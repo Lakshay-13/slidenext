@@ -597,42 +597,45 @@
       <main class="flex-1 bg-[#050505] flex flex-col overflow-hidden relative">
         <div class="h-10 border-b border-zinc-200 dark:border-white/5 bg-[#f9fafb] dark:bg-[#070707] flex items-center justify-between px-6 z-15 flex-shrink-0">
           <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Canvas Workspace</span>
-          <div class="flex items-center gap-2">
-            <button onclick="zoomOut()" class="p-1 hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all flex items-center justify-center" title="Zoom Out">
-              <span class="material-symbols-outlined text-[16px]">zoom_out</span>
-            </button>
-            <select id="zoomSelect" onchange="zoomSelectChange(this.value)" class="bg-zinc-900 border border-white/5 rounded px-2 py-0.5 text-xs text-zinc-300 font-mono focus:outline-none">
-              <option value="fit">Fit Screen</option>
-              <option value="0.25">25%</option>
-              <option value="0.3">30%</option>
-              <option value="0.35">35%</option>
-              <option value="0.4">40%</option>
-              <option value="0.45">45%</option>
-              <option value="0.5">50%</option>
-              <option value="0.55">55%</option>
-              <option value="0.6">60%</option>
-              <option value="0.65">65%</option>
-              <option value="0.7">70%</option>
-              <option value="0.75">75%</option>
-              <option value="0.8">80%</option>
-              <option value="0.85">85%</option>
-              <option value="0.9">90%</option>
-              <option value="0.95">95%</option>
-              <option value="1">100%</option>
-              <option value="1.05">105%</option>
-              <option value="1.1">110%</option>
-              <option value="1.15">115%</option>
-              <option value="1.2">120%</option>
-              <option value="1.25">125%</option>
-              <option value="1.3">130%</option>
-              <option value="1.35">135%</option>
-              <option value="1.4">140%</option>
-              <option value="1.45">145%</option>
-              <option value="1.5">150%</option>
-            </select>
-            <button onclick="zoomIn()" class="p-1 hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all flex items-center justify-center" title="Zoom In">
-              <span class="material-symbols-outlined text-[16px]">zoom_in</span>
-            </button>
+          <div class="flex items-center gap-3">
+            <span class="text-[10px] font-mono text-zinc-500 hidden lg:inline">Hold <span class="text-zinc-300">Alt</span> to disable snap</span>
+            <div class="flex items-center gap-2">
+              <button onclick="zoomOut()" class="p-1 hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all flex items-center justify-center" title="Zoom Out">
+                <span class="material-symbols-outlined text-[16px]">zoom_out</span>
+              </button>
+              <select id="zoomSelect" onchange="zoomSelectChange(this.value)" class="bg-zinc-900 border border-white/5 rounded px-2 py-0.5 text-xs text-zinc-300 font-mono focus:outline-none">
+                <option value="fit">Fit Screen</option>
+                <option value="0.25">25%</option>
+                <option value="0.3">30%</option>
+                <option value="0.35">35%</option>
+                <option value="0.4">40%</option>
+                <option value="0.45">45%</option>
+                <option value="0.5">50%</option>
+                <option value="0.55">55%</option>
+                <option value="0.6">60%</option>
+                <option value="0.65">65%</option>
+                <option value="0.7">70%</option>
+                <option value="0.75">75%</option>
+                <option value="0.8">80%</option>
+                <option value="0.85">85%</option>
+                <option value="0.9">90%</option>
+                <option value="0.95">95%</option>
+                <option value="1">100%</option>
+                <option value="1.05">105%</option>
+                <option value="1.1">110%</option>
+                <option value="1.15">115%</option>
+                <option value="1.2">120%</option>
+                <option value="1.25">125%</option>
+                <option value="1.3">130%</option>
+                <option value="1.35">135%</option>
+                <option value="1.4">140%</option>
+                <option value="1.45">145%</option>
+                <option value="1.5">150%</option>
+              </select>
+              <button onclick="zoomIn()" class="p-1 hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all flex items-center justify-center" title="Zoom In">
+                <span class="material-symbols-outlined text-[16px]">zoom_in</span>
+              </button>
+            </div>
           </div>
         </div>
         
@@ -955,6 +958,7 @@
     let customGradientType = 'linear';
     let renamingFilename = '';
     const SNAP_THRESHOLD_PX = 5;
+    const SNAP_RELEASE_THRESHOLD_PX = 10;
     const MIN_ELEMENT_SIZE_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const EDITOR_SELECTABLE_SELECTOR = "h1, h2, h3, h4, h5, h6, p, span, li, img, pre, code, .editor-shape, table, [style*='position: absolute']";
@@ -1455,9 +1459,43 @@
             right: 0;
             border-top: 1px dotted rgba(112, 40, 208, 0.95);
           }
+          #editorDragHud {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 1000000;
+            pointer-events: none;
+            background: rgba(5, 5, 8, 0.88);
+            border: 1px solid rgba(112, 40, 208, 0.45);
+            color: #ece7ff;
+            border-radius: 8px;
+            font: 600 11px/1.4 'JetBrains Mono', monospace;
+            letter-spacing: 0.02em;
+            padding: 6px 8px;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            transform: translateY(-2px);
+            transition: opacity 0.1s ease, transform 0.1s ease;
+            white-space: nowrap;
+          }
+          #editorDragHud.visible {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          #editorSelectionOverlay.drag-preview {
+            border-style: dashed;
+            border-color: rgba(112, 40, 208, 1);
+            box-shadow: 0 0 0 1px rgba(96, 48, 216, 0.55), 0 0 26px rgba(112, 40, 208, 0.34);
+          }
           .editor-dragging {
             transition: none !important;
             transition-property: none !important;
+            cursor: grabbing !important;
+          }
+          .editor-dragging, .editor-dragging * {
+            user-select: none !important;
           }
           /* Absolute Positioning layout tweaks */
           [style*="position: absolute"] {
@@ -1890,12 +1928,45 @@
       return guides;
     }
 
+    function ensureDragHud(doc, slide) {
+      let hud = slide.querySelector('#editorDragHud');
+      if (!hud) {
+        hud = doc.createElement('div');
+        hud.id = 'editorDragHud';
+        slide.appendChild(hud);
+      }
+      return hud;
+    }
+
     function hideGuides() {
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
       if (!slide) return;
       const guides = slide.querySelector('#editorGuidesLayer');
       if (guides) guides.innerHTML = '';
+    }
+
+    function hideDragHud() {
+      const doc = getIframeDoc();
+      const slide = getActiveSlide(doc);
+      if (!slide) return;
+      const hud = slide.querySelector('#editorDragHud');
+      if (hud) hud.classList.remove('visible');
+    }
+
+    function updateDragHud(bounds, snapX, snapY) {
+      const doc = getIframeDoc();
+      const slide = getActiveSlide(doc);
+      if (!doc || !slide || !bounds) return;
+      const hud = ensureDragHud(doc, slide);
+      const x = Math.round(bounds.left);
+      const y = Math.round(bounds.top);
+      const w = Math.round(bounds.width);
+      const h = Math.round(bounds.height);
+      const snapXText = snapX ? `${Math.round(snapX.anchor)}px` : '--';
+      const snapYText = snapY ? `${Math.round(snapY.anchor)}px` : '--';
+      hud.textContent = `X ${x}  Y ${y}  W ${w}  H ${h}  SnapX ${snapXText}  SnapY ${snapYText}`;
+      hud.classList.add('visible');
     }
 
     function renderGuides(guidesDef) {
@@ -1944,6 +2015,7 @@
       if (selectedElements.length === 0) {
         overlay.style.display = 'none';
         hideGuides();
+        hideDragHud();
         return;
       }
 
@@ -1951,6 +2023,7 @@
       if (!bounds) {
         overlay.style.display = 'none';
         hideGuides();
+        hideDragHud();
         return;
       }
 
@@ -2068,6 +2141,7 @@
       selectedElements = [];
       refreshSelectionClasses();
       syncSelectionOverlay();
+      hideDragHud();
       syncInspectorForSelection();
       updateLayersList();
     }
@@ -2258,43 +2332,94 @@
       return { left, top, right, bottom, width: right - left, height: bottom - top };
     }
 
-    function collectSnapAnchors(slide, excludedElements) {
-      const slideRect = slide.getBoundingClientRect();
-      const anchors = {
-        x: [slideRect.width / 2, CANVAS_GUIDE_MARGIN_PX, slideRect.width - CANVAS_GUIDE_MARGIN_PX],
-        y: [slideRect.height / 2, CANVAS_GUIDE_MARGIN_PX, slideRect.height - CANVAS_GUIDE_MARGIN_PX]
-      };
-
-      slide.querySelectorAll(EDITOR_SELECTABLE_SELECTOR).forEach(el => {
-        if (!isEligibleEditableElement(el)) return;
-        if (excludedElements.has(el)) return;
-        const rect = el.getBoundingClientRect();
-        const left = rect.left - slideRect.left;
-        const right = rect.right - slideRect.left;
-        const top = rect.top - slideRect.top;
-        const bottom = rect.bottom - slideRect.top;
-        anchors.x.push(left, (left + right) / 2, right);
-        anchors.y.push(top, (top + bottom) / 2, bottom);
-      });
-
-      return anchors;
+    function getDirectSlideChildReference(el, slide) {
+      let ref = el;
+      while (ref && ref.parentElement && ref.parentElement !== slide) {
+        ref = ref.parentElement;
+      }
+      return (ref && ref !== slide) ? ref : null;
     }
 
-    function bestSnap(targets, anchors) {
+    function isSelectionRelated(el, selectedSet) {
+      for (const selected of selectedSet) {
+        if (selected === el) return true;
+        if (selected.contains && selected.contains(el)) return true;
+        if (el.contains && el.contains(selected)) return true;
+      }
+      return false;
+    }
+
+    function normalizeAnchorValue(value) {
+      return Math.round(value * 2) / 2;
+    }
+
+    function collectSnapAnchors(slide, excludedElements) {
+      const slideRect = slide.getBoundingClientRect();
+      const xSet = new Set([
+        normalizeAnchorValue(slideRect.width / 2),
+        normalizeAnchorValue(CANVAS_GUIDE_MARGIN_PX),
+        normalizeAnchorValue(slideRect.width - CANVAS_GUIDE_MARGIN_PX)
+      ]);
+      const ySet = new Set([
+        normalizeAnchorValue(slideRect.height / 2),
+        normalizeAnchorValue(CANVAS_GUIDE_MARGIN_PX),
+        normalizeAnchorValue(slideRect.height - CANVAS_GUIDE_MARGIN_PX)
+      ]);
+
+      const snapRefs = new Set();
+      slide.querySelectorAll(EDITOR_SELECTABLE_SELECTOR).forEach(el => {
+        if (!isEligibleEditableElement(el)) return;
+        const ref = getDirectSlideChildReference(el, slide) || el;
+        if (!ref || !isEligibleEditableElement(ref)) return;
+        if (isSelectionRelated(ref, excludedElements)) return;
+        snapRefs.add(ref);
+      });
+
+      snapRefs.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        const left = normalizeAnchorValue(rect.left - slideRect.left);
+        const right = normalizeAnchorValue(rect.right - slideRect.left);
+        const top = normalizeAnchorValue(rect.top - slideRect.top);
+        const bottom = normalizeAnchorValue(rect.bottom - slideRect.top);
+        xSet.add(left);
+        xSet.add(normalizeAnchorValue((left + right) / 2));
+        xSet.add(right);
+        ySet.add(top);
+        ySet.add(normalizeAnchorValue((top + bottom) / 2));
+        ySet.add(bottom);
+      });
+
+      const x = Array.from(xSet).filter(v => Number.isFinite(v) && v >= 0 && v <= slideRect.width).sort((a, b) => a - b);
+      const y = Array.from(ySet).filter(v => Number.isFinite(v) && v >= 0 && v <= slideRect.height).sort((a, b) => a - b);
+      return { x, y };
+    }
+
+    function bestSnap(targets, anchors, activeLock = null) {
+      if (activeLock) {
+        const lockedTarget = targets.find(t => t.key === activeLock.key) || targets[0];
+        if (lockedTarget) {
+          const lockDelta = activeLock.anchor - lockedTarget.value;
+          const lockDistance = Math.abs(lockDelta);
+          if (lockDistance <= SNAP_RELEASE_THRESHOLD_PX) {
+            return { delta: lockDelta, absDelta: lockDistance, anchor: activeLock.anchor, key: activeLock.key, locked: true };
+          }
+        }
+      }
+
       let best = null;
       targets.forEach(target => {
         anchors.forEach(anchor => {
           const delta = anchor - target.value;
           const absDelta = Math.abs(delta);
           if (absDelta <= SNAP_THRESHOLD_PX && (!best || absDelta < best.absDelta)) {
-            best = { delta, absDelta, anchor, key: target.key };
+            best = { delta, absDelta, anchor, key: target.key, locked: false };
           }
         });
       });
       return best;
     }
 
-    function applySnapToBounds(bounds, anchors, mode, handleDir = '') {
+    function applySnapToBounds(bounds, anchors, mode, handleDir = '', snapLock = { x: null, y: null }, snapEnabled = true) {
       let { left, top, right, bottom } = bounds;
       const centerX = (left + right) / 2;
       const centerY = (top + bottom) / 2;
@@ -2316,7 +2441,10 @@
             ? [{ key: 'bottom', value: bottom }]
             : [{ key: 'centerY', value: centerY }];
 
-      const snapX = bestSnap(xTargets, anchors.x);
+      let snapX = null;
+      if (snapEnabled) {
+        snapX = bestSnap(xTargets, anchors.x, snapLock.x);
+      }
       if (snapX) {
         if (mode === 'drag' || snapX.key === 'centerX') {
           left += snapX.delta;
@@ -2329,7 +2457,10 @@
         guides.push({ axis: 'x', position: snapX.anchor });
       }
 
-      const snapY = bestSnap(yTargets, anchors.y);
+      let snapY = null;
+      if (snapEnabled) {
+        snapY = bestSnap(yTargets, anchors.y, snapLock.y);
+      }
       if (snapY) {
         if (mode === 'drag' || snapY.key === 'centerY') {
           top += snapY.delta;
@@ -2342,7 +2473,12 @@
         guides.push({ axis: 'y', position: snapY.anchor });
       }
 
-      return { left, top, right, bottom, width: right - left, height: bottom - top, guides };
+      const nextSnapLock = {
+        x: snapX ? { anchor: snapX.anchor, key: snapX.key } : null,
+        y: snapY ? { anchor: snapY.anchor, key: snapY.key } : null
+      };
+
+      return { left, top, right, bottom, width: right - left, height: bottom - top, guides, snapX, snapY, snapLock: nextSnapLock };
     }
 
     function applyBoundsToSelection(session, bounds) {
@@ -2408,6 +2544,27 @@
     function setupIframeDragging(doc) {
       let session = null;
 
+      const finalizeDragSession = () => {
+        if (!session) return;
+        const didMove = session.moved;
+        session.items.forEach(item => item.element.classList.remove('editor-dragging'));
+        if (session.overlay) {
+          session.overlay.classList.remove('drag-preview');
+        }
+        session = null;
+        isDraggingElement = false;
+        hideGuides();
+        hideDragHud();
+        syncSelectionOverlay();
+        syncInspectorForSelection();
+        updateLayersList();
+        if (didMove) {
+          saveHistoryState();
+          triggerAutoSave();
+          triggerAutoVersion('Auto: Moved Element');
+        }
+      };
+
       doc.addEventListener('dragstart', (e) => {
         e.preventDefault();
       }, true);
@@ -2438,6 +2595,8 @@
         if (!startBounds) return;
         const excluded = new Set(selectedElements);
         const anchors = collectSnapAnchors(slide, excluded);
+        const overlayNode = ensureSelectionOverlay(doc, slide);
+        if (overlayNode) overlayNode.classList.add('drag-preview');
 
         const items = selectedElements.map(el => {
           const rect = el.getBoundingClientRect();
@@ -2474,9 +2633,12 @@
           startBounds,
           items,
           anchors,
-          moved: false
+          moved: false,
+          snapLock: { x: null, y: null },
+          overlay: overlayNode
         };
 
+        updateDragHud(startBounds, null, null);
         isDraggingElement = true;
         e.preventDefault();
         e.stopPropagation();
@@ -2506,31 +2668,26 @@
           if (session.handleDir.includes('s')) bottom += dy;
         }
 
+        const snapEnabled = !e.altKey;
         let bounds = normalizeBounds({ left, top, right, bottom }, session.slideRect, session.type, session.handleDir);
-        bounds = applySnapToBounds(bounds, session.anchors, session.type, session.handleDir);
+        const snapped = applySnapToBounds(bounds, session.anchors, session.type, session.handleDir, session.snapLock, snapEnabled);
+        session.snapLock = snapped.snapLock;
+        bounds = snapped;
         bounds = normalizeBounds(bounds, session.slideRect, session.type, session.handleDir);
 
         applyBoundsToSelection(session, bounds);
         syncSelectionOverlay();
-        renderGuides(bounds.guides);
+        renderGuides(snapped.guides);
+        updateDragHud(bounds, snapped.snapX, snapped.snapY);
         e.preventDefault();
       }, true);
 
       doc.body.addEventListener('mouseup', () => {
-        if (!session) return;
-        const didMove = session.moved;
-        session.items.forEach(item => item.element.classList.remove('editor-dragging'));
-        session = null;
-        isDraggingElement = false;
-        hideGuides();
-        syncSelectionOverlay();
-        syncInspectorForSelection();
-        updateLayersList();
-        if (didMove) {
-          saveHistoryState();
-          triggerAutoSave();
-          triggerAutoVersion('Auto: Moved Element');
-        }
+        finalizeDragSession();
+      }, true);
+
+      doc.defaultView?.addEventListener('blur', () => {
+        finalizeDragSession();
       }, true);
     }
 
