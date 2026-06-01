@@ -954,7 +954,7 @@
     let zoomFactor = 1.0;
     let customGradientType = 'linear';
     let renamingFilename = '';
-    const DRAG_START_THRESHOLD_PX = 2;
+    const DRAG_START_THRESHOLD_PX = 4;
     const MIN_ELEMENT_SIZE_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const DRAG_OVERFLOW_MARGIN_PX = 280;
@@ -2546,6 +2546,8 @@
           handleDir: handle ? handle.getAttribute('data-dir') : '',
           pointerId: e.pointerId,
           captureTarget: doc.body,
+          startClientX: e.clientX,
+          startClientY: e.clientY,
           startPointer,
           grabOffset: {
             x: startPointer.x - startBounds.left,
@@ -2579,8 +2581,8 @@
         const pointer = getPointerOnSlide(e, session.slideMetrics);
         const dx = pointer.x - session.startPointer.x;
         const dy = pointer.y - session.startPointer.y;
-        const moveDistance = Math.hypot(dx, dy);
-        if (!session.materialized && moveDistance >= DRAG_START_THRESHOLD_PX) {
+        const moveDistanceScreen = Math.hypot(e.clientX - session.startClientX, e.clientY - session.startClientY);
+        if (!session.materialized && moveDistanceScreen >= DRAG_START_THRESHOLD_PX) {
           materializeSessionItems();
         }
 
@@ -2588,7 +2590,7 @@
           return;
         }
 
-        if (moveDistance >= DRAG_START_THRESHOLD_PX) {
+        if (moveDistanceScreen >= DRAG_START_THRESHOLD_PX) {
           session.moved = true;
         }
         let left = session.startBounds.left;
