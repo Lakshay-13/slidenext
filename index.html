@@ -958,7 +958,31 @@
     const MIN_ELEMENT_SIZE_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const DRAG_OVERFLOW_MARGIN_PX = 280;
-    const EDITOR_SELECTABLE_SELECTOR = "h1, h2, h3, h4, h5, h6, p, span, li, img, pre, code, .editor-shape, table, [style*='position: absolute']";
+    const EDITOR_SELECTABLE_SELECTOR = [
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'p', 'li', 'img', 'pre', 'code', 'button', 'a',
+      'svg', 'canvas', 'video', 'figure', 'blockquote',
+      '.editor-shape', 'table',
+      '.glass-card', '.glass-panel', '.nav-btn',
+      '.pipeline-step', '.dim3-card', '.fail-card', '.av-node',
+      "[class*='card']", "[class*='panel']", "[class*='node']", "[class*='step']", "[class*='box']",
+      "[style*='position:absolute']", "[style*='position: absolute']",
+      "[style*='position:fixed']", "[style*='position: fixed']"
+    ].join(', ');
+    const EDITOR_PARENT_TARGET_SELECTOR = [
+      'button',
+      'a',
+      '[role="button"]',
+      '.glass-card',
+      '.glass-panel',
+      '.nav-btn',
+      "[class*='card']",
+      "[class*='panel']",
+      "[class*='node']",
+      "[class*='step']",
+      "[class*='box']"
+    ].join(', ');
+    const EDITOR_INLINE_TEXT_TAGS = new Set(['span', 'strong', 'em', 'b', 'i', 'u', 'small', 'mark', 'sup', 'sub', 'label']);
     const RESIZE_HANDLE_DIRECTIONS = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
 
     // Slide Wallpapers Presets Data
@@ -1402,6 +1426,21 @@
             outline: 1px dashed rgba(112, 40, 208, 0.75) !important;
             outline-offset: 2px !important;
             cursor: pointer !important;
+          }
+          .editor-hoverable,
+          .editor-hoverable * {
+            -webkit-user-drag: none !important;
+          }
+          .editor-hoverable:hover,
+          .editor-hoverable:active,
+          .editor-hoverable:focus,
+          .editor-hoverable:hover *,
+          .editor-hoverable:active *,
+          .editor-hoverable:focus * {
+            transform: none !important;
+            translate: none !important;
+            scale: none !important;
+            rotate: none !important;
           }
           .editor-hoverable,
           #editorSelectionOverlay,
@@ -1879,10 +1918,26 @@
       return true;
     }
 
+    function findPreferredDragContainer(el) {
+      if (!el || typeof el.closest !== 'function') return null;
+      const slide = el.closest('.slide');
+      if (!slide) return null;
+      const candidate = el.closest(EDITOR_PARENT_TARGET_SELECTOR);
+      if (!candidate || candidate === el) return null;
+      if (!slide.contains(candidate)) return null;
+      if (!isEligibleEditableElement(candidate)) return null;
+      return candidate;
+    }
+
     function resolveEditableTarget(node) {
       let curr = node && node.nodeType === 1 ? node : node?.parentElement;
       while (curr) {
         if (curr.matches?.(EDITOR_SELECTABLE_SELECTOR) && isEligibleEditableElement(curr)) {
+          const tag = curr.tagName.toLowerCase();
+          if (EDITOR_INLINE_TEXT_TAGS.has(tag)) {
+            const preferred = findPreferredDragContainer(curr);
+            if (preferred) return preferred;
+          }
           if (curr.tagName.toLowerCase() === 'th' || curr.tagName.toLowerCase() === 'td') {
             const table = curr.closest('table');
             return table && isEligibleEditableElement(table) ? table : null;
