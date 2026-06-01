@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Workshop: AI-Assisted Development</title>
+  <link rel="icon" href="/logo.png" type="image/png">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  
+  <!-- Tailwind for layouts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Geist', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- GSAP for timeline animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-[#02040a] text-[#f0f6fc] antialiased select-none">
+
+  <!-- Ambient Dynamic Background & Particle System -->
+  <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+    <div class="bg-grid-overlay"></div>
+    <div class="bg-ambient-layer"></div>
+    <canvas id="particlesCanvas" class="canvas-particles"></canvas>
+    <div class="bg-animated-glow" style="top: 20%; left: 10%;"></div>
+    <div class="bg-animated-glow" style="bottom: 10%; right: 15%; animation-delay: -10s; animation-duration: 40s;"></div>
+  </div>
+
+  <!-- Slides Viewport Container -->
+  <div class="presentation-viewport">
+    <div id="slidesContainer" class="slides-container">
+
+      <!-- Slide 1: Hero / Title Slide -->
+      <section class="slide slide-active flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full grid grid-cols-1 md:grid-cols-12 gap-12 items-center z-10">
+          <div class="md:col-span-7 flex flex-col items-start space-y-6">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 bg-[#00f2ff]/10 border border-[#00f2ff]/20 rounded-full">
+              <span class="w-2 h-2 rounded-full bg-[#00f2ff] animate-pulse"></span>
+              <span class="font-mono text-xs text-[#00f2ff] uppercase tracking-widest">Interactive Workshop</span>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-bold tracking-tight text-white leading-none">
+              AI-Assisted <br>
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#00f2ff] to-[#9d50bb] glow-text">Development</span>
+            </h1>
+            <p class="text-lg text-[#8b949e] max-w-xl">
+              An interactive slide deck mapping foundation tools, agent ecosystems, workspace workflows, pro secrets, and safety boundaries. Let's discuss.
+            </p>
+            <div class="pt-2">
+              <button onclick="goToSlide(1)" class="px-6 py-3.5 bg-gradient-to-r from-[#00f2ff] to-[#3d5afe] text-white font-semibold rounded-lg glow-btn hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+                Enter Workshop
+                <span class="material-symbols-outlined text-[18px] font-bold">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+          <div class="md:col-span-5 flex justify-center">
+            <div class="ai-core-container float-slow">
+              <div class="ai-core-orb"></div>
+              <div class="ai-core-rings"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 2: Question 1 - Chatbots Preferences -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-6 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#00f2ff] uppercase tracking-widest">QUESTION 01 // TEAM SURVEY</span>
+            <h2 class="text-3xl md:text-5xl font-semibold text-white tracking-tight">Which AI chatbots do you use most?</h2>
+            <p class="text-[#8b949e] text-sm">Click on your preferred models to vote. Let's discuss daily developer toolkits.</p>
+          </div>
+          
+          <!-- Large Interactive Vote Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+            <!-- Gemini -->
+            <div class="glass-card vote-card p-8 flex flex-col items-center text-center justify-between h-72 cursor-pointer" data-vote="gemini">
+              <div class="w-16 h-16 rounded-full bg-[#38bdf8]/10 flex items-center justify-center border border-[#38bdf8]/20 text-[#38bdf8] mb-4 p-4">
+                <!-- Gemini Logo SVG -->
+                <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-white mb-2">Gemini</h3>
+                <p class="text-xs text-[#8b949e]">Google Core Model</p>
+              </div>
+              <div class="mt-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-xs text-[#38bdf8]">how_to_vote</span>
+                <span class="font-mono text-sm text-white font-bold" id="geminiVotes">0 Votes</span>
+              </div>
+            </div>
+
+            <!-- ChatGPT -->
+            <div class="glass-card vote-card p-8 flex flex-col items-center text-center justify-between h-72 cursor-pointer" data-vote="chatgpt">
+              <div class="w-16 h-16 rounded-full bg-[#10b981]/10 flex items-center justify-center border border-[#10b981]/20 text-[#10b981] mb-4 p-4.5">
+                <!-- OpenAI Logo SVG -->
+                <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-white mb-2">ChatGPT</h3>
+                <p class="text-xs text-[#8b949e]">OpenAI Core Model</p>
+              </div>
+              <div class="mt-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-xs text-[#10b981]">how_to_vote</span>
+                <span class="font-mono text-sm text-white font-bold" id="chatgptVotes">0 Votes</span>
+              </div>
+            </div>
+
+            <!-- Claude -->
+            <div class="glass-card vote-card p-8 flex flex-col items-center text-center justify-between h-72 cursor-pointer" data-vote="claude">
+              <div class="w-16 h-16 rounded-full bg-[#f97316]/10 flex items-center justify-center border border-[#f97316]/20 text-[#f97316] mb-4 p-4">
+                <!-- Claude Logo SVG -->
+                <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-2xl font-bold text-white mb-2">Claude</h3>
+                <p class="text-xs text-[#8b949e]">Anthropic Core Model</p>
+              </div>
+              <div class="mt-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-xs text-[#f97316]">how_to_vote</span>
+                <span class="font-mono text-sm text-white font-bold" id="claudeVotes">0 Votes</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 3: Question 2 - Chatbots for different tasks -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-6 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#00f2ff] uppercase tracking-widest">QUESTION 02 // TASK DIVISION</span>
+            <h2 class="text-3xl md:text-5xl font-semibold text-white tracking-tight">Do you use different chatbots for different tasks?</h2>
+            <p class="text-[#8b949e] text-sm">Click each specialized AI card below to reveal what developers use them for.</p>
+          </div>
+
+          <!-- Click to reveal cards grid -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-4">
+            <!-- Perplexity -->
+            <div class="glass-card flex flex-col justify-between p-6 h-64 border border-white/5" data-reveal="perplexity">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded bg-[#06b6d4]/10 border border-[#06b6d4]/20 text-[#06b6d4] flex items-center justify-center p-2.5">
+                  <!-- Perplexity Logo SVG -->
+                  <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M22.3977 7.0896h-2.3106V.0676l-7.5094 6.3542V.1577h-1.1554v6.1966L4.4904 0v7.0896H1.6023v10.3976h2.8882V24l6.932-6.3591v6.2005h1.1554v-6.0469l6.9318 6.1807v-6.4879h2.8882V7.0896zm-3.4657-4.531v4.531h-5.355l5.355-4.531zm-13.2862.0676 4.8691 4.4634H5.6458V2.6262zM2.7576 16.332V8.245h7.8476l-6.1149 6.1147v1.9723H2.7576zm2.8882 5.0404v-3.8852h.0001v-2.6488l5.7763-5.7764v7.0111l-5.7764 5.2993zm12.7086.0248-5.7766-5.1509V9.0618l5.7766 5.7766v6.5588zm2.8882-5.0652h-1.733v-1.9723L13.3948 8.245h7.8478v8.087z"/>
+                  </svg>
+                </div>
+                <h3 class="font-bold text-white text-md">Perplexity</h3>
+              </div>
+              <!-- Hidden details box -->
+              <div class="reveal-info-container" id="info-perplexity">
+                <p class="text-xs text-[#8b949e] leading-relaxed">
+                  <strong class="text-[#06b6d4]">Expertise: Research.</strong> Ideal for research-oriented, factual, real-time searches across docs and library releases.
+                </p>
+              </div>
+              <div class="text-[10px] text-[#06b6d4] font-mono tracking-widest uppercase mt-auto flex items-center gap-1.5" id="lbl-perplexity">
+                <span class="material-symbols-outlined text-xs">unfold_more</span> Click to reveal
+              </div>
+            </div>
+
+            <!-- Manus AI -->
+            <div class="glass-card flex flex-col justify-between p-6 h-64 border border-white/5" data-reveal="manus">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded bg-[#e11d48]/10 border border-[#e11d48]/20 text-[#e11d48] flex items-center justify-center p-2.5">
+                  <!-- Manus AI Logo SVG -->
+                  <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8.047 1.163A.936.936 0 119.863.709c.063.256.132.508.2.76l.005.016c.158.58.315 1.16.416 1.771a.936.936 0 11-1.847.305c-.085-.517-.203-.949-.346-1.473v-.002c-.075-.274-.157-.573-.244-.923zM3.67 2.753a.936.936 0 00.428 1.252c.667.327 1.245.65 1.818 1.295a.936.936 0 001.4-1.242C6.5 3.138 5.66 2.687 4.922 2.325a.936.936 0 00-1.252.428z"/>
+                    <path clip-rule="evenodd" d="M15.672 21.284c-.17-.036-.356-.075-.546-.117-.7-.152-1.65-.365-2.097-.513l-.033-.011-.032-.012c-.198-.074-.534-.156-1.09-.283l-.103-.023c-.48-.11-1.07-.244-1.63-.413-.578-.176-1.294-.437-1.903-.862-.638-.446-1.364-1.232-1.404-2.412a5.024 5.024 0 01.009-.51 2.716 2.716 0 01-.65-1.24 2.632 2.632 0 01.03-1.275c.083-.317.21-.594.316-.8.036-.07.073-.14.11-.206-.35-.111-.747-.248-1.133-.412-.503-.215-1.218-.57-1.752-1.141a2.798 2.798 0 01-.71-1.327 2.55 2.55 0 01.226-1.68c.604-1.208 1.757-1.635 2.782-1.672.926-.033 1.912.226 2.795.536.804.282 1.955.807 2.933 1.264.322-.529.747-1.126 1.149-1.608l.08-.095.092-.084a3.43 3.43 0 012.06-.887 3.559 3.559 0 011.059.08l.036.008.023.007h.003l.002.001s.002 0-.477 1.786l.479-1.786.208.058.19.102c.964.516 1.238 1.406 1.31 1.876a2.9 2.9 0 01-.008.903l-.003.018v.005l-1.858-.37 1.857.371-.01.054-.3 1.19c-.058.292-.065.459-.062.547a.286.286 0 00.016.107v.001c.013.03.043.095.154.263.043.066.088.131.144.214l.058.084c.08.118.174.257.274.412.623.97.684 1.902.68 2.499v.026l.238.078.103.032.153.049c.076.024.173.056.267.09.11-.202.407-.636.945-.636.702 0 .99.987.99.987.275 1.838-.98 8.013-2.794 9.164-1.386.88-2.413-.427-3.176-2.437zM8.72 12.868c.118-.119.47-.37 1.136-.445a4.337 4.337 0 012.228.365c.623.276 1.053.908 1.233 1.667.088.371.104.731.066 1.025-.04.31-.128.465-.169.511-.05.058-.228.157-.721.053a3.417 3.417 0 01-.764-.266l-.006-.003a.936.936 0 00-.861 1.662h.001l.003.002.008.004.024.012a4.888 4.888 0 00.34.152c.215.086.52.194.866.267.615.13 1.75.23 2.52-.652.37-.424.548-.98.615-1.501a4.789 4.789 0 00-.1-1.697c-.268-1.128-.976-2.362-2.297-2.948a6.208 6.208 0 00-3.195-.513c-.619.07-1.211.242-1.69.504l-.02-.006h-.004c-1.183-.338-3.536-1.01-2.956-2.17.44-.88 1.643-.807 3.275-.234.663.232 1.584.647 2.453 1.051.27.125.534.25.784.367l.974.454c.693-.832.962-1.29 1.2-1.695.163-.278.312-.53.573-.862l.025-.032a9.902 9.902 0 01.146-.18.895.895 0 01.02-.017c.642-.567 1.389-.36 1.389-.36.427.228.318.806.318.806l-.296 1.178c-.284 1.386.03 1.845.547 2.6.09.133.188.275.29.433.412.643.392 1.26.377 1.765-.01.324-.019.602.09.809.224.425 1.06.69 1.61.862.132.042.247.078.333.11l.059.023c-.078.24-.148.489-.218.737-.313 1.103-.623 2.202-1.55 2.53-.632.225-1.263.214-1.71.156-.786-.17-1.716-.379-2.066-.495-.363-.135-.871-.25-1.424-.377-1.316-.3-2.883-.656-3.331-1.462a.975.975 0 01-.125-.447c-.026-.74.234-1.404.234-1.404s-.403.002-.685-.27a.853.853 0 01-.238-.431c-.03-.13-.042-.28-.025-.44.008 0 .012-.008.012-.028 0-.234.234-.702.702-1.17z"/>
+                    <path d="M14.077.604a.936.936 0 01.315 1.285c-.355.584-.561 1.181-.786 2.081a.936.936 0 11-1.816-.454c.243-.971.504-1.778 1.002-2.598a.936.936 0 011.285-.314z"/>
+                  </svg>
+                </div>
+                <h3 class="font-bold text-white text-md">Manus AI</h3>
+              </div>
+              <!-- Hidden details box -->
+              <div class="reveal-info-container" id="info-manus">
+                <p class="text-xs text-[#8b949e] leading-relaxed">
+                  <strong class="text-[#e11d48]">Expertise: Document Editing.</strong> Capable of compiling complex reports, analyzing spreadsheets, and automating edits.
+                </p>
+              </div>
+              <div class="text-[10px] text-[#e11d48] font-mono tracking-widest uppercase mt-auto flex items-center gap-1.5" id="lbl-manus">
+                <span class="material-symbols-outlined text-xs">unfold_more</span> Click to reveal
+              </div>
+            </div>
+
+            <!-- Bolt.new -->
+            <div class="glass-card flex flex-col justify-between p-6 h-64 border border-white/5" data-reveal="bolt">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded bg-[#eab308]/10 border border-[#eab308]/20 text-[#eab308] flex items-center justify-center p-2.5">
+                  <!-- StackBlitz Logo SVG -->
+                  <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10.797 14.182H3.635L16.728 0l-3.525 9.818h7.162L7.272 24l3.524-9.818Z"/>
+                  </svg>
+                </div>
+                <h3 class="font-bold text-white text-md">Bolt.new</h3>
+              </div>
+              <!-- Hidden details box -->
+              <div class="reveal-info-container" id="info-bolt">
+                <p class="text-xs text-[#8b949e] leading-relaxed">
+                  <strong class="text-[#eab308]">Expertise: UI Prototyping.</strong> Builds full-stack visual web components with instant local deployment and previews.
+                </p>
+              </div>
+              <div class="text-[10px] text-[#eab308] font-mono tracking-widest uppercase mt-auto flex items-center gap-1.5" id="lbl-bolt">
+                <span class="material-symbols-outlined text-xs">unfold_more</span> Click to reveal
+              </div>
+            </div>
+
+            <!-- DeepSeek -->
+            <div class="glass-card flex flex-col justify-between p-6 h-64 border border-white/5" data-reveal="deepseek">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded bg-[#2563eb]/10 border border-[#2563eb]/20 text-[#2563eb] flex items-center justify-center p-2.5">
+                  <!-- DeepSeek Logo SVG -->
+                  <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.748 4.651c-.254-.124-.364.113-.512.233-.051.04-.094.09-.137.137-.372.397-.806.657-1.373.626-.829-.046-1.537.214-2.163.848-.133-.782-.575-1.248-1.247-1.548-.352-.155-.708-.311-.955-.65-.172-.24-.219-.509-.305-.774-.055-.16-.11-.323-.293-.35-.2-.031-.278.136-.356.276-.313.572-.434 1.202-.422 1.84.027 1.436.633 2.58 1.838 3.393.137.094.172.187.129.323-.082.28-.18.553-.266.833-.055.179-.137.218-.328.14a5.5 5.5 0 0 1-1.737-1.179c-.857-.828-1.631-1.743-2.597-2.46a12 12 0 0 0-.689-.47c-.985-.957.13-1.743.387-1.836.27-.098.094-.433-.778-.428-.872.003-1.67.295-2.687.685a3 3 0 0 1-.465.136 9.6 9.6 0 0 0-2.883-.101c-1.885.21-3.39 1.1-4.497 2.622C.082 8.776-.231 10.854.152 13.02c.403 2.284 1.568 4.175 3.36 5.653 1.857 1.533 3.997 2.284 6.438 2.14( 1.482-.085 3.132-.284 4.994-1.86.47.234.962.328 1.78.398.629.058 1.235-.031 1.705-.129.735-.155.684-.836.418-.961-2.155-1.004-1.682-.595-2.112-.926 1.095-1.295 2.768-3.598 3.284-6.733.05-.346.115-.834.108-1.114-.004-.171.035-.238.23-.257a4.2 4.2 0 0 0 1.545-.475c1.397-.763 1.96-2.016 2.093-3.517.02-.23-.004-.467-.247-.588M11.58 18.168c-2.088-1.642-3.101-2.183-3.52-2.16-.39.024-.32.472-.234.763.09.288.207.487.371.74.114.167.192.416-.113.603-.673.416-1.842-.14-1.897-.168-1.361-.801-2.5-1.86-3.301-3.306-.775-1.393-1.225-2.888-1.299-4.482-.02-.385.094-.522.477-.592a4.7 4.7 0 0 1 1.53-.038c2.131.311 3.946 1.264 5.467 2.774.868.86 1.525 1.887 2.202 2.89.72 1.066 1.494 2.082 2.48 2.915.348.291.626.513.892.677-.802.09-2.14.109-3.055-.615zm1.001-6.44a.306.306 0 0 1 .415-.287.3.3 0 0 1 .113.074.3.3 0 0 1 .086.214c0 .17-.136.307-.308.307a.303.303 0 0 1-.306-.307m3.11 1.596c-.2.081-.4.151-.591.16a1.25 1.25 0 0 1-.798-.254c-.274-.23-.47-.358-.551-.758a1.7 1.7 0 0 1 .015-.588c.07-.327-.007-.537-.238-.727-.188-.156-.426-.199-.689-.199a.6.6 0 0 1-.254-.078.253.253 0 0 1-.114-.358 1 1 0 0 1 .192-.21c.356-.202.767-.136 1.146.016.352.144.618.408 1.001.782.392.451.462.576.685.915.176.264.336.536.446.848.066.194-.02.353-.25.45"/>
+                  </svg>
+                </div>
+                <h3 class="font-bold text-white text-md">DeepSeek Coder</h3>
+              </div>
+              <!-- Hidden details box -->
+              <div class="reveal-info-container" id="info-deepseek">
+                <p class="text-xs text-[#8b949e] leading-relaxed">
+                  <strong class="text-[#2563eb]">Expertise: Algorithm Logic.</strong> Tailored for core backend routing logic, compiler structures, and math optimization.
+                </p>
+              </div>
+              <div class="text-[10px] text-[#2563eb] font-mono tracking-widest uppercase mt-auto flex items-center gap-1.5" id="lbl-deepseek">
+                <span class="material-symbols-outlined text-xs">unfold_more</span> Click to reveal
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 4: Question 3 - Agentic Tools -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-6 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#00f2ff] uppercase tracking-widest">QUESTION 03 // AUTONOMOUS AGENTS</span>
+            <h2 class="text-3xl md:text-5xl font-semibold text-white tracking-tight">Have you used agentic developer tools?</h2>
+            <p class="text-[#8b949e] text-sm">Click each agent to see its automation role. Let's discuss workflow integration.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+            <!-- OpenAI Codex -->
+            <div class="glass-card flex flex-col justify-between p-6 h-64 border border-white/5" data-agent="codex">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded bg-[#10b981]/10 border border-[#10b981]/20 text-[#10b981] flex items-center justify-center p-2.5">
+                  <!-- OpenAI Logo SVG -->
+                  <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/>
+                  </svg>
+                </div>
+                <h3 class="font-bold text-white text-md">OpenAI Codex</h3>
+              </div>
+              <div class="reveal-info-container" id="info-codex">
+                <p class="text-xs text-[#8b949e] leading-relaxed">
+                  Though originally the core model powering GitHub Copilot, it has evolved in modern workspace integrations into an autonomous agentic UI and reasoning framework that directly edits codebases, runs checks, and refactors code autonomously.
+                </p>
+              </div>
+              <div class="text-[10px] text-[#10b981] font-mono tracking-widest uppercase mt-auto flex items-center gap-1.5" id="lbl-codex">
+                <span class="material-symbols-outlined text-xs">unfold_more</span> Click to inspect
+              </div>
+            </div>
+
+            <!-- Claude Code -->
+            <div class="glass-card flex flex-col justify-between p-6 h-64 border border-white/5" data-agent="claudecode">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded bg-[#ea580c]/10 border border-[#ea580c]/20 text-[#ea580c] flex items-center justify-center p-2.5">
+                  <!-- Anthropic Logo SVG -->
+                  <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z"/>
+                  </svg>
+                </div>
+                <h3 class="font-bold text-white text-md">Claude Code</h3>
+              </div>
+              <div class="reveal-info-container" id="info-claudecode">
+                <p class="text-xs text-[#8b949e] leading-relaxed">
+                  CLI agent by Anthropic. Reads files, executes tests, edits code directly, and searches git histories inside local repos.
+                </p>
+              </div>
+              <div class="text-[10px] text-[#ea580c] font-mono tracking-widest uppercase mt-auto flex items-center gap-1.5" id="lbl-claudecode">
+                <span class="material-symbols-outlined text-xs">unfold_more</span> Click to inspect
+              </div>
+            </div>
+
+            <!-- Google Antigravity -->
+            <div class="glass-card flex flex-col justify-between p-6 h-64 border border-white/5" data-agent="antigravity">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded bg-[#8b5cf6]/10 border border-[#8b5cf6]/20 text-[#8b5cf6] flex items-center justify-center p-2.5">
+                  <!-- Google Logo SVG -->
+                  <svg class="w-full h-full" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/>
+                  </svg>
+                </div>
+                <h3 class="font-bold text-white text-md">Antigravity (Google)</h3>
+              </div>
+              <div class="reveal-info-container" id="info-antigravity">
+                <p class="text-xs text-[#8b949e] leading-relaxed">
+                  Autonomous developer agent. Explores directories recursively, fixes compile lints, runs check scripts, and structures workspace modifications.
+                </p>
+              </div>
+              <div class="text-[10px] text-[#8b5cf6] font-mono tracking-widest uppercase mt-auto flex items-center gap-1.5" id="lbl-antigravity">
+                <span class="material-symbols-outlined text-xs">unfold_more</span> Click to inspect
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 5: Good vs. Bad Practices -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-6 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#00f2ff] uppercase tracking-widest">PRACTICE STANDARDS // DISCUSS</span>
+            <h2 class="text-3xl md:text-5xl font-semibold text-white tracking-tight">Code of Conduct: Good vs. Bad Practices</h2>
+            <p class="text-[#8b949e] text-sm">Let's discuss how to align our habits to avoid security drifts and prompt loops.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-2">
+            <!-- Good Practices -->
+            <div class="glass-panel flex flex-col gap-4">
+              <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                <div class="flex items-center gap-2 text-[#7ee787]">
+                  <span class="material-symbols-outlined">check_circle</span>
+                  <span class="font-mono text-sm uppercase tracking-widest font-bold">Good Practices</span>
+                </div>
+                <button id="revealGoodBtn" class="px-2.5 py-1 bg-[#7ee787]/10 hover:bg-[#7ee787]/20 border border-[#7ee787]/30 text-[#7ee787] font-mono text-[10px] uppercase tracking-wider rounded transition-all flex items-center gap-1 select-none pointer-events-auto">
+                  <span class="material-symbols-outlined text-xs">add_circle</span>
+                  Reveal (<span id="goodCount">0</span>/3)
+                </button>
+              </div>
+              
+              <div class="flex flex-col gap-4" id="goodPracticesContainer">
+                <div class="practice-card good-practice p-4 bg-white/5 rounded-lg flex items-start gap-3 opacity-0 translate-y-4 pointer-events-none hidden transition-all duration-500">
+                  <span class="material-symbols-outlined text-[#7ee787] mt-0.5">add</span>
+                  <div>
+                    <h4 class="font-bold text-white text-sm">Be Clear & Concise in Prompts</h4>
+                    <p class="text-xs text-[#8b949e] mt-0.5">Provide explicit steps, expected variables, output templates, and file schemes upfront.</p>
+                  </div>
+                </div>
+
+                <div class="practice-card good-practice p-4 bg-white/5 rounded-lg flex items-start gap-3 opacity-0 translate-y-4 pointer-events-none hidden transition-all duration-500">
+                  <span class="material-symbols-outlined text-[#7ee787] mt-0.5">add</span>
+                  <div>
+                    <h4 class="font-bold text-white text-sm">Overlook & Verify Code Manually</h4>
+                    <p class="text-xs text-[#8b949e] mt-0.5">Verify git diff changes manually. Never push unchecked changes to feature branches.</p>
+                  </div>
+                </div>
+
+                <div class="practice-card good-practice p-4 bg-white/5 rounded-lg flex items-start gap-3 opacity-0 translate-y-4 pointer-events-none hidden transition-all duration-500">
+                  <span class="material-symbols-outlined text-[#7ee787] mt-0.5">add</span>
+                  <div>
+                    <h4 class="font-bold text-white text-sm">Use Available Tools Correctly (MCP/Plugins)</h4>
+                    <p class="text-xs text-[#8b949e] mt-0.5">Utilize contextual directory access plugins or MCP servers (e.g. database schema check, git history search).</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bad Practices -->
+            <div class="glass-panel flex flex-col gap-4">
+              <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                <div class="flex items-center gap-2 text-[#ff7b72]">
+                  <span class="material-symbols-outlined">cancel</span>
+                  <span class="font-mono text-sm uppercase tracking-widest font-bold">Bad Practices</span>
+                </div>
+                <button id="revealBadBtn" class="px-2.5 py-1 bg-[#ff7b72]/10 hover:bg-[#ff7b72]/20 border border-[#ff7b72]/30 text-[#ff7b72] font-mono text-[10px] uppercase tracking-wider rounded transition-all flex items-center gap-1 select-none pointer-events-auto">
+                  <span class="material-symbols-outlined text-xs">add_circle</span>
+                  Reveal (<span id="badCount">0</span>/3)
+                </button>
+              </div>
+              
+              <div class="flex flex-col gap-4" id="badPracticesContainer">
+                <div class="practice-card p-4 bg-white/5 rounded-lg flex items-start gap-3 opacity-0 translate-y-4 pointer-events-none hidden transition-all duration-500">
+                  <span class="material-symbols-outlined text-[#ff7b72] mt-0.5">close</span>
+                  <div>
+                    <h4 class="font-bold text-white text-sm">Avoid Random / Vague Instructions</h4>
+                    <p class="text-xs text-[#8b949e] mt-0.5">Don't say "fix this" or "rewrite the file" without specifying context bounds and schemas.</p>
+                  </div>
+                </div>
+
+                <div class="practice-card p-4 bg-white/5 rounded-lg flex items-start gap-3 opacity-0 translate-y-4 pointer-events-none hidden transition-all duration-500">
+                  <span class="material-symbols-outlined text-[#ff7b72] mt-0.5">close</span>
+                  <div>
+                    <h4 class="font-bold text-white text-sm">Never Grant Full Unrestricted Access</h4>
+                    <p class="text-xs text-[#8b949e] mt-0.5">Restrict write bounds, review console commands before approval, and never run blind curl commands.</p>
+                  </div>
+                </div>
+
+                <div class="practice-card p-4 bg-white/5 rounded-lg flex items-start gap-3 opacity-0 translate-y-4 pointer-events-none hidden transition-all duration-500">
+                  <span class="material-symbols-outlined text-[#ff7b72] mt-0.5">close</span>
+                  <div>
+                    <h4 class="font-bold text-white text-sm">Don't Drag on Endless Prompt Sessions</h4>
+                    <p class="text-xs text-[#8b949e] mt-0.5">Long chat logs bloat context tokens and lead to model confusion. Fresh prompts yield cleaner fixes.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="text-center mt-3 p-3 bg-white/5 rounded-lg border border-white/5">
+            <p class="text-xs text-[#00f2ff] font-mono tracking-wide uppercase">Open Floor: What custom guardrails do you prefer? Let's discuss.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 6: Secrets & Techniques -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-6 z-10">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex flex-col gap-2">
+              <span class="font-mono text-sm text-[#00f2ff] uppercase tracking-widest">AI SECRETS // POWER USER TIPS</span>
+              <h2 class="text-3xl md:text-5xl font-semibold text-white tracking-tight">AI Pro-Tips: Secrets of the Power User</h2>
+              <p class="text-[#8b949e] text-sm">Click each technique to view tactical setups. Add your custom tips at the end.</p>
+            </div>
+            <button id="revealTipBtn" class="flex-shrink-0 px-4 py-2 bg-[#00f2ff]/10 hover:bg-[#00f2ff]/20 border border-[#00f2ff]/30 text-[#00f2ff] font-mono text-xs uppercase tracking-wider rounded-md transition-all flex items-center justify-center gap-2 select-none pointer-events-auto">
+              <span class="material-symbols-outlined text-sm">add_circle</span>
+              Reveal Next Tip (<span id="tipCount">0</span>/5)
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-2">
+            <!-- Tip 1 -->
+            <div class="glass-card flex flex-col justify-between p-5 h-72 border border-white/5 opacity-0 translate-y-4 pointer-events-none hidden transition-all duration-500" data-tip="1">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#00f2ff] text-[18px]">keyboard_voice</span>
+                <h4 class="font-bold text-white text-xs">01 // Voice Chat</h4>
+              </div>
+              <div class="reveal-info-container" id="info-tip-1">
+                <p class="text-[11px] text-[#8b949e] leading-relaxed">
+                  Use voice tools to learn new topics. It accelerates conversational cross-questioning and rapid conceptual back-and-forth ideation.
+                </p>
+              </div>
+              <span class="text-[9px] text-[#00f2ff] font-mono uppercase mt-auto flex items-center gap-1" id="lbl-tip-1">
+                <span class="material-symbols-outlined text-[10px]">unfold_more</span> View strategy
+              </span>
+            </div>
+
+            <!-- Tip 2 -->
+            <div class="glass-card flex flex-col justify-between p-5 h-72 border border-white/5 opacity-0 translate-y-4 pointer-events-none hidden transition-all duration-500" data-tip="2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#f97316] text-[18px]">tune</span>
+                <h4 class="font-bold text-white text-xs">02 // Personalized Configs</h4>
+              </div>
+              <div class="reveal-info-container" id="info-tip-2">
+                <p class="text-[11px] text-[#8b949e] leading-relaxed">
+                  Feed bespoke configuration files (like `.cursorrules` or `.clinerules`) to chatbots and agentic utilities separately to align guidelines.
+                </p>
+              </div>
+              <span class="text-[9px] text-[#f97316] font-mono uppercase mt-auto flex items-center gap-1" id="lbl-tip-2">
+                <span class="material-symbols-outlined text-[10px]">unfold_more</span> View strategy
+              </span>
+            </div>
+
+            <!-- Tip 3 -->
+            <div class="glass-card flex flex-col justify-between p-5 h-72 border border-white/5 opacity-0 translate-y-4 pointer-events-none hidden transition-all duration-500" data-tip="3">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#10b981] text-[18px]">smart_toy</span>
+                <h4 class="font-bold text-white text-xs">03 // AI to Prompt AI</h4>
+              </div>
+              <div class="reveal-info-container" id="info-tip-3">
+                <p class="text-[11px] text-[#8b949e] leading-relaxed">
+                  Ideate requirements in one chat, ask it to output a formal prompt, then load that meta-prompt into an agent (e.g. Codex or Claude Code).
+                </p>
+              </div>
+              <span class="text-[9px] text-[#10b981] font-mono uppercase mt-auto flex items-center gap-1" id="lbl-tip-3">
+                <span class="material-symbols-outlined text-[10px]">unfold_more</span> View strategy
+              </span>
+            </div>
+
+            <!-- Tip 4 -->
+            <div class="glass-card flex flex-col justify-between p-5 h-72 border border-white/5 opacity-0 translate-y-4 pointer-events-none hidden transition-all duration-500" data-tip="4">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#8b5cf6] text-[18px]">difference</span>
+                <h4 class="font-bold text-white text-xs">04 // Cross Synthesis</h4>
+              </div>
+              <div class="reveal-info-container" id="info-tip-4">
+                <p class="text-[11px] text-[#8b949e] leading-relaxed">
+                  Pass identical prompts to multiple models (e.g. Gemini, ChatGPT, Claude) and combine results to filter out errors.
+                </p>
+              </div>
+              <span class="text-[9px] text-[#8b5cf6] font-mono uppercase mt-auto flex items-center gap-1" id="lbl-tip-4">
+                <span class="material-symbols-outlined text-[10px]">unfold_more</span> View strategy
+              </span>
+            </div>
+
+            <!-- Tip 5: Interactive Custom Tip -->
+            <div class="glass-card flex flex-col justify-between p-5 h-72 border border-dashed border-[#00f2ff]/30 cursor-default opacity-0 translate-y-4 pointer-events-none hidden transition-all duration-500" id="customTipCard">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#00f2ff] text-[18px]">edit_square</span>
+                <h4 class="font-bold text-white text-xs">05 // Intern Suggestion</h4>
+              </div>
+              
+              <div class="flex-grow flex flex-col justify-center">
+                <p class="text-[10px] text-[#8b949e] leading-relaxed" id="customTipContent">
+                  Add a prompt secret or shortcut used in your setup below. Let's record ideas!
+                </p>
+                <div class="terminal-input-line">
+                  <span class="font-mono text-xs text-[#00f2ff]">$</span>
+                  <input type="text" id="customTipInput" placeholder="Type custom tip..." class="terminal-text-input" maxlength="120" autocomplete="off" />
+                </div>
+              </div>
+              
+              <button id="customTipBtn" class="w-full py-1.5 bg-[#00f2ff]/10 hover:bg-[#00f2ff]/20 border border-[#00f2ff]/30 text-white font-mono text-[9px] uppercase tracking-wider rounded-md transition-all mt-3">
+                Save to slide
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 7: Final Slide -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-4xl text-center flex flex-col items-center gap-6 z-10">
+          <div class="inline-flex items-center space-x-2 px-3 py-1 bg-[#00f2ff]/10 border border-[#00f2ff]/20 rounded-full">
+            <span class="w-2 h-2 rounded-full bg-[#00f2ff] animate-pulse"></span>
+            <span class="font-mono text-xs text-[#00f2ff] uppercase tracking-widest">WORKSHOP COMPLETED</span>
+          </div>
+          <h1 class="text-6xl md:text-8xl font-bold tracking-tight text-white leading-none">
+            The Future of Dev is <br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#00f2ff] to-[#9d50bb] glow-text">Collaborative</span>
+          </h1>
+          <p class="text-lg md:text-2xl font-mono text-[#00f2ff] tracking-wide mt-2">
+            // Humans + AI &gt; Humans Alone
+          </p>
+          <div class="flex items-center gap-4 mt-8">
+            <button onclick="goToSlide(0)" class="px-6 py-3 bg-white/5 border border-white/10 text-white rounded-lg hover:bg-white/10 active:scale-95 transition-all text-sm font-medium flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px]">replay</span> Start Over
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Slide Navigation docks (Fixed Overlay) -->
+  <nav class="fixed bottom-0 left-0 right-0 z-50 flex justify-between items-center px-8 py-6 pointer-events-none">
+    <!-- Previous Button -->
+    <button id="prevBtn" class="nav-btn pointer-events-auto">
+      <span class="material-symbols-outlined">arrow_back</span>
+    </button>
+    
+    <!-- Status & Dots indicators -->
+    <div class="flex flex-col items-center gap-2 pointer-events-auto">
+      <span id="slideNum" class="slide-counter">01 / 07</span>
+      <div class="indicators-panel" id="indicatorDots"></div>
+    </div>
+
+    <!-- Next Button -->
+    <button id="nextBtn" class="nav-btn pointer-events-auto">
+      <span class="material-symbols-outlined">arrow_forward</span>
+    </button>
+  </nav>
+
+  <!-- Progress Bar Overlay (Fixed Bottom edge) -->
+  <div class="fixed bottom-0 left-0 right-0 h-1 bg-white/5 z-50 pointer-events-none">
+    <div id="progressLine" class="h-full bg-gradient-to-r from-[#00f2ff] to-[#9d50bb] shadow-[0_0_10px_rgba(0,242,255,0.5)] transition-all duration-300" style="width: 14.28%;"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

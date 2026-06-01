@@ -1,0 +1,3530 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SlideNext - Presentation Studio</title>
+  <meta name="description" content="SlideNext is a modern presentation management and visual editing platform for organizing, editing, previewing, and managing HTML-based slide decks.">
+  <link rel="icon" href="/logo.png" type="image/png">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  
+  <!-- Tailwind for grid/layout styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Geist', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* SlideNext Brand Tokens */
+    :root {
+      --primary: #7028d0;
+      --primary-dark: #4820a8;
+      --secondary: #5050e8;
+      --accent: #6030d8;
+      --primary-rgb: 112, 40, 208;
+      /* Light mode tokens */
+      --color-bg-base: #fafafa;
+      --color-bg-surface: #ffffff;
+      --color-border: rgba(0, 0, 0, 0.08);
+      --color-text: #1f2937;
+      --color-primary: var(--primary);
+      --color-primary-rgb: var(--primary-rgb);
+      --color-secondary: var(--primary-dark);
+      --color-tertiary: var(--secondary);
+    }
+
+    html.dark, :root.dark {
+      /* Dark mode overrides */
+      --color-bg-base: #050505;
+      --color-bg-surface: #0a0a0a;
+      --color-border: rgba(255, 255, 255, 0.05);
+      --color-text: #e5e2e1;
+      --color-primary: var(--primary);
+      --color-primary-rgb: var(--primary-rgb);
+      --color-secondary: var(--secondary);
+      --color-tertiary: var(--accent);
+    }
+
+    body {
+      background-color: var(--color-bg-base);
+      color: var(--color-text);
+      font-family: 'Geist', sans-serif;
+      overflow-x: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .bg-grid-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 45px 45px;
+      background-position: center;
+      pointer-events: none;
+    }
+
+    .bg-ambient-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background: radial-gradient(circle at 50% 50%, rgba(112, 40, 208, 0.04), transparent 60%);
+      pointer-events: none;
+    }
+
+    .bg-glowing-orb {
+      position: fixed;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(112, 40, 208, 0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      z-index: 1;
+      pointer-events: none;
+      filter: blur(40px);
+      animation: rotateOrbit 25s linear infinite;
+    }
+
+    @keyframes rotateOrbit {
+      0% { transform: translate(-10%, -10%) rotate(0deg); }
+      50% { transform: translate(10%, 10%) rotate(180deg); }
+      100% { transform: translate(-10%, -10%) rotate(360deg); }
+    }
+
+    .glass-panel {
+      background: rgba(10, 10, 10, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(var(--color-primary-rgb), 0.15);
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      position: relative;
+    }
+
+    .glass-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.4), rgba(var(--color-primary-rgb), 0.05));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .glass-card {
+      background: rgba(10, 10, 10, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+      border-radius: 8px;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .glass-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(var(--color-primary-rgb), 0.4);
+      box-shadow: 0 15px 35px rgba(var(--color-primary-rgb), 0.1);
+    }
+
+    .glow-text {
+      text-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.3);
+    }
+
+    /* Fullscreen Modal View transitions */
+    .presentation-modal {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    .presentation-modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Category Tab Styles */
+    .category-tab {
+      background: rgba(10, 10, 10, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+      color: #bcc9c6;
+      padding: 8px 20px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+
+    .category-tab:hover {
+      border-color: rgba(var(--color-primary-rgb), 0.4);
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .category-tab.active {
+      background: rgba(var(--color-primary-rgb), 0.15);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+      box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.25);
+    }
+
+    /* Version dropdown custom scroll */
+    #versionsDropdown::-webkit-scrollbar {
+      width: 4px;
+    }
+    #versionsDropdown::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    #versionsDropdown::-webkit-scrollbar-thumb {
+      background: rgba(var(--color-primary-rgb), 0.35);
+      border-radius: 2px;
+    }
+
+    /* Light/Dark overrides using custom CSS variables and class selectors */
+    html:not(.dark) body {
+      background-color: var(--color-bg-base) !important;
+      color: var(--color-text) !important;
+    }
+    
+    html:not(.dark) .bg-grid-overlay {
+      background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px) !important;
+    }
+    
+    html:not(.dark) .bg-ambient-layer {
+      background: radial-gradient(circle at 50% 50%, rgba(112, 40, 208, 0.06), transparent 60%) !important;
+    }
+
+    html:not(.dark) .bg-glowing-orb {
+      background: radial-gradient(circle, rgba(112, 40, 208, 0.03) 0%, transparent 70%) !important;
+    }
+    
+    html:not(.dark) .glass-panel {
+      background: rgba(255, 255, 255, 0.75) !important;
+      border-color: rgba(112, 40, 208, 0.15) !important;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.04) !important;
+    }
+    
+    html:not(.dark) .glass-panel::before {
+      background: linear-gradient(135deg, rgba(112, 40, 208, 0.2), rgba(112, 40, 208, 0.02)) !important;
+    }
+    
+    html:not(.dark) .glass-card {
+      background: rgba(255, 255, 255, 0.7) !important;
+      border-color: rgba(0, 0, 0, 0.08) !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02) !important;
+    }
+    
+    html:not(.dark) .glass-card:hover {
+      border-color: #7028d0 !important;
+      box-shadow: 0 15px 35px rgba(112, 40, 208, 0.08) !important;
+      background: rgba(255, 255, 255, 0.95) !important;
+    }
+    
+    html:not(.dark) .text-white {
+      color: #1f2937 !important;
+    }
+    html:not(.dark) .text-zinc-300 {
+      color: #374151 !important;
+    }
+    html:not(.dark) .text-zinc-400 {
+      color: #4b5563 !important;
+    }
+    html:not(.dark) .text-zinc-500 {
+      color: #6b7280 !important;
+    }
+    html:not(.dark) .text-\[\#bcc9c6\] {
+      color: #4b5563 !important;
+    }
+    html:not(.dark) .text-\[\#bcc9c6\]\/80 {
+      color: rgba(75, 85, 99, 0.9) !important;
+    }
+    
+    html:not(.dark) header {
+      background-color: #ffffff !important;
+      border-color: rgba(0, 0, 0, 0.08) !important;
+    }
+    
+    html:not(.dark) aside {
+      background-color: #fcfcfc !important;
+      border-color: rgba(0, 0, 0, 0.08) !important;
+    }
+
+    html:not(.dark) .bg-\[\#070707\] {
+      background-color: #f9fafb !important;
+      border-color: rgba(0, 0, 0, 0.08) !important;
+    }
+    
+    html:not(.dark) main {
+      background-color: #f3f4f6 !important;
+    }
+    
+    html:not(.dark) #canvasStage {
+      background-color: #ebebeb !important;
+    }
+    
+    html:not(.dark) #canvasWrapper {
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    html:not(.dark) .bg-zinc-950 {
+      background-color: #ffffff !important;
+      border-color: rgba(0, 0, 0, 0.08) !important;
+    }
+    
+    html:not(.dark) .bg-zinc-900 {
+      background-color: #f3f4f6 !important;
+    }
+    
+    html:not(.dark) .bg-zinc-900\/50 {
+      background-color: rgba(243, 244, 246, 0.5) !important;
+    }
+    
+    html:not(.dark) .border-white\/5 {
+      border-color: rgba(0, 0, 0, 0.08) !important;
+    }
+    
+    html:not(.dark) .border-white\/10 {
+      border-color: rgba(0, 0, 0, 0.12) !important;
+    }
+    
+    html:not(.dark) .hover\:bg-white\/5:hover {
+      background-color: rgba(0, 0, 0, 0.05) !important;
+    }
+    
+    html:not(.dark) .hover\:text-white:hover {
+      color: #000000 !important;
+    }
+    
+    html:not(.dark) .category-tab {
+      background: rgba(255, 255, 255, 0.7) !important;
+      border-color: rgba(0, 0, 0, 0.08) !important;
+      color: #4b5563 !important;
+    }
+    html:not(.dark) .category-tab:hover {
+      border-color: rgba(112, 40, 208, 0.4) !important;
+      color: #111827 !important;
+    }
+    html:not(.dark) .category-tab.active {
+      background: rgba(112, 40, 208, 0.1) !important;
+      border-color: #7028d0 !important;
+      color: #7028d0 !important;
+      box-shadow: 0 0 20px rgba(112, 40, 208, 0.15) !important;
+    }
+    
+    html:not(.dark) select, html:not(.dark) textarea, html:not(.dark) input[type="text"], html:not(.dark) input[type="number"] {
+      background-color: #ffffff !important;
+      border-color: rgba(0, 0, 0, 0.15) !important;
+      color: #1f2937 !important;
+    }
+
+    html:not(.dark) input[type="range"] {
+      accent-color: #7028d0 !important;
+    }
+
+    html:not(.dark) .bg-grid-overlay {
+      background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px) !important;
+    }
+    
+    html:not(.dark) .bg-ambient-layer {
+      background: radial-gradient(circle at 50% 50%, rgba(112, 40, 208, 0.02), transparent 60%) !important;
+    }
+
+    html:not(.dark) #slideLayersList div {
+      background-color: #ffffff !important;
+      border-color: rgba(0, 0, 0, 0.08) !important;
+      color: #1f2937 !important;
+    }
+    html:not(.dark) #slideLayersList div:hover {
+      background-color: #f9fafb !important;
+    }
+    html:not(.dark) #slideLayersList div.border-\[\#7028d0\] {
+      background-color: rgba(112, 40, 208, 0.05) !important;
+      border-color: #7028d0 !important;
+      color: #7028d0 !important;
+    }
+  </style>
+</head>
+<body class="p-8 md:p-16 relative">
+
+  <!-- Background Overlays -->
+  <div class="bg-grid-overlay"></div>
+  <div class="bg-ambient-layer"></div>
+  <div class="bg-glowing-orb" style="top: 15%; left: 20%;"></div>
+  <div class="bg-glowing-orb" style="bottom: 10%; right: 10%; animation-delay: -5s;"></div>
+
+  <!-- Dashboard Top Right Toolbar -->
+  <div class="absolute top-6 right-6 z-30 flex items-center gap-3">
+    <button onclick="toggleGlobalTheme()" class="p-2.5 bg-zinc-900/60 hover:bg-zinc-800 border border-white/10 text-zinc-400 hover:text-white rounded-lg transition-all flex items-center justify-center" title="Toggle Light/Dark Theme">
+      <span class="material-symbols-outlined text-[20px]" id="themeIcon">light_mode</span>
+    </button>
+  </div>
+
+  <!-- Dashboard Container -->
+  <div class="max-w-6xl mx-auto z-10 relative">
+    
+    <!-- Title Section -->
+    <div class="flex flex-col items-center text-center space-y-4 mb-16">
+      <img src="/logo.png" alt="SlideNext Logo" class="h-16 w-auto object-contain mb-2 hover:scale-105 transition-transform" />
+      <div class="inline-flex items-center space-x-2 px-3 py-1 bg-[#7028d0]/10 border border-[#7028d0]/20 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#7028d0] animate-ping"></span>
+        <span class="font-mono text-xs text-[#7028d0] uppercase tracking-widest">SlideNext Dashboard</span>
+      </div>
+      <h1 class="text-4xl md:text-6xl font-bold tracking-tight text-white leading-tight">
+        SlideNext <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#7028d0] to-[#6030d8] glow-text">Studio</span>
+      </h1>
+      <p class="text-[#bcc9c6] text-sm md:text-base max-w-xl">
+        Organize, edit, preview, and manage HTML-based presentations with a premium visual studio workflow.
+      </p>
+    </div>
+
+    <!-- Category Tabs Container -->
+    <div id="categoryTabs" class="flex flex-wrap justify-center gap-3 mb-12 hidden">
+      <!-- Injected Dynamically -->
+    </div>
+
+    <!-- Loading Placeholder -->
+    <div id="loader" class="text-center py-12">
+      <span class="material-symbols-outlined text-[36px] text-[#7028d0] animate-spin">sync</span>
+      <p class="text-xs text-[#bcc9c6] font-mono mt-2 uppercase tracking-widest">Loading presentations list...</p>
+    </div>
+
+    <!-- Grid of presentations -->
+    <div id="presentationsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-8 hidden">
+      <!-- Generated dynamically in script -->
+    </div>
+
+  </div>
+
+  <!-- Fullscreen Presentation Modal Frame (Viewer Mode) -->
+  <div id="presentationModal" class="presentation-modal fixed inset-0 z-[150] bg-black flex flex-col opacity-0 pointer-events-none transition-opacity duration-300 hidden">
+    <!-- Close controller / floating dock -->
+    <div class="fixed top-6 left-6 z-[99999] flex items-center gap-3 transition-opacity duration-300 hover:opacity-100 opacity-80 pointer-events-auto bg-black/40 p-1.5 rounded-xl backdrop-blur-md border border-white/5">
+      <button onclick="closePresentation()" class="px-4 py-2.5 bg-black/80 hover:bg-zinc-900 border border-white/10 hover:border-white/20 text-white rounded-lg backdrop-blur-md shadow-2xl transition-all flex items-center gap-1.5 text-xs font-semibold">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span> Back to SlideNext
+      </button>
+      <button onclick="toggleIframeFullscreen()" class="px-4 py-2.5 bg-black/80 hover:bg-zinc-900 border border-white/10 hover:border-white/20 text-white rounded-lg backdrop-blur-md shadow-2xl transition-all flex items-center justify-center text-xs font-semibold">
+        <span class="material-symbols-outlined text-[16px]" id="fsIcon">fullscreen</span>
+      </button>
+    </div>
+
+    <!-- Presentation Viewport Frame -->
+    <iframe id="presentationFrame" src="" class="absolute inset-0 w-full h-full border-none z-10"></iframe>
+  </div>
+
+  <!-- Save Version Custom Modal -->
+  <div id="saveVersionModal" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl p-6 w-[400px] flex flex-col gap-4 transform scale-95 transition-transform duration-200" id="saveVersionModalContent">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[#7028d0] text-2xl">bookmarks</span>
+        <h3 class="text-base font-bold text-white">Save Version Checkpoint</h3>
+      </div>
+      <p class="text-xs text-zinc-400 leading-relaxed">
+        Save a named checkpoint of your presentation. You can view history and rollback to this version at any time from the Versions menu.
+      </p>
+      <div class="flex flex-col gap-1.5 mt-2">
+        <label for="versionCheckpointName" class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Version Name</label>
+        <input type="text" id="versionCheckpointName" placeholder="e.g. V1 Draft, Theme Update" onkeydown="if(event.key === 'Enter') submitSaveVersion()" class="w-full px-3.5 py-2.5 bg-zinc-900 border border-white/10 hover:border-white/20 focus:border-[#7028d0]/50 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all font-sans" />
+      </div>
+      <div class="flex justify-end gap-3 mt-4">
+        <button onclick="closeSaveVersionModal()" class="px-4 py-2 text-xs font-mono text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg transition-all">Cancel</button>
+        <button id="confirmSaveVersionBtn" onclick="submitSaveVersion()" class="px-4 py-2 text-xs font-bold text-black bg-gradient-to-r from-[#7028d0] to-[#6030d8] hover:from-[#5050e8] hover:to-[#6030d8] rounded-lg transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(112,40,208,0.2)]">Save Version</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rename Version Custom Modal -->
+  <div id="renameVersionModal" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl p-6 w-[400px] flex flex-col gap-4 transform scale-95 transition-transform duration-200" id="renameVersionModalContent">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[#7028d0] text-2xl">edit</span>
+        <h3 class="text-base font-bold text-white">Rename Version</h3>
+      </div>
+      <p class="text-xs text-zinc-400 leading-relaxed">
+        Change the label for this version checkpoint.
+      </p>
+      <div class="flex flex-col gap-1.5 mt-2">
+        <label for="newVersionNameInput" class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">New Version Name</label>
+        <input type="text" id="newVersionNameInput" placeholder="e.g. V1 Draft, Theme Update" onkeydown="if(event.key === 'Enter') submitRenameVersion()" class="w-full px-3.5 py-2.5 bg-zinc-900 border border-white/10 hover:border-white/20 focus:border-[#7028d0]/50 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all font-sans" />
+      </div>
+      <div class="flex justify-end gap-3 mt-4">
+        <button onclick="closeRenameVersionModal()" class="px-4 py-2 text-xs font-mono text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg transition-all">Cancel</button>
+        <button id="confirmRenameVersionBtn" onclick="submitRenameVersion()" class="px-4 py-2 text-xs font-bold text-black bg-gradient-to-r from-[#7028d0] to-[#6030d8] hover:from-[#5050e8] hover:to-[#6030d8] rounded-lg transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(112,40,208,0.2)]">Rename</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Studio Editor Workspace Overlay (Keynote/Canva Style) -->
+  <div id="studioEditor" class="fixed inset-0 z-50 bg-[#050505] flex flex-col opacity-0 pointer-events-none transition-opacity duration-300 hidden">
+    
+    <!-- Top toolbar header -->
+    <header class="h-16 border-b border-white/5 bg-[#0a0a0a] flex items-center justify-between px-6 z-20">
+      <!-- Left: Navigation / Title -->
+      <div class="flex items-center gap-4">
+        <button onclick="closeStudioEditor()" class="p-2 hover:bg-white/5 text-zinc-400 hover:text-white rounded-lg transition-all flex items-center gap-1 text-xs font-medium border border-white/5">
+          <span class="material-symbols-outlined text-[16px]">arrow_back</span> Dashboard
+        </button>
+        <div class="h-6 w-[1px] bg-white/10"></div>
+        <img src="/logo.png" alt="SlideNext Logo" class="h-8 w-auto object-contain select-none" />
+        <div class="flex flex-col">
+          <span class="text-xs font-mono text-[#7028d0] uppercase tracking-wider font-semibold" id="studioCategoryLabel">General</span>
+          <span class="text-sm font-bold text-white leading-tight" id="studioTitleLabel">SlideNext Studio</span>
+        </div>
+      </div>
+
+      <!-- Center: Element Insert Tools -->
+      <div class="flex items-center gap-1.5 bg-zinc-900/50 border border-white/5 rounded-lg p-1.5 backdrop-blur-md">
+        <button onclick="insertElement('h2')" class="px-2.5 py-1.5 hover:bg-white/5 text-zinc-300 hover:text-white rounded flex items-center gap-1 text-[11px] font-mono transition-all" title="Add Heading (H2)">
+          <span class="material-symbols-outlined text-[15px]">title</span>
+          <span>Heading</span>
+        </button>
+        <button onclick="insertElement('p')" class="px-2.5 py-1.5 hover:bg-white/5 text-zinc-300 hover:text-white rounded flex items-center gap-1 text-[11px] font-mono transition-all" title="Add Paragraph (P)">
+          <span class="material-symbols-outlined text-[15px]">notes</span>
+          <span>Text</span>
+        </button>
+        <button onclick="insertElement('img')" class="px-2.5 py-1.5 hover:bg-white/5 text-zinc-300 hover:text-white rounded flex items-center gap-1 text-[11px] font-mono transition-all" title="Add Image Placeholder">
+          <span class="material-symbols-outlined text-[15px]">image</span>
+          <span>Image</span>
+        </button>
+        <button onclick="insertElement('shape')" class="px-2.5 py-1.5 hover:bg-white/5 text-zinc-300 hover:text-white rounded flex items-center gap-1 text-[11px] font-mono transition-all" title="Add Decorative Box">
+          <span class="material-symbols-outlined text-[15px]">layers</span>
+          <span>Shape</span>
+        </button>
+      </div>
+
+      <!-- Right: Operations (Save, Undo, Redo, Versions, Preview) -->
+      <div class="flex items-center gap-3">
+        <!-- Undo/Redo -->
+        <div class="flex items-center gap-1 bg-zinc-900/50 border border-white/5 rounded-lg p-1">
+          <button id="studioUndoBtn" onclick="editorUndo()" class="p-1.5 hover:bg-white/5 text-zinc-400 hover:text-white rounded disabled:opacity-30 disabled:pointer-events-none transition-all" title="Undo (Ctrl+Z)">
+            <span class="material-symbols-outlined text-[18px]">undo</span>
+          </button>
+          <button id="studioRedoBtn" onclick="editorRedo()" class="p-1.5 hover:bg-white/5 text-zinc-400 hover:text-white rounded disabled:opacity-30 disabled:pointer-events-none transition-all" title="Redo (Ctrl+Y)">
+            <span class="material-symbols-outlined text-[18px]">redo</span>
+          </button>
+        </div>
+
+        <!-- Versions Dropdown trigger -->
+        <div class="relative">
+          <button id="studioVersionBtn" onclick="toggleVersionDropdown()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all">
+            <span class="material-symbols-outlined text-[16px]">history</span>
+            <span>Versions</span>
+            <span class="material-symbols-outlined text-[12px]">keyboard_arrow_down</span>
+          </button>
+          <!-- Versions dropdown menu list -->
+          <div id="versionsDropdown" class="absolute right-0 top-full mt-2 w-64 bg-zinc-950 border border-white/10 rounded-lg shadow-2xl p-2 hidden flex flex-col gap-1 max-h-60 overflow-y-auto z-50">
+            <div class="text-[10px] text-zinc-500 font-mono px-2 py-1 uppercase tracking-wider border-b border-white/5">Saved Backups</div>
+            <div id="versionsList" class="flex flex-col gap-1 py-1">
+              <span class="text-zinc-500 text-center py-2 text-[11px]">No versions saved yet</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Present slideshow delivery directly -->
+        <button onclick="launchPreview()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all">
+          <span class="material-symbols-outlined text-[16px]">play_arrow</span>
+          <span>Present</span>
+        </button>
+
+        <!-- AutoSave Status Indicator -->
+        <div class="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mr-2" id="autoSaveStatus">Saved to disk</div>
+
+        <!-- Editor Theme Toggle -->
+        <button onclick="toggleGlobalTheme()" class="p-2 bg-zinc-900/50 hover:bg-zinc-800/80 border border-white/5 text-zinc-400 hover:text-white rounded-lg flex items-center justify-center transition-all" title="Toggle Light/Dark Theme">
+          <span class="material-symbols-outlined text-[16px]" id="themeIconEditor">light_mode</span>
+        </button>
+
+        <!-- Save Version Checkpoint -->
+        <button id="studioSaveBtn" onclick="openSaveVersionModal()" class="px-4 py-2 bg-gradient-to-r from-[#7028d0] to-[#6030d8] hover:from-[#5050e8] hover:to-[#6030d8] text-black font-bold rounded-lg flex items-center gap-1.5 text-xs transition-all shadow-[0_0_15px_rgba(112,40,208,0.2)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:pointer-events-none">
+          <span class="material-symbols-outlined text-[16px] font-bold">bookmarks</span>
+          <span>Save Version</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Workstation Editor Panel Body -->
+    <div class="flex-1 flex overflow-hidden relative">
+      
+      <!-- 1. LEFT SIDEBAR: Slides Thumbnail organizer -->
+      <aside class="w-64 border-r border-white/5 bg-[#0a0a0a] flex flex-col z-10">
+        <div class="p-4 border-b border-zinc-200 dark:border-white/5 flex justify-between items-center bg-[#f9fafb] dark:bg-[#070707]">
+          <span class="text-[10px] font-mono text-zinc-400 uppercase tracking-widest font-bold">Slides Organizer</span>
+          <span class="px-2 py-0.5 bg-[#7028d0]/10 border border-[#7028d0]/20 rounded text-[9px] font-mono text-[#7028d0]" id="slideCountLabel">0 / 0</span>
+        </div>
+        
+        <!-- Thumbnail Scroll area -->
+        <div id="thumbnailsList" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+          <!-- Generated dynamically -->
+        </div>
+
+        <!-- Add Slide button at bottom -->
+        <div class="p-4 border-t border-zinc-200 dark:border-white/5 bg-[#f9fafb] dark:bg-[#070707]">
+          <button onclick="addSlideNode()" class="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-[#7028d0]/30 text-white rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold transition-all">
+            <span class="material-symbols-outlined text-[16px] text-[#7028d0]">add_circle</span> Add New Slide
+          </button>
+        </div>
+      </aside>
+
+      <!-- 2. CENTER STAGE: Canvas area centering the active slide viewport -->
+      <main class="flex-1 bg-[#050505] flex flex-col overflow-hidden relative">
+        <div class="h-10 border-b border-zinc-200 dark:border-white/5 bg-[#f9fafb] dark:bg-[#070707] flex items-center justify-between px-6 z-15 flex-shrink-0">
+          <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Canvas Workspace</span>
+          <div class="flex items-center gap-2">
+            <button onclick="zoomOut()" class="p-1 hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all flex items-center justify-center" title="Zoom Out">
+              <span class="material-symbols-outlined text-[16px]">zoom_out</span>
+            </button>
+            <select id="zoomSelect" onchange="zoomSelectChange(this.value)" class="bg-zinc-900 border border-white/5 rounded px-2 py-0.5 text-xs text-zinc-300 font-mono focus:outline-none">
+              <option value="fit">Fit Screen</option>
+              <option value="0.25">25%</option>
+              <option value="0.3">30%</option>
+              <option value="0.35">35%</option>
+              <option value="0.4">40%</option>
+              <option value="0.45">45%</option>
+              <option value="0.5">50%</option>
+              <option value="0.55">55%</option>
+              <option value="0.6">60%</option>
+              <option value="0.65">65%</option>
+              <option value="0.7">70%</option>
+              <option value="0.75">75%</option>
+              <option value="0.8">80%</option>
+              <option value="0.85">85%</option>
+              <option value="0.9">90%</option>
+              <option value="0.95">95%</option>
+              <option value="1">100%</option>
+              <option value="1.05">105%</option>
+              <option value="1.1">110%</option>
+              <option value="1.15">115%</option>
+              <option value="1.2">120%</option>
+              <option value="1.25">125%</option>
+              <option value="1.3">130%</option>
+              <option value="1.35">135%</option>
+              <option value="1.4">140%</option>
+              <option value="1.45">145%</option>
+              <option value="1.5">150%</option>
+            </select>
+            <button onclick="zoomIn()" class="p-1 hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all flex items-center justify-center" title="Zoom In">
+              <span class="material-symbols-outlined text-[16px]">zoom_in</span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Inner canvas workspace stage that allows scrollbars when zoomed in -->
+        <div class="flex-1 overflow-auto p-12 flex bg-[#030303]" id="canvasStage">
+          <!-- Fixed 1920x1080 Aspect-Ratio container wrapper scaled dynamically -->
+          <div id="canvasScrollContainer" style="width: 1920px; height: 1080px; position: relative; transition: all 0.2s ease; flex-shrink: 0; margin: auto;">
+            <div id="canvasWrapper" style="width: 1920px; height: 1080px; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); transform-origin: center center; transition: transform 0.2s ease;" class="border border-[#7028d0]/25 rounded-xl shadow-[0_30px_70px_rgba(0,0,0,0.8)] bg-black overflow-hidden">
+              <iframe id="studioFrame" src="" style="width: 1920px; height: 1080px; pointer-events: auto;" class="absolute inset-0 border-none z-10"></iframe>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- 3. RIGHT SIDEBAR: Style Properties Contextual Inspector -->
+      <aside class="w-80 border-l border-white/5 bg-[#0a0a0a] flex flex-col z-10 overflow-y-auto p-5">
+        <!-- Sidebar header -->
+        <div class="border-b border-white/5 pb-4 mb-5">
+          <span class="text-[10px] font-mono text-zinc-400 uppercase tracking-widest font-bold block mb-1">Context Inspector</span>
+          <h3 class="text-sm font-bold text-white flex items-center gap-1.5" id="inspectorTargetLabel">
+            <span class="material-symbols-outlined text-[16px] text-[#7028d0]">settings_suggest</span>
+            No selection active
+          </h3>
+        </div>
+
+        <!-- Global/General properties panel (Slide settings) - visible when no element is selected -->
+        <div id="slideInspectorPanel" class="flex flex-col gap-6">
+          <!-- Slide background (wallpaper) -->
+          <div class="flex flex-col gap-4">
+            <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Slide Wallpaper</h4>
+            
+            <!-- background picker tabs -->
+            <div class="grid grid-cols-3 gap-1 bg-zinc-900 p-1 rounded-lg border border-white/5">
+              <button onclick="setWallpaperTab('solid')" id="wpTabSolid" class="py-1 text-center text-[10px] font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all">Solid</button>
+              <button onclick="setWallpaperTab('presets')" id="wpTabPresets" class="py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all">Themes</button>
+              <button onclick="setWallpaperTab('custom')" id="wpTabCustom" class="py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all">Custom</button>
+            </div>
+
+            <!-- Solid Background Panel -->
+            <div id="wpPanelSolid" class="flex flex-col gap-3">
+              <div id="wallpaperSolidsList" class="grid grid-cols-5 gap-2">
+                <!-- Preset color swatches dynamically injected -->
+              </div>
+              <div class="flex items-center justify-between p-2 bg-zinc-900 border border-white/5 rounded-lg">
+                <span class="text-xs font-mono text-zinc-400">Solid Picker:</span>
+                <input type="color" id="wallpaperCustomColor" oninput="applyPresetWallpaper(this.value, true)" onchange="triggerAutoVersion('Auto: Changed Background')" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
+              </div>
+            </div>
+
+            <!-- Gradient Presets Panel -->
+            <div id="wpPanelPresets" class="flex flex-col gap-3 hidden">
+              <div id="wallpaperGradientsList" class="grid grid-cols-5 gap-2">
+                <!-- Preset gradient swatches dynamically injected -->
+              </div>
+            </div>
+
+            <!-- Custom Gradient Creator Panel -->
+            <div id="wpPanelCustom" class="flex flex-col gap-4 hidden bg-zinc-900/50 p-3 rounded-lg border border-white/5">
+              <div class="flex flex-col gap-2">
+                <label class="text-[10px] font-mono text-zinc-500 uppercase">Gradient Type</label>
+                <div class="grid grid-cols-2 gap-2 bg-zinc-950 p-1 rounded border border-white/5">
+                  <button id="cgLinearBtn" onclick="setCustomGradientType('linear')" class="py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all">Linear</button>
+                  <button id="cgRadialBtn" onclick="setCustomGradientType('radial')" class="py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all">Radial</button>
+                </div>
+              </div>
+
+              <!-- Color Stop 1 -->
+              <div class="flex justify-between items-center bg-zinc-950/60 p-2 rounded border border-white/5">
+                <span class="text-xs font-mono text-zinc-400">Color 1:</span>
+                <input type="color" id="cgColor1" value="#5050e8" oninput="applyCustomGradient()" onchange="triggerAutoVersion('Auto: Changed Background')" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
+              </div>
+
+              <!-- Color Stop 2 -->
+              <div class="flex justify-between items-center bg-zinc-950/60 p-2 rounded border border-white/5">
+                <span class="text-xs font-mono text-zinc-400">Color 2:</span>
+                <input type="color" id="cgColor2" value="#050505" oninput="applyCustomGradient()" onchange="triggerAutoVersion('Auto: Changed Background')" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
+              </div>
+
+              <!-- Angle Slider (Linear only) -->
+              <div class="flex flex-col gap-1.5" id="cgAngleGroup">
+                <div class="flex justify-between text-xs font-mono text-zinc-400">
+                  <span>Linear Angle:</span>
+                  <span id="cgAngleVal" class="text-white font-bold">135°</span>
+                </div>
+                <input type="range" id="cgAngle" min="0" max="360" value="135" oninput="document.getElementById('cgAngleVal').textContent = this.value + '°'; applyCustomGradient();" onchange="triggerAutoVersion('Auto: Changed Background')" class="w-full accent-[#7028d0] cursor-pointer" />
+              </div>
+            </div>
+
+            <!-- Apply to All button -->
+            <button onclick="applyWallpaperToAllSlides()" class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-[#7028d0] hover:text-white font-mono text-[9px] uppercase tracking-wider rounded flex items-center justify-center gap-1 transition-all">
+              <span class="material-symbols-outlined text-[14px]">done_all</span> Apply active paint to all slides
+            </button>
+          </div>
+
+          <div class="h-[1px] bg-white/5"></div>
+
+          <!-- Add Shape tools -->
+          <div class="flex flex-col gap-3">
+            <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Add Elements</h4>
+            <div class="grid grid-cols-2 gap-3">
+              <button onclick="insertElement('h2')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all">
+                <span class="material-symbols-outlined text-[20px] text-[#7028d0]">title</span>
+                <span>Large Title</span>
+              </button>
+              <button onclick="insertElement('p')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all">
+                <span class="material-symbols-outlined text-[20px] text-[#7028d0]">notes</span>
+                <span>Paragraph</span>
+              </button>
+              <button onclick="insertElement('img')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all">
+                <span class="material-symbols-outlined text-[20px] text-[#7028d0]">image</span>
+                <span>Image Frame</span>
+              </button>
+              <button onclick="insertElement('shape')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all">
+                <span class="material-symbols-outlined text-[20px] text-[#7028d0]">layers</span>
+                <span>Color Shape</span>
+              </button>
+              <button onclick="insertElement('table')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all">
+                <span class="material-symbols-outlined text-[20px] text-[#7028d0]">grid_on</span>
+                <span>Data Table</span>
+              </button>
+              <button onclick="insertElement('code')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all">
+                <span class="material-symbols-outlined text-[20px] text-[#7028d0]">terminal</span>
+                <span>Code Block</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Element properties panel - visible when an element is focused -->
+        <div id="elementInspectorPanel" class="flex flex-col gap-6 hidden">
+          
+          <!-- Text content editor -->
+          <div class="flex flex-col gap-2" id="inspectorTextContentGroup">
+            <label class="text-[10px] font-mono text-zinc-500 uppercase">Text Copy Content</label>
+            <textarea id="elTextContent" oninput="applySelectedElementStyle('text', this.value)" onchange="triggerAutoVersion('Auto: Edited Text')" rows="3" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all resize-none"></textarea>
+          </div>
+
+          <!-- Image Source editor (Only displays for images) -->
+          <div class="flex flex-col gap-2 hidden" id="inspectorImageGroup">
+            <label class="text-[10px] font-mono text-zinc-500 uppercase">Image Asset URL</label>
+            <input type="text" id="elImageSrc" oninput="applySelectedElementStyle('src', this.value)" onchange="triggerAutoVersion('Auto: Changed Image Source')" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-mono text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
+          </div>
+
+          <!-- Font Typography size & font -->
+          <div class="flex flex-col gap-4" id="inspectorTypographyGroup">
+            <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Typography Styling</h4>
+
+            <!-- Size Slider -->
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between items-center text-xs font-mono text-zinc-400">
+                <span>Font Size:</span>
+                <span class="text-white font-bold" id="fontSizeVal">16px</span>
+              </div>
+              <input type="range" id="elFontSize" min="8" max="96" value="16" oninput="applySelectedElementStyle('size', this.value)" onchange="triggerAutoVersion('Auto: Changed Font Size')" class="w-full accent-[#7028d0] cursor-pointer" />
+            </div>
+
+            <!-- Font Family -->
+            <div class="flex flex-col gap-2">
+              <label class="text-[10px] font-mono text-zinc-500 uppercase">Font Family</label>
+              <select id="elFontFamily" onchange="applySelectedElementStyle('family', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
+                <option value="'Geist', sans-serif">Geist Sans</option>
+                <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+                <option value="system-ui, sans-serif">System Sans</option>
+                <option value="Georgia, serif">Georgia Serif</option>
+              </select>
+            </div>
+
+            <!-- Font Weight -->
+            <div class="flex flex-col gap-2">
+              <label class="text-[10px] font-mono text-zinc-500 uppercase">Weight</label>
+              <select id="elFontWeight" onchange="applySelectedElementStyle('weight', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
+                <option value="300">Light</option>
+                <option value="400">Regular</option>
+                <option value="500">Medium</option>
+                <option value="600">SemiBold</option>
+                <option value="700">Bold</option>
+              </select>
+            </div>
+
+            <!-- Alignment -->
+            <div class="flex flex-col gap-2">
+              <label class="text-[10px] font-mono text-zinc-500 uppercase">Alignment</label>
+              <div class="grid grid-cols-4 gap-1.5 bg-zinc-900 p-1 rounded-lg border border-white/5">
+                <button onclick="applySelectedElementStyle('align', 'left')" id="alignLeftBtn" class="py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all">
+                  <span class="material-symbols-outlined text-[16px]">format_align_left</span>
+                </button>
+                <button onclick="applySelectedElementStyle('align', 'center')" id="alignCenterBtn" class="py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all">
+                  <span class="material-symbols-outlined text-[16px]">format_align_center</span>
+                </button>
+                <button onclick="applySelectedElementStyle('align', 'right')" id="alignRightBtn" class="py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all">
+                  <span class="material-symbols-outlined text-[16px]">format_align_right</span>
+                </button>
+                <button onclick="applySelectedElementStyle('align', 'justify')" id="alignJustifyBtn" class="py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all">
+                  <span class="material-symbols-outlined text-[16px]">format_align_justify</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Custom text color -->
+            <div class="flex items-center justify-between p-2.5 bg-zinc-900 border border-white/5 rounded-lg">
+              <span class="text-xs font-mono text-zinc-400">Text Paint:</span>
+              <input type="color" id="elTextColor" oninput="applySelectedElementStyle('color', this.value)" onchange="triggerAutoVersion('Auto: Changed Text Color')" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between items-center text-xs font-mono text-zinc-400">
+                <span>Opacity:</span>
+                <span class="text-white font-bold" id="opacityVal">100%</span>
+              </div>
+              <input type="range" id="elOpacity" min="10" max="100" value="100" oninput="applySelectedElementStyle('opacity', this.value)" onchange="triggerAutoVersion('Auto: Changed Opacity')" class="w-full accent-[#7028d0] cursor-pointer" />
+            </div>
+          </div>
+
+          <!-- Borders & Radius editor (Displays for images, shapes) -->
+          <div class="flex flex-col gap-4 hidden" id="inspectorBorderGroup">
+            <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Borders & Corners</h4>
+            
+            <!-- Border Style -->
+            <div class="flex flex-col gap-2">
+              <label class="text-[10px] font-mono text-zinc-500 uppercase">Border Style</label>
+              <select id="elBorderStyle" onchange="applySelectedElementStyle('borderStyle', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
+                <option value="none">None</option>
+                <option value="solid">Solid</option>
+                <option value="dashed">Dashed</option>
+                <option value="dotted">Dotted</option>
+                <option value="double">Double</option>
+              </select>
+            </div>
+
+            <!-- Border Width -->
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between items-center text-xs font-mono text-zinc-400">
+                <span>Border Width:</span>
+                <span class="text-white font-bold" id="borderWidthVal">0px</span>
+              </div>
+              <input type="range" id="elBorderWidth" min="0" max="20" value="0" oninput="applySelectedElementStyle('borderWidth', this.value)" onchange="triggerAutoVersion('Auto: Changed Border Width')" class="w-full accent-[#7028d0] cursor-pointer" />
+            </div>
+
+            <!-- Border Radius -->
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between items-center text-xs font-mono text-zinc-400">
+                <span>Corner Radius:</span>
+                <span class="text-white font-bold" id="borderRadiusVal">0px</span>
+              </div>
+              <input type="range" id="elBorderRadius" min="0" max="100" value="0" oninput="applySelectedElementStyle('borderRadius', this.value)" onchange="triggerAutoVersion('Auto: Changed Corner Radius')" class="w-full accent-[#7028d0] cursor-pointer" />
+            </div>
+
+            <!-- Border Color -->
+            <div class="flex items-center justify-between p-2.5 bg-zinc-900 border border-white/5 rounded-lg">
+              <span class="text-xs font-mono text-zinc-400">Border Color:</span>
+              <input type="color" id="elBorderColor" oninput="applySelectedElementStyle('borderColor', this.value)" onchange="triggerAutoVersion('Auto: Changed Border Color')" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
+            </div>
+          </div>
+
+          <!-- Layer Arrangement (Z-Index) -->
+          <div class="flex flex-col gap-3">
+            <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Arrange Layers</h4>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="arrangeElementLayer('front')" class="py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white rounded text-[10px] font-mono flex items-center justify-center gap-1 transition-all" title="Bring to Front">
+                <span class="material-symbols-outlined text-[14px] text-[#7028d0]">flip_to_front</span> Front
+              </button>
+              <button onclick="arrangeElementLayer('back')" class="py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white rounded text-[10px] font-mono flex items-center justify-center gap-1 transition-all" title="Send to Back">
+                <span class="material-symbols-outlined text-[14px] text-[#7028d0]">flip_to_back</span> Back
+              </button>
+              <button onclick="arrangeElementLayer('forward')" class="py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white rounded text-[10px] font-mono flex items-center justify-center gap-1 transition-all" title="Bring Forward">
+                <span class="material-symbols-outlined text-[14px]">arrow_upward</span> Forward
+              </button>
+              <button onclick="arrangeElementLayer('backward')" class="py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white rounded text-[10px] font-mono flex items-center justify-center gap-1 transition-all" title="Send Backward">
+                <span class="material-symbols-outlined text-[14px]">arrow_downward</span> Backward
+              </button>
+            </div>
+            <div class="flex items-center justify-between p-2 bg-zinc-900 border border-white/5 rounded-lg text-xs font-mono">
+              <span class="text-zinc-400">z-index:</span>
+              <input type="number" id="elZIndex" onchange="applySelectedElementStyle('zIndex', this.value)" class="w-16 bg-zinc-950 border border-white/10 text-white rounded text-center py-0.5 focus:outline-none" />
+            </div>
+          </div>
+
+          <div class="h-[1px] bg-white/5"></div>
+
+          <!-- Danger actions: Remove element -->
+          <div class="flex flex-col gap-2">
+            <button onclick="removeSelectedElement()" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all">
+              <span class="material-symbols-outlined text-[16px]">delete</span>
+              Delete Selected
+            </button>
+            <button onclick="deselectElement()" class="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-400 text-xs font-mono rounded-lg flex items-center justify-center gap-1.5 transition-all">
+              Clear Selection
+            </button>
+          </div>
+        </div>
+
+        <!-- Persistent Slide Layers list at the bottom -->
+        <div class="h-[1px] bg-white/5 my-5 flex-shrink-0"></div>
+        <div class="flex flex-col gap-3 flex-shrink-0">
+          <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider flex items-center justify-between">
+            <span>Slide Elements</span>
+            <span class="text-[9px] text-zinc-500 font-mono lowercase">(shift+click for multi-select)</span>
+          </h4>
+          <div id="slideLayersList" class="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1">
+            <p class="text-[10px] text-zinc-500 font-mono text-center py-2">No elements found</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>  <!-- Logic scripts -->
+  <script>
+    // Global Editor State
+    let currentPresentationUrl = '';
+    let currentTitle = '';
+    let currentCategory = '';
+    let currentSlideIndex = 0;
+    let selectedElement = null;
+    let selectedElements = [];
+    let undoStack = [];
+    let redoStack = [];
+    let wallpaperTab = 'solid';
+    let activeCategory = 'all';
+    let isDraggingElement = false;
+    let zoomFactor = 1.0;
+    let customGradientType = 'linear';
+    let renamingFilename = '';
+    const SNAP_THRESHOLD_PX = 5;
+    const MIN_ELEMENT_SIZE_PX = 24;
+    const CANVAS_GUIDE_MARGIN_PX = 64;
+    const EDITOR_SELECTABLE_SELECTOR = "h1, h2, h3, h4, h5, h6, p, span, li, img, pre, code, .editor-shape, table, [style*='position: absolute']";
+    const RESIZE_HANDLE_DIRECTIONS = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
+
+    // Slide Wallpapers Presets Data
+    const wallpaperPresetsData = {
+      solid: [
+        { name: 'Obsidian Black', value: '#050505' },
+        { name: 'Slate Grey', value: '#121212' },
+        { name: 'Deep Carbon', value: '#1e1e1e' },
+        { name: 'Dark Teal', value: '#0d2b28' },
+        { name: 'Navy Blue', value: '#0a1128' },
+        { name: 'Plum Purple', value: '#1b0a21' },
+        { name: 'Steel Blue', value: '#1e293b' },
+        { name: 'Crimson Red', value: '#270c10' },
+        { name: 'Pure White', value: '#ffffff' },
+        { name: 'Light Alabaster', value: '#fafafa' },
+        { name: 'Light Sand', value: '#f4f4f5' },
+        { name: 'Soft Mint', value: '#f0fdf4' }
+      ],
+      gradient: [
+        { name: 'Neon Teal', value: 'radial-gradient(circle, rgba(112,40,208,0.25) 0%, #050505 85%)' },
+        { name: 'Cyber Violet', value: 'radial-gradient(circle, rgba(139,92,246,0.25) 0%, #050505 85%)' },
+        { name: 'Sunset Aura', value: 'radial-gradient(circle, rgba(225,29,72,0.2) 0%, #050505 85%)' },
+        { name: 'Deep Sea', value: 'linear-gradient(135deg, #0a1128 0%, #000000 100%)' },
+        { name: 'Electric Indigo', value: 'linear-gradient(135deg, #311054 0%, #080210 100%)' },
+        { name: 'Dark Rose', value: 'linear-gradient(135deg, #440a1d 0%, #050106 100%)' },
+        { name: 'Warm Amber', value: 'radial-gradient(circle, rgba(217,119,6,0.15) 0%, #050505 85%)' },
+        { name: 'Vapor Wave', value: 'linear-gradient(135deg, #0d383b 0%, #2f083a 100%)' },
+        { name: 'Obsidian Slate', value: 'linear-gradient(135deg, #0f172a 0%, #020617 100%)' },
+        { name: 'Midnight Aurora', value: 'linear-gradient(135deg, #0b0f19 0%, #111827 50%, #050505 100%)' },
+        { name: 'Charcoal Minimal', value: 'linear-gradient(135deg, #18181b 0%, #09090b 100%)' },
+        { name: 'Clean Light Grey', value: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)' },
+        { name: 'Soft Light Blue', value: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)' },
+        { name: 'Soft Mint Frost', value: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' },
+        { name: 'Warm Sunset Aura', value: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)' }
+      ]
+    };
+
+    // Load theme setting immediately to prevent flash
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
+    // Initialize Dashboard
+    document.addEventListener('DOMContentLoaded', () => {
+      loadPresentations();
+      renderWallpaperPresets();
+      
+      // Update theme toggle icons
+      const themeIcon = document.getElementById('themeIcon');
+      const themeIconEditor = document.getElementById('themeIconEditor');
+      if (themeIcon) themeIcon.textContent = savedTheme === 'dark' ? 'light_mode' : 'dark_mode';
+      if (themeIconEditor) themeIconEditor.textContent = savedTheme === 'dark' ? 'light_mode' : 'dark_mode';
+      
+      // Bind shortcuts globally
+      document.addEventListener('keydown', (e) => {
+        const editor = document.getElementById('studioEditor');
+        if (editor.classList.contains('active') || editor.style.opacity === '1') {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+            e.preventDefault();
+            editorUndo();
+          }
+          if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+            e.preventDefault();
+            editorRedo();
+          }
+        }
+      });
+
+      // Bind window resize for FIT zoom scaling
+      window.addEventListener('resize', () => {
+        if (document.getElementById('zoomSelect') && document.getElementById('zoomSelect').value === 'fit') {
+          applyZoom('fit');
+        }
+      });
+    });
+
+    // Theme Toggle Functionality
+    function toggleGlobalTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      const mode = isDark ? 'dark' : 'light';
+      localStorage.setItem('theme', mode);
+      
+      const themeIcon = document.getElementById('themeIcon');
+      const themeIconEditor = document.getElementById('themeIconEditor');
+      
+      const iconText = isDark ? 'light_mode' : 'dark_mode';
+      if (themeIcon) themeIcon.textContent = iconText;
+      if (themeIconEditor) themeIconEditor.textContent = iconText;
+
+      // Sync active theme to presentation slide iframe
+      syncIframeTheme();
+    }
+
+    function syncIframeTheme() {
+      const iframe = document.getElementById('studioFrame');
+      if (!iframe) return;
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!iframeDoc || !iframeDoc.documentElement) return;
+      
+      const isDark = document.documentElement.classList.contains('dark');
+      
+      if (isDark) {
+        iframeDoc.documentElement.classList.add('dark');
+      } else {
+        iframeDoc.documentElement.classList.remove('dark');
+      }
+      
+      // Inject/update dynamic theme overrides
+      const styleId = 'editor-theme-override-tag';
+      let styleEl = iframeDoc.getElementById(styleId);
+      if (!styleEl) {
+        styleEl = iframeDoc.createElement('style');
+        styleEl.id = styleId;
+        iframeDoc.head.appendChild(styleEl);
+      }
+      
+      if (!isDark) {
+        styleEl.textContent = `
+          :root, html {
+            --color-bg-base: #fafafa !important;
+            --color-bg-surface: #ffffff !important;
+            --color-bg-surface-glass: rgba(255, 255, 255, 0.75) !important;
+            --color-primary: #7028d0 !important;
+            --color-primary-rgb: 112, 40, 208 !important;
+            --color-secondary: #5050e8 !important;
+            --color-tertiary: #6030d8 !important;
+            --color-text-primary: #1f2937 !important;
+            --color-text-muted: #4b5563 !important;
+          }
+          body {
+            background-color: #fafafa !important;
+            color: #1f2937 !important;
+          }
+          .glass-panel, .glass-card, .code-block, .git-graph {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            border-color: rgba(0, 0, 0, 0.08) !important;
+            color: #1f2937 !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important;
+          }
+          .glass-panel::before {
+            background: linear-gradient(135deg, rgba(112, 40, 208, 0.2), rgba(112, 40, 208, 0.02)) !important;
+          }
+          h1, h2, h3, h4, h5, h6, .text-white, .text-2xl, .text-3xl, .text-4xl, .text-5xl, .text-6xl, .text-7xl {
+            color: #1f2937 !important;
+          }
+          p, span, li, .text-\[\#bcc9c6\], .text-\[\#bcc9c6\]\/80 {
+            color: #4b5563 !important;
+          }
+          #particlesCanvas, .canvas-particles {
+            opacity: 0.25 !important;
+          }
+          .bg-animated-glow, .bg-animated-glow-ambient, .bg-animated-glow-ambient-layer {
+            opacity: 0.15 !important;
+          }
+          .bg-grid-overlay {
+            background-image: 
+              linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px) !important;
+          }
+          .code-keyword { color: #d73a49 !important; }
+          .code-command { color: #0550ae !important; }
+          .code-arg { color: #0550ae !important; }
+          .code-comment { color: #6a737d !important; }
+        `;
+      } else {
+        styleEl.textContent = '';
+      }
+    }
+
+    // 1. Fetch Presentations from Backend
+    async function loadPresentations() {
+      try {
+        const response = await fetch('/api/presentations');
+        const data = await response.json();
+        
+        document.getElementById('loader').classList.add('hidden');
+        document.getElementById('categoryTabs').classList.remove('hidden');
+        document.getElementById('presentationsGrid').classList.remove('hidden');
+        
+        renderCategories(data);
+        renderGrid(data);
+      } catch (err) {
+        console.error('Error fetching presentations:', err);
+        document.getElementById('loader').innerHTML = `
+          <span class="material-symbols-outlined text-[36px] text-rose-500">error</span>
+          <p class="text-xs text-rose-400 font-mono mt-2 uppercase tracking-widest">Failed to load SlideNext workspace</p>
+        `;
+      }
+    }
+
+    // Render category tab filters
+    function renderCategories(data) {
+      const container = document.getElementById('categoryTabs');
+      
+      // Get unique category names
+      const categories = ['all', ...data.map(d => d.category)];
+      
+      container.innerHTML = categories.map(cat => {
+        const isActive = activeCategory === cat;
+        const displayName = cat === 'all' ? 'All Decks' : cat;
+        return `
+          <button onclick="filterCategory('${cat}')" class="category-tab ${isActive ? 'active' : ''}">
+            ${displayName}
+          </button>
+        `;
+      }).join('');
+    }
+
+    // Filter by category selection
+    function filterCategory(cat) {
+      activeCategory = cat;
+      const tabs = document.querySelectorAll('.category-tab');
+      tabs.forEach(tab => {
+        if (tab.textContent.trim().toLowerCase() === (cat === 'all' ? 'all decks' : cat.toLowerCase())) {
+          tab.classList.add('active');
+        } else {
+          tab.classList.remove('active');
+        }
+      });
+      
+      // Reload UI filtering
+      fetch('/api/presentations')
+        .then(res => res.json())
+        .then(data => renderGrid(data));
+    }
+
+    // Render grid cards
+    function renderGrid(data) {
+      const grid = document.getElementById('presentationsGrid');
+      grid.innerHTML = '';
+      
+      let items = [];
+      if (activeCategory === 'all') {
+        data.forEach(catGroup => {
+          items = items.concat(catGroup.presentations);
+        });
+      } else {
+        const group = data.find(g => g.category === activeCategory);
+        if (group) items = group.presentations;
+      }
+      
+      if (items.length === 0) {
+        grid.innerHTML = `<p class="col-span-2 text-center text-zinc-500 text-sm font-mono py-8">No presentations found in this category.</p>`;
+        return;
+      }
+      
+      grid.innerHTML = items.map(pres => `
+        <div class="glass-card p-6 flex flex-col justify-between h-full relative group">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-12 h-12 rounded-xl bg-[#7028d0]/10 border border-[#7028d0]/20 flex items-center justify-center text-[#7028d0] group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-[28px]">${pres.icon || 'presentation_play'}</span>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap justify-end">
+              ${pres.category ? `<span class="px-2 py-0.5 bg-[#7028d0]/10 border border-[#7028d0]/20 rounded text-[9px] font-mono text-[#7028d0] uppercase tracking-wider">${pres.category}</span>` : ''}
+              ${pres.tags ? pres.tags.map(tag => `<span class="px-2 py-0.5 bg-white/5 border border-white/10 rounded text-[9px] font-mono text-[#bcc9c6]">${tag}</span>`).join('') : ''}
+            </div>
+          </div>
+          <div class="flex-grow mb-6">
+            <h3 class="text-xl font-bold text-white mb-2 leading-tight">${pres.title}</h3>
+            <p class="text-xs font-mono text-[#7028d0] mb-3">${pres.subtitle || ''}</p>
+            <p class="text-sm text-[#bcc9c6]/80 leading-relaxed">${pres.description || ''}</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="launchPresentation('${pres.url}')" class="flex-1 py-2.5 bg-[#7028d0] hover:bg-[#5050e8] text-black font-bold rounded-lg text-xs transition-all shadow-[0_0_15px_rgba(112,40,208,0.1)] hover:shadow-[0_0_20px_rgba(112,40,208,0.25)] flex items-center justify-center gap-1.5 active:scale-95">
+              <span class="material-symbols-outlined text-[16px] font-bold">play_arrow</span> Launch Keynote
+            </button>
+            <button onclick="launchStudioEditor('${pres.url}', '${pres.title}', '${pres.category}')" class="px-3.5 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95">
+              <span class="material-symbols-outlined text-[16px]">edit_note</span> Studio Editor
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 2. Viewer Presentation Modal
+    function launchPresentation(url, startSlideIdx) {
+      const modal = document.getElementById('presentationModal');
+      const iframe = document.getElementById('presentationFrame');
+      
+      modal.classList.remove('hidden');
+      void modal.offsetWidth;
+      
+      if (startSlideIdx !== undefined) {
+        iframe.onload = () => {
+          setTimeout(() => {
+            if (iframe.contentWindow && typeof iframe.contentWindow.goToSlide === 'function') {
+              iframe.contentWindow.goToSlide(startSlideIdx);
+            }
+          }, 300);
+        };
+      } else {
+        iframe.onload = null;
+      }
+      
+      // Inject presentation url and open
+      iframe.src = url;
+      modal.classList.add('active');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePresentation() {
+      const modal = document.getElementById('presentationModal');
+      const iframe = document.getElementById('presentationFrame');
+      
+      iframe.src = '';
+      modal.classList.remove('active');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      document.body.style.overflow = '';
+      
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      }
+      document.getElementById('fsIcon').textContent = 'fullscreen';
+      
+      setTimeout(() => {
+        if (!modal.classList.contains('active')) {
+          modal.classList.add('hidden');
+        }
+      }, 300);
+    }
+
+    function toggleIframeFullscreen() {
+      const modal = document.getElementById('presentationModal');
+      const fsIcon = document.getElementById('fsIcon');
+      
+      if (!document.fullscreenElement) {
+        modal.requestFullscreen().then(() => {
+          fsIcon.textContent = 'fullscreen_exit';
+        }).catch(err => {
+          console.error('Fullscreen request failed:', err);
+        });
+      } else {
+        document.exitFullscreen().then(() => {
+          fsIcon.textContent = 'fullscreen';
+        });
+      }
+    }
+
+    // Sync fullscreen button icon when native fullscreen changes (e.g. Esc press)
+    document.addEventListener('fullscreenchange', () => {
+      const fsIcon = document.getElementById('fsIcon');
+      if (fsIcon) {
+        if (document.fullscreenElement) {
+          fsIcon.textContent = 'fullscreen_exit';
+        } else {
+          fsIcon.textContent = 'fullscreen';
+        }
+      }
+    });
+
+    // 3. Studio Presentation Workspace Mode
+    function launchStudioEditor(url, title, category) {
+      currentPresentationUrl = url;
+      currentTitle = title;
+      currentCategory = category || 'General';
+      currentSlideIndex = 0;
+      selectedElement = null;
+      selectedElements = [];
+      undoStack = [];
+      redoStack = [];
+      
+      const editor = document.getElementById('studioEditor');
+      const iframe = document.getElementById('studioFrame');
+      
+      document.getElementById('studioCategoryLabel').textContent = currentCategory;
+      document.getElementById('studioTitleLabel').textContent = currentTitle;
+      
+      // Initial AutoSave label status
+      document.getElementById('autoSaveStatus').innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
+      
+      // Configure load triggers BEFORE setting src
+      iframe.onload = () => {
+        initStudioFrame();
+        // Restore zoom level
+        const savedZoom = localStorage.getItem('presentationZoom') || 'fit';
+        setTimeout(() => applyZoom(savedZoom), 150);
+      };
+      
+      editor.classList.remove('hidden');
+      void editor.offsetWidth;
+      
+      iframe.src = url;
+      editor.classList.add('active');
+      editor.style.opacity = '1';
+      editor.style.pointerEvents = 'auto';
+      document.body.style.overflow = 'hidden';
+      
+      // Fetch backups list
+      loadVersions();
+    }
+
+    function closeStudioEditor() {
+      const editor = document.getElementById('studioEditor');
+      const iframe = document.getElementById('studioFrame');
+      
+      iframe.src = '';
+      editor.classList.remove('active');
+      editor.style.opacity = '0';
+      editor.style.pointerEvents = 'none';
+      document.body.style.overflow = '';
+      
+      setTimeout(() => {
+        if (!editor.classList.contains('active')) {
+          editor.classList.add('hidden');
+        }
+      }, 300);
+      
+      // Refresh dashboard list
+      loadPresentations();
+    }
+
+    // Initialize Frame Hooks
+    function initStudioFrame() {
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      
+      // Sync active theme to slide frame
+      syncIframeTheme();
+      
+      // 1. Inject Stylesheet
+      const styleId = 'editor-style-tag';
+      if (!iframeDoc.getElementById(styleId)) {
+        const styleEl = iframeDoc.createElement('style');
+        styleEl.id = styleId;
+        styleEl.textContent = `
+          .slide {
+            position: relative !important;
+          }
+          .editor-selected {
+            outline: 2px solid #7028d0 !important;
+            outline-offset: 3px !important;
+            box-shadow: 0 0 18px rgba(112, 40, 208, 0.35) !important;
+            position: relative !important;
+            transition: outline-color 0.14s ease, box-shadow 0.14s ease !important;
+          }
+          .editor-hoverable:hover:not(.editor-selected) {
+            outline: 1px dashed rgba(112, 40, 208, 0.75) !important;
+            outline-offset: 2px !important;
+            cursor: pointer !important;
+          }
+          #editorSelectionOverlay {
+            position: absolute;
+            border: 1.5px solid rgba(112, 40, 208, 0.95);
+            background: rgba(112, 40, 208, 0.08);
+            box-shadow: 0 0 0 1px rgba(80, 80, 232, 0.4), 0 0 22px rgba(112, 40, 208, 0.22);
+            pointer-events: none;
+            z-index: 999999;
+            transition: opacity 0.12s ease;
+            opacity: 1;
+          }
+          .editor-resize-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            background: #7028d0;
+            border-radius: 50%;
+            pointer-events: auto;
+            box-shadow: 0 0 8px rgba(112, 40, 208, 0.5);
+          }
+          .editor-resize-handle[data-dir="n"] { left: 50%; top: -6px; transform: translateX(-50%); cursor: ns-resize; }
+          .editor-resize-handle[data-dir="s"] { left: 50%; bottom: -6px; transform: translateX(-50%); cursor: ns-resize; }
+          .editor-resize-handle[data-dir="e"] { right: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+          .editor-resize-handle[data-dir="w"] { left: -6px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+          .editor-resize-handle[data-dir="nw"] { left: -6px; top: -6px; cursor: nwse-resize; }
+          .editor-resize-handle[data-dir="ne"] { right: -6px; top: -6px; cursor: nesw-resize; }
+          .editor-resize-handle[data-dir="sw"] { left: -6px; bottom: -6px; cursor: nesw-resize; }
+          .editor-resize-handle[data-dir="se"] { right: -6px; bottom: -6px; cursor: nwse-resize; }
+          #editorGuidesLayer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 999998;
+          }
+          .editor-guide-line {
+            position: absolute;
+            opacity: 0;
+            transition: opacity 0.12s ease;
+          }
+          .editor-guide-line.visible {
+            opacity: 1;
+          }
+          .editor-guide-line.vertical {
+            top: 0;
+            bottom: 0;
+            border-left: 1px dotted rgba(112, 40, 208, 0.95);
+          }
+          .editor-guide-line.horizontal {
+            left: 0;
+            right: 0;
+            border-top: 1px dotted rgba(112, 40, 208, 0.95);
+          }
+          .editor-dragging {
+            transition: none !important;
+            transition-property: none !important;
+          }
+          /* Absolute Positioning layout tweaks */
+          [style*="position: absolute"] {
+            cursor: move !important;
+            user-select: none !important;
+          }
+          a {
+            pointer-events: none !important;
+          }
+        `;
+        iframeDoc.head.appendChild(styleEl);
+      }
+      
+      // 2. Make elements hoverable & selectable
+      makeElementsHoverable(iframeDoc);
+      
+      // 3. Setup click listeners on the document (survives innerHTML body swaps)
+      iframeDoc.addEventListener('click', (e) => {
+        if (isDraggingElement) return;
+        if (e.target.closest('.editor-resize-handle') || e.target.closest('#editorSelectionOverlay')) {
+          return;
+        }
+        // Prevent slides navigating on click
+        e.preventDefault();
+        e.stopPropagation();
+
+        const target = resolveEditableTarget(e.target);
+        if (target) {
+          selectElement(target, { additive: e.shiftKey, toggle: e.shiftKey });
+        } else {
+          deselectElement();
+        }
+      }, true);
+      
+      // 4. Setup Keydown bubble
+      iframeDoc.addEventListener('keydown', (e) => {
+        // Allow shortcut keys (Ctrl+Z, Ctrl+Y)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+          e.preventDefault();
+          editorUndo();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+          e.preventDefault();
+          editorRedo();
+        }
+
+        const activeEl = iframeDoc.activeElement;
+        const isTypingContext = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
+        if (!isTypingContext && selectedElements.length > 0 && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+          e.preventDefault();
+          e.stopPropagation();
+          const step = e.shiftKey ? 10 : 1;
+          if (e.key === 'ArrowUp') nudgeSelectedElements(0, -step);
+          if (e.key === 'ArrowDown') nudgeSelectedElements(0, step);
+          if (e.key === 'ArrowLeft') nudgeSelectedElements(-step, 0);
+          if (e.key === 'ArrowRight') nudgeSelectedElements(step, 0);
+          return;
+        }
+
+        // Prevent default slide navigation keys inside the visual canvas editor
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowLeft' || e.key === 'PageDown' || e.key === 'PageUp') {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }, true);
+
+      // 5. Setup Drag positioning logic inside slide
+      setupIframeDragging(iframeDoc);
+      
+      // 6. Generate Side List Thumbnails
+      generateThumbnails();
+      
+      // 7. Select first slide
+      setActiveSlide(0);
+      
+      // 8. Capture first historical state
+      saveHistoryState(false);
+    }
+
+    // Apply hoverable tags to editable nodes
+    function makeElementsHoverable(doc) {
+      doc.querySelectorAll(EDITOR_SELECTABLE_SELECTOR).forEach(el => {
+        if (!isEligibleEditableElement(el)) return;
+        el.classList.add('editor-hoverable');
+      });
+    }
+
+    // Render visual Slide Organizer thumbnails
+    function generateThumbnails() {
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const slides = iframeDoc.querySelectorAll('.slide');
+      
+      const listContainer = document.getElementById('thumbnailsList');
+      listContainer.innerHTML = '';
+      
+      document.getElementById('slideCountLabel').textContent = `${currentSlideIndex + 1} / ${slides.length}`;
+      
+      slides.forEach((slide, idx) => {
+        const isActive = idx === currentSlideIndex;
+        
+        // Retrieve title/text description from slide contents
+        const firstHeading = slide.querySelector('h1, h2, h3');
+        const slideTitle = firstHeading ? firstHeading.textContent.trim() : `Slide ${idx + 1}`;
+        
+        // Build card element
+        const thumbCard = document.createElement('div');
+        thumbCard.className = `glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all ${
+          isActive ? 'border-[#7028d0] bg-[#7028d0]/5 shadow-[0_0_15px_rgba(112,40,208,0.1)]' : 'border-white/5 bg-[#0a0a0a]/40 hover:border-white/20'
+        }`;
+        thumbCard.draggable = true;
+        thumbCard.dataset.index = idx;
+        
+        // Hover Delete controls
+        thumbCard.innerHTML = `
+          <div class="w-6 h-6 rounded-lg bg-zinc-900 border border-white/5 flex items-center justify-center font-mono text-xs text-[#7028d0] font-bold">
+            ${String(idx + 1).padStart(2, '0')}
+          </div>
+          <div class="flex-grow overflow-hidden">
+            <h4 class="text-xs font-semibold text-white truncate font-sans">${slideTitle}</h4>
+            <p class="text-[10px] text-zinc-500 font-mono uppercase mt-0.5">${slide.style.background ? 'Gradient/Paint' : 'Default'}</p>
+          </div>
+          <button onclick="event.stopPropagation(); deleteSlideNode(${idx})" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-500/20 text-zinc-500 hover:text-rose-400 rounded transition-all absolute right-2 top-2.5" title="Delete Slide">
+            <span class="material-symbols-outlined text-[15px]">delete</span>
+          </button>
+        `;
+        
+        // Bind Click navigation
+        thumbCard.addEventListener('click', () => {
+          setActiveSlide(idx);
+        });
+        
+        // Bind HTML5 drag events
+        setupDragAndDropThumbnail(thumbCard);
+        
+        listContainer.appendChild(thumbCard);
+      });
+    }
+
+    // HTML5 Drag and Drop handlers for thumbnail cards
+    let draggedThumbIndex = null;
+    function setupDragAndDropThumbnail(card) {
+      card.addEventListener('dragstart', (e) => {
+        draggedThumbIndex = parseInt(card.dataset.index);
+        card.style.opacity = '0.4';
+      });
+      
+      card.addEventListener('dragend', () => {
+        card.style.opacity = '1';
+        draggedThumbIndex = null;
+      });
+      
+      card.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        card.classList.add('border-dashed', 'border-[#7028d0]/50');
+      });
+      
+      card.addEventListener('dragleave', () => {
+        card.classList.remove('border-dashed', 'border-[#7028d0]/50');
+      });
+      
+      card.addEventListener('drop', (e) => {
+        e.preventDefault();
+        card.classList.remove('border-dashed', 'border-[#7028d0]/50');
+        
+        const targetIndex = parseInt(card.dataset.index);
+        if (draggedThumbIndex !== null && draggedThumbIndex !== targetIndex) {
+          reorderSlides(draggedThumbIndex, targetIndex);
+        }
+      });
+    }
+
+    // Swap node indices in iframe and re-render
+    function reorderSlides(fromIdx, toIdx) {
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const container = iframeDoc.getElementById('slidesContainer');
+      if (!container) return;
+      
+      const slides = Array.from(container.querySelectorAll('.slide'));
+      const draggedNode = slides[fromIdx];
+      const targetNode = slides[toIdx];
+      
+      if (fromIdx < toIdx) {
+        container.insertBefore(draggedNode, targetNode.nextSibling);
+      } else {
+        container.insertBefore(draggedNode, targetNode);
+      }
+      
+      // Update state and active slide
+      currentSlideIndex = toIdx;
+      
+      generateThumbnails();
+      setActiveSlide(currentSlideIndex);
+      saveHistoryState();
+      triggerAutoSave();
+      triggerAutoVersion('Auto: Reordered Slides');
+    }
+
+    // Toggle active slide viewport display
+    function setActiveSlide(index) {
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const slides = iframeDoc.querySelectorAll('.slide');
+      
+      if (index < 0 || index >= slides.length) return;
+      currentSlideIndex = index;
+      
+      // Apply translation to container
+      const container = iframeDoc.getElementById('slidesContainer');
+      if (container) {
+        container.style.transform = `translateX(-${index * 100}vw)`;
+      }
+      
+      // Toggle class lists
+      slides.forEach((slide, idx) => {
+        if (idx === index) {
+          slide.classList.add('slide-active');
+        } else {
+          slide.classList.remove('slide-active');
+        }
+      });
+      
+      // Update sidebar thumbnail visual selection states
+      const cards = document.querySelectorAll('#thumbnailsList > div');
+      cards.forEach((card, idx) => {
+        if (idx === index) {
+          card.className = 'glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all border-[#7028d0] bg-[#7028d0]/5 shadow-[0_0_15px_rgba(112,40,208,0.1)]';
+        } else {
+          card.className = 'glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all border-white/5 bg-[#0a0a0a]/40 hover:border-white/20';
+        }
+      });
+      
+      // Update counts and dots inside the iframe itself to keep the presentation UI consistent
+      updateIframeNavigationUI(iframeDoc, slides);
+      
+      // Update label
+      document.getElementById('slideCountLabel').textContent = `${currentSlideIndex + 1} / ${slides.length}`;
+      
+      // Selection reset
+      deselectElement();
+    }
+
+    // Sync presentation's internal dots and counter
+    function updateIframeNavigationUI(doc, slides) {
+      const totalSlides = slides.length;
+      
+      // Re-generate indicator dots in the iframe
+      const dotsContainer = doc.getElementById('indicatorDots');
+      if (dotsContainer) {
+        dotsContainer.innerHTML = '';
+        for (let i = 0; i < totalSlides; i++) {
+          const dot = doc.createElement('div');
+          dot.className = `indicator-dot ${i === currentSlideIndex ? 'active' : ''}`;
+          dot.addEventListener('click', () => {
+            setActiveSlide(i);
+          });
+          dotsContainer.appendChild(dot);
+        }
+      }
+      
+      // Update slide count text
+      const slideNumText = doc.getElementById('slideNum');
+      if (slideNumText) {
+        const formattedNum = String(currentSlideIndex + 1).padStart(2, '0');
+        const formattedTotal = String(totalSlides).padStart(2, '0');
+        slideNumText.textContent = `${formattedNum} / ${formattedTotal}`;
+      }
+      
+      // Update progress bar
+      const progressLine = doc.getElementById('progressLine');
+      if (progressLine) {
+        const progressPercent = ((currentSlideIndex + 1) / totalSlides) * 100;
+        progressLine.style.width = `${progressPercent}%`;
+      }
+      
+      // Prev/Next Nav triggers state
+      const prevBtn = doc.getElementById('prevBtn');
+      const nextBtn = doc.getElementById('nextBtn');
+      if (prevBtn) {
+        if (currentSlideIndex === 0) {
+          prevBtn.style.opacity = '0.3';
+          prevBtn.style.pointerEvents = 'none';
+        } else {
+          prevBtn.style.opacity = '1';
+          prevBtn.style.pointerEvents = 'auto';
+        }
+      }
+      if (nextBtn) {
+        if (currentSlideIndex === totalSlides - 1) {
+          nextBtn.style.opacity = '0.3';
+          nextBtn.style.pointerEvents = 'none';
+        } else {
+          nextBtn.style.opacity = '1';
+          nextBtn.style.pointerEvents = 'auto';
+        }
+      }
+    }
+
+    // Add Blank Slide Node
+    function addSlideNode() {
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const container = iframeDoc.getElementById('slidesContainer');
+      if (!container) return;
+      
+      const slides = container.querySelectorAll('.slide');
+      const newIndex = slides.length;
+      
+      const newSlide = iframeDoc.createElement('section');
+      newSlide.className = 'slide flex flex-col justify-center items-center';
+      newSlide.style.background = '#050505';
+      
+      const innerDiv = iframeDoc.createElement('div');
+      innerDiv.className = 'max-w-4xl text-center flex flex-col items-center gap-4 z-10';
+      
+      const h2 = iframeDoc.createElement('h2');
+      h2.className = 'text-4xl md:text-5xl font-semibold text-white tracking-tight editor-hoverable';
+      h2.textContent = 'Slide Heading';
+      
+      const p = iframeDoc.createElement('p');
+      p.className = 'text-lg text-[#bcc9c6] editor-hoverable';
+      p.textContent = 'Enter description text content here.';
+      
+      innerDiv.appendChild(h2);
+      innerDiv.appendChild(p);
+      newSlide.appendChild(innerDiv);
+      
+      container.appendChild(newSlide);
+      
+      // Update UI
+      generateThumbnails();
+      setActiveSlide(newIndex);
+      saveHistoryState();
+      triggerAutoSave();
+      triggerAutoVersion('Auto: Added Slide');
+    }
+
+    // Delete Active Slide Node
+    function deleteSlideNode(idx) {
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const container = iframeDoc.getElementById('slidesContainer');
+      if (!container) return;
+      
+      const slides = container.querySelectorAll('.slide');
+      if (slides.length <= 1) {
+        alert("Action aborted: presentation requires at least one slide.");
+        return;
+      }
+      
+      slides[idx].remove();
+      
+      // Navigate to nearby
+      const nextActiveIdx = Math.max(0, idx - 1);
+      generateThumbnails();
+      setActiveSlide(nextActiveIdx);
+      saveHistoryState();
+      triggerAutoSave();
+      triggerAutoVersion('Auto: Deleted Slide');
+    }
+
+    function getIframeDoc() {
+      const iframe = document.getElementById('studioFrame');
+      return iframe ? (iframe.contentDocument || iframe.contentWindow.document) : null;
+    }
+
+    function getActiveSlide(doc = getIframeDoc()) {
+      if (!doc) return null;
+      return doc.querySelector('.slide-active') || doc.querySelector('.slide');
+    }
+
+    function isEligibleEditableElement(el) {
+      if (!el || el.nodeType !== 1) return false;
+      if (el.id === 'editorSelectionOverlay' || el.id === 'editorGuidesLayer') return false;
+      if (el.classList.contains('editor-resize-handle') || el.classList.contains('editor-guide-line')) return false;
+      if (el.classList.contains('slide') || el.id === 'slidesContainer') return false;
+      const tag = el.tagName.toLowerCase();
+      if (['html', 'body', 'head', 'style', 'script', 'iframe'].includes(tag)) return false;
+      return true;
+    }
+
+    function resolveEditableTarget(node) {
+      let curr = node && node.nodeType === 1 ? node : node?.parentElement;
+      while (curr) {
+        if (curr.matches?.(EDITOR_SELECTABLE_SELECTOR) && isEligibleEditableElement(curr)) {
+          if (curr.tagName.toLowerCase() === 'th' || curr.tagName.toLowerCase() === 'td') {
+            const table = curr.closest('table');
+            return table && isEligibleEditableElement(table) ? table : null;
+          }
+          return curr;
+        }
+        curr = curr.parentElement;
+      }
+      return null;
+    }
+
+    function refreshSelectionClasses() {
+      const doc = getIframeDoc();
+      if (!doc) return;
+      doc.querySelectorAll('.editor-selected').forEach(el => el.classList.remove('editor-selected'));
+      selectedElements = selectedElements.filter(el => el && el.isConnected && isEligibleEditableElement(el));
+      selectedElements.forEach(el => el.classList.add('editor-selected'));
+      selectedElement = selectedElements[0] || null;
+    }
+
+    function ensureSelectionOverlay(doc, slide) {
+      let overlay = slide.querySelector('#editorSelectionOverlay');
+      if (!overlay) {
+        overlay = doc.createElement('div');
+        overlay.id = 'editorSelectionOverlay';
+        RESIZE_HANDLE_DIRECTIONS.forEach(dir => {
+          const handle = doc.createElement('div');
+          handle.className = 'editor-resize-handle';
+          handle.setAttribute('data-dir', dir);
+          overlay.appendChild(handle);
+        });
+        slide.appendChild(overlay);
+      }
+      return overlay;
+    }
+
+    function ensureGuidesLayer(doc, slide) {
+      let guides = slide.querySelector('#editorGuidesLayer');
+      if (!guides) {
+        guides = doc.createElement('div');
+        guides.id = 'editorGuidesLayer';
+        slide.appendChild(guides);
+      }
+      return guides;
+    }
+
+    function hideGuides() {
+      const doc = getIframeDoc();
+      const slide = getActiveSlide(doc);
+      if (!slide) return;
+      const guides = slide.querySelector('#editorGuidesLayer');
+      if (guides) guides.innerHTML = '';
+    }
+
+    function renderGuides(guidesDef) {
+      const doc = getIframeDoc();
+      const slide = getActiveSlide(doc);
+      if (!doc || !slide) return;
+      const guidesLayer = ensureGuidesLayer(doc, slide);
+      guidesLayer.innerHTML = '';
+      (guidesDef || []).forEach(guide => {
+        const line = doc.createElement('div');
+        line.className = `editor-guide-line ${guide.axis === 'x' ? 'vertical' : 'horizontal'} visible`;
+        if (guide.axis === 'x') {
+          line.style.left = `${guide.position}px`;
+        } else {
+          line.style.top = `${guide.position}px`;
+        }
+        guidesLayer.appendChild(line);
+      });
+    }
+
+    function getSelectionBounds(elements = selectedElements) {
+      const slide = getActiveSlide();
+      if (!slide || !elements || elements.length === 0) return null;
+      const slideRect = slide.getBoundingClientRect();
+      const rects = elements.map(el => el.getBoundingClientRect());
+      const left = Math.min(...rects.map(r => r.left - slideRect.left));
+      const top = Math.min(...rects.map(r => r.top - slideRect.top));
+      const right = Math.max(...rects.map(r => r.right - slideRect.left));
+      const bottom = Math.max(...rects.map(r => r.bottom - slideRect.top));
+      return {
+        left,
+        top,
+        right,
+        bottom,
+        width: Math.max(MIN_ELEMENT_SIZE_PX, right - left),
+        height: Math.max(MIN_ELEMENT_SIZE_PX, bottom - top)
+      };
+    }
+
+    function syncSelectionOverlay() {
+      const doc = getIframeDoc();
+      const slide = getActiveSlide(doc);
+      if (!doc || !slide) return;
+      const overlay = ensureSelectionOverlay(doc, slide);
+
+      if (selectedElements.length === 0) {
+        overlay.style.display = 'none';
+        hideGuides();
+        return;
+      }
+
+      const bounds = getSelectionBounds(selectedElements);
+      if (!bounds) {
+        overlay.style.display = 'none';
+        hideGuides();
+        return;
+      }
+
+      overlay.style.display = 'block';
+      overlay.style.left = `${bounds.left}px`;
+      overlay.style.top = `${bounds.top}px`;
+      overlay.style.width = `${bounds.width}px`;
+      overlay.style.height = `${bounds.height}px`;
+      overlay.style.pointerEvents = 'auto';
+      overlay.style.opacity = '1';
+    }
+
+    function syncInspectorForSelection() {
+      const count = selectedElements.length;
+      if (count === 0) {
+        document.getElementById('inspectorTargetLabel').innerHTML = `
+          <span class="material-symbols-outlined text-[16px] text-[#7028d0]">settings_suggest</span>
+          No selection active
+        `;
+        document.getElementById('slideInspectorPanel').classList.remove('hidden');
+        document.getElementById('elementInspectorPanel').classList.add('hidden');
+        return;
+      }
+
+      const el = selectedElements[0];
+      const isMulti = count > 1;
+      document.getElementById('inspectorTargetLabel').innerHTML = `
+        <span class="material-symbols-outlined text-[16px] text-[#7028d0]">edit</span>
+        ${isMulti ? `Editing ${count} elements` : `Editing ${el.tagName.toLowerCase()}`}
+      `;
+
+      document.getElementById('slideInspectorPanel').classList.add('hidden');
+      document.getElementById('elementInspectorPanel').classList.remove('hidden');
+
+      const textVal = el.innerText || el.textContent || '';
+      document.getElementById('elTextContent').value = textVal;
+
+      if (!isMulti && el.tagName.toLowerCase() === 'img') {
+        document.getElementById('inspectorImageGroup').classList.remove('hidden');
+        document.getElementById('elImageSrc').value = el.src || '';
+        document.getElementById('inspectorTextContentGroup').classList.add('hidden');
+      } else {
+        document.getElementById('inspectorImageGroup').classList.add('hidden');
+        document.getElementById('inspectorTextContentGroup').classList.toggle('hidden', isMulti);
+      }
+
+      const computedStyles = el.ownerDocument.defaultView.getComputedStyle(el);
+      const fSize = parseInt(computedStyles.fontSize) || 16;
+      document.getElementById('elFontSize').value = fSize;
+      document.getElementById('fontSizeVal').textContent = fSize + 'px';
+
+      const fFamily = computedStyles.fontFamily.replace(/['"]/g, '');
+      const familySelect = document.getElementById('elFontFamily');
+      familySelect.value = "'Geist', sans-serif";
+      for (let opt of familySelect.options) {
+        if (opt.value.replace(/['"]/g, '').includes(fFamily)) {
+          familySelect.value = opt.value;
+          break;
+        }
+      }
+
+      document.getElementById('elFontWeight').value = computedStyles.fontWeight;
+      document.getElementById('elTextColor').value = rgbToHex(computedStyles.color);
+      highlightAlignButton(computedStyles.textAlign || 'left');
+      document.getElementById('elZIndex').value = el.style.zIndex || 0;
+
+      const opacityVal = Math.round((parseFloat(computedStyles.opacity || '1')) * 100);
+      document.getElementById('elOpacity').value = opacityVal;
+      document.getElementById('opacityVal').textContent = opacityVal + '%';
+
+      const isImgOrShape = selectedElements.some(node => node.tagName.toLowerCase() === 'img' || node.classList.contains('editor-shape') || node.tagName.toLowerCase() === 'table' || node.tagName.toLowerCase() === 'div');
+      if (isImgOrShape) {
+        document.getElementById('inspectorBorderGroup').classList.remove('hidden');
+        document.getElementById('elBorderStyle').value = computedStyles.borderStyle || 'none';
+        const bWidth = parseInt(computedStyles.borderWidth) || 0;
+        document.getElementById('elBorderWidth').value = bWidth;
+        document.getElementById('borderWidthVal').textContent = bWidth + 'px';
+        const bRadius = parseInt(computedStyles.borderRadius) || 0;
+        document.getElementById('elBorderRadius').value = bRadius;
+        document.getElementById('borderRadiusVal').textContent = bRadius + 'px';
+        document.getElementById('elBorderColor').value = rgbToHex(computedStyles.borderColor || '#ffffff');
+      } else {
+        document.getElementById('inspectorBorderGroup').classList.add('hidden');
+      }
+    }
+
+    // Click Selection highlights
+    function selectElement(el, options = {}) {
+      const target = resolveEditableTarget(el);
+      if (!target) return;
+      const additive = !!options.additive;
+      const toggle = !!options.toggle;
+
+      if (!additive) {
+        selectedElements = [];
+      }
+
+      if (toggle) {
+        if (selectedElements.includes(target)) {
+          selectedElements = selectedElements.filter(node => node !== target);
+        } else {
+          selectedElements.push(target);
+        }
+      } else if (!selectedElements.includes(target)) {
+        selectedElements.push(target);
+      }
+
+      refreshSelectionClasses();
+      syncSelectionOverlay();
+      syncInspectorForSelection();
+      updateLayersList();
+    }
+
+    function deselectElement() {
+      selectedElements = [];
+      refreshSelectionClasses();
+      syncSelectionOverlay();
+      syncInspectorForSelection();
+      updateLayersList();
+    }
+
+    // Helper: RGB to hex converters
+    function rgbToHex(rgb) {
+      if (!rgb) return '#ffffff';
+      if (rgb.startsWith('#')) return rgb;
+      const rgbValues = rgb.match(/\d+/g);
+      if (!rgbValues) return '#ffffff';
+      const r = parseInt(rgbValues[0]);
+      const g = parseInt(rgbValues[1]);
+      const b = parseInt(rgbValues[2]);
+      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    function highlightAlignButton(align) {
+      const alignBtns = ['Left', 'Center', 'Right', 'Justify'];
+      alignBtns.forEach(btn => {
+        const el = document.getElementById(`align${btn}Btn`);
+        if (btn.toLowerCase() === align) {
+          el.className = 'py-1 flex items-center justify-center bg-[#7028d0]/15 border border-[#7028d0]/30 text-[#7028d0] rounded transition-all';
+        } else {
+          el.className = 'py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all';
+        }
+      });
+    }
+
+    // Apply styles immediately to active selected elements
+    function applySelectedElementStyle(prop, val) {
+      if (selectedElements.length === 0) return;
+      const targets = [...selectedElements];
+
+      targets.forEach((target, idx) => {
+        if (prop === 'text') {
+          if (idx === 0) target.textContent = val;
+        } else if (prop === 'src') {
+          if (idx === 0 && target.tagName.toLowerCase() === 'img') target.src = val;
+        } else if (prop === 'size') {
+          target.style.fontSize = val + 'px';
+        } else if (prop === 'family') {
+          target.style.fontFamily = val;
+        } else if (prop === 'weight') {
+          target.style.fontWeight = val;
+        } else if (prop === 'color') {
+          target.style.color = val;
+        } else if (prop === 'align') {
+          target.style.textAlign = val;
+        } else if (prop === 'opacity') {
+          target.style.opacity = (Math.max(10, Math.min(100, parseInt(val, 10) || 100)) / 100).toString();
+        } else if (prop === 'zIndex') {
+          target.style.zIndex = val;
+        } else if (prop === 'borderStyle') {
+          target.style.borderStyle = val;
+        } else if (prop === 'borderWidth') {
+          target.style.borderWidth = val + 'px';
+        } else if (prop === 'borderRadius') {
+          target.style.borderRadius = val + 'px';
+        } else if (prop === 'borderColor') {
+          target.style.borderColor = val;
+        }
+      });
+
+      if (prop === 'size') {
+        document.getElementById('fontSizeVal').textContent = val + 'px';
+      } else if (prop === 'align') {
+        highlightAlignButton(val);
+      } else if (prop === 'borderWidth') {
+        document.getElementById('borderWidthVal').textContent = val + 'px';
+      } else if (prop === 'borderRadius') {
+        document.getElementById('borderRadiusVal').textContent = val + 'px';
+      } else if (prop === 'opacity') {
+        document.getElementById('opacityVal').textContent = `${val}%`;
+      }
+
+      syncSelectionOverlay();
+      // Refresh thumbnail to sync visual text changes
+      generateThumbnails();
+
+      // Update sidebar layers list
+      updateLayersList();
+
+      // Debounce saving state for range inputs / key typing. We will capture state on slide changes, save actions, input focus shifts, or simple delay
+      saveHistoryState(true);
+      triggerAutoSave();
+
+      // Trigger version checkpoints for discrete changes
+      if (prop === 'family') {
+        triggerAutoVersion('Auto: Changed Font Family');
+      } else if (prop === 'weight') {
+        triggerAutoVersion('Auto: Changed Font Weight');
+      } else if (prop === 'align') {
+        triggerAutoVersion('Auto: Changed Alignment');
+      } else if (prop === 'zIndex') {
+        triggerAutoVersion('Auto: Changed Z-Index');
+      } else if (prop === 'borderStyle') {
+        triggerAutoVersion('Auto: Changed Border Style');
+      } else if (prop === 'borderWidth') {
+        triggerAutoVersion('Auto: Changed Border Width');
+      } else if (prop === 'borderRadius') {
+        triggerAutoVersion('Auto: Changed Corner Radius');
+      } else if (prop === 'borderColor') {
+        triggerAutoVersion('Auto: Changed Border Color');
+      } else if (prop === 'opacity') {
+        triggerAutoVersion('Auto: Changed Opacity');
+      }
+    }
+
+    // Delete active selection
+    function removeSelectedElement() {
+      if (selectedElements.length === 0) return;
+      selectedElements.forEach(el => {
+        if (el && el.isConnected) el.remove();
+      });
+      deselectElement();
+      generateThumbnails();
+      updateLayersList();
+      saveHistoryState();
+      triggerAutoSave();
+      triggerAutoVersion('Auto: Deleted Element');
+    }
+
+    function getClosestPositionedAncestor(el) {
+      let parent = el.parentElement;
+      const view = el.ownerDocument?.defaultView || window;
+      while (parent) {
+        if (parent.classList && parent.classList.contains('slide')) {
+          return parent;
+        }
+        const style = view.getComputedStyle ? view.getComputedStyle(parent) : parent.style;
+        if (style && style.position !== 'static') {
+          return parent;
+        }
+        if (parent.tagName === 'BODY' || parent.tagName === 'HTML') {
+          return parent;
+        }
+        parent = parent.parentElement;
+      }
+      return document.body;
+    }
+
+    function shouldResizeWidth(el) {
+      const tag = el.tagName.toLowerCase();
+      return ['img', 'table', 'pre', 'code', 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag);
+    }
+
+    function shouldResizeHeight(el) {
+      const tag = el.tagName.toLowerCase();
+      return ['img', 'table', 'pre', 'code', 'div'].includes(tag);
+    }
+
+    function clampValue(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function normalizeBounds(bounds, slideRect, mode, handleDir = '') {
+      let { left, top, right, bottom } = bounds;
+      const minW = MIN_ELEMENT_SIZE_PX;
+      const minH = MIN_ELEMENT_SIZE_PX;
+
+      if (mode === 'drag') {
+        const width = right - left;
+        const height = bottom - top;
+        left = clampValue(left, 0, Math.max(0, slideRect.width - width));
+        top = clampValue(top, 0, Math.max(0, slideRect.height - height));
+        right = left + width;
+        bottom = top + height;
+      } else {
+        left = clampValue(left, 0, slideRect.width);
+        right = clampValue(right, 0, slideRect.width);
+        top = clampValue(top, 0, slideRect.height);
+        bottom = clampValue(bottom, 0, slideRect.height);
+
+        if (right - left < minW) {
+          if (handleDir.includes('w')) left = right - minW;
+          else right = left + minW;
+        }
+        if (bottom - top < minH) {
+          if (handleDir.includes('n')) top = bottom - minH;
+          else bottom = top + minH;
+        }
+        left = clampValue(left, 0, slideRect.width);
+        right = clampValue(right, 0, slideRect.width);
+        top = clampValue(top, 0, slideRect.height);
+        bottom = clampValue(bottom, 0, slideRect.height);
+      }
+
+      return { left, top, right, bottom, width: right - left, height: bottom - top };
+    }
+
+    function collectSnapAnchors(slide, excludedElements) {
+      const slideRect = slide.getBoundingClientRect();
+      const anchors = {
+        x: [slideRect.width / 2, CANVAS_GUIDE_MARGIN_PX, slideRect.width - CANVAS_GUIDE_MARGIN_PX],
+        y: [slideRect.height / 2, CANVAS_GUIDE_MARGIN_PX, slideRect.height - CANVAS_GUIDE_MARGIN_PX]
+      };
+
+      slide.querySelectorAll(EDITOR_SELECTABLE_SELECTOR).forEach(el => {
+        if (!isEligibleEditableElement(el)) return;
+        if (excludedElements.has(el)) return;
+        const rect = el.getBoundingClientRect();
+        const left = rect.left - slideRect.left;
+        const right = rect.right - slideRect.left;
+        const top = rect.top - slideRect.top;
+        const bottom = rect.bottom - slideRect.top;
+        anchors.x.push(left, (left + right) / 2, right);
+        anchors.y.push(top, (top + bottom) / 2, bottom);
+      });
+
+      return anchors;
+    }
+
+    function bestSnap(targets, anchors) {
+      let best = null;
+      targets.forEach(target => {
+        anchors.forEach(anchor => {
+          const delta = anchor - target.value;
+          const absDelta = Math.abs(delta);
+          if (absDelta <= SNAP_THRESHOLD_PX && (!best || absDelta < best.absDelta)) {
+            best = { delta, absDelta, anchor, key: target.key };
+          }
+        });
+      });
+      return best;
+    }
+
+    function applySnapToBounds(bounds, anchors, mode, handleDir = '') {
+      let { left, top, right, bottom } = bounds;
+      const centerX = (left + right) / 2;
+      const centerY = (top + bottom) / 2;
+      const guides = [];
+
+      const xTargets = mode === 'drag'
+        ? [{ key: 'left', value: left }, { key: 'centerX', value: centerX }, { key: 'right', value: right }]
+        : handleDir.includes('w')
+          ? [{ key: 'left', value: left }]
+          : handleDir.includes('e')
+            ? [{ key: 'right', value: right }]
+            : [{ key: 'centerX', value: centerX }];
+
+      const yTargets = mode === 'drag'
+        ? [{ key: 'top', value: top }, { key: 'centerY', value: centerY }, { key: 'bottom', value: bottom }]
+        : handleDir.includes('n')
+          ? [{ key: 'top', value: top }]
+          : handleDir.includes('s')
+            ? [{ key: 'bottom', value: bottom }]
+            : [{ key: 'centerY', value: centerY }];
+
+      const snapX = bestSnap(xTargets, anchors.x);
+      if (snapX) {
+        if (mode === 'drag' || snapX.key === 'centerX') {
+          left += snapX.delta;
+          right += snapX.delta;
+        } else if (snapX.key === 'left') {
+          left += snapX.delta;
+        } else if (snapX.key === 'right') {
+          right += snapX.delta;
+        }
+        guides.push({ axis: 'x', position: snapX.anchor });
+      }
+
+      const snapY = bestSnap(yTargets, anchors.y);
+      if (snapY) {
+        if (mode === 'drag' || snapY.key === 'centerY') {
+          top += snapY.delta;
+          bottom += snapY.delta;
+        } else if (snapY.key === 'top') {
+          top += snapY.delta;
+        } else if (snapY.key === 'bottom') {
+          bottom += snapY.delta;
+        }
+        guides.push({ axis: 'y', position: snapY.anchor });
+      }
+
+      return { left, top, right, bottom, width: right - left, height: bottom - top, guides };
+    }
+
+    function applyBoundsToSelection(session, bounds) {
+      if (session.type === 'drag') {
+        const dx = bounds.left - session.startBounds.left;
+        const dy = bounds.top - session.startBounds.top;
+        session.items.forEach(item => {
+          const nextAbsLeft = item.startAbsLeft + dx;
+          const nextAbsTop = item.startAbsTop + dy;
+          item.element.style.left = `${nextAbsLeft - item.parentOffsetLeft}px`;
+          item.element.style.top = `${nextAbsTop - item.parentOffsetTop}px`;
+        });
+        return;
+      }
+
+      const scaleX = session.startBounds.width === 0 ? 1 : bounds.width / session.startBounds.width;
+      const scaleY = session.startBounds.height === 0 ? 1 : bounds.height / session.startBounds.height;
+      session.items.forEach(item => {
+        const relLeft = item.startAbsLeft - session.startBounds.left;
+        const relTop = item.startAbsTop - session.startBounds.top;
+        const nextAbsLeft = bounds.left + (relLeft * scaleX);
+        const nextAbsTop = bounds.top + (relTop * scaleY);
+
+        item.element.style.left = `${nextAbsLeft - item.parentOffsetLeft}px`;
+        item.element.style.top = `${nextAbsTop - item.parentOffsetTop}px`;
+
+        if (shouldResizeWidth(item.element)) {
+          item.element.style.width = `${Math.max(MIN_ELEMENT_SIZE_PX, item.startWidth * scaleX)}px`;
+        }
+        if (shouldResizeHeight(item.element)) {
+          item.element.style.height = `${Math.max(MIN_ELEMENT_SIZE_PX, item.startHeight * scaleY)}px`;
+        }
+      });
+    }
+
+    function nudgeSelectedElements(dx, dy) {
+      const doc = getIframeDoc();
+      const slide = getActiveSlide(doc);
+      if (!doc || !slide || selectedElements.length === 0) return;
+      const slideRect = slide.getBoundingClientRect();
+
+      selectedElements.forEach(el => {
+        const rect = el.getBoundingClientRect();
+        const parent = getClosestPositionedAncestor(el);
+        const parentRect = parent.getBoundingClientRect();
+
+        el.style.position = 'absolute';
+        el.style.margin = '0';
+        const nextAbsLeft = clampValue(rect.left - slideRect.left + dx, 0, Math.max(0, slideRect.width - rect.width));
+        const nextAbsTop = clampValue(rect.top - slideRect.top + dy, 0, Math.max(0, slideRect.height - rect.height));
+        el.style.left = `${nextAbsLeft - (parentRect.left - slideRect.left)}px`;
+        el.style.top = `${nextAbsTop - (parentRect.top - slideRect.top)}px`;
+      });
+
+      syncSelectionOverlay();
+      updateLayersList();
+      saveHistoryState(true);
+      triggerAutoSave();
+      triggerAutoVersion('Auto: Nudged Element');
+    }
+
+    // Element dragging + resize with smart guides and snap behavior
+    function setupIframeDragging(doc) {
+      let session = null;
+
+      doc.addEventListener('dragstart', (e) => {
+        e.preventDefault();
+      }, true);
+
+      doc.body.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        const slide = getActiveSlide(doc);
+        if (!slide) return;
+
+        const handle = e.target.closest('.editor-resize-handle');
+        const overlay = e.target.closest('#editorSelectionOverlay');
+        let dragTarget = resolveEditableTarget(e.target);
+
+        if (!handle && !overlay && !dragTarget) return;
+
+        if (dragTarget && !selectedElements.includes(dragTarget)) {
+          selectElement(dragTarget, { additive: e.shiftKey, toggle: e.shiftKey });
+        }
+
+        if (!handle && !overlay && dragTarget && selectedElements.length === 0) {
+          selectElement(dragTarget);
+        }
+
+        if (selectedElements.length === 0) return;
+
+        const slideRect = slide.getBoundingClientRect();
+        const startBounds = getSelectionBounds(selectedElements);
+        if (!startBounds) return;
+        const excluded = new Set(selectedElements);
+        const anchors = collectSnapAnchors(slide, excluded);
+
+        const items = selectedElements.map(el => {
+          const rect = el.getBoundingClientRect();
+          const parent = getClosestPositionedAncestor(el);
+          const parentRect = parent.getBoundingClientRect();
+          const startAbsLeft = rect.left - slideRect.left;
+          const startAbsTop = rect.top - slideRect.top;
+          const startWidth = rect.width;
+          const startHeight = rect.height;
+
+          el.style.position = 'absolute';
+          el.style.margin = '0';
+          el.style.left = `${rect.left - parentRect.left}px`;
+          el.style.top = `${rect.top - parentRect.top}px`;
+          el.classList.add('editor-dragging');
+
+          return {
+            element: el,
+            startAbsLeft,
+            startAbsTop,
+            startWidth,
+            startHeight,
+            parentOffsetLeft: parentRect.left - slideRect.left,
+            parentOffsetTop: parentRect.top - slideRect.top
+          };
+        });
+
+        session = {
+          type: handle ? 'resize' : 'drag',
+          handleDir: handle ? handle.getAttribute('data-dir') : '',
+          startX: e.clientX,
+          startY: e.clientY,
+          slideRect,
+          startBounds,
+          items,
+          anchors,
+          moved: false
+        };
+
+        isDraggingElement = true;
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
+
+      doc.body.addEventListener('mousemove', (e) => {
+        if (!session) return;
+        const dx = e.clientX - session.startX;
+        const dy = e.clientY - session.startY;
+        if (Math.abs(dx) > 0.2 || Math.abs(dy) > 0.2) {
+          session.moved = true;
+        }
+        let left = session.startBounds.left;
+        let top = session.startBounds.top;
+        let right = session.startBounds.right;
+        let bottom = session.startBounds.bottom;
+
+        if (session.type === 'drag') {
+          left += dx;
+          right += dx;
+          top += dy;
+          bottom += dy;
+        } else {
+          if (session.handleDir.includes('w')) left += dx;
+          if (session.handleDir.includes('e')) right += dx;
+          if (session.handleDir.includes('n')) top += dy;
+          if (session.handleDir.includes('s')) bottom += dy;
+        }
+
+        let bounds = normalizeBounds({ left, top, right, bottom }, session.slideRect, session.type, session.handleDir);
+        bounds = applySnapToBounds(bounds, session.anchors, session.type, session.handleDir);
+        bounds = normalizeBounds(bounds, session.slideRect, session.type, session.handleDir);
+
+        applyBoundsToSelection(session, bounds);
+        syncSelectionOverlay();
+        renderGuides(bounds.guides);
+        e.preventDefault();
+      }, true);
+
+      doc.body.addEventListener('mouseup', () => {
+        if (!session) return;
+        const didMove = session.moved;
+        session.items.forEach(item => item.element.classList.remove('editor-dragging'));
+        session = null;
+        isDraggingElement = false;
+        hideGuides();
+        syncSelectionOverlay();
+        syncInspectorForSelection();
+        updateLayersList();
+        if (didMove) {
+          saveHistoryState();
+          triggerAutoSave();
+          triggerAutoVersion('Auto: Moved Element');
+        }
+      }, true);
+    }
+
+    // Insert New elements (perfectly centered on native 1080p slide)
+    function insertElement(type) {
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      
+      const activeSlide = iframeDoc.querySelector('.slide-active') || iframeDoc.querySelector('.slide');
+      if (!activeSlide) return;
+
+      const offset = (activeSlide.children.length * 15) % 150;
+      
+      let newEl;
+      if (type === 'h2') {
+        newEl = iframeDoc.createElement('h2');
+        newEl.textContent = 'New Heading';
+        newEl.style.fontSize = '48px';
+        newEl.style.fontWeight = '700';
+        newEl.style.color = '#ffffff';
+        newEl.style.fontFamily = "'Geist', sans-serif";
+        newEl.style.position = 'absolute';
+        newEl.style.left = `calc(30% + ${offset}px)`;
+        newEl.style.top = `calc(40% + ${offset}px)`;
+      } else if (type === 'p') {
+        newEl = iframeDoc.createElement('p');
+        newEl.textContent = 'Enter text descriptions here.';
+        newEl.style.fontSize = '20px';
+        newEl.style.fontWeight = '400';
+        newEl.style.color = '#bcc9c6';
+        newEl.style.fontFamily = "'Geist', sans-serif";
+        newEl.style.position = 'absolute';
+        newEl.style.left = `calc(30% + ${offset}px)`;
+        newEl.style.top = `calc(50% + ${offset}px)`;
+      } else if (type === 'img') {
+        newEl = iframeDoc.createElement('img');
+        newEl.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800';
+        newEl.style.width = '450px';
+        newEl.style.borderRadius = '12px';
+        newEl.style.position = 'absolute';
+        newEl.style.left = `calc(40% + ${offset}px)`;
+        newEl.style.top = `calc(30% + ${offset}px)`;
+      } else if (type === 'shape') {
+        newEl = iframeDoc.createElement('div');
+        newEl.className = 'editor-shape';
+        newEl.style.width = '200px';
+        newEl.style.height = '200px';
+        newEl.style.backgroundColor = '#7028d0';
+        newEl.style.borderRadius = '16px';
+        newEl.style.position = 'absolute';
+        newEl.style.left = `calc(45% + ${offset}px)`;
+        newEl.style.top = `calc(40% + ${offset}px)`;
+      } else if (type === 'table') {
+        newEl = iframeDoc.createElement('table');
+        newEl.className = 'editor-table border-collapse border border-white/10 rounded-lg text-left text-sm';
+        newEl.style.width = '600px';
+        newEl.style.position = 'absolute';
+        newEl.style.left = `calc(30% + ${offset}px)`;
+        newEl.style.top = `calc(35% + ${offset}px)`;
+        newEl.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+        newEl.style.backgroundColor = 'rgba(10, 10, 10, 0.6)';
+        newEl.style.color = '#ffffff';
+        newEl.style.borderRadius = '8px';
+        newEl.style.fontFamily = "'Geist', sans-serif";
+        
+        newEl.innerHTML = `
+          <thead>
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.15)">
+              <th style="padding: 10px; font-weight: 600; color: #7028d0">Metric</th>
+              <th style="padding: 10px; font-weight: 600; color: #7028d0">Value</th>
+              <th style="padding: 10px; font-weight: 600; color: #7028d0">Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08)">
+              <td style="padding: 10px;">Accuracy</td>
+              <td style="padding: 10px;">94.2%</td>
+              <td style="padding: 10px; color: #10b981">+2.4%</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px;">Latency</td>
+              <td style="padding: 10px;">12ms</td>
+              <td style="padding: 10px; color: #10b981">-4ms</td>
+            </tr>
+          </tbody>
+        `;
+      } else if (type === 'code') {
+        newEl = iframeDoc.createElement('pre');
+        newEl.className = 'editor-code border border-white/10 rounded-lg p-4 font-mono text-xs overflow-x-auto';
+        newEl.style.width = '550px';
+        newEl.style.position = 'absolute';
+        newEl.style.left = `calc(35% + ${offset}px)`;
+        newEl.style.top = `calc(40% + ${offset}px)`;
+        newEl.style.backgroundColor = '#0c0c0e';
+        newEl.style.color = '#a9b1d6';
+        newEl.style.borderRadius = '10px';
+        newEl.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+        
+        const codeNode = iframeDoc.createElement('code');
+        codeNode.textContent = `// Sample algorithm block\nfunction trainEpoch(model, data) {\n  const loss = model.computeLoss(data);\n  loss.backward();\n  model.step();\n  return loss.val;\n}`;
+        newEl.appendChild(codeNode);
+      }
+      
+      if (newEl) {
+        newEl.classList.add('editor-hoverable');
+        activeSlide.appendChild(newEl);
+        
+        selectElement(newEl);
+        generateThumbnails();
+        saveHistoryState();
+        triggerAutoSave();
+        updateLayersList();
+        triggerAutoVersion('Auto: Added ' + type.toUpperCase());
+      }
+    }
+
+    // Rearrange Selected Element Layers
+    function arrangeElementLayer(action) {
+      if (selectedElements.length === 0) return;
+      selectedElements.forEach(el => {
+        const zVal = parseInt(el.style.zIndex) || 0;
+        if (action === 'front') {
+          el.style.zIndex = '999';
+        } else if (action === 'back') {
+          el.style.zIndex = '0';
+        } else if (action === 'forward') {
+          el.style.zIndex = (zVal + 1).toString();
+        } else if (action === 'backward') {
+          el.style.zIndex = Math.max(0, zVal - 1).toString();
+        }
+      });
+
+      if (selectedElements[0]) {
+        document.getElementById('elZIndex').value = selectedElements[0].style.zIndex || 0;
+      }
+      saveHistoryState();
+      triggerAutoSave();
+      updateLayersList();
+      triggerAutoVersion('Auto: Rearranged Layers');
+    }
+
+    // Wallpaper / Background styles Tabs
+    function setWallpaperTab(tab) {
+      wallpaperTab = tab;
+      
+      const solidTab = document.getElementById('wpTabSolid');
+      const presetsTab = document.getElementById('wpTabPresets');
+      const customTab = document.getElementById('wpTabCustom');
+      
+      const solidPanel = document.getElementById('wpPanelSolid');
+      const presetsPanel = document.getElementById('wpPanelPresets');
+      const customPanel = document.getElementById('wpPanelCustom');
+      
+      // Clear tab visual selection styles
+      [solidTab, presetsTab, customTab].forEach(t => {
+        t.className = 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all';
+      });
+      
+      // Hide all panels
+      solidPanel.classList.add('hidden');
+      presetsPanel.classList.add('hidden');
+      customPanel.classList.add('hidden');
+      
+      // Activate
+      if (tab === 'solid') {
+        solidTab.className = 'py-1 text-center text-[10px] font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all';
+        solidPanel.classList.remove('hidden');
+      } else if (tab === 'presets') {
+        presetsTab.className = 'py-1 text-center text-[10px] font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all';
+        presetsPanel.classList.remove('hidden');
+      } else if (tab === 'custom') {
+        customTab.className = 'py-1 text-center text-[10px] font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all';
+        customPanel.classList.remove('hidden');
+      }
+    }
+
+    // Render preset solid & gradient options
+    function renderWallpaperPresets() {
+      const solidsContainer = document.getElementById('wallpaperSolidsList');
+      const gradientsContainer = document.getElementById('wallpaperGradientsList');
+      
+      // Inject Solids swatches
+      solidsContainer.innerHTML = wallpaperPresetsData.solid.map(p => `
+        <button onclick="applyPresetWallpaper('${p.value}')" class="h-8 rounded border border-white/10 hover:border-[#7028d0]/50 hover:scale-105 active:scale-95 transition-all relative overflow-hidden group" title="${p.name}" style="background: ${p.value};">
+          <span class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100"></span>
+        </button>
+      `).join('');
+      
+      // Inject Gradients swatches
+      gradientsContainer.innerHTML = wallpaperPresetsData.gradient.map(p => `
+        <button onclick="applyPresetWallpaper('${p.value}')" class="h-8 rounded border border-white/10 hover:border-[#7028d0]/50 hover:scale-105 active:scale-95 transition-all relative overflow-hidden group" title="${p.name}" style="background: ${p.value};">
+          <span class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100"></span>
+        </button>
+      `).join('');
+    }
+
+    function applyPresetWallpaper(val, isCustomInput = false) {
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const activeSlide = iframeDoc.querySelector('.slide-active') || iframeDoc.querySelector('.slide');
+      
+      if (activeSlide) {
+        activeSlide.style.background = val;
+        generateThumbnails();
+        saveHistoryState();
+        triggerAutoSave();
+        if (!isCustomInput) {
+          triggerAutoVersion('Auto: Changed Background');
+        }
+      }
+    }
+
+    function setCustomGradientType(type) {
+      customGradientType = type;
+      const linearBtn = document.getElementById('cgLinearBtn');
+      const radialBtn = document.getElementById('cgRadialBtn');
+      const angleGroup = document.getElementById('cgAngleGroup');
+      
+      if (type === 'linear') {
+        linearBtn.className = 'py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all';
+        radialBtn.className = 'py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all';
+        angleGroup.classList.remove('hidden');
+      } else {
+        radialBtn.className = 'py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all';
+        linearBtn.className = 'py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all';
+        angleGroup.classList.add('hidden');
+      }
+      
+      applyCustomGradient();
+    }
+
+    // Build background CSS based on custom stops
+    function applyCustomGradient() {
+      const color1 = document.getElementById('cgColor1').value;
+      const color2 = document.getElementById('cgColor2').value;
+      const angle = document.getElementById('cgAngle').value;
+      
+      let gradientVal = '';
+      if (customGradientType === 'linear') {
+        gradientVal = `linear-gradient(${angle}deg, ${color1} 0%, ${color2} 100%)`;
+      } else {
+        gradientVal = `radial-gradient(circle, ${color1} 0%, ${color2} 100%)`;
+      }
+      
+      applyPresetWallpaper(gradientVal, true);
+    }
+
+    function applyWallpaperToAllSlides() {
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const activeSlide = iframeDoc.querySelector('.slide-active') || iframeDoc.querySelector('.slide');
+      
+      if (!activeSlide) return;
+      const paint = activeSlide.style.background;
+      if (!paint) return;
+      
+      const slides = iframeDoc.querySelectorAll('.slide');
+      slides.forEach(slide => {
+        slide.style.background = paint;
+      });
+      
+      generateThumbnails();
+      saveHistoryState();
+      triggerAutoSave();
+      triggerAutoVersion('Auto: Applied Background to All Slides');
+      
+      alert("Successfully applied active background paint to all slides in the deck.");
+    }
+
+    // 4. Zoom Engine (Center workspace stage)
+    function applyZoom(scaleVal) {
+      const stage = document.getElementById('canvasStage');
+      const scroller = document.getElementById('canvasScrollContainer');
+      const wrapper = document.getElementById('canvasWrapper');
+      const select = document.getElementById('zoomSelect');
+      
+      if (!stage || !scroller || !wrapper) return;
+      
+      if (scaleVal === 'fit') {
+        const stageWidth = stage.clientWidth - 48;
+        const stageHeight = stage.clientHeight - 48;
+        const scaleX = stageWidth / 1920;
+        const scaleY = stageHeight / 1080;
+        zoomFactor = Math.min(scaleX, scaleY);
+        zoomFactor = Math.max(0.15, Math.min(1.5, zoomFactor)); // bounds fitting
+        select.value = 'fit';
+      } else {
+        zoomFactor = parseFloat(scaleVal);
+        select.value = scaleVal;
+      }
+      
+      // Store in local storage
+      localStorage.setItem('presentationZoom', scaleVal);
+      
+      // Apply scale
+      scroller.style.width = (1920 * zoomFactor) + 'px';
+      scroller.style.height = (1080 * zoomFactor) + 'px';
+      wrapper.style.transform = `translate(-50%, -50%) scale(${zoomFactor})`;
+    }
+
+    function zoomIn() {
+      const select = document.getElementById('zoomSelect');
+      const zoomOptions = [0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5];
+      let nextVal;
+      
+      if (select.value === 'fit') {
+        nextVal = zoomOptions.find(opt => opt > zoomFactor) || 1.5;
+      } else {
+        const idx = zoomOptions.indexOf(parseFloat(select.value));
+        nextVal = idx === -1 ? 1.0 : zoomOptions[Math.min(zoomOptions.length - 1, idx + 1)];
+      }
+      
+      applyZoom(nextVal.toString());
+    }
+
+    function zoomOut() {
+      const select = document.getElementById('zoomSelect');
+      const zoomOptions = [0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5];
+      let nextVal;
+      
+      if (select.value === 'fit') {
+        nextVal = [...zoomOptions].reverse().find(opt => opt < zoomFactor) || 0.25;
+      } else {
+        const idx = zoomOptions.indexOf(parseFloat(select.value));
+        nextVal = idx === -1 ? 1.0 : zoomOptions[Math.max(0, idx - 1)];
+      }
+      
+      applyZoom(nextVal.toString());
+    }
+
+    function zoomSelectChange(val) {
+      applyZoom(val);
+    }
+
+    // 5. Undo/Redo Engine
+    let undoDebounceTimer = null;
+    function saveHistoryState(debounce = false) {
+      if (debounce) {
+        clearTimeout(undoDebounceTimer);
+        undoDebounceTimer = setTimeout(() => {
+          captureState();
+        }, 800);
+      } else {
+        captureState();
+      }
+    }
+
+    function captureState() {
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!iframeDoc) return;
+      
+      const htmlSnapshot = iframeDoc.documentElement.innerHTML;
+      
+      // Avoid duplicated entries
+      if (undoStack.length > 0 && undoStack[undoStack.length - 1] === htmlSnapshot) {
+        return;
+      }
+      
+      undoStack.push(htmlSnapshot);
+      // Caps stack size
+      if (undoStack.length > 50) {
+        undoStack.shift();
+      }
+      
+      redoStack = []; // Reset redo
+      updateHistoryButtons();
+    }
+
+    function updateHistoryButtons() {
+      document.getElementById('studioUndoBtn').disabled = undoStack.length <= 1;
+      document.getElementById('studioRedoBtn').disabled = redoStack.length === 0;
+    }
+
+    function editorUndo() {
+      if (undoStack.length <= 1) return;
+      
+      const currentState = undoStack.pop();
+      redoStack.push(currentState);
+      
+      const prevState = undoStack[undoStack.length - 1];
+      restoreFrameFromHtml(prevState);
+      updateHistoryButtons();
+      triggerAutoSave();
+    }
+
+    function editorRedo() {
+      if (redoStack.length === 0) return;
+      
+      const nextState = redoStack.pop();
+      undoStack.push(nextState);
+      
+      restoreFrameFromHtml(nextState);
+      updateHistoryButtons();
+      triggerAutoSave();
+    }
+
+    function restoreFrameFromHtml(html) {
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      
+      // Preserve selection index to avoid jumping slides on undo/redo
+      const currentIdx = currentSlideIndex;
+      selectedElements = [];
+      selectedElement = null;
+      
+      iframeDoc.documentElement.innerHTML = html;
+      
+      // Re-bind listeners
+      makeElementsHoverable(iframeDoc);
+      setupIframeDragging(iframeDoc);
+      
+      // Re-generate and load index state
+      generateThumbnails();
+      setActiveSlide(currentIdx);
+      syncSelectionOverlay();
+      syncInspectorForSelection();
+    }
+
+    // 6. AutoSave debouncing pipeline
+    let autoSaveDebounceTimer = null;
+    function triggerAutoSave() {
+      const statusEl = document.getElementById('autoSaveStatus');
+      if (statusEl) {
+        statusEl.innerHTML = `<span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Saving...</span>`;
+      }
+      
+      clearTimeout(autoSaveDebounceTimer);
+      autoSaveDebounceTimer = setTimeout(async () => {
+        const iframe = document.getElementById('studioFrame');
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        if (!iframeDoc || !currentPresentationUrl) return;
+        
+        // Clone and clean HTML
+        const clone = iframeDoc.documentElement.cloneNode(true);
+        const styleTag = clone.querySelector('#editor-style-tag');
+        if (styleTag) styleTag.remove();
+        
+        const themeOverrideTag = clone.querySelector('#editor-theme-override-tag');
+        if (themeOverrideTag) themeOverrideTag.remove();
+        const selectionOverlayTag = clone.querySelector('#editorSelectionOverlay');
+        if (selectionOverlayTag) selectionOverlayTag.remove();
+        const guidesLayerTag = clone.querySelector('#editorGuidesLayer');
+        if (guidesLayerTag) guidesLayerTag.remove();
+        
+        clone.querySelectorAll('.editor-selected').forEach(el => {
+          el.classList.remove('editor-selected');
+        });
+        clone.querySelectorAll('.editor-hoverable').forEach(el => {
+          el.classList.remove('editor-hoverable');
+        });
+        clone.querySelectorAll('.editor-dragging').forEach(el => {
+          el.classList.remove('editor-dragging');
+        });
+        
+        // Restore default dark theme class on disk
+        clone.classList.add('dark');
+        
+        const cleanHtml = '<!DOCTYPE html>\n' + clone.outerHTML;
+        
+        try {
+          const response = await fetch('/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              htmlPath: currentPresentationUrl,
+              htmlContent: cleanHtml,
+              isAutoSave: true
+            })
+          });
+          
+          const data = await response.json();
+          if (data.success) {
+            if (statusEl) {
+              statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
+            }
+          } else {
+            if (statusEl) {
+              statusEl.innerHTML = `<span class="text-rose-400">AutoSave Failed</span>`;
+            }
+          }
+        } catch (err) {
+          console.error('AutoSave Error:', err);
+          if (statusEl) {
+            statusEl.innerHTML = `<span class="text-rose-400">Network Error</span>`;
+          }
+        }
+      }, 1500); // 1.5s debounce delay
+    }
+
+    // Custom styled checkpoint version modal controls
+    function openSaveVersionModal() {
+      const modal = document.getElementById('saveVersionModal');
+      const content = document.getElementById('saveVersionModalContent');
+      const input = document.getElementById('versionCheckpointName');
+      
+      input.value = '';
+      modal.classList.remove('hidden');
+      modal.offsetHeight; // trigger reflow
+      modal.classList.remove('opacity-0');
+      modal.classList.add('opacity-100');
+      content.classList.remove('scale-95');
+      content.classList.add('scale-100');
+      
+      setTimeout(() => input.focus(), 50);
+    }
+    
+    function closeSaveVersionModal() {
+      const modal = document.getElementById('saveVersionModal');
+      const content = document.getElementById('saveVersionModalContent');
+      
+      modal.classList.remove('opacity-100');
+      modal.classList.add('opacity-0');
+      content.classList.remove('scale-100');
+      content.classList.add('scale-95');
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 200);
+    }
+    
+    async function submitSaveVersion() {
+      const input = document.getElementById('versionCheckpointName');
+      const versionName = input.value.trim();
+      if (!versionName) {
+        alert("Please enter a version name.");
+        return;
+      }
+      
+      closeSaveVersionModal();
+      
+      const saveBtn = document.getElementById('studioSaveBtn');
+      const statusEl = document.getElementById('autoSaveStatus');
+      
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>Creating version...</span>`;
+      
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!iframeDoc) return;
+      
+      const clone = iframeDoc.documentElement.cloneNode(true);
+      const styleTag = clone.querySelector('#editor-style-tag');
+      if (styleTag) styleTag.remove();
+      
+      const themeOverrideTag = clone.querySelector('#editor-theme-override-tag');
+      if (themeOverrideTag) themeOverrideTag.remove();
+      const selectionOverlayTag = clone.querySelector('#editorSelectionOverlay');
+      if (selectionOverlayTag) selectionOverlayTag.remove();
+      const guidesLayerTag = clone.querySelector('#editorGuidesLayer');
+      if (guidesLayerTag) guidesLayerTag.remove();
+      
+      clone.querySelectorAll('.editor-selected').forEach(el => {
+        el.classList.remove('editor-selected');
+      });
+      clone.querySelectorAll('.editor-hoverable').forEach(el => {
+        el.classList.remove('editor-hoverable');
+      });
+      clone.querySelectorAll('.editor-dragging').forEach(el => {
+        el.classList.remove('editor-dragging');
+      });
+      
+      // Restore default dark theme class on disk
+      clone.classList.add('dark');
+      
+      const cleanHtml = '<!DOCTYPE html>\n' + clone.outerHTML;
+      
+      try {
+        const response = await fetch('/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            htmlPath: currentPresentationUrl,
+            htmlContent: cleanHtml,
+            isAutoSave: false, // create version backup
+            versionLabel: versionName
+          })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          alert('Successfully saved named version backup checkpoint!');
+          loadVersions(); // Reload versions lists dropdown
+        } else {
+          alert(`Save version failed: ${data.error}`);
+        }
+      } catch (err) {
+        alert(`Network error saving version: ${err.message}`);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] font-bold">bookmarks</span><span>Save Version</span>`;
+        if (statusEl) {
+          statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
+        }
+      }
+    }
+
+    // Automatically save a labeled checkpoint version in the background
+    let autoVersionTimers = {};
+
+    async function triggerAutoVersion(label) {
+      // Frequent operations (e.g. dragging, typing) get debounced on 10s delay.
+      // Structural operations (e.g. Adding/Deleting Slide, Adding/Deleting Element) save immediately.
+      const isFrequentAction = label.includes('Moved') || label.includes('Edited') || label.includes('Changed') || label.includes('Rearranged');
+      
+      if (isFrequentAction) {
+        const timerKey = 'frequent_action';
+        clearTimeout(autoVersionTimers[timerKey]);
+        autoVersionTimers[timerKey] = setTimeout(() => {
+          executeSaveAutoVersion(label);
+        }, 10000); // 10 seconds delay
+      } else {
+        // Execute immediately
+        executeSaveAutoVersion(label);
+      }
+    }
+
+    async function executeSaveAutoVersion(label) {
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!iframeDoc || !currentPresentationUrl) return;
+      
+      const clone = iframeDoc.documentElement.cloneNode(true);
+      
+      // Clean up editor specific elements/classes
+      const styleTag = clone.querySelector('#editor-style-tag');
+      if (styleTag) styleTag.remove();
+      
+      const themeOverrideTag = clone.querySelector('#editor-theme-override-tag');
+      if (themeOverrideTag) themeOverrideTag.remove();
+      const selectionOverlayTag = clone.querySelector('#editorSelectionOverlay');
+      if (selectionOverlayTag) selectionOverlayTag.remove();
+      const guidesLayerTag = clone.querySelector('#editorGuidesLayer');
+      if (guidesLayerTag) guidesLayerTag.remove();
+      
+      clone.querySelectorAll('.editor-selected').forEach(el => {
+        el.classList.remove('editor-selected');
+      });
+      clone.querySelectorAll('.editor-hoverable').forEach(el => {
+        el.classList.remove('editor-hoverable');
+      });
+      clone.querySelectorAll('.editor-dragging').forEach(el => {
+        el.classList.remove('editor-dragging');
+      });
+      
+      // Restore default dark theme class on disk
+      clone.classList.add('dark');
+      
+      const cleanHtml = '<!DOCTYPE html>\n' + clone.outerHTML;
+      
+      try {
+        const response = await fetch('/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            htmlPath: currentPresentationUrl,
+            htmlContent: cleanHtml,
+            isAutoSave: false, // creates version backup!
+            versionLabel: label
+          })
+        });
+        const data = await response.json();
+        if (data.success) {
+          console.log(`Auto-created version checkpoint: ${label}`);
+          loadVersions(); // Refresh dropdown
+        }
+      } catch (err) {
+        console.error('Failed to auto-create version backup:', err);
+      }
+    }
+
+    // 7. Versions and Backups listing
+    function toggleVersionDropdown() {
+      const menu = document.getElementById('versionsDropdown');
+      menu.classList.toggle('hidden');
+    }
+
+    // Fetch versions checklist
+    async function loadVersions() {
+      if (!currentPresentationUrl) return;
+      try {
+        const response = await fetch(`/api/versions?htmlPath=${encodeURIComponent(currentPresentationUrl)}`);
+        const versions = await response.json();
+        
+        const list = document.getElementById('versionsList');
+        if (versions.length === 0) {
+          list.innerHTML = `<span class="text-zinc-500 text-center py-2 text-[11px]">No versions saved yet</span>`;
+          return;
+        }
+        
+        // Extract presentation base filename prefix
+        const urlParts = currentPresentationUrl.split('/');
+        const lastPart = urlParts[urlParts.length - 1];
+        const baseName = lastPart.substring(0, lastPart.lastIndexOf('.'));
+        const prefix = baseName + '_';
+        
+        list.innerHTML = versions.map(v => {
+          const date = new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + 
+                       new Date(v.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
+          
+          let cleanName = v.filename;
+          if (cleanName.startsWith(prefix)) {
+            cleanName = cleanName.substring(prefix.length);
+          }
+          const extIndex = cleanName.lastIndexOf('.');
+          if (extIndex !== -1) {
+            cleanName = cleanName.substring(0, extIndex);
+          }
+          
+          // Timestamp is YYYYMMDD_HHMMSS_mmm (19 chars)
+          let label = 'Manual Checkpoint';
+          if (cleanName.length > 19) {
+            const rawLabel = cleanName.substring(20);
+            label = rawLabel
+              .replace(/__/g, ': ')
+              .replace(/_/g, ' ');
+          } else if (v.filename.includes('Auto')) {
+            label = 'Auto Saved Version';
+          }
+          
+          return `
+            <div class="w-full px-3 py-1.5 hover:bg-white/5 rounded transition-all font-sans text-xs flex justify-between items-center group/item text-zinc-300 relative">
+              <div onclick="restoreVersion('${v.filename}')" class="flex flex-col cursor-pointer flex-1 truncate pr-2">
+                <span class="truncate font-semibold text-zinc-200 group-hover/item:text-white">${label}</span>
+                <span class="text-zinc-500 font-mono text-[9px] mt-0.5">${date}</span>
+              </div>
+              <div class="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                <button onclick="event.stopPropagation(); promptRenameVersion('${v.filename}', '${label.replace(/'/g, "\\'")}')" class="p-1 hover:bg-white/10 hover:text-[#7028d0] text-zinc-400 rounded transition-all flex items-center justify-center" title="Rename Version">
+                  <span class="material-symbols-outlined text-[14px]">edit</span>
+                </button>
+                <button onclick="event.stopPropagation(); deleteVersion('${v.filename}')" class="p-1 hover:bg-rose-500/20 hover:text-rose-400 text-zinc-400 rounded transition-all flex items-center justify-center" title="Delete Version">
+                  <span class="material-symbols-outlined text-[14px]">delete</span>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Failed to load version history:', err);
+      }
+    }
+
+    // Rollback backup version
+    async function restoreVersion(filename) {
+      if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/restore', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            htmlPath: currentPresentationUrl,
+            versionFilename: filename
+          })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          alert('Rollback successfully restored!');
+          document.getElementById('versionsDropdown').classList.add('hidden');
+          // Reload presentation
+          launchStudioEditor(currentPresentationUrl, currentTitle, currentCategory);
+        } else {
+          alert(`Restore failed: ${data.error}`);
+        }
+      } catch (err) {
+        alert(`Network error restoring version: ${err.message}`);
+      }
+    }
+
+    function promptRenameVersion(filename, currentLabel) {
+      renamingFilename = filename;
+      document.getElementById('newVersionNameInput').value = currentLabel;
+      
+      const modal = document.getElementById('renameVersionModal');
+      const content = document.getElementById('renameVersionModalContent');
+      
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.add('opacity-100');
+        content.classList.remove('scale-95');
+        content.classList.add('scale-100');
+        document.getElementById('newVersionNameInput').focus();
+        document.getElementById('newVersionNameInput').select();
+      }, 10);
+    }
+    
+    function closeRenameVersionModal() {
+      const modal = document.getElementById('renameVersionModal');
+      const content = document.getElementById('renameVersionModalContent');
+      
+      modal.classList.remove('opacity-100');
+      content.classList.remove('scale-100');
+      content.classList.add('scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 200);
+    }
+    
+    async function submitRenameVersion() {
+      const newLabel = document.getElementById('newVersionNameInput').value.trim();
+      if (!newLabel) return;
+      
+      const btn = document.getElementById('confirmRenameVersionBtn');
+      btn.disabled = true;
+      btn.textContent = 'Renaming...';
+      
+      try {
+        const response = await fetch('/api/versions/rename', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            htmlPath: currentPresentationUrl,
+            versionFilename: renamingFilename,
+            newLabel
+          })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          closeRenameVersionModal();
+          loadVersions();
+        } else {
+          alert(`Rename failed: ${data.error}`);
+        }
+      } catch (err) {
+        alert(`Error renaming version: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Rename';
+      }
+    }
+
+    async function deleteVersion(filename) {
+      if (!confirm('Are you sure you want to delete this version? This action cannot be undone.')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/versions/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            htmlPath: currentPresentationUrl,
+            versionFilename: filename
+          })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          loadVersions();
+        } else {
+          alert(`Delete failed: ${data.error}`);
+        }
+      } catch (err) {
+        alert(`Error deleting version: ${err.message}`);
+      }
+    }
+
+    // Slide Elements / Layers List Inspector Panel
+    function updateLayersList() {
+      const listContainer = document.getElementById('slideLayersList');
+      if (!listContainer) return;
+      
+      const iframe = document.getElementById('studioFrame');
+      if (!iframe) return;
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!iframeDoc) return;
+      
+      const activeSlide = iframeDoc.querySelector('.slide-active') || iframeDoc.querySelector('.slide');
+      if (!activeSlide) {
+        listContainer.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-2">No active slide</p>`;
+        return;
+      }
+      
+      const elements = Array.from(activeSlide.querySelectorAll(EDITOR_SELECTABLE_SELECTOR)).filter(isEligibleEditableElement);
+      if (elements.length === 0) {
+        listContainer.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-2">No elements found</p>`;
+        return;
+      }
+      
+      // Sort elements by zIndex descending, then by DOM order descending so that topmost visually appears first
+      const elementsArray = Array.from(elements);
+      elementsArray.sort((a, b) => {
+        const zA = parseInt(a.style.zIndex) || 0;
+        const zB = parseInt(b.style.zIndex) || 0;
+        if (zA !== zB) return zB - zA;
+        return elementsArray.indexOf(b) - elementsArray.indexOf(a);
+      });
+      
+      listContainer.innerHTML = elementsArray.map(el => {
+        const isSelected = selectedElements.includes(el);
+        const tagName = el.tagName.toLowerCase();
+        let typeIcon = 'notes';
+        let displayName = '';
+        
+        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+          typeIcon = 'title';
+          displayName = `Heading: "${el.textContent.trim().slice(0, 15)}${el.textContent.trim().length > 15 ? '...' : ''}"`;
+        } else if (tagName === 'img') {
+          typeIcon = 'image';
+          const srcParts = (el.src || '').split('/');
+          const filename = srcParts[srcParts.length - 1] || 'Image';
+          displayName = `Image: "${filename.slice(0, 15)}${filename.length > 15 ? '...' : ''}"`;
+        } else if (el.classList.contains('editor-shape')) {
+          typeIcon = 'layers';
+          displayName = `Shape (${el.style.backgroundColor || 'colored'})`;
+        } else if (tagName === 'table') {
+          typeIcon = 'grid_on';
+          displayName = `Data Table`;
+        } else if (tagName === 'pre' || tagName === 'code') {
+          typeIcon = 'terminal';
+          displayName = `Code Block`;
+        } else {
+          typeIcon = 'description';
+          displayName = `Text: "${el.textContent.trim().slice(0, 15)}${el.textContent.trim().length > 15 ? '...' : ''}"`;
+        }
+        
+        const zIndex = el.style.zIndex || '0';
+        
+        const activeClass = isSelected 
+          ? 'border-[#7028d0] bg-[#7028d0]/10 text-white font-semibold' 
+          : 'border-white/5 bg-zinc-950/40 hover:bg-zinc-900/60 text-zinc-300 hover:text-white';
+          
+        return `
+          <div class="flex items-center justify-between p-2 rounded-lg border text-xs font-mono transition-all ${activeClass}">
+            <button onclick="selectLayerElementByRef(event)" class="flex-1 text-left flex items-center gap-2 truncate pr-1" style="min-width: 0;">
+              <span class="material-symbols-outlined text-[14px] text-[#7028d0] flex-shrink-0">${typeIcon}</span>
+              <span class="truncate" style="font-size: 10px;">${displayName}</span>
+              <span class="text-[9px] text-zinc-500 font-bold ml-auto flex-shrink-0">z:${zIndex}</span>
+            </button>
+            <div class="flex items-center gap-1 flex-shrink-0 ml-1">
+              <button onclick="changeLayerZIndexByRef(event, 'forward')" class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded" title="Bring Forward">
+                <span class="material-symbols-outlined text-[12px]">keyboard_arrow_up</span>
+              </button>
+              <button onclick="changeLayerZIndexByRef(event, 'backward')" class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded" title="Send Backward">
+                <span class="material-symbols-outlined text-[12px]">keyboard_arrow_down</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      // Store references to the elements on the DOM elements of the layers container
+      const rows = listContainer.children;
+      for (let i = 0; i < rows.length; i++) {
+        if (elementsArray[i]) {
+          rows[i].elementRef = elementsArray[i];
+        }
+      }
+    }
+
+    function selectLayerElementByRef(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      const parentRow = event.currentTarget.closest('[class*="border"]');
+      if (parentRow && parentRow.elementRef) {
+        selectElement(parentRow.elementRef, { additive: event.shiftKey, toggle: event.shiftKey });
+        updateLayersList();
+      }
+    }
+    
+    function changeLayerZIndexByRef(event, action) {
+      event.preventDefault();
+      event.stopPropagation();
+      const parentRow = event.currentTarget.closest('[class*="border"]');
+      if (parentRow && parentRow.elementRef) {
+        const el = parentRow.elementRef;
+        let zVal = parseInt(el.style.zIndex) || 0;
+        if (action === 'forward') {
+          el.style.zIndex = (zVal + 1).toString();
+        } else if (action === 'backward') {
+          el.style.zIndex = Math.max(0, zVal - 1).toString();
+        }
+        
+        // Update selection properties panel if currently selected
+        if (selectedElements.includes(el)) {
+          document.getElementById('elZIndex').value = el.style.zIndex || 0;
+        }
+        
+        saveHistoryState();
+        triggerAutoSave();
+        updateLayersList();
+      }
+    }
+
+    // Presentation Live Preview from workspace
+    function launchPreview() {
+      if (currentPresentationUrl) {
+        launchPresentation(currentPresentationUrl, currentSlideIndex);
+      }
+    }
+  </script>
+</body>
+</html>

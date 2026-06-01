@@ -1,0 +1,9 @@
+{
+  "id": "pinns-presentation",
+  "title": "RL-PINNs Presentation",
+  "subtitle": "Reinforcement Learning for Physics-Informed Neural Networks",
+  "description": "Scientific showcase of Physics-Informed Neural Networks optimized with Reinforcement Learning models.",
+  "url": "pinns presentation/index.html",
+  "icon": "science",
+  "tags": ["Research", "Neural Networks", "Physics", "RL"]
+}

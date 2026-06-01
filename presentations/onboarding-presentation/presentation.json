@@ -1,0 +1,9 @@
+{
+  "id": "onboarding-presentation",
+  "title": "Project Onboarding",
+  "subtitle": "Getting Started with the Development Environment",
+  "description": "Interactive onboarding guide covering VS Code editor workspace, Git version controls, and Docker containerization.",
+  "url": "onboarding-presentation/index.html",
+  "icon": "terminal",
+  "tags": ["Onboarding", "VS Code", "Git", "Docker"]
+}

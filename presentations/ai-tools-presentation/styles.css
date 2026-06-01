@@ -1,0 +1,387 @@
+/* CSS for AI Tools Presentation - Widescreen Keynote System */
+:root {
+  --color-bg-base: #02040a;
+  --color-bg-surface: #070a16;
+  --color-bg-surface-glass: rgba(7, 10, 22, 0.75);
+  --color-primary: #00f2ff;
+  --color-primary-rgb: 0, 242, 255;
+  --color-secondary: #3d5afe;
+  --color-tertiary: #9d50bb;
+  --color-text-primary: #f0f6fc;
+  --color-text-muted: #8b949e;
+  --transition-smooth: 0.85s cubic-bezier(0.77, 0, 0.175, 1);
+  
+  /* Brand-specific Colors */
+  --color-gemini: #38bdf8;
+  --color-claude: #f97316;
+  --color-chatgpt: #10b981;
+  --color-perplexity: #06b6d4;
+  --color-manus: #e11d48;
+  --color-bolt: #eab308;
+  --color-deepseek: #2563eb;
+  --color-codex: #10b981;
+  --color-claudecode: #ea580c;
+  --color-antigravity: #8b5cf6;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: 'Geist', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base Presentation Layout */
+.presentation-viewport {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.slides-container {
+  display: flex;
+  width: 700vw; /* 7 slides */
+  height: 100%;
+  transition: transform var(--transition-smooth);
+}
+
+.slide {
+  width: 100vw;
+  height: 100%;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+}
+
+/* Background Gradients & Ambient Effects */
+.bg-ambient-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 242, 255, 0.035), transparent 70%);
+  pointer-events: none;
+}
+
+.bg-grid-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: center;
+  pointer-events: none;
+}
+
+.bg-animated-glow {
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(0, 242, 255, 0.05) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+  filter: blur(60px);
+  animation: slowOrbit 45s linear infinite;
+}
+
+@keyframes slowOrbit {
+  0% { transform: translate(-20%, -20%) rotate(0deg); }
+  50% { transform: translate(20%, 20%) rotate(180deg); }
+  100% { transform: translate(-20%, -20%) rotate(360deg); }
+}
+
+.canvas-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Glassmorphism Panel styles */
+.glass-panel {
+  background: var(--color-bg-surface-glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.12);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+  border-radius: 20px;
+  padding: 2.5rem;
+  z-index: 10;
+  position: relative;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.3), rgba(var(--color-primary-rgb), 0.02));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.glass-card {
+  background: rgba(7, 10, 22, 0.45);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  padding: 1.8rem;
+  position: relative;
+  transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.glass-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(var(--color-primary-rgb), 0.3);
+  box-shadow: 0 15px 35px rgba(var(--color-primary-rgb), 0.08);
+}
+
+/* Glow Elements */
+.glow-text {
+  text-shadow: 0 0 25px rgba(var(--color-primary-rgb), 0.35);
+}
+
+.glow-btn {
+  box-shadow: 0 0 25px rgba(var(--color-primary-rgb), 0.25);
+  transition: all 0.3s ease;
+}
+
+.glow-btn:hover {
+  box-shadow: 0 0 35px rgba(var(--color-primary-rgb), 0.45);
+}
+
+/* Navigation System Controls */
+.nav-btn {
+  background: var(--color-bg-surface-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.2);
+  color: var(--color-text-primary);
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.nav-btn:hover {
+  background: rgba(var(--color-primary-rgb), 0.12);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.35);
+}
+
+.nav-btn:active {
+  transform: scale(0.92);
+}
+
+/* Page Indicator Bullets */
+.indicators-panel {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.indicator-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.indicator-dot.active {
+  width: 25px;
+  border-radius: 5px;
+  background: var(--color-primary);
+  box-shadow: 0 0 12px rgba(var(--color-primary-rgb), 0.6);
+}
+
+.slide-counter {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+}
+
+/* Slide Entrance Animations */
+.slide-active .anim-fade-in {
+  animation: fadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.slide-active .anim-slide-up {
+  animation: slideUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.slide-active .anim-stagger-1 { animation-delay: 0.15s; }
+.slide-active .anim-stagger-2 { animation-delay: 0.28s; }
+.slide-active .anim-stagger-3 { animation-delay: 0.4s; }
+.slide-active .anim-stagger-4 { animation-delay: 0.52s; }
+.slide-active .anim-stagger-5 { animation-delay: 0.65s; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(45px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* AI Core pulsing icon */
+.ai-core-container {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.ai-core-orb {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, var(--color-primary) 0%, var(--color-secondary) 50%, transparent 100%);
+  border-radius: 50%;
+  opacity: 0.85;
+  filter: blur(8px);
+  animation: orbPulse 4s ease-in-out infinite;
+}
+
+.ai-core-rings {
+  position: absolute;
+  inset: -15px;
+  border: 1.5px dashed rgba(var(--color-primary-rgb), 0.4);
+  border-radius: 50%;
+  animation: rotateClockwise 15s linear infinite;
+}
+
+.ai-core-rings::after {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.15);
+  border-radius: 50%;
+  animation: rotateCounterClockwise 25s linear infinite;
+}
+
+@keyframes orbPulse {
+  0%, 100% { transform: scale(0.92); opacity: 0.7; filter: blur(8px); }
+  50% { transform: scale(1.08); opacity: 0.95; filter: blur(15px); }
+}
+
+@keyframes rotateClockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rotateCounterClockwise {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+/* Vote mechanics */
+.vote-card {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.vote-card.voted {
+  background: rgba(0, 242, 255, 0.08);
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 25px rgba(0, 242, 255, 0.2);
+  transform: translateY(-8px) scale(1.03);
+}
+
+/* Click to Reveal details CSS */
+.reveal-info-container {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+}
+
+.reveal-info-container.revealed {
+  max-height: 150px;
+  opacity: 1;
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 0.8rem;
+}
+
+/* Practice checks */
+.practice-card {
+  border-left: 3px solid #ff7b72;
+  transition: all 0.35s ease;
+}
+
+.practice-card.good-practice {
+  border-left-color: #7ee787;
+}
+
+.practice-card:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-left-width: 5px;
+}
+
+/* Custom terminal prompt input */
+.terminal-input-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 0.8rem;
+  margin-top: 0.8rem;
+}
+
+.terminal-text-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  flex: 1;
+}
+
+/* Responsive Rules */
+@media (max-width: 768px) {
+  body {
+    overflow-y: auto;
+  }
+  .slides-container {
+    width: 100vw;
+    height: auto;
+    flex-direction: column;
+    transform: none !important;
+  }
+  .slide {
+    height: auto;
+    min-height: 100vh;
+    padding: 6rem 1rem 4rem 1rem;
+  }
+}

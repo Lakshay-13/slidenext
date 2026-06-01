@@ -1,0 +1,39 @@
+[
+  {
+    "id": "onboarding-presentation",
+    "title": "Project Onboarding",
+    "subtitle": "Getting Started with the Development Environment",
+    "description": "Interactive onboarding guide covering VS Code editor workspace, Git version controls, and Docker containerization.",
+    "folder": "onboarding-presentation",
+    "icon": "terminal",
+    "tags": ["Onboarding", "VS Code", "Git", "Docker"]
+  },
+  {
+    "id": "pinns-presentation",
+    "title": "RL-PINNs Presentation",
+    "subtitle": "Reinforcement Learning for Physics-Informed Neural Networks",
+    "description": "Scientific showcase of Physics-Informed Neural Networks optimized with Reinforcement Learning models.",
+    "folder": "pinns-presentation",
+    "icon": "science",
+    "tags": ["Research", "Neural Networks", "Physics", "RL"],
+    "category": "Research"
+  },
+  {
+    "id": "ai-tools-presentation",
+    "title": "AI Tools & Workflows",
+    "subtitle": "The Future of Collaborative Development",
+    "description": "Interactive showcase of cutting-edge AI models, coding companions, automated agents, and cooperative dev workflows.",
+    "folder": "ai-tools-presentation",
+    "icon": "auto_awesome",
+    "tags": ["AI Tools", "Gemini", "Coding", "Agents"]
+  },
+  {
+    "id": "computer-vision-presentation",
+    "title": "Computer Vision (Image, Video & 3D Analysis)",
+    "subtitle": "How machines learn to interpret the visual world",
+    "description": "An interactive, visual introduction to Computer Vision covering sensors, 2D images, video understanding, 3D perception, autonomous vehicles, and deep learning limitations.",
+    "folder": "computer-vision-presentation",
+    "icon": "visibility",
+    "tags": ["Computer Vision", "Sensors", "3D Analysis", "Deep Learning"]
+  }
+]

@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Developer Onboarding Presentation</title>
+  <link rel="icon" href="/logo.png" type="image/png">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  
+  <!-- Tailwind Utilities -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Geist', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            teal: {
+              400: '#4fdbc8',
+              500: '#6bd8cb',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-black text-[#e5e2e1] antialiased select-none">
+
+  <!-- Ambient Background Canvas & Glows -->
+  <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+    <div class="bg-grid-overlay"></div>
+    <div class="bg-ambient-layer"></div>
+    <canvas id="particlesCanvas" class="canvas-particles"></canvas>
+    <div class="bg-animated-glow" style="top: 25%; left: 15%;"></div>
+    <div class="bg-animated-glow" style="bottom: 15%; right: 20%; animation-delay: -8s; animation-duration: 35s;"></div>
+  </div>
+
+  <!-- Main Slides Canvas -->
+  <div class="presentation-viewport">
+    <div id="slidesContainer" class="slides-container">
+
+      <!-- Slide 01: Hero Slide -->
+      <section class="slide slide-active flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full grid grid-cols-1 md:grid-cols-12 gap-12 items-center z-10">
+          <div class="md:col-span-7 flex flex-col items-start space-y-6">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 bg-[#6bd8cb]/10 border border-[#6bd8cb]/20 rounded-full">
+              <span class="w-2 h-2 rounded-full bg-[#6bd8cb] animate-pulse"></span>
+              <span class="font-mono text-xs text-[#6bd8cb] uppercase tracking-widest">ONBOARDING HUB</span>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-bold tracking-tight text-white leading-none">
+              Project <br>
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#6bd8cb] to-[#3cddc7] glow-text">Onboarding</span>
+            </h1>
+            <p class="text-lg text-[#bcc9c6] max-w-xl">
+              Getting started with the development environment. Learn to configure your VS Code editor, master Git workflows, and run local containerized systems.
+            </p>
+            <div class="pt-2">
+              <button onclick="document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'ArrowRight'}))" class="px-6 py-3.5 bg-gradient-to-r from-[#6bd8cb] to-[#3cddc7] text-black font-semibold rounded-lg shadow-[0_0_20px_rgba(107,216,203,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+                Start Presentation
+                <span class="material-symbols-outlined text-[18px] font-bold">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+          <div class="md:col-span-5 flex justify-center">
+            <div class="w-full max-w-md glass-panel float-slow">
+              <div class="flex justify-between items-center pb-4 mb-4 border-b border-white/5">
+                <div class="flex gap-1.5">
+                  <span class="w-3 h-3 rounded-full bg-[#ff7b72]/70"></span>
+                  <span class="w-3 h-3 rounded-full bg-[#e3b341]/70"></span>
+                  <span class="w-3 h-3 rounded-full bg-[#7ee787]/70"></span>
+                </div>
+                <span class="font-mono text-xs text-[#bcc9c6]/50">workspace_setup.sh</span>
+                <span class="material-symbols-outlined text-xs text-[#bcc9c6]/50">terminal</span>
+              </div>
+              <div class="font-mono text-sm leading-relaxed text-[#bcc9c6]/80">
+                <p class="text-[#6bd8cb]">$ ./bootstrap.sh</p>
+                <p class="mt-2 text-white">Initializing tools pipeline...</p>
+                <p class="text-[#7ee787]">[OK] Editor environment matching</p>
+                <p class="text-[#7ee787]">[OK] Git sync directories ready</p>
+                <p class="text-[#7ee787]">[OK] Docker container engines loaded</p>
+                <p class="mt-3 text-white">Press Arrow Keys to navigate <span class="terminal-cursor"></span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 02: What Interns Will Learn -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-8 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#6bd8cb] uppercase tracking-widest">CURRICULUM OVERVIEW</span>
+            <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tight">What You Will Learn</h2>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="glass-card flex flex-col gap-4">
+              <div class="w-10 h-10 rounded bg-[#6bd8cb]/10 flex items-center justify-center border border-[#6bd8cb]/20 text-[#6bd8cb]">
+                <span class="material-symbols-outlined">code</span>
+              </div>
+              <h3 class="text-xl font-medium text-white">1. VS Code</h3>
+              <p class="text-[#bcc9c6] text-sm leading-relaxed">Set up the standard IDE environment, plugins, configurations, and key extensions.</p>
+            </div>
+            <div class="glass-card flex flex-col gap-4">
+              <div class="w-10 h-10 rounded bg-[#6bd8cb]/10 flex items-center justify-center border border-[#6bd8cb]/20 text-[#6bd8cb]">
+                <span class="material-symbols-outlined">fork_right</span>
+              </div>
+              <h3 class="text-xl font-medium text-white">2. Git Workflow</h3>
+              <p class="text-[#bcc9c6] text-sm leading-relaxed">Master branches, stage files, write structured commits, and pull remote origin codebase updates.</p>
+            </div>
+            <div class="glass-card flex flex-col gap-4">
+              <div class="w-10 h-10 rounded bg-[#6bd8cb]/10 flex items-center justify-center border border-[#6bd8cb]/20 text-[#6bd8cb]">
+                <span class="material-symbols-outlined">token</span>
+              </div>
+              <h3 class="text-xl font-medium text-white">3. Docker Containers</h3>
+              <p class="text-[#bcc9c6] text-sm leading-relaxed">Understand microservices containerization, isolate databases, and map ports locally.</p>
+            </div>
+            <div class="glass-card flex flex-col gap-4">
+              <div class="w-10 h-10 rounded bg-[#6bd8cb]/10 flex items-center justify-center border border-[#6bd8cb]/20 text-[#6bd8cb]">
+                <span class="material-symbols-outlined">play_circle</span>
+              </div>
+              <h3 class="text-xl font-medium text-white">4. Local Launch</h3>
+              <p class="text-[#bcc9c6] text-sm leading-relaxed">Run backend APIs, orchestrate services with compose files, and inspect runtime server logs.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 03: VS Code Setup -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-8 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#6bd8cb] uppercase tracking-widest">STEP 1 // EDITOR STANDARD</span>
+            <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tight">VS Code: Our Workspace</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+            <div class="md:col-span-6 flex flex-col gap-5">
+              <h3 class="text-2xl font-medium text-white">Configuring Visual Studio Code</h3>
+              <p class="text-[#bcc9c6] text-sm leading-relaxed">
+                VS Code is our official development IDE. Having a unified setup ensures code format consistency and improves team productivity.
+              </p>
+              <div class="flex flex-col gap-3 font-mono text-xs">
+                <div class="flex items-center gap-3 p-3 bg-white/5 rounded border border-white/5">
+                  <span class="material-symbols-outlined text-[#6bd8cb]">extension</span>
+                  <div>
+                    <strong class="text-white">Essential Extensions:</strong>
+                    <p class="text-[#bcc9c6] mt-0.5">Prettier, ESLint, GitLens, Docker Desktop Explorer.</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-white/5 rounded border border-white/5">
+                  <span class="material-symbols-outlined text-[#6bd8cb]">settings</span>
+                  <div>
+                    <strong class="text-white">Auto Format on Save:</strong>
+                    <p class="text-[#bcc9c6] mt-0.5">Enforces stylistic conventions automatically on file saves.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="md:col-span-6">
+              <div class="code-block font-mono text-xs leading-relaxed text-[#bcc9c6]/80">
+                <div class="text-[#6bd8cb]">// .vscode/settings.json</div>
+                <pre class="mt-2">{
+  <span class="code-keyword">"editor.formatOnSave"</span>: <span class="code-arg">true</span>,
+  <span class="code-keyword">"editor.defaultFormatter"</span>: <span class="code-arg">"esbenp.prettier-vscode"</span>,
+  <span class="code-keyword">"editor.codeActionsOnSave"</span>: {
+    <span class="code-keyword">"source.fixAll.eslint"</span>: <span class="code-arg">"always"</span>
+  },
+  <span class="code-keyword">"files.insertFinalNewline"</span>: <span class="code-arg">true</span>,
+  <span class="code-keyword">"files.trimTrailingWhitespace"</span>: <span class="code-arg">true</span>
+}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 04: Git Basics -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-8 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#6bd8cb] uppercase tracking-widest">STEP 2 // VERSION CONTROL</span>
+            <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tight">Git Version Control</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+            <div class="md:col-span-5 flex flex-col gap-4">
+              <h3 class="text-2xl font-medium text-white">Distributed Synchronization</h3>
+              <p class="text-[#bcc9c6] text-sm leading-relaxed">
+                Git is our version tracker. It checkpoints historical progress. You manage code directories locally, commit snapshots, and push to synchronize with the remote central host (GitHub).
+              </p>
+              <div class="flex flex-col gap-2 font-mono text-xs text-[#bcc9c6]/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#6bd8cb]"></span>
+                  <span><strong>Working Tree:</strong> Active local changes</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#6bd8cb]"></span>
+                  <span><strong>Staging Area:</strong> Sandbox preparing index commit</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#6bd8cb]"></span>
+                  <span><strong>Local Repo:</strong> Checked snapshots database</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="md:col-span-7">
+              <div class="glass-panel py-8 flex flex-col gap-4">
+                <h4 class="font-mono text-xs uppercase tracking-widest text-[#bcc9c6]/60 text-center">Sync Flow Map</h4>
+                <div class="flex items-center justify-around py-4 text-center">
+                  <div class="px-4 py-3 bg-white/5 border border-white/10 rounded-lg font-mono text-xs">
+                    <strong>Local Workspace</strong>
+                    <p class="text-[#bcc9c6]/40 mt-1">Staging / Commits</p>
+                  </div>
+                  
+                  <div class="flex flex-col items-center">
+                    <span class="material-symbols-outlined text-[#6bd8cb] text-[20px] animate-pulse">swap_horiz</span>
+                    <span class="font-mono text-[9px] text-[#bcc9c6] mt-1">push / pull</span>
+                  </div>
+
+                  <div class="px-4 py-3 bg-[#6bd8cb]/10 border border-[#6bd8cb]/20 rounded-lg font-mono text-xs">
+                    <strong>Remote Origin</strong>
+                    <p class="text-[#6bd8cb] mt-1">GitHub server</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 05: Essential Git Commands -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-8 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#6bd8cb] uppercase tracking-widest">GIT TOOLKIT</span>
+            <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tight">Essential Git Commands</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass-card flex flex-col justify-between gap-4">
+              <div>
+                <h4 class="font-mono text-sm text-white font-semibold flex items-center gap-2 mb-2">
+                  <span class="w-1.5 h-3 bg-[#6bd8cb] rounded-sm"></span> git clone
+                </h4>
+                <p class="text-xs text-[#bcc9c6] leading-relaxed">
+                  Downloads a full copy of the remote repository to your local drive.
+                </p>
+              </div>
+              <div class="code-block text-xs py-2 px-3">
+                git clone <span class="code-arg">&lt;repo-url&gt;</span>
+              </div>
+            </div>
+
+            <div class="glass-card flex flex-col justify-between gap-4">
+              <div>
+                <h4 class="font-mono text-sm text-white font-semibold flex items-center gap-2 mb-2">
+                  <span class="w-1.5 h-3 bg-[#6bd8cb] rounded-sm"></span> git checkout
+                </h4>
+                <p class="text-xs text-[#bcc9c6] leading-relaxed">
+                  Creates or switches to a development feature branch.
+                </p>
+              </div>
+              <div class="code-block text-xs py-2 px-3">
+                git checkout -b <span class="code-arg">feat/onboard</span>
+              </div>
+            </div>
+
+            <div class="glass-card flex flex-col justify-between gap-4">
+              <div>
+                <h4 class="font-mono text-sm text-white font-semibold flex items-center gap-2 mb-2">
+                  <span class="w-1.5 h-3 bg-[#6bd8cb] rounded-sm"></span> git pull
+                </h4>
+                <p class="text-xs text-[#bcc9c6] leading-relaxed">
+                  Fetches the latest remote code updates and merges them locally.
+                </p>
+              </div>
+              <div class="code-block text-xs py-2 px-3">
+                git pull origin <span class="code-arg">main</span>
+              </div>
+            </div>
+
+            <div class="glass-card flex flex-col justify-between gap-4">
+              <div>
+                <h4 class="font-mono text-sm text-white font-semibold flex items-center gap-2 mb-2">
+                  <span class="w-1.5 h-3 bg-[#6bd8cb] rounded-sm"></span> git add
+                </h4>
+                <p class="text-xs text-[#bcc9c6] leading-relaxed">
+                  Stages files to prepare them for the next commit checkpoint.
+                </p>
+              </div>
+              <div class="code-block text-xs py-2 px-3">
+                git add . <span class="code-comment"># Stage all changes</span>
+              </div>
+            </div>
+
+            <div class="glass-card flex flex-col justify-between gap-4">
+              <div>
+                <h4 class="font-mono text-sm text-white font-semibold flex items-center gap-2 mb-2">
+                  <span class="w-1.5 h-3 bg-[#6bd8cb] rounded-sm"></span> git commit
+                </h4>
+                <p class="text-xs text-[#bcc9c6] leading-relaxed">
+                  Saves staged changes as a historical snapshot.
+                </p>
+              </div>
+              <div class="code-block text-xs py-2 px-3">
+                git commit -m <span class="code-arg">"feat: onboarding docs"</span>
+              </div>
+            </div>
+
+            <div class="glass-card flex flex-col justify-between gap-4">
+              <div>
+                <h4 class="font-mono text-sm text-white font-semibold flex items-center gap-2 mb-2">
+                  <span class="w-1.5 h-3 bg-[#6bd8cb] rounded-sm"></span> git push
+                </h4>
+                <p class="text-xs text-[#bcc9c6] leading-relaxed">
+                  Uploads local commits to the shared remote branch.
+                </p>
+              </div>
+              <div class="code-block text-xs py-2 px-3">
+                git push origin <span class="code-arg">feat/onboard</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 06: Git Collaboration & Pull Requests -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-8 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#6bd8cb] uppercase tracking-widest">COLLABORATION WORKFLOW</span>
+            <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tight">Collaboration & Pull Requests</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
+            <!-- Git Graph Simulation -->
+            <div class="md:col-span-5 flex flex-col justify-between glass-panel py-6">
+              <div>
+                <h3 class="text-xl font-bold text-white mb-2">Visual Branch Sync</h3>
+                <p class="text-[#bcc9c6] text-xs leading-relaxed mb-4">
+                  Developers commit code on feature branches, sync up history, and then merge back into the main line via Pull Request.
+                </p>
+              </div>
+              <div class="git-graph relative mt-auto">
+                <div class="absolute left-4 top-2 font-mono text-[9px] text-[#bcc9c6]/40 uppercase tracking-widest flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span> main
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#6bd8cb] ml-2"></span> feature
+                </div>
+                <div class="git-line"></div>
+                <svg class="absolute inset-0 w-full h-full" style="pointer-events: none;">
+                  <path d="M 100 100 Q 130 140 200 140 L 750 140 Q 780 140 800 100" fill="none" stroke="rgba(107, 216, 203, 0.4)" stroke-width="2"/>
+                </svg>
+                <div id="gitNodesContainer" class="absolute inset-0"></div>
+              </div>
+            </div>
+
+            <!-- PR Merge Simulator -->
+            <div class="md:col-span-7">
+              <div class="glass-panel pr-diff-card flex flex-col justify-between h-full relative overflow-hidden">
+                <div class="flex justify-between items-center border-b border-white/5 pb-4">
+                  <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-[#6bd8cb]">conversion_path</span>
+                    <span class="font-semibold text-white text-sm">PR #124: Add onboarding Checklist</span>
+                  </div>
+                  <div id="prStatus" class="px-3 py-1 bg-[#6bd8cb]/10 border border-[#6bd8cb]/30 text-[#6bd8cb] font-label-sm text-label-sm uppercase rounded-md flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#6bd8cb] animate-ping"></span> Open
+                  </div>
+                </div>
+
+                <div class="font-mono text-xs border border-white/5 p-4 rounded bg-black/40 overflow-x-auto my-4 flex-grow">
+                  <p class="text-white/40">@@ -12,4 +12,8 @@</p>
+                  <p class="bg-red-500/10 text-[#ff7b72]">- const local_db = false;</p>
+                  <p class="bg-green-500/10 text-[#7ee787]">+ const local_db = true; // Set up local Docker containers</p>
+                  <p class="bg-green-500/10 text-[#7ee787]">+ initDockerConn({ host: 'localhost' });</p>
+                </div>
+
+                <div class="flex justify-between items-center border-t border-white/5 pt-4 mt-auto">
+                  <span class="font-mono text-[9px] text-[#bcc9c6]/50">All checks passed. Ready to merge.</span>
+                  
+                  <button id="mergePrBtn" class="px-4 py-2 bg-gradient-to-r from-[#6bd8cb] to-[#3cddc7] text-black font-semibold text-xs rounded-md shadow-[0_0_15px_rgba(107,216,203,0.3)] hover:scale-105 transition-all flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px] font-bold">call_merge</span> Merge Pull Request
+                  </button>
+
+                  <div id="mergeSuccessMsg" class="hidden text-[#7ee787] font-mono text-xs flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px] text-green-400 font-bold">verified</span> Code Merged successfully!
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 07: Why Containerization Matters -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-8 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#6bd8cb] uppercase tracking-widest">STEP 3 // ISOLATION SYSTEM</span>
+            <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tight">Why Containerization?</h2>
+          </div>
+          
+          <div class="comparison-container">
+            <div class="comparison-panel bad glass-panel flex flex-col justify-between">
+              <div>
+                <div class="flex items-center gap-2 mb-4 text-[#ff7b72]">
+                  <span class="material-symbols-outlined">error</span>
+                  <span class="font-mono text-sm uppercase">Unstandardized Environment</span>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-2">"Works on my machine"</h3>
+                <p class="text-[#bcc9c6] text-sm leading-relaxed mb-4">
+                  Installing libraries manually on your host machine causes dependency conflicts, database drifts, and hours wasted debugging OS-specific issues.
+                </p>
+              </div>
+              <div class="bg-red-500/10 border border-red-500/20 p-4 rounded-lg font-mono text-xs text-[#ff7b72]">
+                <p class="font-bold">CRASH LOG:</p>
+                <p>node-gyp rebuild failed. python executable mismatch.</p>
+                <p>PostgreSQL server version mismatch. Connection refused.</p>
+              </div>
+            </div>
+
+            <div class="comparison-panel good glass-panel flex flex-col justify-between">
+              <div>
+                <div class="flex items-center gap-2 mb-4 text-[#7ee787]">
+                  <span class="material-symbols-outlined">check_circle</span>
+                  <span class="font-mono text-sm uppercase">Standardized Docker Env</span>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-2">Isolate Consistency</h3>
+                <p class="text-[#bcc9c6] text-sm leading-relaxed mb-4">
+                  Docker encapsulates configuration files, libraries, databases, and runtime configs. The container matches staging and production exactly.
+                </p>
+              </div>
+              <div class="bg-green-500/10 border border-green-500/20 p-4 rounded-lg font-mono text-xs text-[#7ee787]">
+                <p class="font-bold">BOOT SUCCESS:</p>
+                <p>Container nodejs-app: Ready and listening on port 3000</p>
+                <p>Container database: DB engine initialized and connected [OK]</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 08: Installing Docker (Workflow Pipeline) -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-8 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#6bd8cb] uppercase tracking-widest">SETUP ENGINE</span>
+            <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tight">Installing Docker</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div class="flex flex-col gap-4">
+              <p class="text-[#bcc9c6] leading-relaxed">
+                Docker is a system virtualization tool. It creates isolated environments called <strong>Containers</strong>. Unlike VMs, containers share the host kernel, making them lightweight, super fast, and low on RAM usage.
+              </p>
+              <div class="flex flex-col gap-3 font-mono text-sm mt-2">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[#6bd8cb] text-[18px]">download</span>
+                  <span>1. Download Docker Desktop (MacOS/Windows)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[#6bd8cb] text-[18px]">settings_accessibility</span>
+                  <span>2. Assign resources (Min 4GB RAM recommended)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[#6bd8cb] text-[18px]">toggle_on</span>
+                  <span>3. Verify system startup daemon (Engine running)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fixed width container workflow with no box cutting -->
+            <div class="glass-panel w-full flex flex-col justify-center items-center px-4 py-8 overflow-hidden">
+              <h4 class="font-mono text-xs uppercase tracking-widest text-[#bcc9c6]/60 mb-6 text-center">Workflow Architecture</h4>
+              
+              <div class="animated-pipeline w-full max-w-lg">
+                <div class="pipeline-node font-mono text-xs text-white">Developer</div>
+                <div class="pipeline-arrow"></div>
+                <div class="pipeline-node font-mono text-xs text-[#6bd8cb]">Docker</div>
+                <div class="pipeline-arrow"></div>
+                <div class="pipeline-node font-mono text-xs text-white">Container</div>
+                <div class="pipeline-arrow"></div>
+                <div class="pipeline-node font-mono text-xs text-[#3cddc7]">App</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 09: Docker Basics -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-8 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#6bd8cb] uppercase tracking-widest">COMMAND CONTEXT</span>
+            <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tight">Docker Basics</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch">
+            <div class="md:col-span-4 flex flex-col gap-3">
+              <button data-cmd="pull" class="cmd-tab w-full text-left p-4 border border-white/5 rounded-lg bg-white/5 hover:bg-white/10 text-[#bcc9c6] hover:text-white transition-all font-mono text-sm flex justify-between items-center bg-primary/20 border-primary text-primary">
+                <span>docker pull</span>
+                <span class="material-symbols-outlined text-[16px]">download</span>
+              </button>
+              <button data-cmd="run" class="cmd-tab w-full text-left p-4 border border-white/5 rounded-lg bg-white/5 hover:bg-white/10 text-[#bcc9c6] hover:text-white transition-all font-mono text-sm flex justify-between items-center">
+                <span>docker run</span>
+                <span class="material-symbols-outlined text-[16px]">play_arrow</span>
+              </button>
+              <button data-cmd="ps" class="cmd-tab w-full text-left p-4 border border-white/5 rounded-lg bg-white/5 hover:bg-white/10 text-[#bcc9c6] hover:text-white transition-all font-mono text-sm flex justify-between items-center">
+                <span>docker ps</span>
+                <span class="material-symbols-outlined text-[16px]">list</span>
+              </button>
+            </div>
+            
+            <div class="md:col-span-8 flex flex-col gap-4">
+              <div class="code-block h-48 overflow-y-auto">
+                <pre><code id="dockerCodeDisplay"><span class="code-keyword">docker pull</span> node:18-alpine
+<span class="code-comment"># Pulls the official Node.js alpine image from Docker Hub</span>
+
+Status: Downloaded newer image for node:18-alpine
+docker.io/library/node:18-alpine</code></pre>
+              </div>
+              <div class="glass-card">
+                <p id="dockerExpl" class="text-sm text-[#bcc9c6] leading-relaxed">
+                  <strong>docker pull [image]:</strong> Downloads a pre-packaged template (Image) from Docker Hub registry. The base image contains all runtime files, core utilities, and standard libraries needed to spin up your application environment.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 10: Running the Project Locally -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-8 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#6bd8cb] uppercase tracking-widest">BOOTSTRAP WORKFLOW</span>
+            <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tight">Running the Project Locally</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+            <div class="md:col-span-5 flex flex-col gap-6">
+              <div class="flex gap-4">
+                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#6bd8cb]/10 border border-[#6bd8cb]/30 flex items-center justify-center font-mono text-sm text-[#6bd8cb] font-bold">1</div>
+                <div>
+                  <h4 class="text-lg font-medium text-white">Clone the codebase</h4>
+                  <p class="text-xs text-[#bcc9c6] mt-1">Download code history from remote origin.</p>
+                </div>
+              </div>
+              <div class="flex gap-4">
+                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#6bd8cb]/10 border border-[#6bd8cb]/30 flex items-center justify-center font-mono text-sm text-[#6bd8cb] font-bold">2</div>
+                <div>
+                  <h4 class="text-lg font-medium text-white">Enter target folder</h4>
+                  <p class="text-xs text-[#bcc9c6] mt-1">Navigate to the cloned directory in terminal.</p>
+                </div>
+              </div>
+              <div class="flex gap-4">
+                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#6bd8cb]/10 border border-[#6bd8cb]/30 flex items-center justify-center font-mono text-sm text-[#6bd8cb] font-bold">3</div>
+                <div>
+                  <h4 class="text-lg font-medium text-white">Start Docker Compose</h4>
+                  <p class="text-xs text-[#bcc9c6] mt-1">Orchestrate and start all service containers simultaneously.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="md:col-span-7">
+              <div class="code-block font-mono text-sm leading-relaxed text-[#bcc9c6]/90">
+                <div class="flex items-center gap-2 mb-3 text-xs text-[#bcc9c6]/40 uppercase tracking-wider border-b border-white/5 pb-2">
+                  <span class="material-symbols-outlined text-[14px]">terminal</span> Local Console
+                </div>
+                <p><span class="text-[#6bd8cb]">$</span> git clone https://github.com/org/project-repo.git</p>
+                <p class="text-white/40">Cloning into 'project-repo'...</p>
+                <p class="text-white/40">Resolving deltas: 100% (2382/2382), done.</p>
+                <p class="mt-2"><span class="text-[#6bd8cb]">$</span> cd project-repo</p>
+                <p class="mt-2"><span class="text-[#6bd8cb]">$</span> docker compose up -d</p>
+                <p class="text-[#7ee787]">Creating network "project_default" [OK]</p>
+                <p class="text-[#7ee787]">Creating container db-postgres ... started</p>
+                <p class="text-[#7ee787]">Creating container api-backend ... started</p>
+                <p class="text-[#7ee787]">Creating container app-frontend ... started</p>
+                <p class="mt-2 text-white/50 font-mono text-xs">Ready at: <a href="#" class="text-[#6bd8cb] underline">http://localhost:3000</a></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 11: What Happens Next & AI Future -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-6xl w-full flex flex-col gap-8 z-10">
+          <div class="flex flex-col gap-2">
+            <span class="font-mono text-sm text-[#6bd8cb] uppercase tracking-widest">NEXT STEPS // AI HORIZON</span>
+            <h2 class="text-4xl md:text-5xl font-semibold text-white tracking-tight">What Happens Next?</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div class="flex flex-col gap-5">
+              <h3 class="text-2xl font-medium text-white">Your Development Roadmap</h3>
+              <p class="text-[#bcc9c6] text-sm leading-relaxed">
+                Now that you understand local container environments and Git sync controls, you are ready to claim tickets from our board and write production code!
+              </p>
+              
+              <div class="bg-gradient-to-r from-[#6bd8cb]/10 to-[#3cddc7]/5 border border-[#6bd8cb]/20 p-5 rounded-lg">
+                <h4 class="font-mono text-xs uppercase tracking-widest text-[#6bd8cb] mb-2 flex items-center gap-2">
+                  <span class="material-symbols-outlined text-[16px] animate-bounce">rocket_launch</span> AI Tools Up Next!
+                </h4>
+                <p class="text-[#bcc9c6] text-xs leading-relaxed">
+                  Get excited—our next team presentation will cover integration with cutting-edge AI utilities (GitHub Copilot, Gemini models, and StitchMCP code-generation agents) to supercharge your daily coding velocity!
+                </p>
+              </div>
+            </div>
+
+            <div class="glass-panel flex flex-col gap-4">
+              <h4 class="font-mono text-xs uppercase tracking-widest text-[#bcc9c6]/60">Upcoming Milestones</h4>
+              
+              <div class="flex flex-col gap-4 mt-2">
+                <div class="flex items-center gap-4">
+                  <div class="w-8 h-8 rounded-full bg-[#6bd8cb]/10 border border-[#6bd8cb]/30 flex items-center justify-center font-mono text-xs text-[#6bd8cb]">1</div>
+                  <div>
+                    <h5 class="text-sm font-semibold text-white">Local Run Success</h5>
+                    <p class="text-xs text-[#bcc9c6]">Pull, build, and run the container service stack locally.</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                  <div class="w-8 h-8 rounded-full bg-[#6bd8cb]/10 border border-[#6bd8cb]/30 flex items-center justify-center font-mono text-xs text-[#6bd8cb]">2</div>
+                  <div>
+                    <h5 class="text-sm font-semibold text-white">Create Sandbox Branch</h5>
+                    <p class="text-xs text-[#bcc9c6]">Checkout a test branch, edit code, and trigger a test pull request.</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                  <div class="w-8 h-8 rounded-full bg-[#6bd8cb]/10 border border-[#6bd8cb]/30 flex items-center justify-center font-mono text-xs text-[#6bd8cb]">3</div>
+                  <div>
+                    <h5 class="text-sm font-semibold text-white">First Real Feature Ticket</h5>
+                    <p class="text-xs text-[#bcc9c6]">Claim a card on the team sprint board and align with your engineering buddy.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 12: Final Slide -->
+      <section class="slide flex flex-col justify-center items-center">
+        <div class="max-w-4xl text-center flex flex-col items-center gap-6 z-10">
+          <div class="inline-flex items-center space-x-2 px-3 py-1 bg-[#6bd8cb]/10 border border-[#6bd8cb]/20 rounded-full">
+            <span class="w-2 h-2 rounded-full bg-[#7ee787] animate-pulse"></span>
+            <span class="font-mono text-xs text-[#7ee787] uppercase tracking-widest">SETUP COMPLETED</span>
+          </div>
+          <h1 class="text-6xl md:text-8xl font-bold tracking-tight text-white leading-none">
+            Welcome to <br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#6bd8cb] to-[#3cddc7] glow-text">the Team</span>
+          </h1>
+          <p class="text-lg md:text-2xl font-mono text-[#6bd8cb] tracking-wide mt-2">
+            // Happy Coding!
+          </p>
+          <div class="flex items-center gap-4 mt-8">
+            <button onclick="document.getElementById('slidesContainer').style.transform = 'translateX(0vw)'; document.querySelector('.slide-active').classList.remove('slide-active'); document.querySelectorAll('.slide')[0].classList.add('slide-active');" class="px-6 py-3 bg-white/5 border border-white/10 text-white rounded-lg hover:bg-white/10 active:scale-95 transition-all text-sm font-medium flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px]">replay</span> Start Over
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Overlay -->
+  <nav class="fixed bottom-0 left-0 right-0 z-50 flex justify-between items-center px-8 py-6 pointer-events-none">
+    <!-- Prev Button -->
+    <button id="prevBtn" class="nav-btn pointer-events-auto">
+      <span class="material-symbols-outlined">arrow_back</span>
+    </button>
+    
+    <!-- Navigation Status & Indicators -->
+    <div class="flex flex-col items-center gap-2 pointer-events-auto">
+      <span id="slideNum" class="slide-counter text-xs">01 / 12</span>
+      <div class="indicators-panel" id="indicatorDots"></div>
+    </div>
+
+    <!-- Next Button -->
+    <button id="nextBtn" class="nav-btn pointer-events-auto">
+      <span class="material-symbols-outlined">arrow_forward</span>
+    </button>
+  </nav>
+
+  <!-- Progress Bar Overlay (Fixed Bottom Edge) -->
+  <div class="fixed bottom-0 left-0 right-0 h-1 bg-white/5 z-50 pointer-events-none">
+    <div id="progressLine" class="h-full bg-gradient-to-r from-[#6bd8cb] to-[#3cddc7] shadow-[0_0_10px_rgba(107,216,203,0.5)] transition-all duration-300" style="width: 8.33%;"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

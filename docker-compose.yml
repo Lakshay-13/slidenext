@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  presentation-hub:
+    build: .
+    container_name: presentation_hub_editor
+    ports:
+      - "11004:11004"
+    volumes:
+      # Mount workspace directory so that edits persist directly on the host machine
+      - .:/app
+      # Exclude node_modules from host-mount to prevent compatibility errors
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped

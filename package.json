@@ -1,0 +1,17 @@
+{
+  "name": "slidenext",
+  "version": "1.0.0",
+  "description": "SlideNext: modern presentation management and visual HTML slide studio with drag-drop editing, snapping, and versioning.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Lakshay-13/slidenext.git"
+  },
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}

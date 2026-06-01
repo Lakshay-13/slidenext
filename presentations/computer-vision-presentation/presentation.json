@@ -1,0 +1,9 @@
+{
+  "id": "computer-vision-presentation",
+  "title": "Computer Vision (Image, Video & 3D Analysis)",
+  "subtitle": "How machines learn to interpret the visual world",
+  "description": "An interactive, visual introduction to Computer Vision covering sensors, 2D images, video understanding, 3D perception, autonomous vehicles, and deep learning limitations.",
+  "url": "computer-vision-presentation/index.html",
+  "icon": "visibility",
+  "tags": ["Computer Vision", "Sensors", "3D Analysis", "Deep Learning"]
+}
