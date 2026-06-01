@@ -597,12 +597,7 @@
       <main class="flex-1 bg-[#050505] flex flex-col overflow-hidden relative">
         <div class="h-10 border-b border-zinc-200 dark:border-white/5 bg-[#f9fafb] dark:bg-[#070707] flex items-center justify-between px-6 z-15 flex-shrink-0">
           <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Canvas Workspace</span>
-          <div class="flex items-center gap-3">
-            <button id="snapToggleBtn" onclick="toggleSnapEnabled()" class="px-2.5 py-1 rounded border text-[10px] font-mono transition-all bg-zinc-900 border-white/10 text-zinc-400 hover:text-white hover:border-white/20" title="Toggle smart snap guides">
-              Snap Off
-            </button>
-            <span id="snapHint" class="text-[10px] font-mono text-zinc-500 hidden xl:inline">Snap is off (free move)</span>
-            <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2">
               <button onclick="zoomOut()" class="p-1 hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all flex items-center justify-center" title="Zoom Out">
                 <span class="material-symbols-outlined text-[16px]">zoom_out</span>
               </button>
@@ -638,7 +633,6 @@
               <button onclick="zoomIn()" class="p-1 hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all flex items-center justify-center" title="Zoom In">
                 <span class="material-symbols-outlined text-[16px]">zoom_in</span>
               </button>
-            </div>
           </div>
         </div>
         
@@ -960,9 +954,6 @@
     let zoomFactor = 1.0;
     let customGradientType = 'linear';
     let renamingFilename = '';
-    let isSnapEnabled = false;
-    const SNAP_THRESHOLD_PX = 5;
-    const SNAP_RELEASE_THRESHOLD_PX = 10;
     const DRAG_START_THRESHOLD_PX = 2;
     const MIN_ELEMENT_SIZE_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
@@ -1017,9 +1008,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadPresentations();
       renderWallpaperPresets();
-      const savedSnapPref = localStorage.getItem('studioSnapEnabled');
-      isSnapEnabled = savedSnapPref === 'true';
-      updateSnapToggleUI();
       
       // Update theme toggle icons
       const themeIcon = document.getElementById('themeIcon');
@@ -1065,27 +1053,6 @@
 
       // Sync active theme to presentation slide iframe
       syncIframeTheme();
-    }
-
-    function updateSnapToggleUI() {
-      const btn = document.getElementById('snapToggleBtn');
-      const hint = document.getElementById('snapHint');
-      if (!btn) return;
-      if (isSnapEnabled) {
-        btn.textContent = 'Snap On';
-        btn.className = 'px-2.5 py-1 rounded border text-[10px] font-mono transition-all bg-[#7028d0]/15 border-[#7028d0]/40 text-[#cdbdff] hover:text-white hover:border-[#7028d0]';
-        if (hint) hint.innerHTML = 'Hold <span class="text-zinc-300">Alt</span> while dragging to bypass snap';
-      } else {
-        btn.textContent = 'Snap Off';
-        btn.className = 'px-2.5 py-1 rounded border text-[10px] font-mono transition-all bg-zinc-900 border-white/10 text-zinc-400 hover:text-white hover:border-white/20';
-        if (hint) hint.textContent = 'Snap is off (free move)';
-      }
-    }
-
-    function toggleSnapEnabled() {
-      isSnapEnabled = !isSnapEnabled;
-      localStorage.setItem('studioSnapEnabled', String(isSnapEnabled));
-      updateSnapToggleUI();
     }
 
     function syncIframeTheme() {
@@ -1436,6 +1403,11 @@
             outline: 1px dashed rgba(112, 40, 208, 0.75) !important;
             outline-offset: 2px !important;
             cursor: pointer !important;
+          }
+          .editor-hoverable,
+          #editorSelectionOverlay,
+          .editor-resize-handle {
+            touch-action: none !important;
           }
           #editorSelectionOverlay {
             position: absolute;
@@ -1984,7 +1956,7 @@
       if (hud) hud.classList.remove('visible');
     }
 
-    function updateDragHud(bounds, snapX, snapY) {
+    function updateDragHud(bounds) {
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
       if (!doc || !slide || !bounds) return;
@@ -1993,9 +1965,7 @@
       const y = Math.round(bounds.top);
       const w = Math.round(bounds.width);
       const h = Math.round(bounds.height);
-      const snapXText = snapX ? `${Math.round(snapX.anchor)}px` : '--';
-      const snapYText = snapY ? `${Math.round(snapY.anchor)}px` : '--';
-      hud.textContent = `X ${x}  Y ${y}  W ${w}  H ${h}  SnapX ${snapXText}  SnapY ${snapYText}`;
+      hud.textContent = `X ${x}  Y ${y}  W ${w}  H ${h}`;
       hud.classList.add('visible');
     }
 
@@ -2017,15 +1987,40 @@
       });
     }
 
-    function getSelectionBounds(elements = selectedElements) {
+    function getSlideMetrics(slide) {
+      const rect = slide.getBoundingClientRect();
+      const logicalWidth = slide.clientWidth || rect.width || 1920;
+      const logicalHeight = slide.clientHeight || rect.height || 1080;
+      const scaleX = rect.width > 0 ? logicalWidth / rect.width : 1;
+      const scaleY = rect.height > 0 ? logicalHeight / rect.height : 1;
+      return { rect, logicalWidth, logicalHeight, scaleX, scaleY };
+    }
+
+    function getRectOnSlide(rect, slideMetrics) {
+      return {
+        left: (rect.left - slideMetrics.rect.left) * slideMetrics.scaleX,
+        top: (rect.top - slideMetrics.rect.top) * slideMetrics.scaleY,
+        right: (rect.right - slideMetrics.rect.left) * slideMetrics.scaleX,
+        bottom: (rect.bottom - slideMetrics.rect.top) * slideMetrics.scaleY
+      };
+    }
+
+    function getPointerOnSlide(e, slideMetrics) {
+      return {
+        x: (e.clientX - slideMetrics.rect.left) * slideMetrics.scaleX,
+        y: (e.clientY - slideMetrics.rect.top) * slideMetrics.scaleY
+      };
+    }
+
+    function getSelectionBounds(elements = selectedElements, slideMetrics = null) {
       const slide = getActiveSlide();
       if (!slide || !elements || elements.length === 0) return null;
-      const slideRect = slide.getBoundingClientRect();
-      const rects = elements.map(el => el.getBoundingClientRect());
-      const left = Math.min(...rects.map(r => r.left - slideRect.left));
-      const top = Math.min(...rects.map(r => r.top - slideRect.top));
-      const right = Math.max(...rects.map(r => r.right - slideRect.left));
-      const bottom = Math.max(...rects.map(r => r.bottom - slideRect.top));
+      const metrics = slideMetrics || getSlideMetrics(slide);
+      const rects = elements.map(el => getRectOnSlide(el.getBoundingClientRect(), metrics));
+      const left = Math.min(...rects.map(r => r.left));
+      const top = Math.min(...rects.map(r => r.top));
+      const right = Math.max(...rects.map(r => r.right));
+      const bottom = Math.max(...rects.map(r => r.bottom));
       return {
         left,
         top,
@@ -2327,13 +2322,6 @@
       return Math.max(min, Math.min(max, value));
     }
 
-    function getPointerOnSlide(e, slideRect) {
-      return {
-        x: e.clientX - slideRect.left,
-        y: e.clientY - slideRect.top
-      };
-    }
-
     function normalizeBounds(bounds, slideRect, mode, handleDir = '') {
       let { left, top, right, bottom } = bounds;
       const minW = MIN_ELEMENT_SIZE_PX;
@@ -2373,155 +2361,6 @@
       return { left, top, right, bottom, width: right - left, height: bottom - top };
     }
 
-    function getDirectSlideChildReference(el, slide) {
-      let ref = el;
-      while (ref && ref.parentElement && ref.parentElement !== slide) {
-        ref = ref.parentElement;
-      }
-      return (ref && ref !== slide) ? ref : null;
-    }
-
-    function isSelectionRelated(el, selectedSet) {
-      for (const selected of selectedSet) {
-        if (selected === el) return true;
-        if (selected.contains && selected.contains(el)) return true;
-        if (el.contains && el.contains(selected)) return true;
-      }
-      return false;
-    }
-
-    function normalizeAnchorValue(value) {
-      return Math.round(value * 2) / 2;
-    }
-
-    function collectSnapAnchors(slide, excludedElements) {
-      const slideRect = slide.getBoundingClientRect();
-      const xSet = new Set([
-        normalizeAnchorValue(slideRect.width / 2),
-        normalizeAnchorValue(CANVAS_GUIDE_MARGIN_PX),
-        normalizeAnchorValue(slideRect.width - CANVAS_GUIDE_MARGIN_PX)
-      ]);
-      const ySet = new Set([
-        normalizeAnchorValue(slideRect.height / 2),
-        normalizeAnchorValue(CANVAS_GUIDE_MARGIN_PX),
-        normalizeAnchorValue(slideRect.height - CANVAS_GUIDE_MARGIN_PX)
-      ]);
-
-      const snapRefs = new Set();
-      slide.querySelectorAll(EDITOR_SELECTABLE_SELECTOR).forEach(el => {
-        if (!isEligibleEditableElement(el)) return;
-        const ref = getDirectSlideChildReference(el, slide) || el;
-        if (!ref || !isEligibleEditableElement(ref)) return;
-        if (isSelectionRelated(ref, excludedElements)) return;
-        snapRefs.add(ref);
-      });
-
-      snapRefs.forEach(el => {
-        const rect = el.getBoundingClientRect();
-        const left = normalizeAnchorValue(rect.left - slideRect.left);
-        const right = normalizeAnchorValue(rect.right - slideRect.left);
-        const top = normalizeAnchorValue(rect.top - slideRect.top);
-        const bottom = normalizeAnchorValue(rect.bottom - slideRect.top);
-        xSet.add(left);
-        xSet.add(normalizeAnchorValue((left + right) / 2));
-        xSet.add(right);
-        ySet.add(top);
-        ySet.add(normalizeAnchorValue((top + bottom) / 2));
-        ySet.add(bottom);
-      });
-
-      const x = Array.from(xSet).filter(v => Number.isFinite(v) && v >= 0 && v <= slideRect.width).sort((a, b) => a - b);
-      const y = Array.from(ySet).filter(v => Number.isFinite(v) && v >= 0 && v <= slideRect.height).sort((a, b) => a - b);
-      return { x, y };
-    }
-
-    function bestSnap(targets, anchors, activeLock = null) {
-      if (activeLock) {
-        const lockedTarget = targets.find(t => t.key === activeLock.key) || targets[0];
-        if (lockedTarget) {
-          const lockDelta = activeLock.anchor - lockedTarget.value;
-          const lockDistance = Math.abs(lockDelta);
-          if (lockDistance <= SNAP_RELEASE_THRESHOLD_PX) {
-            return { delta: lockDelta, absDelta: lockDistance, anchor: activeLock.anchor, key: activeLock.key, locked: true };
-          }
-        }
-      }
-
-      let best = null;
-      targets.forEach(target => {
-        anchors.forEach(anchor => {
-          const delta = anchor - target.value;
-          const absDelta = Math.abs(delta);
-          if (absDelta <= SNAP_THRESHOLD_PX && (!best || absDelta < best.absDelta)) {
-            best = { delta, absDelta, anchor, key: target.key, locked: false };
-          }
-        });
-      });
-      return best;
-    }
-
-    function applySnapToBounds(bounds, anchors, mode, handleDir = '', snapLock = { x: null, y: null }, snapEnabled = true) {
-      let { left, top, right, bottom } = bounds;
-      const centerX = (left + right) / 2;
-      const centerY = (top + bottom) / 2;
-      const guides = [];
-
-      const xTargets = mode === 'drag'
-        ? [{ key: 'left', value: left }, { key: 'centerX', value: centerX }, { key: 'right', value: right }]
-        : handleDir.includes('w')
-          ? [{ key: 'left', value: left }]
-          : handleDir.includes('e')
-            ? [{ key: 'right', value: right }]
-            : [{ key: 'centerX', value: centerX }];
-
-      const yTargets = mode === 'drag'
-        ? [{ key: 'top', value: top }, { key: 'centerY', value: centerY }, { key: 'bottom', value: bottom }]
-        : handleDir.includes('n')
-          ? [{ key: 'top', value: top }]
-          : handleDir.includes('s')
-            ? [{ key: 'bottom', value: bottom }]
-            : [{ key: 'centerY', value: centerY }];
-
-      let snapX = null;
-      if (snapEnabled) {
-        snapX = bestSnap(xTargets, anchors.x, snapLock.x);
-      }
-      if (snapX) {
-        if (mode === 'drag' || snapX.key === 'centerX') {
-          left += snapX.delta;
-          right += snapX.delta;
-        } else if (snapX.key === 'left') {
-          left += snapX.delta;
-        } else if (snapX.key === 'right') {
-          right += snapX.delta;
-        }
-        guides.push({ axis: 'x', position: snapX.anchor });
-      }
-
-      let snapY = null;
-      if (snapEnabled) {
-        snapY = bestSnap(yTargets, anchors.y, snapLock.y);
-      }
-      if (snapY) {
-        if (mode === 'drag' || snapY.key === 'centerY') {
-          top += snapY.delta;
-          bottom += snapY.delta;
-        } else if (snapY.key === 'top') {
-          top += snapY.delta;
-        } else if (snapY.key === 'bottom') {
-          bottom += snapY.delta;
-        }
-        guides.push({ axis: 'y', position: snapY.anchor });
-      }
-
-      const nextSnapLock = {
-        x: snapX ? { anchor: snapX.anchor, key: snapX.key } : null,
-        y: snapY ? { anchor: snapY.anchor, key: snapY.key } : null
-      };
-
-      return { left, top, right, bottom, width: right - left, height: bottom - top, guides, snapX, snapY, snapLock: nextSnapLock };
-    }
-
     function applyBoundsToSelection(session, bounds) {
       if (session.type === 'drag') {
         const dx = bounds.left - session.startBounds.left;
@@ -2559,19 +2398,22 @@
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
       if (!doc || !slide || selectedElements.length === 0) return;
-      const slideRect = slide.getBoundingClientRect();
+      const slideMetrics = getSlideMetrics(slide);
+      const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
 
       selectedElements.forEach(el => {
         const rect = el.getBoundingClientRect();
         const parent = getClosestPositionedAncestor(el);
         const parentRect = parent.getBoundingClientRect();
+        const rectOnSlide = getRectOnSlide(rect, slideMetrics);
+        const parentOnSlide = getRectOnSlide(parentRect, slideMetrics);
 
         el.style.position = 'absolute';
         el.style.margin = '0';
-        const nextAbsLeft = clampValue(rect.left - slideRect.left + dx, 0, Math.max(0, slideRect.width - rect.width));
-        const nextAbsTop = clampValue(rect.top - slideRect.top + dy, 0, Math.max(0, slideRect.height - rect.height));
-        el.style.left = `${nextAbsLeft - (parentRect.left - slideRect.left)}px`;
-        el.style.top = `${nextAbsTop - (parentRect.top - slideRect.top)}px`;
+        const nextAbsLeft = clampValue(rectOnSlide.left + dx, 0, Math.max(0, slideBounds.width - (rectOnSlide.right - rectOnSlide.left)));
+        const nextAbsTop = clampValue(rectOnSlide.top + dy, 0, Math.max(0, slideBounds.height - (rectOnSlide.bottom - rectOnSlide.top)));
+        el.style.left = `${nextAbsLeft - parentOnSlide.left}px`;
+        el.style.top = `${nextAbsTop - parentOnSlide.top}px`;
       });
 
       syncSelectionOverlay();
@@ -2581,7 +2423,7 @@
       triggerAutoVersion('Auto: Nudged Element');
     }
 
-    // Element dragging + resize with smart guides and snap behavior
+    // Element dragging + resize on an open canvas (no snapping)
     function setupIframeDragging(doc) {
       let session = null;
 
@@ -2590,6 +2432,12 @@
         session.items.forEach(item => {
           item.element.style.position = 'absolute';
           item.element.style.margin = '0';
+          if (item.lockWidth) {
+            item.element.style.width = `${item.startWidth}px`;
+          }
+          if (item.lockHeight) {
+            item.element.style.height = `${item.startHeight}px`;
+          }
           item.element.style.left = `${item.startAbsLeft - item.parentOffsetLeft}px`;
           item.element.style.top = `${item.startAbsTop - item.parentOffsetTop}px`;
           item.element.classList.add('editor-dragging');
@@ -2602,6 +2450,15 @@
 
       const finalizeDragSession = () => {
         if (!session) return;
+        if (session.captureTarget && typeof session.captureTarget.releasePointerCapture === 'function') {
+          try {
+            if (session.captureTarget.hasPointerCapture?.(session.pointerId)) {
+              session.captureTarget.releasePointerCapture(session.pointerId);
+            }
+          } catch (_) {
+            // no-op
+          }
+        }
         const didMove = session.moved;
         session.items.forEach(item => item.element.classList.remove('editor-dragging'));
         if (session.overlay) {
@@ -2625,8 +2482,8 @@
         e.preventDefault();
       }, true);
 
-      doc.body.addEventListener('mousedown', (e) => {
-        if (e.button !== 0) return;
+      doc.body.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0 || e.isPrimary === false) return;
         const slide = getActiveSlide(doc);
         if (!slide) return;
 
@@ -2646,28 +2503,30 @@
 
         if (selectedElements.length === 0) return;
 
-        const slideRect = slide.getBoundingClientRect();
-        const startPointer = getPointerOnSlide(e, slideRect);
-        const startBounds = getSelectionBounds(selectedElements);
+        const slideMetrics = getSlideMetrics(slide);
+        const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
+        const startPointer = getPointerOnSlide(e, slideMetrics);
+        const startBounds = getSelectionBounds(selectedElements, slideMetrics);
         if (!startBounds) return;
-        const excluded = new Set(selectedElements);
-        const anchors = collectSnapAnchors(slide, excluded);
         const overlayNode = ensureSelectionOverlay(doc, slide);
 
         const items = selectedElements.map(el => {
           const rect = el.getBoundingClientRect();
           const parent = getClosestPositionedAncestor(el);
           const parentRect = parent.getBoundingClientRect();
-          const startAbsLeft = rect.left - slideRect.left;
-          const startAbsTop = rect.top - slideRect.top;
-          const startWidth = rect.width;
-          const startHeight = rect.height;
-
-          el.style.position = 'absolute';
-          el.style.margin = '0';
-          el.style.left = `${rect.left - parentRect.left}px`;
-          el.style.top = `${rect.top - parentRect.top}px`;
-          el.classList.add('editor-dragging');
+          const rectOnSlide = getRectOnSlide(rect, slideMetrics);
+          const parentOnSlide = getRectOnSlide(parentRect, slideMetrics);
+          const startAbsLeft = rectOnSlide.left;
+          const startAbsTop = rectOnSlide.top;
+          const startWidth = rectOnSlide.right - rectOnSlide.left;
+          const startHeight = rectOnSlide.bottom - rectOnSlide.top;
+          const computed = el.ownerDocument.defaultView.getComputedStyle(el);
+          const isPrePositioned = computed.position === 'absolute' || computed.position === 'fixed';
+          const tag = el.tagName.toLowerCase();
+          const inlineWidth = (el.style.width || '').trim();
+          const inlineHeight = (el.style.height || '').trim();
+          const lockWidth = !isPrePositioned && inlineWidth === '';
+          const lockHeight = !isPrePositioned && inlineHeight === '' && ['table', 'pre', 'code'].includes(tag);
 
           return {
             element: el,
@@ -2675,38 +2534,49 @@
             startAbsTop,
             startWidth,
             startHeight,
-            parentOffsetLeft: parentRect.left - slideRect.left,
-            parentOffsetTop: parentRect.top - slideRect.top
+            parentOffsetLeft: parentOnSlide.left,
+            parentOffsetTop: parentOnSlide.top,
+            lockWidth,
+            lockHeight
           };
         });
 
         session = {
           type: handle ? 'resize' : 'drag',
           handleDir: handle ? handle.getAttribute('data-dir') : '',
+          pointerId: e.pointerId,
+          captureTarget: doc.body,
           startPointer,
           grabOffset: {
             x: startPointer.x - startBounds.left,
             y: startPointer.y - startBounds.top
           },
-          slideRect,
+          slideMetrics,
+          slideBounds,
           startBounds,
           items,
-          anchors,
           moved: false,
           materialized: false,
-          snapLock: { x: null, y: null },
           overlay: overlayNode
         };
 
-        updateDragHud(startBounds, null, null);
+        if (typeof doc.body.setPointerCapture === 'function') {
+          try {
+            doc.body.setPointerCapture(e.pointerId);
+          } catch (_) {
+            // no-op
+          }
+        }
+
+        updateDragHud(startBounds);
         isDraggingElement = true;
         e.preventDefault();
         e.stopPropagation();
       }, true);
 
-      doc.body.addEventListener('mousemove', (e) => {
-        if (!session) return;
-        const pointer = getPointerOnSlide(e, session.slideRect);
+      doc.body.addEventListener('pointermove', (e) => {
+        if (!session || e.pointerId !== session.pointerId) return;
+        const pointer = getPointerOnSlide(e, session.slideMetrics);
         const dx = pointer.x - session.startPointer.x;
         const dy = pointer.y - session.startPointer.y;
         const moveDistance = Math.hypot(dx, dy);
@@ -2738,21 +2608,22 @@
           if (session.handleDir.includes('s')) bottom += dy;
         }
 
-        const snapEnabled = isSnapEnabled && !e.altKey;
-        let bounds = normalizeBounds({ left, top, right, bottom }, session.slideRect, session.type, session.handleDir);
-        const snapped = applySnapToBounds(bounds, session.anchors, session.type, session.handleDir, session.snapLock, snapEnabled);
-        session.snapLock = snapped.snapLock;
-        bounds = snapped;
-        bounds = normalizeBounds(bounds, session.slideRect, session.type, session.handleDir);
+        let bounds = normalizeBounds({ left, top, right, bottom }, session.slideBounds, session.type, session.handleDir);
+        bounds = normalizeBounds(bounds, session.slideBounds, session.type, session.handleDir);
 
         applyBoundsToSelection(session, bounds);
         syncSelectionOverlay();
-        renderGuides(snapped.guides);
-        updateDragHud(bounds, snapped.snapX, snapped.snapY);
+        updateDragHud(bounds);
         e.preventDefault();
       }, true);
 
-      doc.body.addEventListener('mouseup', () => {
+      doc.body.addEventListener('pointerup', (e) => {
+        if (!session || e.pointerId !== session.pointerId) return;
+        finalizeDragSession();
+      }, true);
+
+      doc.body.addEventListener('pointercancel', (e) => {
+        if (!session || e.pointerId !== session.pointerId) return;
         finalizeDragSession();
       }, true);
 
