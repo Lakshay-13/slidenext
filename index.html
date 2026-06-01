@@ -963,6 +963,7 @@
     let isSnapEnabled = false;
     const SNAP_THRESHOLD_PX = 5;
     const SNAP_RELEASE_THRESHOLD_PX = 10;
+    const DRAG_START_THRESHOLD_PX = 2;
     const MIN_ELEMENT_SIZE_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const DRAG_OVERFLOW_MARGIN_PX = 280;
@@ -2584,6 +2585,21 @@
     function setupIframeDragging(doc) {
       let session = null;
 
+      const materializeSessionItems = () => {
+        if (!session || session.materialized) return;
+        session.items.forEach(item => {
+          item.element.style.position = 'absolute';
+          item.element.style.margin = '0';
+          item.element.style.left = `${item.startAbsLeft - item.parentOffsetLeft}px`;
+          item.element.style.top = `${item.startAbsTop - item.parentOffsetTop}px`;
+          item.element.classList.add('editor-dragging');
+        });
+        if (session.overlay) {
+          session.overlay.classList.add('drag-preview');
+        }
+        session.materialized = true;
+      };
+
       const finalizeDragSession = () => {
         if (!session) return;
         const didMove = session.moved;
@@ -2637,7 +2653,6 @@
         const excluded = new Set(selectedElements);
         const anchors = collectSnapAnchors(slide, excluded);
         const overlayNode = ensureSelectionOverlay(doc, slide);
-        if (overlayNode) overlayNode.classList.add('drag-preview');
 
         const items = selectedElements.map(el => {
           const rect = el.getBoundingClientRect();
@@ -2678,6 +2693,7 @@
           items,
           anchors,
           moved: false,
+          materialized: false,
           snapLock: { x: null, y: null },
           overlay: overlayNode
         };
@@ -2693,7 +2709,16 @@
         const pointer = getPointerOnSlide(e, session.slideRect);
         const dx = pointer.x - session.startPointer.x;
         const dy = pointer.y - session.startPointer.y;
-        if (Math.abs(dx) > 0.2 || Math.abs(dy) > 0.2) {
+        const moveDistance = Math.hypot(dx, dy);
+        if (!session.materialized && moveDistance >= DRAG_START_THRESHOLD_PX) {
+          materializeSessionItems();
+        }
+
+        if (!session.materialized) {
+          return;
+        }
+
+        if (moveDistance >= DRAG_START_THRESHOLD_PX) {
           session.moved = true;
         }
         let left = session.startBounds.left;
