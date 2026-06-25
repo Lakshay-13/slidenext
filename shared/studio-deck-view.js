@@ -10,6 +10,45 @@
     root.SlideNextStudioDeckView = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (deckHtml) {
+  function bindStudioDeckNavigationSync(doc, frameWin, options = {}) {
+    const getGoToSlide = typeof options.getGoToSlide === 'function'
+      ? options.getGoToSlide
+      : (win) => win && typeof win.goToSlide === 'function' ? win.goToSlide : null;
+    const isAlreadyWrapped = typeof options.isAlreadyWrapped === 'function'
+      ? options.isAlreadyWrapped
+      : (win) => !!(win && win.__studioGoToSlideWrapped);
+    const markWrapped = typeof options.markWrapped === 'function'
+      ? options.markWrapped
+      : (win) => {
+          if (win) {
+            win.__studioGoToSlideWrapped = true;
+          }
+        };
+    const setGoToSlide = typeof options.setGoToSlide === 'function'
+      ? options.setGoToSlide
+      : (win, nextGoToSlide) => {
+          if (win) {
+            win.goToSlide = nextGoToSlide;
+          }
+        };
+    const syncStudioChromeToActiveSlide = typeof options.syncStudioChromeToActiveSlide === 'function'
+      ? options.syncStudioChromeToActiveSlide
+      : () => {};
+
+    const originalGoToSlide = getGoToSlide(frameWin);
+    if (!doc || !frameWin || typeof originalGoToSlide !== 'function' || isAlreadyWrapped(frameWin)) {
+      return false;
+    }
+
+    setGoToSlide(frameWin, (index) => {
+      const result = originalGoToSlide.call(frameWin, index);
+      syncStudioChromeToActiveSlide(doc);
+      return result;
+    });
+    markWrapped(frameWin);
+    return true;
+  }
+
   function syncStudioActiveSlideView(doc, options = {}) {
     const getSlides = typeof options.getSlides === 'function'
       ? options.getSlides
@@ -119,6 +158,7 @@
   }
 
   return {
+    bindStudioDeckNavigationSync,
     syncStudioActiveSlideView,
     buildStudioPreviewHtml,
     buildStudioSourceHtml

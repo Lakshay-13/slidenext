@@ -1780,18 +1780,9 @@
     function bindDeckNavigationSync(doc = getIframeDoc()) {
       const iframe = document.getElementById('studioFrame');
       const frameWin = iframe?.contentWindow;
-      if (!doc || !frameWin || typeof frameWin.goToSlide !== 'function' || frameWin.__studioGoToSlideWrapped) {
-        return false;
-      }
-
-      const originalGoToSlide = frameWin.goToSlide.bind(frameWin);
-      frameWin.goToSlide = (index) => {
-        const result = originalGoToSlide(index);
-        syncStudioChromeToActiveSlide(doc);
-        return result;
-      };
-      frameWin.__studioGoToSlideWrapped = true;
-      return true;
+      return SlideNextStudioDeckView.bindStudioDeckNavigationSync(doc, frameWin, {
+        syncStudioChromeToActiveSlide
+      });
     }
 
     function teardownDeckActiveSlideSync() {
