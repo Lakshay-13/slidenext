@@ -702,17 +702,43 @@
     return assetSeeds;
   }
 
+  function queryDocumentAttribute(doc, selector, attributeName) {
+    if (!doc || typeof doc.querySelector !== 'function') {
+      return '';
+    }
+    const node = doc.querySelector(selector);
+    if (!node || typeof node.getAttribute !== 'function') {
+      return '';
+    }
+    return normalizeString(node.getAttribute(attributeName)).trim();
+  }
+
+  function parseMetadataTagList(value) {
+    if (typeof value !== 'string') {
+      return [];
+    }
+    return value
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  }
+
   function buildDeckMetadata(doc, options = {}) {
     const metadata = asPlainObject(options.presentationMetadata);
     const titleNode = doc.querySelector('title');
+    const fallbackDescription = queryDocumentAttribute(doc, 'meta[name="description"]', 'content')
+      || queryDocumentAttribute(doc, 'meta[property="og:description"]', 'content');
+    const fallbackIcon = queryDocumentAttribute(doc, 'link[rel~="icon"][href]', 'href');
+    const fallbackTags = parseMetadataTagList(queryDocumentAttribute(doc, 'meta[name="keywords"]', 'content'));
+    const metadataTags = normalizeStringArray(metadata.tags);
 
     return {
       id: normalizeString(metadata.id),
       title: normalizeString(metadata.title, normalizeString(titleNode && titleNode.textContent)),
       subtitle: normalizeString(metadata.subtitle),
-      description: normalizeString(metadata.description),
-      icon: normalizeString(metadata.icon),
-      tags: normalizeStringArray(metadata.tags),
+      description: normalizeString(metadata.description, fallbackDescription),
+      icon: normalizeString(metadata.icon, fallbackIcon),
+      tags: metadataTags.length > 0 ? metadataTags : fallbackTags,
       sourcePath: normalizeString(options.sourcePath, normalizeString(metadata.url))
     };
   }

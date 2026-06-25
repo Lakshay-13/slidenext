@@ -220,6 +220,77 @@ function flattenSanitizableDescendants(root) {
   return descendants;
 }
 
+function createMetadataDocument(options = {}) {
+  const selectors = new Map();
+  if (options.title) {
+    selectors.set('title', {
+      textContent: options.title
+    });
+  }
+  if (options.description) {
+    selectors.set('meta[name="description"]', createElement('META', {
+      content: options.description
+    }));
+  }
+  if (options.ogDescription) {
+    selectors.set('meta[property="og:description"]', createElement('META', {
+      content: options.ogDescription
+    }));
+  }
+  if (options.keywords) {
+    selectors.set('meta[name="keywords"]', createElement('META', {
+      content: options.keywords
+    }));
+  }
+  if (options.iconHref) {
+    selectors.set('link[rel~="icon"][href]', createElement('LINK', {
+      href: options.iconHref
+    }));
+  }
+
+  const sourceClone = {
+    outerHTML: '<html><head></head><body></body></html>',
+    querySelector(selector) {
+      if (selector === 'head') {
+        return { innerHTML: '' };
+      }
+      if (selector === 'body') {
+        return { innerHTML: '', attributes: [] };
+      }
+      return null;
+    },
+    querySelectorAll() {
+      return [];
+    }
+  };
+
+  return {
+    querySelector(selector) {
+      return selectors.get(selector) || null;
+    },
+    querySelectorAll(selector) {
+      if (selector === '.slide') {
+        return [];
+      }
+      return [];
+    },
+    styleSheets: [],
+    documentElement: {
+      style: createStyleDeclaration({}),
+      cloneNode() {
+        return sourceClone;
+      }
+    },
+    head: {
+      innerHTML: ''
+    },
+    body: {
+      innerHTML: '',
+      attributes: []
+    }
+  };
+}
+
 test('collectDeckAssets includes inline style asset urls, skips fragments, and deduplicates sources', () => {
   const imageEl = createElement('IMG', {
     src: 'assets/chart.png'
@@ -259,6 +330,60 @@ test('collectDeckAssets includes inline style asset urls, skips fragments, and d
       src: 'assets/hero.png'
     }
   ]);
+});
+
+test('importHtmlDeckToCanonicalDeck falls back to head metadata for missing description, icon, and tags', () => {
+  const deck = deckImport.importHtmlDeckToCanonicalDeck(createMetadataDocument({
+    title: 'HTML Deck Title',
+    description: 'Deck description from meta',
+    keywords: 'AI, Slides,  Workshops ',
+    iconHref: '/logo.png'
+  }), {
+    presentationMetadata: {
+      id: 'html-only-deck'
+    },
+    sourcePath: '/presentations/html-only-deck/index.html',
+    stripTransientDeckRuntimeState() {}
+  });
+
+  assert.deepEqual(deck.metadata, {
+    id: 'html-only-deck',
+    title: 'HTML Deck Title',
+    subtitle: '',
+    description: 'Deck description from meta',
+    icon: '/logo.png',
+    tags: ['AI', 'Slides', 'Workshops'],
+    sourcePath: '/presentations/html-only-deck/index.html'
+  });
+});
+
+test('importHtmlDeckToCanonicalDeck preserves explicit metadata over head fallbacks', () => {
+  const deck = deckImport.importHtmlDeckToCanonicalDeck(createMetadataDocument({
+    title: 'HTML Deck Title',
+    description: 'Deck description from meta',
+    keywords: 'AI, Slides',
+    iconHref: '/logo.png'
+  }), {
+    presentationMetadata: {
+      id: 'metadata-deck',
+      title: 'Metadata Title',
+      description: 'Metadata description',
+      icon: 'science',
+      tags: ['Research']
+    },
+    sourcePath: '/presentations/metadata-deck/index.html',
+    stripTransientDeckRuntimeState() {}
+  });
+
+  assert.deepEqual(deck.metadata, {
+    id: 'metadata-deck',
+    title: 'Metadata Title',
+    subtitle: '',
+    description: 'Metadata description',
+    icon: 'science',
+    tags: ['Research'],
+    sourcePath: '/presentations/metadata-deck/index.html'
+  });
 });
 
 test('collectDeckThemeTokens reads same-origin :root custom properties and ignores inaccessible stylesheets', () => {
