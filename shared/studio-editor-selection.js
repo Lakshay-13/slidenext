@@ -117,6 +117,48 @@
     };
   }
 
+  function commitStudioSelectionState(nextSelectionState = {}, options = {}) {
+    const selectedElements = Array.isArray(nextSelectionState.selectedElements)
+      ? nextSelectionState.selectedElements
+      : [];
+    const selectedElement = nextSelectionState.selectedElement || selectedElements[0] || null;
+    const applySelectionState = typeof options.applySelectionState === 'function'
+      ? options.applySelectionState
+      : () => {};
+    const refreshSelectionClasses = typeof options.refreshSelectionClasses === 'function'
+      ? options.refreshSelectionClasses
+      : () => {};
+    const syncSelectionOverlay = typeof options.syncSelectionOverlay === 'function'
+      ? options.syncSelectionOverlay
+      : () => {};
+    const hideDragHud = typeof options.hideDragHud === 'function'
+      ? options.hideDragHud
+      : () => {};
+    const syncInspectorForSelection = typeof options.syncInspectorForSelection === 'function'
+      ? options.syncInspectorForSelection
+      : () => {};
+    const updateLayersList = typeof options.updateLayersList === 'function'
+      ? options.updateLayersList
+      : () => {};
+
+    applySelectionState({
+      selectedElements,
+      selectedElement
+    });
+    refreshSelectionClasses();
+    syncSelectionOverlay();
+    if (options.hideDragHudOnClear && selectedElements.length === 0) {
+      hideDragHud();
+    }
+    syncInspectorForSelection();
+    updateLayersList();
+
+    return {
+      selectedElements,
+      selectedElement
+    };
+  }
+
   return {
     getStudioSelectedElementIds,
     areStudioIdListsEqual,
@@ -124,6 +166,7 @@
     restoreStudioSelectionByIdsOnActiveSlide,
     updateStudioSelection,
     clearStudioSelection,
-    selectAllStudioElements
+    selectAllStudioElements,
+    commitStudioSelectionState
   };
 });

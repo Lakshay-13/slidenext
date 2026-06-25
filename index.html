@@ -2443,24 +2443,32 @@
           toggle: !!options.toggle
         }
       );
-      selectedElements = nextSelectionState.selectedElements;
-      selectedElement = nextSelectionState.selectedElement;
-
-      refreshSelectionClasses();
-      syncSelectionOverlay();
-      syncInspectorForSelection();
-      updateLayersList();
+      SlideNextStudioEditorSelection.commitStudioSelectionState(nextSelectionState, {
+        applySelectionState: (nextState) => {
+          selectedElements = nextState.selectedElements;
+          selectedElement = nextState.selectedElement;
+        },
+        refreshSelectionClasses,
+        syncSelectionOverlay,
+        syncInspectorForSelection,
+        updateLayersList
+      });
     }
 
     function deselectElement() {
       const nextSelectionState = SlideNextStudioEditorSelection.clearStudioSelection();
-      selectedElements = nextSelectionState.selectedElements;
-      selectedElement = nextSelectionState.selectedElement;
-      refreshSelectionClasses();
-      syncSelectionOverlay();
-      hideDragHud();
-      syncInspectorForSelection();
-      updateLayersList();
+      SlideNextStudioEditorSelection.commitStudioSelectionState(nextSelectionState, {
+        applySelectionState: (nextState) => {
+          selectedElements = nextState.selectedElements;
+          selectedElement = nextState.selectedElement;
+        },
+        refreshSelectionClasses,
+        syncSelectionOverlay,
+        hideDragHud,
+        hideDragHudOnClear: true,
+        syncInspectorForSelection,
+        updateLayersList
+      });
     }
 
     function selectAllElementsOnActiveSlide() {
@@ -2469,12 +2477,16 @@
       const nextSelection = getNormalizedSlideLayerOrder(slide);
       if (nextSelection.length === 0) return false;
       const nextSelectionState = SlideNextStudioEditorSelection.selectAllStudioElements(nextSelection);
-      selectedElements = nextSelectionState.selectedElements;
-      selectedElement = nextSelectionState.selectedElement;
-      refreshSelectionClasses();
-      syncSelectionOverlay();
-      syncInspectorForSelection();
-      updateLayersList();
+      SlideNextStudioEditorSelection.commitStudioSelectionState(nextSelectionState, {
+        applySelectionState: (nextState) => {
+          selectedElements = nextState.selectedElements;
+          selectedElement = nextState.selectedElement;
+        },
+        refreshSelectionClasses,
+        syncSelectionOverlay,
+        syncInspectorForSelection,
+        updateLayersList
+      });
       return true;
     }
 
