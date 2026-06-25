@@ -88,7 +88,7 @@
 
     const sourceAttributes = slide.source ? asPlainObject(slide.source.attributes) : {};
     if (!sourceAttributes.class) {
-      sourceAttributes.class = 'slide';
+      sourceAttributes.class = index === 0 ? 'slide slide-active' : 'slide';
     }
     if (!sourceAttributes.id && slide.id) {
       sourceAttributes.id = slide.id;
@@ -114,7 +114,7 @@
     const slidesHtml = Array.isArray(deck.slides)
       ? deck.slides.map((slide, index) => renderCanonicalSlide(slide, index, options)).join('\n')
       : '';
-    return `<div class="slides-container">${slidesHtml}</div>`;
+    return `<div id="slidesContainer" class="slides-container">${slidesHtml}</div>`;
   }
 
   function renderCanonicalDeckHtml(deckLike, options = {}) {
