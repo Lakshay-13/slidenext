@@ -3904,19 +3904,23 @@
         alert("Please enter a version name.");
         return;
       }
-      
+
+      const iframe = document.getElementById('studioFrame');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!iframeDoc) {
+        alert('Save version failed: editor frame is unavailable.');
+        return;
+      }
+
       closeSaveVersionModal();
-      
+
       const saveBtn = document.getElementById('studioSaveBtn');
       const statusEl = document.getElementById('autoSaveStatus');
       const scheduledPresentationUrl = currentPresentationUrl;
-      
+
       saveBtn.disabled = true;
       saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>Creating version...</span>`;
-      
-      const iframe = document.getElementById('studioFrame');
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      if (!iframeDoc) return;
+
       const cleanHtml = buildPersistableDeckHtml(iframeDoc);
       const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
         scheduledPresentationUrl,
