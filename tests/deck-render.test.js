@@ -220,6 +220,37 @@ test('renderCanonicalDeckHtml emits theme tokens and custom css when rendering w
   assert.match(html, /<style>\s*\.slide \{ color: var\(--color-primary\); \}\s*<\/style>/);
 });
 
+test('renderCanonicalDeckHtml emits canonical deck layout sizing when source head html is absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    layout: {
+      size: {
+        width: 1920,
+        height: 1080,
+        unit: 'px'
+      },
+      aspectRatio: '16:9'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<style>\s*\.slide \{\s*width: 1920px;\s*height: 1080px;\s*aspect-ratio: 16 \/ 9;\s*box-sizing: border-box;\s*overflow: hidden;\s*\}\s*<\/style>/);
+});
+
 test('renderCanonicalDeckHtml emits canonical description and keyword metadata when source head html is absent', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {

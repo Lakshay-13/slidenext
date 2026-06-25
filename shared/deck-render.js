@@ -50,6 +50,20 @@
     return `<meta name="${escapeAttribute(name)}" content="${escapeAttribute(normalizedContent)}">`;
   }
 
+  function normalizeAspectRatioCssValue(value) {
+    const normalizedValue = normalizeString(value).trim();
+    if (!normalizedValue) {
+      return '';
+    }
+    return normalizedValue.includes(':')
+      ? normalizedValue
+        .split(':')
+        .map(part => part.trim())
+        .filter(Boolean)
+        .join(' / ')
+      : normalizedValue;
+  }
+
   function renderAttributeMap(attributes = {}) {
     return Object.entries(asPlainObject(attributes))
       .filter(([, value]) => value !== null && value !== undefined && value !== false)
@@ -233,9 +247,30 @@
 
   function buildDefaultHeadHtml(deck) {
     const metadata = asPlainObject(deck.metadata);
+    const layout = asPlainObject(deck.layout);
+    const layoutSize = asPlainObject(layout.size);
     const title = normalizeString(metadata.title, 'SlideNext Deck');
     const descriptionMetaTag = buildMetaTag('description', metadata.description);
     const keywordsMetaTag = buildMetaTag('keywords', Array.isArray(metadata.tags) ? metadata.tags.join(', ') : '');
+    const layoutCssUnit = normalizeString(layoutSize.unit, 'px').trim() || 'px';
+    const layoutAspectRatio = normalizeAspectRatioCssValue(layout.aspectRatio);
+    const layoutStyleLines = [];
+    if (Number.isFinite(layoutSize.width)) {
+      layoutStyleLines.push(`  width: ${layoutSize.width}${layoutCssUnit};`);
+    }
+    if (Number.isFinite(layoutSize.height)) {
+      layoutStyleLines.push(`  height: ${layoutSize.height}${layoutCssUnit};`);
+    }
+    if (layoutAspectRatio) {
+      layoutStyleLines.push(`  aspect-ratio: ${escapeStyleText(layoutAspectRatio)};`);
+    }
+    if (layoutStyleLines.length > 0) {
+      layoutStyleLines.push('  box-sizing: border-box;');
+      layoutStyleLines.push('  overflow: hidden;');
+    }
+    const deckLayoutStyleBlock = layoutStyleLines.length > 0
+      ? `<style>\n.slide {\n${layoutStyleLines.join('\n')}\n}\n</style>`
+      : '';
     const themeTokens = asPlainObject(deck.theme && deck.theme.tokens);
     const themeTokenEntries = Object.entries(themeTokens)
       .filter(([tokenName, tokenValue]) => tokenName.startsWith('--') && normalizeString(tokenValue).trim() !== '');
@@ -258,6 +293,7 @@
       `<title>${escapeHtml(title)}</title>`,
       descriptionMetaTag,
       keywordsMetaTag,
+      deckLayoutStyleBlock,
       ...themeStyleBlocks
     ].filter(Boolean).join('\n');
   }
