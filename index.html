@@ -1660,7 +1660,7 @@
         
         // Bind Click navigation
         thumbCard.addEventListener('click', () => {
-          setActiveSlideById(slide.id);
+          setActiveSlideById(slide.id, undefined, { captureHistory: true });
         });
         
         // Bind HTML5 drag events
@@ -1814,12 +1814,13 @@
     }
 
     // Toggle active slide viewport display
-    function setActiveSlide(index) {
+    function setActiveSlide(index, options = {}) {
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       const slides = getSlides(iframeDoc);
       
       if (index < 0 || index >= slides.length) return;
+      const previousIndex = currentSlideIndex;
       
       // Apply translation to container
       const container = iframeDoc.getElementById('slidesContainer');
@@ -1837,12 +1838,15 @@
       });
 
       syncStudioChromeToActiveSlide(iframeDoc);
+      if (options.captureHistory && previousIndex !== currentSlideIndex) {
+        saveHistoryState(false);
+      }
     }
 
     // Sync presentation's internal dots and counter
     function updateIframeNavigationUI(doc, slides) {
       SlideNextStudioDeckView.updateStudioDeckNavigationUi(doc, slides, currentSlideIndex, {
-        setActiveSlide
+        setActiveSlide: (index) => setActiveSlide(index, { captureHistory: true })
       });
     }
 
@@ -2117,10 +2121,10 @@
       });
     }
 
-    function setActiveSlideById(slideId, doc = getIframeDoc()) {
+    function setActiveSlideById(slideId, doc = getIframeDoc(), options = {}) {
       const index = getSlideIndexById(slideId, doc);
       if (index === -1) return false;
-      setActiveSlide(index);
+      setActiveSlide(index, options);
       return true;
     }
 
