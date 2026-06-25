@@ -147,10 +147,13 @@ app.get('/api/versions', async (req, res) => {
 
     try {
       const files = await fs.readdir(versionsDir);
-      // Filter for files matching structure of backups (with optional _Label suffix)
+      // Support both legacy and current backup timestamps:
+      // base_YYYYMMDD_HHMMSS[_mmm][_Label]
       const ext = path.extname(targetFile);
       const base = path.basename(targetFile, ext);
-      const backupRegex = new RegExp(`^${base}_\\d{4}-?\\d{2}-?\\d{2}_\\d{6}(_.*)?${ext}$`);
+      const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escapedExt = ext.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const backupRegex = new RegExp(`^${escapedBase}_\\d{8}_\\d{6}(?:_\\d{3})?(?:_.*)?${escapedExt}$`);
 
       const versions = [];
       for (const file of files) {
