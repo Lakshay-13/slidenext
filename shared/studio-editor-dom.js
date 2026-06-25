@@ -180,6 +180,50 @@
     return orderedElements;
   }
 
+  function findPreferredStudioDragContainer(el, options = {}) {
+    if (!el || typeof el.closest !== 'function') return null;
+    const slideSelector = options.slideSelector || '.slide';
+    const parentTargetSelector = options.parentTargetSelector || '';
+    if (!parentTargetSelector) return null;
+    const slide = el.closest(slideSelector);
+    if (!slide) return null;
+    const candidate = el.closest(parentTargetSelector);
+    if (!candidate || candidate === el) return null;
+    if (!slide.contains(candidate)) return null;
+    const isEligible = typeof options.isEligibleEditableElement === 'function'
+      ? options.isEligibleEditableElement
+      : isEligibleEditableElement;
+    if (!isEligible(candidate, options)) return null;
+    return candidate;
+  }
+
+  function resolveStudioEditableTarget(node, options = {}) {
+    const selectableSelector = options.selectableSelector || '';
+    const inlineTextTags = options.inlineTextTags || [];
+    const inlineTagSet = inlineTextTags instanceof Set ? inlineTextTags : new Set(inlineTextTags);
+    const isEligible = typeof options.isEligibleEditableElement === 'function'
+      ? options.isEligibleEditableElement
+      : isEligibleEditableElement;
+
+    let current = node && node.nodeType === 1 ? node : node && node.parentElement ? node.parentElement : null;
+    while (current) {
+      if (current.matches && selectableSelector && current.matches(selectableSelector) && isEligible(current, options)) {
+        const tagName = current.tagName ? current.tagName.toLowerCase() : '';
+        if (inlineTagSet.has(tagName)) {
+          const preferred = findPreferredStudioDragContainer(current, options);
+          if (preferred) return preferred;
+        }
+        if (tagName === 'th' || tagName === 'td') {
+          const table = current.closest('table');
+          return table && isEligible(table, options) ? table : null;
+        }
+        return current;
+      }
+      current = current.parentElement;
+    }
+    return null;
+  }
+
   return {
     createStudioSlideId,
     assignStudioSlideId,
@@ -194,6 +238,8 @@
     getElementByEditorId,
     getStudioSlideEditableElements,
     getNormalizedStudioSlideLayerOrder,
-    applyStudioSlideLayerOrder
+    applyStudioSlideLayerOrder,
+    findPreferredStudioDragContainer,
+    resolveStudioEditableTarget
   };
 });

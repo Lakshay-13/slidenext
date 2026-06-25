@@ -2222,7 +2222,10 @@
       return {
         slideAttrName: EDITOR_SLIDE_ID_ATTR,
         elementAttrName: EDITOR_ELEMENT_ID_ATTR,
+        slideSelector: '.slide',
         selectableSelector: EDITOR_SELECTABLE_SELECTOR,
+        parentTargetSelector: EDITOR_PARENT_TARGET_SELECTOR,
+        inlineTextTags: EDITOR_INLINE_TEXT_TAGS,
         blockedIds: ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud', 'slidesContainer'],
         ...options
       };
@@ -2458,34 +2461,11 @@
     }
 
     function findPreferredDragContainer(el) {
-      if (!el || typeof el.closest !== 'function') return null;
-      const slide = el.closest('.slide');
-      if (!slide) return null;
-      const candidate = el.closest(EDITOR_PARENT_TARGET_SELECTOR);
-      if (!candidate || candidate === el) return null;
-      if (!slide.contains(candidate)) return null;
-      if (!isEligibleEditableElement(candidate)) return null;
-      return candidate;
+      return SlideNextStudioEditorDom.findPreferredStudioDragContainer(el, getEditorDomOptions());
     }
 
     function resolveEditableTarget(node) {
-      let curr = node && node.nodeType === 1 ? node : node?.parentElement;
-      while (curr) {
-        if (curr.matches?.(EDITOR_SELECTABLE_SELECTOR) && isEligibleEditableElement(curr)) {
-          const tag = curr.tagName.toLowerCase();
-          if (EDITOR_INLINE_TEXT_TAGS.has(tag)) {
-            const preferred = findPreferredDragContainer(curr);
-            if (preferred) return preferred;
-          }
-          if (curr.tagName.toLowerCase() === 'th' || curr.tagName.toLowerCase() === 'td') {
-            const table = curr.closest('table');
-            return table && isEligibleEditableElement(table) ? table : null;
-          }
-          return curr;
-        }
-        curr = curr.parentElement;
-      }
-      return null;
+      return SlideNextStudioEditorDom.resolveStudioEditableTarget(node, getEditorDomOptions());
     }
 
     function refreshSelectionClasses() {
