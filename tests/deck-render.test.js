@@ -170,6 +170,20 @@ test('renderCanonicalNode preserves explicit style over canonical layout fallbac
   assert.equal(html, '<div style="color: red;">Hero copy</div>');
 });
 
+test('renderCanonicalNode renders hidden nodes as hidden when canonical visibility marks them hidden', () => {
+  const html = deckRender.renderCanonicalNode({
+    tagName: 'div',
+    text: 'Hidden copy',
+    visibility: {
+      hidden: true
+    }
+  }, {
+    preferNodeSourceHtml: false
+  });
+
+  assert.equal(html, '<div hidden aria-hidden="true">Hidden copy</div>');
+});
+
 test('renderCanonicalDeckHtml emits theme tokens and custom css when rendering without source head html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {

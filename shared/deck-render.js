@@ -174,6 +174,7 @@
       }
     }
     if (node.visibility && node.visibility.hidden) {
+      attributes.hidden = true;
       attributes['aria-hidden'] = attributes['aria-hidden'] || 'true';
     }
 
