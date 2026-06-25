@@ -98,6 +98,41 @@ test('closePresentationModal clears the preview load handler before removing sou
   assert.equal(modalEl.classList.contains('active'), false);
 });
 
+test('resetPresentationModal clears preview state immediately', () => {
+  const iframeEl = createIframe();
+  iframeEl.onload = () => {};
+  iframeEl.src = '/presentations/stale/index.html';
+  iframeEl.srcdoc = '<html>stale preview</html>';
+  preview.getNextPresentationFrameLoadToken(iframeEl);
+  const modalEl = { classList: createClassList(['active', 'opacity-100']) };
+  const bodyEl = {
+    style: {
+      overflow: 'hidden'
+    }
+  };
+  const fullscreenIconEl = {
+    textContent: 'fullscreen_exit'
+  };
+
+  preview.resetPresentationModal({
+    modalEl,
+    iframeEl,
+    bodyEl,
+    fullscreenIconEl
+  });
+
+  assert.equal(iframeEl.onload, null);
+  assert.equal(iframeEl.src, '');
+  assert.equal(iframeEl.srcdoc, '');
+  assert.equal(modalEl.classList.contains('active'), false);
+  assert.equal(modalEl.classList.contains('hidden'), true);
+  assert.equal(modalEl.classList.contains('opacity-0'), true);
+  assert.equal(modalEl.classList.contains('pointer-events-none'), true);
+  assert.equal(modalEl.classList.contains('opacity-100'), false);
+  assert.equal(bodyEl.style.overflow, '');
+  assert.equal(fullscreenIconEl.textContent, 'fullscreen');
+});
+
 test('resetSourceViewModal clears source modal state immediately', () => {
   const modalEl = { classList: createClassList(['opacity-100']) };
   const contentEl = { classList: createClassList(['scale-100']) };

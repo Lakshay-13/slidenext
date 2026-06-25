@@ -64,6 +64,7 @@
   function removeIframeSources(iframeEl) {
     if (!iframeEl) return;
     iframeEl.removeAttribute('srcdoc');
+    iframeEl.srcdoc = '';
     iframeEl.removeAttribute('src');
     iframeEl.src = '';
   }
@@ -143,6 +144,28 @@
         modalEl.classList.add('hidden');
       }
     }, hideDelayMs);
+  }
+
+  function resetPresentationModal(options = {}) {
+    const {
+      modalEl,
+      iframeEl,
+      bodyEl,
+      fullscreenIconEl
+    } = options;
+
+    clearPresentationFrameLoadHandler(iframeEl);
+    removeIframeSources(iframeEl);
+    if (modalEl) {
+      modalEl.classList.remove('active', 'opacity-100');
+      modalEl.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+    }
+    if (bodyEl && bodyEl.style) {
+      bodyEl.style.overflow = '';
+    }
+    if (fullscreenIconEl) {
+      fullscreenIconEl.textContent = 'fullscreen';
+    }
   }
 
   function openSourceViewModal(options = {}) {
@@ -239,6 +262,7 @@
     launchPresentationUrl,
     launchPresentationHtml,
     closePresentationModal,
+    resetPresentationModal,
     openSourceViewModal,
     closeSourceViewModal,
     resetSourceViewModal

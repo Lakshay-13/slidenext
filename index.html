@@ -1489,17 +1489,24 @@
       });
     }
 
-    function closePresentation() {
-      SlideNextStudioPreview.closePresentationModal({
-        modalEl: document.getElementById('presentationModal'),
-        iframeEl: document.getElementById('presentationFrame'),
-        bodyEl: document.body
-      });
-      
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
+    function resetStudioPresentationUiState() {
+      const modalEl = document.getElementById('presentationModal');
+      if (document.fullscreenElement === modalEl && typeof document.exitFullscreen === 'function') {
+        const fullscreenExitResult = document.exitFullscreen();
+        if (fullscreenExitResult && typeof fullscreenExitResult.catch === 'function') {
+          fullscreenExitResult.catch(() => {});
+        }
       }
-      document.getElementById('fsIcon').textContent = 'fullscreen';
+      SlideNextStudioPreview.resetPresentationModal({
+        modalEl,
+        iframeEl: document.getElementById('presentationFrame'),
+        bodyEl: document.body,
+        fullscreenIconEl: document.getElementById('fsIcon')
+      });
+    }
+
+    function closePresentation() {
+      resetStudioPresentationUiState();
     }
 
     function toggleIframeFullscreen() {
@@ -1552,6 +1559,7 @@
       
       // Initial AutoSave label status
       document.getElementById('autoSaveStatus').innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
+      resetStudioPresentationUiState();
       resetStudioSourceViewUiState();
       resetStudioDeckUiState({ isLoading: true });
       resetStudioVersionUiState({ isLoading: true });
@@ -1609,6 +1617,7 @@
       currentPresentationMetadata = null;
       resetEditorPersistenceTimers();
       resetEditorDeckPersistenceState();
+      resetStudioPresentationUiState();
       resetStudioSourceViewUiState();
       resetStudioDeckUiState();
       resetStudioVersionUiState();
