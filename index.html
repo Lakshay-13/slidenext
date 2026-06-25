@@ -1008,6 +1008,7 @@
     const MIN_ELEMENT_SIZE_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const DRAG_OVERFLOW_MARGIN_PX = 280;
+    const EDITOR_ELEMENT_ID_ATTR = 'data-editor-id';
     const EDITOR_SELECTABLE_SELECTOR = [
       'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
       'p', 'li', 'img', 'pre', 'code', 'button', 'a',
@@ -1034,6 +1035,7 @@
     ].join(', ');
     const EDITOR_INLINE_TEXT_TAGS = new Set(['span', 'strong', 'em', 'b', 'i', 'u', 'small', 'mark', 'sup', 'sub', 'label']);
     const RESIZE_HANDLE_DIRECTIONS = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
+    let editorElementIdCounter = 0;
 
     // Slide Wallpapers Presets Data
     const wallpaperPresetsData = {
@@ -1732,9 +1734,8 @@
     }
 
     // Apply hoverable tags to editable nodes
-    function makeElementsHoverable(doc) {
-      doc.querySelectorAll(EDITOR_SELECTABLE_SELECTOR).forEach(el => {
-        if (!isEligibleEditableElement(el)) return;
+    function makeElementsHoverable(root) {
+      ensureEditorElementIds(root).forEach(el => {
         el.classList.add('editor-hoverable');
       });
     }
@@ -1979,6 +1980,7 @@
       innerDiv.appendChild(h2);
       innerDiv.appendChild(p);
       newSlide.appendChild(innerDiv);
+      makeElementsHoverable(newSlide);
       
       container.appendChild(newSlide);
       
@@ -2032,6 +2034,46 @@
       const tag = el.tagName.toLowerCase();
       if (['html', 'body', 'head', 'style', 'script', 'iframe'].includes(tag)) return false;
       return true;
+    }
+
+    function createEditorElementId() {
+      if (window.crypto?.randomUUID) {
+        return `el-${window.crypto.randomUUID()}`;
+      }
+      editorElementIdCounter += 1;
+      return `el-${Date.now().toString(36)}-${editorElementIdCounter.toString(36)}`;
+    }
+
+    function assignEditorElementId(el, options = {}) {
+      if (!isEligibleEditableElement(el)) return '';
+      const forceNew = !!options.forceNew;
+      const existingId = el.getAttribute(EDITOR_ELEMENT_ID_ATTR);
+      if (!forceNew && existingId) return existingId;
+      const nextId = createEditorElementId();
+      el.setAttribute(EDITOR_ELEMENT_ID_ATTR, nextId);
+      return nextId;
+    }
+
+    function ensureEditorElementIds(root, options = {}) {
+      if (!root) return [];
+      const editableElements = [];
+      if (root.nodeType === 1 && root.matches?.(EDITOR_SELECTABLE_SELECTOR) && isEligibleEditableElement(root)) {
+        editableElements.push(root);
+      }
+      if (typeof root.querySelectorAll === 'function') {
+        root.querySelectorAll(EDITOR_SELECTABLE_SELECTOR).forEach(el => {
+          if (isEligibleEditableElement(el)) {
+            editableElements.push(el);
+          }
+        });
+      }
+      editableElements.forEach(el => assignEditorElementId(el, options));
+      return editableElements;
+    }
+
+    function getElementByEditorId(editorId, doc = getIframeDoc()) {
+      if (!editorId || !doc) return null;
+      return doc.querySelector(`[${EDITOR_ELEMENT_ID_ATTR}="${editorId}"]`);
     }
 
     function getSlideEditableElements(slide) {
@@ -2685,8 +2727,10 @@
     function sanitizeDuplicatedSubtree(root) {
       if (!root || root.nodeType !== 1) return;
       root.removeAttribute('id');
+      root.removeAttribute(EDITOR_ELEMENT_ID_ATTR);
       root.classList.remove('editor-selected', 'editor-dragging');
       root.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+      root.querySelectorAll(`[${EDITOR_ELEMENT_ID_ATTR}]`).forEach(node => node.removeAttribute(EDITOR_ELEMENT_ID_ATTR));
       root.querySelectorAll('.editor-selected, .editor-dragging').forEach(node => {
         node.classList.remove('editor-selected', 'editor-dragging');
       });
@@ -2737,7 +2781,7 @@
 
       items.forEach(item => {
         const clone = item.template.cloneNode(true);
-        clone.classList.add('editor-hoverable');
+        makeElementsHoverable(clone);
 
         if (item.isAbsolutelyPositioned) {
           const parent = item.sourceParent && item.sourceParent.isConnected && slide.contains(item.sourceParent) ? item.sourceParent : slide;
@@ -3249,7 +3293,7 @@
       }
       
       if (newEl) {
-        newEl.classList.add('editor-hoverable');
+        makeElementsHoverable(newEl);
         activeSlide.appendChild(newEl);
         
         selectElement(newEl);
@@ -4081,21 +4125,31 @@
         `;
       }).join('');
       
-      // Store references to the elements on the DOM elements of the layers container
+      // Store stable editor ids on layer rows and keep direct refs as a live-session fallback.
       const rows = listContainer.children;
       for (let i = 0; i < rows.length; i++) {
         if (elementsArray[i]) {
+          rows[i].dataset.editorElementId = assignEditorElementId(elementsArray[i]);
           rows[i].elementRef = elementsArray[i];
         }
       }
+    }
+
+    function resolveLayerRowElement(row) {
+      if (!row) return null;
+      const editorId = row.dataset.editorElementId;
+      const byId = getElementByEditorId(editorId);
+      if (byId) return byId;
+      return row.elementRef && row.elementRef.isConnected ? row.elementRef : null;
     }
 
     function selectLayerElementByRef(event) {
       event.preventDefault();
       event.stopPropagation();
       const parentRow = event.currentTarget.closest('[class*="border"]');
-      if (parentRow && parentRow.elementRef) {
-        selectElement(parentRow.elementRef, { additive: event.shiftKey, toggle: event.shiftKey });
+      const target = resolveLayerRowElement(parentRow);
+      if (target) {
+        selectElement(target, { additive: event.shiftKey, toggle: event.shiftKey });
         updateLayersList();
       }
     }
@@ -4104,8 +4158,9 @@
       event.preventDefault();
       event.stopPropagation();
       const parentRow = event.currentTarget.closest('[class*="border"]');
-      if (!parentRow || !parentRow.elementRef) return;
-      selectedElements = [parentRow.elementRef];
+      const target = resolveLayerRowElement(parentRow);
+      if (!target) return;
+      selectedElements = [target];
       refreshSelectionClasses();
       toggleSelectedElementsVisibility();
     }
@@ -4114,8 +4169,8 @@
       event.preventDefault();
       event.stopPropagation();
       const parentRow = event.currentTarget.closest('[class*="border"]');
-      if (parentRow && parentRow.elementRef) {
-        const el = parentRow.elementRef;
+      const el = resolveLayerRowElement(parentRow);
+      if (el) {
         if (isElementLocked(el)) return;
         const didChange = reorderSlideLayers(action, [el]);
         if (!didChange) return;
