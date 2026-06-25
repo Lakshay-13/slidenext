@@ -2163,8 +2163,7 @@
         zIndex: el.style.zIndex || '0',
         isLocked: isElementLocked(el),
         isHidden: isElementHidden(el),
-        isSelected: selectedElements.includes(el),
-        element: el
+        isSelected: selectedElements.includes(el)
       };
     }
 
@@ -4315,12 +4314,11 @@
         `;
       }).join('');
       
-      // Store stable editor ids on layer rows and keep direct refs as a live-session fallback.
+      // Store stable editor ids on layer rows so actions can resolve the current DOM element.
       const rows = listContainer.children;
       for (let i = 0; i < rows.length; i++) {
         if (layers[i]) {
           rows[i].dataset.editorElementId = layers[i].id;
-          rows[i].elementRef = layers[i].element;
         }
       }
     }
@@ -4328,9 +4326,7 @@
     function resolveLayerRowElement(row) {
       if (!row) return null;
       const editorId = row.dataset.editorElementId;
-      const byId = getElementByEditorId(editorId);
-      if (byId) return byId;
-      return row.elementRef && row.elementRef.isConnected ? row.elementRef : null;
+      return getElementByEditorId(editorId);
     }
 
     function selectLayerElementByRef(event) {
