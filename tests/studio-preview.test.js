@@ -97,3 +97,28 @@ test('closePresentationModal clears the preview load handler before removing sou
   assert.equal(iframeEl.onload, null);
   assert.equal(modalEl.classList.contains('active'), false);
 });
+
+test('resetSourceViewModal clears source modal state immediately', () => {
+  const modalEl = { classList: createClassList(['opacity-100']) };
+  const contentEl = { classList: createClassList(['scale-100']) };
+  const textareaEl = {
+    value: '<html>stale</html>',
+    scrollTop: 40
+  };
+  const tokenBefore = 0;
+
+  preview.resetSourceViewModal({
+    modalEl,
+    contentEl,
+    textareaEl
+  });
+
+  assert.equal(textareaEl.value, '');
+  assert.equal(textareaEl.scrollTop, 0);
+  assert.equal(modalEl.classList.contains('hidden'), true);
+  assert.equal(modalEl.classList.contains('opacity-0'), true);
+  assert.equal(modalEl.classList.contains('opacity-100'), false);
+  assert.equal(contentEl.classList.contains('scale-95'), true);
+  assert.equal(contentEl.classList.contains('scale-100'), false);
+  assert.equal(modalEl.__slideNextModalVisibilityToken, tokenBefore + 1);
+});

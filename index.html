@@ -1461,6 +1461,14 @@
       });
     }
 
+    function resetStudioSourceViewUiState() {
+      SlideNextStudioPreview.resetSourceViewModal({
+        modalEl: document.getElementById('sourceViewModal'),
+        contentEl: document.getElementById('sourceViewModalContent'),
+        textareaEl: document.getElementById('sourceViewContent')
+      });
+    }
+
     function closePresentation() {
       SlideNextStudioPreview.closePresentationModal({
         modalEl: document.getElementById('presentationModal'),
@@ -1524,6 +1532,7 @@
       
       // Initial AutoSave label status
       document.getElementById('autoSaveStatus').innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
+      resetStudioSourceViewUiState();
       resetStudioDeckUiState({ isLoading: true });
       resetStudioVersionUiState({ isLoading: true });
       resetStudioSaveButtonState();
@@ -1580,6 +1589,7 @@
       currentPresentationMetadata = null;
       resetEditorPersistenceTimers();
       resetEditorDeckPersistenceState();
+      resetStudioSourceViewUiState();
       resetStudioDeckUiState();
       resetStudioVersionUiState();
       resetStudioSaveButtonState();

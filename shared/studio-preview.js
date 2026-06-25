@@ -205,6 +205,31 @@
     setTimeout(() => modalEl.classList.add('hidden'), hideDelayMs);
   }
 
+  function resetSourceViewModal(options = {}) {
+    const {
+      modalEl,
+      contentEl,
+      textareaEl
+    } = options;
+
+    if (textareaEl) {
+      textareaEl.value = '';
+      textareaEl.scrollTop = 0;
+    }
+    if (modalVisibility && typeof modalVisibility.cancelStudioModalHide === 'function') {
+      modalVisibility.cancelStudioModalHide(modalEl);
+    }
+    if (modalEl) {
+      modalEl.classList.add('hidden');
+      modalEl.classList.add('opacity-0');
+      modalEl.classList.remove('opacity-100');
+    }
+    if (contentEl) {
+      contentEl.classList.add('scale-95');
+      contentEl.classList.remove('scale-100');
+    }
+  }
+
   return {
     getNextPresentationFrameLoadToken,
     isPresentationFrameLoadCurrent,
@@ -215,6 +240,7 @@
     launchPresentationHtml,
     closePresentationModal,
     openSourceViewModal,
-    closeSourceViewModal
+    closeSourceViewModal,
+    resetSourceViewModal
   };
 });
