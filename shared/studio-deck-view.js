@@ -306,6 +306,45 @@
     return true;
   }
 
+  function restoreStudioDeckViewAfterSlideMutation(options = {}) {
+    const preservedActiveSlideId = typeof options.preservedActiveSlideId === 'string'
+      ? options.preservedActiveSlideId
+      : '';
+    const removedSlideId = typeof options.removedSlideId === 'string'
+      ? options.removedSlideId
+      : '';
+    const restoreActiveSlideById = typeof options.restoreActiveSlideById === 'function'
+      ? options.restoreActiveSlideById
+      : () => false;
+    const restoreSelectionState = typeof options.restoreSelectionState === 'function'
+      ? options.restoreSelectionState
+      : () => {};
+    const setActiveSlideByIndex = typeof options.setActiveSlideByIndex === 'function'
+      ? options.setActiveSlideByIndex
+      : () => {};
+    const fallbackIndex = Number.isInteger(options.fallbackIndex)
+      ? options.fallbackIndex
+      : 0;
+    const canRestorePreservedActiveSlide = !!preservedActiveSlideId
+      && (!removedSlideId || preservedActiveSlideId !== removedSlideId);
+
+    if (canRestorePreservedActiveSlide && restoreActiveSlideById(preservedActiveSlideId)) {
+      restoreSelectionState();
+      return {
+        didRestorePreservedActiveSlide: true,
+        activeSlideId: preservedActiveSlideId,
+        fallbackIndex: null
+      };
+    }
+
+    setActiveSlideByIndex(fallbackIndex);
+    return {
+      didRestorePreservedActiveSlide: false,
+      activeSlideId: '',
+      fallbackIndex
+    };
+  }
+
   function updateStudioDeckNavigationUi(doc, slides = [], currentSlideIndex, options = {}) {
     const getIndicatorDotsContainer = typeof options.getIndicatorDotsContainer === 'function'
       ? options.getIndicatorDotsContainer
@@ -460,6 +499,7 @@
     syncStudioActiveSlideView,
     setStudioDeckActiveSlide,
     setStudioDeckActiveSlideById,
+    restoreStudioDeckViewAfterSlideMutation,
     updateStudioDeckNavigationUi,
     buildStudioPreviewHtml,
     buildStudioSourceHtml
