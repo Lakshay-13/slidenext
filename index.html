@@ -3927,6 +3927,7 @@
       selectedElement = null;
       
       iframeDoc.documentElement.innerHTML = historyEntry.html;
+      syncIframeTheme();
       
       // Re-bind listeners
       makeElementsHoverable(iframeDoc);
