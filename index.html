@@ -1012,6 +1012,7 @@
   <script src="/shared/deck-import.js"></script>
   <script src="/shared/deck-model.js"></script>
   <script src="/shared/deck-render.js"></script>
+  <script src="/shared/deck-html.js"></script>
   <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/version-backup-utils.js"></script>
   <script>
@@ -1410,40 +1411,22 @@
       iframe.src = url;
     }
 
-    function buildPresentationBaseHref(presentationUrl) {
-      if (!presentationUrl) return '';
-      return new URL('./', new URL(presentationUrl, window.location.href)).href;
-    }
-
-    function injectBaseHrefIntoHtml(html, baseHref) {
-      if (!html || !baseHref) return html;
-      const baseTag = `<base href="${baseHref}">`;
-      if (/<base\b/i.test(html)) {
-        return html.replace(/<base\b[^>]*>/i, baseTag);
-      }
-      if (/<head[^>]*>/i.test(html)) {
-        return html.replace(/<head([^>]*)>/i, `<head$1>${baseTag}`);
-      }
-      return html.replace(/<html([^>]*)>/i, `<html$1><head>${baseTag}</head>`);
-    }
-
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
-      if (!doc || !window.SlideNextDeckRender) {
+      if (!doc || !window.SlideNextDeckHtml) {
         return '';
       }
       const canonicalDeck = buildEditorCanonicalDeck(doc);
       if (!canonicalDeck) {
         return '';
       }
-      const renderedHtml = SlideNextDeckRender.renderCanonicalDeckHtml(canonicalDeck);
-      return injectBaseHrefIntoHtml(renderedHtml, buildPresentationBaseHref(currentPresentationUrl));
+      return SlideNextDeckHtml.buildDeckPreviewHtml(canonicalDeck, currentPresentationUrl);
     }
 
     function buildEditorSourceHtml(doc = getIframeDoc()) {
-      if (doc && window.SlideNextDeckRender) {
+      if (doc && window.SlideNextDeckHtml) {
         const canonicalDeck = buildEditorCanonicalDeck(doc);
         if (canonicalDeck) {
-          return SlideNextDeckRender.renderCanonicalDeckHtml(canonicalDeck);
+          return SlideNextDeckHtml.buildDeckSourceHtml(canonicalDeck);
         }
       }
       return doc ? buildPersistableDeckHtml(doc) : '';
