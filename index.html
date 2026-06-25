@@ -1059,6 +1059,10 @@
             e.preventDefault();
             selectAllElementsOnActiveSlide();
           }
+          if (!isTypingContext && selectedElements.length > 0 && (e.ctrlKey || e.metaKey) && (e.key === '[' || e.key === ']')) {
+            e.preventDefault();
+            arrangeElementLayer(e.key === ']' ? 'forward' : 'backward');
+          }
           if (!isTypingContext && selectedElements.length > 0 && e.key === 'Escape') {
             e.preventDefault();
             deselectElement();
@@ -1609,6 +1613,12 @@
           e.preventDefault();
           e.stopPropagation();
           selectAllElementsOnActiveSlide();
+          return;
+        }
+        if (!isTypingContext && selectedElements.length > 0 && (e.ctrlKey || e.metaKey) && (e.key === '[' || e.key === ']')) {
+          e.preventDefault();
+          e.stopPropagation();
+          arrangeElementLayer(e.key === ']' ? 'forward' : 'backward');
           return;
         }
         if (!isTypingContext && selectedElements.length > 0 && e.key === 'Escape') {
