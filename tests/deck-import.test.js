@@ -328,7 +328,18 @@ test('collectDeckCustomCss serializes accessible deck styles and skips editor ch
         },
         cssRules: [
           {
+            selectorText: ':root',
+            style: createStyleDeclaration({
+              '--color-primary': '#00f2ff'
+            }),
             cssText: ':root { --color-primary: #00f2ff; }'
+          },
+          {
+            selectorText: ':root, body',
+            style: createStyleDeclaration({
+              colorScheme: 'dark'
+            }),
+            cssText: ':root, body { color-scheme: dark; }'
           },
           {
             cssText: '.slides-container { transition: transform 0.8s ease; }'
@@ -346,7 +357,8 @@ test('collectDeckCustomCss serializes accessible deck styles and skips editor ch
   const customCss = deckImport.collectDeckCustomCss(doc);
 
   assert.equal(customCss.includes('.editor-selected'), false);
-  assert.match(customCss, /:root \{ --color-primary: #00f2ff; \}/);
+  assert.equal(customCss.includes(':root { --color-primary: #00f2ff; }'), false);
+  assert.match(customCss, /:root, body \{ color-scheme: dark; \}/);
   assert.match(customCss, /\.slides-container \{ transition: transform 0\.8s ease; \}/);
 });
 
