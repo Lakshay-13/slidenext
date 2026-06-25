@@ -2097,23 +2097,29 @@
       return getSlides(doc).findIndex(slide => slide.getAttribute(EDITOR_SLIDE_ID_ATTR) === slideId);
     }
 
-    function buildEditorSlideSnapshot(slide, index) {
+    function buildEditorSlideSnapshot(slide, index, options = {}) {
+      const includeLayers = !!options.includeLayers;
       const slideId = assignEditorSlideId(slide);
       const firstHeading = slide.querySelector('h1, h2, h3');
-      return {
+      const snapshot = {
         id: slideId,
         index,
         title: firstHeading ? firstHeading.textContent.trim() : `Slide ${index + 1}`,
-        backgroundLabel: slide.style.background ? 'Gradient/Paint' : 'Default'
+        backgroundLabel: slide.style.background ? 'Gradient/Paint' : 'Default',
+        elementCount: getSlideEditableElements(slide).length
       };
+      if (includeLayers) {
+        snapshot.elements = buildEditorLayerSnapshot(slide);
+      }
+      return snapshot;
     }
 
-    function buildEditorDeckSnapshot(doc = getIframeDoc()) {
+    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {
       const slides = getSlides(doc);
       const activeSlideId = getActiveSlide(doc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
       return {
         activeSlideId,
-        slides: slides.map((slide, index) => buildEditorSlideSnapshot(slide, index))
+        slides: slides.map((slide, index) => buildEditorSlideSnapshot(slide, index, options))
       };
     }
 
@@ -4232,13 +4238,14 @@
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       if (!iframeDoc) return;
       
-      const activeSlide = getActiveSlide(iframeDoc);
-      if (!activeSlide) {
+      const deckSnapshot = buildEditorDeckSnapshot(iframeDoc, { includeLayers: true });
+      const activeSlideSnapshot = deckSnapshot.slides.find(slide => slide.id === deckSnapshot.activeSlideId);
+      if (!activeSlideSnapshot) {
         listContainer.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-2">No active slide</p>`;
         return;
       }
       
-      const layers = buildEditorLayerSnapshot(activeSlide);
+      const layers = Array.isArray(activeSlideSnapshot.elements) ? activeSlideSnapshot.elements : [];
       if (layers.length === 0) {
         listContainer.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-2">No elements found</p>`;
         return;
