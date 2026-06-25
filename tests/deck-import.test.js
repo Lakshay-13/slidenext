@@ -48,6 +48,41 @@ function createClassList(initialValues = []) {
   };
 }
 
+function createIterableClassList(initialValues = []) {
+  const values = [...initialValues];
+  values.contains = (value) => values.includes(value);
+  return values;
+}
+
+function createImportedElement(options = {}) {
+  const attributeEntries = Object.entries(options.attributes || {});
+  const attributeMap = new Map(attributeEntries);
+  const classList = options.classList || createIterableClassList();
+  const children = options.children || [];
+  return {
+    tagName: options.tagName || 'DIV',
+    className: options.className || (options.attributes && options.attributes.class) || '',
+    classList,
+    children,
+    childNodes: options.childNodes || [],
+    textContent: options.textContent || '',
+    outerHTML: options.outerHTML || '',
+    style: options.style || {},
+    ownerDocument: options.ownerDocument || null,
+    hidden: !!options.hidden,
+    attributes: attributeEntries.map(([name, value]) => ({ name, value })),
+    getAttribute(name) {
+      return attributeMap.has(name) ? attributeMap.get(name) : '';
+    },
+    querySelector(selector) {
+      if (typeof options.querySelector === 'function') {
+        return options.querySelector(selector);
+      }
+      return null;
+    }
+  };
+}
+
 test('collectDeckAssets includes inline style asset urls, skips fragments, and deduplicates sources', () => {
   const imageEl = createElement('IMG', {
     src: 'assets/chart.png'
@@ -292,4 +327,62 @@ test('buildDeckSource serializes the sanitized clone instead of the live editor 
   assert.equal(source.headHtml, '<style>.deck{}</style>');
   assert.equal(source.bodyHtml, '<main>clean</main>');
   assert.deepEqual(source.bodyAttributes, { class: 'deck-body' });
+});
+
+test('importElementToCanonicalNode strips editor-only classes and attributes from the canonical node payload', () => {
+  const element = createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['hero-card', 'editor-hoverable']),
+    attributes: {
+      class: 'hero-card editor-hoverable',
+      'data-editor-id': 'node-1',
+      'data-editor-hidden': 'true',
+      'aria-label': 'Hero'
+    },
+    textContent: 'Hero copy',
+    outerHTML: '<div class="hero-card editor-hoverable" data-editor-id="node-1">Hero copy</div>'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+
+  assert.deepEqual(node.classes, ['hero-card']);
+  assert.deepEqual(node.attributes, {
+    class: 'hero-card',
+    'aria-label': 'Hero'
+  });
+});
+
+test('importSlideToCanonicalSlide strips editor-only slide metadata from canonical slide attributes', () => {
+  const heading = createImportedElement({
+    tagName: 'H1',
+    classList: createIterableClassList(['editor-hoverable']),
+    textContent: 'Intro',
+    attributes: {
+      class: 'editor-hoverable'
+    },
+    outerHTML: '<h1 class="editor-hoverable">Intro</h1>'
+  });
+  const slide = createImportedElement({
+    tagName: 'SECTION',
+    classList: createIterableClassList(['slide', 'editor-selected']),
+    children: [heading],
+    textContent: 'Intro',
+    attributes: {
+      class: 'slide editor-selected',
+      'data-slide-id': 'slide-runtime-1',
+      'data-speaker-notes': 'Key message'
+    },
+    outerHTML: '<section class="slide editor-selected" data-slide-id="slide-runtime-1"><h1 class="editor-hoverable">Intro</h1></section>',
+    querySelector(selector) {
+      return selector === 'h1, h2, h3' ? heading : null;
+    }
+  });
+
+  const canonicalSlide = deckImport.importSlideToCanonicalSlide(slide, 0);
+
+  assert.equal(canonicalSlide.layout.background.className, 'slide');
+  assert.deepEqual(canonicalSlide.source.attributes, {
+    class: 'slide',
+    'data-speaker-notes': 'Key message'
+  });
 });

@@ -21,6 +21,13 @@
   const DEFAULT_IGNORED_THEME_STYLE_IDS = new Set(['editor-style-tag']);
   const DEFAULT_SOURCE_IGNORED_NODE_IDS = ['editor-style-tag', 'editor-theme-override-tag'];
   const DEFAULT_SOURCE_TRANSIENT_CLASSES = ['editor-selected', 'editor-hoverable', 'editor-dragging'];
+  const DEFAULT_IMPORTED_TRANSIENT_ATTRIBUTE_NAMES = new Set([
+    'data-editor-id',
+    'data-slide-id',
+    'data-editor-hidden',
+    'data-editor-locked',
+    'data-editor-prev-display'
+  ]);
   const STYLE_URL_PATTERN = /url\((?:'([^']*)'|"([^"]*)"|([^)]*))\)/gi;
 
   function asPlainObject(value) {
@@ -261,6 +268,52 @@
     return attributes;
   }
 
+  function resolveImportedTransientClassNames(options = {}) {
+    return Array.isArray(options.transientClassNames)
+      ? options.transientClassNames
+      : DEFAULT_SOURCE_TRANSIENT_CLASSES;
+  }
+
+  function sanitizeImportedClassNames(classNamesLike, options = {}) {
+    const transientClassNames = new Set(resolveImportedTransientClassNames(options));
+    const classNameTokens = Array.isArray(classNamesLike)
+      ? classNamesLike
+      : typeof classNamesLike === 'string'
+        ? classNamesLike.split(/\s+/)
+        : Array.from(classNamesLike || []);
+
+    return classNameTokens
+      .map((className) => normalizeString(className).trim())
+      .filter((className) => className && !transientClassNames.has(className));
+  }
+
+  function sanitizeImportedClassNameString(className, options = {}) {
+    return sanitizeImportedClassNames(className, options).join(' ');
+  }
+
+  function sanitizeImportedAttributeMap(el, options = {}) {
+    const transientAttributeNames = options.transientAttributeNames instanceof Set
+      ? options.transientAttributeNames
+      : DEFAULT_IMPORTED_TRANSIENT_ATTRIBUTE_NAMES;
+    const attributes = {};
+
+    Array.from(el && el.attributes ? el.attributes : []).forEach((attr) => {
+      if (!attr || transientAttributeNames.has(attr.name)) {
+        return;
+      }
+      if (attr.name === 'class') {
+        const className = sanitizeImportedClassNameString(attr.value, options);
+        if (className) {
+          attributes.class = className;
+        }
+        return;
+      }
+      attributes[attr.name] = attr.value;
+    });
+
+    return attributes;
+  }
+
   function extractDirectText(el) {
     if (!el || !el.childNodes) return '';
     return normalizeWhitespace(
@@ -374,8 +427,8 @@
       tagName: el.tagName.toLowerCase(),
       text: normalizeWhitespace(childElements.length === 0 ? (el.textContent || '') : extractDirectText(el)),
       html: options.includeSourceHtml === false ? '' : el.outerHTML,
-      classes: Array.from(el.classList || []),
-      attributes: extractAttributeMap(el),
+      classes: sanitizeImportedClassNames(el.classList || [], options),
+      attributes: sanitizeImportedAttributeMap(el, options),
       style: normalizeString(el.getAttribute('style')),
       layout: buildImportedLayout(el, win),
       visibility: buildImportedVisibility(el, win),
@@ -423,7 +476,7 @@
         background: {
           color: normalizeString(slide.style && slide.style.backgroundColor),
           image: normalizeString(slide.style && slide.style.backgroundImage),
-          className: normalizeString(slide.className),
+          className: sanitizeImportedClassNameString(slide.className, options),
           style: normalizeString(slide.getAttribute('style'))
         }
       },
@@ -434,7 +487,7 @@
       })),
       source: {
         html: options.includeSourceHtml === false ? '' : slide.outerHTML,
-        attributes: extractAttributeMap(slide)
+        attributes: sanitizeImportedAttributeMap(slide, options)
       }
     });
   }
