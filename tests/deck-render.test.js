@@ -117,6 +117,22 @@ test('renderCanonicalDeckHtml removes stale slide-active from non-active rendere
   assert.match(html, /<section class="slide custom-slide" id="slide-2"><\/section>/);
 });
 
+test('renderCanonicalNode uses dedicated class and style fields when attributes omit them', () => {
+  const html = deckRender.renderCanonicalNode({
+    tagName: 'div',
+    text: 'Hero copy',
+    classes: ['hero-card'],
+    style: 'color: red;',
+    attributes: {
+      'aria-label': 'Hero'
+    }
+  }, {
+    preferNodeSourceHtml: false
+  });
+
+  assert.equal(html, '<div aria-label="Hero" class="hero-card" style="color: red;">Hero copy</div>');
+});
+
 test('renderCanonicalDeckHtml emits theme tokens and custom css when rendering without source head html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {

@@ -366,6 +366,13 @@
     return attributes;
   }
 
+  function stripCanonicalNodeAttributeDuplicates(attributes = {}) {
+    const nextAttributes = { ...attributes };
+    delete nextAttributes.class;
+    delete nextAttributes.style;
+    return nextAttributes;
+  }
+
   function sanitizeImportedDomNode(node, options = {}) {
     if (!node) {
       return;
@@ -543,7 +550,7 @@
       text: normalizeWhitespace(childElements.length === 0 ? (el.textContent || '') : extractDirectText(el)),
       html: buildImportedSourceHtml(el, options),
       classes: sanitizeImportedClassNames(el.classList || [], options),
-      attributes: sanitizeImportedAttributeMap(el, options),
+      attributes: stripCanonicalNodeAttributeDuplicates(sanitizeImportedAttributeMap(el, options)),
       style: normalizeString(el.getAttribute('style')),
       layout: buildImportedLayout(el, win),
       visibility: buildImportedVisibility(el, win),

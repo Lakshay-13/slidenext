@@ -496,7 +496,6 @@ test('importElementToCanonicalNode strips editor-only classes and attributes fro
 
   assert.deepEqual(node.classes, ['hero-card']);
   assert.deepEqual(node.attributes, {
-    class: 'hero-card',
     'aria-label': 'Hero'
   });
 });
