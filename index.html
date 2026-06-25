@@ -994,6 +994,7 @@
   <script>
     // Global Editor State
     let currentPresentationUrl = '';
+    let currentPresentationMetadata = null;
     let currentTitle = '';
     let currentCategory = '';
     let currentSlideIndex = 0;
@@ -1433,6 +1434,7 @@
     // 3. Studio Presentation Workspace Mode
     function launchStudioEditor(url, title, category) {
       currentPresentationUrl = url;
+      currentPresentationMetadata = buildCurrentPresentationMetadataSeed(url, title);
       currentTitle = title;
       currentCategory = category || 'General';
       currentSlideIndex = 0;
@@ -1468,6 +1470,7 @@
       editor.style.opacity = '1';
       editor.style.pointerEvents = 'auto';
       document.body.style.overflow = 'hidden';
+      void loadCurrentPresentationMetadata(url, title);
       
       // Fetch backups list
       loadVersions();
@@ -1477,6 +1480,7 @@
       const editor = document.getElementById('studioEditor');
       const iframe = document.getElementById('studioFrame');
       teardownDeckActiveSlideSync();
+      currentPresentationMetadata = null;
       lastPersistedDeckHtml = '';
       persistedDeckPlaybackState = null;
       
@@ -2219,20 +2223,62 @@
       });
     }
 
-    function deriveCurrentPresentationId() {
-      const pathParts = (currentPresentationUrl || '').split('/').filter(Boolean);
+    function derivePresentationIdFromUrl(presentationUrl = currentPresentationUrl) {
+      const pathParts = (presentationUrl || '').split('/').filter(Boolean);
       if (pathParts.length >= 2) {
         return pathParts[pathParts.length - 2];
       }
       return '';
     }
 
-    function buildCurrentPresentationMetadataSeed() {
+    function buildCurrentPresentationMetadataSeed(presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
       return {
-        id: deriveCurrentPresentationId(),
-        title: currentTitle,
-        sourcePath: currentPresentationUrl
+        id: derivePresentationIdFromUrl(presentationUrl),
+        title: presentationTitle,
+        sourcePath: presentationUrl
       };
+    }
+
+    function derivePresentationMetadataUrl(presentationUrl = currentPresentationUrl) {
+      if (!presentationUrl || !presentationUrl.endsWith('/index.html')) {
+        return '';
+      }
+      return presentationUrl.replace(/\/index\.html$/, '/presentation.json');
+    }
+
+    async function loadCurrentPresentationMetadata(presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
+      const fallbackMetadata = buildCurrentPresentationMetadataSeed(presentationUrl, presentationTitle);
+      const metadataUrl = derivePresentationMetadataUrl(presentationUrl);
+      if (!metadataUrl) {
+        if (currentPresentationUrl === presentationUrl) {
+          currentPresentationMetadata = fallbackMetadata;
+        }
+        return fallbackMetadata;
+      }
+
+      try {
+        const response = await fetch(metadataUrl, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`Metadata request failed with status ${response.status}`);
+        }
+
+        const metadata = await response.json();
+        const mergedMetadata = {
+          ...fallbackMetadata,
+          ...metadata,
+          sourcePath: presentationUrl
+        };
+        if (currentPresentationUrl === presentationUrl) {
+          currentPresentationMetadata = mergedMetadata;
+        }
+        return mergedMetadata;
+      } catch (err) {
+        console.warn(`Failed to load presentation metadata from ${metadataUrl}:`, err);
+        if (currentPresentationUrl === presentationUrl) {
+          currentPresentationMetadata = fallbackMetadata;
+        }
+        return fallbackMetadata;
+      }
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
@@ -2241,7 +2287,7 @@
       }
 
       return SlideNextDeckImport.importHtmlDeckToCanonicalDeck(doc, {
-        presentationMetadata: buildCurrentPresentationMetadataSeed(),
+        presentationMetadata: currentPresentationMetadata || buildCurrentPresentationMetadataSeed(),
         sourcePath: currentPresentationUrl,
         getSlideId: assignEditorSlideId,
         getNodeId: assignEditorElementId
