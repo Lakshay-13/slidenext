@@ -3934,11 +3934,14 @@
         getSlideCount: () => getSlides(iframeDoc).length,
         setActiveSlideByIndex: (index) => setActiveSlide(index)
       });
-      restoreSelectionByIdsOnActiveSlide(historyEntry.selectedElementIds, iframeDoc);
-      syncSelectionOverlay();
-      syncInspectorForSelection();
-      updateLayersList();
-      observeDeckActiveSlideState(iframeDoc);
+      SlideNextStudioHistory.restoreStudioHistorySelectionState(historyEntry, {
+        doc: iframeDoc,
+        restoreSelectionByIds: (selectedElementIds, doc) => restoreSelectionByIdsOnActiveSlide(selectedElementIds, doc),
+        syncSelectionOverlay,
+        syncInspectorForSelection,
+        updateLayersList,
+        observeDeckActiveSlideState
+      });
     }
 
     function buildPersistableDeckHtml(doc = getIframeDoc()) {

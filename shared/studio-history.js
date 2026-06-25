@@ -241,6 +241,39 @@
     };
   }
 
+  function restoreStudioHistorySelectionState(historyEntry, options = {}) {
+    const restoreSelectionByIds = typeof options.restoreSelectionByIds === 'function'
+      ? options.restoreSelectionByIds
+      : () => {};
+    const syncSelectionOverlay = typeof options.syncSelectionOverlay === 'function'
+      ? options.syncSelectionOverlay
+      : () => {};
+    const syncInspectorForSelection = typeof options.syncInspectorForSelection === 'function'
+      ? options.syncInspectorForSelection
+      : () => {};
+    const updateLayersList = typeof options.updateLayersList === 'function'
+      ? options.updateLayersList
+      : () => {};
+    const observeDeckActiveSlideState = typeof options.observeDeckActiveSlideState === 'function'
+      ? options.observeDeckActiveSlideState
+      : () => {};
+    const doc = options.doc || null;
+    const selectedElementIds = historyEntry && Array.isArray(historyEntry.selectedElementIds)
+      ? historyEntry.selectedElementIds.filter(Boolean)
+      : [];
+
+    restoreSelectionByIds(selectedElementIds, doc);
+    syncSelectionOverlay();
+    syncInspectorForSelection();
+    updateLayersList();
+    observeDeckActiveSlideState(doc);
+
+    return {
+      restoredSelectionIds: selectedElementIds,
+      restoredSelectionCount: selectedElementIds.length
+    };
+  }
+
   return {
     buildStudioHistoryFrameHtml,
     createStudioHistoryEntry,
@@ -251,6 +284,7 @@
     stepStudioHistoryRedo,
     getStudioHistoryButtonState,
     scheduleStudioHistoryCapture,
-    restoreStudioHistoryActiveSlide
+    restoreStudioHistoryActiveSlide,
+    restoreStudioHistorySelectionState
   };
 });
