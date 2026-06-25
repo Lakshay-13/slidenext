@@ -1055,6 +1055,10 @@
             e.preventDefault();
             editorRedo();
           }
+          if (!isTypingContext && (e.ctrlKey || e.metaKey) && loweredKey === 'a') {
+            e.preventDefault();
+            selectAllElementsOnActiveSlide();
+          }
           if (!isTypingContext && selectedElements.length > 0 && e.key === 'Escape') {
             e.preventDefault();
             deselectElement();
@@ -1601,6 +1605,12 @@
 
         const activeEl = iframeDoc.activeElement;
         const isTypingContext = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
+        if (!isTypingContext && (e.ctrlKey || e.metaKey) && loweredKey === 'a') {
+          e.preventDefault();
+          e.stopPropagation();
+          selectAllElementsOnActiveSlide();
+          return;
+        }
         if (!isTypingContext && selectedElements.length > 0 && e.key === 'Escape') {
           e.preventDefault();
           e.stopPropagation();
@@ -2325,6 +2335,19 @@
       hideDragHud();
       syncInspectorForSelection();
       updateLayersList();
+    }
+
+    function selectAllElementsOnActiveSlide() {
+      const slide = getActiveSlide();
+      if (!slide) return false;
+      const nextSelection = getNormalizedSlideLayerOrder(slide);
+      if (nextSelection.length === 0) return false;
+      selectedElements = nextSelection;
+      refreshSelectionClasses();
+      syncSelectionOverlay();
+      syncInspectorForSelection();
+      updateLayersList();
+      return true;
     }
 
     // Helper: RGB to hex converters
