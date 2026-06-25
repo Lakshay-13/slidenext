@@ -927,9 +927,14 @@
             </button>
           </div>
 
+          <button id="toggleLockSelectionBtn" onclick="toggleSelectedElementsLockState()" class="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+            <span id="toggleLockSelectionIcon" class="material-symbols-outlined text-[16px]">lock</span>
+            <span id="toggleLockSelectionLabel">Lock Selected</span>
+          </button>
+
           <!-- Danger actions: Remove element -->
           <div class="flex flex-col gap-2">
-            <button onclick="removeSelectedElement()" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all">
+            <button id="removeSelectionBtn" onclick="removeSelectedElement()" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-rose-500/10">
               <span class="material-symbols-outlined text-[16px]">delete</span>
               Delete Selected
             </button>
@@ -2263,11 +2268,16 @@
       overlay.style.height = `${bounds.height}px`;
       overlay.style.pointerEvents = 'auto';
       overlay.style.opacity = '1';
+      const hideHandles = selectedElements.length > 0 && selectedElements.every(isElementLocked);
+      overlay.querySelectorAll('.editor-resize-handle').forEach(handle => {
+        handle.style.display = hideHandles ? 'none' : '';
+      });
     }
 
     function syncInspectorForSelection() {
       const count = selectedElements.length;
       updateClipboardActionState();
+      updateLockActionState();
       if (count === 0) {
         document.getElementById('inspectorTargetLabel').innerHTML = `
           <span class="material-symbols-outlined text-[16px] text-[#7028d0]">settings_suggest</span>
@@ -2389,6 +2399,48 @@
       return true;
     }
 
+    function isElementLocked(el) {
+      return !!(el && el.dataset && el.dataset.editorLocked === 'true');
+    }
+
+    function selectionHasLockedElements(elements = selectedElements) {
+      return elements.some(isElementLocked);
+    }
+
+    function updateLockActionState() {
+      const hasSelection = selectedElements.length > 0;
+      const allLocked = hasSelection && selectedElements.every(isElementLocked);
+      const lockBtn = document.getElementById('toggleLockSelectionBtn');
+      const lockIcon = document.getElementById('toggleLockSelectionIcon');
+      const lockLabel = document.getElementById('toggleLockSelectionLabel');
+      const removeBtn = document.getElementById('removeSelectionBtn');
+      if (lockBtn) lockBtn.disabled = !hasSelection;
+      if (lockIcon) lockIcon.textContent = allLocked ? 'lock_open' : 'lock';
+      if (lockLabel) lockLabel.textContent = allLocked ? 'Unlock Selected' : 'Lock Selected';
+      if (removeBtn) removeBtn.disabled = selectionHasLockedElements();
+    }
+
+    function toggleSelectedElementsLockState() {
+      if (selectedElements.length === 0) return false;
+      const shouldLock = !selectedElements.every(isElementLocked);
+      selectedElements.forEach(el => {
+        if (!el || !el.isConnected) return;
+        if (shouldLock) {
+          el.dataset.editorLocked = 'true';
+        } else {
+          delete el.dataset.editorLocked;
+        }
+      });
+      refreshSelectionClasses();
+      syncSelectionOverlay();
+      syncInspectorForSelection();
+      updateLayersList();
+      saveHistoryState();
+      triggerAutoSave();
+      triggerAutoVersion(shouldLock ? 'Auto: Locked Element' : 'Auto: Unlocked Element');
+      return true;
+    }
+
     // Helper: RGB to hex converters
     function rgbToHex(rgb) {
       if (!rgb) return '#ffffff';
@@ -2416,6 +2468,7 @@
     // Apply styles immediately to active selected elements
     function applySelectedElementStyle(prop, val) {
       if (selectedElements.length === 0) return;
+      if (selectionHasLockedElements()) return;
       const targets = [...selectedElements];
 
       targets.forEach((target, idx) => {
@@ -2496,6 +2549,7 @@
     // Delete active selection
     function removeSelectedElement() {
       if (selectedElements.length === 0) return;
+      if (selectionHasLockedElements()) return;
       selectedElements.forEach(el => {
         if (el && el.isConnected) el.remove();
       });
@@ -2631,6 +2685,7 @@
     }
 
     function duplicateSelectedElements() {
+      if (selectionHasLockedElements()) return false;
       const duplicates = insertClipboardPayload(buildClipboardPayload(), 1);
       if (duplicates.length === 0) return false;
       return finalizeInsertedElements(duplicates, 'Auto: Duplicated Element');
@@ -2745,6 +2800,7 @@
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
       if (!doc || !slide || selectedElements.length === 0) return;
+      if (selectionHasLockedElements()) return;
       const slideMetrics = getSlideMetrics(slide);
       const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
 
@@ -2849,6 +2905,7 @@
         }
 
         if (selectedElements.length === 0) return;
+        if (selectionHasLockedElements()) return;
 
         const slideMetrics = getSlideMetrics(slide);
         const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
@@ -3097,6 +3154,7 @@
     // Rearrange Selected Element Layers
     function arrangeElementLayer(action) {
       if (selectedElements.length === 0) return;
+      if (selectionHasLockedElements()) return;
       const didChange = reorderSlideLayers(action);
       if (!didChange) return;
 
@@ -3882,6 +3940,7 @@
         }
         
         const zIndex = el.style.zIndex || '0';
+        const isLocked = isElementLocked(el);
         
         const activeClass = isSelected 
           ? 'border-[#7028d0] bg-[#7028d0]/10 text-white font-semibold' 
@@ -3892,13 +3951,14 @@
             <button onclick="selectLayerElementByRef(event)" class="flex-1 text-left flex items-center gap-2 truncate pr-1" style="min-width: 0;">
               <span class="material-symbols-outlined text-[14px] text-[#7028d0] flex-shrink-0">${typeIcon}</span>
               <span class="truncate" style="font-size: 10px;">${displayName}</span>
+              ${isLocked ? '<span class="material-symbols-outlined text-[11px] text-amber-400 flex-shrink-0" title="Locked">lock</span>' : ''}
               <span class="text-[9px] text-zinc-500 font-bold ml-auto flex-shrink-0">z:${zIndex}</span>
             </button>
             <div class="flex items-center gap-1 flex-shrink-0 ml-1">
-              <button onclick="changeLayerZIndexByRef(event, 'forward')" class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded" title="Bring Forward">
+              <button onclick="changeLayerZIndexByRef(event, 'forward')" ${isLocked ? 'disabled' : ''} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Bring Forward">
                 <span class="material-symbols-outlined text-[12px]">keyboard_arrow_up</span>
               </button>
-              <button onclick="changeLayerZIndexByRef(event, 'backward')" class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded" title="Send Backward">
+              <button onclick="changeLayerZIndexByRef(event, 'backward')" ${isLocked ? 'disabled' : ''} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Send Backward">
                 <span class="material-symbols-outlined text-[12px]">keyboard_arrow_down</span>
               </button>
             </div>
@@ -3931,6 +3991,7 @@
       const parentRow = event.currentTarget.closest('[class*="border"]');
       if (parentRow && parentRow.elementRef) {
         const el = parentRow.elementRef;
+        if (isElementLocked(el)) return;
         const didChange = reorderSlideLayers(action, [el]);
         if (!didChange) return;
         
