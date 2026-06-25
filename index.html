@@ -2086,8 +2086,7 @@
     }
 
     function getActiveSlide(doc = getIframeDoc()) {
-      if (!doc) return null;
-      return doc.querySelector('.slide-active') || doc.querySelector('.slide');
+      return SlideNextStudioEditorDom.getStudioActiveSlide(doc, getEditorDomOptions());
     }
 
     function pruneEditorChromeNodes(doc = getIframeDoc(), activeSlide = getActiveSlide(doc)) {
