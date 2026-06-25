@@ -3633,8 +3633,7 @@
       const historyEntry = normalizeHistoryEntry(entry);
       const fallbackIndex = currentSlideIndex;
       
-      selectedElements = [];
-      selectedElement = null;
+      applyEditorSelectionState({});
       
       SlideNextStudioHistory.restoreStudioHistoryEntry(historyEntry, {
         restoreFrameSetup: (nextHistoryEntry) => SlideNextStudioHistory.restoreStudioHistoryFrameSetup(nextHistoryEntry, {
