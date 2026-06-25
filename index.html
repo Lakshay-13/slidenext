@@ -989,6 +989,7 @@
   <script src="/shared/canonical-deck.js"></script>
   <script src="/shared/deck-import.js"></script>
   <script src="/shared/deck-model.js"></script>
+  <script src="/shared/deck-render.js"></script>
   <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/version-backup-utils.js"></script>
   <script>
@@ -1355,13 +1356,13 @@
     }
 
     // 2. Viewer Presentation Modal
-    function launchPresentation(url, startSlideIdx) {
+    function openPresentationModalWithLoader(startSlideIdx) {
       const modal = document.getElementById('presentationModal');
       const iframe = document.getElementById('presentationFrame');
-      
+
       modal.classList.remove('hidden');
       void modal.offsetWidth;
-      
+
       if (startSlideIdx !== undefined) {
         iframe.onload = () => {
           setTimeout(() => {
@@ -1373,18 +1374,60 @@
       } else {
         iframe.onload = null;
       }
-      
-      // Inject presentation url and open
-      iframe.src = url;
+
       modal.classList.add('active');
       modal.classList.remove('opacity-0', 'pointer-events-none');
       document.body.style.overflow = 'hidden';
+
+      return { modal, iframe };
+    }
+
+    function launchPresentation(url, startSlideIdx) {
+      const { iframe } = openPresentationModalWithLoader(startSlideIdx);
+      iframe.removeAttribute('srcdoc');
+      iframe.src = url;
+    }
+
+    function buildPresentationBaseHref(presentationUrl) {
+      if (!presentationUrl) return '';
+      return new URL('./', new URL(presentationUrl, window.location.href)).href;
+    }
+
+    function injectBaseHrefIntoHtml(html, baseHref) {
+      if (!html || !baseHref) return html;
+      const baseTag = `<base href="${baseHref}">`;
+      if (/<base\b/i.test(html)) {
+        return html.replace(/<base\b[^>]*>/i, baseTag);
+      }
+      if (/<head[^>]*>/i.test(html)) {
+        return html.replace(/<head([^>]*)>/i, `<head$1>${baseTag}`);
+      }
+      return html.replace(/<html([^>]*)>/i, `<html$1><head>${baseTag}</head>`);
+    }
+
+    function buildEditorPreviewHtml(doc = getIframeDoc()) {
+      if (!doc || !window.SlideNextDeckRender) {
+        return '';
+      }
+      const canonicalDeck = buildEditorCanonicalDeck(doc);
+      if (!canonicalDeck) {
+        return '';
+      }
+      const renderedHtml = SlideNextDeckRender.renderCanonicalDeckHtml(canonicalDeck);
+      return injectBaseHrefIntoHtml(renderedHtml, buildPresentationBaseHref(currentPresentationUrl));
+    }
+
+    function launchPresentationHtml(html, startSlideIdx) {
+      const { iframe } = openPresentationModalWithLoader(startSlideIdx);
+      iframe.removeAttribute('src');
+      iframe.srcdoc = html;
     }
 
     function closePresentation() {
       const modal = document.getElementById('presentationModal');
       const iframe = document.getElementById('presentationFrame');
       
+      iframe.removeAttribute('srcdoc');
       iframe.src = '';
       modal.classList.remove('active');
       modal.classList.add('opacity-0', 'pointer-events-none');
@@ -4566,9 +4609,13 @@
 
     // Presentation Live Preview from workspace
     function launchPreview() {
-      if (currentPresentationUrl) {
-        launchPresentation(currentPresentationUrl, getStudioActiveSlideIndex());
+      if (!currentPresentationUrl) return;
+      const previewHtml = buildEditorPreviewHtml();
+      if (previewHtml) {
+        launchPresentationHtml(previewHtml, getStudioActiveSlideIndex());
+        return;
       }
+      launchPresentation(currentPresentationUrl, getStudioActiveSlideIndex());
     }
   </script>
 </body>
