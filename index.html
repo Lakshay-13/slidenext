@@ -1918,6 +1918,73 @@
       return true;
     }
 
+    function getSlideEditableElements(slide) {
+      if (!slide) return [];
+      return Array.from(slide.querySelectorAll(EDITOR_SELECTABLE_SELECTOR)).filter(isEligibleEditableElement);
+    }
+
+    function getNormalizedSlideLayerOrder(slide) {
+      return getSlideEditableElements(slide)
+        .map((el, domIndex) => ({
+          el,
+          domIndex,
+          zIndex: parseInt(el.style.zIndex, 10) || 0
+        }))
+        .sort((a, b) => {
+          if (a.zIndex !== b.zIndex) return a.zIndex - b.zIndex;
+          return a.domIndex - b.domIndex;
+        })
+        .map(entry => entry.el);
+    }
+
+    function applySlideLayerOrder(slide, orderedElements) {
+      orderedElements.forEach((el, idx) => {
+        el.style.zIndex = String(idx);
+      });
+      return orderedElements;
+    }
+
+    function reorderSlideLayers(action, targetElements = selectedElements) {
+      const slide = getActiveSlide();
+      if (!slide) return false;
+
+      const targets = targetElements.filter(el => el && el.isConnected && slide.contains(el));
+      if (targets.length === 0) return false;
+
+      const targetSet = new Set(targets);
+      const initialOrder = getNormalizedSlideLayerOrder(slide);
+      let nextOrder = [...initialOrder];
+
+      if (action === 'front') {
+        nextOrder = nextOrder.filter(el => !targetSet.has(el)).concat(nextOrder.filter(el => targetSet.has(el)));
+      } else if (action === 'back') {
+        nextOrder = nextOrder.filter(el => targetSet.has(el)).concat(nextOrder.filter(el => !targetSet.has(el)));
+      } else if (action === 'forward') {
+        for (let i = nextOrder.length - 2; i >= 0; i -= 1) {
+          if (targetSet.has(nextOrder[i]) && !targetSet.has(nextOrder[i + 1])) {
+            [nextOrder[i], nextOrder[i + 1]] = [nextOrder[i + 1], nextOrder[i]];
+          }
+        }
+      } else if (action === 'backward') {
+        for (let i = 1; i < nextOrder.length; i += 1) {
+          if (targetSet.has(nextOrder[i]) && !targetSet.has(nextOrder[i - 1])) {
+            [nextOrder[i], nextOrder[i - 1]] = [nextOrder[i - 1], nextOrder[i]];
+          }
+        }
+      } else {
+        return false;
+      }
+
+      const didChange = nextOrder.some((el, idx) => el !== initialOrder[idx]);
+      if (!didChange) {
+        applySlideLayerOrder(slide, initialOrder);
+        return false;
+      }
+
+      applySlideLayerOrder(slide, nextOrder);
+      return true;
+    }
+
     function findPreferredDragContainer(el) {
       if (!el || typeof el.closest !== 'function') return null;
       const slide = el.closest('.slide');
@@ -2804,18 +2871,8 @@
     // Rearrange Selected Element Layers
     function arrangeElementLayer(action) {
       if (selectedElements.length === 0) return;
-      selectedElements.forEach(el => {
-        const zVal = parseInt(el.style.zIndex) || 0;
-        if (action === 'front') {
-          el.style.zIndex = '999';
-        } else if (action === 'back') {
-          el.style.zIndex = '0';
-        } else if (action === 'forward') {
-          el.style.zIndex = (zVal + 1).toString();
-        } else if (action === 'backward') {
-          el.style.zIndex = Math.max(0, zVal - 1).toString();
-        }
-      });
+      const didChange = reorderSlideLayers(action);
+      if (!didChange) return;
 
       if (selectedElements[0]) {
         document.getElementById('elZIndex').value = selectedElements[0].style.zIndex || 0;
@@ -3562,20 +3619,13 @@
         return;
       }
       
-      const elements = Array.from(activeSlide.querySelectorAll(EDITOR_SELECTABLE_SELECTOR)).filter(isEligibleEditableElement);
+      const elements = getNormalizedSlideLayerOrder(activeSlide);
       if (elements.length === 0) {
         listContainer.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-2">No elements found</p>`;
         return;
       }
       
-      // Sort elements by zIndex descending, then by DOM order descending so that topmost visually appears first
-      const elementsArray = Array.from(elements);
-      elementsArray.sort((a, b) => {
-        const zA = parseInt(a.style.zIndex) || 0;
-        const zB = parseInt(b.style.zIndex) || 0;
-        if (zA !== zB) return zB - zA;
-        return elementsArray.indexOf(b) - elementsArray.indexOf(a);
-      });
+      const elementsArray = [...elements].reverse();
       
       listContainer.innerHTML = elementsArray.map(el => {
         const isSelected = selectedElements.includes(el);
@@ -3655,12 +3705,8 @@
       const parentRow = event.currentTarget.closest('[class*="border"]');
       if (parentRow && parentRow.elementRef) {
         const el = parentRow.elementRef;
-        let zVal = parseInt(el.style.zIndex) || 0;
-        if (action === 'forward') {
-          el.style.zIndex = (zVal + 1).toString();
-        } else if (action === 'backward') {
-          el.style.zIndex = Math.max(0, zVal - 1).toString();
-        }
+        const didChange = reorderSlideLayers(action, [el]);
+        if (!didChange) return;
         
         // Update selection properties panel if currently selected
         if (selectedElements.includes(el)) {
