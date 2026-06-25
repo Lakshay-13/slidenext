@@ -224,6 +224,53 @@
     };
   }
 
+  function setStudioDeckActiveSlide(index, options = {}) {
+    const doc = options.doc || null;
+    const getSlides = typeof options.getSlides === 'function'
+      ? options.getSlides
+      : () => [];
+    const getSlidesContainer = typeof options.getSlidesContainer === 'function'
+      ? options.getSlidesContainer
+      : (nextDoc) => nextDoc && typeof nextDoc.getElementById === 'function'
+          ? nextDoc.getElementById('slidesContainer')
+          : null;
+    const setSlideContainerOffset = typeof options.setSlideContainerOffset === 'function'
+      ? options.setSlideContainerOffset
+      : (container, activeIndex) => {
+          if (container && container.style) {
+            container.style.transform = `translateX(-${activeIndex * 100}vw)`;
+          }
+        };
+    const setSlideActiveState = typeof options.setSlideActiveState === 'function'
+      ? options.setSlideActiveState
+      : (slide, isActive) => {
+          if (!slide || !slide.classList) return;
+          if (isActive) {
+            slide.classList.add('slide-active');
+          } else {
+            slide.classList.remove('slide-active');
+          }
+        };
+    const syncStudioChromeToActiveSlide = typeof options.syncStudioChromeToActiveSlide === 'function'
+      ? options.syncStudioChromeToActiveSlide
+      : () => false;
+    const captureHistory = !!options.captureHistory;
+
+    const slides = getSlides(doc);
+    if (index < 0 || index >= slides.length) {
+      return false;
+    }
+
+    const container = getSlidesContainer(doc);
+    setSlideContainerOffset(container, index);
+    slides.forEach((slide, slideIndex) => {
+      setSlideActiveState(slide, slideIndex === index);
+    });
+
+    syncStudioChromeToActiveSlide(doc, { captureHistory });
+    return true;
+  }
+
   function updateStudioDeckNavigationUi(doc, slides = [], currentSlideIndex, options = {}) {
     const getIndicatorDotsContainer = typeof options.getIndicatorDotsContainer === 'function'
       ? options.getIndicatorDotsContainer
@@ -375,6 +422,7 @@
     observeStudioDeckActiveSlideState,
     bindStudioDeckNavigationSync,
     syncStudioActiveSlideView,
+    setStudioDeckActiveSlide,
     updateStudioDeckNavigationUi,
     buildStudioPreviewHtml,
     buildStudioSourceHtml

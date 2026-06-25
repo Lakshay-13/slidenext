@@ -1821,26 +1821,12 @@
     function setActiveSlide(index, options = {}) {
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      const slides = getSlides(iframeDoc);
-      
-      if (index < 0 || index >= slides.length) return;
-      
-      // Apply translation to container
-      const container = iframeDoc.getElementById('slidesContainer');
-      if (container) {
-        container.style.transform = `translateX(-${index * 100}vw)`;
-      }
-      
-      // Toggle class lists
-      slides.forEach((slide, idx) => {
-        if (idx === index) {
-          slide.classList.add('slide-active');
-        } else {
-          slide.classList.remove('slide-active');
-        }
+      SlideNextStudioDeckView.setStudioDeckActiveSlide(index, {
+        doc: iframeDoc,
+        captureHistory: options.captureHistory,
+        getSlides,
+        syncStudioChromeToActiveSlide
       });
-
-      syncStudioChromeToActiveSlide(iframeDoc, { captureHistory: options.captureHistory });
     }
 
     // Sync presentation's internal dots and counter
