@@ -1014,6 +1014,7 @@
   <script src="/shared/studio-deck-context.js"></script>
   <script src="/shared/deck-model.js"></script>
   <script src="/shared/deck-render.js"></script>
+  <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/deck-html.js"></script>
@@ -1077,8 +1078,6 @@
     ].join(', ');
     const EDITOR_INLINE_TEXT_TAGS = new Set(['span', 'strong', 'em', 'b', 'i', 'u', 'small', 'mark', 'sup', 'sub', 'label']);
     const RESIZE_HANDLE_DIRECTIONS = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
-    let editorElementIdCounter = 0;
-    let editorSlideIdCounter = 0;
 
     // Slide Wallpapers Presets Data
     const wallpaperPresetsData = {
@@ -2219,49 +2218,38 @@
       return iframe ? (iframe.contentDocument || iframe.contentWindow.document) : null;
     }
 
+    function getEditorDomOptions(options = {}) {
+      return {
+        slideAttrName: EDITOR_SLIDE_ID_ATTR,
+        elementAttrName: EDITOR_ELEMENT_ID_ATTR,
+        selectableSelector: EDITOR_SELECTABLE_SELECTOR,
+        blockedIds: ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud', 'slidesContainer'],
+        ...options
+      };
+    }
+
     function createEditorSlideId() {
-      if (window.crypto?.randomUUID) {
-        return `sl-${window.crypto.randomUUID()}`;
-      }
-      editorSlideIdCounter += 1;
-      return `sl-${Date.now().toString(36)}-${editorSlideIdCounter.toString(36)}`;
+      return SlideNextStudioEditorDom.createStudioSlideId();
     }
 
     function assignEditorSlideId(slide, options = {}) {
-      if (!slide || !slide.classList?.contains('slide')) return '';
-      const forceNew = !!options.forceNew;
-      const existingId = slide.getAttribute(EDITOR_SLIDE_ID_ATTR);
-      if (!forceNew && existingId) return existingId;
-      const nextId = createEditorSlideId();
-      slide.setAttribute(EDITOR_SLIDE_ID_ATTR, nextId);
-      return nextId;
+      return SlideNextStudioEditorDom.assignStudioSlideId(slide, getEditorDomOptions(options));
     }
 
     function ensureEditorSlideIds(root, options = {}) {
-      if (!root) return [];
-      const slides = [];
-      if (root.nodeType === 1 && root.classList?.contains('slide')) {
-        slides.push(root);
-      }
-      if (typeof root.querySelectorAll === 'function') {
-        root.querySelectorAll('.slide').forEach(slide => slides.push(slide));
-      }
-      slides.forEach(slide => assignEditorSlideId(slide, options));
-      return slides;
+      return SlideNextStudioEditorDom.ensureStudioSlideIds(root, getEditorDomOptions(options));
     }
 
     function getSlides(doc = getIframeDoc()) {
-      if (!doc) return [];
-      return ensureEditorSlideIds(doc);
+      return SlideNextStudioEditorDom.getStudioSlides(doc, getEditorDomOptions());
     }
 
     function getSlideById(slideId, doc = getIframeDoc()) {
-      if (!slideId || !doc) return null;
-      return doc.querySelector(`.slide[${EDITOR_SLIDE_ID_ATTR}="${slideId}"]`);
+      return SlideNextStudioEditorDom.getStudioSlideById(slideId, doc, getEditorDomOptions());
     }
 
     function getSlideIndexById(slideId, doc = getIframeDoc()) {
-      return getSlides(doc).findIndex(slide => slide.getAttribute(EDITOR_SLIDE_ID_ATTR) === slideId);
+      return SlideNextStudioEditorDom.getStudioSlideIndexById(slideId, doc, getEditorDomOptions());
     }
 
     function buildEditorDeckSnapshotFromDom(doc = getIframeDoc(), options = {}) {
@@ -2394,79 +2382,38 @@
     }
 
     function isEligibleEditableElement(el) {
-      if (!el || el.nodeType !== 1) return false;
-      if (el.id === 'editorSelectionOverlay' || el.id === 'editorGuidesLayer') return false;
-      if (el.classList.contains('editor-resize-handle') || el.classList.contains('editor-guide-line')) return false;
-      if (el.classList.contains('slide') || el.id === 'slidesContainer') return false;
-      const tag = el.tagName.toLowerCase();
-      if (['html', 'body', 'head', 'style', 'script', 'iframe'].includes(tag)) return false;
-      return true;
+      return SlideNextStudioEditorDom.isEligibleEditableElement(el, getEditorDomOptions());
     }
 
     function createEditorElementId() {
-      if (window.crypto?.randomUUID) {
-        return `el-${window.crypto.randomUUID()}`;
-      }
-      editorElementIdCounter += 1;
-      return `el-${Date.now().toString(36)}-${editorElementIdCounter.toString(36)}`;
+      return SlideNextStudioEditorDom.createStudioElementId();
     }
 
     function assignEditorElementId(el, options = {}) {
-      if (!isEligibleEditableElement(el)) return '';
-      const forceNew = !!options.forceNew;
-      const existingId = el.getAttribute(EDITOR_ELEMENT_ID_ATTR);
-      if (!forceNew && existingId) return existingId;
-      const nextId = createEditorElementId();
-      el.setAttribute(EDITOR_ELEMENT_ID_ATTR, nextId);
-      return nextId;
+      return SlideNextStudioEditorDom.assignStudioElementId(el, getEditorDomOptions(options));
     }
 
     function ensureEditorElementIds(root, options = {}) {
-      if (!root) return [];
-      const editableElements = [];
-      if (root.nodeType === 1 && root.matches?.(EDITOR_SELECTABLE_SELECTOR) && isEligibleEditableElement(root)) {
-        editableElements.push(root);
-      }
-      if (typeof root.querySelectorAll === 'function') {
-        root.querySelectorAll(EDITOR_SELECTABLE_SELECTOR).forEach(el => {
-          if (isEligibleEditableElement(el)) {
-            editableElements.push(el);
-          }
-        });
-      }
-      editableElements.forEach(el => assignEditorElementId(el, options));
-      return editableElements;
+      return SlideNextStudioEditorDom.ensureStudioElementIds(root, getEditorDomOptions(options));
     }
 
     function getElementByEditorId(editorId, doc = getIframeDoc()) {
-      if (!editorId || !doc) return null;
-      return doc.querySelector(`[${EDITOR_ELEMENT_ID_ATTR}="${editorId}"]`);
+      return SlideNextStudioEditorDom.getElementByEditorId(editorId, doc, getEditorDomOptions());
     }
 
     function getSlideEditableElements(slide) {
-      if (!slide) return [];
-      return Array.from(slide.querySelectorAll(EDITOR_SELECTABLE_SELECTOR)).filter(isEligibleEditableElement);
+      return SlideNextStudioEditorDom.getStudioSlideEditableElements(slide, getEditorDomOptions());
     }
 
     function getNormalizedSlideLayerOrder(slide) {
-      return getSlideEditableElements(slide)
-        .map((el, domIndex) => ({
-          el,
-          domIndex,
-          zIndex: parseInt(el.style.zIndex, 10) || 0
-        }))
-        .sort((a, b) => {
-          if (a.zIndex !== b.zIndex) return a.zIndex - b.zIndex;
-          return a.domIndex - b.domIndex;
-        })
-        .map(entry => entry.el);
+      return SlideNextStudioEditorDom.getNormalizedStudioSlideLayerOrder(slide, {
+        ...getEditorDomOptions(),
+        getSlideEditableElements
+      });
     }
 
     function applySlideLayerOrder(slide, orderedElements) {
-      orderedElements.forEach((el, idx) => {
-        el.style.zIndex = String(idx);
-      });
-      return orderedElements;
+      return SlideNextStudioEditorDom.applyStudioSlideLayerOrder(slide, orderedElements);
     }
 
     function reorderSlideLayers(action, targetElements = selectedElements) {
