@@ -4479,9 +4479,19 @@
       const parentRow = event.currentTarget.closest('[class*="border"]');
       const target = resolveLayerRowElement(parentRow);
       if (!target) return;
+      const preservedSelectionIds = getSelectedEditorElementIds();
       selectedElements = [target];
       refreshSelectionClasses();
-      toggleSelectedElementsVisibility();
+      const didToggle = toggleSelectedElementsVisibility();
+      if (!didToggle) return;
+      if (preservedSelectionIds.length === 0) {
+        deselectElement();
+        return;
+      }
+      restoreSelectionByIdsOnActiveSlide(preservedSelectionIds);
+      syncSelectionOverlay();
+      syncInspectorForSelection();
+      updateLayersList();
     }
     
     function changeLayerZIndexByRef(event, action) {
