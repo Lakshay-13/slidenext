@@ -79,6 +79,11 @@
     return doc.querySelector(activeSlideSelector) || doc.querySelector(slideSelector);
   }
 
+  function getStudioActiveSlideId(doc, options = {}) {
+    const activeSlide = getStudioActiveSlide(doc, options);
+    return getStudioSlideId(activeSlide, options);
+  }
+
   function pruneStudioChromeNodes(doc, options = {}) {
     if (!doc || typeof doc.querySelectorAll !== 'function') return;
     const chromeNodeIds = options.chromeNodeIds || [];
@@ -264,6 +269,7 @@
     getStudioSlideIndexById,
     getStudioSlideId,
     getStudioActiveSlide,
+    getStudioActiveSlideId,
     pruneStudioChromeNodes,
     isEligibleEditableElement,
     createStudioElementId,

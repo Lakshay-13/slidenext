@@ -1710,7 +1710,7 @@
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return;
       saveHistoryState();
-      const activeSlideId = getEditorSlideId(getActiveSlide(iframeDoc));
+      const activeSlideId = getActiveSlideId(iframeDoc);
       const preservedSelectionIds = getSelectedEditorElementIds();
       
       const slides = getSlides(iframeDoc);
@@ -1887,7 +1887,7 @@
         return;
       }
       saveHistoryState();
-      const activeSlideId = getEditorSlideId(getActiveSlide(iframeDoc));
+      const activeSlideId = getActiveSlideId(iframeDoc);
       const deletedSlideId = getEditorSlideId(slides[idx]);
       const preservedSelectionIds = getSelectedEditorElementIds();
       
@@ -1962,7 +1962,7 @@
       return {
         chromeNodeIds: EDITOR_CHROME_NODE_IDS,
         removableClassNames: ['editor-selected', 'editor-hoverable', 'editor-dragging'],
-        getActiveSlideId: (doc) => getEditorSlideId(getActiveSlide(doc)),
+        getActiveSlideId,
         getSelectedElementIds: () => getSelectedEditorElementIds(),
         areIdListsEqual: areEditorIdListsEqual,
         ...options
@@ -2096,6 +2096,10 @@
 
     function getActiveSlide(doc = getIframeDoc()) {
       return SlideNextStudioEditorDom.getStudioActiveSlide(doc, getEditorDomOptions());
+    }
+
+    function getActiveSlideId(doc = getIframeDoc()) {
+      return SlideNextStudioEditorDom.getStudioActiveSlideId(doc, getEditorDomOptions());
     }
 
     function pruneEditorChromeNodes(doc = getIframeDoc(), activeSlide = getActiveSlide(doc)) {
