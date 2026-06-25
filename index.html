@@ -3689,20 +3689,24 @@
       if (!iframeDoc) return null;
       return {
         html: iframeDoc.documentElement.innerHTML,
-        activeSlideId: getActiveSlide(iframeDoc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || ''
+        activeSlideId: getActiveSlide(iframeDoc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '',
+        selectedElementIds: selectedElements
+          .filter(el => el && el.isConnected && isEligibleEditableElement(el))
+          .map(el => assignEditorElementId(el))
       };
     }
 
     function normalizeHistoryEntry(entry) {
       if (!entry) {
-        return { html: '', activeSlideId: '' };
+        return { html: '', activeSlideId: '', selectedElementIds: [] };
       }
       if (typeof entry === 'string') {
-        return { html: entry, activeSlideId: '' };
+        return { html: entry, activeSlideId: '', selectedElementIds: [] };
       }
       return {
         html: entry.html || '',
-        activeSlideId: entry.activeSlideId || ''
+        activeSlideId: entry.activeSlideId || '',
+        selectedElementIds: Array.isArray(entry.selectedElementIds) ? entry.selectedElementIds.filter(Boolean) : []
       };
     }
 
@@ -3780,8 +3784,14 @@
         const nextIndex = slideCount === 0 ? 0 : Math.min(fallbackIndex, slideCount - 1);
         setActiveSlide(nextIndex);
       }
+      const activeSlide = getActiveSlide(iframeDoc);
+      selectedElements = historyEntry.selectedElementIds
+        .map(id => getElementByEditorId(id, iframeDoc))
+        .filter(el => el && el.isConnected && activeSlide && activeSlide.contains(el));
+      refreshSelectionClasses();
       syncSelectionOverlay();
       syncInspectorForSelection();
+      updateLayersList();
     }
 
     // 6. AutoSave debouncing pipeline
