@@ -10,6 +10,9 @@
     root.SlideNextStudioDeckView = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (deckHtml) {
+  const ACTIVE_THUMBNAIL_CARD_CLASS_NAME = 'glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all border-[#7028d0] bg-[#7028d0]/5 shadow-[0_0_15px_rgba(112,40,208,0.1)]';
+  const INACTIVE_THUMBNAIL_CARD_CLASS_NAME = 'glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all border-white/5 bg-[#0a0a0a]/40 hover:border-white/20';
+
   function teardownStudioDeckActiveSlideSync(state = {}, options = {}) {
     const disconnectObserver = typeof options.disconnectObserver === 'function'
       ? options.disconnectObserver
@@ -147,6 +150,17 @@
     });
     markWrapped(frameWin);
     return true;
+  }
+
+  function updateStudioDeckActiveThumbnailCardState(cards, activeSlideId, options = {}) {
+    const activeClassName = options.activeClassName || ACTIVE_THUMBNAIL_CARD_CLASS_NAME;
+    const inactiveClassName = options.inactiveClassName || INACTIVE_THUMBNAIL_CARD_CLASS_NAME;
+    Array.from(cards || []).forEach((card) => {
+      if (!card) return;
+      card.className = card.dataset && card.dataset.slideId === activeSlideId
+        ? activeClassName
+        : inactiveClassName;
+    });
   }
 
   function syncStudioActiveSlideView(doc, options = {}) {
@@ -442,6 +456,7 @@
     scheduleStudioDeckActiveSlideSync,
     observeStudioDeckActiveSlideState,
     bindStudioDeckNavigationSync,
+    updateStudioDeckActiveThumbnailCardState,
     syncStudioActiveSlideView,
     setStudioDeckActiveSlide,
     setStudioDeckActiveSlideById,
