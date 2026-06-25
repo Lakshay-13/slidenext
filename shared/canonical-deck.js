@@ -114,6 +114,7 @@
     const layout = asPlainObject(deck.layout);
     const notes = asPlainObject(deck.notes);
     const exportMeta = asPlainObject(deck.export);
+    const source = asPlainObject(deck.source);
 
     return {
       kind: DECK_KIND,
@@ -153,6 +154,12 @@
         html: asPlainObject(exportMeta.html),
         pdf: asPlainObject(exportMeta.pdf),
         pptx: asPlainObject(exportMeta.pptx)
+      },
+      source: {
+        html: normalizeString(source.html),
+        headHtml: normalizeString(source.headHtml),
+        bodyHtml: normalizeString(source.bodyHtml),
+        bodyAttributes: asPlainObject(source.bodyAttributes)
       }
     };
   }

@@ -347,6 +347,20 @@
     };
   }
 
+  function buildDocumentHtml(doc) {
+    if (!doc || !doc.documentElement) return '';
+    return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  }
+
+  function buildDeckSource(doc) {
+    return {
+      html: buildDocumentHtml(doc),
+      headHtml: doc.head ? doc.head.innerHTML : '',
+      bodyHtml: doc.body ? doc.body.innerHTML : '',
+      bodyAttributes: doc.body ? extractAttributeMap(doc.body) : {}
+    };
+  }
+
   function importHtmlDeckToCanonicalDeck(doc, options = {}) {
     if (!doc) {
       return canonicalDeck.createCanonicalDeck();
@@ -359,7 +373,8 @@
       metadata: buildDeckMetadata(doc, options),
       layout: inferDeckLayout(doc, slides, options),
       assets: collectDeckAssets(doc),
-      slides: slides.map((slide, index) => importSlideToCanonicalSlide(slide, index, options))
+      slides: slides.map((slide, index) => importSlideToCanonicalSlide(slide, index, options)),
+      source: buildDeckSource(doc)
     });
   }
 
