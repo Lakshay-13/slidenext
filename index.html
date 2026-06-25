@@ -1731,8 +1731,10 @@
       // 6. Generate Side List Thumbnails
       generateThumbnails();
       
-      // 7. Select first slide
-      setActiveSlide(0);
+      // 7. Respect the deck's existing active slide state, with slide 1 as a fallback.
+      if (!syncStudioChromeToActiveSlide(iframeDoc)) {
+        setActiveSlide(0);
+      }
 
       // 8. Keep Studio chrome aligned when a deck uses its own slide navigation API.
       bindDeckNavigationSync(iframeDoc);
@@ -1884,8 +1886,9 @@
       });
     }
 
-    function syncStudioChromeToActiveSlide(doc = getIframeDoc()) {
+    function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
       if (!doc) return false;
+      const normalizeViewport = options.normalizeViewport !== false;
       const slides = getSlides(doc);
       if (slides.length === 0) {
         currentSlideIndex = 0;
@@ -1899,6 +1902,12 @@
       if (activeIndex === -1) return false;
 
       currentSlideIndex = activeIndex;
+      if (normalizeViewport) {
+        const container = doc.getElementById('slidesContainer');
+        if (container) {
+          container.style.transform = `translateX(-${currentSlideIndex * 100}vw)`;
+        }
+      }
       const activeSlideId = slides[activeIndex].getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
       updateActiveThumbnailCardState(activeSlideId);
       updateIframeNavigationUI(doc, slides);
