@@ -75,5 +75,44 @@ test('renderCanonicalDeckHtml preserves explicit slide classes when source attri
     preferNodeSourceHtml: false
   });
 
-  assert.match(html, /<section class="slide custom-slide" id="slide-1"><\/section>/);
+  assert.match(html, /<section class="slide custom-slide slide-active" id="slide-1"><\/section>/);
+});
+
+test('renderCanonicalDeckHtml removes stale slide-active from non-active rendered slides', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {
+          html: '',
+          attributes: {
+            class: 'hero-slide'
+          }
+        }
+      },
+      {
+        id: 'slide-2',
+        nodes: [],
+        source: {
+          html: '',
+          attributes: {
+            class: 'slide custom-slide slide-active'
+          }
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<section class="slide hero-slide slide-active" id="slide-1"><\/section>/);
+  assert.match(html, /<section class="slide custom-slide" id="slide-2"><\/section>/);
 });

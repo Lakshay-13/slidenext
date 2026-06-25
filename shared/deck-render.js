@@ -50,6 +50,23 @@
       .join('');
   }
 
+  function tokenizeClassNames(className) {
+    return normalizeString(className)
+      .split(/\s+/)
+      .map(token => token.trim())
+      .filter(Boolean);
+  }
+
+  function buildRenderedSlideClassName(className, isActive) {
+    const nextClassNames = tokenizeClassNames(className)
+      .filter(token => token !== 'slide' && token !== 'slide-active');
+    nextClassNames.unshift('slide');
+    if (isActive) {
+      nextClassNames.push('slide-active');
+    }
+    return nextClassNames.join(' ');
+  }
+
   function renderCanonicalNode(node, options = {}) {
     if (!node || typeof node !== 'object') return '';
     if (options.preferNodeSourceHtml !== false && normalizeString(node.html)) {
@@ -87,9 +104,7 @@
     }
 
     const sourceAttributes = slide.source ? asPlainObject(slide.source.attributes) : {};
-    if (!sourceAttributes.class) {
-      sourceAttributes.class = index === 0 ? 'slide slide-active' : 'slide';
-    }
+    sourceAttributes.class = buildRenderedSlideClassName(sourceAttributes.class, index === 0);
     if (!sourceAttributes.id && slide.id) {
       sourceAttributes.id = slide.id;
     }
@@ -144,6 +159,7 @@
   }
 
   return {
+    buildRenderedSlideClassName,
     renderCanonicalNode,
     renderCanonicalSlide,
     renderCanonicalDeckHtml
