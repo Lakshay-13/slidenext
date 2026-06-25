@@ -1,0 +1,71 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+const editorSession = require('../shared/studio-editor-session.js');
+
+test('shouldHandleStudioFrameLoad requires an active matching editor session', () => {
+  assert.equal(editorSession.shouldHandleStudioFrameLoad('', {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    editorActive: true
+  }), false);
+
+  assert.equal(editorSession.shouldHandleStudioFrameLoad(
+    '/presentations/onboarding-presentation/index.html',
+    {
+      currentPresentationUrl: '/presentations/ai-tools-presentation/index.html',
+      editorActive: true
+    }
+  ), false);
+
+  assert.equal(editorSession.shouldHandleStudioFrameLoad(
+    '/presentations/onboarding-presentation/index.html',
+    {
+      currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+      editorActive: false
+    }
+  ), false);
+
+  assert.equal(editorSession.shouldHandleStudioFrameLoad(
+    '/presentations/onboarding-presentation/index.html',
+    {
+      getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+      isEditorActive: () => true
+    }
+  ), true);
+});
+
+test('createStudioFrameLoadHandler runs load hooks for the active editor session', () => {
+  const calls = [];
+  const onLoad = editorSession.createStudioFrameLoadHandler({
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    isEditorActive: () => true,
+    handleLoad() {
+      calls.push('handleLoad');
+    },
+    afterLoad() {
+      calls.push('afterLoad');
+    }
+  });
+
+  assert.equal(onLoad(), true);
+  assert.deepEqual(calls, ['handleLoad', 'afterLoad']);
+});
+
+test('createStudioFrameLoadHandler skips stale editor sessions', () => {
+  const calls = [];
+  const onLoad = editorSession.createStudioFrameLoadHandler({
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    getCurrentPresentationUrl: () => '/presentations/ai-tools-presentation/index.html',
+    isEditorActive: () => true,
+    handleLoad() {
+      calls.push('handleLoad');
+    },
+    afterLoad() {
+      calls.push('afterLoad');
+    }
+  });
+
+  assert.equal(onLoad(), false);
+  assert.deepEqual(calls, []);
+});

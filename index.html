@@ -1017,6 +1017,7 @@
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
+  <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
@@ -1514,12 +1515,26 @@
       document.getElementById('autoSaveStatus').innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
       
       // Configure load triggers BEFORE setting src
-      iframe.onload = () => {
-        initStudioFrame();
-        // Restore zoom level
-        const savedZoom = localStorage.getItem('presentationZoom') || 'fit';
-        setTimeout(() => applyZoom(savedZoom), 150);
-      };
+      iframe.onload = SlideNextStudioEditorSession.createStudioFrameLoadHandler({
+        presentationUrl: url,
+        getCurrentPresentationUrl: () => currentPresentationUrl,
+        isEditorActive: () => editor.classList.contains('active'),
+        handleLoad: () => {
+          initStudioFrame();
+        },
+        afterLoad: () => {
+          const savedZoom = localStorage.getItem('presentationZoom') || 'fit';
+          setTimeout(() => {
+            if (!SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(url, {
+              getCurrentPresentationUrl: () => currentPresentationUrl,
+              isEditorActive: () => editor.classList.contains('active')
+            })) {
+              return;
+            }
+            applyZoom(savedZoom);
+          }, 150);
+        }
+      });
       
       editor.classList.remove('hidden');
       void editor.offsetWidth;
@@ -1549,6 +1564,7 @@
       deselectElement();
       resetEditorHistoryState({ syncButtons: true });
       
+      iframe.onload = null;
       iframe.src = '';
       editor.classList.remove('active');
       editor.style.opacity = '0';
