@@ -1834,9 +1834,7 @@
       if (!container) return;
       saveHistoryState();
       const activeSlideId = getActiveSlide(iframeDoc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
-      const preservedSelectionIds = selectedElements
-        .filter(el => el && el.isConnected && isEligibleEditableElement(el))
-        .map(el => assignEditorElementId(el));
+      const preservedSelectionIds = getSelectedEditorElementIds();
       
       const slides = getSlides(iframeDoc);
       const draggedNode = slides[fromIdx];
@@ -2024,9 +2022,7 @@
       saveHistoryState();
       const activeSlideId = getActiveSlide(iframeDoc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
       const deletedSlideId = slides[idx]?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
-      const preservedSelectionIds = selectedElements
-        .filter(el => el && el.isConnected && isEligibleEditableElement(el))
-        .map(el => assignEditorElementId(el));
+      const preservedSelectionIds = getSelectedEditorElementIds();
       
       slides[idx].remove();
       
@@ -2176,6 +2172,17 @@
       return getNormalizedSlideLayerOrder(slide)
         .map(el => buildEditorElementSnapshot(el))
         .reverse();
+    }
+
+    function getSelectedEditorElementIds(elements = selectedElements) {
+      return elements
+        .filter(el => el && el.isConnected && isEligibleEditableElement(el))
+        .map(el => assignEditorElementId(el));
+    }
+
+    function areEditorIdListsEqual(a = [], b = []) {
+      if (a.length !== b.length) return false;
+      return a.every((id, index) => id === b[index]);
     }
 
     function getActiveSlide(doc = getIframeDoc()) {
@@ -3726,9 +3733,7 @@
       return {
         html: iframeDoc.documentElement.innerHTML,
         activeSlideId: getActiveSlide(iframeDoc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '',
-        selectedElementIds: selectedElements
-          .filter(el => el && el.isConnected && isEligibleEditableElement(el))
-          .map(el => assignEditorElementId(el))
+        selectedElementIds: getSelectedEditorElementIds()
       };
     }
 
@@ -3756,7 +3761,12 @@
       
       // Avoid duplicated entries
       const lastEntry = undoStack.length > 0 ? normalizeHistoryEntry(undoStack[undoStack.length - 1]) : null;
-      if (lastEntry && lastEntry.html === historyEntry.html && lastEntry.activeSlideId === historyEntry.activeSlideId) {
+      if (
+        lastEntry
+        && lastEntry.html === historyEntry.html
+        && lastEntry.activeSlideId === historyEntry.activeSlideId
+        && areEditorIdListsEqual(lastEntry.selectedElementIds, historyEntry.selectedElementIds)
+      ) {
         return;
       }
       
