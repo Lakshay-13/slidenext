@@ -2272,6 +2272,16 @@
       };
     }
 
+    function getEditorHistoryStackOptions(options = {}) {
+      return {
+        ...getEditorHistoryOptions(),
+        normalizeEntry: normalizeHistoryEntry,
+        areEntriesEqual: SlideNextStudioHistory.areStudioHistoryEntriesEqual,
+        maxUndoEntries: 50,
+        ...options
+      };
+    }
+
     function createEditorSlideId() {
       return SlideNextStudioEditorDom.createStudioSlideId();
     }
@@ -3858,21 +3868,18 @@
       if (!iframeDoc) return;
       
       const historyEntry = createHistoryEntry(iframeDoc);
-      if (!historyEntry) return;
-      
-      // Avoid duplicated entries
-      const lastEntry = undoStack.length > 0 ? normalizeHistoryEntry(undoStack[undoStack.length - 1]) : null;
-      if (lastEntry && SlideNextStudioHistory.areStudioHistoryEntriesEqual(lastEntry, historyEntry, getEditorHistoryOptions())) {
+      const nextHistoryState = SlideNextStudioHistory.captureStudioHistoryState(
+        undoStack,
+        redoStack,
+        historyEntry,
+        getEditorHistoryStackOptions()
+      );
+      if (!nextHistoryState.didCapture) {
         return;
       }
-      
-      undoStack.push(historyEntry);
-      // Caps stack size
-      if (undoStack.length > 50) {
-        undoStack.shift();
-      }
-      
-      redoStack = []; // Reset redo
+
+      undoStack = nextHistoryState.undoStack;
+      redoStack = nextHistoryState.redoStack;
       updateHistoryButtons();
     }
 
@@ -3882,24 +3889,23 @@
     }
 
     function editorUndo() {
-      if (undoStack.length <= 1) return;
-      
-      const currentState = undoStack.pop();
-      redoStack.push(currentState);
-      
-      const prevState = undoStack[undoStack.length - 1];
-      restoreFrameFromHistoryEntry(prevState);
+      const nextHistoryState = SlideNextStudioHistory.stepStudioHistoryUndo(undoStack, redoStack);
+      if (!nextHistoryState.didUndo) return;
+
+      undoStack = nextHistoryState.undoStack;
+      redoStack = nextHistoryState.redoStack;
+      restoreFrameFromHistoryEntry(nextHistoryState.restoreEntry);
       updateHistoryButtons();
       triggerAutoSave();
     }
 
     function editorRedo() {
-      if (redoStack.length === 0) return;
-      
-      const nextState = redoStack.pop();
-      undoStack.push(nextState);
-      
-      restoreFrameFromHistoryEntry(nextState);
+      const nextHistoryState = SlideNextStudioHistory.stepStudioHistoryRedo(undoStack, redoStack);
+      if (!nextHistoryState.didRedo) return;
+
+      undoStack = nextHistoryState.undoStack;
+      redoStack = nextHistoryState.redoStack;
+      restoreFrameFromHistoryEntry(nextHistoryState.restoreEntry);
       updateHistoryButtons();
       triggerAutoSave();
     }

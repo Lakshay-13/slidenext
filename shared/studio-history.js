@@ -81,10 +81,102 @@
       && areIdListsEqual(normalizedA.selectedElementIds, normalizedB.selectedElementIds);
   }
 
+  function captureStudioHistoryState(undoStack = [], redoStack = [], historyEntry, options = {}) {
+    const normalizeEntry = typeof options.normalizeEntry === 'function'
+      ? options.normalizeEntry
+      : normalizeStudioHistoryEntry;
+    const areEntriesEqual = typeof options.areEntriesEqual === 'function'
+      ? options.areEntriesEqual
+      : (left, right, compareOptions) => areStudioHistoryEntriesEqual(left, right, compareOptions);
+    const maxUndoEntries = Number.isInteger(options.maxUndoEntries) && options.maxUndoEntries > 0
+      ? options.maxUndoEntries
+      : 50;
+
+    const nextUndoStack = [...undoStack];
+    const nextRedoStack = [...redoStack];
+    if (!historyEntry) {
+      return {
+        undoStack: nextUndoStack,
+        redoStack: nextRedoStack,
+        didCapture: false
+      };
+    }
+
+    const lastEntry = nextUndoStack.length > 0 ? normalizeEntry(nextUndoStack[nextUndoStack.length - 1]) : null;
+    const normalizedHistoryEntry = normalizeEntry(historyEntry);
+    if (lastEntry && areEntriesEqual(lastEntry, normalizedHistoryEntry, options)) {
+      return {
+        undoStack: nextUndoStack,
+        redoStack: nextRedoStack,
+        didCapture: false
+      };
+    }
+
+    nextUndoStack.push(historyEntry);
+    if (nextUndoStack.length > maxUndoEntries) {
+      nextUndoStack.shift();
+    }
+
+    return {
+      undoStack: nextUndoStack,
+      redoStack: [],
+      didCapture: true
+    };
+  }
+
+  function stepStudioHistoryUndo(undoStack = [], redoStack = []) {
+    const nextUndoStack = [...undoStack];
+    const nextRedoStack = [...redoStack];
+    if (nextUndoStack.length <= 1) {
+      return {
+        undoStack: nextUndoStack,
+        redoStack: nextRedoStack,
+        restoreEntry: null,
+        didUndo: false
+      };
+    }
+
+    const currentState = nextUndoStack.pop();
+    nextRedoStack.push(currentState);
+
+    return {
+      undoStack: nextUndoStack,
+      redoStack: nextRedoStack,
+      restoreEntry: nextUndoStack[nextUndoStack.length - 1] || null,
+      didUndo: true
+    };
+  }
+
+  function stepStudioHistoryRedo(undoStack = [], redoStack = []) {
+    const nextUndoStack = [...undoStack];
+    const nextRedoStack = [...redoStack];
+    if (nextRedoStack.length === 0) {
+      return {
+        undoStack: nextUndoStack,
+        redoStack: nextRedoStack,
+        restoreEntry: null,
+        didRedo: false
+      };
+    }
+
+    const restoreEntry = nextRedoStack.pop();
+    nextUndoStack.push(restoreEntry);
+
+    return {
+      undoStack: nextUndoStack,
+      redoStack: nextRedoStack,
+      restoreEntry,
+      didRedo: true
+    };
+  }
+
   return {
     buildStudioHistoryFrameHtml,
     createStudioHistoryEntry,
     normalizeStudioHistoryEntry,
-    areStudioHistoryEntriesEqual
+    areStudioHistoryEntriesEqual,
+    captureStudioHistoryState,
+    stepStudioHistoryUndo,
+    stepStudioHistoryRedo
   };
 });
