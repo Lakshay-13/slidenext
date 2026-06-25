@@ -1017,6 +1017,7 @@
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
+  <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
@@ -1596,27 +1597,19 @@
         nudgeSelectedElements
       }), true);
 
-      // 5. Setup Drag positioning logic inside slide
-      setupIframeDragging(iframeDoc);
-      
-      // 6. Generate Side List Thumbnails
-      generateThumbnails();
-      
-      // 7. Respect the deck's existing active slide state, with slide 1 as a fallback.
-      if (!syncStudioChromeToActiveSlide(iframeDoc)) {
-        setActiveSlide(0);
-      }
-
-      // 8. Keep Studio chrome aligned when a deck uses its own slide navigation API.
-      bindDeckNavigationSync(iframeDoc);
-
-      // 9. Catch decks that mutate active-slide state directly without calling goToSlide().
-      observeDeckActiveSlideState(iframeDoc);
-      
-      // 10. Capture first historical state
-      saveHistoryState(false);
-      persistedDeckPlaybackState = capturePersistedDeckPlaybackState(iframeDoc);
-      lastPersistedDeckHtml = buildPersistableDeckHtml(iframeDoc);
+      SlideNextStudioFrameBootstrap.runStudioFrameBootstrap(iframeDoc, {
+        setupIframeDragging,
+        generateThumbnails,
+        syncStudioChromeToActiveSlide,
+        setActiveSlide,
+        bindDeckNavigationSync,
+        observeDeckActiveSlideState,
+        captureInitialHistoryState: () => {
+          saveHistoryState(false);
+          persistedDeckPlaybackState = capturePersistedDeckPlaybackState(iframeDoc);
+          lastPersistedDeckHtml = buildPersistableDeckHtml(iframeDoc);
+        }
+      });
     }
 
     // Apply hoverable tags to editable nodes
