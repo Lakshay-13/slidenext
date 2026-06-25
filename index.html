@@ -3931,6 +3931,8 @@
       // Re-bind listeners
       makeElementsHoverable(iframeDoc);
       setupIframeDragging(iframeDoc);
+      bindDeckNavigationSync(iframeDoc);
+      observeDeckActiveSlideState(iframeDoc);
       
       // Re-generate and restore slide focus with an index fallback for older snapshots.
       generateThumbnails();
