@@ -1009,6 +1009,7 @@
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const DRAG_OVERFLOW_MARGIN_PX = 280;
     const EDITOR_ELEMENT_ID_ATTR = 'data-editor-id';
+    const EDITOR_SLIDE_ID_ATTR = 'data-slide-id';
     const EDITOR_SELECTABLE_SELECTOR = [
       'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
       'p', 'li', 'img', 'pre', 'code', 'button', 'a',
@@ -1036,6 +1037,7 @@
     const EDITOR_INLINE_TEXT_TAGS = new Set(['span', 'strong', 'em', 'b', 'i', 'u', 'small', 'mark', 'sup', 'sub', 'label']);
     const RESIZE_HANDLE_DIRECTIONS = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
     let editorElementIdCounter = 0;
+    let editorSlideIdCounter = 0;
 
     // Slide Wallpapers Presets Data
     const wallpaperPresetsData = {
@@ -1744,7 +1746,7 @@
     function generateThumbnails() {
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      const slides = iframeDoc.querySelectorAll('.slide');
+      const slides = getSlides(iframeDoc);
       
       const listContainer = document.getElementById('thumbnailsList');
       listContainer.innerHTML = '';
@@ -1753,6 +1755,7 @@
       
       slides.forEach((slide, idx) => {
         const isActive = idx === currentSlideIndex;
+        const slideId = assignEditorSlideId(slide);
         
         // Retrieve title/text description from slide contents
         const firstHeading = slide.querySelector('h1, h2, h3');
@@ -1765,6 +1768,7 @@
         }`;
         thumbCard.draggable = true;
         thumbCard.dataset.index = idx;
+        thumbCard.dataset.slideId = slideId;
         
         // Hover Delete controls
         thumbCard.innerHTML = `
@@ -1775,14 +1779,14 @@
             <h4 class="text-xs font-semibold text-white truncate font-sans">${slideTitle}</h4>
             <p class="text-[10px] text-zinc-500 font-mono uppercase mt-0.5">${slide.style.background ? 'Gradient/Paint' : 'Default'}</p>
           </div>
-          <button onclick="event.stopPropagation(); deleteSlideNode(${idx})" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-500/20 text-zinc-500 hover:text-rose-400 rounded transition-all absolute right-2 top-2.5" title="Delete Slide">
+          <button onclick="event.stopPropagation(); deleteSlideNodeById('${slideId}')" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-500/20 text-zinc-500 hover:text-rose-400 rounded transition-all absolute right-2 top-2.5" title="Delete Slide">
             <span class="material-symbols-outlined text-[15px]">delete</span>
           </button>
         `;
         
         // Bind Click navigation
         thumbCard.addEventListener('click', () => {
-          setActiveSlide(idx);
+          setActiveSlideById(slideId);
         });
         
         // Bind HTML5 drag events
@@ -1793,16 +1797,16 @@
     }
 
     // HTML5 Drag and Drop handlers for thumbnail cards
-    let draggedThumbIndex = null;
+    let draggedThumbSlideId = '';
     function setupDragAndDropThumbnail(card) {
       card.addEventListener('dragstart', (e) => {
-        draggedThumbIndex = parseInt(card.dataset.index);
+        draggedThumbSlideId = card.dataset.slideId || '';
         card.style.opacity = '0.4';
       });
       
       card.addEventListener('dragend', () => {
         card.style.opacity = '1';
-        draggedThumbIndex = null;
+        draggedThumbSlideId = '';
       });
       
       card.addEventListener('dragover', (e) => {
@@ -1818,9 +1822,9 @@
         e.preventDefault();
         card.classList.remove('border-dashed', 'border-[#7028d0]/50');
         
-        const targetIndex = parseInt(card.dataset.index);
-        if (draggedThumbIndex !== null && draggedThumbIndex !== targetIndex) {
-          reorderSlides(draggedThumbIndex, targetIndex);
+        const targetSlideId = card.dataset.slideId || '';
+        if (draggedThumbSlideId && draggedThumbSlideId !== targetSlideId) {
+          reorderSlidesById(draggedThumbSlideId, targetSlideId);
         }
       });
     }
@@ -1832,9 +1836,10 @@
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return;
       
-      const slides = Array.from(container.querySelectorAll('.slide'));
+      const slides = getSlides(iframeDoc);
       const draggedNode = slides[fromIdx];
       const targetNode = slides[toIdx];
+      if (!draggedNode || !targetNode) return;
       
       if (fromIdx < toIdx) {
         container.insertBefore(draggedNode, targetNode.nextSibling);
@@ -1856,10 +1861,12 @@
     function setActiveSlide(index) {
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      const slides = iframeDoc.querySelectorAll('.slide');
+      const slides = getSlides(iframeDoc);
       
       if (index < 0 || index >= slides.length) return;
       currentSlideIndex = index;
+      const activeSlide = slides[index];
+      const activeSlideId = activeSlide.getAttribute(EDITOR_SLIDE_ID_ATTR);
       
       // Apply translation to container
       const container = iframeDoc.getElementById('slidesContainer');
@@ -1878,8 +1885,8 @@
       
       // Update sidebar thumbnail visual selection states
       const cards = document.querySelectorAll('#thumbnailsList > div');
-      cards.forEach((card, idx) => {
-        if (idx === index) {
+      cards.forEach((card) => {
+        if (card.dataset.slideId === activeSlideId) {
           card.className = 'glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all border-[#7028d0] bg-[#7028d0]/5 shadow-[0_0_15px_rgba(112,40,208,0.1)]';
         } else {
           card.className = 'glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all border-white/5 bg-[#0a0a0a]/40 hover:border-white/20';
@@ -1965,6 +1972,7 @@
       const newSlide = iframeDoc.createElement('section');
       newSlide.className = 'slide flex flex-col justify-center items-center';
       newSlide.style.background = '#050505';
+      assignEditorSlideId(newSlide);
       
       const innerDiv = iframeDoc.createElement('div');
       innerDiv.className = 'max-w-4xl text-center flex flex-col items-center gap-4 z-10';
@@ -1999,7 +2007,7 @@
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return;
       
-      const slides = container.querySelectorAll('.slide');
+      const slides = getSlides(iframeDoc);
       if (slides.length <= 1) {
         alert("Action aborted: presentation requires at least one slide.");
         return;
@@ -2021,9 +2029,76 @@
       return iframe ? (iframe.contentDocument || iframe.contentWindow.document) : null;
     }
 
+    function createEditorSlideId() {
+      if (window.crypto?.randomUUID) {
+        return `sl-${window.crypto.randomUUID()}`;
+      }
+      editorSlideIdCounter += 1;
+      return `sl-${Date.now().toString(36)}-${editorSlideIdCounter.toString(36)}`;
+    }
+
+    function assignEditorSlideId(slide, options = {}) {
+      if (!slide || !slide.classList?.contains('slide')) return '';
+      const forceNew = !!options.forceNew;
+      const existingId = slide.getAttribute(EDITOR_SLIDE_ID_ATTR);
+      if (!forceNew && existingId) return existingId;
+      const nextId = createEditorSlideId();
+      slide.setAttribute(EDITOR_SLIDE_ID_ATTR, nextId);
+      return nextId;
+    }
+
+    function ensureEditorSlideIds(root, options = {}) {
+      if (!root) return [];
+      const slides = [];
+      if (root.nodeType === 1 && root.classList?.contains('slide')) {
+        slides.push(root);
+      }
+      if (typeof root.querySelectorAll === 'function') {
+        root.querySelectorAll('.slide').forEach(slide => slides.push(slide));
+      }
+      slides.forEach(slide => assignEditorSlideId(slide, options));
+      return slides;
+    }
+
+    function getSlides(doc = getIframeDoc()) {
+      if (!doc) return [];
+      return ensureEditorSlideIds(doc);
+    }
+
+    function getSlideById(slideId, doc = getIframeDoc()) {
+      if (!slideId || !doc) return null;
+      return doc.querySelector(`.slide[${EDITOR_SLIDE_ID_ATTR}="${slideId}"]`);
+    }
+
+    function getSlideIndexById(slideId, doc = getIframeDoc()) {
+      return getSlides(doc).findIndex(slide => slide.getAttribute(EDITOR_SLIDE_ID_ATTR) === slideId);
+    }
+
     function getActiveSlide(doc = getIframeDoc()) {
       if (!doc) return null;
       return doc.querySelector('.slide-active') || doc.querySelector('.slide');
+    }
+
+    function setActiveSlideById(slideId, doc = getIframeDoc()) {
+      const index = getSlideIndexById(slideId, doc);
+      if (index === -1) return false;
+      setActiveSlide(index);
+      return true;
+    }
+
+    function deleteSlideNodeById(slideId, doc = getIframeDoc()) {
+      const index = getSlideIndexById(slideId, doc);
+      if (index === -1) return false;
+      deleteSlideNode(index);
+      return true;
+    }
+
+    function reorderSlidesById(sourceSlideId, targetSlideId, doc = getIframeDoc()) {
+      const fromIdx = getSlideIndexById(sourceSlideId, doc);
+      const toIdx = getSlideIndexById(targetSlideId, doc);
+      if (fromIdx === -1 || toIdx === -1) return false;
+      reorderSlides(fromIdx, toIdx);
+      return true;
     }
 
     function isEligibleEditableElement(el) {
