@@ -32,6 +32,26 @@
     return getNextStudioModalVisibilityToken(modalEl);
   }
 
+  function scheduleStudioModalCallback(modalEl, options = {}) {
+    if (!modalEl) return 0;
+    const scheduleCallback = typeof options.scheduleCallback === 'function'
+      ? options.scheduleCallback
+      : (callback, delayMs) => setTimeout(callback, delayMs);
+    const delayMs = Number.isFinite(options.delayMs) ? options.delayMs : 0;
+    const visibilityToken = getCurrentStudioModalVisibilityToken(modalEl);
+
+    scheduleCallback(() => {
+      if (!isStudioModalVisibilityCurrent(modalEl, visibilityToken)) {
+        return;
+      }
+      if (typeof options.callback === 'function') {
+        options.callback();
+      }
+    }, delayMs);
+
+    return visibilityToken;
+  }
+
   function scheduleStudioModalHide(modalEl, options = {}) {
     if (!modalEl) return 0;
     const scheduleCallback = typeof options.scheduleCallback === 'function'
@@ -57,6 +77,7 @@
     getCurrentStudioModalVisibilityToken,
     isStudioModalVisibilityCurrent,
     cancelStudioModalHide,
+    scheduleStudioModalCallback,
     scheduleStudioModalHide
   };
 });

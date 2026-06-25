@@ -165,6 +165,17 @@
       modalVisibility.cancelStudioModalHide(modalEl);
     }
     modalEl.classList.remove('hidden');
+    if (modalVisibility && typeof modalVisibility.scheduleStudioModalCallback === 'function') {
+      modalVisibility.scheduleStudioModalCallback(modalEl, {
+        scheduleCallback: (callback) => runAnimationFrame(callback),
+        callback: () => {
+          modalEl.classList.remove('opacity-0');
+          contentEl.classList.remove('scale-95');
+          contentEl.classList.add('scale-100');
+        }
+      });
+      return;
+    }
     runAnimationFrame(() => {
       modalEl.classList.remove('opacity-0');
       contentEl.classList.remove('scale-95');

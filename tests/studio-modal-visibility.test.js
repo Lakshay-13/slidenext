@@ -57,3 +57,27 @@ test('getCurrentStudioModalVisibilityToken returns the modal visibility token wi
   modalVisibility.cancelStudioModalHide(modalEl);
   assert.equal(modalVisibility.getCurrentStudioModalVisibilityToken(modalEl), 1);
 });
+
+test('scheduleStudioModalCallback skips stale delayed callbacks after the modal session changes', () => {
+  const modalEl = createModal();
+  const calls = [];
+  const scheduledCallbacks = [];
+
+  modalVisibility.cancelStudioModalHide(modalEl);
+  modalVisibility.scheduleStudioModalCallback(modalEl, {
+    delayMs: 10,
+    scheduleCallback(callback, delayMs) {
+      scheduledCallbacks.push({ callback, delayMs });
+    },
+    callback() {
+      calls.push('callback');
+    }
+  });
+
+  modalVisibility.cancelStudioModalHide(modalEl);
+  assert.equal(scheduledCallbacks.length, 1);
+  assert.equal(scheduledCallbacks[0].delayMs, 10);
+  scheduledCallbacks[0].callback();
+
+  assert.deepEqual(calls, []);
+});

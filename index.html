@@ -3863,7 +3863,10 @@
       content.classList.remove('scale-95');
       content.classList.add('scale-100');
       
-      setTimeout(() => input.focus(), 50);
+      SlideNextStudioModalVisibility.scheduleStudioModalCallback(modal, {
+        delayMs: 50,
+        callback: () => input.focus()
+      });
     }
     
     function closeSaveVersionModal() {
@@ -4118,13 +4121,16 @@
       
       SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
       modal.classList.remove('hidden');
-      setTimeout(() => {
-        modal.classList.add('opacity-100');
-        content.classList.remove('scale-95');
-        content.classList.add('scale-100');
-        document.getElementById('newVersionNameInput').focus();
-        document.getElementById('newVersionNameInput').select();
-      }, 10);
+      SlideNextStudioModalVisibility.scheduleStudioModalCallback(modal, {
+        delayMs: 10,
+        callback: () => {
+          modal.classList.add('opacity-100');
+          content.classList.remove('scale-95');
+          content.classList.add('scale-100');
+          document.getElementById('newVersionNameInput').focus();
+          document.getElementById('newVersionNameInput').select();
+        }
+      });
     }
     
     function closeRenameVersionModal() {
