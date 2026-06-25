@@ -996,6 +996,7 @@
     let selectedElement = null;
     let selectedElements = [];
     let lastPersistedDeckHtml = '';
+    let persistedDeckPlaybackState = null;
     let undoStack = [];
     let redoStack = [];
     let wallpaperTab = 'solid';
@@ -1432,6 +1433,7 @@
       currentCategory = category || 'General';
       currentSlideIndex = 0;
       lastPersistedDeckHtml = '';
+      persistedDeckPlaybackState = null;
       selectedElement = null;
       selectedElements = [];
       undoStack = [];
@@ -1472,6 +1474,7 @@
       const iframe = document.getElementById('studioFrame');
       teardownDeckActiveSlideSync();
       lastPersistedDeckHtml = '';
+      persistedDeckPlaybackState = null;
       
       iframe.src = '';
       editor.classList.remove('active');
@@ -1749,6 +1752,7 @@
       
       // 10. Capture first historical state
       saveHistoryState(false);
+      persistedDeckPlaybackState = capturePersistedDeckPlaybackState(iframeDoc);
       lastPersistedDeckHtml = buildPersistableDeckHtml(iframeDoc);
     }
 
@@ -4079,6 +4083,7 @@
       clone.querySelectorAll(`[${EDITOR_ELEMENT_ID_ATTR}]`).forEach(node => {
         node.removeAttribute(EDITOR_ELEMENT_ID_ATTR);
       });
+      restorePersistedDeckPlaybackState(clone);
       clone.querySelectorAll(`[${EDITOR_SLIDE_ID_ATTR}]`).forEach(node => {
         node.removeAttribute(EDITOR_SLIDE_ID_ATTR);
       });
@@ -4088,6 +4093,38 @@
       clone.classList.add('dark');
 
       return '<!DOCTYPE html>\n' + clone.outerHTML;
+    }
+
+    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {
+      if (!doc) return null;
+      const slides = getSlides(doc);
+      return {
+        activeSlideIds: slides
+          .filter(slide => slide.classList.contains('slide-active'))
+          .map(slide => slide.getAttribute(EDITOR_SLIDE_ID_ATTR))
+          .filter(Boolean),
+        slideCounterText: doc.getElementById('slideNum')?.textContent || ''
+      };
+    }
+
+    function restorePersistedDeckPlaybackState(root) {
+      if (!root || !persistedDeckPlaybackState) return;
+
+      const slides = Array.from(root.querySelectorAll(`.slide[${EDITOR_SLIDE_ID_ATTR}]`));
+      if (slides.length > 0) {
+        slides.forEach(slide => slide.classList.remove('slide-active'));
+        persistedDeckPlaybackState.activeSlideIds.forEach(slideId => {
+          const match = root.querySelector(`.slide[${EDITOR_SLIDE_ID_ATTR}="${slideId}"]`);
+          if (match) {
+            match.classList.add('slide-active');
+          }
+        });
+      }
+
+      const slideNumNode = root.querySelector('#slideNum');
+      if (slideNumNode && typeof persistedDeckPlaybackState.slideCounterText === 'string') {
+        slideNumNode.textContent = persistedDeckPlaybackState.slideCounterText;
+      }
     }
 
     function isCurrentDeckHtmlPersisted(cleanHtml) {
