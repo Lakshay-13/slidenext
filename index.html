@@ -1013,6 +1013,7 @@
   <script src="/shared/deck-loader.js"></script>
   <script src="/shared/deck-model.js"></script>
   <script src="/shared/deck-render.js"></script>
+  <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/deck-html.js"></script>
   <script src="/shared/studio-deck-view.js"></script>
   <script src="/shared/studio-preview.js"></script>
@@ -2262,7 +2263,7 @@
     }
 
     function buildEditorDeckSnapshotFromDom(doc = getIframeDoc(), options = {}) {
-      return SlideNextDeckModel.buildDeckSnapshot(doc, {
+      return SlideNextStudioDeckSnapshot.buildStudioDeckSnapshotFromDom(doc, {
         includeLayers: !!options.includeLayers,
         getSlides,
         getActiveSlide,
@@ -2301,44 +2302,24 @@
     }
 
     function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {
-      const canonicalDeck = buildEditorCanonicalDeck(doc);
-      if (!canonicalDeck) {
-        return buildEditorDeckSnapshotFromDom(doc, options);
-      }
-
-      const activeSlide = getActiveSlide(doc);
-      const activeSlideId = activeSlide ? assignEditorSlideId(activeSlide) : '';
-      const deckSnapshot = SlideNextDeckModel.buildDeckSnapshotFromCanonicalDeck(canonicalDeck, {
-        activeSlideId
-      });
-
-      if (!options.includeLayers) {
-        return deckSnapshot;
-      }
-
-      return {
-        ...deckSnapshot,
-        slides: deckSnapshot.slides.map(slideSnapshot => {
-          const slideEl = getSlideById(slideSnapshot.id, doc);
-          if (!slideEl) return slideSnapshot;
-          return {
-            ...slideSnapshot,
-            elements: SlideNextDeckModel.buildLayerSnapshot(getNormalizedSlideLayerOrder(slideEl), {
-              buildElementSnapshot: buildEditorElementSnapshot
-            })
-          };
+      return SlideNextStudioDeckSnapshot.buildStudioDeckSnapshot(doc, {
+        includeLayers: !!options.includeLayers,
+        buildCanonicalDeck: buildEditorCanonicalDeck,
+        buildDomSnapshot: (sourceDoc) => buildEditorDeckSnapshotFromDom(sourceDoc, options),
+        getActiveSlide,
+        getActiveSlideId: assignEditorSlideId,
+        getSlideById,
+        buildSlideLayerSnapshot: (slideEl) => SlideNextDeckModel.buildLayerSnapshot(getNormalizedSlideLayerOrder(slideEl), {
+          buildElementSnapshot: buildEditorElementSnapshot
         })
-      };
+      });
     }
 
     function getStudioActiveSlideIndex(doc = getIframeDoc()) {
-      const deckSnapshot = buildEditorDeckSnapshot(doc);
-      if (deckSnapshot.activeSlideIndex >= 0) {
-        return deckSnapshot.activeSlideIndex;
-      }
-      const slideCount = deckSnapshot.slides.length;
-      if (slideCount === 0) return 0;
-      return Math.max(0, Math.min(currentSlideIndex, slideCount - 1));
+      return SlideNextStudioDeckSnapshot.resolveStudioActiveSlideIndex(
+        buildEditorDeckSnapshot(doc),
+        currentSlideIndex
+      );
     }
 
     function getEditorLayerDisplayMetadata(el) {
