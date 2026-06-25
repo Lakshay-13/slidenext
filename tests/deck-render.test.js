@@ -197,3 +197,71 @@ test('renderCanonicalDeckHtml emits canonical description and keyword metadata w
   assert.match(html, /<meta name="description" content="Deck description from canonical metadata">/);
   assert.match(html, /<meta name="keywords" content="AI, Slides, Exports">/);
 });
+
+test('renderCanonicalDeckHtml falls back to canonical slide background metadata when source attributes are absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        layout: {
+          background: {
+            className: 'hero-slide',
+            color: '#101820',
+            image: 'linear-gradient(135deg, #101820, #1f2937)'
+          }
+        },
+        nodes: [],
+        source: {
+          html: '',
+          attributes: {}
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<section class="slide hero-slide slide-active" style="background-color: #101820; background-image: linear-gradient\(135deg, #101820, #1f2937\);" id="slide-1"><\/section>/);
+});
+
+test('renderCanonicalDeckHtml preserves explicit slide source attributes over canonical background fallbacks', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        layout: {
+          background: {
+            className: 'hero-slide',
+            style: 'background-color: #101820;'
+          }
+        },
+        nodes: [],
+        source: {
+          html: '',
+          attributes: {
+            class: 'source-slide',
+            style: 'background: black;'
+          }
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<section class="slide source-slide slide-active" style="background: black;" id="slide-1"><\/section>/);
+});

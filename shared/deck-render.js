@@ -79,6 +79,21 @@
     return nextClassNames.join(' ');
   }
 
+  function buildRenderedSlideBackgroundStyle(background = {}) {
+    const styleFragments = [];
+    const backgroundColor = normalizeString(background.color).trim();
+    const backgroundImage = normalizeString(background.image).trim();
+
+    if (backgroundColor) {
+      styleFragments.push(`background-color: ${backgroundColor};`);
+    }
+    if (backgroundImage) {
+      styleFragments.push(`background-image: ${backgroundImage};`);
+    }
+
+    return styleFragments.join(' ');
+  }
+
   function renderCanonicalNode(node, options = {}) {
     if (!node || typeof node !== 'object') return '';
     if (options.preferNodeSourceHtml !== false && normalizeString(node.html)) {
@@ -116,6 +131,16 @@
     }
 
     const sourceAttributes = slide.source ? asPlainObject(slide.source.attributes) : {};
+    const background = slide.layout ? asPlainObject(slide.layout.background) : {};
+    if (!sourceAttributes.class && background.className) {
+      sourceAttributes.class = background.className;
+    }
+    if (!sourceAttributes.style) {
+      const backgroundStyle = normalizeString(background.style).trim() || buildRenderedSlideBackgroundStyle(background);
+      if (backgroundStyle) {
+        sourceAttributes.style = backgroundStyle;
+      }
+    }
     sourceAttributes.class = buildRenderedSlideClassName(sourceAttributes.class, index === 0);
     if (!sourceAttributes.id && slide.id) {
       sourceAttributes.id = slide.id;
