@@ -34,6 +34,28 @@ test('shouldHandleStudioFrameLoad requires an active matching editor session', (
   ), true);
 });
 
+test('shouldHandleStudioFrameLoad rejects stale same-url editor session tokens', () => {
+  assert.equal(editorSession.shouldHandleStudioFrameLoad(
+    '/presentations/onboarding-presentation/index.html',
+    {
+      sessionToken: 2,
+      getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+      getCurrentSessionToken: () => 3,
+      isEditorActive: () => true
+    }
+  ), false);
+
+  assert.equal(editorSession.shouldHandleStudioFrameLoad(
+    '/presentations/onboarding-presentation/index.html',
+    {
+      sessionToken: 3,
+      getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+      getCurrentSessionToken: () => 3,
+      isEditorActive: () => true
+    }
+  ), true);
+});
+
 test('createStudioFrameLoadHandler runs load hooks for the active editor session', () => {
   const calls = [];
   const onLoad = editorSession.createStudioFrameLoadHandler({
@@ -57,6 +79,26 @@ test('createStudioFrameLoadHandler skips stale editor sessions', () => {
   const onLoad = editorSession.createStudioFrameLoadHandler({
     presentationUrl: '/presentations/onboarding-presentation/index.html',
     getCurrentPresentationUrl: () => '/presentations/ai-tools-presentation/index.html',
+    isEditorActive: () => true,
+    handleLoad() {
+      calls.push('handleLoad');
+    },
+    afterLoad() {
+      calls.push('afterLoad');
+    }
+  });
+
+  assert.equal(onLoad(), false);
+  assert.deepEqual(calls, []);
+});
+
+test('createStudioFrameLoadHandler skips stale same-url reopen sessions', () => {
+  const calls = [];
+  const onLoad = editorSession.createStudioFrameLoadHandler({
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    sessionToken: 4,
+    getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    getCurrentSessionToken: () => 5,
     isEditorActive: () => true,
     handleLoad() {
       calls.push('handleLoad');

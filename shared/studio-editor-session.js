@@ -11,6 +11,21 @@
     return typeof value === 'string' ? value : fallback;
   }
 
+  function isCurrentStudioEditorSession(options = {}) {
+    const expectedSessionToken = Number.isInteger(options.sessionToken)
+      ? options.sessionToken
+      : null;
+    if (expectedSessionToken === null) {
+      return true;
+    }
+
+    const getCurrentSessionToken = typeof options.getCurrentSessionToken === 'function'
+      ? options.getCurrentSessionToken
+      : () => options.currentSessionToken;
+
+    return getCurrentSessionToken() === expectedSessionToken;
+  }
+
   function shouldHandleStudioFrameLoad(expectedPresentationUrl = '', options = {}) {
     const presentationUrl = normalizeString(expectedPresentationUrl);
     if (!presentationUrl) {
@@ -25,7 +40,8 @@
       : () => !!options.editorActive;
 
     return !!isEditorActive()
-      && normalizeString(getCurrentPresentationUrl()) === presentationUrl;
+      && normalizeString(getCurrentPresentationUrl()) === presentationUrl
+      && isCurrentStudioEditorSession(options);
   }
 
   function createStudioFrameLoadHandler(options = {}) {
@@ -49,6 +65,7 @@
   }
 
   return {
+    isCurrentStudioEditorSession,
     shouldHandleStudioFrameLoad,
     createStudioFrameLoadHandler
   };

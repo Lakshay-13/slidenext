@@ -1051,6 +1051,7 @@
     let activeCategory = 'all';
     let presentationLibraryData = [];
     let presentationLibraryLoadToken = 0;
+    let studioEditorSessionToken = 0;
     let isDraggingElement = false;
     let zoomFactor = 1.0;
     let customGradientType = 'linear';
@@ -1504,6 +1505,7 @@
 
     // 3. Studio Presentation Workspace Mode
     function launchStudioEditor(url, title, category) {
+      const editorSessionToken = ++studioEditorSessionToken;
       currentPresentationUrl = url;
       currentPresentationMetadata = buildCurrentPresentationMetadataSeed(url, title);
       currentTitle = title;
@@ -1526,7 +1528,9 @@
       // Configure load triggers BEFORE setting src
       iframe.onload = SlideNextStudioEditorSession.createStudioFrameLoadHandler({
         presentationUrl: url,
+        sessionToken: editorSessionToken,
         getCurrentPresentationUrl: () => currentPresentationUrl,
+        getCurrentSessionToken: () => studioEditorSessionToken,
         isEditorActive: () => editor.classList.contains('active'),
         handleLoad: () => {
           initStudioFrame();
@@ -1535,7 +1539,9 @@
           const savedZoom = localStorage.getItem('presentationZoom') || 'fit';
           setTimeout(() => {
             if (!SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(url, {
+              sessionToken: editorSessionToken,
               getCurrentPresentationUrl: () => currentPresentationUrl,
+              getCurrentSessionToken: () => studioEditorSessionToken,
               isEditorActive: () => editor.classList.contains('active')
             })) {
               return;
@@ -1562,6 +1568,7 @@
     function closeStudioEditor() {
       const editor = document.getElementById('studioEditor');
       const iframe = document.getElementById('studioFrame');
+      studioEditorSessionToken += 1;
       teardownDeckActiveSlideSync();
       currentPresentationUrl = '';
       currentTitle = '';
