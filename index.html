@@ -1832,6 +1832,7 @@
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return;
+      saveHistoryState();
       
       const slides = getSlides(iframeDoc);
       const draggedNode = slides[fromIdx];
@@ -1962,6 +1963,7 @@
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return;
+      saveHistoryState();
       
       const slides = container.querySelectorAll('.slide');
       const newIndex = slides.length;
@@ -2009,6 +2011,7 @@
         alert("Action aborted: presentation requires at least one slide.");
         return;
       }
+      saveHistoryState();
       
       slides[idx].remove();
       
@@ -3675,19 +3678,43 @@
       }
     }
 
+    function createHistoryEntry(doc) {
+      const iframeDoc = doc || getIframeDoc();
+      if (!iframeDoc) return null;
+      return {
+        html: iframeDoc.documentElement.innerHTML,
+        activeSlideId: getActiveSlide(iframeDoc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || ''
+      };
+    }
+
+    function normalizeHistoryEntry(entry) {
+      if (!entry) {
+        return { html: '', activeSlideId: '' };
+      }
+      if (typeof entry === 'string') {
+        return { html: entry, activeSlideId: '' };
+      }
+      return {
+        html: entry.html || '',
+        activeSlideId: entry.activeSlideId || ''
+      };
+    }
+
     function captureState() {
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       if (!iframeDoc) return;
       
-      const htmlSnapshot = iframeDoc.documentElement.innerHTML;
+      const historyEntry = createHistoryEntry(iframeDoc);
+      if (!historyEntry) return;
       
       // Avoid duplicated entries
-      if (undoStack.length > 0 && undoStack[undoStack.length - 1] === htmlSnapshot) {
+      const lastEntry = undoStack.length > 0 ? normalizeHistoryEntry(undoStack[undoStack.length - 1]) : null;
+      if (lastEntry && lastEntry.html === historyEntry.html && lastEntry.activeSlideId === historyEntry.activeSlideId) {
         return;
       }
       
-      undoStack.push(htmlSnapshot);
+      undoStack.push(historyEntry);
       // Caps stack size
       if (undoStack.length > 50) {
         undoStack.shift();
@@ -3709,7 +3736,7 @@
       redoStack.push(currentState);
       
       const prevState = undoStack[undoStack.length - 1];
-      restoreFrameFromHtml(prevState);
+      restoreFrameFromHistoryEntry(prevState);
       updateHistoryButtons();
       triggerAutoSave();
     }
@@ -3720,29 +3747,33 @@
       const nextState = redoStack.pop();
       undoStack.push(nextState);
       
-      restoreFrameFromHtml(nextState);
+      restoreFrameFromHistoryEntry(nextState);
       updateHistoryButtons();
       triggerAutoSave();
     }
 
-    function restoreFrameFromHtml(html) {
+    function restoreFrameFromHistoryEntry(entry) {
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const historyEntry = normalizeHistoryEntry(entry);
+      const fallbackIndex = currentSlideIndex;
       
-      // Preserve selection index to avoid jumping slides on undo/redo
-      const currentIdx = currentSlideIndex;
       selectedElements = [];
       selectedElement = null;
       
-      iframeDoc.documentElement.innerHTML = html;
+      iframeDoc.documentElement.innerHTML = historyEntry.html;
       
       // Re-bind listeners
       makeElementsHoverable(iframeDoc);
       setupIframeDragging(iframeDoc);
       
-      // Re-generate and load index state
+      // Re-generate and restore slide focus with an index fallback for older snapshots.
       generateThumbnails();
-      setActiveSlide(currentIdx);
+      if (!historyEntry.activeSlideId || !setActiveSlideById(historyEntry.activeSlideId, iframeDoc)) {
+        const slideCount = getSlides(iframeDoc).length;
+        const nextIndex = slideCount === 0 ? 0 : Math.min(fallbackIndex, slideCount - 1);
+        setActiveSlide(nextIndex);
+      }
       syncSelectionOverlay();
       syncInspectorForSelection();
     }
