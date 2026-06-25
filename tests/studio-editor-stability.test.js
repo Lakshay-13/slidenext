@@ -87,6 +87,19 @@ test('restoreStudioSelectionByIdsOnActiveSlide restores only connected elements 
   assert.equal(disconnectedElement.classList.contains('editor-selected'), false);
 });
 
+test('getStudioCommittedSelectedElements falls back to committed DOM selection when in-memory selection is empty', () => {
+  const committedElement = createElement('committed', { classNames: ['editor-selected'] });
+  const staleElement = createElement('stale', { classNames: ['editor-selected'], isConnected: false });
+  const doc = createSelectionDoc([committedElement, staleElement]);
+
+  const result = selection.getStudioCommittedSelectedElements([], doc, {
+    selectionClassName: 'editor-selected',
+    isEligibleElement: (element) => !element.ineligible
+  });
+
+  assert.deepEqual(result, [committedElement]);
+});
+
 test('restoreStudioSelectionByIdsOnActiveSlide clears stale selection when there is nothing to restore', () => {
   const staleElement = createElement('stale', { classNames: ['editor-selected'] });
   const activeSlide = createSlide([]);
@@ -237,4 +250,71 @@ test('restoreStudioDeckViewAfterSlideMutation prefers the preserved active slide
     restoreSelectionState: 1,
     setActiveSlideByIndex: [4]
   });
+});
+
+test('syncStudioActiveSlideView preserves selection only when explicitly requested', () => {
+  const activeSlide = {
+    classList: createClassList(['slide-active'])
+  };
+  const inactiveSlide = {
+    classList: createClassList([])
+  };
+  const selectionPreservedCalls = {
+    deselectElement: 0,
+    setCurrentSlideIndex: []
+  };
+
+  const preservedResult = deckView.syncStudioActiveSlideView(
+    {},
+    {
+      preserveSelection: true,
+      getSlides: () => [activeSlide, inactiveSlide],
+      setCurrentSlideIndex(nextIndex) {
+        selectionPreservedCalls.setCurrentSlideIndex.push(nextIndex);
+      },
+      updateActiveThumbnailCardState() {},
+      setSlideCountLabel() {},
+      deselectElement() {
+        selectionPreservedCalls.deselectElement += 1;
+      },
+      applyViewportTransform() {},
+      pruneEditorChromeNodes() {},
+      getSlideId: () => 'slide-1',
+      updateIframeNavigationUI() {}
+    }
+  );
+
+  assert.deepEqual(preservedResult, {
+    didSync: true,
+    activeIndex: 0,
+    activeSlideId: 'slide-1',
+    slideCount: 2
+  });
+  assert.deepEqual(selectionPreservedCalls, {
+    deselectElement: 0,
+    setCurrentSlideIndex: [0]
+  });
+
+  const deselectCalls = {
+    deselectElement: 0
+  };
+
+  deckView.syncStudioActiveSlideView(
+    {},
+    {
+      getSlides: () => [activeSlide],
+      setCurrentSlideIndex() {},
+      updateActiveThumbnailCardState() {},
+      setSlideCountLabel() {},
+      deselectElement() {
+        deselectCalls.deselectElement += 1;
+      },
+      applyViewportTransform() {},
+      pruneEditorChromeNodes() {},
+      getSlideId: () => 'slide-1',
+      updateIframeNavigationUI() {}
+    }
+  );
+
+  assert.equal(deselectCalls.deselectElement, 1);
 });

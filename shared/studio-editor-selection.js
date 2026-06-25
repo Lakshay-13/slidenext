@@ -21,6 +21,27 @@
       .filter(Boolean);
   }
 
+  function getStudioCommittedSelectedElements(elements = [], doc, options = {}) {
+    const isEligibleElement = typeof options.isEligibleElement === 'function'
+      ? options.isEligibleElement
+      : () => true;
+    const selectionClassName = options.selectionClassName || 'editor-selected';
+    const connectedSelection = Array.isArray(elements)
+      ? elements.filter((el) => el && el.isConnected && isEligibleElement(el))
+      : [];
+
+    if (connectedSelection.length > 0) {
+      return connectedSelection;
+    }
+    if (!doc || typeof doc.querySelectorAll !== 'function') {
+      return [];
+    }
+
+    return Array.from(doc.querySelectorAll(`.${selectionClassName}`)).filter((el) => {
+      return el && el.isConnected && isEligibleElement(el);
+    });
+  }
+
   function areStudioIdListsEqual(a = [], b = []) {
     if (a.length !== b.length) return false;
     return a.every((id, index) => id === b[index]);
@@ -161,6 +182,7 @@
 
   return {
     getStudioSelectedElementIds,
+    getStudioCommittedSelectedElements,
     areStudioIdListsEqual,
     refreshStudioSelectionClasses,
     restoreStudioSelectionByIdsOnActiveSlide,

@@ -195,6 +195,7 @@
       ? options.updateIframeNavigationUI
       : () => {};
     const normalizeViewport = options.normalizeViewport !== false;
+    const preserveSelection = !!options.preserveSelection;
 
     const slides = getSlides(doc);
     if (slides.length === 0) {
@@ -231,7 +232,9 @@
     updateActiveThumbnailCardState(activeSlideId);
     updateIframeNavigationUI(doc, slides);
     setSlideCountLabel(`${activeIndex + 1} / ${slides.length}`);
-    deselectElement();
+    if (!preserveSelection) {
+      deselectElement();
+    }
 
     return {
       didSync: true,
@@ -272,6 +275,7 @@
       ? options.syncStudioChromeToActiveSlide
       : () => false;
     const captureHistory = !!options.captureHistory;
+    const preserveSelection = !!options.preserveSelection;
 
     const slides = getSlides(doc);
     if (index < 0 || index >= slides.length) {
@@ -284,7 +288,7 @@
       setSlideActiveState(slide, slideIndex === index);
     });
 
-    syncStudioChromeToActiveSlide(doc, { captureHistory });
+    syncStudioChromeToActiveSlide(doc, { captureHistory, preserveSelection });
     return true;
   }
 
