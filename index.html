@@ -1524,6 +1524,7 @@
       
       // Initial AutoSave label status
       document.getElementById('autoSaveStatus').innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
+      resetStudioDeckUiState({ isLoading: true });
       resetStudioVersionUiState();
       resetStudioSaveButtonState();
       
@@ -1579,6 +1580,7 @@
       currentPresentationMetadata = null;
       resetEditorPersistenceTimers();
       resetEditorDeckPersistenceState();
+      resetStudioDeckUiState();
       resetStudioVersionUiState();
       resetStudioSaveButtonState();
       deselectElement();
@@ -3964,6 +3966,24 @@
       if (renameVersionModalContent) {
         renameVersionModalContent.classList.add('scale-95');
         renameVersionModalContent.classList.remove('scale-100');
+      }
+    }
+
+    function resetStudioDeckUiState(options = {}) {
+      const isLoading = !!options.isLoading;
+      const slideCountLabel = document.getElementById('slideCountLabel');
+      if (slideCountLabel) {
+        slideCountLabel.textContent = '0 / 0';
+      }
+
+      const thumbnailsList = document.getElementById('thumbnailsList');
+      if (thumbnailsList) {
+        thumbnailsList.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-6">${isLoading ? 'Loading slides...' : 'No slides loaded'}</p>`;
+      }
+
+      const slideLayersList = document.getElementById('slideLayersList');
+      if (slideLayersList) {
+        slideLayersList.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-2">${isLoading ? 'Loading layers...' : 'No active slide'}</p>`;
       }
     }
 
