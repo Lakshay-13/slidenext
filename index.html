@@ -3918,16 +3918,19 @@
       selectedElements = [];
       selectedElement = null;
       
-      iframeDoc.documentElement.innerHTML = historyEntry.html;
-      syncIframeTheme();
-      
-      // Re-bind listeners
-      makeElementsHoverable(iframeDoc);
-      setupIframeDragging(iframeDoc);
-      bindDeckNavigationSync(iframeDoc);
-      
-      // Re-generate and restore slide focus with an index fallback for older snapshots.
-      generateThumbnails();
+      SlideNextStudioHistory.restoreStudioHistoryFrameSetup(historyEntry, {
+        doc: iframeDoc,
+        replaceFrameHtml: (doc, html) => {
+          doc.documentElement.innerHTML = html;
+        },
+        syncIframeTheme,
+        makeElementsHoverable,
+        setupIframeDragging,
+        bindDeckNavigationSync,
+        generateThumbnails
+      });
+
+      // Restore slide focus with an index fallback for older snapshots.
       SlideNextStudioHistory.restoreStudioHistoryActiveSlide(historyEntry, {
         fallbackIndex,
         restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc),

@@ -274,6 +274,45 @@
     };
   }
 
+  function restoreStudioHistoryFrameSetup(historyEntry, options = {}) {
+    const replaceFrameHtml = typeof options.replaceFrameHtml === 'function'
+      ? options.replaceFrameHtml
+      : (doc, html) => {
+          if (doc && doc.documentElement) {
+            doc.documentElement.innerHTML = html;
+          }
+        };
+    const syncIframeTheme = typeof options.syncIframeTheme === 'function'
+      ? options.syncIframeTheme
+      : () => {};
+    const makeElementsHoverable = typeof options.makeElementsHoverable === 'function'
+      ? options.makeElementsHoverable
+      : () => {};
+    const setupIframeDragging = typeof options.setupIframeDragging === 'function'
+      ? options.setupIframeDragging
+      : () => {};
+    const bindDeckNavigationSync = typeof options.bindDeckNavigationSync === 'function'
+      ? options.bindDeckNavigationSync
+      : () => {};
+    const generateThumbnails = typeof options.generateThumbnails === 'function'
+      ? options.generateThumbnails
+      : () => {};
+    const doc = options.doc || null;
+    const html = historyEntry && typeof historyEntry.html === 'string' ? historyEntry.html : '';
+
+    replaceFrameHtml(doc, html);
+    syncIframeTheme(doc);
+    makeElementsHoverable(doc);
+    setupIframeDragging(doc);
+    bindDeckNavigationSync(doc);
+    generateThumbnails(doc);
+
+    return {
+      didRestoreDoc: !!doc,
+      restoredHtmlLength: html.length
+    };
+  }
+
   return {
     buildStudioHistoryFrameHtml,
     createStudioHistoryEntry,
@@ -285,6 +324,7 @@
     getStudioHistoryButtonState,
     scheduleStudioHistoryCapture,
     restoreStudioHistoryActiveSlide,
-    restoreStudioHistorySelectionState
+    restoreStudioHistorySelectionState,
+    restoreStudioHistoryFrameSetup
   };
 });
