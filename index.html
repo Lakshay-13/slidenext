@@ -987,6 +987,7 @@
     </div>
   </div>  <!-- Logic scripts -->
   <script src="/shared/deck-model.js"></script>
+  <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/version-backup-utils.js"></script>
   <script>
     // Global Editor State
@@ -3955,129 +3956,20 @@
       updateLayersList();
     }
 
-    const PERSISTABLE_RUNTIME_EMPTY_CONTAINER_IDS = [
-      'gitNodesContainer',
-      'indicatorDots'
-    ];
-
-    const PERSISTABLE_RUNTIME_STYLE_CLEANUPS = [
-      { selector: '#slidesContainer', properties: ['transform'] },
-      { selector: '#prevBtn, #nextBtn', properties: ['opacity', 'pointer-events'] },
-      { selector: '#progressLine', properties: ['width'] }
-    ];
-
-    function stripInlineStyleProperties(node, properties) {
-      if (!node || !node.style) return;
-      properties.forEach(property => node.style.removeProperty(property));
-      if (!node.getAttribute('style') || !node.getAttribute('style').trim()) {
-        node.removeAttribute('style');
-      }
-    }
-
-    function stripTransientDeckRuntimeState(root) {
-      if (!root) return;
-
-      const usesTailwindCdn = !!root.querySelector('script[src*="cdn.tailwindcss.com"]');
-      if (usesTailwindCdn) {
-        root.querySelectorAll('style').forEach(styleNode => {
-          if ((styleNode.textContent || '').includes('! tailwindcss')) {
-            styleNode.remove();
-          }
-        });
-      }
-
-      PERSISTABLE_RUNTIME_EMPTY_CONTAINER_IDS.forEach(nodeId => {
-        root.querySelectorAll(`#${nodeId}`).forEach(node => {
-          node.replaceChildren();
-        });
-      });
-
-      root.querySelectorAll('#particlesCanvas, .canvas-particles').forEach(canvas => {
-        canvas.removeAttribute('width');
-        canvas.removeAttribute('height');
-      });
-
-      PERSISTABLE_RUNTIME_STYLE_CLEANUPS.forEach(({ selector, properties }) => {
-        root.querySelectorAll(selector).forEach(node => {
-          stripInlineStyleProperties(node, properties);
-        });
-      });
-
-      root.querySelectorAll('[data-editor-prev-display=""]').forEach(node => {
-        node.removeAttribute('data-editor-prev-display');
-      });
-      root.querySelectorAll('[class=""]').forEach(node => node.removeAttribute('class'));
-      root.querySelectorAll('[style=""]').forEach(node => node.removeAttribute('style'));
-    }
-
     function buildPersistableDeckHtml(doc = getIframeDoc()) {
-      if (!doc) return '';
-
-      const clone = doc.documentElement.cloneNode(true);
-      const removableEditorNodeIds = [
-        'editor-style-tag',
-        'editor-theme-override-tag',
-        ...EDITOR_CHROME_NODE_IDS
-      ];
-
-      removableEditorNodeIds.forEach(nodeId => {
-        clone.querySelectorAll(`#${nodeId}`).forEach(node => node.remove());
+      return SlideNextDeckPersistence.buildPersistableDeckHtml(doc, {
+        editorChromeNodeIds: EDITOR_CHROME_NODE_IDS,
+        editorElementIdAttr: EDITOR_ELEMENT_ID_ATTR,
+        editorSlideIdAttr: EDITOR_SLIDE_ID_ATTR,
+        persistedDeckPlaybackState
       });
-
-      clone.querySelectorAll('.editor-selected').forEach(el => {
-        el.classList.remove('editor-selected');
-      });
-      clone.querySelectorAll('.editor-hoverable').forEach(el => {
-        el.classList.remove('editor-hoverable');
-      });
-      clone.querySelectorAll('.editor-dragging').forEach(el => {
-        el.classList.remove('editor-dragging');
-      });
-      clone.querySelectorAll(`[${EDITOR_ELEMENT_ID_ATTR}]`).forEach(node => {
-        node.removeAttribute(EDITOR_ELEMENT_ID_ATTR);
-      });
-      restorePersistedDeckPlaybackState(clone);
-      clone.querySelectorAll(`[${EDITOR_SLIDE_ID_ATTR}]`).forEach(node => {
-        node.removeAttribute(EDITOR_SLIDE_ID_ATTR);
-      });
-      stripTransientDeckRuntimeState(clone);
-
-      // Persist the deck markup without editor chrome state.
-      clone.classList.add('dark');
-
-      return '<!DOCTYPE html>\n' + clone.outerHTML;
     }
 
     function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {
-      if (!doc) return null;
-      const slides = getSlides(doc);
-      return {
-        activeSlideIds: slides
-          .filter(slide => slide.classList.contains('slide-active'))
-          .map(slide => slide.getAttribute(EDITOR_SLIDE_ID_ATTR))
-          .filter(Boolean),
-        slideCounterText: doc.getElementById('slideNum')?.textContent || ''
-      };
-    }
-
-    function restorePersistedDeckPlaybackState(root) {
-      if (!root || !persistedDeckPlaybackState) return;
-
-      const slides = Array.from(root.querySelectorAll(`.slide[${EDITOR_SLIDE_ID_ATTR}]`));
-      if (slides.length > 0) {
-        slides.forEach(slide => slide.classList.remove('slide-active'));
-        persistedDeckPlaybackState.activeSlideIds.forEach(slideId => {
-          const match = root.querySelector(`.slide[${EDITOR_SLIDE_ID_ATTR}="${slideId}"]`);
-          if (match) {
-            match.classList.add('slide-active');
-          }
-        });
-      }
-
-      const slideNumNode = root.querySelector('#slideNum');
-      if (slideNumNode && typeof persistedDeckPlaybackState.slideCounterText === 'string') {
-        slideNumNode.textContent = persistedDeckPlaybackState.slideCounterText;
-      }
+      return SlideNextDeckPersistence.capturePersistedDeckPlaybackState(doc, {
+        getSlides,
+        slideIdAttr: EDITOR_SLIDE_ID_ATTR
+      });
     }
 
     function isCurrentDeckHtmlPersisted(cleanHtml) {
