@@ -11,6 +11,10 @@
     return typeof value === 'string' ? value : fallback;
   }
 
+  function normalizeSessionToken(value) {
+    return Number.isInteger(value) ? value : null;
+  }
+
   function deriveStudioVersionDeckBaseName(presentationUrl = '') {
     const url = normalizeString(presentationUrl);
     if (!url) {
@@ -41,6 +45,7 @@
     const getCurrentPresentationUrl = typeof options.getCurrentPresentationUrl === 'function'
       ? options.getCurrentPresentationUrl
       : () => options.currentPresentationUrl;
+    const requestedSessionToken = normalizeSessionToken(options.sessionToken);
     const response = await fetchImpl(`/api/versions?htmlPath=${encodeURIComponent(requestedPresentationUrl)}`, {
       cache: 'no-store',
       ...(options.requestInit || {})
@@ -51,8 +56,12 @@
 
     const payload = await response.json();
     const versions = Array.isArray(payload) ? payload : [];
+    const getCurrentSessionToken = typeof options.getCurrentSessionToken === 'function'
+      ? options.getCurrentSessionToken
+      : () => options.currentSessionToken;
     if (typeof options.commitVersionEntries === 'function'
-      && normalizeString(getCurrentPresentationUrl()) === requestedPresentationUrl) {
+      && normalizeString(getCurrentPresentationUrl()) === requestedPresentationUrl
+      && (requestedSessionToken === null || normalizeSessionToken(getCurrentSessionToken()) === requestedSessionToken)) {
       options.commitVersionEntries(versions);
     }
 

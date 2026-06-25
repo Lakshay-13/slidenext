@@ -4099,11 +4099,13 @@
     }
 
     // Fetch versions checklist
-    async function loadVersions(presentationUrl = currentPresentationUrl) {
+    async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
       if (!presentationUrl) return;
       try {
         await SlideNextStudioVersionHistory.loadStudioVersionHistory(presentationUrl, {
+          sessionToken,
           getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentSessionToken: () => studioEditorSessionToken,
           commitVersionEntries: (versions) => {
             renderVersionsList(presentationUrl, versions);
           }

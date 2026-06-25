@@ -79,3 +79,36 @@ test('loadStudioVersionHistory skips committing stale versions after the current
   ]);
   assert.deepEqual(committedVersions, []);
 });
+
+test('loadStudioVersionHistory skips committing stale same-url editor sessions', async () => {
+  const fetchDeferred = createDeferred();
+  const committedVersions = [];
+  let currentPresentationUrl = '/presentations/onboarding-presentation/index.html';
+  let currentSessionToken = 2;
+
+  const versionsPromise = versionHistory.loadStudioVersionHistory(currentPresentationUrl, {
+    fetchImpl: async () => fetchDeferred.promise,
+    sessionToken: 2,
+    getCurrentPresentationUrl: () => currentPresentationUrl,
+    getCurrentSessionToken: () => currentSessionToken,
+    commitVersionEntries: (versions) => {
+      committedVersions.push(versions);
+    }
+  });
+
+  currentSessionToken = 3;
+  fetchDeferred.resolve({
+    ok: true,
+    async json() {
+      return [
+        { filename: 'index_20260101_120000_Auto.html', createdAt: '2026-01-01T12:00:00.000Z' }
+      ];
+    }
+  });
+
+  const versions = await versionsPromise;
+  assert.deepEqual(versions, [
+    { filename: 'index_20260101_120000_Auto.html', createdAt: '2026-01-01T12:00:00.000Z' }
+  ]);
+  assert.deepEqual(committedVersions, []);
+});
