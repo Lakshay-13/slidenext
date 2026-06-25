@@ -42,6 +42,13 @@
     });
   }
 
+  function getStudioCommittedSelectedElementIds(elements = [], doc, options = {}) {
+    return getStudioSelectedElementIds(
+      getStudioCommittedSelectedElements(elements, doc, options),
+      options
+    );
+  }
+
   function areStudioIdListsEqual(a = [], b = []) {
     if (a.length !== b.length) return false;
     return a.every((id, index) => id === b[index]);
@@ -183,6 +190,7 @@
   return {
     getStudioSelectedElementIds,
     getStudioCommittedSelectedElements,
+    getStudioCommittedSelectedElementIds,
     areStudioIdListsEqual,
     refreshStudioSelectionClasses,
     restoreStudioSelectionByIdsOnActiveSlide,

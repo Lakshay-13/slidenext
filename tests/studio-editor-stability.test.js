@@ -100,6 +100,23 @@ test('getStudioCommittedSelectedElements falls back to committed DOM selection w
   assert.deepEqual(result, [committedElement]);
 });
 
+test('getStudioCommittedSelectedElementIds returns ids from the committed DOM selection fallback', () => {
+  const committedElement = createElement('committed', { classNames: ['editor-selected'] });
+  const ineligibleElement = createElement('ignored', {
+    classNames: ['editor-selected'],
+    ineligible: true
+  });
+  const doc = createSelectionDoc([committedElement, ineligibleElement]);
+
+  const result = selection.getStudioCommittedSelectedElementIds([], doc, {
+    selectionClassName: 'editor-selected',
+    isEligibleElement: (element) => !element.ineligible,
+    getElementId: (element) => element.editorId
+  });
+
+  assert.deepEqual(result, ['committed']);
+});
+
 test('restoreStudioSelectionByIdsOnActiveSlide clears stale selection when there is nothing to restore', () => {
   const staleElement = createElement('stale', { classNames: ['editor-selected'] });
   const activeSlide = createSlide([]);
