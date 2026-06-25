@@ -1003,6 +1003,8 @@
     let customGradientType = 'linear';
     let renamingFilename = '';
     let editorClipboard = null;
+    let deckActiveSlideObserver = null;
+    let deckActiveSlideSyncTimer = null;
     const DRAG_START_THRESHOLD_PX = 4;
     const DUPLICATE_OFFSET_PX = 24;
     const MIN_ELEMENT_SIZE_PX = 24;
@@ -1464,6 +1466,7 @@
     function closeStudioEditor() {
       const editor = document.getElementById('studioEditor');
       const iframe = document.getElementById('studioFrame');
+      teardownDeckActiveSlideSync();
       
       iframe.src = '';
       editor.classList.remove('active');
@@ -1733,8 +1736,11 @@
 
       // 8. Keep Studio chrome aligned when a deck uses its own slide navigation API.
       bindDeckNavigationSync(iframeDoc);
+
+      // 9. Catch decks that mutate active-slide state directly without calling goToSlide().
+      observeDeckActiveSlideState(iframeDoc);
       
-      // 9. Capture first historical state
+      // 10. Capture first historical state
       saveHistoryState(false);
     }
 
@@ -1915,6 +1921,54 @@
         return result;
       };
       frameWin.__studioGoToSlideWrapped = true;
+      return true;
+    }
+
+    function teardownDeckActiveSlideSync() {
+      if (deckActiveSlideObserver) {
+        deckActiveSlideObserver.disconnect();
+        deckActiveSlideObserver = null;
+      }
+      if (deckActiveSlideSyncTimer) {
+        clearTimeout(deckActiveSlideSyncTimer);
+        deckActiveSlideSyncTimer = null;
+      }
+    }
+
+    function scheduleStudioChromeSync(doc = getIframeDoc()) {
+      if (!doc) return;
+      if (deckActiveSlideSyncTimer) {
+        clearTimeout(deckActiveSlideSyncTimer);
+      }
+      deckActiveSlideSyncTimer = setTimeout(() => {
+        deckActiveSlideSyncTimer = null;
+        syncStudioChromeToActiveSlide(doc);
+      }, 0);
+    }
+
+    function observeDeckActiveSlideState(doc = getIframeDoc()) {
+      teardownDeckActiveSlideSync();
+      if (!doc || typeof MutationObserver !== 'function') return false;
+
+      const slidesContainer = doc.getElementById('slidesContainer');
+      if (!slidesContainer) return false;
+
+      deckActiveSlideObserver = new MutationObserver((mutations) => {
+        const shouldSync = mutations.some((mutation) => {
+          if (mutation.type !== 'attributes') return false;
+          if (mutation.target === slidesContainer && mutation.attributeName === 'style') return true;
+          return mutation.attributeName === 'class' && mutation.target.classList?.contains('slide');
+        });
+        if (shouldSync) {
+          scheduleStudioChromeSync(doc);
+        }
+      });
+
+      deckActiveSlideObserver.observe(slidesContainer, {
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style']
+      });
       return true;
     }
 
