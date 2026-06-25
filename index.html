@@ -3920,7 +3920,6 @@
       makeElementsHoverable(iframeDoc);
       setupIframeDragging(iframeDoc);
       bindDeckNavigationSync(iframeDoc);
-      observeDeckActiveSlideState(iframeDoc);
       
       // Re-generate and restore slide focus with an index fallback for older snapshots.
       generateThumbnails();
@@ -3933,6 +3932,7 @@
       syncSelectionOverlay();
       syncInspectorForSelection();
       updateLayersList();
+      observeDeckActiveSlideState(iframeDoc);
     }
 
     function buildPersistableDeckHtml(doc = getIframeDoc()) {

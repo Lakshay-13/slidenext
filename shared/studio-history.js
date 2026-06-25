@@ -40,10 +40,13 @@
       ? options.getSelectedElementIds
       : () => [];
 
+    const activeSlideId = getActiveSlideId(doc) || '';
+    const selectedElementIds = getSelectedElementIds(doc);
+
     return {
       html: buildHistoryHtml(doc, options),
-      activeSlideId: getActiveSlideId(doc) || '',
-      selectedElementIds: getSelectedElementIds(doc)
+      activeSlideId,
+      selectedElementIds
     };
   }
 
