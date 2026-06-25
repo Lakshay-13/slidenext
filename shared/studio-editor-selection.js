@@ -75,10 +75,55 @@
     };
   }
 
+  function updateStudioSelection(selectedElements = [], target, options = {}) {
+    if (!target) {
+      return {
+        selectedElements,
+        selectedElement: selectedElements[0] || null
+      };
+    }
+
+    const additive = !!options.additive;
+    const toggle = !!options.toggle;
+    let nextSelectedElements = additive ? [...selectedElements] : [];
+
+    if (toggle) {
+      if (nextSelectedElements.includes(target)) {
+        nextSelectedElements = nextSelectedElements.filter((el) => el !== target);
+      } else {
+        nextSelectedElements.push(target);
+      }
+    } else if (!nextSelectedElements.includes(target)) {
+      nextSelectedElements.push(target);
+    }
+
+    return {
+      selectedElements: nextSelectedElements,
+      selectedElement: nextSelectedElements[0] || null
+    };
+  }
+
+  function clearStudioSelection() {
+    return {
+      selectedElements: [],
+      selectedElement: null
+    };
+  }
+
+  function selectAllStudioElements(elements = []) {
+    return {
+      selectedElements: [...elements],
+      selectedElement: elements[0] || null
+    };
+  }
+
   return {
     getStudioSelectedElementIds,
     areStudioIdListsEqual,
     refreshStudioSelectionClasses,
-    restoreStudioSelectionByIdsOnActiveSlide
+    restoreStudioSelectionByIdsOnActiveSlide,
+    updateStudioSelection,
+    clearStudioSelection,
+    selectAllStudioElements
   };
 });

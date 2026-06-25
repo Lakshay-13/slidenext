@@ -2726,22 +2726,16 @@
     function selectElement(el, options = {}) {
       const target = resolveEditableTarget(el);
       if (!target) return;
-      const additive = !!options.additive;
-      const toggle = !!options.toggle;
-
-      if (!additive) {
-        selectedElements = [];
-      }
-
-      if (toggle) {
-        if (selectedElements.includes(target)) {
-          selectedElements = selectedElements.filter(node => node !== target);
-        } else {
-          selectedElements.push(target);
+      const nextSelectionState = SlideNextStudioEditorSelection.updateStudioSelection(
+        selectedElements,
+        target,
+        {
+          additive: !!options.additive,
+          toggle: !!options.toggle
         }
-      } else if (!selectedElements.includes(target)) {
-        selectedElements.push(target);
-      }
+      );
+      selectedElements = nextSelectionState.selectedElements;
+      selectedElement = nextSelectionState.selectedElement;
 
       refreshSelectionClasses();
       syncSelectionOverlay();
@@ -2750,7 +2744,9 @@
     }
 
     function deselectElement() {
-      selectedElements = [];
+      const nextSelectionState = SlideNextStudioEditorSelection.clearStudioSelection();
+      selectedElements = nextSelectionState.selectedElements;
+      selectedElement = nextSelectionState.selectedElement;
       refreshSelectionClasses();
       syncSelectionOverlay();
       hideDragHud();
@@ -2763,7 +2759,9 @@
       if (!slide) return false;
       const nextSelection = getNormalizedSlideLayerOrder(slide);
       if (nextSelection.length === 0) return false;
-      selectedElements = nextSelection;
+      const nextSelectionState = SlideNextStudioEditorSelection.selectAllStudioElements(nextSelection);
+      selectedElements = nextSelectionState.selectedElements;
+      selectedElement = nextSelectionState.selectedElement;
       refreshSelectionClasses();
       syncSelectionOverlay();
       syncInspectorForSelection();
