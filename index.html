@@ -1730,8 +1730,11 @@
       
       // 7. Select first slide
       setActiveSlide(0);
+
+      // 8. Keep Studio chrome aligned when a deck uses its own slide navigation API.
+      bindDeckNavigationSync(iframeDoc);
       
-      // 8. Capture first historical state
+      // 9. Capture first historical state
       saveHistoryState(false);
     }
 
@@ -1864,6 +1867,57 @@
       triggerAutoVersion('Auto: Reordered Slides');
     }
 
+    function updateActiveThumbnailCardState(activeSlideId) {
+      const cards = document.querySelectorAll('#thumbnailsList > div');
+      cards.forEach((card) => {
+        if (card.dataset.slideId === activeSlideId) {
+          card.className = 'glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all border-[#7028d0] bg-[#7028d0]/5 shadow-[0_0_15px_rgba(112,40,208,0.1)]';
+        } else {
+          card.className = 'glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all border-white/5 bg-[#0a0a0a]/40 hover:border-white/20';
+        }
+      });
+    }
+
+    function syncStudioChromeToActiveSlide(doc = getIframeDoc()) {
+      if (!doc) return false;
+      const slides = getSlides(doc);
+      if (slides.length === 0) {
+        currentSlideIndex = 0;
+        updateActiveThumbnailCardState('');
+        document.getElementById('slideCountLabel').textContent = '0 / 0';
+        deselectElement();
+        return false;
+      }
+
+      const activeIndex = slides.findIndex(slide => slide.classList.contains('slide-active'));
+      if (activeIndex === -1) return false;
+
+      currentSlideIndex = activeIndex;
+      const activeSlideId = slides[activeIndex].getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
+      updateActiveThumbnailCardState(activeSlideId);
+      updateIframeNavigationUI(doc, slides);
+      document.getElementById('slideCountLabel').textContent = `${currentSlideIndex + 1} / ${slides.length}`;
+      deselectElement();
+      return true;
+    }
+
+    function bindDeckNavigationSync(doc = getIframeDoc()) {
+      const iframe = document.getElementById('studioFrame');
+      const frameWin = iframe?.contentWindow;
+      if (!doc || !frameWin || typeof frameWin.goToSlide !== 'function' || frameWin.__studioGoToSlideWrapped) {
+        return false;
+      }
+
+      const originalGoToSlide = frameWin.goToSlide.bind(frameWin);
+      frameWin.goToSlide = (index) => {
+        const result = originalGoToSlide(index);
+        syncStudioChromeToActiveSlide(doc);
+        return result;
+      };
+      frameWin.__studioGoToSlideWrapped = true;
+      return true;
+    }
+
     // Toggle active slide viewport display
     function setActiveSlide(index) {
       const iframe = document.getElementById('studioFrame');
@@ -1871,9 +1925,6 @@
       const slides = getSlides(iframeDoc);
       
       if (index < 0 || index >= slides.length) return;
-      currentSlideIndex = index;
-      const activeSlide = slides[index];
-      const activeSlideId = activeSlide.getAttribute(EDITOR_SLIDE_ID_ATTR);
       
       // Apply translation to container
       const container = iframeDoc.getElementById('slidesContainer');
@@ -1889,25 +1940,8 @@
           slide.classList.remove('slide-active');
         }
       });
-      
-      // Update sidebar thumbnail visual selection states
-      const cards = document.querySelectorAll('#thumbnailsList > div');
-      cards.forEach((card) => {
-        if (card.dataset.slideId === activeSlideId) {
-          card.className = 'glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all border-[#7028d0] bg-[#7028d0]/5 shadow-[0_0_15px_rgba(112,40,208,0.1)]';
-        } else {
-          card.className = 'glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all border-white/5 bg-[#0a0a0a]/40 hover:border-white/20';
-        }
-      });
-      
-      // Update counts and dots inside the iframe itself to keep the presentation UI consistent
-      updateIframeNavigationUI(iframeDoc, slides);
-      
-      // Update label
-      document.getElementById('slideCountLabel').textContent = `${currentSlideIndex + 1} / ${slides.length}`;
-      
-      // Selection reset
-      deselectElement();
+
+      syncStudioChromeToActiveSlide(iframeDoc);
     }
 
     // Sync presentation's internal dots and counter
