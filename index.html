@@ -1010,6 +1010,7 @@
   </div>  <!-- Logic scripts -->
   <script src="/shared/canonical-deck.js"></script>
   <script src="/shared/deck-import.js"></script>
+  <script src="/shared/deck-loader.js"></script>
   <script src="/shared/deck-model.js"></script>
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/deck-html.js"></script>
@@ -2280,70 +2281,24 @@
       });
     }
 
-    function derivePresentationIdFromUrl(presentationUrl = currentPresentationUrl) {
-      const pathParts = (presentationUrl || '').split('/').filter(Boolean);
-      if (pathParts.length >= 2) {
-        return pathParts[pathParts.length - 2];
-      }
-      return '';
-    }
-
     function buildCurrentPresentationMetadataSeed(presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
-      return {
-        id: derivePresentationIdFromUrl(presentationUrl),
-        title: presentationTitle,
-        sourcePath: presentationUrl
-      };
-    }
-
-    function derivePresentationMetadataUrl(presentationUrl = currentPresentationUrl) {
-      if (!presentationUrl || !presentationUrl.endsWith('/index.html')) {
-        return '';
-      }
-      return presentationUrl.replace(/\/index\.html$/, '/presentation.json');
+      return SlideNextDeckLoader.buildPresentationMetadataSeed(presentationUrl, presentationTitle);
     }
 
     async function loadCurrentPresentationMetadata(presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
-      const fallbackMetadata = buildCurrentPresentationMetadataSeed(presentationUrl, presentationTitle);
-      const metadataUrl = derivePresentationMetadataUrl(presentationUrl);
-      if (!metadataUrl) {
-        if (currentPresentationUrl === presentationUrl) {
-          currentPresentationMetadata = fallbackMetadata;
+      const metadata = await SlideNextDeckLoader.loadPresentationMetadata(presentationUrl, presentationTitle, {
+        onError: (err, metadataUrl) => {
+          console.warn(`Failed to load presentation metadata from ${metadataUrl}:`, err);
         }
-        return fallbackMetadata;
+      });
+      if (currentPresentationUrl === presentationUrl) {
+        currentPresentationMetadata = metadata;
       }
-
-      try {
-        const response = await fetch(metadataUrl, { cache: 'no-store' });
-        if (!response.ok) {
-          throw new Error(`Metadata request failed with status ${response.status}`);
-        }
-
-        const metadata = await response.json();
-        const mergedMetadata = {
-          ...fallbackMetadata,
-          ...metadata,
-          sourcePath: presentationUrl
-        };
-        if (currentPresentationUrl === presentationUrl) {
-          currentPresentationMetadata = mergedMetadata;
-        }
-        return mergedMetadata;
-      } catch (err) {
-        console.warn(`Failed to load presentation metadata from ${metadataUrl}:`, err);
-        if (currentPresentationUrl === presentationUrl) {
-          currentPresentationMetadata = fallbackMetadata;
-        }
-        return fallbackMetadata;
-      }
+      return metadata;
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
-      if (!doc || !window.SlideNextDeckImport || !window.SlideNextCanonicalDeck) {
-        return null;
-      }
-
-      return SlideNextDeckImport.importHtmlDeckToCanonicalDeck(doc, {
+      return SlideNextDeckLoader.buildCanonicalDeckFromDocument(doc, {
         presentationMetadata: currentPresentationMetadata || buildCurrentPresentationMetadataSeed(),
         sourcePath: currentPresentationUrl,
         getSlideId: assignEditorSlideId,
