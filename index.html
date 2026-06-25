@@ -4241,10 +4241,12 @@
             cleanName = cleanName.substring(0, extIndex);
           }
           
-          // Timestamp is YYYYMMDD_HHMMSS_mmm (19 chars)
+          // Support both legacy and current backup timestamps:
+          // YYYYMMDD_HHMMSS[_mmm]
           let label = 'Manual Checkpoint';
-          if (cleanName.length > 19) {
-            const rawLabel = cleanName.substring(20);
+          const labelMatch = cleanName.match(/^\d{8}_\d{6}(?:_\d{3})?_(.+)$/);
+          if (labelMatch) {
+            const rawLabel = labelMatch[1];
             label = rawLabel
               .replace(/__/g, ': ')
               .replace(/_/g, ' ');
