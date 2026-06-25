@@ -25,6 +25,9 @@
     const loadMetadata = deckLoader && typeof deckLoader.loadPresentationMetadata === 'function'
       ? deckLoader.loadPresentationMetadata
       : async () => buildStudioPresentationMetadataSeed(presentationUrl, presentationTitle);
+    const getCurrentPresentationUrl = typeof options.getCurrentPresentationUrl === 'function'
+      ? options.getCurrentPresentationUrl
+      : () => options.currentPresentationUrl;
 
     const metadata = await loadMetadata(presentationUrl, presentationTitle, {
       fetchImpl: options.fetchImpl,
@@ -33,7 +36,7 @@
     });
 
     if (typeof options.setCurrentPresentationMetadata === 'function'
-      && options.currentPresentationUrl === presentationUrl) {
+      && getCurrentPresentationUrl() === presentationUrl) {
       options.setCurrentPresentationMetadata(metadata);
     }
 

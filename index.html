@@ -2013,7 +2013,7 @@
 
     async function loadCurrentPresentationMetadata(presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
       return SlideNextStudioDeckContext.loadStudioPresentationMetadata(presentationUrl, presentationTitle, {
-        currentPresentationUrl,
+        getCurrentPresentationUrl: () => currentPresentationUrl,
         setCurrentPresentationMetadata: (metadata) => {
           currentPresentationMetadata = metadata;
         },
