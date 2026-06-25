@@ -1746,20 +1746,17 @@
     function generateThumbnails() {
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      const slides = getSlides(iframeDoc);
+      const deckSnapshot = buildEditorDeckSnapshot(iframeDoc);
+      const slides = deckSnapshot.slides;
       
       const listContainer = document.getElementById('thumbnailsList');
       listContainer.innerHTML = '';
       
-      document.getElementById('slideCountLabel').textContent = `${currentSlideIndex + 1} / ${slides.length}`;
+      const visibleIndex = slides.length === 0 ? 0 : Math.min(currentSlideIndex, slides.length - 1) + 1;
+      document.getElementById('slideCountLabel').textContent = `${visibleIndex} / ${slides.length}`;
       
-      slides.forEach((slide, idx) => {
-        const isActive = idx === currentSlideIndex;
-        const slideId = assignEditorSlideId(slide);
-        
-        // Retrieve title/text description from slide contents
-        const firstHeading = slide.querySelector('h1, h2, h3');
-        const slideTitle = firstHeading ? firstHeading.textContent.trim() : `Slide ${idx + 1}`;
+      slides.forEach((slide) => {
+        const isActive = slide.id === deckSnapshot.activeSlideId;
         
         // Build card element
         const thumbCard = document.createElement('div');
@@ -1767,26 +1764,26 @@
           isActive ? 'border-[#7028d0] bg-[#7028d0]/5 shadow-[0_0_15px_rgba(112,40,208,0.1)]' : 'border-white/5 bg-[#0a0a0a]/40 hover:border-white/20'
         }`;
         thumbCard.draggable = true;
-        thumbCard.dataset.index = idx;
-        thumbCard.dataset.slideId = slideId;
+        thumbCard.dataset.index = slide.index;
+        thumbCard.dataset.slideId = slide.id;
         
         // Hover Delete controls
         thumbCard.innerHTML = `
           <div class="w-6 h-6 rounded-lg bg-zinc-900 border border-white/5 flex items-center justify-center font-mono text-xs text-[#7028d0] font-bold">
-            ${String(idx + 1).padStart(2, '0')}
+            ${String(slide.index + 1).padStart(2, '0')}
           </div>
           <div class="flex-grow overflow-hidden">
-            <h4 class="text-xs font-semibold text-white truncate font-sans">${slideTitle}</h4>
-            <p class="text-[10px] text-zinc-500 font-mono uppercase mt-0.5">${slide.style.background ? 'Gradient/Paint' : 'Default'}</p>
+            <h4 class="text-xs font-semibold text-white truncate font-sans">${slide.title}</h4>
+            <p class="text-[10px] text-zinc-500 font-mono uppercase mt-0.5">${slide.backgroundLabel}</p>
           </div>
-          <button onclick="event.stopPropagation(); deleteSlideNodeById('${slideId}')" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-500/20 text-zinc-500 hover:text-rose-400 rounded transition-all absolute right-2 top-2.5" title="Delete Slide">
+          <button onclick="event.stopPropagation(); deleteSlideNodeById('${slide.id}')" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-500/20 text-zinc-500 hover:text-rose-400 rounded transition-all absolute right-2 top-2.5" title="Delete Slide">
             <span class="material-symbols-outlined text-[15px]">delete</span>
           </button>
         `;
         
         // Bind Click navigation
         thumbCard.addEventListener('click', () => {
-          setActiveSlideById(slideId);
+          setActiveSlideById(slide.id);
         });
         
         // Bind HTML5 drag events
@@ -2072,6 +2069,26 @@
 
     function getSlideIndexById(slideId, doc = getIframeDoc()) {
       return getSlides(doc).findIndex(slide => slide.getAttribute(EDITOR_SLIDE_ID_ATTR) === slideId);
+    }
+
+    function buildEditorSlideSnapshot(slide, index) {
+      const slideId = assignEditorSlideId(slide);
+      const firstHeading = slide.querySelector('h1, h2, h3');
+      return {
+        id: slideId,
+        index,
+        title: firstHeading ? firstHeading.textContent.trim() : `Slide ${index + 1}`,
+        backgroundLabel: slide.style.background ? 'Gradient/Paint' : 'Default'
+      };
+    }
+
+    function buildEditorDeckSnapshot(doc = getIframeDoc()) {
+      const slides = getSlides(doc);
+      const activeSlideId = getActiveSlide(doc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
+      return {
+        activeSlideId,
+        slides: slides.map((slide, index) => buildEditorSlideSnapshot(slide, index))
+      };
     }
 
     function getActiveSlide(doc = getIframeDoc()) {
