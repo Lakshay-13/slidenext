@@ -1763,7 +1763,7 @@
       const listContainer = document.getElementById('thumbnailsList');
       listContainer.innerHTML = '';
       
-      const visibleIndex = slides.length === 0 ? 0 : Math.min(currentSlideIndex, slides.length - 1) + 1;
+      const visibleIndex = slides.length === 0 ? 0 : getStudioActiveSlideIndex(iframeDoc) + 1;
       document.getElementById('slideCountLabel').textContent = `${visibleIndex} / ${slides.length}`;
       
       slides.forEach((slide) => {
@@ -2210,10 +2210,22 @@
     function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {
       const slides = getSlides(doc);
       const activeSlideId = getActiveSlide(doc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
+      const activeSlideIndex = slides.findIndex(slide => slide.getAttribute(EDITOR_SLIDE_ID_ATTR) === activeSlideId);
       return {
         activeSlideId,
+        activeSlideIndex,
         slides: slides.map((slide, index) => buildEditorSlideSnapshot(slide, index, options))
       };
+    }
+
+    function getStudioActiveSlideIndex(doc = getIframeDoc()) {
+      const deckSnapshot = buildEditorDeckSnapshot(doc);
+      if (deckSnapshot.activeSlideIndex >= 0) {
+        return deckSnapshot.activeSlideIndex;
+      }
+      const slideCount = deckSnapshot.slides.length;
+      if (slideCount === 0) return 0;
+      return Math.max(0, Math.min(currentSlideIndex, slideCount - 1));
     }
 
     function getEditorLayerDisplayMetadata(el) {
@@ -4448,7 +4460,7 @@
     // Presentation Live Preview from workspace
     function launchPreview() {
       if (currentPresentationUrl) {
-        launchPresentation(currentPresentationUrl, currentSlideIndex);
+        launchPresentation(currentPresentationUrl, getStudioActiveSlideIndex());
       }
     }
   </script>
