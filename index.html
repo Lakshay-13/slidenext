@@ -1834,6 +1834,9 @@
       if (!container) return;
       saveHistoryState();
       const activeSlideId = getActiveSlide(iframeDoc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
+      const preservedSelectionIds = selectedElements
+        .filter(el => el && el.isConnected && isEligibleEditableElement(el))
+        .map(el => assignEditorElementId(el));
       
       const slides = getSlides(iframeDoc);
       const draggedNode = slides[fromIdx];
@@ -1847,7 +1850,13 @@
       }
       
       generateThumbnails();
-      if (!activeSlideId || !setActiveSlideById(activeSlideId, iframeDoc)) {
+      const preservedActiveSlide = activeSlideId && setActiveSlideById(activeSlideId, iframeDoc);
+      if (preservedActiveSlide) {
+        restoreSelectionByIdsOnActiveSlide(preservedSelectionIds, iframeDoc);
+        syncSelectionOverlay();
+        syncInspectorForSelection();
+        updateLayersList();
+      } else {
         const slideCount = getSlides(iframeDoc).length;
         const fallbackIndex = slideCount === 0 ? 0 : Math.min(toIdx, slideCount - 1);
         setActiveSlide(fallbackIndex);
