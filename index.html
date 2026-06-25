@@ -1524,6 +1524,7 @@
       
       // Initial AutoSave label status
       document.getElementById('autoSaveStatus').innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
+      resetStudioVersionUiState();
       resetStudioSaveButtonState();
       
       // Configure load triggers BEFORE setting src
@@ -1578,6 +1579,7 @@
       currentPresentationMetadata = null;
       resetEditorPersistenceTimers();
       resetEditorDeckPersistenceState();
+      resetStudioVersionUiState();
       resetStudioSaveButtonState();
       deselectElement();
       resetEditorHistoryState({ syncButtons: true });
@@ -3915,6 +3917,54 @@
           modal.classList.add('hidden');
         }
       });
+    }
+
+    function resetStudioVersionUiState() {
+      const versionsDropdown = document.getElementById('versionsDropdown');
+      if (versionsDropdown) {
+        versionsDropdown.classList.add('hidden');
+      }
+
+      const saveVersionModal = document.getElementById('saveVersionModal');
+      const saveVersionModalContent = document.getElementById('saveVersionModalContent');
+      const saveVersionNameInput = document.getElementById('versionCheckpointName');
+      if (saveVersionNameInput) {
+        saveVersionNameInput.value = '';
+      }
+      if (saveVersionModal) {
+        SlideNextStudioModalVisibility.cancelStudioModalHide(saveVersionModal);
+        saveVersionModal.classList.add('hidden');
+        saveVersionModal.classList.add('opacity-0');
+        saveVersionModal.classList.remove('opacity-100');
+      }
+      if (saveVersionModalContent) {
+        saveVersionModalContent.classList.add('scale-95');
+        saveVersionModalContent.classList.remove('scale-100');
+      }
+
+      const renameVersionModal = document.getElementById('renameVersionModal');
+      const renameVersionModalContent = document.getElementById('renameVersionModalContent');
+      const renameVersionInput = document.getElementById('newVersionNameInput');
+      const confirmRenameVersionBtn = document.getElementById('confirmRenameVersionBtn');
+      renamingFilename = '';
+      renamingVersionContext = null;
+      if (renameVersionInput) {
+        renameVersionInput.value = '';
+      }
+      if (confirmRenameVersionBtn) {
+        confirmRenameVersionBtn.disabled = false;
+        confirmRenameVersionBtn.textContent = 'Rename';
+      }
+      if (renameVersionModal) {
+        SlideNextStudioModalVisibility.cancelStudioModalHide(renameVersionModal);
+        renameVersionModal.classList.add('hidden');
+        renameVersionModal.classList.add('opacity-0');
+        renameVersionModal.classList.remove('opacity-100');
+      }
+      if (renameVersionModalContent) {
+        renameVersionModalContent.classList.add('scale-95');
+        renameVersionModalContent.classList.remove('scale-100');
+      }
     }
 
     function resetStudioSaveButtonState() {
