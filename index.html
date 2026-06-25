@@ -955,6 +955,7 @@
     let customGradientType = 'linear';
     let renamingFilename = '';
     const DRAG_START_THRESHOLD_PX = 4;
+    const DUPLICATE_OFFSET_PX = 24;
     const MIN_ELEMENT_SIZE_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const DRAG_OVERFLOW_MARGIN_PX = 280;
@@ -1043,6 +1044,8 @@
       document.addEventListener('keydown', (e) => {
         const editor = document.getElementById('studioEditor');
         if (editor.classList.contains('active') || editor.style.opacity === '1') {
+          const activeEl = document.activeElement;
+          const isTypingContext = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
           if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
             e.preventDefault();
             editorUndo();
@@ -1050,6 +1053,10 @@
           if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
             e.preventDefault();
             editorRedo();
+          }
+          if (!isTypingContext && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd' && selectedElements.length > 0) {
+            e.preventDefault();
+            duplicateSelectedElements();
           }
         }
       });
@@ -1584,6 +1591,12 @@
 
         const activeEl = iframeDoc.activeElement;
         const isTypingContext = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
+        if (!isTypingContext && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd' && selectedElements.length > 0) {
+          e.preventDefault();
+          e.stopPropagation();
+          duplicateSelectedElements();
+          return;
+        }
         if (!isTypingContext && selectedElements.length > 0 && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
           e.preventDefault();
           e.stopPropagation();
@@ -2408,6 +2421,68 @@
       saveHistoryState();
       triggerAutoSave();
       triggerAutoVersion('Auto: Deleted Element');
+    }
+
+    function sanitizeDuplicatedSubtree(root) {
+      if (!root || root.nodeType !== 1) return;
+      root.removeAttribute('id');
+      root.classList.remove('editor-selected', 'editor-dragging');
+      root.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+      root.querySelectorAll('.editor-selected, .editor-dragging').forEach(node => {
+        node.classList.remove('editor-selected', 'editor-dragging');
+      });
+    }
+
+    function duplicateSelectedElements() {
+      const doc = getIframeDoc();
+      const slide = getActiveSlide(doc);
+      if (!doc || !slide || selectedElements.length === 0) return;
+
+      const slideMetrics = getSlideMetrics(slide);
+      const duplicates = [];
+      const orderedSelection = getNormalizedSlideLayerOrder(slide).filter(el => selectedElements.includes(el));
+
+      orderedSelection.forEach(el => {
+        const clone = el.cloneNode(true);
+        sanitizeDuplicatedSubtree(clone);
+        clone.classList.add('editor-hoverable');
+
+        const computed = doc.defaultView.getComputedStyle(el);
+        const isAbsolutelyPositioned = computed.position === 'absolute' || computed.position === 'fixed';
+        if (isAbsolutelyPositioned) {
+          const rect = el.getBoundingClientRect();
+          const parent = getClosestPositionedAncestor(el);
+          const parentRect = parent.getBoundingClientRect();
+          const rectOnSlide = getRectOnSlide(rect, slideMetrics);
+          const parentOnSlide = getRectOnSlide(parentRect, slideMetrics);
+          const width = rectOnSlide.right - rectOnSlide.left;
+          const height = rectOnSlide.bottom - rectOnSlide.top;
+          const nextAbsLeft = clampValue(rectOnSlide.left + DUPLICATE_OFFSET_PX, 0, Math.max(0, slideMetrics.logicalWidth - width));
+          const nextAbsTop = clampValue(rectOnSlide.top + DUPLICATE_OFFSET_PX, 0, Math.max(0, slideMetrics.logicalHeight - height));
+
+          clone.style.position = 'absolute';
+          clone.style.margin = '0';
+          clone.style.left = `${nextAbsLeft - parentOnSlide.left}px`;
+          clone.style.top = `${nextAbsTop - parentOnSlide.top}px`;
+          parent.appendChild(clone);
+        } else {
+          el.insertAdjacentElement('afterend', clone);
+        }
+
+        duplicates.push(clone);
+      });
+
+      if (duplicates.length === 0) return;
+
+      selectedElements = duplicates;
+      refreshSelectionClasses();
+      syncSelectionOverlay();
+      syncInspectorForSelection();
+      generateThumbnails();
+      updateLayersList();
+      saveHistoryState();
+      triggerAutoSave();
+      triggerAutoVersion('Auto: Duplicated Element');
     }
 
     function getClosestPositionedAncestor(el) {
