@@ -1753,34 +1753,28 @@
     }
 
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
-      if (!doc) return false;
-      const normalizeViewport = options.normalizeViewport !== false;
-      const slides = getSlides(doc);
-      if (slides.length === 0) {
-        currentSlideIndex = 0;
-        updateActiveThumbnailCardState('');
-        document.getElementById('slideCountLabel').textContent = '0 / 0';
-        deselectElement();
-        return false;
-      }
-
-      const activeIndex = slides.findIndex(slide => slide.classList.contains('slide-active'));
-      if (activeIndex === -1) return false;
-
-      currentSlideIndex = activeIndex;
-      if (normalizeViewport) {
-        const container = doc.getElementById('slidesContainer');
-        if (container) {
-          container.style.transform = `translateX(-${currentSlideIndex * 100}vw)`;
-        }
-      }
-      pruneEditorChromeNodes(doc, slides[activeIndex]);
-      const activeSlideId = slides[activeIndex].getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
-      updateActiveThumbnailCardState(activeSlideId);
-      updateIframeNavigationUI(doc, slides);
-      document.getElementById('slideCountLabel').textContent = `${currentSlideIndex + 1} / ${slides.length}`;
-      deselectElement();
-      return true;
+      const nextViewState = SlideNextStudioDeckView.syncStudioActiveSlideView(doc, {
+        normalizeViewport: options.normalizeViewport,
+        getSlides,
+        setCurrentSlideIndex: (nextIndex) => {
+          currentSlideIndex = nextIndex;
+        },
+        updateActiveThumbnailCardState,
+        setSlideCountLabel: (label) => {
+          document.getElementById('slideCountLabel').textContent = label;
+        },
+        deselectElement,
+        applyViewportTransform: (nextDoc, activeIndex) => {
+          const container = nextDoc.getElementById('slidesContainer');
+          if (container) {
+            container.style.transform = `translateX(-${activeIndex * 100}vw)`;
+          }
+        },
+        pruneEditorChromeNodes,
+        getSlideId: (slide) => slide.getAttribute(EDITOR_SLIDE_ID_ATTR) || '',
+        updateIframeNavigationUI
+      });
+      return nextViewState.didSync;
     }
 
     function bindDeckNavigationSync(doc = getIframeDoc()) {
