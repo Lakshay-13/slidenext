@@ -1055,6 +1055,10 @@
             e.preventDefault();
             editorRedo();
           }
+          if (!isTypingContext && selectedElements.length > 0 && e.key === 'Escape') {
+            e.preventDefault();
+            deselectElement();
+          }
           if (!isTypingContext && selectedElements.length > 0 && (e.key === 'Delete' || e.key === 'Backspace')) {
             e.preventDefault();
             removeSelectedElement();
@@ -1597,6 +1601,12 @@
 
         const activeEl = iframeDoc.activeElement;
         const isTypingContext = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
+        if (!isTypingContext && selectedElements.length > 0 && e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          deselectElement();
+          return;
+        }
         if (!isTypingContext && selectedElements.length > 0 && (e.key === 'Delete' || e.key === 'Backspace')) {
           e.preventDefault();
           e.stopPropagation();
