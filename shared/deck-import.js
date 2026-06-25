@@ -15,6 +15,7 @@
   }
 
   const DEFAULT_SKIP_TAG_NAMES = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE']);
+  const STYLE_URL_PATTERN = /url\((?:'([^']*)'|"([^"]*)"|([^)]*))\)/gi;
 
   function asPlainObject(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -53,6 +54,25 @@
 
   function normalizeWhitespace(value) {
     return normalizeString(value).replace(/\s+/g, ' ').trim();
+  }
+
+  function extractCssUrlValues(value) {
+    if (typeof value !== 'string' || !value.includes('url(')) {
+      return [];
+    }
+
+    const urls = [];
+    STYLE_URL_PATTERN.lastIndex = 0;
+    let match = STYLE_URL_PATTERN.exec(value);
+    while (match) {
+      const nextUrl = normalizeString(match[1] || match[2] || match[3]).trim();
+      if (nextUrl && !nextUrl.startsWith('#')) {
+        urls.push(nextUrl);
+      }
+      match = STYLE_URL_PATTERN.exec(value);
+    }
+
+    return urls;
   }
 
   function getGreatestCommonDivisor(a, b) {
@@ -305,6 +325,20 @@
     return parts[parts.length - 1] || cleanUrl || 'asset';
   }
 
+  function appendDeckAsset(assetSeeds, seenUrls, seed = {}) {
+    const src = normalizeString(seed.src);
+    if (!src || seenUrls.has(src)) {
+      return;
+    }
+    seenUrls.add(src);
+    assetSeeds.push({
+      id: `asset-${assetSeeds.length + 1}`,
+      type: normalizeString(seed.type, 'file'),
+      name: normalizeString(seed.name, buildAssetName(src)),
+      src
+    });
+  }
+
   function collectDeckAssets(doc) {
     const assetSeeds = [];
     const seenUrls = new Set();
@@ -318,14 +352,18 @@
     ];
 
     doc.querySelectorAll(assetSelectors.join(', ')).forEach((el) => {
-      const src = normalizeString(el.getAttribute('src') || el.getAttribute('href'));
-      if (!src || seenUrls.has(src)) return;
-      seenUrls.add(src);
-      assetSeeds.push({
-        id: `asset-${assetSeeds.length + 1}`,
+      appendDeckAsset(assetSeeds, seenUrls, {
         type: inferAssetType(el),
-        name: buildAssetName(src),
-        src
+        src: el.getAttribute('src') || el.getAttribute('href')
+      });
+    });
+
+    doc.querySelectorAll('[style*="url("]').forEach((el) => {
+      extractCssUrlValues(normalizeString(el.getAttribute('style'))).forEach((src) => {
+        appendDeckAsset(assetSeeds, seenUrls, {
+          type: 'image',
+          src
+        });
       });
     });
 
@@ -380,6 +418,8 @@
 
   return {
     DEFAULT_SKIP_TAG_NAMES,
+    extractCssUrlValues,
+    collectDeckAssets,
     inferImportedNodeType,
     importElementToCanonicalNode,
     importSlideToCanonicalSlide,
