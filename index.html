@@ -1050,6 +1050,7 @@
     let editorClipboard = null;
     let deckActiveSlideObserver = null;
     let deckActiveSlideSyncTimer = null;
+    let preserveSelectionOnNextActiveSlideSync = false;
     const DRAG_START_THRESHOLD_PX = 4;
     const DUPLICATE_OFFSET_PX = 24;
     const MIN_ELEMENT_SIZE_PX = 24;
@@ -1711,7 +1712,7 @@
       if (!container) return;
       saveHistoryState();
       const activeSlideId = getActiveSlideId(iframeDoc);
-      const preservedSelectionIds = getSelectedEditorElementIds();
+      const preservedSelectionIds = getCommittedSelectedEditorElementIds(iframeDoc);
       
       const slides = getSlides(iframeDoc);
       const draggedNode = slides[fromIdx];
@@ -1728,8 +1729,9 @@
       const slideCount = getSlides(iframeDoc).length;
       SlideNextStudioDeckView.restoreStudioDeckViewAfterSlideMutation({
         preservedActiveSlideId: activeSlideId,
-        restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc),
+        restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc, { preserveSelection: true }),
         restoreSelectionState: () => {
+          preserveSelectionOnNextActiveSlideSync = true;
           restoreSelectionByIdsOnActiveSlide(preservedSelectionIds, iframeDoc);
           syncSelectionOverlay();
           syncInspectorForSelection();
@@ -1750,8 +1752,10 @@
 
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
       const previousIndex = currentSlideIndex;
+      const preserveSelection = !!options.preserveSelection || preserveSelectionOnNextActiveSlideSync;
       const nextViewState = SlideNextStudioDeckView.syncStudioActiveSlideView(doc, {
         normalizeViewport: options.normalizeViewport,
+        preserveSelection,
         getSlides,
         setCurrentSlideIndex: (nextIndex) => {
           currentSlideIndex = nextIndex;
@@ -1771,6 +1775,7 @@
         getSlideId: getEditorSlideId,
         updateIframeNavigationUI
       });
+      preserveSelectionOnNextActiveSlideSync = false;
       if (options.captureHistory && nextViewState.didSync && previousIndex !== currentSlideIndex) {
         saveHistoryState(false);
       }
@@ -1821,6 +1826,7 @@
       SlideNextStudioDeckView.setStudioDeckActiveSlide(index, {
         doc: iframeDoc,
         captureHistory: options.captureHistory,
+        preserveSelection: !!options.preserveSelection,
         getSlides,
         syncStudioChromeToActiveSlide
       });
@@ -1874,7 +1880,7 @@
       saveHistoryState();
       const activeSlideId = getActiveSlideId(iframeDoc);
       const deletedSlideId = getEditorSlideId(slides[idx]);
-      const preservedSelectionIds = getSelectedEditorElementIds();
+      const preservedSelectionIds = getCommittedSelectedEditorElementIds(iframeDoc);
       
       slides[idx].remove();
       
@@ -1883,8 +1889,9 @@
       SlideNextStudioDeckView.restoreStudioDeckViewAfterSlideMutation({
         preservedActiveSlideId: activeSlideId,
         removedSlideId: deletedSlideId,
-        restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc),
+        restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc, { preserveSelection: true }),
         restoreSelectionState: () => {
+          preserveSelectionOnNextActiveSlideSync = true;
           restoreSelectionByIdsOnActiveSlide(preservedSelectionIds, iframeDoc);
           syncSelectionOverlay();
           syncInspectorForSelection();
@@ -2073,6 +2080,14 @@
 
     function getSelectedEditorElementIds(elements = selectedElements) {
       return SlideNextStudioEditorSelection.getStudioSelectedElementIds(elements, getEditorSelectionOptions());
+    }
+
+    function getCommittedSelectedEditorElementIds(doc = getIframeDoc()) {
+      return SlideNextStudioEditorSelection.getStudioCommittedSelectedElementIds(
+        selectedElements,
+        doc,
+        getEditorSelectionOptions()
+      );
     }
 
     function areEditorIdListsEqual(a = [], b = []) {
@@ -4109,7 +4124,7 @@
       const parentRow = event.currentTarget.closest('[class*="border"]');
       const target = resolveLayerRowElement(parentRow);
       if (!target) return;
-      const preservedSelectionIds = getSelectedEditorElementIds();
+      const preservedSelectionIds = getCommittedSelectedEditorElementIds();
       selectedElements = [target];
       refreshSelectionClasses();
       const didToggle = toggleSelectedElementsVisibility();
