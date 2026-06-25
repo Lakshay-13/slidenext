@@ -174,17 +174,55 @@
       selectedElement
     });
     refreshSelectionClasses();
+    syncStudioSelectionUi(selectedElements, {
+      syncSelectionOverlay,
+      hideDragHud,
+      hideDragHudOnClear: options.hideDragHudOnClear,
+      syncInspectorForSelection,
+      updateLayersList
+    });
+
+    return {
+      selectedElements,
+      selectedElement
+    };
+  }
+
+  function syncStudioSelectionUi(selectedElements = [], options = {}) {
+    const syncSelectionOverlay = typeof options.syncSelectionOverlay === 'function'
+      ? options.syncSelectionOverlay
+      : () => {};
+    const hideDragHud = typeof options.hideDragHud === 'function'
+      ? options.hideDragHud
+      : () => {};
+    const syncInspectorForSelection = typeof options.syncInspectorForSelection === 'function'
+      ? options.syncInspectorForSelection
+      : () => {};
+    const updateLayersList = typeof options.updateLayersList === 'function'
+      ? options.updateLayersList
+      : () => {};
+
     syncSelectionOverlay();
     if (options.hideDragHudOnClear && selectedElements.length === 0) {
       hideDragHud();
     }
     syncInspectorForSelection();
     updateLayersList();
+  }
 
-    return {
-      selectedElements,
-      selectedElement
-    };
+  function restoreCommittedStudioSelectionByIdsOnActiveSlide(selectedIds, doc, options = {}) {
+    const nextSelectionState = restoreStudioSelectionByIdsOnActiveSlide(selectedIds, doc, options);
+    const applySelectionState = typeof options.applySelectionState === 'function'
+      ? options.applySelectionState
+      : () => {};
+
+    applySelectionState({
+      selectedElements: nextSelectionState.selectedElements,
+      selectedElement: nextSelectionState.selectedElement
+    });
+    syncStudioSelectionUi(nextSelectionState.selectedElements, options);
+
+    return nextSelectionState;
   }
 
   return {
@@ -197,6 +235,8 @@
     updateStudioSelection,
     clearStudioSelection,
     selectAllStudioElements,
-    commitStudioSelectionState
+    commitStudioSelectionState,
+    syncStudioSelectionUi,
+    restoreCommittedStudioSelectionByIdsOnActiveSlide
   };
 });

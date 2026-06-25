@@ -1732,10 +1732,7 @@
         restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc, { preserveSelection: true }),
         restoreSelectionState: () => {
           preserveSelectionOnNextActiveSlideSync = true;
-          restoreSelectionByIdsOnActiveSlide(preservedSelectionIds, iframeDoc);
-          syncSelectionOverlay();
-          syncInspectorForSelection();
-          updateLayersList();
+          restoreCommittedSelectionByIdsOnActiveSlide(preservedSelectionIds, iframeDoc);
         },
         fallbackIndex: slideCount === 0 ? 0 : Math.min(toIdx, slideCount - 1),
         setActiveSlideByIndex: (index) => setActiveSlide(index)
@@ -1892,10 +1889,7 @@
         restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc, { preserveSelection: true }),
         restoreSelectionState: () => {
           preserveSelectionOnNextActiveSlideSync = true;
-          restoreSelectionByIdsOnActiveSlide(preservedSelectionIds, iframeDoc);
-          syncSelectionOverlay();
-          syncInspectorForSelection();
-          updateLayersList();
+          restoreCommittedSelectionByIdsOnActiveSlide(preservedSelectionIds, iframeDoc);
         },
         fallbackIndex: remainingSlides.length === 0 ? 0 : Math.max(0, Math.min(idx - 1, remainingSlides.length - 1)),
         setActiveSlideByIndex: (index) => setActiveSlide(index)
@@ -2237,6 +2231,26 @@
       );
       selectedElements = nextSelectionState.selectedElements;
       selectedElement = nextSelectionState.selectedElement;
+      return nextSelectionState.restored;
+    }
+
+    function restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc(), options = {}) {
+      const nextSelectionState = SlideNextStudioEditorSelection.restoreCommittedStudioSelectionByIdsOnActiveSlide(
+        selectedIds,
+        doc,
+        {
+          ...getEditorSelectionOptions(),
+          applySelectionState: (nextState) => {
+            selectedElements = nextState.selectedElements;
+            selectedElement = nextState.selectedElement;
+          },
+          syncSelectionOverlay,
+          hideDragHud,
+          hideDragHudOnClear: !!options.hideDragHudOnClear,
+          syncInspectorForSelection,
+          updateLayersList
+        }
+      );
       return nextSelectionState.restored;
     }
 
@@ -4133,10 +4147,7 @@
         deselectElement();
         return;
       }
-      restoreSelectionByIdsOnActiveSlide(preservedSelectionIds);
-      syncSelectionOverlay();
-      syncInspectorForSelection();
-      updateLayersList();
+      restoreCommittedSelectionByIdsOnActiveSlide(preservedSelectionIds);
     }
     
     function changeLayerZIndexByRef(event, action) {

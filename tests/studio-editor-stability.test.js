@@ -207,6 +207,60 @@ test('commitStudioSelectionState triggers the expected UI sync hooks', () => {
   assert.equal(calls.hideDragHud, 1);
 });
 
+test('restoreCommittedStudioSelectionByIdsOnActiveSlide applies selection state and syncs UI hooks', () => {
+  const activeElement = createElement('active');
+  const activeSlide = createSlide([activeElement]);
+  const doc = createSelectionDoc([activeElement]);
+  const elementsById = new Map([['active', activeElement]]);
+  const calls = {
+    applySelectionState: 0,
+    syncSelectionOverlay: 0,
+    hideDragHud: 0,
+    syncInspectorForSelection: 0,
+    updateLayersList: 0
+  };
+  let appliedState = null;
+
+  const result = selection.restoreCommittedStudioSelectionByIdsOnActiveSlide(
+    ['active'],
+    doc,
+    {
+      ...createSelectionOptions(activeSlide, elementsById),
+      applySelectionState(nextState) {
+        calls.applySelectionState += 1;
+        appliedState = nextState;
+      },
+      syncSelectionOverlay() {
+        calls.syncSelectionOverlay += 1;
+      },
+      hideDragHud() {
+        calls.hideDragHud += 1;
+      },
+      hideDragHudOnClear: true,
+      syncInspectorForSelection() {
+        calls.syncInspectorForSelection += 1;
+      },
+      updateLayersList() {
+        calls.updateLayersList += 1;
+      }
+    }
+  );
+
+  assert.equal(result.restored, true);
+  assert.deepEqual(appliedState, {
+    selectedElements: [activeElement],
+    selectedElement: activeElement
+  });
+  assert.deepEqual(calls, {
+    applySelectionState: 1,
+    syncSelectionOverlay: 1,
+    hideDragHud: 0,
+    syncInspectorForSelection: 1,
+    updateLayersList: 1
+  });
+  assert.equal(activeElement.classList.contains('editor-selected'), true);
+});
+
 test('restoreStudioDeckViewAfterSlideMutation prefers the preserved active slide before falling back', () => {
   const calls = {
     restoreActiveSlideById: [],
