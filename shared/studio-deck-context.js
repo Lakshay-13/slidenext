@@ -2,14 +2,17 @@
   const deckLoader = typeof module === 'object' && module.exports
     ? require('./deck-loader')
     : root && root.SlideNextDeckLoader;
-  const api = factory(deckLoader);
+  const canonicalDeck = typeof module === 'object' && module.exports
+    ? require('./canonical-deck')
+    : root && root.SlideNextCanonicalDeck;
+  const api = factory(deckLoader, canonicalDeck);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioDeckContext = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (deckLoader) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (deckLoader, canonicalDeck) {
   function buildStudioPresentationMetadataSeed(presentationUrl = '', presentationTitle = '') {
     if (!deckLoader || typeof deckLoader.buildPresentationMetadataSeed !== 'function') {
       return {
@@ -44,21 +47,36 @@
   }
 
   function buildStudioCanonicalDeck(doc, options = {}) {
-    if (!deckLoader || typeof deckLoader.buildCanonicalDeckFromDocument !== 'function') {
+    const buildCanonicalDeckFromDocument = typeof options.buildCanonicalDeckFromDocument === 'function'
+      ? options.buildCanonicalDeckFromDocument
+      : deckLoader && typeof deckLoader.buildCanonicalDeckFromDocument === 'function'
+        ? deckLoader.buildCanonicalDeckFromDocument
+        : null;
+    if (!buildCanonicalDeckFromDocument) {
       return null;
     }
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : canonicalDeck && typeof canonicalDeck.isCanonicalDeck === 'function'
+        ? canonicalDeck.isCanonicalDeck
+        : null;
 
     const presentationMetadata = options.currentPresentationMetadata
       || (typeof options.buildPresentationMetadataSeed === 'function'
         ? options.buildPresentationMetadataSeed(options.presentationUrl, options.presentationTitle)
         : buildStudioPresentationMetadataSeed(options.presentationUrl, options.presentationTitle));
 
-    return deckLoader.buildCanonicalDeckFromDocument(doc, {
+    const deck = buildCanonicalDeckFromDocument(doc, {
       presentationMetadata,
       sourcePath: options.presentationUrl || '',
       getSlideId: options.getSlideId,
       getNodeId: options.getNodeId
     });
+    if (deck && isCanonicalDeck && !isCanonicalDeck(deck)) {
+      return null;
+    }
+
+    return deck;
   }
 
   return {

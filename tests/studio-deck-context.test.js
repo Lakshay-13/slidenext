@@ -91,3 +91,56 @@ test('loadStudioPresentationMetadata skips committing stale metadata after the c
   });
   assert.deepEqual(committedMetadata, []);
 });
+
+test('buildStudioCanonicalDeck returns the validated deck from the canonical builder', () => {
+  const doc = { label: 'doc' };
+  const presentationMetadata = {
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: '/presentations/onboarding-presentation/index.html'
+  };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const builderCalls = [];
+  const result = deckContext.buildStudioCanonicalDeck(doc, {
+    currentPresentationMetadata: presentationMetadata,
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    getSlideId: () => 'slide-1',
+    getNodeId: () => 'node-1',
+    buildCanonicalDeckFromDocument(nextDoc, options) {
+      builderCalls.push({ nextDoc, options });
+      return canonicalDeck;
+    },
+    isCanonicalDeck: (deck) => deck === canonicalDeck
+  });
+
+  assert.equal(result, canonicalDeck);
+  assert.equal(builderCalls.length, 1);
+  assert.equal(builderCalls[0].nextDoc, doc);
+  assert.deepEqual(builderCalls[0].options, {
+    presentationMetadata,
+    sourcePath: '/presentations/onboarding-presentation/index.html',
+    getSlideId: builderCalls[0].options.getSlideId,
+    getNodeId: builderCalls[0].options.getNodeId
+  });
+  assert.equal(builderCalls[0].options.getSlideId(), 'slide-1');
+  assert.equal(builderCalls[0].options.getNodeId(), 'node-1');
+});
+
+test('buildStudioCanonicalDeck returns null when the canonical builder yields malformed data', () => {
+  const result = deckContext.buildStudioCanonicalDeck({ label: 'doc' }, {
+    buildCanonicalDeckFromDocument() {
+      return {
+        metadata: {
+          title: 'Broken Deck'
+        }
+      };
+    },
+    isCanonicalDeck: () => false
+  });
+
+  assert.equal(result, null);
+});
