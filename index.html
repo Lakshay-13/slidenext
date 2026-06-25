@@ -1976,8 +1976,7 @@
       if (!container) return;
       saveHistoryState();
       
-      const slides = container.querySelectorAll('.slide');
-      const newIndex = slides.length;
+      const newIndex = getSlides(iframeDoc).length;
       
       const newSlide = iframeDoc.createElement('section');
       newSlide.className = 'slide flex flex-col justify-center items-center';
@@ -3385,7 +3384,7 @@
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       
-      const activeSlide = iframeDoc.querySelector('.slide-active') || iframeDoc.querySelector('.slide');
+      const activeSlide = getActiveSlide(iframeDoc);
       if (!activeSlide) return;
 
       const offset = (activeSlide.children.length * 15) % 150;
@@ -3567,7 +3566,7 @@
     function applyPresetWallpaper(val, isCustomInput = false) {
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      const activeSlide = iframeDoc.querySelector('.slide-active') || iframeDoc.querySelector('.slide');
+      const activeSlide = getActiveSlide(iframeDoc);
       
       if (activeSlide) {
         activeSlide.style.background = val;
@@ -3618,13 +3617,13 @@
     function applyWallpaperToAllSlides() {
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      const activeSlide = iframeDoc.querySelector('.slide-active') || iframeDoc.querySelector('.slide');
+      const activeSlide = getActiveSlide(iframeDoc);
       
       if (!activeSlide) return;
       const paint = activeSlide.style.background;
       if (!paint) return;
       
-      const slides = iframeDoc.querySelectorAll('.slide');
+      const slides = getSlides(iframeDoc);
       slides.forEach(slide => {
         slide.style.background = paint;
       });
