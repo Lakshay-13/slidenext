@@ -1499,8 +1499,7 @@
       currentTitle = title;
       currentCategory = category || 'General';
       currentSlideIndex = 0;
-      lastPersistedDeckHtml = '';
-      persistedDeckPlaybackState = null;
+      resetEditorDeckPersistenceState();
       applyEditorSelectionState({});
       resetEditorHistoryState({ syncButtons: true });
       
@@ -1540,8 +1539,9 @@
       const iframe = document.getElementById('studioFrame');
       teardownDeckActiveSlideSync();
       currentPresentationMetadata = null;
-      lastPersistedDeckHtml = '';
-      persistedDeckPlaybackState = null;
+      resetEditorDeckPersistenceState();
+      deselectElement();
+      resetEditorHistoryState({ syncButtons: true });
       
       iframe.src = '';
       editor.classList.remove('active');
@@ -3574,6 +3574,11 @@
 
     function normalizeHistoryEntry(entry) {
       return SlideNextStudioHistory.normalizeStudioHistoryEntry(entry);
+    }
+
+    function resetEditorDeckPersistenceState() {
+      lastPersistedDeckHtml = '';
+      persistedDeckPlaybackState = null;
     }
 
     function resetEditorHistoryState(options = {}) {
