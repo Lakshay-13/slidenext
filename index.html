@@ -4101,10 +4101,20 @@
             }
           });
         } else {
-          alert(`Restore failed: ${data.error}`);
+          SlideNextStudioVersionActions.handleStudioVersionActionFailure(restoreContext, {
+            getCurrentPresentationUrl: () => currentPresentationUrl,
+            onFailure: () => {
+              alert(`Restore failed: ${data.error}`);
+            }
+          });
         }
       } catch (err) {
-        alert(`Network error restoring version: ${err.message}`);
+        SlideNextStudioVersionActions.handleStudioVersionActionFailure(restoreContext, {
+          getCurrentPresentationUrl: () => currentPresentationUrl,
+          onFailure: () => {
+            alert(`Network error restoring version: ${err.message}`);
+          }
+        });
       }
     }
 
@@ -4252,10 +4262,20 @@
             }
           });
         } else {
-          alert(`Delete failed: ${data.error}`);
+          SlideNextStudioVersionActions.handleStudioVersionActionFailure(deleteContext, {
+            getCurrentPresentationUrl: () => currentPresentationUrl,
+            onFailure: () => {
+              alert(`Delete failed: ${data.error}`);
+            }
+          });
         }
       } catch (err) {
-        alert(`Error deleting version: ${err.message}`);
+        SlideNextStudioVersionActions.handleStudioVersionActionFailure(deleteContext, {
+          getCurrentPresentationUrl: () => currentPresentationUrl,
+          onFailure: () => {
+            alert(`Error deleting version: ${err.message}`);
+          }
+        });
       }
     }
 
