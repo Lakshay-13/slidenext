@@ -1753,6 +1753,7 @@
     }
 
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
+      const previousIndex = currentSlideIndex;
       const nextViewState = SlideNextStudioDeckView.syncStudioActiveSlideView(doc, {
         normalizeViewport: options.normalizeViewport,
         getSlides,
@@ -1774,6 +1775,9 @@
         getSlideId: (slide) => slide.getAttribute(EDITOR_SLIDE_ID_ATTR) || '',
         updateIframeNavigationUI
       });
+      if (options.captureHistory && nextViewState.didSync && previousIndex !== currentSlideIndex) {
+        saveHistoryState(false);
+      }
       return nextViewState.didSync;
     }
 
@@ -1820,7 +1824,6 @@
       const slides = getSlides(iframeDoc);
       
       if (index < 0 || index >= slides.length) return;
-      const previousIndex = currentSlideIndex;
       
       // Apply translation to container
       const container = iframeDoc.getElementById('slidesContainer');
@@ -1837,10 +1840,7 @@
         }
       });
 
-      syncStudioChromeToActiveSlide(iframeDoc);
-      if (options.captureHistory && previousIndex !== currentSlideIndex) {
-        saveHistoryState(false);
-      }
+      syncStudioChromeToActiveSlide(iframeDoc, { captureHistory: options.captureHistory });
     }
 
     // Sync presentation's internal dots and counter
