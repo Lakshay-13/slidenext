@@ -932,6 +932,11 @@
             <span id="toggleLockSelectionLabel">Lock Selected</span>
           </button>
 
+          <button id="toggleVisibilitySelectionBtn" onclick="toggleSelectedElementsVisibility()" class="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+            <span id="toggleVisibilitySelectionIcon" class="material-symbols-outlined text-[16px]">visibility_off</span>
+            <span id="toggleVisibilitySelectionLabel">Hide Selected</span>
+          </button>
+
           <!-- Danger actions: Remove element -->
           <div class="flex flex-col gap-2">
             <button id="removeSelectionBtn" onclick="removeSelectedElement()" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-rose-500/10">
@@ -2225,7 +2230,9 @@
       const slide = getActiveSlide();
       if (!slide || !elements || elements.length === 0) return null;
       const metrics = slideMetrics || getSlideMetrics(slide);
-      const rects = elements.map(el => getRectOnSlide(el.getBoundingClientRect(), metrics));
+      const measurableElements = elements.filter(el => !isElementHidden(el));
+      if (measurableElements.length === 0) return null;
+      const rects = measurableElements.map(el => getRectOnSlide(el.getBoundingClientRect(), metrics));
       const left = Math.min(...rects.map(r => r.left));
       const top = Math.min(...rects.map(r => r.top));
       const right = Math.max(...rects.map(r => r.right));
@@ -2247,6 +2254,13 @@
       const overlay = ensureSelectionOverlay(doc, slide);
 
       if (selectedElements.length === 0) {
+        overlay.style.display = 'none';
+        hideGuides();
+        hideDragHud();
+        return;
+      }
+
+      if (selectedElements.every(isElementHidden)) {
         overlay.style.display = 'none';
         hideGuides();
         hideDragHud();
@@ -2278,6 +2292,7 @@
       const count = selectedElements.length;
       updateClipboardActionState();
       updateLockActionState();
+      updateVisibilityActionState();
       if (count === 0) {
         document.getElementById('inspectorTargetLabel').innerHTML = `
           <span class="material-symbols-outlined text-[16px] text-[#7028d0]">settings_suggest</span>
@@ -2407,6 +2422,33 @@
       return elements.some(isElementLocked);
     }
 
+    function isElementHidden(el) {
+      return !!(el && el.dataset && el.dataset.editorHidden === 'true');
+    }
+
+    function setElementHiddenState(el, hidden) {
+      if (!el || !el.isConnected) return;
+      if (hidden) {
+        if (!Object.prototype.hasOwnProperty.call(el.dataset, 'editorPrevDisplay')) {
+          el.dataset.editorPrevDisplay = el.style.display || '';
+        }
+        el.dataset.editorHidden = 'true';
+        el.style.display = 'none';
+        return;
+      }
+
+      const prevDisplay = Object.prototype.hasOwnProperty.call(el.dataset, 'editorPrevDisplay')
+        ? el.dataset.editorPrevDisplay
+        : '';
+      if (prevDisplay) {
+        el.style.display = prevDisplay;
+      } else {
+        el.style.removeProperty('display');
+      }
+      delete el.dataset.editorHidden;
+      delete el.dataset.editorPrevDisplay;
+    }
+
     function updateLockActionState() {
       const hasSelection = selectedElements.length > 0;
       const allLocked = hasSelection && selectedElements.every(isElementLocked);
@@ -2418,6 +2460,17 @@
       if (lockIcon) lockIcon.textContent = allLocked ? 'lock_open' : 'lock';
       if (lockLabel) lockLabel.textContent = allLocked ? 'Unlock Selected' : 'Lock Selected';
       if (removeBtn) removeBtn.disabled = selectionHasLockedElements();
+    }
+
+    function updateVisibilityActionState() {
+      const hasSelection = selectedElements.length > 0;
+      const allHidden = hasSelection && selectedElements.every(isElementHidden);
+      const visibilityBtn = document.getElementById('toggleVisibilitySelectionBtn');
+      const visibilityIcon = document.getElementById('toggleVisibilitySelectionIcon');
+      const visibilityLabel = document.getElementById('toggleVisibilitySelectionLabel');
+      if (visibilityBtn) visibilityBtn.disabled = !hasSelection;
+      if (visibilityIcon) visibilityIcon.textContent = allHidden ? 'visibility' : 'visibility_off';
+      if (visibilityLabel) visibilityLabel.textContent = allHidden ? 'Show Selected' : 'Hide Selected';
     }
 
     function toggleSelectedElementsLockState() {
@@ -2438,6 +2491,20 @@
       saveHistoryState();
       triggerAutoSave();
       triggerAutoVersion(shouldLock ? 'Auto: Locked Element' : 'Auto: Unlocked Element');
+      return true;
+    }
+
+    function toggleSelectedElementsVisibility() {
+      if (selectedElements.length === 0) return false;
+      const shouldHide = !selectedElements.every(isElementHidden);
+      selectedElements.forEach(el => setElementHiddenState(el, shouldHide));
+      refreshSelectionClasses();
+      syncSelectionOverlay();
+      syncInspectorForSelection();
+      updateLayersList();
+      saveHistoryState();
+      triggerAutoSave();
+      triggerAutoVersion(shouldHide ? 'Auto: Hid Element' : 'Auto: Showed Element');
       return true;
     }
 
@@ -3941,6 +4008,7 @@
         
         const zIndex = el.style.zIndex || '0';
         const isLocked = isElementLocked(el);
+        const isHidden = isElementHidden(el);
         
         const activeClass = isSelected 
           ? 'border-[#7028d0] bg-[#7028d0]/10 text-white font-semibold' 
@@ -3952,9 +4020,13 @@
               <span class="material-symbols-outlined text-[14px] text-[#7028d0] flex-shrink-0">${typeIcon}</span>
               <span class="truncate" style="font-size: 10px;">${displayName}</span>
               ${isLocked ? '<span class="material-symbols-outlined text-[11px] text-amber-400 flex-shrink-0" title="Locked">lock</span>' : ''}
+              ${isHidden ? '<span class="material-symbols-outlined text-[11px] text-zinc-500 flex-shrink-0" title="Hidden">visibility_off</span>' : ''}
               <span class="text-[9px] text-zinc-500 font-bold ml-auto flex-shrink-0">z:${zIndex}</span>
             </button>
             <div class="flex items-center gap-1 flex-shrink-0 ml-1">
+              <button onclick="toggleLayerVisibilityByRef(event)" class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded" title="${isHidden ? 'Show Element' : 'Hide Element'}">
+                <span class="material-symbols-outlined text-[12px]">${isHidden ? 'visibility' : 'visibility_off'}</span>
+              </button>
               <button onclick="changeLayerZIndexByRef(event, 'forward')" ${isLocked ? 'disabled' : ''} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Bring Forward">
                 <span class="material-symbols-outlined text-[12px]">keyboard_arrow_up</span>
               </button>
@@ -3983,6 +4055,16 @@
         selectElement(parentRow.elementRef, { additive: event.shiftKey, toggle: event.shiftKey });
         updateLayersList();
       }
+    }
+
+    function toggleLayerVisibilityByRef(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      const parentRow = event.currentTarget.closest('[class*="border"]');
+      if (!parentRow || !parentRow.elementRef) return;
+      selectedElements = [parentRow.elementRef];
+      refreshSelectionClasses();
+      toggleSelectedElementsVisibility();
     }
     
     function changeLayerZIndexByRef(event, action) {
