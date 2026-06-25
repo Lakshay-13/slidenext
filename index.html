@@ -1015,6 +1015,7 @@
   <script src="/shared/deck-model.js"></script>
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
+  <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
@@ -2248,6 +2249,17 @@
       };
     }
 
+    function getEditorSelectionOptions(options = {}) {
+      return {
+        selectionClassName: 'editor-selected',
+        isEligibleElement: isEligibleEditableElement,
+        getElementId: assignEditorElementId,
+        getActiveSlide,
+        getElementById: getElementByEditorId,
+        ...options
+      };
+    }
+
     function createEditorSlideId() {
       return SlideNextStudioEditorDom.createStudioSlideId();
     }
@@ -2352,14 +2364,11 @@
     }
 
     function getSelectedEditorElementIds(elements = selectedElements) {
-      return elements
-        .filter(el => el && el.isConnected && isEligibleEditableElement(el))
-        .map(el => assignEditorElementId(el));
+      return SlideNextStudioEditorSelection.getStudioSelectedElementIds(elements, getEditorSelectionOptions());
     }
 
     function areEditorIdListsEqual(a = [], b = []) {
-      if (a.length !== b.length) return false;
-      return a.every((id, index) => id === b[index]);
+      return SlideNextStudioEditorSelection.areStudioIdListsEqual(a, b);
     }
 
     function getActiveSlide(doc = getIframeDoc()) {
@@ -2487,25 +2496,24 @@
 
     function refreshSelectionClasses() {
       const doc = getIframeDoc();
-      if (!doc) return;
-      doc.querySelectorAll('.editor-selected').forEach(el => el.classList.remove('editor-selected'));
-      selectedElements = selectedElements.filter(el => el && el.isConnected && isEligibleEditableElement(el));
-      selectedElements.forEach(el => el.classList.add('editor-selected'));
-      selectedElement = selectedElements[0] || null;
+      const nextSelectionState = SlideNextStudioEditorSelection.refreshStudioSelectionClasses(
+        doc,
+        selectedElements,
+        getEditorSelectionOptions()
+      );
+      selectedElements = nextSelectionState.selectedElements;
+      selectedElement = nextSelectionState.selectedElement;
     }
 
     function restoreSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc()) {
-      const activeSlide = getActiveSlide(doc);
-      if (!activeSlide || !Array.isArray(selectedIds) || selectedIds.length === 0) {
-        selectedElements = [];
-        refreshSelectionClasses();
-        return false;
-      }
-      selectedElements = selectedIds
-        .map(id => getElementByEditorId(id, doc))
-        .filter(el => el && el.isConnected && activeSlide.contains(el));
-      refreshSelectionClasses();
-      return selectedElements.length > 0;
+      const nextSelectionState = SlideNextStudioEditorSelection.restoreStudioSelectionByIdsOnActiveSlide(
+        selectedIds,
+        doc,
+        getEditorSelectionOptions()
+      );
+      selectedElements = nextSelectionState.selectedElements;
+      selectedElement = nextSelectionState.selectedElement;
+      return nextSelectionState.restored;
     }
 
     function ensureSelectionOverlay(doc, slide) {
