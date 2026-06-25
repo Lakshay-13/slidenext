@@ -2014,13 +2014,17 @@
         return;
       }
       saveHistoryState();
+      const activeSlideId = getActiveSlide(iframeDoc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
+      const deletedSlideId = slides[idx]?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
       
       slides[idx].remove();
       
-      // Navigate to nearby
-      const nextActiveIdx = Math.max(0, idx - 1);
       generateThumbnails();
-      setActiveSlide(nextActiveIdx);
+      if (!activeSlideId || activeSlideId === deletedSlideId || !setActiveSlideById(activeSlideId, iframeDoc)) {
+        const remainingSlides = getSlides(iframeDoc);
+        const nextActiveIdx = remainingSlides.length === 0 ? 0 : Math.max(0, Math.min(idx - 1, remainingSlides.length - 1));
+        setActiveSlide(nextActiveIdx);
+      }
       saveHistoryState();
       triggerAutoSave();
       triggerAutoVersion('Auto: Deleted Slide');
