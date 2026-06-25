@@ -1731,8 +1731,7 @@
         preservedActiveSlideId: activeSlideId,
         restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc, { preserveSelection: true }),
         restoreSelectionState: () => {
-          preserveSelectionOnNextActiveSlideSync = true;
-          restoreCommittedSelectionByIdsOnActiveSlide(preservedSelectionIds, iframeDoc);
+          restoreSelectionAfterPreservedSlideMutation(preservedSelectionIds, iframeDoc);
         },
         fallbackIndex: slideCount === 0 ? 0 : Math.min(toIdx, slideCount - 1),
         setActiveSlideByIndex: (index) => setActiveSlide(index)
@@ -1888,8 +1887,7 @@
         removedSlideId: deletedSlideId,
         restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc, { preserveSelection: true }),
         restoreSelectionState: () => {
-          preserveSelectionOnNextActiveSlideSync = true;
-          restoreCommittedSelectionByIdsOnActiveSlide(preservedSelectionIds, iframeDoc);
+          restoreSelectionAfterPreservedSlideMutation(preservedSelectionIds, iframeDoc);
         },
         fallbackIndex: remainingSlides.length === 0 ? 0 : Math.max(0, Math.min(idx - 1, remainingSlides.length - 1)),
         setActiveSlideByIndex: (index) => setActiveSlide(index)
@@ -2252,6 +2250,11 @@
         }
       );
       return nextSelectionState.restored;
+    }
+
+    function restoreSelectionAfterPreservedSlideMutation(selectedIds, doc = getIframeDoc()) {
+      preserveSelectionOnNextActiveSlideSync = true;
+      return restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc);
     }
 
     function ensureSelectionOverlay(doc, slide) {
