@@ -2091,14 +2091,9 @@
     }
 
     function pruneEditorChromeNodes(doc = getIframeDoc(), activeSlide = getActiveSlide(doc)) {
-      if (!doc) return;
-      EDITOR_CHROME_NODE_IDS.forEach(nodeId => {
-        const matches = Array.from(doc.querySelectorAll(`#${nodeId}`));
-        const keepNode = activeSlide ? matches.find(node => activeSlide.contains(node)) || null : null;
-        matches.forEach(node => {
-          if (keepNode && node === keepNode) return;
-          node.remove();
-        });
+      SlideNextStudioEditorDom.pruneStudioChromeNodes(doc, {
+        activeSlide,
+        chromeNodeIds: EDITOR_CHROME_NODE_IDS
       });
     }
 
