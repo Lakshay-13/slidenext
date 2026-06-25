@@ -3820,6 +3820,44 @@
       updateLayersList();
     }
 
+    function buildPersistableDeckHtml(doc = getIframeDoc()) {
+      if (!doc) return '';
+
+      const clone = doc.documentElement.cloneNode(true);
+      const removableEditorNodeIds = [
+        'editor-style-tag',
+        'editor-theme-override-tag',
+        'editorSelectionOverlay',
+        'editorGuidesLayer'
+      ];
+
+      removableEditorNodeIds.forEach(nodeId => {
+        const node = clone.querySelector(`#${nodeId}`);
+        if (node) node.remove();
+      });
+
+      clone.querySelectorAll('.editor-selected').forEach(el => {
+        el.classList.remove('editor-selected');
+      });
+      clone.querySelectorAll('.editor-hoverable').forEach(el => {
+        el.classList.remove('editor-hoverable');
+      });
+      clone.querySelectorAll('.editor-dragging').forEach(el => {
+        el.classList.remove('editor-dragging');
+      });
+      clone.querySelectorAll(`[${EDITOR_ELEMENT_ID_ATTR}]`).forEach(node => {
+        node.removeAttribute(EDITOR_ELEMENT_ID_ATTR);
+      });
+      clone.querySelectorAll(`[${EDITOR_SLIDE_ID_ATTR}]`).forEach(node => {
+        node.removeAttribute(EDITOR_SLIDE_ID_ATTR);
+      });
+
+      // Persist the deck markup without editor chrome state.
+      clone.classList.add('dark');
+
+      return '<!DOCTYPE html>\n' + clone.outerHTML;
+    }
+
     // 6. AutoSave debouncing pipeline
     let autoSaveDebounceTimer = null;
     function triggerAutoSave() {
@@ -3833,33 +3871,7 @@
         const iframe = document.getElementById('studioFrame');
         const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
         if (!iframeDoc || !currentPresentationUrl) return;
-        
-        // Clone and clean HTML
-        const clone = iframeDoc.documentElement.cloneNode(true);
-        const styleTag = clone.querySelector('#editor-style-tag');
-        if (styleTag) styleTag.remove();
-        
-        const themeOverrideTag = clone.querySelector('#editor-theme-override-tag');
-        if (themeOverrideTag) themeOverrideTag.remove();
-        const selectionOverlayTag = clone.querySelector('#editorSelectionOverlay');
-        if (selectionOverlayTag) selectionOverlayTag.remove();
-        const guidesLayerTag = clone.querySelector('#editorGuidesLayer');
-        if (guidesLayerTag) guidesLayerTag.remove();
-        
-        clone.querySelectorAll('.editor-selected').forEach(el => {
-          el.classList.remove('editor-selected');
-        });
-        clone.querySelectorAll('.editor-hoverable').forEach(el => {
-          el.classList.remove('editor-hoverable');
-        });
-        clone.querySelectorAll('.editor-dragging').forEach(el => {
-          el.classList.remove('editor-dragging');
-        });
-        
-        // Restore default dark theme class on disk
-        clone.classList.add('dark');
-        
-        const cleanHtml = '<!DOCTYPE html>\n' + clone.outerHTML;
+        const cleanHtml = buildPersistableDeckHtml(iframeDoc);
         
         try {
           const response = await fetch('/api/save', {
@@ -3941,32 +3953,7 @@
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       if (!iframeDoc) return;
-      
-      const clone = iframeDoc.documentElement.cloneNode(true);
-      const styleTag = clone.querySelector('#editor-style-tag');
-      if (styleTag) styleTag.remove();
-      
-      const themeOverrideTag = clone.querySelector('#editor-theme-override-tag');
-      if (themeOverrideTag) themeOverrideTag.remove();
-      const selectionOverlayTag = clone.querySelector('#editorSelectionOverlay');
-      if (selectionOverlayTag) selectionOverlayTag.remove();
-      const guidesLayerTag = clone.querySelector('#editorGuidesLayer');
-      if (guidesLayerTag) guidesLayerTag.remove();
-      
-      clone.querySelectorAll('.editor-selected').forEach(el => {
-        el.classList.remove('editor-selected');
-      });
-      clone.querySelectorAll('.editor-hoverable').forEach(el => {
-        el.classList.remove('editor-hoverable');
-      });
-      clone.querySelectorAll('.editor-dragging').forEach(el => {
-        el.classList.remove('editor-dragging');
-      });
-      
-      // Restore default dark theme class on disk
-      clone.classList.add('dark');
-      
-      const cleanHtml = '<!DOCTYPE html>\n' + clone.outerHTML;
+      const cleanHtml = buildPersistableDeckHtml(iframeDoc);
       
       try {
         const response = await fetch('/api/save', {
@@ -4022,34 +4009,7 @@
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       if (!iframeDoc || !currentPresentationUrl) return;
-      
-      const clone = iframeDoc.documentElement.cloneNode(true);
-      
-      // Clean up editor specific elements/classes
-      const styleTag = clone.querySelector('#editor-style-tag');
-      if (styleTag) styleTag.remove();
-      
-      const themeOverrideTag = clone.querySelector('#editor-theme-override-tag');
-      if (themeOverrideTag) themeOverrideTag.remove();
-      const selectionOverlayTag = clone.querySelector('#editorSelectionOverlay');
-      if (selectionOverlayTag) selectionOverlayTag.remove();
-      const guidesLayerTag = clone.querySelector('#editorGuidesLayer');
-      if (guidesLayerTag) guidesLayerTag.remove();
-      
-      clone.querySelectorAll('.editor-selected').forEach(el => {
-        el.classList.remove('editor-selected');
-      });
-      clone.querySelectorAll('.editor-hoverable').forEach(el => {
-        el.classList.remove('editor-hoverable');
-      });
-      clone.querySelectorAll('.editor-dragging').forEach(el => {
-        el.classList.remove('editor-dragging');
-      });
-      
-      // Restore default dark theme class on disk
-      clone.classList.add('dark');
-      
-      const cleanHtml = '<!DOCTYPE html>\n' + clone.outerHTML;
+      const cleanHtml = buildPersistableDeckHtml(iframeDoc);
       
       try {
         const response = await fetch('/api/save', {
