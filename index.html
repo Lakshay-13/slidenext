@@ -1046,11 +1046,12 @@
         if (editor.classList.contains('active') || editor.style.opacity === '1') {
           const activeEl = document.activeElement;
           const isTypingContext = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
-          if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+          const loweredKey = e.key.toLowerCase();
+          if ((e.ctrlKey || e.metaKey) && loweredKey === 'z' && !e.shiftKey) {
             e.preventDefault();
             editorUndo();
           }
-          if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+          if ((e.ctrlKey || e.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && e.shiftKey))) {
             e.preventDefault();
             editorRedo();
           }
@@ -1583,12 +1584,13 @@
       
       // 4. Setup Keydown bubble
       iframeDoc.addEventListener('keydown', (e) => {
+        const loweredKey = e.key.toLowerCase();
         // Allow shortcut keys (Ctrl+Z, Ctrl+Y)
-        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        if ((e.ctrlKey || e.metaKey) && loweredKey === 'z' && !e.shiftKey) {
           e.preventDefault();
           editorUndo();
         }
-        if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        if ((e.ctrlKey || e.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && e.shiftKey))) {
           e.preventDefault();
           editorRedo();
         }
