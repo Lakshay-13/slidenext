@@ -75,6 +75,23 @@ async function ensureDir(dirPath) {
   }
 }
 
+const VERSION_BACKUP_TIMESTAMP_PATTERN = String.raw`(?:\d{8}|\d{4}-\d{2}-\d{2})_\d{6}(?:_\d{3})?`;
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildVersionBackupRegex(base, ext) {
+  return new RegExp(`^${escapeRegex(base)}_${VERSION_BACKUP_TIMESTAMP_PATTERN}(?:_.*)?${escapeRegex(ext)}$`);
+}
+
+function extractVersionTimestampPrefix(versionFilename, base, ext) {
+  const match = versionFilename.match(
+    new RegExp(`^(${escapeRegex(base)}_${VERSION_BACKUP_TIMESTAMP_PATTERN})(?:_.*)?${escapeRegex(ext)}$`)
+  );
+  return match ? match[1] : '';
+}
+
 // 2. API: Overwrite index.html and save a timestamped backup in .versions/
 app.post('/api/save', async (req, res) => {
   const { htmlPath, htmlContent, isAutoSave, versionLabel } = req.body;
@@ -147,13 +164,9 @@ app.get('/api/versions', async (req, res) => {
 
     try {
       const files = await fs.readdir(versionsDir);
-      // Support both legacy and current backup timestamps:
-      // base_(YYYYMMDD|YYYY-MM-DD)_HHMMSS[_mmm][_Label]
       const ext = path.extname(targetFile);
       const base = path.basename(targetFile, ext);
-      const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const escapedExt = ext.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const backupRegex = new RegExp(`^${escapedBase}_(?:\\d{8}|\\d{4}-\\d{2}-\\d{2})_\\d{6}(?:_\\d{3})?(?:_.*)?${escapedExt}$`);
+      const backupRegex = buildVersionBackupRegex(base, ext);
 
       const versions = [];
       for (const file of files) {
@@ -245,16 +258,10 @@ app.post('/api/versions/rename', async (req, res) => {
 
     const ext = path.extname(targetFile);
     const base = path.basename(targetFile, ext);
-    const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const escapedExt = ext.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-    // Support both legacy and current backup timestamps:
-    // base_(YYYYMMDD|YYYY-MM-DD)_HHMMSS[_mmm]
-    const match = versionFilename.match(new RegExp(`^(${escapedBase}_(?:\\d{8}|\\d{4}-\\d{2}-\\d{2})_\\d{6}(?:_\\d{3})?)(?:_.*)?${escapedExt}$`));
-    if (!match) {
+    const timestampPart = extractVersionTimestampPrefix(versionFilename, base, ext);
+    if (!timestampPart) {
       return res.status(400).json({ error: 'Invalid version filename format' });
     }
-    const timestampPart = match[1];
 
     const cleanLabel = newLabel.replace(/[^a-zA-Z0-9_-]/g, '_');
     const newFilename = `${timestampPart}_${cleanLabel}${ext}`;

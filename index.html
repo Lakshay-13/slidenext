@@ -4226,33 +4226,37 @@
         const urlParts = currentPresentationUrl.split('/');
         const lastPart = urlParts[urlParts.length - 1];
         const baseName = lastPart.substring(0, lastPart.lastIndexOf('.'));
-        const prefix = baseName + '_';
         
-        list.innerHTML = versions.map(v => {
-          const date = new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + 
-                       new Date(v.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
-          
-          let cleanName = v.filename;
+        function deriveVersionDisplayLabel(versionFilename, deckBaseName) {
+          const prefix = `${deckBaseName}_`;
+          let cleanName = versionFilename;
           if (cleanName.startsWith(prefix)) {
             cleanName = cleanName.substring(prefix.length);
           }
+
           const extIndex = cleanName.lastIndexOf('.');
           if (extIndex !== -1) {
             cleanName = cleanName.substring(0, extIndex);
           }
-          
-          // Support both legacy and current backup timestamps:
-          // (YYYYMMDD|YYYY-MM-DD)_HHMMSS[_mmm]
-          let label = 'Manual Checkpoint';
+
           const labelMatch = cleanName.match(/^(?:\d{8}|\d{4}-\d{2}-\d{2})_\d{6}(?:_\d{3})?_(.+)$/);
           if (labelMatch) {
-            const rawLabel = labelMatch[1];
-            label = rawLabel
+            return labelMatch[1]
               .replace(/__/g, ': ')
               .replace(/_/g, ' ');
-          } else if (v.filename.includes('Auto')) {
-            label = 'Auto Saved Version';
           }
+
+          if (versionFilename.includes('Auto')) {
+            return 'Auto Saved Version';
+          }
+
+          return 'Manual Checkpoint';
+        }
+        
+        list.innerHTML = versions.map(v => {
+          const date = new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + 
+                       new Date(v.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
+          const label = deriveVersionDisplayLabel(v.filename, baseName);
           
           return `
             <div class="w-full px-3 py-1.5 hover:bg-white/5 rounded transition-all font-sans text-xs flex justify-between items-center group/item text-zinc-300 relative">
