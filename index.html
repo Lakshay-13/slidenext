@@ -1018,6 +1018,7 @@
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
   <script src="/shared/studio-modal-visibility.js"></script>
+  <script src="/shared/presentation-library.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
@@ -1048,6 +1049,7 @@
     let redoStack = [];
     let wallpaperTab = 'solid';
     let activeCategory = 'all';
+    let presentationLibraryData = [];
     let isDraggingElement = false;
     let zoomFactor = 1.0;
     let customGradientType = 'linear';
@@ -1296,13 +1298,14 @@
       try {
         const response = await fetch('/api/presentations');
         const data = await response.json();
+        presentationLibraryData = SlideNextPresentationLibrary.normalizePresentationLibraryData(data);
         
         document.getElementById('loader').classList.add('hidden');
         document.getElementById('categoryTabs').classList.remove('hidden');
         document.getElementById('presentationsGrid').classList.remove('hidden');
         
-        renderCategories(data);
-        renderGrid(data);
+        renderCategories(presentationLibraryData);
+        renderGrid(presentationLibraryData);
       } catch (err) {
         console.error('Error fetching presentations:', err);
         document.getElementById('loader').innerHTML = `
@@ -1316,8 +1319,7 @@
     function renderCategories(data) {
       const container = document.getElementById('categoryTabs');
       
-      // Get unique category names
-      const categories = ['all', ...data.map(d => d.category)];
+      const categories = SlideNextPresentationLibrary.listPresentationLibraryCategories(data);
       
       container.innerHTML = categories.map(cat => {
         const isActive = activeCategory === cat;
@@ -1343,9 +1345,7 @@
       });
       
       // Reload UI filtering
-      fetch('/api/presentations')
-        .then(res => res.json())
-        .then(data => renderGrid(data));
+      renderGrid(presentationLibraryData);
     }
 
     // Render grid cards
@@ -1353,15 +1353,7 @@
       const grid = document.getElementById('presentationsGrid');
       grid.innerHTML = '';
       
-      let items = [];
-      if (activeCategory === 'all') {
-        data.forEach(catGroup => {
-          items = items.concat(catGroup.presentations);
-        });
-      } else {
-        const group = data.find(g => g.category === activeCategory);
-        if (group) items = group.presentations;
-      }
+      const items = SlideNextPresentationLibrary.resolvePresentationLibraryItems(data, activeCategory);
       
       if (items.length === 0) {
         grid.innerHTML = `<p class="col-span-2 text-center text-zinc-500 text-sm font-mono py-8">No presentations found in this category.</p>`;
