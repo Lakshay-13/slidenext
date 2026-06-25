@@ -3928,11 +3928,12 @@
       
       // Re-generate and restore slide focus with an index fallback for older snapshots.
       generateThumbnails();
-      if (!historyEntry.activeSlideId || !setActiveSlideById(historyEntry.activeSlideId, iframeDoc)) {
-        const slideCount = getSlides(iframeDoc).length;
-        const nextIndex = slideCount === 0 ? 0 : Math.min(fallbackIndex, slideCount - 1);
-        setActiveSlide(nextIndex);
-      }
+      SlideNextStudioHistory.restoreStudioHistoryActiveSlide(historyEntry, {
+        fallbackIndex,
+        restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc),
+        getSlideCount: () => getSlides(iframeDoc).length,
+        setActiveSlideByIndex: (index) => setActiveSlide(index)
+      });
       restoreSelectionByIdsOnActiveSlide(historyEntry.selectedElementIds, iframeDoc);
       syncSelectionOverlay();
       syncInspectorForSelection();
