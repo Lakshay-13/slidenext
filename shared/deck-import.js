@@ -2,20 +2,25 @@
   const canonicalDeck = typeof module === 'object' && module.exports
     ? require('./canonical-deck')
     : root && root.SlideNextCanonicalDeck;
-  const api = factory(canonicalDeck);
+  const deckPersistence = typeof module === 'object' && module.exports
+    ? require('./deck-persistence')
+    : null;
+  const api = factory(root, canonicalDeck, deckPersistence);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextDeckImport = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (canonicalDeck) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, canonicalDeck, deckPersistence) {
   if (!canonicalDeck) {
     throw new Error('SlideNextCanonicalDeck dependency is required');
   }
 
   const DEFAULT_SKIP_TAG_NAMES = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE']);
   const DEFAULT_IGNORED_THEME_STYLE_IDS = new Set(['editor-style-tag']);
+  const DEFAULT_SOURCE_IGNORED_NODE_IDS = ['editor-style-tag', 'editor-theme-override-tag'];
+  const DEFAULT_SOURCE_TRANSIENT_CLASSES = ['editor-selected', 'editor-hoverable', 'editor-dragging'];
   const STYLE_URL_PATTERN = /url\((?:'([^']*)'|"([^"]*)"|([^)]*))\)/gi;
 
   function asPlainObject(value) {
@@ -537,17 +542,90 @@
     };
   }
 
-  function buildDocumentHtml(doc) {
-    if (!doc || !doc.documentElement) return '';
-    return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  function resolveDocumentElement(docOrElement) {
+    if (!docOrElement) return null;
+    if (docOrElement.documentElement) {
+      return docOrElement.documentElement;
+    }
+    return docOrElement;
   }
 
-  function buildDeckSource(doc) {
+  function buildDocumentHtml(docOrElement) {
+    const documentElement = resolveDocumentElement(docOrElement);
+    if (!documentElement) return '';
+    return '<!DOCTYPE html>\n' + documentElement.outerHTML;
+  }
+
+  function resolveDeckPersistenceStripper(options = {}) {
+    if (typeof options.stripTransientDeckRuntimeState === 'function') {
+      return options.stripTransientDeckRuntimeState;
+    }
+    if (deckPersistence && typeof deckPersistence.stripTransientDeckRuntimeState === 'function') {
+      return deckPersistence.stripTransientDeckRuntimeState;
+    }
+    const runtimeDeckPersistence = root && root.SlideNextDeckPersistence;
+    return runtimeDeckPersistence && typeof runtimeDeckPersistence.stripTransientDeckRuntimeState === 'function'
+      ? runtimeDeckPersistence.stripTransientDeckRuntimeState
+      : null;
+  }
+
+  function sanitizeDeckSourceClone(sourceClone, options = {}) {
+    if (!sourceClone || typeof sourceClone.querySelectorAll !== 'function') {
+      return sourceClone;
+    }
+
+    const ignoredNodeIds = Array.isArray(options.ignoredNodeIds)
+      ? options.ignoredNodeIds
+      : DEFAULT_SOURCE_IGNORED_NODE_IDS;
+    const transientClassNames = Array.isArray(options.transientClassNames)
+      ? options.transientClassNames
+      : DEFAULT_SOURCE_TRANSIENT_CLASSES;
+    const editorElementIdAttr = options.editorElementIdAttr || 'data-editor-id';
+    const editorSlideIdAttr = options.editorSlideIdAttr || 'data-slide-id';
+
+    ignoredNodeIds.forEach((nodeId) => {
+      sourceClone.querySelectorAll(`#${nodeId}`).forEach((node) => node.remove());
+    });
+
+    transientClassNames.forEach((className) => {
+      sourceClone.querySelectorAll(`.${className}`).forEach((node) => {
+        if (node && node.classList && typeof node.classList.remove === 'function') {
+          node.classList.remove(className);
+        }
+      });
+    });
+
+    sourceClone.querySelectorAll(`[${editorElementIdAttr}]`).forEach((node) => {
+      node.removeAttribute(editorElementIdAttr);
+    });
+    sourceClone.querySelectorAll(`[${editorSlideIdAttr}]`).forEach((node) => {
+      node.removeAttribute(editorSlideIdAttr);
+    });
+
+    const stripTransientDeckRuntimeState = resolveDeckPersistenceStripper(options);
+    if (stripTransientDeckRuntimeState) {
+      stripTransientDeckRuntimeState(sourceClone, options.persistenceOptions || options);
+    }
+
+    return sourceClone;
+  }
+
+  function buildDeckSource(doc, options = {}) {
+    const sourceClone = doc && doc.documentElement && typeof doc.documentElement.cloneNode === 'function'
+      ? sanitizeDeckSourceClone(doc.documentElement.cloneNode(true), options)
+      : null;
+    const sourceHead = sourceClone && typeof sourceClone.querySelector === 'function'
+      ? sourceClone.querySelector('head')
+      : doc && doc.head ? doc.head : null;
+    const sourceBody = sourceClone && typeof sourceClone.querySelector === 'function'
+      ? sourceClone.querySelector('body')
+      : doc && doc.body ? doc.body : null;
+
     return {
-      html: buildDocumentHtml(doc),
-      headHtml: doc.head ? doc.head.innerHTML : '',
-      bodyHtml: doc.body ? doc.body.innerHTML : '',
-      bodyAttributes: doc.body ? extractAttributeMap(doc.body) : {}
+      html: buildDocumentHtml(sourceClone || doc),
+      headHtml: sourceHead ? sourceHead.innerHTML : '',
+      bodyHtml: sourceBody ? sourceBody.innerHTML : '',
+      bodyAttributes: sourceBody ? extractAttributeMap(sourceBody) : {}
     };
   }
 
@@ -568,12 +646,13 @@
       layout: inferDeckLayout(doc, slides, options),
       assets: collectDeckAssets(doc),
       slides: slides.map((slide, index) => importSlideToCanonicalSlide(slide, index, options)),
-      source: buildDeckSource(doc)
+      source: buildDeckSource(doc, options)
     });
   }
 
   return {
     DEFAULT_SKIP_TAG_NAMES,
+    buildDeckSource,
     collectDeckCustomCss,
     collectDeckThemeTokens,
     extractCssUrlValues,
@@ -581,6 +660,7 @@
     inferImportedNodeType,
     importElementToCanonicalNode,
     importSlideToCanonicalSlide,
+    sanitizeDeckSourceClone,
     importHtmlDeckToCanonicalDeck
   };
 });
