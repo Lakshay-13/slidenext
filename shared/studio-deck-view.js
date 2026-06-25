@@ -131,6 +131,9 @@
     const syncStudioChromeToActiveSlide = typeof options.syncStudioChromeToActiveSlide === 'function'
       ? options.syncStudioChromeToActiveSlide
       : () => {};
+    const getSyncStudioChromeOptions = typeof options.getSyncStudioChromeOptions === 'function'
+      ? options.getSyncStudioChromeOptions
+      : () => options.syncStudioChromeOptions || {};
 
     const originalGoToSlide = getGoToSlide(frameWin);
     if (!doc || !frameWin || typeof originalGoToSlide !== 'function' || isAlreadyWrapped(frameWin)) {
@@ -139,7 +142,7 @@
 
     setGoToSlide(frameWin, (index) => {
       const result = originalGoToSlide.call(frameWin, index);
-      syncStudioChromeToActiveSlide(doc);
+      syncStudioChromeToActiveSlide(doc, getSyncStudioChromeOptions(index));
       return result;
     });
     markWrapped(frameWin);

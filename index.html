@@ -1785,7 +1785,8 @@
       const iframe = document.getElementById('studioFrame');
       const frameWin = iframe?.contentWindow;
       return SlideNextStudioDeckView.bindStudioDeckNavigationSync(doc, frameWin, {
-        syncStudioChromeToActiveSlide
+        syncStudioChromeToActiveSlide,
+        getSyncStudioChromeOptions: () => ({ captureHistory: true })
       });
     }
 
