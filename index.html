@@ -2243,8 +2243,7 @@
         doc,
         getEditorSelectionOptions()
       );
-      selectedElements = nextSelectionState.selectedElements;
-      selectedElement = nextSelectionState.selectedElement;
+      applyEditorSelectionState(nextSelectionState);
       return nextSelectionState.restored;
     }
 
@@ -2254,10 +2253,7 @@
         doc,
         {
           ...getEditorSelectionOptions(),
-          applySelectionState: (nextState) => {
-            selectedElements = nextState.selectedElements;
-            selectedElement = nextState.selectedElement;
-          },
+          applySelectionState: applyEditorSelectionState,
           syncSelectionOverlay,
           hideDragHud,
           hideDragHudOnClear: !!options.hideDragHudOnClear,
