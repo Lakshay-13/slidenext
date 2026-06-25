@@ -1014,6 +1014,7 @@
   <script src="/shared/deck-model.js"></script>
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/deck-html.js"></script>
+  <script src="/shared/studio-deck-view.js"></script>
   <script src="/shared/studio-preview.js"></script>
   <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/version-backup-utils.js"></script>
@@ -1401,24 +1402,17 @@
     }
 
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
-      if (!doc || !window.SlideNextDeckHtml) {
-        return '';
-      }
-      const canonicalDeck = buildEditorCanonicalDeck(doc);
-      if (!canonicalDeck) {
-        return '';
-      }
-      return SlideNextDeckHtml.buildDeckPreviewHtml(canonicalDeck, currentPresentationUrl);
+      return SlideNextStudioDeckView.buildStudioPreviewHtml(doc, {
+        buildCanonicalDeck: buildEditorCanonicalDeck,
+        presentationUrl: currentPresentationUrl
+      });
     }
 
     function buildEditorSourceHtml(doc = getIframeDoc()) {
-      if (doc && window.SlideNextDeckHtml) {
-        const canonicalDeck = buildEditorCanonicalDeck(doc);
-        if (canonicalDeck) {
-          return SlideNextDeckHtml.buildDeckSourceHtml(canonicalDeck);
-        }
-      }
-      return doc ? buildPersistableDeckHtml(doc) : '';
+      return SlideNextStudioDeckView.buildStudioSourceHtml(doc, {
+        buildCanonicalDeck: buildEditorCanonicalDeck,
+        buildFallbackHtml: (sourceDoc) => sourceDoc ? buildPersistableDeckHtml(sourceDoc) : ''
+      });
     }
 
     function launchPresentationHtml(html, startSlideIdx) {
