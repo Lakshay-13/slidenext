@@ -1016,6 +1016,7 @@
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
+  <script src="/shared/studio-editor-persistence.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
@@ -3732,6 +3733,13 @@
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl) {
       const hasPersistedCurrentHtml = isCurrentDeckHtmlPersisted(cleanHtml);
+      const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
+        presentationUrl,
+        cleanHtml,
+        {
+          shouldUpdatePersistedHtml: !hasPersistedCurrentHtml
+        }
+      );
       const response = await fetch(hasPersistedCurrentHtml ? '/api/versions/create' : '/api/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3751,8 +3759,13 @@
       });
       const data = await response.json();
 
-      if (data.success && !hasPersistedCurrentHtml) {
-        lastPersistedDeckHtml = cleanHtml;
+      if (data.success) {
+        SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
+          getCurrentPresentationUrl: () => currentPresentationUrl,
+          setPersistedHtml: (nextHtml) => {
+            lastPersistedDeckHtml = nextHtml;
+          }
+        });
       }
 
       return data;
@@ -3774,6 +3787,10 @@
         const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
         if (!iframeDoc || isStaleEditorPersistenceTask(scheduledPresentationUrl)) return;
         const cleanHtml = buildPersistableDeckHtml(iframeDoc);
+        const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
+          scheduledPresentationUrl,
+          cleanHtml
+        );
 
         if (isCurrentDeckHtmlPersisted(cleanHtml)) {
           if (statusEl) {
@@ -3795,20 +3812,37 @@
           
           const data = await response.json();
           if (data.success) {
-            lastPersistedDeckHtml = cleanHtml;
-            if (statusEl) {
-              statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
-            }
+            SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
+              getCurrentPresentationUrl: () => currentPresentationUrl,
+              setPersistedHtml: (nextHtml) => {
+                lastPersistedDeckHtml = nextHtml;
+              },
+              onSuccess: () => {
+                if (statusEl) {
+                  statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
+                }
+              }
+            });
           } else {
-            if (statusEl) {
-              statusEl.innerHTML = `<span class="text-rose-400">AutoSave Failed</span>`;
-            }
+            SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
+              getCurrentPresentationUrl: () => currentPresentationUrl,
+              onFailure: () => {
+                if (statusEl) {
+                  statusEl.innerHTML = `<span class="text-rose-400">AutoSave Failed</span>`;
+                }
+              }
+            });
           }
         } catch (err) {
           console.error('AutoSave Error:', err);
-          if (statusEl) {
-            statusEl.innerHTML = `<span class="text-rose-400">Network Error</span>`;
-          }
+          SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
+            getCurrentPresentationUrl: () => currentPresentationUrl,
+            onFailure: () => {
+              if (statusEl) {
+                statusEl.innerHTML = `<span class="text-rose-400">Network Error</span>`;
+              }
+            }
+          });
         }
       }, 1500); // 1.5s debounce delay
     }
@@ -3856,6 +3890,7 @@
       
       const saveBtn = document.getElementById('studioSaveBtn');
       const statusEl = document.getElementById('autoSaveStatus');
+      const scheduledPresentationUrl = currentPresentationUrl;
       
       saveBtn.disabled = true;
       saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>Creating version...</span>`;
@@ -3864,23 +3899,51 @@
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       if (!iframeDoc) return;
       const cleanHtml = buildPersistableDeckHtml(iframeDoc);
+      const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
+        scheduledPresentationUrl,
+        cleanHtml,
+        {
+          shouldUpdatePersistedHtml: false
+        }
+      );
       
       try {
-        const data = await saveVersionCheckpoint(versionName, cleanHtml);
+        const data = await saveVersionCheckpoint(versionName, cleanHtml, scheduledPresentationUrl);
         if (data.success) {
-          alert('Successfully saved named version backup checkpoint!');
-          loadVersions(); // Reload versions lists dropdown
+          SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
+            getCurrentPresentationUrl: () => currentPresentationUrl,
+            onSuccess: () => {
+              alert('Successfully saved named version backup checkpoint!');
+              loadVersions(scheduledPresentationUrl);
+              if (statusEl) {
+                statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
+              }
+            }
+          });
         } else {
-          alert(`Save version failed: ${data.error}`);
+          SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
+            getCurrentPresentationUrl: () => currentPresentationUrl,
+            onFailure: () => {
+              alert(`Save version failed: ${data.error}`);
+              if (statusEl) {
+                statusEl.innerHTML = `<span class="text-rose-400">Save Version Failed</span>`;
+              }
+            }
+          });
         }
       } catch (err) {
-        alert(`Network error saving version: ${err.message}`);
+        SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
+          getCurrentPresentationUrl: () => currentPresentationUrl,
+          onFailure: () => {
+            alert(`Network error saving version: ${err.message}`);
+            if (statusEl) {
+              statusEl.innerHTML = `<span class="text-rose-400">Network Error</span>`;
+            }
+          }
+        });
       } finally {
         saveBtn.disabled = false;
         saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] font-bold">bookmarks</span><span>Save Version</span>`;
-        if (statusEl) {
-          statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
-        }
       }
     }
 
@@ -3911,12 +3974,24 @@
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       if (!iframeDoc || isStaleEditorPersistenceTask(presentationUrl)) return;
       const cleanHtml = buildPersistableDeckHtml(iframeDoc);
+      const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
+        presentationUrl,
+        cleanHtml,
+        {
+          shouldUpdatePersistedHtml: false
+        }
+      );
       
       try {
         const data = await saveVersionCheckpoint(label, cleanHtml, presentationUrl);
         if (data.success) {
-          console.log(`Auto-created version checkpoint: ${label}`);
-          loadVersions(); // Refresh dropdown
+          SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
+            getCurrentPresentationUrl: () => currentPresentationUrl,
+            onSuccess: () => {
+              console.log(`Auto-created version checkpoint: ${label}`);
+              loadVersions(presentationUrl); // Refresh dropdown
+            }
+          });
         }
       } catch (err) {
         console.error('Failed to auto-create version backup:', err);
