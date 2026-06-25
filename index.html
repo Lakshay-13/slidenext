@@ -1015,6 +1015,7 @@
   <script src="/shared/deck-model.js"></script>
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
+  <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
@@ -1711,92 +1712,27 @@
       makeElementsHoverable(iframeDoc);
       
       // 3. Setup click listeners on the document (survives innerHTML body swaps)
-      iframeDoc.addEventListener('click', (e) => {
-        if (isDraggingElement) return;
-        if (e.target.closest('.editor-resize-handle') || e.target.closest('#editorSelectionOverlay')) {
-          return;
-        }
-        // Prevent slides navigating on click
-        e.preventDefault();
-        e.stopPropagation();
-
-        const target = resolveEditableTarget(e.target);
-        if (target) {
-          selectElement(target, { additive: e.shiftKey, toggle: e.shiftKey });
-        } else {
-          deselectElement();
-        }
-      }, true);
+      iframeDoc.addEventListener('click', SlideNextStudioEditorEvents.createStudioFrameClickHandler({
+        isDraggingElement: () => isDraggingElement,
+        shouldIgnoreTarget: (target) => !!(target && (target.closest('.editor-resize-handle') || target.closest('#editorSelectionOverlay'))),
+        resolveEditableTarget,
+        selectElement,
+        deselectElement
+      }), true);
       
       // 4. Setup Keydown bubble
-      iframeDoc.addEventListener('keydown', (e) => {
-        const loweredKey = e.key.toLowerCase();
-        const isBracketShortcut = e.code === 'BracketLeft' || e.code === 'BracketRight';
-        // Allow shortcut keys (Ctrl+Z, Ctrl+Y)
-        if ((e.ctrlKey || e.metaKey) && loweredKey === 'z' && !e.shiftKey) {
-          e.preventDefault();
-          editorUndo();
-        }
-        if ((e.ctrlKey || e.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && e.shiftKey))) {
-          e.preventDefault();
-          editorRedo();
-        }
-
-        const activeEl = iframeDoc.activeElement;
-        const isTypingContext = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
-        if (!isTypingContext && (e.ctrlKey || e.metaKey) && loweredKey === 'a') {
-          e.preventDefault();
-          e.stopPropagation();
-          selectAllElementsOnActiveSlide();
-          return;
-        }
-        if (!isTypingContext && selectedElements.length > 0 && (e.ctrlKey || e.metaKey) && e.shiftKey && isBracketShortcut) {
-          e.preventDefault();
-          e.stopPropagation();
-          arrangeElementLayer(e.code === 'BracketRight' ? 'front' : 'back');
-          return;
-        }
-        if (!isTypingContext && selectedElements.length > 0 && (e.ctrlKey || e.metaKey) && isBracketShortcut) {
-          e.preventDefault();
-          e.stopPropagation();
-          arrangeElementLayer(e.code === 'BracketRight' ? 'forward' : 'backward');
-          return;
-        }
-        if (!isTypingContext && selectedElements.length > 0 && e.key === 'Escape') {
-          e.preventDefault();
-          e.stopPropagation();
-          deselectElement();
-          return;
-        }
-        if (!isTypingContext && selectedElements.length > 0 && (e.key === 'Delete' || e.key === 'Backspace')) {
-          e.preventDefault();
-          e.stopPropagation();
-          removeSelectedElement();
-          return;
-        }
-        if (!isTypingContext && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd' && selectedElements.length > 0) {
-          e.preventDefault();
-          e.stopPropagation();
-          duplicateSelectedElements();
-          return;
-        }
-        if (!isTypingContext && selectedElements.length > 0 && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-          e.preventDefault();
-          e.stopPropagation();
-          const step = e.shiftKey ? 10 : 1;
-          if (e.key === 'ArrowUp') nudgeSelectedElements(0, -step);
-          if (e.key === 'ArrowDown') nudgeSelectedElements(0, step);
-          if (e.key === 'ArrowLeft') nudgeSelectedElements(-step, 0);
-          if (e.key === 'ArrowRight') nudgeSelectedElements(step, 0);
-          return;
-        }
-
-        // Prevent default slide navigation keys inside the visual canvas editor
-        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowLeft' || e.key === 'PageDown' || e.key === 'PageUp') {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      }, true);
+      iframeDoc.addEventListener('keydown', SlideNextStudioEditorEvents.createStudioFrameKeydownHandler({
+        getActiveElement: () => iframeDoc.activeElement,
+        getSelectedElements: () => selectedElements,
+        editorUndo,
+        editorRedo,
+        selectAllElementsOnActiveSlide,
+        arrangeElementLayer,
+        deselectElement,
+        removeSelectedElement,
+        duplicateSelectedElements,
+        nudgeSelectedElements
+      }), true);
 
       // 5. Setup Drag positioning logic inside slide
       setupIframeDragging(iframeDoc);

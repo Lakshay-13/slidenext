@@ -1,0 +1,167 @@
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) {
+    module.exports = api;
+  }
+  if (root) {
+    root.SlideNextStudioEditorEvents = api;
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function createStudioFrameClickHandler(options = {}) {
+    const isDraggingElement = typeof options.isDraggingElement === 'function'
+      ? options.isDraggingElement
+      : () => false;
+    const shouldIgnoreTarget = typeof options.shouldIgnoreTarget === 'function'
+      ? options.shouldIgnoreTarget
+      : () => false;
+    const resolveEditableTarget = typeof options.resolveEditableTarget === 'function'
+      ? options.resolveEditableTarget
+      : () => null;
+    const selectElement = typeof options.selectElement === 'function'
+      ? options.selectElement
+      : () => {};
+    const deselectElement = typeof options.deselectElement === 'function'
+      ? options.deselectElement
+      : () => {};
+
+    return function studioFrameClickHandler(event) {
+      if (isDraggingElement()) return;
+      if (shouldIgnoreTarget(event && event.target ? event.target : null)) {
+        return;
+      }
+
+      if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault();
+      }
+      if (event && typeof event.stopPropagation === 'function') {
+        event.stopPropagation();
+      }
+
+      const target = resolveEditableTarget(event && event.target ? event.target : null);
+      if (target) {
+        const shouldToggle = !!(event && event.shiftKey);
+        selectElement(target, {
+          additive: shouldToggle,
+          toggle: shouldToggle
+        });
+      } else {
+        deselectElement();
+      }
+    };
+  }
+
+  function createStudioFrameKeydownHandler(options = {}) {
+    const getActiveElement = typeof options.getActiveElement === 'function'
+      ? options.getActiveElement
+      : () => null;
+    const getSelectedElements = typeof options.getSelectedElements === 'function'
+      ? options.getSelectedElements
+      : () => [];
+    const editorUndo = typeof options.editorUndo === 'function'
+      ? options.editorUndo
+      : () => {};
+    const editorRedo = typeof options.editorRedo === 'function'
+      ? options.editorRedo
+      : () => {};
+    const selectAllElementsOnActiveSlide = typeof options.selectAllElementsOnActiveSlide === 'function'
+      ? options.selectAllElementsOnActiveSlide
+      : () => {};
+    const arrangeElementLayer = typeof options.arrangeElementLayer === 'function'
+      ? options.arrangeElementLayer
+      : () => {};
+    const deselectElement = typeof options.deselectElement === 'function'
+      ? options.deselectElement
+      : () => {};
+    const removeSelectedElement = typeof options.removeSelectedElement === 'function'
+      ? options.removeSelectedElement
+      : () => {};
+    const duplicateSelectedElements = typeof options.duplicateSelectedElements === 'function'
+      ? options.duplicateSelectedElements
+      : () => {};
+    const nudgeSelectedElements = typeof options.nudgeSelectedElements === 'function'
+      ? options.nudgeSelectedElements
+      : () => {};
+    const isTypingContext = typeof options.isTypingContext === 'function'
+      ? options.isTypingContext
+      : (activeEl) => !!(activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable));
+
+    return function studioFrameKeydownHandler(event) {
+      const loweredKey = typeof event.key === 'string' ? event.key.toLowerCase() : '';
+      const isBracketShortcut = event.code === 'BracketLeft' || event.code === 'BracketRight';
+
+      if ((event.ctrlKey || event.metaKey) && loweredKey === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        editorUndo();
+      }
+      if ((event.ctrlKey || event.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && event.shiftKey))) {
+        event.preventDefault();
+        editorRedo();
+      }
+
+      const activeEl = getActiveElement();
+      if (isTypingContext(activeEl)) {
+        return;
+      }
+
+      const selectedElements = getSelectedElements();
+      const hasSelection = selectedElements.length > 0;
+
+      if ((event.ctrlKey || event.metaKey) && loweredKey === 'a') {
+        event.preventDefault();
+        event.stopPropagation();
+        selectAllElementsOnActiveSlide();
+        return;
+      }
+      if (hasSelection && (event.ctrlKey || event.metaKey) && event.shiftKey && isBracketShortcut) {
+        event.preventDefault();
+        event.stopPropagation();
+        arrangeElementLayer(event.code === 'BracketRight' ? 'front' : 'back');
+        return;
+      }
+      if (hasSelection && (event.ctrlKey || event.metaKey) && isBracketShortcut) {
+        event.preventDefault();
+        event.stopPropagation();
+        arrangeElementLayer(event.code === 'BracketRight' ? 'forward' : 'backward');
+        return;
+      }
+      if (hasSelection && event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        deselectElement();
+        return;
+      }
+      if (hasSelection && (event.key === 'Delete' || event.key === 'Backspace')) {
+        event.preventDefault();
+        event.stopPropagation();
+        removeSelectedElement();
+        return;
+      }
+      if ((event.ctrlKey || event.metaKey) && loweredKey === 'd' && hasSelection) {
+        event.preventDefault();
+        event.stopPropagation();
+        duplicateSelectedElements();
+        return;
+      }
+      if (hasSelection && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+        event.preventDefault();
+        event.stopPropagation();
+        const step = event.shiftKey ? 10 : 1;
+        if (event.key === 'ArrowUp') nudgeSelectedElements(0, -step);
+        if (event.key === 'ArrowDown') nudgeSelectedElements(0, step);
+        if (event.key === 'ArrowLeft') nudgeSelectedElements(-step, 0);
+        if (event.key === 'ArrowRight') nudgeSelectedElements(step, 0);
+        return;
+      }
+
+      if (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'ArrowLeft' || event.key === 'PageDown' || event.key === 'PageUp') {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+  }
+
+  return {
+    createStudioFrameClickHandler,
+    createStudioFrameKeydownHandler
+  };
+});
