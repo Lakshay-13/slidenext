@@ -1710,7 +1710,7 @@
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return;
       saveHistoryState();
-      const activeSlideId = getActiveSlide(iframeDoc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
+      const activeSlideId = getEditorSlideId(getActiveSlide(iframeDoc));
       const preservedSelectionIds = getSelectedEditorElementIds();
       
       const slides = getSlides(iframeDoc);
@@ -1766,7 +1766,7 @@
           }
         },
         pruneEditorChromeNodes,
-        getSlideId: (slide) => slide.getAttribute(EDITOR_SLIDE_ID_ATTR) || '',
+        getSlideId: getEditorSlideId,
         updateIframeNavigationUI
       });
       if (options.captureHistory && nextViewState.didSync && previousIndex !== currentSlideIndex) {
@@ -1885,8 +1885,8 @@
         return;
       }
       saveHistoryState();
-      const activeSlideId = getActiveSlide(iframeDoc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
-      const deletedSlideId = slides[idx]?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
+      const activeSlideId = getEditorSlideId(getActiveSlide(iframeDoc));
+      const deletedSlideId = getEditorSlideId(slides[idx]);
       const preservedSelectionIds = getSelectedEditorElementIds();
       
       slides[idx].remove();
@@ -1957,7 +1957,7 @@
       return {
         chromeNodeIds: EDITOR_CHROME_NODE_IDS,
         removableClassNames: ['editor-selected', 'editor-hoverable', 'editor-dragging'],
-        getActiveSlideId: (doc) => getActiveSlide(doc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '',
+        getActiveSlideId: (doc) => getEditorSlideId(getActiveSlide(doc)),
         getSelectedElementIds: () => getSelectedEditorElementIds(),
         areIdListsEqual: areEditorIdListsEqual,
         ...options
@@ -1982,6 +1982,10 @@
       return SlideNextStudioEditorDom.assignStudioSlideId(slide, getEditorDomOptions(options));
     }
 
+    function getEditorSlideId(slide, options = {}) {
+      return SlideNextStudioEditorDom.getStudioSlideId(slide, getEditorDomOptions(options));
+    }
+
     function ensureEditorSlideIds(root, options = {}) {
       return SlideNextStudioEditorDom.ensureStudioSlideIds(root, getEditorDomOptions(options));
     }
@@ -2003,7 +2007,7 @@
         includeLayers: !!options.includeLayers,
         getSlides,
         getActiveSlide,
-        getSlideId: assignEditorSlideId,
+        getSlideId: getEditorSlideId,
         getSlideEditableElements,
         getNormalizedSlideLayerOrder,
         elementSnapshotOptions: {
@@ -2034,7 +2038,7 @@
         buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
         presentationUrl: currentPresentationUrl,
         presentationTitle: currentTitle,
-        getSlideId: assignEditorSlideId,
+        getSlideId: getEditorSlideId,
         getNodeId: assignEditorElementId
       });
     }
@@ -2045,7 +2049,7 @@
         buildCanonicalDeck: buildEditorCanonicalDeck,
         buildDomSnapshot: (sourceDoc) => buildEditorDeckSnapshotFromDom(sourceDoc, options),
         getActiveSlide,
-        getActiveSlideId: assignEditorSlideId,
+        getActiveSlideId: getEditorSlideId,
         getSlideById,
         buildSlideLayerSnapshot: (slideEl) => buildEditorLayerSnapshot(slideEl)
       });

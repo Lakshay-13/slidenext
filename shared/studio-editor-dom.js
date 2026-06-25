@@ -67,6 +67,11 @@
     });
   }
 
+  function getStudioSlideId(slide, options = {}) {
+    if (!slide || !slide.classList || !slide.classList.contains('slide')) return '';
+    return assignStudioSlideId(slide, options);
+  }
+
   function getStudioActiveSlide(doc, options = {}) {
     if (!doc || typeof doc.querySelector !== 'function') return null;
     const activeSlideSelector = options.activeSlideSelector || '.slide-active';
@@ -257,6 +262,7 @@
     getStudioSlides,
     getStudioSlideById,
     getStudioSlideIndexById,
+    getStudioSlideId,
     getStudioActiveSlide,
     pruneStudioChromeNodes,
     isEligibleEditableElement,
