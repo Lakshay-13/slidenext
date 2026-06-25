@@ -17,6 +17,13 @@
     return nextToken;
   }
 
+  function getCurrentStudioModalVisibilityToken(modalEl) {
+    if (!modalEl) return 0;
+    return Number.isInteger(modalEl.__slideNextModalVisibilityToken)
+      ? modalEl.__slideNextModalVisibilityToken
+      : 0;
+  }
+
   function isStudioModalVisibilityCurrent(modalEl, visibilityToken) {
     return !!modalEl && modalEl.__slideNextModalVisibilityToken === visibilityToken;
   }
@@ -47,6 +54,7 @@
 
   return {
     getNextStudioModalVisibilityToken,
+    getCurrentStudioModalVisibilityToken,
     isStudioModalVisibilityCurrent,
     cancelStudioModalHide,
     scheduleStudioModalHide

@@ -32,8 +32,17 @@
     return normalizeString(getCurrentPresentationUrl()) === requestedPresentationUrl;
   }
 
-  function handleStudioRestoreVersionSuccess(context = {}, options = {}) {
+  function isStudioVersionActionSessionCurrent(context = {}, options = {}) {
     if (!isStudioVersionActionCurrent(context, options)) {
+      return false;
+    }
+    return typeof options.isCurrentSession === 'function'
+      ? !!options.isCurrentSession()
+      : true;
+  }
+
+  function handleStudioRestoreVersionSuccess(context = {}, options = {}) {
+    if (!isStudioVersionActionSessionCurrent(context, options)) {
       return false;
     }
 
@@ -55,7 +64,7 @@
   }
 
   function handleStudioVersionListMutationSuccess(context = {}, options = {}) {
-    if (!isStudioVersionActionCurrent(context, options)) {
+    if (!isStudioVersionActionSessionCurrent(context, options)) {
       return false;
     }
 
@@ -69,10 +78,24 @@
     return true;
   }
 
+  function handleStudioVersionActionFailure(context = {}, options = {}) {
+    if (!isStudioVersionActionSessionCurrent(context, options)) {
+      return false;
+    }
+
+    if (typeof options.onFailure === 'function') {
+      options.onFailure(context);
+    }
+
+    return true;
+  }
+
   return {
     createStudioVersionActionContext,
     isStudioVersionActionCurrent,
+    isStudioVersionActionSessionCurrent,
     handleStudioRestoreVersionSuccess,
-    handleStudioVersionListMutationSuccess
+    handleStudioVersionListMutationSuccess,
+    handleStudioVersionActionFailure
   };
 });

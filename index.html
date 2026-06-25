@@ -4112,6 +4112,9 @@
       
       const modal = document.getElementById('renameVersionModal');
       const content = document.getElementById('renameVersionModalContent');
+      const btn = document.getElementById('confirmRenameVersionBtn');
+      btn.disabled = false;
+      btn.textContent = 'Rename';
       
       SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
       modal.classList.remove('hidden');
@@ -4151,6 +4154,8 @@
       );
       const versionFilename = renamingFilename;
       if (!versionFilename || !renameContext.presentationUrl) return;
+      const modal = document.getElementById('renameVersionModal');
+      const renameSessionToken = SlideNextStudioModalVisibility.getCurrentStudioModalVisibilityToken(modal);
       
       const btn = document.getElementById('confirmRenameVersionBtn');
       btn.disabled = true;
@@ -4169,21 +4174,42 @@
         
         const data = await response.json();
         if (data.success) {
-          closeRenameVersionModal();
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(renameContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
+            isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
+            onSuccess: () => {
+              closeRenameVersionModal();
+            },
             refreshVersionEntries: (presentationUrl) => {
               loadVersions(presentationUrl);
             }
           });
         } else {
-          alert(`Rename failed: ${data.error}`);
+          SlideNextStudioVersionActions.handleStudioVersionActionFailure(renameContext, {
+            getCurrentPresentationUrl: () => currentPresentationUrl,
+            isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
+            onFailure: () => {
+              alert(`Rename failed: ${data.error}`);
+            }
+          });
         }
       } catch (err) {
-        alert(`Error renaming version: ${err.message}`);
+        SlideNextStudioVersionActions.handleStudioVersionActionFailure(renameContext, {
+          getCurrentPresentationUrl: () => currentPresentationUrl,
+          isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
+          onFailure: () => {
+            alert(`Error renaming version: ${err.message}`);
+          }
+        });
       } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Rename';
+        SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(renameContext, {
+          getCurrentPresentationUrl: () => currentPresentationUrl,
+          isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
+          onSuccess: () => {
+            btn.disabled = false;
+            btn.textContent = 'Rename';
+          }
+        });
       }
     }
 

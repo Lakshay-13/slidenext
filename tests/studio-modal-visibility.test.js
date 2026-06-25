@@ -49,3 +49,11 @@ test('cancelStudioModalHide prevents a stale hide callback from hiding a reopene
 
   assert.equal(modalEl.hidden, false);
 });
+
+test('getCurrentStudioModalVisibilityToken returns the modal visibility token without mutating it', () => {
+  const modalEl = createModal();
+
+  assert.equal(modalVisibility.getCurrentStudioModalVisibilityToken(modalEl), 0);
+  modalVisibility.cancelStudioModalHide(modalEl);
+  assert.equal(modalVisibility.getCurrentStudioModalVisibilityToken(modalEl), 1);
+});

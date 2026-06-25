@@ -124,3 +124,66 @@ test('handleStudioVersionListMutationSuccess skips stale deck refreshes', () => 
   assert.equal(applied, false);
   assert.deepEqual(calls, []);
 });
+
+test('handleStudioVersionListMutationSuccess skips stale modal sessions', () => {
+  const renameContext = versionActions.createStudioVersionActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    'General'
+  );
+  const calls = [];
+
+  const applied = versionActions.handleStudioVersionListMutationSuccess(renameContext, {
+    getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    isCurrentSession: () => false,
+    onSuccess() {
+      calls.push(['onSuccess']);
+    },
+    refreshVersionEntries() {
+      calls.push(['refreshVersionEntries']);
+    }
+  });
+
+  assert.equal(applied, false);
+  assert.deepEqual(calls, []);
+});
+
+test('handleStudioVersionActionFailure reports failures only for the active session', () => {
+  const renameContext = versionActions.createStudioVersionActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    'General'
+  );
+  const calls = [];
+
+  const applied = versionActions.handleStudioVersionActionFailure(renameContext, {
+    getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    isCurrentSession: () => true,
+    onFailure(context) {
+      calls.push(['onFailure', context.presentationUrl]);
+    }
+  });
+
+  assert.equal(applied, true);
+  assert.deepEqual(calls, [['onFailure', '/presentations/onboarding-presentation/index.html']]);
+});
+
+test('handleStudioVersionActionFailure skips stale sessions', () => {
+  const renameContext = versionActions.createStudioVersionActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    'General'
+  );
+  const calls = [];
+
+  const applied = versionActions.handleStudioVersionActionFailure(renameContext, {
+    getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    isCurrentSession: () => false,
+    onFailure() {
+      calls.push(['onFailure']);
+    }
+  });
+
+  assert.equal(applied, false);
+  assert.deepEqual(calls, []);
+});
