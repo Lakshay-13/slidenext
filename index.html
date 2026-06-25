@@ -3994,6 +3994,58 @@
       updateLayersList();
     }
 
+    const PERSISTABLE_RUNTIME_EMPTY_CONTAINER_IDS = [
+      'gitNodesContainer',
+      'indicatorDots'
+    ];
+
+    const PERSISTABLE_RUNTIME_STYLE_CLEANUPS = [
+      { selector: '#slidesContainer', properties: ['transform'] },
+      { selector: '#prevBtn, #nextBtn', properties: ['opacity', 'pointer-events'] },
+      { selector: '#progressLine', properties: ['width'] }
+    ];
+
+    function stripInlineStyleProperties(node, properties) {
+      if (!node || !node.style) return;
+      properties.forEach(property => node.style.removeProperty(property));
+      if (!node.getAttribute('style') || !node.getAttribute('style').trim()) {
+        node.removeAttribute('style');
+      }
+    }
+
+    function stripTransientDeckRuntimeState(root) {
+      if (!root) return;
+
+      const usesTailwindCdn = !!root.querySelector('script[src*="cdn.tailwindcss.com"]');
+      if (usesTailwindCdn) {
+        root.querySelectorAll('style').forEach(styleNode => {
+          if ((styleNode.textContent || '').includes('! tailwindcss')) {
+            styleNode.remove();
+          }
+        });
+      }
+
+      PERSISTABLE_RUNTIME_EMPTY_CONTAINER_IDS.forEach(nodeId => {
+        root.querySelectorAll(`#${nodeId}`).forEach(node => {
+          node.replaceChildren();
+        });
+      });
+
+      root.querySelectorAll('#particlesCanvas, .canvas-particles').forEach(canvas => {
+        canvas.removeAttribute('width');
+        canvas.removeAttribute('height');
+      });
+
+      PERSISTABLE_RUNTIME_STYLE_CLEANUPS.forEach(({ selector, properties }) => {
+        root.querySelectorAll(selector).forEach(node => {
+          stripInlineStyleProperties(node, properties);
+        });
+      });
+
+      root.querySelectorAll('[class=""]').forEach(node => node.removeAttribute('class'));
+      root.querySelectorAll('[style=""]').forEach(node => node.removeAttribute('style'));
+    }
+
     function buildPersistableDeckHtml(doc = getIframeDoc()) {
       if (!doc) return '';
 
@@ -4023,6 +4075,7 @@
       clone.querySelectorAll(`[${EDITOR_SLIDE_ID_ATTR}]`).forEach(node => {
         node.removeAttribute(EDITOR_SLIDE_ID_ATTR);
       });
+      stripTransientDeckRuntimeState(clone);
 
       // Persist the deck markup without editor chrome state.
       clone.classList.add('dark');
