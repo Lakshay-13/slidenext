@@ -7,6 +7,10 @@
     root.SlideNextDeckModel = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function normalizeString(value, fallback = '') {
+    return typeof value === 'string' ? value : fallback;
+  }
+
   function resolveElementDisplayMetadata(el) {
     const tagName = el.tagName.toLowerCase();
     if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
@@ -119,11 +123,56 @@
     };
   }
 
+  function countCanonicalSlideNodes(nodes = []) {
+    return (nodes || []).reduce((count, node) => {
+      const childCount = countCanonicalSlideNodes(node && Array.isArray(node.children) ? node.children : []);
+      return count + (node ? 1 : 0) + childCount;
+    }, 0);
+  }
+
+  function buildCanonicalBackgroundLabel(slide) {
+    const background = slide && slide.layout && slide.layout.background
+      ? slide.layout.background
+      : {};
+    return background.style || background.image || background.color || background.className
+      ? 'Gradient/Paint'
+      : 'Default';
+  }
+
+  function buildSlideSnapshotFromCanonicalSlide(slide, index, options = {}) {
+    const slideId = typeof options.getSlideId === 'function'
+      ? options.getSlideId(slide, index)
+      : slide.id || `slide-${index + 1}`;
+    return {
+      id: slideId,
+      index,
+      title: normalizeString(slide.title, normalizeString(slide.name, `Slide ${index + 1}`)),
+      backgroundLabel: buildCanonicalBackgroundLabel(slide),
+      elementCount: countCanonicalSlideNodes(slide && Array.isArray(slide.nodes) ? slide.nodes : [])
+    };
+  }
+
+  function buildDeckSnapshotFromCanonicalDeck(deck, options = {}) {
+    const slides = deck && Array.isArray(deck.slides) ? deck.slides : [];
+    const slideSnapshots = slides.map((slide, index) => buildSlideSnapshotFromCanonicalSlide(slide, index, options));
+    const activeSlideId = normalizeString(options.activeSlideId, slideSnapshots[0] ? slideSnapshots[0].id : '');
+    const activeSlideIndex = slideSnapshots.findIndex(slide => slide.id === activeSlideId);
+
+    return {
+      activeSlideId,
+      activeSlideIndex,
+      slides: slideSnapshots
+    };
+  }
+
   return {
     resolveElementDisplayMetadata,
     buildElementSnapshot,
     buildLayerSnapshot,
     buildSlideSnapshot,
-    buildDeckSnapshot
+    buildDeckSnapshot,
+    countCanonicalSlideNodes,
+    buildSlideSnapshotFromCanonicalSlide,
+    buildDeckSnapshotFromCanonicalDeck
   };
 });
