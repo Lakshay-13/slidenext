@@ -1833,6 +1833,7 @@
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return;
       saveHistoryState();
+      const activeSlideId = getActiveSlide(iframeDoc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
       
       const slides = getSlides(iframeDoc);
       const draggedNode = slides[fromIdx];
@@ -1845,11 +1846,12 @@
         container.insertBefore(draggedNode, targetNode);
       }
       
-      // Update state and active slide
-      currentSlideIndex = toIdx;
-      
       generateThumbnails();
-      setActiveSlide(currentSlideIndex);
+      if (!activeSlideId || !setActiveSlideById(activeSlideId, iframeDoc)) {
+        const slideCount = getSlides(iframeDoc).length;
+        const fallbackIndex = slideCount === 0 ? 0 : Math.min(toIdx, slideCount - 1);
+        setActiveSlide(fallbackIndex);
+      }
       saveHistoryState();
       triggerAutoSave();
       triggerAutoVersion('Auto: Reordered Slides');
