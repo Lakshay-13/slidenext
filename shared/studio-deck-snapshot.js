@@ -10,6 +10,10 @@
     root.SlideNextStudioDeckSnapshot = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (deckModel) {
+  function isCanonicalDeckLike(deck) {
+    return !!deck && Array.isArray(deck.slides);
+  }
+
   function buildStudioDeckSnapshotFromDom(doc, options = {}) {
     if (!deckModel || typeof deckModel.buildDeckSnapshot !== 'function') {
       return {
@@ -39,7 +43,7 @@
       : (sourceDoc) => buildStudioDeckSnapshotFromDom(sourceDoc, options.domSnapshotOptions || options);
     const canonicalDeck = buildCanonicalDeck ? buildCanonicalDeck(doc) : null;
 
-    if (!canonicalDeck || !deckModel || typeof deckModel.buildDeckSnapshotFromCanonicalDeck !== 'function') {
+    if (!isCanonicalDeckLike(canonicalDeck) || !deckModel || typeof deckModel.buildDeckSnapshotFromCanonicalDeck !== 'function') {
       return buildDomSnapshot(doc);
     }
 
@@ -91,6 +95,7 @@
   }
 
   return {
+    isCanonicalDeckLike,
     buildStudioDeckSnapshotFromDom,
     buildStudioDeckSnapshot,
     resolveStudioActiveSlideIndex

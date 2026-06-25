@@ -138,3 +138,41 @@ test('buildStudioDeckSnapshot merges live layer snapshots onto canonical slides 
     ]
   });
 });
+
+test('buildStudioDeckSnapshot falls back to the DOM snapshot when the canonical deck is malformed', () => {
+  const doc = { label: 'doc' };
+  const result = deckSnapshot.buildStudioDeckSnapshot(doc, {
+    buildCanonicalDeck() {
+      return {
+        metadata: {
+          title: 'Broken Deck'
+        }
+      };
+    },
+    buildDomSnapshot(nextDoc) {
+      return {
+        activeSlideId: `dom-slide:${nextDoc.label}`,
+        activeSlideIndex: 2,
+        slides: [
+          {
+            id: 'dom-slide',
+            index: 2,
+            title: 'DOM Snapshot'
+          }
+        ]
+      };
+    }
+  });
+
+  assert.deepEqual(result, {
+    activeSlideId: 'dom-slide:doc',
+    activeSlideIndex: 2,
+    slides: [
+      {
+        id: 'dom-slide',
+        index: 2,
+        title: 'DOM Snapshot'
+      }
+    ]
+  });
+});
