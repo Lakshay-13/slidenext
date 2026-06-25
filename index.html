@@ -1028,6 +1028,7 @@
   <script src="/shared/studio-deck-view.js"></script>
   <script src="/shared/studio-preview.js"></script>
   <script src="/shared/deck-persistence.js"></script>
+  <script src="/shared/studio-version-actions.js"></script>
   <script src="/shared/studio-version-history.js"></script>
   <script src="/shared/version-backup-utils.js"></script>
   <script>
@@ -3981,23 +3982,36 @@
       if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
         return;
       }
+      const restoreContext = SlideNextStudioVersionActions.createStudioVersionActionContext(
+        currentPresentationUrl,
+        currentTitle,
+        currentCategory
+      );
       
       try {
         const response = await fetch('/api/restore', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            htmlPath: currentPresentationUrl,
+            htmlPath: restoreContext.presentationUrl,
             versionFilename: filename
           })
         });
         
         const data = await response.json();
         if (data.success) {
-          alert('Rollback successfully restored!');
-          document.getElementById('versionsDropdown').classList.add('hidden');
-          // Reload presentation
-          launchStudioEditor(currentPresentationUrl, currentTitle, currentCategory);
+          SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(restoreContext, {
+            getCurrentPresentationUrl: () => currentPresentationUrl,
+            onSuccess: () => {
+              alert('Rollback successfully restored!');
+            },
+            hideVersionsDropdown: () => {
+              document.getElementById('versionsDropdown').classList.add('hidden');
+            },
+            relaunchEditor: (presentationUrl, presentationTitle, presentationCategory) => {
+              launchStudioEditor(presentationUrl, presentationTitle, presentationCategory);
+            }
+          });
         } else {
           alert(`Restore failed: ${data.error}`);
         }
