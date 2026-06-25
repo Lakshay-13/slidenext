@@ -986,6 +986,7 @@
       </aside>
     </div>
   </div>  <!-- Logic scripts -->
+  <script src="/shared/version-backup-utils.js"></script>
   <script>
     // Global Editor State
     let currentPresentationUrl = '';
@@ -4227,36 +4228,10 @@
         const lastPart = urlParts[urlParts.length - 1];
         const baseName = lastPart.substring(0, lastPart.lastIndexOf('.'));
         
-        function deriveVersionDisplayLabel(versionFilename, deckBaseName) {
-          const prefix = `${deckBaseName}_`;
-          let cleanName = versionFilename;
-          if (cleanName.startsWith(prefix)) {
-            cleanName = cleanName.substring(prefix.length);
-          }
-
-          const extIndex = cleanName.lastIndexOf('.');
-          if (extIndex !== -1) {
-            cleanName = cleanName.substring(0, extIndex);
-          }
-
-          const labelMatch = cleanName.match(/^(?:\d{8}|\d{4}-\d{2}-\d{2})_\d{6}(?:_\d{3})?_(.+)$/);
-          if (labelMatch) {
-            return labelMatch[1]
-              .replace(/__/g, ': ')
-              .replace(/_/g, ' ');
-          }
-
-          if (versionFilename.includes('Auto')) {
-            return 'Auto Saved Version';
-          }
-
-          return 'Manual Checkpoint';
-        }
-        
         list.innerHTML = versions.map(v => {
           const date = new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + 
                        new Date(v.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' });
-          const label = deriveVersionDisplayLabel(v.filename, baseName);
+          const label = VersionBackupUtils.deriveVersionDisplayLabel(v.filename, baseName);
           
           return `
             <div class="w-full px-3 py-1.5 hover:bg-white/5 rounded transition-all font-sans text-xs flex justify-between items-center group/item text-zinc-300 relative">

@@ -2,6 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
+const {
+  buildVersionBackupRegex,
+  extractVersionTimestampPrefix
+} = require('./shared/version-backup-utils');
 
 const app = express();
 const PORT = 11004;
@@ -73,23 +77,6 @@ async function ensureDir(dirPath) {
   } catch (err) {
     if (err.code !== 'EEXIST') throw err;
   }
-}
-
-const VERSION_BACKUP_TIMESTAMP_PATTERN = String.raw`(?:\d{8}|\d{4}-\d{2}-\d{2})_\d{6}(?:_\d{3})?`;
-
-function escapeRegex(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function buildVersionBackupRegex(base, ext) {
-  return new RegExp(`^${escapeRegex(base)}_${VERSION_BACKUP_TIMESTAMP_PATTERN}(?:_.*)?${escapeRegex(ext)}$`);
-}
-
-function extractVersionTimestampPrefix(versionFilename, base, ext) {
-  const match = versionFilename.match(
-    new RegExp(`^(${escapeRegex(base)}_${VERSION_BACKUP_TIMESTAMP_PATTERN})(?:_.*)?${escapeRegex(ext)}$`)
-  );
-  return match ? match[1] : '';
 }
 
 // 2. API: Overwrite index.html and save a timestamped backup in .versions/
