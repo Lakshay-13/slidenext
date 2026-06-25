@@ -3918,32 +3918,32 @@
       selectedElements = [];
       selectedElement = null;
       
-      SlideNextStudioHistory.restoreStudioHistoryFrameSetup(historyEntry, {
-        doc: iframeDoc,
-        replaceFrameHtml: (doc, html) => {
-          doc.documentElement.innerHTML = html;
-        },
-        syncIframeTheme,
-        makeElementsHoverable,
-        setupIframeDragging,
-        bindDeckNavigationSync,
-        generateThumbnails
-      });
-
-      // Restore slide focus with an index fallback for older snapshots.
-      SlideNextStudioHistory.restoreStudioHistoryActiveSlide(historyEntry, {
-        fallbackIndex,
-        restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc),
-        getSlideCount: () => getSlides(iframeDoc).length,
-        setActiveSlideByIndex: (index) => setActiveSlide(index)
-      });
-      SlideNextStudioHistory.restoreStudioHistorySelectionState(historyEntry, {
-        doc: iframeDoc,
-        restoreSelectionByIds: (selectedElementIds, doc) => restoreSelectionByIdsOnActiveSlide(selectedElementIds, doc),
-        syncSelectionOverlay,
-        syncInspectorForSelection,
-        updateLayersList,
-        observeDeckActiveSlideState
+      SlideNextStudioHistory.restoreStudioHistoryEntry(historyEntry, {
+        restoreFrameSetup: (nextHistoryEntry) => SlideNextStudioHistory.restoreStudioHistoryFrameSetup(nextHistoryEntry, {
+          doc: iframeDoc,
+          replaceFrameHtml: (doc, html) => {
+            doc.documentElement.innerHTML = html;
+          },
+          syncIframeTheme,
+          makeElementsHoverable,
+          setupIframeDragging,
+          bindDeckNavigationSync,
+          generateThumbnails
+        }),
+        restoreActiveSlide: (nextHistoryEntry) => SlideNextStudioHistory.restoreStudioHistoryActiveSlide(nextHistoryEntry, {
+          fallbackIndex,
+          restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc),
+          getSlideCount: () => getSlides(iframeDoc).length,
+          setActiveSlideByIndex: (index) => setActiveSlide(index)
+        }),
+        restoreSelectionState: (nextHistoryEntry) => SlideNextStudioHistory.restoreStudioHistorySelectionState(nextHistoryEntry, {
+          doc: iframeDoc,
+          restoreSelectionByIds: (selectedElementIds, doc) => restoreSelectionByIdsOnActiveSlide(selectedElementIds, doc),
+          syncSelectionOverlay,
+          syncInspectorForSelection,
+          updateLayersList,
+          observeDeckActiveSlideState
+        })
       });
     }
 

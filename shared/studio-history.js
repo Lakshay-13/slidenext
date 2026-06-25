@@ -313,6 +313,24 @@
     };
   }
 
+  function restoreStudioHistoryEntry(historyEntry, options = {}) {
+    const restoreFrameSetup = typeof options.restoreFrameSetup === 'function'
+      ? options.restoreFrameSetup
+      : () => null;
+    const restoreActiveSlide = typeof options.restoreActiveSlide === 'function'
+      ? options.restoreActiveSlide
+      : () => null;
+    const restoreSelectionState = typeof options.restoreSelectionState === 'function'
+      ? options.restoreSelectionState
+      : () => null;
+
+    return {
+      frameSetup: restoreFrameSetup(historyEntry),
+      activeSlide: restoreActiveSlide(historyEntry),
+      selectionState: restoreSelectionState(historyEntry)
+    };
+  }
+
   return {
     buildStudioHistoryFrameHtml,
     createStudioHistoryEntry,
@@ -325,6 +343,7 @@
     scheduleStudioHistoryCapture,
     restoreStudioHistoryActiveSlide,
     restoreStudioHistorySelectionState,
-    restoreStudioHistoryFrameSetup
+    restoreStudioHistoryFrameSetup,
+    restoreStudioHistoryEntry
   };
 });
