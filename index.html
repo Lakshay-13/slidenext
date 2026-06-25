@@ -2221,6 +2221,22 @@
       selectedElement = nextSelectionState.selectedElement;
     }
 
+    function applyEditorSelectionState(nextState = {}) {
+      selectedElements = Array.isArray(nextState.selectedElements) ? nextState.selectedElements : [];
+      selectedElement = nextState.selectedElement || selectedElements[0] || null;
+    }
+
+    function commitEditorSelectionState(nextSelectionState, options = {}) {
+      return SlideNextStudioEditorSelection.commitStudioSelectionState(nextSelectionState, {
+        applySelectionState: applyEditorSelectionState,
+        refreshSelectionClasses,
+        syncSelectionOverlay,
+        syncInspectorForSelection,
+        updateLayersList,
+        ...options
+      });
+    }
+
     function restoreSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc()) {
       const nextSelectionState = SlideNextStudioEditorSelection.restoreStudioSelectionByIdsOnActiveSlide(
         selectedIds,
@@ -2475,31 +2491,14 @@
           toggle: !!options.toggle
         }
       );
-      SlideNextStudioEditorSelection.commitStudioSelectionState(nextSelectionState, {
-        applySelectionState: (nextState) => {
-          selectedElements = nextState.selectedElements;
-          selectedElement = nextState.selectedElement;
-        },
-        refreshSelectionClasses,
-        syncSelectionOverlay,
-        syncInspectorForSelection,
-        updateLayersList
-      });
+      commitEditorSelectionState(nextSelectionState);
     }
 
     function deselectElement() {
       const nextSelectionState = SlideNextStudioEditorSelection.clearStudioSelection();
-      SlideNextStudioEditorSelection.commitStudioSelectionState(nextSelectionState, {
-        applySelectionState: (nextState) => {
-          selectedElements = nextState.selectedElements;
-          selectedElement = nextState.selectedElement;
-        },
-        refreshSelectionClasses,
-        syncSelectionOverlay,
+      commitEditorSelectionState(nextSelectionState, {
         hideDragHud,
-        hideDragHudOnClear: true,
-        syncInspectorForSelection,
-        updateLayersList
+        hideDragHudOnClear: true
       });
     }
 
@@ -2509,16 +2508,7 @@
       const nextSelection = getNormalizedSlideLayerOrder(slide);
       if (nextSelection.length === 0) return false;
       const nextSelectionState = SlideNextStudioEditorSelection.selectAllStudioElements(nextSelection);
-      SlideNextStudioEditorSelection.commitStudioSelectionState(nextSelectionState, {
-        applySelectionState: (nextState) => {
-          selectedElements = nextState.selectedElements;
-          selectedElement = nextState.selectedElement;
-        },
-        refreshSelectionClasses,
-        syncSelectionOverlay,
-        syncInspectorForSelection,
-        updateLayersList
-      });
+      commitEditorSelectionState(nextSelectionState);
       return true;
     }
 
@@ -2865,16 +2855,7 @@
     function finalizeInsertedElements(insertedElements, versionLabel) {
       if (!insertedElements || insertedElements.length === 0) return false;
       const nextSelectionState = SlideNextStudioEditorSelection.selectAllStudioElements(insertedElements);
-      SlideNextStudioEditorSelection.commitStudioSelectionState(nextSelectionState, {
-        applySelectionState: (nextState) => {
-          selectedElements = nextState.selectedElements;
-          selectedElement = nextState.selectedElement;
-        },
-        refreshSelectionClasses,
-        syncSelectionOverlay,
-        syncInspectorForSelection,
-        updateLayersList
-      });
+      commitEditorSelectionState(nextSelectionState);
       generateThumbnails();
       saveHistoryState();
       triggerAutoSave();
