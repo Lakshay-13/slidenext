@@ -79,6 +79,30 @@ async function ensureDir(dirPath) {
   }
 }
 
+function buildVersionBackupFilename(targetFile, versionLabel, now = new Date()) {
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const pad3 = (n) => String(n).padStart(3, '0');
+  const yyyymmdd = `${now.getFullYear()}${pad2(now.getMonth() + 1)}${pad2(now.getDate())}`;
+  const hhmmss = `${pad2(now.getHours())}${pad2(now.getMinutes())}${pad2(now.getSeconds())}`;
+  const mmm = pad3(now.getMilliseconds());
+  const timestamp = `${yyyymmdd}_${hhmmss}_${mmm}`;
+  const ext = path.extname(targetFile);
+  const base = path.basename(targetFile, ext);
+  const labelSuffix = versionLabel ? `_${versionLabel.replace(/[^a-zA-Z0-9_-]/g, '_')}` : '';
+  return `${base}_${timestamp}${labelSuffix}${ext}`;
+}
+
+async function createVersionBackupFromContent(targetFile, htmlContent, versionLabel) {
+  const parentDir = path.dirname(targetFile);
+  const versionsDir = path.join(parentDir, '.versions');
+  await ensureDir(versionsDir);
+
+  const backupFilename = buildVersionBackupFilename(targetFile, versionLabel);
+  const backupPath = path.join(versionsDir, backupFilename);
+  await fs.writeFile(backupPath, htmlContent, 'utf8');
+  return backupFilename;
+}
+
 // 2. API: Overwrite index.html and save a timestamped backup in .versions/
 app.post('/api/save', async (req, res) => {
   const { htmlPath, htmlContent, isAutoSave, versionLabel } = req.body;
@@ -94,28 +118,10 @@ app.post('/api/save', async (req, res) => {
       return res.status(403).json({ error: 'Access denied: outside workspace directory' });
     }
 
-    const parentDir = path.dirname(targetFile);
-    const versionsDir = path.join(parentDir, '.versions');
-    await ensureDir(versionsDir);
-
     // Create timestamped backup file if it is NOT an auto-save
     if (!isAutoSave) {
       try {
-        const now = new Date();
-        const pad2 = (n) => String(n).padStart(2, '0');
-        const pad3 = (n) => String(n).padStart(3, '0');
-        const yyyymmdd = `${now.getFullYear()}${pad2(now.getMonth() + 1)}${pad2(now.getDate())}`;
-        const hhmmss = `${pad2(now.getHours())}${pad2(now.getMinutes())}${pad2(now.getSeconds())}`;
-        const mmm = pad3(now.getMilliseconds());
-        const timestamp = `${yyyymmdd}_${hhmmss}_${mmm}`;
-        
-        const ext = path.extname(targetFile);
-        const base = path.basename(targetFile, ext);
-        const labelSuffix = versionLabel ? `_${versionLabel.replace(/[^a-zA-Z0-9_-]/g, '_')}` : '';
-        const backupFilename = `${base}_${timestamp}${labelSuffix}${ext}`;
-        const backupPath = path.join(versionsDir, backupFilename);
-        
-        await fs.writeFile(backupPath, htmlContent, 'utf8');
+        const backupFilename = await createVersionBackupFromContent(targetFile, htmlContent, versionLabel);
         console.log(`Version backup saved: ${backupFilename}`);
       } catch (backupErr) {
         console.warn('Failed to create version backup:', backupErr.message);
@@ -133,7 +139,31 @@ app.post('/api/save', async (req, res) => {
   }
 });
 
-// 3. API: List version backups for a specific presentation file
+// 3. API: Create a named checkpoint from the current on-disk file without rewriting it
+app.post('/api/versions/create', async (req, res) => {
+  const { htmlPath, versionLabel } = req.body;
+  if (!htmlPath || !versionLabel) {
+    return res.status(400).json({ error: 'Missing htmlPath or versionLabel' });
+  }
+
+  try {
+    const targetFile = path.resolve(workspaceDir, htmlPath);
+    if (!targetFile.startsWith(workspaceDir)) {
+      return res.status(403).json({ error: 'Access denied: outside workspace directory' });
+    }
+
+    const htmlContent = await fs.readFile(targetFile, 'utf8');
+    const backupFilename = await createVersionBackupFromContent(targetFile, htmlContent, versionLabel);
+    console.log(`Version backup saved without rewriting deck: ${backupFilename}`);
+
+    res.json({ success: true, backupFilename });
+  } catch (err) {
+    console.error('Error creating version-only backup:', err);
+    res.status(500).json({ error: `Failed to create version backup: ${err.message}` });
+  }
+});
+
+// 4. API: List version backups for a specific presentation file
 app.get('/api/versions', async (req, res) => {
   const { htmlPath } = req.query;
   if (!htmlPath) {

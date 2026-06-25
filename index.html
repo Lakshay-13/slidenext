@@ -995,6 +995,7 @@
     let currentSlideIndex = 0;
     let selectedElement = null;
     let selectedElements = [];
+    let lastPersistedDeckHtml = '';
     let undoStack = [];
     let redoStack = [];
     let wallpaperTab = 'solid';
@@ -1430,6 +1431,7 @@
       currentTitle = title;
       currentCategory = category || 'General';
       currentSlideIndex = 0;
+      lastPersistedDeckHtml = '';
       selectedElement = null;
       selectedElements = [];
       undoStack = [];
@@ -1469,6 +1471,7 @@
       const editor = document.getElementById('studioEditor');
       const iframe = document.getElementById('studioFrame');
       teardownDeckActiveSlideSync();
+      lastPersistedDeckHtml = '';
       
       iframe.src = '';
       editor.classList.remove('active');
@@ -1746,6 +1749,7 @@
       
       // 10. Capture first historical state
       saveHistoryState(false);
+      lastPersistedDeckHtml = buildPersistableDeckHtml(iframeDoc);
     }
 
     // Apply hoverable tags to editable nodes
@@ -4086,6 +4090,38 @@
       return '<!DOCTYPE html>\n' + clone.outerHTML;
     }
 
+    function isCurrentDeckHtmlPersisted(cleanHtml) {
+      return !!lastPersistedDeckHtml && cleanHtml === lastPersistedDeckHtml;
+    }
+
+    async function saveVersionCheckpoint(versionLabel, cleanHtml) {
+      const hasPersistedCurrentHtml = isCurrentDeckHtmlPersisted(cleanHtml);
+      const response = await fetch(hasPersistedCurrentHtml ? '/api/versions/create' : '/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          hasPersistedCurrentHtml
+            ? {
+                htmlPath: currentPresentationUrl,
+                versionLabel
+              }
+            : {
+                htmlPath: currentPresentationUrl,
+                htmlContent: cleanHtml,
+                isAutoSave: false,
+                versionLabel
+              }
+        )
+      });
+      const data = await response.json();
+
+      if (data.success && !hasPersistedCurrentHtml) {
+        lastPersistedDeckHtml = cleanHtml;
+      }
+
+      return data;
+    }
+
     // 6. AutoSave debouncing pipeline
     let autoSaveDebounceTimer = null;
     function triggerAutoSave() {
@@ -4100,6 +4136,13 @@
         const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
         if (!iframeDoc || !currentPresentationUrl) return;
         const cleanHtml = buildPersistableDeckHtml(iframeDoc);
+
+        if (isCurrentDeckHtmlPersisted(cleanHtml)) {
+          if (statusEl) {
+            statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
+          }
+          return;
+        }
         
         try {
           const response = await fetch('/api/save', {
@@ -4114,6 +4157,7 @@
           
           const data = await response.json();
           if (data.success) {
+            lastPersistedDeckHtml = cleanHtml;
             if (statusEl) {
               statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
             }
@@ -4184,18 +4228,7 @@
       const cleanHtml = buildPersistableDeckHtml(iframeDoc);
       
       try {
-        const response = await fetch('/api/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            htmlPath: currentPresentationUrl,
-            htmlContent: cleanHtml,
-            isAutoSave: false, // create version backup
-            versionLabel: versionName
-          })
-        });
-        
-        const data = await response.json();
+        const data = await saveVersionCheckpoint(versionName, cleanHtml);
         if (data.success) {
           alert('Successfully saved named version backup checkpoint!');
           loadVersions(); // Reload versions lists dropdown
@@ -4240,17 +4273,7 @@
       const cleanHtml = buildPersistableDeckHtml(iframeDoc);
       
       try {
-        const response = await fetch('/api/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            htmlPath: currentPresentationUrl,
-            htmlContent: cleanHtml,
-            isAutoSave: false, // creates version backup!
-            versionLabel: label
-          })
-        });
-        const data = await response.json();
+        const data = await saveVersionCheckpoint(label, cleanHtml);
         if (data.success) {
           console.log(`Auto-created version checkpoint: ${label}`);
           loadVersions(); // Refresh dropdown
