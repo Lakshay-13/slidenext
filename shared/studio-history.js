@@ -181,6 +181,37 @@
     };
   }
 
+  function scheduleStudioHistoryCapture(currentTimer, debounce, captureFn, options = {}) {
+    const clearScheduledCapture = typeof options.clearScheduledCapture === 'function'
+      ? options.clearScheduledCapture
+      : (timerId) => clearTimeout(timerId);
+    const scheduleCapture = typeof options.scheduleCapture === 'function'
+      ? options.scheduleCapture
+      : (callback, delayMs) => setTimeout(callback, delayMs);
+    const debounceMs = Number.isInteger(options.debounceMs) && options.debounceMs >= 0
+      ? options.debounceMs
+      : 800;
+
+    if (!debounce) {
+      captureFn();
+      return {
+        nextTimer: currentTimer,
+        didCapture: true
+      };
+    }
+
+    if (currentTimer) {
+      clearScheduledCapture(currentTimer);
+    }
+
+    return {
+      nextTimer: scheduleCapture(() => {
+        captureFn();
+      }, debounceMs),
+      didCapture: false
+    };
+  }
+
   return {
     buildStudioHistoryFrameHtml,
     createStudioHistoryEntry,
@@ -189,6 +220,7 @@
     captureStudioHistoryState,
     stepStudioHistoryUndo,
     stepStudioHistoryRedo,
-    getStudioHistoryButtonState
+    getStudioHistoryButtonState,
+    scheduleStudioHistoryCapture
   };
 });

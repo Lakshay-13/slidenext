@@ -3837,14 +3837,12 @@
     // 5. Undo/Redo Engine
     let undoDebounceTimer = null;
     function saveHistoryState(debounce = false) {
-      if (debounce) {
-        clearTimeout(undoDebounceTimer);
-        undoDebounceTimer = setTimeout(() => {
-          captureState();
-        }, 800);
-      } else {
-        captureState();
-      }
+      const nextCaptureState = SlideNextStudioHistory.scheduleStudioHistoryCapture(
+        undoDebounceTimer,
+        debounce,
+        captureState
+      );
+      undoDebounceTimer = nextCaptureState.nextTimer;
     }
 
     function buildHistoryFrameHtml(doc = getIframeDoc()) {
