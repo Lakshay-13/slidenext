@@ -482,6 +482,23 @@
     </div>
   </div>
 
+  <!-- HTML Source View Modal -->
+  <div id="sourceViewModal" class="fixed inset-0 z-[120] bg-black/70 backdrop-blur-md flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl w-[min(1100px,92vw)] h-[min(760px,82vh)] p-5 flex flex-col gap-4 transform scale-95 transition-transform duration-200" id="sourceViewModalContent">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex items-start gap-3">
+          <span class="material-symbols-outlined text-[#7028d0] text-2xl">code</span>
+          <div class="flex flex-col gap-1">
+            <h3 class="text-base font-bold text-white">Rendered HTML Source</h3>
+            <p class="text-xs text-zinc-400 leading-relaxed">Read-only source generated from the current studio deck state.</p>
+          </div>
+        </div>
+        <button onclick="closeSourceViewModal()" class="px-3 py-2 text-xs font-mono text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg transition-all">Close</button>
+      </div>
+      <textarea id="sourceViewContent" readonly spellcheck="false" class="flex-1 w-full p-4 bg-black/60 border border-white/10 rounded-xl text-[11px] leading-relaxed font-mono text-zinc-200 focus:outline-none resize-none whitespace-pre"></textarea>
+    </div>
+  </div>
+
   <!-- Studio Editor Workspace Overlay (Keynote/Canva Style) -->
   <div id="studioEditor" class="fixed inset-0 z-50 bg-[#050505] flex flex-col opacity-0 pointer-events-none transition-opacity duration-300 hidden">
     
@@ -552,6 +569,11 @@
         <button onclick="launchPreview()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all">
           <span class="material-symbols-outlined text-[16px]">play_arrow</span>
           <span>Present</span>
+        </button>
+
+        <button onclick="openSourceViewModal()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all">
+          <span class="material-symbols-outlined text-[16px]">code</span>
+          <span>HTML</span>
         </button>
 
         <!-- AutoSave Status Indicator -->
@@ -1417,10 +1439,46 @@
       return injectBaseHrefIntoHtml(renderedHtml, buildPresentationBaseHref(currentPresentationUrl));
     }
 
+    function buildEditorSourceHtml(doc = getIframeDoc()) {
+      if (doc && window.SlideNextDeckRender) {
+        const canonicalDeck = buildEditorCanonicalDeck(doc);
+        if (canonicalDeck) {
+          return SlideNextDeckRender.renderCanonicalDeckHtml(canonicalDeck);
+        }
+      }
+      return doc ? buildPersistableDeckHtml(doc) : '';
+    }
+
     function launchPresentationHtml(html, startSlideIdx) {
       const { iframe } = openPresentationModalWithLoader(startSlideIdx);
       iframe.removeAttribute('src');
       iframe.srcdoc = html;
+    }
+
+    function openSourceViewModal() {
+      const modal = document.getElementById('sourceViewModal');
+      const content = document.getElementById('sourceViewModalContent');
+      const textarea = document.getElementById('sourceViewContent');
+      const sourceHtml = buildEditorSourceHtml();
+      if (textarea) {
+        textarea.value = sourceHtml || '<!DOCTYPE html>\n<!-- No source available -->';
+        textarea.scrollTop = 0;
+      }
+      modal.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        modal.classList.remove('opacity-0');
+        content.classList.remove('scale-95');
+        content.classList.add('scale-100');
+      });
+    }
+
+    function closeSourceViewModal() {
+      const modal = document.getElementById('sourceViewModal');
+      const content = document.getElementById('sourceViewModalContent');
+      modal.classList.add('opacity-0');
+      content.classList.remove('scale-100');
+      content.classList.add('scale-95');
+      setTimeout(() => modal.classList.add('hidden'), 180);
     }
 
     function closePresentation() {
