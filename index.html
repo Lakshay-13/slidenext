@@ -1499,6 +1499,7 @@
       currentTitle = title;
       currentCategory = category || 'General';
       currentSlideIndex = 0;
+      resetEditorPersistenceTimers();
       resetEditorDeckPersistenceState();
       applyEditorSelectionState({});
       resetEditorHistoryState({ syncButtons: true });
@@ -1543,6 +1544,7 @@
       currentCategory = '';
       currentSlideIndex = 0;
       currentPresentationMetadata = null;
+      resetEditorPersistenceTimers();
       resetEditorDeckPersistenceState();
       deselectElement();
       resetEditorHistoryState({ syncButtons: true });
@@ -3696,7 +3698,20 @@
       return !!lastPersistedDeckHtml && cleanHtml === lastPersistedDeckHtml;
     }
 
-    async function saveVersionCheckpoint(versionLabel, cleanHtml) {
+    function isStaleEditorPersistenceTask(presentationUrl) {
+      return !presentationUrl || presentationUrl !== currentPresentationUrl;
+    }
+
+    function resetEditorPersistenceTimers() {
+      clearTimeout(autoSaveDebounceTimer);
+      autoSaveDebounceTimer = null;
+      Object.values(autoVersionTimers).forEach((timerId) => {
+        clearTimeout(timerId);
+      });
+      autoVersionTimers = {};
+    }
+
+    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl) {
       const hasPersistedCurrentHtml = isCurrentDeckHtmlPersisted(cleanHtml);
       const response = await fetch(hasPersistedCurrentHtml ? '/api/versions/create' : '/api/save', {
         method: 'POST',
@@ -3704,11 +3719,11 @@
         body: JSON.stringify(
           hasPersistedCurrentHtml
             ? {
-                htmlPath: currentPresentationUrl,
+                htmlPath: presentationUrl,
                 versionLabel
               }
             : {
-                htmlPath: currentPresentationUrl,
+                htmlPath: presentationUrl,
                 htmlContent: cleanHtml,
                 isAutoSave: false,
                 versionLabel
@@ -3728,15 +3743,17 @@
     let autoSaveDebounceTimer = null;
     function triggerAutoSave() {
       const statusEl = document.getElementById('autoSaveStatus');
+      const scheduledPresentationUrl = currentPresentationUrl;
       if (statusEl) {
         statusEl.innerHTML = `<span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Saving...</span>`;
       }
       
       clearTimeout(autoSaveDebounceTimer);
       autoSaveDebounceTimer = setTimeout(async () => {
+        autoSaveDebounceTimer = null;
         const iframe = document.getElementById('studioFrame');
         const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-        if (!iframeDoc || !currentPresentationUrl) return;
+        if (!iframeDoc || isStaleEditorPersistenceTask(scheduledPresentationUrl)) return;
         const cleanHtml = buildPersistableDeckHtml(iframeDoc);
 
         if (isCurrentDeckHtmlPersisted(cleanHtml)) {
@@ -3751,7 +3768,7 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              htmlPath: currentPresentationUrl,
+              htmlPath: scheduledPresentationUrl,
               htmlContent: cleanHtml,
               isAutoSave: true
             })
@@ -3855,27 +3872,29 @@
       // Frequent operations (e.g. dragging, typing) get debounced on 10s delay.
       // Structural operations (e.g. Adding/Deleting Slide, Adding/Deleting Element) save immediately.
       const isFrequentAction = label.includes('Moved') || label.includes('Edited') || label.includes('Changed') || label.includes('Rearranged');
+      const scheduledPresentationUrl = currentPresentationUrl;
       
       if (isFrequentAction) {
         const timerKey = 'frequent_action';
         clearTimeout(autoVersionTimers[timerKey]);
         autoVersionTimers[timerKey] = setTimeout(() => {
-          executeSaveAutoVersion(label);
+          delete autoVersionTimers[timerKey];
+          executeSaveAutoVersion(label, scheduledPresentationUrl);
         }, 10000); // 10 seconds delay
       } else {
         // Execute immediately
-        executeSaveAutoVersion(label);
+        executeSaveAutoVersion(label, scheduledPresentationUrl);
       }
     }
 
-    async function executeSaveAutoVersion(label) {
+    async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl) {
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      if (!iframeDoc || !currentPresentationUrl) return;
+      if (!iframeDoc || isStaleEditorPersistenceTask(presentationUrl)) return;
       const cleanHtml = buildPersistableDeckHtml(iframeDoc);
       
       try {
-        const data = await saveVersionCheckpoint(label, cleanHtml);
+        const data = await saveVersionCheckpoint(label, cleanHtml, presentationUrl);
         if (data.success) {
           console.log(`Auto-created version checkpoint: ${label}`);
           loadVersions(); // Refresh dropdown
