@@ -75,6 +75,95 @@
     return urls;
   }
 
+  function extractCustomPropertyMap(styleDeclaration) {
+    const tokens = {};
+    if (!styleDeclaration) {
+      return tokens;
+    }
+
+    const styleLength = Number.isInteger(styleDeclaration.length)
+      ? styleDeclaration.length
+      : 0;
+    if (styleLength > 0 && typeof styleDeclaration.getPropertyValue === 'function') {
+      for (let index = 0; index < styleLength; index += 1) {
+        const propertyName = normalizeString(
+          styleDeclaration[index],
+          typeof styleDeclaration.item === 'function' ? styleDeclaration.item(index) : ''
+        ).trim();
+        if (!propertyName.startsWith('--')) {
+          continue;
+        }
+        const propertyValue = normalizeWhitespace(styleDeclaration.getPropertyValue(propertyName));
+        if (propertyValue) {
+          tokens[propertyName] = propertyValue;
+        }
+      }
+      return tokens;
+    }
+
+    Object.entries(styleDeclaration).forEach(([propertyName, propertyValue]) => {
+      if (!propertyName.startsWith('--')) {
+        return;
+      }
+      const normalizedValue = normalizeWhitespace(propertyValue);
+      if (normalizedValue) {
+        tokens[propertyName] = normalizedValue;
+      }
+    });
+    return tokens;
+  }
+
+  function mergeThemeTokensFromCssRule(rule, tokens) {
+    if (!rule || !tokens) {
+      return;
+    }
+
+    let nestedRules = [];
+    try {
+      nestedRules = Array.isArray(rule.cssRules)
+        ? rule.cssRules
+        : rule.cssRules && typeof rule.cssRules.length === 'number'
+          ? Array.from(rule.cssRules)
+          : [];
+    } catch (err) {
+      nestedRules = [];
+    }
+    nestedRules.forEach((nestedRule) => mergeThemeTokensFromCssRule(nestedRule, tokens));
+
+    const selectorText = normalizeString(rule.selectorText).toLowerCase();
+    if (!selectorText) {
+      return;
+    }
+    const isRootRule = selectorText
+      .split(',')
+      .some((selector) => selector.trim() === ':root');
+    if (!isRootRule) {
+      return;
+    }
+
+    Object.assign(tokens, extractCustomPropertyMap(rule.style));
+  }
+
+  function collectDeckThemeTokens(doc) {
+    const tokens = {};
+    if (!doc) {
+      return tokens;
+    }
+
+    Object.assign(tokens, extractCustomPropertyMap(doc.documentElement && doc.documentElement.style));
+    Array.from(doc.styleSheets || []).forEach((styleSheet) => {
+      let cssRules = [];
+      try {
+        cssRules = Array.from(styleSheet.cssRules || styleSheet.rules || []);
+      } catch (err) {
+        cssRules = [];
+      }
+      cssRules.forEach((rule) => mergeThemeTokensFromCssRule(rule, tokens));
+    });
+
+    return tokens;
+  }
+
   function getGreatestCommonDivisor(a, b) {
     let x = Math.abs(a);
     let y = Math.abs(b);
@@ -409,6 +498,9 @@
 
     return canonicalDeck.createCanonicalDeck({
       metadata: buildDeckMetadata(doc, options),
+      theme: {
+        tokens: collectDeckThemeTokens(doc)
+      },
       layout: inferDeckLayout(doc, slides, options),
       assets: collectDeckAssets(doc),
       slides: slides.map((slide, index) => importSlideToCanonicalSlide(slide, index, options)),
@@ -418,6 +510,7 @@
 
   return {
     DEFAULT_SKIP_TAG_NAMES,
+    collectDeckThemeTokens,
     extractCssUrlValues,
     collectDeckAssets,
     inferImportedNodeType,

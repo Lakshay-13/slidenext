@@ -116,3 +116,39 @@ test('renderCanonicalDeckHtml removes stale slide-active from non-active rendere
   assert.match(html, /<section class="slide hero-slide slide-active" id="slide-1"><\/section>/);
   assert.match(html, /<section class="slide custom-slide" id="slide-2"><\/section>/);
 });
+
+test('renderCanonicalDeckHtml emits theme tokens and custom css when rendering without source head html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    metadata: {
+      title: 'Themed Canonical Deck'
+    },
+    theme: {
+      tokens: {
+        '--color-primary': '#00f2ff',
+        '--font-heading': "'Sora', sans-serif"
+      },
+      customCss: '.slide { color: var(--color-primary); }'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<style>\s*:root\s*\{/);
+  assert.match(html, /--color-primary: #00f2ff;/);
+  assert.match(html, /--font-heading: 'Sora', sans-serif;/);
+  assert.match(html, /<style>\s*\.slide \{ color: var\(--color-primary\); \}\s*<\/style>/);
+});

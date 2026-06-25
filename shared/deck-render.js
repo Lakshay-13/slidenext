@@ -38,6 +38,10 @@
     return escapeHtml(value).replace(/"/g, '&quot;');
   }
 
+  function escapeStyleText(value) {
+    return normalizeString(value).replace(/<\/style/gi, '<\\/style');
+  }
+
   function renderAttributeMap(attributes = {}) {
     return Object.entries(asPlainObject(attributes))
       .filter(([, value]) => value !== null && value !== undefined && value !== false)
@@ -118,10 +122,27 @@
 
   function buildDefaultHeadHtml(deck) {
     const title = normalizeString(deck.metadata && deck.metadata.title, 'SlideNext Deck');
+    const themeTokens = asPlainObject(deck.theme && deck.theme.tokens);
+    const themeTokenEntries = Object.entries(themeTokens)
+      .filter(([tokenName, tokenValue]) => tokenName.startsWith('--') && normalizeString(tokenValue).trim() !== '');
+    const themeCustomCss = normalizeString(deck.theme && deck.theme.customCss).trim();
+    const themeStyleBlocks = [];
+
+    if (themeTokenEntries.length > 0) {
+      const tokenLines = themeTokenEntries
+        .map(([tokenName, tokenValue]) => `  ${tokenName}: ${escapeStyleText(String(tokenValue))};`)
+        .join('\n');
+      themeStyleBlocks.push(`<style>\n:root {\n${tokenLines}\n}\n</style>`);
+    }
+    if (themeCustomCss) {
+      themeStyleBlocks.push(`<style>\n${escapeStyleText(themeCustomCss)}\n</style>`);
+    }
+
     return [
       '<meta charset="utf-8">',
       '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
-      `<title>${escapeHtml(title)}</title>`
+      `<title>${escapeHtml(title)}</title>`,
+      ...themeStyleBlocks
     ].join('\n');
   }
 
