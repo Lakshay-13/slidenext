@@ -133,6 +133,43 @@ test('renderCanonicalNode uses dedicated class and style fields when attributes 
   assert.equal(html, '<div aria-label="Hero" class="hero-card" style="color: red;">Hero copy</div>');
 });
 
+test('renderCanonicalNode falls back to canonical absolute layout when style is absent', () => {
+  const html = deckRender.renderCanonicalNode({
+    tagName: 'div',
+    text: 'Hero copy',
+    layout: {
+      mode: 'absolute',
+      x: 120,
+      y: 80,
+      width: 400,
+      height: 160,
+      zIndex: 4
+    }
+  }, {
+    preferNodeSourceHtml: false
+  });
+
+  assert.equal(html, '<div style="position: absolute; left: 120px; top: 80px; width: 400px; height: 160px; z-index: 4;">Hero copy</div>');
+});
+
+test('renderCanonicalNode preserves explicit style over canonical layout fallbacks', () => {
+  const html = deckRender.renderCanonicalNode({
+    tagName: 'div',
+    text: 'Hero copy',
+    style: 'color: red;',
+    layout: {
+      mode: 'absolute',
+      x: 120,
+      y: 80,
+      zIndex: 4
+    }
+  }, {
+    preferNodeSourceHtml: false
+  });
+
+  assert.equal(html, '<div style="color: red;">Hero copy</div>');
+});
+
 test('renderCanonicalDeckHtml emits theme tokens and custom css when rendering without source head html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {
@@ -326,4 +363,45 @@ test('renderCanonicalDeckHtml preserves explicit slide notes attributes over can
   assert.match(html, /data-slide-name="Imported Slide"/);
   assert.match(html, /data-notes="Imported notes"/);
   assert.doesNotMatch(html, /data-speaker-notes="Canonical notes"/);
+});
+
+test('renderCanonicalDeckHtml adds slide positioning context for canonical absolute layout nodes when source slide style is absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [
+          {
+            tagName: 'div',
+            text: 'Hero copy',
+            layout: {
+              mode: 'absolute',
+              x: 120,
+              y: 80,
+              width: 400,
+              height: 160,
+              zIndex: 3
+            },
+            source: {}
+          }
+        ],
+        source: {
+          html: '',
+          attributes: {}
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<section style="position: relative;" class="slide slide-active" id="slide-1">/);
+  assert.match(html, /<div style="position: absolute; left: 120px; top: 80px; width: 400px; height: 160px; z-index: 3;">Hero copy<\/div>/);
 });

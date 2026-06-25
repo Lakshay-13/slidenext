@@ -94,6 +94,66 @@
     return styleFragments.join(' ');
   }
 
+  function appendStyleDeclaration(styleText, declaration) {
+    const normalizedStyleText = normalizeString(styleText).trim();
+    const normalizedDeclaration = normalizeString(declaration).trim();
+    if (!normalizedDeclaration) {
+      return normalizedStyleText;
+    }
+    if (!normalizedStyleText) {
+      return normalizedDeclaration;
+    }
+    return `${normalizedStyleText}${normalizedStyleText.endsWith(';') ? '' : ';'} ${normalizedDeclaration}`;
+  }
+
+  function styleTextHasProperty(styleText, propertyName) {
+    const normalizedStyleText = normalizeString(styleText).trim();
+    const normalizedPropertyName = normalizeString(propertyName).trim();
+    if (!normalizedStyleText || !normalizedPropertyName) {
+      return false;
+    }
+    const escapedPropertyName = normalizedPropertyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(^|;)\\s*${escapedPropertyName}\\s*:`, 'i').test(normalizedStyleText);
+  }
+
+  function buildRenderedNodeLayoutStyle(layout = {}) {
+    const normalizedLayout = asPlainObject(layout);
+    if (normalizeString(normalizedLayout.mode) !== 'absolute') {
+      return '';
+    }
+
+    const styleFragments = ['position: absolute;'];
+    if (Number.isFinite(normalizedLayout.x)) {
+      styleFragments.push(`left: ${normalizedLayout.x}px;`);
+    }
+    if (Number.isFinite(normalizedLayout.y)) {
+      styleFragments.push(`top: ${normalizedLayout.y}px;`);
+    }
+    if (Number.isFinite(normalizedLayout.width)) {
+      styleFragments.push(`width: ${normalizedLayout.width}px;`);
+    }
+    if (Number.isFinite(normalizedLayout.height)) {
+      styleFragments.push(`height: ${normalizedLayout.height}px;`);
+    }
+    if (Number.isFinite(normalizedLayout.zIndex)) {
+      styleFragments.push(`z-index: ${normalizedLayout.zIndex};`);
+    }
+
+    return styleFragments.join(' ');
+  }
+
+  function hasAbsolutePositionedNode(nodes = []) {
+    return Array.isArray(nodes) && nodes.some((node) => {
+      if (!node || typeof node !== 'object') {
+        return false;
+      }
+      if (normalizeString(node.layout && node.layout.mode) === 'absolute') {
+        return true;
+      }
+      return hasAbsolutePositionedNode(node.children);
+    });
+  }
+
   function renderCanonicalNode(node, options = {}) {
     if (!node || typeof node !== 'object') return '';
     if (options.preferNodeSourceHtml !== false && normalizeString(node.html)) {
@@ -106,6 +166,12 @@
     }
     if (node.style && !attributes.style) {
       attributes.style = node.style;
+    }
+    if (!attributes.style) {
+      const layoutStyle = buildRenderedNodeLayoutStyle(node.layout);
+      if (layoutStyle) {
+        attributes.style = layoutStyle;
+      }
     }
     if (node.visibility && node.visibility.hidden) {
       attributes['aria-hidden'] = attributes['aria-hidden'] || 'true';
@@ -132,6 +198,8 @@
 
     const sourceAttributes = slide.source ? asPlainObject(slide.source.attributes) : {};
     const background = slide.layout ? asPlainObject(slide.layout.background) : {};
+    const hasExplicitSourceStyle = !!normalizeString(sourceAttributes.style).trim();
+    const needsPositionContext = hasAbsolutePositionedNode(slide.nodes);
     if (!sourceAttributes['data-slide-name'] && slide.name) {
       sourceAttributes['data-slide-name'] = slide.name;
     }
@@ -146,6 +214,9 @@
       if (backgroundStyle) {
         sourceAttributes.style = backgroundStyle;
       }
+    }
+    if (needsPositionContext && !hasExplicitSourceStyle && !styleTextHasProperty(sourceAttributes.style, 'position')) {
+      sourceAttributes.style = appendStyleDeclaration(sourceAttributes.style, 'position: relative;');
     }
     sourceAttributes.class = buildRenderedSlideClassName(sourceAttributes.class, index === 0);
     if (!sourceAttributes.id && slide.id) {
