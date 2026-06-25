@@ -265,3 +265,65 @@ test('renderCanonicalDeckHtml preserves explicit slide source attributes over ca
 
   assert.match(html, /<section class="slide source-slide slide-active" style="background: black;" id="slide-1"><\/section>/);
 });
+
+test('renderCanonicalDeckHtml falls back to canonical slide name and notes attributes when source attributes are absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        name: 'Opening Slide',
+        notes: 'Remember to introduce the roadmap.',
+        nodes: [],
+        source: {
+          html: '',
+          attributes: {}
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /data-slide-name="Opening Slide"/);
+  assert.match(html, /data-speaker-notes="Remember to introduce the roadmap\." class="slide slide-active" id="slide-1"/);
+});
+
+test('renderCanonicalDeckHtml preserves explicit slide notes attributes over canonical note fallbacks', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        name: 'Opening Slide',
+        notes: 'Canonical notes',
+        nodes: [],
+        source: {
+          html: '',
+          attributes: {
+            'data-slide-name': 'Imported Slide',
+            'data-notes': 'Imported notes'
+          }
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /data-slide-name="Imported Slide"/);
+  assert.match(html, /data-notes="Imported notes"/);
+  assert.doesNotMatch(html, /data-speaker-notes="Canonical notes"/);
+});

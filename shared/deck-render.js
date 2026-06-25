@@ -132,6 +132,12 @@
 
     const sourceAttributes = slide.source ? asPlainObject(slide.source.attributes) : {};
     const background = slide.layout ? asPlainObject(slide.layout.background) : {};
+    if (!sourceAttributes['data-slide-name'] && slide.name) {
+      sourceAttributes['data-slide-name'] = slide.name;
+    }
+    if (!sourceAttributes['data-speaker-notes'] && !sourceAttributes['data-notes'] && slide.notes) {
+      sourceAttributes['data-speaker-notes'] = slide.notes;
+    }
     if (!sourceAttributes.class && background.className) {
       sourceAttributes.class = background.className;
     }
