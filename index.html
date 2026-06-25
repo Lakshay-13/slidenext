@@ -1841,58 +1841,9 @@
 
     // Sync presentation's internal dots and counter
     function updateIframeNavigationUI(doc, slides) {
-      const totalSlides = slides.length;
-      
-      // Re-generate indicator dots in the iframe
-      const dotsContainer = doc.getElementById('indicatorDots');
-      if (dotsContainer) {
-        dotsContainer.innerHTML = '';
-        for (let i = 0; i < totalSlides; i++) {
-          const dot = doc.createElement('div');
-          dot.className = `indicator-dot ${i === currentSlideIndex ? 'active' : ''}`;
-          dot.addEventListener('click', () => {
-            setActiveSlide(i);
-          });
-          dotsContainer.appendChild(dot);
-        }
-      }
-      
-      // Update slide count text
-      const slideNumText = doc.getElementById('slideNum');
-      if (slideNumText) {
-        const formattedNum = String(currentSlideIndex + 1).padStart(2, '0');
-        const formattedTotal = String(totalSlides).padStart(2, '0');
-        slideNumText.textContent = `${formattedNum} / ${formattedTotal}`;
-      }
-      
-      // Update progress bar
-      const progressLine = doc.getElementById('progressLine');
-      if (progressLine) {
-        const progressPercent = ((currentSlideIndex + 1) / totalSlides) * 100;
-        progressLine.style.width = `${progressPercent}%`;
-      }
-      
-      // Prev/Next Nav triggers state
-      const prevBtn = doc.getElementById('prevBtn');
-      const nextBtn = doc.getElementById('nextBtn');
-      if (prevBtn) {
-        if (currentSlideIndex === 0) {
-          prevBtn.style.opacity = '0.3';
-          prevBtn.style.pointerEvents = 'none';
-        } else {
-          prevBtn.style.opacity = '1';
-          prevBtn.style.pointerEvents = 'auto';
-        }
-      }
-      if (nextBtn) {
-        if (currentSlideIndex === totalSlides - 1) {
-          nextBtn.style.opacity = '0.3';
-          nextBtn.style.pointerEvents = 'none';
-        } else {
-          nextBtn.style.opacity = '1';
-          nextBtn.style.pointerEvents = 'auto';
-        }
-      }
+      SlideNextStudioDeckView.updateStudioDeckNavigationUi(doc, slides, currentSlideIndex, {
+        setActiveSlide
+      });
     }
 
     // Add Blank Slide Node

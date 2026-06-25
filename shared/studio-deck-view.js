@@ -224,6 +224,121 @@
     };
   }
 
+  function updateStudioDeckNavigationUi(doc, slides = [], currentSlideIndex, options = {}) {
+    const getIndicatorDotsContainer = typeof options.getIndicatorDotsContainer === 'function'
+      ? options.getIndicatorDotsContainer
+      : (nextDoc) => nextDoc && typeof nextDoc.getElementById === 'function'
+          ? nextDoc.getElementById('indicatorDots')
+          : null;
+    const createIndicatorDot = typeof options.createIndicatorDot === 'function'
+      ? options.createIndicatorDot
+      : (nextDoc) => nextDoc && typeof nextDoc.createElement === 'function'
+          ? nextDoc.createElement('div')
+          : null;
+    const appendIndicatorDot = typeof options.appendIndicatorDot === 'function'
+      ? options.appendIndicatorDot
+      : (container, dot) => {
+          if (container && dot) {
+            container.appendChild(dot);
+          }
+        };
+    const bindIndicatorDotClick = typeof options.bindIndicatorDotClick === 'function'
+      ? options.bindIndicatorDotClick
+      : (dot, index, setActiveSlide) => {
+          if (dot && typeof dot.addEventListener === 'function') {
+            dot.addEventListener('click', () => {
+              setActiveSlide(index);
+            });
+          }
+        };
+    const setIndicatorDotsHtml = typeof options.setIndicatorDotsHtml === 'function'
+      ? options.setIndicatorDotsHtml
+      : (container, html) => {
+          if (container) {
+            container.innerHTML = html;
+          }
+        };
+    const setActiveSlide = typeof options.setActiveSlide === 'function'
+      ? options.setActiveSlide
+      : () => {};
+    const getSlideNumNode = typeof options.getSlideNumNode === 'function'
+      ? options.getSlideNumNode
+      : (nextDoc) => nextDoc && typeof nextDoc.getElementById === 'function'
+          ? nextDoc.getElementById('slideNum')
+          : null;
+    const setSlideNumText = typeof options.setSlideNumText === 'function'
+      ? options.setSlideNumText
+      : (node, text) => {
+          if (node) {
+            node.textContent = text;
+          }
+        };
+    const getProgressLineNode = typeof options.getProgressLineNode === 'function'
+      ? options.getProgressLineNode
+      : (nextDoc) => nextDoc && typeof nextDoc.getElementById === 'function'
+          ? nextDoc.getElementById('progressLine')
+          : null;
+    const setProgressPercent = typeof options.setProgressPercent === 'function'
+      ? options.setProgressPercent
+      : (node, percent) => {
+          if (node && node.style) {
+            node.style.width = `${percent}%`;
+          }
+        };
+    const getPrevButton = typeof options.getPrevButton === 'function'
+      ? options.getPrevButton
+      : (nextDoc) => nextDoc && typeof nextDoc.getElementById === 'function'
+          ? nextDoc.getElementById('prevBtn')
+          : null;
+    const getNextButton = typeof options.getNextButton === 'function'
+      ? options.getNextButton
+      : (nextDoc) => nextDoc && typeof nextDoc.getElementById === 'function'
+          ? nextDoc.getElementById('nextBtn')
+          : null;
+    const setButtonEnabledState = typeof options.setButtonEnabledState === 'function'
+      ? options.setButtonEnabledState
+      : (node, isEnabled) => {
+          if (!node || !node.style) return;
+          node.style.opacity = isEnabled ? '1' : '0.3';
+          node.style.pointerEvents = isEnabled ? 'auto' : 'none';
+        };
+
+    const totalSlides = Array.isArray(slides) ? slides.length : 0;
+    const dotsContainer = getIndicatorDotsContainer(doc);
+    if (dotsContainer) {
+      setIndicatorDotsHtml(dotsContainer, '');
+      for (let i = 0; i < totalSlides; i += 1) {
+        const dot = createIndicatorDot(doc);
+        if (!dot) continue;
+        dot.className = `indicator-dot ${i === currentSlideIndex ? 'active' : ''}`;
+        bindIndicatorDotClick(dot, i, setActiveSlide);
+        appendIndicatorDot(dotsContainer, dot);
+      }
+    }
+
+    const slideNumText = getSlideNumNode(doc);
+    const formattedNum = String(currentSlideIndex + 1).padStart(2, '0');
+    const formattedTotal = String(totalSlides).padStart(2, '0');
+    setSlideNumText(slideNumText, `${formattedNum} / ${formattedTotal}`);
+
+    const progressLine = getProgressLineNode(doc);
+    const progressPercent = totalSlides === 0 ? 0 : ((currentSlideIndex + 1) / totalSlides) * 100;
+    setProgressPercent(progressLine, progressPercent);
+
+    const prevBtn = getPrevButton(doc);
+    const nextBtn = getNextButton(doc);
+    setButtonEnabledState(prevBtn, currentSlideIndex !== 0);
+    setButtonEnabledState(nextBtn, currentSlideIndex !== totalSlides - 1);
+
+    return {
+      totalSlides,
+      currentSlideIndex,
+      formattedNum,
+      formattedTotal,
+      progressPercent
+    };
+  }
+
   function buildStudioPreviewHtml(doc, options = {}) {
     if (!doc || !deckHtml || typeof deckHtml.buildDeckPreviewHtml !== 'function') {
       return '';
@@ -260,6 +375,7 @@
     observeStudioDeckActiveSlideState,
     bindStudioDeckNavigationSync,
     syncStudioActiveSlideView,
+    updateStudioDeckNavigationUi,
     buildStudioPreviewHtml,
     buildStudioSourceHtml
   };
