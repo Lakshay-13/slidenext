@@ -1047,6 +1047,7 @@
           const activeEl = document.activeElement;
           const isTypingContext = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
           const loweredKey = e.key.toLowerCase();
+          const isBracketShortcut = e.code === 'BracketLeft' || e.code === 'BracketRight';
           if ((e.ctrlKey || e.metaKey) && loweredKey === 'z' && !e.shiftKey) {
             e.preventDefault();
             editorUndo();
@@ -1059,9 +1060,13 @@
             e.preventDefault();
             selectAllElementsOnActiveSlide();
           }
-          if (!isTypingContext && selectedElements.length > 0 && (e.ctrlKey || e.metaKey) && (e.key === '[' || e.key === ']')) {
+          if (!isTypingContext && selectedElements.length > 0 && (e.ctrlKey || e.metaKey) && e.shiftKey && isBracketShortcut) {
             e.preventDefault();
-            arrangeElementLayer(e.key === ']' ? 'forward' : 'backward');
+            arrangeElementLayer(e.code === 'BracketRight' ? 'front' : 'back');
+          }
+          if (!isTypingContext && selectedElements.length > 0 && (e.ctrlKey || e.metaKey) && isBracketShortcut) {
+            e.preventDefault();
+            arrangeElementLayer(e.code === 'BracketRight' ? 'forward' : 'backward');
           }
           if (!isTypingContext && selectedElements.length > 0 && e.key === 'Escape') {
             e.preventDefault();
@@ -1597,6 +1602,7 @@
       // 4. Setup Keydown bubble
       iframeDoc.addEventListener('keydown', (e) => {
         const loweredKey = e.key.toLowerCase();
+        const isBracketShortcut = e.code === 'BracketLeft' || e.code === 'BracketRight';
         // Allow shortcut keys (Ctrl+Z, Ctrl+Y)
         if ((e.ctrlKey || e.metaKey) && loweredKey === 'z' && !e.shiftKey) {
           e.preventDefault();
@@ -1615,10 +1621,16 @@
           selectAllElementsOnActiveSlide();
           return;
         }
-        if (!isTypingContext && selectedElements.length > 0 && (e.ctrlKey || e.metaKey) && (e.key === '[' || e.key === ']')) {
+        if (!isTypingContext && selectedElements.length > 0 && (e.ctrlKey || e.metaKey) && e.shiftKey && isBracketShortcut) {
           e.preventDefault();
           e.stopPropagation();
-          arrangeElementLayer(e.key === ']' ? 'forward' : 'backward');
+          arrangeElementLayer(e.code === 'BracketRight' ? 'front' : 'back');
+          return;
+        }
+        if (!isTypingContext && selectedElements.length > 0 && (e.ctrlKey || e.metaKey) && isBracketShortcut) {
+          e.preventDefault();
+          e.stopPropagation();
+          arrangeElementLayer(e.code === 'BracketRight' ? 'forward' : 'backward');
           return;
         }
         if (!isTypingContext && selectedElements.length > 0 && e.key === 'Escape') {
