@@ -1010,6 +1010,7 @@
     const MIN_ELEMENT_SIZE_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const DRAG_OVERFLOW_MARGIN_PX = 280;
+    const EDITOR_CHROME_NODE_IDS = ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud'];
     const EDITOR_ELEMENT_ID_ATTR = 'data-editor-id';
     const EDITOR_SLIDE_ID_ATTR = 'data-slide-id';
     const EDITOR_SELECTABLE_SELECTOR = [
@@ -1908,6 +1909,7 @@
           container.style.transform = `translateX(-${currentSlideIndex * 100}vw)`;
         }
       }
+      pruneEditorChromeNodes(doc, slides[activeIndex]);
       const activeSlideId = slides[activeIndex].getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
       updateActiveThumbnailCardState(activeSlideId);
       updateIframeNavigationUI(doc, slides);
@@ -2297,6 +2299,18 @@
     function getActiveSlide(doc = getIframeDoc()) {
       if (!doc) return null;
       return doc.querySelector('.slide-active') || doc.querySelector('.slide');
+    }
+
+    function pruneEditorChromeNodes(doc = getIframeDoc(), activeSlide = getActiveSlide(doc)) {
+      if (!doc) return;
+      EDITOR_CHROME_NODE_IDS.forEach(nodeId => {
+        const matches = Array.from(doc.querySelectorAll(`#${nodeId}`));
+        const keepNode = activeSlide ? matches.find(node => activeSlide.contains(node)) || null : null;
+        matches.forEach(node => {
+          if (keepNode && node === keepNode) return;
+          node.remove();
+        });
+      });
     }
 
     function setActiveSlideById(slideId, doc = getIframeDoc()) {
@@ -3840,13 +3854,7 @@
       if (!doc) return '';
 
       const clone = doc.documentElement.cloneNode(true);
-      const removableEditorNodeIds = [
-        'editorSelectionOverlay',
-        'editorGuidesLayer',
-        'editorDragHud'
-      ];
-
-      removableEditorNodeIds.forEach(nodeId => {
+      EDITOR_CHROME_NODE_IDS.forEach(nodeId => {
         clone.querySelectorAll(`#${nodeId}`).forEach(node => node.remove());
       });
 
@@ -3982,9 +3990,7 @@
       const removableEditorNodeIds = [
         'editor-style-tag',
         'editor-theme-override-tag',
-        'editorSelectionOverlay',
-        'editorGuidesLayer',
-        'editorDragHud'
+        ...EDITOR_CHROME_NODE_IDS
       ];
 
       removableEditorNodeIds.forEach(nodeId => {
