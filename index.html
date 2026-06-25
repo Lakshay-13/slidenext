@@ -1050,6 +1050,7 @@
     let zoomFactor = 1.0;
     let customGradientType = 'linear';
     let renamingFilename = '';
+    let renamingVersionContext = null;
     let editorClipboard = null;
     let deckActiveSlideObserver = null;
     let deckActiveSlideSyncTimer = null;
@@ -4022,6 +4023,11 @@
 
     function promptRenameVersion(filename, currentLabel) {
       renamingFilename = filename;
+      renamingVersionContext = SlideNextStudioVersionActions.createStudioVersionActionContext(
+        currentPresentationUrl,
+        currentTitle,
+        currentCategory
+      );
       document.getElementById('newVersionNameInput').value = currentLabel;
       
       const modal = document.getElementById('renameVersionModal');
@@ -4040,6 +4046,8 @@
     function closeRenameVersionModal() {
       const modal = document.getElementById('renameVersionModal');
       const content = document.getElementById('renameVersionModalContent');
+      renamingFilename = '';
+      renamingVersionContext = null;
       
       modal.classList.remove('opacity-100');
       content.classList.remove('scale-100');
@@ -4052,6 +4060,13 @@
     async function submitRenameVersion() {
       const newLabel = document.getElementById('newVersionNameInput').value.trim();
       if (!newLabel) return;
+      const renameContext = renamingVersionContext || SlideNextStudioVersionActions.createStudioVersionActionContext(
+        currentPresentationUrl,
+        currentTitle,
+        currentCategory
+      );
+      const versionFilename = renamingFilename;
+      if (!versionFilename || !renameContext.presentationUrl) return;
       
       const btn = document.getElementById('confirmRenameVersionBtn');
       btn.disabled = true;
@@ -4062,8 +4077,8 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            htmlPath: currentPresentationUrl,
-            versionFilename: renamingFilename,
+            htmlPath: renameContext.presentationUrl,
+            versionFilename,
             newLabel
           })
         });
@@ -4071,7 +4086,12 @@
         const data = await response.json();
         if (data.success) {
           closeRenameVersionModal();
-          loadVersions();
+          SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(renameContext, {
+            getCurrentPresentationUrl: () => currentPresentationUrl,
+            refreshVersionEntries: (presentationUrl) => {
+              loadVersions(presentationUrl);
+            }
+          });
         } else {
           alert(`Rename failed: ${data.error}`);
         }
@@ -4087,20 +4107,30 @@
       if (!confirm('Are you sure you want to delete this version? This action cannot be undone.')) {
         return;
       }
+      const deleteContext = SlideNextStudioVersionActions.createStudioVersionActionContext(
+        currentPresentationUrl,
+        currentTitle,
+        currentCategory
+      );
       
       try {
         const response = await fetch('/api/versions/delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            htmlPath: currentPresentationUrl,
+            htmlPath: deleteContext.presentationUrl,
             versionFilename: filename
           })
         });
         
         const data = await response.json();
         if (data.success) {
-          loadVersions();
+          SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(deleteContext, {
+            getCurrentPresentationUrl: () => currentPresentationUrl,
+            refreshVersionEntries: (presentationUrl) => {
+              loadVersions(presentationUrl);
+            }
+          });
         } else {
           alert(`Delete failed: ${data.error}`);
         }

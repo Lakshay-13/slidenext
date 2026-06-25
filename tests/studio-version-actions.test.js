@@ -77,3 +77,50 @@ test('handleStudioRestoreVersionSuccess skips stale restore completions', () => 
   assert.equal(applied, false);
   assert.deepEqual(calls, []);
 });
+
+test('handleStudioVersionListMutationSuccess refreshes the active deck versions list', () => {
+  const renameContext = versionActions.createStudioVersionActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    'General'
+  );
+  const calls = [];
+
+  const applied = versionActions.handleStudioVersionListMutationSuccess(renameContext, {
+    getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    onSuccess(context) {
+      calls.push(['onSuccess', context.presentationUrl]);
+    },
+    refreshVersionEntries(presentationUrl) {
+      calls.push(['refreshVersionEntries', presentationUrl]);
+    }
+  });
+
+  assert.equal(applied, true);
+  assert.deepEqual(calls, [
+    ['onSuccess', '/presentations/onboarding-presentation/index.html'],
+    ['refreshVersionEntries', '/presentations/onboarding-presentation/index.html']
+  ]);
+});
+
+test('handleStudioVersionListMutationSuccess skips stale deck refreshes', () => {
+  const renameContext = versionActions.createStudioVersionActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    'General'
+  );
+  const calls = [];
+
+  const applied = versionActions.handleStudioVersionListMutationSuccess(renameContext, {
+    getCurrentPresentationUrl: () => '/presentations/ai-tools-presentation/index.html',
+    onSuccess() {
+      calls.push(['onSuccess']);
+    },
+    refreshVersionEntries() {
+      calls.push(['refreshVersionEntries']);
+    }
+  });
+
+  assert.equal(applied, false);
+  assert.deepEqual(calls, []);
+});

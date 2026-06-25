@@ -54,9 +54,25 @@
     return true;
   }
 
+  function handleStudioVersionListMutationSuccess(context = {}, options = {}) {
+    if (!isStudioVersionActionCurrent(context, options)) {
+      return false;
+    }
+
+    if (typeof options.onSuccess === 'function') {
+      options.onSuccess(context);
+    }
+    if (typeof options.refreshVersionEntries === 'function') {
+      options.refreshVersionEntries(context.presentationUrl);
+    }
+
+    return true;
+  }
+
   return {
     createStudioVersionActionContext,
     isStudioVersionActionCurrent,
-    handleStudioRestoreVersionSuccess
+    handleStudioRestoreVersionSuccess,
+    handleStudioVersionListMutationSuccess
   };
 });
