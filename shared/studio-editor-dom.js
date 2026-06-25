@@ -72,6 +72,41 @@
     return assignStudioSlideId(slide, options);
   }
 
+  function createStudioBlankSlide(doc, options = {}) {
+    if (!doc || typeof doc.createElement !== 'function') return null;
+    const slide = doc.createElement(options.slideTagName || 'section');
+    slide.className = options.slideClassName || 'slide flex flex-col justify-center items-center';
+    if (slide.style) {
+      slide.style.background = options.slideBackground || '#050505';
+    }
+
+    const assignSlideId = typeof options.assignSlideId === 'function'
+      ? options.assignSlideId
+      : (nextSlide) => assignStudioSlideId(nextSlide, options);
+    assignSlideId(slide);
+
+    const content = doc.createElement(options.contentTagName || 'div');
+    content.className = options.contentClassName || 'max-w-4xl text-center flex flex-col items-center gap-4 z-10';
+
+    const heading = doc.createElement(options.headingTagName || 'h2');
+    heading.className = options.headingClassName || 'text-4xl md:text-5xl font-semibold text-white tracking-tight editor-hoverable';
+    heading.textContent = options.headingText || 'Slide Heading';
+
+    const description = doc.createElement(options.descriptionTagName || 'p');
+    description.className = options.descriptionClassName || 'text-lg text-[#bcc9c6] editor-hoverable';
+    description.textContent = options.descriptionText || 'Enter description text content here.';
+
+    content.appendChild(heading);
+    content.appendChild(description);
+    slide.appendChild(content);
+
+    if (typeof options.decorateSlide === 'function') {
+      options.decorateSlide(slide);
+    }
+
+    return slide;
+  }
+
   function getStudioActiveSlide(doc, options = {}) {
     if (!doc || typeof doc.querySelector !== 'function') return null;
     const activeSlideSelector = options.activeSlideSelector || '.slide-active';
@@ -268,6 +303,7 @@
     getStudioSlideById,
     getStudioSlideIndexById,
     getStudioSlideId,
+    createStudioBlankSlide,
     getStudioActiveSlide,
     getStudioActiveSlideId,
     pruneStudioChromeNodes,

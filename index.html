@@ -1842,27 +1842,12 @@
       saveHistoryState();
       
       const newIndex = getSlides(iframeDoc).length;
-      
-      const newSlide = iframeDoc.createElement('section');
-      newSlide.className = 'slide flex flex-col justify-center items-center';
-      newSlide.style.background = '#050505';
-      assignEditorSlideId(newSlide);
-      
-      const innerDiv = iframeDoc.createElement('div');
-      innerDiv.className = 'max-w-4xl text-center flex flex-col items-center gap-4 z-10';
-      
-      const h2 = iframeDoc.createElement('h2');
-      h2.className = 'text-4xl md:text-5xl font-semibold text-white tracking-tight editor-hoverable';
-      h2.textContent = 'Slide Heading';
-      
-      const p = iframeDoc.createElement('p');
-      p.className = 'text-lg text-[#bcc9c6] editor-hoverable';
-      p.textContent = 'Enter description text content here.';
-      
-      innerDiv.appendChild(h2);
-      innerDiv.appendChild(p);
-      newSlide.appendChild(innerDiv);
-      makeElementsHoverable(newSlide);
+      const newSlide = SlideNextStudioEditorDom.createStudioBlankSlide(iframeDoc, {
+        ...getEditorDomOptions(),
+        assignSlideId: assignEditorSlideId,
+        decorateSlide: makeElementsHoverable
+      });
+      if (!newSlide) return;
       
       container.appendChild(newSlide);
       
