@@ -3666,10 +3666,7 @@
         }),
         restoreSelectionState: (nextHistoryEntry) => SlideNextStudioHistory.restoreStudioHistorySelectionState(nextHistoryEntry, {
           doc: iframeDoc,
-          restoreSelectionByIds: (selectedElementIds, doc) => restoreSelectionByIdsOnActiveSlide(selectedElementIds, doc),
-          syncSelectionOverlay,
-          syncInspectorForSelection,
-          updateLayersList,
+          restoreCommittedSelectionState: (selectedElementIds, doc) => restoreCommittedSelectionByIdsOnActiveSlide(selectedElementIds, doc),
           observeDeckActiveSlideState
         })
       });

@@ -242,6 +242,9 @@
   }
 
   function restoreStudioHistorySelectionState(historyEntry, options = {}) {
+    const restoreCommittedSelectionState = typeof options.restoreCommittedSelectionState === 'function'
+      ? options.restoreCommittedSelectionState
+      : null;
     const restoreSelectionByIds = typeof options.restoreSelectionByIds === 'function'
       ? options.restoreSelectionByIds
       : () => {};
@@ -262,10 +265,14 @@
       ? historyEntry.selectedElementIds.filter(Boolean)
       : [];
 
-    restoreSelectionByIds(selectedElementIds, doc);
-    syncSelectionOverlay();
-    syncInspectorForSelection();
-    updateLayersList();
+    if (restoreCommittedSelectionState) {
+      restoreCommittedSelectionState(selectedElementIds, doc);
+    } else {
+      restoreSelectionByIds(selectedElementIds, doc);
+      syncSelectionOverlay();
+      syncInspectorForSelection();
+      updateLayersList();
+    }
     observeDeckActiveSlideState(doc);
 
     return {

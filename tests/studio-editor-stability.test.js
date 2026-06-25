@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 
 const selection = require('../shared/studio-editor-selection.js');
 const deckView = require('../shared/studio-deck-view.js');
+const history = require('../shared/studio-history.js');
 
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
@@ -388,4 +389,64 @@ test('syncStudioActiveSlideView preserves selection only when explicitly request
   );
 
   assert.equal(deselectCalls.deselectElement, 1);
+});
+
+test('restoreStudioHistorySelectionState uses committed-selection restore callback when provided', () => {
+  const calls = {
+    restoreCommittedSelectionState: [],
+    restoreSelectionByIds: 0,
+    syncSelectionOverlay: 0,
+    syncInspectorForSelection: 0,
+    updateLayersList: 0,
+    observeDeckActiveSlideState: []
+  };
+  const doc = { label: 'doc' };
+
+  const result = history.restoreStudioHistorySelectionState(
+    {
+      selectedElementIds: ['el-1', '', null, 'el-2']
+    },
+    {
+      doc,
+      restoreCommittedSelectionState(selectedIds, nextDoc) {
+        calls.restoreCommittedSelectionState.push({
+          selectedIds,
+          doc: nextDoc
+        });
+      },
+      restoreSelectionByIds() {
+        calls.restoreSelectionByIds += 1;
+      },
+      syncSelectionOverlay() {
+        calls.syncSelectionOverlay += 1;
+      },
+      syncInspectorForSelection() {
+        calls.syncInspectorForSelection += 1;
+      },
+      updateLayersList() {
+        calls.updateLayersList += 1;
+      },
+      observeDeckActiveSlideState(nextDoc) {
+        calls.observeDeckActiveSlideState.push(nextDoc);
+      }
+    }
+  );
+
+  assert.deepEqual(result, {
+    restoredSelectionIds: ['el-1', 'el-2'],
+    restoredSelectionCount: 2
+  });
+  assert.deepEqual(calls, {
+    restoreCommittedSelectionState: [
+      {
+        selectedIds: ['el-1', 'el-2'],
+        doc
+      }
+    ],
+    restoreSelectionByIds: 0,
+    syncSelectionOverlay: 0,
+    syncInspectorForSelection: 0,
+    updateLayersList: 0,
+    observeDeckActiveSlideState: [doc]
+  });
 });
