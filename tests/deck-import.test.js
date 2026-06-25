@@ -121,3 +121,44 @@ test('collectDeckThemeTokens reads same-origin :root custom properties and ignor
     '--color-secondary': '#3d5afe'
   });
 });
+
+test('collectDeckCustomCss serializes accessible deck styles and skips editor chrome stylesheets', () => {
+  const doc = {
+    styleSheets: [
+      {
+        ownerNode: {
+          id: 'editor-style-tag'
+        },
+        cssRules: [
+          {
+            cssText: '.editor-selected { outline: 2px solid #7028d0; }'
+          }
+        ]
+      },
+      {
+        ownerNode: {
+          id: 'deck-style-tag'
+        },
+        cssRules: [
+          {
+            cssText: ':root { --color-primary: #00f2ff; }'
+          },
+          {
+            cssText: '.slides-container { transition: transform 0.8s ease; }'
+          }
+        ]
+      },
+      {
+        get cssRules() {
+          throw new Error('Cross-origin stylesheet');
+        }
+      }
+    ]
+  };
+
+  const customCss = deckImport.collectDeckCustomCss(doc);
+
+  assert.equal(customCss.includes('.editor-selected'), false);
+  assert.match(customCss, /:root \{ --color-primary: #00f2ff; \}/);
+  assert.match(customCss, /\.slides-container \{ transition: transform 0\.8s ease; \}/);
+});

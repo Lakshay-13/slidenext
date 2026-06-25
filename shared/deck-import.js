@@ -15,6 +15,7 @@
   }
 
   const DEFAULT_SKIP_TAG_NAMES = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE']);
+  const DEFAULT_IGNORED_THEME_STYLE_IDS = new Set(['editor-style-tag']);
   const STYLE_URL_PATTERN = /url\((?:'([^']*)'|"([^"]*)"|([^)]*))\)/gi;
 
   function asPlainObject(value) {
@@ -162,6 +163,68 @@
     });
 
     return tokens;
+  }
+
+  function serializeCssRule(rule) {
+    if (!rule) {
+      return '';
+    }
+
+    const cssText = normalizeString(rule.cssText).trim();
+    if (cssText) {
+      return cssText;
+    }
+
+    let nestedRules = [];
+    try {
+      nestedRules = Array.isArray(rule.cssRules)
+        ? rule.cssRules
+        : rule.cssRules && typeof rule.cssRules.length === 'number'
+          ? Array.from(rule.cssRules)
+          : [];
+    } catch (err) {
+      nestedRules = [];
+    }
+    return nestedRules
+      .map((nestedRule) => serializeCssRule(nestedRule))
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  function collectDeckCustomCss(doc, options = {}) {
+    if (!doc) {
+      return '';
+    }
+
+    const ignoredStyleIds = options.ignoredStyleIds instanceof Set
+      ? options.ignoredStyleIds
+      : DEFAULT_IGNORED_THEME_STYLE_IDS;
+    const cssBlocks = [];
+
+    Array.from(doc.styleSheets || []).forEach((styleSheet) => {
+      const ownerNodeId = normalizeString(styleSheet && styleSheet.ownerNode && styleSheet.ownerNode.id);
+      if (ignoredStyleIds.has(ownerNodeId)) {
+        return;
+      }
+
+      let cssRules = [];
+      try {
+        cssRules = Array.from(styleSheet.cssRules || styleSheet.rules || []);
+      } catch (err) {
+        cssRules = [];
+      }
+
+      const cssText = cssRules
+        .map((rule) => serializeCssRule(rule))
+        .filter(Boolean)
+        .join('\n')
+        .trim();
+      if (cssText) {
+        cssBlocks.push(cssText);
+      }
+    });
+
+    return cssBlocks.join('\n\n');
   }
 
   function getGreatestCommonDivisor(a, b) {
@@ -499,7 +562,8 @@
     return canonicalDeck.createCanonicalDeck({
       metadata: buildDeckMetadata(doc, options),
       theme: {
-        tokens: collectDeckThemeTokens(doc)
+        tokens: collectDeckThemeTokens(doc),
+        customCss: collectDeckCustomCss(doc)
       },
       layout: inferDeckLayout(doc, slides, options),
       assets: collectDeckAssets(doc),
@@ -510,6 +574,7 @@
 
   return {
     DEFAULT_SKIP_TAG_NAMES,
+    collectDeckCustomCss,
     collectDeckThemeTokens,
     extractCssUrlValues,
     collectDeckAssets,
