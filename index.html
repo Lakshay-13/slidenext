@@ -1015,6 +1015,7 @@
   <script src="/shared/deck-model.js"></script>
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
+  <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/deck-html.js"></script>
@@ -2231,6 +2232,22 @@
       };
     }
 
+    function getEditorOverlayOptions(options = {}) {
+      return {
+        selectionOverlayId: 'editorSelectionOverlay',
+        guidesLayerId: 'editorGuidesLayer',
+        dragHudId: 'editorDragHud',
+        resizeHandleDirections: RESIZE_HANDLE_DIRECTIONS,
+        resizeHandleClassName: 'editor-resize-handle',
+        resizeHandleDirectionAttr: 'data-dir',
+        guideLineClassName: 'editor-guide-line',
+        guideLineVerticalClassName: 'vertical',
+        guideLineHorizontalClassName: 'horizontal',
+        visibleClassName: 'visible',
+        ...options
+      };
+    }
+
     function createEditorSlideId() {
       return SlideNextStudioEditorDom.createStudioSlideId();
     }
@@ -2492,86 +2509,43 @@
     }
 
     function ensureSelectionOverlay(doc, slide) {
-      let overlay = slide.querySelector('#editorSelectionOverlay');
-      if (!overlay) {
-        overlay = doc.createElement('div');
-        overlay.id = 'editorSelectionOverlay';
-        RESIZE_HANDLE_DIRECTIONS.forEach(dir => {
-          const handle = doc.createElement('div');
-          handle.className = 'editor-resize-handle';
-          handle.setAttribute('data-dir', dir);
-          overlay.appendChild(handle);
-        });
-        slide.appendChild(overlay);
-      }
-      return overlay;
+      return SlideNextStudioEditorOverlay.ensureStudioSelectionOverlay(doc, slide, getEditorOverlayOptions());
     }
 
     function ensureGuidesLayer(doc, slide) {
-      let guides = slide.querySelector('#editorGuidesLayer');
-      if (!guides) {
-        guides = doc.createElement('div');
-        guides.id = 'editorGuidesLayer';
-        slide.appendChild(guides);
-      }
-      return guides;
+      return SlideNextStudioEditorOverlay.ensureStudioGuidesLayer(doc, slide, getEditorOverlayOptions());
     }
 
     function ensureDragHud(doc, slide) {
-      let hud = slide.querySelector('#editorDragHud');
-      if (!hud) {
-        hud = doc.createElement('div');
-        hud.id = 'editorDragHud';
-        slide.appendChild(hud);
-      }
-      return hud;
+      return SlideNextStudioEditorOverlay.ensureStudioDragHud(doc, slide, getEditorOverlayOptions());
     }
 
     function hideGuides() {
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
       if (!slide) return;
-      const guides = slide.querySelector('#editorGuidesLayer');
-      if (guides) guides.innerHTML = '';
+      SlideNextStudioEditorOverlay.clearStudioGuides(slide, getEditorOverlayOptions());
     }
 
     function hideDragHud() {
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
       if (!slide) return;
-      const hud = slide.querySelector('#editorDragHud');
-      if (hud) hud.classList.remove('visible');
+      SlideNextStudioEditorOverlay.hideStudioDragHud(slide, getEditorOverlayOptions());
     }
 
     function updateDragHud(bounds) {
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
       if (!doc || !slide || !bounds) return;
-      const hud = ensureDragHud(doc, slide);
-      const x = Math.round(bounds.left);
-      const y = Math.round(bounds.top);
-      const w = Math.round(bounds.width);
-      const h = Math.round(bounds.height);
-      hud.textContent = `X ${x}  Y ${y}  W ${w}  H ${h}`;
-      hud.classList.add('visible');
+      SlideNextStudioEditorOverlay.updateStudioDragHud(doc, slide, bounds, getEditorOverlayOptions());
     }
 
     function renderGuides(guidesDef) {
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
       if (!doc || !slide) return;
-      const guidesLayer = ensureGuidesLayer(doc, slide);
-      guidesLayer.innerHTML = '';
-      (guidesDef || []).forEach(guide => {
-        const line = doc.createElement('div');
-        line.className = `editor-guide-line ${guide.axis === 'x' ? 'vertical' : 'horizontal'} visible`;
-        if (guide.axis === 'x') {
-          line.style.left = `${guide.position}px`;
-        } else {
-          line.style.top = `${guide.position}px`;
-        }
-        guidesLayer.appendChild(line);
-      });
+      SlideNextStudioEditorOverlay.renderStudioGuides(doc, slide, guidesDef, getEditorOverlayOptions());
     }
 
     function getSlideMetrics(slide) {

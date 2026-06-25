@@ -1,0 +1,122 @@
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) {
+    module.exports = api;
+  }
+  if (root) {
+    root.SlideNextStudioEditorOverlay = api;
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function ensureStudioSelectionOverlay(doc, slide, options = {}) {
+    if (!doc || !slide) return null;
+    const overlayId = options.selectionOverlayId || 'editorSelectionOverlay';
+    const handleClassName = options.resizeHandleClassName || 'editor-resize-handle';
+    const handleDirectionAttr = options.resizeHandleDirectionAttr || 'data-dir';
+    const resizeHandleDirections = options.resizeHandleDirections || [];
+
+    let overlay = slide.querySelector(`#${overlayId}`);
+    if (!overlay) {
+      overlay = doc.createElement('div');
+      overlay.id = overlayId;
+      resizeHandleDirections.forEach((direction) => {
+        const handle = doc.createElement('div');
+        handle.className = handleClassName;
+        handle.setAttribute(handleDirectionAttr, direction);
+        overlay.appendChild(handle);
+      });
+      slide.appendChild(overlay);
+    }
+    return overlay;
+  }
+
+  function ensureStudioGuidesLayer(doc, slide, options = {}) {
+    if (!doc || !slide) return null;
+    const guidesLayerId = options.guidesLayerId || 'editorGuidesLayer';
+
+    let guides = slide.querySelector(`#${guidesLayerId}`);
+    if (!guides) {
+      guides = doc.createElement('div');
+      guides.id = guidesLayerId;
+      slide.appendChild(guides);
+    }
+    return guides;
+  }
+
+  function ensureStudioDragHud(doc, slide, options = {}) {
+    if (!doc || !slide) return null;
+    const dragHudId = options.dragHudId || 'editorDragHud';
+
+    let hud = slide.querySelector(`#${dragHudId}`);
+    if (!hud) {
+      hud = doc.createElement('div');
+      hud.id = dragHudId;
+      slide.appendChild(hud);
+    }
+    return hud;
+  }
+
+  function clearStudioGuides(slide, options = {}) {
+    if (!slide) return;
+    const guidesLayerId = options.guidesLayerId || 'editorGuidesLayer';
+    const guides = slide.querySelector(`#${guidesLayerId}`);
+    if (guides) guides.innerHTML = '';
+  }
+
+  function hideStudioDragHud(slide, options = {}) {
+    if (!slide) return;
+    const dragHudId = options.dragHudId || 'editorDragHud';
+    const visibleClassName = options.visibleClassName || 'visible';
+    const hud = slide.querySelector(`#${dragHudId}`);
+    if (hud) hud.classList.remove(visibleClassName);
+  }
+
+  function updateStudioDragHud(doc, slide, bounds, options = {}) {
+    if (!doc || !slide || !bounds) return null;
+    const visibleClassName = options.visibleClassName || 'visible';
+    const hud = ensureStudioDragHud(doc, slide, options);
+    if (!hud) return null;
+
+    const x = Math.round(bounds.left);
+    const y = Math.round(bounds.top);
+    const width = Math.round(bounds.width);
+    const height = Math.round(bounds.height);
+    hud.textContent = `X ${x}  Y ${y}  W ${width}  H ${height}`;
+    hud.classList.add(visibleClassName);
+    return hud;
+  }
+
+  function renderStudioGuides(doc, slide, guidesDef, options = {}) {
+    if (!doc || !slide) return null;
+    const guidesLayer = ensureStudioGuidesLayer(doc, slide, options);
+    if (!guidesLayer) return null;
+
+    const guideLineClassName = options.guideLineClassName || 'editor-guide-line';
+    const visibleClassName = options.visibleClassName || 'visible';
+    const verticalClassName = options.guideLineVerticalClassName || 'vertical';
+    const horizontalClassName = options.guideLineHorizontalClassName || 'horizontal';
+
+    guidesLayer.innerHTML = '';
+    (guidesDef || []).forEach((guide) => {
+      const line = doc.createElement('div');
+      line.className = `${guideLineClassName} ${guide.axis === 'x' ? verticalClassName : horizontalClassName} ${visibleClassName}`;
+      if (guide.axis === 'x') {
+        line.style.left = `${guide.position}px`;
+      } else {
+        line.style.top = `${guide.position}px`;
+      }
+      guidesLayer.appendChild(line);
+    });
+
+    return guidesLayer;
+  }
+
+  return {
+    ensureStudioSelectionOverlay,
+    ensureStudioGuidesLayer,
+    ensureStudioDragHud,
+    clearStudioGuides,
+    hideStudioDragHud,
+    updateStudioDragHud,
+    renderStudioGuides
+  };
+});
