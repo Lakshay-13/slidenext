@@ -35,13 +35,16 @@ test('resetStudioVersionUiState hides open version chrome and clears modal state
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resetStudioVersionUiStateSource = extractFunctionSource(
     fileContent,
-    'function resetStudioVersionUiState() {',
+    'function resetStudioVersionUiState(options = {}) {',
     '\n\n    function resetStudioSaveButtonState() {'
   );
 
   const elements = {
     versionsDropdown: {
       classList: createClassList()
+    },
+    versionsList: {
+      innerHTML: '<div>Old versions</div>'
     },
     saveVersionModal: {
       classList: createClassList(['opacity-100'])
@@ -86,9 +89,10 @@ test('resetStudioVersionUiState hides open version chrome and clears modal state
   const saveModalTokenBefore = modalVisibility.getCurrentStudioModalVisibilityToken(elements.saveVersionModal);
   const renameModalTokenBefore = modalVisibility.getCurrentStudioModalVisibilityToken(elements.renameVersionModal);
 
-  context.resetStudioVersionUiState();
+  context.resetStudioVersionUiState({ isLoading: true });
 
   assert.equal(elements.versionsDropdown.classList.contains('hidden'), true);
+  assert.match(elements.versionsList.innerHTML, /Loading versions\.\.\./);
   assert.equal(elements.versionCheckpointName.value, '');
   assert.equal(elements.saveVersionModal.classList.contains('hidden'), true);
   assert.equal(elements.saveVersionModal.classList.contains('opacity-0'), true);
@@ -107,12 +111,15 @@ test('resetStudioVersionUiState hides open version chrome and clears modal state
   assert.equal(elements.renameVersionModalContent.classList.contains('scale-95'), true);
   assert.equal(elements.renameVersionModalContent.classList.contains('scale-100'), false);
 
+  context.resetStudioVersionUiState();
+  assert.match(elements.versionsList.innerHTML, /No versions saved yet/);
+
   assert.equal(
     modalVisibility.getCurrentStudioModalVisibilityToken(elements.saveVersionModal),
-    saveModalTokenBefore + 1
+    saveModalTokenBefore + 2
   );
   assert.equal(
     modalVisibility.getCurrentStudioModalVisibilityToken(elements.renameVersionModal),
-    renameModalTokenBefore + 1
+    renameModalTokenBefore + 2
   );
 });

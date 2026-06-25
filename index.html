@@ -1525,7 +1525,7 @@
       // Initial AutoSave label status
       document.getElementById('autoSaveStatus').innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
       resetStudioDeckUiState({ isLoading: true });
-      resetStudioVersionUiState();
+      resetStudioVersionUiState({ isLoading: true });
       resetStudioSaveButtonState();
       
       // Configure load triggers BEFORE setting src
@@ -3921,10 +3921,15 @@
       });
     }
 
-    function resetStudioVersionUiState() {
+    function resetStudioVersionUiState(options = {}) {
+      const isLoading = !!options.isLoading;
       const versionsDropdown = document.getElementById('versionsDropdown');
       if (versionsDropdown) {
         versionsDropdown.classList.add('hidden');
+      }
+      const versionsList = document.getElementById('versionsList');
+      if (versionsList) {
+        versionsList.innerHTML = `<span class="text-zinc-500 text-center py-2 text-[11px]">${isLoading ? 'Loading versions...' : 'No versions saved yet'}</span>`;
       }
 
       const saveVersionModal = document.getElementById('saveVersionModal');
