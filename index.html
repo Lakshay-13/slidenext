@@ -1560,7 +1560,7 @@
       editor.style.opacity = '1';
       editor.style.pointerEvents = 'auto';
       document.body.style.overflow = 'hidden';
-      void loadCurrentPresentationMetadata(url, title);
+      void loadCurrentPresentationMetadata(url, title, editorSessionToken);
       
       // Fetch backups list
       loadVersions();
@@ -2047,9 +2047,15 @@
       return SlideNextStudioDeckContext.buildStudioPresentationMetadataSeed(presentationUrl, presentationTitle);
     }
 
-    async function loadCurrentPresentationMetadata(presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
+    async function loadCurrentPresentationMetadata(
+      presentationUrl = currentPresentationUrl,
+      presentationTitle = currentTitle,
+      sessionToken = studioEditorSessionToken
+    ) {
       return SlideNextStudioDeckContext.loadStudioPresentationMetadata(presentationUrl, presentationTitle, {
+        sessionToken,
         getCurrentPresentationUrl: () => currentPresentationUrl,
+        getCurrentSessionToken: () => studioEditorSessionToken,
         setCurrentPresentationMetadata: (metadata) => {
           currentPresentationMetadata = metadata;
         },

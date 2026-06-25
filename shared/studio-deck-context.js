@@ -13,6 +13,10 @@
     root.SlideNextStudioDeckContext = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (deckLoader, canonicalDeck) {
+  function normalizeSessionToken(value) {
+    return Number.isInteger(value) ? value : null;
+  }
+
   function buildStudioPresentationMetadataSeed(presentationUrl = '', presentationTitle = '') {
     if (!deckLoader || typeof deckLoader.buildPresentationMetadataSeed !== 'function') {
       return {
@@ -31,6 +35,7 @@
     const getCurrentPresentationUrl = typeof options.getCurrentPresentationUrl === 'function'
       ? options.getCurrentPresentationUrl
       : () => options.currentPresentationUrl;
+    const requestedSessionToken = normalizeSessionToken(options.sessionToken);
 
     const metadata = await loadMetadata(presentationUrl, presentationTitle, {
       fetchImpl: options.fetchImpl,
@@ -38,8 +43,12 @@
       onError: options.onError
     });
 
+    const getCurrentSessionToken = typeof options.getCurrentSessionToken === 'function'
+      ? options.getCurrentSessionToken
+      : () => options.currentSessionToken;
     if (typeof options.setCurrentPresentationMetadata === 'function'
-      && getCurrentPresentationUrl() === presentationUrl) {
+      && getCurrentPresentationUrl() === presentationUrl
+      && (requestedSessionToken === null || normalizeSessionToken(getCurrentSessionToken()) === requestedSessionToken)) {
       options.setCurrentPresentationMetadata(metadata);
     }
 

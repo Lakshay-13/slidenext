@@ -92,6 +92,49 @@ test('loadStudioPresentationMetadata skips committing stale metadata after the c
   assert.deepEqual(committedMetadata, []);
 });
 
+test('loadStudioPresentationMetadata skips committing stale same-url editor sessions', async () => {
+  const fetchDeferred = createDeferred();
+  const committedMetadata = [];
+  let currentPresentationUrl = '/presentations/onboarding-presentation/index.html';
+  let currentSessionToken = 4;
+
+  const metadataPromise = deckContext.loadStudioPresentationMetadata(
+    currentPresentationUrl,
+    'Project Onboarding',
+    {
+      fetchImpl: async () => fetchDeferred.promise,
+      sessionToken: 4,
+      getCurrentPresentationUrl: () => currentPresentationUrl,
+      getCurrentSessionToken: () => currentSessionToken,
+      setCurrentPresentationMetadata: (metadata) => {
+        committedMetadata.push(metadata);
+      }
+    }
+  );
+
+  currentSessionToken = 5;
+  fetchDeferred.resolve({
+    ok: true,
+    async json() {
+      return {
+        subtitle: 'Getting Started',
+        tags: ['Onboarding']
+      };
+    }
+  });
+
+  const metadata = await metadataPromise;
+
+  assert.deepEqual(metadata, {
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: '/presentations/onboarding-presentation/index.html',
+    subtitle: 'Getting Started',
+    tags: ['Onboarding']
+  });
+  assert.deepEqual(committedMetadata, []);
+});
+
 test('buildStudioCanonicalDeck returns the validated deck from the canonical builder', () => {
   const doc = { label: 'doc' };
   const presentationMetadata = {
