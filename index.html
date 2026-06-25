@@ -1017,6 +1017,7 @@
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
+  <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/deck-html.js"></script>
@@ -2256,6 +2257,17 @@
         getElementId: assignEditorElementId,
         getActiveSlide,
         getElementById: getElementByEditorId,
+        ...options
+      };
+    }
+
+    function getEditorHistoryOptions(options = {}) {
+      return {
+        chromeNodeIds: EDITOR_CHROME_NODE_IDS,
+        removableClassNames: ['editor-selected', 'editor-hoverable', 'editor-dragging'],
+        getActiveSlideId: (doc) => getActiveSlide(doc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '',
+        getSelectedElementIds: () => getSelectedEditorElementIds(),
+        areIdListsEqual: areEditorIdListsEqual,
         ...options
       };
     }
@@ -3826,48 +3838,18 @@
     }
 
     function buildHistoryFrameHtml(doc = getIframeDoc()) {
-      if (!doc) return '';
-
-      const clone = doc.documentElement.cloneNode(true);
-      EDITOR_CHROME_NODE_IDS.forEach(nodeId => {
-        clone.querySelectorAll(`#${nodeId}`).forEach(node => node.remove());
-      });
-
-      clone.querySelectorAll('.editor-selected').forEach(el => {
-        el.classList.remove('editor-selected');
-      });
-      clone.querySelectorAll('.editor-hoverable').forEach(el => {
-        el.classList.remove('editor-hoverable');
-      });
-      clone.querySelectorAll('.editor-dragging').forEach(el => {
-        el.classList.remove('editor-dragging');
-      });
-
-      return clone.innerHTML;
+      return SlideNextStudioHistory.buildStudioHistoryFrameHtml(doc, getEditorHistoryOptions());
     }
 
     function createHistoryEntry(doc) {
-      const iframeDoc = doc || getIframeDoc();
-      if (!iframeDoc) return null;
-      return {
-        html: buildHistoryFrameHtml(iframeDoc),
-        activeSlideId: getActiveSlide(iframeDoc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '',
-        selectedElementIds: getSelectedEditorElementIds()
-      };
+      return SlideNextStudioHistory.createStudioHistoryEntry(doc || getIframeDoc(), {
+        ...getEditorHistoryOptions(),
+        buildHistoryHtml: buildHistoryFrameHtml
+      });
     }
 
     function normalizeHistoryEntry(entry) {
-      if (!entry) {
-        return { html: '', activeSlideId: '', selectedElementIds: [] };
-      }
-      if (typeof entry === 'string') {
-        return { html: entry, activeSlideId: '', selectedElementIds: [] };
-      }
-      return {
-        html: entry.html || '',
-        activeSlideId: entry.activeSlideId || '',
-        selectedElementIds: Array.isArray(entry.selectedElementIds) ? entry.selectedElementIds.filter(Boolean) : []
-      };
+      return SlideNextStudioHistory.normalizeStudioHistoryEntry(entry);
     }
 
     function captureState() {
@@ -3880,12 +3862,7 @@
       
       // Avoid duplicated entries
       const lastEntry = undoStack.length > 0 ? normalizeHistoryEntry(undoStack[undoStack.length - 1]) : null;
-      if (
-        lastEntry
-        && lastEntry.html === historyEntry.html
-        && lastEntry.activeSlideId === historyEntry.activeSlideId
-        && areEditorIdListsEqual(lastEntry.selectedElementIds, historyEntry.selectedElementIds)
-      ) {
+      if (lastEntry && SlideNextStudioHistory.areStudioHistoryEntriesEqual(lastEntry, historyEntry, getEditorHistoryOptions())) {
         return;
       }
       
