@@ -170,6 +170,17 @@
     };
   }
 
+  function getStudioHistoryButtonState(undoStack = [], redoStack = [], options = {}) {
+    const minUndoStackLength = Number.isInteger(options.minUndoStackLength) && options.minUndoStackLength > 0
+      ? options.minUndoStackLength
+      : 2;
+
+    return {
+      undoDisabled: undoStack.length < minUndoStackLength,
+      redoDisabled: redoStack.length === 0
+    };
+  }
+
   return {
     buildStudioHistoryFrameHtml,
     createStudioHistoryEntry,
@@ -177,6 +188,7 @@
     areStudioHistoryEntriesEqual,
     captureStudioHistoryState,
     stepStudioHistoryUndo,
-    stepStudioHistoryRedo
+    stepStudioHistoryRedo,
+    getStudioHistoryButtonState
   };
 });

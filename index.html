@@ -3884,8 +3884,9 @@
     }
 
     function updateHistoryButtons() {
-      document.getElementById('studioUndoBtn').disabled = undoStack.length <= 1;
-      document.getElementById('studioRedoBtn').disabled = redoStack.length === 0;
+      const historyButtonState = SlideNextStudioHistory.getStudioHistoryButtonState(undoStack, redoStack);
+      document.getElementById('studioUndoBtn').disabled = historyButtonState.undoDisabled;
+      document.getElementById('studioRedoBtn').disabled = historyButtonState.redoDisabled;
     }
 
     function editorUndo() {
