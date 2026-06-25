@@ -918,19 +918,19 @@
             <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Nudge</h4>
             <div class="grid grid-cols-3 gap-1.5 bg-zinc-900 p-2 rounded-lg border border-white/5 w-fit mx-auto">
               <span></span>
-              <button onclick="nudgeSelectedElements(0, -1)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all" title="Nudge Up">
+              <button id="nudgeSelectionUpBtn" onclick="nudgeSelectedElements(0, -1)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Nudge Up">
                 <span class="material-symbols-outlined text-[16px]">keyboard_arrow_up</span>
               </button>
               <span></span>
-              <button onclick="nudgeSelectedElements(-1, 0)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all" title="Nudge Left">
+              <button id="nudgeSelectionLeftBtn" onclick="nudgeSelectedElements(-1, 0)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Nudge Left">
                 <span class="material-symbols-outlined text-[16px]">keyboard_arrow_left</span>
               </button>
               <span class="flex items-center justify-center text-[9px] font-mono text-zinc-500">1px</span>
-              <button onclick="nudgeSelectedElements(1, 0)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all" title="Nudge Right">
+              <button id="nudgeSelectionRightBtn" onclick="nudgeSelectedElements(1, 0)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Nudge Right">
                 <span class="material-symbols-outlined text-[16px]">keyboard_arrow_right</span>
               </button>
               <span></span>
-              <button onclick="nudgeSelectedElements(0, 1)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all" title="Nudge Down">
+              <button id="nudgeSelectionDownBtn" onclick="nudgeSelectedElements(0, 1)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Nudge Down">
                 <span class="material-symbols-outlined text-[16px]">keyboard_arrow_down</span>
               </button>
               <span></span>
@@ -2303,9 +2303,10 @@
       overlay.style.top = `${bounds.top}px`;
       overlay.style.width = `${bounds.width}px`;
       overlay.style.height = `${bounds.height}px`;
-      overlay.style.pointerEvents = 'auto';
+      const canTransform = selectionSupportsFreeformTransforms();
+      overlay.style.pointerEvents = canTransform ? 'auto' : 'none';
       overlay.style.opacity = '1';
-      const hideHandles = selectedElements.length > 0 && selectedElements.every(isElementLocked);
+      const hideHandles = !canTransform;
       overlay.querySelectorAll('.editor-resize-handle').forEach(handle => {
         handle.style.display = hideHandles ? 'none' : '';
       });
@@ -2316,6 +2317,7 @@
       updateClipboardActionState();
       updateLockActionState();
       updateVisibilityActionState();
+      updateMotionActionState();
       if (count === 0) {
         document.getElementById('inspectorTargetLabel').innerHTML = `
           <span class="material-symbols-outlined text-[16px] text-[#7028d0]">settings_suggest</span>
@@ -2451,6 +2453,10 @@
       return computed.position === 'absolute' || computed.position === 'fixed';
     }
 
+    function selectionSupportsFreeformTransforms(elements = selectedElements) {
+      return elements.length > 0 && !selectionHasLockedElements(elements) && elements.every(isElementFreeformPositioned);
+    }
+
     function isElementHidden(el) {
       return !!(el && el.dataset && el.dataset.editorHidden === 'true');
     }
@@ -2500,6 +2506,14 @@
       if (visibilityBtn) visibilityBtn.disabled = !hasSelection;
       if (visibilityIcon) visibilityIcon.textContent = allHidden ? 'visibility' : 'visibility_off';
       if (visibilityLabel) visibilityLabel.textContent = allHidden ? 'Show Selected' : 'Hide Selected';
+    }
+
+    function updateMotionActionState() {
+      const canTransform = selectionSupportsFreeformTransforms();
+      ['nudgeSelectionUpBtn', 'nudgeSelectionLeftBtn', 'nudgeSelectionRightBtn', 'nudgeSelectionDownBtn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.disabled = !canTransform;
+      });
     }
 
     function toggleSelectedElementsLockState() {
@@ -3001,6 +3015,7 @@
 
         if (selectedElements.length === 0) return;
         if (selectionHasLockedElements()) return;
+        if (!selectionSupportsFreeformTransforms()) return;
 
         const slideMetrics = getSlideMetrics(slide);
         const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
