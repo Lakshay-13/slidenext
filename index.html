@@ -1011,6 +1011,7 @@
   <script src="/shared/canonical-deck.js"></script>
   <script src="/shared/deck-import.js"></script>
   <script src="/shared/deck-loader.js"></script>
+  <script src="/shared/studio-deck-context.js"></script>
   <script src="/shared/deck-model.js"></script>
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
@@ -2277,25 +2278,27 @@
     }
 
     function buildCurrentPresentationMetadataSeed(presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
-      return SlideNextDeckLoader.buildPresentationMetadataSeed(presentationUrl, presentationTitle);
+      return SlideNextStudioDeckContext.buildStudioPresentationMetadataSeed(presentationUrl, presentationTitle);
     }
 
     async function loadCurrentPresentationMetadata(presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
-      const metadata = await SlideNextDeckLoader.loadPresentationMetadata(presentationUrl, presentationTitle, {
+      return SlideNextStudioDeckContext.loadStudioPresentationMetadata(presentationUrl, presentationTitle, {
+        currentPresentationUrl,
+        setCurrentPresentationMetadata: (metadata) => {
+          currentPresentationMetadata = metadata;
+        },
         onError: (err, metadataUrl) => {
           console.warn(`Failed to load presentation metadata from ${metadataUrl}:`, err);
         }
       });
-      if (currentPresentationUrl === presentationUrl) {
-        currentPresentationMetadata = metadata;
-      }
-      return metadata;
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
-      return SlideNextDeckLoader.buildCanonicalDeckFromDocument(doc, {
-        presentationMetadata: currentPresentationMetadata || buildCurrentPresentationMetadataSeed(),
-        sourcePath: currentPresentationUrl,
+      return SlideNextStudioDeckContext.buildStudioCanonicalDeck(doc, {
+        currentPresentationMetadata,
+        buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
+        presentationUrl: currentPresentationUrl,
+        presentationTitle: currentTitle,
         getSlideId: assignEditorSlideId,
         getNodeId: assignEditorElementId
       });
