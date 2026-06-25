@@ -155,7 +155,8 @@
   function buildDeckSnapshotFromCanonicalDeck(deck, options = {}) {
     const slides = deck && Array.isArray(deck.slides) ? deck.slides : [];
     const slideSnapshots = slides.map((slide, index) => buildSlideSnapshotFromCanonicalSlide(slide, index, options));
-    const activeSlideId = normalizeString(options.activeSlideId, slideSnapshots[0] ? slideSnapshots[0].id : '');
+    const requestedActiveSlideId = normalizeString(options.activeSlideId);
+    const activeSlideId = requestedActiveSlideId || (slideSnapshots[0] ? slideSnapshots[0].id : '');
     const activeSlideIndex = slideSnapshots.findIndex(slide => slide.id === activeSlideId);
 
     return {
