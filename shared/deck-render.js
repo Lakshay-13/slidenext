@@ -187,6 +187,9 @@
         attributes.style = layoutStyle;
       }
     }
+    if (node.visibility && node.visibility.locked) {
+      attributes['data-editor-locked'] = 'true';
+    }
     if (node.visibility && node.visibility.hidden) {
       attributes.hidden = true;
       attributes['aria-hidden'] = attributes['aria-hidden'] || 'true';
