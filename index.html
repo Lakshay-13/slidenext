@@ -2860,12 +2860,18 @@
 
     function finalizeInsertedElements(insertedElements, versionLabel) {
       if (!insertedElements || insertedElements.length === 0) return false;
-      selectedElements = insertedElements;
-      refreshSelectionClasses();
-      syncSelectionOverlay();
-      syncInspectorForSelection();
+      const nextSelectionState = SlideNextStudioEditorSelection.selectAllStudioElements(insertedElements);
+      SlideNextStudioEditorSelection.commitStudioSelectionState(nextSelectionState, {
+        applySelectionState: (nextState) => {
+          selectedElements = nextState.selectedElements;
+          selectedElement = nextState.selectedElement;
+        },
+        refreshSelectionClasses,
+        syncSelectionOverlay,
+        syncInspectorForSelection,
+        updateLayersList
+      });
       generateThumbnails();
-      updateLayersList();
       saveHistoryState();
       triggerAutoSave();
       triggerAutoVersion(versionLabel);
