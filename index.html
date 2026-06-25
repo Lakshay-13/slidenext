@@ -2091,6 +2091,62 @@
       };
     }
 
+    function getEditorLayerDisplayMetadata(el) {
+      const tagName = el.tagName.toLowerCase();
+      if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+        const headingText = el.textContent.trim();
+        return {
+          typeIcon: 'title',
+          displayName: `Heading: "${headingText.slice(0, 15)}${headingText.length > 15 ? '...' : ''}"`
+        };
+      }
+      if (tagName === 'img') {
+        const srcParts = (el.src || '').split('/');
+        const filename = srcParts[srcParts.length - 1] || 'Image';
+        return {
+          typeIcon: 'image',
+          displayName: `Image: "${filename.slice(0, 15)}${filename.length > 15 ? '...' : ''}"`
+        };
+      }
+      if (el.classList.contains('editor-shape')) {
+        return {
+          typeIcon: 'layers',
+          displayName: `Shape (${el.style.backgroundColor || 'colored'})`
+        };
+      }
+      if (tagName === 'table') {
+        return { typeIcon: 'grid_on', displayName: 'Data Table' };
+      }
+      if (tagName === 'pre' || tagName === 'code') {
+        return { typeIcon: 'terminal', displayName: 'Code Block' };
+      }
+      const textValue = el.textContent.trim();
+      return {
+        typeIcon: 'description',
+        displayName: `Text: "${textValue.slice(0, 15)}${textValue.length > 15 ? '...' : ''}"`
+      };
+    }
+
+    function buildEditorElementSnapshot(el) {
+      const { typeIcon, displayName } = getEditorLayerDisplayMetadata(el);
+      return {
+        id: assignEditorElementId(el),
+        typeIcon,
+        displayName,
+        zIndex: el.style.zIndex || '0',
+        isLocked: isElementLocked(el),
+        isHidden: isElementHidden(el),
+        isSelected: selectedElements.includes(el),
+        element: el
+      };
+    }
+
+    function buildEditorLayerSnapshot(slide) {
+      return getNormalizedSlideLayerOrder(slide)
+        .map(el => buildEditorElementSnapshot(el))
+        .reverse();
+    }
+
     function getActiveSlide(doc = getIframeDoc()) {
       if (!doc) return null;
       return doc.querySelector('.slide-active') || doc.querySelector('.slide');
@@ -4143,73 +4199,40 @@
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       if (!iframeDoc) return;
       
-      const activeSlide = iframeDoc.querySelector('.slide-active') || iframeDoc.querySelector('.slide');
+      const activeSlide = getActiveSlide(iframeDoc);
       if (!activeSlide) {
         listContainer.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-2">No active slide</p>`;
         return;
       }
       
-      const elements = getNormalizedSlideLayerOrder(activeSlide);
-      if (elements.length === 0) {
+      const layers = buildEditorLayerSnapshot(activeSlide);
+      if (layers.length === 0) {
         listContainer.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-2">No elements found</p>`;
         return;
       }
-      
-      const elementsArray = [...elements].reverse();
-      
-      listContainer.innerHTML = elementsArray.map(el => {
-        const isSelected = selectedElements.includes(el);
-        const tagName = el.tagName.toLowerCase();
-        let typeIcon = 'notes';
-        let displayName = '';
-        
-        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
-          typeIcon = 'title';
-          displayName = `Heading: "${el.textContent.trim().slice(0, 15)}${el.textContent.trim().length > 15 ? '...' : ''}"`;
-        } else if (tagName === 'img') {
-          typeIcon = 'image';
-          const srcParts = (el.src || '').split('/');
-          const filename = srcParts[srcParts.length - 1] || 'Image';
-          displayName = `Image: "${filename.slice(0, 15)}${filename.length > 15 ? '...' : ''}"`;
-        } else if (el.classList.contains('editor-shape')) {
-          typeIcon = 'layers';
-          displayName = `Shape (${el.style.backgroundColor || 'colored'})`;
-        } else if (tagName === 'table') {
-          typeIcon = 'grid_on';
-          displayName = `Data Table`;
-        } else if (tagName === 'pre' || tagName === 'code') {
-          typeIcon = 'terminal';
-          displayName = `Code Block`;
-        } else {
-          typeIcon = 'description';
-          displayName = `Text: "${el.textContent.trim().slice(0, 15)}${el.textContent.trim().length > 15 ? '...' : ''}"`;
-        }
-        
-        const zIndex = el.style.zIndex || '0';
-        const isLocked = isElementLocked(el);
-        const isHidden = isElementHidden(el);
-        
-        const activeClass = isSelected 
+
+      listContainer.innerHTML = layers.map(layer => {
+        const activeClass = layer.isSelected 
           ? 'border-[#7028d0] bg-[#7028d0]/10 text-white font-semibold' 
           : 'border-white/5 bg-zinc-950/40 hover:bg-zinc-900/60 text-zinc-300 hover:text-white';
           
         return `
           <div class="flex items-center justify-between p-2 rounded-lg border text-xs font-mono transition-all ${activeClass}">
             <button onclick="selectLayerElementByRef(event)" class="flex-1 text-left flex items-center gap-2 truncate pr-1" style="min-width: 0;">
-              <span class="material-symbols-outlined text-[14px] text-[#7028d0] flex-shrink-0">${typeIcon}</span>
-              <span class="truncate" style="font-size: 10px;">${displayName}</span>
-              ${isLocked ? '<span class="material-symbols-outlined text-[11px] text-amber-400 flex-shrink-0" title="Locked">lock</span>' : ''}
-              ${isHidden ? '<span class="material-symbols-outlined text-[11px] text-zinc-500 flex-shrink-0" title="Hidden">visibility_off</span>' : ''}
-              <span class="text-[9px] text-zinc-500 font-bold ml-auto flex-shrink-0">z:${zIndex}</span>
+              <span class="material-symbols-outlined text-[14px] text-[#7028d0] flex-shrink-0">${layer.typeIcon}</span>
+              <span class="truncate" style="font-size: 10px;">${layer.displayName}</span>
+              ${layer.isLocked ? '<span class="material-symbols-outlined text-[11px] text-amber-400 flex-shrink-0" title="Locked">lock</span>' : ''}
+              ${layer.isHidden ? '<span class="material-symbols-outlined text-[11px] text-zinc-500 flex-shrink-0" title="Hidden">visibility_off</span>' : ''}
+              <span class="text-[9px] text-zinc-500 font-bold ml-auto flex-shrink-0">z:${layer.zIndex}</span>
             </button>
             <div class="flex items-center gap-1 flex-shrink-0 ml-1">
-              <button onclick="toggleLayerVisibilityByRef(event)" class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded" title="${isHidden ? 'Show Element' : 'Hide Element'}">
-                <span class="material-symbols-outlined text-[12px]">${isHidden ? 'visibility' : 'visibility_off'}</span>
+              <button onclick="toggleLayerVisibilityByRef(event)" class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded" title="${layer.isHidden ? 'Show Element' : 'Hide Element'}">
+                <span class="material-symbols-outlined text-[12px]">${layer.isHidden ? 'visibility' : 'visibility_off'}</span>
               </button>
-              <button onclick="changeLayerZIndexByRef(event, 'forward')" ${isLocked ? 'disabled' : ''} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Bring Forward">
+              <button onclick="changeLayerZIndexByRef(event, 'forward')" ${layer.isLocked ? 'disabled' : ''} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Bring Forward">
                 <span class="material-symbols-outlined text-[12px]">keyboard_arrow_up</span>
               </button>
-              <button onclick="changeLayerZIndexByRef(event, 'backward')" ${isLocked ? 'disabled' : ''} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Send Backward">
+              <button onclick="changeLayerZIndexByRef(event, 'backward')" ${layer.isLocked ? 'disabled' : ''} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Send Backward">
                 <span class="material-symbols-outlined text-[12px]">keyboard_arrow_down</span>
               </button>
             </div>
@@ -4220,9 +4243,9 @@
       // Store stable editor ids on layer rows and keep direct refs as a live-session fallback.
       const rows = listContainer.children;
       for (let i = 0; i < rows.length; i++) {
-        if (elementsArray[i]) {
-          rows[i].dataset.editorElementId = assignEditorElementId(elementsArray[i]);
-          rows[i].elementRef = elementsArray[i];
+        if (layers[i]) {
+          rows[i].dataset.editorElementId = layers[i].id;
+          rows[i].elementRef = layers[i].element;
         }
       }
     }
