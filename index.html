@@ -4084,7 +4084,10 @@
       const restoreContext = SlideNextStudioVersionActions.createStudioVersionActionContext(
         currentPresentationUrl,
         currentTitle,
-        currentCategory
+        currentCategory,
+        {
+          sessionToken: studioEditorSessionToken
+        }
       );
       
       try {
@@ -4101,6 +4104,7 @@
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(restoreContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
+            getCurrentSessionToken: () => studioEditorSessionToken,
             onSuccess: () => {
               alert('Rollback successfully restored!');
             },
@@ -4114,6 +4118,7 @@
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(restoreContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
+            getCurrentSessionToken: () => studioEditorSessionToken,
             onFailure: () => {
               alert(`Restore failed: ${data.error}`);
             }
@@ -4122,6 +4127,7 @@
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(restoreContext, {
           getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentSessionToken: () => studioEditorSessionToken,
           onFailure: () => {
             alert(`Network error restoring version: ${err.message}`);
           }
@@ -4134,7 +4140,10 @@
       renamingVersionContext = SlideNextStudioVersionActions.createStudioVersionActionContext(
         currentPresentationUrl,
         currentTitle,
-        currentCategory
+        currentCategory,
+        {
+          sessionToken: studioEditorSessionToken
+        }
       );
       document.getElementById('newVersionNameInput').value = currentLabel;
       
@@ -4181,7 +4190,10 @@
       const renameContext = renamingVersionContext || SlideNextStudioVersionActions.createStudioVersionActionContext(
         currentPresentationUrl,
         currentTitle,
-        currentCategory
+        currentCategory,
+        {
+          sessionToken: studioEditorSessionToken
+        }
       );
       const versionFilename = renamingFilename;
       if (!versionFilename || !renameContext.presentationUrl) return;
@@ -4207,6 +4219,7 @@
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(renameContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
+            getCurrentSessionToken: () => studioEditorSessionToken,
             isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
             onSuccess: () => {
               closeRenameVersionModal();
@@ -4218,6 +4231,7 @@
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(renameContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
+            getCurrentSessionToken: () => studioEditorSessionToken,
             isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
             onFailure: () => {
               alert(`Rename failed: ${data.error}`);
@@ -4227,6 +4241,7 @@
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(renameContext, {
           getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentSessionToken: () => studioEditorSessionToken,
           isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
           onFailure: () => {
             alert(`Error renaming version: ${err.message}`);
@@ -4235,6 +4250,7 @@
       } finally {
         SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(renameContext, {
           getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentSessionToken: () => studioEditorSessionToken,
           isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
           onSuccess: () => {
             btn.disabled = false;
@@ -4251,7 +4267,10 @@
       const deleteContext = SlideNextStudioVersionActions.createStudioVersionActionContext(
         currentPresentationUrl,
         currentTitle,
-        currentCategory
+        currentCategory,
+        {
+          sessionToken: studioEditorSessionToken
+        }
       );
       
       try {
@@ -4268,6 +4287,7 @@
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(deleteContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
+            getCurrentSessionToken: () => studioEditorSessionToken,
             refreshVersionEntries: (presentationUrl) => {
               loadVersions(presentationUrl);
             }
@@ -4275,6 +4295,7 @@
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(deleteContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
+            getCurrentSessionToken: () => studioEditorSessionToken,
             onFailure: () => {
               alert(`Delete failed: ${data.error}`);
             }
@@ -4283,6 +4304,7 @@
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(deleteContext, {
           getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentSessionToken: () => studioEditorSessionToken,
           onFailure: () => {
             alert(`Error deleting version: ${err.message}`);
           }

@@ -11,12 +11,21 @@
     return typeof value === 'string' ? value : fallback;
   }
 
-  function createStudioVersionActionContext(presentationUrl = '', presentationTitle = '', presentationCategory = '') {
-    return {
+  function normalizeSessionToken(value) {
+    return Number.isInteger(value) ? value : null;
+  }
+
+  function createStudioVersionActionContext(presentationUrl = '', presentationTitle = '', presentationCategory = '', options = {}) {
+    const context = {
       presentationUrl: normalizeString(presentationUrl),
       presentationTitle: normalizeString(presentationTitle),
       presentationCategory: normalizeString(presentationCategory)
     };
+    const sessionToken = normalizeSessionToken(options.sessionToken);
+    if (sessionToken !== null) {
+      context.sessionToken = sessionToken;
+    }
+    return context;
   }
 
   function isStudioVersionActionCurrent(context = {}, options = {}) {
@@ -29,7 +38,20 @@
       ? options.getCurrentPresentationUrl
       : () => options.currentPresentationUrl;
 
-    return normalizeString(getCurrentPresentationUrl()) === requestedPresentationUrl;
+    if (normalizeString(getCurrentPresentationUrl()) !== requestedPresentationUrl) {
+      return false;
+    }
+
+    const requestedSessionToken = normalizeSessionToken(context.sessionToken);
+    if (requestedSessionToken === null) {
+      return true;
+    }
+
+    const getCurrentSessionToken = typeof options.getCurrentSessionToken === 'function'
+      ? options.getCurrentSessionToken
+      : () => options.currentSessionToken;
+
+    return normalizeSessionToken(getCurrentSessionToken()) === requestedSessionToken;
   }
 
   function isStudioVersionActionSessionCurrent(context = {}, options = {}) {

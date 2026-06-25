@@ -22,6 +22,21 @@ test('createStudioVersionActionContext normalizes the captured deck state', () =
     presentationTitle: '',
     presentationCategory: ''
   });
+
+  assert.deepEqual(
+    versionActions.createStudioVersionActionContext(
+      '/presentations/onboarding-presentation/index.html',
+      'Project Onboarding',
+      'General',
+      { sessionToken: 7 }
+    ),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      presentationTitle: 'Project Onboarding',
+      presentationCategory: 'General',
+      sessionToken: 7
+    }
+  );
 });
 
 test('handleStudioRestoreVersionSuccess applies restore hooks for the active deck only', () => {
@@ -148,6 +163,30 @@ test('handleStudioVersionListMutationSuccess skips stale modal sessions', () => 
   assert.deepEqual(calls, []);
 });
 
+test('handleStudioVersionListMutationSuccess skips stale same-url editor sessions', () => {
+  const renameContext = versionActions.createStudioVersionActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    'General',
+    { sessionToken: 4 }
+  );
+  const calls = [];
+
+  const applied = versionActions.handleStudioVersionListMutationSuccess(renameContext, {
+    getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    getCurrentSessionToken: () => 5,
+    onSuccess() {
+      calls.push(['onSuccess']);
+    },
+    refreshVersionEntries() {
+      calls.push(['refreshVersionEntries']);
+    }
+  });
+
+  assert.equal(applied, false);
+  assert.deepEqual(calls, []);
+});
+
 test('handleStudioVersionActionFailure reports failures only for the active session', () => {
   const renameContext = versionActions.createStudioVersionActionContext(
     '/presentations/onboarding-presentation/index.html',
@@ -181,6 +220,33 @@ test('handleStudioVersionActionFailure skips stale sessions', () => {
     isCurrentSession: () => false,
     onFailure() {
       calls.push(['onFailure']);
+    }
+  });
+
+  assert.equal(applied, false);
+  assert.deepEqual(calls, []);
+});
+
+test('handleStudioRestoreVersionSuccess skips stale same-url editor sessions', () => {
+  const restoreContext = versionActions.createStudioVersionActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    'General',
+    { sessionToken: 9 }
+  );
+  const calls = [];
+
+  const applied = versionActions.handleStudioRestoreVersionSuccess(restoreContext, {
+    getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    getCurrentSessionToken: () => 10,
+    onSuccess() {
+      calls.push(['onSuccess']);
+    },
+    hideVersionsDropdown() {
+      calls.push(['hideVersionsDropdown']);
+    },
+    relaunchEditor() {
+      calls.push(['relaunchEditor']);
     }
   });
 
