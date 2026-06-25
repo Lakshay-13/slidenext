@@ -730,7 +730,7 @@
           <div class="h-[1px] bg-white/5"></div>
 
           <!-- Add Shape tools -->
-          <div class="flex flex-col gap-3">
+        <div class="flex flex-col gap-3">
             <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Add Elements</h4>
             <div class="grid grid-cols-2 gap-3">
               <button onclick="insertElement('h2')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all">
@@ -758,6 +758,10 @@
                 <span>Code Block</span>
               </button>
             </div>
+            <button id="slidePasteClipboardBtn" onclick="pasteClipboardElements()" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+              <span class="material-symbols-outlined text-[14px] text-[#7028d0]">content_paste</span>
+              Paste Clipboard
+            </button>
           </div>
         </div>
 
@@ -912,6 +916,17 @@
 
           <div class="h-[1px] bg-white/5"></div>
 
+          <div class="grid grid-cols-2 gap-2">
+            <button id="copySelectionBtn" onclick="copySelectedElements()" class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+              <span class="material-symbols-outlined text-[16px]">content_copy</span>
+              Copy Selected
+            </button>
+            <button id="pasteClipboardBtn" onclick="pasteClipboardElements()" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+              <span class="material-symbols-outlined text-[16px]">content_paste</span>
+              Paste Clipboard
+            </button>
+          </div>
+
           <!-- Danger actions: Remove element -->
           <div class="flex flex-col gap-2">
             <button onclick="removeSelectedElement()" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all">
@@ -954,6 +969,7 @@
     let zoomFactor = 1.0;
     let customGradientType = 'linear';
     let renamingFilename = '';
+    let editorClipboard = null;
     const DRAG_START_THRESHOLD_PX = 4;
     const DUPLICATE_OFFSET_PX = 24;
     const MIN_ELEMENT_SIZE_PX = 24;
@@ -2251,6 +2267,7 @@
 
     function syncInspectorForSelection() {
       const count = selectedElements.length;
+      updateClipboardActionState();
       if (count === 0) {
         document.getElementById('inspectorTargetLabel').innerHTML = `
           <span class="material-symbols-outlined text-[16px] text-[#7028d0]">settings_suggest</span>
@@ -2490,6 +2507,17 @@
       triggerAutoVersion('Auto: Deleted Element');
     }
 
+    function updateClipboardActionState() {
+      const hasSelection = selectedElements.length > 0;
+      const hasClipboard = !!editorClipboard?.items?.length;
+      const copyBtn = document.getElementById('copySelectionBtn');
+      const pasteBtn = document.getElementById('pasteClipboardBtn');
+      const slidePasteBtn = document.getElementById('slidePasteClipboardBtn');
+      if (copyBtn) copyBtn.disabled = !hasSelection;
+      if (pasteBtn) pasteBtn.disabled = !hasClipboard;
+      if (slidePasteBtn) slidePasteBtn.disabled = !hasClipboard;
+    }
+
     function sanitizeDuplicatedSubtree(root) {
       if (!root || root.nodeType !== 1) return;
       root.removeAttribute('id');
@@ -2500,48 +2528,80 @@
       });
     }
 
-    function duplicateSelectedElements() {
+    function buildClipboardPayload(elements = selectedElements) {
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
-      if (!doc || !slide || selectedElements.length === 0) return;
-
+      if (!doc || !slide || elements.length === 0) return [];
       const slideMetrics = getSlideMetrics(slide);
-      const duplicates = [];
-      const orderedSelection = getNormalizedSlideLayerOrder(slide).filter(el => selectedElements.includes(el));
+      const orderedSelection = getNormalizedSlideLayerOrder(slide).filter(el => elements.includes(el));
 
-      orderedSelection.forEach(el => {
-        const clone = el.cloneNode(true);
-        sanitizeDuplicatedSubtree(clone);
-        clone.classList.add('editor-hoverable');
+      return orderedSelection.map(el => {
+        const template = el.cloneNode(true);
+        sanitizeDuplicatedSubtree(template);
+        template.classList.add('editor-hoverable');
 
         const computed = doc.defaultView.getComputedStyle(el);
         const isAbsolutelyPositioned = computed.position === 'absolute' || computed.position === 'fixed';
+        const item = {
+          template,
+          isAbsolutelyPositioned,
+          sourceElement: el,
+          sourceParent: getClosestPositionedAncestor(el)
+        };
+
         if (isAbsolutelyPositioned) {
           const rect = el.getBoundingClientRect();
-          const parent = getClosestPositionedAncestor(el);
-          const parentRect = parent.getBoundingClientRect();
           const rectOnSlide = getRectOnSlide(rect, slideMetrics);
+          item.startAbsLeft = rectOnSlide.left;
+          item.startAbsTop = rectOnSlide.top;
+          item.width = rectOnSlide.right - rectOnSlide.left;
+          item.height = rectOnSlide.bottom - rectOnSlide.top;
+        }
+
+        return item;
+      });
+    }
+
+    function insertClipboardPayload(items, offsetMultiplier = 1) {
+      const doc = getIframeDoc();
+      const slide = getActiveSlide(doc);
+      if (!doc || !slide || !items || items.length === 0) return [];
+
+      const slideMetrics = getSlideMetrics(slide);
+      const offset = DUPLICATE_OFFSET_PX * Math.max(1, offsetMultiplier);
+      const inserted = [];
+
+      items.forEach(item => {
+        const clone = item.template.cloneNode(true);
+        clone.classList.add('editor-hoverable');
+
+        if (item.isAbsolutelyPositioned) {
+          const parent = item.sourceParent && item.sourceParent.isConnected && slide.contains(item.sourceParent) ? item.sourceParent : slide;
+          const parentRect = parent.getBoundingClientRect();
           const parentOnSlide = getRectOnSlide(parentRect, slideMetrics);
-          const width = rectOnSlide.right - rectOnSlide.left;
-          const height = rectOnSlide.bottom - rectOnSlide.top;
-          const nextAbsLeft = clampValue(rectOnSlide.left + DUPLICATE_OFFSET_PX, 0, Math.max(0, slideMetrics.logicalWidth - width));
-          const nextAbsTop = clampValue(rectOnSlide.top + DUPLICATE_OFFSET_PX, 0, Math.max(0, slideMetrics.logicalHeight - height));
+          const nextAbsLeft = clampValue(item.startAbsLeft + offset, 0, Math.max(0, slideMetrics.logicalWidth - item.width));
+          const nextAbsTop = clampValue(item.startAbsTop + offset, 0, Math.max(0, slideMetrics.logicalHeight - item.height));
 
           clone.style.position = 'absolute';
           clone.style.margin = '0';
           clone.style.left = `${nextAbsLeft - parentOnSlide.left}px`;
           clone.style.top = `${nextAbsTop - parentOnSlide.top}px`;
           parent.appendChild(clone);
+        } else if (item.sourceElement && item.sourceElement.isConnected && slide.contains(item.sourceElement)) {
+          item.sourceElement.insertAdjacentElement('afterend', clone);
         } else {
-          el.insertAdjacentElement('afterend', clone);
+          slide.appendChild(clone);
         }
 
-        duplicates.push(clone);
+        inserted.push(clone);
       });
 
-      if (duplicates.length === 0) return;
+      return inserted;
+    }
 
-      selectedElements = duplicates;
+    function finalizeInsertedElements(insertedElements, versionLabel) {
+      if (!insertedElements || insertedElements.length === 0) return false;
+      selectedElements = insertedElements;
       refreshSelectionClasses();
       syncSelectionOverlay();
       syncInspectorForSelection();
@@ -2549,7 +2609,31 @@
       updateLayersList();
       saveHistoryState();
       triggerAutoSave();
-      triggerAutoVersion('Auto: Duplicated Element');
+      triggerAutoVersion(versionLabel);
+      return true;
+    }
+
+    function copySelectedElements() {
+      const items = buildClipboardPayload();
+      if (items.length === 0) return false;
+      editorClipboard = { items, pasteCount: 0 };
+      updateClipboardActionState();
+      return true;
+    }
+
+    function pasteClipboardElements() {
+      if (!editorClipboard?.items?.length) return false;
+      editorClipboard.pasteCount = (editorClipboard.pasteCount || 0) + 1;
+      const pasted = insertClipboardPayload(editorClipboard.items, editorClipboard.pasteCount);
+      const didPaste = finalizeInsertedElements(pasted, 'Auto: Pasted Element');
+      updateClipboardActionState();
+      return didPaste;
+    }
+
+    function duplicateSelectedElements() {
+      const duplicates = insertClipboardPayload(buildClipboardPayload(), 1);
+      if (duplicates.length === 0) return false;
+      return finalizeInsertedElements(duplicates, 'Auto: Duplicated Element');
     }
 
     function getClosestPositionedAncestor(el) {
