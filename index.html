@@ -4242,9 +4242,9 @@
           }
           
           // Support both legacy and current backup timestamps:
-          // YYYYMMDD_HHMMSS[_mmm]
+          // (YYYYMMDD|YYYY-MM-DD)_HHMMSS[_mmm]
           let label = 'Manual Checkpoint';
-          const labelMatch = cleanName.match(/^\d{8}_\d{6}(?:_\d{3})?_(.+)$/);
+          const labelMatch = cleanName.match(/^(?:\d{8}|\d{4}-\d{2}-\d{2})_\d{6}(?:_\d{3})?_(.+)$/);
           if (labelMatch) {
             const rawLabel = labelMatch[1];
             label = rawLabel

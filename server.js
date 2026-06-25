@@ -148,12 +148,12 @@ app.get('/api/versions', async (req, res) => {
     try {
       const files = await fs.readdir(versionsDir);
       // Support both legacy and current backup timestamps:
-      // base_YYYYMMDD_HHMMSS[_mmm][_Label]
+      // base_(YYYYMMDD|YYYY-MM-DD)_HHMMSS[_mmm][_Label]
       const ext = path.extname(targetFile);
       const base = path.basename(targetFile, ext);
       const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const escapedExt = ext.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const backupRegex = new RegExp(`^${escapedBase}_\\d{8}_\\d{6}(?:_\\d{3})?(?:_.*)?${escapedExt}$`);
+      const backupRegex = new RegExp(`^${escapedBase}_(?:\\d{8}|\\d{4}-\\d{2}-\\d{2})_\\d{6}(?:_\\d{3})?(?:_.*)?${escapedExt}$`);
 
       const versions = [];
       for (const file of files) {
@@ -245,10 +245,12 @@ app.post('/api/versions/rename', async (req, res) => {
 
     const ext = path.extname(targetFile);
     const base = path.basename(targetFile, ext);
+    const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedExt = ext.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     // Support both legacy and current backup timestamps:
-    // base_YYYYMMDD_HHMMSS[_mmm]
-    const match = versionFilename.match(new RegExp(`^(${base}_\\d{8}_\\d{6}(?:_\\d{3})?)(?:_.*)?${ext}$`));
+    // base_(YYYYMMDD|YYYY-MM-DD)_HHMMSS[_mmm]
+    const match = versionFilename.match(new RegExp(`^(${escapedBase}_(?:\\d{8}|\\d{4}-\\d{2}-\\d{2})_\\d{6}(?:_\\d{3})?)(?:_.*)?${escapedExt}$`));
     if (!match) {
       return res.status(400).json({ error: 'Invalid version filename format' });
     }
