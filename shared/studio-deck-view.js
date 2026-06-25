@@ -10,6 +10,103 @@
     root.SlideNextStudioDeckView = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (deckHtml) {
+  function teardownStudioDeckActiveSlideSync(state = {}, options = {}) {
+    const disconnectObserver = typeof options.disconnectObserver === 'function'
+      ? options.disconnectObserver
+      : (observer) => observer && typeof observer.disconnect === 'function' && observer.disconnect();
+    const clearTimer = typeof options.clearTimer === 'function'
+      ? options.clearTimer
+      : (timerId) => clearTimeout(timerId);
+    const observer = state.observer || null;
+    const timer = state.timer || null;
+
+    if (observer) {
+      disconnectObserver(observer);
+    }
+    if (timer) {
+      clearTimer(timer);
+    }
+
+    return {
+      observer: null,
+      timer: null
+    };
+  }
+
+  function scheduleStudioDeckActiveSlideSync(currentTimer, callback, options = {}) {
+    const clearTimer = typeof options.clearTimer === 'function'
+      ? options.clearTimer
+      : (timerId) => clearTimeout(timerId);
+    const scheduleTimer = typeof options.scheduleTimer === 'function'
+      ? options.scheduleTimer
+      : (nextCallback, delayMs) => setTimeout(nextCallback, delayMs);
+    const delayMs = Number.isInteger(options.delayMs) && options.delayMs >= 0
+      ? options.delayMs
+      : 0;
+
+    if (currentTimer) {
+      clearTimer(currentTimer);
+    }
+
+    return scheduleTimer(callback, delayMs);
+  }
+
+  function observeStudioDeckActiveSlideState(doc, options = {}) {
+    const MutationObserverCtor = typeof options.MutationObserverCtor === 'function'
+      ? options.MutationObserverCtor
+      : (typeof MutationObserver === 'function' ? MutationObserver : null);
+    const getSlidesContainer = typeof options.getSlidesContainer === 'function'
+      ? options.getSlidesContainer
+      : (nextDoc) => nextDoc && typeof nextDoc.getElementById === 'function'
+          ? nextDoc.getElementById('slidesContainer')
+          : null;
+    const shouldSyncMutation = typeof options.shouldSyncMutation === 'function'
+      ? options.shouldSyncMutation
+      : (mutation, slidesContainer) => {
+          if (!mutation || mutation.type !== 'attributes') return false;
+          if (mutation.target === slidesContainer && mutation.attributeName === 'style') return true;
+          return mutation.attributeName === 'class' && !!mutation.target.classList?.contains('slide');
+        };
+    const scheduleSync = typeof options.scheduleSync === 'function'
+      ? options.scheduleSync
+      : () => {};
+
+    if (!doc || !MutationObserverCtor) {
+      return {
+        didObserve: false,
+        observer: null
+      };
+    }
+
+    const slidesContainer = getSlidesContainer(doc);
+    if (!slidesContainer) {
+      return {
+        didObserve: false,
+        observer: null
+      };
+    }
+
+    const observer = new MutationObserverCtor((mutations) => {
+      const shouldSync = Array.isArray(mutations) && mutations.some((mutation) => {
+        return shouldSyncMutation(mutation, slidesContainer);
+      });
+      if (shouldSync) {
+        scheduleSync(doc);
+      }
+    });
+
+    observer.observe(slidesContainer, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style']
+    });
+
+    return {
+      didObserve: true,
+      observer
+    };
+  }
+
   function bindStudioDeckNavigationSync(doc, frameWin, options = {}) {
     const getGoToSlide = typeof options.getGoToSlide === 'function'
       ? options.getGoToSlide
@@ -158,6 +255,9 @@
   }
 
   return {
+    teardownStudioDeckActiveSlideSync,
+    scheduleStudioDeckActiveSlideSync,
+    observeStudioDeckActiveSlideState,
     bindStudioDeckNavigationSync,
     syncStudioActiveSlideView,
     buildStudioPreviewHtml,

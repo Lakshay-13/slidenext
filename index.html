@@ -1786,51 +1786,31 @@
     }
 
     function teardownDeckActiveSlideSync() {
-      if (deckActiveSlideObserver) {
-        deckActiveSlideObserver.disconnect();
-        deckActiveSlideObserver = null;
-      }
-      if (deckActiveSlideSyncTimer) {
-        clearTimeout(deckActiveSlideSyncTimer);
-        deckActiveSlideSyncTimer = null;
-      }
+      const nextSyncState = SlideNextStudioDeckView.teardownStudioDeckActiveSlideSync({
+        observer: deckActiveSlideObserver,
+        timer: deckActiveSlideSyncTimer
+      });
+      deckActiveSlideObserver = nextSyncState.observer;
+      deckActiveSlideSyncTimer = nextSyncState.timer;
     }
 
     function scheduleStudioChromeSync(doc = getIframeDoc()) {
       if (!doc) return;
-      if (deckActiveSlideSyncTimer) {
-        clearTimeout(deckActiveSlideSyncTimer);
-      }
-      deckActiveSlideSyncTimer = setTimeout(() => {
+      deckActiveSlideSyncTimer = SlideNextStudioDeckView.scheduleStudioDeckActiveSlideSync(deckActiveSlideSyncTimer, () => {
         deckActiveSlideSyncTimer = null;
         syncStudioChromeToActiveSlide(doc);
-      }, 0);
+      });
     }
 
     function observeDeckActiveSlideState(doc = getIframeDoc()) {
       teardownDeckActiveSlideSync();
-      if (!doc || typeof MutationObserver !== 'function') return false;
-
-      const slidesContainer = doc.getElementById('slidesContainer');
-      if (!slidesContainer) return false;
-
-      deckActiveSlideObserver = new MutationObserver((mutations) => {
-        const shouldSync = mutations.some((mutation) => {
-          if (mutation.type !== 'attributes') return false;
-          if (mutation.target === slidesContainer && mutation.attributeName === 'style') return true;
-          return mutation.attributeName === 'class' && mutation.target.classList?.contains('slide');
-        });
-        if (shouldSync) {
-          scheduleStudioChromeSync(doc);
+      const nextObserverState = SlideNextStudioDeckView.observeStudioDeckActiveSlideState(doc, {
+        scheduleSync: (nextDoc) => {
+          scheduleStudioChromeSync(nextDoc);
         }
       });
-
-      deckActiveSlideObserver.observe(slidesContainer, {
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['class', 'style']
-      });
-      return true;
+      deckActiveSlideObserver = nextObserverState.observer;
+      return nextObserverState.didObserve;
     }
 
     // Toggle active slide viewport display
