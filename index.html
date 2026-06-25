@@ -2625,9 +2625,11 @@
       const shouldHide = !selectedElements.every(isElementHidden);
       selectedElements.forEach(el => setElementHiddenState(el, shouldHide));
       refreshSelectionClasses();
-      syncSelectionOverlay();
-      syncInspectorForSelection();
-      updateLayersList();
+      SlideNextStudioEditorSelection.syncStudioSelectionUi(selectedElements, {
+        syncSelectionOverlay,
+        syncInspectorForSelection,
+        updateLayersList
+      });
       saveHistoryState();
       triggerAutoSave();
       triggerAutoVersion(shouldHide ? 'Auto: Hid Element' : 'Auto: Showed Element');
