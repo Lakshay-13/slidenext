@@ -314,6 +314,69 @@
     return attributes;
   }
 
+  function sanitizeImportedDomNode(node, options = {}) {
+    if (!node) {
+      return;
+    }
+
+    const transientAttributeNames = options.transientAttributeNames instanceof Set
+      ? options.transientAttributeNames
+      : DEFAULT_IMPORTED_TRANSIENT_ATTRIBUTE_NAMES;
+    const transientClassNames = resolveImportedTransientClassNames(options);
+
+    if (node.classList && typeof node.classList.remove === 'function') {
+      transientClassNames.forEach((className) => {
+        node.classList.remove(className);
+      });
+    }
+
+    if (typeof node.getAttribute === 'function') {
+      const className = sanitizeImportedClassNameString(node.getAttribute('class'), options);
+      if (className) {
+        if (typeof node.setAttribute === 'function') {
+          node.setAttribute('class', className);
+        }
+      } else if (typeof node.removeAttribute === 'function') {
+        node.removeAttribute('class');
+      }
+    }
+
+    if (typeof node.removeAttribute === 'function') {
+      transientAttributeNames.forEach((attributeName) => {
+        node.removeAttribute(attributeName);
+      });
+    }
+  }
+
+  function sanitizeImportedElementClone(el, options = {}) {
+    if (!el || typeof el.cloneNode !== 'function') {
+      return null;
+    }
+
+    const clone = el.cloneNode(true);
+    sanitizeImportedDomNode(clone, options);
+
+    if (clone && typeof clone.querySelectorAll === 'function') {
+      Array.from(clone.querySelectorAll('*')).forEach((descendant) => {
+        sanitizeImportedDomNode(descendant, options);
+      });
+    }
+
+    sanitizeDeckSourceClone(clone, options);
+    return clone;
+  }
+
+  function buildImportedSourceHtml(el, options = {}) {
+    if (options.includeSourceHtml === false) {
+      return '';
+    }
+
+    const sourceClone = sanitizeImportedElementClone(el, options);
+    return sourceClone && typeof sourceClone.outerHTML === 'string'
+      ? sourceClone.outerHTML
+      : normalizeString(el && el.outerHTML);
+  }
+
   function extractDirectText(el) {
     if (!el || !el.childNodes) return '';
     return normalizeWhitespace(
@@ -426,7 +489,7 @@
       name: buildImportedNodeName(el),
       tagName: el.tagName.toLowerCase(),
       text: normalizeWhitespace(childElements.length === 0 ? (el.textContent || '') : extractDirectText(el)),
-      html: options.includeSourceHtml === false ? '' : el.outerHTML,
+      html: buildImportedSourceHtml(el, options),
       classes: sanitizeImportedClassNames(el.classList || [], options),
       attributes: sanitizeImportedAttributeMap(el, options),
       style: normalizeString(el.getAttribute('style')),
@@ -486,7 +549,7 @@
         path: [childIndex + 1]
       })),
       source: {
-        html: options.includeSourceHtml === false ? '' : slide.outerHTML,
+        html: buildImportedSourceHtml(slide, options),
         attributes: sanitizeImportedAttributeMap(slide, options)
       }
     });
@@ -706,6 +769,7 @@
   return {
     DEFAULT_SKIP_TAG_NAMES,
     buildDeckSource,
+    buildImportedSourceHtml,
     collectDeckCustomCss,
     collectDeckThemeTokens,
     extractCssUrlValues,
@@ -714,6 +778,7 @@
     importElementToCanonicalNode,
     importSlideToCanonicalSlide,
     sanitizeDeckSourceClone,
+    sanitizeImportedElementClone,
     importHtmlDeckToCanonicalDeck
   };
 });

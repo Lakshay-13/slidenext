@@ -83,6 +83,143 @@ function createImportedElement(options = {}) {
   };
 }
 
+function createSanitizableElement(options = {}) {
+  const attributeMap = new Map(Object.entries(options.attributes || {}).filter(([name]) => name !== 'class'));
+  let classValues = (options.attributes && options.attributes.class
+    ? options.attributes.class.split(/\s+/)
+    : options.classNames || [])
+    .map((className) => className.trim())
+    .filter(Boolean);
+  const childNodes = options.children || [];
+  const element = {
+    tagName: options.tagName || 'DIV',
+    children: childNodes,
+    childNodes: childNodes,
+    textContent: options.textContent || '',
+    style: options.style || {},
+    ownerDocument: options.ownerDocument || null,
+    hidden: !!options.hidden,
+    removed: false,
+    get className() {
+      return classValues.join(' ');
+    },
+    set className(nextValue) {
+      classValues = String(nextValue || '')
+        .split(/\s+/)
+        .map((className) => className.trim())
+        .filter(Boolean);
+    },
+    classList: {
+      add(...nextValues) {
+        nextValues.forEach((value) => {
+          if (!classValues.includes(value)) {
+            classValues.push(value);
+          }
+        });
+      },
+      remove(...nextValues) {
+        classValues = classValues.filter((value) => !nextValues.includes(value));
+      },
+      contains(value) {
+        return classValues.includes(value);
+      },
+      [Symbol.iterator]: function* iterator() {
+        yield* classValues;
+      }
+    },
+    get attributes() {
+      const attributes = Array.from(attributeMap.entries()).map(([name, value]) => ({ name, value }));
+      if (classValues.length > 0) {
+        attributes.unshift({ name: 'class', value: classValues.join(' ') });
+      }
+      return attributes;
+    },
+    getAttribute(name) {
+      if (name === 'class') {
+        return classValues.join(' ');
+      }
+      return attributeMap.has(name) ? attributeMap.get(name) : '';
+    },
+    setAttribute(name, value) {
+      if (name === 'class') {
+        this.className = value;
+        return;
+      }
+      attributeMap.set(name, value);
+    },
+    removeAttribute(name) {
+      if (name === 'class') {
+        classValues = [];
+        return;
+      }
+      attributeMap.delete(name);
+    },
+    remove() {
+      this.removed = true;
+    },
+    querySelector(selector) {
+      if (selector === 'h1, h2, h3') {
+        return flattenSanitizableDescendants(this).find((node) => /^H[1-3]$/.test(node.tagName)) || null;
+      }
+      return null;
+    },
+    querySelectorAll(selector) {
+      const descendants = flattenSanitizableDescendants(this);
+      if (selector === '*') {
+        return descendants;
+      }
+      if (selector.startsWith('.')) {
+        return descendants.filter((node) => node.classList.contains(selector.slice(1)));
+      }
+      if (selector.startsWith('#')) {
+        return descendants.filter((node) => node.getAttribute('id') === selector.slice(1));
+      }
+      if (/^\[[^\]]+\]$/.test(selector)) {
+        const attributeName = selector.slice(1, -1);
+        return descendants.filter((node) => node.getAttribute(attributeName) !== '');
+      }
+      return [];
+    },
+    cloneNode(deep) {
+      return createSanitizableElement({
+        tagName: this.tagName,
+        attributes: Object.fromEntries(this.attributes.map(({ name, value }) => [name, value])),
+        children: deep ? this.children.map((child) => child.cloneNode(true)) : [],
+        textContent: this.textContent,
+        style: { ...this.style },
+        hidden: this.hidden
+      });
+    },
+    get outerHTML() {
+      if (this.removed) {
+        return '';
+      }
+      const attrs = this.attributes
+        .map(({ name, value }) => ` ${name}="${value}"`)
+        .join('');
+      const childrenHtml = this.children
+        .map((child) => child.outerHTML)
+        .filter(Boolean)
+        .join('');
+      const textHtml = childrenHtml || this.textContent;
+      return `<${this.tagName.toLowerCase()}${attrs}>${textHtml}</${this.tagName.toLowerCase()}>`;
+    }
+  };
+  return element;
+}
+
+function flattenSanitizableDescendants(root) {
+  const descendants = [];
+  (root.children || []).forEach((child) => {
+    if (!child || child.removed) {
+      return;
+    }
+    descendants.push(child);
+    descendants.push(...flattenSanitizableDescendants(child));
+  });
+  return descendants;
+}
+
 test('collectDeckAssets includes inline style asset urls, skips fragments, and deduplicates sources', () => {
   const imageEl = createElement('IMG', {
     src: 'assets/chart.png'
@@ -352,6 +489,33 @@ test('importElementToCanonicalNode strips editor-only classes and attributes fro
   });
 });
 
+test('importElementToCanonicalNode sanitizes stored node html fragments', () => {
+  const child = createSanitizableElement({
+    tagName: 'SPAN',
+    attributes: {
+      class: 'eyebrow editor-selected',
+      'data-editor-id': 'child-node'
+    },
+    textContent: 'Eyebrow'
+  });
+  const element = createSanitizableElement({
+    tagName: 'DIV',
+    attributes: {
+      class: 'hero-card editor-hoverable',
+      'data-editor-id': 'node-1'
+    },
+    children: [child]
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+
+  assert.equal(node.html.includes('editor-hoverable'), false);
+  assert.equal(node.html.includes('editor-selected'), false);
+  assert.equal(node.html.includes('data-editor-id'), false);
+  assert.match(node.html, /class="hero-card"/);
+  assert.match(node.html, /class="eyebrow"/);
+});
+
 test('importSlideToCanonicalSlide strips editor-only slide metadata from canonical slide attributes', () => {
   const heading = createImportedElement({
     tagName: 'H1',
@@ -385,4 +549,34 @@ test('importSlideToCanonicalSlide strips editor-only slide metadata from canonic
     class: 'slide',
     'data-speaker-notes': 'Key message'
   });
+});
+
+test('importSlideToCanonicalSlide sanitizes stored slide source html fragments', () => {
+  const heading = createSanitizableElement({
+    tagName: 'H1',
+    attributes: {
+      class: 'title editor-hoverable',
+      'data-editor-id': 'heading-node'
+    },
+    textContent: 'Intro'
+  });
+  const slide = createSanitizableElement({
+    tagName: 'SECTION',
+    attributes: {
+      class: 'slide editor-selected',
+      'data-slide-id': 'slide-runtime-1',
+      'data-speaker-notes': 'Key message'
+    },
+    children: [heading]
+  });
+
+  const canonicalSlide = deckImport.importSlideToCanonicalSlide(slide, 0);
+
+  assert.equal(canonicalSlide.source.html.includes('editor-selected'), false);
+  assert.equal(canonicalSlide.source.html.includes('editor-hoverable'), false);
+  assert.equal(canonicalSlide.source.html.includes('data-slide-id'), false);
+  assert.equal(canonicalSlide.source.html.includes('data-editor-id'), false);
+  assert.match(canonicalSlide.source.html, /class="slide"/);
+  assert.match(canonicalSlide.source.html, /class="title"/);
+  assert.match(canonicalSlide.source.html, /data-speaker-notes="Key message"/);
 });
