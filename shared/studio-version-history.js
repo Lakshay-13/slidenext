@@ -1,0 +1,66 @@
+(function (root, factory) {
+  const api = factory(root);
+  if (typeof module === 'object' && module.exports) {
+    module.exports = api;
+  }
+  if (root) {
+    root.SlideNextStudioVersionHistory = api;
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  function normalizeString(value, fallback = '') {
+    return typeof value === 'string' ? value : fallback;
+  }
+
+  function deriveStudioVersionDeckBaseName(presentationUrl = '') {
+    const url = normalizeString(presentationUrl);
+    if (!url) {
+      return '';
+    }
+
+    const urlParts = url.split('/');
+    const lastPart = urlParts[urlParts.length - 1] || '';
+    const extensionIndex = lastPart.lastIndexOf('.');
+    return extensionIndex === -1 ? lastPart : lastPart.substring(0, extensionIndex);
+  }
+
+  async function loadStudioVersionHistory(presentationUrl = '', options = {}) {
+    const requestedPresentationUrl = normalizeString(presentationUrl);
+    if (!requestedPresentationUrl) {
+      return [];
+    }
+
+    const fetchImpl = typeof options.fetchImpl === 'function'
+      ? options.fetchImpl
+      : root && typeof root.fetch === 'function'
+        ? root.fetch.bind(root)
+        : null;
+    if (!fetchImpl) {
+      return [];
+    }
+
+    const getCurrentPresentationUrl = typeof options.getCurrentPresentationUrl === 'function'
+      ? options.getCurrentPresentationUrl
+      : () => options.currentPresentationUrl;
+    const response = await fetchImpl(`/api/versions?htmlPath=${encodeURIComponent(requestedPresentationUrl)}`, {
+      cache: 'no-store',
+      ...(options.requestInit || {})
+    });
+    if (!response.ok) {
+      throw new Error(`Version history request failed with status ${response.status}`);
+    }
+
+    const payload = await response.json();
+    const versions = Array.isArray(payload) ? payload : [];
+    if (typeof options.commitVersionEntries === 'function'
+      && normalizeString(getCurrentPresentationUrl()) === requestedPresentationUrl) {
+      options.commitVersionEntries(versions);
+    }
+
+    return versions;
+  }
+
+  return {
+    deriveStudioVersionDeckBaseName,
+    loadStudioVersionHistory
+  };
+});
