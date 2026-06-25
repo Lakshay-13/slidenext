@@ -1,12 +1,15 @@
 (function (root, factory) {
-  const api = factory(root);
+  const modalVisibility = typeof module === 'object' && module.exports
+    ? require('./studio-modal-visibility')
+    : root && root.SlideNextStudioModalVisibility;
+  const api = factory(root, modalVisibility);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioPreview = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, modalVisibility) {
   function runAnimationFrame(callback) {
     if (root && typeof root.requestAnimationFrame === 'function') {
       root.requestAnimationFrame(callback);
@@ -158,6 +161,9 @@
       textareaEl.scrollTop = 0;
     }
 
+    if (modalVisibility && typeof modalVisibility.cancelStudioModalHide === 'function') {
+      modalVisibility.cancelStudioModalHide(modalEl);
+    }
     modalEl.classList.remove('hidden');
     runAnimationFrame(() => {
       modalEl.classList.remove('opacity-0');
@@ -178,6 +184,13 @@
     modalEl.classList.add('opacity-0');
     contentEl.classList.remove('scale-100');
     contentEl.classList.add('scale-95');
+    if (modalVisibility && typeof modalVisibility.scheduleStudioModalHide === 'function') {
+      modalVisibility.scheduleStudioModalHide(modalEl, {
+        hideDelayMs,
+        onHide: () => modalEl.classList.add('hidden')
+      });
+      return;
+    }
     setTimeout(() => modalEl.classList.add('hidden'), hideDelayMs);
   }
 

@@ -1017,6 +1017,7 @@
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
+  <script src="/shared/studio-modal-visibility.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
@@ -3854,6 +3855,7 @@
       const input = document.getElementById('versionCheckpointName');
       
       input.value = '';
+      SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
       modal.classList.remove('hidden');
       modal.offsetHeight; // trigger reflow
       modal.classList.remove('opacity-0');
@@ -3873,9 +3875,12 @@
       content.classList.remove('scale-100');
       content.classList.add('scale-95');
       
-      setTimeout(() => {
-        modal.classList.add('hidden');
-      }, 200);
+      SlideNextStudioModalVisibility.scheduleStudioModalHide(modal, {
+        hideDelayMs: 200,
+        onHide: () => {
+          modal.classList.add('hidden');
+        }
+      });
     }
     
     async function submitSaveVersion() {
@@ -4108,6 +4113,7 @@
       const modal = document.getElementById('renameVersionModal');
       const content = document.getElementById('renameVersionModalContent');
       
+      SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
       modal.classList.remove('hidden');
       setTimeout(() => {
         modal.classList.add('opacity-100');
@@ -4127,9 +4133,12 @@
       modal.classList.remove('opacity-100');
       content.classList.remove('scale-100');
       content.classList.add('scale-95');
-      setTimeout(() => {
-        modal.classList.add('hidden');
-      }, 200);
+      SlideNextStudioModalVisibility.scheduleStudioModalHide(modal, {
+        hideDelayMs: 200,
+        onHide: () => {
+          modal.classList.add('hidden');
+        }
+      });
     }
     
     async function submitRenameVersion() {
