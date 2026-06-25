@@ -243,8 +243,9 @@ app.post('/api/versions/rename', async (req, res) => {
     const ext = path.extname(targetFile);
     const base = path.basename(targetFile, ext);
 
-    // Matches the beginning base and the timestamp: base_YYYYMMDD_HHMMSS_mmm
-    const match = versionFilename.match(new RegExp(`^(${base}_\\d{8}_\\d{6}_\\d{3})(?:_.*)?${ext}$`));
+    // Support both legacy and current backup timestamps:
+    // base_YYYYMMDD_HHMMSS[_mmm]
+    const match = versionFilename.match(new RegExp(`^(${base}_\\d{8}_\\d{6}(?:_\\d{3})?)(?:_.*)?${ext}$`));
     if (!match) {
       return res.status(400).json({ error: 'Invalid version filename format' });
     }
