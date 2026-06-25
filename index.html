@@ -1538,6 +1538,10 @@
       const editor = document.getElementById('studioEditor');
       const iframe = document.getElementById('studioFrame');
       teardownDeckActiveSlideSync();
+      currentPresentationUrl = '';
+      currentTitle = '';
+      currentCategory = '';
+      currentSlideIndex = 0;
       currentPresentationMetadata = null;
       resetEditorDeckPersistenceState();
       deselectElement();
