@@ -4126,7 +4126,10 @@
       const target = resolveLayerRowElement(parentRow);
       if (!target) return;
       const preservedSelectionIds = getCommittedSelectedEditorElementIds();
-      selectedElements = [target];
+      applyEditorSelectionState({
+        selectedElements: [target],
+        selectedElement: target
+      });
       refreshSelectionClasses();
       const didToggle = toggleSelectedElementsVisibility();
       if (!didToggle) return;
