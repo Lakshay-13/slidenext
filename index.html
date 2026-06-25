@@ -4042,6 +4042,9 @@
         });
       });
 
+      root.querySelectorAll('[data-editor-prev-display=""]').forEach(node => {
+        node.removeAttribute('data-editor-prev-display');
+      });
       root.querySelectorAll('[class=""]').forEach(node => node.removeAttribute('class'));
       root.querySelectorAll('[style=""]').forEach(node => node.removeAttribute('style'));
     }
