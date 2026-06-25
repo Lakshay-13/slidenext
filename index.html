@@ -986,6 +986,7 @@
       </aside>
     </div>
   </div>  <!-- Logic scripts -->
+  <script src="/shared/deck-model.js"></script>
   <script src="/shared/version-backup-utils.js"></script>
   <script>
     // Global Editor State
@@ -2201,32 +2202,18 @@
       return getSlides(doc).findIndex(slide => slide.getAttribute(EDITOR_SLIDE_ID_ATTR) === slideId);
     }
 
-    function buildEditorSlideSnapshot(slide, index, options = {}) {
-      const includeLayers = !!options.includeLayers;
-      const slideId = assignEditorSlideId(slide);
-      const firstHeading = slide.querySelector('h1, h2, h3');
-      const snapshot = {
-        id: slideId,
-        index,
-        title: firstHeading ? firstHeading.textContent.trim() : `Slide ${index + 1}`,
-        backgroundLabel: slide.style.background ? 'Gradient/Paint' : 'Default',
-        elementCount: getSlideEditableElements(slide).length
-      };
-      if (includeLayers) {
-        snapshot.elements = buildEditorLayerSnapshot(slide);
-      }
-      return snapshot;
-    }
-
     function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {
-      const slides = getSlides(doc);
-      const activeSlideId = getActiveSlide(doc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
-      const activeSlideIndex = slides.findIndex(slide => slide.getAttribute(EDITOR_SLIDE_ID_ATTR) === activeSlideId);
-      return {
-        activeSlideId,
-        activeSlideIndex,
-        slides: slides.map((slide, index) => buildEditorSlideSnapshot(slide, index, options))
-      };
+      return SlideNextDeckModel.buildDeckSnapshot(doc, {
+        includeLayers: !!options.includeLayers,
+        getSlides,
+        getActiveSlide,
+        getSlideId: assignEditorSlideId,
+        getSlideEditableElements,
+        getNormalizedSlideLayerOrder,
+        elementSnapshotOptions: {
+          buildElementSnapshot: buildEditorElementSnapshot
+        }
+      });
     }
 
     function getStudioActiveSlideIndex(doc = getIframeDoc()) {
@@ -2240,57 +2227,23 @@
     }
 
     function getEditorLayerDisplayMetadata(el) {
-      const tagName = el.tagName.toLowerCase();
-      if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
-        const headingText = el.textContent.trim();
-        return {
-          typeIcon: 'title',
-          displayName: `Heading: "${headingText.slice(0, 15)}${headingText.length > 15 ? '...' : ''}"`
-        };
-      }
-      if (tagName === 'img') {
-        const srcParts = (el.src || '').split('/');
-        const filename = srcParts[srcParts.length - 1] || 'Image';
-        return {
-          typeIcon: 'image',
-          displayName: `Image: "${filename.slice(0, 15)}${filename.length > 15 ? '...' : ''}"`
-        };
-      }
-      if (el.classList.contains('editor-shape')) {
-        return {
-          typeIcon: 'layers',
-          displayName: `Shape (${el.style.backgroundColor || 'colored'})`
-        };
-      }
-      if (tagName === 'table') {
-        return { typeIcon: 'grid_on', displayName: 'Data Table' };
-      }
-      if (tagName === 'pre' || tagName === 'code') {
-        return { typeIcon: 'terminal', displayName: 'Code Block' };
-      }
-      const textValue = el.textContent.trim();
-      return {
-        typeIcon: 'description',
-        displayName: `Text: "${textValue.slice(0, 15)}${textValue.length > 15 ? '...' : ''}"`
-      };
+      return SlideNextDeckModel.resolveElementDisplayMetadata(el);
     }
 
     function buildEditorElementSnapshot(el) {
-      const { typeIcon, displayName } = getEditorLayerDisplayMetadata(el);
-      return {
-        id: assignEditorElementId(el),
-        typeIcon,
-        displayName,
-        zIndex: el.style.zIndex || '0',
-        isLocked: isElementLocked(el),
-        isHidden: isElementHidden(el),
-        isSelected: selectedElements.includes(el)
-      };
+      return SlideNextDeckModel.buildElementSnapshot(el, {
+        getElementId: assignEditorElementId,
+        isElementLocked,
+        isElementHidden,
+        isSelectedElement: candidate => selectedElements.includes(candidate)
+      });
     }
 
     function buildEditorLayerSnapshot(slide) {
-      return getNormalizedSlideLayerOrder(slide)
-        .map(el => buildEditorElementSnapshot(el))
+      return SlideNextDeckModel
+        .buildLayerSnapshot(getNormalizedSlideLayerOrder(slide), {
+          buildElementSnapshot: buildEditorElementSnapshot
+        })
         .reverse();
     }
 
