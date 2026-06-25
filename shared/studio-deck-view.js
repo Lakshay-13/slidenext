@@ -274,6 +274,24 @@
     return true;
   }
 
+  function setStudioDeckActiveSlideById(slideId, options = {}) {
+    const doc = options.doc || null;
+    const getSlideIndexById = typeof options.getSlideIndexById === 'function'
+      ? options.getSlideIndexById
+      : () => -1;
+    const activateSlideByIndex = typeof options.activateSlideByIndex === 'function'
+      ? options.activateSlideByIndex
+      : () => false;
+
+    const index = getSlideIndexById(slideId, doc);
+    if (index === -1) {
+      return false;
+    }
+
+    activateSlideByIndex(index);
+    return true;
+  }
+
   function updateStudioDeckNavigationUi(doc, slides = [], currentSlideIndex, options = {}) {
     const getIndicatorDotsContainer = typeof options.getIndicatorDotsContainer === 'function'
       ? options.getIndicatorDotsContainer
@@ -426,6 +444,7 @@
     bindStudioDeckNavigationSync,
     syncStudioActiveSlideView,
     setStudioDeckActiveSlide,
+    setStudioDeckActiveSlideById,
     updateStudioDeckNavigationUi,
     buildStudioPreviewHtml,
     buildStudioSourceHtml

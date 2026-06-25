@@ -2109,10 +2109,13 @@
     }
 
     function setActiveSlideById(slideId, doc = getIframeDoc(), options = {}) {
-      const index = getSlideIndexById(slideId, doc);
-      if (index === -1) return false;
-      setActiveSlide(index, options);
-      return true;
+      return SlideNextStudioDeckView.setStudioDeckActiveSlideById(slideId, {
+        doc,
+        getSlideIndexById,
+        activateSlideByIndex: (index) => {
+          setActiveSlide(index, options);
+        }
+      });
     }
 
     function deleteSlideNodeById(slideId, doc = getIframeDoc()) {
