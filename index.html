@@ -2611,9 +2611,11 @@
         }
       });
       refreshSelectionClasses();
-      syncSelectionOverlay();
-      syncInspectorForSelection();
-      updateLayersList();
+      SlideNextStudioEditorSelection.syncStudioSelectionUi(selectedElements, {
+        syncSelectionOverlay,
+        syncInspectorForSelection,
+        updateLayersList
+      });
       saveHistoryState();
       triggerAutoSave();
       triggerAutoVersion(shouldLock ? 'Auto: Locked Element' : 'Auto: Unlocked Element');
