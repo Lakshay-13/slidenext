@@ -2016,11 +2016,20 @@
       saveHistoryState();
       const activeSlideId = getActiveSlide(iframeDoc)?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
       const deletedSlideId = slides[idx]?.getAttribute(EDITOR_SLIDE_ID_ATTR) || '';
+      const preservedSelectionIds = selectedElements
+        .filter(el => el && el.isConnected && isEligibleEditableElement(el))
+        .map(el => assignEditorElementId(el));
       
       slides[idx].remove();
       
       generateThumbnails();
-      if (!activeSlideId || activeSlideId === deletedSlideId || !setActiveSlideById(activeSlideId, iframeDoc)) {
+      const preservedActiveSlide = activeSlideId && activeSlideId !== deletedSlideId && setActiveSlideById(activeSlideId, iframeDoc);
+      if (preservedActiveSlide) {
+        restoreSelectionByIdsOnActiveSlide(preservedSelectionIds, iframeDoc);
+        syncSelectionOverlay();
+        syncInspectorForSelection();
+        updateLayersList();
+      } else {
         const remainingSlides = getSlides(iframeDoc);
         const nextActiveIdx = remainingSlides.length === 0 ? 0 : Math.max(0, Math.min(idx - 1, remainingSlides.length - 1));
         setActiveSlide(nextActiveIdx);
@@ -2338,6 +2347,20 @@
       selectedElements = selectedElements.filter(el => el && el.isConnected && isEligibleEditableElement(el));
       selectedElements.forEach(el => el.classList.add('editor-selected'));
       selectedElement = selectedElements[0] || null;
+    }
+
+    function restoreSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc()) {
+      const activeSlide = getActiveSlide(doc);
+      if (!activeSlide || !Array.isArray(selectedIds) || selectedIds.length === 0) {
+        selectedElements = [];
+        refreshSelectionClasses();
+        return false;
+      }
+      selectedElements = selectedIds
+        .map(id => getElementByEditorId(id, doc))
+        .filter(el => el && el.isConnected && activeSlide.contains(el));
+      refreshSelectionClasses();
+      return selectedElements.length > 0;
     }
 
     function ensureSelectionOverlay(doc, slide) {
@@ -3784,11 +3807,7 @@
         const nextIndex = slideCount === 0 ? 0 : Math.min(fallbackIndex, slideCount - 1);
         setActiveSlide(nextIndex);
       }
-      const activeSlide = getActiveSlide(iframeDoc);
-      selectedElements = historyEntry.selectedElementIds
-        .map(id => getElementByEditorId(id, iframeDoc))
-        .filter(el => el && el.isConnected && activeSlide && activeSlide.contains(el));
-      refreshSelectionClasses();
+      restoreSelectionByIdsOnActiveSlide(historyEntry.selectedElementIds, iframeDoc);
       syncSelectionOverlay();
       syncInspectorForSelection();
       updateLayersList();
