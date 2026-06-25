@@ -1524,6 +1524,7 @@
       
       // Initial AutoSave label status
       document.getElementById('autoSaveStatus').innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
+      resetStudioSaveButtonState();
       
       // Configure load triggers BEFORE setting src
       iframe.onload = SlideNextStudioEditorSession.createStudioFrameLoadHandler({
@@ -1577,6 +1578,7 @@
       currentPresentationMetadata = null;
       resetEditorPersistenceTimers();
       resetEditorDeckPersistenceState();
+      resetStudioSaveButtonState();
       deselectElement();
       resetEditorHistoryState({ syncButtons: true });
       
@@ -3730,8 +3732,11 @@
       return !!lastPersistedDeckHtml && cleanHtml === lastPersistedDeckHtml;
     }
 
-    function isStaleEditorPersistenceTask(presentationUrl) {
-      return !presentationUrl || presentationUrl !== currentPresentationUrl;
+    function isStaleEditorPersistenceTask(presentationUrl, sessionToken = null) {
+      if (!presentationUrl || presentationUrl !== currentPresentationUrl) {
+        return true;
+      }
+      return Number.isInteger(sessionToken) && sessionToken !== studioEditorSessionToken;
     }
 
     function resetEditorPersistenceTimers() {
@@ -3743,13 +3748,14 @@
       autoVersionTimers = {};
     }
 
-    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl) {
+    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
       const hasPersistedCurrentHtml = isCurrentDeckHtmlPersisted(cleanHtml);
       const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
         presentationUrl,
         cleanHtml,
         {
-          shouldUpdatePersistedHtml: !hasPersistedCurrentHtml
+          shouldUpdatePersistedHtml: !hasPersistedCurrentHtml,
+          sessionToken: options.sessionToken
         }
       );
       const response = await fetch(hasPersistedCurrentHtml ? '/api/versions/create' : '/api/save', {
@@ -3774,6 +3780,7 @@
       if (data.success) {
         SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
           getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentSessionToken: () => studioEditorSessionToken,
           setPersistedHtml: (nextHtml) => {
             lastPersistedDeckHtml = nextHtml;
           }
@@ -3788,6 +3795,7 @@
     function triggerAutoSave() {
       const statusEl = document.getElementById('autoSaveStatus');
       const scheduledPresentationUrl = currentPresentationUrl;
+      const scheduledSessionToken = studioEditorSessionToken;
       if (statusEl) {
         statusEl.innerHTML = `<span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Saving...</span>`;
       }
@@ -3797,11 +3805,14 @@
         autoSaveDebounceTimer = null;
         const iframe = document.getElementById('studioFrame');
         const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-        if (!iframeDoc || isStaleEditorPersistenceTask(scheduledPresentationUrl)) return;
+        if (!iframeDoc || isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
         const cleanHtml = buildPersistableDeckHtml(iframeDoc);
         const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
           scheduledPresentationUrl,
-          cleanHtml
+          cleanHtml,
+          {
+            sessionToken: scheduledSessionToken
+          }
         );
 
         if (isCurrentDeckHtmlPersisted(cleanHtml)) {
@@ -3826,6 +3837,7 @@
           if (data.success) {
             SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
               getCurrentPresentationUrl: () => currentPresentationUrl,
+              getCurrentSessionToken: () => studioEditorSessionToken,
               setPersistedHtml: (nextHtml) => {
                 lastPersistedDeckHtml = nextHtml;
               },
@@ -3838,6 +3850,7 @@
           } else {
             SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
               getCurrentPresentationUrl: () => currentPresentationUrl,
+              getCurrentSessionToken: () => studioEditorSessionToken,
               onFailure: () => {
                 if (statusEl) {
                   statusEl.innerHTML = `<span class="text-rose-400">AutoSave Failed</span>`;
@@ -3849,6 +3862,7 @@
           console.error('AutoSave Error:', err);
           SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
+            getCurrentSessionToken: () => studioEditorSessionToken,
             onFailure: () => {
               if (statusEl) {
                 statusEl.innerHTML = `<span class="text-rose-400">Network Error</span>`;
@@ -3896,6 +3910,13 @@
         }
       });
     }
+
+    function resetStudioSaveButtonState() {
+      const saveBtn = document.getElementById('studioSaveBtn');
+      if (!saveBtn) return;
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] font-bold">bookmarks</span><span>Save Version</span>`;
+    }
     
     async function submitSaveVersion() {
       const input = document.getElementById('versionCheckpointName');
@@ -3917,6 +3938,7 @@
       const saveBtn = document.getElementById('studioSaveBtn');
       const statusEl = document.getElementById('autoSaveStatus');
       const scheduledPresentationUrl = currentPresentationUrl;
+      const scheduledSessionToken = studioEditorSessionToken;
 
       saveBtn.disabled = true;
       saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>Creating version...</span>`;
@@ -3926,15 +3948,19 @@
         scheduledPresentationUrl,
         cleanHtml,
         {
-          shouldUpdatePersistedHtml: false
+          shouldUpdatePersistedHtml: false,
+          sessionToken: scheduledSessionToken
         }
       );
       
       try {
-        const data = await saveVersionCheckpoint(versionName, cleanHtml, scheduledPresentationUrl);
+        const data = await saveVersionCheckpoint(versionName, cleanHtml, scheduledPresentationUrl, {
+          sessionToken: scheduledSessionToken
+        });
         if (data.success) {
           SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
+            getCurrentSessionToken: () => studioEditorSessionToken,
             onSuccess: () => {
               alert('Successfully saved named version backup checkpoint!');
               loadVersions(scheduledPresentationUrl);
@@ -3946,6 +3972,7 @@
         } else {
           SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
+            getCurrentSessionToken: () => studioEditorSessionToken,
             onFailure: () => {
               alert(`Save version failed: ${data.error}`);
               if (statusEl) {
@@ -3957,6 +3984,7 @@
       } catch (err) {
         SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
           getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentSessionToken: () => studioEditorSessionToken,
           onFailure: () => {
             alert(`Network error saving version: ${err.message}`);
             if (statusEl) {
@@ -3965,8 +3993,12 @@
           }
         });
       } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] font-bold">bookmarks</span><span>Save Version</span>`;
+        if (SlideNextStudioEditorPersistence.isStudioPersistenceActionCurrent(persistenceContext, {
+          getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentSessionToken: () => studioEditorSessionToken
+        })) {
+          resetStudioSaveButtonState();
+        }
       }
     }
 
@@ -3978,38 +4010,43 @@
       // Structural operations (e.g. Adding/Deleting Slide, Adding/Deleting Element) save immediately.
       const isFrequentAction = label.includes('Moved') || label.includes('Edited') || label.includes('Changed') || label.includes('Rearranged');
       const scheduledPresentationUrl = currentPresentationUrl;
+      const scheduledSessionToken = studioEditorSessionToken;
       
       if (isFrequentAction) {
         const timerKey = 'frequent_action';
         clearTimeout(autoVersionTimers[timerKey]);
         autoVersionTimers[timerKey] = setTimeout(() => {
           delete autoVersionTimers[timerKey];
-          executeSaveAutoVersion(label, scheduledPresentationUrl);
+          executeSaveAutoVersion(label, scheduledPresentationUrl, scheduledSessionToken);
         }, 10000); // 10 seconds delay
       } else {
         // Execute immediately
-        executeSaveAutoVersion(label, scheduledPresentationUrl);
+        executeSaveAutoVersion(label, scheduledPresentationUrl, scheduledSessionToken);
       }
     }
 
-    async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl) {
+    async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
       const iframe = document.getElementById('studioFrame');
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-      if (!iframeDoc || isStaleEditorPersistenceTask(presentationUrl)) return;
+      if (!iframeDoc || isStaleEditorPersistenceTask(presentationUrl, sessionToken)) return;
       const cleanHtml = buildPersistableDeckHtml(iframeDoc);
       const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
         presentationUrl,
         cleanHtml,
         {
-          shouldUpdatePersistedHtml: false
+          shouldUpdatePersistedHtml: false,
+          sessionToken
         }
       );
       
       try {
-        const data = await saveVersionCheckpoint(label, cleanHtml, presentationUrl);
+        const data = await saveVersionCheckpoint(label, cleanHtml, presentationUrl, {
+          sessionToken
+        });
         if (data.success) {
           SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
+            getCurrentSessionToken: () => studioEditorSessionToken,
             onSuccess: () => {
               console.log(`Auto-created version checkpoint: ${label}`);
               loadVersions(presentationUrl); // Refresh dropdown

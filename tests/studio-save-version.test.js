@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const editorPersistence = require('../shared/studio-editor-persistence.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
@@ -68,6 +69,10 @@ test('submitSaveVersion keeps the save button idle when the editor frame is unav
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     document: documentStub,
+    resetStudioSaveButtonState() {
+      saveBtnEl.disabled = false;
+      saveBtnEl.innerHTML = '<span>Save Version</span>';
+    },
     saveVersionCheckpoint: async () => {
       saveVersionCalls += 1;
       return { success: true };
@@ -93,6 +98,96 @@ test('submitSaveVersion keeps the save button idle when the editor frame is unav
   assert.deepEqual(alerts, ['Save version failed: editor frame is unavailable.']);
   assert.equal(closeModalCalls, 0);
   assert.equal(saveVersionCalls, 0);
+  assert.equal(saveBtnEl.disabled, false);
+  assert.equal(saveBtnEl.innerHTML, '<span>Save Version</span>');
+  assert.equal(statusEl.innerHTML, 'Saved to disk');
+});
+
+test('submitSaveVersion ignores stale same-url session completions', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const submitSaveVersionSource = extractFunctionSource(
+    fileContent,
+    'async function submitSaveVersion() {',
+    '\n\n    // Automatically save a labeled checkpoint version in the background'
+  );
+
+  const alerts = [];
+  let closeModalCalls = 0;
+  let loadVersionsCalls = 0;
+  let resolveCheckpoint;
+
+  const inputEl = { value: 'Checkpoint B' };
+  const saveBtnEl = {
+    disabled: false,
+    innerHTML: '<span>Save Version</span>'
+  };
+  const statusEl = {
+    innerHTML: 'Saved to disk'
+  };
+  const iframeDoc = { documentElement: {} };
+  const studioFrameEl = {
+    contentDocument: iframeDoc,
+    contentWindow: { document: iframeDoc }
+  };
+
+  const documentStub = {
+    getElementById(id) {
+      switch (id) {
+        case 'versionCheckpointName':
+          return inputEl;
+        case 'studioSaveBtn':
+          return saveBtnEl;
+        case 'autoSaveStatus':
+          return statusEl;
+        case 'studioFrame':
+          return studioFrameEl;
+        default:
+          throw new Error(`Unexpected element lookup: ${id}`);
+      }
+    }
+  };
+
+  const context = {
+    alert(message) {
+      alerts.push(message);
+    },
+    buildPersistableDeckHtml() {
+      return '<html>persisted</html>';
+    },
+    closeSaveVersionModal() {
+      closeModalCalls += 1;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    document: documentStub,
+    loadVersions() {
+      loadVersionsCalls += 1;
+    },
+    resetStudioSaveButtonState() {
+      saveBtnEl.disabled = false;
+      saveBtnEl.innerHTML = '<span>Save Version</span>';
+    },
+    saveVersionCheckpoint: () => new Promise((resolve) => {
+      resolveCheckpoint = resolve;
+    }),
+    SlideNextStudioEditorPersistence: editorPersistence,
+    studioEditorSessionToken: 4
+  };
+
+  vm.createContext(context);
+  vm.runInContext(submitSaveVersionSource, context);
+
+  const savePromise = context.submitSaveVersion();
+  assert.equal(closeModalCalls, 1);
+  assert.equal(saveBtnEl.disabled, true);
+  assert.match(saveBtnEl.innerHTML, /Creating version/);
+
+  context.studioEditorSessionToken = 5;
+  context.resetStudioSaveButtonState();
+  resolveCheckpoint({ success: true });
+  await savePromise;
+
+  assert.deepEqual(alerts, []);
+  assert.equal(loadVersionsCalls, 0);
   assert.equal(saveBtnEl.disabled, false);
   assert.equal(saveBtnEl.innerHTML, '<span>Save Version</span>');
   assert.equal(statusEl.innerHTML, 'Saved to disk');
