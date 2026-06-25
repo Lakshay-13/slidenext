@@ -1501,10 +1501,8 @@
       currentSlideIndex = 0;
       lastPersistedDeckHtml = '';
       persistedDeckPlaybackState = null;
-      selectedElement = null;
-      selectedElements = [];
-      undoStack = [];
-      redoStack = [];
+      applyEditorSelectionState({});
+      resetEditorHistoryState({ syncButtons: true });
       
       const editor = document.getElementById('studioEditor');
       const iframe = document.getElementById('studioFrame');
@@ -3576,6 +3574,14 @@
 
     function normalizeHistoryEntry(entry) {
       return SlideNextStudioHistory.normalizeStudioHistoryEntry(entry);
+    }
+
+    function resetEditorHistoryState(options = {}) {
+      undoStack = [];
+      redoStack = [];
+      if (options.syncButtons) {
+        updateHistoryButtons();
+      }
     }
 
     function captureState() {
