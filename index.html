@@ -1014,6 +1014,7 @@
   <script src="/shared/studio-deck-context.js"></script>
   <script src="/shared/deck-model.js"></script>
   <script src="/shared/deck-render.js"></script>
+  <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/deck-html.js"></script>
   <script src="/shared/studio-deck-view.js"></script>
@@ -2312,9 +2313,7 @@
         getActiveSlide,
         getActiveSlideId: assignEditorSlideId,
         getSlideById,
-        buildSlideLayerSnapshot: (slideEl) => SlideNextDeckModel.buildLayerSnapshot(getNormalizedSlideLayerOrder(slideEl), {
-          buildElementSnapshot: buildEditorElementSnapshot
-        })
+        buildSlideLayerSnapshot: (slideEl) => buildEditorLayerSnapshot(slideEl)
       });
     }
 
@@ -2326,11 +2325,11 @@
     }
 
     function getEditorLayerDisplayMetadata(el) {
-      return SlideNextDeckModel.resolveElementDisplayMetadata(el);
+      return SlideNextStudioElementSnapshot.resolveStudioLayerDisplayMetadata(el);
     }
 
     function buildEditorElementSnapshot(el) {
-      return SlideNextDeckModel.buildElementSnapshot(el, {
+      return SlideNextStudioElementSnapshot.buildStudioElementSnapshot(el, {
         getElementId: assignEditorElementId,
         isElementLocked,
         isElementHidden,
@@ -2339,11 +2338,9 @@
     }
 
     function buildEditorLayerSnapshot(slide) {
-      return SlideNextDeckModel
-        .buildLayerSnapshot(getNormalizedSlideLayerOrder(slide), {
-          buildElementSnapshot: buildEditorElementSnapshot
-        })
-        .reverse();
+      return SlideNextStudioElementSnapshot.buildStudioLayerSnapshot(getNormalizedSlideLayerOrder(slide), {
+        buildElementSnapshot: buildEditorElementSnapshot
+      });
     }
 
     function getSelectedEditorElementIds(elements = selectedElements) {
