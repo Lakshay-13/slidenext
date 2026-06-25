@@ -42,6 +42,14 @@
     return normalizeString(value).replace(/<\/style/gi, '<\\/style');
   }
 
+  function buildMetaTag(name, content) {
+    const normalizedContent = normalizeString(content).trim();
+    if (!normalizedContent) {
+      return '';
+    }
+    return `<meta name="${escapeAttribute(name)}" content="${escapeAttribute(normalizedContent)}">`;
+  }
+
   function renderAttributeMap(attributes = {}) {
     return Object.entries(asPlainObject(attributes))
       .filter(([, value]) => value !== null && value !== undefined && value !== false)
@@ -121,7 +129,10 @@
   }
 
   function buildDefaultHeadHtml(deck) {
-    const title = normalizeString(deck.metadata && deck.metadata.title, 'SlideNext Deck');
+    const metadata = asPlainObject(deck.metadata);
+    const title = normalizeString(metadata.title, 'SlideNext Deck');
+    const descriptionMetaTag = buildMetaTag('description', metadata.description);
+    const keywordsMetaTag = buildMetaTag('keywords', Array.isArray(metadata.tags) ? metadata.tags.join(', ') : '');
     const themeTokens = asPlainObject(deck.theme && deck.theme.tokens);
     const themeTokenEntries = Object.entries(themeTokens)
       .filter(([tokenName, tokenValue]) => tokenName.startsWith('--') && normalizeString(tokenValue).trim() !== '');
@@ -142,8 +153,10 @@
       '<meta charset="utf-8">',
       '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
       `<title>${escapeHtml(title)}</title>`,
+      descriptionMetaTag,
+      keywordsMetaTag,
       ...themeStyleBlocks
-    ].join('\n');
+    ].filter(Boolean).join('\n');
   }
 
   function buildDefaultBodyHtml(deck, options = {}) {

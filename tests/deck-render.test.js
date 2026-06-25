@@ -168,3 +168,32 @@ test('renderCanonicalDeckHtml emits theme tokens and custom css when rendering w
   assert.match(html, /--font-heading: 'Sora', sans-serif;/);
   assert.match(html, /<style>\s*\.slide \{ color: var\(--color-primary\); \}\s*<\/style>/);
 });
+
+test('renderCanonicalDeckHtml emits canonical description and keyword metadata when source head html is absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    metadata: {
+      title: 'Canonical Metadata Deck',
+      description: 'Deck description from canonical metadata',
+      tags: ['AI', 'Slides', 'Exports']
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<meta name="description" content="Deck description from canonical metadata">/);
+  assert.match(html, /<meta name="keywords" content="AI, Slides, Exports">/);
+});
