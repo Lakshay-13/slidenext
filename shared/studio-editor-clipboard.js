@@ -11,12 +11,22 @@
     return !!(clipboard && Array.isArray(clipboard.items) && clipboard.items.length > 0);
   }
 
-  function canStudioCopySelection(elements = [], options = {}) {
+  function getStudioClipboardSelection(elements = [], options = {}) {
     const selection = Array.isArray(elements) ? elements : [];
     const isEligibleElement = typeof options.isEligibleElement === 'function'
       ? options.isEligibleElement
       : (element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected);
     const eligibleSelection = selection.filter((element) => isEligibleElement(element));
+    const orderedElements = Array.isArray(options.orderedElements) ? options.orderedElements : null;
+
+    if (!orderedElements) {
+      return eligibleSelection;
+    }
+    return orderedElements.filter((element) => eligibleSelection.includes(element));
+  }
+
+  function canStudioCopySelection(elements = [], options = {}) {
+    const eligibleSelection = getStudioClipboardSelection(elements, options);
 
     if (eligibleSelection.length === 0) {
       return false;
@@ -36,6 +46,7 @@
 
   return {
     hasStudioClipboardItems,
+    getStudioClipboardSelection,
     canStudioCopySelection,
     buildStudioClipboardActionState
   };

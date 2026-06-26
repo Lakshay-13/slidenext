@@ -19,6 +19,24 @@ test('canStudioCopySelection allows unlocked selections', () => {
   }), true);
 });
 
+test('getStudioClipboardSelection filters stale selections and preserves ordered selection', () => {
+  const stale = { id: 1, isConnected: false };
+  const first = { id: 2, isConnected: true };
+  const second = { id: 3, isConnected: true };
+
+  assert.deepEqual(clipboardState.getStudioClipboardSelection(
+    [stale, second, first],
+    {
+      orderedElements: [first, second]
+    }
+  ), [first, second]);
+
+  assert.deepEqual(clipboardState.getStudioClipboardSelection(
+    [second, first],
+    {}
+  ), [second, first]);
+});
+
 test('canStudioCopySelection ignores disconnected stale selections', () => {
   assert.equal(clipboardState.canStudioCopySelection([
     { id: 1, isConnected: false },

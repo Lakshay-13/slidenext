@@ -2816,7 +2816,10 @@
       const slide = getActiveSlide(doc);
       if (!doc || !slide || elements.length === 0) return [];
       const slideMetrics = getSlideMetrics(slide);
-      const orderedSelection = getNormalizedSlideLayerOrder(slide).filter(el => elements.includes(el));
+      const orderedSelection = SlideNextStudioEditorClipboard.getStudioClipboardSelection(elements, {
+        orderedElements: getNormalizedSlideLayerOrder(slide)
+      });
+      if (orderedSelection.length === 0) return [];
 
       return orderedSelection.map(el => {
         const template = el.cloneNode(true);
