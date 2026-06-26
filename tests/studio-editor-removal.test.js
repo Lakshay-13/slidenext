@@ -43,4 +43,15 @@ test('buildStudioRemovalActionState derives delete availability from live unlock
     hasSelection: false,
     canRemove: false
   });
+
+  assert.deepEqual(removal.buildStudioRemovalActionState([
+    { id: 1, isConnected: true, locked: false }
+  ], {
+    isLocked: (element) => !!element.locked,
+    canMutateDeck: () => false
+  }), {
+    selection: [{ id: 1, isConnected: true, locked: false }],
+    hasSelection: true,
+    canRemove: false
+  });
 });

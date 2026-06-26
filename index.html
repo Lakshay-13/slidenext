@@ -2607,11 +2607,11 @@
 
     function updateRemovalActionState(doc = getIframeDoc()) {
       const removalActionState = SlideNextStudioEditorRemoval.buildStudioRemovalActionState(selectedElements, {
-        isLocked: isElementLocked
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(doc)
       });
-      const hasActiveSlide = !!getActiveSlide(doc);
       const removeBtn = document.getElementById('removeSelectionBtn');
-      if (removeBtn) removeBtn.disabled = !(removalActionState.canRemove && hasActiveSlide);
+      if (removeBtn) removeBtn.disabled = !removalActionState.canRemove;
     }
 
     function updateVisibilityActionState() {
@@ -2794,8 +2794,10 @@
 
     // Delete active selection
     function removeSelectedElement() {
+      const doc = getIframeDoc();
       const removalActionState = SlideNextStudioEditorRemoval.buildStudioRemovalActionState(selectedElements, {
-        isLocked: isElementLocked
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!removalActionState.canRemove) return false;
       removalActionState.selection.forEach(el => {

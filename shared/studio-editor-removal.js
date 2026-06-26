@@ -21,12 +21,16 @@
     const isLocked = typeof options.isLocked === 'function'
       ? options.isLocked
       : () => false;
+    const canMutateDeck = typeof options.canMutateDeck === 'function'
+      ? options.canMutateDeck
+      : () => true;
     const hasSelection = selection.length > 0;
+    const deckReady = canMutateDeck();
 
     return {
       selection,
       hasSelection,
-      canRemove: hasSelection && !selection.some((element) => isLocked(element))
+      canRemove: deckReady && hasSelection && !selection.some((element) => isLocked(element))
     };
   }
 

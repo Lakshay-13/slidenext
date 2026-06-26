@@ -29,9 +29,9 @@ test('updateRemovalActionState enables the delete control only when the iframe h
       return false;
     },
     SlideNextStudioEditorRemoval: {
-      buildStudioRemovalActionState() {
+      buildStudioRemovalActionState(elements, options = {}) {
         return {
-          canRemove: true
+          canRemove: typeof options.canMutateDeck === 'function' ? options.canMutateDeck() : true
         };
       }
     },
