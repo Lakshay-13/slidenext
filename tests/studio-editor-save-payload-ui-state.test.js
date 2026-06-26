@@ -21,7 +21,7 @@ test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requ
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(
     fileContent,
-    'function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = buildPersistableDeckHtml(doc), options = {}) {',
+    'function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {',
     '\n\n    function isCurrentDeckHtmlPersisted(cleanHtml) {'
   );
 
@@ -69,4 +69,55 @@ test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requ
       canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeck)
     }
   );
+});
+
+test('buildEditorSaveRequestBody falls back to the persisted html baseline when the editor frame is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSaveRequestBodySource = extractFunctionSource(
+    fileContent,
+    'function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {',
+    '\n\n    function isCurrentDeckHtmlPersisted(cleanHtml) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  let buildPersistableDeckHtmlCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
+    SlideNextCanonicalDeck: {
+      isCanonicalDeck(deck) {
+        return !!deck && deck.kind === 'slidenext.deck' && Array.isArray(deck.slides);
+      }
+    },
+    buildPersistableDeckHtml() {
+      buildPersistableDeckHtmlCalls += 1;
+      return '<html>rebuilt</html>';
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, null);
+      return canonicalDeck;
+    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '<html>persisted-baseline</html>'
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorSaveRequestBodySource, context);
+
+  assert.deepEqual(
+    context.buildEditorSaveRequestBody(),
+    {
+      htmlPath: 'presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>persisted-baseline</html>',
+      isAutoSave: false,
+      canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeck)
+    }
+  );
+  assert.equal(buildPersistableDeckHtmlCalls, 0);
 });

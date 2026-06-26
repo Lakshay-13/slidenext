@@ -3634,13 +3634,18 @@
       });
     }
 
-    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = buildPersistableDeckHtml(doc), options = {}) {
+    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {
       const presentationUrl = Object.prototype.hasOwnProperty.call(options, 'presentationUrl')
         ? options.presentationUrl
         : currentPresentationUrl;
+      const resolvedCleanHtml = typeof cleanHtml === 'string'
+        ? cleanHtml
+        : doc
+          ? buildPersistableDeckHtml(doc)
+          : (typeof lastPersistedDeckHtml === 'string' ? lastPersistedDeckHtml : '');
       return SlideNextStudioEditorPersistence.buildStudioSaveRequestBody(
         presentationUrl,
-        cleanHtml,
+        resolvedCleanHtml,
         {
           isAutoSave: !!options.isAutoSave,
           versionLabel: options.versionLabel,
