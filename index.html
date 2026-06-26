@@ -1015,6 +1015,7 @@
   <script src="/shared/deck-model.js"></script>
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-element-state.js"></script>
+  <script src="/shared/studio-editor-live-selection.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
@@ -2604,8 +2605,14 @@
       return SlideNextStudioElementState.isStudioElementLocked(el);
     }
 
+    function getLiveSelectedElements(elements = selectedElements) {
+      return SlideNextStudioEditorLiveSelection.getStudioLiveSelection(elements);
+    }
+
     function selectionHasLockedElements(elements = selectedElements) {
-      return elements.some(isElementLocked);
+      return SlideNextStudioEditorLiveSelection.hasStudioLockedLiveSelection(elements, {
+        isLocked: isElementLocked
+      });
     }
 
     function isElementFreeformPositioned(el) {
@@ -2727,9 +2734,9 @@
 
     // Apply styles immediately to active selected elements
     function applySelectedElementStyle(prop, val) {
-      if (selectedElements.length === 0) return;
-      if (selectionHasLockedElements()) return;
-      const targets = [...selectedElements];
+      const targets = getLiveSelectedElements();
+      if (targets.length === 0) return;
+      if (selectionHasLockedElements(targets)) return;
 
       targets.forEach((target, idx) => {
         if (prop === 'text') {
@@ -2808,9 +2815,10 @@
 
     // Delete active selection
     function removeSelectedElement() {
-      if (selectedElements.length === 0) return;
-      if (selectionHasLockedElements()) return;
-      selectedElements.forEach(el => {
+      const targets = getLiveSelectedElements();
+      if (targets.length === 0) return;
+      if (selectionHasLockedElements(targets)) return;
+      targets.forEach(el => {
         if (el && el.isConnected) el.remove();
       });
       deselectElement();
@@ -2946,8 +2954,10 @@
     }
 
     function duplicateSelectedElements() {
-      if (selectionHasLockedElements()) return false;
-      const duplicates = insertClipboardPayload(buildClipboardPayload(), 1);
+      const targets = getLiveSelectedElements();
+      if (targets.length === 0) return false;
+      if (selectionHasLockedElements(targets)) return false;
+      const duplicates = insertClipboardPayload(buildClipboardPayload(targets), 1);
       if (duplicates.length === 0) return false;
       return finalizeInsertedElements(duplicates, 'Auto: Duplicated Element');
     }
@@ -3060,13 +3070,14 @@
     function nudgeSelectedElements(dx, dy) {
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
-      if (!doc || !slide || selectedElements.length === 0) return;
-      if (selectionHasLockedElements()) return;
-      if (!selectedElements.every(isElementFreeformPositioned)) return;
+      const targets = getLiveSelectedElements();
+      if (!doc || !slide || targets.length === 0) return;
+      if (selectionHasLockedElements(targets)) return;
+      if (!targets.every(isElementFreeformPositioned)) return;
       const slideMetrics = getSlideMetrics(slide);
       const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
 
-      selectedElements.forEach(el => {
+      targets.forEach(el => {
         const rect = el.getBoundingClientRect();
         const parent = getClosestPositionedAncestor(el);
         const parentRect = parent.getBoundingClientRect();
@@ -3414,13 +3425,14 @@
 
     // Rearrange Selected Element Layers
     function arrangeElementLayer(action) {
-      if (selectedElements.length === 0) return;
-      if (selectionHasLockedElements()) return;
-      const didChange = reorderSlideLayers(action);
+      const targets = getLiveSelectedElements();
+      if (targets.length === 0) return;
+      if (selectionHasLockedElements(targets)) return;
+      const didChange = reorderSlideLayers(action, targets);
       if (!didChange) return;
 
-      if (selectedElements[0]) {
-        document.getElementById('elZIndex').value = selectedElements[0].style.zIndex || 0;
+      if (targets[0]) {
+        document.getElementById('elZIndex').value = targets[0].style.zIndex || 0;
       }
       saveHistoryState();
       triggerAutoSave();
