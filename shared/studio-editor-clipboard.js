@@ -56,6 +56,71 @@
     };
   }
 
+  function buildStudioClipboardPayloadItem(element, options = {}) {
+    if (!element || typeof element.cloneNode !== 'function') {
+      return null;
+    }
+
+    const sanitizeElement = typeof options.sanitizeElement === 'function'
+      ? options.sanitizeElement
+      : () => {};
+    const hoverableClassName = options.hoverableClassName || 'editor-hoverable';
+    const getComputedStyle = typeof options.getComputedStyle === 'function'
+      ? options.getComputedStyle
+      : element.ownerDocument && element.ownerDocument.defaultView && typeof element.ownerDocument.defaultView.getComputedStyle === 'function'
+        ? element.ownerDocument.defaultView.getComputedStyle.bind(element.ownerDocument.defaultView)
+        : null;
+    const getClosestPositionedAncestor = typeof options.getClosestPositionedAncestor === 'function'
+      ? options.getClosestPositionedAncestor
+      : () => null;
+    const buildPositionedLayoutItem = typeof options.buildPositionedLayoutItem === 'function'
+      ? options.buildPositionedLayoutItem
+      : () => null;
+    const positionedLayoutOptions = options.positionedLayoutOptions || {};
+
+    const template = element.cloneNode(true);
+    sanitizeElement(template);
+    if (template.classList && typeof template.classList.add === 'function') {
+      template.classList.add(hoverableClassName);
+    }
+
+    const computed = getComputedStyle ? getComputedStyle(element) : null;
+    const isAbsolutelyPositioned = !!computed && (computed.position === 'absolute' || computed.position === 'fixed');
+    const sourceParent = getClosestPositionedAncestor(element);
+    const item = {
+      template,
+      isAbsolutelyPositioned,
+      sourceElement: element,
+      sourceParent
+    };
+
+    if (!isAbsolutelyPositioned) {
+      return item;
+    }
+
+    const layoutItem = buildPositionedLayoutItem(element, positionedLayoutOptions);
+    if (!layoutItem) {
+      return null;
+    }
+
+    return {
+      ...item,
+      startAbsLeft: layoutItem.absLeft,
+      startAbsTop: layoutItem.absTop,
+      width: layoutItem.width,
+      height: layoutItem.height
+    };
+  }
+
+  function buildStudioClipboardPayloadItems(elements = [], options = {}) {
+    const selection = Array.isArray(elements) ? elements : [];
+    const items = selection
+      .map((element) => buildStudioClipboardPayloadItem(element, options))
+      .filter(Boolean);
+
+    return items.length === selection.length ? items : [];
+  }
+
   function resolveStudioClipboardInsertionTarget(item = {}, options = {}) {
     const slide = options.slide || null;
     const isConnected = typeof options.isConnected === 'function'
@@ -118,6 +183,8 @@
     canStudioCopySelection,
     buildStudioClipboardActionState,
     buildStudioClipboardMutationPlan,
+    buildStudioClipboardPayloadItem,
+    buildStudioClipboardPayloadItems,
     resolveStudioClipboardInsertionTarget,
     buildStudioClipboardAbsolutePlacement
   };

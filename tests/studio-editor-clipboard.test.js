@@ -3,6 +3,18 @@ const assert = require('node:assert/strict');
 
 const clipboardState = require('../shared/studio-editor-clipboard.js');
 
+function createClassList() {
+  const values = new Set();
+  return {
+    add(value) {
+      values.add(value);
+    },
+    contains(value) {
+      return values.has(value);
+    }
+  };
+}
+
 test('canStudioCopySelection rejects empty selections and locked selections', () => {
   assert.equal(clipboardState.canStudioCopySelection([], {
     isLocked: () => false
@@ -121,6 +133,94 @@ test('buildStudioClipboardMutationPlan reuses the live unlocked selection for co
     canDuplicate: false,
     canPaste: false
   });
+});
+
+test('buildStudioClipboardPayloadItem captures sanitized absolute payload geometry', () => {
+  const template = {
+    classList: createClassList()
+  };
+  const parent = { id: 'parent' };
+  const element = {
+    id: 'source',
+    cloneNode(deep) {
+      assert.equal(deep, true);
+      return template;
+    }
+  };
+
+  const result = clipboardState.buildStudioClipboardPayloadItem(element, {
+    sanitizeElement(clone) {
+      clone.sanitized = true;
+    },
+    getComputedStyle(currentElement) {
+      assert.equal(currentElement, element);
+      return { position: 'absolute' };
+    },
+    getClosestPositionedAncestor(currentElement) {
+      assert.equal(currentElement, element);
+      return parent;
+    },
+    buildPositionedLayoutItem(currentElement, options) {
+      assert.equal(currentElement, element);
+      assert.deepEqual(options, { slideMetrics: { logicalWidth: 1920 } });
+      return {
+        absLeft: 120,
+        absTop: 80,
+        width: 300,
+        height: 160
+      };
+    },
+    positionedLayoutOptions: {
+      slideMetrics: { logicalWidth: 1920 }
+    }
+  });
+
+  assert.equal(template.sanitized, true);
+  assert.equal(template.classList.contains('editor-hoverable'), true);
+  assert.deepEqual(result, {
+    template,
+    isAbsolutelyPositioned: true,
+    sourceElement: element,
+    sourceParent: parent,
+    startAbsLeft: 120,
+    startAbsTop: 80,
+    width: 300,
+    height: 160
+  });
+});
+
+test('buildStudioClipboardPayloadItems aborts when any selected element cannot produce a payload item', () => {
+  const firstTemplate = { classList: createClassList() };
+  const secondTemplate = { classList: createClassList() };
+  const first = {
+    id: 'first',
+    cloneNode() {
+      return firstTemplate;
+    }
+  };
+  const second = {
+    id: 'second',
+    cloneNode() {
+      return secondTemplate;
+    }
+  };
+
+  assert.deepEqual(clipboardState.buildStudioClipboardPayloadItems([first, second], {
+    getComputedStyle() {
+      return { position: 'absolute' };
+    },
+    buildPositionedLayoutItem(element) {
+      if (element === first) {
+        return {
+          absLeft: 10,
+          absTop: 20,
+          width: 30,
+          height: 40
+        };
+      }
+      return null;
+    }
+  }), []);
 });
 
 test('resolveStudioClipboardInsertionTarget preserves live insertion anchors and falls back from stale ones', () => {

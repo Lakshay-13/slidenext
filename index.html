@@ -2753,30 +2753,17 @@
       });
       if (orderedSelection.length === 0) return [];
 
-      return orderedSelection.map(el => {
-        const template = el.cloneNode(true);
-        sanitizeDuplicatedSubtree(template);
-        template.classList.add('editor-hoverable');
-
-        const computed = doc.defaultView.getComputedStyle(el);
-        const isAbsolutelyPositioned = computed.position === 'absolute' || computed.position === 'fixed';
-        const item = {
-          template,
-          isAbsolutelyPositioned,
-          sourceElement: el,
-          sourceParent: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(el)
-        };
-
-        if (isAbsolutelyPositioned) {
-          const rect = el.getBoundingClientRect();
-          const rectOnSlide = getRectOnSlide(rect, slideMetrics);
-          item.startAbsLeft = rectOnSlide.left;
-          item.startAbsTop = rectOnSlide.top;
-          item.width = rectOnSlide.right - rectOnSlide.left;
-          item.height = rectOnSlide.bottom - rectOnSlide.top;
+      return SlideNextStudioEditorClipboard.buildStudioClipboardPayloadItems(orderedSelection, {
+        sanitizeElement: sanitizeDuplicatedSubtree,
+        hoverableClassName: 'editor-hoverable',
+        getComputedStyle: doc.defaultView.getComputedStyle.bind(doc.defaultView),
+        getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+        buildPositionedLayoutItem: SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem,
+        positionedLayoutOptions: {
+          getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+          getRectOnSlide,
+          slideMetrics
         }
-
-        return item;
       });
     }
 
