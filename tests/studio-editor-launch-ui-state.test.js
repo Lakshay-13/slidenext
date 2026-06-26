@@ -76,6 +76,9 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
         return function onloadHandler() {};
       }
     },
+    applyCurrentPresentationMetadata(metadata) {
+      context.currentPresentationMetadata = metadata;
+    },
     applyEditorSelectionState() {},
     buildCurrentPresentationMetadataSeed(url, title) {
       return { url, title };
@@ -170,6 +173,9 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentSlideIndex: 2,
     currentTitle: 'Project Onboarding',
+    applyCurrentPresentationMetadata(metadata) {
+      context.currentPresentationMetadata = metadata;
+    },
     deselectElement() {},
     document: {
       body: {
@@ -270,6 +276,10 @@ test('loadCurrentPresentationMetadata reuses current session readers when delega
     currentPresentationMetadata: null,
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
+    applyCurrentPresentationMetadata(metadata) {
+      context.currentPresentationMetadata = metadata;
+      return metadata;
+    },
     updateEditorPersistedDeckState() {},
     studioEditorSessionToken: 12
   };
@@ -292,6 +302,47 @@ test('loadCurrentPresentationMetadata reuses current session readers when delega
   assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
   assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
   assert.deepEqual(context.currentPresentationMetadata, metadata);
+});
+
+test('applyCurrentPresentationMetadata refreshes the persisted canonical baseline only when requested', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyCurrentPresentationMetadataSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentPresentationMetadata(metadata, options = {}) {',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+
+  const metadata = {
+    id: 'onboarding-presentation',
+    canonicalDeck: {
+      slides: []
+    }
+  };
+  const context = {
+    SlideNextStudioDeckContext: {
+      resolveStoredStudioCanonicalDeck(nextMetadata) {
+        assert.equal(nextMetadata, metadata);
+        return { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+      }
+    },
+    currentPresentationMetadata: null,
+    updateEditorPersistedDeckStateCalls: [],
+    updateEditorPersistedDeckState(nextState) {
+      context.updateEditorPersistedDeckStateCalls.push(nextState);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyCurrentPresentationMetadataSource, context);
+
+  context.applyCurrentPresentationMetadata(metadata);
+  context.applyCurrentPresentationMetadata(metadata, { syncPersistedCanonicalDeck: true });
+
+  assert.equal(context.currentPresentationMetadata, metadata);
+  assert.equal(context.updateEditorPersistedDeckStateCalls.length, 1);
+  assert.equal(context.updateEditorPersistedDeckStateCalls[0].canonicalDeck.kind, 'slidenext.deck');
+  assert.equal(context.updateEditorPersistedDeckStateCalls[0].canonicalDeck.schemaVersion, 1);
+  assert.deepEqual(context.updateEditorPersistedDeckStateCalls[0].canonicalDeck.slides, []);
 });
 
 test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline from stored metadata sidecars', async () => {
@@ -340,6 +391,16 @@ test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
     lastPersistedCanonicalDeck: null,
+    applyCurrentPresentationMetadata(metadata, options = {}) {
+      context.currentPresentationMetadata = metadata;
+      if (options.syncPersistedCanonicalDeck) {
+        const storedCanonicalDeck = context.SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck(metadata);
+        if (storedCanonicalDeck) {
+          context.updateEditorPersistedDeckState({ canonicalDeck: storedCanonicalDeck });
+        }
+      }
+      return metadata;
+    },
     updateEditorPersistedDeckState(nextState) {
       if (Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck')) {
         context.lastPersistedCanonicalDeck = nextState.canonicalDeck;

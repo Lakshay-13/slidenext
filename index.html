@@ -1538,7 +1538,7 @@
       const editorSessionToken = ++studioEditorSessionToken;
       const currentStudioSessionStateReaders = createCurrentStudioSessionStateReaders();
       currentPresentationUrl = url;
-      currentPresentationMetadata = buildCurrentPresentationMetadataSeed(url, title);
+      applyCurrentPresentationMetadata(buildCurrentPresentationMetadataSeed(url, title));
       currentTitle = title;
       currentCategory = category || 'General';
       currentSlideIndex = 0;
@@ -1608,7 +1608,7 @@
       currentTitle = '';
       currentCategory = '';
       currentSlideIndex = 0;
-      currentPresentationMetadata = null;
+      applyCurrentPresentationMetadata(null);
       resetEditorPersistenceTimers();
       resetEditorDeckPersistenceState();
       resetStudioPresentationUiState();
@@ -2115,11 +2115,7 @@
         sessionToken,
         ...createCurrentStudioSessionStateReaders(),
         setCurrentPresentationMetadata: (metadata) => {
-          currentPresentationMetadata = metadata;
-          const storedCanonicalDeck = SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck(metadata);
-          if (storedCanonicalDeck) {
-            updateEditorPersistedDeckState({ canonicalDeck: storedCanonicalDeck });
-          }
+          applyCurrentPresentationMetadata(metadata, { syncPersistedCanonicalDeck: true });
         },
         onError: (err, metadataUrl) => {
           console.warn(`Failed to load presentation metadata from ${metadataUrl}:`, err);
@@ -2127,16 +2123,31 @@
       });
     }
 
+    function applyCurrentPresentationMetadata(metadata, options = {}) {
+      currentPresentationMetadata = metadata || null;
+      if (!options.syncPersistedCanonicalDeck || !currentPresentationMetadata) {
+        return currentPresentationMetadata;
+      }
+
+      const storedCanonicalDeck = SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck(currentPresentationMetadata);
+      if (storedCanonicalDeck) {
+        updateEditorPersistedDeckState({ canonicalDeck: storedCanonicalDeck });
+      }
+      return currentPresentationMetadata;
+    }
+
     function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
       if (!canonicalDeck || presentationUrl !== currentPresentationUrl) {
         return;
       }
-      currentPresentationMetadata = SlideNextStudioDeckContext.mergeStudioPresentationMetadataCanonicalDeck(canonicalDeck, {
-        currentPresentationMetadata,
-        presentationUrl,
-        presentationTitle,
-        buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed
-      });
+      applyCurrentPresentationMetadata(
+        SlideNextStudioDeckContext.mergeStudioPresentationMetadataCanonicalDeck(canonicalDeck, {
+          currentPresentationMetadata,
+          presentationUrl,
+          presentationTitle,
+          buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed
+        })
+      );
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {

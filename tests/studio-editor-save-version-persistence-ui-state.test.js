@@ -27,6 +27,10 @@ test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata up
 
   const context = {
     SlideNextStudioDeckContext: require('../shared/studio-deck-context.js'),
+    applyCurrentPresentationMetadata(metadata) {
+      context.currentPresentationMetadata = metadata;
+      return metadata;
+    },
     currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
     currentPresentationMetadata: null,
