@@ -149,6 +149,40 @@
     };
   }
 
+  function buildStudioTransformInteractionBounds(session = {}, options = {}) {
+    const startBounds = session.startBounds || {};
+    const startLeft = Number.isFinite(startBounds.left) ? startBounds.left : 0;
+    const startTop = Number.isFinite(startBounds.top) ? startBounds.top : 0;
+    const startRight = Number.isFinite(startBounds.right) ? startBounds.right : startLeft;
+    const startBottom = Number.isFinite(startBounds.bottom) ? startBounds.bottom : startTop;
+    const startWidth = Number.isFinite(startBounds.width) ? startBounds.width : startRight - startLeft;
+    const startHeight = Number.isFinite(startBounds.height) ? startBounds.height : startBottom - startTop;
+    const pointer = options.pointer || {};
+    const dx = Number.isFinite(options.dx) ? options.dx : 0;
+    const dy = Number.isFinite(options.dy) ? options.dy : 0;
+
+    let left = startLeft;
+    let top = startTop;
+    let right = startRight;
+    let bottom = startBottom;
+
+    if (session.type === 'drag') {
+      const grabOffset = session.grabOffset || {};
+      left = (Number.isFinite(pointer.x) ? pointer.x : startLeft) - (Number.isFinite(grabOffset.x) ? grabOffset.x : 0);
+      top = (Number.isFinite(pointer.y) ? pointer.y : startTop) - (Number.isFinite(grabOffset.y) ? grabOffset.y : 0);
+      right = left + startWidth;
+      bottom = top + startHeight;
+    } else {
+      const handleDir = typeof session.handleDir === 'string' ? session.handleDir : '';
+      if (handleDir.includes('w')) left += dx;
+      if (handleDir.includes('e')) right += dx;
+      if (handleDir.includes('n')) top += dy;
+      if (handleDir.includes('s')) bottom += dy;
+    }
+
+    return { left, top, right, bottom };
+  }
+
   function applyStudioTransformBounds(session = {}, bounds = {}, options = {}) {
     const items = Array.isArray(session.items) ? session.items : [];
     const minSizePx = Number.isFinite(options.minSizePx) ? options.minSizePx : 0;
@@ -328,6 +362,7 @@
     STUDIO_RESIZE_HEIGHT_TAGS,
     shouldStudioResizeWidth,
     shouldStudioResizeHeight,
+    buildStudioTransformInteractionBounds,
     normalizeStudioTransformBounds,
     applyStudioTransformBounds,
     materializeStudioTransformSession,

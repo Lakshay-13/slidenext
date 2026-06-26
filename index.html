@@ -3045,24 +3045,13 @@
         if (moveDistanceScreen >= DRAG_START_THRESHOLD_PX) {
           session.moved = true;
         }
-        let left = session.startBounds.left;
-        let top = session.startBounds.top;
-        let right = session.startBounds.right;
-        let bottom = session.startBounds.bottom;
+        const rawBounds = SlideNextStudioEditorTransform.buildStudioTransformInteractionBounds(session, {
+          pointer,
+          dx,
+          dy
+        });
 
-        if (session.type === 'drag') {
-          left = pointer.x - session.grabOffset.x;
-          top = pointer.y - session.grabOffset.y;
-          right = left + session.startBounds.width;
-          bottom = top + session.startBounds.height;
-        } else {
-          if (session.handleDir.includes('w')) left += dx;
-          if (session.handleDir.includes('e')) right += dx;
-          if (session.handleDir.includes('n')) top += dy;
-          if (session.handleDir.includes('s')) bottom += dy;
-        }
-
-        let bounds = SlideNextStudioEditorTransform.normalizeStudioTransformBounds({ left, top, right, bottom }, session.slideBounds, {
+        let bounds = SlideNextStudioEditorTransform.normalizeStudioTransformBounds(rawBounds, session.slideBounds, {
           mode: session.type,
           handleDir: session.handleDir,
           minSizePx: MIN_ELEMENT_SIZE_PX,

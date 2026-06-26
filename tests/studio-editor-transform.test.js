@@ -222,6 +222,53 @@ test('normalizeStudioTransformBounds clamps drag motion and resize bounds determ
   });
 });
 
+test('buildStudioTransformInteractionBounds derives raw drag and resize bounds from session state', () => {
+  assert.deepEqual(transformState.buildStudioTransformInteractionBounds({
+    type: 'drag',
+    startBounds: {
+      left: 100,
+      top: 80,
+      right: 220,
+      bottom: 170,
+      width: 120,
+      height: 90
+    },
+    grabOffset: {
+      x: 15,
+      y: 10
+    }
+  }, {
+    pointer: {
+      x: 190,
+      y: 160
+    }
+  }), {
+    left: 175,
+    top: 150,
+    right: 295,
+    bottom: 240
+  });
+
+  assert.deepEqual(transformState.buildStudioTransformInteractionBounds({
+    type: 'resize',
+    handleDir: 'nw',
+    startBounds: {
+      left: 100,
+      top: 80,
+      right: 220,
+      bottom: 170
+    }
+  }, {
+    dx: -20,
+    dy: 15
+  }), {
+    left: 80,
+    top: 95,
+    right: 220,
+    bottom: 170
+  });
+});
+
 test('applyStudioTransformBounds updates drag and resize item styles using shared transform math', () => {
   const dragElement = { tagName: 'DIV', style: {} };
   transformState.applyStudioTransformBounds({
