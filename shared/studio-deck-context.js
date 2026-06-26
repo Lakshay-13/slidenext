@@ -5,42 +5,35 @@
   const canonicalDeck = typeof module === 'object' && module.exports
     ? require('./canonical-deck')
     : root && root.SlideNextCanonicalDeck;
-  const api = factory(deckLoader, canonicalDeck);
+  const presentationMetadata = typeof module === 'object' && module.exports
+    ? require('./presentation-metadata')
+    : root && root.SlideNextPresentationMetadata;
+  const api = factory(deckLoader, canonicalDeck, presentationMetadata);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioDeckContext = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (deckLoader, canonicalDeck) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (deckLoader, canonicalDeck, presentationMetadata) {
   function normalizeSessionToken(value) {
     return Number.isInteger(value) ? value : null;
   }
 
-  function resolveStoredStudioCanonicalDeck(presentationMetadata = {}, options = {}) {
-    const metadata = presentationMetadata && typeof presentationMetadata === 'object'
-      ? presentationMetadata
-      : {};
-    const rawDeck = metadata.canonicalDeck;
-    if (!rawDeck || !Array.isArray(rawDeck.slides)) {
+  function resolveStoredStudioCanonicalDeck(storedPresentationMetadata = {}, options = {}) {
+    const resolvePresentationCanonicalDeck = typeof options.resolvePresentationCanonicalDeck === 'function'
+      ? options.resolvePresentationCanonicalDeck
+      : presentationMetadata && typeof presentationMetadata.resolvePresentationCanonicalDeck === 'function'
+        ? presentationMetadata.resolvePresentationCanonicalDeck
+        : null;
+    if (!resolvePresentationCanonicalDeck) {
       return null;
     }
 
-    const createCanonicalDeck = typeof options.createCanonicalDeck === 'function'
-      ? options.createCanonicalDeck
-      : canonicalDeck && typeof canonicalDeck.createCanonicalDeck === 'function'
-        ? canonicalDeck.createCanonicalDeck
-        : null;
-    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
-      ? options.isCanonicalDeck
-      : canonicalDeck && typeof canonicalDeck.isCanonicalDeck === 'function'
-        ? canonicalDeck.isCanonicalDeck
-        : null;
-    const nextDeck = createCanonicalDeck ? createCanonicalDeck(rawDeck) : rawDeck;
-
-    return isCanonicalDeck && isCanonicalDeck(nextDeck)
-      ? nextDeck
-      : null;
+    return resolvePresentationCanonicalDeck(storedPresentationMetadata, {
+      createCanonicalDeck: options.createCanonicalDeck,
+      isCanonicalDeck: options.isCanonicalDeck
+    });
   }
 
   function buildStudioPresentationMetadataSeed(presentationUrl = '', presentationTitle = '') {
@@ -90,18 +83,24 @@
     if (!buildCanonicalDeckFromDocument) {
       return null;
     }
+    const createCanonicalDeck = typeof options.createCanonicalDeck === 'function'
+      ? options.createCanonicalDeck
+      : canonicalDeck && typeof canonicalDeck.createCanonicalDeck === 'function'
+        ? canonicalDeck.createCanonicalDeck
+        : null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : canonicalDeck && typeof canonicalDeck.isCanonicalDeck === 'function'
         ? canonicalDeck.isCanonicalDeck
         : null;
 
-    const presentationMetadata = options.currentPresentationMetadata
+    const currentPresentationMetadata = options.currentPresentationMetadata
       || (typeof options.buildPresentationMetadataSeed === 'function'
         ? options.buildPresentationMetadataSeed(options.presentationUrl, options.presentationTitle)
         : buildStudioPresentationMetadataSeed(options.presentationUrl, options.presentationTitle));
     if (options.preferStoredCanonicalDeck !== false) {
-      const storedCanonicalDeck = resolveStoredStudioCanonicalDeck(presentationMetadata, {
+      const storedCanonicalDeck = resolveStoredStudioCanonicalDeck(currentPresentationMetadata, {
+        createCanonicalDeck,
         isCanonicalDeck
       });
       if (storedCanonicalDeck) {
@@ -110,7 +109,7 @@
     }
 
     const deck = buildCanonicalDeckFromDocument(doc, {
-      presentationMetadata,
+      presentationMetadata: currentPresentationMetadata,
       sourcePath: options.presentationUrl || '',
       getSlideId: options.getSlideId,
       getNodeId: options.getNodeId

@@ -136,6 +136,35 @@ test('loadStudioPresentationMetadata skips committing stale same-url editor sess
   assert.deepEqual(committedMetadata, []);
 });
 
+test('resolveStoredStudioCanonicalDeck delegates sidecar normalization to the shared metadata resolver', () => {
+  const storedMetadata = {
+    canonicalDeck: {
+      slides: []
+    }
+  };
+  const normalizedDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const resolverCalls = [];
+
+  const result = deckContext.resolveStoredStudioCanonicalDeck(storedMetadata, {
+    createCanonicalDeck: () => normalizedDeck,
+    isCanonicalDeck: (deck) => deck === normalizedDeck,
+    resolvePresentationCanonicalDeck(nextMetadata, options) {
+      resolverCalls.push({ nextMetadata, options });
+      return normalizedDeck;
+    }
+  });
+
+  assert.equal(result, normalizedDeck);
+  assert.equal(resolverCalls.length, 1);
+  assert.equal(resolverCalls[0].nextMetadata, storedMetadata);
+  assert.equal(typeof resolverCalls[0].options.createCanonicalDeck, 'function');
+  assert.equal(typeof resolverCalls[0].options.isCanonicalDeck, 'function');
+});
+
 test('buildStudioCanonicalDeck returns the validated deck from the canonical builder', () => {
   const doc = { label: 'doc' };
   const presentationMetadata = {
