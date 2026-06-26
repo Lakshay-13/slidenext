@@ -2242,8 +2242,10 @@
       const slide = getActiveSlide();
       if (!slide) return false;
       const initialOrder = getNormalizedSlideLayerOrder(slide);
-      const reorderResult = SlideNextStudioEditorLayerOrder.buildStudioReorderedLayerOrder(initialOrder, targetElements, action, {
-        isEligibleElement: (element) => !!(element && element.isConnected && slide.contains(element))
+      const reorderResult = SlideNextStudioEditorLayerOrder.buildStudioLayerOrderMutationPlan(targetElements, action, {
+        orderedElements: initialOrder,
+        isEligibleElement: (element) => !!(element && element.isConnected && slide.contains(element)),
+        isLocked: isElementLocked
       });
       if (!reorderResult.didChange) {
         return false;

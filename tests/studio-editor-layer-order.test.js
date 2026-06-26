@@ -66,6 +66,31 @@ test('buildStudioLayerOrderActionState disables locked and no-op layer arrangeme
   });
 });
 
+test('buildStudioLayerOrderMutationPlan reuses the action-state lock guard before reordering layers', () => {
+  const first = { id: 'first', isConnected: true, locked: false };
+  const second = { id: 'second', isConnected: true, locked: false };
+  const third = { id: 'third', isConnected: true, locked: true };
+  const orderedElements = [first, second, third];
+
+  assert.deepEqual(layerOrder.buildStudioLayerOrderMutationPlan([third], 'front', {
+    orderedElements,
+    isLocked: (element) => !!element.locked
+  }), {
+    selection: [third],
+    didChange: false,
+    nextOrder: [first, second, third]
+  });
+
+  assert.deepEqual(layerOrder.buildStudioLayerOrderMutationPlan([second], 'front', {
+    orderedElements,
+    isLocked: (element) => !!element.locked
+  }), {
+    selection: [second],
+    didChange: true,
+    nextOrder: [first, third, second]
+  });
+});
+
 test('buildStudioReorderedLayerOrder moves targets to front or back in layer order', () => {
   const first = { id: 'first', isConnected: true };
   const second = { id: 'second', isConnected: true };

@@ -53,6 +53,35 @@
     };
   }
 
+  function buildStudioLayerOrderMutationPlan(targetElements = [], action, options = {}) {
+    const orderedElements = Array.isArray(options.orderedElements) ? options.orderedElements : [];
+    const actionState = buildStudioLayerOrderActionState(targetElements, {
+      ...options,
+      orderedElements
+    });
+    const actionAvailability = {
+      front: actionState.canBringToFront,
+      back: actionState.canSendToBack,
+      forward: actionState.canBringForward,
+      backward: actionState.canSendBackward
+    };
+
+    if (!actionAvailability[action]) {
+      return {
+        selection: actionState.selection,
+        didChange: false,
+        nextOrder: [...orderedElements]
+      };
+    }
+
+    const reorderResult = buildStudioReorderedLayerOrder(orderedElements, actionState.selection, action, options);
+    return {
+      selection: actionState.selection,
+      didChange: reorderResult.didChange,
+      nextOrder: reorderResult.nextOrder
+    };
+  }
+
   function buildStudioReorderedLayerOrder(initialOrder = [], targetElements = [], action, options = {}) {
     const nextOrder = Array.isArray(initialOrder) ? [...initialOrder] : [];
     if (nextOrder.length === 0) {
@@ -108,6 +137,7 @@
   return {
     getStudioLayerOrderSelection,
     buildStudioLayerOrderActionState,
+    buildStudioLayerOrderMutationPlan,
     buildStudioReorderedLayerOrder
   };
 });
