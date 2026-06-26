@@ -796,15 +796,22 @@
       return null;
     }
 
+    const items = selection
+      .map((element) => buildSessionItem(element, {
+        ...options.itemOptions,
+        slideMetrics
+      }))
+      .filter(Boolean);
+    if (items.length !== selection.length || items.length === 0) {
+      return null;
+    }
+
     return {
       slideMetrics,
       slideBounds,
       startPointer,
       startBounds,
-      items: selection.map((element) => buildSessionItem(element, {
-        ...options.itemOptions,
-        slideMetrics
-      }))
+      items
     };
   }
 

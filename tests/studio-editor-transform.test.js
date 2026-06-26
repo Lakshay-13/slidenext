@@ -1258,3 +1258,22 @@ test('buildStudioTransformStartState derives the shared transform bootstrap stat
     }
   }), null);
 });
+
+test('buildStudioTransformStartState aborts when any selected item cannot materialize into a transform session item', () => {
+  const selection = [{ id: 'node-1' }, { id: 'node-2' }];
+
+  assert.equal(transformState.buildStudioTransformStartState(selection, {
+    getSlideMetrics() {
+      return { logicalWidth: 1280, logicalHeight: 720 };
+    },
+    getPointerOnSlide() {
+      return { x: 10, y: 20 };
+    },
+    getSelectionBounds() {
+      return { left: 0, top: 0, width: 100, height: 80 };
+    },
+    buildSessionItem(element) {
+      return element.id === 'node-1' ? { elementId: element.id } : null;
+    }
+  }), null);
+});
