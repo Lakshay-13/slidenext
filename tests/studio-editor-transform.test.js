@@ -871,6 +871,46 @@ test('buildStudioTransformCompletionPlan only persists moved sessions and centra
   });
 });
 
+test('buildStudioPositionedLayoutItem captures the shared positioned geometry snapshot', () => {
+  const parent = {
+    getBoundingClientRect() {
+      return { left: 40, top: 55, right: 260, bottom: 215 };
+    }
+  };
+  const element = {
+    getBoundingClientRect() {
+      return { left: 70, top: 95, right: 190, bottom: 155 };
+    }
+  };
+
+  assert.deepEqual(transformState.buildStudioPositionedLayoutItem(element, {
+    slideMetrics: { scaleX: 2, scaleY: 2, rect: { left: 10, top: 15 } },
+    getClosestPositionedAncestor(currentElement) {
+      assert.equal(currentElement, element);
+      return parent;
+    },
+    getRectOnSlide(rect, slideMetrics) {
+      assert.equal(slideMetrics.scaleX, 2);
+      return {
+        left: (rect.left - slideMetrics.rect.left) * slideMetrics.scaleX,
+        top: (rect.top - slideMetrics.rect.top) * slideMetrics.scaleY,
+        right: (rect.right - slideMetrics.rect.left) * slideMetrics.scaleX,
+        bottom: (rect.bottom - slideMetrics.rect.top) * slideMetrics.scaleY
+      };
+    }
+  }), {
+    element,
+    absLeft: 120,
+    absTop: 160,
+    width: 240,
+    height: 120,
+    parentLeft: 60,
+    parentTop: 80
+  });
+
+  assert.equal(transformState.buildStudioPositionedLayoutItem(null), null);
+});
+
 test('buildStudioTransformSessionItem captures transform geometry and sizing locks from an element', () => {
   const parent = {
     getBoundingClientRect() {

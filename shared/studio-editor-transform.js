@@ -575,7 +575,7 @@
     };
   }
 
-  function buildStudioTransformSessionItem(element, options = {}) {
+  function buildStudioPositionedLayoutItem(element, options = {}) {
     if (!element || typeof element.getBoundingClientRect !== 'function') {
       return null;
     }
@@ -595,16 +595,33 @@
     const parentRect = parent.getBoundingClientRect();
     const rectOnSlide = getRectOnSlide(rect, options.slideMetrics);
     const parentOnSlide = getRectOnSlide(parentRect, options.slideMetrics);
+
+    return {
+      element,
+      absLeft: rectOnSlide.left,
+      absTop: rectOnSlide.top,
+      width: rectOnSlide.right - rectOnSlide.left,
+      height: rectOnSlide.bottom - rectOnSlide.top,
+      parentLeft: parentOnSlide.left,
+      parentTop: parentOnSlide.top
+    };
+  }
+
+  function buildStudioTransformSessionItem(element, options = {}) {
+    const geometry = buildStudioPositionedLayoutItem(element, options);
+    if (!geometry) {
+      return null;
+    }
     const sizingLockState = buildStudioTransformSizingLockState(element, options);
 
     return {
       element,
-      startAbsLeft: rectOnSlide.left,
-      startAbsTop: rectOnSlide.top,
-      startWidth: rectOnSlide.right - rectOnSlide.left,
-      startHeight: rectOnSlide.bottom - rectOnSlide.top,
-      parentOffsetLeft: parentOnSlide.left,
-      parentOffsetTop: parentOnSlide.top,
+      startAbsLeft: geometry.absLeft,
+      startAbsTop: geometry.absTop,
+      startWidth: geometry.width,
+      startHeight: geometry.height,
+      parentOffsetLeft: geometry.parentLeft,
+      parentOffsetTop: geometry.parentTop,
       lockWidth: sizingLockState.lockWidth,
       lockHeight: sizingLockState.lockHeight
     };
@@ -842,6 +859,7 @@
     cleanupStudioTransformSession,
     finalizeStudioTransformSession,
     buildStudioTransformCompletionPlan,
+    buildStudioPositionedLayoutItem,
     buildStudioTransformSessionItem,
     buildStudioTransformSession,
     startStudioTransformSession,
