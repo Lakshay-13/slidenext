@@ -21,10 +21,16 @@
   }
 
   function isStudioElementHidden(el) {
+    const computedStyle = el && el.ownerDocument && el.ownerDocument.defaultView
+      && typeof el.ownerDocument.defaultView.getComputedStyle === 'function'
+      ? el.ownerDocument.defaultView.getComputedStyle(el)
+      : null;
     return !!(el && (
       (el.dataset && el.dataset.editorHidden === 'true')
       || (typeof el.getAttribute === 'function' && el.getAttribute('aria-hidden') === 'true')
       || (el.style && el.style.display === 'none')
+      || (computedStyle && computedStyle.display === 'none')
+      || (computedStyle && computedStyle.visibility === 'hidden')
       || el.hidden === true
     ));
   }

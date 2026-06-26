@@ -22,6 +22,15 @@ function createElement(options = {}) {
     dataset: { ...(options.dataset || {}) },
     hidden: !!options.hidden,
     style: options.style || createStyle(options.display || ''),
+    ownerDocument: options.computedStyle
+      ? {
+          defaultView: {
+            getComputedStyle() {
+              return options.computedStyle;
+            }
+          }
+        }
+      : null,
     getAttribute(name) {
       return Object.prototype.hasOwnProperty.call(attributes, name) ? attributes[name] : null;
     },
@@ -62,6 +71,12 @@ test('isStudioElementHidden treats either dataset or hidden attribute state as h
   })), true);
   assert.equal(studioElementState.isStudioElementHidden(createElement({
     style: createStyle('none')
+  })), true);
+  assert.equal(studioElementState.isStudioElementHidden(createElement({
+    computedStyle: { display: 'block', visibility: 'hidden' }
+  })), true);
+  assert.equal(studioElementState.isStudioElementHidden(createElement({
+    computedStyle: { display: 'none', visibility: 'visible' }
   })), true);
   assert.equal(studioElementState.isStudioElementHidden(createElement({
     hidden: true
