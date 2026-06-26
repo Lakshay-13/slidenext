@@ -15,6 +15,39 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+test('setStudioSaveButtonState renders the version button loading and idle states', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setStudioSaveButtonStateSource = extractFunctionSource(
+    fileContent,
+    'function setStudioSaveButtonState(state) {',
+    '\n\n    function resetStudioSaveButtonState() {'
+  );
+
+  const saveBtnEl = {
+    disabled: false,
+    innerHTML: '<span>Save Version</span>'
+  };
+  const context = {
+    document: {
+      getElementById(id) {
+        if (id === 'studioSaveBtn') return saveBtnEl;
+        return null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setStudioSaveButtonStateSource, context);
+
+  context.setStudioSaveButtonState('saving-version');
+  assert.equal(saveBtnEl.disabled, true);
+  assert.match(saveBtnEl.innerHTML, /Creating version/);
+
+  context.setStudioSaveButtonState('idle');
+  assert.equal(saveBtnEl.disabled, false);
+  assert.match(saveBtnEl.innerHTML, /Save Version/);
+});
+
 test('submitSaveVersion keeps the save button idle when the editor frame is unavailable', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const submitSaveVersionSource = extractFunctionSource(
@@ -75,6 +108,12 @@ test('submitSaveVersion keeps the save button idle when the editor frame is unav
     resetStudioSaveButtonState() {
       saveBtnEl.disabled = false;
       saveBtnEl.innerHTML = '<span>Save Version</span>';
+    },
+    setStudioSaveButtonState(state) {
+      if (state === 'saving-version') {
+        saveBtnEl.disabled = true;
+        saveBtnEl.innerHTML = '<span>Creating version...</span>';
+      }
     },
     setStudioAutoSaveStatus(state) {
       statusEl.innerHTML = state;
@@ -174,6 +213,12 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
     resetStudioSaveButtonState() {
       saveBtnEl.disabled = false;
       saveBtnEl.innerHTML = '<span>Save Version</span>';
+    },
+    setStudioSaveButtonState(state) {
+      if (state === 'saving-version') {
+        saveBtnEl.disabled = true;
+        saveBtnEl.innerHTML = '<span>Creating version...</span>';
+      }
     },
     setStudioAutoSaveStatus(state) {
       statusEl.innerHTML = state;

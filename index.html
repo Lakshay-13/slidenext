@@ -4120,11 +4120,22 @@
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
     }
 
-    function resetStudioSaveButtonState() {
+    function setStudioSaveButtonState(state) {
       const saveBtn = document.getElementById('studioSaveBtn');
       if (!saveBtn) return;
+
+      if (state === 'saving-version') {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>Creating version...</span>`;
+        return;
+      }
+
       saveBtn.disabled = false;
       saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] font-bold">bookmarks</span><span>Save Version</span>`;
+    }
+
+    function resetStudioSaveButtonState() {
+      setStudioSaveButtonState('idle');
     }
     
     async function submitSaveVersion() {
@@ -4143,12 +4154,10 @@
 
       closeSaveVersionModal();
 
-      const saveBtn = document.getElementById('studioSaveBtn');
       const scheduledPresentationUrl = currentPresentationUrl;
       const scheduledSessionToken = studioEditorSessionToken;
 
-      saveBtn.disabled = true;
-      saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>Creating version...</span>`;
+      setStudioSaveButtonState('saving-version');
 
       const cleanHtml = buildPersistableDeckHtml(iframeDoc);
       const persistenceContext = SlideNextStudioEditorPersistence.createStudioVersionPersistenceActionContext(
