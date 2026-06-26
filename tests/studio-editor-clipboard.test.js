@@ -223,6 +223,103 @@ test('buildStudioClipboardPayloadItems aborts when any selected element cannot p
   }), []);
 });
 
+test('buildStudioClipboardInsertionPlan prepares clones and resolves absolute placement before insertion', () => {
+  const absoluteClone = { id: 'absolute-clone' };
+  const flowClone = { id: 'flow-clone' };
+  const slide = { id: 'slide' };
+  const absoluteParent = { id: 'parent' };
+  const flowAnchor = { id: 'anchor' };
+  const prepared = [];
+  const absoluteItem = {
+    template: {
+      cloneNode(deep) {
+        assert.equal(deep, true);
+        return absoluteClone;
+      }
+    },
+    isAbsolutelyPositioned: true,
+    startAbsLeft: 100,
+    startAbsTop: 120,
+    width: 200,
+    height: 80
+  };
+  const flowItem = {
+    template: {
+      cloneNode(deep) {
+        assert.equal(deep, true);
+        return flowClone;
+      }
+    },
+    isAbsolutelyPositioned: false
+  };
+
+  assert.deepEqual(clipboardState.buildStudioClipboardInsertionPlan([absoluteItem, flowItem], 2, {
+    slide,
+    prepareElement(clone) {
+      prepared.push(clone.id);
+      clone.prepared = true;
+    },
+    resolveInsertionTarget(item) {
+      if (item === absoluteItem) {
+        return { mode: 'absolute', parent: absoluteParent };
+      }
+      return { mode: 'after-source', anchor: flowAnchor, parent: slide };
+    },
+    getParentBoundsOnSlide(parent) {
+      assert.equal(parent, absoluteParent);
+      return { left: 20, top: 30 };
+    },
+    offsetPx: 16,
+    slideWidth: 1920,
+    slideHeight: 1080
+  }), [
+    {
+      clone: { id: 'absolute-clone', prepared: true },
+      insertionTarget: { mode: 'absolute', parent: absoluteParent },
+      absolutePlacement: {
+        nextAbsLeft: 132,
+        nextAbsTop: 152,
+        nextLeft: 112,
+        nextTop: 122
+      }
+    },
+    {
+      clone: { id: 'flow-clone', prepared: true },
+      insertionTarget: { mode: 'after-source', anchor: flowAnchor, parent: slide },
+      absolutePlacement: null
+    }
+  ]);
+
+  assert.deepEqual(prepared, ['absolute-clone', 'flow-clone']);
+});
+
+test('buildStudioClipboardInsertionPlan aborts when absolute insertion parent bounds are unavailable', () => {
+  const absoluteItem = {
+    template: {
+      cloneNode() {
+        return { id: 'clone' };
+      }
+    },
+    isAbsolutelyPositioned: true,
+    startAbsLeft: 10,
+    startAbsTop: 20,
+    width: 30,
+    height: 40
+  };
+  const slide = { id: 'slide' };
+  const parent = { id: 'parent' };
+
+  assert.deepEqual(clipboardState.buildStudioClipboardInsertionPlan([absoluteItem], 1, {
+    slide,
+    resolveInsertionTarget() {
+      return { mode: 'absolute', parent };
+    },
+    getParentBoundsOnSlide() {
+      return null;
+    }
+  }), []);
+});
+
 test('resolveStudioClipboardInsertionTarget preserves live insertion anchors and falls back from stale ones', () => {
   const slide = { id: 'slide', isConnected: true };
   const liveParent = { id: 'parent', isConnected: true };

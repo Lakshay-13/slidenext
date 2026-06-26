@@ -121,6 +121,66 @@
     return items.length === selection.length ? items : [];
   }
 
+  function buildStudioClipboardInsertionPlan(items = [], offsetMultiplier = 1, options = {}) {
+    const selection = Array.isArray(items) ? items : [];
+    const slide = options.slide || null;
+    const prepareElement = typeof options.prepareElement === 'function'
+      ? options.prepareElement
+      : () => {};
+    const resolveInsertionTarget = typeof options.resolveInsertionTarget === 'function'
+      ? options.resolveInsertionTarget
+      : (item) => resolveStudioClipboardInsertionTarget(item, {
+        slide,
+        isConnected: options.isConnected,
+        isOnActiveSlide: options.isOnActiveSlide
+      });
+    const getParentBoundsOnSlide = typeof options.getParentBoundsOnSlide === 'function'
+      ? options.getParentBoundsOnSlide
+      : () => null;
+
+    const plans = selection.map((item) => {
+      if (!item || !item.template || typeof item.template.cloneNode !== 'function') {
+        return null;
+      }
+
+      const clone = item.template.cloneNode(true);
+      prepareElement(clone);
+
+      const insertionTarget = resolveInsertionTarget(item);
+      if (!insertionTarget || !insertionTarget.mode) {
+        return null;
+      }
+
+      if (insertionTarget.mode !== 'absolute') {
+        return {
+          clone,
+          insertionTarget,
+          absolutePlacement: null
+        };
+      }
+
+      const parent = insertionTarget.parent || slide;
+      const parentBoundsOnSlide = getParentBoundsOnSlide(parent);
+      if (!parentBoundsOnSlide) {
+        return null;
+      }
+
+      return {
+        clone,
+        insertionTarget,
+        absolutePlacement: buildStudioClipboardAbsolutePlacement(item, offsetMultiplier, {
+          offsetPx: options.offsetPx,
+          slideWidth: options.slideWidth,
+          slideHeight: options.slideHeight,
+          parentLeft: parentBoundsOnSlide.left,
+          parentTop: parentBoundsOnSlide.top
+        })
+      };
+    });
+
+    return plans.length === selection.length && plans.every(Boolean) ? plans : [];
+  }
+
   function resolveStudioClipboardInsertionTarget(item = {}, options = {}) {
     const slide = options.slide || null;
     const isConnected = typeof options.isConnected === 'function'
@@ -185,6 +245,7 @@
     buildStudioClipboardMutationPlan,
     buildStudioClipboardPayloadItem,
     buildStudioClipboardPayloadItems,
+    buildStudioClipboardInsertionPlan,
     resolveStudioClipboardInsertionTarget,
     buildStudioClipboardAbsolutePlacement
   };

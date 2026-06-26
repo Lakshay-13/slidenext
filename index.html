@@ -2773,28 +2773,25 @@
       if (!doc || !slide || !items || items.length === 0) return [];
 
       const slideMetrics = getSlideMetrics(slide);
+      const insertionPlans = SlideNextStudioEditorClipboard.buildStudioClipboardInsertionPlan(items, offsetMultiplier, {
+        slide,
+        prepareElement: makeElementsHoverable,
+        isOnActiveSlide: (element) => !!(element && slide.contains(element)),
+        getParentBoundsOnSlide: (parent) => {
+          if (!parent || typeof parent.getBoundingClientRect !== 'function') return null;
+          return getRectOnSlide(parent.getBoundingClientRect(), slideMetrics);
+        },
+        offsetPx: DUPLICATE_OFFSET_PX,
+        slideWidth: slideMetrics.logicalWidth,
+        slideHeight: slideMetrics.logicalHeight
+      });
+      if (insertionPlans.length !== items.length) return [];
+
       const inserted = [];
 
-      items.forEach(item => {
-        const clone = item.template.cloneNode(true);
-        makeElementsHoverable(clone);
-        const insertionTarget = SlideNextStudioEditorClipboard.resolveStudioClipboardInsertionTarget(item, {
-          slide,
-          isOnActiveSlide: (element) => !!(element && slide.contains(element))
-        });
-
-        if (insertionTarget.mode === 'absolute') {
+      insertionPlans.forEach(({ clone, insertionTarget, absolutePlacement }) => {
+        if (insertionTarget.mode === 'absolute' && absolutePlacement) {
           const parent = insertionTarget.parent || slide;
-          const parentRect = parent.getBoundingClientRect();
-          const parentOnSlide = getRectOnSlide(parentRect, slideMetrics);
-          const absolutePlacement = SlideNextStudioEditorClipboard.buildStudioClipboardAbsolutePlacement(item, offsetMultiplier, {
-            offsetPx: DUPLICATE_OFFSET_PX,
-            slideWidth: slideMetrics.logicalWidth,
-            slideHeight: slideMetrics.logicalHeight,
-            parentLeft: parentOnSlide.left,
-            parentTop: parentOnSlide.top
-          });
-
           clone.style.position = 'absolute';
           clone.style.margin = '0';
           clone.style.left = `${absolutePlacement.nextLeft}px`;
