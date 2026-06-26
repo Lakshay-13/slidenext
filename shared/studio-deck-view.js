@@ -469,7 +469,7 @@
   }
 
   function buildStudioPreviewHtml(doc, options = {}) {
-    if (!doc || !deckHtml || typeof deckHtml.buildDeckPreviewHtml !== 'function') {
+    if (!deckHtml || typeof deckHtml.buildDeckPreviewHtml !== 'function') {
       return '';
     }
 
@@ -484,7 +484,7 @@
   }
 
   function buildStudioSourceHtml(doc, options = {}) {
-    if (doc && deckHtml && typeof deckHtml.buildDeckSourceHtml === 'function') {
+    if (deckHtml && typeof deckHtml.buildDeckSourceHtml === 'function') {
       const canonicalDeck = typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck(doc)
         : null;

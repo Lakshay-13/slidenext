@@ -20,6 +20,25 @@ test('buildStudioPreviewHtml skips malformed canonical decks', () => {
   assert.equal(result, '');
 });
 
+test('buildStudioPreviewHtml can render from a canonical deck when the live editor frame is unavailable', () => {
+  const result = deckView.buildStudioPreviewHtml(
+    null,
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      buildCanonicalDeck(doc) {
+        assert.equal(doc, null);
+        return {
+          slides: [
+            { id: 'slide-1', nodes: [] }
+          ]
+        };
+      }
+    }
+  );
+
+  assert.match(result, /slidesContainer/);
+});
+
 test('buildStudioSourceHtml falls back when the canonical deck is malformed', () => {
   const result = deckView.buildStudioSourceHtml(
     { label: 'doc' },
@@ -38,4 +57,22 @@ test('buildStudioSourceHtml falls back when the canonical deck is malformed', ()
   );
 
   assert.equal(result, 'fallback:doc');
+});
+
+test('buildStudioSourceHtml can render from a canonical deck when the live editor frame is unavailable', () => {
+  const result = deckView.buildStudioSourceHtml(
+    null,
+    {
+      buildCanonicalDeck(doc) {
+        assert.equal(doc, null);
+        return {
+          slides: [
+            { id: 'slide-1', nodes: [] }
+          ]
+        };
+      }
+    }
+  );
+
+  assert.match(result, /slidesContainer/);
 });
