@@ -168,6 +168,18 @@
     });
   }
 
+  function hasHeadingNode(nodes = []) {
+    return Array.isArray(nodes) && nodes.some((node) => {
+      if (!node || typeof node !== 'object') {
+        return false;
+      }
+      if (/^h[1-6]$/i.test(normalizeString(node.tagName))) {
+        return true;
+      }
+      return hasHeadingNode(node.children);
+    });
+  }
+
   function renderCanonicalNode(node, options = {}) {
     if (!node || typeof node !== 'object') return '';
     if (options.preferNodeSourceHtml !== false && normalizeString(node.html)) {
@@ -218,6 +230,11 @@
     const background = slide.layout ? asPlainObject(slide.layout.background) : {};
     const hasExplicitSourceStyle = !!normalizeString(sourceAttributes.style).trim();
     const needsPositionContext = hasAbsolutePositionedNode(slide.nodes);
+    const slideTitle = normalizeString(slide.title).trim();
+    const isDefaultSlideTitle = slideTitle === `Slide ${index + 1}` && !normalizeString(slide.name).trim();
+    if (!sourceAttributes['aria-label'] && slideTitle && !hasHeadingNode(slide.nodes) && !isDefaultSlideTitle) {
+      sourceAttributes['aria-label'] = slide.title;
+    }
     if (!sourceAttributes['data-slide-name'] && slide.name) {
       sourceAttributes['data-slide-name'] = slide.name;
     }

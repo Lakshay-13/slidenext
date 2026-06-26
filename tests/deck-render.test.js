@@ -45,7 +45,7 @@ test('renderCanonicalDeckHtml renders a source-less deck with slidesContainer an
 
   assert.match(html, /<div id="slidesContainer" class="slides-container">/);
   assert.match(html, /<section class="slide slide-active" id="slide-1">/);
-  assert.match(html, /<section class="slide" id="slide-2">/);
+  assert.match(html, /<section[^>]*class="slide"[^>]*id="slide-2"[^>]*>/);
   assert.match(html, /<h1>Intro<\/h1>/);
   assert.match(html, /<p>Agenda<\/p>/);
 });
@@ -422,6 +422,33 @@ test('renderCanonicalDeckHtml preserves explicit slide notes attributes over can
   assert.match(html, /data-slide-name="Imported Slide"/);
   assert.match(html, /data-notes="Imported notes"/);
   assert.doesNotMatch(html, /data-speaker-notes="Canonical notes"/);
+});
+
+test('renderCanonicalDeckHtml falls back to canonical slide title through aria-label when source attributes are absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        title: 'Quarterly Roadmap',
+        nodes: [],
+        source: {
+          html: '',
+          attributes: {}
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /aria-label="Quarterly Roadmap"/);
 });
 
 test('renderCanonicalDeckHtml adds slide positioning context for canonical absolute layout nodes when source slide style is absent', () => {
