@@ -17,6 +17,32 @@
     return Number.isInteger(value) ? value : null;
   }
 
+  function resolveStoredStudioCanonicalDeck(presentationMetadata = {}, options = {}) {
+    const metadata = presentationMetadata && typeof presentationMetadata === 'object'
+      ? presentationMetadata
+      : {};
+    const rawDeck = metadata.canonicalDeck;
+    if (!rawDeck || !Array.isArray(rawDeck.slides)) {
+      return null;
+    }
+
+    const createCanonicalDeck = typeof options.createCanonicalDeck === 'function'
+      ? options.createCanonicalDeck
+      : canonicalDeck && typeof canonicalDeck.createCanonicalDeck === 'function'
+        ? canonicalDeck.createCanonicalDeck
+        : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : canonicalDeck && typeof canonicalDeck.isCanonicalDeck === 'function'
+        ? canonicalDeck.isCanonicalDeck
+        : null;
+    const nextDeck = createCanonicalDeck ? createCanonicalDeck(rawDeck) : rawDeck;
+
+    return isCanonicalDeck && isCanonicalDeck(nextDeck)
+      ? nextDeck
+      : null;
+  }
+
   function buildStudioPresentationMetadataSeed(presentationUrl = '', presentationTitle = '') {
     if (!deckLoader || typeof deckLoader.buildPresentationMetadataSeed !== 'function') {
       return {
@@ -74,6 +100,12 @@
       || (typeof options.buildPresentationMetadataSeed === 'function'
         ? options.buildPresentationMetadataSeed(options.presentationUrl, options.presentationTitle)
         : buildStudioPresentationMetadataSeed(options.presentationUrl, options.presentationTitle));
+    const storedCanonicalDeck = resolveStoredStudioCanonicalDeck(presentationMetadata, {
+      isCanonicalDeck
+    });
+    if (storedCanonicalDeck) {
+      return storedCanonicalDeck;
+    }
 
     const deck = buildCanonicalDeckFromDocument(doc, {
       presentationMetadata,
@@ -91,6 +123,7 @@
   return {
     buildStudioPresentationMetadataSeed,
     loadStudioPresentationMetadata,
+    resolveStoredStudioCanonicalDeck,
     buildStudioCanonicalDeck
   };
 });

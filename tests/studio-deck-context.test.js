@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
+const canonicalDeck = require('../shared/canonical-deck.js');
 const deckContext = require('../shared/studio-deck-context.js');
 
 function createDeferred() {
@@ -171,6 +172,71 @@ test('buildStudioCanonicalDeck returns the validated deck from the canonical bui
   });
   assert.equal(builderCalls[0].options.getSlideId(), 'slide-1');
   assert.equal(builderCalls[0].options.getNodeId(), 'node-1');
+});
+
+test('buildStudioCanonicalDeck prefers a valid stored canonical deck from presentation metadata', () => {
+  const storedCanonicalDeck = {
+    metadata: {
+      id: 'onboarding-presentation',
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        title: 'Intro',
+        nodes: [
+          {
+            id: 'node-1',
+            type: 'html'
+          }
+        ]
+      }
+    ]
+  };
+  const result = deckContext.buildStudioCanonicalDeck({ label: 'doc' }, {
+    currentPresentationMetadata: {
+      id: 'onboarding-presentation',
+      title: 'Project Onboarding',
+      sourcePath: '/presentations/onboarding-presentation/index.html',
+      canonicalDeck: storedCanonicalDeck
+    },
+    buildCanonicalDeckFromDocument() {
+      throw new Error('DOM import should not run when stored canonical metadata is valid');
+    }
+  });
+
+  assert.deepEqual(result, canonicalDeck.createCanonicalDeck(storedCanonicalDeck));
+});
+
+test('buildStudioCanonicalDeck falls back to DOM import when stored canonical metadata is malformed', () => {
+  const doc = { label: 'doc' };
+  const builderCalls = [];
+  const importedDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+
+  const result = deckContext.buildStudioCanonicalDeck(doc, {
+    currentPresentationMetadata: {
+      id: 'onboarding-presentation',
+      title: 'Project Onboarding',
+      sourcePath: '/presentations/onboarding-presentation/index.html',
+      canonicalDeck: {
+        metadata: {
+          title: 'Broken Deck'
+        }
+      }
+    },
+    buildCanonicalDeckFromDocument(nextDoc) {
+      builderCalls.push(nextDoc);
+      return importedDeck;
+    },
+    isCanonicalDeck: (deck) => deck === importedDeck
+  });
+
+  assert.equal(result, importedDeck);
+  assert.deepEqual(builderCalls, [doc]);
 });
 
 test('buildStudioCanonicalDeck returns null when the canonical builder yields malformed data', () => {
