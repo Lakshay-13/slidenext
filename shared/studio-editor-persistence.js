@@ -25,6 +25,22 @@
     return Number.isInteger(value) ? value : null;
   }
 
+  function areStudioPersistenceCanonicalDecksEqual(left, right, options = {}) {
+    const areCanonicalDecksEqual = typeof options.areCanonicalDecksEqual === 'function'
+      ? options.areCanonicalDecksEqual
+      : (nextLeft, nextRight) => {
+          if (nextLeft === nextRight) return true;
+          if (!nextLeft || !nextRight) return !nextLeft && !nextRight;
+          try {
+            return JSON.stringify(nextLeft) === JSON.stringify(nextRight);
+          } catch (err) {
+            return false;
+          }
+        };
+
+    return areCanonicalDecksEqual(left, right);
+  }
+
   function resolveStudioPersistenceCanonicalDeck(deckLike = null, options = {}) {
     const resolvePresentationCanonicalDeck = typeof options.resolvePresentationCanonicalDeck === 'function'
       ? options.resolvePresentationCanonicalDeck
@@ -99,24 +115,33 @@
   }
 
   function buildStudioPersistenceRequestPlan(presentationUrl = '', cleanHtml = '', options = {}) {
-    const hasPersistedCurrentHtml = typeof options.isPersistedHtml === 'function'
-      ? !!options.isPersistedHtml(cleanHtml)
-      : false;
+    const isPersistedState = typeof options.isPersistedState === 'function'
+      ? options.isPersistedState
+      : null;
     const buildSaveRequestBody = typeof options.buildSaveRequestBody === 'function'
       ? options.buildSaveRequestBody
       : null;
-    const saveRequestBody = !hasPersistedCurrentHtml && buildSaveRequestBody
+    const tentativeSaveRequestBody = isPersistedState && buildSaveRequestBody
       ? buildSaveRequestBody(cleanHtml)
       : null;
+    const hasPersistedCurrentState = isPersistedState
+      ? !!isPersistedState(tentativeSaveRequestBody, cleanHtml)
+      : typeof options.isPersistedHtml === 'function'
+        ? !!options.isPersistedHtml(cleanHtml)
+        : false;
+    const saveRequestBody = hasPersistedCurrentState
+      ? null
+      : tentativeSaveRequestBody || (buildSaveRequestBody ? buildSaveRequestBody(cleanHtml) : null);
 
     return {
-      hasPersistedCurrentHtml,
+      hasPersistedCurrentHtml: hasPersistedCurrentState,
+      hasPersistedCurrentState,
       saveRequestBody,
       persistenceContext: createStudioPersistenceActionContext(
         presentationUrl,
         cleanHtml,
         {
-          shouldUpdatePersistedHtml: !hasPersistedCurrentHtml,
+          shouldUpdatePersistedHtml: !hasPersistedCurrentState,
           canonicalDeck: saveRequestBody && saveRequestBody.canonicalDeck,
           sessionToken: options.sessionToken,
           createCanonicalDeck: options.createCanonicalDeck,
@@ -129,6 +154,28 @@
 
   function isStudioPersistedHtml(cleanHtml = '', persistedHtml = '') {
     return !!normalizeString(persistedHtml) && normalizeString(cleanHtml) === normalizeString(persistedHtml);
+  }
+
+  function isStudioPersistedCanonicalDeck(canonicalDeck, persistedCanonicalDeck, options = {}) {
+    const nextCanonicalDeck = resolveStudioPersistenceCanonicalDeck(canonicalDeck, options);
+    if (!nextCanonicalDeck) {
+      return true;
+    }
+
+    const nextPersistedCanonicalDeck = resolveStudioPersistenceCanonicalDeck(persistedCanonicalDeck, options);
+    if (!nextPersistedCanonicalDeck) {
+      return false;
+    }
+
+    return areStudioPersistenceCanonicalDecksEqual(nextCanonicalDeck, nextPersistedCanonicalDeck, options);
+  }
+
+  function isStudioPersistedState(cleanHtml = '', canonicalDeck = null, options = {}) {
+    if (!isStudioPersistedHtml(cleanHtml, options.persistedHtml)) {
+      return false;
+    }
+
+    return isStudioPersistedCanonicalDeck(canonicalDeck, options.persistedCanonicalDeck, options);
   }
 
   function isStudioPersistenceTaskStale(presentationUrl = '', options = {}) {
@@ -235,6 +282,8 @@
     buildStudioSaveRequestBody,
     buildStudioPersistenceRequestPlan,
     isStudioPersistedHtml,
+    isStudioPersistedCanonicalDeck,
+    isStudioPersistedState,
     isStudioPersistenceTaskStale,
     isStudioPersistenceActionCurrent,
     handleStudioPersistenceSuccess,

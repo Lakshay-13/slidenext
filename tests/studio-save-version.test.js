@@ -296,7 +296,7 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
     getIframeDoc() {
       return null;
     },
-    isCurrentDeckHtmlPersisted() {
+    isCurrentDeckStatePersisted() {
       return false;
     },
     isStaleEditorPersistenceTask() {

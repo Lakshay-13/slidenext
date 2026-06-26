@@ -1056,6 +1056,7 @@
     let selectedElement = null;
     let selectedElements = [];
     let lastPersistedDeckHtml = '';
+    let lastPersistedCanonicalDeck = null;
     let persistedDeckPlaybackState = null;
     let undoStack = [];
     let redoStack = [];
@@ -1683,6 +1684,7 @@
           saveHistoryState(false);
           persistedDeckPlaybackState = capturePersistedDeckPlaybackState(iframeDoc);
           lastPersistedDeckHtml = buildPersistableDeckHtml(iframeDoc);
+          lastPersistedCanonicalDeck = buildEditorCanonicalDeck(iframeDoc);
         }
       });
       updateInsertionActionState();
@@ -3456,6 +3458,7 @@
 
     function resetEditorDeckPersistenceState() {
       lastPersistedDeckHtml = '';
+      lastPersistedCanonicalDeck = null;
       persistedDeckPlaybackState = null;
     }
 
@@ -3584,6 +3587,17 @@
       return SlideNextStudioEditorPersistence.isStudioPersistedHtml(cleanHtml, lastPersistedDeckHtml);
     }
 
+    function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {
+      return SlideNextStudioEditorPersistence.isStudioPersistedState(
+        cleanHtml,
+        saveRequestBody && saveRequestBody.canonicalDeck,
+        {
+          persistedHtml: lastPersistedDeckHtml,
+          persistedCanonicalDeck: lastPersistedCanonicalDeck
+        }
+      );
+    }
+
     function isStaleEditorPersistenceTask(presentationUrl, sessionToken = null) {
       return SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale(presentationUrl, {
         currentPresentationUrl,
@@ -3613,7 +3627,7 @@
         presentationUrl,
         cleanHtml,
         {
-          isPersistedHtml: isCurrentDeckHtmlPersisted,
+          isPersistedState: isCurrentDeckStatePersisted,
           buildSaveRequestBody: () => buildEditorSaveRequestBody(options.doc, cleanHtml, {
             presentationUrl,
             versionLabel
@@ -3621,11 +3635,11 @@
           sessionToken: options.sessionToken
         }
       );
-      const response = await fetch(persistencePlan.hasPersistedCurrentHtml ? '/api/versions/create' : '/api/save', {
+      const response = await fetch(persistencePlan.hasPersistedCurrentState ? '/api/versions/create' : '/api/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
-          persistencePlan.hasPersistedCurrentHtml
+          persistencePlan.hasPersistedCurrentState
             ? {
                 htmlPath: presentationUrl,
                 versionLabel
@@ -3642,6 +3656,7 @@
             lastPersistedDeckHtml = nextHtml;
           },
           setPersistedCanonicalDeck: (nextCanonicalDeck) => {
+            lastPersistedCanonicalDeck = nextCanonicalDeck;
             setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl);
           }
         });
@@ -3670,7 +3685,7 @@
           scheduledPresentationUrl,
           cleanHtml,
           {
-            isPersistedHtml: isCurrentDeckHtmlPersisted,
+            isPersistedState: isCurrentDeckStatePersisted,
             buildSaveRequestBody: () => buildEditorSaveRequestBody(iframeDoc, cleanHtml, {
               presentationUrl: scheduledPresentationUrl,
               isAutoSave: true
@@ -3679,7 +3694,7 @@
           }
         );
 
-        if (persistencePlan.hasPersistedCurrentHtml) {
+        if (persistencePlan.hasPersistedCurrentState) {
           if (statusEl) {
             statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
           }
@@ -3701,6 +3716,7 @@
                 lastPersistedDeckHtml = nextHtml;
               },
               setPersistedCanonicalDeck: (nextCanonicalDeck) => {
+                lastPersistedCanonicalDeck = nextCanonicalDeck;
                 setCurrentPresentationCanonicalDeck(nextCanonicalDeck, scheduledPresentationUrl);
               },
               onSuccess: () => {

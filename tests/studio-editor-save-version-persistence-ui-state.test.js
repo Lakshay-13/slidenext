@@ -103,7 +103,8 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
     currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
     studioEditorSessionToken: 4,
     lastPersistedDeckHtml: '',
-    isCurrentDeckHtmlPersisted() {
+    lastPersistedCanonicalDeck: null,
+    isCurrentDeckStatePersisted() {
       return false;
     },
     buildEditorSaveRequestBody(doc, cleanHtml, options = {}) {
@@ -151,8 +152,99 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
     }
   ]]);
   assert.equal(context.lastPersistedDeckHtml, '<html>persisted</html>');
+  assert.deepEqual(context.lastPersistedCanonicalDeck, canonicalDeckModel.createCanonicalDeck(canonicalDeck));
   assert.deepEqual(canonicalDeckUpdates, [[
     canonicalDeckModel.createCanonicalDeck(canonicalDeck),
     'presentations/onboarding-presentation/index.html'
+  ]]);
+});
+
+test('saveVersionCheckpoint keeps save rewrites enabled when canonical state changed despite matching persisted html', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const saveVersionCheckpointSource = extractFunctionSource(
+    fileContent,
+    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {',
+    '\n\n    // 6. AutoSave debouncing pipeline'
+  );
+
+  const currentCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [
+          {
+            id: 'node-1',
+            type: 'html'
+          }
+        ]
+      }
+    ]
+  };
+  const persistedCanonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  });
+  const fetchCalls = [];
+  const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 7,
+    lastPersistedDeckHtml: '<html>persisted</html>',
+    lastPersistedCanonicalDeck: persistedCanonicalDeck,
+    isCurrentDeckStatePersisted(saveRequestBody, cleanHtml) {
+      return editorPersistence.isStudioPersistedState(cleanHtml, saveRequestBody && saveRequestBody.canonicalDeck, {
+        persistedHtml: context.lastPersistedDeckHtml,
+        persistedCanonicalDeck: context.lastPersistedCanonicalDeck
+      });
+    },
+    buildEditorSaveRequestBody(doc, cleanHtml, options = {}) {
+      return {
+        htmlPath: options.presentationUrl,
+        htmlContent: cleanHtml,
+        versionLabel: options.versionLabel,
+        canonicalDeck: currentCanonicalDeck
+      };
+    },
+    fetch: async (url, init) => {
+      fetchCalls.push([url, JSON.parse(init.body)]);
+      return {
+        async json() {
+          return { success: true };
+        }
+      };
+    },
+    setCurrentPresentationCanonicalDeck() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(saveVersionCheckpointSource, context);
+
+  await context.saveVersionCheckpoint(
+    'Checkpoint B',
+    '<html>persisted</html>',
+    'presentations/onboarding-presentation/index.html',
+    {
+      sessionToken: 7,
+      doc: { label: 'iframe-doc' }
+    }
+  );
+
+  assert.deepEqual(fetchCalls, [[
+    '/api/save',
+    {
+      htmlPath: 'presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>persisted</html>',
+      versionLabel: 'Checkpoint B',
+      canonicalDeck: currentCanonicalDeck
+    }
   ]]);
 });

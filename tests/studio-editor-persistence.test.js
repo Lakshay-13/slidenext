@@ -179,6 +179,7 @@ test('buildStudioPersistenceRequestPlan reuses persisted-html checks to skip red
 
   assert.deepEqual(persistedPlan, {
     hasPersistedCurrentHtml: true,
+    hasPersistedCurrentState: true,
     saveRequestBody: null,
     persistenceContext: {
       presentationUrl: '/presentations/onboarding-presentation/index.html',
@@ -210,6 +211,7 @@ test('buildStudioPersistenceRequestPlan reuses persisted-html checks to skip red
 
   assert.deepEqual(dirtyPlan, {
     hasPersistedCurrentHtml: false,
+    hasPersistedCurrentState: false,
     saveRequestBody: {
       htmlPath: '/presentations/onboarding-presentation/index.html',
       htmlContent: '<html>changed</html>',
@@ -225,6 +227,128 @@ test('buildStudioPersistenceRequestPlan reuses persisted-html checks to skip red
     }
   });
   assert.deepEqual(buildSaveRequestBodyCalls, ['dirty']);
+});
+
+test('isStudioPersistedState requires both html and canonical deck sidecars to match when a canonical deck is present', () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+
+  assert.equal(
+    editorPersistence.isStudioPersistedState('<html></html>', canonicalDeck, {
+      persistedHtml: '<html></html>',
+      persistedCanonicalDeck: canonicalDeck
+    }),
+    true
+  );
+
+  assert.equal(
+    editorPersistence.isStudioPersistedState('<html></html>', canonicalDeck, {
+      persistedHtml: '<html></html>',
+      persistedCanonicalDeck: canonicalDeckModel.createCanonicalDeck({
+        metadata: {
+          title: 'Project Onboarding'
+        },
+        slides: [
+          {
+            id: 'slide-1',
+            nodes: [
+              {
+                id: 'node-1',
+                type: 'html'
+              }
+            ]
+          }
+        ]
+      })
+    }),
+    false
+  );
+
+  assert.equal(
+    editorPersistence.isStudioPersistedState('<html></html>', null, {
+      persistedHtml: '<html></html>',
+      persistedCanonicalDeck: canonicalDeck
+    }),
+    true
+  );
+});
+
+test('buildStudioPersistenceRequestPlan keeps save payloads when canonical deck state changed despite matching html', () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+  const buildSaveRequestBodyCalls = [];
+
+  const plan = editorPersistence.buildStudioPersistenceRequestPlan(
+    '/presentations/onboarding-presentation/index.html',
+    '<html></html>',
+    {
+      isPersistedState(saveRequestBody, cleanHtml) {
+        return editorPersistence.isStudioPersistedState(cleanHtml, saveRequestBody && saveRequestBody.canonicalDeck, {
+          persistedHtml: '<html></html>',
+          persistedCanonicalDeck: canonicalDeckModel.createCanonicalDeck({
+            metadata: {
+              title: 'Project Onboarding'
+            },
+            slides: [
+              {
+                id: 'slide-1',
+                nodes: [
+                  {
+                    id: 'node-1',
+                    type: 'html'
+                  }
+                ]
+              }
+            ]
+          })
+        });
+      },
+      buildSaveRequestBody() {
+        buildSaveRequestBodyCalls.push('save');
+        return editorPersistence.buildStudioSaveRequestBody(
+          '/presentations/onboarding-presentation/index.html',
+          '<html></html>',
+          { canonicalDeck }
+        );
+      }
+    }
+  );
+
+  assert.deepEqual(plan, {
+    hasPersistedCurrentHtml: false,
+    hasPersistedCurrentState: false,
+    saveRequestBody: {
+      htmlPath: '/presentations/onboarding-presentation/index.html',
+      htmlContent: '<html></html>',
+      isAutoSave: false,
+      canonicalDeck
+    },
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      cleanHtml: '<html></html>',
+      shouldUpdatePersistedHtml: true,
+      canonicalDeck,
+    }
+  });
+  assert.deepEqual(buildSaveRequestBodyCalls, ['save']);
 });
 
 test('isStudioPersistedHtml only reports true when a non-empty persisted html snapshot matches exactly', () => {
