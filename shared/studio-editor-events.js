@@ -172,8 +172,99 @@
     };
   }
 
+  function createStudioGlobalKeydownHandler(options = {}) {
+    const isEditorActive = typeof options.isEditorActive === 'function'
+      ? options.isEditorActive
+      : () => false;
+    const getActiveElement = typeof options.getActiveElement === 'function'
+      ? options.getActiveElement
+      : () => null;
+    const getSelectedElements = typeof options.getSelectedElements === 'function'
+      ? options.getSelectedElements
+      : () => [];
+    const editorUndo = typeof options.editorUndo === 'function'
+      ? options.editorUndo
+      : () => {};
+    const editorRedo = typeof options.editorRedo === 'function'
+      ? options.editorRedo
+      : () => {};
+    const selectAllElementsOnActiveSlide = typeof options.selectAllElementsOnActiveSlide === 'function'
+      ? options.selectAllElementsOnActiveSlide
+      : () => {};
+    const arrangeElementLayer = typeof options.arrangeElementLayer === 'function'
+      ? options.arrangeElementLayer
+      : () => {};
+    const deselectElement = typeof options.deselectElement === 'function'
+      ? options.deselectElement
+      : () => {};
+    const removeSelectedElement = typeof options.removeSelectedElement === 'function'
+      ? options.removeSelectedElement
+      : () => {};
+    const duplicateSelectedElements = typeof options.duplicateSelectedElements === 'function'
+      ? options.duplicateSelectedElements
+      : () => {};
+    const isTypingContext = typeof options.isTypingContext === 'function'
+      ? options.isTypingContext
+      : (activeEl) => !!(activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable));
+
+    return function studioGlobalKeydownHandler(event) {
+      if (!isEditorActive()) {
+        return;
+      }
+
+      const activeEl = getActiveElement();
+      const typingContext = isTypingContext(activeEl);
+      const loweredKey = typeof event.key === 'string' ? event.key.toLowerCase() : '';
+      const isBracketShortcut = event.code === 'BracketLeft' || event.code === 'BracketRight';
+      const selectedElements = getFrameShortcutSelection(getSelectedElements());
+      const hasSelection = selectedElements.length > 0;
+
+      if ((event.ctrlKey || event.metaKey) && loweredKey === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        editorUndo();
+        return;
+      }
+      if ((event.ctrlKey || event.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && event.shiftKey))) {
+        event.preventDefault();
+        editorRedo();
+        return;
+      }
+      if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'a') {
+        event.preventDefault();
+        selectAllElementsOnActiveSlide();
+        return;
+      }
+      if (!typingContext && hasSelection && (event.ctrlKey || event.metaKey) && event.shiftKey && isBracketShortcut) {
+        event.preventDefault();
+        arrangeElementLayer(event.code === 'BracketRight' ? 'front' : 'back');
+        return;
+      }
+      if (!typingContext && hasSelection && (event.ctrlKey || event.metaKey) && isBracketShortcut) {
+        event.preventDefault();
+        arrangeElementLayer(event.code === 'BracketRight' ? 'forward' : 'backward');
+        return;
+      }
+      if (!typingContext && hasSelection && event.key === 'Escape') {
+        event.preventDefault();
+        deselectElement();
+        return;
+      }
+      if (!typingContext && hasSelection && (event.key === 'Delete' || event.key === 'Backspace')) {
+        event.preventDefault();
+        removeSelectedElement();
+        return;
+      }
+      if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'd' && hasSelection) {
+        event.preventDefault();
+        duplicateSelectedElements();
+        return;
+      }
+    };
+  }
+
   return {
     createStudioFrameClickHandler,
-    createStudioFrameKeydownHandler
+    createStudioFrameKeydownHandler,
+    createStudioGlobalKeydownHandler
   };
 });

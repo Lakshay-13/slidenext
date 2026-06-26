@@ -119,3 +119,86 @@ test('createStudioFrameKeydownHandler still honors shortcuts for live selections
   assert.equal(nudgeEvent.prevented, 1);
   assert.equal(nudgeEvent.stopped, 1);
 });
+
+test('createStudioGlobalKeydownHandler ignores stale disconnected selections for selection-only shortcuts', () => {
+  const calls = {
+    arrange: [],
+    remove: 0,
+    duplicate: 0
+  };
+  const handler = events.createStudioGlobalKeydownHandler({
+    isEditorActive: () => true,
+    getActiveElement: () => null,
+    getSelectedElements: () => [{ id: 1, isConnected: false }],
+    arrangeElementLayer(action) {
+      calls.arrange.push(action);
+    },
+    removeSelectedElement() {
+      calls.remove += 1;
+    },
+    duplicateSelectedElements() {
+      calls.duplicate += 1;
+    }
+  });
+
+  const arrangeEvent = createKeyboardEvent({
+    key: ']',
+    code: 'BracketRight',
+    ctrlKey: true
+  });
+  handler(arrangeEvent);
+  assert.deepEqual(calls.arrange, []);
+  assert.equal(arrangeEvent.prevented, 0);
+
+  const deleteEvent = createKeyboardEvent({ key: 'Delete' });
+  handler(deleteEvent);
+  assert.equal(calls.remove, 0);
+  assert.equal(deleteEvent.prevented, 0);
+
+  const duplicateEvent = createKeyboardEvent({
+    key: 'd',
+    ctrlKey: true
+  });
+  handler(duplicateEvent);
+  assert.equal(calls.duplicate, 0);
+  assert.equal(duplicateEvent.prevented, 0);
+});
+
+test('createStudioGlobalKeydownHandler still honors shortcuts for live selections', () => {
+  const calls = {
+    arrange: [],
+    duplicate: 0
+  };
+  const handler = events.createStudioGlobalKeydownHandler({
+    isEditorActive: () => true,
+    getActiveElement: () => null,
+    getSelectedElements: () => [
+      { id: 1, isConnected: false },
+      { id: 2, isConnected: true }
+    ],
+    arrangeElementLayer(action) {
+      calls.arrange.push(action);
+    },
+    duplicateSelectedElements() {
+      calls.duplicate += 1;
+    }
+  });
+
+  const arrangeEvent = createKeyboardEvent({
+    key: ']',
+    code: 'BracketRight',
+    ctrlKey: true,
+    shiftKey: true
+  });
+  handler(arrangeEvent);
+  assert.deepEqual(calls.arrange, ['front']);
+  assert.equal(arrangeEvent.prevented, 1);
+
+  const duplicateEvent = createKeyboardEvent({
+    key: 'd',
+    ctrlKey: true
+  });
+  handler(duplicateEvent);
+  assert.equal(calls.duplicate, 1);
+  assert.equal(duplicateEvent.prevented, 1);
+});

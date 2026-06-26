@@ -1158,47 +1158,21 @@
       if (themeIconEditor) themeIconEditor.textContent = savedTheme === 'dark' ? 'light_mode' : 'dark_mode';
       
       // Bind shortcuts globally
-      document.addEventListener('keydown', (e) => {
-        const editor = document.getElementById('studioEditor');
-        if (editor.classList.contains('active') || editor.style.opacity === '1') {
-          const activeEl = document.activeElement;
-          const isTypingContext = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
-          const loweredKey = e.key.toLowerCase();
-          const isBracketShortcut = e.code === 'BracketLeft' || e.code === 'BracketRight';
-          if ((e.ctrlKey || e.metaKey) && loweredKey === 'z' && !e.shiftKey) {
-            e.preventDefault();
-            editorUndo();
-          }
-          if ((e.ctrlKey || e.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && e.shiftKey))) {
-            e.preventDefault();
-            editorRedo();
-          }
-          if (!isTypingContext && (e.ctrlKey || e.metaKey) && loweredKey === 'a') {
-            e.preventDefault();
-            selectAllElementsOnActiveSlide();
-          }
-          if (!isTypingContext && selectedElements.length > 0 && (e.ctrlKey || e.metaKey) && e.shiftKey && isBracketShortcut) {
-            e.preventDefault();
-            arrangeElementLayer(e.code === 'BracketRight' ? 'front' : 'back');
-          }
-          if (!isTypingContext && selectedElements.length > 0 && (e.ctrlKey || e.metaKey) && isBracketShortcut) {
-            e.preventDefault();
-            arrangeElementLayer(e.code === 'BracketRight' ? 'forward' : 'backward');
-          }
-          if (!isTypingContext && selectedElements.length > 0 && e.key === 'Escape') {
-            e.preventDefault();
-            deselectElement();
-          }
-          if (!isTypingContext && selectedElements.length > 0 && (e.key === 'Delete' || e.key === 'Backspace')) {
-            e.preventDefault();
-            removeSelectedElement();
-          }
-          if (!isTypingContext && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd' && selectedElements.length > 0) {
-            e.preventDefault();
-            duplicateSelectedElements();
-          }
-        }
-      });
+      document.addEventListener('keydown', SlideNextStudioEditorEvents.createStudioGlobalKeydownHandler({
+        isEditorActive: () => {
+          const editor = document.getElementById('studioEditor');
+          return !!editor && (editor.classList.contains('active') || editor.style.opacity === '1');
+        },
+        getActiveElement: () => document.activeElement,
+        getSelectedElements: () => selectedElements,
+        editorUndo,
+        editorRedo,
+        selectAllElementsOnActiveSlide,
+        arrangeElementLayer,
+        deselectElement,
+        removeSelectedElement,
+        duplicateSelectedElements
+      }));
 
       // Bind window resize for FIT zoom scaling
       window.addEventListener('resize', () => {
