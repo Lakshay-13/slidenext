@@ -4057,8 +4057,7 @@
         return;
       }
 
-      const iframe = document.getElementById('studioFrame');
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeDoc = getIframeDoc();
       if (!iframeDoc) {
         alert('Save version failed: editor frame is unavailable.');
         return;
@@ -4158,8 +4157,7 @@
     }
 
     async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
-      const iframe = document.getElementById('studioFrame');
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeDoc = getIframeDoc();
       if (!iframeDoc || isStaleEditorPersistenceTask(presentationUrl, sessionToken)) return;
       const cleanHtml = buildPersistableDeckHtml(iframeDoc);
       const persistenceContext = SlideNextStudioEditorPersistence.createStudioVersionPersistenceActionContext(

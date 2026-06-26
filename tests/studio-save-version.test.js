@@ -35,10 +35,6 @@ test('submitSaveVersion keeps the save button idle when the editor frame is unav
   const statusEl = {
     innerHTML: 'Saved to disk'
   };
-  const studioFrameEl = {
-    contentDocument: null,
-    contentWindow: {}
-  };
 
   const documentStub = {
     getElementById(id) {
@@ -49,8 +45,6 @@ test('submitSaveVersion keeps the save button idle when the editor frame is unav
           return saveBtnEl;
         case 'autoSaveStatus':
           return statusEl;
-        case 'studioFrame':
-          return studioFrameEl;
         default:
           throw new Error(`Unexpected element lookup: ${id}`);
       }
@@ -69,6 +63,9 @@ test('submitSaveVersion keeps the save button idle when the editor frame is unav
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     document: documentStub,
+    getIframeDoc() {
+      return null;
+    },
     resetStudioSaveButtonState() {
       saveBtnEl.disabled = false;
       saveBtnEl.innerHTML = '<span>Save Version</span>';
@@ -125,10 +122,6 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
     innerHTML: 'Saved to disk'
   };
   const iframeDoc = { documentElement: {} };
-  const studioFrameEl = {
-    contentDocument: iframeDoc,
-    contentWindow: { document: iframeDoc }
-  };
 
   const documentStub = {
     getElementById(id) {
@@ -139,8 +132,6 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
           return saveBtnEl;
         case 'autoSaveStatus':
           return statusEl;
-        case 'studioFrame':
-          return studioFrameEl;
         default:
           throw new Error(`Unexpected element lookup: ${id}`);
       }
@@ -159,6 +150,9 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     document: documentStub,
+    getIframeDoc() {
+      return iframeDoc;
+    },
     loadVersions() {
       loadVersionsCalls += 1;
     },
@@ -191,4 +185,41 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
   assert.equal(saveBtnEl.disabled, false);
   assert.equal(saveBtnEl.innerHTML, '<span>Save Version</span>');
   assert.equal(statusEl.innerHTML, 'Saved to disk');
+});
+
+test('executeSaveAutoVersion skips persistence when the shared iframe accessor has no live document', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const executeSaveAutoVersionSource = extractFunctionSource(
+    fileContent,
+    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
+    '\n\n    // 7. Versions and Backups listing'
+  );
+
+  let saveVersionCalls = 0;
+  const context = {
+    buildPersistableDeckHtml() {
+      return '<html>persisted</html>';
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    getIframeDoc() {
+      return null;
+    },
+    isStaleEditorPersistenceTask() {
+      return false;
+    },
+    loadVersions() {},
+    saveVersionCheckpoint: async () => {
+      saveVersionCalls += 1;
+      return { success: true };
+    },
+    SlideNextStudioEditorPersistence: editorPersistence,
+    studioEditorSessionToken: 4
+  };
+
+  vm.createContext(context);
+  vm.runInContext(executeSaveAutoVersionSource, context);
+
+  await context.executeSaveAutoVersion('Auto: Edited Text');
+
+  assert.equal(saveVersionCalls, 0);
 });
