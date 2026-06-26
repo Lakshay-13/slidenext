@@ -1017,6 +1017,7 @@
   <script src="/shared/studio-element-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
+  <script src="/shared/studio-editor-visibility-state.js"></script>
   <script src="/shared/studio-editor-transform.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
@@ -2644,14 +2645,15 @@
     }
 
     function updateVisibilityActionState() {
-      const hasSelection = selectedElements.length > 0;
-      const allHidden = hasSelection && selectedElements.every(isElementHidden);
+      const visibilityActionState = SlideNextStudioEditorVisibilityState.buildStudioVisibilityActionState(selectedElements, {
+        isHidden: isElementHidden
+      });
       const visibilityBtn = document.getElementById('toggleVisibilitySelectionBtn');
       const visibilityIcon = document.getElementById('toggleVisibilitySelectionIcon');
       const visibilityLabel = document.getElementById('toggleVisibilitySelectionLabel');
-      if (visibilityBtn) visibilityBtn.disabled = !hasSelection;
-      if (visibilityIcon) visibilityIcon.textContent = allHidden ? 'visibility' : 'visibility_off';
-      if (visibilityLabel) visibilityLabel.textContent = allHidden ? 'Show Selected' : 'Hide Selected';
+      if (visibilityBtn) visibilityBtn.disabled = !visibilityActionState.hasSelection;
+      if (visibilityIcon) visibilityIcon.textContent = visibilityActionState.allHidden ? 'visibility' : 'visibility_off';
+      if (visibilityLabel) visibilityLabel.textContent = visibilityActionState.allHidden ? 'Show Selected' : 'Hide Selected';
     }
 
     function updateMotionActionState() {
@@ -2683,9 +2685,10 @@
     }
 
     function toggleSelectedElementsVisibility() {
-      if (selectedElements.length === 0) return false;
-      const shouldHide = !selectedElements.every(isElementHidden);
-      selectedElements.forEach(el => setElementHiddenState(el, shouldHide));
+      const visibilitySelection = SlideNextStudioEditorVisibilityState.getStudioVisibilitySelection(selectedElements);
+      if (visibilitySelection.length === 0) return false;
+      const shouldHide = !visibilitySelection.every(isElementHidden);
+      visibilitySelection.forEach(el => setElementHiddenState(el, shouldHide));
       refreshSelectionClasses();
       SlideNextStudioEditorSelection.syncStudioSelectionUi(selectedElements, {
         syncSelectionOverlay,
