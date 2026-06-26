@@ -2016,9 +2016,17 @@
     }
 
     function getEditorSelectionOptions(options = {}) {
+      const doc = Object.prototype.hasOwnProperty.call(options, 'doc')
+        ? options.doc
+        : getIframeDoc();
+      const activeSlide = Object.prototype.hasOwnProperty.call(options, 'activeSlide')
+        ? options.activeSlide
+        : getActiveSlide(doc);
       return {
         selectionClassName: 'editor-selected',
-        isEligibleElement: isEligibleEditableElement,
+        isEligibleElement: (element) => {
+          return !!(isEligibleEditableElement(element) && activeSlide && activeSlide.contains(element));
+        },
         getElementId: assignEditorElementId,
         getActiveSlide,
         getElementById: getElementByEditorId,
@@ -2168,7 +2176,7 @@
       return SlideNextStudioEditorSelection.getStudioCommittedSelectedElementIds(
         selectedElements,
         doc,
-        getEditorSelectionOptions()
+        getEditorSelectionOptions({ doc })
       );
     }
 
@@ -2281,20 +2289,24 @@
       const nextSelectionState = SlideNextStudioEditorSelection.refreshStudioSelectionClasses(
         doc,
         selectedElements,
-        getEditorSelectionOptions()
+        getEditorSelectionOptions({ doc })
       );
       selectedElements = nextSelectionState.selectedElements;
       selectedElement = nextSelectionState.selectedElement;
     }
 
     function applyEditorSelectionState(nextState = {}) {
-      const normalizedSelectionState = SlideNextStudioEditorSelection.normalizeStudioSelectionState(nextState);
+      const normalizedSelectionState = SlideNextStudioEditorSelection.normalizeStudioSelectionState(
+        nextState,
+        getEditorSelectionOptions()
+      );
       selectedElements = normalizedSelectionState.selectedElements;
       selectedElement = normalizedSelectionState.selectedElement;
     }
 
     function commitEditorSelectionState(nextSelectionState, options = {}) {
       return SlideNextStudioEditorSelection.commitStudioSelectionState(nextSelectionState, {
+        ...getEditorSelectionOptions(),
         applySelectionState: applyEditorSelectionState,
         refreshSelectionClasses,
         syncSelectionOverlay,
@@ -2308,7 +2320,7 @@
       const nextSelectionState = SlideNextStudioEditorSelection.restoreStudioSelectionByIdsOnActiveSlide(
         selectedIds,
         doc,
-        getEditorSelectionOptions()
+        getEditorSelectionOptions({ doc })
       );
       applyEditorSelectionState(nextSelectionState);
       return nextSelectionState.restored;
@@ -2319,7 +2331,7 @@
         selectedIds,
         doc,
         {
-          ...getEditorSelectionOptions(),
+          ...getEditorSelectionOptions({ doc }),
           applySelectionState: applyEditorSelectionState,
           syncSelectionOverlay,
           hideDragHud,
@@ -2527,6 +2539,7 @@
         selectedElements,
         target,
         {
+          ...getEditorSelectionOptions(),
           additive: !!options.additive,
           toggle: !!options.toggle
         }
@@ -2547,7 +2560,10 @@
       if (!slide) return false;
       const nextSelection = getNormalizedSlideLayerOrder(slide);
       if (nextSelection.length === 0) return false;
-      const nextSelectionState = SlideNextStudioEditorSelection.selectAllStudioElements(nextSelection);
+      const nextSelectionState = SlideNextStudioEditorSelection.selectAllStudioElements(
+        nextSelection,
+        getEditorSelectionOptions({ activeSlide: slide })
+      );
       commitEditorSelectionState(nextSelectionState);
       return true;
     }

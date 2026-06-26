@@ -231,9 +231,10 @@ test('commitStudioSelectionState triggers the expected UI sync hooks', () => {
   });
 });
 
-test('normalizeStudioSelectionState removes stale elements and normalizes primary selection', () => {
+test('normalizeStudioSelectionState removes stale and ineligible elements and normalizes primary selection', () => {
   const staleSelectedElement = createElement('stale', { isConnected: false });
   const fallbackSelectedElement = createElement('fallback');
+  const ineligibleSelectedElement = createElement('ineligible', { ineligible: true });
 
   assert.deepEqual(selection.normalizeStudioSelectionState({
     selectedElements: [staleSelectedElement, fallbackSelectedElement],
@@ -250,12 +251,23 @@ test('normalizeStudioSelectionState removes stale elements and normalizes primar
     selectedElements: [],
     selectedElement: null
   });
+
+  assert.deepEqual(selection.normalizeStudioSelectionState({
+    selectedElements: [ineligibleSelectedElement, fallbackSelectedElement],
+    selectedElement: ineligibleSelectedElement
+  }, {
+    isEligibleElement: (element) => !element.ineligible
+  }), {
+    selectedElements: [fallbackSelectedElement],
+    selectedElement: fallbackSelectedElement
+  });
 });
 
-test('updateStudioSelection and selectAllStudioElements normalize stale inputs before building selection state', () => {
+test('updateStudioSelection and selectAllStudioElements normalize stale and ineligible inputs before building selection state', () => {
   const staleSelectedElement = createElement('stale', { isConnected: false });
   const liveSelectedElement = createElement('live');
   const targetElement = createElement('target');
+  const offSlideSelectedElement = createElement('off-slide', { ineligible: true });
 
   assert.deepEqual(selection.updateStudioSelection(
     [staleSelectedElement, liveSelectedElement],
@@ -274,10 +286,32 @@ test('updateStudioSelection and selectAllStudioElements normalize stale inputs b
     selectedElement: liveSelectedElement
   });
 
+  assert.deepEqual(selection.updateStudioSelection(
+    [offSlideSelectedElement, liveSelectedElement],
+    targetElement,
+    {
+      additive: true,
+      isEligibleElement: (element) => !element.ineligible
+    }
+  ), {
+    selectedElements: [liveSelectedElement, targetElement],
+    selectedElement: liveSelectedElement
+  });
+
   assert.deepEqual(selection.selectAllStudioElements([
     staleSelectedElement,
     liveSelectedElement
   ]), {
+    selectedElements: [liveSelectedElement],
+    selectedElement: liveSelectedElement
+  });
+
+  assert.deepEqual(selection.selectAllStudioElements([
+    offSlideSelectedElement,
+    liveSelectedElement
+  ], {
+    isEligibleElement: (element) => !element.ineligible
+  }), {
     selectedElements: [liveSelectedElement],
     selectedElement: liveSelectedElement
   });

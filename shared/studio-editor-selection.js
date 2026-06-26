@@ -10,16 +10,23 @@
     root.SlideNextStudioEditorSelection = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (liveSelection) {
-  function normalizeStudioSelectionState(nextSelectionState = {}) {
+  function normalizeStudioSelectionState(nextSelectionState = {}, options = {}) {
     const rawSelectedElements = Array.isArray(nextSelectionState.selectedElements)
       ? nextSelectionState.selectedElements
       : [];
     const selectedElements = liveSelection && typeof liveSelection.getStudioLiveSelection === 'function'
-      ? liveSelection.getStudioLiveSelection(rawSelectedElements)
-      : rawSelectedElements.filter((element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected));
+      ? liveSelection.getStudioLiveSelection(rawSelectedElements, options)
+      : rawSelectedElements.filter((element) => {
+        const isEligibleElement = typeof options.isEligibleElement === 'function'
+          ? options.isEligibleElement
+          : () => true;
+        return !!element
+          && (typeof element.isConnected !== 'boolean' || element.isConnected)
+          && isEligibleElement(element);
+      });
     const preferredSelectedElement = nextSelectionState.selectedElement;
     const selectedElement = liveSelection && typeof liveSelection.isStudioLiveSelectedElement === 'function'
-      && liveSelection.isStudioLiveSelectedElement(selectedElements, preferredSelectedElement)
+      && liveSelection.isStudioLiveSelectedElement(selectedElements, preferredSelectedElement, options)
       ? preferredSelectedElement
       : selectedElements[0] || null;
 
@@ -128,7 +135,7 @@
   function updateStudioSelection(selectedElements = [], target, options = {}) {
     const normalizedSelectionState = normalizeStudioSelectionState({
       selectedElements
-    });
+    }, options);
     const currentSelection = normalizedSelectionState.selectedElements;
     if (!target) {
       return {
@@ -164,14 +171,14 @@
     };
   }
 
-  function selectAllStudioElements(elements = []) {
+  function selectAllStudioElements(elements = [], options = {}) {
     return normalizeStudioSelectionState({
       selectedElements: elements
-    });
+    }, options);
   }
 
   function commitStudioSelectionState(nextSelectionState = {}, options = {}) {
-    const normalizedSelectionState = normalizeStudioSelectionState(nextSelectionState);
+    const normalizedSelectionState = normalizeStudioSelectionState(nextSelectionState, options);
     const selectedElements = normalizedSelectionState.selectedElements;
     const selectedElement = normalizedSelectionState.selectedElement;
     const applySelectionState = typeof options.applySelectionState === 'function'
