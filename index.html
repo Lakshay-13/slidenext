@@ -3611,38 +3611,34 @@
     }
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
-      const hasPersistedCurrentHtml = isCurrentDeckHtmlPersisted(cleanHtml);
-      const saveRequestBody = hasPersistedCurrentHtml
-        ? null
-        : buildEditorSaveRequestBody(options.doc, cleanHtml, {
-            presentationUrl,
-            versionLabel
-          });
-      const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
+      const persistencePlan = SlideNextStudioEditorPersistence.buildStudioPersistenceRequestPlan(
         presentationUrl,
         cleanHtml,
         {
-          shouldUpdatePersistedHtml: !hasPersistedCurrentHtml,
-          canonicalDeck: saveRequestBody && saveRequestBody.canonicalDeck,
+          isPersistedHtml: isCurrentDeckHtmlPersisted,
+          buildSaveRequestBody: () => buildEditorSaveRequestBody(options.doc, cleanHtml, {
+            presentationUrl,
+            versionLabel
+          }),
           sessionToken: options.sessionToken
         }
       );
-      const response = await fetch(hasPersistedCurrentHtml ? '/api/versions/create' : '/api/save', {
+      const response = await fetch(persistencePlan.hasPersistedCurrentHtml ? '/api/versions/create' : '/api/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
-          hasPersistedCurrentHtml
+          persistencePlan.hasPersistedCurrentHtml
             ? {
                 htmlPath: presentationUrl,
                 versionLabel
               }
-            : saveRequestBody
+            : persistencePlan.saveRequestBody
         )
       });
       const data = await response.json();
 
       if (data.success) {
-        SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
+        SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistencePlan.persistenceContext, {
           getCurrentPresentationUrl: () => currentPresentationUrl,
           getCurrentSessionToken: () => studioEditorSessionToken,
           setPersistedHtml: (nextHtml) => {
@@ -3674,20 +3670,20 @@
         const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
         if (!iframeDoc || isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
         const cleanHtml = buildPersistableDeckHtml(iframeDoc);
-        const saveRequestBody = buildEditorSaveRequestBody(iframeDoc, cleanHtml, {
-          presentationUrl: scheduledPresentationUrl,
-          isAutoSave: true
-        });
-        const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
+        const persistencePlan = SlideNextStudioEditorPersistence.buildStudioPersistenceRequestPlan(
           scheduledPresentationUrl,
           cleanHtml,
           {
-            canonicalDeck: saveRequestBody.canonicalDeck,
+            isPersistedHtml: isCurrentDeckHtmlPersisted,
+            buildSaveRequestBody: () => buildEditorSaveRequestBody(iframeDoc, cleanHtml, {
+              presentationUrl: scheduledPresentationUrl,
+              isAutoSave: true
+            }),
             sessionToken: scheduledSessionToken
           }
         );
 
-        if (isCurrentDeckHtmlPersisted(cleanHtml)) {
+        if (persistencePlan.hasPersistedCurrentHtml) {
           if (statusEl) {
             statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
           }
@@ -3698,12 +3694,12 @@
           const response = await fetch('/api/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(saveRequestBody)
+            body: JSON.stringify(persistencePlan.saveRequestBody)
           });
           
           const data = await response.json();
           if (data.success) {
-            SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
+            SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistencePlan.persistenceContext, {
               getCurrentPresentationUrl: () => currentPresentationUrl,
               getCurrentSessionToken: () => studioEditorSessionToken,
               setPersistedHtml: (nextHtml) => {
@@ -3719,7 +3715,7 @@
               }
             });
           } else {
-            SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
+            SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistencePlan.persistenceContext, {
               getCurrentPresentationUrl: () => currentPresentationUrl,
               getCurrentSessionToken: () => studioEditorSessionToken,
               onFailure: () => {
@@ -3731,7 +3727,7 @@
           }
         } catch (err) {
           console.error('AutoSave Error:', err);
-          SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
+          SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistencePlan.persistenceContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
             getCurrentSessionToken: () => studioEditorSessionToken,
             onFailure: () => {

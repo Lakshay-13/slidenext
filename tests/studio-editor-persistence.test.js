@@ -134,6 +134,83 @@ test('buildStudioSaveRequestBody includes canonical deck sidecars only when they
   );
 });
 
+test('buildStudioPersistenceRequestPlan reuses persisted-html checks to skip redundant save payloads', () => {
+  const canonicalDeck = {
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+  const buildSaveRequestBodyCalls = [];
+
+  const persistedPlan = editorPersistence.buildStudioPersistenceRequestPlan(
+    '/presentations/onboarding-presentation/index.html',
+    '<html></html>',
+    {
+      isPersistedHtml: () => true,
+      buildSaveRequestBody() {
+        buildSaveRequestBodyCalls.push('persisted');
+        return { shouldNotBeBuilt: true };
+      },
+      sessionToken: 4
+    }
+  );
+
+  assert.deepEqual(persistedPlan, {
+    hasPersistedCurrentHtml: true,
+    saveRequestBody: null,
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      cleanHtml: '<html></html>',
+      shouldUpdatePersistedHtml: false,
+      sessionToken: 4
+    }
+  });
+  assert.deepEqual(buildSaveRequestBodyCalls, []);
+
+  const dirtyPlan = editorPersistence.buildStudioPersistenceRequestPlan(
+    '/presentations/onboarding-presentation/index.html',
+    '<html>changed</html>',
+    {
+      isPersistedHtml: () => false,
+      buildSaveRequestBody() {
+        buildSaveRequestBodyCalls.push('dirty');
+        return editorPersistence.buildStudioSaveRequestBody(
+          '/presentations/onboarding-presentation/index.html',
+          '<html>changed</html>',
+          {
+            canonicalDeck
+          }
+        );
+      },
+      sessionToken: 5
+    }
+  );
+
+  assert.deepEqual(dirtyPlan, {
+    hasPersistedCurrentHtml: false,
+    saveRequestBody: {
+      htmlPath: '/presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>changed</html>',
+      isAutoSave: false,
+      canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeck)
+    },
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      cleanHtml: '<html>changed</html>',
+      shouldUpdatePersistedHtml: true,
+      canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeck),
+      sessionToken: 5
+    }
+  });
+  assert.deepEqual(buildSaveRequestBodyCalls, ['dirty']);
+});
+
 test('resolveStudioPersistenceCanonicalDeck normalizes valid deck-like payloads and rejects malformed ones', () => {
   assert.deepEqual(
     editorPersistence.resolveStudioPersistenceCanonicalDeck({

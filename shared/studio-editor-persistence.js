@@ -91,6 +91,35 @@
     return body;
   }
 
+  function buildStudioPersistenceRequestPlan(presentationUrl = '', cleanHtml = '', options = {}) {
+    const hasPersistedCurrentHtml = typeof options.isPersistedHtml === 'function'
+      ? !!options.isPersistedHtml(cleanHtml)
+      : false;
+    const buildSaveRequestBody = typeof options.buildSaveRequestBody === 'function'
+      ? options.buildSaveRequestBody
+      : null;
+    const saveRequestBody = !hasPersistedCurrentHtml && buildSaveRequestBody
+      ? buildSaveRequestBody(cleanHtml)
+      : null;
+
+    return {
+      hasPersistedCurrentHtml,
+      saveRequestBody,
+      persistenceContext: createStudioPersistenceActionContext(
+        presentationUrl,
+        cleanHtml,
+        {
+          shouldUpdatePersistedHtml: !hasPersistedCurrentHtml,
+          canonicalDeck: saveRequestBody && saveRequestBody.canonicalDeck,
+          sessionToken: options.sessionToken,
+          createCanonicalDeck: options.createCanonicalDeck,
+          isCanonicalDeck: options.isCanonicalDeck,
+          resolvePresentationCanonicalDeck: options.resolvePresentationCanonicalDeck
+        }
+      )
+    };
+  }
+
   function isStudioPersistenceActionCurrent(context = {}, options = {}) {
     const requestedPresentationUrl = normalizeString(context.presentationUrl);
     if (!requestedPresentationUrl) {
@@ -151,6 +180,7 @@
     resolveStudioPersistenceCanonicalDeck,
     createStudioPersistenceActionContext,
     buildStudioSaveRequestBody,
+    buildStudioPersistenceRequestPlan,
     isStudioPersistenceActionCurrent,
     handleStudioPersistenceSuccess,
     handleStudioPersistenceFailure
