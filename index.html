@@ -4154,8 +4154,9 @@
       }
 
       const iframeDoc = getIframeDoc();
-      if (!iframeDoc) {
-        alert('Save version failed: editor frame is unavailable.');
+      const cleanHtml = buildPersistableDeckHtml(iframeDoc);
+      if (!cleanHtml) {
+        alert('Save version failed: editor content is unavailable.');
         return;
       }
 
@@ -4166,7 +4167,6 @@
 
       setStudioSaveButtonState('saving-version');
 
-      const cleanHtml = buildPersistableDeckHtml(iframeDoc);
       const persistenceContext = SlideNextStudioEditorPersistence.createStudioVersionPersistenceActionContext(
         scheduledPresentationUrl,
         cleanHtml,
@@ -4241,8 +4241,9 @@
 
     async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
       const iframeDoc = getIframeDoc();
-      if (!iframeDoc || isStaleEditorPersistenceTask(presentationUrl, sessionToken)) return;
+      if (isStaleEditorPersistenceTask(presentationUrl, sessionToken)) return;
       const cleanHtml = buildPersistableDeckHtml(iframeDoc);
+      if (!cleanHtml) return;
       const persistenceContext = SlideNextStudioEditorPersistence.createStudioVersionPersistenceActionContext(
         presentationUrl,
         cleanHtml,
