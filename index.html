@@ -1016,6 +1016,7 @@
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-element-state.js"></script>
   <script src="/shared/studio-editor-live-selection.js"></script>
+  <script src="/shared/studio-editor-selection-bounds.js"></script>
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
@@ -2404,23 +2405,13 @@
 
     function getSelectionBounds(elements = selectedElements, slideMetrics = null) {
       const slide = getActiveSlide();
-      if (!slide || !elements || elements.length === 0) return null;
+      if (!slide) return null;
       const metrics = slideMetrics || getSlideMetrics(slide);
-      const measurableElements = elements.filter(el => !isElementHidden(el));
-      if (measurableElements.length === 0) return null;
-      const rects = measurableElements.map(el => getRectOnSlide(el.getBoundingClientRect(), metrics));
-      const left = Math.min(...rects.map(r => r.left));
-      const top = Math.min(...rects.map(r => r.top));
-      const right = Math.max(...rects.map(r => r.right));
-      const bottom = Math.max(...rects.map(r => r.bottom));
-      return {
-        left,
-        top,
-        right,
-        bottom,
-        width: Math.max(MIN_ELEMENT_SIZE_PX, right - left),
-        height: Math.max(MIN_ELEMENT_SIZE_PX, bottom - top)
-      };
+      return SlideNextStudioEditorSelectionBounds.buildStudioSelectionBounds(elements, {
+        minSizePx: MIN_ELEMENT_SIZE_PX,
+        isHidden: isElementHidden,
+        getElementBounds: (element) => getRectOnSlide(element.getBoundingClientRect(), metrics)
+      });
     }
 
     function syncSelectionOverlay() {
