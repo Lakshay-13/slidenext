@@ -143,13 +143,13 @@
         selectAllElementsOnActiveSlide();
         return;
       }
-      if (hasSelection && (event.ctrlKey || event.metaKey) && event.shiftKey && isBracketShortcut) {
+      if (deckShortcutReady && hasSelection && (event.ctrlKey || event.metaKey) && event.shiftKey && isBracketShortcut) {
         event.preventDefault();
         event.stopPropagation();
         arrangeElementLayer(event.code === 'BracketRight' ? 'front' : 'back');
         return;
       }
-      if (hasSelection && (event.ctrlKey || event.metaKey) && isBracketShortcut) {
+      if (deckShortcutReady && hasSelection && (event.ctrlKey || event.metaKey) && isBracketShortcut) {
         event.preventDefault();
         event.stopPropagation();
         arrangeElementLayer(event.code === 'BracketRight' ? 'forward' : 'backward');
@@ -278,12 +278,12 @@
         selectAllElementsOnActiveSlide();
         return;
       }
-      if (!typingContext && hasSelection && (event.ctrlKey || event.metaKey) && event.shiftKey && isBracketShortcut) {
+      if (!typingContext && deckShortcutReady && hasSelection && (event.ctrlKey || event.metaKey) && event.shiftKey && isBracketShortcut) {
         event.preventDefault();
         arrangeElementLayer(event.code === 'BracketRight' ? 'front' : 'back');
         return;
       }
-      if (!typingContext && hasSelection && (event.ctrlKey || event.metaKey) && isBracketShortcut) {
+      if (!typingContext && deckShortcutReady && hasSelection && (event.ctrlKey || event.metaKey) && isBracketShortcut) {
         event.preventDefault();
         arrangeElementLayer(event.code === 'BracketRight' ? 'forward' : 'backward');
         return;

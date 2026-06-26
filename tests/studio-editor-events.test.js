@@ -161,6 +161,7 @@ test('createStudioFrameKeydownHandler still honors shortcuts for live selections
 
 test('createStudioFrameKeydownHandler skips deck-level paste and select-all shortcuts until the active slide is ready', () => {
   const calls = {
+    arrange: [],
     copy: 0,
     duplicate: 0,
     undo: 0,
@@ -172,6 +173,9 @@ test('createStudioFrameKeydownHandler skips deck-level paste and select-all shor
     getActiveElement: () => null,
     getSelectedElements: () => [{ id: 1, isConnected: true }],
     canMutateDeck: () => false,
+    arrangeElementLayer(action) {
+      calls.arrange.push(action);
+    },
     copySelectedElements() {
       calls.copy += 1;
     },
@@ -245,6 +249,16 @@ test('createStudioFrameKeydownHandler skips deck-level paste and select-all shor
   assert.equal(calls.duplicate, 0);
   assert.equal(duplicateEvent.prevented, 0);
   assert.equal(duplicateEvent.stopped, 0);
+
+  const arrangeEvent = createKeyboardEvent({
+    key: ']',
+    code: 'BracketRight',
+    ctrlKey: true
+  });
+  handler(arrangeEvent);
+  assert.deepEqual(calls.arrange, []);
+  assert.equal(arrangeEvent.prevented, 0);
+  assert.equal(arrangeEvent.stopped, 0);
 
   const nextSlideEvent = createKeyboardEvent({
     key: 'PageDown'
@@ -445,6 +459,7 @@ test('createStudioGlobalKeydownHandler still honors shortcuts for live selection
 
 test('createStudioGlobalKeydownHandler skips deck-level paste and select-all shortcuts until the active slide is ready', () => {
   const calls = {
+    arrange: [],
     copy: 0,
     duplicate: 0,
     undo: 0,
@@ -457,6 +472,9 @@ test('createStudioGlobalKeydownHandler skips deck-level paste and select-all sho
     getActiveElement: () => null,
     getSelectedElements: () => [{ id: 1, isConnected: true }],
     canMutateDeck: () => false,
+    arrangeElementLayer(action) {
+      calls.arrange.push(action);
+    },
     copySelectedElements() {
       calls.copy += 1;
     },
@@ -524,6 +542,15 @@ test('createStudioGlobalKeydownHandler skips deck-level paste and select-all sho
   handler(duplicateEvent);
   assert.equal(calls.duplicate, 0);
   assert.equal(duplicateEvent.prevented, 0);
+
+  const arrangeEvent = createKeyboardEvent({
+    key: ']',
+    code: 'BracketRight',
+    ctrlKey: true
+  });
+  handler(arrangeEvent);
+  assert.deepEqual(calls.arrange, []);
+  assert.equal(arrangeEvent.prevented, 0);
 });
 
 test('createStudioGlobalKeydownHandler does not intercept undo and redo while typing', () => {
