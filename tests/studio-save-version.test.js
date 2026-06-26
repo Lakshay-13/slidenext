@@ -241,3 +241,85 @@ test('executeSaveAutoVersion skips persistence when the shared iframe accessor h
 
   assert.equal(saveVersionCalls, 0);
 });
+
+test('triggerAutoSave skips persistence when the shared iframe accessor has no live document', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const triggerAutoSaveSource = extractFunctionSource(
+    fileContent,
+    'function triggerAutoSave() {',
+    '\n\n    // Custom styled checkpoint version modal controls'
+  );
+
+  let scheduledCallback = null;
+  let buildPersistableDeckHtmlCalls = 0;
+  let fetchCalls = 0;
+  let saveRequestBodyCalls = 0;
+  const statusEl = {
+    innerHTML: 'Saved to disk'
+  };
+
+  const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
+    autoSaveDebounceTimer: null,
+    buildEditorSaveRequestBody() {
+      saveRequestBodyCalls += 1;
+      return {};
+    },
+    buildPersistableDeckHtml() {
+      buildPersistableDeckHtmlCalls += 1;
+      return '<html>persisted</html>';
+    },
+    clearTimeout() {},
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    document: {
+      getElementById(id) {
+        if (id === 'autoSaveStatus') {
+          return statusEl;
+        }
+        throw new Error(`Unexpected element lookup: ${id}`);
+      }
+    },
+    fetch: async () => {
+      fetchCalls += 1;
+      return {
+        async json() {
+          return { success: true };
+        }
+      };
+    },
+    getIframeDoc() {
+      return null;
+    },
+    isCurrentDeckHtmlPersisted() {
+      return false;
+    },
+    isStaleEditorPersistenceTask() {
+      return false;
+    },
+    setCurrentPresentationCanonicalDeck() {},
+    setTimeout(callback) {
+      scheduledCallback = callback;
+      return 1;
+    },
+    studioEditorSessionToken: 9
+  };
+
+  vm.createContext(context);
+  vm.runInContext(triggerAutoSaveSource, context);
+
+  context.triggerAutoSave();
+  assert.match(statusEl.innerHTML, /Saving/);
+  assert.equal(typeof scheduledCallback, 'function');
+
+  await scheduledCallback();
+
+  assert.equal(buildPersistableDeckHtmlCalls, 0);
+  assert.equal(saveRequestBodyCalls, 0);
+  assert.equal(fetchCalls, 0);
+});

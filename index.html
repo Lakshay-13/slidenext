@@ -3671,8 +3671,7 @@
       clearTimeout(autoSaveDebounceTimer);
       autoSaveDebounceTimer = setTimeout(async () => {
         autoSaveDebounceTimer = null;
-        const iframe = document.getElementById('studioFrame');
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        const iframeDoc = getIframeDoc();
         if (!iframeDoc || isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
         const cleanHtml = buildPersistableDeckHtml(iframeDoc);
         const persistencePlan = SlideNextStudioEditorPersistence.buildStudioPersistenceRequestPlan(
