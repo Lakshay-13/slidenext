@@ -88,6 +88,9 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
     currentPresentationUrl: '',
     currentSlideIndex: 0,
     currentTitle: '',
+    getStudioFrame() {
+      return elements.studioFrame;
+    },
     document: {
       body: {
         style: {}
@@ -137,6 +140,92 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
     '/presentations/onboarding-presentation/index.html',
     1
   ]]);
+});
+
+test('closeStudioEditor reuses the shared frame accessor before clearing the editor shell state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const closeStudioEditorSource = extractFunctionSource(
+    fileContent,
+    'function closeStudioEditor() {',
+    '\n\n    // Initialize Frame Hooks'
+  );
+
+  const studioFrame = {
+    onload: function existingHandler() {},
+    src: '/presentations/onboarding-presentation/index.html'
+  };
+  const studioEditor = {
+    classList: createClassList(['active']),
+    style: {
+      opacity: '1',
+      pointerEvents: 'auto'
+    }
+  };
+  let getStudioFrameCalls = 0;
+  let loadPresentationsCalls = 0;
+
+  const context = {
+    currentCategory: 'General',
+    currentPresentationMetadata: { id: 'deck-1' },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentSlideIndex: 2,
+    currentTitle: 'Project Onboarding',
+    deselectElement() {},
+    document: {
+      body: {
+        style: {
+          overflow: 'hidden'
+        }
+      },
+      getElementById(id) {
+        if (id === 'studioEditor') return studioEditor;
+        throw new Error(`Unexpected element lookup: ${id}`);
+      }
+    },
+    getStudioFrame() {
+      getStudioFrameCalls += 1;
+      return studioFrame;
+    },
+    loadPresentations() {
+      loadPresentationsCalls += 1;
+    },
+    resetEditorDeckPersistenceState() {},
+    resetEditorHistoryState() {},
+    resetEditorPersistenceTimers() {},
+    resetStudioDeckUiState() {},
+    resetStudioPresentationUiState() {},
+    resetStudioSaveButtonState() {},
+    resetStudioSourceViewUiState() {},
+    resetStudioVersionUiState() {},
+    setTimeout(callback) {
+      callback();
+      return 1;
+    },
+    studioEditorSessionToken: 4,
+    teardownDeckActiveSlideSync() {},
+    updateDeckReadyToolbarActionState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(closeStudioEditorSource, context);
+
+  context.closeStudioEditor();
+
+  assert.equal(getStudioFrameCalls, 1);
+  assert.equal(studioFrame.onload, null);
+  assert.equal(studioFrame.src, '');
+  assert.equal(studioEditor.classList.contains('active'), false);
+  assert.equal(studioEditor.classList.contains('hidden'), true);
+  assert.equal(studioEditor.style.opacity, '0');
+  assert.equal(studioEditor.style.pointerEvents, 'none');
+  assert.equal(context.currentPresentationUrl, '');
+  assert.equal(context.currentTitle, '');
+  assert.equal(context.currentCategory, '');
+  assert.equal(context.currentSlideIndex, 0);
+  assert.equal(context.currentPresentationMetadata, null);
+  assert.equal(context.studioEditorSessionToken, 5);
+  assert.equal(context.document.body.style.overflow, '');
+  assert.equal(loadPresentationsCalls, 1);
 });
 
 test('loadCurrentPresentationMetadata reuses current session readers when delegating to the deck context', async () => {

@@ -1530,6 +1530,10 @@
     });
 
     // 3. Studio Presentation Workspace Mode
+    function getStudioFrame() {
+      return document.getElementById('studioFrame');
+    }
+
     function launchStudioEditor(url, title, category) {
       const editorSessionToken = ++studioEditorSessionToken;
       const currentStudioSessionStateReaders = createCurrentStudioSessionStateReaders();
@@ -1544,7 +1548,7 @@
       resetEditorHistoryState({ syncButtons: true });
       
       const editor = document.getElementById('studioEditor');
-      const iframe = document.getElementById('studioFrame');
+      const iframe = getStudioFrame();
       
       document.getElementById('studioCategoryLabel').textContent = currentCategory;
       document.getElementById('studioTitleLabel').textContent = currentTitle;
@@ -1597,7 +1601,7 @@
 
     function closeStudioEditor() {
       const editor = document.getElementById('studioEditor');
-      const iframe = document.getElementById('studioFrame');
+      const iframe = getStudioFrame();
       studioEditorSessionToken += 1;
       teardownDeckActiveSlideSync();
       currentPresentationUrl = '';
@@ -1976,12 +1980,12 @@
     }
 
     function getIframeDoc() {
-      const iframe = document.getElementById('studioFrame');
+      const iframe = getStudioFrame();
       return iframe ? (iframe.contentDocument || iframe.contentWindow.document) : null;
     }
 
     function getIframeWindow() {
-      const iframe = document.getElementById('studioFrame');
+      const iframe = getStudioFrame();
       return iframe ? iframe.contentWindow || null : null;
     }
 
