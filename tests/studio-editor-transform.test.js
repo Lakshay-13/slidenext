@@ -153,6 +153,24 @@ test('buildStudioTransformPointerSelectionPlan makes transform target reselectio
   });
 });
 
+test('shouldHandleStudioTransformPointerEvent only accepts events for the active transform pointer', () => {
+  assert.equal(transformState.shouldHandleStudioTransformPointerEvent({
+    pointerId: 7
+  }, {
+    pointerId: 7
+  }), true);
+
+  assert.equal(transformState.shouldHandleStudioTransformPointerEvent({
+    pointerId: 7
+  }, {
+    pointerId: 8
+  }), false);
+
+  assert.equal(transformState.shouldHandleStudioTransformPointerEvent(null, {
+    pointerId: 7
+  }), false);
+});
+
 test('isStudioFreeformPositioned only accepts absolute and fixed positioned elements', () => {
   const view = {
     getComputedStyle(element) {

@@ -55,6 +55,13 @@
     };
   }
 
+  function shouldHandleStudioTransformPointerEvent(session = {}, event = {}) {
+    if (!session) {
+      return false;
+    }
+    return event && event.pointerId === session.pointerId;
+  }
+
   function canStudioTransformSelection(elements = [], options = {}) {
     return buildStudioTransformSelectionState(elements, options).canTransform;
   }
@@ -559,6 +566,7 @@
     getStudioTransformSelection,
     buildStudioTransformSelectionState,
     buildStudioTransformPointerSelectionPlan,
+    shouldHandleStudioTransformPointerEvent,
     canStudioTransformSelection,
     isStudioFreeformPositioned,
     buildStudioTransformSizingLockState,

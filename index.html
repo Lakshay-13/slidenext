@@ -3032,7 +3032,7 @@
       }, true);
 
       doc.body.addEventListener('pointermove', (e) => {
-        if (!session || e.pointerId !== session.pointerId) return;
+        if (!SlideNextStudioEditorTransform.shouldHandleStudioTransformPointerEvent(session, e)) return;
         const pointer = getPointerOnSlide(e, session.slideMetrics);
         const motionState = SlideNextStudioEditorTransform.buildStudioTransformMotionState(session, {
           pointer,
@@ -3064,12 +3064,12 @@
       }, true);
 
       doc.body.addEventListener('pointerup', (e) => {
-        if (!session || e.pointerId !== session.pointerId) return;
+        if (!SlideNextStudioEditorTransform.shouldHandleStudioTransformPointerEvent(session, e)) return;
         finalizeDragSession();
       }, true);
 
       doc.body.addEventListener('pointercancel', (e) => {
-        if (!session || e.pointerId !== session.pointerId) return;
+        if (!SlideNextStudioEditorTransform.shouldHandleStudioTransformPointerEvent(session, e)) return;
         finalizeDragSession();
       }, true);
 
