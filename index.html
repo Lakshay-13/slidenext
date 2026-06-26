@@ -3157,6 +3157,10 @@
         if (e.button !== 0 || e.isPrimary === false) return;
         const slide = getActiveSlide(doc);
         if (!slide) return;
+        const getTransformSelectionState = () => SlideNextStudioEditorTransform.buildStudioTransformSelectionState(selectedElements, {
+          isLocked: isElementLocked,
+          isFreeformPositioned: isElementFreeformPositioned
+        });
 
         const handle = e.target.closest('.editor-resize-handle');
         const overlay = e.target.closest('#editorSelectionOverlay');
@@ -3164,26 +3168,28 @@
 
         if (!handle && !overlay && !dragTarget) return;
 
-        if (dragTarget && !selectedElements.includes(dragTarget)) {
+        let transformSelectionState = getTransformSelectionState();
+        if (dragTarget && !transformSelectionState.selection.includes(dragTarget)) {
           selectElement(dragTarget, { additive: e.shiftKey, toggle: e.shiftKey });
+          transformSelectionState = getTransformSelectionState();
         }
 
-        if (!handle && !overlay && dragTarget && selectedElements.length === 0) {
+        if (!handle && !overlay && dragTarget && transformSelectionState.selection.length === 0) {
           selectElement(dragTarget);
+          transformSelectionState = getTransformSelectionState();
         }
 
-        if (selectedElements.length === 0) return;
-        if (selectionHasLockedElements()) return;
-        if (!selectionSupportsFreeformTransforms()) return;
+        if (!transformSelectionState.canTransform) return;
+        const dragSelection = transformSelectionState.selection;
 
         const slideMetrics = getSlideMetrics(slide);
         const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
         const startPointer = getPointerOnSlide(e, slideMetrics);
-        const startBounds = getSelectionBounds(selectedElements, slideMetrics);
+        const startBounds = getSelectionBounds(dragSelection, slideMetrics);
         if (!startBounds) return;
         const overlayNode = ensureSelectionOverlay(doc, slide);
 
-        const items = selectedElements.map(el => {
+        const items = dragSelection.map(el => {
           const rect = el.getBoundingClientRect();
           const parent = getClosestPositionedAncestor(el);
           const parentRect = parent.getBoundingClientRect();

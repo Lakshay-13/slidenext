@@ -20,10 +20,17 @@ test('canStudioTransformSelection allows connected unlocked freeform selections'
   }), true);
 });
 
-test('canStudioTransformSelection rejects disconnected selections', () => {
+test('canStudioTransformSelection ignores disconnected stale selections', () => {
   assert.equal(transformState.canStudioTransformSelection([
     { id: 1, isConnected: false },
     { id: 2, isConnected: true }
+  ], {
+    isLocked: () => false,
+    isFreeformPositioned: () => true
+  }), true);
+
+  assert.equal(transformState.canStudioTransformSelection([
+    { id: 1, isConnected: false }
   ], {
     isLocked: () => false,
     isFreeformPositioned: () => true
@@ -45,4 +52,27 @@ test('canStudioTransformSelection rejects locked or non-freeform selections', ()
     isLocked: () => false,
     isFreeformPositioned: () => false
   }), false);
+});
+
+test('buildStudioTransformSelectionState returns filtered live selections and transform state', () => {
+  assert.deepEqual(transformState.buildStudioTransformSelectionState([
+    { id: 1, isConnected: false },
+    { id: 2, isConnected: true }
+  ], {
+    isLocked: () => false,
+    isFreeformPositioned: () => true
+  }), {
+    selection: [{ id: 2, isConnected: true }],
+    canTransform: true
+  });
+
+  assert.deepEqual(transformState.buildStudioTransformSelectionState([
+    { id: 1, isConnected: true }
+  ], {
+    isLocked: () => true,
+    isFreeformPositioned: () => true
+  }), {
+    selection: [{ id: 1, isConnected: true }],
+    canTransform: false
+  });
 });
