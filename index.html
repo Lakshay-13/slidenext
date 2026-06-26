@@ -1014,6 +1014,7 @@
   <script src="/shared/studio-deck-context.js"></script>
   <script src="/shared/deck-model.js"></script>
   <script src="/shared/deck-render.js"></script>
+  <script src="/shared/studio-element-state.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
@@ -2596,7 +2597,7 @@
     }
 
     function isElementLocked(el) {
-      return !!(el && el.dataset && el.dataset.editorLocked === 'true');
+      return SlideNextStudioElementState.isStudioElementLocked(el);
     }
 
     function selectionHasLockedElements(elements = selectedElements) {
@@ -2614,30 +2615,12 @@
     }
 
     function isElementHidden(el) {
-      return !!(el && el.dataset && el.dataset.editorHidden === 'true');
+      return SlideNextStudioElementState.isStudioElementHidden(el);
     }
 
     function setElementHiddenState(el, hidden) {
       if (!el || !el.isConnected) return;
-      if (hidden) {
-        if (!Object.prototype.hasOwnProperty.call(el.dataset, 'editorPrevDisplay')) {
-          el.dataset.editorPrevDisplay = el.style.display || '';
-        }
-        el.dataset.editorHidden = 'true';
-        el.style.display = 'none';
-        return;
-      }
-
-      const prevDisplay = Object.prototype.hasOwnProperty.call(el.dataset, 'editorPrevDisplay')
-        ? el.dataset.editorPrevDisplay
-        : '';
-      if (prevDisplay) {
-        el.style.display = prevDisplay;
-      } else {
-        el.style.removeProperty('display');
-      }
-      delete el.dataset.editorHidden;
-      delete el.dataset.editorPrevDisplay;
+      SlideNextStudioElementState.setStudioElementHiddenState(el, hidden);
     }
 
     function updateLockActionState() {
