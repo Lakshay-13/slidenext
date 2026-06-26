@@ -2408,7 +2408,7 @@
       overlay.style.top = `${bounds.top}px`;
       overlay.style.width = `${bounds.width}px`;
       overlay.style.height = `${bounds.height}px`;
-      const canTransform = selectionSupportsFreeformTransforms(getLiveSelectedElements());
+      const canTransform = getTransformSelectionState().canTransform;
       overlay.style.pointerEvents = canTransform ? 'auto' : 'none';
       overlay.style.opacity = '1';
       const hideHandles = !canTransform;
@@ -2538,6 +2538,13 @@
       return SlideNextStudioEditorLiveSelection.getStudioLiveSelection(elements);
     }
 
+    function getTransformSelectionState(elements = selectedElements) {
+      return SlideNextStudioEditorTransform.buildStudioTransformSelectionState(elements, {
+        isLocked: isElementLocked,
+        isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
+      });
+    }
+
     function selectionHasLockedElements(elements = selectedElements) {
       return SlideNextStudioEditorLiveSelection.hasStudioLockedLiveSelection(elements, {
         isLocked: isElementLocked
@@ -2545,10 +2552,7 @@
     }
 
     function selectionSupportsFreeformTransforms(elements = selectedElements) {
-      return SlideNextStudioEditorTransform.canStudioTransformSelection(elements, {
-        isLocked: isElementLocked,
-        isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
-      });
+      return getTransformSelectionState(elements).canTransform;
     }
 
     function isElementHidden(el) {
@@ -2936,10 +2940,6 @@
 
       doc.body.addEventListener('pointerdown', (e) => {
         const slide = getActiveSlide(doc);
-        const getTransformSelectionState = () => SlideNextStudioEditorTransform.buildStudioTransformSelectionState(selectedElements, {
-          isLocked: isElementLocked,
-          isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
-        });
         const transformSessionStart = SlideNextStudioEditorTransform.resolveStudioTransformSessionStart({
           slide,
           event: e,
