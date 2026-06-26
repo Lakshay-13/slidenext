@@ -1735,6 +1735,7 @@
       const iframeDoc = getIframeDoc();
       const deckSnapshot = buildEditorDeckSnapshot(iframeDoc);
       const slides = deckSnapshot.slides;
+      const canMutateSlides = !!iframeDoc;
       const canDeleteSlides = slides.length > 1;
       
       const listContainer = document.getElementById('thumbnailsList');
@@ -1748,10 +1749,10 @@
         
         // Build card element
         const thumbCard = document.createElement('div');
-        thumbCard.className = `glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all ${
+        thumbCard.className = `glass-card p-3 border ${canMutateSlides ? 'cursor-pointer' : 'cursor-default'} relative group flex items-start gap-3 select-none transition-all ${
           isActive ? 'border-[#7028d0] bg-[#7028d0]/5 shadow-[0_0_15px_rgba(112,40,208,0.1)]' : 'border-white/5 bg-[#0a0a0a]/40 hover:border-white/20'
         }`;
-        thumbCard.draggable = true;
+        thumbCard.draggable = canMutateSlides;
         thumbCard.dataset.index = slide.index;
         thumbCard.dataset.slideId = slide.id;
         
@@ -1764,20 +1765,22 @@
             <h4 class="text-xs font-semibold text-white truncate font-sans">${slide.title}</h4>
             <p class="text-[10px] text-zinc-500 font-mono uppercase mt-0.5">${slide.backgroundLabel}</p>
           </div>
-          ${canDeleteSlides ? `
+          ${canDeleteSlides && canMutateSlides ? `
             <button onclick="event.stopPropagation(); deleteSlideNodeById('${slide.id}')" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-500/20 text-zinc-500 hover:text-rose-400 rounded transition-all absolute right-2 top-2.5" title="Delete Slide">
               <span class="material-symbols-outlined text-[15px]">delete</span>
             </button>
           ` : ''}
         `;
         
-        // Bind Click navigation
-        thumbCard.addEventListener('click', () => {
-          setActiveSlideById(slide.id, undefined, { captureHistory: true });
-        });
-        
-        // Bind HTML5 drag events
-        setupDragAndDropThumbnail(thumbCard);
+        if (canMutateSlides) {
+          // Bind Click navigation
+          thumbCard.addEventListener('click', () => {
+            setActiveSlideById(slide.id, undefined, { captureHistory: true });
+          });
+          
+          // Bind HTML5 drag events
+          setupDragAndDropThumbnail(thumbCard);
+        }
         
         listContainer.appendChild(thumbCard);
       });

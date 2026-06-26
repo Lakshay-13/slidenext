@@ -38,8 +38,11 @@ function createThumbCard() {
     draggable: false,
     dataset: {},
     innerHTML: '',
+    listeners: [],
     style: {},
-    addEventListener() {}
+    addEventListener(type, handler) {
+      this.listeners.push({ type, handler });
+    }
   };
 }
 
@@ -126,4 +129,81 @@ test('generateThumbnails hides the slide delete affordance when only one slide r
   assert.match(thumbnailsList.children[0].innerHTML, /deleteSlideNodeById\('slide-1'\)/);
   assert.match(thumbnailsList.children[1].innerHTML, /deleteSlideNodeById\('slide-2'\)/);
   assert.equal(getIframeDocCalls, 2);
+});
+
+test('generateThumbnails renders a read-only canonical fallback when the editor frame is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const generateThumbnailsSource = extractFunctionSource(
+    fileContent,
+    'function generateThumbnails() {',
+    '\n\n    // HTML5 Drag and Drop handlers for thumbnail cards'
+  );
+
+  const slideCountLabel = { textContent: '' };
+  const thumbnailsList = createListContainer();
+  let getIframeDocCalls = 0;
+  let setActiveSlideByIdCalls = 0;
+  let setupDragAndDropCalls = 0;
+
+  const context = {
+    buildEditorDeckSnapshot() {
+      return {
+        activeSlideId: 'slide-2',
+        slides: [
+          {
+            id: 'slide-1',
+            index: 0,
+            title: 'First Slide',
+            backgroundLabel: 'Solid'
+          },
+          {
+            id: 'slide-2',
+            index: 1,
+            title: 'Second Slide',
+            backgroundLabel: 'Gradient'
+          }
+        ]
+      };
+    },
+    document: {
+      getElementById(id) {
+        if (id === 'thumbnailsList') return thumbnailsList;
+        if (id === 'slideCountLabel') return slideCountLabel;
+        return null;
+      },
+      createElement() {
+        return createThumbCard();
+      }
+    },
+    getIframeDoc() {
+      getIframeDocCalls += 1;
+      return null;
+    },
+    getStudioActiveSlideIndex() {
+      return 1;
+    },
+    setActiveSlideById() {
+      setActiveSlideByIdCalls += 1;
+    },
+    setupDragAndDropThumbnail() {
+      setupDragAndDropCalls += 1;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(generateThumbnailsSource, context);
+
+  context.generateThumbnails();
+
+  assert.equal(slideCountLabel.textContent, '2 / 2');
+  assert.equal(thumbnailsList.children.length, 2);
+  assert.equal(thumbnailsList.children[0].draggable, false);
+  assert.equal(thumbnailsList.children[1].draggable, false);
+  assert.deepEqual(thumbnailsList.children[0].listeners, []);
+  assert.deepEqual(thumbnailsList.children[1].listeners, []);
+  assert.doesNotMatch(thumbnailsList.children[0].innerHTML, /deleteSlideNodeById/);
+  assert.doesNotMatch(thumbnailsList.children[1].innerHTML, /deleteSlideNodeById/);
+  assert.equal(setActiveSlideByIdCalls, 0);
+  assert.equal(setupDragAndDropCalls, 0);
+  assert.equal(getIframeDocCalls, 1);
 });
