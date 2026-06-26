@@ -17,10 +17,20 @@ function createStyle(initialDisplay = '') {
 }
 
 function createElement(options = {}) {
+  const attributes = { ...(options.attributes || {}) };
   return {
     dataset: { ...(options.dataset || {}) },
     hidden: !!options.hidden,
-    style: options.style || createStyle(options.display || '')
+    style: options.style || createStyle(options.display || ''),
+    getAttribute(name) {
+      return Object.prototype.hasOwnProperty.call(attributes, name) ? attributes[name] : null;
+    },
+    setAttribute(name, value) {
+      attributes[name] = String(value);
+    },
+    removeAttribute(name) {
+      delete attributes[name];
+    }
   };
 }
 
@@ -49,8 +59,10 @@ test('setStudioElementHiddenState hides an element using both editor dataset and
   studioElementState.setStudioElementHiddenState(el, true);
 
   assert.equal(el.dataset.editorPrevDisplay, 'flex');
+  assert.equal(el.dataset.editorPrevAriaHidden, '');
   assert.equal(el.dataset.editorHidden, 'true');
   assert.equal(el.hidden, true);
+  assert.equal(el.getAttribute('aria-hidden'), 'true');
   assert.equal(el.style.display, 'none');
 });
 
@@ -60,15 +72,18 @@ test('setStudioElementHiddenState restores a hidden element and clears persisted
     style: createStyle('none'),
     dataset: {
       editorHidden: 'true',
-      editorPrevDisplay: 'grid'
+      editorPrevDisplay: 'grid',
+      editorPrevAriaHidden: ''
     }
   });
 
   studioElementState.setStudioElementHiddenState(el, false);
 
   assert.equal(el.hidden, false);
+  assert.equal(el.getAttribute('aria-hidden'), null);
   assert.equal(Object.prototype.hasOwnProperty.call(el.dataset, 'editorHidden'), false);
   assert.equal(Object.prototype.hasOwnProperty.call(el.dataset, 'editorPrevDisplay'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(el.dataset, 'editorPrevAriaHidden'), false);
   assert.equal(el.style.display, 'grid');
 });
 
@@ -76,14 +91,31 @@ test('setStudioElementHiddenState clears a hidden attribute loaded from disk eve
   const style = createStyle('none');
   const el = createElement({
     hidden: true,
-    style
+    style,
+    attributes: {
+      'aria-hidden': 'true'
+    }
   });
 
   studioElementState.setStudioElementHiddenState(el, false);
 
   assert.equal(el.hidden, false);
+  assert.equal(el.getAttribute('aria-hidden'), null);
   assert.equal(style.display, '');
   assert.deepEqual(style.removePropertyCalls, ['display']);
+});
+
+test('setStudioElementHiddenState restores a pre-existing aria-hidden value after unhide', () => {
+  const el = createElement({
+    attributes: {
+      'aria-hidden': 'false'
+    }
+  });
+
+  studioElementState.setStudioElementHiddenState(el, true);
+  studioElementState.setStudioElementHiddenState(el, false);
+
+  assert.equal(el.getAttribute('aria-hidden'), 'false');
 });
 
 function createClassList(initialValues = []) {
@@ -99,19 +131,20 @@ function createClassList(initialValues = []) {
 }
 
 function createSanitizableElement(options = {}) {
-  const attributes = { ...(options.attributes || {}) };
   const element = createElement({
     hidden: options.hidden,
     dataset: options.dataset,
-    style: options.style
+    style: options.style,
+    attributes: options.attributes
   });
 
   element.nodeType = 1;
   element.classList = createClassList(options.classNames || []);
   element.removeAttributeCalls = [];
+  const baseRemoveAttribute = element.removeAttribute.bind(element);
   element.removeAttribute = function removeAttribute(name) {
     this.removeAttributeCalls.push(name);
-    delete attributes[name];
+    baseRemoveAttribute(name);
   };
   element.querySelectorAll = () => options.descendants || [];
 
@@ -124,9 +157,13 @@ test('sanitizeStudioDuplicatedSubtree removes editor ids and clears managed hidd
     dataset: {
       editorHidden: 'true',
       editorPrevDisplay: 'grid',
+      editorPrevAriaHidden: '',
       editorLocked: 'true'
     },
     style: createStyle('none'),
+    attributes: {
+      'aria-hidden': 'true'
+    },
     classNames: ['editor-dragging']
   });
   const root = createSanitizableElement({
@@ -147,8 +184,29 @@ test('sanitizeStudioDuplicatedSubtree removes editor ids and clears managed hidd
   assert.equal(root.classList.contains('editor-selected'), false);
   assert.equal(child.classList.contains('editor-dragging'), false);
   assert.equal(child.hidden, false);
+  assert.equal(child.getAttribute('aria-hidden'), null);
   assert.equal(child.style.display, 'grid');
   assert.equal(Object.prototype.hasOwnProperty.call(child.dataset, 'editorHidden'), false);
   assert.equal(Object.prototype.hasOwnProperty.call(child.dataset, 'editorPrevDisplay'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(child.dataset, 'editorPrevAriaHidden'), false);
   assert.equal(Object.prototype.hasOwnProperty.call(child.dataset, 'editorLocked'), false);
+});
+
+test('sanitizeStudioDuplicatedSubtree clears hidden state for older hidden nodes that only carry DOM hidden state', () => {
+  const child = createSanitizableElement({
+    hidden: true,
+    style: createStyle('none'),
+    attributes: {
+      'aria-hidden': 'true'
+    }
+  });
+  const root = createSanitizableElement({
+    descendants: [child]
+  });
+
+  studioElementState.sanitizeStudioDuplicatedSubtree(root);
+
+  assert.equal(child.hidden, false);
+  assert.equal(child.getAttribute('aria-hidden'), null);
+  assert.equal(child.style.display, '');
 });

@@ -29,8 +29,19 @@
       }
       if (el.dataset) {
         el.dataset.editorHidden = 'true';
+        if (!Object.prototype.hasOwnProperty.call(el.dataset, 'editorPrevAriaHidden')) {
+          const previousAriaHidden = typeof el.getAttribute === 'function'
+            ? el.getAttribute('aria-hidden')
+            : null;
+          el.dataset.editorPrevAriaHidden = typeof previousAriaHidden === 'string'
+            ? previousAriaHidden
+            : '';
+        }
       }
       el.hidden = true;
+      if (typeof el.setAttribute === 'function') {
+        el.setAttribute('aria-hidden', 'true');
+      }
       if (el.style) {
         el.style.display = 'none';
       }
@@ -49,9 +60,20 @@
     } else if (el.style) {
       el.style.display = prevDisplay || '';
     }
+    const prevAriaHidden = el.dataset && Object.prototype.hasOwnProperty.call(el.dataset, 'editorPrevAriaHidden')
+      ? el.dataset.editorPrevAriaHidden
+      : null;
+    if (typeof el.setAttribute === 'function' && typeof el.removeAttribute === 'function') {
+      if (prevAriaHidden === 'true' || prevAriaHidden === 'false') {
+        el.setAttribute('aria-hidden', prevAriaHidden);
+      } else {
+        el.removeAttribute('aria-hidden');
+      }
+    }
     if (el.dataset) {
       delete el.dataset.editorHidden;
       delete el.dataset.editorPrevDisplay;
+      delete el.dataset.editorPrevAriaHidden;
     }
     el.hidden = false;
   }
@@ -77,7 +99,7 @@
       if (node.classList && typeof node.classList.remove === 'function') {
         transientClassNames.forEach((className) => node.classList.remove(className));
       }
-      if (node.dataset && node.dataset.editorHidden === 'true') {
+      if (isStudioElementHidden(node)) {
         setStudioElementHiddenState(node, false);
       }
       if (node.dataset) {
