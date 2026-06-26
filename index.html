@@ -2987,30 +2987,11 @@
         if (!startBounds) return;
         const overlayNode = ensureSelectionOverlay(doc, slide);
 
-        const items = dragSelection.map(el => {
-          const rect = el.getBoundingClientRect();
-          const parent = SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(el);
-          const parentRect = parent.getBoundingClientRect();
-          const rectOnSlide = getRectOnSlide(rect, slideMetrics);
-          const parentOnSlide = getRectOnSlide(parentRect, slideMetrics);
-          const startAbsLeft = rectOnSlide.left;
-          const startAbsTop = rectOnSlide.top;
-          const startWidth = rectOnSlide.right - rectOnSlide.left;
-          const startHeight = rectOnSlide.bottom - rectOnSlide.top;
-          const sizingLockState = SlideNextStudioEditorTransform.buildStudioTransformSizingLockState(el);
-
-          return {
-            element: el,
-            startAbsLeft,
-            startAbsTop,
-            startWidth,
-            startHeight,
-            parentOffsetLeft: parentOnSlide.left,
-            parentOffsetTop: parentOnSlide.top,
-            lockWidth: sizingLockState.lockWidth,
-            lockHeight: sizingLockState.lockHeight
-          };
-        });
+        const items = dragSelection.map((el) => SlideNextStudioEditorTransform.buildStudioTransformSessionItem(el, {
+          slideMetrics,
+          getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+          getRectOnSlide
+        }));
 
         session = {
           type: handle ? 'resize' : 'drag',

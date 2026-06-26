@@ -283,6 +283,41 @@
     };
   }
 
+  function buildStudioTransformSessionItem(element, options = {}) {
+    if (!element || typeof element.getBoundingClientRect !== 'function') {
+      return null;
+    }
+
+    const getClosestPositionedAncestor = typeof options.getClosestPositionedAncestor === 'function'
+      ? options.getClosestPositionedAncestor
+      : () => null;
+    const getRectOnSlide = typeof options.getRectOnSlide === 'function'
+      ? options.getRectOnSlide
+      : (rect) => rect;
+    const parent = getClosestPositionedAncestor(element);
+    if (!parent || typeof parent.getBoundingClientRect !== 'function') {
+      return null;
+    }
+
+    const rect = element.getBoundingClientRect();
+    const parentRect = parent.getBoundingClientRect();
+    const rectOnSlide = getRectOnSlide(rect, options.slideMetrics);
+    const parentOnSlide = getRectOnSlide(parentRect, options.slideMetrics);
+    const sizingLockState = buildStudioTransformSizingLockState(element, options);
+
+    return {
+      element,
+      startAbsLeft: rectOnSlide.left,
+      startAbsTop: rectOnSlide.top,
+      startWidth: rectOnSlide.right - rectOnSlide.left,
+      startHeight: rectOnSlide.bottom - rectOnSlide.top,
+      parentOffsetLeft: parentOnSlide.left,
+      parentOffsetTop: parentOnSlide.top,
+      lockWidth: sizingLockState.lockWidth,
+      lockHeight: sizingLockState.lockHeight
+    };
+  }
+
   return {
     getStudioTransformSelection,
     buildStudioTransformSelectionState,
@@ -296,6 +331,7 @@
     normalizeStudioTransformBounds,
     applyStudioTransformBounds,
     materializeStudioTransformSession,
-    cleanupStudioTransformSession
+    cleanupStudioTransformSession,
+    buildStudioTransformSessionItem
   };
 });

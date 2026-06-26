@@ -384,3 +384,49 @@ test('cleanupStudioTransformSession tolerates missing capture state and null ses
     session: null
   });
 });
+
+test('buildStudioTransformSessionItem captures transform geometry and sizing locks from an element', () => {
+  const parent = {
+    getBoundingClientRect() {
+      return { left: 20, top: 30, right: 220, bottom: 180 };
+    }
+  };
+  const element = {
+    tagName: 'TABLE',
+    position: 'relative',
+    style: { width: '', height: '' },
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle(node) {
+          return { position: node.position };
+        }
+      }
+    },
+    getBoundingClientRect() {
+      return { left: 60, top: 80, right: 260, bottom: 200 };
+    }
+  };
+
+  assert.deepEqual(transformState.buildStudioTransformSessionItem(element, {
+    slideMetrics: { scaleX: 1, scaleY: 1 },
+    getClosestPositionedAncestor: () => parent,
+    getRectOnSlide: (rect) => rect
+  }), {
+    element,
+    startAbsLeft: 60,
+    startAbsTop: 80,
+    startWidth: 200,
+    startHeight: 120,
+    parentOffsetLeft: 20,
+    parentOffsetTop: 30,
+    lockWidth: true,
+    lockHeight: true
+  });
+
+  assert.equal(transformState.buildStudioTransformSessionItem(null), null);
+  assert.equal(transformState.buildStudioTransformSessionItem({
+    getBoundingClientRect() {
+      return { left: 0, top: 0, right: 10, bottom: 10 };
+    }
+  }), null);
+});
