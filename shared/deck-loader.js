@@ -52,6 +52,35 @@
     return presentationUrl.replace(/\/index\.html$/, '/presentation.json');
   }
 
+  function normalizeLoadedPresentationMetadata(metadata = {}) {
+    const nextMetadata = metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+      ? { ...metadata }
+      : {};
+    const resolvePresentationCanonicalDeck = presentationMetadata
+      && typeof presentationMetadata.resolvePresentationCanonicalDeck === 'function'
+      ? presentationMetadata.resolvePresentationCanonicalDeck
+      : null;
+    if (!resolvePresentationCanonicalDeck) {
+      return nextMetadata;
+    }
+
+    const canonicalDeck = resolvePresentationCanonicalDeck(nextMetadata);
+    if (canonicalDeck) {
+      return {
+        ...nextMetadata,
+        canonicalDeck
+      };
+    }
+
+    const stripPresentationCanonicalDeck = presentationMetadata
+      && typeof presentationMetadata.stripPresentationCanonicalDeck === 'function'
+      ? presentationMetadata.stripPresentationCanonicalDeck
+      : null;
+    return stripPresentationCanonicalDeck
+      ? stripPresentationCanonicalDeck(nextMetadata)
+      : nextMetadata;
+  }
+
   async function loadPresentationMetadata(presentationUrl = '', presentationTitle = '', options = {}) {
     const fallbackMetadata = buildPresentationMetadataSeed(presentationUrl, presentationTitle);
     const metadataUrl = derivePresentationMetadataUrl(presentationUrl);
@@ -74,12 +103,14 @@
         throw new Error(`Metadata request failed with status ${response.status}`);
       }
 
-      const metadata = await response.json();
-      return {
+      const responseMetadata = await response.json();
+      return normalizeLoadedPresentationMetadata({
         ...fallbackMetadata,
-        ...metadata,
+        ...(responseMetadata && typeof responseMetadata === 'object' && !Array.isArray(responseMetadata)
+          ? responseMetadata
+          : {}),
         sourcePath: presentationUrl
-      };
+      });
     } catch (err) {
       if (typeof options.onError === 'function') {
         options.onError(err, metadataUrl);
@@ -105,6 +136,7 @@
     derivePresentationIdFromUrl,
     buildPresentationMetadataSeed,
     derivePresentationMetadataUrl,
+    normalizeLoadedPresentationMetadata,
     loadPresentationMetadata,
     buildCanonicalDeckFromDocument
   };
