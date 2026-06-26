@@ -117,14 +117,17 @@
       const typingContext = isTypingContext(activeEl);
       const loweredKey = typeof event.key === 'string' ? event.key.toLowerCase() : '';
       const isBracketShortcut = event.code === 'BracketLeft' || event.code === 'BracketRight';
+      const deckShortcutReady = canMutateDeck();
 
-      if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'z' && !event.shiftKey) {
+      if (!typingContext && deckShortcutReady && (event.ctrlKey || event.metaKey) && loweredKey === 'z' && !event.shiftKey) {
         event.preventDefault();
         editorUndo();
+        return;
       }
-      if (!typingContext && (event.ctrlKey || event.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && event.shiftKey))) {
+      if (!typingContext && deckShortcutReady && (event.ctrlKey || event.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && event.shiftKey))) {
         event.preventDefault();
         editorRedo();
+        return;
       }
 
       if (typingContext) {
@@ -133,7 +136,6 @@
 
       const selectedElements = getFrameShortcutSelection(getSelectedElements());
       const hasSelection = selectedElements.length > 0;
-      const deckShortcutReady = canMutateDeck();
 
       if (deckShortcutReady && (event.ctrlKey || event.metaKey) && loweredKey === 'a') {
         event.preventDefault();
@@ -261,12 +263,12 @@
       const hasSelection = selectedElements.length > 0;
       const deckShortcutReady = canMutateDeck();
 
-      if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'z' && !event.shiftKey) {
+      if (!typingContext && deckShortcutReady && (event.ctrlKey || event.metaKey) && loweredKey === 'z' && !event.shiftKey) {
         event.preventDefault();
         editorUndo();
         return;
       }
-      if (!typingContext && (event.ctrlKey || event.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && event.shiftKey))) {
+      if (!typingContext && deckShortcutReady && (event.ctrlKey || event.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && event.shiftKey))) {
         event.preventDefault();
         editorRedo();
         return;

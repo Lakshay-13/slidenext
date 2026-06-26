@@ -161,6 +161,8 @@ test('createStudioFrameKeydownHandler still honors shortcuts for live selections
 
 test('createStudioFrameKeydownHandler skips deck-level paste and select-all shortcuts until the active slide is ready', () => {
   const calls = {
+    undo: 0,
+    redo: 0,
     paste: 0,
     selectAll: 0
   };
@@ -168,6 +170,12 @@ test('createStudioFrameKeydownHandler skips deck-level paste and select-all shor
     getActiveElement: () => null,
     getSelectedElements: () => [],
     canMutateDeck: () => false,
+    editorUndo() {
+      calls.undo += 1;
+    },
+    editorRedo() {
+      calls.redo += 1;
+    },
     pasteClipboardElements() {
       calls.paste += 1;
     },
@@ -193,6 +201,24 @@ test('createStudioFrameKeydownHandler skips deck-level paste and select-all shor
   assert.equal(calls.selectAll, 0);
   assert.equal(selectAllEvent.prevented, 0);
   assert.equal(selectAllEvent.stopped, 0);
+
+  const undoEvent = createKeyboardEvent({
+    key: 'z',
+    ctrlKey: true
+  });
+  handler(undoEvent);
+  assert.equal(calls.undo, 0);
+  assert.equal(undoEvent.prevented, 0);
+  assert.equal(undoEvent.stopped, 0);
+
+  const redoEvent = createKeyboardEvent({
+    key: 'y',
+    ctrlKey: true
+  });
+  handler(redoEvent);
+  assert.equal(calls.redo, 0);
+  assert.equal(redoEvent.prevented, 0);
+  assert.equal(redoEvent.stopped, 0);
 });
 
 test('createStudioFrameKeydownHandler does not intercept undo and redo while typing', () => {
@@ -371,6 +397,8 @@ test('createStudioGlobalKeydownHandler still honors shortcuts for live selection
 
 test('createStudioGlobalKeydownHandler skips deck-level paste and select-all shortcuts until the active slide is ready', () => {
   const calls = {
+    undo: 0,
+    redo: 0,
     paste: 0,
     selectAll: 0
   };
@@ -379,6 +407,12 @@ test('createStudioGlobalKeydownHandler skips deck-level paste and select-all sho
     getActiveElement: () => null,
     getSelectedElements: () => [],
     canMutateDeck: () => false,
+    editorUndo() {
+      calls.undo += 1;
+    },
+    editorRedo() {
+      calls.redo += 1;
+    },
     pasteClipboardElements() {
       calls.paste += 1;
     },
@@ -402,6 +436,22 @@ test('createStudioGlobalKeydownHandler skips deck-level paste and select-all sho
   handler(selectAllEvent);
   assert.equal(calls.selectAll, 0);
   assert.equal(selectAllEvent.prevented, 0);
+
+  const undoEvent = createKeyboardEvent({
+    key: 'z',
+    ctrlKey: true
+  });
+  handler(undoEvent);
+  assert.equal(calls.undo, 0);
+  assert.equal(undoEvent.prevented, 0);
+
+  const redoEvent = createKeyboardEvent({
+    key: 'y',
+    ctrlKey: true
+  });
+  handler(redoEvent);
+  assert.equal(calls.redo, 0);
+  assert.equal(redoEvent.prevented, 0);
 });
 
 test('createStudioGlobalKeydownHandler does not intercept undo and redo while typing', () => {
