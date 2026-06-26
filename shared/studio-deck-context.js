@@ -100,11 +100,13 @@
       || (typeof options.buildPresentationMetadataSeed === 'function'
         ? options.buildPresentationMetadataSeed(options.presentationUrl, options.presentationTitle)
         : buildStudioPresentationMetadataSeed(options.presentationUrl, options.presentationTitle));
-    const storedCanonicalDeck = resolveStoredStudioCanonicalDeck(presentationMetadata, {
-      isCanonicalDeck
-    });
-    if (storedCanonicalDeck) {
-      return storedCanonicalDeck;
+    if (options.preferStoredCanonicalDeck !== false) {
+      const storedCanonicalDeck = resolveStoredStudioCanonicalDeck(presentationMetadata, {
+        isCanonicalDeck
+      });
+      if (storedCanonicalDeck) {
+        return storedCanonicalDeck;
+      }
     }
 
     const deck = buildCanonicalDeckFromDocument(doc, {

@@ -239,6 +239,44 @@ test('buildStudioCanonicalDeck falls back to DOM import when stored canonical me
   assert.deepEqual(builderCalls, [doc]);
 });
 
+test('buildStudioCanonicalDeck can bypass stored canonical metadata for live DOM rebuilds', () => {
+  const doc = { label: 'doc' };
+  const builderCalls = [];
+  const importedDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+
+  const result = deckContext.buildStudioCanonicalDeck(doc, {
+    currentPresentationMetadata: {
+      id: 'onboarding-presentation',
+      title: 'Project Onboarding',
+      sourcePath: '/presentations/onboarding-presentation/index.html',
+      canonicalDeck: {
+        metadata: {
+          id: 'onboarding-presentation'
+        },
+        slides: [
+          {
+            id: 'slide-1',
+            nodes: []
+          }
+        ]
+      }
+    },
+    preferStoredCanonicalDeck: false,
+    buildCanonicalDeckFromDocument(nextDoc) {
+      builderCalls.push(nextDoc);
+      return importedDeck;
+    },
+    isCanonicalDeck: (deck) => deck === importedDeck
+  });
+
+  assert.equal(result, importedDeck);
+  assert.deepEqual(builderCalls, [doc]);
+});
+
 test('buildStudioCanonicalDeck returns null when the canonical builder yields malformed data', () => {
   const result = deckContext.buildStudioCanonicalDeck({ label: 'doc' }, {
     buildCanonicalDeckFromDocument() {
