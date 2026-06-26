@@ -11,6 +11,31 @@
     return !!(clipboard && Array.isArray(clipboard.items) && clipboard.items.length > 0);
   }
 
+  function createStudioClipboardState(items = []) {
+    return {
+      items: Array.isArray(items) ? items : [],
+      pasteCount: 0
+    };
+  }
+
+  function buildStudioClipboardPastePlan(clipboard = null) {
+    const items = hasStudioClipboardItems(clipboard) ? clipboard.items : [];
+    const pasteCount = Number.isFinite(clipboard && clipboard.pasteCount) ? clipboard.pasteCount : 0;
+    const nextPasteCount = pasteCount + 1;
+
+    return {
+      canPaste: items.length > 0,
+      items,
+      nextPasteCount,
+      nextClipboard: items.length > 0
+        ? {
+          items,
+          pasteCount: nextPasteCount
+        }
+        : null
+    };
+  }
+
   function getStudioClipboardSelection(elements = [], options = {}) {
     const selection = Array.isArray(elements) ? elements : [];
     const isEligibleElement = typeof options.isEligibleElement === 'function'
@@ -52,7 +77,7 @@
       selection,
       canCopy,
       canDuplicate: canCopy,
-      canPaste: hasStudioClipboardItems(clipboard)
+      canPaste: buildStudioClipboardPastePlan(clipboard).canPaste
     };
   }
 
@@ -239,6 +264,8 @@
 
   return {
     hasStudioClipboardItems,
+    createStudioClipboardState,
+    buildStudioClipboardPastePlan,
     getStudioClipboardSelection,
     canStudioCopySelection,
     buildStudioClipboardActionState,

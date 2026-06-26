@@ -2830,16 +2830,19 @@
       }
       const items = buildClipboardPayload(clipboardActionState.selection);
       if (items.length === 0) return false;
-      editorClipboard = { items, pasteCount: 0 };
+      editorClipboard = SlideNextStudioEditorClipboard.createStudioClipboardState(items);
       updateClipboardActionState();
       return true;
     }
 
     function pasteClipboardElements() {
-      if (!editorClipboard?.items?.length) return false;
-      editorClipboard.pasteCount = (editorClipboard.pasteCount || 0) + 1;
-      const pasted = insertClipboardPayload(editorClipboard.items, editorClipboard.pasteCount);
+      const pastePlan = SlideNextStudioEditorClipboard.buildStudioClipboardPastePlan(editorClipboard);
+      if (!pastePlan.canPaste) return false;
+      const pasted = insertClipboardPayload(pastePlan.items, pastePlan.nextPasteCount);
       const didPaste = finalizeInsertedElements(pasted, 'Auto: Pasted Element');
+      if (didPaste) {
+        editorClipboard = pastePlan.nextClipboard;
+      }
       updateClipboardActionState();
       return didPaste;
     }

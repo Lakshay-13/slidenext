@@ -70,6 +70,39 @@ test('hasStudioClipboardItems reflects whether clipboard items exist', () => {
   assert.equal(clipboardState.hasStudioClipboardItems({ items: [{ id: 1 }] }), true);
 });
 
+test('createStudioClipboardState resets paste count for a fresh clipboard payload', () => {
+  const items = [{ id: 'copy-1' }];
+
+  assert.deepEqual(clipboardState.createStudioClipboardState(items), {
+    items,
+    pasteCount: 0
+  });
+});
+
+test('buildStudioClipboardPastePlan increments paste count only in the planned next clipboard state', () => {
+  const items = [{ id: 'copy-1' }];
+
+  assert.deepEqual(clipboardState.buildStudioClipboardPastePlan({
+    items,
+    pasteCount: 2
+  }), {
+    canPaste: true,
+    items,
+    nextPasteCount: 3,
+    nextClipboard: {
+      items,
+      pasteCount: 3
+    }
+  });
+
+  assert.deepEqual(clipboardState.buildStudioClipboardPastePlan(null), {
+    canPaste: false,
+    items: [],
+    nextPasteCount: 1,
+    nextClipboard: null
+  });
+});
+
 test('buildStudioClipboardActionState combines lock-aware copy state with clipboard paste state', () => {
   assert.deepEqual(clipboardState.buildStudioClipboardActionState(
     [{ id: 1 }, { id: 2 }],
