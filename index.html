@@ -2928,6 +2928,7 @@
       const finalizeDragSession = () => {
         if (!session) return;
         const finalizeResult = SlideNextStudioEditorTransform.finalizeStudioTransformSession(session);
+        const completionPlan = SlideNextStudioEditorTransform.buildStudioTransformCompletionPlan(finalizeResult);
         session = null;
         isDraggingElement = false;
         hideGuides();
@@ -2935,10 +2936,10 @@
         syncSelectionOverlay();
         syncInspectorForSelection();
         updateLayersList();
-        if (finalizeResult.didMove) {
+        if (completionPlan.shouldPersist) {
           saveHistoryState();
           triggerAutoSave();
-          triggerAutoVersion('Auto: Moved Element');
+          triggerAutoVersion(completionPlan.versionLabel);
         }
       };
 

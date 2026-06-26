@@ -769,6 +769,31 @@ test('finalizeStudioTransformSession reports move state while delegating cleanup
   });
 });
 
+test('buildStudioTransformCompletionPlan only persists moved sessions and centralizes the version label', () => {
+  assert.deepEqual(transformState.buildStudioTransformCompletionPlan({
+    didMove: true
+  }), {
+    shouldPersist: true,
+    versionLabel: 'Auto: Moved Element'
+  });
+
+  assert.deepEqual(transformState.buildStudioTransformCompletionPlan({
+    didMove: true
+  }, {
+    versionLabel: 'Custom Move Label'
+  }), {
+    shouldPersist: true,
+    versionLabel: 'Custom Move Label'
+  });
+
+  assert.deepEqual(transformState.buildStudioTransformCompletionPlan({
+    didMove: false
+  }), {
+    shouldPersist: false,
+    versionLabel: ''
+  });
+});
+
 test('buildStudioTransformSessionItem captures transform geometry and sizing locks from an element', () => {
   const parent = {
     getBoundingClientRect() {

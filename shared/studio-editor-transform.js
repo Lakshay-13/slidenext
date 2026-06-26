@@ -9,6 +9,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const STUDIO_RESIZE_WIDTH_TAGS = new Set(['img', 'table', 'pre', 'code', 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
   const STUDIO_RESIZE_HEIGHT_TAGS = new Set(['img', 'table', 'pre', 'code', 'div']);
+  const STUDIO_TRANSFORM_MOVED_VERSION_LABEL = 'Auto: Moved Element';
 
   function getStudioTransformSelection(elements = [], options = {}) {
     const selection = Array.isArray(elements) ? elements : [];
@@ -498,6 +499,16 @@
     };
   }
 
+  function buildStudioTransformCompletionPlan(finalizeResult = {}, options = {}) {
+    const didMove = !!(finalizeResult && finalizeResult.didMove);
+    return {
+      shouldPersist: didMove,
+      versionLabel: didMove
+        ? (typeof options.versionLabel === 'string' && options.versionLabel ? options.versionLabel : STUDIO_TRANSFORM_MOVED_VERSION_LABEL)
+        : ''
+    };
+  }
+
   function buildStudioTransformSessionItem(element, options = {}) {
     if (!element || typeof element.getBoundingClientRect !== 'function') {
       return null;
@@ -681,6 +692,7 @@
     progressStudioTransformSession,
     cleanupStudioTransformSession,
     finalizeStudioTransformSession,
+    buildStudioTransformCompletionPlan,
     buildStudioTransformSessionItem,
     buildStudioTransformSession,
     startStudioTransformSession,
