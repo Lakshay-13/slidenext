@@ -3,6 +3,18 @@ const assert = require('node:assert/strict');
 
 const transformState = require('../shared/studio-editor-transform.js');
 
+function createClassList() {
+  const values = new Set();
+  return {
+    add(value) {
+      values.add(value);
+    },
+    contains(value) {
+      return values.has(value);
+    }
+  };
+}
+
 test('canStudioTransformSelection rejects empty selections', () => {
   assert.equal(transformState.canStudioTransformSelection([], {
     isLocked: () => false,
@@ -255,4 +267,48 @@ test('applyStudioTransformBounds updates drag and resize item styles using share
   assert.equal(resizeElement.style.top, '85px');
   assert.equal(resizeElement.style.width, '120px');
   assert.equal(resizeElement.style.height, '60px');
+});
+
+test('materializeStudioTransformSession applies absolute positioning state only once', () => {
+  const element = {
+    style: {},
+    classList: createClassList()
+  };
+  const overlay = {
+    classList: createClassList()
+  };
+  const session = {
+    materialized: false,
+    items: [{
+      element,
+      startAbsLeft: 140,
+      startAbsTop: 120,
+      startWidth: 180,
+      startHeight: 90,
+      parentOffsetLeft: 40,
+      parentOffsetTop: 20,
+      lockWidth: true,
+      lockHeight: false
+    }],
+    overlay
+  };
+
+  assert.deepEqual(transformState.materializeStudioTransformSession(session), {
+    didMaterialize: true,
+    session
+  });
+  assert.equal(element.style.position, 'absolute');
+  assert.equal(element.style.margin, '0');
+  assert.equal(element.style.width, '180px');
+  assert.equal(element.style.height, undefined);
+  assert.equal(element.style.left, '100px');
+  assert.equal(element.style.top, '100px');
+  assert.equal(element.classList.contains('editor-dragging'), true);
+  assert.equal(overlay.classList.contains('drag-preview'), true);
+  assert.equal(session.materialized, true);
+
+  assert.deepEqual(transformState.materializeStudioTransformSession(session), {
+    didMaterialize: false,
+    session
+  });
 });

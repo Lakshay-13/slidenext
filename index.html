@@ -2926,24 +2926,7 @@
       let session = null;
 
       const materializeSessionItems = () => {
-        if (!session || session.materialized) return;
-        session.items.forEach(item => {
-          item.element.style.position = 'absolute';
-          item.element.style.margin = '0';
-          if (item.lockWidth) {
-            item.element.style.width = `${item.startWidth}px`;
-          }
-          if (item.lockHeight) {
-            item.element.style.height = `${item.startHeight}px`;
-          }
-          item.element.style.left = `${item.startAbsLeft - item.parentOffsetLeft}px`;
-          item.element.style.top = `${item.startAbsTop - item.parentOffsetTop}px`;
-          item.element.classList.add('editor-dragging');
-        });
-        if (session.overlay) {
-          session.overlay.classList.add('drag-preview');
-        }
-        session.materialized = true;
+        SlideNextStudioEditorTransform.materializeStudioTransformSession(session);
       };
 
       const finalizeDragSession = () => {

@@ -197,6 +197,49 @@
     });
   }
 
+  function materializeStudioTransformSession(session = {}, options = {}) {
+    if (!session || session.materialized) {
+      return {
+        didMaterialize: false,
+        session
+      };
+    }
+
+    const draggingClassName = options.draggingClassName || 'editor-dragging';
+    const overlayDraggingClassName = options.overlayDraggingClassName || 'drag-preview';
+    const items = Array.isArray(session.items) ? session.items : [];
+
+    items.forEach((item) => {
+      if (!item || !item.element || !item.element.style) {
+        return;
+      }
+
+      item.element.style.position = 'absolute';
+      item.element.style.margin = '0';
+      if (item.lockWidth) {
+        item.element.style.width = `${item.startWidth}px`;
+      }
+      if (item.lockHeight) {
+        item.element.style.height = `${item.startHeight}px`;
+      }
+      item.element.style.left = `${item.startAbsLeft - item.parentOffsetLeft}px`;
+      item.element.style.top = `${item.startAbsTop - item.parentOffsetTop}px`;
+      if (item.element.classList && typeof item.element.classList.add === 'function') {
+        item.element.classList.add(draggingClassName);
+      }
+    });
+
+    if (session.overlay && session.overlay.classList && typeof session.overlay.classList.add === 'function') {
+      session.overlay.classList.add(overlayDraggingClassName);
+    }
+
+    session.materialized = true;
+    return {
+      didMaterialize: true,
+      session
+    };
+  }
+
   return {
     getStudioTransformSelection,
     buildStudioTransformSelectionState,
@@ -208,6 +251,7 @@
     shouldStudioResizeWidth,
     shouldStudioResizeHeight,
     normalizeStudioTransformBounds,
-    applyStudioTransformBounds
+    applyStudioTransformBounds,
+    materializeStudioTransformSession
   };
 });
