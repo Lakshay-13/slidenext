@@ -33,6 +33,8 @@ test('createStudioFrameKeydownHandler ignores stale disconnected selections for 
   const calls = {
     arrange: [],
     remove: 0,
+    copy: 0,
+    paste: 0,
     duplicate: 0,
     nudge: []
   };
@@ -44,6 +46,12 @@ test('createStudioFrameKeydownHandler ignores stale disconnected selections for 
     },
     removeSelectedElement() {
       calls.remove += 1;
+    },
+    copySelectedElements() {
+      calls.copy += 1;
+    },
+    pasteClipboardElements() {
+      calls.paste += 1;
     },
     duplicateSelectedElements() {
       calls.duplicate += 1;
@@ -78,6 +86,24 @@ test('createStudioFrameKeydownHandler ignores stale disconnected selections for 
   assert.equal(duplicateEvent.prevented, 0);
   assert.equal(duplicateEvent.stopped, 0);
 
+  const copyEvent = createKeyboardEvent({
+    key: 'c',
+    ctrlKey: true
+  });
+  handler(copyEvent);
+  assert.equal(calls.copy, 0);
+  assert.equal(copyEvent.prevented, 0);
+  assert.equal(copyEvent.stopped, 0);
+
+  const pasteEvent = createKeyboardEvent({
+    key: 'v',
+    ctrlKey: true
+  });
+  handler(pasteEvent);
+  assert.equal(calls.paste, 1);
+  assert.equal(pasteEvent.prevented, 1);
+  assert.equal(pasteEvent.stopped, 1);
+
   const nudgeEvent = createKeyboardEvent({ key: 'ArrowUp' });
   handler(nudgeEvent);
   assert.deepEqual(calls.nudge, []);
@@ -88,6 +114,7 @@ test('createStudioFrameKeydownHandler ignores stale disconnected selections for 
 test('createStudioFrameKeydownHandler still honors shortcuts for live selections', () => {
   const calls = {
     remove: 0,
+    copy: 0,
     nudge: []
   };
   const handler = events.createStudioFrameKeydownHandler({
@@ -99,6 +126,9 @@ test('createStudioFrameKeydownHandler still honors shortcuts for live selections
     removeSelectedElement() {
       calls.remove += 1;
     },
+    copySelectedElements() {
+      calls.copy += 1;
+    },
     nudgeSelectedElements(dx, dy) {
       calls.nudge.push([dx, dy]);
     }
@@ -109,6 +139,15 @@ test('createStudioFrameKeydownHandler still honors shortcuts for live selections
   assert.equal(calls.remove, 1);
   assert.equal(deleteEvent.prevented, 1);
   assert.equal(deleteEvent.stopped, 1);
+
+  const copyEvent = createKeyboardEvent({
+    key: 'c',
+    ctrlKey: true
+  });
+  handler(copyEvent);
+  assert.equal(calls.copy, 1);
+  assert.equal(copyEvent.prevented, 1);
+  assert.equal(copyEvent.stopped, 1);
 
   const nudgeEvent = createKeyboardEvent({
     key: 'ArrowRight',
@@ -124,6 +163,8 @@ test('createStudioGlobalKeydownHandler ignores stale disconnected selections for
   const calls = {
     arrange: [],
     remove: 0,
+    copy: 0,
+    paste: 0,
     duplicate: 0,
     nudge: []
   };
@@ -136,6 +177,12 @@ test('createStudioGlobalKeydownHandler ignores stale disconnected selections for
     },
     removeSelectedElement() {
       calls.remove += 1;
+    },
+    copySelectedElements() {
+      calls.copy += 1;
+    },
+    pasteClipboardElements() {
+      calls.paste += 1;
     },
     duplicateSelectedElements() {
       calls.duplicate += 1;
@@ -167,6 +214,22 @@ test('createStudioGlobalKeydownHandler ignores stale disconnected selections for
   assert.equal(calls.duplicate, 0);
   assert.equal(duplicateEvent.prevented, 0);
 
+  const copyEvent = createKeyboardEvent({
+    key: 'c',
+    ctrlKey: true
+  });
+  handler(copyEvent);
+  assert.equal(calls.copy, 0);
+  assert.equal(copyEvent.prevented, 0);
+
+  const pasteEvent = createKeyboardEvent({
+    key: 'v',
+    ctrlKey: true
+  });
+  handler(pasteEvent);
+  assert.equal(calls.paste, 1);
+  assert.equal(pasteEvent.prevented, 1);
+
   const nudgeEvent = createKeyboardEvent({ key: 'ArrowLeft' });
   handler(nudgeEvent);
   assert.deepEqual(calls.nudge, []);
@@ -176,6 +239,7 @@ test('createStudioGlobalKeydownHandler ignores stale disconnected selections for
 test('createStudioGlobalKeydownHandler still honors shortcuts for live selections', () => {
   const calls = {
     arrange: [],
+    copy: 0,
     duplicate: 0,
     nudge: []
   };
@@ -188,6 +252,9 @@ test('createStudioGlobalKeydownHandler still honors shortcuts for live selection
     ],
     arrangeElementLayer(action) {
       calls.arrange.push(action);
+    },
+    copySelectedElements() {
+      calls.copy += 1;
     },
     duplicateSelectedElements() {
       calls.duplicate += 1;
@@ -214,6 +281,14 @@ test('createStudioGlobalKeydownHandler still honors shortcuts for live selection
   handler(duplicateEvent);
   assert.equal(calls.duplicate, 1);
   assert.equal(duplicateEvent.prevented, 1);
+
+  const copyEvent = createKeyboardEvent({
+    key: 'c',
+    ctrlKey: true
+  });
+  handler(copyEvent);
+  assert.equal(calls.copy, 1);
+  assert.equal(copyEvent.prevented, 1);
 
   const nudgeEvent = createKeyboardEvent({
     key: 'ArrowLeft',

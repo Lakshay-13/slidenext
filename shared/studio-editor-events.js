@@ -90,6 +90,12 @@
     const removeSelectedElement = typeof options.removeSelectedElement === 'function'
       ? options.removeSelectedElement
       : () => {};
+    const copySelectedElements = typeof options.copySelectedElements === 'function'
+      ? options.copySelectedElements
+      : () => {};
+    const pasteClipboardElements = typeof options.pasteClipboardElements === 'function'
+      ? options.pasteClipboardElements
+      : () => {};
     const duplicateSelectedElements = typeof options.duplicateSelectedElements === 'function'
       ? options.duplicateSelectedElements
       : () => {};
@@ -154,6 +160,18 @@
         removeSelectedElement();
         return;
       }
+      if ((event.ctrlKey || event.metaKey) && loweredKey === 'c' && hasSelection) {
+        event.preventDefault();
+        event.stopPropagation();
+        copySelectedElements();
+        return;
+      }
+      if ((event.ctrlKey || event.metaKey) && loweredKey === 'v') {
+        event.preventDefault();
+        event.stopPropagation();
+        pasteClipboardElements();
+        return;
+      }
       if ((event.ctrlKey || event.metaKey) && loweredKey === 'd' && hasSelection) {
         event.preventDefault();
         event.stopPropagation();
@@ -202,6 +220,12 @@
       : () => {};
     const removeSelectedElement = typeof options.removeSelectedElement === 'function'
       ? options.removeSelectedElement
+      : () => {};
+    const copySelectedElements = typeof options.copySelectedElements === 'function'
+      ? options.copySelectedElements
+      : () => {};
+    const pasteClipboardElements = typeof options.pasteClipboardElements === 'function'
+      ? options.pasteClipboardElements
       : () => {};
     const duplicateSelectedElements = typeof options.duplicateSelectedElements === 'function'
       ? options.duplicateSelectedElements
@@ -261,6 +285,16 @@
       if (!typingContext && hasSelection && (event.key === 'Delete' || event.key === 'Backspace')) {
         event.preventDefault();
         removeSelectedElement();
+        return;
+      }
+      if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'c' && hasSelection) {
+        event.preventDefault();
+        copySelectedElements();
+        return;
+      }
+      if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'v') {
+        event.preventDefault();
+        pasteClipboardElements();
         return;
       }
       if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'd' && hasSelection) {
