@@ -267,6 +267,31 @@ app.post('/api/restore', async (req, res) => {
     await fs.writeFile(targetFile, backupContent, 'utf8');
     console.log(`Restored target file to backup version: ${versionFilename}`);
 
+    try {
+      const metadataPath = presentationMetadata.derivePresentationMetadataPath(htmlPath);
+      if (metadataPath) {
+        const normalizedMetadataPath = metadataPath.replace(/^\//, '');
+        const metadataFile = path.resolve(workspaceDir, normalizedMetadataPath);
+        if (metadataFile.startsWith(workspaceDir)) {
+          let currentMetadata = presentationMetadata.buildPresentationMetadataSeed(htmlPath);
+          try {
+            const metadataContent = await fs.readFile(metadataFile, 'utf8');
+            currentMetadata = JSON.parse(metadataContent);
+          } catch (metadataErr) {
+            if (metadataErr.code !== 'ENOENT') {
+              console.warn(`Falling back to generated metadata seed for ${metadataFile}:`, metadataErr.message);
+            }
+          }
+
+          const nextMetadata = presentationMetadata.stripPresentationCanonicalDeck(currentMetadata);
+          await fs.writeFile(metadataFile, `${JSON.stringify(nextMetadata, null, 2)}\n`, 'utf8');
+          console.log(`Cleared restored canonical deck sidecar: ${metadataFile}`);
+        }
+      }
+    } catch (metadataErr) {
+      console.warn('Failed to clear restored canonical deck sidecar:', metadataErr.message);
+    }
+
     res.json({ success: true, message: 'Restore completed successfully' });
   } catch (err) {
     console.error('Error restoring version:', err);

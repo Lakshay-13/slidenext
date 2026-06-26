@@ -62,10 +62,20 @@
     };
   }
 
+  function stripPresentationCanonicalDeck(metadata = {}) {
+    const nextMetadata = asPlainObject(metadata);
+    if (!Object.prototype.hasOwnProperty.call(nextMetadata, 'canonicalDeck')) {
+      return nextMetadata;
+    }
+    delete nextMetadata.canonicalDeck;
+    return nextMetadata;
+  }
+
   return {
     derivePresentationMetadataPath,
     derivePresentationIdFromHtmlPath,
     buildPresentationMetadataSeed,
-    mergePresentationCanonicalDeck
+    mergePresentationCanonicalDeck,
+    stripPresentationCanonicalDeck
   };
 });

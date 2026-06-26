@@ -67,3 +67,34 @@ test('mergePresentationCanonicalDeck preserves metadata and only stores valid ca
     metadata
   );
 });
+
+test('stripPresentationCanonicalDeck removes stale canonical sidecars without disturbing other metadata', () => {
+  assert.deepEqual(
+    presentationMetadata.stripPresentationCanonicalDeck({
+      id: 'onboarding-presentation',
+      title: 'Project Onboarding',
+      tags: ['Onboarding'],
+      canonicalDeck: {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: [{ id: 'slide-1' }]
+      }
+    }),
+    {
+      id: 'onboarding-presentation',
+      title: 'Project Onboarding',
+      tags: ['Onboarding']
+    }
+  );
+
+  assert.deepEqual(
+    presentationMetadata.stripPresentationCanonicalDeck({
+      id: 'onboarding-presentation',
+      title: 'Project Onboarding'
+    }),
+    {
+      id: 'onboarding-presentation',
+      title: 'Project Onboarding'
+    }
+  );
+});
