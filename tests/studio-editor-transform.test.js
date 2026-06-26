@@ -911,6 +911,34 @@ test('buildStudioPositionedLayoutItem captures the shared positioned geometry sn
   assert.equal(transformState.buildStudioPositionedLayoutItem(null), null);
 });
 
+test('buildStudioPositionedLayoutItems aborts when any selected element cannot produce a geometry snapshot', () => {
+  const first = {
+    id: 'first',
+    getBoundingClientRect() {
+      return { left: 10, top: 20, right: 60, bottom: 50 };
+    }
+  };
+  const second = {
+    id: 'second'
+  };
+
+  assert.deepEqual(transformState.buildStudioPositionedLayoutItems([first, second], {
+    getClosestPositionedAncestor(element) {
+      if (element === first) {
+        return {
+          getBoundingClientRect() {
+            return { left: 0, top: 0, right: 100, bottom: 100 };
+          }
+        };
+      }
+      return null;
+    },
+    getRectOnSlide(rect) {
+      return rect;
+    }
+  }), []);
+});
+
 test('buildStudioTransformSessionItem captures transform geometry and sizing locks from an element', () => {
   const parent = {
     getBoundingClientRect() {

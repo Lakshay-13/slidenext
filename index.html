@@ -2864,13 +2864,11 @@
       if (!doc || !slide || !nudgeSelectionState.canNudge) return false;
       const slideMetrics = getSlideMetrics(slide);
       const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
-      const nudgeLayoutItems = nudgeSelectionState.selection
-        .map((el) => SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem(el, {
-          getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
-          getRectOnSlide,
-          slideMetrics
-        }))
-        .filter(Boolean);
+      const nudgeLayoutItems = SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(nudgeSelectionState.selection, {
+        getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+        getRectOnSlide,
+        slideMetrics
+      });
       if (nudgeLayoutItems.length !== nudgeSelectionState.selection.length) return false;
       const nudgeResult = SlideNextStudioEditorNudge.buildStudioNudgedLayout(nudgeLayoutItems, { dx, dy }, slideBounds);
       if (!nudgeResult.didChange) return false;
