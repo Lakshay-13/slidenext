@@ -3294,8 +3294,7 @@
     }
 
     function applyPresetWallpaper(val, isCustomInput = false) {
-      const iframe = document.getElementById('studioFrame');
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeDoc = getIframeDoc();
       const activeSlide = getActiveSlide(iframeDoc);
       
       if (activeSlide) {
