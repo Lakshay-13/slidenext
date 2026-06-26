@@ -270,6 +270,7 @@ test('loadCurrentPresentationMetadata reuses current session readers when delega
     currentPresentationMetadata: null,
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
+    updateEditorPersistedDeckState() {},
     studioEditorSessionToken: 12
   };
 
@@ -339,6 +340,11 @@ test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
     lastPersistedCanonicalDeck: null,
+    updateEditorPersistedDeckState(nextState) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck')) {
+        context.lastPersistedCanonicalDeck = nextState.canonicalDeck;
+      }
+    },
     studioEditorSessionToken: 12
   };
 

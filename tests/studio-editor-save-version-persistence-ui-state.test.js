@@ -107,6 +107,14 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
     isCurrentDeckStatePersisted() {
       return false;
     },
+    updateEditorPersistedDeckState(nextState) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'cleanHtml')) {
+        context.lastPersistedDeckHtml = nextState.cleanHtml;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck')) {
+        context.lastPersistedCanonicalDeck = canonicalDeckModel.createCanonicalDeck(nextState.canonicalDeck);
+      }
+    },
     buildEditorSaveRequestBody(doc, cleanHtml, options = {}) {
       return {
         htmlPath: options.presentationUrl,
@@ -205,6 +213,14 @@ test('saveVersionCheckpoint keeps save rewrites enabled when canonical state cha
         persistedHtml: context.lastPersistedDeckHtml,
         persistedCanonicalDeck: context.lastPersistedCanonicalDeck
       });
+    },
+    updateEditorPersistedDeckState(nextState) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'cleanHtml')) {
+        context.lastPersistedDeckHtml = nextState.cleanHtml;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck')) {
+        context.lastPersistedCanonicalDeck = canonicalDeckModel.createCanonicalDeck(nextState.canonicalDeck);
+      }
     },
     buildEditorSaveRequestBody(doc, cleanHtml, options = {}) {
       return {

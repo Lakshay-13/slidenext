@@ -1686,9 +1686,11 @@
         observeDeckActiveSlideState,
         captureInitialHistoryState: () => {
           saveHistoryState(false);
-          persistedDeckPlaybackState = capturePersistedDeckPlaybackState(iframeDoc);
-          lastPersistedDeckHtml = buildPersistableDeckHtml(iframeDoc);
-          lastPersistedCanonicalDeck = buildEditorCanonicalDeck(iframeDoc);
+          updateEditorPersistedDeckState({
+            playbackState: capturePersistedDeckPlaybackState(iframeDoc),
+            cleanHtml: buildPersistableDeckHtml(iframeDoc),
+            canonicalDeck: buildEditorCanonicalDeck(iframeDoc)
+          });
         }
       });
       updateInsertionActionState();
@@ -2116,7 +2118,7 @@
           currentPresentationMetadata = metadata;
           const storedCanonicalDeck = SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck(metadata);
           if (storedCanonicalDeck) {
-            lastPersistedCanonicalDeck = storedCanonicalDeck;
+            updateEditorPersistedDeckState({ canonicalDeck: storedCanonicalDeck });
           }
         },
         onError: (err, metadataUrl) => {
@@ -3468,10 +3470,24 @@
       return SlideNextStudioHistory.normalizeStudioHistoryEntry(entry);
     }
 
+    function updateEditorPersistedDeckState(nextState = {}) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'cleanHtml')) {
+        lastPersistedDeckHtml = typeof nextState.cleanHtml === 'string' ? nextState.cleanHtml : '';
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck')) {
+        lastPersistedCanonicalDeck = nextState.canonicalDeck || null;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'playbackState')) {
+        persistedDeckPlaybackState = nextState.playbackState || null;
+      }
+    }
+
     function resetEditorDeckPersistenceState() {
-      lastPersistedDeckHtml = '';
-      lastPersistedCanonicalDeck = null;
-      persistedDeckPlaybackState = null;
+      updateEditorPersistedDeckState({
+        cleanHtml: '',
+        canonicalDeck: null,
+        playbackState: null
+      });
     }
 
     function resetEditorHistoryState(options = {}) {
@@ -3665,10 +3681,10 @@
         SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistencePlan.persistenceContext, {
           ...createCurrentStudioSessionStateReaders(),
           setPersistedHtml: (nextHtml) => {
-            lastPersistedDeckHtml = nextHtml;
+            updateEditorPersistedDeckState({ cleanHtml: nextHtml });
           },
           setPersistedCanonicalDeck: (nextCanonicalDeck) => {
-            lastPersistedCanonicalDeck = nextCanonicalDeck;
+            updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
             setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl);
           }
         });
@@ -3725,10 +3741,10 @@
             SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistencePlan.persistenceContext, {
               ...createCurrentStudioSessionStateReaders(),
               setPersistedHtml: (nextHtml) => {
-                lastPersistedDeckHtml = nextHtml;
+                updateEditorPersistedDeckState({ cleanHtml: nextHtml });
               },
               setPersistedCanonicalDeck: (nextCanonicalDeck) => {
-                lastPersistedCanonicalDeck = nextCanonicalDeck;
+                updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
                 setCurrentPresentationCanonicalDeck(nextCanonicalDeck, scheduledPresentationUrl);
               },
               onSuccess: () => {
