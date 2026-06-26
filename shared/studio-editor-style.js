@@ -8,6 +8,142 @@
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const DEFAULT_STUDIO_EDITOR_STYLE_ID = 'editor-style-tag';
+  const STUDIO_STYLE_VERSION_LABELS = {
+    family: 'Auto: Changed Font Family',
+    weight: 'Auto: Changed Font Weight',
+    align: 'Auto: Changed Alignment',
+    zIndex: 'Auto: Changed Z-Index',
+    borderStyle: 'Auto: Changed Border Style',
+    borderWidth: 'Auto: Changed Border Width',
+    borderRadius: 'Auto: Changed Corner Radius',
+    borderColor: 'Auto: Changed Border Color',
+    opacity: 'Auto: Changed Opacity'
+  };
+
+  function getStudioStyleSelection(elements = [], options = {}) {
+    const selection = Array.isArray(elements) ? elements : [];
+    const isEligibleElement = typeof options.isEligibleElement === 'function'
+      ? options.isEligibleElement
+      : (element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected);
+
+    return selection.filter((element) => isEligibleElement(element));
+  }
+
+  function buildStudioStyleMutationPlan(elements = [], prop, value, options = {}) {
+    const selection = getStudioStyleSelection(elements, options);
+    const isLocked = typeof options.isLocked === 'function'
+      ? options.isLocked
+      : () => false;
+
+    return {
+      selection,
+      prop,
+      value,
+      canApply: selection.length > 0 && !selection.some((element) => isLocked(element)),
+      versionLabel: STUDIO_STYLE_VERSION_LABELS[prop] || ''
+    };
+  }
+
+  function normalizeStudioStyleMutationValue(prop, value) {
+    if (prop === 'opacity') {
+      const displayValue = `${Math.max(10, Math.min(100, parseInt(value, 10) || 100))}`;
+      return {
+        styleValue: (Number(displayValue) / 100).toString(),
+        displayValue
+      };
+    }
+
+    if (prop === 'size' || prop === 'borderWidth' || prop === 'borderRadius') {
+      return {
+        styleValue: `${value}px`,
+        displayValue: `${value}`
+      };
+    }
+
+    return {
+      styleValue: value,
+      displayValue: `${value}`
+    };
+  }
+
+  function applyStudioStyleMutation(elements = [], prop, value) {
+    const selection = Array.isArray(elements) ? elements : [];
+    if (selection.length === 0) {
+      return {
+        didApply: false,
+        displayValue: `${value}`
+      };
+    }
+
+    const normalizedValue = normalizeStudioStyleMutationValue(prop, value);
+    let didApply = false;
+
+    selection.forEach((element, index) => {
+      if (!element) {
+        return;
+      }
+
+      if (prop === 'text') {
+        if (index === 0) {
+          element.textContent = value;
+          didApply = true;
+        }
+        return;
+      }
+
+      if (prop === 'src') {
+        if (index === 0 && typeof element.tagName === 'string' && element.tagName.toLowerCase() === 'img') {
+          element.src = value;
+          didApply = true;
+        }
+        return;
+      }
+
+      if (!element.style) {
+        return;
+      }
+
+      if (prop === 'size') {
+        element.style.fontSize = normalizedValue.styleValue;
+        didApply = true;
+      } else if (prop === 'family') {
+        element.style.fontFamily = normalizedValue.styleValue;
+        didApply = true;
+      } else if (prop === 'weight') {
+        element.style.fontWeight = normalizedValue.styleValue;
+        didApply = true;
+      } else if (prop === 'color') {
+        element.style.color = normalizedValue.styleValue;
+        didApply = true;
+      } else if (prop === 'align') {
+        element.style.textAlign = normalizedValue.styleValue;
+        didApply = true;
+      } else if (prop === 'opacity') {
+        element.style.opacity = normalizedValue.styleValue;
+        didApply = true;
+      } else if (prop === 'zIndex') {
+        element.style.zIndex = normalizedValue.styleValue;
+        didApply = true;
+      } else if (prop === 'borderStyle') {
+        element.style.borderStyle = normalizedValue.styleValue;
+        didApply = true;
+      } else if (prop === 'borderWidth') {
+        element.style.borderWidth = normalizedValue.styleValue;
+        didApply = true;
+      } else if (prop === 'borderRadius') {
+        element.style.borderRadius = normalizedValue.styleValue;
+        didApply = true;
+      } else if (prop === 'borderColor') {
+        element.style.borderColor = normalizedValue.styleValue;
+        didApply = true;
+      }
+    });
+
+    return {
+      didApply,
+      displayValue: normalizedValue.displayValue
+    };
+  }
 
   function getStudioEditorStyleText() {
     return `
@@ -167,6 +303,11 @@
 
   return {
     DEFAULT_STUDIO_EDITOR_STYLE_ID,
+    STUDIO_STYLE_VERSION_LABELS,
+    getStudioStyleSelection,
+    buildStudioStyleMutationPlan,
+    normalizeStudioStyleMutationValue,
+    applyStudioStyleMutation,
     getStudioEditorStyleText,
     ensureStudioEditorStyle
   };

@@ -2684,50 +2684,23 @@
 
     // Apply styles immediately to active selected elements
     function applySelectedElementStyle(prop, val) {
-      const targets = getLiveSelectedElements();
-      if (targets.length === 0) return;
-      if (selectionHasLockedElements(targets)) return;
-
-      targets.forEach((target, idx) => {
-        if (prop === 'text') {
-          if (idx === 0) target.textContent = val;
-        } else if (prop === 'src') {
-          if (idx === 0 && target.tagName.toLowerCase() === 'img') target.src = val;
-        } else if (prop === 'size') {
-          target.style.fontSize = val + 'px';
-        } else if (prop === 'family') {
-          target.style.fontFamily = val;
-        } else if (prop === 'weight') {
-          target.style.fontWeight = val;
-        } else if (prop === 'color') {
-          target.style.color = val;
-        } else if (prop === 'align') {
-          target.style.textAlign = val;
-        } else if (prop === 'opacity') {
-          target.style.opacity = (Math.max(10, Math.min(100, parseInt(val, 10) || 100)) / 100).toString();
-        } else if (prop === 'zIndex') {
-          target.style.zIndex = val;
-        } else if (prop === 'borderStyle') {
-          target.style.borderStyle = val;
-        } else if (prop === 'borderWidth') {
-          target.style.borderWidth = val + 'px';
-        } else if (prop === 'borderRadius') {
-          target.style.borderRadius = val + 'px';
-        } else if (prop === 'borderColor') {
-          target.style.borderColor = val;
-        }
+      const styleMutationPlan = SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(selectedElements, prop, val, {
+        isLocked: isElementLocked
       });
+      if (!styleMutationPlan.canApply) return false;
+      const styleMutationResult = SlideNextStudioEditorStyle.applyStudioStyleMutation(styleMutationPlan.selection, prop, val);
+      if (!styleMutationResult.didApply) return false;
 
       if (prop === 'size') {
-        document.getElementById('fontSizeVal').textContent = val + 'px';
+        document.getElementById('fontSizeVal').textContent = `${styleMutationResult.displayValue}px`;
       } else if (prop === 'align') {
         highlightAlignButton(val);
       } else if (prop === 'borderWidth') {
-        document.getElementById('borderWidthVal').textContent = val + 'px';
+        document.getElementById('borderWidthVal').textContent = `${styleMutationResult.displayValue}px`;
       } else if (prop === 'borderRadius') {
-        document.getElementById('borderRadiusVal').textContent = val + 'px';
+        document.getElementById('borderRadiusVal').textContent = `${styleMutationResult.displayValue}px`;
       } else if (prop === 'opacity') {
-        document.getElementById('opacityVal').textContent = `${val}%`;
+        document.getElementById('opacityVal').textContent = `${styleMutationResult.displayValue}%`;
       }
 
       syncSelectionOverlay();
@@ -2742,25 +2715,10 @@
       triggerAutoSave();
 
       // Trigger version checkpoints for discrete changes
-      if (prop === 'family') {
-        triggerAutoVersion('Auto: Changed Font Family');
-      } else if (prop === 'weight') {
-        triggerAutoVersion('Auto: Changed Font Weight');
-      } else if (prop === 'align') {
-        triggerAutoVersion('Auto: Changed Alignment');
-      } else if (prop === 'zIndex') {
-        triggerAutoVersion('Auto: Changed Z-Index');
-      } else if (prop === 'borderStyle') {
-        triggerAutoVersion('Auto: Changed Border Style');
-      } else if (prop === 'borderWidth') {
-        triggerAutoVersion('Auto: Changed Border Width');
-      } else if (prop === 'borderRadius') {
-        triggerAutoVersion('Auto: Changed Corner Radius');
-      } else if (prop === 'borderColor') {
-        triggerAutoVersion('Auto: Changed Border Color');
-      } else if (prop === 'opacity') {
-        triggerAutoVersion('Auto: Changed Opacity');
+      if (styleMutationPlan.versionLabel) {
+        triggerAutoVersion(styleMutationPlan.versionLabel);
       }
+      return true;
     }
 
     // Delete active selection
