@@ -2625,8 +2625,9 @@
       if (visibilityLabel) visibilityLabel.textContent = visibilityActionState.allHidden ? 'Show Selected' : 'Hide Selected';
     }
 
-    function updateMotionActionState() {
-      const canNudge = getNudgeSelectionState().canNudge;
+    function updateMotionActionState(doc = getIframeDoc()) {
+      const hasActiveSlide = !!getActiveSlide(doc);
+      const canNudge = hasActiveSlide && getNudgeSelectionState().canNudge;
       ['nudgeSelectionUpBtn', 'nudgeSelectionLeftBtn', 'nudgeSelectionRightBtn', 'nudgeSelectionDownBtn'].forEach(id => {
         const btn = document.getElementById(id);
         if (btn) btn.disabled = !canNudge;
