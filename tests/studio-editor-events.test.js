@@ -161,6 +161,8 @@ test('createStudioFrameKeydownHandler still honors shortcuts for live selections
 
 test('createStudioFrameKeydownHandler skips deck-level paste and select-all shortcuts until the active slide is ready', () => {
   const calls = {
+    copy: 0,
+    duplicate: 0,
     undo: 0,
     redo: 0,
     paste: 0,
@@ -168,8 +170,14 @@ test('createStudioFrameKeydownHandler skips deck-level paste and select-all shor
   };
   const handler = events.createStudioFrameKeydownHandler({
     getActiveElement: () => null,
-    getSelectedElements: () => [],
+    getSelectedElements: () => [{ id: 1, isConnected: true }],
     canMutateDeck: () => false,
+    copySelectedElements() {
+      calls.copy += 1;
+    },
+    duplicateSelectedElements() {
+      calls.duplicate += 1;
+    },
     editorUndo() {
       calls.undo += 1;
     },
@@ -219,6 +227,24 @@ test('createStudioFrameKeydownHandler skips deck-level paste and select-all shor
   assert.equal(calls.redo, 0);
   assert.equal(redoEvent.prevented, 0);
   assert.equal(redoEvent.stopped, 0);
+
+  const copyEvent = createKeyboardEvent({
+    key: 'c',
+    ctrlKey: true
+  });
+  handler(copyEvent);
+  assert.equal(calls.copy, 0);
+  assert.equal(copyEvent.prevented, 0);
+  assert.equal(copyEvent.stopped, 0);
+
+  const duplicateEvent = createKeyboardEvent({
+    key: 'd',
+    ctrlKey: true
+  });
+  handler(duplicateEvent);
+  assert.equal(calls.duplicate, 0);
+  assert.equal(duplicateEvent.prevented, 0);
+  assert.equal(duplicateEvent.stopped, 0);
 
   const nextSlideEvent = createKeyboardEvent({
     key: 'PageDown'
@@ -419,6 +445,8 @@ test('createStudioGlobalKeydownHandler still honors shortcuts for live selection
 
 test('createStudioGlobalKeydownHandler skips deck-level paste and select-all shortcuts until the active slide is ready', () => {
   const calls = {
+    copy: 0,
+    duplicate: 0,
     undo: 0,
     redo: 0,
     paste: 0,
@@ -427,8 +455,14 @@ test('createStudioGlobalKeydownHandler skips deck-level paste and select-all sho
   const handler = events.createStudioGlobalKeydownHandler({
     isEditorActive: () => true,
     getActiveElement: () => null,
-    getSelectedElements: () => [],
+    getSelectedElements: () => [{ id: 1, isConnected: true }],
     canMutateDeck: () => false,
+    copySelectedElements() {
+      calls.copy += 1;
+    },
+    duplicateSelectedElements() {
+      calls.duplicate += 1;
+    },
     editorUndo() {
       calls.undo += 1;
     },
@@ -474,6 +508,22 @@ test('createStudioGlobalKeydownHandler skips deck-level paste and select-all sho
   handler(redoEvent);
   assert.equal(calls.redo, 0);
   assert.equal(redoEvent.prevented, 0);
+
+  const copyEvent = createKeyboardEvent({
+    key: 'c',
+    ctrlKey: true
+  });
+  handler(copyEvent);
+  assert.equal(calls.copy, 0);
+  assert.equal(copyEvent.prevented, 0);
+
+  const duplicateEvent = createKeyboardEvent({
+    key: 'd',
+    ctrlKey: true
+  });
+  handler(duplicateEvent);
+  assert.equal(calls.duplicate, 0);
+  assert.equal(duplicateEvent.prevented, 0);
 });
 
 test('createStudioGlobalKeydownHandler does not intercept undo and redo while typing', () => {

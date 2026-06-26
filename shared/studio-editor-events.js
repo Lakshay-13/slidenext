@@ -167,7 +167,7 @@
         removeSelectedElement();
         return;
       }
-      if ((event.ctrlKey || event.metaKey) && loweredKey === 'c' && hasSelection) {
+      if (deckShortcutReady && (event.ctrlKey || event.metaKey) && loweredKey === 'c' && hasSelection) {
         event.preventDefault();
         event.stopPropagation();
         copySelectedElements();
@@ -179,7 +179,7 @@
         pasteClipboardElements();
         return;
       }
-      if ((event.ctrlKey || event.metaKey) && loweredKey === 'd' && hasSelection) {
+      if (deckShortcutReady && (event.ctrlKey || event.metaKey) && loweredKey === 'd' && hasSelection) {
         event.preventDefault();
         event.stopPropagation();
         duplicateSelectedElements();
@@ -298,7 +298,7 @@
         removeSelectedElement();
         return;
       }
-      if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'c' && hasSelection) {
+      if (!typingContext && deckShortcutReady && (event.ctrlKey || event.metaKey) && loweredKey === 'c' && hasSelection) {
         event.preventDefault();
         copySelectedElements();
         return;
@@ -308,7 +308,7 @@
         pasteClipboardElements();
         return;
       }
-      if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'd' && hasSelection) {
+      if (!typingContext && deckShortcutReady && (event.ctrlKey || event.metaKey) && loweredKey === 'd' && hasSelection) {
         event.preventDefault();
         duplicateSelectedElements();
         return;
