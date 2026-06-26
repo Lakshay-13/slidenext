@@ -452,6 +452,44 @@
     };
   }
 
+  function buildStudioTransformStartState(elements = [], options = {}) {
+    const selection = Array.isArray(elements) ? elements : [];
+    const getSlideMetrics = typeof options.getSlideMetrics === 'function'
+      ? options.getSlideMetrics
+      : () => null;
+    const getPointerOnSlide = typeof options.getPointerOnSlide === 'function'
+      ? options.getPointerOnSlide
+      : () => ({ x: 0, y: 0 });
+    const getSelectionBounds = typeof options.getSelectionBounds === 'function'
+      ? options.getSelectionBounds
+      : () => null;
+    const buildSessionItem = typeof options.buildSessionItem === 'function'
+      ? options.buildSessionItem
+      : buildStudioTransformSessionItem;
+
+    const slideMetrics = getSlideMetrics(options.slide);
+    const slideBounds = {
+      width: Number.isFinite(slideMetrics && slideMetrics.logicalWidth) ? slideMetrics.logicalWidth : 0,
+      height: Number.isFinite(slideMetrics && slideMetrics.logicalHeight) ? slideMetrics.logicalHeight : 0
+    };
+    const startPointer = getPointerOnSlide(options.event, slideMetrics);
+    const startBounds = getSelectionBounds(selection, slideMetrics);
+    if (!startBounds) {
+      return null;
+    }
+
+    return {
+      slideMetrics,
+      slideBounds,
+      startPointer,
+      startBounds,
+      items: selection.map((element) => buildSessionItem(element, {
+        ...options.itemOptions,
+        slideMetrics
+      }))
+    };
+  }
+
   return {
     getStudioTransformSelection,
     buildStudioTransformSelectionState,
@@ -471,6 +509,7 @@
     cleanupStudioTransformSession,
     buildStudioTransformSessionItem,
     buildStudioTransformSession,
-    buildStudioTransformMotionState
+    buildStudioTransformMotionState,
+    buildStudioTransformStartState
   };
 });

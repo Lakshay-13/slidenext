@@ -2976,18 +2976,26 @@
         if (!transformSelectionState.canTransform) return;
         const dragSelection = transformSelectionState.selection;
 
-        const slideMetrics = getSlideMetrics(slide);
-        const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
-        const startPointer = getPointerOnSlide(e, slideMetrics);
-        const startBounds = getSelectionBounds(dragSelection, slideMetrics);
-        if (!startBounds) return;
-        const overlayNode = ensureSelectionOverlay(doc, slide);
-
-        const items = dragSelection.map((el) => SlideNextStudioEditorTransform.buildStudioTransformSessionItem(el, {
+        const transformStartState = SlideNextStudioEditorTransform.buildStudioTransformStartState(dragSelection, {
+          slide,
+          event: e,
+          getSlideMetrics,
+          getPointerOnSlide,
+          getSelectionBounds,
+          itemOptions: {
+            getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+            getRectOnSlide
+          }
+        });
+        if (!transformStartState) return;
+        const {
           slideMetrics,
-          getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
-          getRectOnSlide
-        }));
+          slideBounds,
+          startPointer,
+          startBounds,
+          items
+        } = transformStartState;
+        const overlayNode = ensureSelectionOverlay(doc, slide);
 
         session = SlideNextStudioEditorTransform.buildStudioTransformSession({
           type: handle ? 'resize' : 'drag',

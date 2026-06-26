@@ -677,3 +677,51 @@ test('buildStudioTransformMotionState derives pointer deltas and screen movement
     moveDistanceScreen: 0
   });
 });
+
+test('buildStudioTransformStartState derives the shared transform bootstrap state', () => {
+  const slide = { id: 'slide-1' };
+  const selection = [{ id: 'node-1' }, { id: 'node-2' }];
+
+  assert.deepEqual(transformState.buildStudioTransformStartState(selection, {
+    slide,
+    event: { pointerId: 7 },
+    itemOptions: { source: 'test' },
+    getSlideMetrics(currentSlide) {
+      assert.equal(currentSlide, slide);
+      return { logicalWidth: 1280, logicalHeight: 720, scaleX: 2, scaleY: 2 };
+    },
+    getPointerOnSlide(event, slideMetrics) {
+      assert.equal(event.pointerId, 7);
+      assert.equal(slideMetrics.logicalWidth, 1280);
+      return { x: 100, y: 80 };
+    },
+    getSelectionBounds(elements, slideMetrics) {
+      assert.equal(elements, selection);
+      assert.equal(slideMetrics.logicalHeight, 720);
+      return { left: 60, top: 40, width: 200, height: 120 };
+    },
+    buildSessionItem(element, options) {
+      assert.equal(options.slideMetrics.logicalWidth, 1280);
+      assert.equal(options.source, 'test');
+      return { elementId: element.id };
+    }
+  }), {
+    slideMetrics: { logicalWidth: 1280, logicalHeight: 720, scaleX: 2, scaleY: 2 },
+    slideBounds: { width: 1280, height: 720 },
+    startPointer: { x: 100, y: 80 },
+    startBounds: { left: 60, top: 40, width: 200, height: 120 },
+    items: [{ elementId: 'node-1' }, { elementId: 'node-2' }]
+  });
+
+  assert.equal(transformState.buildStudioTransformStartState(selection, {
+    getSlideMetrics() {
+      return { logicalWidth: 0, logicalHeight: 0 };
+    },
+    getPointerOnSlide() {
+      return { x: 0, y: 0 };
+    },
+    getSelectionBounds() {
+      return null;
+    }
+  }), null);
+});
