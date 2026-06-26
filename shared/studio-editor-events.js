@@ -1,12 +1,24 @@
 (function (root, factory) {
-  const api = factory();
+  const liveSelection = typeof module === 'object' && module.exports
+    ? require('./studio-editor-live-selection')
+    : root && root.SlideNextStudioEditorLiveSelection;
+  const api = factory(liveSelection);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorEvents = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (liveSelection) {
+  function getFrameShortcutSelection(elements = []) {
+    if (liveSelection && typeof liveSelection.getStudioLiveSelection === 'function') {
+      return liveSelection.getStudioLiveSelection(elements);
+    }
+    return Array.isArray(elements)
+      ? elements.filter((element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected))
+      : [];
+  }
+
   function createStudioFrameClickHandler(options = {}) {
     const isDraggingElement = typeof options.isDraggingElement === 'function'
       ? options.isDraggingElement
@@ -103,7 +115,7 @@
         return;
       }
 
-      const selectedElements = getSelectedElements();
+      const selectedElements = getFrameShortcutSelection(getSelectedElements());
       const hasSelection = selectedElements.length > 0;
 
       if ((event.ctrlKey || event.metaKey) && loweredKey === 'a') {
