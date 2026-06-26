@@ -92,9 +92,10 @@ test('buildEditorSaveRequestBody falls back to the persisted html baseline when 
         return !!deck && deck.kind === 'slidenext.deck' && Array.isArray(deck.slides);
       }
     },
-    buildPersistableDeckHtml() {
+    buildPersistableDeckHtml(nextDoc) {
       buildPersistableDeckHtmlCalls += 1;
-      return '<html>rebuilt</html>';
+      assert.equal(nextDoc, null);
+      return '<html>persisted-baseline</html>';
     },
     buildEditorCanonicalDeck(nextDoc) {
       assert.equal(nextDoc, null);
@@ -119,5 +120,38 @@ test('buildEditorSaveRequestBody falls back to the persisted html baseline when 
       canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeck)
     }
   );
-  assert.equal(buildPersistableDeckHtmlCalls, 0);
+  assert.equal(buildPersistableDeckHtmlCalls, 1);
+});
+
+test('buildPersistableDeckHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+  );
+
+  let sharedBuildCalls = 0;
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml() {
+        sharedBuildCalls += 1;
+        return '<html>rebuilt</html>';
+      }
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '<html>persisted-baseline</html>',
+    persistedDeckPlaybackState: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+
+  assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-baseline</html>');
+  assert.equal(sharedBuildCalls, 0);
 });

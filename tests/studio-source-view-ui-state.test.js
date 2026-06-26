@@ -96,8 +96,9 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
     buildEditorCanonicalDeck() {
       throw new Error('canonical deck should not be requested for this fallback');
     },
-    buildPersistableDeckHtml() {
-      throw new Error('persistable html should not be rebuilt without a live document');
+    buildPersistableDeckHtml(nextDoc) {
+      assert.equal(nextDoc, null);
+      return context.lastPersistedDeckHtml;
     },
     getIframeDoc() {
       return null;
