@@ -1898,8 +1898,7 @@
 
     // Toggle active slide viewport display
     function setActiveSlide(index, options = {}) {
-      const iframe = document.getElementById('studioFrame');
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeDoc = getIframeDoc();
       SlideNextStudioDeckView.setStudioDeckActiveSlide(index, {
         doc: iframeDoc,
         captureHistory: options.captureHistory,
