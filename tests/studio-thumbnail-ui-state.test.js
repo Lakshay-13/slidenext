@@ -67,6 +67,7 @@ test('generateThumbnails hides the slide delete affordance when only one slide r
       ]
     }
   };
+  let getIframeDocCalls = 0;
 
   const context = {
     buildEditorDeckSnapshot() {
@@ -74,12 +75,6 @@ test('generateThumbnails hides the slide delete affordance when only one slide r
     },
     document: {
       getElementById(id) {
-        if (id === 'studioFrame') {
-          return {
-            contentDocument: iframeDoc,
-            contentWindow: { document: iframeDoc }
-          };
-        }
         if (id === 'thumbnailsList') return thumbnailsList;
         if (id === 'slideCountLabel') return slideCountLabel;
         return null;
@@ -87,6 +82,10 @@ test('generateThumbnails hides the slide delete affordance when only one slide r
       createElement() {
         return createThumbCard();
       }
+    },
+    getIframeDoc() {
+      getIframeDocCalls += 1;
+      return iframeDoc;
     },
     getStudioActiveSlideIndex() {
       return 0;
@@ -126,4 +125,5 @@ test('generateThumbnails hides the slide delete affordance when only one slide r
   assert.equal(thumbnailsList.children.length, 2);
   assert.match(thumbnailsList.children[0].innerHTML, /deleteSlideNodeById\('slide-1'\)/);
   assert.match(thumbnailsList.children[1].innerHTML, /deleteSlideNodeById\('slide-2'\)/);
+  assert.equal(getIframeDocCalls, 2);
 });

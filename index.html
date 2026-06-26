@@ -1701,8 +1701,7 @@
 
     // Render visual Slide Organizer thumbnails
     function generateThumbnails() {
-      const iframe = document.getElementById('studioFrame');
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeDoc = getIframeDoc();
       const deckSnapshot = buildEditorDeckSnapshot(iframeDoc);
       const slides = deckSnapshot.slides;
       const canDeleteSlides = slides.length > 1;
