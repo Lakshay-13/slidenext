@@ -2430,6 +2430,7 @@
       updateLockActionState();
       updateVisibilityActionState();
       updateMotionActionState();
+      updateStyleActionState();
       updateLayerOrderActionState();
       if (!liveSelectionState.hasSelection) {
         document.getElementById('inspectorTargetLabel').innerHTML = `
@@ -2617,6 +2618,33 @@
       });
     }
 
+    function updateStyleActionState() {
+      [
+        ['elTextContent', 'text', ''],
+        ['elImageSrc', 'src', ''],
+        ['elFontSize', 'size', '16'],
+        ['elFontFamily', 'family', "'Geist', sans-serif"],
+        ['elFontWeight', 'weight', '400'],
+        ['alignLeftBtn', 'align', 'left'],
+        ['alignCenterBtn', 'align', 'center'],
+        ['alignRightBtn', 'align', 'right'],
+        ['alignJustifyBtn', 'align', 'justify'],
+        ['elTextColor', 'color', '#ffffff'],
+        ['elOpacity', 'opacity', '100'],
+        ['elBorderStyle', 'borderStyle', 'none'],
+        ['elBorderWidth', 'borderWidth', '0'],
+        ['elBorderRadius', 'borderRadius', '0'],
+        ['elBorderColor', 'borderColor', '#ffffff']
+      ].forEach(([id, prop, value]) => {
+        const control = document.getElementById(id);
+        if (!control) return;
+        const styleMutationPlan = SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(selectedElements, prop, value, {
+          isLocked: isElementLocked
+        });
+        control.disabled = !styleMutationPlan.canApply;
+      });
+    }
+
     function updateLayerOrderActionState() {
       const slide = getActiveSlide();
       const layerOrderActionState = SlideNextStudioEditorLayerOrder.buildStudioLayerOrderActionState(selectedElements, {
@@ -2699,10 +2727,11 @@
       const alignBtns = ['Left', 'Center', 'Right', 'Justify'];
       alignBtns.forEach(btn => {
         const el = document.getElementById(`align${btn}Btn`);
+        if (!el) return;
         if (btn.toLowerCase() === align) {
-          el.className = 'py-1 flex items-center justify-center bg-[#7028d0]/15 border border-[#7028d0]/30 text-[#7028d0] rounded transition-all';
+          el.className = 'py-1 flex items-center justify-center bg-[#7028d0]/15 border border-[#7028d0]/30 text-[#7028d0] rounded transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none';
         } else {
-          el.className = 'py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all';
+          el.className = 'py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none';
         }
       });
     }
