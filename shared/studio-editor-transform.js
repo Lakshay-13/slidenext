@@ -40,6 +40,16 @@
     return buildStudioTransformSelectionState(elements, options).canTransform;
   }
 
+  function isStudioFreeformPositioned(element, options = {}) {
+    if (!element) return false;
+    const view = options.view || (element.ownerDocument && element.ownerDocument.defaultView) || null;
+    if (!view || typeof view.getComputedStyle !== 'function') {
+      return false;
+    }
+    const computed = view.getComputedStyle(element);
+    return !!computed && (computed.position === 'absolute' || computed.position === 'fixed');
+  }
+
   function shouldStudioResizeWidth(element) {
     const tagName = element && typeof element.tagName === 'string'
       ? element.tagName.toLowerCase()
@@ -164,6 +174,7 @@
     getStudioTransformSelection,
     buildStudioTransformSelectionState,
     canStudioTransformSelection,
+    isStudioFreeformPositioned,
     STUDIO_RESIZE_WIDTH_TAGS,
     STUDIO_RESIZE_HEIGHT_TAGS,
     shouldStudioResizeWidth,

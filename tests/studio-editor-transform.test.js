@@ -77,6 +77,30 @@ test('buildStudioTransformSelectionState returns filtered live selections and tr
   });
 });
 
+test('isStudioFreeformPositioned only accepts absolute and fixed positioned elements', () => {
+  const view = {
+    getComputedStyle(element) {
+      return { position: element.position };
+    }
+  };
+
+  assert.equal(transformState.isStudioFreeformPositioned({
+    position: 'absolute',
+    ownerDocument: { defaultView: view }
+  }), true);
+  assert.equal(transformState.isStudioFreeformPositioned({
+    position: 'fixed',
+    ownerDocument: { defaultView: view }
+  }), true);
+  assert.equal(transformState.isStudioFreeformPositioned({
+    position: 'relative',
+    ownerDocument: { defaultView: view }
+  }), false);
+  assert.equal(transformState.isStudioFreeformPositioned({
+    position: 'absolute'
+  }), false);
+});
+
 test('shouldStudioResizeWidth and shouldStudioResizeHeight follow the editor resize tag policy', () => {
   assert.equal(transformState.shouldStudioResizeWidth({ tagName: 'IMG' }), true);
   assert.equal(transformState.shouldStudioResizeWidth({ tagName: 'SPAN' }), false);

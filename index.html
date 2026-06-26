@@ -2557,16 +2557,10 @@
       });
     }
 
-    function isElementFreeformPositioned(el) {
-      if (!el || !el.ownerDocument?.defaultView) return false;
-      const computed = el.ownerDocument.defaultView.getComputedStyle(el);
-      return computed.position === 'absolute' || computed.position === 'fixed';
-    }
-
     function selectionSupportsFreeformTransforms(elements = selectedElements) {
       return SlideNextStudioEditorTransform.canStudioTransformSelection(elements, {
         isLocked: isElementLocked,
-        isFreeformPositioned: isElementFreeformPositioned
+        isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
       });
     }
 
@@ -2890,7 +2884,7 @@
       const slide = getActiveSlide(doc);
       const nudgeSelectionState = SlideNextStudioEditorNudge.buildStudioNudgeSelectionState(selectedElements, {
         isLocked: isElementLocked,
-        isFreeformPositioned: isElementFreeformPositioned
+        isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
       });
       if (!doc || !slide || !nudgeSelectionState.canNudge) return false;
       const slideMetrics = getSlideMetrics(slide);
@@ -2992,7 +2986,7 @@
         if (!slide) return;
         const getTransformSelectionState = () => SlideNextStudioEditorTransform.buildStudioTransformSelectionState(selectedElements, {
           isLocked: isElementLocked,
-          isFreeformPositioned: isElementFreeformPositioned
+          isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
         });
 
         const handle = e.target.closest('.editor-resize-handle');
