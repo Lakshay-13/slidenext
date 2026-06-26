@@ -2925,10 +2925,6 @@
     function setupIframeDragging(doc) {
       let session = null;
 
-      const materializeSessionItems = () => {
-        SlideNextStudioEditorTransform.materializeStudioTransformSession(session);
-      };
-
       const finalizeDragSession = () => {
         if (!session) return;
         const didMove = session.moved;
@@ -3031,16 +3027,12 @@
           clientY: e.clientY
         });
         const { dx, dy, moveDistanceScreen } = motionState;
-        if (!session.materialized && moveDistanceScreen >= DRAG_START_THRESHOLD_PX) {
-          materializeSessionItems();
-        }
-
-        if (!session.materialized) {
+        const transformProgress = SlideNextStudioEditorTransform.progressStudioTransformSession(session, {
+          moveDistanceScreen,
+          dragStartThresholdPx: DRAG_START_THRESHOLD_PX
+        });
+        if (!transformProgress.isActive) {
           return;
-        }
-
-        if (moveDistanceScreen >= DRAG_START_THRESHOLD_PX) {
-          session.moved = true;
         }
         const bounds = SlideNextStudioEditorTransform.resolveStudioTransformBounds(session, {
           pointer,

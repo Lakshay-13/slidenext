@@ -288,6 +288,45 @@
     };
   }
 
+  function progressStudioTransformSession(session = {}, options = {}) {
+    if (!session) {
+      return {
+        didMaterialize: false,
+        isActive: false,
+        didMove: false,
+        session
+      };
+    }
+
+    const moveDistanceScreen = Number.isFinite(options.moveDistanceScreen) ? options.moveDistanceScreen : 0;
+    const dragStartThresholdPx = Number.isFinite(options.dragStartThresholdPx) ? options.dragStartThresholdPx : 0;
+    let didMaterialize = false;
+
+    if (!session.materialized && moveDistanceScreen >= dragStartThresholdPx) {
+      didMaterialize = materializeStudioTransformSession(session, options).didMaterialize;
+    }
+
+    if (!session.materialized) {
+      return {
+        didMaterialize,
+        isActive: false,
+        didMove: false,
+        session
+      };
+    }
+
+    if (moveDistanceScreen >= dragStartThresholdPx) {
+      session.moved = true;
+    }
+
+    return {
+      didMaterialize,
+      isActive: true,
+      didMove: !!session.moved,
+      session
+    };
+  }
+
   function cleanupStudioTransformSession(session = {}, options = {}) {
     if (!session) {
       return {
@@ -428,6 +467,7 @@
     normalizeStudioTransformBounds,
     applyStudioTransformBounds,
     materializeStudioTransformSession,
+    progressStudioTransformSession,
     cleanupStudioTransformSession,
     buildStudioTransformSessionItem,
     buildStudioTransformSession,

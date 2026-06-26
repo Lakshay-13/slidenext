@@ -426,6 +426,65 @@ test('materializeStudioTransformSession applies absolute positioning state only 
   });
 });
 
+test('progressStudioTransformSession applies drag threshold gating before continuing transforms', () => {
+  const element = {
+    style: {},
+    classList: createClassList()
+  };
+  const overlay = {
+    classList: createClassList()
+  };
+  const session = {
+    materialized: false,
+    moved: false,
+    items: [{
+      element,
+      startAbsLeft: 140,
+      startAbsTop: 120,
+      startWidth: 180,
+      startHeight: 90,
+      parentOffsetLeft: 40,
+      parentOffsetTop: 20,
+      lockWidth: false,
+      lockHeight: false
+    }],
+    overlay
+  };
+
+  assert.deepEqual(transformState.progressStudioTransformSession(session, {
+    moveDistanceScreen: 4,
+    dragStartThresholdPx: 5
+  }), {
+    didMaterialize: false,
+    isActive: false,
+    didMove: false,
+    session
+  });
+  assert.equal(session.materialized, false);
+  assert.equal(session.moved, false);
+
+  assert.deepEqual(transformState.progressStudioTransformSession(session, {
+    moveDistanceScreen: 5,
+    dragStartThresholdPx: 5
+  }), {
+    didMaterialize: true,
+    isActive: true,
+    didMove: true,
+    session
+  });
+  assert.equal(session.materialized, true);
+  assert.equal(session.moved, true);
+  assert.equal(element.classList.contains('editor-dragging'), true);
+  assert.equal(overlay.classList.contains('drag-preview'), true);
+
+  assert.deepEqual(transformState.progressStudioTransformSession(null), {
+    didMaterialize: false,
+    isActive: false,
+    didMove: false,
+    session: null
+  });
+});
+
 test('cleanupStudioTransformSession releases pointer capture and clears drag state', () => {
   const element = {
     style: {},
