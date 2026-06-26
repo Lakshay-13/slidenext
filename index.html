@@ -2605,12 +2605,13 @@
       if (lockLabel) lockLabel.textContent = lockActionState.allLocked ? 'Unlock Selected' : 'Lock Selected';
     }
 
-    function updateRemovalActionState() {
+    function updateRemovalActionState(doc = getIframeDoc()) {
       const removalActionState = SlideNextStudioEditorRemoval.buildStudioRemovalActionState(selectedElements, {
         isLocked: isElementLocked
       });
+      const hasActiveSlide = !!getActiveSlide(doc);
       const removeBtn = document.getElementById('removeSelectionBtn');
-      if (removeBtn) removeBtn.disabled = !removalActionState.canRemove;
+      if (removeBtn) removeBtn.disabled = !(removalActionState.canRemove && hasActiveSlide);
     }
 
     function updateVisibilityActionState() {
