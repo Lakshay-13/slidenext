@@ -1020,6 +1020,7 @@
   <script src="/shared/studio-editor-selection-bounds.js"></script>
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
+  <script src="/shared/studio-editor-removal.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
   <script src="/shared/studio-editor-transform.js"></script>
@@ -2433,6 +2434,7 @@
       const liveSelectionState = SlideNextStudioEditorLiveSelection.buildStudioLiveSelectionState(selectedElements);
       const count = liveSelectionState.count;
       updateClipboardActionState();
+      updateRemovalActionState();
       updateLockActionState();
       updateVisibilityActionState();
       updateMotionActionState();
@@ -2584,11 +2586,17 @@
       const lockBtn = document.getElementById('toggleLockSelectionBtn');
       const lockIcon = document.getElementById('toggleLockSelectionIcon');
       const lockLabel = document.getElementById('toggleLockSelectionLabel');
-      const removeBtn = document.getElementById('removeSelectionBtn');
       if (lockBtn) lockBtn.disabled = !lockActionState.hasSelection;
       if (lockIcon) lockIcon.textContent = lockActionState.allLocked ? 'lock_open' : 'lock';
       if (lockLabel) lockLabel.textContent = lockActionState.allLocked ? 'Unlock Selected' : 'Lock Selected';
-      if (removeBtn) removeBtn.disabled = !lockActionState.canRemove;
+    }
+
+    function updateRemovalActionState() {
+      const removalActionState = SlideNextStudioEditorRemoval.buildStudioRemovalActionState(selectedElements, {
+        isLocked: isElementLocked
+      });
+      const removeBtn = document.getElementById('removeSelectionBtn');
+      if (removeBtn) removeBtn.disabled = !removalActionState.canRemove;
     }
 
     function updateVisibilityActionState() {
@@ -2757,10 +2765,11 @@
 
     // Delete active selection
     function removeSelectedElement() {
-      const targets = getLiveSelectedElements();
-      if (targets.length === 0) return;
-      if (selectionHasLockedElements(targets)) return;
-      targets.forEach(el => {
+      const removalActionState = SlideNextStudioEditorRemoval.buildStudioRemovalActionState(selectedElements, {
+        isLocked: isElementLocked
+      });
+      if (!removalActionState.canRemove) return false;
+      removalActionState.selection.forEach(el => {
         if (el && el.isConnected) el.remove();
       });
       deselectElement();
@@ -2769,6 +2778,7 @@
       saveHistoryState();
       triggerAutoSave();
       triggerAutoVersion('Auto: Deleted Element');
+      return true;
     }
 
     function updateClipboardActionState() {
