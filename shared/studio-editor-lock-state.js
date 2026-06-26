@@ -21,13 +21,18 @@
     const isLocked = typeof options.isLocked === 'function'
       ? options.isLocked
       : () => false;
+    const canMutateDeck = typeof options.canMutateDeck === 'function'
+      ? options.canMutateDeck
+      : () => true;
     const hasSelection = selection.length > 0;
-    const hasLockedSelection = selection.some((element) => isLocked(element));
+    const canToggle = canMutateDeck() && hasSelection;
+    const hasLockedSelection = canToggle && selection.some((element) => isLocked(element));
 
     return {
       hasSelection,
-      allLocked: hasSelection && selection.every((element) => isLocked(element)),
-      canRemove: hasSelection && !hasLockedSelection
+      canToggle,
+      allLocked: canToggle && selection.every((element) => isLocked(element)),
+      canRemove: canToggle && !hasLockedSelection
     };
   }
 
@@ -36,8 +41,11 @@
     const isLocked = typeof options.isLocked === 'function'
       ? options.isLocked
       : () => false;
+    const canMutateDeck = typeof options.canMutateDeck === 'function'
+      ? options.canMutateDeck
+      : () => true;
 
-    if (selection.length === 0) {
+    if (selection.length === 0 || !canMutateDeck()) {
       return {
         selection,
         shouldLock: false,

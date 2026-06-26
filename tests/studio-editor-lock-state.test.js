@@ -20,6 +20,7 @@ test('buildStudioLockActionState derives button state from live selections only'
     isLocked: () => false
   }), {
     hasSelection: true,
+    canToggle: true,
     allLocked: false,
     canRemove: true
   });
@@ -30,6 +31,7 @@ test('buildStudioLockActionState derives button state from live selections only'
     isLocked: () => true
   }), {
     hasSelection: true,
+    canToggle: true,
     allLocked: true,
     canRemove: false
   });
@@ -40,6 +42,19 @@ test('buildStudioLockActionState derives button state from live selections only'
     isLocked: () => false
   }), {
     hasSelection: false,
+    canToggle: false,
+    allLocked: false,
+    canRemove: false
+  });
+
+  assert.deepEqual(lockState.buildStudioLockActionState([
+    { id: 1, isConnected: true, locked: true }
+  ], {
+    isLocked: (element) => !!element.locked,
+    canMutateDeck: () => false
+  }), {
+    hasSelection: true,
+    canToggle: false,
     allLocked: false,
     canRemove: false
   });
@@ -76,6 +91,16 @@ test('buildStudioLockMutationPlan derives the next lock toggle from the live sel
     isLocked: (element) => !!element.locked
   }), {
     selection: [],
+    shouldLock: false,
+    didChange: false,
+    versionLabel: ''
+  });
+
+  assert.deepEqual(lockState.buildStudioLockMutationPlan([unlocked], {
+    isLocked: (element) => !!element.locked,
+    canMutateDeck: () => false
+  }), {
+    selection: [unlocked],
     shouldLock: false,
     didChange: false,
     versionLabel: ''

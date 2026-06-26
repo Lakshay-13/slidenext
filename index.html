@@ -2593,14 +2593,15 @@
       SlideNextStudioElementState.setStudioElementHiddenState(el, hidden);
     }
 
-    function updateLockActionState() {
+    function updateLockActionState(doc = getIframeDoc()) {
       const lockActionState = SlideNextStudioEditorLockState.buildStudioLockActionState(selectedElements, {
-        isLocked: isElementLocked
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(doc)
       });
       const lockBtn = document.getElementById('toggleLockSelectionBtn');
       const lockIcon = document.getElementById('toggleLockSelectionIcon');
       const lockLabel = document.getElementById('toggleLockSelectionLabel');
-      if (lockBtn) lockBtn.disabled = !lockActionState.hasSelection;
+      if (lockBtn) lockBtn.disabled = !lockActionState.canToggle;
       if (lockIcon) lockIcon.textContent = lockActionState.allLocked ? 'lock_open' : 'lock';
       if (lockLabel) lockLabel.textContent = lockActionState.allLocked ? 'Unlock Selected' : 'Lock Selected';
     }
@@ -2690,8 +2691,10 @@
     }
 
     function toggleSelectedElementsLockState() {
+      const doc = getIframeDoc();
       const lockMutationPlan = SlideNextStudioEditorLockState.buildStudioLockMutationPlan(selectedElements, {
-        isLocked: isElementLocked
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!lockMutationPlan.didChange) return false;
       lockMutationPlan.selection.forEach(el => {
