@@ -2560,6 +2560,13 @@
       return getTransformSelectionState(elements).canTransform;
     }
 
+    function getNudgeSelectionState(elements = selectedElements) {
+      return SlideNextStudioEditorNudge.buildStudioNudgeSelectionState(elements, {
+        isLocked: isElementLocked,
+        isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
+      });
+    }
+
     function isElementHidden(el) {
       return SlideNextStudioElementState.isStudioElementHidden(el);
     }
@@ -2602,10 +2609,10 @@
     }
 
     function updateMotionActionState() {
-      const canTransform = selectionSupportsFreeformTransforms();
+      const canNudge = getNudgeSelectionState().canNudge;
       ['nudgeSelectionUpBtn', 'nudgeSelectionLeftBtn', 'nudgeSelectionRightBtn', 'nudgeSelectionDownBtn'].forEach(id => {
         const btn = document.getElementById(id);
-        if (btn) btn.disabled = !canTransform;
+        if (btn) btn.disabled = !canNudge;
       });
     }
 
@@ -2865,10 +2872,7 @@
     function nudgeSelectedElements(dx, dy) {
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
-      const nudgeSelectionState = SlideNextStudioEditorNudge.buildStudioNudgeSelectionState(selectedElements, {
-        isLocked: isElementLocked,
-        isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
-      });
+      const nudgeSelectionState = getNudgeSelectionState();
       if (!doc || !slide || !nudgeSelectionState.canNudge) return false;
       const slideMetrics = getSlideMetrics(slide);
       const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
