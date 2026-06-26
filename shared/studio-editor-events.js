@@ -113,20 +113,21 @@
       : (activeEl) => !!(activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable));
 
     return function studioFrameKeydownHandler(event) {
+      const activeEl = getActiveElement();
+      const typingContext = isTypingContext(activeEl);
       const loweredKey = typeof event.key === 'string' ? event.key.toLowerCase() : '';
       const isBracketShortcut = event.code === 'BracketLeft' || event.code === 'BracketRight';
 
-      if ((event.ctrlKey || event.metaKey) && loweredKey === 'z' && !event.shiftKey) {
+      if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'z' && !event.shiftKey) {
         event.preventDefault();
         editorUndo();
       }
-      if ((event.ctrlKey || event.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && event.shiftKey))) {
+      if (!typingContext && (event.ctrlKey || event.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && event.shiftKey))) {
         event.preventDefault();
         editorRedo();
       }
 
-      const activeEl = getActiveElement();
-      if (isTypingContext(activeEl)) {
+      if (typingContext) {
         return;
       }
 
@@ -260,12 +261,12 @@
       const hasSelection = selectedElements.length > 0;
       const deckShortcutReady = canMutateDeck();
 
-      if ((event.ctrlKey || event.metaKey) && loweredKey === 'z' && !event.shiftKey) {
+      if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'z' && !event.shiftKey) {
         event.preventDefault();
         editorUndo();
         return;
       }
-      if ((event.ctrlKey || event.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && event.shiftKey))) {
+      if (!typingContext && (event.ctrlKey || event.metaKey) && (loweredKey === 'y' || (loweredKey === 'z' && event.shiftKey))) {
         event.preventDefault();
         editorRedo();
         return;
