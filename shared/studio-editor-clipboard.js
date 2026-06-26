@@ -38,8 +38,20 @@
   }
 
   function buildStudioClipboardActionState(elements = [], clipboard = null, options = {}) {
+    return buildStudioClipboardMutationPlan(elements, clipboard, options);
+  }
+
+  function buildStudioClipboardMutationPlan(elements = [], clipboard = null, options = {}) {
+    const selection = getStudioClipboardSelection(elements, options);
+    const isLocked = typeof options.isLocked === 'function'
+      ? options.isLocked
+      : () => false;
+    const canCopy = selection.length > 0 && !selection.some((element) => isLocked(element));
+
     return {
-      canCopy: canStudioCopySelection(elements, options),
+      selection,
+      canCopy,
+      canDuplicate: canCopy,
       canPaste: hasStudioClipboardItems(clipboard)
     };
   }
@@ -48,6 +60,7 @@
     hasStudioClipboardItems,
     getStudioClipboardSelection,
     canStudioCopySelection,
-    buildStudioClipboardActionState
+    buildStudioClipboardActionState,
+    buildStudioClipboardMutationPlan
   };
 });

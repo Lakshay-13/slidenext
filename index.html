@@ -2782,7 +2782,7 @@
     }
 
     function updateClipboardActionState() {
-      const clipboardActionState = SlideNextStudioEditorClipboard.buildStudioClipboardActionState(selectedElements, editorClipboard, {
+      const clipboardActionState = SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
         isLocked: isElementLocked
       });
       const copyBtn = document.getElementById('copySelectionBtn');
@@ -2886,13 +2886,14 @@
     }
 
     function copySelectedElements() {
-      if (!SlideNextStudioEditorClipboard.canStudioCopySelection(selectedElements, {
+      const clipboardActionState = SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
         isLocked: isElementLocked
-      })) {
+      });
+      if (!clipboardActionState.canCopy) {
         updateClipboardActionState();
         return false;
       }
-      const items = buildClipboardPayload();
+      const items = buildClipboardPayload(clipboardActionState.selection);
       if (items.length === 0) return false;
       editorClipboard = { items, pasteCount: 0 };
       updateClipboardActionState();
@@ -2909,10 +2910,11 @@
     }
 
     function duplicateSelectedElements() {
-      const targets = getLiveSelectedElements();
-      if (targets.length === 0) return false;
-      if (selectionHasLockedElements(targets)) return false;
-      const duplicates = insertClipboardPayload(buildClipboardPayload(targets), 1);
+      const clipboardActionState = SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
+        isLocked: isElementLocked
+      });
+      if (!clipboardActionState.canDuplicate) return false;
+      const duplicates = insertClipboardPayload(buildClipboardPayload(clipboardActionState.selection), 1);
       if (duplicates.length === 0) return false;
       return finalizeInsertedElements(duplicates, 'Auto: Duplicated Element');
     }

@@ -66,7 +66,9 @@ test('buildStudioClipboardActionState combines lock-aware copy state with clipbo
       isLocked: (element) => element.id === 2
     }
   ), {
+    selection: [{ id: 1 }, { id: 2 }],
     canCopy: false,
+    canDuplicate: false,
     canPaste: true
   });
 
@@ -77,7 +79,9 @@ test('buildStudioClipboardActionState combines lock-aware copy state with clipbo
       isLocked: () => false
     }
   ), {
+    selection: [{ id: 1 }],
     canCopy: true,
+    canDuplicate: true,
     canPaste: false
   });
 
@@ -88,7 +92,33 @@ test('buildStudioClipboardActionState combines lock-aware copy state with clipbo
       isLocked: () => false
     }
   ), {
+    selection: [],
     canCopy: false,
+    canDuplicate: false,
     canPaste: true
+  });
+});
+
+test('buildStudioClipboardMutationPlan reuses the live unlocked selection for copy and duplicate actions', () => {
+  const stale = { id: 'stale', isConnected: false, locked: false };
+  const live = { id: 'live', isConnected: true, locked: false };
+  const locked = { id: 'locked', isConnected: true, locked: true };
+
+  assert.deepEqual(clipboardState.buildStudioClipboardMutationPlan([stale, live], null, {
+    isLocked: (element) => !!element.locked
+  }), {
+    selection: [live],
+    canCopy: true,
+    canDuplicate: true,
+    canPaste: false
+  });
+
+  assert.deepEqual(clipboardState.buildStudioClipboardMutationPlan([live, locked], null, {
+    isLocked: (element) => !!element.locked
+  }), {
+    selection: [live, locked],
+    canCopy: false,
+    canDuplicate: false,
+    canPaste: false
   });
 });
