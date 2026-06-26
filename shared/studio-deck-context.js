@@ -134,7 +134,7 @@
       getNodeId: options.getNodeId
     });
     if (deck && isCanonicalDeck && !isCanonicalDeck(deck)) {
-      return null;
+      return storedCanonicalDeck || null;
     }
 
     return deck;

@@ -404,6 +404,40 @@ test('buildStudioCanonicalDeck falls back to stored canonical metadata when a fo
   assert.deepEqual(result, canonicalDeck.createCanonicalDeck(storedCanonicalDeck));
 });
 
+test('buildStudioCanonicalDeck falls back to stored canonical metadata when a live rebuild returns malformed data', () => {
+  const storedCanonicalDeck = {
+    metadata: {
+      id: 'onboarding-presentation'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+
+  const result = deckContext.buildStudioCanonicalDeck({ label: 'doc' }, {
+    currentPresentationMetadata: {
+      id: 'onboarding-presentation',
+      title: 'Project Onboarding',
+      sourcePath: '/presentations/onboarding-presentation/index.html',
+      canonicalDeck: storedCanonicalDeck
+    },
+    preferStoredCanonicalDeck: false,
+    buildCanonicalDeckFromDocument() {
+      return {
+        metadata: {
+          title: 'Broken Deck'
+        }
+      };
+    },
+    isCanonicalDeck: canonicalDeck.isCanonicalDeck
+  });
+
+  assert.deepEqual(result, canonicalDeck.createCanonicalDeck(storedCanonicalDeck));
+});
+
 test('buildStudioCanonicalDeck returns null when the canonical builder yields malformed data', () => {
   const result = deckContext.buildStudioCanonicalDeck({ label: 'doc' }, {
     buildCanonicalDeckFromDocument() {
