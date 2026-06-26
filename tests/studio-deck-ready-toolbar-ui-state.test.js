@@ -14,7 +14,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
-test('updateDeckReadyToolbarActionState enables save and source actions only when the iframe document is ready', () => {
+test('updateDeckReadyToolbarActionState enables deck-level toolbar actions only when the iframe document is ready', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateDeckReadyToolbarActionStateSource = extractFunctionSource(
     fileContent,
@@ -24,7 +24,8 @@ test('updateDeckReadyToolbarActionState enables save and source actions only whe
 
   const elements = {
     studioSaveBtn: { disabled: false },
-    openSourceViewBtn: { disabled: false }
+    openSourceViewBtn: { disabled: false },
+    studioVersionBtn: { disabled: false }
   };
   const context = {
     document: {
@@ -43,8 +44,10 @@ test('updateDeckReadyToolbarActionState enables save and source actions only whe
   context.updateDeckReadyToolbarActionState(null);
   assert.equal(elements.studioSaveBtn.disabled, true);
   assert.equal(elements.openSourceViewBtn.disabled, true);
+  assert.equal(elements.studioVersionBtn.disabled, true);
 
   context.updateDeckReadyToolbarActionState({ documentElement: {} });
   assert.equal(elements.studioSaveBtn.disabled, false);
   assert.equal(elements.openSourceViewBtn.disabled, false);
+  assert.equal(elements.studioVersionBtn.disabled, false);
 });

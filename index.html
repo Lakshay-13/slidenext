@@ -3949,6 +3949,11 @@
       if (sourceViewBtn) {
         sourceViewBtn.disabled = !hasDeckDocument;
       }
+
+      const versionBtn = document.getElementById('studioVersionBtn');
+      if (versionBtn) {
+        versionBtn.disabled = !hasDeckDocument;
+      }
     }
 
     function setStudioAutoSaveStatus(state) {
