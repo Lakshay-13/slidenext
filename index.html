@@ -1015,6 +1015,7 @@
   <script src="/shared/deck-model.js"></script>
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-element-state.js"></script>
+  <script src="/shared/studio-editor-clipboard.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
@@ -2811,14 +2812,15 @@
     }
 
     function updateClipboardActionState() {
-      const hasSelection = selectedElements.length > 0;
-      const hasClipboard = !!editorClipboard?.items?.length;
+      const clipboardActionState = SlideNextStudioEditorClipboard.buildStudioClipboardActionState(selectedElements, editorClipboard, {
+        isLocked: isElementLocked
+      });
       const copyBtn = document.getElementById('copySelectionBtn');
       const pasteBtn = document.getElementById('pasteClipboardBtn');
       const slidePasteBtn = document.getElementById('slidePasteClipboardBtn');
-      if (copyBtn) copyBtn.disabled = !hasSelection;
-      if (pasteBtn) pasteBtn.disabled = !hasClipboard;
-      if (slidePasteBtn) slidePasteBtn.disabled = !hasClipboard;
+      if (copyBtn) copyBtn.disabled = !clipboardActionState.canCopy;
+      if (pasteBtn) pasteBtn.disabled = !clipboardActionState.canPaste;
+      if (slidePasteBtn) slidePasteBtn.disabled = !clipboardActionState.canPaste;
     }
 
     function sanitizeDuplicatedSubtree(root) {
@@ -2911,6 +2913,12 @@
     }
 
     function copySelectedElements() {
+      if (!SlideNextStudioEditorClipboard.canStudioCopySelection(selectedElements, {
+        isLocked: isElementLocked
+      })) {
+        updateClipboardActionState();
+        return false;
+      }
       const items = buildClipboardPayload();
       if (items.length === 0) return false;
       editorClipboard = { items, pasteCount: 0 };
