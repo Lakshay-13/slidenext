@@ -4139,17 +4139,16 @@
     async function triggerAutoVersion(label) {
       // Frequent operations (e.g. dragging, typing) get debounced on 10s delay.
       // Structural operations (e.g. Adding/Deleting Slide, Adding/Deleting Element) save immediately.
-      const isFrequentAction = label.includes('Moved') || label.includes('Edited') || label.includes('Changed') || label.includes('Rearranged');
       const scheduledPresentationUrl = currentPresentationUrl;
       const scheduledSessionToken = studioEditorSessionToken;
       
-      if (isFrequentAction) {
-        const timerKey = 'frequent_action';
+      if (SlideNextStudioVersionActions.shouldDebounceStudioAutoVersion(label)) {
+        const timerKey = SlideNextStudioVersionActions.STUDIO_AUTO_VERSION_TIMER_KEY;
         clearTimeout(autoVersionTimers[timerKey]);
         autoVersionTimers[timerKey] = setTimeout(() => {
           delete autoVersionTimers[timerKey];
           executeSaveAutoVersion(label, scheduledPresentationUrl, scheduledSessionToken);
-        }, 10000); // 10 seconds delay
+        }, SlideNextStudioVersionActions.STUDIO_AUTO_VERSION_DEBOUNCE_MS);
       } else {
         // Execute immediately
         executeSaveAutoVersion(label, scheduledPresentationUrl, scheduledSessionToken);

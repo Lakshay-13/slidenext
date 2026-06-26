@@ -3,6 +3,18 @@ const assert = require('node:assert/strict');
 
 const versionActions = require('../shared/studio-version-actions.js');
 
+test('shouldDebounceStudioAutoVersion matches the existing frequent-action checkpoint heuristic', () => {
+  assert.equal(versionActions.STUDIO_AUTO_VERSION_TIMER_KEY, 'frequent_action');
+  assert.equal(versionActions.STUDIO_AUTO_VERSION_DEBOUNCE_MS, 10000);
+
+  assert.equal(versionActions.shouldDebounceStudioAutoVersion('Moved element'), true);
+  assert.equal(versionActions.shouldDebounceStudioAutoVersion('Edited title block'), true);
+  assert.equal(versionActions.shouldDebounceStudioAutoVersion('Changed background'), true);
+  assert.equal(versionActions.shouldDebounceStudioAutoVersion('Rearranged layers'), true);
+  assert.equal(versionActions.shouldDebounceStudioAutoVersion('Added Slide'), false);
+  assert.equal(versionActions.shouldDebounceStudioAutoVersion('Deleted Element'), false);
+});
+
 test('createStudioVersionActionContext normalizes the captured deck state', () => {
   assert.deepEqual(
     versionActions.createStudioVersionActionContext(

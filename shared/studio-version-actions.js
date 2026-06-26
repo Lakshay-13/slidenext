@@ -7,6 +7,9 @@
     root.SlideNextStudioVersionActions = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  const STUDIO_AUTO_VERSION_DEBOUNCE_MS = 10000;
+  const STUDIO_AUTO_VERSION_TIMER_KEY = 'frequent_action';
+
   function normalizeString(value, fallback = '') {
     return typeof value === 'string' ? value : fallback;
   }
@@ -63,6 +66,14 @@
       : true;
   }
 
+  function shouldDebounceStudioAutoVersion(label = '') {
+    const versionLabel = normalizeString(label);
+    return versionLabel.includes('Moved')
+      || versionLabel.includes('Edited')
+      || versionLabel.includes('Changed')
+      || versionLabel.includes('Rearranged');
+  }
+
   function handleStudioRestoreVersionSuccess(context = {}, options = {}) {
     if (!isStudioVersionActionSessionCurrent(context, options)) {
       return false;
@@ -113,9 +124,12 @@
   }
 
   return {
+    STUDIO_AUTO_VERSION_DEBOUNCE_MS,
+    STUDIO_AUTO_VERSION_TIMER_KEY,
     createStudioVersionActionContext,
     isStudioVersionActionCurrent,
     isStudioVersionActionSessionCurrent,
+    shouldDebounceStudioAutoVersion,
     handleStudioRestoreVersionSuccess,
     handleStudioVersionListMutationSuccess,
     handleStudioVersionActionFailure
