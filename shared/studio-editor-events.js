@@ -185,7 +185,9 @@
         duplicateSelectedElements();
         return;
       }
-      const nudgeDelta = hasSelection ? buildNudgeDeltaFromKey(event.key, { shiftKey: !!event.shiftKey }) : null;
+      const nudgeDelta = deckShortcutReady && hasSelection
+        ? buildNudgeDeltaFromKey(event.key, { shiftKey: !!event.shiftKey })
+        : null;
       if (nudgeDelta) {
         event.preventDefault();
         event.stopPropagation();
@@ -313,7 +315,7 @@
         duplicateSelectedElements();
         return;
       }
-      const nudgeDelta = !typingContext && hasSelection
+      const nudgeDelta = !typingContext && deckShortcutReady && hasSelection
         ? buildNudgeDeltaFromKey(event.key, { shiftKey: !!event.shiftKey })
         : null;
       if (nudgeDelta) {

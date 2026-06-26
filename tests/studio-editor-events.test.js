@@ -164,6 +164,7 @@ test('createStudioFrameKeydownHandler skips deck-level paste and select-all shor
     arrange: [],
     copy: 0,
     duplicate: 0,
+    nudge: [],
     undo: 0,
     redo: 0,
     paste: 0,
@@ -181,6 +182,9 @@ test('createStudioFrameKeydownHandler skips deck-level paste and select-all shor
     },
     duplicateSelectedElements() {
       calls.duplicate += 1;
+    },
+    nudgeSelectedElements(dx, dy) {
+      calls.nudge.push([dx, dy]);
     },
     editorUndo() {
       calls.undo += 1;
@@ -259,6 +263,14 @@ test('createStudioFrameKeydownHandler skips deck-level paste and select-all shor
   assert.deepEqual(calls.arrange, []);
   assert.equal(arrangeEvent.prevented, 0);
   assert.equal(arrangeEvent.stopped, 0);
+
+  const nudgeEvent = createKeyboardEvent({
+    key: 'ArrowRight'
+  });
+  handler(nudgeEvent);
+  assert.deepEqual(calls.nudge, []);
+  assert.equal(nudgeEvent.prevented, 0);
+  assert.equal(nudgeEvent.stopped, 0);
 
   const nextSlideEvent = createKeyboardEvent({
     key: 'PageDown'
@@ -462,6 +474,7 @@ test('createStudioGlobalKeydownHandler skips deck-level paste and select-all sho
     arrange: [],
     copy: 0,
     duplicate: 0,
+    nudge: [],
     undo: 0,
     redo: 0,
     paste: 0,
@@ -480,6 +493,9 @@ test('createStudioGlobalKeydownHandler skips deck-level paste and select-all sho
     },
     duplicateSelectedElements() {
       calls.duplicate += 1;
+    },
+    nudgeSelectedElements(dx, dy) {
+      calls.nudge.push([dx, dy]);
     },
     editorUndo() {
       calls.undo += 1;
@@ -551,6 +567,13 @@ test('createStudioGlobalKeydownHandler skips deck-level paste and select-all sho
   handler(arrangeEvent);
   assert.deepEqual(calls.arrange, []);
   assert.equal(arrangeEvent.prevented, 0);
+
+  const nudgeEvent = createKeyboardEvent({
+    key: 'ArrowRight'
+  });
+  handler(nudgeEvent);
+  assert.deepEqual(calls.nudge, []);
+  assert.equal(nudgeEvent.prevented, 0);
 });
 
 test('createStudioGlobalKeydownHandler does not intercept undo and redo while typing', () => {
