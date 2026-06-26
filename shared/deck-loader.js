@@ -2,19 +2,26 @@
   const deckImport = typeof module === 'object' && module.exports
     ? require('./deck-import')
     : root && root.SlideNextDeckImport;
-  const api = factory(deckImport, root);
+  const presentationMetadata = typeof module === 'object' && module.exports
+    ? require('./presentation-metadata')
+    : root && root.SlideNextPresentationMetadata;
+  const api = factory(deckImport, presentationMetadata, root);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextDeckLoader = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (deckImport, root) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (deckImport, presentationMetadata, root) {
   function normalizeString(value, fallback = '') {
     return typeof value === 'string' ? value : fallback;
   }
 
   function derivePresentationIdFromUrl(presentationUrl = '') {
+    if (presentationMetadata && typeof presentationMetadata.derivePresentationIdFromHtmlPath === 'function') {
+      return presentationMetadata.derivePresentationIdFromHtmlPath(presentationUrl);
+    }
+
     const pathParts = normalizeString(presentationUrl).split('/').filter(Boolean);
     if (pathParts.length >= 2) {
       return pathParts[pathParts.length - 2];
@@ -23,6 +30,10 @@
   }
 
   function buildPresentationMetadataSeed(presentationUrl = '', presentationTitle = '') {
+    if (presentationMetadata && typeof presentationMetadata.buildPresentationMetadataSeed === 'function') {
+      return presentationMetadata.buildPresentationMetadataSeed(presentationUrl, presentationTitle);
+    }
+
     return {
       id: derivePresentationIdFromUrl(presentationUrl),
       title: normalizeString(presentationTitle),
@@ -31,6 +42,10 @@
   }
 
   function derivePresentationMetadataUrl(presentationUrl = '') {
+    if (presentationMetadata && typeof presentationMetadata.derivePresentationMetadataPath === 'function') {
+      return presentationMetadata.derivePresentationMetadataPath(presentationUrl);
+    }
+
     if (!presentationUrl || !presentationUrl.endsWith('/index.html')) {
       return '';
     }
