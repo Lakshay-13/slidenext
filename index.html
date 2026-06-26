@@ -2291,8 +2291,9 @@
     }
 
     function applyEditorSelectionState(nextState = {}) {
-      selectedElements = Array.isArray(nextState.selectedElements) ? nextState.selectedElements : [];
-      selectedElement = nextState.selectedElement || selectedElements[0] || null;
+      const normalizedSelectionState = SlideNextStudioEditorSelection.normalizeStudioSelectionState(nextState);
+      selectedElements = normalizedSelectionState.selectedElements;
+      selectedElement = normalizedSelectionState.selectedElement;
     }
 
     function commitEditorSelectionState(nextSelectionState, options = {}) {
