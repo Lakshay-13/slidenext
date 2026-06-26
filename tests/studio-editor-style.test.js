@@ -13,7 +13,7 @@ function createElement(tagName = 'div') {
   };
 }
 
-test('buildStudioStyleMutationPlan filters stale selections, blocks locked selections, and maps version labels', () => {
+test('buildStudioStyleMutationPlan filters stale selections, blocks locked selections, respects deck readiness, and maps version labels', () => {
   const stale = { isConnected: false, locked: false };
   const live = { isConnected: true, locked: false };
   const locked = { isConnected: true, locked: true };
@@ -36,6 +36,17 @@ test('buildStudioStyleMutationPlan filters stale selections, blocks locked selec
     value: '#fff',
     canApply: false,
     versionLabel: ''
+  });
+
+  assert.deepEqual(styleState.buildStudioStyleMutationPlan([live], 'weight', '600', {
+    isLocked: (element) => !!element.locked,
+    canMutateDeck: () => false
+  }), {
+    selection: [live],
+    prop: 'weight',
+    value: '600',
+    canApply: false,
+    versionLabel: 'Auto: Changed Font Weight'
   });
 });
 

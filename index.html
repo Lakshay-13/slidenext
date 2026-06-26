@@ -2637,7 +2637,7 @@
       });
     }
 
-    function updateStyleActionState() {
+    function updateStyleActionState(doc = getIframeDoc()) {
       [
         ['elTextContent', 'text', ''],
         ['elImageSrc', 'src', ''],
@@ -2658,7 +2658,8 @@
         const control = document.getElementById(id);
         if (!control) return;
         const styleMutationPlan = SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(selectedElements, prop, value, {
-          isLocked: isElementLocked
+          isLocked: isElementLocked,
+          canMutateDeck: () => !!getActiveSlide(doc)
         });
         control.disabled = !styleMutationPlan.canApply;
       });
@@ -2761,8 +2762,10 @@
 
     // Apply styles immediately to active selected elements
     function applySelectedElementStyle(prop, val) {
+      const doc = getIframeDoc();
       const styleMutationPlan = SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(selectedElements, prop, val, {
-        isLocked: isElementLocked
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!styleMutationPlan.canApply) return false;
       const styleMutationResult = SlideNextStudioEditorStyle.applyStudioStyleMutation(styleMutationPlan.selection, prop, val);

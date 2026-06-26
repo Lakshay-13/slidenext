@@ -44,17 +44,24 @@ test('updateStyleActionState disables style controls whenever the current select
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateStyleActionStateSource = extractFunctionSource(
     fileContent,
-    'function updateStyleActionState() {',
+    'function updateStyleActionState(doc = getIframeDoc()) {',
     '\n\n    function updateLayerOrderActionState() {'
   );
 
   const controls = createControlMap();
+  const readyDoc = { activeSlide: {} };
   const context = {
     SlideNextStudioEditorStyle: styleState,
     document: {
       getElementById(id) {
         return controls[id] || null;
       }
+    },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return readyDoc;
     },
     isElementLocked(element) {
       return !!element.locked;
@@ -65,7 +72,26 @@ test('updateStyleActionState disables style controls whenever the current select
   vm.createContext(context);
   vm.runInContext(updateStyleActionStateSource, context);
 
-  context.updateStyleActionState();
+  context.updateStyleActionState(null);
+  assert.deepEqual(getDisabledStates(controls), {
+    elTextContent: true,
+    elImageSrc: true,
+    elFontSize: true,
+    elFontFamily: true,
+    elFontWeight: true,
+    alignLeftBtn: true,
+    alignCenterBtn: true,
+    alignRightBtn: true,
+    alignJustifyBtn: true,
+    elTextColor: true,
+    elOpacity: true,
+    elBorderStyle: true,
+    elBorderWidth: true,
+    elBorderRadius: true,
+    elBorderColor: true
+  });
+
+  context.updateStyleActionState(readyDoc);
   assert.deepEqual(getDisabledStates(controls), {
     elTextContent: true,
     elImageSrc: true,
@@ -85,7 +111,7 @@ test('updateStyleActionState disables style controls whenever the current select
   });
 
   context.selectedElements = [{ isConnected: true, locked: false }];
-  context.updateStyleActionState();
+  context.updateStyleActionState(readyDoc);
   assert.deepEqual(getDisabledStates(controls), {
     elTextContent: false,
     elImageSrc: false,
@@ -105,7 +131,7 @@ test('updateStyleActionState disables style controls whenever the current select
   });
 
   context.selectedElements = [{ isConnected: true, locked: true }];
-  context.updateStyleActionState();
+  context.updateStyleActionState(readyDoc);
   assert.deepEqual(getDisabledStates(controls), {
     elTextContent: true,
     elImageSrc: true,

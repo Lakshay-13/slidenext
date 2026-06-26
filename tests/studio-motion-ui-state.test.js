@@ -32,7 +32,7 @@ test('updateMotionActionState enables nudge controls only when the iframe has a 
   const updateMotionActionStateSource = extractFunctionSource(
     fileContent,
     'function updateMotionActionState(doc = getIframeDoc()) {',
-    '\n\n    function updateStyleActionState() {'
+    '\n\n    function updateStyleActionState(doc = getIframeDoc()) {'
   );
 
   const controls = createControls();

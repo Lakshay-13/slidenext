@@ -34,12 +34,15 @@
     const isLocked = typeof options.isLocked === 'function'
       ? options.isLocked
       : () => false;
+    const canMutateDeck = typeof options.canMutateDeck === 'function'
+      ? options.canMutateDeck
+      : () => true;
 
     return {
       selection,
       prop,
       value,
-      canApply: selection.length > 0 && !selection.some((element) => isLocked(element)),
+      canApply: canMutateDeck() && selection.length > 0 && !selection.some((element) => isLocked(element)),
       versionLabel: STUDIO_STYLE_VERSION_LABELS[prop] || ''
     };
   }
