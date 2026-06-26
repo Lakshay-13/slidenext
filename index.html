@@ -1023,6 +1023,7 @@
   <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
   <script src="/shared/studio-editor-transform.js"></script>
+  <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
@@ -3012,24 +3013,35 @@
     function nudgeSelectedElements(dx, dy) {
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
-      const targets = getLiveSelectedElements();
-      if (!doc || !slide || targets.length === 0) return;
-      if (selectionHasLockedElements(targets)) return;
-      if (!targets.every(isElementFreeformPositioned)) return;
+      const nudgeSelectionState = SlideNextStudioEditorNudge.buildStudioNudgeSelectionState(selectedElements, {
+        isLocked: isElementLocked,
+        isFreeformPositioned: isElementFreeformPositioned
+      });
+      if (!doc || !slide || !nudgeSelectionState.canNudge) return false;
       const slideMetrics = getSlideMetrics(slide);
       const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
-
-      targets.forEach(el => {
+      const nudgeLayoutItems = nudgeSelectionState.selection.map((el) => {
         const rect = el.getBoundingClientRect();
         const parent = getClosestPositionedAncestor(el);
         const parentRect = parent.getBoundingClientRect();
         const rectOnSlide = getRectOnSlide(rect, slideMetrics);
         const parentOnSlide = getRectOnSlide(parentRect, slideMetrics);
 
-        const nextAbsLeft = clampValue(rectOnSlide.left + dx, 0, Math.max(0, slideBounds.width - (rectOnSlide.right - rectOnSlide.left)));
-        const nextAbsTop = clampValue(rectOnSlide.top + dy, 0, Math.max(0, slideBounds.height - (rectOnSlide.bottom - rectOnSlide.top)));
-        el.style.left = `${nextAbsLeft - parentOnSlide.left}px`;
-        el.style.top = `${nextAbsTop - parentOnSlide.top}px`;
+        return {
+          element: el,
+          absLeft: rectOnSlide.left,
+          absTop: rectOnSlide.top,
+          width: rectOnSlide.right - rectOnSlide.left,
+          height: rectOnSlide.bottom - rectOnSlide.top,
+          parentLeft: parentOnSlide.left,
+          parentTop: parentOnSlide.top
+        };
+      });
+      const nudgeResult = SlideNextStudioEditorNudge.buildStudioNudgedLayout(nudgeLayoutItems, { dx, dy }, slideBounds);
+      if (!nudgeResult.didChange) return false;
+      nudgeResult.nextItems.forEach((item) => {
+        item.element.style.left = `${item.nextLeft}px`;
+        item.element.style.top = `${item.nextTop}px`;
       });
 
       syncSelectionOverlay();
@@ -3037,6 +3049,7 @@
       saveHistoryState(true);
       triggerAutoSave();
       triggerAutoVersion('Auto: Nudged Element');
+      return true;
     }
 
     // Element dragging + resize on an open canvas (no snapping)
