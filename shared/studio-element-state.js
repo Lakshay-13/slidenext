@@ -11,6 +11,15 @@
     return !!(el && el.dataset && el.dataset.editorLocked === 'true');
   }
 
+  function setStudioElementLockedState(el, locked) {
+    if (!el || !el.dataset) return;
+    if (locked) {
+      el.dataset.editorLocked = 'true';
+      return;
+    }
+    delete el.dataset.editorLocked;
+  }
+
   function isStudioElementHidden(el) {
     return !!(el && (
       (el.dataset && el.dataset.editorHidden === 'true')
@@ -102,9 +111,7 @@
       if (isStudioElementHidden(node)) {
         setStudioElementHiddenState(node, false);
       }
-      if (node.dataset) {
-        delete node.dataset.editorLocked;
-      }
+      setStudioElementLockedState(node, false);
     });
 
     return root;
@@ -112,6 +119,7 @@
 
   return {
     isStudioElementLocked,
+    setStudioElementLockedState,
     isStudioElementHidden,
     setStudioElementHiddenState,
     sanitizeStudioDuplicatedSubtree

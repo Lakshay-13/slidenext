@@ -41,6 +41,18 @@ test('isStudioElementLocked reads the existing editor lock dataset contract', ()
   assert.equal(studioElementState.isStudioElementLocked(createElement()), false);
 });
 
+test('setStudioElementLockedState writes and clears the existing editor lock dataset contract', () => {
+  const el = createElement();
+
+  studioElementState.setStudioElementLockedState(el, true);
+  assert.equal(el.dataset.editorLocked, 'true');
+  assert.equal(studioElementState.isStudioElementLocked(el), true);
+
+  studioElementState.setStudioElementLockedState(el, false);
+  assert.equal(Object.prototype.hasOwnProperty.call(el.dataset, 'editorLocked'), false);
+  assert.equal(studioElementState.isStudioElementLocked(el), false);
+});
+
 test('isStudioElementHidden treats either dataset or hidden attribute state as hidden', () => {
   assert.equal(studioElementState.isStudioElementHidden(createElement({
     dataset: { editorHidden: 'true' }

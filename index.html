@@ -2660,11 +2660,7 @@
       const shouldLock = !selectedElements.every(isElementLocked);
       selectedElements.forEach(el => {
         if (!el || !el.isConnected) return;
-        if (shouldLock) {
-          el.dataset.editorLocked = 'true';
-        } else {
-          delete el.dataset.editorLocked;
-        }
+        SlideNextStudioElementState.setStudioElementLockedState(el, shouldLock);
       });
       refreshSelectionClasses();
       SlideNextStudioEditorSelection.syncStudioSelectionUi(selectedElements, {
