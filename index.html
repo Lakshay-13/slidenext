@@ -2665,11 +2665,13 @@
       });
     }
 
-    function updateLayerOrderActionState() {
-      const slide = getActiveSlide();
+    function updateLayerOrderActionState(doc = getIframeDoc()) {
+      const slide = getActiveSlide(doc);
+      const canMutateDeck = () => !!slide;
       const layerOrderActionState = SlideNextStudioEditorLayerOrder.buildStudioLayerOrderActionState(selectedElements, {
         orderedElements: slide ? getNormalizedSlideLayerOrder(slide) : [],
-        isLocked: isElementLocked
+        isLocked: isElementLocked,
+        canMutateDeck
       });
       const buttonStates = {
         arrangeLayerFrontBtn: layerOrderActionState.canBringToFront,
@@ -2686,7 +2688,8 @@
       const zIndexInput = document.getElementById('elZIndex');
       if (zIndexInput) {
         const zIndexMutationPlan = SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(selectedElements, 'zIndex', '', {
-          isLocked: isElementLocked
+          isLocked: isElementLocked,
+          canMutateDeck
         });
         zIndexInput.disabled = !zIndexMutationPlan.canApply;
       }

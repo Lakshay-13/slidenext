@@ -30,9 +30,12 @@
     const isLocked = typeof options.isLocked === 'function'
       ? options.isLocked
       : () => false;
+    const canMutateDeck = typeof options.canMutateDeck === 'function'
+      ? options.canMutateDeck
+      : () => true;
     const hasSelection = selection.length > 0;
     const hasLockedSelection = selection.some((element) => isLocked(element));
-    const canReorder = hasSelection && !hasLockedSelection && orderedElements.length > 0;
+    const canReorder = canMutateDeck() && hasSelection && !hasLockedSelection && orderedElements.length > 0;
 
     const canRunAction = (action) => {
       if (!canReorder) {

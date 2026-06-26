@@ -45,7 +45,7 @@ test('updateStyleActionState disables style controls whenever the current select
   const updateStyleActionStateSource = extractFunctionSource(
     fileContent,
     'function updateStyleActionState(doc = getIframeDoc()) {',
-    '\n\n    function updateLayerOrderActionState() {'
+    '\n\n    function updateLayerOrderActionState(doc = getIframeDoc()) {'
   );
 
   const controls = createControlMap();

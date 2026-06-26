@@ -17,7 +17,7 @@ test('getStudioLayerOrderSelection filters stale targets and preserves current l
   ), [first, third]);
 });
 
-test('buildStudioLayerOrderActionState disables locked and no-op layer arrangement actions', () => {
+test('buildStudioLayerOrderActionState disables locked, deck-not-ready, and no-op layer arrangement actions', () => {
   const first = { id: 'first', isConnected: true, locked: false };
   const second = { id: 'second', isConnected: true, locked: false };
   const third = { id: 'third', isConnected: true, locked: true };
@@ -64,9 +64,24 @@ test('buildStudioLayerOrderActionState disables locked and no-op layer arrangeme
     canBringForward: true,
     canSendBackward: false
   });
+
+  assert.deepEqual(layerOrder.buildStudioLayerOrderActionState([second], {
+    orderedElements,
+    isLocked: (element) => !!element.locked,
+    canMutateDeck: () => false
+  }), {
+    selection: [second],
+    hasSelection: true,
+    hasLockedSelection: false,
+    canReorder: false,
+    canBringToFront: false,
+    canSendToBack: false,
+    canBringForward: false,
+    canSendBackward: false
+  });
 });
 
-test('buildStudioLayerOrderMutationPlan reuses the action-state lock guard before reordering layers', () => {
+test('buildStudioLayerOrderMutationPlan reuses the action-state readiness and lock guards before reordering layers', () => {
   const first = { id: 'first', isConnected: true, locked: false };
   const second = { id: 'second', isConnected: true, locked: false };
   const third = { id: 'third', isConnected: true, locked: true };
@@ -88,6 +103,16 @@ test('buildStudioLayerOrderMutationPlan reuses the action-state lock guard befor
     selection: [second],
     didChange: true,
     nextOrder: [first, third, second]
+  });
+
+  assert.deepEqual(layerOrder.buildStudioLayerOrderMutationPlan([second], 'front', {
+    orderedElements,
+    isLocked: (element) => !!element.locked,
+    canMutateDeck: () => false
+  }), {
+    selection: [second],
+    didChange: false,
+    nextOrder: [first, second, third]
   });
 });
 
