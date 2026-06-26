@@ -23,6 +23,8 @@
   function isStudioElementHidden(el) {
     return !!(el && (
       (el.dataset && el.dataset.editorHidden === 'true')
+      || (typeof el.getAttribute === 'function' && el.getAttribute('aria-hidden') === 'true')
+      || (el.style && el.style.display === 'none')
       || el.hidden === true
     ));
   }

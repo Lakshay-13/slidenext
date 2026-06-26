@@ -58,6 +58,12 @@ test('isStudioElementHidden treats either dataset or hidden attribute state as h
     dataset: { editorHidden: 'true' }
   })), true);
   assert.equal(studioElementState.isStudioElementHidden(createElement({
+    attributes: { 'aria-hidden': 'true' }
+  })), true);
+  assert.equal(studioElementState.isStudioElementHidden(createElement({
+    style: createStyle('none')
+  })), true);
+  assert.equal(studioElementState.isStudioElementHidden(createElement({
     hidden: true
   })), true);
   assert.equal(studioElementState.isStudioElementHidden(createElement()), false);
