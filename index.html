@@ -3546,6 +3546,7 @@
           observeDeckActiveSlideState
         })
       });
+      setCurrentPresentationCanonicalDeck(historyEntry.canonicalDeck);
     }
 
     function buildPersistableDeckHtml(doc = getIframeDoc()) {

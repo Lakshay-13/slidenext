@@ -178,6 +178,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
       innerHTML: ''
     }
   };
+  const canonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
   const callLog = [];
   const context = {
     applyEditorSelectionState(selection) {
@@ -213,6 +214,9 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
     },
     restoreCommittedSelectionByIdsOnActiveSlide(selectedElementIds, doc) {
       callLog.push(['restoreCommittedSelectionByIdsOnActiveSlide', selectedElementIds, doc]);
+    },
+    setCurrentPresentationCanonicalDeck(nextCanonicalDeck) {
+      callLog.push(['setCurrentPresentationCanonicalDeck', nextCanonicalDeck]);
     },
     setActiveSlide(index) {
       callLog.push(['setActiveSlide', index]);
@@ -261,7 +265,8 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
 
   context.restoreFrameFromHistoryEntry({
     html: '<html>snapshot</html>',
-    selectedElementIds: ['node-1']
+    selectedElementIds: ['node-1'],
+    canonicalDeck
   });
 
   assert.equal(iframeDoc.documentElement.innerHTML, '<html>restored</html>');
@@ -293,4 +298,5 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   assert.equal(callLog[15][2], iframeDoc);
   assert.deepEqual(callLog[16], ['restoreCommittedSelectionByIdsOnActiveSlide', ['node-1'], iframeDoc]);
   assert.deepEqual(callLog[17], ['observeDeckActiveSlideState', iframeDoc]);
+  assert.deepEqual(callLog[18], ['setCurrentPresentationCanonicalDeck', canonicalDeck]);
 });
