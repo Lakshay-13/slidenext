@@ -176,3 +176,49 @@ test('toggleVersionDropdown refreshes version history only when opening the menu
     14
   ]]);
 });
+
+test('createCurrentStudioVersionActionContext captures the active editor deck identity and session', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createCurrentStudioVersionActionContextSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionActionContext() {',
+    '\n\n    // Rollback backup version'
+  );
+
+  const calls = [];
+  const context = {
+    SlideNextStudioVersionActions: {
+      createStudioVersionActionContext(presentationUrl, presentationTitle, presentationCategory, options) {
+        calls.push([presentationUrl, presentationTitle, presentationCategory, options]);
+        return {
+          presentationUrl,
+          presentationTitle,
+          presentationCategory,
+          sessionToken: options.sessionToken
+        };
+      }
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    currentCategory: 'General',
+    studioEditorSessionToken: 21
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createCurrentStudioVersionActionContextSource, context);
+
+  assert.deepEqual(
+    context.createCurrentStudioVersionActionContext(),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      presentationTitle: 'Project Onboarding',
+      presentationCategory: 'General',
+      sessionToken: 21
+    }
+  );
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], '/presentations/onboarding-presentation/index.html');
+  assert.equal(calls[0][1], 'Project Onboarding');
+  assert.equal(calls[0][2], 'General');
+  assert.equal(calls[0][3].sessionToken, 21);
+});
