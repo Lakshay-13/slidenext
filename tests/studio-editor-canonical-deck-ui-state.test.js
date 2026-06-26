@@ -60,3 +60,61 @@ test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical dec
   assert.equal(typeof calls[0].options.getSlideId, 'function');
   assert.equal(typeof calls[0].options.getNodeId, 'function');
 });
+
+test('buildEditorDeckSnapshot forwards the persisted active slide fallback when the iframe is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getPersistedActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {',
+    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
+  );
+  const buildEditorDeckSnapshotSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function getStudioActiveSlideIndex(doc = getIframeDoc()) {'
+  );
+
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckSnapshot: {
+      buildStudioDeckSnapshot(nextDoc, options) {
+        calls.push({ nextDoc, options });
+        return {
+          activeSlideId: options.fallbackActiveSlideId,
+          activeSlideIndex: 1,
+          slides: []
+        };
+      }
+    },
+    buildEditorCanonicalDeck() {},
+    buildEditorDeckSnapshotFromDom() {},
+    buildEditorLayerSnapshot() {},
+    getActiveSlide() {
+      return null;
+    },
+    getEditorSlideId() {
+      return '';
+    },
+    getIframeDoc() {
+      return null;
+    },
+    getSlideById() {
+      return null;
+    },
+    persistedDeckPlaybackState: {
+      activeSlideId: 'slide-2'
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getPersistedActiveSlideIdSource, context);
+  vm.runInContext(buildEditorDeckSnapshotSource, context);
+
+  const result = context.buildEditorDeckSnapshot();
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].nextDoc, null);
+  assert.equal(calls[0].options.fallbackActiveSlideId, 'slide-2');
+  assert.equal(result.activeSlideId, 'slide-2');
+  assert.equal(result.activeSlideIndex, 1);
+});

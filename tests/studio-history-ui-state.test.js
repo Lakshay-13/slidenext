@@ -31,6 +31,9 @@ test('createHistoryEntry attaches the current canonical deck sidecar to editor h
       return canonicalDeck;
     },
     buildHistoryFrameHtml() {},
+    getPersistedActiveSlideId() {
+      return '';
+    },
     persistedDeckPlaybackState: null,
     getEditorHistoryOptions() {
       calls.push(['getEditorHistoryOptions']);
@@ -108,6 +111,10 @@ test('createHistoryEntry falls back to persisted baseline state when the editor 
       calls.push(['buildPersistableDeckHtml', doc]);
       return '<html>persisted-baseline</html>';
     },
+    getPersistedActiveSlideId() {
+      calls.push(['getPersistedActiveSlideId']);
+      return 'slide-1';
+    },
     getEditorHistoryOptions() {
       calls.push(['getEditorHistoryOptions']);
       return { chromeNodeIds: ['editorSelectionOverlay'] };
@@ -130,18 +137,19 @@ test('createHistoryEntry falls back to persisted baseline state when the editor 
   assert.deepEqual(calls.map(([name]) => name), [
     'getIframeDoc',
     'getEditorHistoryOptions',
+    'getPersistedActiveSlideId',
     'buildEditorCanonicalDeck',
     'createStudioHistoryEntry',
     'getEditorHistoryOptions',
     'buildStudioHistoryFrameHtml',
     'buildPersistableDeckHtml'
   ]);
-  assert.equal(calls[2][1], null);
   assert.equal(calls[3][1], null);
-  assert.equal(calls[3][2].activeSlideId, 'slide-1');
-  assert.equal(Array.isArray(calls[3][2].selectedElementIds), true);
-  assert.equal(calls[3][2].selectedElementIds.length, 0);
-  assert.equal(calls[5][1], null);
+  assert.equal(calls[4][1], null);
+  assert.equal(calls[4][2].activeSlideId, 'slide-1');
+  assert.equal(Array.isArray(calls[4][2].selectedElementIds), true);
+  assert.equal(calls[4][2].selectedElementIds.length, 0);
+  assert.equal(calls[7][1], null);
   assert.equal(entry.html, '<html>persisted-baseline</html>');
   assert.equal(entry.activeSlideId, 'slide-1');
   assert.equal(Array.isArray(entry.selectedElementIds), true);

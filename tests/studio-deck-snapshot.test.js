@@ -211,6 +211,29 @@ test('buildStudioDeckSnapshot preserves canonical layer snapshots when live slid
   });
 });
 
+test('buildStudioDeckSnapshot uses the fallback active slide id when the live editor frame is unavailable', () => {
+  const result = deckSnapshot.buildStudioDeckSnapshot(null, {
+    buildCanonicalDeck() {
+      return {
+        slides: [
+          { id: 'slide-1', title: 'Intro', nodes: [{ id: 'node-1' }] },
+          { id: 'slide-2', title: 'Agenda', nodes: [{ id: 'node-2' }] }
+        ]
+      };
+    },
+    fallbackActiveSlideId: 'slide-2',
+    getActiveSlide() {
+      return null;
+    },
+    getActiveSlideId() {
+      return '';
+    }
+  });
+
+  assert.equal(result.activeSlideId, 'slide-2');
+  assert.equal(result.activeSlideIndex, 1);
+});
+
 test('buildStudioDeckSnapshot falls back to the DOM snapshot when the canonical deck is malformed', () => {
   const doc = { label: 'doc' };
   const result = deckSnapshot.buildStudioDeckSnapshot(doc, {

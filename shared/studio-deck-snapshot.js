@@ -50,9 +50,12 @@
     const activeSlide = typeof options.getActiveSlide === 'function'
       ? options.getActiveSlide(doc)
       : null;
-    const activeSlideId = activeSlide && typeof options.getActiveSlideId === 'function'
-      ? options.getActiveSlideId(activeSlide, doc)
+    const fallbackActiveSlideId = typeof options.fallbackActiveSlideId === 'string'
+      ? options.fallbackActiveSlideId
       : '';
+    const activeSlideId = activeSlide && typeof options.getActiveSlideId === 'function'
+      ? (options.getActiveSlideId(activeSlide, doc) || fallbackActiveSlideId)
+      : fallbackActiveSlideId;
     const deckSnapshot = deckModel.buildDeckSnapshotFromCanonicalDeck(canonicalDeck, {
       activeSlideId,
       includeLayers: !!options.includeLayers,
