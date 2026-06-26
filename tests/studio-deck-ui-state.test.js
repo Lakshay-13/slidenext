@@ -14,7 +14,22 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
-test('resetStudioDeckUiState clears stale sidebar chrome for loading and idle states', () => {
+function createClassList(initialValues = []) {
+  const values = new Set(initialValues);
+  return {
+    add(...nextValues) {
+      nextValues.forEach((value) => values.add(value));
+    },
+    remove(...nextValues) {
+      nextValues.forEach((value) => values.delete(value));
+    },
+    contains(value) {
+      return values.has(value);
+    }
+  };
+}
+
+test('resetStudioDeckUiState clears stale sidebar chrome and disables stale inspector controls for loading and idle states', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resetStudioDeckUiStateSource = extractFunctionSource(
     fileContent,
@@ -25,7 +40,44 @@ test('resetStudioDeckUiState clears stale sidebar chrome for loading and idle st
   const elements = {
     slideCountLabel: { textContent: '5 / 12' },
     thumbnailsList: { innerHTML: '<div>Old thumbnails</div>' },
-    slideLayersList: { innerHTML: '<div>Old layers</div>' }
+    slideLayersList: { innerHTML: '<div>Old layers</div>' },
+    inspectorTargetLabel: { innerHTML: '<span>Editing div</span>' },
+    slideInspectorPanel: { classList: createClassList(['hidden']) },
+    elementInspectorPanel: { classList: createClassList([]) },
+    toggleLockSelectionIcon: { textContent: 'lock_open' },
+    toggleLockSelectionLabel: { textContent: 'Unlock Selected' },
+    toggleVisibilitySelectionIcon: { textContent: 'visibility' },
+    toggleVisibilitySelectionLabel: { textContent: 'Show Selected' },
+    slidePasteClipboardBtn: { disabled: false },
+    copySelectionBtn: { disabled: false },
+    pasteClipboardBtn: { disabled: false },
+    toggleLockSelectionBtn: { disabled: false },
+    toggleVisibilitySelectionBtn: { disabled: false },
+    removeSelectionBtn: { disabled: false },
+    nudgeSelectionUpBtn: { disabled: false },
+    nudgeSelectionLeftBtn: { disabled: false },
+    nudgeSelectionRightBtn: { disabled: false },
+    nudgeSelectionDownBtn: { disabled: false },
+    arrangeLayerFrontBtn: { disabled: false },
+    arrangeLayerBackBtn: { disabled: false },
+    arrangeLayerForwardBtn: { disabled: false },
+    arrangeLayerBackwardBtn: { disabled: false },
+    elZIndex: { disabled: false },
+    elTextContent: { disabled: false },
+    elImageSrc: { disabled: false },
+    elFontSize: { disabled: false },
+    elFontFamily: { disabled: false },
+    elFontWeight: { disabled: false },
+    alignLeftBtn: { disabled: false },
+    alignCenterBtn: { disabled: false },
+    alignRightBtn: { disabled: false },
+    alignJustifyBtn: { disabled: false },
+    elTextColor: { disabled: false },
+    elOpacity: { disabled: false },
+    elBorderStyle: { disabled: false },
+    elBorderWidth: { disabled: false },
+    elBorderRadius: { disabled: false },
+    elBorderColor: { disabled: false }
   };
 
   const documentStub = {
@@ -45,6 +97,47 @@ test('resetStudioDeckUiState clears stale sidebar chrome for loading and idle st
   assert.equal(elements.slideCountLabel.textContent, '0 / 0');
   assert.match(elements.thumbnailsList.innerHTML, /Loading slides\.\.\./);
   assert.match(elements.slideLayersList.innerHTML, /Loading layers\.\.\./);
+  assert.match(elements.inspectorTargetLabel.innerHTML, /No selection active/);
+  assert.equal(elements.slideInspectorPanel.classList.contains('hidden'), false);
+  assert.equal(elements.elementInspectorPanel.classList.contains('hidden'), true);
+  assert.equal(elements.toggleLockSelectionIcon.textContent, 'lock');
+  assert.equal(elements.toggleLockSelectionLabel.textContent, 'Lock Selected');
+  assert.equal(elements.toggleVisibilitySelectionIcon.textContent, 'visibility_off');
+  assert.equal(elements.toggleVisibilitySelectionLabel.textContent, 'Hide Selected');
+  [
+    'slidePasteClipboardBtn',
+    'copySelectionBtn',
+    'pasteClipboardBtn',
+    'toggleLockSelectionBtn',
+    'toggleVisibilitySelectionBtn',
+    'removeSelectionBtn',
+    'nudgeSelectionUpBtn',
+    'nudgeSelectionLeftBtn',
+    'nudgeSelectionRightBtn',
+    'nudgeSelectionDownBtn',
+    'arrangeLayerFrontBtn',
+    'arrangeLayerBackBtn',
+    'arrangeLayerForwardBtn',
+    'arrangeLayerBackwardBtn',
+    'elZIndex',
+    'elTextContent',
+    'elImageSrc',
+    'elFontSize',
+    'elFontFamily',
+    'elFontWeight',
+    'alignLeftBtn',
+    'alignCenterBtn',
+    'alignRightBtn',
+    'alignJustifyBtn',
+    'elTextColor',
+    'elOpacity',
+    'elBorderStyle',
+    'elBorderWidth',
+    'elBorderRadius',
+    'elBorderColor'
+  ].forEach((id) => {
+    assert.equal(elements[id].disabled, true, `${id} should be disabled`);
+  });
 
   context.resetStudioDeckUiState();
   assert.equal(elements.slideCountLabel.textContent, '0 / 0');

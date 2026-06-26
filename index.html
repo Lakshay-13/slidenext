@@ -1607,7 +1607,6 @@
       resetEditorDeckPersistenceState();
       resetStudioPresentationUiState();
       resetStudioSourceViewUiState();
-      resetStudioDeckUiState();
       resetStudioVersionUiState();
       resetStudioSaveButtonState();
       deselectElement();
@@ -1615,6 +1614,7 @@
       
       iframe.onload = null;
       iframe.src = '';
+      resetStudioDeckUiState();
       editor.classList.remove('active');
       editor.style.opacity = '0';
       editor.style.pointerEvents = 'none';
@@ -1682,6 +1682,7 @@
           lastPersistedDeckHtml = buildPersistableDeckHtml(iframeDoc);
         }
       });
+      syncInspectorForSelection();
     }
 
     // Apply hoverable tags to editable nodes
@@ -3763,6 +3764,82 @@
       if (slideLayersList) {
         slideLayersList.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-2">${isLoading ? 'Loading layers...' : 'No active slide'}</p>`;
       }
+
+      const inspectorTargetLabel = document.getElementById('inspectorTargetLabel');
+      if (inspectorTargetLabel) {
+        inspectorTargetLabel.innerHTML = `
+          <span class="material-symbols-outlined text-[16px] text-[#7028d0]">settings_suggest</span>
+          No selection active
+        `;
+      }
+
+      const slideInspectorPanel = document.getElementById('slideInspectorPanel');
+      if (slideInspectorPanel) {
+        slideInspectorPanel.classList.remove('hidden');
+      }
+
+      const elementInspectorPanel = document.getElementById('elementInspectorPanel');
+      if (elementInspectorPanel) {
+        elementInspectorPanel.classList.add('hidden');
+      }
+
+      const lockIcon = document.getElementById('toggleLockSelectionIcon');
+      if (lockIcon) {
+        lockIcon.textContent = 'lock';
+      }
+
+      const lockLabel = document.getElementById('toggleLockSelectionLabel');
+      if (lockLabel) {
+        lockLabel.textContent = 'Lock Selected';
+      }
+
+      const visibilityIcon = document.getElementById('toggleVisibilitySelectionIcon');
+      if (visibilityIcon) {
+        visibilityIcon.textContent = 'visibility_off';
+      }
+
+      const visibilityLabel = document.getElementById('toggleVisibilitySelectionLabel');
+      if (visibilityLabel) {
+        visibilityLabel.textContent = 'Hide Selected';
+      }
+
+      [
+        'slidePasteClipboardBtn',
+        'copySelectionBtn',
+        'pasteClipboardBtn',
+        'toggleLockSelectionBtn',
+        'toggleVisibilitySelectionBtn',
+        'removeSelectionBtn',
+        'nudgeSelectionUpBtn',
+        'nudgeSelectionLeftBtn',
+        'nudgeSelectionRightBtn',
+        'nudgeSelectionDownBtn',
+        'arrangeLayerFrontBtn',
+        'arrangeLayerBackBtn',
+        'arrangeLayerForwardBtn',
+        'arrangeLayerBackwardBtn',
+        'elZIndex',
+        'elTextContent',
+        'elImageSrc',
+        'elFontSize',
+        'elFontFamily',
+        'elFontWeight',
+        'alignLeftBtn',
+        'alignCenterBtn',
+        'alignRightBtn',
+        'alignJustifyBtn',
+        'elTextColor',
+        'elOpacity',
+        'elBorderStyle',
+        'elBorderWidth',
+        'elBorderRadius',
+        'elBorderColor'
+      ].forEach((id) => {
+        const control = document.getElementById(id);
+        if (control) {
+          control.disabled = true;
+        }
+      });
     }
 
     function resetStudioSaveButtonState() {
