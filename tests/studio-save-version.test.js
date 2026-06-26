@@ -76,6 +76,9 @@ test('submitSaveVersion keeps the save button idle when the editor frame is unav
       saveBtnEl.disabled = false;
       saveBtnEl.innerHTML = '<span>Save Version</span>';
     },
+    setStudioAutoSaveStatus(state) {
+      statusEl.innerHTML = state;
+    },
     saveVersionCheckpoint: async () => {
       saveVersionCalls += 1;
       return { success: true };
@@ -171,6 +174,9 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
     resetStudioSaveButtonState() {
       saveBtnEl.disabled = false;
       saveBtnEl.innerHTML = '<span>Save Version</span>';
+    },
+    setStudioAutoSaveStatus(state) {
+      statusEl.innerHTML = state;
     },
     saveVersionCheckpoint: () => new Promise((resolve) => {
       resolveCheckpoint = resolve;
@@ -302,6 +308,9 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
     isStaleEditorPersistenceTask() {
       return false;
     },
+    setStudioAutoSaveStatus(state) {
+      statusEl.innerHTML = state;
+    },
     setCurrentPresentationCanonicalDeck() {},
     setTimeout(callback) {
       scheduledCallback = callback;
@@ -314,7 +323,7 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
   vm.runInContext(triggerAutoSaveSource, context);
 
   context.triggerAutoSave();
-  assert.match(statusEl.innerHTML, /Saving/);
+  assert.equal(statusEl.innerHTML, 'saving');
   assert.equal(typeof scheduledCallback, 'function');
 
   await scheduledCallback();

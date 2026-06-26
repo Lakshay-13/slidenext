@@ -145,6 +145,40 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   ]]);
 });
 
+test('setStudioAutoSaveStatus renders saving and failure editor states', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setStudioAutoSaveStatusSource = extractFunctionSource(
+    fileContent,
+    'function setStudioAutoSaveStatus(state) {',
+    '\n\n    function resetStudioSaveButtonState() {'
+  );
+
+  const statusEl = { innerHTML: 'Saved to disk' };
+  const context = {
+    document: {
+      getElementById(id) {
+        if (id === 'autoSaveStatus') return statusEl;
+        return null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setStudioAutoSaveStatusSource, context);
+
+  context.setStudioAutoSaveStatus('saving');
+  assert.match(statusEl.innerHTML, /Saving/);
+
+  context.setStudioAutoSaveStatus('autosave-failed');
+  assert.match(statusEl.innerHTML, /AutoSave Failed/);
+
+  context.setStudioAutoSaveStatus('save-version-failed');
+  assert.match(statusEl.innerHTML, /Save Version Failed/);
+
+  context.setStudioAutoSaveStatus('network-error');
+  assert.match(statusEl.innerHTML, /Network Error/);
+});
+
 test('closeStudioEditor reuses the shared frame accessor before clearing the editor shell state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const closeStudioEditorSource = extractFunctionSource(

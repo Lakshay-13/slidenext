@@ -3707,12 +3707,9 @@
     // 6. AutoSave debouncing pipeline
     let autoSaveDebounceTimer = null;
     function triggerAutoSave() {
-      const statusEl = document.getElementById('autoSaveStatus');
       const scheduledPresentationUrl = currentPresentationUrl;
       const scheduledSessionToken = studioEditorSessionToken;
-      if (statusEl) {
-        statusEl.innerHTML = `<span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Saving...</span>`;
-      }
+      setStudioAutoSaveStatus('saving');
       
       clearTimeout(autoSaveDebounceTimer);
       autoSaveDebounceTimer = setTimeout(async () => {
@@ -3734,9 +3731,7 @@
         );
 
         if (persistencePlan.hasPersistedCurrentState) {
-          if (statusEl) {
-            statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
-          }
+          setStudioAutoSaveStatus('saved');
           return;
         }
         
@@ -3759,18 +3754,14 @@
                 setCurrentPresentationCanonicalDeck(nextCanonicalDeck, scheduledPresentationUrl);
               },
               onSuccess: () => {
-                if (statusEl) {
-                  statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
-                }
+                setStudioAutoSaveStatus('saved');
               }
             });
           } else {
             SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistencePlan.persistenceContext, {
               ...createCurrentStudioSessionStateReaders(),
               onFailure: () => {
-                if (statusEl) {
-                  statusEl.innerHTML = `<span class="text-rose-400">AutoSave Failed</span>`;
-                }
+                setStudioAutoSaveStatus('autosave-failed');
               }
             });
           }
@@ -3779,9 +3770,7 @@
           SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistencePlan.persistenceContext, {
             ...createCurrentStudioSessionStateReaders(),
             onFailure: () => {
-              if (statusEl) {
-                statusEl.innerHTML = `<span class="text-rose-400">Network Error</span>`;
-              }
+              setStudioAutoSaveStatus('network-error');
             }
           });
         }
@@ -4086,6 +4075,26 @@
         return;
       }
 
+      if (state === 'saving') {
+        statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Saving...</span>`;
+        return;
+      }
+
+      if (state === 'autosave-failed') {
+        statusEl.innerHTML = `<span class="text-rose-400">AutoSave Failed</span>`;
+        return;
+      }
+
+      if (state === 'save-version-failed') {
+        statusEl.innerHTML = `<span class="text-rose-400">Save Version Failed</span>`;
+        return;
+      }
+
+      if (state === 'network-error') {
+        statusEl.innerHTML = `<span class="text-rose-400">Network Error</span>`;
+        return;
+      }
+
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
     }
 
@@ -4113,7 +4122,6 @@
       closeSaveVersionModal();
 
       const saveBtn = document.getElementById('studioSaveBtn');
-      const statusEl = document.getElementById('autoSaveStatus');
       const scheduledPresentationUrl = currentPresentationUrl;
       const scheduledSessionToken = studioEditorSessionToken;
 
@@ -4139,9 +4147,7 @@
             ...createCurrentStudioSessionStateReaders(),
             onSuccess: () => {
               alert('Successfully saved named version backup checkpoint!');
-              if (statusEl) {
-                statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
-              }
+              setStudioAutoSaveStatus('saved');
             },
             refreshVersionEntries: (presentationUrl, sessionToken) => {
               loadVersions(presentationUrl, sessionToken);
@@ -4152,9 +4158,7 @@
             ...createCurrentStudioSessionStateReaders(),
             onFailure: () => {
               alert(`Save version failed: ${data.error}`);
-              if (statusEl) {
-                statusEl.innerHTML = `<span class="text-rose-400">Save Version Failed</span>`;
-              }
+              setStudioAutoSaveStatus('save-version-failed');
             }
           });
         }
@@ -4163,9 +4167,7 @@
           ...createCurrentStudioSessionStateReaders(),
           onFailure: () => {
             alert(`Network error saving version: ${err.message}`);
-            if (statusEl) {
-              statusEl.innerHTML = `<span class="text-rose-400">Network Error</span>`;
-            }
+            setStudioAutoSaveStatus('network-error');
           }
         });
       } finally {
