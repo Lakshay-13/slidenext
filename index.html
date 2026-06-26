@@ -2948,70 +2948,32 @@
       }, true);
 
       doc.body.addEventListener('pointerdown', (e) => {
-        const pointerStartIntent = SlideNextStudioEditorTransform.buildStudioTransformPointerStartIntent(e, {
-          resolveEditableTarget
-        });
-        if (!pointerStartIntent.canStart) return;
         const slide = getActiveSlide(doc);
-        if (!slide) return;
         const getTransformSelectionState = () => SlideNextStudioEditorTransform.buildStudioTransformSelectionState(selectedElements, {
           isLocked: isElementLocked,
           isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
         });
-
-        const { handle, overlay, dragTarget } = pointerStartIntent;
-
-        const pointerSelectionState = SlideNextStudioEditorTransform.resolveStudioTransformPointerSelectionState({
-          getSelectionState: getTransformSelectionState,
-          selectElement,
-          handle,
-          overlay,
-          dragTarget,
-          shiftKey: e.shiftKey
-        });
-        if (!pointerSelectionState.pointerSelectionPlan.hasTransformTarget) return;
-
-        const transformSelectionState = pointerSelectionState.selectionState;
-        if (!transformSelectionState.canTransform) return;
-        const dragSelection = transformSelectionState.selection;
-
-        const transformStartState = SlideNextStudioEditorTransform.buildStudioTransformStartState(dragSelection, {
+        const transformSessionStart = SlideNextStudioEditorTransform.resolveStudioTransformSessionStart({
           slide,
           event: e,
+          getSelectionState: getTransformSelectionState,
+          selectElement,
+          resolveEditableTarget,
           getSlideMetrics,
           getPointerOnSlide,
           getSelectionBounds,
+          ensureOverlay: () => ensureSelectionOverlay(doc, slide),
           itemOptions: {
             getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
             getRectOnSlide
-          }
+          },
+          captureTarget: doc.body
         });
-        if (!transformStartState) return;
-        const {
-          slideMetrics,
-          slideBounds,
-          startPointer,
-          startBounds,
-          items
-        } = transformStartState;
-        const overlayNode = ensureSelectionOverlay(doc, slide);
+        if (!transformSessionStart) return;
 
-        session = SlideNextStudioEditorTransform.startStudioTransformSession({
-          type: handle ? 'resize' : 'drag',
-          handleDir: handle ? handle.getAttribute('data-dir') : '',
-          pointerId: e.pointerId,
-          captureTarget: doc.body,
-          startClientX: e.clientX,
-          startClientY: e.clientY,
-          startPointer,
-          slideMetrics,
-          slideBounds,
-          startBounds,
-          items,
-          overlay: overlayNode
-        }).session;
+        session = transformSessionStart.session;
 
-        updateDragHud(startBounds);
+        updateDragHud(transformSessionStart.startBounds);
         isDraggingElement = true;
         e.preventDefault();
         e.stopPropagation();

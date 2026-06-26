@@ -979,6 +979,96 @@ test('startStudioTransformSession builds the session and captures its pointer', 
   assert.equal(capturedPointerId, 12);
 });
 
+test('resolveStudioTransformSessionStart assembles the transform session from shared startup dependencies', () => {
+  let capturedPointerId = null;
+  const captureTarget = {
+    setPointerCapture(pointerId) {
+      capturedPointerId = pointerId;
+    }
+  };
+  const handleNode = {
+    getAttribute(name) {
+      return name === 'data-dir' ? 'se' : '';
+    }
+  };
+  const overlayNode = { id: 'overlay' };
+  const dragTarget = { id: 'node-1' };
+  const target = {
+    closest(selector) {
+      if (selector === '.editor-resize-handle') return handleNode;
+      return null;
+    }
+  };
+
+  assert.deepEqual(transformState.resolveStudioTransformSessionStart({
+    slide: { id: 'slide-1' },
+    event: {
+      button: 0,
+      isPrimary: true,
+      pointerId: 9,
+      clientX: 300,
+      clientY: 180,
+      target
+    },
+    getSelectionState() {
+      return {
+        selection: [dragTarget],
+        canTransform: true
+      };
+    },
+    selectElement() {},
+    resolveEditableTarget() {
+      return dragTarget;
+    },
+    getSlideMetrics() {
+      return { logicalWidth: 1280, logicalHeight: 720, scaleX: 1, scaleY: 1 };
+    },
+    getPointerOnSlide() {
+      return { x: 140, y: 110 };
+    },
+    getSelectionBounds() {
+      return { left: 100, top: 80, width: 120, height: 90 };
+    },
+    buildSessionItem(element) {
+      return { elementId: element.id };
+    },
+    ensureOverlay() {
+      return overlayNode;
+    },
+    captureTarget
+  }), {
+    session: {
+      type: 'resize',
+      handleDir: 'se',
+      pointerId: 9,
+      captureTarget,
+      startClientX: 300,
+      startClientY: 180,
+      startPointer: { x: 140, y: 110 },
+      grabOffset: { x: 40, y: 30 },
+      slideMetrics: { logicalWidth: 1280, logicalHeight: 720, scaleX: 1, scaleY: 1 },
+      slideBounds: { width: 1280, height: 720 },
+      startBounds: { left: 100, top: 80, width: 120, height: 90 },
+      items: [{ elementId: 'node-1' }],
+      moved: false,
+      materialized: false,
+      overlay: overlayNode
+    },
+    startBounds: { left: 100, top: 80, width: 120, height: 90 },
+    didCapture: true
+  });
+  assert.equal(capturedPointerId, 9);
+
+  assert.equal(transformState.resolveStudioTransformSessionStart({
+    slide: null,
+    event: {
+      button: 0,
+      isPrimary: true,
+      target: null
+    }
+  }), null);
+});
+
 test('buildStudioTransformMotionState derives pointer deltas and screen movement from the session start', () => {
   assert.deepEqual(transformState.buildStudioTransformMotionState({
     startPointer: { x: 120, y: 90 },

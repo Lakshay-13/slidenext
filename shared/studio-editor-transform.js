@@ -608,6 +608,78 @@
     };
   }
 
+  function resolveStudioTransformSessionStart(options = {}) {
+    if (!options.slide) {
+      return null;
+    }
+
+    const event = options.event || {};
+    const pointerStartIntent = buildStudioTransformPointerStartIntent(event, {
+      resolveEditableTarget: options.resolveEditableTarget,
+      handleSelector: options.handleSelector,
+      overlaySelector: options.overlaySelector
+    });
+    if (!pointerStartIntent.canStart) {
+      return null;
+    }
+
+    const pointerSelectionState = resolveStudioTransformPointerSelectionState({
+      getSelectionState: options.getSelectionState,
+      selectElement: options.selectElement,
+      handle: pointerStartIntent.handle,
+      overlay: pointerStartIntent.overlay,
+      dragTarget: pointerStartIntent.dragTarget,
+      shiftKey: !!event.shiftKey
+    });
+    if (!pointerSelectionState.pointerSelectionPlan.hasTransformTarget) {
+      return null;
+    }
+
+    const transformSelectionState = pointerSelectionState.selectionState;
+    if (!transformSelectionState.canTransform) {
+      return null;
+    }
+
+    const transformStartState = buildStudioTransformStartState(transformSelectionState.selection, {
+      slide: options.slide,
+      event,
+      getSlideMetrics: options.getSlideMetrics,
+      getPointerOnSlide: options.getPointerOnSlide,
+      getSelectionBounds: options.getSelectionBounds,
+      itemOptions: options.itemOptions,
+      buildSessionItem: options.buildSessionItem
+    });
+    if (!transformStartState) {
+      return null;
+    }
+
+    const overlay = typeof options.ensureOverlay === 'function'
+      ? options.ensureOverlay(options.slide, transformStartState, pointerSelectionState)
+      : options.overlay || null;
+    const sessionStart = startStudioTransformSession({
+      type: pointerStartIntent.handle ? 'resize' : 'drag',
+      handleDir: pointerStartIntent.handle && typeof pointerStartIntent.handle.getAttribute === 'function'
+        ? pointerStartIntent.handle.getAttribute('data-dir')
+        : '',
+      pointerId: event.pointerId,
+      captureTarget: options.captureTarget || null,
+      startClientX: Number.isFinite(event.clientX) ? event.clientX : 0,
+      startClientY: Number.isFinite(event.clientY) ? event.clientY : 0,
+      startPointer: transformStartState.startPointer,
+      slideMetrics: transformStartState.slideMetrics,
+      slideBounds: transformStartState.slideBounds,
+      startBounds: transformStartState.startBounds,
+      items: transformStartState.items,
+      overlay
+    });
+
+    return {
+      session: sessionStart.session,
+      startBounds: transformStartState.startBounds,
+      didCapture: sessionStart.didCapture
+    };
+  }
+
   function buildStudioTransformMotionState(session = {}, options = {}) {
     const pointer = options.pointer || {};
     const startPointer = session.startPointer || {};
@@ -720,6 +792,7 @@
     buildStudioTransformSessionItem,
     buildStudioTransformSession,
     startStudioTransformSession,
+    resolveStudioTransformSessionStart,
     buildStudioTransformMotionState,
     buildStudioTransformFrameState,
     buildStudioTransformStartState
