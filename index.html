@@ -1016,6 +1016,7 @@
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-element-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
+  <script src="/shared/studio-editor-transform.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
@@ -2612,7 +2613,10 @@
     }
 
     function selectionSupportsFreeformTransforms(elements = selectedElements) {
-      return elements.length > 0 && !selectionHasLockedElements(elements) && elements.every(isElementFreeformPositioned);
+      return SlideNextStudioEditorTransform.canStudioTransformSelection(elements, {
+        isLocked: isElementLocked,
+        isFreeformPositioned: isElementFreeformPositioned
+      });
     }
 
     function isElementHidden(el) {
