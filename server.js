@@ -4,7 +4,8 @@ const fs = require('fs').promises;
 const path = require('path');
 const {
   buildVersionBackupRegex,
-  extractVersionTimestampPrefix
+  extractVersionTimestampPrefix,
+  deriveSiblingVersionBackupFilename
 } = require('./shared/version-backup-utils');
 const presentationMetadata = require('./shared/presentation-metadata');
 
@@ -93,15 +94,93 @@ function buildVersionBackupFilename(targetFile, versionLabel, now = new Date()) 
   return `${base}_${timestamp}${labelSuffix}${ext}`;
 }
 
-async function createVersionBackupFromContent(targetFile, htmlContent, versionLabel) {
+async function createVersionBackupFromContent(targetFile, htmlContent, versionLabel, now = new Date()) {
   const parentDir = path.dirname(targetFile);
   const versionsDir = path.join(parentDir, '.versions');
   await ensureDir(versionsDir);
 
-  const backupFilename = buildVersionBackupFilename(targetFile, versionLabel);
+  const backupFilename = buildVersionBackupFilename(targetFile, versionLabel, now);
   const backupPath = path.join(versionsDir, backupFilename);
   await fs.writeFile(backupPath, htmlContent, 'utf8');
   return backupFilename;
+}
+
+async function readPresentationMetadataSidecar(htmlPath) {
+  const metadataPath = presentationMetadata.derivePresentationMetadataPath(htmlPath);
+  if (!metadataPath) {
+    return null;
+  }
+
+  const normalizedMetadataPath = metadataPath.replace(/^\//, '');
+  const metadataFile = path.resolve(workspaceDir, normalizedMetadataPath);
+  if (!metadataFile.startsWith(workspaceDir)) {
+    return null;
+  }
+
+  let metadata = presentationMetadata.buildPresentationMetadataSeed(htmlPath);
+  let exists = false;
+  try {
+    const metadataContent = await fs.readFile(metadataFile, 'utf8');
+    metadata = JSON.parse(metadataContent);
+    exists = true;
+  } catch (metadataErr) {
+    if (metadataErr.code !== 'ENOENT') {
+      console.warn(`Falling back to generated metadata seed for ${metadataFile}:`, metadataErr.message);
+    }
+  }
+
+  return {
+    metadataPath,
+    metadataFile,
+    metadata,
+    exists
+  };
+}
+
+async function writePresentationMetadataSidecar(metadataInfo, metadata) {
+  if (!metadataInfo || !metadataInfo.metadataFile) {
+    return false;
+  }
+  await fs.writeFile(metadataInfo.metadataFile, `${JSON.stringify(metadata, null, 2)}\n`, 'utf8');
+  return true;
+}
+
+function derivePresentationMetadataVersionFilename(versionFilename, targetFile, metadataFile) {
+  const targetExt = path.extname(targetFile);
+  const targetBase = path.basename(targetFile, targetExt);
+  const metadataExt = path.extname(metadataFile);
+  const metadataBase = path.basename(metadataFile, metadataExt);
+
+  return deriveSiblingVersionBackupFilename(
+    versionFilename,
+    targetBase,
+    targetExt,
+    metadataBase,
+    metadataExt
+  );
+}
+
+async function createPresentationMetadataVersionBackup(targetFile, versionFilename, metadataInfo, metadata) {
+  if (!metadataInfo || !metadataInfo.metadataFile) {
+    return '';
+  }
+
+  const metadataVersionFilename = derivePresentationMetadataVersionFilename(
+    versionFilename,
+    targetFile,
+    metadataInfo.metadataFile
+  );
+  if (!metadataVersionFilename) {
+    return '';
+  }
+
+  const parentDir = path.dirname(targetFile);
+  const versionsDir = path.join(parentDir, '.versions');
+  await ensureDir(versionsDir);
+
+  const metadataVersionFile = path.join(versionsDir, metadataVersionFilename);
+  await fs.writeFile(metadataVersionFile, `${JSON.stringify(metadata, null, 2)}\n`, 'utf8');
+  return metadataVersionFilename;
 }
 
 // 2. API: Overwrite index.html and save a timestamped backup in .versions/
@@ -122,8 +201,28 @@ app.post('/api/save', async (req, res) => {
     // Create timestamped backup file if it is NOT an auto-save
     if (!isAutoSave) {
       try {
-        const backupFilename = await createVersionBackupFromContent(targetFile, htmlContent, versionLabel);
+        const now = new Date();
+        const backupFilename = await createVersionBackupFromContent(targetFile, htmlContent, versionLabel, now);
         console.log(`Version backup saved: ${backupFilename}`);
+
+        if (canonicalDeck) {
+          const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
+          if (metadataInfo) {
+            const nextMetadata = presentationMetadata.mergePresentationCanonicalDeck(metadataInfo.metadata, canonicalDeck);
+            const nextCanonicalDeck = presentationMetadata.resolvePresentationCanonicalDeck(nextMetadata);
+            if (nextCanonicalDeck) {
+              const metadataBackupFilename = await createPresentationMetadataVersionBackup(
+                targetFile,
+                backupFilename,
+                metadataInfo,
+                nextMetadata
+              );
+              if (metadataBackupFilename) {
+                console.log(`Version metadata backup saved: ${metadataBackupFilename}`);
+              }
+            }
+          }
+        }
       } catch (backupErr) {
         console.warn('Failed to create version backup:', backupErr.message);
       }
@@ -135,25 +234,11 @@ app.post('/api/save', async (req, res) => {
 
     if (canonicalDeck) {
       try {
-        const metadataPath = presentationMetadata.derivePresentationMetadataPath(htmlPath);
-        if (metadataPath) {
-          const normalizedMetadataPath = metadataPath.replace(/^\//, '');
-          const metadataFile = path.resolve(workspaceDir, normalizedMetadataPath);
-          if (metadataFile.startsWith(workspaceDir)) {
-            let currentMetadata = presentationMetadata.buildPresentationMetadataSeed(htmlPath);
-            try {
-              const metadataContent = await fs.readFile(metadataFile, 'utf8');
-              currentMetadata = JSON.parse(metadataContent);
-            } catch (metadataErr) {
-              if (metadataErr.code !== 'ENOENT') {
-                console.warn(`Falling back to generated metadata seed for ${metadataFile}:`, metadataErr.message);
-              }
-            }
-
-            const nextMetadata = presentationMetadata.mergePresentationCanonicalDeck(currentMetadata, canonicalDeck);
-            await fs.writeFile(metadataFile, `${JSON.stringify(nextMetadata, null, 2)}\n`, 'utf8');
-            console.log(`Updated canonical deck sidecar: ${metadataFile}`);
-          }
+        const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
+        if (metadataInfo) {
+          const nextMetadata = presentationMetadata.mergePresentationCanonicalDeck(metadataInfo.metadata, canonicalDeck);
+          await writePresentationMetadataSidecar(metadataInfo, nextMetadata);
+          console.log(`Updated canonical deck sidecar: ${metadataInfo.metadataFile}`);
         }
       } catch (metadataErr) {
         console.warn('Failed to persist canonical deck sidecar:', metadataErr.message);
@@ -183,6 +268,22 @@ app.post('/api/versions/create', async (req, res) => {
     const htmlContent = await fs.readFile(targetFile, 'utf8');
     const backupFilename = await createVersionBackupFromContent(targetFile, htmlContent, versionLabel);
     console.log(`Version backup saved without rewriting deck: ${backupFilename}`);
+
+    const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
+    if (metadataInfo) {
+      const currentCanonicalDeck = presentationMetadata.resolvePresentationCanonicalDeck(metadataInfo.metadata);
+      if (currentCanonicalDeck) {
+        const metadataBackupFilename = await createPresentationMetadataVersionBackup(
+          targetFile,
+          backupFilename,
+          metadataInfo,
+          metadataInfo.metadata
+        );
+        if (metadataBackupFilename) {
+          console.log(`Version metadata backup saved without rewriting deck: ${metadataBackupFilename}`);
+        }
+      }
+    }
 
     res.json({ success: true, backupFilename });
   } catch (err) {
@@ -268,28 +369,40 @@ app.post('/api/restore', async (req, res) => {
     console.log(`Restored target file to backup version: ${versionFilename}`);
 
     try {
-      const metadataPath = presentationMetadata.derivePresentationMetadataPath(htmlPath);
-      if (metadataPath) {
-        const normalizedMetadataPath = metadataPath.replace(/^\//, '');
-        const metadataFile = path.resolve(workspaceDir, normalizedMetadataPath);
-        if (metadataFile.startsWith(workspaceDir)) {
-          let currentMetadata = presentationMetadata.buildPresentationMetadataSeed(htmlPath);
-          try {
-            const metadataContent = await fs.readFile(metadataFile, 'utf8');
-            currentMetadata = JSON.parse(metadataContent);
-          } catch (metadataErr) {
-            if (metadataErr.code !== 'ENOENT') {
-              console.warn(`Falling back to generated metadata seed for ${metadataFile}:`, metadataErr.message);
+      const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
+      if (metadataInfo) {
+        const metadataVersionFilename = derivePresentationMetadataVersionFilename(
+          versionFilename,
+          targetFile,
+          metadataInfo.metadataFile
+        );
+        let restoredMetadata = null;
+
+        if (metadataVersionFilename) {
+          const metadataVersionFile = path.resolve(parentDir, '.versions', metadataVersionFilename);
+          if (metadataVersionFile.startsWith(path.join(parentDir, '.versions'))) {
+            try {
+              const metadataBackupContent = await fs.readFile(metadataVersionFile, 'utf8');
+              restoredMetadata = JSON.parse(metadataBackupContent);
+            } catch (metadataBackupErr) {
+              if (metadataBackupErr.code !== 'ENOENT') {
+                console.warn(`Failed to read restored canonical deck sidecar backup ${metadataVersionFile}:`, metadataBackupErr.message);
+              }
             }
           }
+        }
 
-          const nextMetadata = presentationMetadata.stripPresentationCanonicalDeck(currentMetadata);
-          await fs.writeFile(metadataFile, `${JSON.stringify(nextMetadata, null, 2)}\n`, 'utf8');
-          console.log(`Cleared restored canonical deck sidecar: ${metadataFile}`);
+        if (restoredMetadata && presentationMetadata.resolvePresentationCanonicalDeck(restoredMetadata)) {
+          await writePresentationMetadataSidecar(metadataInfo, restoredMetadata);
+          console.log(`Restored canonical deck sidecar: ${metadataInfo.metadataFile}`);
+        } else {
+          const nextMetadata = presentationMetadata.stripPresentationCanonicalDeck(metadataInfo.metadata);
+          await writePresentationMetadataSidecar(metadataInfo, nextMetadata);
+          console.log(`Cleared restored canonical deck sidecar: ${metadataInfo.metadataFile}`);
         }
       }
     } catch (metadataErr) {
-      console.warn('Failed to clear restored canonical deck sidecar:', metadataErr.message);
+      console.warn('Failed to restore canonical deck sidecar:', metadataErr.message);
     }
 
     res.json({ success: true, message: 'Restore completed successfully' });
@@ -340,6 +453,37 @@ app.post('/api/versions/rename', async (req, res) => {
     await fs.rename(versionFilePath, newFilePath);
     console.log(`Renamed version from ${versionFilename} to ${newFilename}`);
 
+    const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
+    if (metadataInfo) {
+      const metadataVersionFilename = derivePresentationMetadataVersionFilename(
+        versionFilename,
+        targetFile,
+        metadataInfo.metadataFile
+      );
+      const newMetadataVersionFilename = derivePresentationMetadataVersionFilename(
+        newFilename,
+        targetFile,
+        metadataInfo.metadataFile
+      );
+      if (metadataVersionFilename && newMetadataVersionFilename) {
+        const metadataVersionFile = path.resolve(parentDir, '.versions', metadataVersionFilename);
+        const newMetadataVersionFile = path.resolve(parentDir, '.versions', newMetadataVersionFilename);
+        if (
+          metadataVersionFile.startsWith(path.join(parentDir, '.versions')) &&
+          newMetadataVersionFile.startsWith(path.join(parentDir, '.versions'))
+        ) {
+          try {
+            await fs.rename(metadataVersionFile, newMetadataVersionFile);
+            console.log(`Renamed version metadata from ${metadataVersionFilename} to ${newMetadataVersionFilename}`);
+          } catch (metadataRenameErr) {
+            if (metadataRenameErr.code !== 'ENOENT') {
+              throw metadataRenameErr;
+            }
+          }
+        }
+      }
+    }
+
     res.json({ success: true, newFilename });
   } catch (err) {
     console.error('Error renaming version:', err);
@@ -369,6 +513,28 @@ app.post('/api/versions/delete', async (req, res) => {
 
     await fs.unlink(versionFilePath);
     console.log(`Deleted version backup: ${versionFilename}`);
+
+    const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
+    if (metadataInfo) {
+      const metadataVersionFilename = derivePresentationMetadataVersionFilename(
+        versionFilename,
+        targetFile,
+        metadataInfo.metadataFile
+      );
+      if (metadataVersionFilename) {
+        const metadataVersionFile = path.resolve(parentDir, '.versions', metadataVersionFilename);
+        if (metadataVersionFile.startsWith(path.join(parentDir, '.versions'))) {
+          try {
+            await fs.unlink(metadataVersionFile);
+            console.log(`Deleted version metadata backup: ${metadataVersionFilename}`);
+          } catch (metadataDeleteErr) {
+            if (metadataDeleteErr.code !== 'ENOENT') {
+              throw metadataDeleteErr;
+            }
+          }
+        }
+      }
+    }
 
     res.json({ success: true });
   } catch (err) {

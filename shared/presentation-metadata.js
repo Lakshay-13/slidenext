@@ -44,6 +44,30 @@
     };
   }
 
+  function resolvePresentationCanonicalDeck(metadata = {}, options = {}) {
+    const nextMetadata = asPlainObject(metadata);
+    const rawDeck = nextMetadata.canonicalDeck;
+    if (!rawDeck || !Array.isArray(rawDeck.slides)) {
+      return null;
+    }
+
+    const createCanonicalDeck = typeof options.createCanonicalDeck === 'function'
+      ? options.createCanonicalDeck
+      : canonicalDeck && typeof canonicalDeck.createCanonicalDeck === 'function'
+        ? canonicalDeck.createCanonicalDeck
+        : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : canonicalDeck && typeof canonicalDeck.isCanonicalDeck === 'function'
+        ? canonicalDeck.isCanonicalDeck
+        : null;
+    const nextDeck = createCanonicalDeck ? createCanonicalDeck(rawDeck) : rawDeck;
+
+    return isCanonicalDeck && isCanonicalDeck(nextDeck)
+      ? nextDeck
+      : null;
+  }
+
   function mergePresentationCanonicalDeck(metadata = {}, deckLike = null, options = {}) {
     const nextMetadata = asPlainObject(metadata);
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
@@ -75,6 +99,7 @@
     derivePresentationMetadataPath,
     derivePresentationIdFromHtmlPath,
     buildPresentationMetadataSeed,
+    resolvePresentationCanonicalDeck,
     mergePresentationCanonicalDeck,
     stripPresentationCanonicalDeck
   };

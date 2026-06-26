@@ -53,11 +53,24 @@
     return 'Manual Checkpoint';
   }
 
+  function deriveSiblingVersionBackupFilename(versionFilename, sourceBase, sourceExt, targetBase, targetExt) {
+    if (!buildVersionBackupRegex(sourceBase, sourceExt).test(versionFilename)) {
+      return '';
+    }
+
+    const baseAndTimestamp = versionFilename.slice(
+      sourceBase.length,
+      versionFilename.length - sourceExt.length
+    );
+    return `${targetBase}${baseAndTimestamp}${targetExt}`;
+  }
+
   return {
     VERSION_BACKUP_TIMESTAMP_PATTERN,
     escapeRegex,
     buildVersionBackupRegex,
     extractVersionTimestampPrefix,
-    deriveVersionDisplayLabel
+    deriveVersionDisplayLabel,
+    deriveSiblingVersionBackupFilename
   };
 });

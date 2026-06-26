@@ -29,6 +29,98 @@ test('buildPresentationMetadataSeed derives stable metadata defaults from an htm
   );
 });
 
+test('resolvePresentationCanonicalDeck normalizes valid canonical sidecars and rejects malformed ones', () => {
+  assert.deepEqual(
+    presentationMetadata.resolvePresentationCanonicalDeck({
+      canonicalDeck: {
+        metadata: {
+          title: 'Project Onboarding'
+        },
+        slides: [
+          {
+            id: 'slide-1',
+            nodes: []
+          }
+        ]
+      }
+    }),
+    {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      metadata: {
+        id: '',
+        title: 'Project Onboarding',
+        subtitle: '',
+        description: '',
+        icon: '',
+        tags: [],
+        sourcePath: ''
+      },
+      theme: {
+        tokens: {},
+        customCss: ''
+      },
+      layout: {
+        mode: 'flow',
+        size: {
+          width: null,
+          height: null,
+          unit: 'px'
+        },
+        aspectRatio: ''
+      },
+      assets: [],
+      slides: [
+        {
+          id: 'slide-1',
+          name: '',
+          title: 'Slide 1',
+          notes: '',
+          layout: {
+            mode: 'flow',
+            background: {
+              color: '',
+              image: '',
+              className: '',
+              style: ''
+            }
+          },
+          nodes: [],
+          source: {
+            html: '',
+            attributes: {}
+          }
+        }
+      ],
+      notes: {
+        deck: ''
+      },
+      export: {
+        html: {},
+        pdf: {},
+        pptx: {}
+      },
+      source: {
+        html: '',
+        headHtml: '',
+        bodyHtml: '',
+        bodyAttributes: {}
+      }
+    }
+  );
+
+  assert.equal(
+    presentationMetadata.resolvePresentationCanonicalDeck({
+      canonicalDeck: {
+        metadata: {
+          title: 'Broken Deck'
+        }
+      }
+    }),
+    null
+  );
+});
+
 test('mergePresentationCanonicalDeck preserves metadata and only stores valid canonical decks', () => {
   const metadata = {
     id: 'onboarding-presentation',
