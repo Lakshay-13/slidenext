@@ -121,7 +121,7 @@ test('resolvePresentationCanonicalDeck normalizes valid canonical sidecars and r
   );
 });
 
-test('mergePresentationCanonicalDeck preserves metadata and only stores valid canonical decks', () => {
+test('mergePresentationCanonicalDeck preserves metadata and normalizes valid canonical sidecars', () => {
   const metadata = {
     id: 'onboarding-presentation',
     title: 'Project Onboarding',
@@ -133,9 +133,10 @@ test('mergePresentationCanonicalDeck preserves metadata and only stores valid ca
     }
   };
   const nextCanonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: [{ id: 'slide-1' }]
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [{ id: 'slide-1', nodes: [] }]
   };
 
   assert.deepEqual(
@@ -144,7 +145,69 @@ test('mergePresentationCanonicalDeck preserves metadata and only stores valid ca
       id: 'onboarding-presentation',
       title: 'Project Onboarding',
       tags: ['Onboarding'],
-      canonicalDeck: nextCanonicalDeck
+      canonicalDeck: {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        metadata: {
+          id: '',
+          title: 'Project Onboarding',
+          subtitle: '',
+          description: '',
+          icon: '',
+          tags: [],
+          sourcePath: ''
+        },
+        theme: {
+          tokens: {},
+          customCss: ''
+        },
+        layout: {
+          mode: 'flow',
+          size: {
+            width: null,
+            height: null,
+            unit: 'px'
+          },
+          aspectRatio: ''
+        },
+        assets: [],
+        slides: [
+          {
+            id: 'slide-1',
+            name: '',
+            title: 'Slide 1',
+            notes: '',
+            layout: {
+              mode: 'flow',
+              background: {
+                color: '',
+                image: '',
+                className: '',
+                style: ''
+              }
+            },
+            nodes: [],
+            source: {
+              html: '',
+              attributes: {}
+            }
+          }
+        ],
+        notes: {
+          deck: ''
+        },
+        export: {
+          html: {},
+          pdf: {},
+          pptx: {}
+        },
+        source: {
+          html: '',
+          headHtml: '',
+          bodyHtml: '',
+          bodyAttributes: {}
+        }
+      }
     }
   );
 

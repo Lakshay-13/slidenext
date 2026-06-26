@@ -70,19 +70,20 @@
 
   function mergePresentationCanonicalDeck(metadata = {}, deckLike = null, options = {}) {
     const nextMetadata = asPlainObject(metadata);
-    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
-      ? options.isCanonicalDeck
-      : canonicalDeck && typeof canonicalDeck.isCanonicalDeck === 'function'
-        ? canonicalDeck.isCanonicalDeck
-        : null;
+    const nextCanonicalDeck = resolvePresentationCanonicalDeck({
+      canonicalDeck: deckLike
+    }, {
+      createCanonicalDeck: options.createCanonicalDeck,
+      isCanonicalDeck: options.isCanonicalDeck
+    });
 
-    if (!deckLike || (isCanonicalDeck && !isCanonicalDeck(deckLike))) {
+    if (!nextCanonicalDeck) {
       return nextMetadata;
     }
 
     return {
       ...nextMetadata,
-      canonicalDeck: deckLike
+      canonicalDeck: nextCanonicalDeck
     };
   }
 
