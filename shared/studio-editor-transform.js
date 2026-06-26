@@ -240,6 +240,49 @@
     };
   }
 
+  function cleanupStudioTransformSession(session = {}, options = {}) {
+    if (!session) {
+      return {
+        didCleanup: false,
+        didReleasePointerCapture: false,
+        session
+      };
+    }
+
+    const draggingClassName = options.draggingClassName || 'editor-dragging';
+    const overlayDraggingClassName = options.overlayDraggingClassName || 'drag-preview';
+    let didReleasePointerCapture = false;
+
+    if (session.captureTarget && typeof session.captureTarget.releasePointerCapture === 'function') {
+      try {
+        if (session.captureTarget.hasPointerCapture?.(session.pointerId)) {
+          session.captureTarget.releasePointerCapture(session.pointerId);
+          didReleasePointerCapture = true;
+        }
+      } catch (_) {
+        // no-op
+      }
+    }
+
+    const items = Array.isArray(session.items) ? session.items : [];
+    items.forEach((item) => {
+      if (item && item.element && item.element.classList && typeof item.element.classList.remove === 'function') {
+        item.element.classList.remove(draggingClassName);
+      }
+    });
+
+    if (session.overlay && session.overlay.classList && typeof session.overlay.classList.remove === 'function') {
+      session.overlay.classList.remove(overlayDraggingClassName);
+    }
+
+    session.materialized = false;
+    return {
+      didCleanup: true,
+      didReleasePointerCapture,
+      session
+    };
+  }
+
   return {
     getStudioTransformSelection,
     buildStudioTransformSelectionState,
@@ -252,6 +295,7 @@
     shouldStudioResizeHeight,
     normalizeStudioTransformBounds,
     applyStudioTransformBounds,
-    materializeStudioTransformSession
+    materializeStudioTransformSession,
+    cleanupStudioTransformSession
   };
 });

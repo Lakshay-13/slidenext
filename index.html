@@ -2931,20 +2931,8 @@
 
       const finalizeDragSession = () => {
         if (!session) return;
-        if (session.captureTarget && typeof session.captureTarget.releasePointerCapture === 'function') {
-          try {
-            if (session.captureTarget.hasPointerCapture?.(session.pointerId)) {
-              session.captureTarget.releasePointerCapture(session.pointerId);
-            }
-          } catch (_) {
-            // no-op
-          }
-        }
         const didMove = session.moved;
-        session.items.forEach(item => item.element.classList.remove('editor-dragging'));
-        if (session.overlay) {
-          session.overlay.classList.remove('drag-preview');
-        }
+        SlideNextStudioEditorTransform.cleanupStudioTransformSession(session);
         session = null;
         isDraggingElement = false;
         hideGuides();

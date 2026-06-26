@@ -9,6 +9,9 @@ function createClassList() {
     add(value) {
       values.add(value);
     },
+    remove(value) {
+      values.delete(value);
+    },
     contains(value) {
       return values.has(value);
     }
@@ -310,5 +313,74 @@ test('materializeStudioTransformSession applies absolute positioning state only 
   assert.deepEqual(transformState.materializeStudioTransformSession(session), {
     didMaterialize: false,
     session
+  });
+});
+
+test('cleanupStudioTransformSession releases pointer capture and clears drag state', () => {
+  const element = {
+    style: {},
+    classList: createClassList()
+  };
+  const overlay = {
+    classList: createClassList()
+  };
+  element.classList.add('editor-dragging');
+  overlay.classList.add('drag-preview');
+  let releasedPointerId = null;
+  const session = {
+    pointerId: 7,
+    materialized: true,
+    captureTarget: {
+      hasPointerCapture(pointerId) {
+        return pointerId === 7;
+      },
+      releasePointerCapture(pointerId) {
+        releasedPointerId = pointerId;
+      }
+    },
+    items: [{
+      element
+    }],
+    overlay
+  };
+
+  assert.deepEqual(transformState.cleanupStudioTransformSession(session), {
+    didCleanup: true,
+    didReleasePointerCapture: true,
+    session
+  });
+  assert.equal(releasedPointerId, 7);
+  assert.equal(element.classList.contains('editor-dragging'), false);
+  assert.equal(overlay.classList.contains('drag-preview'), false);
+  assert.equal(session.materialized, false);
+});
+
+test('cleanupStudioTransformSession tolerates missing capture state and null sessions', () => {
+  const session = {
+    pointerId: 3,
+    materialized: true,
+    captureTarget: {
+      hasPointerCapture() {
+        return false;
+      },
+      releasePointerCapture() {
+        throw new Error('should not release');
+      }
+    },
+    items: [],
+    overlay: null
+  };
+
+  assert.deepEqual(transformState.cleanupStudioTransformSession(session), {
+    didCleanup: true,
+    didReleasePointerCapture: false,
+    session
+  });
+  assert.equal(session.materialized, false);
+
+  assert.deepEqual(transformState.cleanupStudioTransformSession(null), {
+    didCleanup: false,
+    didReleasePointerCapture: false,
+    session: null
   });
 });
