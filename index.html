@@ -2885,92 +2885,6 @@
       return finalizeInsertedElements(duplicates, 'Auto: Duplicated Element');
     }
 
-    function shouldResizeWidth(el) {
-      const tag = el.tagName.toLowerCase();
-      return ['img', 'table', 'pre', 'code', 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag);
-    }
-
-    function shouldResizeHeight(el) {
-      const tag = el.tagName.toLowerCase();
-      return ['img', 'table', 'pre', 'code', 'div'].includes(tag);
-    }
-
-    function clampValue(value, min, max) {
-      return Math.max(min, Math.min(max, value));
-    }
-
-    function normalizeBounds(bounds, slideRect, mode, handleDir = '') {
-      let { left, top, right, bottom } = bounds;
-      const minW = MIN_ELEMENT_SIZE_PX;
-      const minH = MIN_ELEMENT_SIZE_PX;
-
-      if (mode === 'drag') {
-        const width = right - left;
-        const height = bottom - top;
-        const minLeft = -DRAG_OVERFLOW_MARGIN_PX;
-        const maxLeft = Math.max(minLeft, slideRect.width - width + DRAG_OVERFLOW_MARGIN_PX);
-        const minTop = -DRAG_OVERFLOW_MARGIN_PX;
-        const maxTop = Math.max(minTop, slideRect.height - height + DRAG_OVERFLOW_MARGIN_PX);
-        left = clampValue(left, minLeft, maxLeft);
-        top = clampValue(top, minTop, maxTop);
-        right = left + width;
-        bottom = top + height;
-      } else {
-        left = clampValue(left, 0, slideRect.width);
-        right = clampValue(right, 0, slideRect.width);
-        top = clampValue(top, 0, slideRect.height);
-        bottom = clampValue(bottom, 0, slideRect.height);
-
-        if (right - left < minW) {
-          if (handleDir.includes('w')) left = right - minW;
-          else right = left + minW;
-        }
-        if (bottom - top < minH) {
-          if (handleDir.includes('n')) top = bottom - minH;
-          else bottom = top + minH;
-        }
-        left = clampValue(left, 0, slideRect.width);
-        right = clampValue(right, 0, slideRect.width);
-        top = clampValue(top, 0, slideRect.height);
-        bottom = clampValue(bottom, 0, slideRect.height);
-      }
-
-      return { left, top, right, bottom, width: right - left, height: bottom - top };
-    }
-
-    function applyBoundsToSelection(session, bounds) {
-      if (session.type === 'drag') {
-        const dx = bounds.left - session.startBounds.left;
-        const dy = bounds.top - session.startBounds.top;
-        session.items.forEach(item => {
-          const nextAbsLeft = item.startAbsLeft + dx;
-          const nextAbsTop = item.startAbsTop + dy;
-          item.element.style.left = `${nextAbsLeft - item.parentOffsetLeft}px`;
-          item.element.style.top = `${nextAbsTop - item.parentOffsetTop}px`;
-        });
-        return;
-      }
-
-      const scaleX = session.startBounds.width === 0 ? 1 : bounds.width / session.startBounds.width;
-      const scaleY = session.startBounds.height === 0 ? 1 : bounds.height / session.startBounds.height;
-      session.items.forEach(item => {
-        const relLeft = item.startAbsLeft - session.startBounds.left;
-        const relTop = item.startAbsTop - session.startBounds.top;
-        const nextAbsLeft = bounds.left + (relLeft * scaleX);
-        const nextAbsTop = bounds.top + (relTop * scaleY);
-
-        item.element.style.left = `${nextAbsLeft - item.parentOffsetLeft}px`;
-        item.element.style.top = `${nextAbsTop - item.parentOffsetTop}px`;
-
-        if (shouldResizeWidth(item.element)) {
-          item.element.style.width = `${Math.max(MIN_ELEMENT_SIZE_PX, item.startWidth * scaleX)}px`;
-        }
-        if (shouldResizeHeight(item.element)) {
-          item.element.style.height = `${Math.max(MIN_ELEMENT_SIZE_PX, item.startHeight * scaleY)}px`;
-        }
-      });
-    }
-
     function nudgeSelectedElements(dx, dy) {
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
@@ -3208,10 +3122,22 @@
           if (session.handleDir.includes('s')) bottom += dy;
         }
 
-        let bounds = normalizeBounds({ left, top, right, bottom }, session.slideBounds, session.type, session.handleDir);
-        bounds = normalizeBounds(bounds, session.slideBounds, session.type, session.handleDir);
+        let bounds = SlideNextStudioEditorTransform.normalizeStudioTransformBounds({ left, top, right, bottom }, session.slideBounds, {
+          mode: session.type,
+          handleDir: session.handleDir,
+          minSizePx: MIN_ELEMENT_SIZE_PX,
+          dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX
+        });
+        bounds = SlideNextStudioEditorTransform.normalizeStudioTransformBounds(bounds, session.slideBounds, {
+          mode: session.type,
+          handleDir: session.handleDir,
+          minSizePx: MIN_ELEMENT_SIZE_PX,
+          dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX
+        });
 
-        applyBoundsToSelection(session, bounds);
+        SlideNextStudioEditorTransform.applyStudioTransformBounds(session, bounds, {
+          minSizePx: MIN_ELEMENT_SIZE_PX
+        });
         syncSelectionOverlay();
         updateDragHud(bounds);
         e.preventDefault();
