@@ -39,6 +39,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     updateInsertionActionState: 0,
     updateWallpaperActionState: 0,
     updateDeckReadyToolbarActionState: 0,
+    setStudioAutoSaveStatus: [],
     syncInspectorForSelection: 0
   };
 
@@ -125,6 +126,9 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     updateDeckReadyToolbarActionState() {
       calls.updateDeckReadyToolbarActionState += 1;
     },
+    setStudioAutoSaveStatus(state) {
+      calls.setStudioAutoSaveStatus.push(state);
+    },
     syncInspectorForSelection() {
       calls.syncInspectorForSelection += 1;
     }
@@ -145,6 +149,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     updateInsertionActionState: 1,
     updateWallpaperActionState: 1,
     updateDeckReadyToolbarActionState: 1,
+    setStudioAutoSaveStatus: ['saved'],
     syncInspectorForSelection: 1
   });
   assert.equal(iframeDoc.listeners.length, 2);

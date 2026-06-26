@@ -1547,8 +1547,7 @@
       document.getElementById('studioCategoryLabel').textContent = currentCategory;
       document.getElementById('studioTitleLabel').textContent = currentTitle;
       
-      // Initial AutoSave label status
-      document.getElementById('autoSaveStatus').innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
+      setStudioAutoSaveStatus('loading');
       resetStudioPresentationUiState();
       resetStudioSourceViewUiState();
       resetStudioDeckUiState({ isLoading: true });
@@ -1689,6 +1688,7 @@
       updateInsertionActionState();
       updateWallpaperActionState();
       updateDeckReadyToolbarActionState();
+      setStudioAutoSaveStatus('saved');
       syncInspectorForSelection();
     }
 
@@ -3944,6 +3944,18 @@
       if (sourceViewBtn) {
         sourceViewBtn.disabled = !hasDeckDocument;
       }
+    }
+
+    function setStudioAutoSaveStatus(state) {
+      const statusEl = document.getElementById('autoSaveStatus');
+      if (!statusEl) return;
+
+      if (state === 'loading') {
+        statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Loading deck...</span>`;
+        return;
+      }
+
+      statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
     }
 
     function resetStudioSaveButtonState() {
