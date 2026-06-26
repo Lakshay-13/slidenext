@@ -219,6 +219,28 @@ test('createStudioFrameKeydownHandler skips deck-level paste and select-all shor
   assert.equal(calls.redo, 0);
   assert.equal(redoEvent.prevented, 0);
   assert.equal(redoEvent.stopped, 0);
+
+  const nextSlideEvent = createKeyboardEvent({
+    key: 'PageDown'
+  });
+  handler(nextSlideEvent);
+  assert.equal(nextSlideEvent.prevented, 0);
+  assert.equal(nextSlideEvent.stopped, 0);
+});
+
+test('createStudioFrameKeydownHandler still suppresses frame navigation keys when the active slide is ready', () => {
+  const handler = events.createStudioFrameKeydownHandler({
+    getActiveElement: () => null,
+    getSelectedElements: () => [],
+    canMutateDeck: () => true
+  });
+
+  const nextSlideEvent = createKeyboardEvent({
+    key: 'PageDown'
+  });
+  handler(nextSlideEvent);
+  assert.equal(nextSlideEvent.prevented, 1);
+  assert.equal(nextSlideEvent.stopped, 1);
 });
 
 test('createStudioFrameKeydownHandler does not intercept undo and redo while typing', () => {

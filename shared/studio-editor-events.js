@@ -193,7 +193,7 @@
         return;
       }
 
-      if (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'ArrowLeft' || event.key === 'PageDown' || event.key === 'PageUp') {
+      if (deckShortcutReady && (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'ArrowLeft' || event.key === 'PageDown' || event.key === 'PageUp')) {
         event.preventDefault();
         event.stopPropagation();
       }
