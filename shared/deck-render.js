@@ -75,6 +75,21 @@
       .map((src) => `<link rel="stylesheet" href="${escapeAttribute(src)}">`);
   }
 
+  function buildScriptAssetTags(assets = []) {
+    const seenSrcs = new Set();
+    return (Array.isArray(assets) ? assets : [])
+      .filter((asset) => asset && asset.type === 'script')
+      .map((asset) => normalizeString(asset.src).trim())
+      .filter((src) => {
+        if (!src || seenSrcs.has(src)) {
+          return false;
+        }
+        seenSrcs.add(src);
+        return true;
+      })
+      .map((src) => `<script src="${escapeAttribute(src)}"></script>`);
+  }
+
   function normalizeAspectRatioCssValue(value) {
     const normalizedValue = normalizeString(value).trim();
     if (!normalizedValue) {
@@ -355,7 +370,11 @@
     const slidesHtml = Array.isArray(deck.slides)
       ? deck.slides.map((slide, index) => renderCanonicalSlide(slide, index, options)).join('\n')
       : '';
-    return `<div id="slidesContainer" class="slides-container">${slidesHtml}</div>`;
+    const scriptAssetTags = buildScriptAssetTags(deck.assets);
+    return [
+      `<div id="slidesContainer" class="slides-container">${slidesHtml}</div>`,
+      ...scriptAssetTags
+    ].join('\n');
   }
 
   function renderCanonicalDeckHtml(deckLike, options = {}) {

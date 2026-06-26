@@ -384,7 +384,46 @@ test('renderCanonicalDeckHtml emits canonical stylesheet assets when source head
 
   assert.match(html, /<link rel="stylesheet" href="\/presentations\/demo\/styles\.css">/);
   assert.equal((html.match(/<link rel="stylesheet" href="\/presentations\/demo\/styles\.css">/g) || []).length, 1);
-  assert.doesNotMatch(html, /<script[^>]*app\.js/);
+  assert.doesNotMatch(html, /<link rel="stylesheet" href="\/presentations\/demo\/app\.js">/);
+});
+
+test('renderCanonicalDeckHtml emits canonical script assets when source body html is absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'script',
+        src: '/presentations/demo/app.js'
+      },
+      {
+        type: 'script',
+        src: '/presentations/demo/app.js'
+      },
+      {
+        type: 'stylesheet',
+        src: '/presentations/demo/styles.css'
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<script src="\/presentations\/demo\/app\.js"><\/script>/);
+  assert.equal((html.match(/<script src="\/presentations\/demo\/app\.js"><\/script>/g) || []).length, 1);
+  assert.doesNotMatch(html, /<script[^>]*styles\.css/);
 });
 
 test('renderCanonicalDeckHtml falls back to canonical slide background metadata when source attributes are absent', () => {
