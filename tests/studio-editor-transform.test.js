@@ -92,6 +92,44 @@ test('buildStudioTransformSelectionState returns filtered live selections and tr
   });
 });
 
+test('getStudioSlideMetrics, getStudioRectOnSlide, and getStudioPointerOnSlide convert browser geometry into slide coordinates', () => {
+  const metrics = transformState.getStudioSlideMetrics({
+    clientWidth: 1920,
+    clientHeight: 1080,
+    getBoundingClientRect() {
+      return { left: 100, top: 200, width: 960, height: 540 };
+    }
+  });
+
+  assert.deepEqual(metrics, {
+    rect: { left: 100, top: 200, width: 960, height: 540 },
+    logicalWidth: 1920,
+    logicalHeight: 1080,
+    scaleX: 2,
+    scaleY: 2
+  });
+
+  assert.deepEqual(transformState.getStudioRectOnSlide({
+    left: 140,
+    top: 230,
+    right: 340,
+    bottom: 430
+  }, metrics), {
+    left: 80,
+    top: 60,
+    right: 480,
+    bottom: 460
+  });
+
+  assert.deepEqual(transformState.getStudioPointerOnSlide({
+    clientX: 150,
+    clientY: 250
+  }, metrics), {
+    x: 100,
+    y: 100
+  });
+});
+
 test('buildStudioTransformPointerSelectionPlan makes transform target reselection explicit', () => {
   const dragTarget = { id: 'node-1' };
 

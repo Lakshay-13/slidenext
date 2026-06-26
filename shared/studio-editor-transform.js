@@ -11,6 +11,49 @@
   const STUDIO_RESIZE_HEIGHT_TAGS = new Set(['img', 'table', 'pre', 'code', 'div']);
   const STUDIO_TRANSFORM_MOVED_VERSION_LABEL = 'Auto: Moved Element';
 
+  function getStudioSlideMetrics(slide) {
+    if (!slide || typeof slide.getBoundingClientRect !== 'function') {
+      return {
+        rect: { left: 0, top: 0, width: 0, height: 0 },
+        logicalWidth: 1920,
+        logicalHeight: 1080,
+        scaleX: 1,
+        scaleY: 1
+      };
+    }
+
+    const rect = slide.getBoundingClientRect();
+    const logicalWidth = slide.clientWidth || rect.width || 1920;
+    const logicalHeight = slide.clientHeight || rect.height || 1080;
+    const scaleX = rect.width > 0 ? logicalWidth / rect.width : 1;
+    const scaleY = rect.height > 0 ? logicalHeight / rect.height : 1;
+    return { rect, logicalWidth, logicalHeight, scaleX, scaleY };
+  }
+
+  function getStudioRectOnSlide(rect = {}, slideMetrics = {}) {
+    const slideRect = slideMetrics.rect || {};
+    const scaleX = Number.isFinite(slideMetrics.scaleX) ? slideMetrics.scaleX : 1;
+    const scaleY = Number.isFinite(slideMetrics.scaleY) ? slideMetrics.scaleY : 1;
+
+    return {
+      left: ((Number.isFinite(rect.left) ? rect.left : 0) - (Number.isFinite(slideRect.left) ? slideRect.left : 0)) * scaleX,
+      top: ((Number.isFinite(rect.top) ? rect.top : 0) - (Number.isFinite(slideRect.top) ? slideRect.top : 0)) * scaleY,
+      right: ((Number.isFinite(rect.right) ? rect.right : 0) - (Number.isFinite(slideRect.left) ? slideRect.left : 0)) * scaleX,
+      bottom: ((Number.isFinite(rect.bottom) ? rect.bottom : 0) - (Number.isFinite(slideRect.top) ? slideRect.top : 0)) * scaleY
+    };
+  }
+
+  function getStudioPointerOnSlide(event = {}, slideMetrics = {}) {
+    const slideRect = slideMetrics.rect || {};
+    const scaleX = Number.isFinite(slideMetrics.scaleX) ? slideMetrics.scaleX : 1;
+    const scaleY = Number.isFinite(slideMetrics.scaleY) ? slideMetrics.scaleY : 1;
+
+    return {
+      x: ((Number.isFinite(event.clientX) ? event.clientX : 0) - (Number.isFinite(slideRect.left) ? slideRect.left : 0)) * scaleX,
+      y: ((Number.isFinite(event.clientY) ? event.clientY : 0) - (Number.isFinite(slideRect.top) ? slideRect.top : 0)) * scaleY
+    };
+  }
+
   function getStudioTransformSelection(elements = [], options = {}) {
     const selection = Array.isArray(elements) ? elements : [];
     const isEligibleElement = typeof options.isEligibleElement === 'function'
@@ -767,6 +810,9 @@
 
   return {
     getStudioTransformSelection,
+    getStudioSlideMetrics,
+    getStudioRectOnSlide,
+    getStudioPointerOnSlide,
     buildStudioTransformSelectionState,
     buildStudioTransformPointerSelectionPlan,
     buildStudioTransformPointerStartIntent,

@@ -2357,28 +2357,15 @@
     }
 
     function getSlideMetrics(slide) {
-      const rect = slide.getBoundingClientRect();
-      const logicalWidth = slide.clientWidth || rect.width || 1920;
-      const logicalHeight = slide.clientHeight || rect.height || 1080;
-      const scaleX = rect.width > 0 ? logicalWidth / rect.width : 1;
-      const scaleY = rect.height > 0 ? logicalHeight / rect.height : 1;
-      return { rect, logicalWidth, logicalHeight, scaleX, scaleY };
+      return SlideNextStudioEditorTransform.getStudioSlideMetrics(slide);
     }
 
     function getRectOnSlide(rect, slideMetrics) {
-      return {
-        left: (rect.left - slideMetrics.rect.left) * slideMetrics.scaleX,
-        top: (rect.top - slideMetrics.rect.top) * slideMetrics.scaleY,
-        right: (rect.right - slideMetrics.rect.left) * slideMetrics.scaleX,
-        bottom: (rect.bottom - slideMetrics.rect.top) * slideMetrics.scaleY
-      };
+      return SlideNextStudioEditorTransform.getStudioRectOnSlide(rect, slideMetrics);
     }
 
     function getPointerOnSlide(e, slideMetrics) {
-      return {
-        x: (e.clientX - slideMetrics.rect.left) * slideMetrics.scaleX,
-        y: (e.clientY - slideMetrics.rect.top) * slideMetrics.scaleY
-      };
+      return SlideNextStudioEditorTransform.getStudioPointerOnSlide(e, slideMetrics);
     }
 
     function getSelectionBounds(elements = selectedElements, slideMetrics = null) {
