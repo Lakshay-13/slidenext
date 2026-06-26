@@ -138,6 +138,8 @@ test('restoreStudioSelectionByIdsOnActiveSlide clears stale selection when there
 
 test('commitStudioSelectionState triggers the expected UI sync hooks', () => {
   const selectedElement = createElement('selected');
+  const staleSelectedElement = createElement('stale', { isConnected: false });
+  const fallbackSelectedElement = createElement('fallback');
   const calls = {
     applySelectionState: 0,
     refreshSelectionClasses: 0,
@@ -206,6 +208,27 @@ test('commitStudioSelectionState triggers the expected UI sync hooks', () => {
     selectedElement
   });
   assert.equal(calls.hideDragHud, 1);
+
+  const normalizedSelectionResult = selection.commitStudioSelectionState(
+    {
+      selectedElements: [staleSelectedElement, fallbackSelectedElement],
+      selectedElement: staleSelectedElement
+    },
+    {
+      applySelectionState(nextState) {
+        appliedState = nextState;
+      }
+    }
+  );
+
+  assert.deepEqual(normalizedSelectionResult, {
+    selectedElements: [fallbackSelectedElement],
+    selectedElement: fallbackSelectedElement
+  });
+  assert.deepEqual(appliedState, {
+    selectedElements: [fallbackSelectedElement],
+    selectedElement: fallbackSelectedElement
+  });
 });
 
 test('restoreCommittedStudioSelectionByIdsOnActiveSlide applies selection state and syncs UI hooks', () => {

@@ -1,12 +1,34 @@
 (function (root, factory) {
-  const api = factory();
+  const liveSelection = typeof module === 'object' && module.exports
+    ? require('./studio-editor-live-selection')
+    : root && root.SlideNextStudioEditorLiveSelection;
+  const api = factory(liveSelection);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorSelection = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (liveSelection) {
+  function normalizeStudioSelectionState(nextSelectionState = {}) {
+    const rawSelectedElements = Array.isArray(nextSelectionState.selectedElements)
+      ? nextSelectionState.selectedElements
+      : [];
+    const selectedElements = liveSelection && typeof liveSelection.getStudioLiveSelection === 'function'
+      ? liveSelection.getStudioLiveSelection(rawSelectedElements)
+      : rawSelectedElements.filter((element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected));
+    const preferredSelectedElement = nextSelectionState.selectedElement;
+    const selectedElement = liveSelection && typeof liveSelection.isStudioLiveSelectedElement === 'function'
+      && liveSelection.isStudioLiveSelectedElement(selectedElements, preferredSelectedElement)
+      ? preferredSelectedElement
+      : selectedElements[0] || null;
+
+    return {
+      selectedElements,
+      selectedElement
+    };
+  }
+
   function getStudioSelectedElementIds(elements = [], options = {}) {
     const isEligibleElement = typeof options.isEligibleElement === 'function'
       ? options.isEligibleElement
@@ -146,10 +168,9 @@
   }
 
   function commitStudioSelectionState(nextSelectionState = {}, options = {}) {
-    const selectedElements = Array.isArray(nextSelectionState.selectedElements)
-      ? nextSelectionState.selectedElements
-      : [];
-    const selectedElement = nextSelectionState.selectedElement || selectedElements[0] || null;
+    const normalizedSelectionState = normalizeStudioSelectionState(nextSelectionState);
+    const selectedElements = normalizedSelectionState.selectedElements;
+    const selectedElement = normalizedSelectionState.selectedElement;
     const applySelectionState = typeof options.applySelectionState === 'function'
       ? options.applySelectionState
       : () => {};
@@ -226,6 +247,7 @@
   }
 
   return {
+    normalizeStudioSelectionState,
     getStudioSelectedElementIds,
     getStudioCommittedSelectedElements,
     getStudioCommittedSelectedElementIds,
