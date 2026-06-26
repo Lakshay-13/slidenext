@@ -3519,8 +3519,7 @@
     }
 
     function restoreFrameFromHistoryEntry(entry) {
-      const iframe = document.getElementById('studioFrame');
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeDoc = getIframeDoc();
       const historyEntry = normalizeHistoryEntry(entry);
       const fallbackIndex = currentSlideIndex;
       
