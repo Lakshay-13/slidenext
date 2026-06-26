@@ -487,6 +487,43 @@ test('materializeStudioTransformSession applies absolute positioning state only 
   });
 });
 
+test('captureStudioTransformSessionPointer captures the active pointer when available', () => {
+  let capturedPointerId = null;
+  const session = {
+    pointerId: 9,
+    captureTarget: {
+      setPointerCapture(pointerId) {
+        capturedPointerId = pointerId;
+      }
+    }
+  };
+
+  assert.deepEqual(transformState.captureStudioTransformSessionPointer(session), {
+    didCapture: true,
+    session
+  });
+  assert.equal(capturedPointerId, 9);
+
+  const failedCaptureSession = {
+    pointerId: 5,
+    captureTarget: {
+      setPointerCapture() {
+        throw new Error('capture failed');
+      }
+    }
+  };
+
+  assert.deepEqual(transformState.captureStudioTransformSessionPointer(failedCaptureSession), {
+    didCapture: false,
+    session: failedCaptureSession
+  });
+
+  assert.deepEqual(transformState.captureStudioTransformSessionPointer(null), {
+    didCapture: false,
+    session: null
+  });
+});
+
 test('progressStudioTransformSession applies drag threshold gating before continuing transforms', () => {
   const element = {
     style: {},

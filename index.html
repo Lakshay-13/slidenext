@@ -3023,13 +3023,7 @@
           overlay: overlayNode
         });
 
-        if (typeof doc.body.setPointerCapture === 'function') {
-          try {
-            doc.body.setPointerCapture(e.pointerId);
-          } catch (_) {
-            // no-op
-          }
-        }
+        SlideNextStudioEditorTransform.captureStudioTransformSessionPointer(session);
 
         updateDragHud(startBounds);
         isDraggingElement = true;

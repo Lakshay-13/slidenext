@@ -307,6 +307,32 @@
     };
   }
 
+  function captureStudioTransformSessionPointer(session = {}) {
+    if (!session) {
+      return {
+        didCapture: false,
+        session
+      };
+    }
+
+    if (session.captureTarget && typeof session.captureTarget.setPointerCapture === 'function') {
+      try {
+        session.captureTarget.setPointerCapture(session.pointerId);
+        return {
+          didCapture: true,
+          session
+        };
+      } catch (_) {
+        // no-op
+      }
+    }
+
+    return {
+      didCapture: false,
+      session
+    };
+  }
+
   function progressStudioTransformSession(session = {}, options = {}) {
     if (!session) {
       return {
@@ -545,6 +571,7 @@
     normalizeStudioTransformBounds,
     applyStudioTransformBounds,
     materializeStudioTransformSession,
+    captureStudioTransformSessionPointer,
     progressStudioTransformSession,
     cleanupStudioTransformSession,
     finalizeStudioTransformSession,
