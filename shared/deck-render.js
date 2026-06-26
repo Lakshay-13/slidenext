@@ -60,6 +60,21 @@
       || /\.[a-z0-9]{2,8}(?:[?#].*)?$/i.test(normalizedValue);
   }
 
+  function buildStylesheetAssetLinkTags(assets = []) {
+    const seenSrcs = new Set();
+    return (Array.isArray(assets) ? assets : [])
+      .filter((asset) => asset && asset.type === 'stylesheet')
+      .map((asset) => normalizeString(asset.src).trim())
+      .filter((src) => {
+        if (!src || seenSrcs.has(src)) {
+          return false;
+        }
+        seenSrcs.add(src);
+        return true;
+      })
+      .map((src) => `<link rel="stylesheet" href="${escapeAttribute(src)}">`);
+  }
+
   function normalizeAspectRatioCssValue(value) {
     const normalizedValue = normalizeString(value).trim();
     if (!normalizedValue) {
@@ -287,6 +302,7 @@
     const iconLinkTag = looksLikeAssetHref(iconHref)
       ? `<link rel="icon" href="${escapeAttribute(iconHref)}">`
       : '';
+    const stylesheetAssetLinkTags = buildStylesheetAssetLinkTags(deck.assets);
     const layoutCssUnit = normalizeString(layoutSize.unit, 'px').trim() || 'px';
     const layoutAspectRatio = normalizeAspectRatioCssValue(layout.aspectRatio);
     const layoutStyleLines = [];
@@ -329,6 +345,7 @@
       descriptionMetaTag,
       keywordsMetaTag,
       iconLinkTag,
+      ...stylesheetAssetLinkTags,
       deckLayoutStyleBlock,
       ...themeStyleBlocks
     ].filter(Boolean).join('\n');

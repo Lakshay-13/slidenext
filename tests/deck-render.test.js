@@ -348,6 +348,45 @@ test('renderCanonicalDeckHtml skips favicon link emission for symbolic canonical
   assert.doesNotMatch(html, /<link rel="icon"/);
 });
 
+test('renderCanonicalDeckHtml emits canonical stylesheet assets when source head html is absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'stylesheet',
+        src: '/presentations/demo/styles.css'
+      },
+      {
+        type: 'stylesheet',
+        src: '/presentations/demo/styles.css'
+      },
+      {
+        type: 'script',
+        src: '/presentations/demo/app.js'
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<link rel="stylesheet" href="\/presentations\/demo\/styles\.css">/);
+  assert.equal((html.match(/<link rel="stylesheet" href="\/presentations\/demo\/styles\.css">/g) || []).length, 1);
+  assert.doesNotMatch(html, /<script[^>]*app\.js/);
+});
+
 test('renderCanonicalDeckHtml falls back to canonical slide background metadata when source attributes are absent', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [
