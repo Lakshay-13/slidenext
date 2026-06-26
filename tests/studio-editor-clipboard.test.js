@@ -19,6 +19,21 @@ test('canStudioCopySelection allows unlocked selections', () => {
   }), true);
 });
 
+test('canStudioCopySelection ignores disconnected stale selections', () => {
+  assert.equal(clipboardState.canStudioCopySelection([
+    { id: 1, isConnected: false },
+    { id: 2, isConnected: true }
+  ], {
+    isLocked: (element) => element.id === 1
+  }), true);
+
+  assert.equal(clipboardState.canStudioCopySelection([
+    { id: 1, isConnected: false }
+  ], {
+    isLocked: () => false
+  }), false);
+});
+
 test('hasStudioClipboardItems reflects whether clipboard items exist', () => {
   assert.equal(clipboardState.hasStudioClipboardItems(null), false);
   assert.equal(clipboardState.hasStudioClipboardItems({ items: [] }), false);
@@ -46,5 +61,16 @@ test('buildStudioClipboardActionState combines lock-aware copy state with clipbo
   ), {
     canCopy: true,
     canPaste: false
+  });
+
+  assert.deepEqual(clipboardState.buildStudioClipboardActionState(
+    [{ id: 1, isConnected: false }],
+    { items: [{ id: 'copy' }] },
+    {
+      isLocked: () => false
+    }
+  ), {
+    canCopy: false,
+    canPaste: true
   });
 });

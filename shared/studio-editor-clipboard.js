@@ -13,13 +13,18 @@
 
   function canStudioCopySelection(elements = [], options = {}) {
     const selection = Array.isArray(elements) ? elements : [];
-    if (selection.length === 0) {
+    const isEligibleElement = typeof options.isEligibleElement === 'function'
+      ? options.isEligibleElement
+      : (element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected);
+    const eligibleSelection = selection.filter((element) => isEligibleElement(element));
+
+    if (eligibleSelection.length === 0) {
       return false;
     }
     const isLocked = typeof options.isLocked === 'function'
       ? options.isLocked
       : () => false;
-    return !selection.some((element) => isLocked(element));
+    return !eligibleSelection.some((element) => isLocked(element));
   }
 
   function buildStudioClipboardActionState(elements = [], clipboard = null, options = {}) {
