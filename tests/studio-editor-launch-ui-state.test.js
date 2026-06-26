@@ -60,15 +60,28 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   };
 
   const loadVersionsCalls = [];
+  let capturedFrameLoadOptions = null;
+  const currentStudioSessionStateReaders = {
+    getCurrentPresentationUrl() {
+      return context.currentPresentationUrl;
+    },
+    getCurrentSessionToken() {
+      return context.studioEditorSessionToken;
+    }
+  };
   const context = {
     SlideNextStudioEditorSession: {
-      createStudioFrameLoadHandler() {
+      createStudioFrameLoadHandler(options) {
+        capturedFrameLoadOptions = options;
         return function onloadHandler() {};
       }
     },
     applyEditorSelectionState() {},
     buildCurrentPresentationMetadataSeed(url, title) {
       return { url, title };
+    },
+    createCurrentStudioSessionStateReaders() {
+      return currentStudioSessionStateReaders;
     },
     currentCategory: '',
     currentPresentationMetadata: null,
@@ -118,8 +131,72 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   assert.equal(elements.studioTitleLabel.textContent, 'Project Onboarding');
   assert.equal(elements.studioFrame.src, '/presentations/onboarding-presentation/index.html');
   assert.equal(elements.studioEditor.classList.contains('active'), true);
+  assert.equal(capturedFrameLoadOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
+  assert.equal(capturedFrameLoadOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
   assert.deepEqual(loadVersionsCalls, [[
     '/presentations/onboarding-presentation/index.html',
     1
   ]]);
+});
+
+test('loadCurrentPresentationMetadata reuses current session readers when delegating to the deck context', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const loadCurrentPresentationMetadataSource = extractFunctionSource(
+    fileContent,
+    'async function loadCurrentPresentationMetadata(',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+
+  let capturedOptions = null;
+  const currentStudioSessionStateReaders = {
+    getCurrentPresentationUrl() {
+      return context.currentPresentationUrl;
+    },
+    getCurrentSessionToken() {
+      return context.studioEditorSessionToken;
+    }
+  };
+  const context = {
+    SlideNextStudioDeckContext: {
+      async loadStudioPresentationMetadata(presentationUrl, presentationTitle, options) {
+        capturedOptions = options;
+        options.setCurrentPresentationMetadata({
+          id: 'onboarding-presentation',
+          title: presentationTitle,
+          sourcePath: presentationUrl
+        });
+        return {
+          id: 'onboarding-presentation',
+          title: presentationTitle,
+          sourcePath: presentationUrl
+        };
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      return currentStudioSessionStateReaders;
+    },
+    currentPresentationMetadata: null,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    studioEditorSessionToken: 12
+  };
+
+  vm.createContext(context);
+  vm.runInContext(loadCurrentPresentationMetadataSource, context);
+
+  const metadata = await context.loadCurrentPresentationMetadata(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    12
+  );
+
+  assert.deepEqual(metadata, {
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: '/presentations/onboarding-presentation/index.html'
+  });
+  assert.equal(capturedOptions.sessionToken, 12);
+  assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
+  assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.deepEqual(context.currentPresentationMetadata, metadata);
 });

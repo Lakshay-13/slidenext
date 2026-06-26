@@ -1533,6 +1533,7 @@
     // 3. Studio Presentation Workspace Mode
     function launchStudioEditor(url, title, category) {
       const editorSessionToken = ++studioEditorSessionToken;
+      const currentStudioSessionStateReaders = createCurrentStudioSessionStateReaders();
       currentPresentationUrl = url;
       currentPresentationMetadata = buildCurrentPresentationMetadataSeed(url, title);
       currentTitle = title;
@@ -1561,8 +1562,7 @@
       iframe.onload = SlideNextStudioEditorSession.createStudioFrameLoadHandler({
         presentationUrl: url,
         sessionToken: editorSessionToken,
-        getCurrentPresentationUrl: () => currentPresentationUrl,
-        getCurrentSessionToken: () => studioEditorSessionToken,
+        ...currentStudioSessionStateReaders,
         isEditorActive: () => editor.classList.contains('active'),
         handleLoad: () => {
           initStudioFrame();
@@ -1572,8 +1572,7 @@
           setTimeout(() => {
             if (!SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(url, {
               sessionToken: editorSessionToken,
-              getCurrentPresentationUrl: () => currentPresentationUrl,
-              getCurrentSessionToken: () => studioEditorSessionToken,
+              ...currentStudioSessionStateReaders,
               isEditorActive: () => editor.classList.contains('active')
             })) {
               return;
@@ -2109,8 +2108,7 @@
     ) {
       return SlideNextStudioDeckContext.loadStudioPresentationMetadata(presentationUrl, presentationTitle, {
         sessionToken,
-        getCurrentPresentationUrl: () => currentPresentationUrl,
-        getCurrentSessionToken: () => studioEditorSessionToken,
+        ...createCurrentStudioSessionStateReaders(),
         setCurrentPresentationMetadata: (metadata) => {
           currentPresentationMetadata = metadata;
         },
