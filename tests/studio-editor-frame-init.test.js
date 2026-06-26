@@ -30,6 +30,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
   };
 
   const calls = {
+    getIframeDoc: 0,
     syncIframeTheme: 0,
     ensureStudioEditorStyle: 0,
     makeElementsHoverable: 0,
@@ -44,16 +45,9 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
   };
 
   const context = {
-    document: {
-      getElementById(id) {
-        if (id === 'studioFrame') {
-          return {
-            contentDocument: iframeDoc,
-            contentWindow: { document: iframeDoc }
-          };
-        }
-        return null;
-      }
+    getIframeDoc() {
+      calls.getIframeDoc += 1;
+      return iframeDoc;
     },
     syncIframeTheme() {
       calls.syncIframeTheme += 1;
@@ -140,6 +134,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
   context.initStudioFrame();
 
   assert.deepEqual(calls, {
+    getIframeDoc: 1,
     syncIframeTheme: 1,
     ensureStudioEditorStyle: 1,
     makeElementsHoverable: 1,
@@ -154,4 +149,71 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
   });
   assert.equal(iframeDoc.listeners.length, 2);
   assert.deepEqual(iframeDoc.listeners.map((listener) => listener.type), ['click', 'keydown']);
+});
+
+test('syncIframeTheme uses the shared iframe accessor and injects the light theme override style', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncIframeThemeSource = extractFunctionSource(
+    fileContent,
+    'function syncIframeTheme() {',
+    '\n\n    // 1. Fetch Presentations from Backend'
+  );
+
+  const appendedStyles = [];
+  const iframeDoc = {
+    createElement(tagName) {
+      return {
+        tagName,
+        id: '',
+        textContent: ''
+      };
+    },
+    documentElement: {
+      classList: {
+        add(value) {
+          appendedStyles.push(['addClass', value]);
+        },
+        remove(value) {
+          appendedStyles.push(['removeClass', value]);
+        }
+      }
+    },
+    getElementById(id) {
+      if (id === 'editor-theme-override-tag') {
+        return null;
+      }
+      throw new Error(`Unexpected iframe lookup: ${id}`);
+    },
+    head: {
+      appendChild(node) {
+        appendedStyles.push(['appendChild', node]);
+      }
+    }
+  };
+
+  const context = {
+    document: {
+      documentElement: {
+        classList: {
+          contains(value) {
+            assert.equal(value, 'dark');
+            return false;
+          }
+        }
+      }
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncIframeThemeSource, context);
+
+  context.syncIframeTheme();
+
+  assert.deepEqual(appendedStyles[0], ['removeClass', 'dark']);
+  assert.equal(appendedStyles[1][0], 'appendChild');
+  assert.equal(appendedStyles[1][1].id, 'editor-theme-override-tag');
+  assert.match(appendedStyles[1][1].textContent, /--color-bg-base/);
 });

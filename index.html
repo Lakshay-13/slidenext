@@ -1211,9 +1211,7 @@
     }
 
     function syncIframeTheme() {
-      const iframe = document.getElementById('studioFrame');
-      if (!iframe) return;
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeDoc = getIframeDoc();
       if (!iframeDoc || !iframeDoc.documentElement) return;
       
       const isDark = document.documentElement.classList.contains('dark');
@@ -1636,8 +1634,8 @@
 
     // Initialize Frame Hooks
     function initStudioFrame() {
-      const iframe = document.getElementById('studioFrame');
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeDoc = getIframeDoc();
+      if (!iframeDoc) return;
       
       // Sync active theme to slide frame
       syncIframeTheme();
