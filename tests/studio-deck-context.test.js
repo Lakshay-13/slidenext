@@ -165,6 +165,75 @@ test('resolveStoredStudioCanonicalDeck delegates sidecar normalization to the sh
   assert.equal(typeof resolverCalls[0].options.isCanonicalDeck, 'function');
 });
 
+test('mergeStudioPresentationMetadataCanonicalDeck seeds metadata and delegates canonical deck merging', () => {
+  const mergeCalls = [];
+  const mergedMetadata = {
+    id: 'onboarding-presentation',
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: []
+    }
+  };
+
+  const result = deckContext.mergeStudioPresentationMetadataCanonicalDeck(
+    {
+      metadata: {
+        title: 'Project Onboarding'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    },
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      presentationTitle: 'Project Onboarding',
+      buildPresentationMetadataSeed(presentationUrl, presentationTitle) {
+        return {
+          id: 'onboarding-presentation',
+          title: presentationTitle,
+          sourcePath: presentationUrl
+        };
+      },
+      mergePresentationCanonicalDeck(currentPresentationMetadata, canonicalDeckLike, mergeOptions) {
+        mergeCalls.push({ currentPresentationMetadata, canonicalDeckLike, mergeOptions });
+        return mergedMetadata;
+      },
+      createCanonicalDeck: () => ({}),
+      isCanonicalDeck: () => true
+    }
+  );
+
+  assert.equal(result, mergedMetadata);
+  assert.deepEqual(mergeCalls, [{
+    currentPresentationMetadata: {
+      id: 'onboarding-presentation',
+      title: 'Project Onboarding',
+      sourcePath: '/presentations/onboarding-presentation/index.html'
+    },
+    canonicalDeckLike: {
+      metadata: {
+        title: 'Project Onboarding'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    },
+    mergeOptions: {
+      createCanonicalDeck: mergeCalls[0].mergeOptions.createCanonicalDeck,
+      isCanonicalDeck: mergeCalls[0].mergeOptions.isCanonicalDeck
+    }
+  }]);
+  assert.equal(typeof mergeCalls[0].mergeOptions.createCanonicalDeck, 'function');
+  assert.equal(typeof mergeCalls[0].mergeOptions.isCanonicalDeck, 'function');
+});
+
 test('buildStudioCanonicalDeck returns the validated deck from the canonical builder', () => {
   const doc = { label: 'doc' };
   const presentationMetadata = {

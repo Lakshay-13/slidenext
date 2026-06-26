@@ -2124,9 +2124,12 @@
       if (!canonicalDeck || presentationUrl !== currentPresentationUrl) {
         return;
       }
-      const currentMetadata = currentPresentationMetadata
-        || buildCurrentPresentationMetadataSeed(presentationUrl, presentationTitle);
-      currentPresentationMetadata = SlideNextPresentationMetadata.mergePresentationCanonicalDeck(currentMetadata, canonicalDeck);
+      currentPresentationMetadata = SlideNextStudioDeckContext.mergeStudioPresentationMetadataCanonicalDeck(canonicalDeck, {
+        currentPresentationMetadata,
+        presentationUrl,
+        presentationTitle,
+        buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed
+      });
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {

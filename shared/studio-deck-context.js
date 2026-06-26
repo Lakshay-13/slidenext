@@ -74,6 +74,26 @@
     return metadata;
   }
 
+  function mergeStudioPresentationMetadataCanonicalDeck(canonicalDeckLike = null, options = {}) {
+    const currentPresentationMetadata = options.currentPresentationMetadata
+      || (typeof options.buildPresentationMetadataSeed === 'function'
+        ? options.buildPresentationMetadataSeed(options.presentationUrl, options.presentationTitle)
+        : buildStudioPresentationMetadataSeed(options.presentationUrl, options.presentationTitle));
+    const mergePresentationCanonicalDeck = typeof options.mergePresentationCanonicalDeck === 'function'
+      ? options.mergePresentationCanonicalDeck
+      : presentationMetadata && typeof presentationMetadata.mergePresentationCanonicalDeck === 'function'
+        ? presentationMetadata.mergePresentationCanonicalDeck
+        : null;
+    if (!mergePresentationCanonicalDeck) {
+      return currentPresentationMetadata;
+    }
+
+    return mergePresentationCanonicalDeck(currentPresentationMetadata, canonicalDeckLike, {
+      createCanonicalDeck: options.createCanonicalDeck,
+      isCanonicalDeck: options.isCanonicalDeck
+    });
+  }
+
   function buildStudioCanonicalDeck(doc, options = {}) {
     const buildCanonicalDeckFromDocument = typeof options.buildCanonicalDeckFromDocument === 'function'
       ? options.buildCanonicalDeckFromDocument
@@ -124,6 +144,7 @@
   return {
     buildStudioPresentationMetadataSeed,
     loadStudioPresentationMetadata,
+    mergeStudioPresentationMetadataCanonicalDeck,
     resolveStoredStudioCanonicalDeck,
     buildStudioCanonicalDeck
   };
