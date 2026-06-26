@@ -1016,6 +1016,7 @@
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-element-state.js"></script>
   <script src="/shared/studio-editor-live-selection.js"></script>
+  <script src="/shared/studio-editor-layer-order.js"></script>
   <script src="/shared/studio-editor-selection-bounds.js"></script>
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
@@ -2233,41 +2234,15 @@
     function reorderSlideLayers(action, targetElements = selectedElements) {
       const slide = getActiveSlide();
       if (!slide) return false;
-
-      const targets = targetElements.filter(el => el && el.isConnected && slide.contains(el));
-      if (targets.length === 0) return false;
-
-      const targetSet = new Set(targets);
       const initialOrder = getNormalizedSlideLayerOrder(slide);
-      let nextOrder = [...initialOrder];
-
-      if (action === 'front') {
-        nextOrder = nextOrder.filter(el => !targetSet.has(el)).concat(nextOrder.filter(el => targetSet.has(el)));
-      } else if (action === 'back') {
-        nextOrder = nextOrder.filter(el => targetSet.has(el)).concat(nextOrder.filter(el => !targetSet.has(el)));
-      } else if (action === 'forward') {
-        for (let i = nextOrder.length - 2; i >= 0; i -= 1) {
-          if (targetSet.has(nextOrder[i]) && !targetSet.has(nextOrder[i + 1])) {
-            [nextOrder[i], nextOrder[i + 1]] = [nextOrder[i + 1], nextOrder[i]];
-          }
-        }
-      } else if (action === 'backward') {
-        for (let i = 1; i < nextOrder.length; i += 1) {
-          if (targetSet.has(nextOrder[i]) && !targetSet.has(nextOrder[i - 1])) {
-            [nextOrder[i], nextOrder[i - 1]] = [nextOrder[i - 1], nextOrder[i]];
-          }
-        }
-      } else {
+      const reorderResult = SlideNextStudioEditorLayerOrder.buildStudioReorderedLayerOrder(initialOrder, targetElements, action, {
+        isEligibleElement: (element) => !!(element && element.isConnected && slide.contains(element))
+      });
+      if (!reorderResult.didChange) {
         return false;
       }
 
-      const didChange = nextOrder.some((el, idx) => el !== initialOrder[idx]);
-      if (!didChange) {
-        applySlideLayerOrder(slide, initialOrder);
-        return false;
-      }
-
-      applySlideLayerOrder(slide, nextOrder);
+      applySlideLayerOrder(slide, reorderResult.nextOrder);
       return true;
     }
 
