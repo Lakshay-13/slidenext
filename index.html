@@ -1170,7 +1170,7 @@
           return !!editor && (editor.classList.contains('active') || editor.style.opacity === '1');
         },
         getActiveElement: () => document.activeElement,
-        getSelectedElements: () => selectedElements,
+        getSelectedElements: () => getLiveSelectedElements(),
         canMutateDeck: () => !!getActiveSlide(),
         editorUndo,
         editorRedo,
@@ -1660,7 +1660,7 @@
       // 4. Setup Keydown bubble
       iframeDoc.addEventListener('keydown', SlideNextStudioEditorEvents.createStudioFrameKeydownHandler({
         getActiveElement: () => iframeDoc.activeElement,
-        getSelectedElements: () => selectedElements,
+        getSelectedElements: () => getLiveSelectedElements(selectedElements, iframeDoc),
         canMutateDeck: () => !!getActiveSlide(iframeDoc),
         editorUndo,
         editorRedo,
@@ -2572,8 +2572,11 @@
       return SlideNextStudioElementState.isStudioElementLocked(el);
     }
 
-    function getLiveSelectedElements(elements = selectedElements) {
-      return SlideNextStudioEditorLiveSelection.getStudioLiveSelection(elements);
+    function getLiveSelectedElements(elements = selectedElements, doc = getIframeDoc()) {
+      return SlideNextStudioEditorLiveSelection.getStudioLiveSelection(
+        elements,
+        getEditorSelectionOptions({ doc })
+      );
     }
 
     function getTransformSelectionState(elements = selectedElements) {

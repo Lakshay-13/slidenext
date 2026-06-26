@@ -10,6 +10,16 @@ test('getStudioLiveSelection ignores disconnected stale selections', () => {
   ]), [
     { id: 2, isConnected: true }
   ]);
+
+  assert.deepEqual(liveSelection.getStudioLiveSelection([
+    { id: 1, isConnected: false, include: true },
+    { id: 2, isConnected: true, include: true },
+    { id: 3, isConnected: true, include: false }
+  ], {
+    isEligibleElement: (element) => !!element.include
+  }), [
+    { id: 2, isConnected: true, include: true }
+  ]);
 });
 
 test('buildStudioLiveSelectionState derives count and primary live element', () => {

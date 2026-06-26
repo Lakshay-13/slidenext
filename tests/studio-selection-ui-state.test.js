@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const liveSelection = require('../shared/studio-editor-live-selection.js');
 const selection = require('../shared/studio-editor-selection.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -78,4 +79,56 @@ test('applyEditorSelectionState keeps only connected selections on the active sl
   });
   assert.deepEqual(context.selectedElements, []);
   assert.equal(context.selectedElement, null);
+});
+
+test('getLiveSelectedElements keeps only connected selections on the active slide', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorSelectionOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorSelectionOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const getLiveSelectedElementsSource = extractFunctionSource(
+    fileContent,
+    'function getLiveSelectedElements(elements = selectedElements, doc = getIframeDoc()) {',
+    '\n\n    function getTransformSelectionState(elements = selectedElements) {'
+  );
+
+  const activeElement = { id: 'active', isConnected: true, onActiveSlide: true };
+  const offSlideElement = { id: 'off-slide', isConnected: true, onActiveSlide: false };
+  const staleElement = { id: 'stale', isConnected: false, onActiveSlide: true };
+  const readyDoc = {
+    activeSlide: {
+      contains(element) {
+        return !!(element && element.onActiveSlide);
+      }
+    }
+  };
+
+  const context = {
+    SlideNextStudioEditorLiveSelection: liveSelection,
+    selectedElements: [offSlideElement, staleElement, activeElement],
+    isEligibleEditableElement(element) {
+      return !!element;
+    },
+    assignEditorElementId(element) {
+      return element && element.id ? element.id : '';
+    },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getElementByEditorId() {
+      return null;
+    },
+    getIframeDoc() {
+      return readyDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getEditorSelectionOptionsSource, context);
+  vm.runInContext(getLiveSelectedElementsSource, context);
+
+  assert.deepEqual(context.getLiveSelectedElements(), [activeElement]);
+  assert.deepEqual(context.getLiveSelectedElements([offSlideElement, activeElement], null), []);
 });

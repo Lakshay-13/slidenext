@@ -9,11 +9,12 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   function getStudioLiveSelection(elements = [], options = {}) {
     const selection = Array.isArray(elements) ? elements : [];
+    const matchesBaseEligibility = (element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected);
     const isEligibleElement = typeof options.isEligibleElement === 'function'
       ? options.isEligibleElement
-      : (element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected);
+      : () => true;
 
-    return selection.filter((element) => isEligibleElement(element));
+    return selection.filter((element) => matchesBaseEligibility(element) && isEligibleElement(element));
   }
 
   function buildStudioLiveSelectionState(elements = [], options = {}) {
