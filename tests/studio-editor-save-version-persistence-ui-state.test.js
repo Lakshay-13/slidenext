@@ -94,6 +94,12 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
       }
     },
     SlideNextStudioEditorPersistence: editorPersistence,
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
     currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
     studioEditorSessionToken: 4,
     lastPersistedDeckHtml: '',

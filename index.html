@@ -3602,6 +3602,13 @@
       });
     }
 
+    function createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => currentPresentationUrl,
+        getCurrentSessionToken: () => studioEditorSessionToken
+      };
+    }
+
     function resetEditorPersistenceTimers() {
       clearTimeout(autoSaveDebounceTimer);
       autoSaveDebounceTimer = null;
@@ -3640,8 +3647,7 @@
 
       if (data.success) {
         SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistencePlan.persistenceContext, {
-          getCurrentPresentationUrl: () => currentPresentationUrl,
-          getCurrentSessionToken: () => studioEditorSessionToken,
+          ...createCurrentStudioSessionStateReaders(),
           setPersistedHtml: (nextHtml) => {
             lastPersistedDeckHtml = nextHtml;
           },
@@ -3701,8 +3707,7 @@
           const data = await response.json();
           if (data.success) {
             SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistencePlan.persistenceContext, {
-              getCurrentPresentationUrl: () => currentPresentationUrl,
-              getCurrentSessionToken: () => studioEditorSessionToken,
+              ...createCurrentStudioSessionStateReaders(),
               setPersistedHtml: (nextHtml) => {
                 lastPersistedDeckHtml = nextHtml;
               },
@@ -3717,8 +3722,7 @@
             });
           } else {
             SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistencePlan.persistenceContext, {
-              getCurrentPresentationUrl: () => currentPresentationUrl,
-              getCurrentSessionToken: () => studioEditorSessionToken,
+              ...createCurrentStudioSessionStateReaders(),
               onFailure: () => {
                 if (statusEl) {
                   statusEl.innerHTML = `<span class="text-rose-400">AutoSave Failed</span>`;
@@ -3729,8 +3733,7 @@
         } catch (err) {
           console.error('AutoSave Error:', err);
           SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistencePlan.persistenceContext, {
-            getCurrentPresentationUrl: () => currentPresentationUrl,
-            getCurrentSessionToken: () => studioEditorSessionToken,
+            ...createCurrentStudioSessionStateReaders(),
             onFailure: () => {
               if (statusEl) {
                 statusEl.innerHTML = `<span class="text-rose-400">Network Error</span>`;
@@ -4089,8 +4092,7 @@
         });
         if (data.success) {
           SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(persistenceContext, {
-            getCurrentPresentationUrl: () => currentPresentationUrl,
-            getCurrentSessionToken: () => studioEditorSessionToken,
+            ...createCurrentStudioSessionStateReaders(),
             onSuccess: () => {
               alert('Successfully saved named version backup checkpoint!');
               if (statusEl) {
@@ -4103,8 +4105,7 @@
           });
         } else {
           SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
-            getCurrentPresentationUrl: () => currentPresentationUrl,
-            getCurrentSessionToken: () => studioEditorSessionToken,
+            ...createCurrentStudioSessionStateReaders(),
             onFailure: () => {
               alert(`Save version failed: ${data.error}`);
               if (statusEl) {
@@ -4115,8 +4116,7 @@
         }
       } catch (err) {
         SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
-          getCurrentPresentationUrl: () => currentPresentationUrl,
-          getCurrentSessionToken: () => studioEditorSessionToken,
+          ...createCurrentStudioSessionStateReaders(),
           onFailure: () => {
             alert(`Network error saving version: ${err.message}`);
             if (statusEl) {
@@ -4126,8 +4126,7 @@
         });
       } finally {
         if (SlideNextStudioEditorPersistence.isStudioPersistenceActionCurrent(persistenceContext, {
-          getCurrentPresentationUrl: () => currentPresentationUrl,
-          getCurrentSessionToken: () => studioEditorSessionToken
+          ...createCurrentStudioSessionStateReaders()
         })) {
           resetStudioSaveButtonState();
         }
@@ -4175,8 +4174,7 @@
         });
         if (data.success) {
           SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(persistenceContext, {
-            getCurrentPresentationUrl: () => currentPresentationUrl,
-            getCurrentSessionToken: () => studioEditorSessionToken,
+            ...createCurrentStudioSessionStateReaders(),
             onSuccess: () => {
               console.log(`Auto-created version checkpoint: ${label}`);
             },
@@ -4241,8 +4239,7 @@
       try {
         await SlideNextStudioVersionHistory.loadStudioVersionHistory(presentationUrl, {
           sessionToken,
-          getCurrentPresentationUrl: () => currentPresentationUrl,
-          getCurrentSessionToken: () => studioEditorSessionToken,
+          ...createCurrentStudioSessionStateReaders(),
           commitVersionEntries: (versions) => {
             renderVersionsList(presentationUrl, versions);
           }
@@ -4283,8 +4280,7 @@
         const data = await response.json();
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(restoreContext, {
-            getCurrentPresentationUrl: () => currentPresentationUrl,
-            getCurrentSessionToken: () => studioEditorSessionToken,
+            ...createCurrentStudioSessionStateReaders(),
             onSuccess: () => {
               alert('Rollback successfully restored!');
             },
@@ -4297,8 +4293,7 @@
           });
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(restoreContext, {
-            getCurrentPresentationUrl: () => currentPresentationUrl,
-            getCurrentSessionToken: () => studioEditorSessionToken,
+            ...createCurrentStudioSessionStateReaders(),
             onFailure: () => {
               alert(`Restore failed: ${data.error}`);
             }
@@ -4306,8 +4301,7 @@
         }
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(restoreContext, {
-          getCurrentPresentationUrl: () => currentPresentationUrl,
-          getCurrentSessionToken: () => studioEditorSessionToken,
+          ...createCurrentStudioSessionStateReaders(),
           onFailure: () => {
             alert(`Network error restoring version: ${err.message}`);
           }
@@ -4384,8 +4378,7 @@
         const data = await response.json();
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(renameContext, {
-            getCurrentPresentationUrl: () => currentPresentationUrl,
-            getCurrentSessionToken: () => studioEditorSessionToken,
+            ...createCurrentStudioSessionStateReaders(),
             isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
             onSuccess: () => {
               closeRenameVersionModal();
@@ -4396,8 +4389,7 @@
           });
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(renameContext, {
-            getCurrentPresentationUrl: () => currentPresentationUrl,
-            getCurrentSessionToken: () => studioEditorSessionToken,
+            ...createCurrentStudioSessionStateReaders(),
             isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
             onFailure: () => {
               alert(`Rename failed: ${data.error}`);
@@ -4406,8 +4398,7 @@
         }
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(renameContext, {
-          getCurrentPresentationUrl: () => currentPresentationUrl,
-          getCurrentSessionToken: () => studioEditorSessionToken,
+          ...createCurrentStudioSessionStateReaders(),
           isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
           onFailure: () => {
             alert(`Error renaming version: ${err.message}`);
@@ -4415,8 +4406,7 @@
         });
       } finally {
         SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(renameContext, {
-          getCurrentPresentationUrl: () => currentPresentationUrl,
-          getCurrentSessionToken: () => studioEditorSessionToken,
+          ...createCurrentStudioSessionStateReaders(),
           isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
           onSuccess: () => {
             btn.disabled = false;
@@ -4445,16 +4435,14 @@
         const data = await response.json();
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(deleteContext, {
-            getCurrentPresentationUrl: () => currentPresentationUrl,
-            getCurrentSessionToken: () => studioEditorSessionToken,
+            ...createCurrentStudioSessionStateReaders(),
             refreshVersionEntries: (presentationUrl, sessionToken) => {
               loadVersions(presentationUrl, sessionToken);
             }
           });
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(deleteContext, {
-            getCurrentPresentationUrl: () => currentPresentationUrl,
-            getCurrentSessionToken: () => studioEditorSessionToken,
+            ...createCurrentStudioSessionStateReaders(),
             onFailure: () => {
               alert(`Delete failed: ${data.error}`);
             }
@@ -4462,8 +4450,7 @@
         }
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(deleteContext, {
-          getCurrentPresentationUrl: () => currentPresentationUrl,
-          getCurrentSessionToken: () => studioEditorSessionToken,
+          ...createCurrentStudioSessionStateReaders(),
           onFailure: () => {
             alert(`Error deleting version: ${err.message}`);
           }

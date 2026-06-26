@@ -61,6 +61,12 @@ test('submitSaveVersion keeps the save button idle when the editor frame is unav
     closeSaveVersionModal() {
       closeModalCalls += 1;
     },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     document: documentStub,
     getIframeDoc() {
@@ -148,6 +154,12 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
     closeSaveVersionModal() {
       closeModalCalls += 1;
     },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     document: documentStub,
     getIframeDoc() {
@@ -199,6 +211,12 @@ test('executeSaveAutoVersion skips persistence when the shared iframe accessor h
   const context = {
     buildPersistableDeckHtml() {
       return '<html>persisted</html>';
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     getIframeDoc() {

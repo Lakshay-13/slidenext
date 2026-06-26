@@ -222,3 +222,29 @@ test('createCurrentStudioVersionActionContext captures the active editor deck id
   assert.equal(calls[0][2], 'General');
   assert.equal(calls[0][3].sessionToken, 21);
 });
+
+test('createCurrentStudioSessionStateReaders exposes live presentation and session getters', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createCurrentStudioSessionStateReadersSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioSessionStateReaders() {',
+    '\n\n    function resetEditorPersistenceTimers() {'
+  );
+
+  const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 4
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createCurrentStudioSessionStateReadersSource, context);
+
+  const readers = context.createCurrentStudioSessionStateReaders();
+  assert.equal(readers.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(readers.getCurrentSessionToken(), 4);
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 5;
+  assert.equal(readers.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(readers.getCurrentSessionToken(), 5);
+});
