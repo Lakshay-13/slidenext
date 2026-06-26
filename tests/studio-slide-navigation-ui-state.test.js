@@ -52,3 +52,49 @@ test('setActiveSlide reads the live frame through the shared iframe accessor and
   assert.equal(capturedCall.options.getSlides, context.getSlides);
   assert.equal(capturedCall.options.syncStudioChromeToActiveSlide, context.syncStudioChromeToActiveSlide);
 });
+
+test('bindDeckNavigationSync reads the live frame window through the shared iframe accessor', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const bindDeckNavigationSyncSource = extractFunctionSource(
+    fileContent,
+    'function bindDeckNavigationSync(doc = getIframeDoc()) {',
+    '\n\n    function teardownDeckActiveSlideSync() {'
+  );
+
+  const iframeDoc = { id: 'doc' };
+  const iframeWindow = { id: 'window' };
+  let capturedCall = null;
+  let getIframeDocCalls = 0;
+  let getIframeWindowCalls = 0;
+  const context = {
+    getIframeDoc() {
+      getIframeDocCalls += 1;
+      return iframeDoc;
+    },
+    getIframeWindow() {
+      getIframeWindowCalls += 1;
+      return iframeWindow;
+    },
+    SlideNextStudioDeckView: {
+      bindStudioDeckNavigationSync(doc, frameWin, options) {
+        capturedCall = { doc, frameWin, options };
+        return true;
+      }
+    },
+    syncStudioChromeToActiveSlide() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(bindDeckNavigationSyncSource, context);
+
+  const result = context.bindDeckNavigationSync();
+
+  assert.equal(result, true);
+  assert.equal(getIframeDocCalls, 1);
+  assert.equal(getIframeWindowCalls, 1);
+  assert.equal(capturedCall.doc, iframeDoc);
+  assert.equal(capturedCall.frameWin, iframeWindow);
+  assert.equal(typeof capturedCall.options.getSyncStudioChromeOptions, 'function');
+  assert.equal(capturedCall.options.syncStudioChromeToActiveSlide, context.syncStudioChromeToActiveSlide);
+  assert.equal(capturedCall.options.getSyncStudioChromeOptions().captureHistory, true);
+});
