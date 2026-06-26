@@ -269,6 +269,69 @@ test('buildStudioTransformInteractionBounds derives raw drag and resize bounds f
   });
 });
 
+test('resolveStudioTransformBounds applies the shared interaction and normalization pipeline', () => {
+  assert.deepEqual(transformState.resolveStudioTransformBounds({
+    type: 'drag',
+    slideBounds: {
+      width: 200,
+      height: 120
+    },
+    startBounds: {
+      left: 100,
+      top: 80,
+      right: 400,
+      bottom: 320,
+      width: 300,
+      height: 240
+    },
+    grabOffset: {
+      x: 40,
+      y: 30
+    }
+  }, {
+    pointer: {
+      x: 0,
+      y: 0
+    },
+    minSizePx: 20,
+    dragOverflowMarginPx: 16
+  }), {
+    left: -16,
+    top: -16,
+    right: 284,
+    bottom: 224,
+    width: 300,
+    height: 240
+  });
+
+  assert.deepEqual(transformState.resolveStudioTransformBounds({
+    type: 'resize',
+    handleDir: 'nw',
+    slideBounds: {
+      width: 200,
+      height: 120
+    },
+    startBounds: {
+      left: 180,
+      top: 90,
+      right: 185,
+      bottom: 95
+    }
+  }, {
+    dx: 0,
+    dy: 0,
+    minSizePx: 20,
+    dragOverflowMarginPx: 16
+  }), {
+    left: 165,
+    top: 75,
+    right: 185,
+    bottom: 95,
+    width: 20,
+    height: 20
+  });
+});
+
 test('applyStudioTransformBounds updates drag and resize item styles using shared transform math', () => {
   const dragElement = { tagName: 'DIV', style: {} };
   transformState.applyStudioTransformBounds({

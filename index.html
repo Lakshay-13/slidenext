@@ -3045,21 +3045,10 @@
         if (moveDistanceScreen >= DRAG_START_THRESHOLD_PX) {
           session.moved = true;
         }
-        const rawBounds = SlideNextStudioEditorTransform.buildStudioTransformInteractionBounds(session, {
+        const bounds = SlideNextStudioEditorTransform.resolveStudioTransformBounds(session, {
           pointer,
           dx,
-          dy
-        });
-
-        let bounds = SlideNextStudioEditorTransform.normalizeStudioTransformBounds(rawBounds, session.slideBounds, {
-          mode: session.type,
-          handleDir: session.handleDir,
-          minSizePx: MIN_ELEMENT_SIZE_PX,
-          dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX
-        });
-        bounds = SlideNextStudioEditorTransform.normalizeStudioTransformBounds(bounds, session.slideBounds, {
-          mode: session.type,
-          handleDir: session.handleDir,
+          dy,
           minSizePx: MIN_ELEMENT_SIZE_PX,
           dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX
         });

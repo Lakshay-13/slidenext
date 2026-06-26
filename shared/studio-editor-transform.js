@@ -183,6 +183,20 @@
     return { left, top, right, bottom };
   }
 
+  function resolveStudioTransformBounds(session = {}, options = {}) {
+    const slideBounds = options.slideBounds || session.slideBounds || {};
+    const handleDir = typeof session.handleDir === 'string' ? session.handleDir : '';
+    const normalizeOptions = {
+      mode: session.type,
+      handleDir,
+      minSizePx: Number.isFinite(options.minSizePx) ? options.minSizePx : 0,
+      dragOverflowMarginPx: Number.isFinite(options.dragOverflowMarginPx) ? options.dragOverflowMarginPx : 0
+    };
+    const rawBounds = buildStudioTransformInteractionBounds(session, options);
+    const normalizedBounds = normalizeStudioTransformBounds(rawBounds, slideBounds, normalizeOptions);
+    return normalizeStudioTransformBounds(normalizedBounds, slideBounds, normalizeOptions);
+  }
+
   function applyStudioTransformBounds(session = {}, bounds = {}, options = {}) {
     const items = Array.isArray(session.items) ? session.items : [];
     const minSizePx = Number.isFinite(options.minSizePx) ? options.minSizePx : 0;
@@ -363,6 +377,7 @@
     shouldStudioResizeWidth,
     shouldStudioResizeHeight,
     buildStudioTransformInteractionBounds,
+    resolveStudioTransformBounds,
     normalizeStudioTransformBounds,
     applyStudioTransformBounds,
     materializeStudioTransformSession,
