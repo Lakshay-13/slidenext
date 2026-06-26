@@ -1435,6 +1435,9 @@
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
       return SlideNextStudioDeckView.buildStudioPreviewHtml(doc, {
         buildCanonicalDeck: buildEditorCanonicalDeck,
+        buildFallbackHtml: (sourceDoc) => sourceDoc
+          ? buildPersistableDeckHtml(sourceDoc)
+          : (typeof lastPersistedDeckHtml === 'string' ? lastPersistedDeckHtml : ''),
         presentationUrl: currentPresentationUrl
       });
     }

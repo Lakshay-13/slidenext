@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 
 const deckView = require('../shared/studio-deck-view.js');
 
-test('buildStudioPreviewHtml skips malformed canonical decks', () => {
+test('buildStudioPreviewHtml falls back when the canonical deck is malformed', () => {
   const result = deckView.buildStudioPreviewHtml(
     { label: 'doc' },
     {
@@ -13,11 +13,14 @@ test('buildStudioPreviewHtml skips malformed canonical decks', () => {
             title: 'Broken Deck'
           }
         };
+      },
+      buildFallbackHtml(doc) {
+        return `fallback:${doc.label}`;
       }
     }
   );
 
-  assert.equal(result, '');
+  assert.equal(result, 'fallback:doc');
 });
 
 test('buildStudioPreviewHtml can render from a canonical deck when the live editor frame is unavailable', () => {

@@ -96,3 +96,43 @@ test('resetStudioPresentationUiState clears stale preview chrome and exits fulls
   assert.equal(documentStub.body.style.overflow, '');
   assert.equal(elements.fsIcon.textContent, 'fullscreen');
 });
+
+test('buildEditorPreviewHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorPreviewHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorPreviewHtml(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorSourceHtml(doc = getIframeDoc()) {'
+  );
+
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      buildStudioPreviewHtml(doc, options) {
+        calls.push({ doc, options });
+        return options.buildFallbackHtml(null);
+      }
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('canonical deck should not be requested for this fallback');
+    },
+    buildPersistableDeckHtml() {
+      throw new Error('persistable html should not be rebuilt without a live document');
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '<html>persisted-preview</html>'
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorPreviewHtmlSource, context);
+
+  const result = context.buildEditorPreviewHtml();
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].doc, null);
+  assert.equal(calls[0].options.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(result, '<html>persisted-preview</html>');
+});

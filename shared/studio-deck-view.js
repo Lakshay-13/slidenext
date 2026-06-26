@@ -469,18 +469,18 @@
   }
 
   function buildStudioPreviewHtml(doc, options = {}) {
-    if (!deckHtml || typeof deckHtml.buildDeckPreviewHtml !== 'function') {
-      return '';
+    if (deckHtml && typeof deckHtml.buildDeckPreviewHtml === 'function') {
+      const canonicalDeck = typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck(doc)
+        : null;
+      if (isCanonicalDeckLike(canonicalDeck)) {
+        return deckHtml.buildDeckPreviewHtml(canonicalDeck, options.presentationUrl || '', options.deckHtmlOptions || {});
+      }
     }
 
-    const canonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck(doc)
-      : null;
-    if (!isCanonicalDeckLike(canonicalDeck)) {
-      return '';
-    }
-
-    return deckHtml.buildDeckPreviewHtml(canonicalDeck, options.presentationUrl || '', options.deckHtmlOptions || {});
+    return typeof options.buildFallbackHtml === 'function'
+      ? options.buildFallbackHtml(doc)
+      : '';
   }
 
   function buildStudioSourceHtml(doc, options = {}) {
