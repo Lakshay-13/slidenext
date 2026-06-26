@@ -58,6 +58,12 @@ test('buildStudioNudgedLayout offsets item positions and preserves parent-relati
   });
 });
 
+test('buildStudioNudgeDeltaFromKey resolves fine and coarse arrow-key deltas', () => {
+  assert.deepEqual(nudge.buildStudioNudgeDeltaFromKey('ArrowUp'), { dx: 0, dy: -1 });
+  assert.deepEqual(nudge.buildStudioNudgeDeltaFromKey('ArrowRight', { shiftKey: true }), { dx: 10, dy: 0 });
+  assert.equal(nudge.buildStudioNudgeDeltaFromKey('Enter'), null);
+});
+
 test('buildStudioNudgedLayout clamps to slide bounds and skips no-op edge nudges', () => {
   assert.deepEqual(nudge.buildStudioNudgedLayout([
     {

@@ -124,7 +124,8 @@ test('createStudioGlobalKeydownHandler ignores stale disconnected selections for
   const calls = {
     arrange: [],
     remove: 0,
-    duplicate: 0
+    duplicate: 0,
+    nudge: []
   };
   const handler = events.createStudioGlobalKeydownHandler({
     isEditorActive: () => true,
@@ -138,6 +139,9 @@ test('createStudioGlobalKeydownHandler ignores stale disconnected selections for
     },
     duplicateSelectedElements() {
       calls.duplicate += 1;
+    },
+    nudgeSelectedElements(dx, dy) {
+      calls.nudge.push([dx, dy]);
     }
   });
 
@@ -162,12 +166,18 @@ test('createStudioGlobalKeydownHandler ignores stale disconnected selections for
   handler(duplicateEvent);
   assert.equal(calls.duplicate, 0);
   assert.equal(duplicateEvent.prevented, 0);
+
+  const nudgeEvent = createKeyboardEvent({ key: 'ArrowLeft' });
+  handler(nudgeEvent);
+  assert.deepEqual(calls.nudge, []);
+  assert.equal(nudgeEvent.prevented, 0);
 });
 
 test('createStudioGlobalKeydownHandler still honors shortcuts for live selections', () => {
   const calls = {
     arrange: [],
-    duplicate: 0
+    duplicate: 0,
+    nudge: []
   };
   const handler = events.createStudioGlobalKeydownHandler({
     isEditorActive: () => true,
@@ -181,6 +191,9 @@ test('createStudioGlobalKeydownHandler still honors shortcuts for live selection
     },
     duplicateSelectedElements() {
       calls.duplicate += 1;
+    },
+    nudgeSelectedElements(dx, dy) {
+      calls.nudge.push([dx, dy]);
     }
   });
 
@@ -201,4 +214,12 @@ test('createStudioGlobalKeydownHandler still honors shortcuts for live selection
   handler(duplicateEvent);
   assert.equal(calls.duplicate, 1);
   assert.equal(duplicateEvent.prevented, 1);
+
+  const nudgeEvent = createKeyboardEvent({
+    key: 'ArrowLeft',
+    shiftKey: true
+  });
+  handler(nudgeEvent);
+  assert.deepEqual(calls.nudge, [[-10, 0]]);
+  assert.equal(nudgeEvent.prevented, 1);
 });

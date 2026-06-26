@@ -37,6 +37,18 @@
     return Math.max(min, Math.min(max, value));
   }
 
+  function buildStudioNudgeDeltaFromKey(key = '', options = {}) {
+    const fineStepPx = Number.isFinite(options.fineStepPx) ? options.fineStepPx : 1;
+    const coarseStepPx = Number.isFinite(options.coarseStepPx) ? options.coarseStepPx : 10;
+    const step = options.shiftKey ? coarseStepPx : fineStepPx;
+
+    if (key === 'ArrowUp') return { dx: 0, dy: -step };
+    if (key === 'ArrowDown') return { dx: 0, dy: step };
+    if (key === 'ArrowLeft') return { dx: -step, dy: 0 };
+    if (key === 'ArrowRight') return { dx: step, dy: 0 };
+    return null;
+  }
+
   function buildStudioNudgedLayout(items = [], delta = {}, slideBounds = {}) {
     const layoutItems = Array.isArray(items) ? items : [];
     const dx = Number.isFinite(delta.dx) ? delta.dx : 0;
@@ -75,6 +87,7 @@
   return {
     getStudioNudgeSelection,
     buildStudioNudgeSelectionState,
+    buildStudioNudgeDeltaFromKey,
     buildStudioNudgedLayout
   };
 });

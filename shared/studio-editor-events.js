@@ -2,14 +2,17 @@
   const liveSelection = typeof module === 'object' && module.exports
     ? require('./studio-editor-live-selection')
     : root && root.SlideNextStudioEditorLiveSelection;
-  const api = factory(liveSelection);
+  const nudge = typeof module === 'object' && module.exports
+    ? require('./studio-editor-nudge')
+    : root && root.SlideNextStudioEditorNudge;
+  const api = factory(liveSelection, nudge);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorEvents = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (liveSelection) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (liveSelection, nudge) {
   function getFrameShortcutSelection(elements = []) {
     if (liveSelection && typeof liveSelection.getStudioLiveSelection === 'function') {
       return liveSelection.getStudioLiveSelection(elements);
@@ -93,6 +96,9 @@
     const nudgeSelectedElements = typeof options.nudgeSelectedElements === 'function'
       ? options.nudgeSelectedElements
       : () => {};
+    const buildNudgeDeltaFromKey = nudge && typeof nudge.buildStudioNudgeDeltaFromKey === 'function'
+      ? nudge.buildStudioNudgeDeltaFromKey
+      : () => null;
     const isTypingContext = typeof options.isTypingContext === 'function'
       ? options.isTypingContext
       : (activeEl) => !!(activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable));
@@ -154,14 +160,11 @@
         duplicateSelectedElements();
         return;
       }
-      if (hasSelection && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+      const nudgeDelta = hasSelection ? buildNudgeDeltaFromKey(event.key, { shiftKey: !!event.shiftKey }) : null;
+      if (nudgeDelta) {
         event.preventDefault();
         event.stopPropagation();
-        const step = event.shiftKey ? 10 : 1;
-        if (event.key === 'ArrowUp') nudgeSelectedElements(0, -step);
-        if (event.key === 'ArrowDown') nudgeSelectedElements(0, step);
-        if (event.key === 'ArrowLeft') nudgeSelectedElements(-step, 0);
-        if (event.key === 'ArrowRight') nudgeSelectedElements(step, 0);
+        nudgeSelectedElements(nudgeDelta.dx, nudgeDelta.dy);
         return;
       }
 
@@ -203,6 +206,12 @@
     const duplicateSelectedElements = typeof options.duplicateSelectedElements === 'function'
       ? options.duplicateSelectedElements
       : () => {};
+    const nudgeSelectedElements = typeof options.nudgeSelectedElements === 'function'
+      ? options.nudgeSelectedElements
+      : () => {};
+    const buildNudgeDeltaFromKey = nudge && typeof nudge.buildStudioNudgeDeltaFromKey === 'function'
+      ? nudge.buildStudioNudgeDeltaFromKey
+      : () => null;
     const isTypingContext = typeof options.isTypingContext === 'function'
       ? options.isTypingContext
       : (activeEl) => !!(activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable));
@@ -257,6 +266,14 @@
       if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'd' && hasSelection) {
         event.preventDefault();
         duplicateSelectedElements();
+        return;
+      }
+      const nudgeDelta = !typingContext && hasSelection
+        ? buildNudgeDeltaFromKey(event.key, { shiftKey: !!event.shiftKey })
+        : null;
+      if (nudgeDelta) {
+        event.preventDefault();
+        nudgeSelectedElements(nudgeDelta.dx, nudgeDelta.dy);
         return;
       }
     };
