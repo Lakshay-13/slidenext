@@ -580,6 +580,38 @@
     };
   }
 
+  function buildStudioTransformFrameState(session = {}, options = {}) {
+    const motionState = buildStudioTransformMotionState(session, options);
+    const progressResult = progressStudioTransformSession(session, {
+      moveDistanceScreen: motionState.moveDistanceScreen,
+      dragStartThresholdPx: Number.isFinite(options.dragStartThresholdPx) ? options.dragStartThresholdPx : 0
+    });
+
+    if (!progressResult.isActive) {
+      return {
+        isActive: false,
+        motionState,
+        progressResult,
+        bounds: null,
+        session
+      };
+    }
+
+    return {
+      isActive: true,
+      motionState,
+      progressResult,
+      bounds: resolveStudioTransformBounds(session, {
+        pointer: options.pointer,
+        dx: motionState.dx,
+        dy: motionState.dy,
+        minSizePx: Number.isFinite(options.minSizePx) ? options.minSizePx : 0,
+        dragOverflowMarginPx: Number.isFinite(options.dragOverflowMarginPx) ? options.dragOverflowMarginPx : 0
+      }),
+      session
+    };
+  }
+
   function buildStudioTransformStartState(elements = [], options = {}) {
     const selection = Array.isArray(elements) ? elements : [];
     const getSlideMetrics = typeof options.getSlideMetrics === 'function'
@@ -643,6 +675,7 @@
     buildStudioTransformSessionItem,
     buildStudioTransformSession,
     buildStudioTransformMotionState,
+    buildStudioTransformFrameState,
     buildStudioTransformStartState
   };
 });

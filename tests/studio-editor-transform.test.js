@@ -893,6 +893,88 @@ test('buildStudioTransformMotionState derives pointer deltas and screen movement
   });
 });
 
+test('buildStudioTransformFrameState combines motion, threshold progress, and resolved bounds', () => {
+  const inactiveSession = {
+    startPointer: { x: 10, y: 20 },
+    startClientX: 100,
+    startClientY: 200,
+    materialized: false,
+    moved: false,
+    startBounds: { left: 0, top: 0, right: 50, bottom: 40, width: 50, height: 40 },
+    grabOffset: { x: 5, y: 4 },
+    slideBounds: { width: 200, height: 120 },
+    items: []
+  };
+
+  assert.deepEqual(transformState.buildStudioTransformFrameState(inactiveSession, {
+    pointer: { x: 12, y: 24 },
+    clientX: 102,
+    clientY: 204,
+    dragStartThresholdPx: 10,
+    minSizePx: 20,
+    dragOverflowMarginPx: 16
+  }), {
+    isActive: false,
+    motionState: {
+      dx: 2,
+      dy: 4,
+      moveDistanceScreen: Math.hypot(2, 4)
+    },
+    progressResult: {
+      didMaterialize: false,
+      isActive: false,
+      didMove: false,
+      session: inactiveSession
+    },
+    bounds: null,
+    session: inactiveSession
+  });
+
+  const activeSession = {
+    type: 'drag',
+    startPointer: { x: 10, y: 20 },
+    startClientX: 100,
+    startClientY: 200,
+    materialized: false,
+    moved: false,
+    startBounds: { left: 0, top: 0, right: 50, bottom: 40, width: 50, height: 40 },
+    grabOffset: { x: 5, y: 4 },
+    slideBounds: { width: 200, height: 120 },
+    items: []
+  };
+
+  assert.deepEqual(transformState.buildStudioTransformFrameState(activeSession, {
+    pointer: { x: 60, y: 70 },
+    clientX: 112,
+    clientY: 216,
+    dragStartThresholdPx: 10,
+    minSizePx: 20,
+    dragOverflowMarginPx: 16
+  }), {
+    isActive: true,
+    motionState: {
+      dx: 50,
+      dy: 50,
+      moveDistanceScreen: 20
+    },
+    progressResult: {
+      didMaterialize: true,
+      isActive: true,
+      didMove: true,
+      session: activeSession
+    },
+    bounds: {
+      left: 55,
+      top: 66,
+      right: 105,
+      bottom: 106,
+      width: 50,
+      height: 40
+    },
+    session: activeSession
+  });
+});
+
 test('buildStudioTransformStartState derives the shared transform bootstrap state', () => {
   const slide = { id: 'slide-1' };
   const selection = [{ id: 'node-1' }, { id: 'node-2' }];

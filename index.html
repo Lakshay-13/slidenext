@@ -3020,26 +3020,16 @@
       doc.body.addEventListener('pointermove', (e) => {
         if (!SlideNextStudioEditorTransform.shouldHandleStudioTransformPointerEvent(session, e)) return;
         const pointer = getPointerOnSlide(e, session.slideMetrics);
-        const motionState = SlideNextStudioEditorTransform.buildStudioTransformMotionState(session, {
+        const transformFrameState = SlideNextStudioEditorTransform.buildStudioTransformFrameState(session, {
           pointer,
           clientX: e.clientX,
-          clientY: e.clientY
-        });
-        const { dx, dy, moveDistanceScreen } = motionState;
-        const transformProgress = SlideNextStudioEditorTransform.progressStudioTransformSession(session, {
-          moveDistanceScreen,
-          dragStartThresholdPx: DRAG_START_THRESHOLD_PX
-        });
-        if (!transformProgress.isActive) {
-          return;
-        }
-        const bounds = SlideNextStudioEditorTransform.resolveStudioTransformBounds(session, {
-          pointer,
-          dx,
-          dy,
+          clientY: e.clientY,
+          dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
           minSizePx: MIN_ELEMENT_SIZE_PX,
           dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX
         });
+        if (!transformFrameState.isActive) return;
+        const bounds = transformFrameState.bounds;
 
         SlideNextStudioEditorTransform.applyStudioTransformBounds(session, bounds, {
           minSizePx: MIN_ELEMENT_SIZE_PX
