@@ -68,6 +68,13 @@
     return context;
   }
 
+  function createStudioVersionPersistenceActionContext(presentationUrl = '', cleanHtml = '', options = {}) {
+    return createStudioPersistenceActionContext(presentationUrl, cleanHtml, {
+      ...options,
+      shouldUpdatePersistedHtml: false
+    });
+  }
+
   function buildStudioSaveRequestBody(presentationUrl = '', cleanHtml = '', options = {}) {
     const body = {
       htmlPath: normalizeString(presentationUrl),
@@ -207,6 +214,7 @@
   return {
     resolveStudioPersistenceCanonicalDeck,
     createStudioPersistenceActionContext,
+    createStudioVersionPersistenceActionContext,
     buildStudioSaveRequestBody,
     buildStudioPersistenceRequestPlan,
     isStudioPersistedHtml,

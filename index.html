@@ -4075,11 +4075,10 @@
       saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>Creating version...</span>`;
 
       const cleanHtml = buildPersistableDeckHtml(iframeDoc);
-      const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
+      const persistenceContext = SlideNextStudioEditorPersistence.createStudioVersionPersistenceActionContext(
         scheduledPresentationUrl,
         cleanHtml,
         {
-          shouldUpdatePersistedHtml: false,
           sessionToken: scheduledSessionToken
         }
       );
@@ -4162,11 +4161,10 @@
       const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
       if (!iframeDoc || isStaleEditorPersistenceTask(presentationUrl, sessionToken)) return;
       const cleanHtml = buildPersistableDeckHtml(iframeDoc);
-      const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
+      const persistenceContext = SlideNextStudioEditorPersistence.createStudioVersionPersistenceActionContext(
         presentationUrl,
         cleanHtml,
         {
-          shouldUpdatePersistedHtml: false,
           sessionToken
         }
       );

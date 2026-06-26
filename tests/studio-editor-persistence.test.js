@@ -81,6 +81,22 @@ test('createStudioPersistenceActionContext normalizes persistence state', () => 
   );
 });
 
+test('createStudioVersionPersistenceActionContext always disables persisted-html writes for checkpoint-only flows', () => {
+  assert.deepEqual(
+    editorPersistence.createStudioVersionPersistenceActionContext(
+      '/presentations/onboarding-presentation/index.html',
+      '<html></html>',
+      { shouldUpdatePersistedHtml: true, sessionToken: 12 }
+    ),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      cleanHtml: '<html></html>',
+      shouldUpdatePersistedHtml: false,
+      sessionToken: 12
+    }
+  );
+});
+
 test('buildStudioSaveRequestBody includes canonical deck sidecars only when they are valid', () => {
   const canonicalDeck = {
     metadata: {
