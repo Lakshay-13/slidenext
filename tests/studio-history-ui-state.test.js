@@ -31,6 +31,7 @@ test('createHistoryEntry attaches the current canonical deck sidecar to editor h
       return canonicalDeck;
     },
     buildHistoryFrameHtml() {},
+    persistedDeckPlaybackState: null,
     getEditorHistoryOptions() {
       calls.push(['getEditorHistoryOptions']);
       return { chromeNodeIds: ['editorSelectionOverlay'] };
@@ -68,6 +69,86 @@ test('createHistoryEntry attaches the current canonical deck sidecar to editor h
   });
 });
 
+test('createHistoryEntry falls back to persisted baseline state when the editor frame is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildHistoryFrameHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildHistoryFrameHtml(doc = getIframeDoc()) {',
+    '\n\n    function createHistoryEntry(doc) {'
+  );
+  const createHistoryEntrySource = extractFunctionSource(
+    fileContent,
+    'function createHistoryEntry(doc) {',
+    '\n\n    function normalizeHistoryEntry(entry) {'
+  );
+
+  const canonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [{ id: 'slide-1', nodes: [] }] };
+  const calls = [];
+  const context = {
+    SlideNextStudioHistory: {
+      buildStudioHistoryFrameHtml(doc, options) {
+        calls.push(['buildStudioHistoryFrameHtml', doc, options]);
+        return '';
+      },
+      createStudioHistoryEntry(doc, options) {
+        calls.push(['createStudioHistoryEntry', doc, options]);
+        return {
+          html: options.buildHistoryHtml(doc, options),
+          activeSlideId: options.activeSlideId,
+          selectedElementIds: options.selectedElementIds,
+          canonicalDeck: options.canonicalDeck
+        };
+      }
+    },
+    buildEditorCanonicalDeck(doc) {
+      calls.push(['buildEditorCanonicalDeck', doc]);
+      return canonicalDeck;
+    },
+    buildPersistableDeckHtml(doc) {
+      calls.push(['buildPersistableDeckHtml', doc]);
+      return '<html>persisted-baseline</html>';
+    },
+    getEditorHistoryOptions() {
+      calls.push(['getEditorHistoryOptions']);
+      return { chromeNodeIds: ['editorSelectionOverlay'] };
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return null;
+    },
+    persistedDeckPlaybackState: {
+      activeSlideIds: ['slide-1']
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildHistoryFrameHtmlSource, context);
+  vm.runInContext(createHistoryEntrySource, context);
+
+  const entry = context.createHistoryEntry();
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'getIframeDoc',
+    'getEditorHistoryOptions',
+    'buildEditorCanonicalDeck',
+    'createStudioHistoryEntry',
+    'getEditorHistoryOptions',
+    'buildStudioHistoryFrameHtml',
+    'buildPersistableDeckHtml'
+  ]);
+  assert.equal(calls[2][1], null);
+  assert.equal(calls[3][1], null);
+  assert.equal(calls[3][2].activeSlideId, 'slide-1');
+  assert.equal(Array.isArray(calls[3][2].selectedElementIds), true);
+  assert.equal(calls[3][2].selectedElementIds.length, 0);
+  assert.equal(calls[5][1], null);
+  assert.equal(entry.html, '<html>persisted-baseline</html>');
+  assert.equal(entry.activeSlideId, 'slide-1');
+  assert.equal(Array.isArray(entry.selectedElementIds), true);
+  assert.equal(entry.selectedElementIds.length, 0);
+  assert.equal(entry.canonicalDeck, canonicalDeck);
+});
+
 test('captureState reads the live frame through the shared iframe accessor before updating history state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const captureStateSource = extractFunctionSource(
@@ -76,7 +157,6 @@ test('captureState reads the live frame through the shared iframe accessor befor
     '\n\n    function updateHistoryButtons() {'
   );
 
-  const iframeDoc = { id: 'doc' };
   const historyEntry = { html: '<html></html>' };
   const capturedCalls = [];
   const context = {
@@ -87,10 +167,6 @@ test('captureState reads the live frame through the shared iframe accessor befor
     getEditorHistoryStackOptions() {
       capturedCalls.push(['getEditorHistoryStackOptions']);
       return { limit: 50 };
-    },
-    getIframeDoc() {
-      capturedCalls.push(['getIframeDoc']);
-      return iframeDoc;
     },
     redoStack: ['redo-entry'],
     SlideNextStudioHistory: {
@@ -118,15 +194,14 @@ test('captureState reads the live frame through the shared iframe accessor befor
   assert.equal(context.undoStack[0], 'undo-entry');
   assert.equal(context.redoStack.length, 0);
   assert.deepEqual(capturedCalls, [
-    ['getIframeDoc'],
-    ['createHistoryEntry', iframeDoc],
+    ['createHistoryEntry', undefined],
     ['getEditorHistoryStackOptions'],
     ['captureStudioHistoryState', [], ['redo-entry'], historyEntry, { limit: 50 }],
     ['updateHistoryButtons']
   ]);
 });
 
-test('captureState skips history capture when the shared iframe accessor has no live document', () => {
+test('captureState skips history capture when no history entry can be created', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const captureStateSource = extractFunctionSource(
     fileContent,
@@ -138,20 +213,17 @@ test('captureState skips history capture when the shared iframe accessor has no 
   const context = {
     createHistoryEntry() {
       createHistoryEntryCalls += 1;
-      return {};
-    },
-    getIframeDoc() {
       return null;
     },
     redoStack: ['redo-entry'],
     SlideNextStudioHistory: {
       captureStudioHistoryState() {
-        throw new Error('captureStudioHistoryState should not run without a live frame document');
+        throw new Error('captureStudioHistoryState should not run without a history entry');
       }
     },
     undoStack: ['undo-entry'],
     updateHistoryButtons() {
-      throw new Error('updateHistoryButtons should not run without a live frame document');
+      throw new Error('updateHistoryButtons should not run without a history entry');
     }
   };
 
@@ -160,9 +232,66 @@ test('captureState skips history capture when the shared iframe accessor has no 
 
   context.captureState();
 
-  assert.equal(createHistoryEntryCalls, 0);
+  assert.equal(createHistoryEntryCalls, 1);
   assert.deepEqual(context.undoStack, ['undo-entry']);
   assert.deepEqual(context.redoStack, ['redo-entry']);
+});
+
+test('captureState can store a persisted baseline history entry without a live frame document', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const captureStateSource = extractFunctionSource(
+    fileContent,
+    'function captureState() {',
+    '\n\n    function updateHistoryButtons() {'
+  );
+
+  const historyEntry = {
+    html: '<html>persisted-baseline</html>',
+    activeSlideId: 'slide-1',
+    selectedElementIds: [],
+    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [{ id: 'slide-1', nodes: [] }] }
+  };
+  const capturedCalls = [];
+  const context = {
+    createHistoryEntry() {
+      capturedCalls.push(['createHistoryEntry']);
+      return historyEntry;
+    },
+    getEditorHistoryStackOptions() {
+      capturedCalls.push(['getEditorHistoryStackOptions']);
+      return { limit: 50 };
+    },
+    redoStack: ['redo-entry'],
+    SlideNextStudioHistory: {
+      captureStudioHistoryState(undoStack, redoStack, nextHistoryEntry, options) {
+        capturedCalls.push(['captureStudioHistoryState', undoStack, redoStack, nextHistoryEntry, options]);
+        return {
+          didCapture: true,
+          undoStack: ['undo-entry'],
+          redoStack: []
+        };
+      }
+    },
+    undoStack: [],
+    updateHistoryButtons() {
+      capturedCalls.push(['updateHistoryButtons']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(captureStateSource, context);
+
+  context.captureState();
+
+  assert.equal(context.undoStack.length, 1);
+  assert.equal(context.undoStack[0], 'undo-entry');
+  assert.equal(context.redoStack.length, 0);
+  assert.deepEqual(capturedCalls, [
+    ['createHistoryEntry'],
+    ['getEditorHistoryStackOptions'],
+    ['captureStudioHistoryState', [], ['redo-entry'], historyEntry, { limit: 50 }],
+    ['updateHistoryButtons']
+  ]);
 });
 
 test('restoreFrameFromHistoryEntry threads the shared iframe accessor through history restore callbacks', () => {

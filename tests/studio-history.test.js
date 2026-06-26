@@ -32,6 +32,30 @@ test('createStudioHistoryEntry includes the canonical deck sidecar when provided
   });
 });
 
+test('createStudioHistoryEntry can capture a model-only history entry without a live document', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+
+  const entry = studioHistory.createStudioHistoryEntry(null, {
+    buildHistoryHtml() {
+      return '<html>persisted-baseline</html>';
+    },
+    activeSlideId: 'slide-1',
+    selectedElementIds: ['node-1', ''],
+    canonicalDeck
+  });
+
+  assert.deepEqual(entry, {
+    html: '<html>persisted-baseline</html>',
+    activeSlideId: 'slide-1',
+    selectedElementIds: ['node-1'],
+    canonicalDeck
+  });
+});
+
 test('normalizeStudioHistoryEntry preserves the canonical deck sidecar', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',
