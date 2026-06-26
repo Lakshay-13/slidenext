@@ -2634,6 +2634,14 @@
         const btn = document.getElementById(id);
         if (btn) btn.disabled = !canRun;
       });
+
+      const zIndexInput = document.getElementById('elZIndex');
+      if (zIndexInput) {
+        const zIndexMutationPlan = SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(selectedElements, 'zIndex', '', {
+          isLocked: isElementLocked
+        });
+        zIndexInput.disabled = !zIndexMutationPlan.canApply;
+      }
     }
 
     function toggleSelectedElementsLockState() {
