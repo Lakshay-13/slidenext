@@ -251,6 +251,35 @@
     return orderedElements;
   }
 
+  function getStudioClosestPositionedAncestor(el, options = {}) {
+    if (!el) return null;
+    const slideClassName = options.slideClassName || 'slide';
+    const fallbackDocument = options.doc || el.ownerDocument || null;
+    const view = options.view || (fallbackDocument && fallbackDocument.defaultView) || root;
+    let parent = el.parentElement || null;
+
+    while (parent) {
+      if (parent.classList && typeof parent.classList.contains === 'function' && parent.classList.contains(slideClassName)) {
+        return parent;
+      }
+
+      const style = view && typeof view.getComputedStyle === 'function'
+        ? view.getComputedStyle(parent)
+        : parent.style;
+      if (style && style.position !== 'static') {
+        return parent;
+      }
+
+      if (parent.tagName === 'BODY' || parent.tagName === 'HTML') {
+        return parent;
+      }
+
+      parent = parent.parentElement || null;
+    }
+
+    return fallbackDocument && fallbackDocument.body ? fallbackDocument.body : null;
+  }
+
   function findPreferredStudioDragContainer(el, options = {}) {
     if (!el || typeof el.closest !== 'function') return null;
     const slideSelector = options.slideSelector || '.slide';
@@ -315,6 +344,7 @@
     getStudioSlideEditableElements,
     getNormalizedStudioSlideLayerOrder,
     applyStudioSlideLayerOrder,
+    getStudioClosestPositionedAncestor,
     findPreferredStudioDragContainer,
     resolveStudioEditableTarget
   };

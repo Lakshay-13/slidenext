@@ -2779,7 +2779,7 @@
           template,
           isAbsolutelyPositioned,
           sourceElement: el,
-          sourceParent: getClosestPositionedAncestor(el)
+          sourceParent: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(el)
         };
 
         if (isAbsolutelyPositioned) {
@@ -2885,25 +2885,6 @@
       return finalizeInsertedElements(duplicates, 'Auto: Duplicated Element');
     }
 
-    function getClosestPositionedAncestor(el) {
-      let parent = el.parentElement;
-      const view = el.ownerDocument?.defaultView || window;
-      while (parent) {
-        if (parent.classList && parent.classList.contains('slide')) {
-          return parent;
-        }
-        const style = view.getComputedStyle ? view.getComputedStyle(parent) : parent.style;
-        if (style && style.position !== 'static') {
-          return parent;
-        }
-        if (parent.tagName === 'BODY' || parent.tagName === 'HTML') {
-          return parent;
-        }
-        parent = parent.parentElement;
-      }
-      return document.body;
-    }
-
     function shouldResizeWidth(el) {
       const tag = el.tagName.toLowerCase();
       return ['img', 'table', 'pre', 'code', 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag);
@@ -3002,7 +2983,7 @@
       const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
       const nudgeLayoutItems = nudgeSelectionState.selection.map((el) => {
         const rect = el.getBoundingClientRect();
-        const parent = getClosestPositionedAncestor(el);
+        const parent = SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(el);
         const parentRect = parent.getBoundingClientRect();
         const rectOnSlide = getRectOnSlide(rect, slideMetrics);
         const parentOnSlide = getRectOnSlide(parentRect, slideMetrics);
@@ -3129,7 +3110,7 @@
 
         const items = dragSelection.map(el => {
           const rect = el.getBoundingClientRect();
-          const parent = getClosestPositionedAncestor(el);
+          const parent = SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(el);
           const parentRect = parent.getBoundingClientRect();
           const rectOnSlide = getRectOnSlide(rect, slideMetrics);
           const parentOnSlide = getRectOnSlide(parentRect, slideMetrics);
