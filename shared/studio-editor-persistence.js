@@ -28,6 +28,13 @@
       cleanHtml: normalizeString(cleanHtml),
       shouldUpdatePersistedHtml: options.shouldUpdatePersistedHtml !== false
     };
+    const canonicalDeck = asPlainObject(options.canonicalDeck);
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : () => true;
+    if (Array.isArray(canonicalDeck.slides) && isCanonicalDeck(canonicalDeck)) {
+      context.canonicalDeck = canonicalDeck;
+    }
     const sessionToken = normalizeSessionToken(options.sessionToken);
     if (sessionToken !== null) {
       context.sessionToken = sessionToken;
@@ -90,6 +97,9 @@
 
     if (context.shouldUpdatePersistedHtml !== false && typeof options.setPersistedHtml === 'function') {
       options.setPersistedHtml(context.cleanHtml);
+    }
+    if (context.canonicalDeck && typeof options.setPersistedCanonicalDeck === 'function') {
+      options.setPersistedCanonicalDeck(context.canonicalDeck);
     }
     if (typeof options.onSuccess === 'function') {
       options.onSuccess(context);

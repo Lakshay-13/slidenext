@@ -1009,6 +1009,7 @@
   </div>
   </div>  <!-- Logic scripts -->
   <script src="/shared/canonical-deck.js"></script>
+  <script src="/shared/presentation-metadata.js"></script>
   <script src="/shared/deck-import.js"></script>
   <script src="/shared/deck-loader.js"></script>
   <script src="/shared/studio-deck-context.js"></script>
@@ -2116,6 +2117,17 @@
         onError: (err, metadataUrl) => {
           console.warn(`Failed to load presentation metadata from ${metadataUrl}:`, err);
         }
+      });
+    }
+
+    function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
+      if (!canonicalDeck || presentationUrl !== currentPresentationUrl) {
+        return;
+      }
+      const currentMetadata = currentPresentationMetadata
+        || buildCurrentPresentationMetadataSeed(presentationUrl, presentationTitle);
+      currentPresentationMetadata = SlideNextPresentationMetadata.mergePresentationCanonicalDeck(currentMetadata, canonicalDeck, {
+        isCanonicalDeck: (deck) => SlideNextCanonicalDeck.isCanonicalDeck(deck)
       });
     }
 
@@ -3600,11 +3612,19 @@
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
       const hasPersistedCurrentHtml = isCurrentDeckHtmlPersisted(cleanHtml);
+      const saveRequestBody = hasPersistedCurrentHtml
+        ? null
+        : buildEditorSaveRequestBody(options.doc, cleanHtml, {
+            presentationUrl,
+            versionLabel
+          });
       const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
         presentationUrl,
         cleanHtml,
         {
           shouldUpdatePersistedHtml: !hasPersistedCurrentHtml,
+          canonicalDeck: saveRequestBody && saveRequestBody.canonicalDeck,
+          isCanonicalDeck: (deck) => SlideNextCanonicalDeck.isCanonicalDeck(deck),
           sessionToken: options.sessionToken
         }
       );
@@ -3617,10 +3637,7 @@
                 htmlPath: presentationUrl,
                 versionLabel
               }
-            : buildEditorSaveRequestBody(options.doc, cleanHtml, {
-                presentationUrl,
-                versionLabel
-              })
+            : saveRequestBody
         )
       });
       const data = await response.json();
@@ -3631,6 +3648,9 @@
           getCurrentSessionToken: () => studioEditorSessionToken,
           setPersistedHtml: (nextHtml) => {
             lastPersistedDeckHtml = nextHtml;
+          },
+          setPersistedCanonicalDeck: (nextCanonicalDeck) => {
+            setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl);
           }
         });
       }
@@ -3655,10 +3675,16 @@
         const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
         if (!iframeDoc || isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
         const cleanHtml = buildPersistableDeckHtml(iframeDoc);
+        const saveRequestBody = buildEditorSaveRequestBody(iframeDoc, cleanHtml, {
+          presentationUrl: scheduledPresentationUrl,
+          isAutoSave: true
+        });
         const persistenceContext = SlideNextStudioEditorPersistence.createStudioPersistenceActionContext(
           scheduledPresentationUrl,
           cleanHtml,
           {
+            canonicalDeck: saveRequestBody.canonicalDeck,
+            isCanonicalDeck: (deck) => SlideNextCanonicalDeck.isCanonicalDeck(deck),
             sessionToken: scheduledSessionToken
           }
         );
@@ -3669,10 +3695,6 @@
           }
           return;
         }
-        const saveRequestBody = buildEditorSaveRequestBody(iframeDoc, cleanHtml, {
-          presentationUrl: scheduledPresentationUrl,
-          isAutoSave: true
-        });
         
         try {
           const response = await fetch('/api/save', {
@@ -3688,6 +3710,9 @@
               getCurrentSessionToken: () => studioEditorSessionToken,
               setPersistedHtml: (nextHtml) => {
                 lastPersistedDeckHtml = nextHtml;
+              },
+              setPersistedCanonicalDeck: (nextCanonicalDeck) => {
+                setCurrentPresentationCanonicalDeck(nextCanonicalDeck, scheduledPresentationUrl);
               },
               onSuccess: () => {
                 if (statusEl) {

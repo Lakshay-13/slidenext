@@ -42,6 +42,30 @@ test('createStudioPersistenceActionContext normalizes persistence state', () => 
       sessionToken: 9
     }
   );
+
+  assert.deepEqual(
+    editorPersistence.createStudioPersistenceActionContext(
+      '/presentations/onboarding-presentation/index.html',
+      '<html></html>',
+      {
+        canonicalDeck: {
+          kind: 'slidenext.deck',
+          schemaVersion: 1,
+          slides: []
+        }
+      }
+    ),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      cleanHtml: '<html></html>',
+      shouldUpdatePersistedHtml: true,
+      canonicalDeck: {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: []
+      }
+    }
+  );
 });
 
 test('buildStudioSaveRequestBody includes canonical deck sidecars only when they are valid', () => {
@@ -94,7 +118,14 @@ test('buildStudioSaveRequestBody includes canonical deck sidecars only when they
 test('handleStudioPersistenceSuccess updates the active deck persistence state only', () => {
   const context = editorPersistence.createStudioPersistenceActionContext(
     '/presentations/onboarding-presentation/index.html',
-    '<html></html>'
+    '<html></html>',
+    {
+      canonicalDeck: {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: []
+      }
+    }
   );
   const calls = [];
 
@@ -102,6 +133,9 @@ test('handleStudioPersistenceSuccess updates the active deck persistence state o
     getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
     setPersistedHtml(nextHtml) {
       calls.push(['setPersistedHtml', nextHtml]);
+    },
+    setPersistedCanonicalDeck(nextCanonicalDeck) {
+      calls.push(['setPersistedCanonicalDeck', nextCanonicalDeck.kind]);
     },
     onSuccess(nextContext) {
       calls.push(['onSuccess', nextContext.presentationUrl]);
@@ -111,6 +145,7 @@ test('handleStudioPersistenceSuccess updates the active deck persistence state o
   assert.equal(applied, true);
   assert.deepEqual(calls, [
     ['setPersistedHtml', '<html></html>'],
+    ['setPersistedCanonicalDeck', 'slidenext.deck'],
     ['onSuccess', '/presentations/onboarding-presentation/index.html']
   ]);
 });
