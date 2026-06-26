@@ -1016,6 +1016,7 @@
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-element-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
+  <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-transform.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
@@ -2629,16 +2630,17 @@
     }
 
     function updateLockActionState() {
-      const hasSelection = selectedElements.length > 0;
-      const allLocked = hasSelection && selectedElements.every(isElementLocked);
+      const lockActionState = SlideNextStudioEditorLockState.buildStudioLockActionState(selectedElements, {
+        isLocked: isElementLocked
+      });
       const lockBtn = document.getElementById('toggleLockSelectionBtn');
       const lockIcon = document.getElementById('toggleLockSelectionIcon');
       const lockLabel = document.getElementById('toggleLockSelectionLabel');
       const removeBtn = document.getElementById('removeSelectionBtn');
-      if (lockBtn) lockBtn.disabled = !hasSelection;
-      if (lockIcon) lockIcon.textContent = allLocked ? 'lock_open' : 'lock';
-      if (lockLabel) lockLabel.textContent = allLocked ? 'Unlock Selected' : 'Lock Selected';
-      if (removeBtn) removeBtn.disabled = selectionHasLockedElements();
+      if (lockBtn) lockBtn.disabled = !lockActionState.hasSelection;
+      if (lockIcon) lockIcon.textContent = lockActionState.allLocked ? 'lock_open' : 'lock';
+      if (lockLabel) lockLabel.textContent = lockActionState.allLocked ? 'Unlock Selected' : 'Lock Selected';
+      if (removeBtn) removeBtn.disabled = !lockActionState.canRemove;
     }
 
     function updateVisibilityActionState() {
@@ -2661,9 +2663,10 @@
     }
 
     function toggleSelectedElementsLockState() {
-      if (selectedElements.length === 0) return false;
-      const shouldLock = !selectedElements.every(isElementLocked);
-      selectedElements.forEach(el => {
+      const lockSelection = SlideNextStudioEditorLockState.getStudioLockSelection(selectedElements);
+      if (lockSelection.length === 0) return false;
+      const shouldLock = !lockSelection.every(isElementLocked);
+      lockSelection.forEach(el => {
         if (!el || !el.isConnected) return;
         SlideNextStudioElementState.setStudioElementLockedState(el, shouldLock);
       });
