@@ -161,7 +161,7 @@
         deselectElement();
         return;
       }
-      if (hasSelection && (event.key === 'Delete' || event.key === 'Backspace')) {
+      if (deckShortcutReady && hasSelection && (event.key === 'Delete' || event.key === 'Backspace')) {
         event.preventDefault();
         event.stopPropagation();
         removeSelectedElement();
@@ -295,7 +295,7 @@
         deselectElement();
         return;
       }
-      if (!typingContext && hasSelection && (event.key === 'Delete' || event.key === 'Backspace')) {
+      if (!typingContext && deckShortcutReady && hasSelection && (event.key === 'Delete' || event.key === 'Backspace')) {
         event.preventDefault();
         removeSelectedElement();
         return;

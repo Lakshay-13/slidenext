@@ -165,6 +165,7 @@ test('createStudioFrameKeydownHandler skips deck-level paste and select-all shor
     copy: 0,
     duplicate: 0,
     nudge: [],
+    remove: 0,
     undo: 0,
     redo: 0,
     paste: 0,
@@ -185,6 +186,9 @@ test('createStudioFrameKeydownHandler skips deck-level paste and select-all shor
     },
     nudgeSelectedElements(dx, dy) {
       calls.nudge.push([dx, dy]);
+    },
+    removeSelectedElement() {
+      calls.remove += 1;
     },
     editorUndo() {
       calls.undo += 1;
@@ -263,6 +267,14 @@ test('createStudioFrameKeydownHandler skips deck-level paste and select-all shor
   assert.deepEqual(calls.arrange, []);
   assert.equal(arrangeEvent.prevented, 0);
   assert.equal(arrangeEvent.stopped, 0);
+
+  const deleteEvent = createKeyboardEvent({
+    key: 'Delete'
+  });
+  handler(deleteEvent);
+  assert.equal(calls.remove, 0);
+  assert.equal(deleteEvent.prevented, 0);
+  assert.equal(deleteEvent.stopped, 0);
 
   const nudgeEvent = createKeyboardEvent({
     key: 'ArrowRight'
@@ -475,6 +487,7 @@ test('createStudioGlobalKeydownHandler skips deck-level paste and select-all sho
     copy: 0,
     duplicate: 0,
     nudge: [],
+    remove: 0,
     undo: 0,
     redo: 0,
     paste: 0,
@@ -496,6 +509,9 @@ test('createStudioGlobalKeydownHandler skips deck-level paste and select-all sho
     },
     nudgeSelectedElements(dx, dy) {
       calls.nudge.push([dx, dy]);
+    },
+    removeSelectedElement() {
+      calls.remove += 1;
     },
     editorUndo() {
       calls.undo += 1;
@@ -567,6 +583,13 @@ test('createStudioGlobalKeydownHandler skips deck-level paste and select-all sho
   handler(arrangeEvent);
   assert.deepEqual(calls.arrange, []);
   assert.equal(arrangeEvent.prevented, 0);
+
+  const deleteEvent = createKeyboardEvent({
+    key: 'Delete'
+  });
+  handler(deleteEvent);
+  assert.equal(calls.remove, 0);
+  assert.equal(deleteEvent.prevented, 0);
 
   const nudgeEvent = createKeyboardEvent({
     key: 'ArrowRight'
