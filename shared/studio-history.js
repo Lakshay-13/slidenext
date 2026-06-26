@@ -79,13 +79,25 @@
           if (left.length !== right.length) return false;
           return left.every((id, index) => id === right[index]);
         };
+    const areCanonicalDecksEqual = typeof options.areCanonicalDecksEqual === 'function'
+      ? options.areCanonicalDecksEqual
+      : (left, right) => {
+          if (left === right) return true;
+          if (!left || !right) return !left && !right;
+          try {
+            return JSON.stringify(left) === JSON.stringify(right);
+          } catch (err) {
+            return false;
+          }
+        };
 
     const normalizedA = normalizeStudioHistoryEntry(a);
     const normalizedB = normalizeStudioHistoryEntry(b);
 
     return normalizedA.html === normalizedB.html
       && normalizedA.activeSlideId === normalizedB.activeSlideId
-      && areIdListsEqual(normalizedA.selectedElementIds, normalizedB.selectedElementIds);
+      && areIdListsEqual(normalizedA.selectedElementIds, normalizedB.selectedElementIds)
+      && areCanonicalDecksEqual(normalizedA.canonicalDeck, normalizedB.canonicalDeck);
   }
 
   function captureStudioHistoryState(undoStack = [], redoStack = [], historyEntry, options = {}) {
