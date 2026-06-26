@@ -1016,6 +1016,7 @@
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-element-state.js"></script>
   <script src="/shared/studio-editor-live-selection.js"></script>
+  <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
@@ -2454,21 +2455,17 @@
       if (!doc || !slide) return;
       const overlay = ensureSelectionOverlay(doc, slide);
 
-      if (selectedElements.length === 0) {
+      const overlaySelectionState = SlideNextStudioEditorOverlayState.buildStudioSelectionOverlayState(selectedElements, {
+        isHidden: isElementHidden
+      });
+      if (!overlaySelectionState.hasVisibleSelection) {
         overlay.style.display = 'none';
         hideGuides();
         hideDragHud();
         return;
       }
 
-      if (selectedElements.every(isElementHidden)) {
-        overlay.style.display = 'none';
-        hideGuides();
-        hideDragHud();
-        return;
-      }
-
-      const bounds = getSelectionBounds(selectedElements);
+      const bounds = getSelectionBounds(overlaySelectionState.visibleSelection);
       if (!bounds) {
         overlay.style.display = 'none';
         hideGuides();
@@ -2481,7 +2478,7 @@
       overlay.style.top = `${bounds.top}px`;
       overlay.style.width = `${bounds.width}px`;
       overlay.style.height = `${bounds.height}px`;
-      const canTransform = selectionSupportsFreeformTransforms();
+      const canTransform = selectionSupportsFreeformTransforms(getLiveSelectedElements());
       overlay.style.pointerEvents = canTransform ? 'auto' : 'none';
       overlay.style.opacity = '1';
       const hideHandles = !canTransform;
