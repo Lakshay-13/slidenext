@@ -65,6 +65,8 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     cgColor2: { disabled: false },
     cgAngle: { disabled: false },
     applyWallpaperToAllSlidesBtn: { disabled: false },
+    studioUndoBtn: { disabled: false },
+    studioRedoBtn: { disabled: false },
     wallpaperSolidsList: {
       buttons: [{ disabled: false }, { disabled: false }],
       querySelectorAll(selector) {
@@ -151,6 +153,8 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     'cgColor2',
     'cgAngle',
     'applyWallpaperToAllSlidesBtn',
+    'studioUndoBtn',
+    'studioRedoBtn',
     'slidePasteClipboardBtn',
     'copySelectionBtn',
     'pasteClipboardBtn',
