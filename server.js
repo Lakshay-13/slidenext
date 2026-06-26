@@ -6,6 +6,7 @@ const {
   buildVersionBackupRegex,
   extractVersionTimestampPrefix
 } = require('./shared/version-backup-utils');
+const presentationMetadata = require('./shared/presentation-metadata');
 
 const app = express();
 const PORT = 11004;
@@ -105,7 +106,7 @@ async function createVersionBackupFromContent(targetFile, htmlContent, versionLa
 
 // 2. API: Overwrite index.html and save a timestamped backup in .versions/
 app.post('/api/save', async (req, res) => {
-  const { htmlPath, htmlContent, isAutoSave, versionLabel } = req.body;
+  const { htmlPath, htmlContent, isAutoSave, versionLabel, canonicalDeck } = req.body;
   if (!htmlPath || !htmlContent) {
     return res.status(400).json({ error: 'Missing htmlPath or htmlContent' });
   }
@@ -131,6 +132,33 @@ app.post('/api/save', async (req, res) => {
     // Write new content to the target file
     await fs.writeFile(targetFile, htmlContent, 'utf8');
     console.log(`Saved new content to ${targetFile} (AutoSave: ${!!isAutoSave})`);
+
+    if (canonicalDeck) {
+      try {
+        const metadataPath = presentationMetadata.derivePresentationMetadataPath(htmlPath);
+        if (metadataPath) {
+          const normalizedMetadataPath = metadataPath.replace(/^\//, '');
+          const metadataFile = path.resolve(workspaceDir, normalizedMetadataPath);
+          if (metadataFile.startsWith(workspaceDir)) {
+            let currentMetadata = presentationMetadata.buildPresentationMetadataSeed(htmlPath);
+            try {
+              const metadataContent = await fs.readFile(metadataFile, 'utf8');
+              currentMetadata = JSON.parse(metadataContent);
+            } catch (metadataErr) {
+              if (metadataErr.code !== 'ENOENT') {
+                console.warn(`Falling back to generated metadata seed for ${metadataFile}:`, metadataErr.message);
+              }
+            }
+
+            const nextMetadata = presentationMetadata.mergePresentationCanonicalDeck(currentMetadata, canonicalDeck);
+            await fs.writeFile(metadataFile, `${JSON.stringify(nextMetadata, null, 2)}\n`, 'utf8');
+            console.log(`Updated canonical deck sidecar: ${metadataFile}`);
+          }
+        }
+      } catch (metadataErr) {
+        console.warn('Failed to persist canonical deck sidecar:', metadataErr.message);
+      }
+    }
 
     res.json({ success: true, message: 'File saved successfully' });
   } catch (err) {

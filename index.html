@@ -3562,6 +3562,22 @@
       });
     }
 
+    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = buildPersistableDeckHtml(doc), options = {}) {
+      const presentationUrl = Object.prototype.hasOwnProperty.call(options, 'presentationUrl')
+        ? options.presentationUrl
+        : currentPresentationUrl;
+      return SlideNextStudioEditorPersistence.buildStudioSaveRequestBody(
+        presentationUrl,
+        cleanHtml,
+        {
+          isAutoSave: !!options.isAutoSave,
+          versionLabel: options.versionLabel,
+          canonicalDeck: buildEditorCanonicalDeck(doc),
+          isCanonicalDeck: (deck) => SlideNextCanonicalDeck.isCanonicalDeck(deck)
+        }
+      );
+    }
+
     function isCurrentDeckHtmlPersisted(cleanHtml) {
       return !!lastPersistedDeckHtml && cleanHtml === lastPersistedDeckHtml;
     }
@@ -3601,12 +3617,10 @@
                 htmlPath: presentationUrl,
                 versionLabel
               }
-            : {
-                htmlPath: presentationUrl,
-                htmlContent: cleanHtml,
-                isAutoSave: false,
+            : buildEditorSaveRequestBody(options.doc, cleanHtml, {
+                presentationUrl,
                 versionLabel
-              }
+              })
         )
       });
       const data = await response.json();
@@ -3655,16 +3669,16 @@
           }
           return;
         }
+        const saveRequestBody = buildEditorSaveRequestBody(iframeDoc, cleanHtml, {
+          presentationUrl: scheduledPresentationUrl,
+          isAutoSave: true
+        });
         
         try {
           const response = await fetch('/api/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              htmlPath: scheduledPresentationUrl,
-              htmlContent: cleanHtml,
-              isAutoSave: true
-            })
+            body: JSON.stringify(saveRequestBody)
           });
           
           const data = await response.json();
@@ -4052,7 +4066,8 @@
       
       try {
         const data = await saveVersionCheckpoint(versionName, cleanHtml, scheduledPresentationUrl, {
-          sessionToken: scheduledSessionToken
+          sessionToken: scheduledSessionToken,
+          doc: iframeDoc
         });
         if (data.success) {
           SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
@@ -4138,7 +4153,8 @@
       
       try {
         const data = await saveVersionCheckpoint(label, cleanHtml, presentationUrl, {
-          sessionToken
+          sessionToken,
+          doc: iframeDoc
         });
         if (data.success) {
           SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {

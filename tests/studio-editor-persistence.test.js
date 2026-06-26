@@ -44,6 +44,53 @@ test('createStudioPersistenceActionContext normalizes persistence state', () => 
   );
 });
 
+test('buildStudioSaveRequestBody includes canonical deck sidecars only when they are valid', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+
+  assert.deepEqual(
+    editorPersistence.buildStudioSaveRequestBody(
+      '/presentations/onboarding-presentation/index.html',
+      '<html></html>',
+      {
+        isAutoSave: true,
+        versionLabel: 'Auto: Updated Deck',
+        canonicalDeck
+      }
+    ),
+    {
+      htmlPath: '/presentations/onboarding-presentation/index.html',
+      htmlContent: '<html></html>',
+      isAutoSave: true,
+      versionLabel: 'Auto: Updated Deck',
+      canonicalDeck
+    }
+  );
+
+  assert.deepEqual(
+    editorPersistence.buildStudioSaveRequestBody(
+      '/presentations/onboarding-presentation/index.html',
+      '<html></html>',
+      {
+        canonicalDeck: {
+          metadata: {
+            title: 'Broken Deck'
+          }
+        },
+        isCanonicalDeck: () => false
+      }
+    ),
+    {
+      htmlPath: '/presentations/onboarding-presentation/index.html',
+      htmlContent: '<html></html>',
+      isAutoSave: false
+    }
+  );
+});
+
 test('handleStudioPersistenceSuccess updates the active deck persistence state only', () => {
   const context = editorPersistence.createStudioPersistenceActionContext(
     '/presentations/onboarding-presentation/index.html',

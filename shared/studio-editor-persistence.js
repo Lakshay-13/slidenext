@@ -11,6 +11,13 @@
     return typeof value === 'string' ? value : fallback;
   }
 
+  function asPlainObject(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return {};
+    }
+    return { ...value };
+  }
+
   function normalizeSessionToken(value) {
     return Number.isInteger(value) ? value : null;
   }
@@ -26,6 +33,28 @@
       context.sessionToken = sessionToken;
     }
     return context;
+  }
+
+  function buildStudioSaveRequestBody(presentationUrl = '', cleanHtml = '', options = {}) {
+    const body = {
+      htmlPath: normalizeString(presentationUrl),
+      htmlContent: normalizeString(cleanHtml),
+      isAutoSave: !!options.isAutoSave
+    };
+    const versionLabel = normalizeString(options.versionLabel);
+    if (versionLabel) {
+      body.versionLabel = versionLabel;
+    }
+
+    const canonicalDeck = asPlainObject(options.canonicalDeck);
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : () => true;
+    if (Array.isArray(canonicalDeck.slides) && isCanonicalDeck(canonicalDeck)) {
+      body.canonicalDeck = canonicalDeck;
+    }
+
+    return body;
   }
 
   function isStudioPersistenceActionCurrent(context = {}, options = {}) {
@@ -83,6 +112,7 @@
 
   return {
     createStudioPersistenceActionContext,
+    buildStudioSaveRequestBody,
     isStudioPersistenceActionCurrent,
     handleStudioPersistenceSuccess,
     handleStudioPersistenceFailure
