@@ -11,6 +11,14 @@
     return typeof value === 'string' ? value : fallback;
   }
 
+  function truncateLabel(value, maxLength = 15) {
+    const text = normalizeString(value).trim();
+    if (text.length <= maxLength) {
+      return text;
+    }
+    return `${text.slice(0, maxLength)}...`;
+  }
+
   function resolveElementDisplayMetadata(el) {
     const tagName = el.tagName.toLowerCase();
     if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
@@ -47,6 +55,52 @@
     };
   }
 
+  function resolveCanonicalNodeDisplayMetadata(node = {}) {
+    const type = normalizeString(node.type).toLowerCase();
+    const tagName = normalizeString(node.tagName).toLowerCase();
+    const name = normalizeString(node.name).trim();
+    const textValue = normalizeString(node.text).trim();
+    const src = normalizeString(node.attributes && node.attributes.src);
+    const srcParts = src.split('/');
+    const filename = srcParts[srcParts.length - 1] || 'Image';
+
+    if (type === 'heading' || /^h[1-6]$/.test(tagName)) {
+      return {
+        typeIcon: 'title',
+        displayName: name || `Heading: "${truncateLabel(textValue || 'Heading')}"`
+      };
+    }
+    if (type === 'image' || tagName === 'img') {
+      return {
+        typeIcon: 'image',
+        displayName: name || `Image: "${truncateLabel(filename || 'Image')}"`
+      };
+    }
+    if (type === 'shape' || type === 'vector' || tagName === 'svg') {
+      return {
+        typeIcon: 'layers',
+        displayName: name || 'Shape'
+      };
+    }
+    if (type === 'table' || tagName === 'table') {
+      return {
+        typeIcon: 'grid_on',
+        displayName: name || 'Data Table'
+      };
+    }
+    if (type === 'code' || tagName === 'pre' || tagName === 'code') {
+      return {
+        typeIcon: 'terminal',
+        displayName: name || 'Code Block'
+      };
+    }
+
+    return {
+      typeIcon: 'description',
+      displayName: name || `Text: "${truncateLabel(textValue || node.id || 'Text')}"`
+    };
+  }
+
   function buildElementSnapshot(el, options = {}) {
     const { typeIcon, displayName } = resolveElementDisplayMetadata(el);
     return {
@@ -65,6 +119,41 @@
       ? options.buildElementSnapshot
       : (el) => buildElementSnapshot(el, options);
     return (elements || []).map((el, index) => snapshotBuilder(el, index));
+  }
+
+  function buildCanonicalLayerSnapshot(nodes = [], options = {}) {
+    const snapshots = [];
+
+    function appendNodeSnapshots(nextNodes = []) {
+      nextNodes.forEach((node, index) => {
+        if (!node || typeof node !== 'object') {
+          return;
+        }
+
+        const { typeIcon, displayName } = resolveCanonicalNodeDisplayMetadata(node);
+        const fallbackId = `node-${snapshots.length + index + 1}`;
+        snapshots.push({
+          id: normalizeString(node.id, fallbackId),
+          typeIcon,
+          displayName,
+          zIndex: Number.isFinite(node.layout && node.layout.zIndex)
+            ? String(node.layout.zIndex)
+            : '0',
+          isLocked: !!(node.visibility && node.visibility.locked),
+          isHidden: !!(node.visibility && node.visibility.hidden),
+          isSelected: typeof options.isSelectedNode === 'function'
+            ? !!options.isSelectedNode(node)
+            : false
+        });
+
+        if (Array.isArray(node.children) && node.children.length > 0) {
+          appendNodeSnapshots(node.children);
+        }
+      });
+    }
+
+    appendNodeSnapshots(Array.isArray(nodes) ? nodes : []);
+    return snapshots;
   }
 
   function buildSlideSnapshot(slide, index, options = {}) {
@@ -143,13 +232,19 @@
     const slideId = typeof options.getSlideId === 'function'
       ? options.getSlideId(slide, index)
       : slide.id || `slide-${index + 1}`;
-    return {
+    const snapshot = {
       id: slideId,
       index,
       title: normalizeString(slide.title, normalizeString(slide.name, `Slide ${index + 1}`)),
       backgroundLabel: buildCanonicalBackgroundLabel(slide),
       elementCount: countCanonicalSlideNodes(slide && Array.isArray(slide.nodes) ? slide.nodes : [])
     };
+
+    if (options.includeLayers) {
+      snapshot.elements = buildCanonicalLayerSnapshot(slide && Array.isArray(slide.nodes) ? slide.nodes : [], options.canonicalLayerOptions || options);
+    }
+
+    return snapshot;
   }
 
   function buildDeckSnapshotFromCanonicalDeck(deck, options = {}) {
@@ -170,6 +265,7 @@
     resolveElementDisplayMetadata,
     buildElementSnapshot,
     buildLayerSnapshot,
+    buildCanonicalLayerSnapshot,
     buildSlideSnapshot,
     buildDeckSnapshot,
     countCanonicalSlideNodes,

@@ -4549,13 +4549,8 @@
       if (!listContainer) return;
       
       const iframeDoc = getIframeDoc();
-      if (!iframeDoc) return;
       const activeSlide = getActiveSlide(iframeDoc);
-      if (!activeSlide) {
-        listContainer.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-2">No active slide</p>`;
-        return;
-      }
-      const orderedLayerElements = getNormalizedSlideLayerOrder(activeSlide);
+      const orderedLayerElements = activeSlide ? getNormalizedSlideLayerOrder(activeSlide) : [];
       
       const deckSnapshot = buildEditorDeckSnapshot(iframeDoc, { includeLayers: true });
       const activeSlideSnapshot = deckSnapshot.slides.find(slide => slide.id === deckSnapshot.activeSlideId);
@@ -4572,6 +4567,7 @@
 
       listContainer.innerHTML = layers.map(layer => {
         const liveElement = getElementByEditorId(layer.id, iframeDoc);
+        const canRunLayerActions = !!liveElement;
         const layerOrderActionState = liveElement
           ? SlideNextStudioEditorLayerOrder.buildStudioLayerOrderActionState([liveElement], {
             orderedElements: orderedLayerElements,
@@ -4587,7 +4583,7 @@
           
         return `
           <div class="flex items-center justify-between p-2 rounded-lg border text-xs font-mono transition-all ${activeClass}">
-            <button onclick="selectLayerElementByRef(event)" class="flex-1 text-left flex items-center gap-2 truncate pr-1" style="min-width: 0;">
+            <button onclick="selectLayerElementByRef(event)" ${canRunLayerActions ? '' : 'disabled'} class="flex-1 text-left flex items-center gap-2 truncate pr-1 disabled:opacity-60 disabled:cursor-not-allowed" style="min-width: 0;">
               <span class="material-symbols-outlined text-[14px] text-[#7028d0] flex-shrink-0">${layer.typeIcon}</span>
               <span class="truncate" style="font-size: 10px;">${layer.displayName}</span>
               ${layer.isLocked ? '<span class="material-symbols-outlined text-[11px] text-amber-400 flex-shrink-0" title="Locked">lock</span>' : ''}
@@ -4595,7 +4591,7 @@
               <span class="text-[9px] text-zinc-500 font-bold ml-auto flex-shrink-0">z:${layer.zIndex}</span>
             </button>
             <div class="flex items-center gap-1 flex-shrink-0 ml-1">
-              <button onclick="toggleLayerVisibilityByRef(event)" class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded" title="${layer.isHidden ? 'Show Element' : 'Hide Element'}">
+              <button onclick="toggleLayerVisibilityByRef(event)" ${canRunLayerActions ? '' : 'disabled'} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="${layer.isHidden ? 'Show Element' : 'Hide Element'}">
                 <span class="material-symbols-outlined text-[12px]">${layer.isHidden ? 'visibility' : 'visibility_off'}</span>
               </button>
               <button onclick="changeLayerZIndexByRef(event, 'forward')" ${layerOrderActionState.canBringForward ? '' : 'disabled'} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Bring Forward">

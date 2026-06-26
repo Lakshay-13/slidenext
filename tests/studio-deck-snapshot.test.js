@@ -139,6 +139,78 @@ test('buildStudioDeckSnapshot merges live layer snapshots onto canonical slides 
   });
 });
 
+test('buildStudioDeckSnapshot preserves canonical layer snapshots when live slide elements are unavailable', () => {
+  const result = deckSnapshot.buildStudioDeckSnapshot(null, {
+    includeLayers: true,
+    buildCanonicalDeck() {
+      return {
+        slides: [
+          {
+            id: 'slide-1',
+            title: 'Intro',
+            nodes: [
+              {
+                id: 'node-1',
+                type: 'heading',
+                text: 'Welcome',
+                layout: { zIndex: 4 },
+                visibility: { hidden: false, locked: false }
+              },
+              {
+                id: 'node-2',
+                type: 'image',
+                attributes: { src: '/assets/diagram.png' },
+                layout: { zIndex: 2 },
+                visibility: { hidden: true, locked: true }
+              }
+            ]
+          }
+        ]
+      };
+    },
+    getActiveSlide() {
+      return null;
+    },
+    getActiveSlideId() {
+      return '';
+    }
+  });
+
+  assert.deepEqual(result, {
+    activeSlideId: 'slide-1',
+    activeSlideIndex: 0,
+    slides: [
+      {
+        id: 'slide-1',
+        index: 0,
+        title: 'Intro',
+        backgroundLabel: 'Default',
+        elementCount: 2,
+        elements: [
+          {
+            id: 'node-1',
+            typeIcon: 'title',
+            displayName: 'Heading: "Welcome"',
+            zIndex: '4',
+            isLocked: false,
+            isHidden: false,
+            isSelected: false
+          },
+          {
+            id: 'node-2',
+            typeIcon: 'image',
+            displayName: 'Image: "diagram.png"',
+            zIndex: '2',
+            isLocked: true,
+            isHidden: true,
+            isSelected: false
+          }
+        ]
+      }
+    ]
+  });
+});
+
 test('buildStudioDeckSnapshot falls back to the DOM snapshot when the canonical deck is malformed', () => {
   const doc = { label: 'doc' };
   const result = deckSnapshot.buildStudioDeckSnapshot(doc, {

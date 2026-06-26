@@ -129,3 +129,77 @@ test('updateLayersList disables row layer controls when a layer cannot move in t
   assert.equal(hasDisabledAttribute(lockedFrontLayerButtons.backwardAttrs), true);
   assert.equal(getIframeDocCalls, 1);
 });
+
+test('updateLayersList renders canonical layer snapshots when the editor frame is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateLayersListSource = extractFunctionSource(
+    fileContent,
+    'function updateLayersList() {',
+    '\n\n    function resolveLayerRowElement(row) {'
+  );
+
+  const listContainer = createListContainer();
+  let getIframeDocCalls = 0;
+  let getNormalizedSlideLayerOrderCalls = 0;
+
+  const context = {
+    SlideNextStudioEditorLayerOrder: layerOrder,
+    buildEditorDeckSnapshot() {
+      return {
+        activeSlideId: 'slide-1',
+        slides: [
+          {
+            id: 'slide-1',
+            elements: [
+              {
+                id: 'node-1',
+                displayName: 'Heading: "Welcome"',
+                typeIcon: 'title',
+                isSelected: false,
+                isLocked: false,
+                isHidden: false,
+                zIndex: '4'
+              }
+            ]
+          }
+        ]
+      };
+    },
+    document: {
+      getElementById(id) {
+        if (id === 'slideLayersList') return listContainer;
+        return null;
+      }
+    },
+    getActiveSlide() {
+      return null;
+    },
+    getElementByEditorId() {
+      return null;
+    },
+    getIframeDoc() {
+      getIframeDocCalls += 1;
+      return null;
+    },
+    getNormalizedSlideLayerOrder() {
+      getNormalizedSlideLayerOrderCalls += 1;
+      return [];
+    },
+    isElementLocked() {
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateLayersListSource, context);
+
+  context.updateLayersList();
+
+  assert.match(listContainer.innerHTML, /Heading: &quot;Welcome&quot;|Heading: "Welcome"/);
+  assert.match(listContainer.innerHTML, /selectLayerElementByRef\(event\)" disabled/);
+  const layerButtons = getLayerButtonAttributes(listContainer.innerHTML, 'Heading: "Welcome"');
+  assert.equal(hasDisabledAttribute(layerButtons.forwardAttrs), true);
+  assert.equal(hasDisabledAttribute(layerButtons.backwardAttrs), true);
+  assert.equal(getIframeDocCalls, 1);
+  assert.equal(getNormalizedSlideLayerOrderCalls, 0);
+});

@@ -54,7 +54,9 @@
       ? options.getActiveSlideId(activeSlide, doc)
       : '';
     const deckSnapshot = deckModel.buildDeckSnapshotFromCanonicalDeck(canonicalDeck, {
-      activeSlideId
+      activeSlideId,
+      includeLayers: !!options.includeLayers,
+      canonicalLayerOptions: options.canonicalLayerOptions || options
     });
 
     if (!options.includeLayers) {
