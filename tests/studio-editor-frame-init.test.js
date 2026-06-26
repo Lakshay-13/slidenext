@@ -37,6 +37,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     keydownHandlerFactory: 0,
     frameBootstrap: 0,
     updateInsertionActionState: 0,
+    updateWallpaperActionState: 0,
     syncInspectorForSelection: 0
   };
 
@@ -117,6 +118,9 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     updateInsertionActionState() {
       calls.updateInsertionActionState += 1;
     },
+    updateWallpaperActionState() {
+      calls.updateWallpaperActionState += 1;
+    },
     syncInspectorForSelection() {
       calls.syncInspectorForSelection += 1;
     }
@@ -135,6 +139,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     keydownHandlerFactory: 1,
     frameBootstrap: 1,
     updateInsertionActionState: 1,
+    updateWallpaperActionState: 1,
     syncInspectorForSelection: 1
   });
   assert.equal(iframeDoc.listeners.length, 2);

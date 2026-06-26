@@ -55,6 +55,28 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     insertShapeBtn: { disabled: false },
     insertTableBtn: { disabled: false },
     insertCodeBtn: { disabled: false },
+    wpTabSolid: { disabled: false },
+    wpTabPresets: { disabled: false },
+    wpTabCustom: { disabled: false },
+    wallpaperCustomColor: { disabled: false },
+    cgLinearBtn: { disabled: false },
+    cgRadialBtn: { disabled: false },
+    cgColor1: { disabled: false },
+    cgColor2: { disabled: false },
+    cgAngle: { disabled: false },
+    applyWallpaperToAllSlidesBtn: { disabled: false },
+    wallpaperSolidsList: {
+      buttons: [{ disabled: false }, { disabled: false }],
+      querySelectorAll(selector) {
+        return selector === 'button' ? this.buttons : [];
+      }
+    },
+    wallpaperGradientsList: {
+      buttons: [{ disabled: false }, { disabled: false }],
+      querySelectorAll(selector) {
+        return selector === 'button' ? this.buttons : [];
+      }
+    },
     slidePasteClipboardBtn: { disabled: false },
     copySelectionBtn: { disabled: false },
     pasteClipboardBtn: { disabled: false },
@@ -119,6 +141,16 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     'insertShapeBtn',
     'insertTableBtn',
     'insertCodeBtn',
+    'wpTabSolid',
+    'wpTabPresets',
+    'wpTabCustom',
+    'wallpaperCustomColor',
+    'cgLinearBtn',
+    'cgRadialBtn',
+    'cgColor1',
+    'cgColor2',
+    'cgAngle',
+    'applyWallpaperToAllSlidesBtn',
     'slidePasteClipboardBtn',
     'copySelectionBtn',
     'pasteClipboardBtn',
@@ -152,6 +184,8 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
   ].forEach((id) => {
     assert.equal(elements[id].disabled, true, `${id} should be disabled`);
   });
+  assert.deepEqual(elements.wallpaperSolidsList.buttons.map((button) => button.disabled), [true, true]);
+  assert.deepEqual(elements.wallpaperGradientsList.buttons.map((button) => button.disabled), [true, true]);
 
   context.resetStudioDeckUiState();
   assert.equal(elements.slideCountLabel.textContent, '0 / 0');
