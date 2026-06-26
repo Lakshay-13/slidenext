@@ -7,6 +7,34 @@
     root.SlideNextStudioHistory = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function resolveStudioHistoryFrameHtml(historyEntry, options = {}) {
+    const html = historyEntry && typeof historyEntry.html === 'string' ? historyEntry.html : '';
+    if (html) {
+      return html;
+    }
+
+    const canonicalDeck = historyEntry && historyEntry.canonicalDeck && typeof historyEntry.canonicalDeck === 'object'
+      ? historyEntry.canonicalDeck
+      : null;
+    const buildDeckSourceHtml = typeof options.buildDeckSourceHtml === 'function'
+      ? options.buildDeckSourceHtml
+      : typeof globalThis !== 'undefined'
+        && globalThis.SlideNextDeckHtml
+        && typeof globalThis.SlideNextDeckHtml.buildDeckSourceHtml === 'function'
+        ? globalThis.SlideNextDeckHtml.buildDeckSourceHtml
+        : null;
+
+    if (!canonicalDeck || !buildDeckSourceHtml) {
+      return html;
+    }
+
+    try {
+      return buildDeckSourceHtml(canonicalDeck, options.deckHtmlOptions || {});
+    } catch (err) {
+      return html;
+    }
+  }
+
   function buildStudioHistoryFrameHtml(doc, options = {}) {
     if (!doc || !doc.documentElement) return '';
 
@@ -324,7 +352,7 @@
       ? options.generateThumbnails
       : () => {};
     const doc = options.doc || null;
-    const html = historyEntry && typeof historyEntry.html === 'string' ? historyEntry.html : '';
+    const html = resolveStudioHistoryFrameHtml(historyEntry, options);
 
     replaceFrameHtml(doc, html);
     syncIframeTheme(doc);

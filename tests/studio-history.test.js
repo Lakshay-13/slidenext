@@ -81,3 +81,91 @@ test('captureStudioHistoryState keeps model-only history changes when the canoni
   assert.deepEqual(result.undoStack[1], nextEntry);
   assert.deepEqual(result.redoStack, []);
 });
+
+test('restoreStudioHistoryFrameSetup falls back to rendered canonical deck html when snapshot html is empty', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const doc = {
+    documentElement: {
+      innerHTML: ''
+    }
+  };
+  const calls = [];
+
+  const result = studioHistory.restoreStudioHistoryFrameSetup({
+    html: '',
+    canonicalDeck
+  }, {
+    doc,
+    buildDeckSourceHtml(deck, options) {
+      calls.push(['buildDeckSourceHtml', deck, options]);
+      return '<html>rendered</html>';
+    },
+    replaceFrameHtml(nextDoc, html) {
+      calls.push(['replaceFrameHtml', nextDoc, html]);
+      nextDoc.documentElement.innerHTML = html;
+    },
+    syncIframeTheme(nextDoc) {
+      calls.push(['syncIframeTheme', nextDoc]);
+    },
+    makeElementsHoverable(nextDoc) {
+      calls.push(['makeElementsHoverable', nextDoc]);
+    },
+    setupIframeDragging(nextDoc) {
+      calls.push(['setupIframeDragging', nextDoc]);
+    },
+    bindDeckNavigationSync(nextDoc) {
+      calls.push(['bindDeckNavigationSync', nextDoc]);
+    },
+    generateThumbnails(nextDoc) {
+      calls.push(['generateThumbnails', nextDoc]);
+    }
+  });
+
+  assert.equal(doc.documentElement.innerHTML, '<html>rendered</html>');
+  assert.deepEqual(calls.map(([name]) => name), [
+    'buildDeckSourceHtml',
+    'replaceFrameHtml',
+    'syncIframeTheme',
+    'makeElementsHoverable',
+    'setupIframeDragging',
+    'bindDeckNavigationSync',
+    'generateThumbnails'
+  ]);
+  assert.equal(calls[0][1], canonicalDeck);
+  assert.deepEqual(calls[0][2], {});
+  assert.equal(calls[1][1], doc);
+  assert.equal(calls[1][2], '<html>rendered</html>');
+  assert.equal(result.didRestoreDoc, true);
+  assert.equal(result.restoredHtmlLength, '<html>rendered</html>'.length);
+});
+
+test('restoreStudioHistoryFrameSetup prefers captured history html over canonical deck fallback html', () => {
+  let buildDeckSourceHtmlCalls = 0;
+  const doc = {
+    documentElement: {
+      innerHTML: ''
+    }
+  };
+
+  studioHistory.restoreStudioHistoryFrameSetup({
+    html: '<html>captured</html>',
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: [{ id: 'slide-1', nodes: [] }]
+    }
+  }, {
+    doc,
+    buildDeckSourceHtml() {
+      buildDeckSourceHtmlCalls += 1;
+      return '<html>rendered</html>';
+    }
+  });
+
+  assert.equal(doc.documentElement.innerHTML, '<html>captured</html>');
+  assert.equal(buildDeckSourceHtmlCalls, 0);
+});
