@@ -2488,12 +2488,13 @@
     }
 
     function syncInspectorForSelection() {
-      const count = selectedElements.length;
+      const liveSelectionState = SlideNextStudioEditorLiveSelection.buildStudioLiveSelectionState(selectedElements);
+      const count = liveSelectionState.count;
       updateClipboardActionState();
       updateLockActionState();
       updateVisibilityActionState();
       updateMotionActionState();
-      if (count === 0) {
+      if (!liveSelectionState.hasSelection) {
         document.getElementById('inspectorTargetLabel').innerHTML = `
           <span class="material-symbols-outlined text-[16px] text-[#7028d0]">settings_suggest</span>
           No selection active
@@ -2503,7 +2504,7 @@
         return;
       }
 
-      const el = selectedElements[0];
+      const el = liveSelectionState.primaryElement;
       const isMulti = count > 1;
       document.getElementById('inspectorTargetLabel').innerHTML = `
         <span class="material-symbols-outlined text-[16px] text-[#7028d0]">edit</span>
@@ -2549,7 +2550,7 @@
       document.getElementById('elOpacity').value = opacityVal;
       document.getElementById('opacityVal').textContent = opacityVal + '%';
 
-      const isImgOrShape = selectedElements.some(node => node.tagName.toLowerCase() === 'img' || node.classList.contains('editor-shape') || node.tagName.toLowerCase() === 'table' || node.tagName.toLowerCase() === 'div');
+      const isImgOrShape = liveSelectionState.selection.some(node => node.tagName.toLowerCase() === 'img' || node.classList.contains('editor-shape') || node.tagName.toLowerCase() === 'table' || node.tagName.toLowerCase() === 'div');
       if (isImgOrShape) {
         document.getElementById('inspectorBorderGroup').classList.remove('hidden');
         document.getElementById('elBorderStyle').value = computedStyles.borderStyle || 'none';

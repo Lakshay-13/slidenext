@@ -16,6 +16,17 @@
     return selection.filter((element) => isEligibleElement(element));
   }
 
+  function buildStudioLiveSelectionState(elements = [], options = {}) {
+    const selection = getStudioLiveSelection(elements, options);
+
+    return {
+      selection,
+      hasSelection: selection.length > 0,
+      count: selection.length,
+      primaryElement: selection[0] || null
+    };
+  }
+
   function hasStudioLockedLiveSelection(elements = [], options = {}) {
     const selection = getStudioLiveSelection(elements, options);
     const isLocked = typeof options.isLocked === 'function'
@@ -27,6 +38,7 @@
 
   return {
     getStudioLiveSelection,
+    buildStudioLiveSelectionState,
     hasStudioLockedLiveSelection
   };
 });
