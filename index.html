@@ -3344,8 +3344,7 @@
     }
 
     function applyWallpaperToAllSlides() {
-      const iframe = document.getElementById('studioFrame');
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeDoc = getIframeDoc();
       const activeSlide = getActiveSlide(iframeDoc);
       
       if (!activeSlide) return;

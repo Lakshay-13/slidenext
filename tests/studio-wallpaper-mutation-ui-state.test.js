@@ -120,3 +120,126 @@ test('applyPresetWallpaper exits cleanly when the shared iframe accessor has no 
     ['getActiveSlide', null]
   ]);
 });
+
+test('applyWallpaperToAllSlides uses the shared iframe accessor and propagates the active background to every slide', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyWallpaperToAllSlidesSource = extractFunctionSource(
+    fileContent,
+    'function applyWallpaperToAllSlides() {',
+    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+  );
+
+  const iframeDoc = { id: 'doc' };
+  const activeSlide = {
+    style: {
+      background: 'linear-gradient(red, blue)'
+    }
+  };
+  const siblingSlide = {
+    style: {
+      background: ''
+    }
+  };
+  const calls = [];
+  const context = {
+    alert(message) {
+      calls.push(['alert', message]);
+    },
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    getActiveSlide(doc) {
+      calls.push(['getActiveSlide', doc]);
+      return activeSlide;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    getSlides(doc) {
+      calls.push(['getSlides', doc]);
+      return [activeSlide, siblingSlide];
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyWallpaperToAllSlidesSource, context);
+
+  context.applyWallpaperToAllSlides();
+
+  assert.equal(activeSlide.style.background, 'linear-gradient(red, blue)');
+  assert.equal(siblingSlide.style.background, 'linear-gradient(red, blue)');
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getActiveSlide', iframeDoc],
+    ['getSlides', iframeDoc],
+    ['generateThumbnails'],
+    ['saveHistoryState'],
+    ['triggerAutoSave'],
+    ['triggerAutoVersion', 'Auto: Applied Background to All Slides'],
+    ['alert', 'Successfully applied active background paint to all slides in the deck.']
+  ]);
+});
+
+test('applyWallpaperToAllSlides exits when the shared iframe accessor has no active background', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyWallpaperToAllSlidesSource = extractFunctionSource(
+    fileContent,
+    'function applyWallpaperToAllSlides() {',
+    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+  );
+
+  const calls = [];
+  const context = {
+    alert(message) {
+      calls.push(['alert', message]);
+    },
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    getActiveSlide(doc) {
+      calls.push(['getActiveSlide', doc]);
+      return {
+        style: {
+          background: ''
+        }
+      };
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return null;
+    },
+    getSlides(doc) {
+      calls.push(['getSlides', doc]);
+      return [];
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyWallpaperToAllSlidesSource, context);
+
+  context.applyWallpaperToAllSlides();
+
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getActiveSlide', null]
+  ]);
+});
