@@ -102,6 +102,9 @@
     const nudgeSelectedElements = typeof options.nudgeSelectedElements === 'function'
       ? options.nudgeSelectedElements
       : () => {};
+    const canMutateDeck = typeof options.canMutateDeck === 'function'
+      ? options.canMutateDeck
+      : () => true;
     const buildNudgeDeltaFromKey = nudge && typeof nudge.buildStudioNudgeDeltaFromKey === 'function'
       ? nudge.buildStudioNudgeDeltaFromKey
       : () => null;
@@ -129,8 +132,9 @@
 
       const selectedElements = getFrameShortcutSelection(getSelectedElements());
       const hasSelection = selectedElements.length > 0;
+      const deckShortcutReady = canMutateDeck();
 
-      if ((event.ctrlKey || event.metaKey) && loweredKey === 'a') {
+      if (deckShortcutReady && (event.ctrlKey || event.metaKey) && loweredKey === 'a') {
         event.preventDefault();
         event.stopPropagation();
         selectAllElementsOnActiveSlide();
@@ -166,7 +170,7 @@
         copySelectedElements();
         return;
       }
-      if ((event.ctrlKey || event.metaKey) && loweredKey === 'v') {
+      if (deckShortcutReady && (event.ctrlKey || event.metaKey) && loweredKey === 'v') {
         event.preventDefault();
         event.stopPropagation();
         pasteClipboardElements();
@@ -233,6 +237,9 @@
     const nudgeSelectedElements = typeof options.nudgeSelectedElements === 'function'
       ? options.nudgeSelectedElements
       : () => {};
+    const canMutateDeck = typeof options.canMutateDeck === 'function'
+      ? options.canMutateDeck
+      : () => true;
     const buildNudgeDeltaFromKey = nudge && typeof nudge.buildStudioNudgeDeltaFromKey === 'function'
       ? nudge.buildStudioNudgeDeltaFromKey
       : () => null;
@@ -251,6 +258,7 @@
       const isBracketShortcut = event.code === 'BracketLeft' || event.code === 'BracketRight';
       const selectedElements = getFrameShortcutSelection(getSelectedElements());
       const hasSelection = selectedElements.length > 0;
+      const deckShortcutReady = canMutateDeck();
 
       if ((event.ctrlKey || event.metaKey) && loweredKey === 'z' && !event.shiftKey) {
         event.preventDefault();
@@ -262,7 +270,7 @@
         editorRedo();
         return;
       }
-      if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'a') {
+      if (!typingContext && deckShortcutReady && (event.ctrlKey || event.metaKey) && loweredKey === 'a') {
         event.preventDefault();
         selectAllElementsOnActiveSlide();
         return;
@@ -292,7 +300,7 @@
         copySelectedElements();
         return;
       }
-      if (!typingContext && (event.ctrlKey || event.metaKey) && loweredKey === 'v') {
+      if (!typingContext && deckShortcutReady && (event.ctrlKey || event.metaKey) && loweredKey === 'v') {
         event.preventDefault();
         pasteClipboardElements();
         return;

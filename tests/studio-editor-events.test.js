@@ -159,6 +159,42 @@ test('createStudioFrameKeydownHandler still honors shortcuts for live selections
   assert.equal(nudgeEvent.stopped, 1);
 });
 
+test('createStudioFrameKeydownHandler skips deck-level paste and select-all shortcuts until the active slide is ready', () => {
+  const calls = {
+    paste: 0,
+    selectAll: 0
+  };
+  const handler = events.createStudioFrameKeydownHandler({
+    getActiveElement: () => null,
+    getSelectedElements: () => [],
+    canMutateDeck: () => false,
+    pasteClipboardElements() {
+      calls.paste += 1;
+    },
+    selectAllElementsOnActiveSlide() {
+      calls.selectAll += 1;
+    }
+  });
+
+  const pasteEvent = createKeyboardEvent({
+    key: 'v',
+    ctrlKey: true
+  });
+  handler(pasteEvent);
+  assert.equal(calls.paste, 0);
+  assert.equal(pasteEvent.prevented, 0);
+  assert.equal(pasteEvent.stopped, 0);
+
+  const selectAllEvent = createKeyboardEvent({
+    key: 'a',
+    ctrlKey: true
+  });
+  handler(selectAllEvent);
+  assert.equal(calls.selectAll, 0);
+  assert.equal(selectAllEvent.prevented, 0);
+  assert.equal(selectAllEvent.stopped, 0);
+});
+
 test('createStudioGlobalKeydownHandler ignores stale disconnected selections for selection-only shortcuts', () => {
   const calls = {
     arrange: [],
@@ -297,4 +333,39 @@ test('createStudioGlobalKeydownHandler still honors shortcuts for live selection
   handler(nudgeEvent);
   assert.deepEqual(calls.nudge, [[-10, 0]]);
   assert.equal(nudgeEvent.prevented, 1);
+});
+
+test('createStudioGlobalKeydownHandler skips deck-level paste and select-all shortcuts until the active slide is ready', () => {
+  const calls = {
+    paste: 0,
+    selectAll: 0
+  };
+  const handler = events.createStudioGlobalKeydownHandler({
+    isEditorActive: () => true,
+    getActiveElement: () => null,
+    getSelectedElements: () => [],
+    canMutateDeck: () => false,
+    pasteClipboardElements() {
+      calls.paste += 1;
+    },
+    selectAllElementsOnActiveSlide() {
+      calls.selectAll += 1;
+    }
+  });
+
+  const pasteEvent = createKeyboardEvent({
+    key: 'v',
+    ctrlKey: true
+  });
+  handler(pasteEvent);
+  assert.equal(calls.paste, 0);
+  assert.equal(pasteEvent.prevented, 0);
+
+  const selectAllEvent = createKeyboardEvent({
+    key: 'a',
+    ctrlKey: true
+  });
+  handler(selectAllEvent);
+  assert.equal(calls.selectAll, 0);
+  assert.equal(selectAllEvent.prevented, 0);
 });

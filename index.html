@@ -1171,6 +1171,7 @@
         },
         getActiveElement: () => document.activeElement,
         getSelectedElements: () => selectedElements,
+        canMutateDeck: () => !!getActiveSlide(),
         editorUndo,
         editorRedo,
         selectAllElementsOnActiveSlide,
@@ -1660,6 +1661,7 @@
       iframeDoc.addEventListener('keydown', SlideNextStudioEditorEvents.createStudioFrameKeydownHandler({
         getActiveElement: () => iframeDoc.activeElement,
         getSelectedElements: () => selectedElements,
+        canMutateDeck: () => !!getActiveSlide(iframeDoc),
         editorUndo,
         editorRedo,
         selectAllElementsOnActiveSlide,
