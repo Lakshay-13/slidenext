@@ -92,6 +92,67 @@ test('buildStudioTransformSelectionState returns filtered live selections and tr
   });
 });
 
+test('buildStudioTransformPointerSelectionPlan makes transform target reselection explicit', () => {
+  const dragTarget = { id: 'node-1' };
+
+  assert.deepEqual(transformState.buildStudioTransformPointerSelectionPlan({
+    selection: []
+  }, {}), {
+    hasTransformTarget: false,
+    shouldSelectTarget: false,
+    selectOptions: {
+      additive: false,
+      toggle: false
+    },
+    shouldFallbackSelectTarget: false
+  });
+
+  assert.deepEqual(transformState.buildStudioTransformPointerSelectionPlan({
+    selection: []
+  }, {
+    dragTarget,
+    shiftKey: true
+  }), {
+    hasTransformTarget: true,
+    shouldSelectTarget: true,
+    selectOptions: {
+      additive: true,
+      toggle: true
+    },
+    shouldFallbackSelectTarget: false
+  });
+
+  assert.deepEqual(transformState.buildStudioTransformPointerSelectionPlan({
+    selection: []
+  }, {
+    dragTarget,
+    didAttemptSelection: true
+  }), {
+    hasTransformTarget: true,
+    shouldSelectTarget: true,
+    selectOptions: {
+      additive: false,
+      toggle: false
+    },
+    shouldFallbackSelectTarget: true
+  });
+
+  assert.deepEqual(transformState.buildStudioTransformPointerSelectionPlan({
+    selection: [dragTarget]
+  }, {
+    dragTarget,
+    handle: { id: 'handle' }
+  }), {
+    hasTransformTarget: true,
+    shouldSelectTarget: false,
+    selectOptions: {
+      additive: false,
+      toggle: false
+    },
+    shouldFallbackSelectTarget: false
+  });
+});
+
 test('isStudioFreeformPositioned only accepts absolute and fixed positioned elements', () => {
   const view = {
     getComputedStyle(element) {

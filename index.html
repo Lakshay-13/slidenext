@@ -2960,15 +2960,27 @@
         const overlay = e.target.closest('#editorSelectionOverlay');
         let dragTarget = resolveEditableTarget(e.target);
 
-        if (!handle && !overlay && !dragTarget) return;
-
         let transformSelectionState = getTransformSelectionState();
-        if (dragTarget && !transformSelectionState.selection.includes(dragTarget)) {
-          selectElement(dragTarget, { additive: e.shiftKey, toggle: e.shiftKey });
+        let pointerSelectionPlan = SlideNextStudioEditorTransform.buildStudioTransformPointerSelectionPlan(transformSelectionState, {
+          handle,
+          overlay,
+          dragTarget,
+          shiftKey: e.shiftKey
+        });
+        if (!pointerSelectionPlan.hasTransformTarget) return;
+        if (pointerSelectionPlan.shouldSelectTarget) {
+          selectElement(dragTarget, pointerSelectionPlan.selectOptions);
           transformSelectionState = getTransformSelectionState();
+          pointerSelectionPlan = SlideNextStudioEditorTransform.buildStudioTransformPointerSelectionPlan(transformSelectionState, {
+            handle,
+            overlay,
+            dragTarget,
+            shiftKey: e.shiftKey,
+            didAttemptSelection: true
+          });
         }
 
-        if (!handle && !overlay && dragTarget && transformSelectionState.selection.length === 0) {
+        if (pointerSelectionPlan.shouldFallbackSelectTarget) {
           selectElement(dragTarget);
           transformSelectionState = getTransformSelectionState();
         }

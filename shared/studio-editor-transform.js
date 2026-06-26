@@ -36,6 +36,25 @@
     };
   }
 
+  function buildStudioTransformPointerSelectionPlan(selectionState = {}, options = {}) {
+    const selection = Array.isArray(selectionState.selection) ? selectionState.selection : [];
+    const dragTarget = options.dragTarget || null;
+    const hasHandle = !!options.handle;
+    const hasOverlay = !!options.overlay;
+    const didAttemptSelection = !!options.didAttemptSelection;
+    const targetIsSelected = !!dragTarget && selection.includes(dragTarget);
+
+    return {
+      hasTransformTarget: hasHandle || hasOverlay || !!dragTarget,
+      shouldSelectTarget: !!dragTarget && !targetIsSelected,
+      selectOptions: {
+        additive: !!options.shiftKey,
+        toggle: !!options.shiftKey
+      },
+      shouldFallbackSelectTarget: !hasHandle && !hasOverlay && !!dragTarget && selection.length === 0 && didAttemptSelection
+    };
+  }
+
   function canStudioTransformSelection(elements = [], options = {}) {
     return buildStudioTransformSelectionState(elements, options).canTransform;
   }
@@ -493,6 +512,7 @@
   return {
     getStudioTransformSelection,
     buildStudioTransformSelectionState,
+    buildStudioTransformPointerSelectionPlan,
     canStudioTransformSelection,
     isStudioFreeformPositioned,
     buildStudioTransformSizingLockState,
