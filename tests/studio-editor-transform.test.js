@@ -615,6 +615,49 @@ test('cleanupStudioTransformSession tolerates missing capture state and null ses
   });
 });
 
+test('finalizeStudioTransformSession reports move state while delegating cleanup', () => {
+  const element = {
+    style: {},
+    classList: createClassList()
+  };
+  const overlay = {
+    classList: createClassList()
+  };
+  element.classList.add('editor-dragging');
+  overlay.classList.add('drag-preview');
+
+  const session = {
+    moved: true,
+    pointerId: 11,
+    materialized: true,
+    captureTarget: {
+      hasPointerCapture(pointerId) {
+        return pointerId === 11;
+      },
+      releasePointerCapture() {}
+    },
+    items: [{ element }],
+    overlay
+  };
+
+  assert.deepEqual(transformState.finalizeStudioTransformSession(session), {
+    didFinalize: true,
+    didMove: true,
+    didReleasePointerCapture: true,
+    session
+  });
+  assert.equal(session.materialized, false);
+  assert.equal(element.classList.contains('editor-dragging'), false);
+  assert.equal(overlay.classList.contains('drag-preview'), false);
+
+  assert.deepEqual(transformState.finalizeStudioTransformSession(null), {
+    didFinalize: false,
+    didMove: false,
+    didReleasePointerCapture: false,
+    session: null
+  });
+});
+
 test('buildStudioTransformSessionItem captures transform geometry and sizing locks from an element', () => {
   const parent = {
     getBoundingClientRect() {

@@ -389,6 +389,26 @@
     };
   }
 
+  function finalizeStudioTransformSession(session = {}, options = {}) {
+    if (!session) {
+      return {
+        didFinalize: false,
+        didMove: false,
+        didReleasePointerCapture: false,
+        session
+      };
+    }
+
+    const didMove = !!session.moved;
+    const cleanupResult = cleanupStudioTransformSession(session, options);
+    return {
+      didFinalize: true,
+      didMove,
+      didReleasePointerCapture: cleanupResult.didReleasePointerCapture,
+      session
+    };
+  }
+
   function buildStudioTransformSessionItem(element, options = {}) {
     if (!element || typeof element.getBoundingClientRect !== 'function') {
       return null;
@@ -527,6 +547,7 @@
     materializeStudioTransformSession,
     progressStudioTransformSession,
     cleanupStudioTransformSession,
+    finalizeStudioTransformSession,
     buildStudioTransformSessionItem,
     buildStudioTransformSession,
     buildStudioTransformMotionState,
