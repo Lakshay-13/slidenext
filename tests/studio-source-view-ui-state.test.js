@@ -76,3 +76,41 @@ test('resetStudioSourceViewUiState clears stale source modal chrome', () => {
   assert.equal(elements.sourceViewModalContent.classList.contains('scale-95'), true);
   assert.equal(elements.sourceViewModalContent.classList.contains('scale-100'), false);
 });
+
+test('buildEditorSourceHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSourceHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorSourceHtml(doc = getIframeDoc()) {',
+    '\n\n    function launchPresentationHtml(html, startSlideIdx) {'
+  );
+
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      buildStudioSourceHtml(doc, options) {
+        calls.push({ doc, options });
+        return options.buildFallbackHtml(null);
+      }
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('canonical deck should not be requested for this fallback');
+    },
+    buildPersistableDeckHtml() {
+      throw new Error('persistable html should not be rebuilt without a live document');
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '<html>persisted-baseline</html>'
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorSourceHtmlSource, context);
+
+  const result = context.buildEditorSourceHtml();
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].doc, null);
+  assert.equal(result, '<html>persisted-baseline</html>');
+});
