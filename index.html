@@ -2808,16 +2808,17 @@
       return true;
     }
 
-    function updateClipboardActionState() {
+    function updateClipboardActionState(doc = getIframeDoc()) {
       const clipboardActionState = SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
         isLocked: isElementLocked
       });
+      const hasActiveSlide = !!getActiveSlide(doc);
       const copyBtn = document.getElementById('copySelectionBtn');
       const pasteBtn = document.getElementById('pasteClipboardBtn');
       const slidePasteBtn = document.getElementById('slidePasteClipboardBtn');
-      if (copyBtn) copyBtn.disabled = !clipboardActionState.canCopy;
-      if (pasteBtn) pasteBtn.disabled = !clipboardActionState.canPaste;
-      if (slidePasteBtn) slidePasteBtn.disabled = !clipboardActionState.canPaste;
+      if (copyBtn) copyBtn.disabled = !(clipboardActionState.canCopy && hasActiveSlide);
+      if (pasteBtn) pasteBtn.disabled = !(clipboardActionState.canPaste && hasActiveSlide);
+      if (slidePasteBtn) slidePasteBtn.disabled = !(clipboardActionState.canPaste && hasActiveSlide);
     }
 
     function sanitizeDuplicatedSubtree(root) {
