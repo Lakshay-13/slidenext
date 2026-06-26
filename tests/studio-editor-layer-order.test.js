@@ -17,6 +17,55 @@ test('getStudioLayerOrderSelection filters stale targets and preserves current l
   ), [first, third]);
 });
 
+test('buildStudioLayerOrderActionState disables locked and no-op layer arrangement actions', () => {
+  const first = { id: 'first', isConnected: true, locked: false };
+  const second = { id: 'second', isConnected: true, locked: false };
+  const third = { id: 'third', isConnected: true, locked: true };
+  const orderedElements = [first, second, third];
+
+  assert.deepEqual(layerOrder.buildStudioLayerOrderActionState([second], {
+    orderedElements,
+    isLocked: (element) => !!element.locked
+  }), {
+    selection: [second],
+    hasSelection: true,
+    hasLockedSelection: false,
+    canReorder: true,
+    canBringToFront: true,
+    canSendToBack: true,
+    canBringForward: true,
+    canSendBackward: true
+  });
+
+  assert.deepEqual(layerOrder.buildStudioLayerOrderActionState([third], {
+    orderedElements,
+    isLocked: (element) => !!element.locked
+  }), {
+    selection: [third],
+    hasSelection: true,
+    hasLockedSelection: true,
+    canReorder: false,
+    canBringToFront: false,
+    canSendToBack: false,
+    canBringForward: false,
+    canSendBackward: false
+  });
+
+  assert.deepEqual(layerOrder.buildStudioLayerOrderActionState([first], {
+    orderedElements,
+    isLocked: (element) => !!element.locked
+  }), {
+    selection: [first],
+    hasSelection: true,
+    hasLockedSelection: false,
+    canReorder: true,
+    canBringToFront: true,
+    canSendToBack: false,
+    canBringForward: true,
+    canSendBackward: false
+  });
+});
+
 test('buildStudioReorderedLayerOrder moves targets to front or back in layer order', () => {
   const first = { id: 'first', isConnected: true };
   const second = { id: 'second', isConnected: true };

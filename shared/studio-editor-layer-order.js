@@ -21,6 +21,38 @@
     return orderedElements.filter((element) => eligibleSelection.includes(element));
   }
 
+  function buildStudioLayerOrderActionState(targetElements = [], options = {}) {
+    const orderedElements = Array.isArray(options.orderedElements) ? options.orderedElements : [];
+    const selection = getStudioLayerOrderSelection(targetElements, {
+      ...options,
+      orderedElements
+    });
+    const isLocked = typeof options.isLocked === 'function'
+      ? options.isLocked
+      : () => false;
+    const hasSelection = selection.length > 0;
+    const hasLockedSelection = selection.some((element) => isLocked(element));
+    const canReorder = hasSelection && !hasLockedSelection && orderedElements.length > 0;
+
+    const canRunAction = (action) => {
+      if (!canReorder) {
+        return false;
+      }
+      return buildStudioReorderedLayerOrder(orderedElements, selection, action, options).didChange;
+    };
+
+    return {
+      selection,
+      hasSelection,
+      hasLockedSelection,
+      canReorder,
+      canBringToFront: canRunAction('front'),
+      canSendToBack: canRunAction('back'),
+      canBringForward: canRunAction('forward'),
+      canSendBackward: canRunAction('backward')
+    };
+  }
+
   function buildStudioReorderedLayerOrder(initialOrder = [], targetElements = [], action, options = {}) {
     const nextOrder = Array.isArray(initialOrder) ? [...initialOrder] : [];
     if (nextOrder.length === 0) {
@@ -75,6 +107,7 @@
 
   return {
     getStudioLayerOrderSelection,
+    buildStudioLayerOrderActionState,
     buildStudioReorderedLayerOrder
   };
 });
