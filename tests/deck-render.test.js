@@ -294,6 +294,60 @@ test('renderCanonicalDeckHtml emits canonical description and keyword metadata w
   assert.match(html, /<meta name="keywords" content="AI, Slides, Exports">/);
 });
 
+test('renderCanonicalDeckHtml emits a favicon link when canonical metadata icon is an asset href', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    metadata: {
+      title: 'Canonical Icon Deck',
+      icon: '/assets/favicon.png'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<link rel="icon" href="\/assets\/favicon\.png">/);
+});
+
+test('renderCanonicalDeckHtml skips favicon link emission for symbolic canonical metadata icons', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    metadata: {
+      title: 'Canonical Icon Deck',
+      icon: 'science'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.doesNotMatch(html, /<link rel="icon"/);
+});
+
 test('renderCanonicalDeckHtml falls back to canonical slide background metadata when source attributes are absent', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [

@@ -50,6 +50,16 @@
     return `<meta name="${escapeAttribute(name)}" content="${escapeAttribute(normalizedContent)}">`;
   }
 
+  function looksLikeAssetHref(value) {
+    const normalizedValue = normalizeString(value).trim();
+    if (!normalizedValue) {
+      return false;
+    }
+    return /^(?:\/|\.\/|\.\.\/|https?:\/\/|data:|blob:)/i.test(normalizedValue)
+      || /[/?#]/.test(normalizedValue)
+      || /\.[a-z0-9]{2,8}(?:[?#].*)?$/i.test(normalizedValue);
+  }
+
   function normalizeAspectRatioCssValue(value) {
     const normalizedValue = normalizeString(value).trim();
     if (!normalizedValue) {
@@ -273,6 +283,10 @@
     const title = normalizeString(metadata.title, 'SlideNext Deck');
     const descriptionMetaTag = buildMetaTag('description', metadata.description);
     const keywordsMetaTag = buildMetaTag('keywords', Array.isArray(metadata.tags) ? metadata.tags.join(', ') : '');
+    const iconHref = normalizeString(metadata.icon).trim();
+    const iconLinkTag = looksLikeAssetHref(iconHref)
+      ? `<link rel="icon" href="${escapeAttribute(iconHref)}">`
+      : '';
     const layoutCssUnit = normalizeString(layoutSize.unit, 'px').trim() || 'px';
     const layoutAspectRatio = normalizeAspectRatioCssValue(layout.aspectRatio);
     const layoutStyleLines = [];
@@ -314,6 +328,7 @@
       `<title>${escapeHtml(title)}</title>`,
       descriptionMetaTag,
       keywordsMetaTag,
+      iconLinkTag,
       deckLayoutStyleBlock,
       ...themeStyleBlocks
     ].filter(Boolean).join('\n');
