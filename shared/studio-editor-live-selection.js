@@ -27,6 +27,13 @@
     };
   }
 
+  function isStudioLiveSelectedElement(elements = [], candidate, options = {}) {
+    if (!candidate) {
+      return false;
+    }
+    return getStudioLiveSelection(elements, options).includes(candidate);
+  }
+
   function hasStudioLockedLiveSelection(elements = [], options = {}) {
     const selection = getStudioLiveSelection(elements, options);
     const isLocked = typeof options.isLocked === 'function'
@@ -39,6 +46,7 @@
   return {
     getStudioLiveSelection,
     buildStudioLiveSelectionState,
+    isStudioLiveSelectedElement,
     hasStudioLockedLiveSelection
   };
 });

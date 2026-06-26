@@ -37,6 +37,15 @@ test('buildStudioLiveSelectionState derives count and primary live element', () 
   });
 });
 
+test('isStudioLiveSelectedElement only matches connected selected elements', () => {
+  const stale = { id: 1, isConnected: false };
+  const live = { id: 2, isConnected: true };
+
+  assert.equal(liveSelection.isStudioLiveSelectedElement([stale, live], stale), false);
+  assert.equal(liveSelection.isStudioLiveSelectedElement([stale, live], live), true);
+  assert.equal(liveSelection.isStudioLiveSelectedElement([stale], null), false);
+});
+
 test('hasStudioLockedLiveSelection only considers connected selections', () => {
   assert.equal(liveSelection.hasStudioLockedLiveSelection([
     { id: 1, isConnected: false },

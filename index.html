@@ -2154,7 +2154,7 @@
         getElementId: assignEditorElementId,
         isElementLocked,
         isElementHidden,
-        isSelectedElement: candidate => selectedElements.includes(candidate)
+        isSelectedElement: candidate => SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement(selectedElements, candidate)
       });
     }
 
@@ -4579,7 +4579,7 @@
         if (!didChange) return;
         
         // Update selection properties panel if currently selected
-        if (selectedElements.includes(el)) {
+        if (SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement(selectedElements, el)) {
           document.getElementById('elZIndex').value = el.style.zIndex || 0;
         }
         
