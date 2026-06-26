@@ -2126,9 +2126,7 @@
       }
       const currentMetadata = currentPresentationMetadata
         || buildCurrentPresentationMetadataSeed(presentationUrl, presentationTitle);
-      currentPresentationMetadata = SlideNextPresentationMetadata.mergePresentationCanonicalDeck(currentMetadata, canonicalDeck, {
-        isCanonicalDeck: (deck) => SlideNextCanonicalDeck.isCanonicalDeck(deck)
-      });
+      currentPresentationMetadata = SlideNextPresentationMetadata.mergePresentationCanonicalDeck(currentMetadata, canonicalDeck);
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
@@ -3584,8 +3582,7 @@
         {
           isAutoSave: !!options.isAutoSave,
           versionLabel: options.versionLabel,
-          canonicalDeck: buildEditorCanonicalDeck(doc),
-          isCanonicalDeck: (deck) => SlideNextCanonicalDeck.isCanonicalDeck(deck)
+          canonicalDeck: buildEditorCanonicalDeck(doc)
         }
       );
     }
@@ -3624,7 +3621,6 @@
         {
           shouldUpdatePersistedHtml: !hasPersistedCurrentHtml,
           canonicalDeck: saveRequestBody && saveRequestBody.canonicalDeck,
-          isCanonicalDeck: (deck) => SlideNextCanonicalDeck.isCanonicalDeck(deck),
           sessionToken: options.sessionToken
         }
       );
@@ -3684,7 +3680,6 @@
           cleanHtml,
           {
             canonicalDeck: saveRequestBody.canonicalDeck,
-            isCanonicalDeck: (deck) => SlideNextCanonicalDeck.isCanonicalDeck(deck),
             sessionToken: scheduledSessionToken
           }
         );

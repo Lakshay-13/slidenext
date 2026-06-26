@@ -17,6 +17,61 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata updates for the active presentation', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {',
+    '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
+  );
+
+  const context = {
+    SlideNextPresentationMetadata: require('../shared/presentation-metadata.js'),
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    currentPresentationMetadata: null,
+    buildCurrentPresentationMetadataSeed(presentationUrl, presentationTitle) {
+      return {
+        id: 'onboarding-presentation',
+        title: presentationTitle,
+        sourcePath: presentationUrl
+      };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setCurrentPresentationCanonicalDeckSource, context);
+
+  context.setCurrentPresentationCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+
+  assert.deepEqual(context.currentPresentationMetadata, {
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: 'presentations/onboarding-presentation/index.html',
+    canonicalDeck: canonicalDeckModel.createCanonicalDeck({
+      metadata: {
+        title: 'Project Onboarding'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    })
+  });
+});
+
 test('saveVersionCheckpoint refreshes persisted html and canonical metadata after a successful save rewrite', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const saveVersionCheckpointSource = extractFunctionSource(
