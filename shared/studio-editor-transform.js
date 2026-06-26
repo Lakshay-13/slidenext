@@ -55,6 +55,62 @@
     };
   }
 
+  function resolveStudioTransformPointerSelectionState(options = {}) {
+    const getSelectionState = typeof options.getSelectionState === 'function'
+      ? options.getSelectionState
+      : () => ({ selection: [], canTransform: false });
+    const selectElement = typeof options.selectElement === 'function'
+      ? options.selectElement
+      : () => {};
+    const planOptions = {
+      handle: options.handle,
+      overlay: options.overlay,
+      dragTarget: options.dragTarget,
+      shiftKey: !!options.shiftKey
+    };
+
+    let selectionState = getSelectionState();
+    let pointerSelectionPlan = buildStudioTransformPointerSelectionPlan(selectionState, planOptions);
+    let didSelectTarget = false;
+    let didFallbackSelectTarget = false;
+
+    if (!pointerSelectionPlan.hasTransformTarget) {
+      return {
+        selectionState,
+        pointerSelectionPlan,
+        didSelectTarget,
+        didFallbackSelectTarget
+      };
+    }
+
+    if (pointerSelectionPlan.shouldSelectTarget) {
+      selectElement(options.dragTarget, pointerSelectionPlan.selectOptions);
+      didSelectTarget = true;
+      selectionState = getSelectionState();
+      pointerSelectionPlan = buildStudioTransformPointerSelectionPlan(selectionState, {
+        ...planOptions,
+        didAttemptSelection: true
+      });
+    }
+
+    if (pointerSelectionPlan.shouldFallbackSelectTarget) {
+      selectElement(options.dragTarget);
+      didFallbackSelectTarget = true;
+      selectionState = getSelectionState();
+      pointerSelectionPlan = buildStudioTransformPointerSelectionPlan(selectionState, {
+        ...planOptions,
+        didAttemptSelection: true
+      });
+    }
+
+    return {
+      selectionState,
+      pointerSelectionPlan,
+      didSelectTarget,
+      didFallbackSelectTarget
+    };
+  }
+
   function shouldHandleStudioTransformPointerEvent(session = {}, event = {}) {
     if (!session) {
       return false;
@@ -566,6 +622,7 @@
     getStudioTransformSelection,
     buildStudioTransformSelectionState,
     buildStudioTransformPointerSelectionPlan,
+    resolveStudioTransformPointerSelectionState,
     shouldHandleStudioTransformPointerEvent,
     canStudioTransformSelection,
     isStudioFreeformPositioned,

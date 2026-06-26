@@ -2959,31 +2959,17 @@
         const overlay = e.target.closest('#editorSelectionOverlay');
         let dragTarget = resolveEditableTarget(e.target);
 
-        let transformSelectionState = getTransformSelectionState();
-        let pointerSelectionPlan = SlideNextStudioEditorTransform.buildStudioTransformPointerSelectionPlan(transformSelectionState, {
+        const pointerSelectionState = SlideNextStudioEditorTransform.resolveStudioTransformPointerSelectionState({
+          getSelectionState: getTransformSelectionState,
+          selectElement,
           handle,
           overlay,
           dragTarget,
           shiftKey: e.shiftKey
         });
-        if (!pointerSelectionPlan.hasTransformTarget) return;
-        if (pointerSelectionPlan.shouldSelectTarget) {
-          selectElement(dragTarget, pointerSelectionPlan.selectOptions);
-          transformSelectionState = getTransformSelectionState();
-          pointerSelectionPlan = SlideNextStudioEditorTransform.buildStudioTransformPointerSelectionPlan(transformSelectionState, {
-            handle,
-            overlay,
-            dragTarget,
-            shiftKey: e.shiftKey,
-            didAttemptSelection: true
-          });
-        }
+        if (!pointerSelectionState.pointerSelectionPlan.hasTransformTarget) return;
 
-        if (pointerSelectionPlan.shouldFallbackSelectTarget) {
-          selectElement(dragTarget);
-          transformSelectionState = getTransformSelectionState();
-        }
-
+        const transformSelectionState = pointerSelectionState.selectionState;
         if (!transformSelectionState.canTransform) return;
         const dragSelection = transformSelectionState.selection;
 

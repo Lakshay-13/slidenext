@@ -153,6 +153,62 @@ test('buildStudioTransformPointerSelectionPlan makes transform target reselectio
   });
 });
 
+test('resolveStudioTransformPointerSelectionState applies transform target reselection and fallback selection', () => {
+  const dragTarget = { id: 'node-1' };
+  const selectionStates = [
+    { selection: [], canTransform: false },
+    { selection: [], canTransform: false },
+    { selection: [dragTarget], canTransform: true }
+  ];
+  const selectedCalls = [];
+
+  assert.deepEqual(transformState.resolveStudioTransformPointerSelectionState({
+    dragTarget,
+    getSelectionState() {
+      return selectionStates.shift();
+    },
+    selectElement(target, options) {
+      selectedCalls.push({ target, options });
+    }
+  }), {
+    selectionState: { selection: [dragTarget], canTransform: true },
+    pointerSelectionPlan: {
+      hasTransformTarget: true,
+      shouldSelectTarget: false,
+      selectOptions: {
+        additive: false,
+        toggle: false
+      },
+      shouldFallbackSelectTarget: false
+    },
+    didSelectTarget: true,
+    didFallbackSelectTarget: true
+  });
+  assert.deepEqual(selectedCalls, [
+    { target: dragTarget, options: { additive: false, toggle: false } },
+    { target: dragTarget, options: undefined }
+  ]);
+
+  assert.deepEqual(transformState.resolveStudioTransformPointerSelectionState({
+    getSelectionState() {
+      return { selection: [], canTransform: false };
+    }
+  }), {
+    selectionState: { selection: [], canTransform: false },
+    pointerSelectionPlan: {
+      hasTransformTarget: false,
+      shouldSelectTarget: false,
+      selectOptions: {
+        additive: false,
+        toggle: false
+      },
+      shouldFallbackSelectTarget: false
+    },
+    didSelectTarget: false,
+    didFallbackSelectTarget: false
+  });
+});
+
 test('shouldHandleStudioTransformPointerEvent only accepts events for the active transform pointer', () => {
   assert.equal(transformState.shouldHandleStudioTransformPointerEvent({
     pointerId: 7
