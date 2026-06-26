@@ -2801,27 +2801,35 @@
       if (!doc || !slide || !items || items.length === 0) return [];
 
       const slideMetrics = getSlideMetrics(slide);
-      const offset = DUPLICATE_OFFSET_PX * Math.max(1, offsetMultiplier);
       const inserted = [];
 
       items.forEach(item => {
         const clone = item.template.cloneNode(true);
         makeElementsHoverable(clone);
+        const insertionTarget = SlideNextStudioEditorClipboard.resolveStudioClipboardInsertionTarget(item, {
+          slide,
+          isOnActiveSlide: (element) => !!(element && slide.contains(element))
+        });
 
-        if (item.isAbsolutelyPositioned) {
-          const parent = item.sourceParent && item.sourceParent.isConnected && slide.contains(item.sourceParent) ? item.sourceParent : slide;
+        if (insertionTarget.mode === 'absolute') {
+          const parent = insertionTarget.parent || slide;
           const parentRect = parent.getBoundingClientRect();
           const parentOnSlide = getRectOnSlide(parentRect, slideMetrics);
-          const nextAbsLeft = clampValue(item.startAbsLeft + offset, 0, Math.max(0, slideMetrics.logicalWidth - item.width));
-          const nextAbsTop = clampValue(item.startAbsTop + offset, 0, Math.max(0, slideMetrics.logicalHeight - item.height));
+          const absolutePlacement = SlideNextStudioEditorClipboard.buildStudioClipboardAbsolutePlacement(item, offsetMultiplier, {
+            offsetPx: DUPLICATE_OFFSET_PX,
+            slideWidth: slideMetrics.logicalWidth,
+            slideHeight: slideMetrics.logicalHeight,
+            parentLeft: parentOnSlide.left,
+            parentTop: parentOnSlide.top
+          });
 
           clone.style.position = 'absolute';
           clone.style.margin = '0';
-          clone.style.left = `${nextAbsLeft - parentOnSlide.left}px`;
-          clone.style.top = `${nextAbsTop - parentOnSlide.top}px`;
+          clone.style.left = `${absolutePlacement.nextLeft}px`;
+          clone.style.top = `${absolutePlacement.nextTop}px`;
           parent.appendChild(clone);
-        } else if (item.sourceElement && item.sourceElement.isConnected && slide.contains(item.sourceElement)) {
-          item.sourceElement.insertAdjacentElement('afterend', clone);
+        } else if (insertionTarget.mode === 'after-source' && insertionTarget.anchor) {
+          insertionTarget.anchor.insertAdjacentElement('afterend', clone);
         } else {
           slide.appendChild(clone);
         }

@@ -56,11 +56,69 @@
     };
   }
 
+  function resolveStudioClipboardInsertionTarget(item = {}, options = {}) {
+    const slide = options.slide || null;
+    const isConnected = typeof options.isConnected === 'function'
+      ? options.isConnected
+      : (element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected);
+    const isOnActiveSlide = typeof options.isOnActiveSlide === 'function'
+      ? options.isOnActiveSlide
+      : () => false;
+
+    if (item.isAbsolutelyPositioned) {
+      const sourceParent = item.sourceParent;
+      return {
+        mode: 'absolute',
+        parent: sourceParent && isConnected(sourceParent) && isOnActiveSlide(sourceParent)
+          ? sourceParent
+          : slide
+      };
+    }
+
+    const sourceElement = item.sourceElement;
+    if (sourceElement && isConnected(sourceElement) && isOnActiveSlide(sourceElement)) {
+      return {
+        mode: 'after-source',
+        anchor: sourceElement,
+        parent: slide
+      };
+    }
+
+    return {
+      mode: 'append-to-slide',
+      parent: slide
+    };
+  }
+
+  function buildStudioClipboardAbsolutePlacement(item = {}, offsetMultiplier = 1, options = {}) {
+    const slideWidth = Number.isFinite(options.slideWidth) ? options.slideWidth : 0;
+    const slideHeight = Number.isFinite(options.slideHeight) ? options.slideHeight : 0;
+    const parentLeft = Number.isFinite(options.parentLeft) ? options.parentLeft : 0;
+    const parentTop = Number.isFinite(options.parentTop) ? options.parentTop : 0;
+    const offsetPx = Number.isFinite(options.offsetPx) ? options.offsetPx : 0;
+    const normalizedOffsetMultiplier = Math.max(1, Number.isFinite(offsetMultiplier) ? offsetMultiplier : 1);
+    const width = Number.isFinite(item.width) ? item.width : 0;
+    const height = Number.isFinite(item.height) ? item.height : 0;
+    const startAbsLeft = Number.isFinite(item.startAbsLeft) ? item.startAbsLeft : 0;
+    const startAbsTop = Number.isFinite(item.startAbsTop) ? item.startAbsTop : 0;
+    const nextAbsLeft = Math.max(0, Math.min(Math.max(0, slideWidth - width), startAbsLeft + (offsetPx * normalizedOffsetMultiplier)));
+    const nextAbsTop = Math.max(0, Math.min(Math.max(0, slideHeight - height), startAbsTop + (offsetPx * normalizedOffsetMultiplier)));
+
+    return {
+      nextAbsLeft,
+      nextAbsTop,
+      nextLeft: nextAbsLeft - parentLeft,
+      nextTop: nextAbsTop - parentTop
+    };
+  }
+
   return {
     hasStudioClipboardItems,
     getStudioClipboardSelection,
     canStudioCopySelection,
     buildStudioClipboardActionState,
-    buildStudioClipboardMutationPlan
+    buildStudioClipboardMutationPlan,
+    resolveStudioClipboardInsertionTarget,
+    buildStudioClipboardAbsolutePlacement
   };
 });

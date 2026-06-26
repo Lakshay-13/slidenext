@@ -122,3 +122,94 @@ test('buildStudioClipboardMutationPlan reuses the live unlocked selection for co
     canPaste: false
   });
 });
+
+test('resolveStudioClipboardInsertionTarget preserves live insertion anchors and falls back from stale ones', () => {
+  const slide = { id: 'slide', isConnected: true };
+  const liveParent = { id: 'parent', isConnected: true };
+  const staleParent = { id: 'stale-parent', isConnected: false };
+  const liveSource = { id: 'source', isConnected: true };
+  const staleSource = { id: 'stale-source', isConnected: false };
+
+  assert.deepEqual(clipboardState.resolveStudioClipboardInsertionTarget({
+    isAbsolutelyPositioned: true,
+    sourceParent: liveParent
+  }, {
+    slide,
+    isOnActiveSlide: (element) => element === liveParent
+  }), {
+    mode: 'absolute',
+    parent: liveParent
+  });
+
+  assert.deepEqual(clipboardState.resolveStudioClipboardInsertionTarget({
+    isAbsolutelyPositioned: true,
+    sourceParent: staleParent
+  }, {
+    slide,
+    isOnActiveSlide: () => false
+  }), {
+    mode: 'absolute',
+    parent: slide
+  });
+
+  assert.deepEqual(clipboardState.resolveStudioClipboardInsertionTarget({
+    isAbsolutelyPositioned: false,
+    sourceElement: liveSource
+  }, {
+    slide,
+    isOnActiveSlide: (element) => element === liveSource
+  }), {
+    mode: 'after-source',
+    anchor: liveSource,
+    parent: slide
+  });
+
+  assert.deepEqual(clipboardState.resolveStudioClipboardInsertionTarget({
+    isAbsolutelyPositioned: false,
+    sourceElement: staleSource
+  }, {
+    slide,
+    isOnActiveSlide: () => false
+  }), {
+    mode: 'append-to-slide',
+    parent: slide
+  });
+});
+
+test('buildStudioClipboardAbsolutePlacement offsets and clamps absolute insertions within slide bounds', () => {
+  assert.deepEqual(clipboardState.buildStudioClipboardAbsolutePlacement({
+    startAbsLeft: 100,
+    startAbsTop: 120,
+    width: 200,
+    height: 80
+  }, 2, {
+    offsetPx: 16,
+    slideWidth: 1920,
+    slideHeight: 1080,
+    parentLeft: 20,
+    parentTop: 30
+  }), {
+    nextAbsLeft: 132,
+    nextAbsTop: 152,
+    nextLeft: 112,
+    nextTop: 122
+  });
+
+  assert.deepEqual(clipboardState.buildStudioClipboardAbsolutePlacement({
+    startAbsLeft: 1810,
+    startAbsTop: 1010,
+    width: 150,
+    height: 60
+  }, 3, {
+    offsetPx: 16,
+    slideWidth: 1920,
+    slideHeight: 1080,
+    parentLeft: 10,
+    parentTop: 20
+  }), {
+    nextAbsLeft: 1770,
+    nextAbsTop: 1020,
+    nextLeft: 1760,
+    nextTop: 1000
+  });
+});
