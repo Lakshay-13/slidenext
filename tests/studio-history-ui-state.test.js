@@ -14,6 +14,60 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+test('createHistoryEntry attaches the current canonical deck sidecar to editor history entries', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createHistoryEntrySource = extractFunctionSource(
+    fileContent,
+    'function createHistoryEntry(doc) {',
+    '\n\n    function normalizeHistoryEntry(entry) {'
+  );
+
+  const iframeDoc = { id: 'doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+  const calls = [];
+  const context = {
+    buildEditorCanonicalDeck(doc) {
+      calls.push(['buildEditorCanonicalDeck', doc]);
+      return canonicalDeck;
+    },
+    buildHistoryFrameHtml() {},
+    getEditorHistoryOptions() {
+      calls.push(['getEditorHistoryOptions']);
+      return { chromeNodeIds: ['editorSelectionOverlay'] };
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    SlideNextStudioHistory: {
+      createStudioHistoryEntry(doc, options) {
+        calls.push(['createStudioHistoryEntry', doc, options]);
+        return { html: '<html></html>', canonicalDeck: options.canonicalDeck };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createHistoryEntrySource, context);
+
+  const entry = context.createHistoryEntry();
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'getIframeDoc',
+    'getEditorHistoryOptions',
+    'buildEditorCanonicalDeck',
+    'createStudioHistoryEntry'
+  ]);
+  assert.equal(calls[2][1], iframeDoc);
+  assert.equal(calls[3][1], iframeDoc);
+  assert.equal(calls[3][2].buildHistoryHtml, context.buildHistoryFrameHtml);
+  assert.equal(calls[3][2].canonicalDeck, canonicalDeck);
+  assert.deepEqual(entry, {
+    html: '<html></html>',
+    canonicalDeck
+  });
+});
+
 test('captureState reads the live frame through the shared iframe accessor before updating history state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const captureStateSource = extractFunctionSource(

@@ -42,26 +42,33 @@
 
     const activeSlideId = getActiveSlideId(doc) || '';
     const selectedElementIds = getSelectedElementIds(doc);
+    const canonicalDeck = options.canonicalDeck && typeof options.canonicalDeck === 'object'
+      ? options.canonicalDeck
+      : null;
 
     return {
       html: buildHistoryHtml(doc, options),
       activeSlideId,
-      selectedElementIds
+      selectedElementIds,
+      canonicalDeck
     };
   }
 
   function normalizeStudioHistoryEntry(entry) {
     if (!entry) {
-      return { html: '', activeSlideId: '', selectedElementIds: [] };
+      return { html: '', activeSlideId: '', selectedElementIds: [], canonicalDeck: null };
     }
     if (typeof entry === 'string') {
-      return { html: entry, activeSlideId: '', selectedElementIds: [] };
+      return { html: entry, activeSlideId: '', selectedElementIds: [], canonicalDeck: null };
     }
 
     return {
       html: entry.html || '',
       activeSlideId: entry.activeSlideId || '',
-      selectedElementIds: Array.isArray(entry.selectedElementIds) ? entry.selectedElementIds.filter(Boolean) : []
+      selectedElementIds: Array.isArray(entry.selectedElementIds) ? entry.selectedElementIds.filter(Boolean) : [],
+      canonicalDeck: entry.canonicalDeck && typeof entry.canonicalDeck === 'object'
+        ? entry.canonicalDeck
+        : null
     };
   }
 

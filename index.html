@@ -3441,9 +3441,12 @@
     }
 
     function createHistoryEntry(doc) {
-      return SlideNextStudioHistory.createStudioHistoryEntry(doc || getIframeDoc(), {
+      const nextDoc = doc || getIframeDoc();
+      if (!nextDoc) return null;
+      return SlideNextStudioHistory.createStudioHistoryEntry(nextDoc, {
         ...getEditorHistoryOptions(),
-        buildHistoryHtml: buildHistoryFrameHtml
+        buildHistoryHtml: buildHistoryFrameHtml,
+        canonicalDeck: buildEditorCanonicalDeck(nextDoc)
       });
     }
 
