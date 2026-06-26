@@ -36,6 +36,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     clickHandlerFactory: 0,
     keydownHandlerFactory: 0,
     frameBootstrap: 0,
+    updateInsertionActionState: 0,
     syncInspectorForSelection: 0
   };
 
@@ -113,6 +114,9 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     },
     persistedDeckPlaybackState: null,
     lastPersistedDeckHtml: '',
+    updateInsertionActionState() {
+      calls.updateInsertionActionState += 1;
+    },
     syncInspectorForSelection() {
       calls.syncInspectorForSelection += 1;
     }
@@ -130,6 +134,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     clickHandlerFactory: 1,
     keydownHandlerFactory: 1,
     frameBootstrap: 1,
+    updateInsertionActionState: 1,
     syncInspectorForSelection: 1
   });
   assert.equal(iframeDoc.listeners.length, 2);

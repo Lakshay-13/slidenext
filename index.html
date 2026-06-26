@@ -609,7 +609,7 @@
 
         <!-- Add Slide button at bottom -->
         <div class="p-4 border-t border-zinc-200 dark:border-white/5 bg-[#f9fafb] dark:bg-[#070707]">
-          <button onclick="addSlideNode()" class="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-[#7028d0]/30 text-white rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold transition-all">
+          <button id="addSlideBtn" onclick="addSlideNode()" class="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-[#7028d0]/30 text-white rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:border-white/5 disabled:text-white">
             <span class="material-symbols-outlined text-[16px] text-[#7028d0]">add_circle</span> Add New Slide
           </button>
         </div>
@@ -755,27 +755,27 @@
         <div class="flex flex-col gap-3">
             <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Add Elements</h4>
             <div class="grid grid-cols-2 gap-3">
-              <button onclick="insertElement('h2')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all">
+              <button id="insertHeadingBtn" onclick="insertElement('h2')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:border-white/5 disabled:text-zinc-300">
                 <span class="material-symbols-outlined text-[20px] text-[#7028d0]">title</span>
                 <span>Large Title</span>
               </button>
-              <button onclick="insertElement('p')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all">
+              <button id="insertParagraphBtn" onclick="insertElement('p')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:border-white/5 disabled:text-zinc-300">
                 <span class="material-symbols-outlined text-[20px] text-[#7028d0]">notes</span>
                 <span>Paragraph</span>
               </button>
-              <button onclick="insertElement('img')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all">
+              <button id="insertImageBtn" onclick="insertElement('img')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:border-white/5 disabled:text-zinc-300">
                 <span class="material-symbols-outlined text-[20px] text-[#7028d0]">image</span>
                 <span>Image Frame</span>
               </button>
-              <button onclick="insertElement('shape')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all">
+              <button id="insertShapeBtn" onclick="insertElement('shape')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:border-white/5 disabled:text-zinc-300">
                 <span class="material-symbols-outlined text-[20px] text-[#7028d0]">layers</span>
                 <span>Color Shape</span>
               </button>
-              <button onclick="insertElement('table')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all">
+              <button id="insertTableBtn" onclick="insertElement('table')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:border-white/5 disabled:text-zinc-300">
                 <span class="material-symbols-outlined text-[20px] text-[#7028d0]">grid_on</span>
                 <span>Data Table</span>
               </button>
-              <button onclick="insertElement('code')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all">
+              <button id="insertCodeBtn" onclick="insertElement('code')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-zinc-700 rounded-lg flex flex-col items-center justify-center gap-1.5 text-xs text-zinc-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:border-white/5 disabled:text-zinc-300">
                 <span class="material-symbols-outlined text-[20px] text-[#7028d0]">terminal</span>
                 <span>Code Block</span>
               </button>
@@ -1682,6 +1682,7 @@
           lastPersistedDeckHtml = buildPersistableDeckHtml(iframeDoc);
         }
       });
+      updateInsertionActionState();
       syncInspectorForSelection();
     }
 
@@ -3804,6 +3805,13 @@
       }
 
       [
+        'addSlideBtn',
+        'insertHeadingBtn',
+        'insertParagraphBtn',
+        'insertImageBtn',
+        'insertShapeBtn',
+        'insertTableBtn',
+        'insertCodeBtn',
         'slidePasteClipboardBtn',
         'copySelectionBtn',
         'pasteClipboardBtn',
@@ -3838,6 +3846,33 @@
         const control = document.getElementById(id);
         if (control) {
           control.disabled = true;
+        }
+      });
+    }
+
+    function updateInsertionActionState(doc = getIframeDoc()) {
+      const slideContainer = doc && typeof doc.getElementById === 'function'
+        ? doc.getElementById('slidesContainer')
+        : null;
+      const hasSlideContainer = !!slideContainer;
+      const hasActiveSlide = !!getActiveSlide(doc);
+
+      const addSlideBtn = document.getElementById('addSlideBtn');
+      if (addSlideBtn) {
+        addSlideBtn.disabled = !hasSlideContainer;
+      }
+
+      [
+        'insertHeadingBtn',
+        'insertParagraphBtn',
+        'insertImageBtn',
+        'insertShapeBtn',
+        'insertTableBtn',
+        'insertCodeBtn'
+      ].forEach((id) => {
+        const control = document.getElementById(id);
+        if (control) {
+          control.disabled = !hasActiveSlide;
         }
       });
     }

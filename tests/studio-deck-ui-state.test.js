@@ -48,6 +48,13 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     toggleLockSelectionLabel: { textContent: 'Unlock Selected' },
     toggleVisibilitySelectionIcon: { textContent: 'visibility' },
     toggleVisibilitySelectionLabel: { textContent: 'Show Selected' },
+    addSlideBtn: { disabled: false },
+    insertHeadingBtn: { disabled: false },
+    insertParagraphBtn: { disabled: false },
+    insertImageBtn: { disabled: false },
+    insertShapeBtn: { disabled: false },
+    insertTableBtn: { disabled: false },
+    insertCodeBtn: { disabled: false },
     slidePasteClipboardBtn: { disabled: false },
     copySelectionBtn: { disabled: false },
     pasteClipboardBtn: { disabled: false },
@@ -105,6 +112,13 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
   assert.equal(elements.toggleVisibilitySelectionIcon.textContent, 'visibility_off');
   assert.equal(elements.toggleVisibilitySelectionLabel.textContent, 'Hide Selected');
   [
+    'addSlideBtn',
+    'insertHeadingBtn',
+    'insertParagraphBtn',
+    'insertImageBtn',
+    'insertShapeBtn',
+    'insertTableBtn',
+    'insertCodeBtn',
     'slidePasteClipboardBtn',
     'copySelectionBtn',
     'pasteClipboardBtn',
