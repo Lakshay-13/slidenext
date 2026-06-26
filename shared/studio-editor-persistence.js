@@ -120,6 +120,34 @@
     };
   }
 
+  function isStudioPersistedHtml(cleanHtml = '', persistedHtml = '') {
+    return !!normalizeString(persistedHtml) && normalizeString(cleanHtml) === normalizeString(persistedHtml);
+  }
+
+  function isStudioPersistenceTaskStale(presentationUrl = '', options = {}) {
+    const requestedPresentationUrl = normalizeString(presentationUrl);
+    const currentPresentationUrl = normalizeString(
+      typeof options.getCurrentPresentationUrl === 'function'
+        ? options.getCurrentPresentationUrl()
+        : options.currentPresentationUrl
+    );
+    if (!requestedPresentationUrl || requestedPresentationUrl !== currentPresentationUrl) {
+      return true;
+    }
+
+    const requestedSessionToken = normalizeSessionToken(options.sessionToken);
+    if (requestedSessionToken === null) {
+      return false;
+    }
+
+    const currentSessionToken = normalizeSessionToken(
+      typeof options.getCurrentSessionToken === 'function'
+        ? options.getCurrentSessionToken()
+        : options.currentSessionToken
+    );
+    return currentSessionToken !== requestedSessionToken;
+  }
+
   function isStudioPersistenceActionCurrent(context = {}, options = {}) {
     const requestedPresentationUrl = normalizeString(context.presentationUrl);
     if (!requestedPresentationUrl) {
@@ -181,6 +209,8 @@
     createStudioPersistenceActionContext,
     buildStudioSaveRequestBody,
     buildStudioPersistenceRequestPlan,
+    isStudioPersistedHtml,
+    isStudioPersistenceTaskStale,
     isStudioPersistenceActionCurrent,
     handleStudioPersistenceSuccess,
     handleStudioPersistenceFailure

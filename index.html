@@ -3591,14 +3591,15 @@
     }
 
     function isCurrentDeckHtmlPersisted(cleanHtml) {
-      return !!lastPersistedDeckHtml && cleanHtml === lastPersistedDeckHtml;
+      return SlideNextStudioEditorPersistence.isStudioPersistedHtml(cleanHtml, lastPersistedDeckHtml);
     }
 
     function isStaleEditorPersistenceTask(presentationUrl, sessionToken = null) {
-      if (!presentationUrl || presentationUrl !== currentPresentationUrl) {
-        return true;
-      }
-      return Number.isInteger(sessionToken) && sessionToken !== studioEditorSessionToken;
+      return SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale(presentationUrl, {
+        currentPresentationUrl,
+        currentSessionToken: studioEditorSessionToken,
+        sessionToken
+      });
     }
 
     function resetEditorPersistenceTimers() {

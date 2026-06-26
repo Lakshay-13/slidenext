@@ -211,6 +211,76 @@ test('buildStudioPersistenceRequestPlan reuses persisted-html checks to skip red
   assert.deepEqual(buildSaveRequestBodyCalls, ['dirty']);
 });
 
+test('isStudioPersistedHtml only reports true when a non-empty persisted html snapshot matches exactly', () => {
+  assert.equal(
+    editorPersistence.isStudioPersistedHtml('<html></html>', '<html></html>'),
+    true
+  );
+
+  assert.equal(
+    editorPersistence.isStudioPersistedHtml('<html></html>', ''),
+    false
+  );
+
+  assert.equal(
+    editorPersistence.isStudioPersistedHtml('<html>changed</html>', '<html></html>'),
+    false
+  );
+});
+
+test('isStudioPersistenceTaskStale rejects missing or stale deck/session combinations', () => {
+  assert.equal(
+    editorPersistence.isStudioPersistenceTaskStale('', {
+      currentPresentationUrl: '/presentations/onboarding-presentation/index.html'
+    }),
+    true
+  );
+
+  assert.equal(
+    editorPersistence.isStudioPersistenceTaskStale(
+      '/presentations/onboarding-presentation/index.html',
+      {
+        currentPresentationUrl: '/presentations/ai-tools-presentation/index.html'
+      }
+    ),
+    true
+  );
+
+  assert.equal(
+    editorPersistence.isStudioPersistenceTaskStale(
+      '/presentations/onboarding-presentation/index.html',
+      {
+        currentPresentationUrl: '/presentations/onboarding-presentation/index.html'
+      }
+    ),
+    false
+  );
+
+  assert.equal(
+    editorPersistence.isStudioPersistenceTaskStale(
+      '/presentations/onboarding-presentation/index.html',
+      {
+        currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+        currentSessionToken: 4,
+        sessionToken: 5
+      }
+    ),
+    true
+  );
+
+  assert.equal(
+    editorPersistence.isStudioPersistenceTaskStale(
+      '/presentations/onboarding-presentation/index.html',
+      {
+        currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+        currentSessionToken: 5,
+        sessionToken: 5
+      }
+    ),
+    false
+  );
+});
+
 test('resolveStudioPersistenceCanonicalDeck normalizes valid deck-like payloads and rejects malformed ones', () => {
   assert.deepEqual(
     editorPersistence.resolveStudioPersistenceCanonicalDeck({
