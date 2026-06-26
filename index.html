@@ -4195,7 +4195,12 @@
     // 7. Versions and Backups listing
     function toggleVersionDropdown() {
       const menu = document.getElementById('versionsDropdown');
+      if (!menu) return;
+      const shouldOpen = menu.classList.contains('hidden');
       menu.classList.toggle('hidden');
+      if (shouldOpen && currentPresentationUrl) {
+        loadVersions(currentPresentationUrl, studioEditorSessionToken);
+      }
     }
 
     function renderVersionsList(presentationUrl, versions = []) {

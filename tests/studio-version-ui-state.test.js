@@ -123,3 +123,56 @@ test('resetStudioVersionUiState hides open version chrome and clears modal state
     renameModalTokenBefore + 2
   );
 });
+
+test('toggleVersionDropdown refreshes version history only when opening the menu', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toggleVersionDropdownSource = extractFunctionSource(
+    fileContent,
+    'function toggleVersionDropdown() {',
+    '\n\n    function renderVersionsList'
+  );
+
+  const loadVersionsCalls = [];
+  const versionsDropdown = {
+    classList: createClassList(['hidden'])
+  };
+  versionsDropdown.classList.toggle = function toggle(value) {
+    if (this.contains(value)) {
+      this.remove(value);
+      return false;
+    }
+    this.add(value);
+    return true;
+  };
+
+  const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    document: {
+      getElementById(id) {
+        assert.equal(id, 'versionsDropdown');
+        return versionsDropdown;
+      }
+    },
+    loadVersions(presentationUrl, sessionToken) {
+      loadVersionsCalls.push([presentationUrl, sessionToken]);
+    },
+    studioEditorSessionToken: 14
+  };
+
+  vm.createContext(context);
+  vm.runInContext(toggleVersionDropdownSource, context);
+
+  context.toggleVersionDropdown();
+  assert.equal(versionsDropdown.classList.contains('hidden'), false);
+  assert.deepEqual(loadVersionsCalls, [[
+    '/presentations/onboarding-presentation/index.html',
+    14
+  ]]);
+
+  context.toggleVersionDropdown();
+  assert.equal(versionsDropdown.classList.contains('hidden'), true);
+  assert.deepEqual(loadVersionsCalls, [[
+    '/presentations/onboarding-presentation/index.html',
+    14
+  ]]);
+});
