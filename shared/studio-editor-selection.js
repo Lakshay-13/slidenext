@@ -126,16 +126,20 @@
   }
 
   function updateStudioSelection(selectedElements = [], target, options = {}) {
+    const normalizedSelectionState = normalizeStudioSelectionState({
+      selectedElements
+    });
+    const currentSelection = normalizedSelectionState.selectedElements;
     if (!target) {
       return {
-        selectedElements,
-        selectedElement: selectedElements[0] || null
+        selectedElements: currentSelection,
+        selectedElement: currentSelection[0] || null
       };
     }
 
     const additive = !!options.additive;
     const toggle = !!options.toggle;
-    let nextSelectedElements = additive ? [...selectedElements] : [];
+    let nextSelectedElements = additive ? [...currentSelection] : [];
 
     if (toggle) {
       if (nextSelectedElements.includes(target)) {
@@ -161,10 +165,9 @@
   }
 
   function selectAllStudioElements(elements = []) {
-    return {
-      selectedElements: [...elements],
-      selectedElement: elements[0] || null
-    };
+    return normalizeStudioSelectionState({
+      selectedElements: elements
+    });
   }
 
   function commitStudioSelectionState(nextSelectionState = {}, options = {}) {

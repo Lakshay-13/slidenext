@@ -231,6 +231,58 @@ test('commitStudioSelectionState triggers the expected UI sync hooks', () => {
   });
 });
 
+test('normalizeStudioSelectionState removes stale elements and normalizes primary selection', () => {
+  const staleSelectedElement = createElement('stale', { isConnected: false });
+  const fallbackSelectedElement = createElement('fallback');
+
+  assert.deepEqual(selection.normalizeStudioSelectionState({
+    selectedElements: [staleSelectedElement, fallbackSelectedElement],
+    selectedElement: staleSelectedElement
+  }), {
+    selectedElements: [fallbackSelectedElement],
+    selectedElement: fallbackSelectedElement
+  });
+
+  assert.deepEqual(selection.normalizeStudioSelectionState({
+    selectedElements: [],
+    selectedElement: staleSelectedElement
+  }), {
+    selectedElements: [],
+    selectedElement: null
+  });
+});
+
+test('updateStudioSelection and selectAllStudioElements normalize stale inputs before building selection state', () => {
+  const staleSelectedElement = createElement('stale', { isConnected: false });
+  const liveSelectedElement = createElement('live');
+  const targetElement = createElement('target');
+
+  assert.deepEqual(selection.updateStudioSelection(
+    [staleSelectedElement, liveSelectedElement],
+    null
+  ), {
+    selectedElements: [liveSelectedElement],
+    selectedElement: liveSelectedElement
+  });
+
+  assert.deepEqual(selection.updateStudioSelection(
+    [staleSelectedElement, liveSelectedElement],
+    targetElement,
+    { additive: true }
+  ), {
+    selectedElements: [liveSelectedElement, targetElement],
+    selectedElement: liveSelectedElement
+  });
+
+  assert.deepEqual(selection.selectAllStudioElements([
+    staleSelectedElement,
+    liveSelectedElement
+  ]), {
+    selectedElements: [liveSelectedElement],
+    selectedElement: liveSelectedElement
+  });
+});
+
 test('restoreCommittedStudioSelectionByIdsOnActiveSlide applies selection state and syncs UI hooks', () => {
   const activeElement = createElement('active');
   const activeSlide = createSlide([activeElement]);
