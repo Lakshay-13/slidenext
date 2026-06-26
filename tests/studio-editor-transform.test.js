@@ -153,6 +153,45 @@ test('buildStudioTransformPointerSelectionPlan makes transform target reselectio
   });
 });
 
+test('buildStudioTransformPointerStartIntent resolves transform start targets only for primary pointer presses', () => {
+  const handleNode = { id: 'handle' };
+  const overlayNode = { id: 'overlay' };
+  const target = {
+    closest(selector) {
+      if (selector === '.editor-resize-handle') return handleNode;
+      if (selector === '#editorSelectionOverlay') return overlayNode;
+      return null;
+    }
+  };
+  const dragTarget = { id: 'node-1' };
+
+  assert.deepEqual(transformState.buildStudioTransformPointerStartIntent({
+    button: 0,
+    isPrimary: true,
+    target
+  }, {
+    resolveEditableTarget() {
+      return dragTarget;
+    }
+  }), {
+    canStart: true,
+    handle: handleNode,
+    overlay: overlayNode,
+    dragTarget
+  });
+
+  assert.deepEqual(transformState.buildStudioTransformPointerStartIntent({
+    button: 1,
+    isPrimary: true,
+    target: null
+  }), {
+    canStart: false,
+    handle: null,
+    overlay: null,
+    dragTarget: null
+  });
+});
+
 test('resolveStudioTransformPointerSelectionState applies transform target reselection and fallback selection', () => {
   const dragTarget = { id: 'node-1' };
   const selectionStates = [

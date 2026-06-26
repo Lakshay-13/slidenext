@@ -56,6 +56,29 @@
     };
   }
 
+  function buildStudioTransformPointerStartIntent(event = {}, options = {}) {
+    const target = event && event.target ? event.target : null;
+    const resolveEditableTarget = typeof options.resolveEditableTarget === 'function'
+      ? options.resolveEditableTarget
+      : () => null;
+    const handleSelector = options.handleSelector || '.editor-resize-handle';
+    const overlaySelector = options.overlaySelector || '#editorSelectionOverlay';
+    const handle = target && typeof target.closest === 'function'
+      ? target.closest(handleSelector)
+      : null;
+    const overlay = target && typeof target.closest === 'function'
+      ? target.closest(overlaySelector)
+      : null;
+    const dragTarget = resolveEditableTarget(target);
+
+    return {
+      canStart: !!event && event.button === 0 && event.isPrimary !== false,
+      handle,
+      overlay,
+      dragTarget
+    };
+  }
+
   function resolveStudioTransformPointerSelectionState(options = {}) {
     const getSelectionState = typeof options.getSelectionState === 'function'
       ? options.getSelectionState
@@ -674,6 +697,7 @@
     getStudioTransformSelection,
     buildStudioTransformSelectionState,
     buildStudioTransformPointerSelectionPlan,
+    buildStudioTransformPointerStartIntent,
     resolveStudioTransformPointerSelectionState,
     shouldHandleStudioTransformPointerEvent,
     canStudioTransformSelection,

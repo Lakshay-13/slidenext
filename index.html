@@ -2948,7 +2948,10 @@
       }, true);
 
       doc.body.addEventListener('pointerdown', (e) => {
-        if (e.button !== 0 || e.isPrimary === false) return;
+        const pointerStartIntent = SlideNextStudioEditorTransform.buildStudioTransformPointerStartIntent(e, {
+          resolveEditableTarget
+        });
+        if (!pointerStartIntent.canStart) return;
         const slide = getActiveSlide(doc);
         if (!slide) return;
         const getTransformSelectionState = () => SlideNextStudioEditorTransform.buildStudioTransformSelectionState(selectedElements, {
@@ -2956,9 +2959,7 @@
           isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
         });
 
-        const handle = e.target.closest('.editor-resize-handle');
-        const overlay = e.target.closest('#editorSelectionOverlay');
-        let dragTarget = resolveEditableTarget(e.target);
+        const { handle, overlay, dragTarget } = pointerStartIntent;
 
         const pointerSelectionState = SlideNextStudioEditorTransform.resolveStudioTransformPointerSelectionState({
           getSelectionState: getTransformSelectionState,
