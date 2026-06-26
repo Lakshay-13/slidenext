@@ -98,3 +98,80 @@ test('bindDeckNavigationSync reads the live frame window through the shared ifra
   assert.equal(capturedCall.options.syncStudioChromeToActiveSlide, context.syncStudioChromeToActiveSlide);
   assert.equal(capturedCall.options.getSyncStudioChromeOptions().captureHistory, true);
 });
+
+test('syncStudioChromeToActiveSlide routes active slide index updates through the shared session-state helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncStudioChromeToActiveSlideSource = extractFunctionSource(
+    fileContent,
+    'function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function bindDeckNavigationSync(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = {
+    getElementById(id) {
+      assert.equal(id, 'slideCountLabel');
+      return {
+        textContent: ''
+      };
+    }
+  };
+  const calls = [];
+  const context = {
+    currentSlideIndex: 1,
+    deselectElement() {
+      calls.push(['deselectElement']);
+    },
+    document: {
+      getElementById(id) {
+        assert.equal(id, 'slideCountLabel');
+        return {
+          textContent: ''
+        };
+      }
+    },
+    getEditorSlideId() {
+      return 'slide-4';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlides() {
+      return [];
+    },
+    preserveSelectionOnNextActiveSlideSync: false,
+    pruneEditorChromeNodes() {},
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    SlideNextStudioDeckView: {
+      syncStudioActiveSlideView(doc, options) {
+        calls.push(['syncStudioActiveSlideView', doc]);
+        options.setCurrentSlideIndex(4);
+        options.setSlideCountLabel('5 / 8');
+        return {
+          didSync: true
+        };
+      }
+    },
+    updateActiveThumbnailCardState() {},
+    updateCurrentPresentationSessionState(nextState) {
+      calls.push(['updateCurrentPresentationSessionState', nextState]);
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        context.currentSlideIndex = nextState.slideIndex;
+      }
+    },
+    updateIframeNavigationUI() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncStudioChromeToActiveSlideSource, context);
+
+  const didSync = context.syncStudioChromeToActiveSlide();
+
+  assert.equal(didSync, true);
+  assert.equal(context.currentSlideIndex, 4);
+  assert.equal(calls[0][0], 'syncStudioActiveSlideView');
+  assert.equal(calls[0][1], iframeDoc);
+  assert.equal(calls[1][0], 'updateCurrentPresentationSessionState');
+  assert.equal(calls[1][1].slideIndex, 4);
+});

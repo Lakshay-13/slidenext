@@ -1534,14 +1534,34 @@
       return document.getElementById('studioFrame');
     }
 
+    function updateCurrentPresentationSessionState(nextState = {}) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationUrl')) {
+        currentPresentationUrl = typeof nextState.presentationUrl === 'string' ? nextState.presentationUrl : '';
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationTitle')) {
+        currentTitle = typeof nextState.presentationTitle === 'string' ? nextState.presentationTitle : '';
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationCategory')) {
+        currentCategory = typeof nextState.presentationCategory === 'string' ? nextState.presentationCategory : '';
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        currentSlideIndex = Number.isInteger(nextState.slideIndex) ? nextState.slideIndex : 0;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationMetadata')) {
+        applyCurrentPresentationMetadata(nextState.presentationMetadata);
+      }
+    }
+
     function launchStudioEditor(url, title, category) {
       const editorSessionToken = ++studioEditorSessionToken;
       const currentStudioSessionStateReaders = createCurrentStudioSessionStateReaders();
-      currentPresentationUrl = url;
-      applyCurrentPresentationMetadata(buildCurrentPresentationMetadataSeed(url, title));
-      currentTitle = title;
-      currentCategory = category || 'General';
-      currentSlideIndex = 0;
+      updateCurrentPresentationSessionState({
+        presentationUrl: url,
+        presentationTitle: title,
+        presentationCategory: category || 'General',
+        slideIndex: 0,
+        presentationMetadata: buildCurrentPresentationMetadataSeed(url, title)
+      });
       resetEditorPersistenceTimers();
       resetEditorDeckPersistenceState();
       applyEditorSelectionState({});
@@ -1604,11 +1624,13 @@
       const iframe = getStudioFrame();
       studioEditorSessionToken += 1;
       teardownDeckActiveSlideSync();
-      currentPresentationUrl = '';
-      currentTitle = '';
-      currentCategory = '';
-      currentSlideIndex = 0;
-      applyCurrentPresentationMetadata(null);
+      updateCurrentPresentationSessionState({
+        presentationUrl: '',
+        presentationTitle: '',
+        presentationCategory: '',
+        slideIndex: 0,
+        presentationMetadata: null
+      });
       resetEditorPersistenceTimers();
       resetEditorDeckPersistenceState();
       resetStudioPresentationUiState();
@@ -1842,7 +1864,7 @@
         preserveSelection,
         getSlides,
         setCurrentSlideIndex: (nextIndex) => {
-          currentSlideIndex = nextIndex;
+          updateCurrentPresentationSessionState({ slideIndex: nextIndex });
         },
         updateActiveThumbnailCardState,
         setSlideCountLabel: (label) => {

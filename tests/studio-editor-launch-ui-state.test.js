@@ -91,6 +91,23 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
     currentPresentationUrl: '',
     currentSlideIndex: 0,
     currentTitle: '',
+    updateCurrentPresentationSessionState(nextState) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationUrl')) {
+        context.currentPresentationUrl = nextState.presentationUrl;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationTitle')) {
+        context.currentTitle = nextState.presentationTitle;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationCategory')) {
+        context.currentCategory = nextState.presentationCategory;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        context.currentSlideIndex = nextState.slideIndex;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationMetadata')) {
+        context.applyCurrentPresentationMetadata(nextState.presentationMetadata);
+      }
+    },
     getStudioFrame() {
       return elements.studioFrame;
     },
@@ -143,6 +160,43 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
     '/presentations/onboarding-presentation/index.html',
     1
   ]]);
+});
+
+test('updateCurrentPresentationSessionState updates only the provided session fields and delegates metadata commits', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateCurrentPresentationSessionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateCurrentPresentationSessionState(nextState = {}) {',
+    '\n\n    function launchStudioEditor(url, title, category) {'
+  );
+
+  const metadata = { id: 'deck-1' };
+  const context = {
+    Object,
+    currentCategory: 'General',
+    currentPresentationMetadata: { id: 'seed' },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentSlideIndex: 2,
+    currentTitle: 'Project Onboarding',
+    applyCurrentPresentationMetadata(nextMetadata) {
+      context.currentPresentationMetadata = nextMetadata;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateCurrentPresentationSessionStateSource, context);
+
+  context.updateCurrentPresentationSessionState({
+    presentationTitle: 'Renamed Deck',
+    slideIndex: 4,
+    presentationMetadata: metadata
+  });
+
+  assert.equal(context.currentPresentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(context.currentTitle, 'Renamed Deck');
+  assert.equal(context.currentCategory, 'General');
+  assert.equal(context.currentSlideIndex, 4);
+  assert.equal(context.currentPresentationMetadata, metadata);
 });
 
 test('setStudioAutoSaveStatus renders saving and failure editor states', () => {
@@ -209,6 +263,23 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
     currentTitle: 'Project Onboarding',
     applyCurrentPresentationMetadata(metadata) {
       context.currentPresentationMetadata = metadata;
+    },
+    updateCurrentPresentationSessionState(nextState) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationUrl')) {
+        context.currentPresentationUrl = nextState.presentationUrl;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationTitle')) {
+        context.currentTitle = nextState.presentationTitle;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationCategory')) {
+        context.currentCategory = nextState.presentationCategory;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        context.currentSlideIndex = nextState.slideIndex;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationMetadata')) {
+        context.applyCurrentPresentationMetadata(nextState.presentationMetadata);
+      }
     },
     deselectElement() {},
     document: {
