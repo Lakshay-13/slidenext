@@ -3472,8 +3472,7 @@
     }
 
     function captureState() {
-      const iframe = document.getElementById('studioFrame');
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeDoc = getIframeDoc();
       if (!iframeDoc) return;
       
       const historyEntry = createHistoryEntry(iframeDoc);
