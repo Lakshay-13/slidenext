@@ -207,7 +207,10 @@
           options.onSuccess(nextContext);
         }
         if (typeof options.refreshVersionEntries === 'function') {
-          options.refreshVersionEntries(nextContext.presentationUrl);
+          options.refreshVersionEntries(
+            nextContext.presentationUrl,
+            normalizeSessionToken(nextContext.sessionToken)
+          );
         }
       }
     });

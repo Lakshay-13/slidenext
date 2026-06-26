@@ -109,24 +109,26 @@ test('handleStudioVersionListMutationSuccess refreshes the active deck versions 
   const renameContext = versionActions.createStudioVersionActionContext(
     '/presentations/onboarding-presentation/index.html',
     'Project Onboarding',
-    'General'
+    'General',
+    { sessionToken: 6 }
   );
   const calls = [];
 
   const applied = versionActions.handleStudioVersionListMutationSuccess(renameContext, {
     getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    getCurrentSessionToken: () => 6,
     onSuccess(context) {
       calls.push(['onSuccess', context.presentationUrl]);
     },
-    refreshVersionEntries(presentationUrl) {
-      calls.push(['refreshVersionEntries', presentationUrl]);
+    refreshVersionEntries(presentationUrl, sessionToken) {
+      calls.push(['refreshVersionEntries', presentationUrl, sessionToken]);
     }
   });
 
   assert.equal(applied, true);
   assert.deepEqual(calls, [
     ['onSuccess', '/presentations/onboarding-presentation/index.html'],
-    ['refreshVersionEntries', '/presentations/onboarding-presentation/index.html']
+    ['refreshVersionEntries', '/presentations/onboarding-presentation/index.html', 6]
   ]);
 });
 

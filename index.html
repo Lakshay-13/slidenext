@@ -1594,7 +1594,7 @@
       void loadCurrentPresentationMetadata(url, title, editorSessionToken);
       
       // Fetch backups list
-      loadVersions();
+      loadVersions(url, editorSessionToken);
     }
 
     function closeStudioEditor() {
@@ -4098,8 +4098,8 @@
                 statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
               }
             },
-            refreshVersionEntries: (presentationUrl) => {
-              loadVersions(presentationUrl);
+            refreshVersionEntries: (presentationUrl, sessionToken) => {
+              loadVersions(presentationUrl, sessionToken);
             }
           });
         } else {
@@ -4182,8 +4182,8 @@
             onSuccess: () => {
               console.log(`Auto-created version checkpoint: ${label}`);
             },
-            refreshVersionEntries: (requestedPresentationUrl) => {
-              loadVersions(requestedPresentationUrl);
+            refreshVersionEntries: (requestedPresentationUrl, requestedSessionToken) => {
+              loadVersions(requestedPresentationUrl, requestedSessionToken);
             }
           });
         }
@@ -4402,8 +4402,8 @@
             onSuccess: () => {
               closeRenameVersionModal();
             },
-            refreshVersionEntries: (presentationUrl) => {
-              loadVersions(presentationUrl);
+            refreshVersionEntries: (presentationUrl, sessionToken) => {
+              loadVersions(presentationUrl, sessionToken);
             }
           });
         } else {
@@ -4466,8 +4466,8 @@
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(deleteContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
             getCurrentSessionToken: () => studioEditorSessionToken,
-            refreshVersionEntries: (presentationUrl) => {
-              loadVersions(presentationUrl);
+            refreshVersionEntries: (presentationUrl, sessionToken) => {
+              loadVersions(presentationUrl, sessionToken);
             }
           });
         } else {

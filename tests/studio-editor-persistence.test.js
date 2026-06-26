@@ -426,15 +426,15 @@ test('handleStudioVersionPersistenceSuccess refreshes version entries only for t
     onSuccess(nextContext) {
       calls.push(['onSuccess', nextContext.presentationUrl]);
     },
-    refreshVersionEntries(presentationUrl) {
-      calls.push(['refreshVersionEntries', presentationUrl]);
+    refreshVersionEntries(presentationUrl, sessionToken) {
+      calls.push(['refreshVersionEntries', presentationUrl, sessionToken]);
     }
   });
 
   assert.equal(applied, true);
   assert.deepEqual(calls, [
     ['onSuccess', '/presentations/onboarding-presentation/index.html'],
-    ['refreshVersionEntries', '/presentations/onboarding-presentation/index.html']
+    ['refreshVersionEntries', '/presentations/onboarding-presentation/index.html', 8]
   ]);
 });
 

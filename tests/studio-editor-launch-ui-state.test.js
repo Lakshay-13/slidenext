@@ -59,7 +59,7 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
     autoSaveStatus: { innerHTML: 'Saved to disk' }
   };
 
-  let loadVersionsCalls = 0;
+  const loadVersionsCalls = [];
   const context = {
     SlideNextStudioEditorSession: {
       createStudioFrameLoadHandler() {
@@ -86,8 +86,8 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
     loadCurrentPresentationMetadata() {
       return Promise.resolve();
     },
-    loadVersions() {
-      loadVersionsCalls += 1;
+    loadVersions(presentationUrl, sessionToken) {
+      loadVersionsCalls.push([presentationUrl, sessionToken]);
     },
     localStorage: {
       getItem() {
@@ -118,5 +118,8 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   assert.equal(elements.studioTitleLabel.textContent, 'Project Onboarding');
   assert.equal(elements.studioFrame.src, '/presentations/onboarding-presentation/index.html');
   assert.equal(elements.studioEditor.classList.contains('active'), true);
-  assert.equal(loadVersionsCalls, 1);
+  assert.deepEqual(loadVersionsCalls, [[
+    '/presentations/onboarding-presentation/index.html',
+    1
+  ]]);
 });
