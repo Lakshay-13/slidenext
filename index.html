@@ -3026,13 +3026,7 @@
           const startAbsTop = rectOnSlide.top;
           const startWidth = rectOnSlide.right - rectOnSlide.left;
           const startHeight = rectOnSlide.bottom - rectOnSlide.top;
-          const computed = el.ownerDocument.defaultView.getComputedStyle(el);
-          const isPrePositioned = computed.position === 'absolute' || computed.position === 'fixed';
-          const tag = el.tagName.toLowerCase();
-          const inlineWidth = (el.style.width || '').trim();
-          const inlineHeight = (el.style.height || '').trim();
-          const lockWidth = !isPrePositioned && inlineWidth === '';
-          const lockHeight = !isPrePositioned && inlineHeight === '' && ['table', 'pre', 'code'].includes(tag);
+          const sizingLockState = SlideNextStudioEditorTransform.buildStudioTransformSizingLockState(el);
 
           return {
             element: el,
@@ -3042,8 +3036,8 @@
             startHeight,
             parentOffsetLeft: parentOnSlide.left,
             parentOffsetTop: parentOnSlide.top,
-            lockWidth,
-            lockHeight
+            lockWidth: sizingLockState.lockWidth,
+            lockHeight: sizingLockState.lockHeight
           };
         });
 

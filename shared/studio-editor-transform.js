@@ -50,6 +50,33 @@
     return !!computed && (computed.position === 'absolute' || computed.position === 'fixed');
   }
 
+  function buildStudioTransformSizingLockState(element, options = {}) {
+    const inlineWidth = typeof options.inlineWidth === 'string'
+      ? options.inlineWidth
+      : element && element.style && typeof element.style.width === 'string'
+        ? element.style.width
+        : '';
+    const inlineHeight = typeof options.inlineHeight === 'string'
+      ? options.inlineHeight
+      : element && element.style && typeof element.style.height === 'string'
+        ? element.style.height
+        : '';
+    const isPrePositioned = typeof options.isPrePositioned === 'boolean'
+      ? options.isPrePositioned
+      : isStudioFreeformPositioned(element, options);
+    const tagName = element && typeof element.tagName === 'string'
+      ? element.tagName.toLowerCase()
+      : '';
+    const normalizedInlineWidth = inlineWidth.trim();
+    const normalizedInlineHeight = inlineHeight.trim();
+
+    return {
+      isPrePositioned,
+      lockWidth: !isPrePositioned && normalizedInlineWidth === '',
+      lockHeight: !isPrePositioned && normalizedInlineHeight === '' && ['table', 'pre', 'code'].includes(tagName)
+    };
+  }
+
   function shouldStudioResizeWidth(element) {
     const tagName = element && typeof element.tagName === 'string'
       ? element.tagName.toLowerCase()
@@ -175,6 +202,7 @@
     buildStudioTransformSelectionState,
     canStudioTransformSelection,
     isStudioFreeformPositioned,
+    buildStudioTransformSizingLockState,
     STUDIO_RESIZE_WIDTH_TAGS,
     STUDIO_RESIZE_HEIGHT_TAGS,
     shouldStudioResizeWidth,

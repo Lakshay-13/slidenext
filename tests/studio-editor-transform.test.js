@@ -101,6 +101,62 @@ test('isStudioFreeformPositioned only accepts absolute and fixed positioned elem
   }), false);
 });
 
+test('buildStudioTransformSizingLockState preserves flow layout sizing constraints only when needed', () => {
+  const absoluteImage = {
+    tagName: 'IMG',
+    position: 'absolute',
+    style: { width: '', height: '' },
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle(element) {
+          return { position: element.position };
+        }
+      }
+    }
+  };
+  assert.deepEqual(transformState.buildStudioTransformSizingLockState(absoluteImage), {
+    isPrePositioned: true,
+    lockWidth: false,
+    lockHeight: false
+  });
+
+  const flowTable = {
+    tagName: 'TABLE',
+    position: 'relative',
+    style: { width: '', height: '' },
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle(element) {
+          return { position: element.position };
+        }
+      }
+    }
+  };
+  assert.deepEqual(transformState.buildStudioTransformSizingLockState(flowTable), {
+    isPrePositioned: false,
+    lockWidth: true,
+    lockHeight: true
+  });
+
+  const flowText = {
+    tagName: 'DIV',
+    position: 'relative',
+    style: { width: '320px', height: '' },
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle(element) {
+          return { position: element.position };
+        }
+      }
+    }
+  };
+  assert.deepEqual(transformState.buildStudioTransformSizingLockState(flowText), {
+    isPrePositioned: false,
+    lockWidth: false,
+    lockHeight: false
+  });
+});
+
 test('shouldStudioResizeWidth and shouldStudioResizeHeight follow the editor resize tag policy', () => {
   assert.equal(transformState.shouldStudioResizeWidth({ tagName: 'IMG' }), true);
   assert.equal(transformState.shouldStudioResizeWidth({ tagName: 'SPAN' }), false);
