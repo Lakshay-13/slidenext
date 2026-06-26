@@ -2106,6 +2106,10 @@
         ...createCurrentStudioSessionStateReaders(),
         setCurrentPresentationMetadata: (metadata) => {
           currentPresentationMetadata = metadata;
+          const storedCanonicalDeck = SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck(metadata);
+          if (storedCanonicalDeck) {
+            lastPersistedCanonicalDeck = storedCanonicalDeck;
+          }
         },
         onError: (err, metadataUrl) => {
           console.warn(`Failed to load presentation metadata from ${metadataUrl}:`, err);

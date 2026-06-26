@@ -170,6 +170,9 @@ test('loadCurrentPresentationMetadata reuses current session readers when delega
           title: presentationTitle,
           sourcePath: presentationUrl
         };
+      },
+      resolveStoredStudioCanonicalDeck() {
+        return null;
       }
     },
     createCurrentStudioSessionStateReaders() {
@@ -199,4 +202,67 @@ test('loadCurrentPresentationMetadata reuses current session readers when delega
   assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
   assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
   assert.deepEqual(context.currentPresentationMetadata, metadata);
+});
+
+test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline from stored metadata sidecars', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const loadCurrentPresentationMetadataSource = extractFunctionSource(
+    fileContent,
+    'async function loadCurrentPresentationMetadata(',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+
+  const resolvedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const fetchedMetadata = {
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: '/presentations/onboarding-presentation/index.html',
+    canonicalDeck: {
+      metadata: {
+        title: 'Project Onboarding'
+      },
+      slides: []
+    }
+  };
+
+  const context = {
+    SlideNextStudioDeckContext: {
+      async loadStudioPresentationMetadata(presentationUrl, presentationTitle, options) {
+        options.setCurrentPresentationMetadata(fetchedMetadata);
+        return fetchedMetadata;
+      },
+      resolveStoredStudioCanonicalDeck(metadata) {
+        assert.equal(metadata, fetchedMetadata);
+        return resolvedCanonicalDeck;
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    currentPresentationMetadata: null,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    lastPersistedCanonicalDeck: null,
+    studioEditorSessionToken: 12
+  };
+
+  vm.createContext(context);
+  vm.runInContext(loadCurrentPresentationMetadataSource, context);
+
+  const metadata = await context.loadCurrentPresentationMetadata(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    12
+  );
+
+  assert.equal(metadata, fetchedMetadata);
+  assert.equal(context.currentPresentationMetadata, fetchedMetadata);
+  assert.equal(context.lastPersistedCanonicalDeck, resolvedCanonicalDeck);
 });
