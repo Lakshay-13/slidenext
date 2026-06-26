@@ -2612,12 +2612,13 @@
     }
 
     function toggleSelectedElementsLockState() {
-      const lockSelection = SlideNextStudioEditorLockState.getStudioLockSelection(selectedElements);
-      if (lockSelection.length === 0) return false;
-      const shouldLock = !lockSelection.every(isElementLocked);
-      lockSelection.forEach(el => {
+      const lockMutationPlan = SlideNextStudioEditorLockState.buildStudioLockMutationPlan(selectedElements, {
+        isLocked: isElementLocked
+      });
+      if (!lockMutationPlan.didChange) return false;
+      lockMutationPlan.selection.forEach(el => {
         if (!el || !el.isConnected) return;
-        SlideNextStudioElementState.setStudioElementLockedState(el, shouldLock);
+        SlideNextStudioElementState.setStudioElementLockedState(el, lockMutationPlan.shouldLock);
       });
       refreshSelectionClasses();
       SlideNextStudioEditorSelection.syncStudioSelectionUi(selectedElements, {
@@ -2627,15 +2628,16 @@
       });
       saveHistoryState();
       triggerAutoSave();
-      triggerAutoVersion(shouldLock ? 'Auto: Locked Element' : 'Auto: Unlocked Element');
+      triggerAutoVersion(lockMutationPlan.versionLabel);
       return true;
     }
 
     function toggleSelectedElementsVisibility() {
-      const visibilitySelection = SlideNextStudioEditorVisibilityState.getStudioVisibilitySelection(selectedElements);
-      if (visibilitySelection.length === 0) return false;
-      const shouldHide = !visibilitySelection.every(isElementHidden);
-      visibilitySelection.forEach(el => setElementHiddenState(el, shouldHide));
+      const visibilityMutationPlan = SlideNextStudioEditorVisibilityState.buildStudioVisibilityMutationPlan(selectedElements, {
+        isHidden: isElementHidden
+      });
+      if (!visibilityMutationPlan.didChange) return false;
+      visibilityMutationPlan.selection.forEach(el => setElementHiddenState(el, visibilityMutationPlan.shouldHide));
       refreshSelectionClasses();
       SlideNextStudioEditorSelection.syncStudioSelectionUi(selectedElements, {
         syncSelectionOverlay,
@@ -2644,7 +2646,7 @@
       });
       saveHistoryState();
       triggerAutoSave();
-      triggerAutoVersion(shouldHide ? 'Auto: Hid Element' : 'Auto: Showed Element');
+      triggerAutoVersion(visibilityMutationPlan.versionLabel);
       return true;
     }
 

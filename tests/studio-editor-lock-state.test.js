@@ -44,3 +44,40 @@ test('buildStudioLockActionState derives button state from live selections only'
     canRemove: false
   });
 });
+
+test('buildStudioLockMutationPlan derives the next lock toggle from the live selection only', () => {
+  const unlocked = { id: 1, isConnected: true, locked: false };
+  const locked = { id: 2, isConnected: true, locked: true };
+
+  assert.deepEqual(lockState.buildStudioLockMutationPlan([
+    { id: 'stale', isConnected: false, locked: false },
+    unlocked
+  ], {
+    isLocked: (element) => !!element.locked
+  }), {
+    selection: [unlocked],
+    shouldLock: true,
+    didChange: true,
+    versionLabel: 'Auto: Locked Element'
+  });
+
+  assert.deepEqual(lockState.buildStudioLockMutationPlan([locked], {
+    isLocked: (element) => !!element.locked
+  }), {
+    selection: [locked],
+    shouldLock: false,
+    didChange: true,
+    versionLabel: 'Auto: Unlocked Element'
+  });
+
+  assert.deepEqual(lockState.buildStudioLockMutationPlan([
+    { id: 'stale', isConnected: false, locked: false }
+  ], {
+    isLocked: (element) => !!element.locked
+  }), {
+    selection: [],
+    shouldLock: false,
+    didChange: false,
+    versionLabel: ''
+  });
+});

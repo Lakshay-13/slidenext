@@ -29,8 +29,33 @@
     };
   }
 
+  function buildStudioVisibilityMutationPlan(elements = [], options = {}) {
+    const selection = getStudioVisibilitySelection(elements, options);
+    const isHidden = typeof options.isHidden === 'function'
+      ? options.isHidden
+      : () => false;
+
+    if (selection.length === 0) {
+      return {
+        selection,
+        shouldHide: false,
+        didChange: false,
+        versionLabel: ''
+      };
+    }
+
+    const shouldHide = !selection.every((element) => isHidden(element));
+    return {
+      selection,
+      shouldHide,
+      didChange: true,
+      versionLabel: shouldHide ? 'Auto: Hid Element' : 'Auto: Showed Element'
+    };
+  }
+
   return {
     getStudioVisibilitySelection,
-    buildStudioVisibilityActionState
+    buildStudioVisibilityActionState,
+    buildStudioVisibilityMutationPlan
   };
 });

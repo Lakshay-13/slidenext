@@ -31,8 +31,33 @@
     };
   }
 
+  function buildStudioLockMutationPlan(elements = [], options = {}) {
+    const selection = getStudioLockSelection(elements, options);
+    const isLocked = typeof options.isLocked === 'function'
+      ? options.isLocked
+      : () => false;
+
+    if (selection.length === 0) {
+      return {
+        selection,
+        shouldLock: false,
+        didChange: false,
+        versionLabel: ''
+      };
+    }
+
+    const shouldLock = !selection.every((element) => isLocked(element));
+    return {
+      selection,
+      shouldLock,
+      didChange: true,
+      versionLabel: shouldLock ? 'Auto: Locked Element' : 'Auto: Unlocked Element'
+    };
+  }
+
   return {
     getStudioLockSelection,
-    buildStudioLockActionState
+    buildStudioLockActionState,
+    buildStudioLockMutationPlan
   };
 });
