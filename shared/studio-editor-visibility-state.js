@@ -21,11 +21,16 @@
     const isHidden = typeof options.isHidden === 'function'
       ? options.isHidden
       : () => false;
+    const canMutateDeck = typeof options.canMutateDeck === 'function'
+      ? options.canMutateDeck
+      : () => true;
     const hasSelection = selection.length > 0;
+    const canToggle = canMutateDeck() && hasSelection;
 
     return {
       hasSelection,
-      allHidden: hasSelection && selection.every((element) => isHidden(element))
+      canToggle,
+      allHidden: canToggle && selection.every((element) => isHidden(element))
     };
   }
 
@@ -34,8 +39,11 @@
     const isHidden = typeof options.isHidden === 'function'
       ? options.isHidden
       : () => false;
+    const canMutateDeck = typeof options.canMutateDeck === 'function'
+      ? options.canMutateDeck
+      : () => true;
 
-    if (selection.length === 0) {
+    if (selection.length === 0 || !canMutateDeck()) {
       return {
         selection,
         shouldHide: false,

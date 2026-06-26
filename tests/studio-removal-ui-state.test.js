@@ -19,7 +19,7 @@ test('updateRemovalActionState enables the delete control only when the iframe h
   const updateRemovalActionStateSource = extractFunctionSource(
     fileContent,
     'function updateRemovalActionState(doc = getIframeDoc()) {',
-    '\n\n    function updateVisibilityActionState() {'
+    '\n\n    function updateVisibilityActionState(doc = getIframeDoc()) {'
   );
 
   const removeSelectionBtn = { disabled: true };

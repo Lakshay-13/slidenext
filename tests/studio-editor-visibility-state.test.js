@@ -20,6 +20,7 @@ test('buildStudioVisibilityActionState derives visibility button state from live
     isHidden: () => false
   }), {
     hasSelection: true,
+    canToggle: true,
     allHidden: false
   });
 
@@ -29,6 +30,7 @@ test('buildStudioVisibilityActionState derives visibility button state from live
     isHidden: () => true
   }), {
     hasSelection: true,
+    canToggle: true,
     allHidden: true
   });
 
@@ -38,6 +40,18 @@ test('buildStudioVisibilityActionState derives visibility button state from live
     isHidden: () => false
   }), {
     hasSelection: false,
+    canToggle: false,
+    allHidden: false
+  });
+
+  assert.deepEqual(visibilityState.buildStudioVisibilityActionState([
+    { id: 1, isConnected: true, hidden: true }
+  ], {
+    isHidden: (element) => !!element.hidden,
+    canMutateDeck: () => false
+  }), {
+    hasSelection: true,
+    canToggle: false,
     allHidden: false
   });
 });
@@ -73,6 +87,16 @@ test('buildStudioVisibilityMutationPlan derives the next visibility toggle from 
     isHidden: (element) => !!element.hidden
   }), {
     selection: [],
+    shouldHide: false,
+    didChange: false,
+    versionLabel: ''
+  });
+
+  assert.deepEqual(visibilityState.buildStudioVisibilityMutationPlan([visible], {
+    isHidden: (element) => !!element.hidden,
+    canMutateDeck: () => false
+  }), {
+    selection: [visible],
     shouldHide: false,
     didChange: false,
     versionLabel: ''

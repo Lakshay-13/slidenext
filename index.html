@@ -2615,14 +2615,15 @@
       if (removeBtn) removeBtn.disabled = !removalActionState.canRemove;
     }
 
-    function updateVisibilityActionState() {
+    function updateVisibilityActionState(doc = getIframeDoc()) {
       const visibilityActionState = SlideNextStudioEditorVisibilityState.buildStudioVisibilityActionState(selectedElements, {
-        isHidden: isElementHidden
+        isHidden: isElementHidden,
+        canMutateDeck: () => !!getActiveSlide(doc)
       });
       const visibilityBtn = document.getElementById('toggleVisibilitySelectionBtn');
       const visibilityIcon = document.getElementById('toggleVisibilitySelectionIcon');
       const visibilityLabel = document.getElementById('toggleVisibilitySelectionLabel');
-      if (visibilityBtn) visibilityBtn.disabled = !visibilityActionState.hasSelection;
+      if (visibilityBtn) visibilityBtn.disabled = !visibilityActionState.canToggle;
       if (visibilityIcon) visibilityIcon.textContent = visibilityActionState.allHidden ? 'visibility' : 'visibility_off';
       if (visibilityLabel) visibilityLabel.textContent = visibilityActionState.allHidden ? 'Show Selected' : 'Hide Selected';
     }
@@ -2714,8 +2715,10 @@
     }
 
     function toggleSelectedElementsVisibility() {
+      const doc = getIframeDoc();
       const visibilityMutationPlan = SlideNextStudioEditorVisibilityState.buildStudioVisibilityMutationPlan(selectedElements, {
-        isHidden: isElementHidden
+        isHidden: isElementHidden,
+        canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!visibilityMutationPlan.didChange) return false;
       visibilityMutationPlan.selection.forEach(el => setElementHiddenState(el, visibilityMutationPlan.shouldHide));
