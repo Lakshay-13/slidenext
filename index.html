@@ -571,7 +571,7 @@
           <span>Present</span>
         </button>
 
-        <button onclick="openSourceViewModal()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all">
+        <button id="openSourceViewBtn" onclick="openSourceViewModal()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
           <span class="material-symbols-outlined text-[16px]">code</span>
           <span>HTML</span>
         </button>
@@ -1155,6 +1155,7 @@
       loadPresentations();
       renderWallpaperPresets();
       updateWallpaperActionState();
+      updateDeckReadyToolbarActionState();
       
       // Update theme toggle icons
       const themeIcon = document.getElementById('themeIcon');
@@ -1553,6 +1554,7 @@
       resetStudioDeckUiState({ isLoading: true });
       resetStudioVersionUiState({ isLoading: true });
       resetStudioSaveButtonState();
+      updateDeckReadyToolbarActionState();
       
       // Configure load triggers BEFORE setting src
       iframe.onload = SlideNextStudioEditorSession.createStudioFrameLoadHandler({
@@ -1610,6 +1612,7 @@
       resetStudioSourceViewUiState();
       resetStudioVersionUiState();
       resetStudioSaveButtonState();
+      updateDeckReadyToolbarActionState();
       deselectElement();
       resetEditorHistoryState({ syncButtons: true });
       
@@ -1685,6 +1688,7 @@
       });
       updateInsertionActionState();
       updateWallpaperActionState();
+      updateDeckReadyToolbarActionState();
       syncInspectorForSelection();
     }
 
@@ -3814,6 +3818,7 @@
         'insertShapeBtn',
         'insertTableBtn',
         'insertCodeBtn',
+        'openSourceViewBtn',
         'wpTabSolid',
         'wpTabPresets',
         'wpTabCustom',
@@ -3925,6 +3930,20 @@
           button.disabled = !hasActiveSlide;
         });
       });
+    }
+
+    function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {
+      const hasDeckDocument = !!(doc && doc.documentElement);
+
+      const saveBtn = document.getElementById('studioSaveBtn');
+      if (saveBtn) {
+        saveBtn.disabled = !hasDeckDocument;
+      }
+
+      const sourceViewBtn = document.getElementById('openSourceViewBtn');
+      if (sourceViewBtn) {
+        sourceViewBtn.disabled = !hasDeckDocument;
+      }
     }
 
     function resetStudioSaveButtonState() {
