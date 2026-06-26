@@ -375,6 +375,35 @@ test('buildStudioCanonicalDeck can bypass stored canonical metadata for live DOM
   assert.deepEqual(builderCalls, [doc]);
 });
 
+test('buildStudioCanonicalDeck falls back to stored canonical metadata when a forced rebuild has no live document', () => {
+  const storedCanonicalDeck = {
+    metadata: {
+      id: 'onboarding-presentation'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+
+  const result = deckContext.buildStudioCanonicalDeck(null, {
+    currentPresentationMetadata: {
+      id: 'onboarding-presentation',
+      title: 'Project Onboarding',
+      sourcePath: '/presentations/onboarding-presentation/index.html',
+      canonicalDeck: storedCanonicalDeck
+    },
+    preferStoredCanonicalDeck: false,
+    buildCanonicalDeckFromDocument() {
+      throw new Error('DOM import should not run when there is no live document');
+    }
+  });
+
+  assert.deepEqual(result, canonicalDeck.createCanonicalDeck(storedCanonicalDeck));
+});
+
 test('buildStudioCanonicalDeck returns null when the canonical builder yields malformed data', () => {
   const result = deckContext.buildStudioCanonicalDeck({ label: 'doc' }, {
     buildCanonicalDeckFromDocument() {

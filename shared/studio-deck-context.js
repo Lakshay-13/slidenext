@@ -95,14 +95,6 @@
   }
 
   function buildStudioCanonicalDeck(doc, options = {}) {
-    const buildCanonicalDeckFromDocument = typeof options.buildCanonicalDeckFromDocument === 'function'
-      ? options.buildCanonicalDeckFromDocument
-      : deckLoader && typeof deckLoader.buildCanonicalDeckFromDocument === 'function'
-        ? deckLoader.buildCanonicalDeckFromDocument
-        : null;
-    if (!buildCanonicalDeckFromDocument) {
-      return null;
-    }
     const createCanonicalDeck = typeof options.createCanonicalDeck === 'function'
       ? options.createCanonicalDeck
       : canonicalDeck && typeof canonicalDeck.createCanonicalDeck === 'function'
@@ -118,14 +110,21 @@
       || (typeof options.buildPresentationMetadataSeed === 'function'
         ? options.buildPresentationMetadataSeed(options.presentationUrl, options.presentationTitle)
         : buildStudioPresentationMetadataSeed(options.presentationUrl, options.presentationTitle));
-    if (options.preferStoredCanonicalDeck !== false) {
-      const storedCanonicalDeck = resolveStoredStudioCanonicalDeck(currentPresentationMetadata, {
-        createCanonicalDeck,
-        isCanonicalDeck
-      });
-      if (storedCanonicalDeck) {
-        return storedCanonicalDeck;
-      }
+    const storedCanonicalDeck = resolveStoredStudioCanonicalDeck(currentPresentationMetadata, {
+      createCanonicalDeck,
+      isCanonicalDeck
+    });
+    if (storedCanonicalDeck && (options.preferStoredCanonicalDeck !== false || !doc)) {
+      return storedCanonicalDeck;
+    }
+
+    const buildCanonicalDeckFromDocument = typeof options.buildCanonicalDeckFromDocument === 'function'
+      ? options.buildCanonicalDeckFromDocument
+      : deckLoader && typeof deckLoader.buildCanonicalDeckFromDocument === 'function'
+        ? deckLoader.buildCanonicalDeckFromDocument
+        : null;
+    if (!buildCanonicalDeckFromDocument) {
+      return storedCanonicalDeck || null;
     }
 
     const deck = buildCanonicalDeckFromDocument(doc, {
