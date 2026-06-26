@@ -398,6 +398,21 @@
     };
   }
 
+  function buildStudioTransformMotionState(session = {}, options = {}) {
+    const pointer = options.pointer || {};
+    const startPointer = session.startPointer || {};
+    const startClientX = Number.isFinite(session.startClientX) ? session.startClientX : 0;
+    const startClientY = Number.isFinite(session.startClientY) ? session.startClientY : 0;
+    const clientX = Number.isFinite(options.clientX) ? options.clientX : startClientX;
+    const clientY = Number.isFinite(options.clientY) ? options.clientY : startClientY;
+
+    return {
+      dx: (Number.isFinite(pointer.x) ? pointer.x : 0) - (Number.isFinite(startPointer.x) ? startPointer.x : 0),
+      dy: (Number.isFinite(pointer.y) ? pointer.y : 0) - (Number.isFinite(startPointer.y) ? startPointer.y : 0),
+      moveDistanceScreen: Math.hypot(clientX - startClientX, clientY - startClientY)
+    };
+  }
+
   return {
     getStudioTransformSelection,
     buildStudioTransformSelectionState,
@@ -415,6 +430,7 @@
     materializeStudioTransformSession,
     cleanupStudioTransformSession,
     buildStudioTransformSessionItem,
-    buildStudioTransformSession
+    buildStudioTransformSession,
+    buildStudioTransformMotionState
   };
 });

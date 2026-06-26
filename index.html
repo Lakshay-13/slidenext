@@ -3025,9 +3025,12 @@
       doc.body.addEventListener('pointermove', (e) => {
         if (!session || e.pointerId !== session.pointerId) return;
         const pointer = getPointerOnSlide(e, session.slideMetrics);
-        const dx = pointer.x - session.startPointer.x;
-        const dy = pointer.y - session.startPointer.y;
-        const moveDistanceScreen = Math.hypot(e.clientX - session.startClientX, e.clientY - session.startClientY);
+        const motionState = SlideNextStudioEditorTransform.buildStudioTransformMotionState(session, {
+          pointer,
+          clientX: e.clientX,
+          clientY: e.clientY
+        });
+        const { dx, dy, moveDistanceScreen } = motionState;
         if (!session.materialized && moveDistanceScreen >= DRAG_START_THRESHOLD_PX) {
           materializeSessionItems();
         }

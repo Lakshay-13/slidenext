@@ -596,3 +596,25 @@ test('buildStudioTransformSession normalizes transform session state and grab of
     overlay: null
   });
 });
+
+test('buildStudioTransformMotionState derives pointer deltas and screen movement from the session start', () => {
+  assert.deepEqual(transformState.buildStudioTransformMotionState({
+    startPointer: { x: 120, y: 90 },
+    startClientX: 400,
+    startClientY: 300
+  }, {
+    pointer: { x: 150, y: 140 },
+    clientX: 424,
+    clientY: 332
+  }), {
+    dx: 30,
+    dy: 50,
+    moveDistanceScreen: 40
+  });
+
+  assert.deepEqual(transformState.buildStudioTransformMotionState({}, {}), {
+    dx: 0,
+    dy: 0,
+    moveDistanceScreen: 0
+  });
+});
