@@ -871,6 +871,50 @@ test('buildStudioTransformSession normalizes transform session state and grab of
   });
 });
 
+test('startStudioTransformSession builds the session and captures its pointer', () => {
+  let capturedPointerId = null;
+  const captureTarget = {
+    setPointerCapture(pointerId) {
+      capturedPointerId = pointerId;
+    }
+  };
+
+  assert.deepEqual(transformState.startStudioTransformSession({
+    type: 'resize',
+    handleDir: 'se',
+    pointerId: 12,
+    captureTarget,
+    startClientX: 300,
+    startClientY: 180,
+    startPointer: { x: 140, y: 110 },
+    slideMetrics: { scaleX: 1, scaleY: 1 },
+    slideBounds: { width: 200, height: 120 },
+    startBounds: { left: 100, top: 80, width: 120, height: 90 },
+    items: [],
+    overlay: null
+  }), {
+    session: {
+      type: 'resize',
+      handleDir: 'se',
+      pointerId: 12,
+      captureTarget,
+      startClientX: 300,
+      startClientY: 180,
+      startPointer: { x: 140, y: 110 },
+      grabOffset: { x: 40, y: 30 },
+      slideMetrics: { scaleX: 1, scaleY: 1 },
+      slideBounds: { width: 200, height: 120 },
+      startBounds: { left: 100, top: 80, width: 120, height: 90 },
+      items: [],
+      moved: false,
+      materialized: false,
+      overlay: null
+    },
+    didCapture: true
+  });
+  assert.equal(capturedPointerId, 12);
+});
+
 test('buildStudioTransformMotionState derives pointer deltas and screen movement from the session start', () => {
   assert.deepEqual(transformState.buildStudioTransformMotionState({
     startPointer: { x: 120, y: 90 },

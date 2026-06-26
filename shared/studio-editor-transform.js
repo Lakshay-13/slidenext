@@ -565,6 +565,15 @@
     };
   }
 
+  function startStudioTransformSession(options = {}) {
+    const session = buildStudioTransformSession(options);
+    const captureResult = captureStudioTransformSessionPointer(session);
+    return {
+      session,
+      didCapture: captureResult.didCapture
+    };
+  }
+
   function buildStudioTransformMotionState(session = {}, options = {}) {
     const pointer = options.pointer || {};
     const startPointer = session.startPointer || {};
@@ -674,6 +683,7 @@
     finalizeStudioTransformSession,
     buildStudioTransformSessionItem,
     buildStudioTransformSession,
+    startStudioTransformSession,
     buildStudioTransformMotionState,
     buildStudioTransformFrameState,
     buildStudioTransformStartState

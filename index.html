@@ -2994,7 +2994,7 @@
         } = transformStartState;
         const overlayNode = ensureSelectionOverlay(doc, slide);
 
-        session = SlideNextStudioEditorTransform.buildStudioTransformSession({
+        session = SlideNextStudioEditorTransform.startStudioTransformSession({
           type: handle ? 'resize' : 'drag',
           handleDir: handle ? handle.getAttribute('data-dir') : '',
           pointerId: e.pointerId,
@@ -3007,9 +3007,7 @@
           startBounds,
           items,
           overlay: overlayNode
-        });
-
-        SlideNextStudioEditorTransform.captureStudioTransformSessionPointer(session);
+        }).session;
 
         updateDragHud(startBounds);
         isDraggingElement = true;
