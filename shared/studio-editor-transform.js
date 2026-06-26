@@ -366,6 +366,38 @@
     };
   }
 
+  function buildStudioTransformSession(options = {}) {
+    const startPointer = options.startPointer || {};
+    const startBounds = options.startBounds || {};
+    const normalizedStartPointer = {
+      x: Number.isFinite(startPointer.x) ? startPointer.x : 0,
+      y: Number.isFinite(startPointer.y) ? startPointer.y : 0
+    };
+    const startLeft = Number.isFinite(startBounds.left) ? startBounds.left : 0;
+    const startTop = Number.isFinite(startBounds.top) ? startBounds.top : 0;
+
+    return {
+      type: options.type === 'resize' ? 'resize' : 'drag',
+      handleDir: typeof options.handleDir === 'string' ? options.handleDir : '',
+      pointerId: options.pointerId,
+      captureTarget: options.captureTarget || null,
+      startClientX: Number.isFinite(options.startClientX) ? options.startClientX : 0,
+      startClientY: Number.isFinite(options.startClientY) ? options.startClientY : 0,
+      startPointer: normalizedStartPointer,
+      grabOffset: {
+        x: normalizedStartPointer.x - startLeft,
+        y: normalizedStartPointer.y - startTop
+      },
+      slideMetrics: options.slideMetrics || null,
+      slideBounds: options.slideBounds || {},
+      startBounds,
+      items: Array.isArray(options.items) ? options.items : [],
+      moved: false,
+      materialized: false,
+      overlay: options.overlay || null
+    };
+  }
+
   return {
     getStudioTransformSelection,
     buildStudioTransformSelectionState,
@@ -382,6 +414,7 @@
     applyStudioTransformBounds,
     materializeStudioTransformSession,
     cleanupStudioTransformSession,
-    buildStudioTransformSessionItem
+    buildStudioTransformSessionItem,
+    buildStudioTransformSession
   };
 });

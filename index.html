@@ -2993,7 +2993,7 @@
           getRectOnSlide
         }));
 
-        session = {
+        session = SlideNextStudioEditorTransform.buildStudioTransformSession({
           type: handle ? 'resize' : 'drag',
           handleDir: handle ? handle.getAttribute('data-dir') : '',
           pointerId: e.pointerId,
@@ -3001,18 +3001,12 @@
           startClientX: e.clientX,
           startClientY: e.clientY,
           startPointer,
-          grabOffset: {
-            x: startPointer.x - startBounds.left,
-            y: startPointer.y - startBounds.top
-          },
           slideMetrics,
           slideBounds,
           startBounds,
           items,
-          moved: false,
-          materialized: false,
           overlay: overlayNode
-        };
+        });
 
         if (typeof doc.body.setPointerCapture === 'function') {
           try {

@@ -540,3 +540,59 @@ test('buildStudioTransformSessionItem captures transform geometry and sizing loc
     }
   }), null);
 });
+
+test('buildStudioTransformSession normalizes transform session state and grab offsets', () => {
+  const items = [{ id: 'node-1' }];
+  const overlay = { id: 'overlay' };
+
+  assert.deepEqual(transformState.buildStudioTransformSession({
+    type: 'resize',
+    handleDir: 'se',
+    pointerId: 9,
+    captureTarget: { id: 'body' },
+    startClientX: 300,
+    startClientY: 180,
+    startPointer: { x: 140, y: 110 },
+    slideMetrics: { scaleX: 1, scaleY: 1 },
+    slideBounds: { width: 200, height: 120 },
+    startBounds: { left: 100, top: 80, width: 120, height: 90 },
+    items,
+    overlay
+  }), {
+    type: 'resize',
+    handleDir: 'se',
+    pointerId: 9,
+    captureTarget: { id: 'body' },
+    startClientX: 300,
+    startClientY: 180,
+    startPointer: { x: 140, y: 110 },
+    grabOffset: { x: 40, y: 30 },
+    slideMetrics: { scaleX: 1, scaleY: 1 },
+    slideBounds: { width: 200, height: 120 },
+    startBounds: { left: 100, top: 80, width: 120, height: 90 },
+    items,
+    moved: false,
+    materialized: false,
+    overlay
+  });
+
+  assert.deepEqual(transformState.buildStudioTransformSession({
+    startBounds: {}
+  }), {
+    type: 'drag',
+    handleDir: '',
+    pointerId: undefined,
+    captureTarget: null,
+    startClientX: 0,
+    startClientY: 0,
+    startPointer: { x: 0, y: 0 },
+    grabOffset: { x: 0, y: 0 },
+    slideMetrics: null,
+    slideBounds: {},
+    startBounds: {},
+    items: [],
+    moved: false,
+    materialized: false,
+    overlay: null
+  });
+});
