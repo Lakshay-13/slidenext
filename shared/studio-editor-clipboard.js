@@ -18,13 +18,17 @@
     };
   }
 
-  function buildStudioClipboardPastePlan(clipboard = null) {
+  function buildStudioClipboardPastePlan(clipboard = null, options = {}) {
     const items = hasStudioClipboardItems(clipboard) ? clipboard.items : [];
     const pasteCount = Number.isFinite(clipboard && clipboard.pasteCount) ? clipboard.pasteCount : 0;
     const nextPasteCount = pasteCount + 1;
+    const canMutateDeck = typeof options.canMutateDeck === 'function'
+      ? options.canMutateDeck
+      : () => true;
+    const deckReady = canMutateDeck();
 
     return {
-      canPaste: items.length > 0,
+      canPaste: deckReady && items.length > 0,
       items,
       nextPasteCount,
       nextClipboard: items.length > 0
@@ -71,13 +75,19 @@
     const isLocked = typeof options.isLocked === 'function'
       ? options.isLocked
       : () => false;
-    const canCopy = selection.length > 0 && !selection.some((element) => isLocked(element));
+    const canMutateDeck = typeof options.canMutateDeck === 'function'
+      ? options.canMutateDeck
+      : () => true;
+    const deckReady = canMutateDeck();
+    const canCopy = deckReady && selection.length > 0 && !selection.some((element) => isLocked(element));
 
     return {
       selection,
       canCopy,
       canDuplicate: canCopy,
-      canPaste: buildStudioClipboardPastePlan(clipboard).canPaste
+      canPaste: buildStudioClipboardPastePlan(clipboard, {
+        canMutateDeck
+      }).canPaste
     };
   }
 

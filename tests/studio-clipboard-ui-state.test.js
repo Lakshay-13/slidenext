@@ -46,10 +46,10 @@ test('updateClipboardActionState enables clipboard controls only when the iframe
       return false;
     },
     SlideNextStudioEditorClipboard: {
-      buildStudioClipboardMutationPlan() {
+      buildStudioClipboardMutationPlan(elements, clipboard, options = {}) {
         return {
-          canCopy: true,
-          canPaste: true
+          canCopy: typeof options.canMutateDeck === 'function' ? options.canMutateDeck() : true,
+          canPaste: typeof options.canMutateDeck === 'function' ? options.canMutateDeck() : true
         };
       }
     },

@@ -2814,15 +2814,15 @@
 
     function updateClipboardActionState(doc = getIframeDoc()) {
       const clipboardActionState = SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
-        isLocked: isElementLocked
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(doc)
       });
-      const hasActiveSlide = !!getActiveSlide(doc);
       const copyBtn = document.getElementById('copySelectionBtn');
       const pasteBtn = document.getElementById('pasteClipboardBtn');
       const slidePasteBtn = document.getElementById('slidePasteClipboardBtn');
-      if (copyBtn) copyBtn.disabled = !(clipboardActionState.canCopy && hasActiveSlide);
-      if (pasteBtn) pasteBtn.disabled = !(clipboardActionState.canPaste && hasActiveSlide);
-      if (slidePasteBtn) slidePasteBtn.disabled = !(clipboardActionState.canPaste && hasActiveSlide);
+      if (copyBtn) copyBtn.disabled = !clipboardActionState.canCopy;
+      if (pasteBtn) pasteBtn.disabled = !clipboardActionState.canPaste;
+      if (slidePasteBtn) slidePasteBtn.disabled = !clipboardActionState.canPaste;
     }
 
     function sanitizeDuplicatedSubtree(root) {
@@ -2911,7 +2911,8 @@
 
     function copySelectedElements() {
       const clipboardActionState = SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
-        isLocked: isElementLocked
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(getIframeDoc())
       });
       if (!clipboardActionState.canCopy) {
         updateClipboardActionState();
@@ -2925,7 +2926,9 @@
     }
 
     function pasteClipboardElements() {
-      const pastePlan = SlideNextStudioEditorClipboard.buildStudioClipboardPastePlan(editorClipboard);
+      const pastePlan = SlideNextStudioEditorClipboard.buildStudioClipboardPastePlan(editorClipboard, {
+        canMutateDeck: () => !!getActiveSlide(getIframeDoc())
+      });
       if (!pastePlan.canPaste) return false;
       const pasted = insertClipboardPayload(pastePlan.items, pastePlan.nextPasteCount);
       const didPaste = finalizeInsertedElements(pasted, 'Auto: Pasted Element');
@@ -2938,7 +2941,8 @@
 
     function duplicateSelectedElements() {
       const clipboardActionState = SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
-        isLocked: isElementLocked
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(getIframeDoc())
       });
       if (!clipboardActionState.canDuplicate) return false;
       const duplicates = insertClipboardPayload(buildClipboardPayload(clipboardActionState.selection), 1);
