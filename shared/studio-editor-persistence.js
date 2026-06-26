@@ -199,6 +199,20 @@
     return true;
   }
 
+  function handleStudioVersionPersistenceSuccess(context = {}, options = {}) {
+    return handleStudioPersistenceSuccess(context, {
+      ...options,
+      onSuccess(nextContext) {
+        if (typeof options.onSuccess === 'function') {
+          options.onSuccess(nextContext);
+        }
+        if (typeof options.refreshVersionEntries === 'function') {
+          options.refreshVersionEntries(nextContext.presentationUrl);
+        }
+      }
+    });
+  }
+
   function handleStudioPersistenceFailure(context = {}, options = {}) {
     if (!isStudioPersistenceActionCurrent(context, options)) {
       return false;
@@ -221,6 +235,7 @@
     isStudioPersistenceTaskStale,
     isStudioPersistenceActionCurrent,
     handleStudioPersistenceSuccess,
+    handleStudioVersionPersistenceSuccess,
     handleStudioPersistenceFailure
   };
 });

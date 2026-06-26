@@ -4089,15 +4089,17 @@
           doc: iframeDoc
         });
         if (data.success) {
-          SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
+          SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(persistenceContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
             getCurrentSessionToken: () => studioEditorSessionToken,
             onSuccess: () => {
               alert('Successfully saved named version backup checkpoint!');
-              loadVersions(scheduledPresentationUrl);
               if (statusEl) {
                 statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
               }
+            },
+            refreshVersionEntries: (presentationUrl) => {
+              loadVersions(presentationUrl);
             }
           });
         } else {
@@ -4174,12 +4176,14 @@
           doc: iframeDoc
         });
         if (data.success) {
-          SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
+          SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(persistenceContext, {
             getCurrentPresentationUrl: () => currentPresentationUrl,
             getCurrentSessionToken: () => studioEditorSessionToken,
             onSuccess: () => {
               console.log(`Auto-created version checkpoint: ${label}`);
-              loadVersions(presentationUrl); // Refresh dropdown
+            },
+            refreshVersionEntries: (requestedPresentationUrl) => {
+              loadVersions(requestedPresentationUrl);
             }
           });
         }

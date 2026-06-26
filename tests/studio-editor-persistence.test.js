@@ -412,6 +412,55 @@ test('handleStudioPersistenceSuccess skips stale same-url editor sessions', () =
   assert.deepEqual(calls, []);
 });
 
+test('handleStudioVersionPersistenceSuccess refreshes version entries only for the active deck', () => {
+  const context = editorPersistence.createStudioVersionPersistenceActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    '<html></html>',
+    { sessionToken: 8 }
+  );
+  const calls = [];
+
+  const applied = editorPersistence.handleStudioVersionPersistenceSuccess(context, {
+    getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    getCurrentSessionToken: () => 8,
+    onSuccess(nextContext) {
+      calls.push(['onSuccess', nextContext.presentationUrl]);
+    },
+    refreshVersionEntries(presentationUrl) {
+      calls.push(['refreshVersionEntries', presentationUrl]);
+    }
+  });
+
+  assert.equal(applied, true);
+  assert.deepEqual(calls, [
+    ['onSuccess', '/presentations/onboarding-presentation/index.html'],
+    ['refreshVersionEntries', '/presentations/onboarding-presentation/index.html']
+  ]);
+});
+
+test('handleStudioVersionPersistenceSuccess skips stale same-url editor sessions', () => {
+  const context = editorPersistence.createStudioVersionPersistenceActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    '<html></html>',
+    { sessionToken: 10 }
+  );
+  const calls = [];
+
+  const applied = editorPersistence.handleStudioVersionPersistenceSuccess(context, {
+    getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    getCurrentSessionToken: () => 11,
+    onSuccess() {
+      calls.push(['onSuccess']);
+    },
+    refreshVersionEntries() {
+      calls.push(['refreshVersionEntries']);
+    }
+  });
+
+  assert.equal(applied, false);
+  assert.deepEqual(calls, []);
+});
+
 test('handleStudioPersistenceFailure reports failures only for the active deck', () => {
   const context = editorPersistence.createStudioPersistenceActionContext(
     '/presentations/onboarding-presentation/index.html',
