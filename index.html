@@ -4450,9 +4450,7 @@
       const listContainer = document.getElementById('slideLayersList');
       if (!listContainer) return;
       
-      const iframe = document.getElementById('studioFrame');
-      if (!iframe) return;
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeDoc = getIframeDoc();
       if (!iframeDoc) return;
       const activeSlide = getActiveSlide(iframeDoc);
       if (!activeSlide) {

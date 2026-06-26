@@ -62,6 +62,7 @@ test('updateLayersList disables row layer controls when a layer cannot move in t
   const activeSlide = { id: 'slide-1' };
   const iframeDoc = { id: 'doc' };
   const listContainer = createListContainer();
+  let getIframeDocCalls = 0;
 
   const elementsById = {
     back: backElement,
@@ -89,17 +90,15 @@ test('updateLayersList disables row layer controls when a layer cannot move in t
     document: {
       getElementById(id) {
         if (id === 'slideLayersList') return listContainer;
-        if (id === 'studioFrame') {
-          return {
-            contentDocument: iframeDoc,
-            contentWindow: { document: iframeDoc }
-          };
-        }
         return null;
       }
     },
     getActiveSlide(doc) {
       return doc === iframeDoc ? activeSlide : null;
+    },
+    getIframeDoc() {
+      getIframeDocCalls += 1;
+      return iframeDoc;
     },
     getNormalizedSlideLayerOrder(slide) {
       return slide === activeSlide ? [backElement, middleElement, lockedFrontElement] : [];
@@ -128,4 +127,5 @@ test('updateLayersList disables row layer controls when a layer cannot move in t
   const lockedFrontLayerButtons = getLayerButtonAttributes(listContainer.innerHTML, 'Locked Front Layer');
   assert.equal(hasDisabledAttribute(lockedFrontLayerButtons.forwardAttrs), true);
   assert.equal(hasDisabledAttribute(lockedFrontLayerButtons.backwardAttrs), true);
+  assert.equal(getIframeDocCalls, 1);
 });
