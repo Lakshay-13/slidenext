@@ -1787,8 +1787,7 @@
 
     // Swap node indices in iframe and re-render
     function reorderSlides(fromIdx, toIdx) {
-      const iframe = document.getElementById('studioFrame');
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeDoc = getIframeDoc();
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return;
       saveHistoryState();
