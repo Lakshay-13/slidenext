@@ -2826,24 +2826,9 @@
     }
 
     function sanitizeDuplicatedSubtree(root) {
-      if (!root || root.nodeType !== 1) return;
-      [root, ...root.querySelectorAll('*')].forEach(node => {
-        node.removeAttribute('id');
-        node.removeAttribute(EDITOR_ELEMENT_ID_ATTR);
-        node.classList.remove('editor-selected', 'editor-dragging');
-        if (node.dataset?.editorHidden === 'true') {
-          const prevDisplay = Object.prototype.hasOwnProperty.call(node.dataset, 'editorPrevDisplay')
-            ? node.dataset.editorPrevDisplay
-            : '';
-          if (prevDisplay) {
-            node.style.display = prevDisplay;
-          } else {
-            node.style.removeProperty('display');
-          }
-        }
-        delete node.dataset.editorHidden;
-        delete node.dataset.editorPrevDisplay;
-        delete node.dataset.editorLocked;
+      SlideNextStudioElementState.sanitizeStudioDuplicatedSubtree(root, {
+        editorElementIdAttr: EDITOR_ELEMENT_ID_ATTR,
+        transientClassNames: ['editor-selected', 'editor-dragging']
       });
     }
 

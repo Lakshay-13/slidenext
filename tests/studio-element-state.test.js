@@ -85,3 +85,70 @@ test('setStudioElementHiddenState clears a hidden attribute loaded from disk eve
   assert.equal(style.display, '');
   assert.deepEqual(style.removePropertyCalls, ['display']);
 });
+
+function createClassList(initialValues = []) {
+  const values = new Set(initialValues);
+  return {
+    contains(value) {
+      return values.has(value);
+    },
+    remove(...entries) {
+      entries.forEach((entry) => values.delete(entry));
+    }
+  };
+}
+
+function createSanitizableElement(options = {}) {
+  const attributes = { ...(options.attributes || {}) };
+  const element = createElement({
+    hidden: options.hidden,
+    dataset: options.dataset,
+    style: options.style
+  });
+
+  element.nodeType = 1;
+  element.classList = createClassList(options.classNames || []);
+  element.removeAttributeCalls = [];
+  element.removeAttribute = function removeAttribute(name) {
+    this.removeAttributeCalls.push(name);
+    delete attributes[name];
+  };
+  element.querySelectorAll = () => options.descendants || [];
+
+  return element;
+}
+
+test('sanitizeStudioDuplicatedSubtree removes editor ids and clears managed hidden and locked state', () => {
+  const child = createSanitizableElement({
+    hidden: true,
+    dataset: {
+      editorHidden: 'true',
+      editorPrevDisplay: 'grid',
+      editorLocked: 'true'
+    },
+    style: createStyle('none'),
+    classNames: ['editor-dragging']
+  });
+  const root = createSanitizableElement({
+    attributes: {
+      id: 'hero-card',
+      'data-editor-id': 'node-1'
+    },
+    classNames: ['editor-selected'],
+    descendants: [child]
+  });
+
+  studioElementState.sanitizeStudioDuplicatedSubtree(root, {
+    editorElementIdAttr: 'data-editor-id',
+    transientClassNames: ['editor-selected', 'editor-dragging']
+  });
+
+  assert.deepEqual(root.removeAttributeCalls, ['id', 'data-editor-id']);
+  assert.equal(root.classList.contains('editor-selected'), false);
+  assert.equal(child.classList.contains('editor-dragging'), false);
+  assert.equal(child.hidden, false);
+  assert.equal(child.style.display, 'grid');
+  assert.equal(Object.prototype.hasOwnProperty.call(child.dataset, 'editorHidden'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(child.dataset, 'editorPrevDisplay'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(child.dataset, 'editorLocked'), false);
+});

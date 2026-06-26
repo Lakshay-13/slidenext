@@ -181,7 +181,7 @@ test('renderCanonicalNode renders hidden nodes as hidden when canonical visibili
     preferNodeSourceHtml: false
   });
 
-  assert.equal(html, '<div hidden aria-hidden="true">Hidden copy</div>');
+  assert.equal(html, '<div data-editor-hidden="true" hidden aria-hidden="true">Hidden copy</div>');
 });
 
 test('renderCanonicalNode emits editor lock metadata when canonical visibility marks the node locked', () => {

@@ -203,6 +203,7 @@
       attributes['data-editor-locked'] = 'true';
     }
     if (node.visibility && node.visibility.hidden) {
+      attributes['data-editor-hidden'] = 'true';
       attributes.hidden = true;
       attributes['aria-hidden'] = attributes['aria-hidden'] || 'true';
     }
