@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -90,7 +91,7 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
   ]]);
   assert.equal(context.lastPersistedDeckHtml, '<html>persisted</html>');
   assert.deepEqual(canonicalDeckUpdates, [[
-    canonicalDeck,
+    canonicalDeckModel.createCanonicalDeck(canonicalDeck),
     'presentations/onboarding-presentation/index.html'
   ]]);
 });

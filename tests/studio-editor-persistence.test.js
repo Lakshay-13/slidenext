@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 
 test('createStudioPersistenceActionContext normalizes persistence state', () => {
@@ -49,9 +50,15 @@ test('createStudioPersistenceActionContext normalizes persistence state', () => 
       '<html></html>',
       {
         canonicalDeck: {
-          kind: 'slidenext.deck',
-          schemaVersion: 1,
-          slides: []
+          metadata: {
+            title: 'Project Onboarding'
+          },
+          slides: [
+            {
+              id: 'slide-1',
+              nodes: []
+            }
+          ]
         }
       }
     ),
@@ -59,20 +66,32 @@ test('createStudioPersistenceActionContext normalizes persistence state', () => 
       presentationUrl: '/presentations/onboarding-presentation/index.html',
       cleanHtml: '<html></html>',
       shouldUpdatePersistedHtml: true,
-      canonicalDeck: {
-        kind: 'slidenext.deck',
-        schemaVersion: 1,
-        slides: []
-      }
+      canonicalDeck: canonicalDeckModel.createCanonicalDeck({
+        metadata: {
+          title: 'Project Onboarding'
+        },
+        slides: [
+          {
+            id: 'slide-1',
+            nodes: []
+          }
+        ]
+      })
     }
   );
 });
 
 test('buildStudioSaveRequestBody includes canonical deck sidecars only when they are valid', () => {
   const canonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: []
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
   };
 
   assert.deepEqual(
@@ -90,7 +109,7 @@ test('buildStudioSaveRequestBody includes canonical deck sidecars only when they
       htmlContent: '<html></html>',
       isAutoSave: true,
       versionLabel: 'Auto: Updated Deck',
-      canonicalDeck
+      canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeck)
     }
   );
 
@@ -112,6 +131,42 @@ test('buildStudioSaveRequestBody includes canonical deck sidecars only when they
       htmlContent: '<html></html>',
       isAutoSave: false
     }
+  );
+});
+
+test('resolveStudioPersistenceCanonicalDeck normalizes valid deck-like payloads and rejects malformed ones', () => {
+  assert.deepEqual(
+    editorPersistence.resolveStudioPersistenceCanonicalDeck({
+      metadata: {
+        title: 'Project Onboarding'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    }),
+    canonicalDeckModel.createCanonicalDeck({
+      metadata: {
+        title: 'Project Onboarding'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    })
+  );
+
+  assert.equal(
+    editorPersistence.resolveStudioPersistenceCanonicalDeck({
+      metadata: {
+        title: 'Broken Deck'
+      }
+    }),
+    null
   );
 });
 

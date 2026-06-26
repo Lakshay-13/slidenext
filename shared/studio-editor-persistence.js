@@ -1,12 +1,15 @@
 (function (root, factory) {
-  const api = factory();
+  const presentationMetadata = typeof module === 'object' && module.exports
+    ? require('./presentation-metadata')
+    : root && root.SlideNextPresentationMetadata;
+  const api = factory(presentationMetadata);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorPersistence = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (presentationMetadata) {
   function normalizeString(value, fallback = '') {
     return typeof value === 'string' ? value : fallback;
   }
@@ -22,17 +25,40 @@
     return Number.isInteger(value) ? value : null;
   }
 
+  function resolveStudioPersistenceCanonicalDeck(deckLike = null, options = {}) {
+    const resolvePresentationCanonicalDeck = typeof options.resolvePresentationCanonicalDeck === 'function'
+      ? options.resolvePresentationCanonicalDeck
+      : presentationMetadata && typeof presentationMetadata.resolvePresentationCanonicalDeck === 'function'
+        ? presentationMetadata.resolvePresentationCanonicalDeck
+        : null;
+    if (resolvePresentationCanonicalDeck) {
+      return resolvePresentationCanonicalDeck({ canonicalDeck: deckLike }, {
+        createCanonicalDeck: options.createCanonicalDeck,
+        isCanonicalDeck: options.isCanonicalDeck
+      });
+    }
+
+    const canonicalDeck = asPlainObject(deckLike);
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : () => true;
+    return Array.isArray(canonicalDeck.slides) && isCanonicalDeck(canonicalDeck)
+      ? canonicalDeck
+      : null;
+  }
+
   function createStudioPersistenceActionContext(presentationUrl = '', cleanHtml = '', options = {}) {
     const context = {
       presentationUrl: normalizeString(presentationUrl),
       cleanHtml: normalizeString(cleanHtml),
       shouldUpdatePersistedHtml: options.shouldUpdatePersistedHtml !== false
     };
-    const canonicalDeck = asPlainObject(options.canonicalDeck);
-    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
-      ? options.isCanonicalDeck
-      : () => true;
-    if (Array.isArray(canonicalDeck.slides) && isCanonicalDeck(canonicalDeck)) {
+    const canonicalDeck = resolveStudioPersistenceCanonicalDeck(options.canonicalDeck, {
+      createCanonicalDeck: options.createCanonicalDeck,
+      isCanonicalDeck: options.isCanonicalDeck,
+      resolvePresentationCanonicalDeck: options.resolvePresentationCanonicalDeck
+    });
+    if (canonicalDeck) {
       context.canonicalDeck = canonicalDeck;
     }
     const sessionToken = normalizeSessionToken(options.sessionToken);
@@ -53,11 +79,12 @@
       body.versionLabel = versionLabel;
     }
 
-    const canonicalDeck = asPlainObject(options.canonicalDeck);
-    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
-      ? options.isCanonicalDeck
-      : () => true;
-    if (Array.isArray(canonicalDeck.slides) && isCanonicalDeck(canonicalDeck)) {
+    const canonicalDeck = resolveStudioPersistenceCanonicalDeck(options.canonicalDeck, {
+      createCanonicalDeck: options.createCanonicalDeck,
+      isCanonicalDeck: options.isCanonicalDeck,
+      resolvePresentationCanonicalDeck: options.resolvePresentationCanonicalDeck
+    });
+    if (canonicalDeck) {
       body.canonicalDeck = canonicalDeck;
     }
 
@@ -121,6 +148,7 @@
   }
 
   return {
+    resolveStudioPersistenceCanonicalDeck,
     createStudioPersistenceActionContext,
     buildStudioSaveRequestBody,
     isStudioPersistenceActionCurrent,

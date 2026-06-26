@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -65,7 +66,7 @@ test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requ
       htmlContent: '<html>persisted</html>',
       isAutoSave: true,
       versionLabel: 'Auto: Updated Deck',
-      canonicalDeck
+      canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeck)
     }
   );
 });
