@@ -4172,7 +4172,7 @@
 
       const saveBtn = document.getElementById('studioSaveBtn');
       if (saveBtn) {
-        saveBtn.disabled = !(hasPresentationSession && (hasDeckDocument || hasPersistedDeckHtml));
+        saveBtn.disabled = !(hasPresentationSession && hasDeckContent);
       }
 
       const sourceViewBtn = document.getElementById('openSourceViewBtn');
