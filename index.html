@@ -3572,7 +3572,13 @@
         lastPersistedDeckHtml = typeof nextState.cleanHtml === 'string' ? nextState.cleanHtml : '';
       }
       if (Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck')) {
-        lastPersistedCanonicalDeck = nextState.canonicalDeck || null;
+        const resolveStoredCanonicalDeck = SlideNextStudioDeckContext
+          && typeof SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck === 'function'
+          ? SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck
+          : (metadata) => metadata && metadata.canonicalDeck ? metadata.canonicalDeck : null;
+        lastPersistedCanonicalDeck = resolveStoredCanonicalDeck({
+          canonicalDeck: nextState.canonicalDeck
+        }) || null;
       }
       if (Object.prototype.hasOwnProperty.call(nextState, 'playbackState')) {
         const normalizePersistedPlaybackState = SlideNextDeckPersistence
