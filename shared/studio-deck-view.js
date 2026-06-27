@@ -478,9 +478,27 @@
       }
     }
 
-    return typeof options.buildFallbackHtml === 'function'
+    const fallbackHtml = typeof options.buildFallbackHtml === 'function'
       ? options.buildFallbackHtml(doc)
       : '';
+    if (!fallbackHtml) {
+      return fallbackHtml;
+    }
+
+    const injectBaseHrefIntoHtml = deckHtml && typeof deckHtml.injectBaseHrefIntoHtml === 'function'
+      ? deckHtml.injectBaseHrefIntoHtml
+      : null;
+    const buildPresentationBaseHref = deckHtml && typeof deckHtml.buildPresentationBaseHref === 'function'
+      ? deckHtml.buildPresentationBaseHref
+      : null;
+    if (!injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
+      return fallbackHtml;
+    }
+
+    return injectBaseHrefIntoHtml(
+      fallbackHtml,
+      buildPresentationBaseHref(options.presentationUrl || '', options.deckHtmlOptions || {})
+    );
   }
 
   function buildStudioSourceHtml(doc, options = {}) {
