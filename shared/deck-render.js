@@ -294,7 +294,11 @@
     if (needsPositionContext && !hasExplicitSourceStyle && !styleTextHasProperty(sourceAttributes.style, 'position')) {
       sourceAttributes.style = appendStyleDeclaration(sourceAttributes.style, 'position: relative;');
     }
-    sourceAttributes.class = buildRenderedSlideClassName(sourceAttributes.class, index === 0);
+    const requestedActiveSlideId = normalizeString(options.activeSlideId).trim();
+    const isActiveSlide = requestedActiveSlideId
+      ? normalizeString(slide.id).trim() === requestedActiveSlideId
+      : index === 0;
+    sourceAttributes.class = buildRenderedSlideClassName(sourceAttributes.class, isActiveSlide);
     if (!sourceAttributes.id && slide.id) {
       sourceAttributes.id = slide.id;
     }
@@ -367,8 +371,16 @@
   }
 
   function buildDefaultBodyHtml(deck, options = {}) {
+    const slides = Array.isArray(deck.slides) ? deck.slides : [];
+    const requestedActiveSlideId = normalizeString(options.activeSlideId).trim();
+    const resolvedActiveSlideId = requestedActiveSlideId && slides.some((slide) => normalizeString(slide && slide.id).trim() === requestedActiveSlideId)
+      ? requestedActiveSlideId
+      : normalizeString(slides[0] && slides[0].id).trim();
     const slidesHtml = Array.isArray(deck.slides)
-      ? deck.slides.map((slide, index) => renderCanonicalSlide(slide, index, options)).join('\n')
+      ? deck.slides.map((slide, index) => renderCanonicalSlide(slide, index, {
+        ...options,
+        activeSlideId: resolvedActiveSlideId
+      })).join('\n')
       : '';
     const scriptAssetTags = buildScriptAssetTags(deck.assets);
     return [
@@ -388,7 +400,9 @@
 
     const headHtml = normalizeString(deck.source && deck.source.headHtml) || buildDefaultHeadHtml(deck);
     const bodyAttributes = asPlainObject(deck.source && deck.source.bodyAttributes);
-    const bodyHtml = normalizeString(deck.source && deck.source.bodyHtml) || buildDefaultBodyHtml(deck, options);
+    const bodyHtml = options.preferBodySourceHtml === false
+      ? buildDefaultBodyHtml(deck, options)
+      : normalizeString(deck.source && deck.source.bodyHtml) || buildDefaultBodyHtml(deck, options);
 
     return [
       '<!DOCTYPE html>',

@@ -3694,7 +3694,15 @@
         }
         return SlideNextStudioDeckView.buildStudioSourceHtml(doc, {
           buildCanonicalDeck: buildEditorCanonicalDeck,
-          buildFallbackHtml: () => persistedHtml
+          buildFallbackHtml: () => persistedHtml,
+          deckHtmlOptions: {
+            renderOptions: {
+              activeSlideId: getPersistedActiveSlideId(),
+              preferSourceHtml: false,
+              preferBodySourceHtml: false,
+              preferSlideSourceHtml: false
+            }
+          }
         });
       }
       return SlideNextDeckPersistence.buildPersistableDeckHtml(doc, {

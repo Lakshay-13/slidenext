@@ -196,11 +196,16 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
       assert.equal(nextDoc, null);
       return canonicalDeck;
     },
+    getPersistedActiveSlideId() {
+      return 'slide-2';
+    },
     getIframeDoc() {
       return null;
     },
     lastPersistedDeckHtml: '',
-    persistedDeckPlaybackState: null
+    persistedDeckPlaybackState: {
+      activeSlideIds: ['slide-2']
+    }
   };
 
   vm.createContext(context);
@@ -213,4 +218,8 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
   assert.equal(typeof calls[0][1].buildCanonicalDeck, 'function');
   assert.equal(calls[0][1].buildCanonicalDeck(null), canonicalDeck);
   assert.equal(calls[0][1].buildFallbackHtml(), '');
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.activeSlideId, 'slide-2');
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSourceHtml, false);
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
 });

@@ -117,6 +117,52 @@ test('renderCanonicalDeckHtml removes stale slide-active from non-active rendere
   assert.match(html, /<section class="slide custom-slide" id="slide-2"><\/section>/);
 });
 
+test('renderCanonicalDeckHtml can rebuild canonical slide bodies and honor a requested active slide when source body html is disabled', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        title: 'Intro',
+        nodes: [],
+        source: {
+          html: '',
+          attributes: {
+            class: 'hero-slide'
+          }
+        }
+      },
+      {
+        id: 'slide-2',
+        title: 'Agenda',
+        nodes: [],
+        source: {
+          html: '',
+          attributes: {
+            class: 'agenda-slide slide-active'
+          }
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '<style>.deck-shell{color:red;}</style>',
+      bodyHtml: '<main>stale body html</main>'
+    }
+  }, {
+    activeSlideId: 'slide-2',
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<style>\.deck-shell\{color:red;\}<\/style>/);
+  assert.match(html, /<div id="slidesContainer" class="slides-container">/);
+  assert.doesNotMatch(html, /stale body html/);
+  assert.match(html, /<section class="slide hero-slide"[^>]*id="slide-1"[^>]*><\/section>/);
+  assert.match(html, /<section class="slide agenda-slide slide-active"[^>]*id="slide-2"[^>]*><\/section>/);
+});
+
 test('renderCanonicalNode uses dedicated class and style fields when attributes omit them', () => {
   const html = deckRender.renderCanonicalNode({
     tagName: 'div',
