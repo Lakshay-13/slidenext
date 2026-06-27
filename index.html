@@ -3688,7 +3688,14 @@
 
     function buildPersistableDeckHtml(doc = getIframeDoc()) {
       if (!doc) {
-        return typeof lastPersistedDeckHtml === 'string' ? lastPersistedDeckHtml : '';
+        const persistedHtml = typeof lastPersistedDeckHtml === 'string' ? lastPersistedDeckHtml : '';
+        if (persistedHtml.trim()) {
+          return persistedHtml;
+        }
+        return SlideNextStudioDeckView.buildStudioSourceHtml(doc, {
+          buildCanonicalDeck: buildEditorCanonicalDeck,
+          buildFallbackHtml: () => persistedHtml
+        });
       }
       return SlideNextDeckPersistence.buildPersistableDeckHtml(doc, {
         editorChromeNodeIds: EDITOR_CHROME_NODE_IDS,

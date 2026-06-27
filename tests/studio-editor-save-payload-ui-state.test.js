@@ -155,3 +155,62 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-baseline</html>');
   assert.equal(sharedBuildCalls, 0);
 });
+
+test('buildPersistableDeckHtml renders canonical deck html when the editor frame and persisted baseline are unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+  let sharedBuildCalls = 0;
+  const calls = [];
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml() {
+        sharedBuildCalls += 1;
+        return '<html>rebuilt</html>';
+      }
+    },
+    SlideNextStudioDeckView: {
+      buildStudioSourceHtml(nextDoc, options) {
+        calls.push([nextDoc, options]);
+        return '<html>canonical-source</html>';
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, null);
+      return canonicalDeck;
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '',
+    persistedDeckPlaybackState: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+
+  assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
+  assert.equal(sharedBuildCalls, 0);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], null);
+  assert.equal(typeof calls[0][1].buildCanonicalDeck, 'function');
+  assert.equal(calls[0][1].buildCanonicalDeck(null), canonicalDeck);
+  assert.equal(calls[0][1].buildFallbackHtml(), '');
+});

@@ -254,6 +254,111 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
   assert.equal(statusEl.innerHTML, 'saved');
 });
 
+test('submitSaveVersion can save rendered canonical html when the editor frame has no persisted html baseline', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const submitSaveVersionSource = extractFunctionSource(
+    fileContent,
+    'async function submitSaveVersion() {',
+    '\n\n    // Automatically save a labeled checkpoint version in the background'
+  );
+
+  const alerts = [];
+  let closeModalCalls = 0;
+  const loadVersionsCalls = [];
+  const saveVersionCalls = [];
+
+  const inputEl = { value: 'Checkpoint Canonical' };
+  const saveBtnEl = {
+    disabled: false,
+    innerHTML: '<span>Save Version</span>'
+  };
+  const statusEl = {
+    innerHTML: 'Saved to disk'
+  };
+
+  const documentStub = {
+    getElementById(id) {
+      switch (id) {
+        case 'versionCheckpointName':
+          return inputEl;
+        case 'studioSaveBtn':
+          return saveBtnEl;
+        case 'autoSaveStatus':
+          return statusEl;
+        default:
+          throw new Error(`Unexpected element lookup: ${id}`);
+      }
+    }
+  };
+
+  const context = {
+    alert(message) {
+      alerts.push(message);
+    },
+    buildPersistableDeckHtml(nextDoc) {
+      assert.equal(nextDoc, null);
+      return '<html>canonical-source</html>';
+    },
+    closeSaveVersionModal() {
+      closeModalCalls += 1;
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    document: documentStub,
+    getIframeDoc() {
+      return null;
+    },
+    loadVersions(presentationUrl, sessionToken) {
+      loadVersionsCalls.push([presentationUrl, sessionToken]);
+    },
+    resetStudioSaveButtonState() {
+      saveBtnEl.disabled = false;
+      saveBtnEl.innerHTML = '<span>Save Version</span>';
+    },
+    saveVersionCheckpoint: async (...args) => {
+      saveVersionCalls.push(args);
+      return { success: true };
+    },
+    setStudioSaveButtonState(state) {
+      if (state === 'saving-version') {
+        saveBtnEl.disabled = true;
+        saveBtnEl.innerHTML = '<span>Creating version...</span>';
+      }
+    },
+    setStudioAutoSaveStatus(state) {
+      statusEl.innerHTML = state;
+    },
+    SlideNextStudioEditorPersistence: editorPersistence,
+    studioEditorSessionToken: 5
+  };
+
+  vm.createContext(context);
+  vm.runInContext(submitSaveVersionSource, context);
+
+  await context.submitSaveVersion();
+
+  assert.deepEqual(alerts, ['Successfully saved named version backup checkpoint!']);
+  assert.equal(closeModalCalls, 1);
+  assert.equal(saveVersionCalls.length, 1);
+  assert.equal(saveVersionCalls[0][0], 'Checkpoint Canonical');
+  assert.equal(saveVersionCalls[0][1], '<html>canonical-source</html>');
+  assert.equal(saveVersionCalls[0][2], '/presentations/onboarding-presentation/index.html');
+  assert.equal(saveVersionCalls[0][3].sessionToken, 5);
+  assert.equal(saveVersionCalls[0][3].doc, null);
+  assert.deepEqual(loadVersionsCalls, [[
+    '/presentations/onboarding-presentation/index.html',
+    5
+  ]]);
+  assert.equal(saveBtnEl.disabled, false);
+  assert.equal(saveBtnEl.innerHTML, '<span>Save Version</span>');
+  assert.equal(statusEl.innerHTML, 'saved');
+});
+
 test('submitSaveVersion ignores stale same-url session completions', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const submitSaveVersionSource = extractFunctionSource(
