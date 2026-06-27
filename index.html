@@ -2189,6 +2189,13 @@
       const storedCanonicalDeck = SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck(currentPresentationMetadata);
       if (storedCanonicalDeck) {
         updateEditorPersistedDeckState({ canonicalDeck: storedCanonicalDeck });
+        const iframeDoc = getIframeDoc();
+        if (!iframeDoc) {
+          generateThumbnails();
+          syncStudioChromeToActiveSlide(iframeDoc);
+          updateLayersList();
+          updateDeckReadyToolbarActionState(iframeDoc);
+        }
       }
       return currentPresentationMetadata;
     }

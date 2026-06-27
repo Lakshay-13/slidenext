@@ -431,6 +431,9 @@ test('applyCurrentPresentationMetadata refreshes the persisted canonical baselin
       }
     },
     currentPresentationMetadata: null,
+    getIframeDoc() {
+      return { documentElement: {} };
+    },
     updateEditorPersistedDeckStateCalls: [],
     updateEditorPersistedDeckState(nextState) {
       context.updateEditorPersistedDeckStateCalls.push(nextState);
@@ -448,6 +451,76 @@ test('applyCurrentPresentationMetadata refreshes the persisted canonical baselin
   assert.equal(context.updateEditorPersistedDeckStateCalls[0].canonicalDeck.kind, 'slidenext.deck');
   assert.equal(context.updateEditorPersistedDeckStateCalls[0].canonicalDeck.schemaVersion, 1);
   assert.deepEqual(context.updateEditorPersistedDeckStateCalls[0].canonicalDeck.slides, []);
+});
+
+test('applyCurrentPresentationMetadata refreshes fallback deck chrome from stored canonical metadata when the iframe is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyCurrentPresentationMetadataSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentPresentationMetadata(metadata, options = {}) {',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+
+  const metadata = {
+    id: 'onboarding-presentation',
+    canonicalDeck: {
+      slides: []
+    }
+  };
+  const resolvedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+  const callLog = [];
+  const context = {
+    SlideNextStudioDeckContext: {
+      resolveStoredStudioCanonicalDeck(nextMetadata) {
+        assert.equal(nextMetadata, metadata);
+        return resolvedCanonicalDeck;
+      }
+    },
+    currentPresentationMetadata: null,
+    generateThumbnails() {
+      callLog.push('generateThumbnails');
+    },
+    getIframeDoc() {
+      callLog.push('getIframeDoc');
+      return null;
+    },
+    syncStudioChromeToActiveSlide(nextDoc) {
+      callLog.push(['syncStudioChromeToActiveSlide', nextDoc]);
+    },
+    updateDeckReadyToolbarActionState(nextDoc) {
+      callLog.push(['updateDeckReadyToolbarActionState', nextDoc]);
+    },
+    updateEditorPersistedDeckState(nextState) {
+      callLog.push(['updateEditorPersistedDeckState', nextState]);
+    },
+    updateLayersList() {
+      callLog.push('updateLayersList');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyCurrentPresentationMetadataSource, context);
+
+  context.applyCurrentPresentationMetadata(metadata, { syncPersistedCanonicalDeck: true });
+
+  assert.equal(context.currentPresentationMetadata, metadata);
+  assert.equal(callLog.length, 6);
+  assert.equal(callLog[0][0], 'updateEditorPersistedDeckState');
+  assert.equal(callLog[0][1].canonicalDeck, resolvedCanonicalDeck);
+  assert.equal(callLog[1], 'getIframeDoc');
+  assert.equal(callLog[2], 'generateThumbnails');
+  assert.deepEqual(callLog[3], ['syncStudioChromeToActiveSlide', null]);
+  assert.equal(callLog[4], 'updateLayersList');
+  assert.deepEqual(callLog[5], ['updateDeckReadyToolbarActionState', null]);
 });
 
 test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline from stored metadata sidecars', async () => {
@@ -495,22 +568,19 @@ test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline
     currentPresentationMetadata: null,
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
-    lastPersistedCanonicalDeck: null,
-    applyCurrentPresentationMetadata(metadata, options = {}) {
-      context.currentPresentationMetadata = metadata;
-      if (options.syncPersistedCanonicalDeck) {
-        const storedCanonicalDeck = context.SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck(metadata);
-        if (storedCanonicalDeck) {
-          context.updateEditorPersistedDeckState({ canonicalDeck: storedCanonicalDeck });
-        }
-      }
-      return metadata;
+    generateThumbnails() {},
+    getIframeDoc() {
+      return { documentElement: {} };
     },
+    lastPersistedCanonicalDeck: null,
+    syncStudioChromeToActiveSlide() {},
+    updateDeckReadyToolbarActionState() {},
     updateEditorPersistedDeckState(nextState) {
       if (Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck')) {
         context.lastPersistedCanonicalDeck = nextState.canonicalDeck;
       }
     },
+    updateLayersList() {},
     studioEditorSessionToken: 12
   };
 
