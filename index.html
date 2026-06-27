@@ -3823,8 +3823,9 @@
       autoSaveDebounceTimer = setTimeout(async () => {
         autoSaveDebounceTimer = null;
         const iframeDoc = getIframeDoc();
-        if (!iframeDoc || isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
+        if (isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
         const cleanHtml = buildPersistableDeckHtml(iframeDoc);
+        if (!cleanHtml) return;
         const persistencePlan = SlideNextStudioEditorPersistence.buildStudioPersistenceRequestPlan(
           scheduledPresentationUrl,
           cleanHtml,

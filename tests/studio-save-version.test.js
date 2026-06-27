@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
@@ -571,7 +572,7 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   assert.deepEqual(logCalls, ['Auto-created version checkpoint: Auto: Edited Text']);
 });
 
-test('triggerAutoSave skips persistence when the shared iframe accessor has no live document', async () => {
+test('triggerAutoSave skips persistence when the shared iframe accessor has no live document and no fallback html', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const triggerAutoSaveSource = extractFunctionSource(
     fileContent,
@@ -596,7 +597,7 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
     },
     buildPersistableDeckHtml() {
       buildPersistableDeckHtmlCalls += 1;
-      return '<html>persisted</html>';
+      return '';
     },
     clearTimeout() {},
     createCurrentStudioSessionStateReaders() {
@@ -651,7 +652,126 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
 
   await scheduledCallback();
 
-  assert.equal(buildPersistableDeckHtmlCalls, 0);
+  assert.equal(buildPersistableDeckHtmlCalls, 1);
   assert.equal(saveRequestBodyCalls, 0);
   assert.equal(fetchCalls, 0);
+});
+
+test('triggerAutoSave can persist rendered canonical html when the shared iframe accessor has no live document', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const triggerAutoSaveSource = extractFunctionSource(
+    fileContent,
+    'function triggerAutoSave() {',
+    '\n\n    // Custom styled checkpoint version modal controls'
+  );
+
+  let scheduledCallback = null;
+  const fetchCalls = [];
+  const persistedStateUpdates = [];
+  const canonicalDeckUpdates = [];
+  const statusEl = {
+    innerHTML: 'Saved to disk'
+  };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+
+  const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
+    autoSaveDebounceTimer: null,
+    buildEditorSaveRequestBody(nextDoc, cleanHtml, options = {}) {
+      assert.equal(nextDoc, null);
+      return {
+        htmlPath: options.presentationUrl,
+        htmlContent: cleanHtml,
+        isAutoSave: !!options.isAutoSave,
+        canonicalDeck
+      };
+    },
+    buildPersistableDeckHtml(nextDoc) {
+      assert.equal(nextDoc, null);
+      return '<html>canonical-source</html>';
+    },
+    clearTimeout() {},
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    document: {
+      getElementById(id) {
+        if (id === 'autoSaveStatus') {
+          return statusEl;
+        }
+        throw new Error(`Unexpected element lookup: ${id}`);
+      }
+    },
+    fetch: async (url, init) => {
+      fetchCalls.push([url, JSON.parse(init.body)]);
+      return {
+        async json() {
+          return { success: true };
+        }
+      };
+    },
+    getIframeDoc() {
+      return null;
+    },
+    isCurrentDeckStatePersisted() {
+      return false;
+    },
+    isStaleEditorPersistenceTask() {
+      return false;
+    },
+    setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl) {
+      canonicalDeckUpdates.push([nextCanonicalDeck, presentationUrl]);
+    },
+    setStudioAutoSaveStatus(state) {
+      statusEl.innerHTML = state;
+    },
+    setTimeout(callback) {
+      scheduledCallback = callback;
+      return 1;
+    },
+    studioEditorSessionToken: 9,
+    updateEditorPersistedDeckState(nextState) {
+      persistedStateUpdates.push(nextState);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(triggerAutoSaveSource, context);
+
+  context.triggerAutoSave();
+  assert.equal(statusEl.innerHTML, 'saving');
+  assert.equal(typeof scheduledCallback, 'function');
+
+  await scheduledCallback();
+
+  assert.deepEqual(fetchCalls, [[
+    '/api/save',
+    {
+      htmlPath: '/presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>canonical-source</html>',
+      isAutoSave: true,
+      canonicalDeck
+    }
+  ]]);
+  assert.equal(persistedStateUpdates.length, 2);
+  assert.equal(persistedStateUpdates[0].cleanHtml, '<html>canonical-source</html>');
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(persistedStateUpdates[1].canonicalDeck)),
+    canonicalDeckModel.createCanonicalDeck(canonicalDeck)
+  );
+  assert.equal(canonicalDeckUpdates.length, 1);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(canonicalDeckUpdates[0][0])),
+    canonicalDeckModel.createCanonicalDeck(canonicalDeck)
+  );
+  assert.equal(canonicalDeckUpdates[0][1], '/presentations/onboarding-presentation/index.html');
+  assert.equal(statusEl.innerHTML, 'saved');
 });
