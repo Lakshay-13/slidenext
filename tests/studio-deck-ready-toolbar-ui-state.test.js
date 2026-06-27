@@ -14,7 +14,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
-test('updateDeckReadyToolbarActionState enables deck-level toolbar actions only when the iframe document is ready', () => {
+test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when fallback deck state remains available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateDeckReadyToolbarActionStateSource = extractFunctionSource(
     fileContent,
@@ -28,6 +28,8 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions only 
     studioVersionBtn: { disabled: false }
   };
   const context = {
+    currentPresentationMetadata: null,
+    currentPresentationUrl: '',
     document: {
       getElementById(id) {
         return elements[id] || null;
@@ -35,7 +37,9 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions only 
     },
     getIframeDoc() {
       return null;
-    }
+    },
+    lastPersistedCanonicalDeck: null,
+    lastPersistedDeckHtml: ''
   };
 
   vm.createContext(context);
@@ -45,6 +49,26 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions only 
   assert.equal(elements.studioSaveBtn.disabled, true);
   assert.equal(elements.openSourceViewBtn.disabled, true);
   assert.equal(elements.studioVersionBtn.disabled, true);
+
+  context.currentPresentationUrl = '/presentations/onboarding-presentation/index.html';
+  context.lastPersistedDeckHtml = '<html>persisted-baseline</html>';
+  context.updateDeckReadyToolbarActionState(null);
+  assert.equal(elements.studioSaveBtn.disabled, false);
+  assert.equal(elements.openSourceViewBtn.disabled, false);
+  assert.equal(elements.studioVersionBtn.disabled, false);
+
+  context.lastPersistedDeckHtml = '';
+  context.currentPresentationMetadata = {
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: []
+    }
+  };
+  context.updateDeckReadyToolbarActionState(null);
+  assert.equal(elements.studioSaveBtn.disabled, true);
+  assert.equal(elements.openSourceViewBtn.disabled, false);
+  assert.equal(elements.studioVersionBtn.disabled, false);
 
   context.updateDeckReadyToolbarActionState({ documentElement: {} });
   assert.equal(elements.studioSaveBtn.disabled, false);

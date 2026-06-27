@@ -4097,20 +4097,25 @@
 
     function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {
       const hasDeckDocument = !!(doc && doc.documentElement);
+      const hasPresentationSession = !!currentPresentationUrl;
+      const hasPersistedDeckHtml = typeof lastPersistedDeckHtml === 'string' && lastPersistedDeckHtml.trim() !== '';
+      const hasStoredCanonicalDeck = !!lastPersistedCanonicalDeck
+        || !!(currentPresentationMetadata && currentPresentationMetadata.canonicalDeck);
+      const hasDeckContent = hasDeckDocument || hasPersistedDeckHtml || hasStoredCanonicalDeck;
 
       const saveBtn = document.getElementById('studioSaveBtn');
       if (saveBtn) {
-        saveBtn.disabled = !hasDeckDocument;
+        saveBtn.disabled = !(hasPresentationSession && (hasDeckDocument || hasPersistedDeckHtml));
       }
 
       const sourceViewBtn = document.getElementById('openSourceViewBtn');
       if (sourceViewBtn) {
-        sourceViewBtn.disabled = !hasDeckDocument;
+        sourceViewBtn.disabled = !(hasPresentationSession && hasDeckContent);
       }
 
       const versionBtn = document.getElementById('studioVersionBtn');
       if (versionBtn) {
-        versionBtn.disabled = !hasDeckDocument;
+        versionBtn.disabled = !hasPresentationSession;
       }
     }
 
