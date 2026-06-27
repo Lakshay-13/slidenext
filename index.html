@@ -1863,6 +1863,37 @@
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
       const previousIndex = currentSlideIndex;
       const preserveSelection = !!options.preserveSelection || preserveSelectionOnNextActiveSlideSync;
+      if (!doc) {
+        const deckSnapshot = buildEditorDeckSnapshot(doc);
+        const slideCount = Array.isArray(deckSnapshot.slides) ? deckSnapshot.slides.length : 0;
+        if (slideCount === 0) {
+          updateCurrentPresentationSessionState({ slideIndex: 0 });
+          updateActiveThumbnailCardState('');
+          document.getElementById('slideCountLabel').textContent = '0 / 0';
+          if (!preserveSelection) {
+            deselectElement();
+          }
+          preserveSelectionOnNextActiveSlideSync = false;
+          return false;
+        }
+
+        const activeIndex = SlideNextStudioDeckSnapshot.resolveStudioActiveSlideIndex(deckSnapshot, currentSlideIndex);
+        const activeSlideSnapshot = deckSnapshot.slides[activeIndex] || null;
+        const activeSlideId = activeSlideSnapshot ? activeSlideSnapshot.id : '';
+
+        updateCurrentPresentationSessionState({ slideIndex: activeIndex });
+        updateActiveThumbnailCardState(activeSlideId);
+        document.getElementById('slideCountLabel').textContent = `${activeIndex + 1} / ${slideCount}`;
+        if (!preserveSelection) {
+          deselectElement();
+        }
+        preserveSelectionOnNextActiveSlideSync = false;
+        if (options.captureHistory && activeSlideSnapshot && previousIndex !== currentSlideIndex) {
+          saveHistoryState(false);
+        }
+        return !!activeSlideSnapshot;
+      }
+
       const nextViewState = SlideNextStudioDeckView.syncStudioActiveSlideView(doc, {
         normalizeViewport: options.normalizeViewport,
         preserveSelection,
