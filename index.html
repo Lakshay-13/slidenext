@@ -3825,7 +3825,10 @@
         const iframeDoc = getIframeDoc();
         if (isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
         const cleanHtml = buildPersistableDeckHtml(iframeDoc);
-        if (!cleanHtml) return;
+        if (!cleanHtml) {
+          setStudioAutoSaveStatus('saved');
+          return;
+        }
         const persistencePlan = SlideNextStudioEditorPersistence.buildStudioPersistenceRequestPlan(
           scheduledPresentationUrl,
           cleanHtml,

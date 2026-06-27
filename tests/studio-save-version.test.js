@@ -655,6 +655,7 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
   assert.equal(buildPersistableDeckHtmlCalls, 1);
   assert.equal(saveRequestBodyCalls, 0);
   assert.equal(fetchCalls, 0);
+  assert.equal(statusEl.innerHTML, 'saved');
 });
 
 test('triggerAutoSave can persist rendered canonical html when the shared iframe accessor has no live document', async () => {
