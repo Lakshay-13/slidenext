@@ -2215,6 +2215,15 @@
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
+      if (!doc && lastPersistedCanonicalDeck) {
+        const storedCanonicalDeck = SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck({
+          canonicalDeck: lastPersistedCanonicalDeck
+        });
+        if (storedCanonicalDeck) {
+          return storedCanonicalDeck;
+        }
+      }
+
       return SlideNextStudioDeckContext.buildStudioCanonicalDeck(doc, {
         currentPresentationMetadata,
         buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,

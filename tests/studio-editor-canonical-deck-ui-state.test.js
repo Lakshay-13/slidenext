@@ -61,6 +61,52 @@ test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical dec
   assert.equal(typeof calls[0].options.getNodeId, 'function');
 });
 
+test('buildEditorCanonicalDeck reuses the in-memory persisted canonical baseline when the iframe is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorCanonicalDeck(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
+  );
+
+  const persistedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckContext: {
+      resolveStoredStudioCanonicalDeck(metadata) {
+        calls.push(['resolveStoredStudioCanonicalDeck', metadata]);
+        return persistedCanonicalDeck;
+      },
+      buildStudioCanonicalDeck() {
+        throw new Error('metadata canonical resolution should satisfy this fallback without rebuilding');
+      }
+    },
+    lastPersistedCanonicalDeck: persistedCanonicalDeck,
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorCanonicalDeckSource, context);
+
+  const result = context.buildEditorCanonicalDeck();
+
+  assert.equal(result, persistedCanonicalDeck);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'resolveStoredStudioCanonicalDeck');
+  assert.equal(calls[0][1].canonicalDeck, persistedCanonicalDeck);
+});
+
 test('buildEditorDeckSnapshot forwards the persisted active slide fallback when the iframe is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getPersistedActiveSlideIdSource = extractFunctionSource(
