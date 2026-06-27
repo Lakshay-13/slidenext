@@ -3528,7 +3528,11 @@
         lastPersistedCanonicalDeck = nextState.canonicalDeck || null;
       }
       if (Object.prototype.hasOwnProperty.call(nextState, 'playbackState')) {
-        persistedDeckPlaybackState = nextState.playbackState || null;
+        const normalizePersistedPlaybackState = SlideNextDeckPersistence
+          && typeof SlideNextDeckPersistence.normalizePersistedDeckPlaybackState === 'function'
+          ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState
+          : (playbackState) => playbackState || null;
+        persistedDeckPlaybackState = normalizePersistedPlaybackState(nextState.playbackState);
       }
     }
 

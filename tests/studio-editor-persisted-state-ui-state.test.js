@@ -4,6 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const deckPersistence = require('../shared/deck-persistence.js');
+
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
@@ -25,7 +27,8 @@ test('updateEditorPersistedDeckState updates only the provided persisted baselin
   const context = {
     lastPersistedDeckHtml: '<html>old</html>',
     lastPersistedCanonicalDeck: { id: 'old-deck' },
-    persistedDeckPlaybackState: { activeSlideId: 'slide-1' },
+    persistedDeckPlaybackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 2' },
+    SlideNextDeckPersistence: deckPersistence,
     Object
   };
 
@@ -39,7 +42,7 @@ test('updateEditorPersistedDeckState updates only the provided persisted baselin
 
   assert.equal(context.lastPersistedDeckHtml, '<html>new</html>');
   assert.deepEqual(context.lastPersistedCanonicalDeck, { id: 'old-deck' });
-  assert.deepEqual(context.persistedDeckPlaybackState, { activeSlideId: 'slide-2' });
+  assert.deepEqual(context.persistedDeckPlaybackState, { activeSlideIds: ['slide-2'], slideCounterText: '' });
 });
 
 test('resetEditorDeckPersistenceState clears the persisted baseline through the shared helper', () => {
@@ -58,7 +61,8 @@ test('resetEditorDeckPersistenceState clears the persisted baseline through the 
   const context = {
     lastPersistedDeckHtml: '<html>old</html>',
     lastPersistedCanonicalDeck: { id: 'old-deck' },
-    persistedDeckPlaybackState: { activeSlideId: 'slide-1' },
+    persistedDeckPlaybackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 2' },
+    SlideNextDeckPersistence: deckPersistence,
     Object
   };
 

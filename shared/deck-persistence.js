@@ -71,6 +71,36 @@
     root.querySelectorAll('[style=""]').forEach(node => node.removeAttribute('style'));
   }
 
+  function normalizePersistedDeckPlaybackState(playbackState) {
+    if (!playbackState || typeof playbackState !== 'object' || Array.isArray(playbackState)) {
+      return null;
+    }
+
+    const activeSlideIds = Array.isArray(playbackState.activeSlideIds)
+      ? playbackState.activeSlideIds.filter((slideId) => typeof slideId === 'string' && slideId.trim())
+      : [];
+    const legacyActiveSlideId = typeof playbackState.activeSlideId === 'string'
+      ? playbackState.activeSlideId.trim()
+      : '';
+
+    if (activeSlideIds.length === 0 && legacyActiveSlideId) {
+      activeSlideIds.push(legacyActiveSlideId);
+    }
+
+    const slideCounterText = typeof playbackState.slideCounterText === 'string'
+      ? playbackState.slideCounterText
+      : '';
+
+    if (activeSlideIds.length === 0 && !slideCounterText) {
+      return null;
+    }
+
+    return {
+      activeSlideIds,
+      slideCounterText
+    };
+  }
+
   function capturePersistedDeckPlaybackState(doc, options = {}) {
     if (!doc) return null;
     const getSlides = typeof options.getSlides === 'function'
@@ -79,24 +109,25 @@
     const slideIdAttr = options.slideIdAttr || 'data-slide-id';
     const slides = getSlides(doc);
 
-    return {
+    return normalizePersistedDeckPlaybackState({
       activeSlideIds: slides
         .filter(slide => slide.classList.contains('slide-active'))
         .map(slide => slide.getAttribute(slideIdAttr))
         .filter(Boolean),
       slideCounterText: doc.getElementById('slideNum')?.textContent || ''
-    };
+    });
   }
 
   function restorePersistedDeckPlaybackState(root, persistedDeckPlaybackState, options = {}) {
-    if (!root || !persistedDeckPlaybackState) return;
+    const normalizedPlaybackState = normalizePersistedDeckPlaybackState(persistedDeckPlaybackState);
+    if (!root || !normalizedPlaybackState) return;
 
     const slideIdAttr = options.slideIdAttr || 'data-slide-id';
     const slides = Array.from(root.querySelectorAll(`.slide[${slideIdAttr}]`));
 
     if (slides.length > 0) {
       slides.forEach(slide => slide.classList.remove('slide-active'));
-      persistedDeckPlaybackState.activeSlideIds.forEach(slideId => {
+      normalizedPlaybackState.activeSlideIds.forEach(slideId => {
         const match = root.querySelector(`.slide[${slideIdAttr}="${slideId}"]`);
         if (match) {
           match.classList.add('slide-active');
@@ -105,8 +136,8 @@
     }
 
     const slideNumNode = root.querySelector('#slideNum');
-    if (slideNumNode && typeof persistedDeckPlaybackState.slideCounterText === 'string') {
-      slideNumNode.textContent = persistedDeckPlaybackState.slideCounterText;
+    if (slideNumNode && typeof normalizedPlaybackState.slideCounterText === 'string') {
+      slideNumNode.textContent = normalizedPlaybackState.slideCounterText;
     }
   }
 
@@ -153,6 +184,7 @@
 
   return {
     stripTransientDeckRuntimeState,
+    normalizePersistedDeckPlaybackState,
     capturePersistedDeckPlaybackState,
     restorePersistedDeckPlaybackState,
     buildPersistableDeckHtml
