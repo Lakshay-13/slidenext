@@ -4152,8 +4152,14 @@
       const hasDeckDocument = !!(doc && doc.documentElement);
       const hasPresentationSession = !!currentPresentationUrl;
       const hasPersistedDeckHtml = typeof lastPersistedDeckHtml === 'string' && lastPersistedDeckHtml.trim() !== '';
+      const resolveStoredCanonicalDeck = SlideNextStudioDeckContext
+        && typeof SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck === 'function'
+        ? SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck
+        : null;
       const hasStoredCanonicalDeck = !!lastPersistedCanonicalDeck
-        || !!(currentPresentationMetadata && currentPresentationMetadata.canonicalDeck);
+        || !!(resolveStoredCanonicalDeck
+          ? resolveStoredCanonicalDeck(currentPresentationMetadata)
+          : currentPresentationMetadata && currentPresentationMetadata.canonicalDeck);
       const hasDeckContent = hasDeckDocument || hasPersistedDeckHtml || hasStoredCanonicalDeck;
 
       const saveBtn = document.getElementById('studioSaveBtn');

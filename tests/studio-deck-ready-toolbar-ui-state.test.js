@@ -39,7 +39,15 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when 
       return null;
     },
     lastPersistedCanonicalDeck: null,
-    lastPersistedDeckHtml: ''
+    lastPersistedDeckHtml: '',
+    SlideNextStudioDeckContext: {
+      resolveStoredStudioCanonicalDeck(metadata) {
+        if (!metadata || !metadata.canonicalDeck || !Array.isArray(metadata.canonicalDeck.slides)) {
+          return null;
+        }
+        return metadata.canonicalDeck;
+      }
+    }
   };
 
   vm.createContext(context);
@@ -68,6 +76,18 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when 
   context.updateDeckReadyToolbarActionState(null);
   assert.equal(elements.studioSaveBtn.disabled, true);
   assert.equal(elements.openSourceViewBtn.disabled, false);
+  assert.equal(elements.studioVersionBtn.disabled, false);
+
+  context.currentPresentationMetadata = {
+    canonicalDeck: {
+      metadata: {
+        title: 'Broken Deck'
+      }
+    }
+  };
+  context.updateDeckReadyToolbarActionState(null);
+  assert.equal(elements.studioSaveBtn.disabled, true);
+  assert.equal(elements.openSourceViewBtn.disabled, true);
   assert.equal(elements.studioVersionBtn.disabled, false);
 
   context.updateDeckReadyToolbarActionState({ documentElement: {} });
