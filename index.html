@@ -3727,11 +3727,28 @@
     function buildPersistableDeckHtml(doc = getIframeDoc()) {
       if (!doc) {
         const persistedHtml = typeof lastPersistedDeckHtml === 'string' ? lastPersistedDeckHtml : '';
-        if (persistedHtml.trim()) {
+        const canonicalDeck = buildEditorCanonicalDeck(doc);
+        const isPersistedCanonicalDeck = SlideNextStudioEditorPersistence
+          && typeof SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck === 'function'
+          ? SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck
+          : (nextCanonicalDeck, persistedCanonicalDeck) => {
+              if (!nextCanonicalDeck) {
+                return true;
+              }
+              if (!persistedCanonicalDeck) {
+                return false;
+              }
+              try {
+                return JSON.stringify(nextCanonicalDeck) === JSON.stringify(persistedCanonicalDeck);
+              } catch (err) {
+                return false;
+              }
+            };
+        if (persistedHtml.trim() && isPersistedCanonicalDeck(canonicalDeck, lastPersistedCanonicalDeck)) {
           return persistedHtml;
         }
         return SlideNextStudioDeckView.buildStudioSourceHtml(doc, {
-          buildCanonicalDeck: buildEditorCanonicalDeck,
+          buildCanonicalDeck: () => canonicalDeck,
           buildFallbackHtml: () => persistedHtml,
           deckHtmlOptions: {
             renderOptions: {

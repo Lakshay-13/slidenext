@@ -132,6 +132,12 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
   );
 
   let sharedBuildCalls = 0;
+  let buildEditorCanonicalDeckCalls = 0;
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
   const context = {
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
@@ -142,10 +148,23 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
         return '<html>rebuilt</html>';
       }
     },
+    SlideNextStudioEditorPersistence: {
+      isStudioPersistedCanonicalDeck(nextCanonicalDeck, persistedCanonicalDeck) {
+        assert.equal(nextCanonicalDeck, canonicalDeck);
+        assert.equal(persistedCanonicalDeck, canonicalDeck);
+        return true;
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      buildEditorCanonicalDeckCalls += 1;
+      assert.equal(nextDoc, null);
+      return canonicalDeck;
+    },
     getIframeDoc() {
       return null;
     },
     lastPersistedDeckHtml: '<html>persisted-baseline</html>',
+    lastPersistedCanonicalDeck: canonicalDeck,
     persistedDeckPlaybackState: null
   };
 
@@ -154,6 +173,7 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-baseline</html>');
   assert.equal(sharedBuildCalls, 0);
+  assert.equal(buildEditorCanonicalDeckCalls, 1);
 });
 
 test('buildPersistableDeckHtml renders canonical deck html when the editor frame and persisted baseline are unavailable', () => {
@@ -184,6 +204,11 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
       buildPersistableDeckHtml() {
         sharedBuildCalls += 1;
         return '<html>rebuilt</html>';
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      isStudioPersistedCanonicalDeck() {
+        throw new Error('persisted canonical deck comparison should not run without a persisted html baseline');
       }
     },
     SlideNextStudioDeckView: {
@@ -219,6 +244,81 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
   assert.equal(calls[0][1].buildCanonicalDeck(null), canonicalDeck);
   assert.equal(calls[0][1].buildFallbackHtml(), '');
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.activeSlideId, 'slide-2');
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSourceHtml, false);
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
+});
+
+test('buildPersistableDeckHtml prefers rendered canonical html when the current canonical deck differs from the persisted baseline', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+  );
+
+  const persistedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-persisted', nodes: [] }]
+  };
+  const currentCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-current', nodes: [] }]
+  };
+  let sharedBuildCalls = 0;
+  const calls = [];
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml() {
+        sharedBuildCalls += 1;
+        return '<html>rebuilt</html>';
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      isStudioPersistedCanonicalDeck(nextCanonicalDeck, nextPersistedCanonicalDeck) {
+        assert.equal(nextCanonicalDeck, currentCanonicalDeck);
+        assert.equal(nextPersistedCanonicalDeck, persistedCanonicalDeck);
+        return false;
+      }
+    },
+    SlideNextStudioDeckView: {
+      buildStudioSourceHtml(nextDoc, options) {
+        calls.push([nextDoc, options]);
+        return '<html>canonical-source</html>';
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, null);
+      return currentCanonicalDeck;
+    },
+    getPersistedActiveSlideId() {
+      return 'slide-current';
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '<html>persisted-baseline</html>',
+    lastPersistedCanonicalDeck: persistedCanonicalDeck,
+    persistedDeckPlaybackState: {
+      activeSlideIds: ['slide-current']
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+
+  assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
+  assert.equal(sharedBuildCalls, 0);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], null);
+  assert.equal(calls[0][1].buildCanonicalDeck(), currentCanonicalDeck);
+  assert.equal(calls[0][1].buildFallbackHtml(), '<html>persisted-baseline</html>');
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.activeSlideId, 'slide-current');
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
