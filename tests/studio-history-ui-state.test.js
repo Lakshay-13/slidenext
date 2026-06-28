@@ -14,7 +14,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
-test('createHistoryEntry attaches the current canonical deck sidecar to editor history entries', () => {
+test('createHistoryEntry attaches the current canonical deck sidecar and live editor state to history entries', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createHistoryEntrySource = extractFunctionSource(
     fileContent,
@@ -31,6 +31,14 @@ test('createHistoryEntry attaches the current canonical deck sidecar to editor h
       return canonicalDeck;
     },
     buildHistoryFrameHtml() {},
+    getActiveSlideId(doc) {
+      calls.push(['getActiveSlideId', doc]);
+      return 'slide-2';
+    },
+    getCommittedSelectedEditorElementIds(doc) {
+      calls.push(['getCommittedSelectedEditorElementIds', doc]);
+      return ['node-1', 'node-2'];
+    },
     getPersistedActiveSlideId() {
       return '';
     },
@@ -46,7 +54,12 @@ test('createHistoryEntry attaches the current canonical deck sidecar to editor h
     SlideNextStudioHistory: {
       createStudioHistoryEntry(doc, options) {
         calls.push(['createStudioHistoryEntry', doc, options]);
-        return { html: '<html></html>', canonicalDeck: options.canonicalDeck };
+        return {
+          html: '<html></html>',
+          activeSlideId: options.getActiveSlideId(doc),
+          selectedElementIds: options.getSelectedElementIds(doc),
+          canonicalDeck: options.canonicalDeck
+        };
       }
     }
   };
@@ -60,7 +73,9 @@ test('createHistoryEntry attaches the current canonical deck sidecar to editor h
     'getIframeDoc',
     'buildEditorCanonicalDeck',
     'getEditorHistoryOptions',
-    'createStudioHistoryEntry'
+    'createStudioHistoryEntry',
+    'getActiveSlideId',
+    'getCommittedSelectedEditorElementIds'
   ]);
   assert.equal(calls[1][1], iframeDoc);
   assert.equal(calls[3][1], iframeDoc);
@@ -68,6 +83,8 @@ test('createHistoryEntry attaches the current canonical deck sidecar to editor h
   assert.equal(calls[3][2].canonicalDeck, canonicalDeck);
   assert.deepEqual(entry, {
     html: '<html></html>',
+    activeSlideId: 'slide-2',
+    selectedElementIds: ['node-1', 'node-2'],
     canonicalDeck
   });
 });
@@ -114,6 +131,12 @@ test('createHistoryEntry falls back to persisted baseline state when the editor 
           canonicalDeck: options.canonicalDeck
         };
       }
+    },
+    getActiveSlideId() {
+      throw new Error('getActiveSlideId should not run without a live editor frame');
+    },
+    getCommittedSelectedEditorElementIds() {
+      throw new Error('getCommittedSelectedEditorElementIds should not run without a live editor frame');
     },
     buildEditorCanonicalDeck(doc) {
       calls.push(['buildEditorCanonicalDeck', doc]);
