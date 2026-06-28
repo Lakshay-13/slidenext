@@ -126,7 +126,7 @@ test('restoreStudioHistoryFrameSetup falls back to rendered canonical deck html 
     doc,
     buildDeckSourceHtml(deck, options) {
       calls.push(['buildDeckSourceHtml', deck, options]);
-      return '<html>rendered</html>';
+      return '<!DOCTYPE html><html><head><style>.deck{}</style></head><body><main>rendered</main></body></html>';
     },
     replaceFrameHtml(nextDoc, html) {
       calls.push(['replaceFrameHtml', nextDoc, html]);
@@ -149,7 +149,7 @@ test('restoreStudioHistoryFrameSetup falls back to rendered canonical deck html 
     }
   });
 
-  assert.equal(doc.documentElement.innerHTML, '<html>rendered</html>');
+  assert.equal(doc.documentElement.innerHTML, '<head><style>.deck{}</style></head><body><main>rendered</main></body>');
   assert.deepEqual(calls.map(([name]) => name), [
     'buildDeckSourceHtml',
     'replaceFrameHtml',
@@ -162,9 +162,9 @@ test('restoreStudioHistoryFrameSetup falls back to rendered canonical deck html 
   assert.equal(calls[0][1], canonicalDeck);
   assert.deepEqual(calls[0][2], {});
   assert.equal(calls[1][1], doc);
-  assert.equal(calls[1][2], '<html>rendered</html>');
+  assert.equal(calls[1][2], '<head><style>.deck{}</style></head><body><main>rendered</main></body>');
   assert.equal(result.didRestoreDoc, true);
-  assert.equal(result.restoredHtmlLength, '<html>rendered</html>'.length);
+  assert.equal(result.restoredHtmlLength, '<head><style>.deck{}</style></head><body><main>rendered</main></body>'.length);
 });
 
 test('restoreStudioHistoryFrameSetup prefers captured history html over canonical deck fallback html', () => {
@@ -176,7 +176,7 @@ test('restoreStudioHistoryFrameSetup prefers captured history html over canonica
   };
 
   studioHistory.restoreStudioHistoryFrameSetup({
-    html: '<html>captured</html>',
+    html: '<!DOCTYPE html><html><head><title>Captured</title></head><body><main>captured</main></body></html>',
     canonicalDeck: {
       kind: 'slidenext.deck',
       schemaVersion: 1,
@@ -190,6 +190,6 @@ test('restoreStudioHistoryFrameSetup prefers captured history html over canonica
     }
   });
 
-  assert.equal(doc.documentElement.innerHTML, '<html>captured</html>');
+  assert.equal(doc.documentElement.innerHTML, '<head><title>Captured</title></head><body><main>captured</main></body>');
   assert.equal(buildDeckSourceHtmlCalls, 0);
 });

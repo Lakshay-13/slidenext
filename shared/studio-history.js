@@ -7,10 +7,21 @@
     root.SlideNextStudioHistory = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function normalizeStudioHistoryFrameHtml(html = '') {
+    const nextHtml = typeof html === 'string' ? html : '';
+    if (!nextHtml) {
+      return '';
+    }
+
+    const withoutDocType = nextHtml.replace(/^\s*<!doctype[^>]*>\s*/i, '');
+    const htmlMatch = withoutDocType.match(/^\s*<html(?:\s[^>]*)?>([\s\S]*)<\/html>\s*$/i);
+    return htmlMatch ? htmlMatch[1] : withoutDocType;
+  }
+
   function resolveStudioHistoryFrameHtml(historyEntry, options = {}) {
     const html = historyEntry && typeof historyEntry.html === 'string' ? historyEntry.html : '';
     if (html) {
-      return html;
+      return normalizeStudioHistoryFrameHtml(html);
     }
 
     const canonicalDeck = historyEntry && historyEntry.canonicalDeck && typeof historyEntry.canonicalDeck === 'object'
@@ -25,13 +36,15 @@
         : null;
 
     if (!canonicalDeck || !buildDeckSourceHtml) {
-      return html;
+      return normalizeStudioHistoryFrameHtml(html);
     }
 
     try {
-      return buildDeckSourceHtml(canonicalDeck, options.deckHtmlOptions || {});
+      return normalizeStudioHistoryFrameHtml(
+        buildDeckSourceHtml(canonicalDeck, options.deckHtmlOptions || {})
+      );
     } catch (err) {
-      return html;
+      return normalizeStudioHistoryFrameHtml(html);
     }
   }
 
@@ -393,6 +406,7 @@
   }
 
   return {
+    normalizeStudioHistoryFrameHtml,
     buildStudioHistoryFrameHtml,
     createStudioHistoryEntry,
     normalizeStudioHistoryEntry,
