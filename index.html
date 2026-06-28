@@ -1432,20 +1432,20 @@
       });
     }
 
-    function resolveEditorFallbackActiveSlideId(doc = getIframeDoc()) {
+    function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {
       const persistedActiveSlideId = getPersistedActiveSlideId();
       if (doc) {
         return persistedActiveSlideId;
       }
 
-      const canonicalDeck = buildEditorCanonicalDeck(doc);
-      if (!canonicalDeck || !Array.isArray(canonicalDeck.slides) || canonicalDeck.slides.length === 0) {
+      const nextCanonicalDeck = canonicalDeck || buildEditorCanonicalDeck(doc);
+      if (!nextCanonicalDeck || !Array.isArray(nextCanonicalDeck.slides) || nextCanonicalDeck.slides.length === 0) {
         return persistedActiveSlideId;
       }
 
       const fallbackIndex = Number.isInteger(currentSlideIndex) ? currentSlideIndex : 0;
-      const safeIndex = Math.max(0, Math.min(fallbackIndex, canonicalDeck.slides.length - 1));
-      const activeSlide = canonicalDeck.slides[safeIndex];
+      const safeIndex = Math.max(0, Math.min(fallbackIndex, nextCanonicalDeck.slides.length - 1));
+      const activeSlide = nextCanonicalDeck.slides[safeIndex];
       return activeSlide && typeof activeSlide.id === 'string' && activeSlide.id.trim()
         ? activeSlide.id
         : persistedActiveSlideId;
@@ -3603,12 +3603,13 @@
 
     function createHistoryEntry(doc) {
       const nextDoc = doc || getIframeDoc();
+      const canonicalDeck = buildEditorCanonicalDeck(nextDoc);
       return SlideNextStudioHistory.createStudioHistoryEntry(nextDoc, {
         ...getEditorHistoryOptions(),
-        activeSlideId: getPersistedActiveSlideId(),
+        activeSlideId: nextDoc ? '' : resolveEditorFallbackActiveSlideId(nextDoc, canonicalDeck),
         selectedElementIds: [],
         buildHistoryHtml: buildHistoryFrameHtml,
-        canonicalDeck: buildEditorCanonicalDeck(nextDoc)
+        canonicalDeck
       });
     }
 
@@ -3771,7 +3772,7 @@
           buildFallbackHtml: () => persistedHtml,
           deckHtmlOptions: {
             renderOptions: {
-              activeSlideId: resolveEditorFallbackActiveSlideId(doc),
+              activeSlideId: resolveEditorFallbackActiveSlideId(doc, canonicalDeck),
               preferSourceHtml: false,
               preferBodySourceHtml: false,
               preferSlideSourceHtml: false

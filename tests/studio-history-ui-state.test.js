@@ -58,11 +58,11 @@ test('createHistoryEntry attaches the current canonical deck sidecar to editor h
 
   assert.deepEqual(calls.map(([name]) => name), [
     'getIframeDoc',
-    'getEditorHistoryOptions',
     'buildEditorCanonicalDeck',
+    'getEditorHistoryOptions',
     'createStudioHistoryEntry'
   ]);
-  assert.equal(calls[2][1], iframeDoc);
+  assert.equal(calls[1][1], iframeDoc);
   assert.equal(calls[3][1], iframeDoc);
   assert.equal(calls[3][2].buildHistoryHtml, context.buildHistoryFrameHtml);
   assert.equal(calls[3][2].canonicalDeck, canonicalDeck);
@@ -74,6 +74,11 @@ test('createHistoryEntry attaches the current canonical deck sidecar to editor h
 
 test('createHistoryEntry falls back to persisted baseline state when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
   const buildHistoryFrameHtmlSource = extractFunctionSource(
     fileContent,
     'function buildHistoryFrameHtml(doc = getIframeDoc()) {',
@@ -85,7 +90,14 @@ test('createHistoryEntry falls back to persisted baseline state when the editor 
     '\n\n    function normalizeHistoryEntry(entry) {'
   );
 
-  const canonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [{ id: 'slide-1', nodes: [] }] };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
   const calls = [];
   const context = {
     SlideNextStudioHistory: {
@@ -111,6 +123,7 @@ test('createHistoryEntry falls back to persisted baseline state when the editor 
       calls.push(['buildPersistableDeckHtml', doc]);
       return '<html>persisted-baseline</html>';
     },
+    currentSlideIndex: 1,
     getPersistedActiveSlideId() {
       calls.push(['getPersistedActiveSlideId']);
       return 'slide-1';
@@ -129,6 +142,7 @@ test('createHistoryEntry falls back to persisted baseline state when the editor 
   };
 
   vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(buildHistoryFrameHtmlSource, context);
   vm.runInContext(createHistoryEntrySource, context);
 
@@ -136,22 +150,22 @@ test('createHistoryEntry falls back to persisted baseline state when the editor 
 
   assert.deepEqual(calls.map(([name]) => name), [
     'getIframeDoc',
+    'buildEditorCanonicalDeck',
     'getEditorHistoryOptions',
     'getPersistedActiveSlideId',
-    'buildEditorCanonicalDeck',
     'createStudioHistoryEntry',
     'getEditorHistoryOptions',
     'buildStudioHistoryFrameHtml',
     'buildPersistableDeckHtml'
   ]);
-  assert.equal(calls[3][1], null);
+  assert.equal(calls[1][1], null);
   assert.equal(calls[4][1], null);
-  assert.equal(calls[4][2].activeSlideId, 'slide-1');
+  assert.equal(calls[4][2].activeSlideId, 'slide-2');
   assert.equal(Array.isArray(calls[4][2].selectedElementIds), true);
   assert.equal(calls[4][2].selectedElementIds.length, 0);
   assert.equal(calls[7][1], null);
   assert.equal(entry.html, '<html>persisted-baseline</html>');
-  assert.equal(entry.activeSlideId, 'slide-1');
+  assert.equal(entry.activeSlideId, 'slide-2');
   assert.equal(Array.isArray(entry.selectedElementIds), true);
   assert.equal(entry.selectedElementIds.length, 0);
   assert.equal(entry.canonicalDeck, canonicalDeck);

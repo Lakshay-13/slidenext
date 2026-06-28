@@ -81,7 +81,7 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(
     fileContent,
-    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc()) {',
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function launchPresentationHtml(html, startSlideIdx) {'
   );
 

@@ -182,7 +182,7 @@ test('buildEditorDeckSnapshot prefers the current session active slide fallback 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
     fileContent,
-    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc()) {',
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
   );
   const getPersistedActiveSlideIdSource = extractFunctionSource(

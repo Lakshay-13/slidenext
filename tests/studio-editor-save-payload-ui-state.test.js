@@ -127,7 +127,7 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
     fileContent,
-    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc()) {',
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
   );
   const buildPersistableDeckHtmlSource = extractFunctionSource(
@@ -186,7 +186,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
     fileContent,
-    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc()) {',
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
   );
   const buildPersistableDeckHtmlSource = extractFunctionSource(
@@ -266,7 +266,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
     fileContent,
-    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc()) {',
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
   );
   const buildPersistableDeckHtmlSource = extractFunctionSource(
