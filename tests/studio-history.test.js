@@ -128,7 +128,37 @@ test('captureStudioHistoryState keeps model-only history changes when the canoni
 
   assert.equal(result.didCapture, true);
   assert.equal(result.undoStack.length, 2);
-  assert.deepEqual(result.undoStack[1], nextEntry);
+  assert.deepEqual(result.undoStack[1], {
+    html: '',
+    activeSlideId: 'slide-1',
+    selectedElementIds: ['node-1'],
+    canonicalDeck: nextEntry.canonicalDeck
+  });
+  assert.deepEqual(result.redoStack, []);
+});
+
+test('captureStudioHistoryState stores normalized history entries in the undo stack', () => {
+  const nextEntry = {
+    html: '<!DOCTYPE html><html><head><title>Deck</title></head><body><main>normalized</main></body></html>',
+    activeSlideId: 'slide-1',
+    selectedElementIds: ['node-1', '', null],
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: [{ id: 'slide-1', nodes: [] }]
+    }
+  };
+
+  const result = studioHistory.captureStudioHistoryState([], [], nextEntry);
+
+  assert.equal(result.didCapture, true);
+  assert.equal(result.undoStack.length, 1);
+  assert.deepEqual(result.undoStack[0], {
+    html: '<head><title>Deck</title></head><body><main>normalized</main></body>',
+    activeSlideId: 'slide-1',
+    selectedElementIds: ['node-1'],
+    canonicalDeck: nextEntry.canonicalDeck
+  });
   assert.deepEqual(result.redoStack, []);
 });
 

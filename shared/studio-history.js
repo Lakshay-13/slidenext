@@ -184,7 +184,7 @@
       };
     }
 
-    nextUndoStack.push(historyEntry);
+    nextUndoStack.push(normalizedHistoryEntry);
     if (nextUndoStack.length > maxUndoEntries) {
       nextUndoStack.shift();
     }
