@@ -3682,6 +3682,14 @@
       SlideNextStudioHistory.restoreStudioHistoryEntry(historyEntry, {
         restoreFrameSetup: (nextHistoryEntry) => SlideNextStudioHistory.restoreStudioHistoryFrameSetup(nextHistoryEntry, {
           doc: iframeDoc,
+          deckHtmlOptions: {
+            renderOptions: {
+              activeSlideId: nextHistoryEntry.activeSlideId || getPersistedActiveSlideId(),
+              preferSourceHtml: false,
+              preferBodySourceHtml: false,
+              preferSlideSourceHtml: false
+            }
+          },
           replaceFrameHtml: (doc, html) => {
             doc.documentElement.innerHTML = html;
           },

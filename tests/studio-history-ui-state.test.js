@@ -332,6 +332,10 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
       callLog.push(['getIframeDoc']);
       return iframeDoc;
     },
+    getPersistedActiveSlideId() {
+      callLog.push(['getPersistedActiveSlideId']);
+      return 'slide-3';
+    },
     getSlides(doc) {
       callLog.push(['getSlides', doc]);
       return [{ id: 'slide-1' }, { id: 'slide-2' }, { id: 'slide-3' }];
@@ -378,7 +382,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
         options.restoreSelectionState(nextHistoryEntry);
       },
       restoreStudioHistoryFrameSetup(nextHistoryEntry, options) {
-        callLog.push(['restoreStudioHistoryFrameSetup', nextHistoryEntry, options.doc]);
+        callLog.push(['restoreStudioHistoryFrameSetup', nextHistoryEntry, options.doc, options.deckHtmlOptions]);
         options.replaceFrameHtml(options.doc, '<html>restored</html>');
         options.syncIframeTheme();
         options.makeElementsHoverable(options.doc);
@@ -415,25 +419,30 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   assert.equal(Object.keys(callLog[2][1]).length, 0);
   assert.equal(callLog[3][0], 'restoreStudioHistoryEntry');
   assert.equal(callLog[3][1].normalized, true);
-  assert.equal(callLog[4][0], 'restoreStudioHistoryFrameSetup');
-  assert.equal(callLog[4][2], iframeDoc);
-  assert.equal(callLog[5][0], 'syncIframeTheme');
-  assert.equal(callLog[6][0], 'makeElementsHoverable');
-  assert.equal(callLog[6][1], iframeDoc);
-  assert.equal(callLog[7][0], 'setupIframeDragging');
+  assert.equal(callLog[4][0], 'getPersistedActiveSlideId');
+  assert.equal(callLog[5][0], 'restoreStudioHistoryFrameSetup');
+  assert.equal(callLog[5][2], iframeDoc);
+  assert.equal(callLog[5][3].renderOptions.activeSlideId, 'slide-3');
+  assert.equal(callLog[5][3].renderOptions.preferSourceHtml, false);
+  assert.equal(callLog[5][3].renderOptions.preferBodySourceHtml, false);
+  assert.equal(callLog[5][3].renderOptions.preferSlideSourceHtml, false);
+  assert.equal(callLog[6][0], 'syncIframeTheme');
+  assert.equal(callLog[7][0], 'makeElementsHoverable');
   assert.equal(callLog[7][1], iframeDoc);
-  assert.equal(callLog[8][0], 'bindDeckNavigationSync');
+  assert.equal(callLog[8][0], 'setupIframeDragging');
   assert.equal(callLog[8][1], iframeDoc);
-  assert.equal(callLog[9][0], 'generateThumbnails');
-  assert.equal(callLog[10][0], 'restoreStudioHistoryActiveSlide');
-  assert.equal(callLog[10][2], 2);
-  assert.deepEqual(callLog[11], ['setActiveSlideById', 'slide-2', iframeDoc]);
-  assert.deepEqual(callLog[12], ['getSlides', iframeDoc]);
-  assert.deepEqual(callLog[13], ['getSlideCountResult', 3]);
-  assert.deepEqual(callLog[14], ['setActiveSlide', 1]);
-  assert.equal(callLog[15][0], 'restoreStudioHistorySelectionState');
-  assert.equal(callLog[15][2], iframeDoc);
-  assert.deepEqual(callLog[16], ['restoreCommittedSelectionByIdsOnActiveSlide', ['node-1'], iframeDoc]);
-  assert.deepEqual(callLog[17], ['observeDeckActiveSlideState', iframeDoc]);
-  assert.deepEqual(callLog[18], ['setCurrentPresentationCanonicalDeck', canonicalDeck]);
+  assert.equal(callLog[9][0], 'bindDeckNavigationSync');
+  assert.equal(callLog[9][1], iframeDoc);
+  assert.equal(callLog[10][0], 'generateThumbnails');
+  assert.equal(callLog[11][0], 'restoreStudioHistoryActiveSlide');
+  assert.equal(callLog[11][2], 2);
+  assert.deepEqual(callLog[12], ['setActiveSlideById', 'slide-2', iframeDoc]);
+  assert.deepEqual(callLog[13], ['getSlides', iframeDoc]);
+  assert.deepEqual(callLog[14], ['getSlideCountResult', 3]);
+  assert.deepEqual(callLog[15], ['setActiveSlide', 1]);
+  assert.equal(callLog[16][0], 'restoreStudioHistorySelectionState');
+  assert.equal(callLog[16][2], iframeDoc);
+  assert.deepEqual(callLog[17], ['restoreCommittedSelectionByIdsOnActiveSlide', ['node-1'], iframeDoc]);
+  assert.deepEqual(callLog[18], ['observeDeckActiveSlideState', iframeDoc]);
+  assert.deepEqual(callLog[19], ['setCurrentPresentationCanonicalDeck', canonicalDeck]);
 });
