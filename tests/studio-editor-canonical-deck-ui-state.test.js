@@ -178,8 +178,13 @@ test('buildEditorCanonicalDeck prefers the current metadata canonical deck over 
   assert.equal(calls[0][1], context.currentPresentationMetadata);
 });
 
-test('buildEditorDeckSnapshot forwards the persisted active slide fallback when the iframe is unavailable', () => {
+test('buildEditorDeckSnapshot prefers the current session active slide fallback when the iframe is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
   const getPersistedActiveSlideIdSource = extractFunctionSource(
     fileContent,
     'function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {',
@@ -203,9 +208,19 @@ test('buildEditorDeckSnapshot forwards the persisted active slide fallback when 
         };
       }
     },
-    buildEditorCanonicalDeck() {},
+    buildEditorCanonicalDeck() {
+      return {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: [
+          { id: 'slide-1', nodes: [] },
+          { id: 'slide-2', nodes: [] }
+        ]
+      };
+    },
     buildEditorDeckSnapshotFromDom() {},
     buildEditorLayerSnapshot() {},
+    currentSlideIndex: 1,
     getActiveSlide() {
       return null;
     },
@@ -219,11 +234,12 @@ test('buildEditorDeckSnapshot forwards the persisted active slide fallback when 
       return null;
     },
     persistedDeckPlaybackState: {
-      activeSlideId: 'slide-2'
+      activeSlideId: 'slide-1'
     }
   };
 
   vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getPersistedActiveSlideIdSource, context);
   vm.runInContext(buildEditorDeckSnapshotSource, context);
 

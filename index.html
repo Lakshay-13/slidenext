@@ -2299,7 +2299,7 @@
         includeLayers: !!options.includeLayers,
         buildCanonicalDeck: buildEditorCanonicalDeck,
         buildDomSnapshot: (sourceDoc) => buildEditorDeckSnapshotFromDom(sourceDoc, options),
-        fallbackActiveSlideId: getPersistedActiveSlideId(),
+        fallbackActiveSlideId: resolveEditorFallbackActiveSlideId(doc),
         getActiveSlide,
         getActiveSlideId: getEditorSlideId,
         getSlideById,
