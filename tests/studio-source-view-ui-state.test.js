@@ -100,6 +100,9 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
       assert.equal(nextDoc, null);
       return context.lastPersistedDeckHtml;
     },
+    getPersistedActiveSlideId() {
+      return 'slide-2';
+    },
     getIframeDoc() {
       return null;
     },
@@ -113,5 +116,9 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].doc, null);
+  assert.equal(calls[0].options.deckHtmlOptions.renderOptions.activeSlideId, 'slide-2');
+  assert.equal(calls[0].options.deckHtmlOptions.renderOptions.preferSourceHtml, false);
+  assert.equal(calls[0].options.deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
+  assert.equal(calls[0].options.deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
   assert.equal(result, '<html>persisted-baseline</html>');
 });

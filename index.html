@@ -1436,14 +1436,34 @@
       return SlideNextStudioDeckView.buildStudioPreviewHtml(doc, {
         buildCanonicalDeck: buildEditorCanonicalDeck,
         buildFallbackHtml: (sourceDoc) => buildPersistableDeckHtml(sourceDoc),
-        presentationUrl: currentPresentationUrl
+        presentationUrl: currentPresentationUrl,
+        deckHtmlOptions: !doc
+          ? {
+              renderOptions: {
+                activeSlideId: getPersistedActiveSlideId(),
+                preferSourceHtml: false,
+                preferBodySourceHtml: false,
+                preferSlideSourceHtml: false
+              }
+            }
+          : undefined
       });
     }
 
     function buildEditorSourceHtml(doc = getIframeDoc()) {
       return SlideNextStudioDeckView.buildStudioSourceHtml(doc, {
         buildCanonicalDeck: buildEditorCanonicalDeck,
-        buildFallbackHtml: (sourceDoc) => buildPersistableDeckHtml(sourceDoc)
+        buildFallbackHtml: (sourceDoc) => buildPersistableDeckHtml(sourceDoc),
+        deckHtmlOptions: !doc
+          ? {
+              renderOptions: {
+                activeSlideId: getPersistedActiveSlideId(),
+                preferSourceHtml: false,
+                preferBodySourceHtml: false,
+                preferSlideSourceHtml: false
+              }
+            }
+          : undefined
       });
     }
 

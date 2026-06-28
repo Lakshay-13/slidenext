@@ -121,6 +121,9 @@ test('buildEditorPreviewHtml falls back to the persisted html baseline when the 
       return context.lastPersistedDeckHtml;
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    getPersistedActiveSlideId() {
+      return 'slide-2';
+    },
     getIframeDoc() {
       return null;
     },
@@ -135,5 +138,9 @@ test('buildEditorPreviewHtml falls back to the persisted html baseline when the 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].doc, null);
   assert.equal(calls[0].options.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(calls[0].options.deckHtmlOptions.renderOptions.activeSlideId, 'slide-2');
+  assert.equal(calls[0].options.deckHtmlOptions.renderOptions.preferSourceHtml, false);
+  assert.equal(calls[0].options.deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
+  assert.equal(calls[0].options.deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
   assert.equal(result, '<html>persisted-preview</html>');
 });
