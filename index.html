@@ -3742,6 +3742,10 @@
           observeDeckActiveSlideState
         })
       });
+      const restoredPlaybackState = capturePersistedDeckPlaybackState(iframeDoc);
+      if (restoredPlaybackState) {
+        updateEditorPersistedDeckState({ playbackState: restoredPlaybackState });
+      }
       setCurrentPresentationCanonicalDeck(historyEntry.canonicalDeck);
     }
 

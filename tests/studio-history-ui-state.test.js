@@ -344,12 +344,20 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
     ]
   };
   const callLog = [];
+  const restoredPlaybackState = {
+    activeSlideIds: ['slide-2'],
+    slideCounterText: '2 / 3'
+  };
   const context = {
     applyEditorSelectionState(selection) {
       callLog.push(['applyEditorSelectionState', selection]);
     },
     bindDeckNavigationSync(doc) {
       callLog.push(['bindDeckNavigationSync', doc]);
+    },
+    capturePersistedDeckPlaybackState(doc) {
+      callLog.push(['capturePersistedDeckPlaybackState', doc]);
+      return restoredPlaybackState;
     },
     currentSlideIndex: 2,
     generateThumbnails() {
@@ -425,6 +433,9 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
     },
     syncIframeTheme() {
       callLog.push(['syncIframeTheme']);
+    },
+    updateEditorPersistedDeckState(nextState) {
+      callLog.push(['updateEditorPersistedDeckState', nextState]);
     }
   };
 
@@ -472,5 +483,11 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   assert.equal(callLog[16][2], iframeDoc);
   assert.deepEqual(callLog[17], ['restoreCommittedSelectionByIdsOnActiveSlide', ['node-1'], iframeDoc]);
   assert.deepEqual(callLog[18], ['observeDeckActiveSlideState', iframeDoc]);
-  assert.deepEqual(callLog[19], ['setCurrentPresentationCanonicalDeck', canonicalDeck]);
+  assert.deepEqual(callLog[19], ['capturePersistedDeckPlaybackState', iframeDoc]);
+  assert.equal(callLog[20][0], 'updateEditorPersistedDeckState');
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(callLog[20][1])),
+    { playbackState: restoredPlaybackState }
+  );
+  assert.deepEqual(callLog[21], ['setCurrentPresentationCanonicalDeck', canonicalDeck]);
 });
