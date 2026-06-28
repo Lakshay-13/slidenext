@@ -2235,8 +2235,18 @@
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
-      if (!doc && lastPersistedCanonicalDeck) {
-        const storedCanonicalDeck = SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck({
+      const resolveStoredCanonicalDeck = SlideNextStudioDeckContext
+        && typeof SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck === 'function'
+        ? SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck
+        : (metadata) => metadata && metadata.canonicalDeck ? metadata.canonicalDeck : null;
+
+      if (!doc) {
+        const currentMetadataCanonicalDeck = resolveStoredCanonicalDeck(currentPresentationMetadata);
+        if (currentMetadataCanonicalDeck) {
+          return currentMetadataCanonicalDeck;
+        }
+
+        const storedCanonicalDeck = resolveStoredCanonicalDeck({
           canonicalDeck: lastPersistedCanonicalDeck
         });
         if (storedCanonicalDeck) {
