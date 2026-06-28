@@ -1455,18 +1455,25 @@
         : persistedActiveSlideId;
     }
 
+    function buildEditorDeckRenderOptions(doc = getIframeDoc(), canonicalDeck = null, options = {}) {
+      const explicitActiveSlideId = typeof options.activeSlideId === 'string' && options.activeSlideId.trim()
+        ? options.activeSlideId
+        : '';
+      return {
+        activeSlideId: explicitActiveSlideId || resolveEditorFallbackActiveSlideId(doc, canonicalDeck),
+        preferSourceHtml: false,
+        preferBodySourceHtml: false,
+        preferSlideSourceHtml: false
+      };
+    }
+
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
       return SlideNextStudioDeckView.buildStudioPreviewHtml(doc, {
         buildCanonicalDeck: buildEditorCanonicalDeck,
         buildFallbackHtml: (sourceDoc) => buildPersistableDeckHtml(sourceDoc),
         presentationUrl: currentPresentationUrl,
         deckHtmlOptions: {
-          renderOptions: {
-            activeSlideId: resolveEditorFallbackActiveSlideId(doc),
-            preferSourceHtml: false,
-            preferBodySourceHtml: false,
-            preferSlideSourceHtml: false
-          }
+          renderOptions: buildEditorDeckRenderOptions(doc)
         }
       });
     }
@@ -1476,12 +1483,7 @@
         buildCanonicalDeck: buildEditorCanonicalDeck,
         buildFallbackHtml: (sourceDoc) => buildPersistableDeckHtml(sourceDoc),
         deckHtmlOptions: {
-          renderOptions: {
-            activeSlideId: resolveEditorFallbackActiveSlideId(doc),
-            preferSourceHtml: false,
-            preferBodySourceHtml: false,
-            preferSlideSourceHtml: false
-          }
+          renderOptions: buildEditorDeckRenderOptions(doc)
         }
       });
     }
@@ -3715,13 +3717,9 @@
         restoreFrameSetup: (nextHistoryEntry) => SlideNextStudioHistory.restoreStudioHistoryFrameSetup(nextHistoryEntry, {
           doc: iframeDoc,
           deckHtmlOptions: {
-            renderOptions: {
+            renderOptions: buildEditorDeckRenderOptions(null, nextHistoryEntry.canonicalDeck, {
               activeSlideId: nextHistoryEntry.activeSlideId
-                || resolveEditorFallbackActiveSlideId(null, nextHistoryEntry.canonicalDeck),
-              preferSourceHtml: false,
-              preferBodySourceHtml: false,
-              preferSlideSourceHtml: false
-            }
+            })
           },
           replaceFrameHtml: (doc, html) => {
             doc.documentElement.innerHTML = html;
@@ -3778,12 +3776,7 @@
           buildCanonicalDeck: () => canonicalDeck,
           buildFallbackHtml: () => persistedHtml,
           deckHtmlOptions: {
-            renderOptions: {
-              activeSlideId: resolveEditorFallbackActiveSlideId(doc, canonicalDeck),
-              preferSourceHtml: false,
-              preferBodySourceHtml: false,
-              preferSlideSourceHtml: false
-            }
+            renderOptions: buildEditorDeckRenderOptions(doc, canonicalDeck)
           }
         });
       }
