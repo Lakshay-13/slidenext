@@ -81,10 +81,18 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(
     fileContent,
-    'function buildEditorSourceHtml(doc = getIframeDoc()) {',
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc()) {',
     '\n\n    function launchPresentationHtml(html, startSlideIdx) {'
   );
 
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
   const calls = [];
   const context = {
     SlideNextStudioDeckView: {
@@ -93,15 +101,17 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
         return options.buildFallbackHtml(null);
       }
     },
-    buildEditorCanonicalDeck() {
-      throw new Error('canonical deck should not be requested for this fallback');
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, null);
+      return canonicalDeck;
     },
     buildPersistableDeckHtml(nextDoc) {
       assert.equal(nextDoc, null);
       return context.lastPersistedDeckHtml;
     },
+    currentSlideIndex: 1,
     getPersistedActiveSlideId() {
-      return 'slide-2';
+      return 'slide-1';
     },
     getIframeDoc() {
       return null;
