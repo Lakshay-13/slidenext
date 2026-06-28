@@ -25,7 +25,7 @@ test('createStudioHistoryEntry includes the canonical deck sidecar when provided
   });
 
   assert.deepEqual(entry, {
-    html: '<html></html>',
+    html: '',
     activeSlideId: 'slide-1',
     selectedElementIds: ['node-1'],
     canonicalDeck
@@ -41,7 +41,7 @@ test('createStudioHistoryEntry can capture a model-only history entry without a 
 
   const entry = studioHistory.createStudioHistoryEntry(null, {
     buildHistoryHtml() {
-      return '<html>persisted-baseline</html>';
+      return '<!DOCTYPE html><html><head><title>Persisted</title></head><body><main>persisted-baseline</main></body></html>';
     },
     activeSlideId: 'slide-1',
     selectedElementIds: ['node-1', ''],
@@ -49,7 +49,7 @@ test('createStudioHistoryEntry can capture a model-only history entry without a 
   });
 
   assert.deepEqual(entry, {
-    html: '<html>persisted-baseline</html>',
+    html: '<head><title>Persisted</title></head><body><main>persisted-baseline</main></body>',
     activeSlideId: 'slide-1',
     selectedElementIds: ['node-1'],
     canonicalDeck
@@ -64,16 +64,42 @@ test('normalizeStudioHistoryEntry preserves the canonical deck sidecar', () => {
   };
 
   assert.deepEqual(studioHistory.normalizeStudioHistoryEntry({
-    html: '<html></html>',
+    html: '<!DOCTYPE html><html><head><title>History</title></head><body><main>snapshot</main></body></html>',
     activeSlideId: 'slide-1',
     selectedElementIds: ['node-1', '', null],
     canonicalDeck
   }), {
-    html: '<html></html>',
+    html: '<head><title>History</title></head><body><main>snapshot</main></body>',
     activeSlideId: 'slide-1',
     selectedElementIds: ['node-1'],
     canonicalDeck
   });
+});
+
+test('captureStudioHistoryState ignores equivalent full-document and inner-html history snapshots', () => {
+  const initialEntry = {
+    html: '<!DOCTYPE html><html><head><title>Deck</title></head><body><main>same</main></body></html>',
+    activeSlideId: 'slide-1',
+    selectedElementIds: ['node-1'],
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: [{ id: 'slide-1', nodes: [] }]
+    }
+  };
+  const nextEntry = {
+    html: '<head><title>Deck</title></head><body><main>same</main></body>',
+    activeSlideId: 'slide-1',
+    selectedElementIds: ['node-1'],
+    canonicalDeck: initialEntry.canonicalDeck
+  };
+
+  const result = studioHistory.captureStudioHistoryState([initialEntry], [], nextEntry);
+
+  assert.equal(result.didCapture, false);
+  assert.equal(result.undoStack.length, 1);
+  assert.deepEqual(result.undoStack[0], initialEntry);
+  assert.deepEqual(result.redoStack, []);
 });
 
 test('captureStudioHistoryState keeps model-only history changes when the canonical deck sidecar differs', () => {

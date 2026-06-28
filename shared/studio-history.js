@@ -88,7 +88,7 @@
     const canonicalDeck = options.canonicalDeck && typeof options.canonicalDeck === 'object'
       ? options.canonicalDeck
       : null;
-    const html = buildHistoryHtml(doc, options);
+    const html = normalizeStudioHistoryFrameHtml(buildHistoryHtml(doc, options));
 
     if (!doc && !html && !canonicalDeck) {
       return null;
@@ -107,11 +107,16 @@
       return { html: '', activeSlideId: '', selectedElementIds: [], canonicalDeck: null };
     }
     if (typeof entry === 'string') {
-      return { html: entry, activeSlideId: '', selectedElementIds: [], canonicalDeck: null };
+      return {
+        html: normalizeStudioHistoryFrameHtml(entry),
+        activeSlideId: '',
+        selectedElementIds: [],
+        canonicalDeck: null
+      };
     }
 
     return {
-      html: entry.html || '',
+      html: normalizeStudioHistoryFrameHtml(entry.html || ''),
       activeSlideId: entry.activeSlideId || '',
       selectedElementIds: Array.isArray(entry.selectedElementIds) ? entry.selectedElementIds.filter(Boolean) : [],
       canonicalDeck: entry.canonicalDeck && typeof entry.canonicalDeck === 'object'
