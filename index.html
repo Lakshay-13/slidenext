@@ -3714,7 +3714,8 @@
           doc: iframeDoc,
           deckHtmlOptions: {
             renderOptions: {
-              activeSlideId: nextHistoryEntry.activeSlideId || getPersistedActiveSlideId(),
+              activeSlideId: nextHistoryEntry.activeSlideId
+                || resolveEditorFallbackActiveSlideId(null, nextHistoryEntry.canonicalDeck),
               preferSourceHtml: false,
               preferBodySourceHtml: false,
               preferSlideSourceHtml: false

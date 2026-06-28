@@ -318,6 +318,11 @@ test('captureState can store a persisted baseline history entry without a live f
 
 test('restoreFrameFromHistoryEntry threads the shared iframe accessor through history restore callbacks', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
   const restoreFrameFromHistoryEntrySource = extractFunctionSource(
     fileContent,
     'function restoreFrameFromHistoryEntry(entry) {',
@@ -329,7 +334,15 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
       innerHTML: ''
     }
   };
-  const canonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] },
+      { id: 'slide-3', nodes: [] }
+    ]
+  };
   const callLog = [];
   const context = {
     applyEditorSelectionState(selection) {
@@ -348,7 +361,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
     },
     getPersistedActiveSlideId() {
       callLog.push(['getPersistedActiveSlideId']);
-      return 'slide-3';
+      return 'slide-1';
     },
     getSlides(doc) {
       callLog.push(['getSlides', doc]);
@@ -416,6 +429,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   };
 
   vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(restoreFrameFromHistoryEntrySource, context);
 
   context.restoreFrameFromHistoryEntry({
