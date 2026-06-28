@@ -91,6 +91,10 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
   };
   const fetchCalls = [];
   const canonicalDeckUpdates = [];
+  const livePlaybackState = {
+    activeSlideIds: ['slide-2'],
+    slideCounterText: '2 / 3'
+  };
   const context = {
     SlideNextCanonicalDeck: {
       isCanonicalDeck(deck) {
@@ -108,6 +112,7 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
     studioEditorSessionToken: 4,
     lastPersistedDeckHtml: '',
     lastPersistedCanonicalDeck: null,
+    persistedDeckPlaybackState: null,
     isCurrentDeckStatePersisted() {
       return false;
     },
@@ -118,6 +123,13 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
       if (Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck')) {
         context.lastPersistedCanonicalDeck = canonicalDeckModel.createCanonicalDeck(nextState.canonicalDeck);
       }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'playbackState')) {
+        context.persistedDeckPlaybackState = nextState.playbackState;
+      }
+    },
+    capturePersistedDeckPlaybackState(doc) {
+      assert.deepEqual(doc, { label: 'iframe-doc' });
+      return livePlaybackState;
     },
     buildEditorSaveRequestBody(doc, cleanHtml, options = {}) {
       return {
@@ -165,6 +177,7 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
   ]]);
   assert.equal(context.lastPersistedDeckHtml, '<html>persisted</html>');
   assert.deepEqual(context.lastPersistedCanonicalDeck, canonicalDeckModel.createCanonicalDeck(canonicalDeck));
+  assert.deepEqual(context.persistedDeckPlaybackState, livePlaybackState);
   assert.deepEqual(canonicalDeckUpdates, [[
     canonicalDeckModel.createCanonicalDeck(canonicalDeck),
     'presentations/onboarding-presentation/index.html'
@@ -202,6 +215,9 @@ test('saveVersionCheckpoint keeps save rewrites enabled when canonical state cha
   const fetchCalls = [];
   const context = {
     SlideNextStudioEditorPersistence: editorPersistence,
+    capturePersistedDeckPlaybackState() {
+      return null;
+    },
     createCurrentStudioSessionStateReaders() {
       return {
         getCurrentPresentationUrl: () => context.currentPresentationUrl,

@@ -3855,6 +3855,7 @@
     }
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
+      const livePlaybackState = capturePersistedDeckPlaybackState(options.doc);
       const persistencePlan = SlideNextStudioEditorPersistence.buildStudioPersistenceRequestPlan(
         presentationUrl,
         cleanHtml,
@@ -3890,6 +3891,11 @@
           setPersistedCanonicalDeck: (nextCanonicalDeck) => {
             updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
             setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl);
+          },
+          onSuccess: (nextContext) => {
+            if (nextContext.shouldUpdatePersistedHtml !== false && livePlaybackState) {
+              updateEditorPersistedDeckState({ playbackState: livePlaybackState });
+            }
           }
         });
       }
@@ -3910,6 +3916,7 @@
         const iframeDoc = getIframeDoc();
         if (isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
         const cleanHtml = buildPersistableDeckHtml(iframeDoc);
+        const livePlaybackState = capturePersistedDeckPlaybackState(iframeDoc);
         if (!cleanHtml) {
           setStudioAutoSaveStatus('saved');
           return;
@@ -3950,7 +3957,10 @@
                 updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
                 setCurrentPresentationCanonicalDeck(nextCanonicalDeck, scheduledPresentationUrl);
               },
-              onSuccess: () => {
+              onSuccess: (nextContext) => {
+                if (nextContext.shouldUpdatePersistedHtml !== false && livePlaybackState) {
+                  updateEditorPersistedDeckState({ playbackState: livePlaybackState });
+                }
                 setStudioAutoSaveStatus('saved');
               }
             });
