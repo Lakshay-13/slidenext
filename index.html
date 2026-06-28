@@ -3781,11 +3781,12 @@
           }
         });
       }
+      const livePlaybackState = capturePersistedDeckPlaybackState(doc) || persistedDeckPlaybackState;
       return SlideNextDeckPersistence.buildPersistableDeckHtml(doc, {
         editorChromeNodeIds: EDITOR_CHROME_NODE_IDS,
         editorElementIdAttr: EDITOR_ELEMENT_ID_ATTR,
         editorSlideIdAttr: EDITOR_SLIDE_ID_ATTR,
-        persistedDeckPlaybackState
+        persistedDeckPlaybackState: livePlaybackState
       });
     }
 

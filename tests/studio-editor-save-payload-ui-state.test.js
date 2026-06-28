@@ -182,6 +182,56 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
   assert.equal(buildEditorCanonicalDeckCalls, 1);
 });
 
+test('buildPersistableDeckHtml captures the live playback state before persisting iframe html', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const livePlaybackState = {
+    activeSlideIds: ['slide-live'],
+    slideCounterText: '2 / 5'
+  };
+  const calls = [];
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml(nextDoc, options) {
+        calls.push(['buildPersistableDeckHtml', nextDoc, options]);
+        return '<html>persisted-live</html>';
+      }
+    },
+    capturePersistedDeckPlaybackState(nextDoc) {
+      calls.push(['capturePersistedDeckPlaybackState', nextDoc]);
+      assert.equal(nextDoc, iframeDoc);
+      return livePlaybackState;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    persistedDeckPlaybackState: {
+      activeSlideIds: ['slide-stale'],
+      slideCounterText: '1 / 5'
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+
+  assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-live</html>');
+  assert.deepEqual(calls.map(([name]) => name), [
+    'capturePersistedDeckPlaybackState',
+    'buildPersistableDeckHtml'
+  ]);
+  assert.equal(calls[1][1], iframeDoc);
+  assert.equal(calls[1][2].persistedDeckPlaybackState, livePlaybackState);
+});
+
 test('buildPersistableDeckHtml renders canonical deck html when the editor frame and persisted baseline are unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
