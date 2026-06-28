@@ -1435,6 +1435,10 @@
     function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {
       const persistedActiveSlideId = getPersistedActiveSlideId();
       if (doc) {
+        const liveActiveSlideId = getActiveSlideId(doc);
+        if (typeof liveActiveSlideId === 'string' && liveActiveSlideId.trim()) {
+          return liveActiveSlideId;
+        }
         return persistedActiveSlideId;
       }
 
@@ -1456,16 +1460,14 @@
         buildCanonicalDeck: buildEditorCanonicalDeck,
         buildFallbackHtml: (sourceDoc) => buildPersistableDeckHtml(sourceDoc),
         presentationUrl: currentPresentationUrl,
-        deckHtmlOptions: !doc
-          ? {
-              renderOptions: {
-                activeSlideId: resolveEditorFallbackActiveSlideId(doc),
-                preferSourceHtml: false,
-                preferBodySourceHtml: false,
-                preferSlideSourceHtml: false
-              }
-            }
-          : undefined
+        deckHtmlOptions: {
+          renderOptions: {
+            activeSlideId: resolveEditorFallbackActiveSlideId(doc),
+            preferSourceHtml: false,
+            preferBodySourceHtml: false,
+            preferSlideSourceHtml: false
+          }
+        }
       });
     }
 
@@ -1473,16 +1475,14 @@
       return SlideNextStudioDeckView.buildStudioSourceHtml(doc, {
         buildCanonicalDeck: buildEditorCanonicalDeck,
         buildFallbackHtml: (sourceDoc) => buildPersistableDeckHtml(sourceDoc),
-        deckHtmlOptions: !doc
-          ? {
-              renderOptions: {
-                activeSlideId: resolveEditorFallbackActiveSlideId(doc),
-                preferSourceHtml: false,
-                preferBodySourceHtml: false,
-                preferSlideSourceHtml: false
-              }
-            }
-          : undefined
+        deckHtmlOptions: {
+          renderOptions: {
+            activeSlideId: resolveEditorFallbackActiveSlideId(doc),
+            preferSourceHtml: false,
+            preferBodySourceHtml: false,
+            preferSlideSourceHtml: false
+          }
+        }
       });
     }
 
