@@ -125,6 +125,11 @@ test('buildEditorSaveRequestBody falls back to the persisted html baseline when 
 
 test('buildPersistableDeckHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
@@ -169,6 +174,7 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
   };
 
   vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-baseline</html>');
@@ -178,6 +184,11 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
 
 test('buildPersistableDeckHtml renders canonical deck html when the editor frame and persisted baseline are unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
@@ -221,6 +232,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
       assert.equal(nextDoc, null);
       return canonicalDeck;
     },
+    currentSlideIndex: 0,
     getPersistedActiveSlideId() {
       return 'slide-2';
     },
@@ -234,6 +246,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
   };
 
   vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
@@ -243,7 +256,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
   assert.equal(typeof calls[0][1].buildCanonicalDeck, 'function');
   assert.equal(calls[0][1].buildCanonicalDeck(null), canonicalDeck);
   assert.equal(calls[0][1].buildFallbackHtml(), '');
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.activeSlideId, 'slide-2');
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.activeSlideId, 'slide-1');
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
@@ -251,6 +264,11 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
 
 test('buildPersistableDeckHtml prefers rendered canonical html when the current canonical deck differs from the persisted baseline', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
@@ -265,7 +283,10 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
   const currentCanonicalDeck = {
     kind: 'slidenext.deck',
     schemaVersion: 1,
-    slides: [{ id: 'slide-current', nodes: [] }]
+    slides: [
+      { id: 'slide-current', nodes: [] },
+      { id: 'slide-next', nodes: [] }
+    ]
   };
   let sharedBuildCalls = 0;
   const calls = [];
@@ -296,6 +317,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
       assert.equal(nextDoc, null);
       return currentCanonicalDeck;
     },
+    currentSlideIndex: 1,
     getPersistedActiveSlideId() {
       return 'slide-current';
     },
@@ -310,6 +332,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
   };
 
   vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
@@ -318,7 +341,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
   assert.equal(calls[0][0], null);
   assert.equal(calls[0][1].buildCanonicalDeck(), currentCanonicalDeck);
   assert.equal(calls[0][1].buildFallbackHtml(), '<html>persisted-baseline</html>');
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.activeSlideId, 'slide-current');
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.activeSlideId, 'slide-next');
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
