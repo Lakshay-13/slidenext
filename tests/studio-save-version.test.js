@@ -34,6 +34,15 @@ function loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context) 
   vm.runInContext(helperSource, context);
 }
 
+function loadIsCurrentStudioPersistenceActionCurrent(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function isCurrentStudioPersistenceActionCurrent(persistenceContext) {',
+    '\n\n    function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadHandleCurrentStudioPersistenceSuccess(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -83,6 +92,44 @@ test('setStudioSaveButtonState renders the version button loading and idle state
   context.setStudioSaveButtonState('idle');
   assert.equal(saveBtnEl.disabled, false);
   assert.match(saveBtnEl.innerHTML, /Save Version/);
+});
+
+test('isCurrentStudioPersistenceActionCurrent reuses current session readers for save-version persistence checks', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let capturedOptions = null;
+  const currentStudioSessionStateReaders = {
+    getCurrentPresentationUrl() {
+      return context.currentPresentationUrl;
+    },
+    getCurrentSessionToken() {
+      return context.studioEditorSessionToken;
+    }
+  };
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      isStudioPersistenceActionCurrent(persistenceContext, options) {
+        capturedOptions = options;
+        return persistenceContext.sessionToken === 8;
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      return currentStudioSessionStateReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 8
+  };
+
+  vm.createContext(context);
+  loadIsCurrentStudioPersistenceActionCurrent(fileContent, context);
+
+  const result = context.isCurrentStudioPersistenceActionCurrent({
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    sessionToken: 8
+  });
+
+  assert.equal(result, true);
+  assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
+  assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
 });
 
 test('submitSaveVersion keeps the save button idle when editor content is unavailable', async () => {
@@ -178,6 +225,7 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadIsCurrentStudioPersistenceActionCurrent(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
@@ -287,6 +335,7 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadIsCurrentStudioPersistenceActionCurrent(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
@@ -406,6 +455,7 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadIsCurrentStudioPersistenceActionCurrent(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
@@ -525,6 +575,7 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadIsCurrentStudioPersistenceActionCurrent(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
