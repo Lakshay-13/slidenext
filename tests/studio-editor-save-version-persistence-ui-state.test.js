@@ -33,7 +33,7 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
-    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
+    '\n\n    function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
