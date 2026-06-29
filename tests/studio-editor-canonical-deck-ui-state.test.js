@@ -14,6 +14,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
+  const resolveEditorStoredCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorStoredCanonicalDeck(metadata) {',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+  vm.runInContext(resolveEditorStoredCanonicalDeckSource, context);
+}
+
 test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical deck for the active editor session', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorCanonicalDeckSource = extractFunctionSource(
@@ -47,6 +56,7 @@ test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical dec
   };
 
   vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(buildEditorCanonicalDeckSource, context);
 
   context.buildEditorCanonicalDeck();
@@ -100,6 +110,7 @@ test('buildEditorCanonicalDeck reuses the in-memory persisted canonical baseline
   };
 
   vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(buildEditorCanonicalDeckSource, context);
 
   const result = context.buildEditorCanonicalDeck();
@@ -168,6 +179,7 @@ test('buildEditorCanonicalDeck prefers the current metadata canonical deck over 
   };
 
   vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(buildEditorCanonicalDeckSource, context);
 
   const result = context.buildEditorCanonicalDeck();

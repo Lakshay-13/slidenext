@@ -16,6 +16,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
+  const resolveEditorStoredCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorStoredCanonicalDeck(metadata) {',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+  vm.runInContext(resolveEditorStoredCanonicalDeckSource, context);
+}
+
 test('updateEditorPersistedDeckState updates only the provided persisted baseline fields', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
@@ -38,6 +47,7 @@ test('updateEditorPersistedDeckState updates only the provided persisted baselin
   };
 
   vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(updateEditorPersistedDeckStateSource, context);
 
   context.updateEditorPersistedDeckState({
@@ -95,6 +105,7 @@ test('updateEditorPersistedDeckState normalizes the persisted canonical baseline
   };
 
   vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(updateEditorPersistedDeckStateSource, context);
 
   context.updateEditorPersistedDeckState({
@@ -133,6 +144,7 @@ test('resetEditorDeckPersistenceState clears the persisted baseline through the 
   };
 
   vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(updateEditorPersistedDeckStateSource, context);
   vm.runInContext(resetEditorDeckPersistenceStateSource, context);
 

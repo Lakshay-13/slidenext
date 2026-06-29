@@ -2294,7 +2294,7 @@
         return currentPresentationMetadata;
       }
 
-      const storedCanonicalDeck = SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck(currentPresentationMetadata);
+      const storedCanonicalDeck = resolveEditorStoredCanonicalDeck(currentPresentationMetadata);
       if (storedCanonicalDeck) {
         updateEditorPersistedDeckState({ canonicalDeck: storedCanonicalDeck });
         const iframeDoc = getIframeDoc();
@@ -2306,6 +2306,14 @@
         }
       }
       return currentPresentationMetadata;
+    }
+
+    function resolveEditorStoredCanonicalDeck(metadata) {
+      const resolveStoredCanonicalDeck = SlideNextStudioDeckContext
+        && typeof SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck === 'function'
+        ? SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck
+        : (storedMetadata) => storedMetadata && storedMetadata.canonicalDeck ? storedMetadata.canonicalDeck : null;
+      return resolveStoredCanonicalDeck(metadata) || null;
     }
 
     function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
@@ -2323,18 +2331,13 @@
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
-      const resolveStoredCanonicalDeck = SlideNextStudioDeckContext
-        && typeof SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck === 'function'
-        ? SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck
-        : (metadata) => metadata && metadata.canonicalDeck ? metadata.canonicalDeck : null;
-
       if (!doc) {
-        const currentMetadataCanonicalDeck = resolveStoredCanonicalDeck(currentPresentationMetadata);
+        const currentMetadataCanonicalDeck = resolveEditorStoredCanonicalDeck(currentPresentationMetadata);
         if (currentMetadataCanonicalDeck) {
           return currentMetadataCanonicalDeck;
         }
 
-        const storedCanonicalDeck = resolveStoredCanonicalDeck({
+        const storedCanonicalDeck = resolveEditorStoredCanonicalDeck({
           canonicalDeck: lastPersistedCanonicalDeck
         });
         if (storedCanonicalDeck) {
@@ -3698,11 +3701,7 @@
         lastPersistedDeckHtml = typeof nextState.cleanHtml === 'string' ? nextState.cleanHtml : '';
       }
       if (Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck')) {
-        const resolveStoredCanonicalDeck = SlideNextStudioDeckContext
-          && typeof SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck === 'function'
-          ? SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck
-          : (metadata) => metadata && metadata.canonicalDeck ? metadata.canonicalDeck : null;
-        lastPersistedCanonicalDeck = resolveStoredCanonicalDeck({
+        lastPersistedCanonicalDeck = resolveEditorStoredCanonicalDeck({
           canonicalDeck: nextState.canonicalDeck
         }) || null;
       }
@@ -4363,14 +4362,8 @@
       const hasDeckDocument = !!(doc && doc.documentElement);
       const hasPresentationSession = !!currentPresentationUrl;
       const hasPersistedDeckHtml = typeof lastPersistedDeckHtml === 'string' && lastPersistedDeckHtml.trim() !== '';
-      const resolveStoredCanonicalDeck = SlideNextStudioDeckContext
-        && typeof SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck === 'function'
-        ? SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck
-        : null;
       const hasStoredCanonicalDeck = !!lastPersistedCanonicalDeck
-        || !!(resolveStoredCanonicalDeck
-          ? resolveStoredCanonicalDeck(currentPresentationMetadata)
-          : currentPresentationMetadata && currentPresentationMetadata.canonicalDeck);
+        || !!resolveEditorStoredCanonicalDeck(currentPresentationMetadata);
       const hasDeckContent = hasDeckDocument || hasPersistedDeckHtml || hasStoredCanonicalDeck;
 
       const saveBtn = document.getElementById('studioSaveBtn');

@@ -14,6 +14,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
+  const resolveEditorStoredCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorStoredCanonicalDeck(metadata) {',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+  vm.runInContext(resolveEditorStoredCanonicalDeckSource, context);
+}
+
 test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when fallback deck state remains available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateDeckReadyToolbarActionStateSource = extractFunctionSource(
@@ -51,6 +60,7 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when 
   };
 
   vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(updateDeckReadyToolbarActionStateSource, context);
 
   context.updateDeckReadyToolbarActionState(null);
