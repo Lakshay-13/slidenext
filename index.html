@@ -1760,10 +1760,16 @@
         observeDeckActiveSlideState,
         captureInitialHistoryState: () => {
           saveHistoryState(false);
+          let resolvedCanonicalDeck = null;
+          const cleanHtml = buildPersistableDeckHtml(iframeDoc, {
+            onCanonicalDeckResolved(canonicalDeck) {
+              resolvedCanonicalDeck = canonicalDeck;
+            }
+          });
           updateEditorPersistedDeckState({
             playbackState: capturePersistedDeckPlaybackState(iframeDoc),
-            cleanHtml: buildPersistableDeckHtml(iframeDoc),
-            canonicalDeck: buildEditorCanonicalDeck(iframeDoc)
+            cleanHtml,
+            canonicalDeck: resolvedCanonicalDeck || buildEditorCanonicalDeck(iframeDoc)
           });
         }
       });

@@ -151,6 +151,120 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
   assert.deepEqual(iframeDoc.listeners.map((listener) => listener.type), ['click', 'keydown']);
 });
 
+test('initStudioFrame reuses the resolved canonical deck when capturing the initial persisted state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const initStudioFrameSource = extractFunctionSource(
+    fileContent,
+    'function initStudioFrame() {',
+    '\n\n    // Apply hoverable tags to editable nodes'
+  );
+
+  const iframeDoc = {
+    addEventListener() {}
+  };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1']
+  };
+  const persistedStateUpdates = [];
+  const calls = [];
+  let buildEditorCanonicalDeckCalls = 0;
+
+  const context = {
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    syncIframeTheme() {},
+    SlideNextStudioEditorStyle: {
+      ensureStudioEditorStyle() {}
+    },
+    makeElementsHoverable() {},
+    SlideNextStudioEditorEvents: {
+      createStudioFrameClickHandler() {
+        return function clickHandler() {};
+      },
+      createStudioFrameKeydownHandler() {
+        return function keydownHandler() {};
+      }
+    },
+    isDraggingElement: false,
+    resolveEditableTarget() {},
+    selectElement() {},
+    deselectElement() {},
+    editorUndo() {},
+    editorRedo() {},
+    selectedElements: [],
+    arrangeElementLayer() {},
+    removeSelectedElement() {},
+    copySelectedElements() {},
+    pasteClipboardElements() {},
+    duplicateSelectedElements() {},
+    nudgeSelectedElements() {},
+    selectAllElementsOnActiveSlide() {},
+    SlideNextStudioFrameBootstrap: {
+      runStudioFrameBootstrap(doc, options) {
+        assert.equal(doc, iframeDoc);
+        options.captureInitialHistoryState();
+      }
+    },
+    setupIframeDragging() {},
+    generateThumbnails() {},
+    syncStudioChromeToActiveSlide() {},
+    setActiveSlide() {},
+    bindDeckNavigationSync() {},
+    observeDeckActiveSlideState() {},
+    saveHistoryState(shouldDebounce) {
+      calls.push(['saveHistoryState', shouldDebounce]);
+    },
+    capturePersistedDeckPlaybackState(doc) {
+      assert.equal(doc, iframeDoc);
+      calls.push(['capturePersistedDeckPlaybackState', doc]);
+      return playbackState;
+    },
+    buildPersistableDeckHtml(doc, options = {}) {
+      assert.equal(doc, iframeDoc);
+      assert.equal(typeof options.onCanonicalDeckResolved, 'function');
+      calls.push(['buildPersistableDeckHtml', doc, options]);
+      options.onCanonicalDeckResolved(canonicalDeck);
+      return '<html>persisted-live</html>';
+    },
+    buildEditorCanonicalDeck() {
+      buildEditorCanonicalDeckCalls += 1;
+      return canonicalDeck;
+    },
+    persistedDeckPlaybackState: null,
+    lastPersistedDeckHtml: '',
+    updateEditorPersistedDeckState(nextState) {
+      persistedStateUpdates.push(nextState);
+    },
+    updateInsertionActionState() {},
+    updateWallpaperActionState() {},
+    updateDeckReadyToolbarActionState() {},
+    setStudioAutoSaveStatus() {},
+    syncInspectorForSelection() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(initStudioFrameSource, context);
+
+  context.initStudioFrame();
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'saveHistoryState',
+    'buildPersistableDeckHtml',
+    'capturePersistedDeckPlaybackState'
+  ]);
+  assert.equal(persistedStateUpdates.length, 1);
+  assert.equal(persistedStateUpdates[0].playbackState, playbackState);
+  assert.equal(persistedStateUpdates[0].cleanHtml, '<html>persisted-live</html>');
+  assert.equal(persistedStateUpdates[0].canonicalDeck, canonicalDeck);
+  assert.equal(buildEditorCanonicalDeckCalls, 0);
+});
+
 test('syncIframeTheme uses the shared iframe accessor and injects the light theme override style', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const syncIframeThemeSource = extractFunctionSource(
