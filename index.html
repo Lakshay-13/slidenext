@@ -4601,13 +4601,6 @@
       setStudioSaveButtonState('idle');
     }
 
-    function isCurrentStudioPersistenceActionCurrent(persistenceContext) {
-      return SlideNextStudioEditorPersistence.isStudioPersistenceActionCurrent(
-        persistenceContext,
-        createCurrentStudioSessionStateOptions()
-      );
-    }
-
     function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
       return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
         persistenceContext,
@@ -4698,7 +4691,10 @@
           }
         });
       } finally {
-        if (isCurrentStudioPersistenceActionCurrent(versionCheckpointPersistenceState.persistenceContext)) {
+        if (SlideNextStudioEditorPersistence.isStudioPersistenceActionCurrent(
+          versionCheckpointPersistenceState.persistenceContext,
+          createCurrentStudioSessionStateOptions()
+        )) {
           resetStudioSaveButtonState();
         }
       }
