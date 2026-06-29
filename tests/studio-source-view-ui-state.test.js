@@ -196,3 +196,54 @@ test('buildEditorSourceHtml prefers the live active slide when the editor frame 
   assert.equal(calls[0].options.deckHtmlOptions.renderOptions.activeSlideId, 'slide-2');
   assert.equal(result, '<html>source</html>');
 });
+
+test('buildEditorSourceHtml reuses the resolved live canonical deck when source generation falls back', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSourceHtmlSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function launchPresentationHtml(html, startSlideIdx) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const iframeDoc = { label: 'iframe-doc' };
+  let buildEditorCanonicalDeckCalls = 0;
+  const context = {
+    SlideNextStudioDeckView: {
+      buildStudioSourceHtml(doc, options) {
+        assert.equal(options.buildCanonicalDeck(doc), canonicalDeck);
+        return options.buildFallbackHtml(doc);
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      buildEditorCanonicalDeckCalls += 1;
+      assert.equal(nextDoc, iframeDoc);
+      return canonicalDeck;
+    },
+    buildPersistableDeckHtml(nextDoc, options = {}) {
+      assert.equal(nextDoc, iframeDoc);
+      assert.equal(options.canonicalDeck, canonicalDeck);
+      return '<html>persisted-source</html>';
+    },
+    getActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return 'slide-1';
+    },
+    getPersistedActiveSlideId() {
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorSourceHtmlSource, context);
+
+  assert.equal(context.buildEditorSourceHtml(), '<html>persisted-source</html>');
+  assert.equal(buildEditorCanonicalDeckCalls, 1);
+});

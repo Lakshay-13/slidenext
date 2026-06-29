@@ -1467,14 +1467,25 @@
       };
     }
 
+    function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {
+      let didResolveCanonicalDeck = false;
+      let resolvedCanonicalDeck = null;
+      return function resolveCanonicalDeck(sourceDoc = doc) {
+        if (!didResolveCanonicalDeck) {
+          resolvedCanonicalDeck = buildEditorCanonicalDeck(sourceDoc);
+          didResolveCanonicalDeck = true;
+        }
+        return resolvedCanonicalDeck;
+      };
+    }
+
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
-      const resolvedCanonicalDeck = doc ? null : buildEditorCanonicalDeck(doc);
+      const resolveCanonicalDeck = createEditorCanonicalDeckResolver(doc);
+      const resolvedCanonicalDeck = doc ? null : resolveCanonicalDeck(doc);
       return SlideNextStudioDeckView.buildStudioPreviewHtml(doc, {
-        buildCanonicalDeck: doc
-          ? buildEditorCanonicalDeck
-          : () => resolvedCanonicalDeck,
+        buildCanonicalDeck: resolveCanonicalDeck,
         buildFallbackHtml: (sourceDoc) => buildPersistableDeckHtml(sourceDoc, {
-          canonicalDeck: resolvedCanonicalDeck
+          canonicalDeck: doc ? resolveCanonicalDeck(sourceDoc) : resolvedCanonicalDeck
         }),
         presentationUrl: currentPresentationUrl,
         deckHtmlOptions: {
@@ -1484,13 +1495,12 @@
     }
 
     function buildEditorSourceHtml(doc = getIframeDoc()) {
-      const resolvedCanonicalDeck = doc ? null : buildEditorCanonicalDeck(doc);
+      const resolveCanonicalDeck = createEditorCanonicalDeckResolver(doc);
+      const resolvedCanonicalDeck = doc ? null : resolveCanonicalDeck(doc);
       return SlideNextStudioDeckView.buildStudioSourceHtml(doc, {
-        buildCanonicalDeck: doc
-          ? buildEditorCanonicalDeck
-          : () => resolvedCanonicalDeck,
+        buildCanonicalDeck: resolveCanonicalDeck,
         buildFallbackHtml: (sourceDoc) => buildPersistableDeckHtml(sourceDoc, {
-          canonicalDeck: resolvedCanonicalDeck
+          canonicalDeck: doc ? resolveCanonicalDeck(sourceDoc) : resolvedCanonicalDeck
         }),
         deckHtmlOptions: {
           renderOptions: buildEditorDeckRenderOptions(doc, resolvedCanonicalDeck)
