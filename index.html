@@ -4840,22 +4840,16 @@
       }).join('');
     }
 
-    function createCurrentStudioVersionHistoryLoadOptions(options = {}) {
-      return {
-        ...createCurrentStudioSessionStateOptions({
-          sessionToken: options.sessionToken
-        }),
-        commitVersionEntries: options.commitVersionEntries
-      };
-    }
-
     async function loadCurrentStudioVersionHistory(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken
     ) {
       return SlideNextStudioVersionHistory.loadStudioVersionHistory(
         presentationUrl,
-        createCurrentStudioVersionHistoryLoadOptions({
+        SlideNextStudioVersionHistory.createStudioVersionHistoryLoadOptions({
+          ...createCurrentStudioSessionStateOptions({
+            sessionToken
+          }),
           sessionToken,
           commitVersionEntries: (versions) => {
             renderVersionsList(presentationUrl, versions);
