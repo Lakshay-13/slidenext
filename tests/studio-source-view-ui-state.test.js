@@ -111,8 +111,9 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
       assert.equal(nextDoc, null);
       return canonicalDeck;
     },
-    buildPersistableDeckHtml(nextDoc) {
+    buildPersistableDeckHtml(nextDoc, options = {}) {
       assert.equal(nextDoc, null);
+      assert.equal(options.canonicalDeck, canonicalDeck);
       return context.lastPersistedDeckHtml;
     },
     currentSlideIndex: 1,
