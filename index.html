@@ -4113,21 +4113,11 @@
       autoVersionTimers = {};
     }
 
-    function createCurrentStudioPersistenceHandlerOptions(options = {}) {
-      return {
-        ...createCurrentStudioSessionStateOptions(),
-        setPersistedHtml: options.setPersistedHtml,
-        setPersistedCanonicalDeck: options.setPersistedCanonicalDeck,
-        setPersistedPlaybackState: options.setPersistedPlaybackState,
-        onSuccess: options.onSuccess,
-        onFailure: options.onFailure
-      };
-    }
-
     function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
       return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
         persistenceContext,
-        createCurrentStudioPersistenceHandlerOptions({
+        SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
+          ...createCurrentStudioSessionStateOptions(),
           setPersistedHtml: (nextHtml) => {
             updateEditorPersistedDeckState({ cleanHtml: nextHtml });
           },
@@ -4146,7 +4136,8 @@
     function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
       return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
         persistenceContext,
-        createCurrentStudioPersistenceHandlerOptions({
+        SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
+          ...createCurrentStudioSessionStateOptions(),
           onFailure: options.onFailure
         })
       );
@@ -4616,18 +4607,11 @@
       );
     }
 
-    function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {
-      return {
-        ...createCurrentStudioSessionStateOptions(),
-        onSuccess: options.onSuccess,
-        refreshVersionEntries: options.refreshVersionEntries
-      };
-    }
-
     function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
       return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
         persistenceContext,
-        createCurrentStudioVersionPersistenceHandlerOptions({
+        SlideNextStudioEditorPersistence.createStudioVersionPersistenceHandlerOptions({
+          ...createCurrentStudioSessionStateOptions(),
           onSuccess: options.onSuccess,
           refreshVersionEntries: loadVersions
         })

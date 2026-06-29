@@ -29,7 +29,7 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioSessionStateOptions(options = {}) {',
-    '\n\n    function createCurrentStudioFrameLoadStateOptions(options = {}) {'
+    '\n\n    function createCurrentStudioFrameLoadHandler('
   );
   vm.runInContext(helperSource, context);
 }
@@ -52,32 +52,12 @@ function loadCaptureCurrentStudioPersistableDeckState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
 function loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context) {
-  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {',
     '\n    \n    async function submitSaveVersion() {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
-function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -93,7 +73,7 @@ function loadIsCurrentStudioPersistenceActionCurrent(fileContent, context) {
 }
 
 function loadHandleCurrentStudioPersistenceSuccess(fileContent, context) {
-  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',
@@ -103,7 +83,7 @@ function loadHandleCurrentStudioPersistenceSuccess(fileContent, context) {
 }
 
 function loadHandleCurrentStudioPersistenceFailure(fileContent, context) {
-  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {',
@@ -418,39 +398,6 @@ test('captureCurrentStudioSessionSnapshot captures the current presentation iden
     presentationUrl: '/presentations/onboarding-presentation/index.html',
     sessionToken: 13
   });
-});
-
-test('createCurrentStudioVersionPersistenceHandlerOptions reuses current session readers and forwards success hooks', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const currentStudioSessionStateReaders = {
-    getCurrentPresentationUrl() {
-      return context.currentPresentationUrl;
-    },
-    getCurrentSessionToken() {
-      return context.studioEditorSessionToken;
-    }
-  };
-  const hooks = {
-    onSuccess() {},
-    refreshVersionEntries() {}
-  };
-  const context = {
-    createCurrentStudioSessionStateReaders() {
-      return currentStudioSessionStateReaders;
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 9
-  };
-
-  vm.createContext(context);
-  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
-
-  const options = context.createCurrentStudioVersionPersistenceHandlerOptions(hooks);
-
-  assert.equal(options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
-  assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
-  assert.equal(options.onSuccess, hooks.onSuccess);
-  assert.equal(options.refreshVersionEntries, hooks.refreshVersionEntries);
 });
 
 test('handleCurrentStudioVersionPersistenceSuccess reuses current session readers and refreshes version entries', () => {

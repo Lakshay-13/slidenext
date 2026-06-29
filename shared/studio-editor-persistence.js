@@ -360,6 +360,27 @@
     return normalizeSessionToken(getCurrentSessionToken()) === requestedSessionToken;
   }
 
+  function createStudioPersistenceHandlerOptions(options = {}) {
+    return {
+      getCurrentPresentationUrl: options.getCurrentPresentationUrl,
+      getCurrentSessionToken: options.getCurrentSessionToken,
+      setPersistedHtml: options.setPersistedHtml,
+      setPersistedCanonicalDeck: options.setPersistedCanonicalDeck,
+      setPersistedPlaybackState: options.setPersistedPlaybackState,
+      onSuccess: options.onSuccess,
+      onFailure: options.onFailure
+    };
+  }
+
+  function createStudioVersionPersistenceHandlerOptions(options = {}) {
+    return {
+      getCurrentPresentationUrl: options.getCurrentPresentationUrl,
+      getCurrentSessionToken: options.getCurrentSessionToken,
+      onSuccess: options.onSuccess,
+      refreshVersionEntries: options.refreshVersionEntries
+    };
+  }
+
   function handleStudioPersistenceSuccess(context = {}, options = {}) {
     if (!isStudioPersistenceActionCurrent(context, options)) {
       return false;
@@ -430,6 +451,8 @@
     isStudioPersistedState,
     isStudioPersistenceTaskStale,
     isStudioPersistenceActionCurrent,
+    createStudioPersistenceHandlerOptions,
+    createStudioVersionPersistenceHandlerOptions,
     handleStudioPersistenceSuccess,
     handleStudioVersionPersistenceSuccess,
     handleStudioPersistenceFailure

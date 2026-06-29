@@ -36,7 +36,7 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioSessionStateOptions(options = {}) {',
-    '\n\n    function createCurrentStudioFrameLoadStateOptions(options = {}) {'
+    '\n\n    function createCurrentStudioFrameLoadHandler('
   );
   vm.runInContext(helperSource, context);
 }

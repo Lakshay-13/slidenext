@@ -21,23 +21,13 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioSessionStateOptions(options = {}) {',
-    '\n\n    function createCurrentStudioFrameLoadStateOptions(options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
-function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
+    '\n\n    function createCurrentStudioFrameLoadHandler('
   );
   vm.runInContext(helperSource, context);
 }
 
 function loadHandleCurrentStudioPersistenceSuccess(fileContent, context) {
-  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',
@@ -47,7 +37,7 @@ function loadHandleCurrentStudioPersistenceSuccess(fileContent, context) {
 }
 
 function loadHandleCurrentStudioPersistenceFailure(fileContent, context) {
-  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {',
@@ -113,45 +103,6 @@ test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata up
       ]
     })
   });
-});
-
-test('createCurrentStudioPersistenceHandlerOptions reuses current session readers and forwards supplied persistence hooks', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const currentStudioSessionStateReaders = {
-    getCurrentPresentationUrl() {
-      return context.currentPresentationUrl;
-    },
-    getCurrentSessionToken() {
-      return context.studioEditorSessionToken;
-    }
-  };
-  const hooks = {
-    setPersistedHtml() {},
-    setPersistedCanonicalDeck() {},
-    setPersistedPlaybackState() {},
-    onSuccess() {},
-    onFailure() {}
-  };
-  const context = {
-    createCurrentStudioSessionStateReaders() {
-      return currentStudioSessionStateReaders;
-    },
-    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 3
-  };
-
-  vm.createContext(context);
-  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-
-  const options = context.createCurrentStudioPersistenceHandlerOptions(hooks);
-
-  assert.equal(options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
-  assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
-  assert.equal(options.setPersistedHtml, hooks.setPersistedHtml);
-  assert.equal(options.setPersistedCanonicalDeck, hooks.setPersistedCanonicalDeck);
-  assert.equal(options.setPersistedPlaybackState, hooks.setPersistedPlaybackState);
-  assert.equal(options.onSuccess, hooks.onSuccess);
-  assert.equal(options.onFailure, hooks.onFailure);
 });
 
 test('handleCurrentStudioPersistenceSuccess reuses current session readers and persisted deck setters', () => {

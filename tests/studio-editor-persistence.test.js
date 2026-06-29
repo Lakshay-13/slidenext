@@ -764,6 +764,52 @@ test('isStudioPersistenceTaskStale rejects missing or stale deck/session combina
   );
 });
 
+test('createStudioPersistenceHandlerOptions preserves the supplied session readers and persistence hooks', () => {
+  const getCurrentPresentationUrl = () => '/presentations/onboarding-presentation/index.html';
+  const getCurrentSessionToken = () => 3;
+  const hooks = {
+    setPersistedHtml() {},
+    setPersistedCanonicalDeck() {},
+    setPersistedPlaybackState() {},
+    onSuccess() {},
+    onFailure() {}
+  };
+
+  const options = editorPersistence.createStudioPersistenceHandlerOptions({
+    getCurrentPresentationUrl,
+    getCurrentSessionToken,
+    ...hooks
+  });
+
+  assert.equal(options.getCurrentPresentationUrl, getCurrentPresentationUrl);
+  assert.equal(options.getCurrentSessionToken, getCurrentSessionToken);
+  assert.equal(options.setPersistedHtml, hooks.setPersistedHtml);
+  assert.equal(options.setPersistedCanonicalDeck, hooks.setPersistedCanonicalDeck);
+  assert.equal(options.setPersistedPlaybackState, hooks.setPersistedPlaybackState);
+  assert.equal(options.onSuccess, hooks.onSuccess);
+  assert.equal(options.onFailure, hooks.onFailure);
+});
+
+test('createStudioVersionPersistenceHandlerOptions preserves the supplied session readers and version hooks', () => {
+  const getCurrentPresentationUrl = () => '/presentations/onboarding-presentation/index.html';
+  const getCurrentSessionToken = () => 9;
+  const hooks = {
+    onSuccess() {},
+    refreshVersionEntries() {}
+  };
+
+  const options = editorPersistence.createStudioVersionPersistenceHandlerOptions({
+    getCurrentPresentationUrl,
+    getCurrentSessionToken,
+    ...hooks
+  });
+
+  assert.equal(options.getCurrentPresentationUrl, getCurrentPresentationUrl);
+  assert.equal(options.getCurrentSessionToken, getCurrentSessionToken);
+  assert.equal(options.onSuccess, hooks.onSuccess);
+  assert.equal(options.refreshVersionEntries, hooks.refreshVersionEntries);
+});
+
 test('resolveStudioPersistenceCanonicalDeck normalizes valid deck-like payloads and rejects malformed ones', () => {
   assert.deepEqual(
     editorPersistence.resolveStudioPersistenceCanonicalDeck({
