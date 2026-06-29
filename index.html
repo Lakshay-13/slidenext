@@ -4242,19 +4242,27 @@
               }
             });
           } else {
-            handleCurrentStudioPersistenceFailure(persistencePlan.persistenceContext, {
-              onFailure: () => {
-                setStudioAutoSaveStatus('autosave-failed');
-              }
-            });
+            SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+              persistencePlan.persistenceContext,
+              SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
+                ...createCurrentStudioSessionStateOptions(),
+                onFailure: () => {
+                  setStudioAutoSaveStatus('autosave-failed');
+                }
+              })
+            );
           }
         } catch (err) {
           console.error('AutoSave Error:', err);
-          handleCurrentStudioPersistenceFailure(persistencePlan.persistenceContext, {
-            onFailure: () => {
-              setStudioAutoSaveStatus('network-error');
-            }
-          });
+          SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+            persistencePlan.persistenceContext,
+            SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
+              ...createCurrentStudioSessionStateOptions(),
+              onFailure: () => {
+                setStudioAutoSaveStatus('network-error');
+              }
+            })
+          );
         }
       }, 1500); // 1.5s debounce delay
     }
