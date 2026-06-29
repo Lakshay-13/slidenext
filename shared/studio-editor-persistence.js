@@ -238,6 +238,19 @@
     );
   }
 
+  function resolveStudioAutoSavePersistenceStateFromCapture(
+    doc = null,
+    capturedDeckState = {},
+    presentationUrl = '',
+    options = {}
+  ) {
+    return resolveStudioAutoSavePersistenceState(
+      createStudioPersistableDeckState(doc, capturedDeckState),
+      presentationUrl,
+      options
+    );
+  }
+
   function createStudioAutoSaveRequest(persistencePlan = {}) {
     return {
       url: '/api/save',
@@ -525,6 +538,7 @@
     buildStudioAutoSavePersistencePlan,
     createStudioAutoSavePersistenceState,
     resolveStudioAutoSavePersistenceState,
+    resolveStudioAutoSavePersistenceStateFromCapture,
     createStudioAutoSaveRequest,
     buildStudioVersionCheckpointPersistencePlan,
     createStudioVersionCheckpointRequest,

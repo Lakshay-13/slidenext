@@ -672,6 +672,73 @@ test('resolveStudioAutoSavePersistenceState returns null without persisted html 
   );
 });
 
+test('resolveStudioAutoSavePersistenceStateFromCapture reuses persisted deck state creation before autosave resolution', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const capturedDeckState = {
+    cleanHtml: '<html>live-save</html>',
+    canonicalDeck: canonicalDeckModel.createCanonicalDeck({
+      metadata: {
+        title: 'Project Onboarding'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    }),
+    playbackState: {
+      activeSlideIds: ['slide-live'],
+      slideCounterText: '2 / 4'
+    }
+  };
+
+  const buildOptions = {
+    isPersistedState() {
+      return false;
+    },
+    buildSaveRequestBody(doc, cleanHtml, options = {}) {
+      return editorPersistence.buildStudioSaveRequestBody(
+        options.presentationUrl,
+        cleanHtml,
+        {
+          isAutoSave: options.isAutoSave,
+          canonicalDeck: options.canonicalDeck
+        }
+      );
+    },
+    sessionToken: 9
+  };
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioAutoSavePersistenceStateFromCapture(
+      iframeDoc,
+      capturedDeckState,
+      '/presentations/onboarding-presentation/index.html',
+      buildOptions
+    ),
+    editorPersistence.createStudioAutoSavePersistenceState(
+      editorPersistence.createStudioPersistableDeckState(iframeDoc, capturedDeckState),
+      '/presentations/onboarding-presentation/index.html',
+      buildOptions
+    )
+  );
+
+  assert.equal(
+    editorPersistence.resolveStudioAutoSavePersistenceStateFromCapture(
+      iframeDoc,
+      {
+        cleanHtml: '',
+        canonicalDeck: null,
+        playbackState: null
+      },
+      '/presentations/onboarding-presentation/index.html',
+      buildOptions
+    ),
+    null
+  );
+});
+
 test('createStudioAutoSaveRequest always posts the autosave payload to the save endpoint', () => {
   const saveRequestBody = {
     htmlPath: '/presentations/onboarding-presentation/index.html',
