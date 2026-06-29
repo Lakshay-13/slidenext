@@ -2194,6 +2194,7 @@
       saveHistoryState();
       triggerAutoSave();
       triggerAutoVersion('Auto: Deleted Slide');
+      return true;
     }
 
     function getIframeDoc() {
@@ -2590,16 +2591,14 @@
     function deleteSlideNodeById(slideId, doc = getIframeDoc()) {
       const index = getSlideIndexById(slideId, doc);
       if (index === -1) return false;
-      deleteSlideNode(index);
-      return true;
+      return deleteSlideNode(index);
     }
 
     function reorderSlidesById(sourceSlideId, targetSlideId, doc = getIframeDoc()) {
       const fromIdx = getSlideIndexById(sourceSlideId, doc);
       const toIdx = getSlideIndexById(targetSlideId, doc);
       if (fromIdx === -1 || toIdx === -1) return false;
-      reorderSlides(fromIdx, toIdx);
-      return true;
+      return reorderSlides(fromIdx, toIdx);
     }
 
     function isEligibleEditableElement(el) {

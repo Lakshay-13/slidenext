@@ -395,6 +395,99 @@ test('reorderSlides no-ops when the requested slide indexes are unchanged', () =
   ]);
 });
 
+test('deleteSlideNodeById returns delegated deletion results', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const deleteSlideNodeByIdSource = extractFunctionSource(
+    fileContent,
+    'function deleteSlideNodeById(slideId, doc = getIframeDoc()) {',
+    '\n\n    function reorderSlidesById(sourceSlideId, targetSlideId, doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const calls = [];
+  const context = {
+    deleteSlideNode(index) {
+      calls.push(['deleteSlideNode', index]);
+      return index === 2;
+    },
+    getSlideIndexById(slideId, doc) {
+      calls.push(['getSlideIndexById', slideId, doc]);
+      if (slideId === 'slide-3') return 2;
+      if (slideId === 'slide-4') return 3;
+      return -1;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(deleteSlideNodeByIdSource, context);
+
+  assert.equal(context.deleteSlideNodeById('missing'), false);
+  assert.equal(context.deleteSlideNodeById('slide-3'), true);
+  assert.equal(context.deleteSlideNodeById('slide-4'), false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getSlideIndexById', 'missing', iframeDoc],
+    ['getIframeDoc'],
+    ['getSlideIndexById', 'slide-3', iframeDoc],
+    ['deleteSlideNode', 2],
+    ['getIframeDoc'],
+    ['getSlideIndexById', 'slide-4', iframeDoc],
+    ['deleteSlideNode', 3]
+  ]);
+});
+
+test('reorderSlidesById returns delegated reorder results', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const reorderSlidesByIdSource = extractFunctionSource(
+    fileContent,
+    'function reorderSlidesById(sourceSlideId, targetSlideId, doc = getIframeDoc()) {',
+    '\n\n    function isEligibleEditableElement(el) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const calls = [];
+  const context = {
+    getSlideIndexById(slideId, doc) {
+      calls.push(['getSlideIndexById', slideId, doc]);
+      if (slideId === 'slide-1') return 0;
+      if (slideId === 'slide-2') return 1;
+      return -1;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    reorderSlides(fromIdx, toIdx) {
+      calls.push(['reorderSlides', fromIdx, toIdx]);
+      return fromIdx !== toIdx;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(reorderSlidesByIdSource, context);
+
+  assert.equal(context.reorderSlidesById('missing', 'slide-2'), false);
+  assert.equal(context.reorderSlidesById('slide-1', 'slide-2'), true);
+  assert.equal(context.reorderSlidesById('slide-1', 'slide-1'), false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getSlideIndexById', 'missing', iframeDoc],
+    ['getSlideIndexById', 'slide-2', iframeDoc],
+    ['getIframeDoc'],
+    ['getSlideIndexById', 'slide-1', iframeDoc],
+    ['getSlideIndexById', 'slide-2', iframeDoc],
+    ['reorderSlides', 0, 1],
+    ['getIframeDoc'],
+    ['getSlideIndexById', 'slide-1', iframeDoc],
+    ['getSlideIndexById', 'slide-1', iframeDoc],
+    ['reorderSlides', 0, 0]
+  ]);
+});
+
 test('deleteSlideNode uses the shared iframe accessor and restores editor state after removing a slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const deleteSlideNodeSource = extractFunctionSource(
