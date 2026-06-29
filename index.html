@@ -566,7 +566,7 @@
         </div>
 
         <!-- Present slideshow delivery directly -->
-        <button onclick="launchPreview()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all">
+        <button id="launchPreviewBtn" onclick="launchPreview()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-white">
           <span class="material-symbols-outlined text-[16px]">play_arrow</span>
           <span>Present</span>
         </button>
@@ -4565,6 +4565,11 @@
       if (versionBtn) {
         versionBtn.disabled = !(hasPresentationSession && hasDeckContent);
       }
+
+      const previewBtn = document.getElementById('launchPreviewBtn');
+      if (previewBtn) {
+        previewBtn.disabled = !hasPresentationSession;
+      }
     }
 
     function setStudioAutoSaveStatus(state) {
@@ -5187,6 +5192,8 @@
 
     // Presentation Live Preview from workspace
     function launchPreview() {
+      const previewBtn = document.getElementById('launchPreviewBtn');
+      if (previewBtn && previewBtn.disabled) return;
       if (!currentPresentationUrl) return;
       const previewHtml = buildEditorPreviewHtml();
       if (previewHtml) {

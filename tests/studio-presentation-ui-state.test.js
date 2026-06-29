@@ -97,6 +97,52 @@ test('resetStudioPresentationUiState clears stale preview chrome and exits fulls
   assert.equal(elements.fsIcon.textContent, 'fullscreen');
 });
 
+test('launchPreview does not open preview flows when the present button is disabled', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const launchPreviewSource = extractFunctionSource(
+    fileContent,
+    'function launchPreview() {',
+    '\n  </script>'
+  );
+
+  let buildEditorPreviewHtmlCalls = 0;
+  let launchPresentationHtmlCalls = 0;
+  let launchPresentationCalls = 0;
+  const context = {
+    buildEditorPreviewHtml() {
+      buildEditorPreviewHtmlCalls += 1;
+      return '<html>preview</html>';
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    document: {
+      getElementById(id) {
+        if (id === 'launchPreviewBtn') {
+          return { disabled: true };
+        }
+        return null;
+      }
+    },
+    getStudioActiveSlideIndex() {
+      return 2;
+    },
+    launchPresentation() {
+      launchPresentationCalls += 1;
+    },
+    launchPresentationHtml() {
+      launchPresentationHtmlCalls += 1;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(launchPreviewSource, context);
+
+  context.launchPreview();
+
+  assert.equal(buildEditorPreviewHtmlCalls, 0);
+  assert.equal(launchPresentationHtmlCalls, 0);
+  assert.equal(launchPresentationCalls, 0);
+});
+
 test('buildEditorPreviewHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorPreviewHtmlSource = extractFunctionSource(
