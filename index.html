@@ -4114,6 +4114,27 @@
       autoVersionTimers = {};
     }
 
+    function createCurrentStudioPersistenceHandlerOptions(options = {}) {
+      const persistencePresentationUrl = typeof options.presentationUrl === 'string' && options.presentationUrl
+        ? options.presentationUrl
+        : currentPresentationUrl;
+      return SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
+        ...createCurrentStudioSessionStateOptions(),
+        setPersistedHtml: (nextHtml) => {
+          updateEditorPersistedDeckState({ cleanHtml: nextHtml });
+        },
+        setPersistedCanonicalDeck: (nextCanonicalDeck) => {
+          updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
+          setCurrentPresentationCanonicalDeck(nextCanonicalDeck, persistencePresentationUrl);
+        },
+        setPersistedPlaybackState: (nextPlaybackState) => {
+          updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
+        },
+        onSuccess: options.onSuccess,
+        onFailure: options.onFailure
+      });
+    }
+
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
       const persistencePlan = SlideNextStudioEditorPersistence.buildStudioVersionCheckpointPersistencePlan(
         versionLabel,
@@ -4141,18 +4162,8 @@
       if (data.success) {
         SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
           persistencePlan.persistenceContext,
-          SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
-            ...createCurrentStudioSessionStateOptions(),
-            setPersistedHtml: (nextHtml) => {
-              updateEditorPersistedDeckState({ cleanHtml: nextHtml });
-            },
-            setPersistedCanonicalDeck: (nextCanonicalDeck) => {
-              updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
-              setCurrentPresentationCanonicalDeck(nextCanonicalDeck, persistencePlan.persistenceContext.presentationUrl);
-            },
-            setPersistedPlaybackState: (nextPlaybackState) => {
-              updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
-            }
+          createCurrentStudioPersistenceHandlerOptions({
+            presentationUrl: persistencePlan.persistenceContext.presentationUrl
           })
         );
       }
@@ -4208,18 +4219,8 @@
           if (data.success) {
             SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
               persistencePlan.persistenceContext,
-              SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
-                ...createCurrentStudioSessionStateOptions(),
-                setPersistedHtml: (nextHtml) => {
-                  updateEditorPersistedDeckState({ cleanHtml: nextHtml });
-                },
-                setPersistedCanonicalDeck: (nextCanonicalDeck) => {
-                  updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
-                  setCurrentPresentationCanonicalDeck(nextCanonicalDeck, persistencePlan.persistenceContext.presentationUrl);
-                },
-                setPersistedPlaybackState: (nextPlaybackState) => {
-                  updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
-                },
+              createCurrentStudioPersistenceHandlerOptions({
+                presentationUrl: persistencePlan.persistenceContext.presentationUrl,
                 onSuccess: () => {
                   setStudioAutoSaveStatus('saved');
                 }
@@ -4228,8 +4229,7 @@
           } else {
             SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
               persistencePlan.persistenceContext,
-              SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
-                ...createCurrentStudioSessionStateOptions(),
+              createCurrentStudioPersistenceHandlerOptions({
                 onFailure: () => {
                   setStudioAutoSaveStatus('autosave-failed');
                 }
@@ -4240,8 +4240,7 @@
           console.error('AutoSave Error:', err);
           SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
             persistencePlan.persistenceContext,
-            SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
-              ...createCurrentStudioSessionStateOptions(),
+            createCurrentStudioPersistenceHandlerOptions({
               onFailure: () => {
                 setStudioAutoSaveStatus('network-error');
               }
@@ -4647,8 +4646,7 @@
         } else {
           SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
             versionCheckpointPersistenceState.persistenceContext,
-            SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
-              ...createCurrentStudioSessionStateOptions(),
+            createCurrentStudioPersistenceHandlerOptions({
               onFailure: () => {
                 alert(`Save version failed: ${data.error}`);
                 setStudioAutoSaveStatus('save-version-failed');
@@ -4659,8 +4657,7 @@
       } catch (err) {
         SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
           versionCheckpointPersistenceState.persistenceContext,
-          SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
-            ...createCurrentStudioSessionStateOptions(),
+          createCurrentStudioPersistenceHandlerOptions({
             onFailure: () => {
               alert(`Network error saving version: ${err.message}`);
               setStudioAutoSaveStatus('network-error');
