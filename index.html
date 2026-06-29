@@ -1630,6 +1630,16 @@
       return document.getElementById('studioFrame');
     }
 
+    function createCurrentStudioFrameLoadStateOptions(options = {}) {
+      return {
+        sessionToken: options.sessionToken,
+        ...createCurrentStudioSessionStateReaders(),
+        isEditorActive: options.isEditorActive,
+        handleLoad: options.handleLoad,
+        afterLoad: options.afterLoad
+      };
+    }
+
     function createCurrentStudioFrameLoadHandler(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken,
@@ -1637,11 +1647,12 @@
     ) {
       return SlideNextStudioEditorSession.createStudioFrameLoadHandler({
         presentationUrl,
-        sessionToken,
-        ...createCurrentStudioSessionStateReaders(),
-        isEditorActive: options.isEditorActive,
-        handleLoad: options.handleLoad,
-        afterLoad: options.afterLoad
+        ...createCurrentStudioFrameLoadStateOptions({
+          sessionToken,
+          isEditorActive: options.isEditorActive,
+          handleLoad: options.handleLoad,
+          afterLoad: options.afterLoad
+        })
       });
     }
 
@@ -1651,9 +1662,10 @@
       options = {}
     ) {
       return SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(presentationUrl, {
-        sessionToken,
-        ...createCurrentStudioSessionStateReaders(),
-        isEditorActive: options.isEditorActive
+        ...createCurrentStudioFrameLoadStateOptions({
+          sessionToken,
+          isEditorActive: options.isEditorActive
+        })
       });
     }
 
