@@ -4732,17 +4732,27 @@
       }).join('');
     }
 
+    function createCurrentStudioVersionHistoryLoadOptions(options = {}) {
+      return {
+        sessionToken: options.sessionToken,
+        ...createCurrentStudioSessionStateReaders(),
+        commitVersionEntries: options.commitVersionEntries
+      };
+    }
+
     async function loadCurrentStudioVersionHistory(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken
     ) {
-      return SlideNextStudioVersionHistory.loadStudioVersionHistory(presentationUrl, {
-        sessionToken,
-        ...createCurrentStudioSessionStateReaders(),
-        commitVersionEntries: (versions) => {
-          renderVersionsList(presentationUrl, versions);
-        }
-      });
+      return SlideNextStudioVersionHistory.loadStudioVersionHistory(
+        presentationUrl,
+        createCurrentStudioVersionHistoryLoadOptions({
+          sessionToken,
+          commitVersionEntries: (versions) => {
+            renderVersionsList(presentationUrl, versions);
+          }
+        })
+      );
     }
 
     // Fetch versions checklist

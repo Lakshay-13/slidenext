@@ -31,6 +31,15 @@ function createClassList(initialValues = []) {
   };
 }
 
+function loadCreateCurrentStudioVersionHistoryLoadOptions(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionHistoryLoadOptions(options = {}) {',
+    '\n\n    async function loadCurrentStudioVersionHistory('
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -259,6 +268,7 @@ test('loadCurrentStudioVersionHistory reuses current session readers when delega
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioVersionHistoryLoadOptions(fileContent, context);
   vm.runInContext(loadCurrentStudioVersionHistorySource, context);
 
   const versions = await context.loadCurrentStudioVersionHistory(
@@ -279,6 +289,39 @@ test('loadCurrentStudioVersionHistory reuses current session readers when delega
     '/presentations/onboarding-presentation/index.html',
     versions
   ]]);
+});
+
+test('createCurrentStudioVersionHistoryLoadOptions reuses current session readers and forwards version commits', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const currentStudioSessionStateReaders = {
+    getCurrentPresentationUrl() {
+      return context.currentPresentationUrl;
+    },
+    getCurrentSessionToken() {
+      return context.studioEditorSessionToken;
+    }
+  };
+  const hooks = {
+    sessionToken: 19,
+    commitVersionEntries() {}
+  };
+  const context = {
+    createCurrentStudioSessionStateReaders() {
+      return currentStudioSessionStateReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 19
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioVersionHistoryLoadOptions(fileContent, context);
+
+  const options = context.createCurrentStudioVersionHistoryLoadOptions(hooks);
+
+  assert.equal(options.sessionToken, 19);
+  assert.equal(options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
+  assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.equal(options.commitVersionEntries, hooks.commitVersionEntries);
 });
 
 test('createCurrentStudioVersionActionContext captures the active editor deck identity and session', () => {
