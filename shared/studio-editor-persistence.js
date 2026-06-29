@@ -470,6 +470,18 @@
     return normalizeSessionToken(getCurrentSessionToken()) === requestedSessionToken;
   }
 
+  function runStudioPersistenceActionIfCurrent(context = {}, options = {}, callback = null) {
+    if (!isStudioPersistenceActionCurrent(context, options)) {
+      return false;
+    }
+
+    if (typeof callback === 'function') {
+      callback(context);
+    }
+
+    return true;
+  }
+
   function createStudioPersistenceHandlerOptions(options = {}) {
     return {
       getCurrentPresentationUrl: options.getCurrentPresentationUrl,
@@ -492,28 +504,24 @@
   }
 
   function handleStudioPersistenceSuccess(context = {}, options = {}) {
-    if (!isStudioPersistenceActionCurrent(context, options)) {
-      return false;
-    }
-
-    if (context.shouldUpdatePersistedHtml !== false && typeof options.setPersistedHtml === 'function') {
-      options.setPersistedHtml(context.cleanHtml);
-    }
-    if (context.canonicalDeck && typeof options.setPersistedCanonicalDeck === 'function') {
-      options.setPersistedCanonicalDeck(context.canonicalDeck);
-    }
-    if (
-      Object.prototype.hasOwnProperty.call(context, 'playbackState')
-      && context.shouldUpdatePersistedPlaybackState !== false
-      && typeof options.setPersistedPlaybackState === 'function'
-    ) {
-      options.setPersistedPlaybackState(context.playbackState);
-    }
-    if (typeof options.onSuccess === 'function') {
-      options.onSuccess(context);
-    }
-
-    return true;
+    return runStudioPersistenceActionIfCurrent(context, options, (nextContext) => {
+      if (nextContext.shouldUpdatePersistedHtml !== false && typeof options.setPersistedHtml === 'function') {
+        options.setPersistedHtml(nextContext.cleanHtml);
+      }
+      if (nextContext.canonicalDeck && typeof options.setPersistedCanonicalDeck === 'function') {
+        options.setPersistedCanonicalDeck(nextContext.canonicalDeck);
+      }
+      if (
+        Object.prototype.hasOwnProperty.call(nextContext, 'playbackState')
+        && nextContext.shouldUpdatePersistedPlaybackState !== false
+        && typeof options.setPersistedPlaybackState === 'function'
+      ) {
+        options.setPersistedPlaybackState(nextContext.playbackState);
+      }
+      if (typeof options.onSuccess === 'function') {
+        options.onSuccess(nextContext);
+      }
+    });
   }
 
   function handleStudioVersionPersistenceSuccess(context = {}, options = {}) {
@@ -534,15 +542,11 @@
   }
 
   function handleStudioPersistenceFailure(context = {}, options = {}) {
-    if (!isStudioPersistenceActionCurrent(context, options)) {
-      return false;
-    }
-
-    if (typeof options.onFailure === 'function') {
-      options.onFailure(context);
-    }
-
-    return true;
+    return runStudioPersistenceActionIfCurrent(context, options, (nextContext) => {
+      if (typeof options.onFailure === 'function') {
+        options.onFailure(nextContext);
+      }
+    });
   }
 
   return {
@@ -570,6 +574,7 @@
     isStudioPersistedState,
     isStudioPersistenceTaskStale,
     isStudioPersistenceActionCurrent,
+    runStudioPersistenceActionIfCurrent,
     createStudioPersistenceHandlerOptions,
     createStudioVersionPersistenceHandlerOptions,
     handleStudioPersistenceSuccess,

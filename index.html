@@ -4667,12 +4667,13 @@
           })
         );
       } finally {
-        if (SlideNextStudioEditorPersistence.isStudioPersistenceActionCurrent(
+        SlideNextStudioEditorPersistence.runStudioPersistenceActionIfCurrent(
           versionCheckpointPersistenceState.persistenceContext,
-          createCurrentStudioSessionStateOptions()
-        )) {
-          resetStudioSaveButtonState();
-        }
+          createCurrentStudioSessionStateOptions(),
+          () => {
+            resetStudioSaveButtonState();
+          }
+        );
       }
     }
 

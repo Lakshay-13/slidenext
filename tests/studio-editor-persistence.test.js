@@ -1275,6 +1275,44 @@ test('handleStudioPersistenceSuccess updates the active deck persistence state o
   ]);
 });
 
+test('runStudioPersistenceActionIfCurrent invokes callbacks only for the active deck session', () => {
+  const context = editorPersistence.createStudioPersistenceActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    '<html></html>',
+    { sessionToken: 3 }
+  );
+  const calls = [];
+
+  const applied = editorPersistence.runStudioPersistenceActionIfCurrent(context, {
+    getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    getCurrentSessionToken: () => 3
+  }, (nextContext) => {
+    calls.push(nextContext.presentationUrl);
+  });
+
+  assert.equal(applied, true);
+  assert.deepEqual(calls, ['/presentations/onboarding-presentation/index.html']);
+});
+
+test('runStudioPersistenceActionIfCurrent skips stale same-url editor sessions', () => {
+  const context = editorPersistence.createStudioPersistenceActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    '<html></html>',
+    { sessionToken: 3 }
+  );
+  const calls = [];
+
+  const applied = editorPersistence.runStudioPersistenceActionIfCurrent(context, {
+    getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    getCurrentSessionToken: () => 4
+  }, () => {
+    calls.push('should-not-run');
+  });
+
+  assert.equal(applied, false);
+  assert.deepEqual(calls, []);
+});
+
 test('handleStudioPersistenceSuccess skips stale deck completions', () => {
   const context = editorPersistence.createStudioPersistenceActionContext(
     '/presentations/onboarding-presentation/index.html',
