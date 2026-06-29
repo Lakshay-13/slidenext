@@ -34,6 +34,15 @@ function loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context) 
   vm.runInContext(helperSource, context);
 }
 
+function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
+    '\n\n    function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadIsCurrentStudioPersistenceActionCurrent(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -44,6 +53,7 @@ function loadIsCurrentStudioPersistenceActionCurrent(fileContent, context) {
 }
 
 function loadHandleCurrentStudioPersistenceSuccess(fileContent, context) {
+  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',
@@ -53,6 +63,7 @@ function loadHandleCurrentStudioPersistenceSuccess(fileContent, context) {
 }
 
 function loadHandleCurrentStudioPersistenceFailure(fileContent, context) {
+  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {',

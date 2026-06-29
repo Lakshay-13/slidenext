@@ -4047,28 +4047,43 @@
       autoVersionTimers = {};
     }
 
-    function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
-      return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
+    function createCurrentStudioPersistenceHandlerOptions(options = {}) {
+      return {
         ...createCurrentStudioSessionStateReaders(),
-        setPersistedHtml: (nextHtml) => {
-          updateEditorPersistedDeckState({ cleanHtml: nextHtml });
-        },
-        setPersistedCanonicalDeck: (nextCanonicalDeck) => {
-          updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
-          setCurrentPresentationCanonicalDeck(nextCanonicalDeck, persistenceContext.presentationUrl);
-        },
-        setPersistedPlaybackState: (nextPlaybackState) => {
-          updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
-        },
-        onSuccess: options.onSuccess
-      });
+        setPersistedHtml: options.setPersistedHtml,
+        setPersistedCanonicalDeck: options.setPersistedCanonicalDeck,
+        setPersistedPlaybackState: options.setPersistedPlaybackState,
+        onSuccess: options.onSuccess,
+        onFailure: options.onFailure
+      };
+    }
+
+    function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
+      return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
+        persistenceContext,
+        createCurrentStudioPersistenceHandlerOptions({
+          setPersistedHtml: (nextHtml) => {
+            updateEditorPersistedDeckState({ cleanHtml: nextHtml });
+          },
+          setPersistedCanonicalDeck: (nextCanonicalDeck) => {
+            updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
+            setCurrentPresentationCanonicalDeck(nextCanonicalDeck, persistenceContext.presentationUrl);
+          },
+          setPersistedPlaybackState: (nextPlaybackState) => {
+            updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
+          },
+          onSuccess: options.onSuccess
+        })
+      );
     }
 
     function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
-      return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
-        ...createCurrentStudioSessionStateReaders(),
-        onFailure: options.onFailure
-      });
+      return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+        persistenceContext,
+        createCurrentStudioPersistenceHandlerOptions({
+          onFailure: options.onFailure
+        })
+      );
     }
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
