@@ -145,6 +145,11 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay', 'editorGuidesLayer'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      stripTransientDeckRuntimeState(root) {
+        context.sanitizedRoot = root;
+      }
+    },
     getActiveSlideId() {
       return 'slide-2';
     },
@@ -171,6 +176,10 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
   );
   assert.equal(options.editorElementIdAttr, 'data-editor-id');
   assert.equal(options.editorSlideIdAttr, 'data-slide-id');
+  assert.equal(typeof options.sanitizeFrameRoot, 'function');
+  const root = { id: 'history-root' };
+  options.sanitizeFrameRoot(root);
+  assert.equal(context.sanitizedRoot, root);
   assert.equal(typeof options.getActiveSlideId, 'function');
   assert.equal(typeof options.getSelectedElementIds, 'function');
   assert.equal(typeof options.areIdListsEqual, 'function');

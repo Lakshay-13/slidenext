@@ -56,6 +56,9 @@
     const removableClassNames = Array.isArray(options.removableClassNames) ? options.removableClassNames : [];
     const editorElementIdAttr = typeof options.editorElementIdAttr === 'string' ? options.editorElementIdAttr.trim() : '';
     const editorSlideIdAttr = typeof options.editorSlideIdAttr === 'string' ? options.editorSlideIdAttr.trim() : '';
+    const sanitizeFrameRoot = typeof options.sanitizeFrameRoot === 'function'
+      ? options.sanitizeFrameRoot
+      : null;
 
     chromeNodeIds.forEach((nodeId) => {
       clone.querySelectorAll(`#${nodeId}`).forEach((node) => node.remove());
@@ -72,6 +75,10 @@
         node.removeAttribute(attrName);
       });
     });
+
+    if (sanitizeFrameRoot) {
+      sanitizeFrameRoot(clone);
+    }
 
     return clone.innerHTML;
   }

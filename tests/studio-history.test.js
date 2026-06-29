@@ -256,6 +256,44 @@ test('buildStudioHistoryFrameHtml strips editor runtime ids from the captured ht
   assert.equal(html, '<section class="slide"><div>Hero copy</div></section>');
 });
 
+test('buildStudioHistoryFrameHtml runs the shared frame sanitizer before serializing history html', () => {
+  const transientNode = createHistorySerializableNode(
+    'div',
+    { 'data-temp': 'runtime' },
+    [],
+    [],
+    'Runtime state'
+  );
+  const clone = {
+    querySelectorAll(selector) {
+      if (selector === '[data-temp]') {
+        return [transientNode];
+      }
+      return [];
+    },
+    get innerHTML() {
+      return transientNode.serialize();
+    }
+  };
+  const doc = {
+    documentElement: {
+      cloneNode() {
+        return clone;
+      }
+    }
+  };
+
+  const html = studioHistory.buildStudioHistoryFrameHtml(doc, {
+    sanitizeFrameRoot(root) {
+      root.querySelectorAll('[data-temp]').forEach((node) => {
+        node.removeAttribute('data-temp');
+      });
+    }
+  });
+
+  assert.equal(html, '<div>Runtime state</div>');
+});
+
 test('restoreStudioHistoryFrameSetup falls back to rendered canonical deck html when snapshot html is empty', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',
