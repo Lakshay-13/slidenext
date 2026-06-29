@@ -25,7 +25,17 @@ function loadCaptureEditorPersistableDeckState(fileContent, context) {
   vm.runInContext(captureEditorPersistableDeckStateSource, context);
 }
 
+function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {',
+    '\n\n    function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context) {
+  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {',
@@ -141,6 +151,77 @@ test('isCurrentStudioPersistenceActionCurrent reuses current session readers for
   assert.equal(result, true);
   assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
   assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+});
+
+test('createCurrentStudioVersionPersistenceHandlerOptions reuses current session readers and forwards success hooks', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const currentStudioSessionStateReaders = {
+    getCurrentPresentationUrl() {
+      return context.currentPresentationUrl;
+    },
+    getCurrentSessionToken() {
+      return context.studioEditorSessionToken;
+    }
+  };
+  const hooks = {
+    onSuccess() {},
+    refreshVersionEntries() {}
+  };
+  const context = {
+    createCurrentStudioSessionStateReaders() {
+      return currentStudioSessionStateReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 9
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
+
+  const options = context.createCurrentStudioVersionPersistenceHandlerOptions(hooks);
+
+  assert.equal(options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
+  assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.equal(options.onSuccess, hooks.onSuccess);
+  assert.equal(options.refreshVersionEntries, hooks.refreshVersionEntries);
+});
+
+test('handleCurrentStudioVersionPersistenceSuccess reuses current session readers and refreshes version entries', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    loadVersions(presentationUrl, sessionToken) {
+      calls.push(['loadVersions', presentationUrl, sessionToken]);
+    },
+    studioEditorSessionToken: 10
+  };
+
+  vm.createContext(context);
+  loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
+
+  const applied = context.handleCurrentStudioVersionPersistenceSuccess({
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    cleanHtml: '<html></html>',
+    sessionToken: 10
+  }, {
+    onSuccess(nextContext) {
+      calls.push(['onSuccess', nextContext.presentationUrl]);
+    }
+  });
+
+  assert.equal(applied, true);
+  assert.deepEqual(calls, [
+    ['onSuccess', '/presentations/onboarding-presentation/index.html'],
+    ['loadVersions', '/presentations/onboarding-presentation/index.html', 10]
+  ]);
 });
 
 test('submitSaveVersion keeps the save button idle when editor content is unavailable', async () => {

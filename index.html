@@ -4547,12 +4547,22 @@
       });
     }
 
-    function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
-      return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(persistenceContext, {
+    function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {
+      return {
         ...createCurrentStudioSessionStateReaders(),
         onSuccess: options.onSuccess,
-        refreshVersionEntries: loadVersions
-      });
+        refreshVersionEntries: options.refreshVersionEntries
+      };
+    }
+
+    function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
+      return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
+        persistenceContext,
+        createCurrentStudioVersionPersistenceHandlerOptions({
+          onSuccess: options.onSuccess,
+          refreshVersionEntries: loadVersions
+        })
+      );
     }
     
     async function submitSaveVersion() {
