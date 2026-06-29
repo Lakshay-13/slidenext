@@ -4154,7 +4154,7 @@
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
       const livePlaybackState = Object.prototype.hasOwnProperty.call(options, 'playbackState')
         ? options.playbackState
-        : capturePersistedDeckPlaybackState(options.doc);
+        : capturePersistedDeckPlaybackState(options.doc, options.canonicalDeck);
       const persistencePlan = SlideNextStudioEditorPersistence.buildStudioPersistenceRequestPlan(
         presentationUrl,
         cleanHtml,

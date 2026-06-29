@@ -450,6 +450,137 @@ test('saveVersionCheckpoint clears the persisted playback baseline after a succe
   assert.equal(context.persistedDeckPlaybackState, null);
 });
 
+test('saveVersionCheckpoint reuses a provided canonical deck when fallback playback capture needs the current session slide', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getPersistedActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {',
+    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
+  );
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function resolveEditorLiveActiveSlide(doc = getIframeDoc()) {'
+  );
+  const capturePersistedDeckPlaybackStateSource = extractFunctionSource(
+    fileContent,
+    'function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {'
+  );
+  const saveVersionCheckpointSource = extractFunctionSource(
+    fileContent,
+    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {',
+    '\n\n    // 6. AutoSave debouncing pipeline'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  let buildEditorCanonicalDeckCalls = 0;
+  let handledPersistenceContext = null;
+  const fetchCalls = [];
+  const context = {
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      capturePersistedDeckPlaybackState(nextDoc, options) {
+        assert.equal(nextDoc, iframeDoc);
+        assert.equal(options.getSlides, context.getSlides);
+        assert.equal(options.slideIdAttr, 'data-slide-id');
+        return {
+          activeSlideIds: [],
+          slideCounterText: '2 / 5'
+        };
+      }
+    },
+    SlideNextStudioEditorPersistence: editorPersistence,
+    buildEditorCanonicalDeck(nextDoc) {
+      buildEditorCanonicalDeckCalls += 1;
+      assert.equal(nextDoc, iframeDoc);
+      return canonicalDeck;
+    },
+    buildEditorSaveRequestBody(doc, cleanHtml, options = {}) {
+      assert.equal(doc, iframeDoc);
+      assert.equal(options.canonicalDeck, canonicalDeck);
+      return {
+        htmlPath: options.presentationUrl,
+        htmlContent: cleanHtml,
+        versionLabel: options.versionLabel,
+        canonicalDeck
+      };
+    },
+    fetch: async (url, init) => {
+      fetchCalls.push([url, JSON.parse(init.body)]);
+      return {
+        async json() {
+          return { success: true };
+        }
+      };
+    },
+    getSlides() {
+      return [];
+    },
+    handleCurrentStudioPersistenceFailure() {
+      throw new Error('saveVersionCheckpoint should not hit the failure handler');
+    },
+    handleCurrentStudioPersistenceSuccess(persistenceContext) {
+      handledPersistenceContext = persistenceContext;
+    },
+    isCurrentDeckStatePersisted() {
+      return false;
+    },
+    currentSlideIndex: 1,
+    persistedDeckPlaybackState: {
+      activeSlideIds: ['slide-stale'],
+      slideCounterText: '1 / 5'
+    },
+    resolveEditorLiveActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return '';
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getPersistedActiveSlideIdSource, context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(capturePersistedDeckPlaybackStateSource, context);
+  vm.runInContext(saveVersionCheckpointSource, context);
+
+  const result = await context.saveVersionCheckpoint(
+    'Checkpoint Canonical Playback',
+    '<html>persisted</html>',
+    'presentations/onboarding-presentation/index.html',
+    {
+      doc: iframeDoc,
+      canonicalDeck
+    }
+  );
+
+  assert.deepEqual(result, { success: true });
+  assert.deepEqual(fetchCalls, [[
+    '/api/save',
+    {
+      htmlPath: 'presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>persisted</html>',
+      versionLabel: 'Checkpoint Canonical Playback',
+      canonicalDeck
+    }
+  ]]);
+  assert.equal(buildEditorCanonicalDeckCalls, 0);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(handledPersistenceContext.playbackState)),
+    {
+      activeSlideIds: ['slide-2'],
+      slideCounterText: '2 / 5'
+    }
+  );
+});
+
 test('saveVersionCheckpoint preserves the persisted playback baseline when no live iframe document is available', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const saveVersionCheckpointSource = extractFunctionSource(
