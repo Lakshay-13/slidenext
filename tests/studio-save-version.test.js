@@ -16,6 +16,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadCaptureEditorPersistableDeckState(fileContent, context) {
+  const captureEditorPersistableDeckStateSource = extractFunctionSource(
+    fileContent,
+    'function captureEditorPersistableDeckState(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(captureEditorPersistableDeckStateSource, context);
+}
+
 test('setStudioSaveButtonState renders the version button loading and idle states', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setStudioSaveButtonStateSource = extractFunctionSource(
@@ -138,6 +147,7 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
   };
 
   vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -241,6 +251,7 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
   };
 
   vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -354,6 +365,7 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
   };
 
   vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -398,6 +410,11 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
     innerHTML: 'Saved to disk'
   };
   const iframeDoc = { documentElement: {} };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
 
   const documentStub = {
     getElementById(id) {
@@ -418,7 +435,10 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
     alert(message) {
       alerts.push(message);
     },
-    buildPersistableDeckHtml() {
+    buildPersistableDeckHtml(nextDoc, buildOptions = {}) {
+      assert.equal(nextDoc, iframeDoc);
+      assert.equal(typeof buildOptions.onCanonicalDeckResolved, 'function');
+      buildOptions.onCanonicalDeckResolved(canonicalDeck);
       return '<html>persisted</html>';
     },
     closeSaveVersionModal() {
@@ -459,6 +479,7 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
   };
 
   vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   const savePromise = context.submitSaveVersion();
@@ -515,6 +536,7 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
   };
 
   vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -578,6 +600,7 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   };
 
   vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -671,6 +694,7 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
   };
 
   vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
   context.triggerAutoSave();
@@ -784,6 +808,7 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
   };
 
   vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
   context.triggerAutoSave();
@@ -913,6 +938,7 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
   };
 
   vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
   context.triggerAutoSave();

@@ -14,6 +14,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadCaptureEditorPersistableDeckState(fileContent, context) {
+  const captureEditorPersistableDeckStateSource = extractFunctionSource(
+    fileContent,
+    'function captureEditorPersistableDeckState(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(captureEditorPersistableDeckStateSource, context);
+}
+
 test('initStudioFrame refreshes inspector state after bootstrapping the iframe', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const initStudioFrameSource = extractFunctionSource(
@@ -129,6 +138,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
   };
 
   vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(initStudioFrameSource, context);
 
   context.initStudioFrame();
@@ -249,6 +259,7 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
   };
 
   vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(initStudioFrameSource, context);
 
   context.initStudioFrame();
