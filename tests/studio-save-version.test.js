@@ -52,6 +52,15 @@ function loadCaptureCurrentStudioSessionSnapshot(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadCaptureCurrentStudioPersistableDeckState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function captureCurrentStudioPersistableDeckState(doc = getIframeDoc()) {',
+    '\n    \n    async function submitSaveVersion() {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
@@ -144,6 +153,38 @@ test('setStudioSaveButtonState renders the version button loading and idle state
   context.setStudioSaveButtonState('idle');
   assert.equal(saveBtnEl.disabled, false);
   assert.match(saveBtnEl.innerHTML, /Save Version/);
+});
+
+test('captureCurrentStudioPersistableDeckState reuses the shared iframe accessor and persistable deck capture', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
+    playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
+  };
+  const context = {
+    captureEditorPersistableDeckState(doc) {
+      assert.equal(doc, iframeDoc);
+      return persistedDeckState;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureCurrentStudioPersistableDeckState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.captureCurrentStudioPersistableDeckState())),
+    {
+      doc: iframeDoc,
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
+      playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
+    }
+  );
 });
 
 test('isCurrentStudioPersistenceActionCurrent reuses current session readers for save-version persistence checks', () => {
@@ -818,6 +859,7 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioPersistableDeckState(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
@@ -886,6 +928,7 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioPersistableDeckState(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 

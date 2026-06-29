@@ -4216,9 +4216,8 @@
       clearTimeout(autoSaveDebounceTimer);
       autoSaveDebounceTimer = setTimeout(async () => {
         autoSaveDebounceTimer = null;
-        const iframeDoc = getIframeDoc();
         if (isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
-        const persistedDeckState = captureEditorPersistableDeckState(iframeDoc);
+        const persistedDeckState = captureCurrentStudioPersistableDeckState();
         const cleanHtml = persistedDeckState.cleanHtml;
         if (!cleanHtml) {
           setStudioAutoSaveStatus('saved');
@@ -4229,14 +4228,14 @@
           cleanHtml,
           {
             isPersistedState: isCurrentDeckStatePersisted,
-            buildSaveRequestBody: () => buildEditorSaveRequestBody(iframeDoc, cleanHtml, {
+            buildSaveRequestBody: () => buildEditorSaveRequestBody(persistedDeckState.doc, cleanHtml, {
               presentationUrl: scheduledPresentationUrl,
               isAutoSave: true,
               canonicalDeck: persistedDeckState.canonicalDeck
             }),
             sessionToken: scheduledSessionToken,
             playbackState: persistedDeckState.playbackState,
-            shouldUpdatePersistedPlaybackState: !!iframeDoc
+            shouldUpdatePersistedPlaybackState: !!persistedDeckState.doc
           }
         );
 
@@ -4666,6 +4665,13 @@
         sessionToken: studioEditorSessionToken
       };
     }
+
+    function captureCurrentStudioPersistableDeckState(doc = getIframeDoc()) {
+      return {
+        doc,
+        ...captureEditorPersistableDeckState(doc)
+      };
+    }
     
     async function submitSaveVersion() {
       const input = document.getElementById('versionCheckpointName');
@@ -4675,8 +4681,7 @@
         return;
       }
 
-      const iframeDoc = getIframeDoc();
-      const persistedDeckState = captureEditorPersistableDeckState(iframeDoc);
+      const persistedDeckState = captureCurrentStudioPersistableDeckState();
       const cleanHtml = persistedDeckState.cleanHtml;
       if (!cleanHtml) {
         alert('Save version failed: editor content is unavailable.');
@@ -4701,7 +4706,7 @@
       try {
         const data = await saveVersionCheckpoint(versionName, cleanHtml, scheduledPresentationUrl, {
           sessionToken: scheduledSessionToken,
-          doc: iframeDoc,
+          doc: persistedDeckState.doc,
           canonicalDeck: persistedDeckState.canonicalDeck,
           playbackState: persistedDeckState.playbackState
         });
@@ -4759,9 +4764,8 @@
     }
 
     async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
-      const iframeDoc = getIframeDoc();
       if (isStaleEditorPersistenceTask(presentationUrl, sessionToken)) return;
-      const persistedDeckState = captureEditorPersistableDeckState(iframeDoc);
+      const persistedDeckState = captureCurrentStudioPersistableDeckState();
       const cleanHtml = persistedDeckState.cleanHtml;
       if (!cleanHtml) return;
       const persistenceContext = createCurrentStudioVersionPersistenceActionContext(
@@ -4773,7 +4777,7 @@
       try {
         const data = await saveVersionCheckpoint(label, cleanHtml, presentationUrl, {
           sessionToken,
-          doc: iframeDoc,
+          doc: persistedDeckState.doc,
           canonicalDeck: persistedDeckState.canonicalDeck,
           playbackState: persistedDeckState.playbackState
         });
