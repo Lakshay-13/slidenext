@@ -100,3 +100,132 @@ test('updateLayerOrderActionState enables layer order controls only when the ifr
     elZIndex: false
   });
 });
+
+test('arrangeElementLayer returns false when there is no live reorder target or no layer change', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const arrangeElementLayerSource = extractFunctionSource(
+    fileContent,
+    'function arrangeElementLayer(action) {',
+    '\n\n    // Wallpaper / Background styles Tabs'
+  );
+
+  const calls = [];
+  const context = {
+    document: {
+      getElementById(id) {
+        if (id === 'elZIndex') {
+          calls.push(['getElementById', id]);
+          return { value: '' };
+        }
+        return null;
+      }
+    },
+    getLiveSelectedElements() {
+      calls.push(['getLiveSelectedElements']);
+      return [];
+    },
+    reorderSlideLayers() {
+      calls.push(['reorderSlideLayers']);
+      return true;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    selectionHasLockedElements() {
+      calls.push(['selectionHasLockedElements']);
+      return false;
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(arrangeElementLayerSource, context);
+
+  assert.equal(context.arrangeElementLayer('front'), false);
+  assert.deepEqual(calls, [['getLiveSelectedElements']]);
+
+  const target = { style: { zIndex: '7' } };
+  calls.length = 0;
+  context.getLiveSelectedElements = () => {
+    calls.push(['getLiveSelectedElements']);
+    return [target];
+  };
+  context.reorderSlideLayers = (action, targets) => {
+    calls.push(['reorderSlideLayers', action, targets]);
+    return false;
+  };
+
+  assert.equal(context.arrangeElementLayer('front'), false);
+  assert.deepEqual(calls, [
+    ['getLiveSelectedElements'],
+    ['selectionHasLockedElements'],
+    ['reorderSlideLayers', 'front', [target]]
+  ]);
+});
+
+test('arrangeElementLayer returns true and tolerates a missing z-index input when reordering succeeds', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const arrangeElementLayerSource = extractFunctionSource(
+    fileContent,
+    'function arrangeElementLayer(action) {',
+    '\n\n    // Wallpaper / Background styles Tabs'
+  );
+
+  const target = { style: { zIndex: '9' } };
+  const calls = [];
+  const context = {
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        return null;
+      }
+    },
+    getLiveSelectedElements() {
+      calls.push(['getLiveSelectedElements']);
+      return [target];
+    },
+    reorderSlideLayers(action, targets) {
+      calls.push(['reorderSlideLayers', action, targets]);
+      return true;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    selectionHasLockedElements(targets) {
+      calls.push(['selectionHasLockedElements', targets]);
+      return false;
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(arrangeElementLayerSource, context);
+
+  assert.equal(context.arrangeElementLayer('front'), true);
+  assert.deepEqual(calls, [
+    ['getLiveSelectedElements'],
+    ['selectionHasLockedElements', [target]],
+    ['reorderSlideLayers', 'front', [target]],
+    ['getElementById', 'elZIndex'],
+    ['saveHistoryState'],
+    ['triggerAutoSave'],
+    ['updateLayersList'],
+    ['triggerAutoVersion', 'Auto: Rearranged Layers']
+  ]);
+});

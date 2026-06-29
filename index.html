@@ -3596,18 +3596,22 @@
     // Rearrange Selected Element Layers
     function arrangeElementLayer(action) {
       const targets = getLiveSelectedElements();
-      if (targets.length === 0) return;
-      if (selectionHasLockedElements(targets)) return;
+      if (targets.length === 0) return false;
+      if (selectionHasLockedElements(targets)) return false;
       const didChange = reorderSlideLayers(action, targets);
-      if (!didChange) return;
+      if (!didChange) return false;
 
-      if (targets[0]) {
-        document.getElementById('elZIndex').value = targets[0].style.zIndex || 0;
+      const zIndexInput = targets[0]
+        ? document.getElementById('elZIndex')
+        : null;
+      if (zIndexInput && targets[0]) {
+        zIndexInput.value = targets[0].style.zIndex || 0;
       }
       saveHistoryState();
       triggerAutoSave();
       updateLayersList();
       triggerAutoVersion('Auto: Rearranged Layers');
+      return true;
     }
 
     // Wallpaper / Background styles Tabs
