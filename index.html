@@ -3942,10 +3942,28 @@
     }
 
     function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {
-      return SlideNextDeckPersistence.capturePersistedDeckPlaybackState(doc, {
+      const playbackState = SlideNextDeckPersistence.capturePersistedDeckPlaybackState(doc, {
         getSlides,
         slideIdAttr: EDITOR_SLIDE_ID_ATTR
       });
+      const hasActiveSlideIds = !!(playbackState
+        && Array.isArray(playbackState.activeSlideIds)
+        && playbackState.activeSlideIds.some((slideId) => typeof slideId === 'string' && slideId.trim()));
+      if (hasActiveSlideIds || !doc) {
+        return playbackState;
+      }
+
+      const fallbackActiveSlideId = resolveEditorFallbackActiveSlideId(doc, buildEditorCanonicalDeck(doc));
+      if (!fallbackActiveSlideId) {
+        return playbackState;
+      }
+
+      return {
+        activeSlideIds: [fallbackActiveSlideId],
+        slideCounterText: playbackState && typeof playbackState.slideCounterText === 'string'
+          ? playbackState.slideCounterText
+          : ''
+      };
     }
 
     function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {

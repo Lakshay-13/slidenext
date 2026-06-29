@@ -444,6 +444,149 @@ test('buildPersistableDeckHtml captures the live playback state before persistin
   assert.equal(calls[1][2].persistedDeckPlaybackState, livePlaybackState);
 });
 
+test('capturePersistedDeckPlaybackState preserves explicit live active slide ids from shared playback capture', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const capturePersistedDeckPlaybackStateSource = extractFunctionSource(
+    fileContent,
+    'function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {'
+  );
+
+  const iframeDoc = {
+    label: 'iframe-doc',
+    querySelector(selector) {
+      assert.equal(selector, '.slide-active');
+      return { label: 'active-slide' };
+    }
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-live'],
+    slideCounterText: '2 / 5'
+  };
+  let buildEditorCanonicalDeckCalls = 0;
+  const context = {
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      capturePersistedDeckPlaybackState(nextDoc, options) {
+        assert.equal(nextDoc, iframeDoc);
+        assert.equal(options.getSlides, context.getSlides);
+        assert.equal(options.slideIdAttr, 'data-slide-id');
+        return playbackState;
+      }
+    },
+    buildEditorCanonicalDeck() {
+      buildEditorCanonicalDeckCalls += 1;
+      return {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: []
+      };
+    },
+    getActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return 'slide-live';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getPersistedActiveSlideId() {
+      return 'slide-stale';
+    },
+    getSlides() {
+      return [];
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(capturePersistedDeckPlaybackStateSource, context);
+
+  assert.equal(context.capturePersistedDeckPlaybackState(), playbackState);
+  assert.equal(buildEditorCanonicalDeckCalls, 0);
+});
+
+test('capturePersistedDeckPlaybackState falls back to the current session slide when shared playback capture has no active slide ids', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const capturePersistedDeckPlaybackStateSource = extractFunctionSource(
+    fileContent,
+    'function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {'
+  );
+
+  const iframeDoc = {
+    label: 'iframe-doc',
+    querySelector(selector) {
+      assert.equal(selector, '.slide-active');
+      return null;
+    }
+  };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  let buildEditorCanonicalDeckCalls = 0;
+  const context = {
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      capturePersistedDeckPlaybackState(nextDoc, options) {
+        assert.equal(nextDoc, iframeDoc);
+        assert.equal(options.getSlides, context.getSlides);
+        assert.equal(options.slideIdAttr, 'data-slide-id');
+        return {
+          activeSlideIds: [],
+          slideCounterText: '2 / 5'
+        };
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      buildEditorCanonicalDeckCalls += 1;
+      assert.equal(nextDoc, iframeDoc);
+      return canonicalDeck;
+    },
+    currentSlideIndex: 1,
+    getActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return '';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getPersistedActiveSlideId() {
+      return 'slide-stale';
+    },
+    getSlides() {
+      return [];
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(capturePersistedDeckPlaybackStateSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.capturePersistedDeckPlaybackState())),
+    {
+      activeSlideIds: ['slide-2'],
+      slideCounterText: '2 / 5'
+    }
+  );
+  assert.equal(buildEditorCanonicalDeckCalls, 1);
+});
+
 test('buildPersistableDeckHtml reports the resolved live canonical deck when requested', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
