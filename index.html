@@ -1806,7 +1806,7 @@
           saveHistoryState(false);
           const persistedDeckState = captureEditorPersistableDeckState(iframeDoc);
           updateEditorPersistedDeckState({
-            playbackState: capturePersistedDeckPlaybackState(iframeDoc),
+            playbackState: persistedDeckState.playbackState,
             cleanHtml: persistedDeckState.cleanHtml,
             canonicalDeck: persistedDeckState.canonicalDeck
           });
@@ -3932,8 +3932,10 @@
           resolvedCanonicalDeck = canonicalDeck;
         }
       });
+      const playbackState = capturePersistedDeckPlaybackState(doc);
       return {
         cleanHtml,
+        playbackState,
         canonicalDeck: cleanHtml && !resolvedCanonicalDeck
           ? buildEditorCanonicalDeck(doc)
           : resolvedCanonicalDeck
@@ -4026,7 +4028,9 @@
     }
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
-      const livePlaybackState = capturePersistedDeckPlaybackState(options.doc);
+      const livePlaybackState = Object.prototype.hasOwnProperty.call(options, 'playbackState')
+        ? options.playbackState
+        : capturePersistedDeckPlaybackState(options.doc);
       const persistencePlan = SlideNextStudioEditorPersistence.buildStudioPersistenceRequestPlan(
         presentationUrl,
         cleanHtml,
@@ -4089,7 +4093,6 @@
         if (isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
         const persistedDeckState = captureEditorPersistableDeckState(iframeDoc);
         const cleanHtml = persistedDeckState.cleanHtml;
-        const livePlaybackState = capturePersistedDeckPlaybackState(iframeDoc);
         if (!cleanHtml) {
           setStudioAutoSaveStatus('saved');
           return;
@@ -4105,7 +4108,7 @@
               canonicalDeck: persistedDeckState.canonicalDeck
             }),
             sessionToken: scheduledSessionToken,
-            playbackState: livePlaybackState,
+            playbackState: persistedDeckState.playbackState,
             shouldUpdatePersistedPlaybackState: !!iframeDoc
           }
         );
@@ -4539,7 +4542,8 @@
         const data = await saveVersionCheckpoint(versionName, cleanHtml, scheduledPresentationUrl, {
           sessionToken: scheduledSessionToken,
           doc: iframeDoc,
-          canonicalDeck: persistedDeckState.canonicalDeck
+          canonicalDeck: persistedDeckState.canonicalDeck,
+          playbackState: persistedDeckState.playbackState
         });
         if (data.success) {
           SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(persistenceContext, {
@@ -4618,7 +4622,8 @@
         const data = await saveVersionCheckpoint(label, cleanHtml, presentationUrl, {
           sessionToken,
           doc: iframeDoc,
-          canonicalDeck: persistedDeckState.canonicalDeck
+          canonicalDeck: persistedDeckState.canonicalDeck,
+          playbackState: persistedDeckState.playbackState
         });
         if (data.success) {
           SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(persistenceContext, {

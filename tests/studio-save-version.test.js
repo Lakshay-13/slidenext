@@ -102,6 +102,9 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
       assert.equal(nextDoc, null);
       return '';
     },
+    capturePersistedDeckPlaybackState() {
+      return null;
+    },
     closeSaveVersionModal() {
       closeModalCalls += 1;
     },
@@ -211,6 +214,9 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
       assert.equal(typeof buildOptions.onCanonicalDeckResolved, 'function');
       buildOptions.onCanonicalDeckResolved(canonicalDeck);
       return '<html>persisted-baseline</html>';
+    },
+    capturePersistedDeckPlaybackState() {
+      return null;
     },
     closeSaveVersionModal() {
       closeModalCalls += 1;
@@ -325,6 +331,9 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
       assert.equal(typeof buildOptions.onCanonicalDeckResolved, 'function');
       buildOptions.onCanonicalDeckResolved(canonicalDeck);
       return '<html>canonical-source</html>';
+    },
+    capturePersistedDeckPlaybackState() {
+      return null;
     },
     closeSaveVersionModal() {
       closeModalCalls += 1;
@@ -441,6 +450,9 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
       buildOptions.onCanonicalDeckResolved(canonicalDeck);
       return '<html>persisted</html>';
     },
+    capturePersistedDeckPlaybackState() {
+      return null;
+    },
     closeSaveVersionModal() {
       closeModalCalls += 1;
     },
@@ -513,6 +525,9 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
       assert.equal(nextDoc, null);
       return '';
     },
+    capturePersistedDeckPlaybackState() {
+      return null;
+    },
     createCurrentStudioSessionStateReaders() {
       return {
         getCurrentPresentationUrl: () => context.currentPresentationUrl,
@@ -566,6 +581,9 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
       assert.equal(typeof buildOptions.onCanonicalDeckResolved, 'function');
       buildOptions.onCanonicalDeckResolved(canonicalDeck);
       return '<html>persisted-baseline</html>';
+    },
+    capturePersistedDeckPlaybackState() {
+      return null;
     },
     console: {
       error() {

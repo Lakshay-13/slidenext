@@ -23,6 +23,52 @@ function loadCaptureEditorPersistableDeckState(fileContent, context) {
   vm.runInContext(captureEditorPersistableDeckStateSource, context);
 }
 
+test('captureEditorPersistableDeckState returns persisted html, canonical deck, and playback state from one capture', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 2'
+  };
+  let buildEditorCanonicalDeckCalls = 0;
+
+  const context = {
+    buildPersistableDeckHtml(doc, options = {}) {
+      assert.equal(doc, iframeDoc);
+      assert.equal(typeof options.onCanonicalDeckResolved, 'function');
+      options.onCanonicalDeckResolved(canonicalDeck);
+      return '<html>persisted</html>';
+    },
+    buildEditorCanonicalDeck() {
+      buildEditorCanonicalDeckCalls += 1;
+      return canonicalDeck;
+    },
+    capturePersistedDeckPlaybackState(doc) {
+      assert.equal(doc, iframeDoc);
+      return playbackState;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
+
+  const persistedDeckState = JSON.parse(JSON.stringify(context.captureEditorPersistableDeckState()));
+  assert.deepEqual(persistedDeckState, {
+    cleanHtml: '<html>persisted</html>',
+    playbackState,
+    canonicalDeck
+  });
+  assert.equal(buildEditorCanonicalDeckCalls, 0);
+});
+
 test('initStudioFrame refreshes inspector state after bootstrapping the iframe', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const initStudioFrameSource = extractFunctionSource(
