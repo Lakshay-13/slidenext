@@ -4169,7 +4169,22 @@
       const data = await response.json();
 
       if (data.success) {
-        handleCurrentStudioPersistenceSuccess(persistencePlan.persistenceContext);
+        SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
+          persistencePlan.persistenceContext,
+          SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
+            ...createCurrentStudioSessionStateOptions(),
+            setPersistedHtml: (nextHtml) => {
+              updateEditorPersistedDeckState({ cleanHtml: nextHtml });
+            },
+            setPersistedCanonicalDeck: (nextCanonicalDeck) => {
+              updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
+              setCurrentPresentationCanonicalDeck(nextCanonicalDeck, persistencePlan.persistenceContext.presentationUrl);
+            },
+            setPersistedPlaybackState: (nextPlaybackState) => {
+              updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
+            }
+          })
+        );
       }
 
       return data;

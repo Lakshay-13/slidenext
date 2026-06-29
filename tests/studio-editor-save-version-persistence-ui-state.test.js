@@ -278,8 +278,7 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
   };
 
   vm.createContext(context);
-  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
-  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   const result = await context.saveVersionCheckpoint(
@@ -384,8 +383,7 @@ test('saveVersionCheckpoint clears the persisted playback baseline after a succe
   };
 
   vm.createContext(context);
-  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
-  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   await context.saveVersionCheckpoint(
@@ -461,7 +459,13 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
         };
       }
     },
-    SlideNextStudioEditorPersistence: editorPersistence,
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      handleStudioPersistenceSuccess(persistenceContext, options = {}) {
+        handledPersistenceContext = persistenceContext;
+        return editorPersistence.handleStudioPersistenceSuccess(persistenceContext, options);
+      }
+    },
     buildEditorCanonicalDeck(nextDoc) {
       buildEditorCanonicalDeckCalls += 1;
       assert.equal(nextDoc, iframeDoc);
@@ -488,12 +492,13 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
     getSlides() {
       return [];
     },
-    handleCurrentStudioPersistenceFailure() {
-      throw new Error('saveVersionCheckpoint should not hit the failure handler');
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
     },
-    handleCurrentStudioPersistenceSuccess(persistenceContext) {
-      handledPersistenceContext = persistenceContext;
-    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
     isCurrentDeckStatePersisted() {
       return false;
     },
@@ -502,6 +507,9 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
       activeSlideIds: ['slide-stale'],
       slideCounterText: '1 / 5'
     },
+    setCurrentPresentationCanonicalDeck() {},
+    studioEditorSessionToken: 8,
+    updateEditorPersistedDeckState() {},
     resolveEditorLiveActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return '';
@@ -509,6 +517,7 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(getPersistedActiveSlideIdSource, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(capturePersistedDeckPlaybackStateSource, context);
@@ -615,8 +624,7 @@ test('saveVersionCheckpoint preserves the persisted playback baseline when no li
   };
 
   vm.createContext(context);
-  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
-  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   await context.saveVersionCheckpoint(
@@ -723,8 +731,7 @@ test('saveVersionCheckpoint keeps save rewrites enabled when canonical state cha
   };
 
   vm.createContext(context);
-  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
-  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   await context.saveVersionCheckpoint(
