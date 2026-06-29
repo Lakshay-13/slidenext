@@ -4217,12 +4217,12 @@
       autoSaveDebounceTimer = setTimeout(async () => {
         autoSaveDebounceTimer = null;
         if (isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
-        const persistedDeckState = captureCurrentStudioPersistableDeckState();
-        const cleanHtml = persistedDeckState.cleanHtml;
-        if (!cleanHtml) {
+        const persistedDeckState = captureCurrentStudioPersistableDeckStateWithContent();
+        if (!persistedDeckState) {
           setStudioAutoSaveStatus('saved');
           return;
         }
+        const cleanHtml = persistedDeckState.cleanHtml;
         const persistencePlan = SlideNextStudioEditorPersistence.buildStudioPersistenceRequestPlan(
           scheduledPresentationUrl,
           cleanHtml,
@@ -4672,6 +4672,11 @@
         ...captureEditorPersistableDeckState(doc)
       };
     }
+
+    function captureCurrentStudioPersistableDeckStateWithContent(doc = getIframeDoc()) {
+      const persistedDeckState = captureCurrentStudioPersistableDeckState(doc);
+      return persistedDeckState.cleanHtml ? persistedDeckState : null;
+    }
     
     async function submitSaveVersion() {
       const input = document.getElementById('versionCheckpointName');
@@ -4681,12 +4686,12 @@
         return;
       }
 
-      const persistedDeckState = captureCurrentStudioPersistableDeckState();
-      const cleanHtml = persistedDeckState.cleanHtml;
-      if (!cleanHtml) {
+      const persistedDeckState = captureCurrentStudioPersistableDeckStateWithContent();
+      if (!persistedDeckState) {
         alert('Save version failed: editor content is unavailable.');
         return;
       }
+      const cleanHtml = persistedDeckState.cleanHtml;
 
       closeSaveVersionModal();
 
@@ -4765,9 +4770,9 @@
 
     async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
       if (isStaleEditorPersistenceTask(presentationUrl, sessionToken)) return;
-      const persistedDeckState = captureCurrentStudioPersistableDeckState();
+      const persistedDeckState = captureCurrentStudioPersistableDeckStateWithContent();
+      if (!persistedDeckState) return;
       const cleanHtml = persistedDeckState.cleanHtml;
-      if (!cleanHtml) return;
       const persistenceContext = createCurrentStudioVersionPersistenceActionContext(
         cleanHtml,
         presentationUrl,
