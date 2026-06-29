@@ -807,3 +807,90 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   );
   assert.deepEqual(callLog[21], ['setCurrentPresentationCanonicalDeck', canonicalDeck]);
 });
+
+test('restoreFrameFromHistoryEntry clears stale persisted playback state when the restored frame has no playback markers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const restoreFrameFromHistoryEntrySource = extractFunctionSource(
+    fileContent,
+    'function restoreFrameFromHistoryEntry(entry) {',
+    '\n\n    function buildPersistableDeckHtml('
+  );
+
+  const iframeDoc = {
+    documentElement: {
+      innerHTML: ''
+    }
+  };
+  const callLog = [];
+  const context = {
+    applyEditorSelectionState() {},
+    bindDeckNavigationSync() {},
+    buildEditorCanonicalDeck() {
+      return null;
+    },
+    capturePersistedDeckPlaybackState(doc) {
+      callLog.push(['capturePersistedDeckPlaybackState', doc]);
+      return null;
+    },
+    currentSlideIndex: 0,
+    generateThumbnails() {},
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getPersistedActiveSlideId() {
+      return '';
+    },
+    getSlides() {
+      return [];
+    },
+    makeElementsHoverable() {},
+    normalizeHistoryEntry(entry) {
+      return entry;
+    },
+    observeDeckActiveSlideState() {},
+    restoreCommittedSelectionByIdsOnActiveSlide() {},
+    setCurrentPresentationCanonicalDeck(nextCanonicalDeck) {
+      callLog.push(['setCurrentPresentationCanonicalDeck', nextCanonicalDeck]);
+    },
+    setActiveSlide() {},
+    setActiveSlideById() {},
+    setupIframeDragging() {},
+    SlideNextStudioHistory: {
+      restoreStudioHistoryActiveSlide() {},
+      restoreStudioHistoryEntry(nextHistoryEntry, options) {
+        options.restoreFrameSetup(nextHistoryEntry);
+        options.restoreActiveSlide(nextHistoryEntry);
+        options.restoreSelectionState(nextHistoryEntry);
+      },
+      restoreStudioHistoryFrameSetup(nextHistoryEntry, options) {
+        options.replaceFrameHtml(options.doc, '<html>restored</html>');
+      },
+      restoreStudioHistorySelectionState() {}
+    },
+    syncIframeTheme() {},
+    updateEditorPersistedDeckState(nextState) {
+      callLog.push(['updateEditorPersistedDeckState', nextState]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(restoreFrameFromHistoryEntrySource, context);
+
+  context.restoreFrameFromHistoryEntry({
+    html: '<html>snapshot</html>',
+    canonicalDeck: null
+  });
+
+  assert.deepEqual(callLog[0], ['capturePersistedDeckPlaybackState', iframeDoc]);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(callLog[1])),
+    ['updateEditorPersistedDeckState', { playbackState: null }]
+  );
+  assert.deepEqual(callLog[2], ['setCurrentPresentationCanonicalDeck', null]);
+});
