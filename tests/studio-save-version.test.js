@@ -46,19 +46,6 @@ function loadCaptureCurrentStudioSessionSnapshot(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadCaptureCurrentStudioVersionCheckpointPersistenceState(fileContent, context) {
-  context.SlideNextStudioEditorPersistence = {
-    ...editorPersistence,
-    ...(context.SlideNextStudioEditorPersistence || {})
-  };
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function captureCurrentStudioVersionCheckpointPersistenceState(',
-    '\n    \n    async function submitSaveVersion() {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
 function loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context) {
   context.SlideNextStudioEditorPersistence = {
     ...editorPersistence,
@@ -124,111 +111,6 @@ test('setStudioSaveButtonState renders the version button loading and idle state
   context.setStudioSaveButtonState('idle');
   assert.equal(saveBtnEl.disabled, false);
   assert.match(saveBtnEl.innerHTML, /Save Version/);
-});
-
-test('captureCurrentStudioVersionCheckpointPersistenceState reuses current deck capture and shared checkpoint state creation', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const iframeDoc = { label: 'iframe-doc' };
-  let capturedPersistableDeckStateArgs = null;
-  let capturedPersistedDeckState = null;
-  const persistedDeckState = {
-    cleanHtml: '<html>persisted</html>',
-    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-    playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
-  };
-  const context = {
-    captureEditorPersistableDeckState(doc) {
-      assert.deepEqual(doc, iframeDoc);
-      return persistedDeckState;
-    },
-    getIframeDoc() {
-      return iframeDoc;
-    },
-    SlideNextStudioEditorPersistence: {
-      ...editorPersistence,
-      createStudioPersistableDeckState(doc, nextPersistedDeckState) {
-        capturedPersistableDeckStateArgs = [doc, nextPersistedDeckState];
-        return editorPersistence.createStudioPersistableDeckState(doc, nextPersistedDeckState);
-      },
-      resolveStudioVersionCheckpointPersistenceState(nextPersistedDeckState, presentationUrl, options = {}) {
-        capturedPersistedDeckState = nextPersistedDeckState;
-        assert.deepEqual(
-          JSON.parse(JSON.stringify(nextPersistedDeckState)),
-          {
-            doc: iframeDoc,
-            cleanHtml: '<html>persisted</html>',
-            canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-            playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
-          }
-        );
-        return {
-          presentationUrl,
-          sessionToken: options.sessionToken,
-          cleanHtml: nextPersistedDeckState.cleanHtml
-        };
-      }
-    }
-  };
-
-  vm.createContext(context);
-  loadCaptureCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
-
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(
-      context.captureCurrentStudioVersionCheckpointPersistenceState(
-        '/presentations/onboarding-presentation/index.html',
-        17,
-        iframeDoc
-      )
-    )),
-    {
-      presentationUrl: '/presentations/onboarding-presentation/index.html',
-      sessionToken: 17,
-      cleanHtml: '<html>persisted</html>'
-    }
-  );
-  assert.deepEqual(JSON.parse(JSON.stringify(capturedPersistableDeckStateArgs)), [
-    { label: 'iframe-doc' },
-    {
-      cleanHtml: '<html>persisted</html>',
-      canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-      playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
-    }
-  ]);
-  assert.deepEqual(JSON.parse(JSON.stringify(capturedPersistedDeckState)), {
-    doc: iframeDoc,
-    cleanHtml: '<html>persisted</html>',
-    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-    playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
-  });
-});
-
-test('captureCurrentStudioVersionCheckpointPersistenceState returns null when no persistable deck content is available', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const context = {
-    captureEditorPersistableDeckState() {
-      return {
-        cleanHtml: '',
-        canonicalDeck: null,
-        playbackState: null
-      };
-    },
-    SlideNextStudioEditorPersistence: editorPersistence,
-    getIframeDoc() {
-      return null;
-    }
-  };
-
-  vm.createContext(context);
-  loadCaptureCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
-
-  assert.equal(
-    context.captureCurrentStudioVersionCheckpointPersistenceState(
-      '/presentations/onboarding-presentation/index.html',
-      21
-    ),
-    null
-  );
 });
 
 test('captureCurrentStudioSessionSnapshot captures the current presentation identity and session token', () => {
@@ -806,7 +688,6 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
-  loadCaptureCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
@@ -875,7 +756,6 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
-  loadCaptureCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 

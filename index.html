@@ -4607,23 +4607,6 @@
         sessionToken: studioEditorSessionToken
       });
     }
-
-    function captureCurrentStudioVersionCheckpointPersistenceState(
-      presentationUrl = currentPresentationUrl,
-      sessionToken = studioEditorSessionToken,
-      doc = getIframeDoc()
-    ) {
-      return SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceState(
-        SlideNextStudioEditorPersistence.createStudioPersistableDeckState(
-          doc,
-          captureEditorPersistableDeckState(doc)
-        ),
-        presentationUrl,
-        {
-          sessionToken
-        }
-      );
-    }
     
     async function submitSaveVersion() {
       const input = document.getElementById('versionCheckpointName');
@@ -4637,9 +4620,16 @@
         presentationUrl: scheduledPresentationUrl,
         sessionToken: scheduledSessionToken
       } = captureCurrentStudioSessionSnapshot();
-      const versionCheckpointPersistenceState = captureCurrentStudioVersionCheckpointPersistenceState(
+      const iframeDoc = getIframeDoc();
+      const versionCheckpointPersistenceState = SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceState(
+        SlideNextStudioEditorPersistence.createStudioPersistableDeckState(
+          iframeDoc,
+          captureEditorPersistableDeckState(iframeDoc)
+        ),
         scheduledPresentationUrl,
-        scheduledSessionToken
+        {
+          sessionToken: scheduledSessionToken
+        }
       );
       if (!versionCheckpointPersistenceState) {
         alert('Save version failed: editor content is unavailable.');
@@ -4715,9 +4705,16 @@
 
     async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
       if (isStaleEditorPersistenceTask(presentationUrl, sessionToken)) return;
-      const versionCheckpointPersistenceState = captureCurrentStudioVersionCheckpointPersistenceState(
+      const iframeDoc = getIframeDoc();
+      const versionCheckpointPersistenceState = SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceState(
+        SlideNextStudioEditorPersistence.createStudioPersistableDeckState(
+          iframeDoc,
+          captureEditorPersistableDeckState(iframeDoc)
+        ),
         presentationUrl,
-        sessionToken
+        {
+          sessionToken
+        }
       );
       if (!versionCheckpointPersistenceState) return;
       
