@@ -4173,18 +4173,15 @@
       if (!persistedDeckState) {
         return null;
       }
-      return {
+      return SlideNextStudioEditorPersistence.createStudioAutoSavePersistenceState(
         persistedDeckState,
-        persistencePlan: SlideNextStudioEditorPersistence.buildStudioAutoSavePersistencePlan(
-          persistedDeckState,
-          presentationUrl,
-          {
-            isPersistedState: isCurrentDeckStatePersisted,
-            buildSaveRequestBody: buildEditorSaveRequestBody,
-            sessionToken
-          }
-        )
-      };
+        presentationUrl,
+        {
+          isPersistedState: isCurrentDeckStatePersisted,
+          buildSaveRequestBody: buildEditorSaveRequestBody,
+          sessionToken
+        }
+      );
     }
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {

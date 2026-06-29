@@ -296,26 +296,38 @@ test('captureCurrentStudioVersionCheckpointPersistenceState returns null when no
 
 test('captureCurrentStudioAutoSavePersistenceState reuses current deck capture and autosave plan creation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
   const persistedDeckState = {
-    doc: { label: 'iframe-doc' },
+    doc: iframeDoc,
     cleanHtml: '<html>live-save</html>',
     canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
     playbackState: { activeSlideIds: ['slide-live'], slideCounterText: '2 / 4' }
   };
   const context = {
     captureCurrentStudioPersistableDeckStateWithContent(doc) {
-      assert.deepEqual(doc, { label: 'iframe-doc' });
+      assert.deepEqual(doc, iframeDoc);
       return persistedDeckState;
     },
     SlideNextStudioEditorPersistence: {
-      buildStudioAutoSavePersistencePlan(nextPersistedDeckState, presentationUrl, options = {}) {
-        assert.equal(nextPersistedDeckState, persistedDeckState);
+      createStudioAutoSavePersistenceState(nextPersistedDeckState, presentationUrl, options = {}) {
+        assert.deepEqual(
+          JSON.parse(JSON.stringify(nextPersistedDeckState)),
+          {
+            doc: iframeDoc,
+            cleanHtml: '<html>live-save</html>',
+            canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
+            playbackState: { activeSlideIds: ['slide-live'], slideCounterText: '2 / 4' }
+          }
+        );
         assert.equal(options.isPersistedState, context.isCurrentDeckStatePersisted);
         assert.equal(options.buildSaveRequestBody, context.buildEditorSaveRequestBody);
         return {
-          presentationUrl,
-          sessionToken: options.sessionToken,
-          hasPersistedCurrentState: false
+          persistedDeckState: nextPersistedDeckState,
+          persistencePlan: {
+            presentationUrl,
+            sessionToken: options.sessionToken,
+            hasPersistedCurrentState: false
+          }
         };
       }
     },
@@ -333,7 +345,7 @@ test('captureCurrentStudioAutoSavePersistenceState reuses current deck capture a
       context.captureCurrentStudioAutoSavePersistenceState(
         '/presentations/onboarding-presentation/index.html',
         14,
-        { label: 'iframe-doc' }
+        iframeDoc
       )
     )),
     {

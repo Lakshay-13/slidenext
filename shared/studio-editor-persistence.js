@@ -193,6 +193,22 @@
     );
   }
 
+  function createStudioAutoSavePersistenceState(
+    persistedDeckState = {},
+    presentationUrl = '',
+    options = {}
+  ) {
+    const nextPersistedDeckState = asPlainObject(persistedDeckState);
+    return {
+      persistedDeckState: nextPersistedDeckState,
+      persistencePlan: buildStudioAutoSavePersistencePlan(
+        nextPersistedDeckState,
+        presentationUrl,
+        options
+      )
+    };
+  }
+
   function buildStudioVersionCheckpointPersistencePlan(
     versionLabel = '',
     cleanHtml = '',
@@ -405,6 +421,7 @@
     buildStudioSaveRequestBody,
     buildStudioPersistenceRequestPlan,
     buildStudioAutoSavePersistencePlan,
+    createStudioAutoSavePersistenceState,
     buildStudioVersionCheckpointPersistencePlan,
     createStudioVersionCheckpointRequestOptions,
     createStudioVersionCheckpointPersistenceState,

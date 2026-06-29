@@ -469,6 +469,71 @@ test('buildStudioAutoSavePersistencePlan reuses current persisted deck state and
   });
 });
 
+test('createStudioAutoSavePersistenceState reuses the shared autosave plan and preserves the captured deck state', () => {
+  const persistedDeckState = {
+    doc: { label: 'iframe-doc' },
+    cleanHtml: '<html>live-save</html>',
+    canonicalDeck: canonicalDeckModel.createCanonicalDeck({
+      metadata: {
+        title: 'Project Onboarding'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    }),
+    playbackState: {
+      activeSlideIds: ['slide-live'],
+      slideCounterText: '2 / 4'
+    }
+  };
+  const persistenceState = editorPersistence.createStudioAutoSavePersistenceState(
+    persistedDeckState,
+    '/presentations/onboarding-presentation/index.html',
+    {
+      isPersistedState() {
+        return false;
+      },
+      buildSaveRequestBody(doc, cleanHtml, options = {}) {
+        return editorPersistence.buildStudioSaveRequestBody(
+          options.presentationUrl,
+          cleanHtml,
+          {
+            isAutoSave: options.isAutoSave,
+            canonicalDeck: options.canonicalDeck
+          }
+        );
+      },
+      sessionToken: 9
+    }
+  );
+
+  assert.deepEqual(persistenceState, {
+    persistedDeckState,
+    persistencePlan: {
+      hasPersistedCurrentHtml: false,
+      hasPersistedCurrentState: false,
+      saveRequestBody: {
+        htmlPath: '/presentations/onboarding-presentation/index.html',
+        htmlContent: '<html>live-save</html>',
+        isAutoSave: true,
+        canonicalDeck: persistedDeckState.canonicalDeck
+      },
+      persistenceContext: {
+        presentationUrl: '/presentations/onboarding-presentation/index.html',
+        cleanHtml: '<html>live-save</html>',
+        shouldUpdatePersistedHtml: true,
+        canonicalDeck: persistedDeckState.canonicalDeck,
+        playbackState: persistedDeckState.playbackState,
+        shouldUpdatePersistedPlaybackState: true,
+        sessionToken: 9
+      }
+    }
+  });
+});
+
 test('buildStudioVersionCheckpointPersistencePlan reuses the shared playback fallback and persistence-plan wiring', () => {
   const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
     metadata: {
