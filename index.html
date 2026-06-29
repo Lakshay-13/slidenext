@@ -4190,29 +4190,6 @@
       );
     }
 
-    function createStudioAutoSavePersistencePlan(
-      persistedDeckState,
-      presentationUrl = currentPresentationUrl,
-      sessionToken = studioEditorSessionToken
-    ) {
-      const cleanHtml = persistedDeckState.cleanHtml;
-      return SlideNextStudioEditorPersistence.buildStudioPersistenceRequestPlan(
-        presentationUrl,
-        cleanHtml,
-        {
-          isPersistedState: isCurrentDeckStatePersisted,
-          buildSaveRequestBody: () => buildEditorSaveRequestBody(persistedDeckState.doc, cleanHtml, {
-            presentationUrl,
-            isAutoSave: true,
-            canonicalDeck: persistedDeckState.canonicalDeck
-          }),
-          sessionToken,
-          playbackState: persistedDeckState.playbackState,
-          shouldUpdatePersistedPlaybackState: !!persistedDeckState.doc
-        }
-      );
-    }
-
     function captureCurrentStudioAutoSavePersistenceState(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken,
@@ -4224,10 +4201,14 @@
       }
       return {
         persistedDeckState,
-        persistencePlan: createStudioAutoSavePersistencePlan(
+        persistencePlan: SlideNextStudioEditorPersistence.buildStudioAutoSavePersistencePlan(
           persistedDeckState,
           presentationUrl,
-          sessionToken
+          {
+            isPersistedState: isCurrentDeckStatePersisted,
+            buildSaveRequestBody: buildEditorSaveRequestBody,
+            sessionToken
+          }
         )
       };
     }

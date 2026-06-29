@@ -392,6 +392,83 @@ test('buildStudioPersistenceRequestPlan keeps save payloads when canonical deck 
   assert.deepEqual(buildSaveRequestBodyCalls, ['save']);
 });
 
+test('buildStudioAutoSavePersistencePlan reuses current persisted deck state and autosave request wiring', () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+  const playbackState = {
+    activeSlideIds: ['slide-live'],
+    slideCounterText: '2 / 4'
+  };
+  const buildSaveRequestBodyCalls = [];
+
+  const persistencePlan = editorPersistence.buildStudioAutoSavePersistencePlan(
+    {
+      doc: { label: 'iframe-doc' },
+      cleanHtml: '<html>live-save</html>',
+      canonicalDeck,
+      playbackState
+    },
+    '/presentations/onboarding-presentation/index.html',
+    {
+      isPersistedState() {
+        return false;
+      },
+      buildSaveRequestBody(doc, cleanHtml, options = {}) {
+        buildSaveRequestBodyCalls.push({ doc, cleanHtml, options });
+        return editorPersistence.buildStudioSaveRequestBody(
+          options.presentationUrl,
+          cleanHtml,
+          {
+            isAutoSave: options.isAutoSave,
+            canonicalDeck: options.canonicalDeck
+          }
+        );
+      },
+      sessionToken: 9
+    }
+  );
+
+  assert.deepEqual(buildSaveRequestBodyCalls, [
+    {
+      doc: { label: 'iframe-doc' },
+      cleanHtml: '<html>live-save</html>',
+      options: {
+        presentationUrl: '/presentations/onboarding-presentation/index.html',
+        isAutoSave: true,
+        canonicalDeck
+      }
+    }
+  ]);
+  assert.deepEqual(persistencePlan, {
+    hasPersistedCurrentHtml: false,
+    hasPersistedCurrentState: false,
+    saveRequestBody: {
+      htmlPath: '/presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>live-save</html>',
+      isAutoSave: true,
+      canonicalDeck
+    },
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      cleanHtml: '<html>live-save</html>',
+      shouldUpdatePersistedHtml: true,
+      canonicalDeck,
+      playbackState,
+      shouldUpdatePersistedPlaybackState: true,
+      sessionToken: 9
+    }
+  });
+});
+
 test('isStudioPersistedHtml only reports true when a non-empty persisted html snapshot matches exactly', () => {
   assert.equal(
     editorPersistence.isStudioPersistedHtml('<html></html>', '<html></html>'),

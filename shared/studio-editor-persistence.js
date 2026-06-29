@@ -163,6 +163,36 @@
     };
   }
 
+  function buildStudioAutoSavePersistencePlan(persistedDeckState = {}, presentationUrl = '', options = {}) {
+    const nextPersistedDeckState = asPlainObject(persistedDeckState);
+    const cleanHtml = normalizeString(nextPersistedDeckState.cleanHtml);
+    const buildSaveRequestBody = typeof options.buildSaveRequestBody === 'function'
+      ? options.buildSaveRequestBody
+      : null;
+    const requestPlanOptions = {
+      isPersistedState: options.isPersistedState,
+      buildSaveRequestBody: buildSaveRequestBody
+        ? () => buildSaveRequestBody(nextPersistedDeckState.doc, cleanHtml, {
+            presentationUrl,
+            isAutoSave: true,
+            canonicalDeck: nextPersistedDeckState.canonicalDeck
+          })
+        : null,
+      sessionToken: options.sessionToken,
+      shouldUpdatePersistedPlaybackState: !!nextPersistedDeckState.doc
+    };
+
+    if (Object.prototype.hasOwnProperty.call(nextPersistedDeckState, 'playbackState')) {
+      requestPlanOptions.playbackState = nextPersistedDeckState.playbackState;
+    }
+
+    return buildStudioPersistenceRequestPlan(
+      presentationUrl,
+      cleanHtml,
+      requestPlanOptions
+    );
+  }
+
   function isStudioPersistedHtml(cleanHtml = '', persistedHtml = '') {
     return !!normalizeString(persistedHtml) && normalizeString(cleanHtml) === normalizeString(persistedHtml);
   }
@@ -299,6 +329,7 @@
     createStudioVersionPersistenceActionContext,
     buildStudioSaveRequestBody,
     buildStudioPersistenceRequestPlan,
+    buildStudioAutoSavePersistencePlan,
     isStudioPersistedHtml,
     isStudioPersistedCanonicalDeck,
     isStudioPersistedState,
