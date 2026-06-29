@@ -574,8 +574,9 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
   vm.createContext(context);
   vm.runInContext(deleteSlideNodeSource, context);
 
-  context.deleteSlideNode(1);
+  const result = context.deleteSlideNode(1);
 
+  assert.equal(result, true);
   assert.deepEqual(slides, [firstSlide]);
   assert.deepEqual(calls.map(([name]) => name), [
     'getIframeDoc',
@@ -638,7 +639,7 @@ test('deleteSlideNode no-ops when the iframe document is unavailable', () => {
   vm.createContext(context);
   vm.runInContext(deleteSlideNodeSource, context);
 
-  context.deleteSlideNode(0);
+  assert.equal(context.deleteSlideNode(0), false);
 
   assert.deepEqual(calls, [['getIframeDoc']]);
 });
@@ -681,6 +682,52 @@ test('deleteSlideNode no-ops when the requested slide index is unavailable', () 
   const result = context.deleteSlideNode(9);
 
   assert.equal(result, false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getSlides', iframeDoc]
+  ]);
+});
+
+test('deleteSlideNode refuses to remove the final remaining slide', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const deleteSlideNodeSource = extractFunctionSource(
+    fileContent,
+    'function deleteSlideNode(idx) {',
+    '\n\n    function getIframeDoc() {'
+  );
+
+  const alerts = [];
+  const iframeDoc = {
+    getElementById(id) {
+      assert.equal(id, 'slidesContainer');
+      return {};
+    }
+  };
+  const calls = [];
+  const context = {
+    alert(message) {
+      alerts.push(message);
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    getSlides(doc) {
+      calls.push(['getSlides', doc]);
+      return [{ id: 'slide-1', remove() {} }];
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(deleteSlideNodeSource, context);
+
+  const result = context.deleteSlideNode(0);
+
+  assert.equal(result, false);
+  assert.deepEqual(alerts, ['Action aborted: presentation requires at least one slide.']);
   assert.deepEqual(calls, [
     ['getIframeDoc'],
     ['getSlides', iframeDoc]

@@ -2162,14 +2162,14 @@
     // Delete Active Slide Node
     function deleteSlideNode(idx) {
       const iframeDoc = getIframeDoc();
-      if (!iframeDoc) return;
+      if (!iframeDoc) return false;
       const container = iframeDoc.getElementById('slidesContainer');
-      if (!container) return;
+      if (!container) return false;
       
       const slides = getSlides(iframeDoc);
       if (slides.length <= 1) {
         alert("Action aborted: presentation requires at least one slide.");
-        return;
+        return false;
       }
       const deletedSlide = slides[idx];
       if (!deletedSlide) return false;
