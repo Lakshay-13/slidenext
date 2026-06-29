@@ -1468,22 +1468,28 @@
     }
 
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
+      const resolvedCanonicalDeck = doc ? null : buildEditorCanonicalDeck(doc);
       return SlideNextStudioDeckView.buildStudioPreviewHtml(doc, {
-        buildCanonicalDeck: buildEditorCanonicalDeck,
+        buildCanonicalDeck: doc
+          ? buildEditorCanonicalDeck
+          : () => resolvedCanonicalDeck,
         buildFallbackHtml: (sourceDoc) => buildPersistableDeckHtml(sourceDoc),
         presentationUrl: currentPresentationUrl,
         deckHtmlOptions: {
-          renderOptions: buildEditorDeckRenderOptions(doc)
+          renderOptions: buildEditorDeckRenderOptions(doc, resolvedCanonicalDeck)
         }
       });
     }
 
     function buildEditorSourceHtml(doc = getIframeDoc()) {
+      const resolvedCanonicalDeck = doc ? null : buildEditorCanonicalDeck(doc);
       return SlideNextStudioDeckView.buildStudioSourceHtml(doc, {
-        buildCanonicalDeck: buildEditorCanonicalDeck,
+        buildCanonicalDeck: doc
+          ? buildEditorCanonicalDeck
+          : () => resolvedCanonicalDeck,
         buildFallbackHtml: (sourceDoc) => buildPersistableDeckHtml(sourceDoc),
         deckHtmlOptions: {
-          renderOptions: buildEditorDeckRenderOptions(doc)
+          renderOptions: buildEditorDeckRenderOptions(doc, resolvedCanonicalDeck)
         }
       });
     }

@@ -114,14 +114,20 @@ test('buildEditorPreviewHtml falls back to the persisted html baseline when the 
     ]
   };
   const calls = [];
+  let buildEditorCanonicalDeckCalls = 0;
   const context = {
     SlideNextStudioDeckView: {
       buildStudioPreviewHtml(doc, options) {
-        calls.push({ doc, options });
+        calls.push({
+          doc,
+          options,
+          canonicalDeck: options.buildCanonicalDeck(doc)
+        });
         return options.buildFallbackHtml(null);
       }
     },
     buildEditorCanonicalDeck(nextDoc) {
+      buildEditorCanonicalDeckCalls += 1;
       assert.equal(nextDoc, null);
       return canonicalDeck;
     },
@@ -147,11 +153,13 @@ test('buildEditorPreviewHtml falls back to the persisted html baseline when the 
 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].doc, null);
+  assert.equal(calls[0].canonicalDeck, canonicalDeck);
   assert.equal(calls[0].options.presentationUrl, '/presentations/onboarding-presentation/index.html');
   assert.equal(calls[0].options.deckHtmlOptions.renderOptions.activeSlideId, 'slide-2');
   assert.equal(calls[0].options.deckHtmlOptions.renderOptions.preferSourceHtml, false);
   assert.equal(calls[0].options.deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
   assert.equal(calls[0].options.deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
+  assert.equal(buildEditorCanonicalDeckCalls, 1);
   assert.equal(result, '<html>persisted-preview</html>');
 });
 
