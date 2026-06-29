@@ -19,6 +19,13 @@
     };
   }
 
+  function createStudioSessionSnapshot(options = {}) {
+    return {
+      presentationUrl: normalizeString(options.presentationUrl),
+      sessionToken: Number.isInteger(options.sessionToken) ? options.sessionToken : null
+    };
+  }
+
   function isCurrentStudioEditorSession(options = {}) {
     const expectedSessionToken = Number.isInteger(options.sessionToken)
       ? options.sessionToken
@@ -85,6 +92,7 @@
 
   return {
     createStudioSessionStateOptions,
+    createStudioSessionSnapshot,
     isCurrentStudioEditorSession,
     shouldHandleStudioFrameLoad,
     createStudioFrameLoadStateOptions,

@@ -4619,10 +4619,10 @@
     }
 
     function captureCurrentStudioSessionSnapshot() {
-      return {
+      return SlideNextStudioEditorSession.createStudioSessionSnapshot({
         presentationUrl: currentPresentationUrl,
         sessionToken: studioEditorSessionToken
-      };
+      });
     }
 
     function captureCurrentStudioPersistableDeckState(doc = getIframeDoc()) {

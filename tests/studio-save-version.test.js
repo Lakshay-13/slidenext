@@ -37,6 +37,7 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
 }
 
 function loadCaptureCurrentStudioSessionSnapshot(fileContent, context) {
+  context.SlideNextStudioEditorSession ??= editorSession;
   const helperSource = extractFunctionSource(
     fileContent,
     'function captureCurrentStudioSessionSnapshot() {',
@@ -386,7 +387,15 @@ test('isCurrentStudioPersistenceActionCurrent reuses current session readers for
 
 test('captureCurrentStudioSessionSnapshot captures the current presentation identity and session token', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let capturedOptions = null;
   const context = {
+    SlideNextStudioEditorSession: {
+      ...editorSession,
+      createStudioSessionSnapshot(options) {
+        capturedOptions = options;
+        return editorSession.createStudioSessionSnapshot(options);
+      }
+    },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     studioEditorSessionToken: 13
   };
@@ -397,6 +406,10 @@ test('captureCurrentStudioSessionSnapshot captures the current presentation iden
   const snapshot = context.captureCurrentStudioSessionSnapshot();
 
   assert.deepEqual(JSON.parse(JSON.stringify(snapshot)), {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    sessionToken: 13
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(capturedOptions)), {
     presentationUrl: '/presentations/onboarding-presentation/index.html',
     sessionToken: 13
   });

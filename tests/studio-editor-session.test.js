@@ -26,6 +26,28 @@ test('createStudioSessionStateOptions preserves the supplied session readers and
   assert.equal(normalizedOptions.sessionToken, null);
 });
 
+test('createStudioSessionSnapshot preserves the supplied presentation identity and normalized session token', () => {
+  const snapshot = editorSession.createStudioSessionSnapshot({
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    sessionToken: 4
+  });
+
+  assert.deepEqual(snapshot, {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    sessionToken: 4
+  });
+
+  const normalizedSnapshot = editorSession.createStudioSessionSnapshot({
+    presentationUrl: null,
+    sessionToken: 'invalid'
+  });
+
+  assert.deepEqual(normalizedSnapshot, {
+    presentationUrl: '',
+    sessionToken: null
+  });
+});
+
 test('shouldHandleStudioFrameLoad requires an active matching editor session', () => {
   assert.equal(editorSession.shouldHandleStudioFrameLoad('', {
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
