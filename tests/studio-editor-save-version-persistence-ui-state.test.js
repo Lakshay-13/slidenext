@@ -132,6 +132,7 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
       return livePlaybackState;
     },
     buildEditorSaveRequestBody(doc, cleanHtml, options = {}) {
+      assert.equal(options.canonicalDeck, canonicalDeck);
       return {
         htmlPath: options.presentationUrl,
         htmlContent: cleanHtml,
@@ -161,7 +162,8 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
     'presentations/onboarding-presentation/index.html',
     {
       sessionToken: 4,
-      doc: { label: 'iframe-doc' }
+      doc: { label: 'iframe-doc' },
+      canonicalDeck
     }
   );
 
@@ -243,6 +245,7 @@ test('saveVersionCheckpoint keeps save rewrites enabled when canonical state cha
       }
     },
     buildEditorSaveRequestBody(doc, cleanHtml, options = {}) {
+      assert.equal(options.canonicalDeck, currentCanonicalDeck);
       return {
         htmlPath: options.presentationUrl,
         htmlContent: cleanHtml,
@@ -270,7 +273,8 @@ test('saveVersionCheckpoint keeps save rewrites enabled when canonical state cha
     'presentations/onboarding-presentation/index.html',
     {
       sessionToken: 7,
-      doc: { label: 'iframe-doc' }
+      doc: { label: 'iframe-doc' },
+      canonicalDeck: currentCanonicalDeck
     }
   );
 

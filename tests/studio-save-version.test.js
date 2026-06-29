@@ -171,6 +171,11 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
   const statusEl = {
     innerHTML: 'Saved to disk'
   };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
 
   const documentStub = {
     getElementById(id) {
@@ -191,8 +196,10 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
     alert(message) {
       alerts.push(message);
     },
-    buildPersistableDeckHtml(nextDoc) {
+    buildPersistableDeckHtml(nextDoc, buildOptions = {}) {
       assert.equal(nextDoc, null);
+      assert.equal(typeof buildOptions.onCanonicalDeckResolved, 'function');
+      buildOptions.onCanonicalDeckResolved(canonicalDeck);
       return '<html>persisted-baseline</html>';
     },
     closeSaveVersionModal() {
@@ -246,6 +253,7 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
   assert.equal(saveVersionCalls[0][2], '/presentations/onboarding-presentation/index.html');
   assert.equal(saveVersionCalls[0][3].sessionToken, 4);
   assert.equal(saveVersionCalls[0][3].doc, null);
+  assert.equal(saveVersionCalls[0][3].canonicalDeck, canonicalDeck);
   assert.deepEqual(loadVersionsCalls, [[
     '/presentations/onboarding-presentation/index.html',
     4
@@ -276,6 +284,11 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
   const statusEl = {
     innerHTML: 'Saved to disk'
   };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
 
   const documentStub = {
     getElementById(id) {
@@ -296,8 +309,10 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
     alert(message) {
       alerts.push(message);
     },
-    buildPersistableDeckHtml(nextDoc) {
+    buildPersistableDeckHtml(nextDoc, buildOptions = {}) {
       assert.equal(nextDoc, null);
+      assert.equal(typeof buildOptions.onCanonicalDeckResolved, 'function');
+      buildOptions.onCanonicalDeckResolved(canonicalDeck);
       return '<html>canonical-source</html>';
     },
     closeSaveVersionModal() {
@@ -351,6 +366,7 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
   assert.equal(saveVersionCalls[0][2], '/presentations/onboarding-presentation/index.html');
   assert.equal(saveVersionCalls[0][3].sessionToken, 5);
   assert.equal(saveVersionCalls[0][3].doc, null);
+  assert.equal(saveVersionCalls[0][3].canonicalDeck, canonicalDeck);
   assert.deepEqual(loadVersionsCalls, [[
     '/presentations/onboarding-presentation/index.html',
     5
@@ -517,9 +533,16 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   const loadVersionsCalls = [];
   const logCalls = [];
   const saveVersionCalls = [];
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
   const context = {
-    buildPersistableDeckHtml(nextDoc) {
+    buildPersistableDeckHtml(nextDoc, buildOptions = {}) {
       assert.equal(nextDoc, null);
+      assert.equal(typeof buildOptions.onCanonicalDeckResolved, 'function');
+      buildOptions.onCanonicalDeckResolved(canonicalDeck);
       return '<html>persisted-baseline</html>';
     },
     console: {
@@ -565,6 +588,7 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   assert.equal(saveVersionCalls[0][2], '/presentations/onboarding-presentation/index.html');
   assert.equal(saveVersionCalls[0][3].sessionToken, 4);
   assert.equal(saveVersionCalls[0][3].doc, null);
+  assert.equal(saveVersionCalls[0][3].canonicalDeck, canonicalDeck);
   assert.deepEqual(loadVersionsCalls, [[
     '/presentations/onboarding-presentation/index.html',
     4

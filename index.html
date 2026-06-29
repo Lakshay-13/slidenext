@@ -3928,7 +3928,8 @@
           isPersistedState: isCurrentDeckStatePersisted,
           buildSaveRequestBody: () => buildEditorSaveRequestBody(options.doc, cleanHtml, {
             presentationUrl,
-            versionLabel
+            versionLabel,
+            canonicalDeck: options.canonicalDeck
           }),
           sessionToken: options.sessionToken
         }
@@ -4414,7 +4415,12 @@
       }
 
       const iframeDoc = getIframeDoc();
-      const cleanHtml = buildPersistableDeckHtml(iframeDoc);
+      let resolvedCanonicalDeck = null;
+      const cleanHtml = buildPersistableDeckHtml(iframeDoc, {
+        onCanonicalDeckResolved(canonicalDeck) {
+          resolvedCanonicalDeck = canonicalDeck;
+        }
+      });
       if (!cleanHtml) {
         alert('Save version failed: editor content is unavailable.');
         return;
@@ -4438,7 +4444,8 @@
       try {
         const data = await saveVersionCheckpoint(versionName, cleanHtml, scheduledPresentationUrl, {
           sessionToken: scheduledSessionToken,
-          doc: iframeDoc
+          doc: iframeDoc,
+          canonicalDeck: resolvedCanonicalDeck
         });
         if (data.success) {
           SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(persistenceContext, {
@@ -4502,7 +4509,12 @@
     async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
       const iframeDoc = getIframeDoc();
       if (isStaleEditorPersistenceTask(presentationUrl, sessionToken)) return;
-      const cleanHtml = buildPersistableDeckHtml(iframeDoc);
+      let resolvedCanonicalDeck = null;
+      const cleanHtml = buildPersistableDeckHtml(iframeDoc, {
+        onCanonicalDeckResolved(canonicalDeck) {
+          resolvedCanonicalDeck = canonicalDeck;
+        }
+      });
       if (!cleanHtml) return;
       const persistenceContext = SlideNextStudioEditorPersistence.createStudioVersionPersistenceActionContext(
         presentationUrl,
@@ -4515,7 +4527,8 @@
       try {
         const data = await saveVersionCheckpoint(label, cleanHtml, presentationUrl, {
           sessionToken,
-          doc: iframeDoc
+          doc: iframeDoc,
+          canonicalDeck: resolvedCanonicalDeck
         });
         if (data.success) {
           SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(persistenceContext, {
