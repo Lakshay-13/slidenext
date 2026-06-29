@@ -230,6 +230,44 @@
     );
   }
 
+  function createStudioVersionCheckpointRequestOptions(persistedDeckState = {}, options = {}) {
+    const nextPersistedDeckState = asPlainObject(persistedDeckState);
+    const requestOptions = {
+      doc: nextPersistedDeckState.doc,
+      canonicalDeck: nextPersistedDeckState.canonicalDeck
+    };
+    const sessionToken = normalizeSessionToken(options.sessionToken);
+    if (sessionToken !== null) {
+      requestOptions.sessionToken = sessionToken;
+    }
+    if (Object.prototype.hasOwnProperty.call(nextPersistedDeckState, 'playbackState')) {
+      requestOptions.playbackState = nextPersistedDeckState.playbackState;
+    }
+    return requestOptions;
+  }
+
+  function createStudioVersionCheckpointPersistenceState(
+    persistedDeckState = {},
+    presentationUrl = '',
+    options = {}
+  ) {
+    const nextPersistedDeckState = asPlainObject(persistedDeckState);
+    const cleanHtml = normalizeString(nextPersistedDeckState.cleanHtml);
+    const sessionToken = normalizeSessionToken(options.sessionToken);
+    return {
+      cleanHtml,
+      persistenceContext: createStudioVersionPersistenceActionContext(
+        presentationUrl,
+        cleanHtml,
+        { sessionToken }
+      ),
+      requestOptions: createStudioVersionCheckpointRequestOptions(
+        nextPersistedDeckState,
+        { sessionToken }
+      )
+    };
+  }
+
   function isStudioPersistedHtml(cleanHtml = '', persistedHtml = '') {
     return !!normalizeString(persistedHtml) && normalizeString(cleanHtml) === normalizeString(persistedHtml);
   }
@@ -368,6 +406,8 @@
     buildStudioPersistenceRequestPlan,
     buildStudioAutoSavePersistencePlan,
     buildStudioVersionCheckpointPersistencePlan,
+    createStudioVersionCheckpointRequestOptions,
+    createStudioVersionCheckpointPersistenceState,
     isStudioPersistedHtml,
     isStudioPersistedCanonicalDeck,
     isStudioPersistedState,

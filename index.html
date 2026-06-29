@@ -4639,20 +4639,6 @@
       };
     }
 
-    function createCurrentStudioVersionPersistenceActionContext(
-      cleanHtml,
-      presentationUrl = currentPresentationUrl,
-      sessionToken = studioEditorSessionToken
-    ) {
-      return SlideNextStudioEditorPersistence.createStudioVersionPersistenceActionContext(
-        presentationUrl,
-        cleanHtml,
-        {
-          sessionToken
-        }
-      );
-    }
-
     function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
       return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
         persistenceContext,
@@ -4682,35 +4668,6 @@
       return persistedDeckState.cleanHtml ? persistedDeckState : null;
     }
 
-    function createStudioVersionCheckpointRequestOptions(
-      persistedDeckState,
-      sessionToken = studioEditorSessionToken
-    ) {
-      return {
-        sessionToken,
-        doc: persistedDeckState.doc,
-        canonicalDeck: persistedDeckState.canonicalDeck,
-        playbackState: persistedDeckState.playbackState
-      };
-    }
-
-    function createStudioVersionCheckpointPersistenceState(
-      persistedDeckState,
-      presentationUrl = currentPresentationUrl,
-      sessionToken = studioEditorSessionToken
-    ) {
-      const cleanHtml = persistedDeckState.cleanHtml;
-      return {
-        cleanHtml,
-        persistenceContext: createCurrentStudioVersionPersistenceActionContext(
-          cleanHtml,
-          presentationUrl,
-          sessionToken
-        ),
-        requestOptions: createStudioVersionCheckpointRequestOptions(persistedDeckState, sessionToken)
-      };
-    }
-
     function captureCurrentStudioVersionCheckpointPersistenceState(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken,
@@ -4720,10 +4677,12 @@
       if (!persistedDeckState) {
         return null;
       }
-      return createStudioVersionCheckpointPersistenceState(
+      return SlideNextStudioEditorPersistence.createStudioVersionCheckpointPersistenceState(
         persistedDeckState,
         presentationUrl,
-        sessionToken
+        {
+          sessionToken
+        }
       );
     }
     

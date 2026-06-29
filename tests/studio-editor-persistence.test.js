@@ -551,6 +551,84 @@ test('buildStudioVersionCheckpointPersistencePlan reuses the shared playback fal
   });
 });
 
+test('createStudioVersionCheckpointRequestOptions preserves the captured deck state and session token', () => {
+  assert.deepEqual(
+    editorPersistence.createStudioVersionCheckpointRequestOptions(
+      {
+        doc: { label: 'iframe-doc' },
+        cleanHtml: '<html>persisted</html>',
+        canonicalDeck: {
+          kind: 'slidenext.deck',
+          schemaVersion: 1,
+          slides: []
+        },
+        playbackState: {
+          activeSlideIds: ['slide-1'],
+          slideCounterText: '1 / 1'
+        }
+      },
+      { sessionToken: 17 }
+    ),
+    {
+      sessionToken: 17,
+      doc: { label: 'iframe-doc' },
+      canonicalDeck: {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: []
+      },
+      playbackState: {
+        activeSlideIds: ['slide-1'],
+        slideCounterText: '1 / 1'
+      }
+    }
+  );
+});
+
+test('createStudioVersionCheckpointPersistenceState reuses the shared version context and request options', () => {
+  assert.deepEqual(
+    editorPersistence.createStudioVersionCheckpointPersistenceState(
+      {
+        doc: { label: 'iframe-doc' },
+        cleanHtml: '<html>persisted</html>',
+        canonicalDeck: {
+          kind: 'slidenext.deck',
+          schemaVersion: 1,
+          slides: []
+        },
+        playbackState: {
+          activeSlideIds: ['slide-1'],
+          slideCounterText: '1 / 1'
+        }
+      },
+      '/presentations/onboarding-presentation/index.html',
+      { sessionToken: 17 }
+    ),
+    {
+      cleanHtml: '<html>persisted</html>',
+      persistenceContext: {
+        presentationUrl: '/presentations/onboarding-presentation/index.html',
+        cleanHtml: '<html>persisted</html>',
+        shouldUpdatePersistedHtml: false,
+        sessionToken: 17
+      },
+      requestOptions: {
+        sessionToken: 17,
+        doc: { label: 'iframe-doc' },
+        canonicalDeck: {
+          kind: 'slidenext.deck',
+          schemaVersion: 1,
+          slides: []
+        },
+        playbackState: {
+          activeSlideIds: ['slide-1'],
+          slideCounterText: '1 / 1'
+        }
+      }
+    }
+  );
+});
+
 test('isStudioPersistedHtml only reports true when a non-empty persisted html snapshot matches exactly', () => {
   assert.equal(
     editorPersistence.isStudioPersistedHtml('<html></html>', '<html></html>'),

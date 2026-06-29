@@ -34,15 +34,6 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadCreateCurrentStudioVersionPersistenceActionContext(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioVersionPersistenceActionContext(',
-    '\n\n    function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
 function loadCaptureCurrentStudioSessionSnapshot(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -72,7 +63,6 @@ function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, co
 }
 
 function loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context) {
-  loadCreateCurrentStudioVersionPersistenceActionContext(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
@@ -217,50 +207,40 @@ test('captureCurrentStudioPersistableDeckStateWithContent returns null when the 
   assert.equal(context.captureCurrentStudioPersistableDeckStateWithContent(), null);
 });
 
-test('createStudioVersionCheckpointRequestOptions reuses the captured persistable deck state and session token', () => {
+test('captureCurrentStudioVersionCheckpointPersistenceState reuses current deck capture and shared checkpoint state creation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
   const persistedDeckState = {
-    doc: { label: 'iframe-doc' },
     cleanHtml: '<html>persisted</html>',
     canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
     playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
   };
   const context = {
-    studioEditorSessionToken: 17
-  };
-
-  vm.createContext(context);
-  loadCaptureCurrentStudioPersistableDeckState(fileContent, context);
-
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(context.createStudioVersionCheckpointRequestOptions(persistedDeckState))),
-    {
-      sessionToken: 17,
-      doc: { label: 'iframe-doc' },
-      canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-      playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
-    }
-  );
-});
-
-test('createStudioVersionCheckpointPersistenceState reuses checkpoint options and persistence context for the current deck state', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const persistedDeckState = {
-    doc: { label: 'iframe-doc' },
-    cleanHtml: '<html>persisted</html>',
-    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-    playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
-  };
-  const context = {
-    createCurrentStudioVersionPersistenceActionContext(cleanHtml, presentationUrl, sessionToken) {
-      return {
-        cleanHtml,
-        presentationUrl,
-        sessionToken,
-        type: 'persistence-context'
-      };
+    captureEditorPersistableDeckState(doc) {
+      assert.deepEqual(doc, iframeDoc);
+      return persistedDeckState;
     },
-    studioEditorSessionToken: 17
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    SlideNextStudioEditorPersistence: {
+      createStudioVersionCheckpointPersistenceState(nextPersistedDeckState, presentationUrl, options = {}) {
+        assert.deepEqual(
+          JSON.parse(JSON.stringify(nextPersistedDeckState)),
+          {
+            doc: iframeDoc,
+            cleanHtml: '<html>persisted</html>',
+            canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
+            playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
+          }
+        );
+        return {
+          presentationUrl,
+          sessionToken: options.sessionToken,
+          cleanHtml: nextPersistedDeckState.cleanHtml
+        };
+      }
+    }
   };
 
   vm.createContext(context);
@@ -268,26 +248,16 @@ test('createStudioVersionCheckpointPersistenceState reuses checkpoint options an
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(
-      context.createStudioVersionCheckpointPersistenceState(
-        persistedDeckState,
+      context.captureCurrentStudioVersionCheckpointPersistenceState(
         '/presentations/onboarding-presentation/index.html',
-        17
+        17,
+        iframeDoc
       )
     )),
     {
-      cleanHtml: '<html>persisted</html>',
-      persistenceContext: {
-        cleanHtml: '<html>persisted</html>',
-        presentationUrl: '/presentations/onboarding-presentation/index.html',
-        sessionToken: 17,
-        type: 'persistence-context'
-      },
-      requestOptions: {
-        sessionToken: 17,
-        doc: { label: 'iframe-doc' },
-        canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-        playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
-      }
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      sessionToken: 17,
+      cleanHtml: '<html>persisted</html>'
     }
   );
 });
@@ -302,8 +272,10 @@ test('captureCurrentStudioVersionCheckpointPersistenceState returns null when no
         playbackState: null
       };
     },
-    createStudioVersionCheckpointPersistenceState() {
-      throw new Error('persistence state should not be built without persistable deck content');
+    SlideNextStudioEditorPersistence: {
+      createStudioVersionCheckpointPersistenceState() {
+        throw new Error('persistence state should not be built without persistable deck content');
+      }
     },
     getIframeDoc() {
       return null;
@@ -416,41 +388,6 @@ test('isCurrentStudioPersistenceActionCurrent reuses current session readers for
   assert.equal(result, true);
   assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
   assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
-});
-
-test('createCurrentStudioVersionPersistenceActionContext reuses the current save-version session identity', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const calls = [];
-  const context = {
-    SlideNextStudioEditorPersistence: {
-      createStudioVersionPersistenceActionContext(presentationUrl, cleanHtml, options) {
-        calls.push([presentationUrl, cleanHtml, options]);
-        return {
-          presentationUrl,
-          cleanHtml,
-          sessionToken: options.sessionToken
-        };
-      }
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 12
-  };
-
-  vm.createContext(context);
-  loadCreateCurrentStudioVersionPersistenceActionContext(fileContent, context);
-
-  const persistenceContext = context.createCurrentStudioVersionPersistenceActionContext('<html></html>');
-
-  assert.deepEqual(persistenceContext, {
-    presentationUrl: '/presentations/onboarding-presentation/index.html',
-    cleanHtml: '<html></html>',
-    sessionToken: 12
-  });
-  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [[
-    '/presentations/onboarding-presentation/index.html',
-    '<html></html>',
-    { sessionToken: 12 }
-  ]]);
 });
 
 test('captureCurrentStudioSessionSnapshot captures the current presentation identity and session token', () => {
