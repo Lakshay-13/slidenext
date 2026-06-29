@@ -17,6 +17,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function getCurrentEditorPersistedDeckState() {',
+    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requests', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(
@@ -236,6 +245,7 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
   };
 
   vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);
@@ -298,6 +308,7 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
   };
 
   vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);
@@ -363,6 +374,7 @@ test('buildPersistableDeckHtml reports the resolved canonical deck when the edit
   };
 
   vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);
@@ -586,6 +598,7 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when playback-st
   };
 
   vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(capturePersistedDeckPlaybackStateSource, context);
@@ -868,12 +881,14 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
       return null;
     },
     lastPersistedDeckHtml: '',
+    lastPersistedCanonicalDeck: null,
     persistedDeckPlaybackState: {
       activeSlideIds: ['slide-2']
     }
   };
 
   vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);
@@ -966,6 +981,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
   };
 
   vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);

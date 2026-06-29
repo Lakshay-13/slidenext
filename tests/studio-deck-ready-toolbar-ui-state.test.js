@@ -23,6 +23,15 @@ function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
   vm.runInContext(resolveEditorStoredCanonicalDeckSource, context);
 }
 
+function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function getCurrentEditorPersistedDeckState() {',
+    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when fallback deck state remains available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateDeckReadyToolbarActionStateSource = extractFunctionSource(
@@ -49,6 +58,7 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when 
     },
     lastPersistedCanonicalDeck: null,
     lastPersistedDeckHtml: '',
+    persistedDeckPlaybackState: null,
     SlideNextStudioDeckContext: {
       resolveStoredStudioCanonicalDeck(metadata) {
         if (!metadata || !metadata.canonicalDeck || !Array.isArray(metadata.canonicalDeck.slides)) {
@@ -61,6 +71,7 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when 
 
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(updateDeckReadyToolbarActionStateSource, context);
 
   context.updateDeckReadyToolbarActionState(null);

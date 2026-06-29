@@ -25,6 +25,33 @@ function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
   vm.runInContext(resolveEditorStoredCanonicalDeckSource, context);
 }
 
+test('getCurrentEditorPersistedDeckState returns the current persisted html, canonical deck, and playback baselines', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function getCurrentEditorPersistedDeckState() {',
+    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
+  );
+
+  const context = {
+    lastPersistedDeckHtml: '<html>persisted</html>',
+    lastPersistedCanonicalDeck: { id: 'persisted-deck' },
+    persistedDeckPlaybackState: { activeSlideIds: ['slide-2'], slideCounterText: '2 / 4' }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState())),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck: { id: 'persisted-deck' },
+      playbackState: { activeSlideIds: ['slide-2'], slideCounterText: '2 / 4' }
+    }
+  );
+});
+
 test('updateEditorPersistedDeckState updates only the provided persisted baseline fields', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateEditorPersistedDeckStateSource = extractFunctionSource(

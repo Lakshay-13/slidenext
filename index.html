@@ -2479,6 +2479,14 @@
       return typeof playbackState.activeSlideId === 'string' ? playbackState.activeSlideId : '';
     }
 
+    function getCurrentEditorPersistedDeckState() {
+      return {
+        cleanHtml: typeof lastPersistedDeckHtml === 'string' ? lastPersistedDeckHtml : '',
+        canonicalDeck: lastPersistedCanonicalDeck,
+        playbackState: persistedDeckPlaybackState
+      };
+    }
+
     function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {
       const {
         resolveCanonicalDeck,
@@ -3946,13 +3954,14 @@
         ? arguments[1]
         : {};
       if (!doc) {
-        const persistedHtml = typeof lastPersistedDeckHtml === 'string' ? lastPersistedDeckHtml : '';
+        const persistedDeckState = getCurrentEditorPersistedDeckState();
+        const persistedHtml = persistedDeckState.cleanHtml;
         const canonicalDeck = buildOptions.canonicalDeck || buildEditorCanonicalDeck(doc);
         if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
           buildOptions.onCanonicalDeckResolved(canonicalDeck);
         }
         if (typeof buildOptions.onPlaybackStateResolved === 'function') {
-          buildOptions.onPlaybackStateResolved(persistedDeckPlaybackState);
+          buildOptions.onPlaybackStateResolved(persistedDeckState.playbackState);
         }
         const isPersistedCanonicalDeck = SlideNextStudioEditorPersistence
           && typeof SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck === 'function'
@@ -3970,7 +3979,7 @@
                 return false;
               }
             };
-        if (persistedHtml.trim() && isPersistedCanonicalDeck(canonicalDeck, lastPersistedCanonicalDeck)) {
+        if (persistedHtml.trim() && isPersistedCanonicalDeck(canonicalDeck, persistedDeckState.canonicalDeck)) {
           return persistedHtml;
         }
         return SlideNextStudioDeckView.buildStudioSourceHtml(doc, {
@@ -4074,16 +4083,20 @@
     }
 
     function isCurrentDeckHtmlPersisted(cleanHtml) {
-      return SlideNextStudioEditorPersistence.isStudioPersistedHtml(cleanHtml, lastPersistedDeckHtml);
+      return SlideNextStudioEditorPersistence.isStudioPersistedHtml(
+        cleanHtml,
+        getCurrentEditorPersistedDeckState().cleanHtml
+      );
     }
 
     function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {
+      const persistedDeckState = getCurrentEditorPersistedDeckState();
       return SlideNextStudioEditorPersistence.isStudioPersistedState(
         cleanHtml,
         saveRequestBody && saveRequestBody.canonicalDeck,
         {
-          persistedHtml: lastPersistedDeckHtml,
-          persistedCanonicalDeck: lastPersistedCanonicalDeck
+          persistedHtml: persistedDeckState.cleanHtml,
+          persistedCanonicalDeck: persistedDeckState.canonicalDeck
         }
       );
     }
@@ -4535,9 +4548,10 @@
     }
 
     function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {
+      const persistedDeckState = getCurrentEditorPersistedDeckState();
       const hasDeckDocument = !!(doc && doc.documentElement);
       const hasPresentationSession = !!currentPresentationUrl;
-      const hasPersistedDeckHtml = typeof lastPersistedDeckHtml === 'string' && lastPersistedDeckHtml.trim() !== '';
+      const hasPersistedDeckHtml = persistedDeckState.cleanHtml.trim() !== '';
       const hasStoredCanonicalDeck = !!resolveEditorStoredCanonicalBaseline();
       const hasDeckContent = hasDeckDocument || hasPersistedDeckHtml || hasStoredCanonicalDeck;
 
