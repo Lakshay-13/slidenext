@@ -4,6 +4,65 @@ const assert = require('node:assert/strict');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 
+test('createStudioPersistableDeckState preserves the iframe doc and captured deck fields', () => {
+  assert.deepEqual(
+    editorPersistence.createStudioPersistableDeckState(
+      { label: 'iframe-doc' },
+      {
+        cleanHtml: '<html>persisted</html>',
+        canonicalDeck: {
+          kind: 'slidenext.deck',
+          schemaVersion: 1,
+          slides: []
+        },
+        playbackState: {
+          activeSlideIds: ['slide-1'],
+          slideCounterText: '1 / 1'
+        }
+      }
+    ),
+    {
+      doc: { label: 'iframe-doc' },
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck: {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: []
+      },
+      playbackState: {
+        activeSlideIds: ['slide-1'],
+        slideCounterText: '1 / 1'
+      }
+    }
+  );
+});
+
+test('resolveStudioPersistableDeckStateWithContent requires non-empty persisted html', () => {
+  const persistedDeckState = {
+    doc: { label: 'iframe-doc' },
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: []
+    }
+  };
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioPersistableDeckStateWithContent(persistedDeckState),
+    persistedDeckState
+  );
+
+  assert.equal(
+    editorPersistence.resolveStudioPersistableDeckStateWithContent({
+      doc: { label: 'iframe-doc' },
+      cleanHtml: '',
+      canonicalDeck: null
+    }),
+    null
+  );
+});
+
 test('createStudioPersistenceActionContext normalizes persistence state', () => {
   assert.deepEqual(
     editorPersistence.createStudioPersistenceActionContext(

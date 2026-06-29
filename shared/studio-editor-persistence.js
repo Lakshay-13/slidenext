@@ -25,6 +25,18 @@
     return Number.isInteger(value) ? value : null;
   }
 
+  function createStudioPersistableDeckState(doc = null, persistedDeckState = {}) {
+    return {
+      doc,
+      ...asPlainObject(persistedDeckState)
+    };
+  }
+
+  function resolveStudioPersistableDeckStateWithContent(persistedDeckState = {}) {
+    const nextPersistedDeckState = asPlainObject(persistedDeckState);
+    return normalizeString(nextPersistedDeckState.cleanHtml) ? nextPersistedDeckState : null;
+  }
+
   function areStudioPersistenceCanonicalDecksEqual(left, right, options = {}) {
     const areCanonicalDecksEqual = typeof options.areCanonicalDecksEqual === 'function'
       ? options.areCanonicalDecksEqual
@@ -436,6 +448,8 @@
   }
 
   return {
+    createStudioPersistableDeckState,
+    resolveStudioPersistableDeckStateWithContent,
     resolveStudioPersistenceCanonicalDeck,
     createStudioPersistenceActionContext,
     createStudioVersionPersistenceActionContext,

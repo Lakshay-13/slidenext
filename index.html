@@ -4627,15 +4627,16 @@
     }
 
     function captureCurrentStudioPersistableDeckState(doc = getIframeDoc()) {
-      return {
+      return SlideNextStudioEditorPersistence.createStudioPersistableDeckState(
         doc,
-        ...captureEditorPersistableDeckState(doc)
-      };
+        captureEditorPersistableDeckState(doc)
+      );
     }
 
     function captureCurrentStudioPersistableDeckStateWithContent(doc = getIframeDoc()) {
-      const persistedDeckState = captureCurrentStudioPersistableDeckState(doc);
-      return persistedDeckState.cleanHtml ? persistedDeckState : null;
+      return SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent(
+        captureCurrentStudioPersistableDeckState(doc)
+      );
     }
 
     function captureCurrentStudioVersionCheckpointPersistenceState(

@@ -47,6 +47,10 @@ function loadCaptureCurrentStudioSessionSnapshot(fileContent, context) {
 }
 
 function loadCaptureCurrentStudioPersistableDeckState(fileContent, context) {
+  context.SlideNextStudioEditorPersistence = {
+    ...editorPersistence,
+    ...(context.SlideNextStudioEditorPersistence || {})
+  };
   const helperSource = extractFunctionSource(
     fileContent,
     'function captureCurrentStudioPersistableDeckState(doc = getIframeDoc()) {',
@@ -56,6 +60,10 @@ function loadCaptureCurrentStudioPersistableDeckState(fileContent, context) {
 }
 
 function loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context) {
+  context.SlideNextStudioEditorPersistence = {
+    ...editorPersistence,
+    ...(context.SlideNextStudioEditorPersistence || {})
+  };
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
@@ -140,12 +148,20 @@ test('setStudioSaveButtonState renders the version button loading and idle state
 test('captureCurrentStudioPersistableDeckState reuses the shared iframe accessor and persistable deck capture', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
+  let capturedPersistableDeckStateArgs = null;
   const persistedDeckState = {
     cleanHtml: '<html>persisted</html>',
     canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
     playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
   };
   const context = {
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      createStudioPersistableDeckState(doc, nextPersistedDeckState) {
+        capturedPersistableDeckStateArgs = [doc, nextPersistedDeckState];
+        return editorPersistence.createStudioPersistableDeckState(doc, nextPersistedDeckState);
+      }
+    },
     captureEditorPersistableDeckState(doc) {
       assert.equal(doc, iframeDoc);
       return persistedDeckState;
@@ -167,11 +183,20 @@ test('captureCurrentStudioPersistableDeckState reuses the shared iframe accessor
       playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
     }
   );
+  assert.deepEqual(JSON.parse(JSON.stringify(capturedPersistableDeckStateArgs)), [
+    { label: 'iframe-doc' },
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
+      playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
+    }
+  ]);
 });
 
 test('captureCurrentStudioPersistableDeckStateWithContent returns null when the current deck has no persistable html', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
     captureEditorPersistableDeckState() {
       return {
         cleanHtml: '',
