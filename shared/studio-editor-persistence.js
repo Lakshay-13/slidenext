@@ -350,6 +350,19 @@
     );
   }
 
+  function resolveStudioVersionCheckpointPersistenceStateFromCapture(
+    doc = null,
+    capturedDeckState = {},
+    presentationUrl = '',
+    options = {}
+  ) {
+    return resolveStudioVersionCheckpointPersistenceState(
+      createStudioPersistableDeckState(doc, capturedDeckState),
+      presentationUrl,
+      options
+    );
+  }
+
   function isStudioPersistedHtml(cleanHtml = '', persistedHtml = '') {
     return !!normalizeString(persistedHtml) && normalizeString(cleanHtml) === normalizeString(persistedHtml);
   }
@@ -518,6 +531,7 @@
     createStudioVersionCheckpointRequestOptions,
     createStudioVersionCheckpointPersistenceState,
     resolveStudioVersionCheckpointPersistenceState,
+    resolveStudioVersionCheckpointPersistenceStateFromCapture,
     isStudioPersistedHtml,
     isStudioPersistedCanonicalDeck,
     isStudioPersistedState,

@@ -4613,11 +4613,9 @@
       const scheduledPresentationUrl = currentPresentationUrl;
       const scheduledSessionToken = studioEditorSessionToken;
       const iframeDoc = getIframeDoc();
-      const versionCheckpointPersistenceState = SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceState(
-        SlideNextStudioEditorPersistence.createStudioPersistableDeckState(
-          iframeDoc,
-          captureEditorPersistableDeckState(iframeDoc)
-        ),
+      const versionCheckpointPersistenceState = SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture(
+        iframeDoc,
+        captureEditorPersistableDeckState(iframeDoc),
         scheduledPresentationUrl,
         {
           sessionToken: scheduledSessionToken
@@ -4705,11 +4703,9 @@
     async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
       if (isStaleEditorPersistenceTask(presentationUrl, sessionToken)) return;
       const iframeDoc = getIframeDoc();
-      const versionCheckpointPersistenceState = SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceState(
-        SlideNextStudioEditorPersistence.createStudioPersistableDeckState(
-          iframeDoc,
-          captureEditorPersistableDeckState(iframeDoc)
-        ),
+      const versionCheckpointPersistenceState = SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture(
+        iframeDoc,
+        captureEditorPersistableDeckState(iframeDoc),
         presentationUrl,
         {
           sessionToken

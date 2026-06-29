@@ -935,6 +935,50 @@ test('resolveStudioVersionCheckpointPersistenceState returns null without persis
   );
 });
 
+test('resolveStudioVersionCheckpointPersistenceStateFromCapture reuses persisted deck state creation before checkpoint resolution', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const capturedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: []
+    },
+    playbackState: {
+      activeSlideIds: ['slide-1'],
+      slideCounterText: '1 / 1'
+    }
+  };
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture(
+      iframeDoc,
+      capturedDeckState,
+      '/presentations/onboarding-presentation/index.html',
+      { sessionToken: 12 }
+    ),
+    editorPersistence.createStudioVersionCheckpointPersistenceState(
+      editorPersistence.createStudioPersistableDeckState(iframeDoc, capturedDeckState),
+      '/presentations/onboarding-presentation/index.html',
+      { sessionToken: 12 }
+    )
+  );
+
+  assert.equal(
+    editorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture(
+      iframeDoc,
+      {
+        cleanHtml: '',
+        canonicalDeck: null,
+        playbackState: null
+      },
+      '/presentations/onboarding-presentation/index.html',
+      { sessionToken: 12 }
+    ),
+    null
+  );
+});
+
 test('isStudioPersistedHtml only reports true when a non-empty persisted html snapshot matches exactly', () => {
   assert.equal(
     editorPersistence.isStudioPersistedHtml('<html></html>', '<html></html>'),
