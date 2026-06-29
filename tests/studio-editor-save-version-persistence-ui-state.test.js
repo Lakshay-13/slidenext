@@ -212,13 +212,20 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
     activeSlideIds: ['slide-2'],
     slideCounterText: '2 / 3'
   };
+  let capturedVersionCheckpointRequestArgs = null;
   const context = {
     SlideNextCanonicalDeck: {
       isCanonicalDeck(deck) {
         return !!deck && deck.kind === 'slidenext.deck' && Array.isArray(deck.slides);
       }
     },
-    SlideNextStudioEditorPersistence: editorPersistence,
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      createStudioVersionCheckpointRequest(versionLabel, presentationUrl, persistencePlan) {
+        capturedVersionCheckpointRequestArgs = [versionLabel, presentationUrl, persistencePlan];
+        return editorPersistence.createStudioVersionCheckpointRequest(versionLabel, presentationUrl, persistencePlan);
+      }
+    },
     createCurrentStudioSessionStateReaders() {
       return {
         getCurrentPresentationUrl: () => context.currentPresentationUrl,
@@ -296,6 +303,9 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
       canonicalDeck
     }
   ]]);
+  assert.equal(capturedVersionCheckpointRequestArgs[0], 'Checkpoint A');
+  assert.equal(capturedVersionCheckpointRequestArgs[1], 'presentations/onboarding-presentation/index.html');
+  assert.equal(capturedVersionCheckpointRequestArgs[2].hasPersistedCurrentState, false);
   assert.equal(context.lastPersistedDeckHtml, '<html>persisted</html>');
   assert.deepEqual(context.lastPersistedCanonicalDeck, canonicalDeckModel.createCanonicalDeck(canonicalDeck));
   assert.deepEqual(context.persistedDeckPlaybackState, livePlaybackState);

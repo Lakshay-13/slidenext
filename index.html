@@ -4175,17 +4175,15 @@
           resolvePlaybackState: capturePersistedDeckPlaybackState
         }
       );
-      const response = await fetch(persistencePlan.hasPersistedCurrentState ? '/api/versions/create' : '/api/save', {
+      const versionCheckpointRequest = SlideNextStudioEditorPersistence.createStudioVersionCheckpointRequest(
+        versionLabel,
+        presentationUrl,
+        persistencePlan
+      );
+      const response = await fetch(versionCheckpointRequest.url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          persistencePlan.hasPersistedCurrentState
-            ? {
-                htmlPath: presentationUrl,
-                versionLabel
-              }
-            : persistencePlan.saveRequestBody
-        )
+        body: JSON.stringify(versionCheckpointRequest.body)
       });
       const data = await response.json();
 

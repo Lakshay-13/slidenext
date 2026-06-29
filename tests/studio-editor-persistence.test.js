@@ -754,6 +754,47 @@ test('buildStudioVersionCheckpointPersistencePlan reuses the shared playback fal
   });
 });
 
+test('createStudioVersionCheckpointRequest selects the correct endpoint and request body', () => {
+  const saveRequestBody = {
+    htmlPath: '/presentations/onboarding-presentation/index.html',
+    htmlContent: '<html>persisted</html>',
+    versionLabel: 'Checkpoint Plan'
+  };
+
+  assert.deepEqual(
+    editorPersistence.createStudioVersionCheckpointRequest(
+      'Checkpoint Plan',
+      '/presentations/onboarding-presentation/index.html',
+      {
+        hasPersistedCurrentState: false,
+        saveRequestBody
+      }
+    ),
+    {
+      url: '/api/save',
+      body: saveRequestBody
+    }
+  );
+
+  assert.deepEqual(
+    editorPersistence.createStudioVersionCheckpointRequest(
+      'Checkpoint Plan',
+      '/presentations/onboarding-presentation/index.html',
+      {
+        hasPersistedCurrentState: true,
+        saveRequestBody: null
+      }
+    ),
+    {
+      url: '/api/versions/create',
+      body: {
+        htmlPath: '/presentations/onboarding-presentation/index.html',
+        versionLabel: 'Checkpoint Plan'
+      }
+    }
+  );
+});
+
 test('createStudioVersionCheckpointRequestOptions preserves the captured deck state and session token', () => {
   assert.deepEqual(
     editorPersistence.createStudioVersionCheckpointRequestOptions(
