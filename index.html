@@ -4074,7 +4074,7 @@
             setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl);
           },
           onSuccess: (nextContext) => {
-            if (nextContext.shouldUpdatePersistedHtml !== false) {
+            if (nextContext.shouldUpdatePersistedHtml !== false && options.doc) {
               updateEditorPersistedDeckState({ playbackState: livePlaybackState });
             }
           }
@@ -4141,7 +4141,7 @@
                 setCurrentPresentationCanonicalDeck(nextCanonicalDeck, scheduledPresentationUrl);
               },
               onSuccess: (nextContext) => {
-                if (nextContext.shouldUpdatePersistedHtml !== false) {
+                if (nextContext.shouldUpdatePersistedHtml !== false && iframeDoc) {
                   updateEditorPersistedDeckState({ playbackState: livePlaybackState });
                 }
                 setStudioAutoSaveStatus('saved');

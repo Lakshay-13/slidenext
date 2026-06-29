@@ -826,14 +826,12 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
       canonicalDeck
     }
   ]]);
-  assert.equal(persistedStateUpdates.length, 3);
+  assert.equal(persistedStateUpdates.length, 2);
   assert.equal(persistedStateUpdates[0].cleanHtml, '<html>canonical-source</html>');
   assert.deepEqual(
     JSON.parse(JSON.stringify(persistedStateUpdates[1].canonicalDeck)),
     canonicalDeckModel.createCanonicalDeck(canonicalDeck)
   );
-  assert.ok(Object.prototype.hasOwnProperty.call(persistedStateUpdates[2], 'playbackState'));
-  assert.equal(persistedStateUpdates[2].playbackState, null);
   assert.equal(canonicalDeckUpdates.length, 1);
   assert.deepEqual(
     JSON.parse(JSON.stringify(canonicalDeckUpdates[0][0])),
