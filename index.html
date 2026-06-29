@@ -4506,6 +4506,14 @@
     function resetStudioSaveButtonState() {
       setStudioSaveButtonState('idle');
     }
+
+    function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
+      return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(persistenceContext, {
+        ...createCurrentStudioSessionStateReaders(),
+        onSuccess: options.onSuccess,
+        refreshVersionEntries: loadVersions
+      });
+    }
     
     async function submitSaveVersion() {
       const input = document.getElementById('versionCheckpointName');
@@ -4546,14 +4554,10 @@
           playbackState: persistedDeckState.playbackState
         });
         if (data.success) {
-          SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(persistenceContext, {
-            ...createCurrentStudioSessionStateReaders(),
+          handleCurrentStudioVersionPersistenceSuccess(persistenceContext, {
             onSuccess: () => {
               alert('Successfully saved named version backup checkpoint!');
               setStudioAutoSaveStatus('saved');
-            },
-            refreshVersionEntries: (presentationUrl, sessionToken) => {
-              loadVersions(presentationUrl, sessionToken);
             }
           });
         } else {
@@ -4626,13 +4630,9 @@
           playbackState: persistedDeckState.playbackState
         });
         if (data.success) {
-          SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(persistenceContext, {
-            ...createCurrentStudioSessionStateReaders(),
+          handleCurrentStudioVersionPersistenceSuccess(persistenceContext, {
             onSuccess: () => {
               console.log(`Auto-created version checkpoint: ${label}`);
-            },
-            refreshVersionEntries: (requestedPresentationUrl, requestedSessionToken) => {
-              loadVersions(requestedPresentationUrl, requestedSessionToken);
             }
           });
         }
