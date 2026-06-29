@@ -36,16 +36,6 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadHandleCurrentStudioPersistenceSuccess(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',
-    '\n\n    function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
 function loadHandleCurrentStudioPersistenceFailure(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
@@ -752,7 +742,6 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
-  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
@@ -875,7 +864,6 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
-  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
@@ -1008,7 +996,6 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
-  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
@@ -1130,7 +1117,6 @@ test('triggerAutoSave clears the persisted playback baseline after a successful 
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
-  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 

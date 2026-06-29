@@ -4114,26 +4114,6 @@
       autoVersionTimers = {};
     }
 
-    function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
-      return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
-        persistenceContext,
-        SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
-          ...createCurrentStudioSessionStateOptions(),
-          setPersistedHtml: (nextHtml) => {
-            updateEditorPersistedDeckState({ cleanHtml: nextHtml });
-          },
-          setPersistedCanonicalDeck: (nextCanonicalDeck) => {
-            updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
-            setCurrentPresentationCanonicalDeck(nextCanonicalDeck, persistenceContext.presentationUrl);
-          },
-          setPersistedPlaybackState: (nextPlaybackState) => {
-            updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
-          },
-          onSuccess: options.onSuccess
-        })
-      );
-    }
-
     function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
       return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
         persistenceContext,
@@ -4236,11 +4216,25 @@
           
           const data = await response.json();
           if (data.success) {
-            handleCurrentStudioPersistenceSuccess(persistencePlan.persistenceContext, {
-              onSuccess: (nextContext) => {
-                setStudioAutoSaveStatus('saved');
-              }
-            });
+            SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
+              persistencePlan.persistenceContext,
+              SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
+                ...createCurrentStudioSessionStateOptions(),
+                setPersistedHtml: (nextHtml) => {
+                  updateEditorPersistedDeckState({ cleanHtml: nextHtml });
+                },
+                setPersistedCanonicalDeck: (nextCanonicalDeck) => {
+                  updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
+                  setCurrentPresentationCanonicalDeck(nextCanonicalDeck, persistencePlan.persistenceContext.presentationUrl);
+                },
+                setPersistedPlaybackState: (nextPlaybackState) => {
+                  updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
+                },
+                onSuccess: () => {
+                  setStudioAutoSaveStatus('saved');
+                }
+              })
+            );
           } else {
             SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
               persistencePlan.persistenceContext,

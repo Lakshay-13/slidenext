@@ -28,16 +28,6 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadHandleCurrentStudioPersistenceSuccess(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',
-    '\n\n    function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
 function loadHandleCurrentStudioPersistenceFailure(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
@@ -105,60 +95,6 @@ test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata up
       ]
     })
   });
-});
-
-test('handleCurrentStudioPersistenceSuccess reuses current session readers and persisted deck setters', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const calls = [];
-  const canonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: []
-  };
-  const playbackState = {
-    activeSlideIds: ['slide-2'],
-    slideCounterText: '2 / 4'
-  };
-  const context = {
-    SlideNextStudioEditorPersistence: editorPersistence,
-    createCurrentStudioSessionStateReaders() {
-      return {
-        getCurrentPresentationUrl: () => context.currentPresentationUrl,
-        getCurrentSessionToken: () => context.studioEditorSessionToken
-      };
-    },
-    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 4,
-    updateEditorPersistedDeckState(nextState) {
-      calls.push(['updateEditorPersistedDeckState', nextState]);
-    },
-    setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl) {
-      calls.push(['setCurrentPresentationCanonicalDeck', nextCanonicalDeck, presentationUrl]);
-    }
-  };
-
-  vm.createContext(context);
-  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
-
-  const applied = context.handleCurrentStudioPersistenceSuccess({
-    presentationUrl: 'presentations/onboarding-presentation/index.html',
-    cleanHtml: '<html>persisted</html>',
-    canonicalDeck,
-    playbackState
-  }, {
-    onSuccess(nextContext) {
-      calls.push(['onSuccess', nextContext.presentationUrl]);
-    }
-  });
-
-  assert.equal(applied, true);
-  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
-    ['updateEditorPersistedDeckState', { cleanHtml: '<html>persisted</html>' }],
-    ['updateEditorPersistedDeckState', { canonicalDeck }],
-    ['setCurrentPresentationCanonicalDeck', canonicalDeck, 'presentations/onboarding-presentation/index.html'],
-    ['updateEditorPersistedDeckState', { playbackState }],
-    ['onSuccess', 'presentations/onboarding-presentation/index.html']
-  ]);
 });
 
 test('handleCurrentStudioPersistenceFailure reuses current session readers for failure handling', () => {
