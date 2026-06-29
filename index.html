@@ -2349,11 +2349,14 @@
     }
 
     function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {
+      const resolvedCanonicalDeck = doc ? null : buildEditorCanonicalDeck(doc);
       return SlideNextStudioDeckSnapshot.buildStudioDeckSnapshot(doc, {
         includeLayers: !!options.includeLayers,
-        buildCanonicalDeck: buildEditorCanonicalDeck,
+        buildCanonicalDeck: doc
+          ? buildEditorCanonicalDeck
+          : () => resolvedCanonicalDeck,
         buildDomSnapshot: (sourceDoc) => buildEditorDeckSnapshotFromDom(sourceDoc, options),
-        fallbackActiveSlideId: resolveEditorFallbackActiveSlideId(doc),
+        fallbackActiveSlideId: resolveEditorFallbackActiveSlideId(doc, resolvedCanonicalDeck),
         getActiveSlide,
         getActiveSlideId: getEditorSlideId,
         getSlideById,

@@ -197,10 +197,23 @@ test('buildEditorDeckSnapshot prefers the current session active slide fallback 
   );
 
   const calls = [];
+  let buildEditorCanonicalDeckCalls = 0;
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
   const context = {
     SlideNextStudioDeckSnapshot: {
       buildStudioDeckSnapshot(nextDoc, options) {
-        calls.push({ nextDoc, options });
+        calls.push({
+          nextDoc,
+          options,
+          canonicalDeck: options.buildCanonicalDeck(nextDoc)
+        });
         return {
           activeSlideId: options.fallbackActiveSlideId,
           activeSlideIndex: 1,
@@ -209,14 +222,8 @@ test('buildEditorDeckSnapshot prefers the current session active slide fallback 
       }
     },
     buildEditorCanonicalDeck() {
-      return {
-        kind: 'slidenext.deck',
-        schemaVersion: 1,
-        slides: [
-          { id: 'slide-1', nodes: [] },
-          { id: 'slide-2', nodes: [] }
-        ]
-      };
+      buildEditorCanonicalDeckCalls += 1;
+      return canonicalDeck;
     },
     buildEditorDeckSnapshotFromDom() {},
     buildEditorLayerSnapshot() {},
@@ -247,7 +254,9 @@ test('buildEditorDeckSnapshot prefers the current session active slide fallback 
 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].nextDoc, null);
+  assert.equal(calls[0].canonicalDeck, canonicalDeck);
   assert.equal(calls[0].options.fallbackActiveSlideId, 'slide-2');
+  assert.equal(buildEditorCanonicalDeckCalls, 1);
   assert.equal(result.activeSlideId, 'slide-2');
   assert.equal(result.activeSlideIndex, 1);
 });
