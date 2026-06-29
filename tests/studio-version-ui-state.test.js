@@ -204,6 +204,71 @@ test('toggleVersionDropdown refreshes version history only when opening the menu
   ]]);
 });
 
+test('loadCurrentStudioVersionHistory reuses current session readers when delegating to the version history loader', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const loadCurrentStudioVersionHistorySource = extractFunctionSource(
+    fileContent,
+    'async function loadCurrentStudioVersionHistory(',
+    '\n\n    // Fetch versions checklist'
+  );
+
+  let capturedOptions = null;
+  const currentStudioSessionStateReaders = {
+    getCurrentPresentationUrl() {
+      return context.currentPresentationUrl;
+    },
+    getCurrentSessionToken() {
+      return context.studioEditorSessionToken;
+    }
+  };
+  const context = {
+    SlideNextStudioVersionHistory: {
+      async loadStudioVersionHistory(presentationUrl, options) {
+        capturedOptions = options;
+        const versions = [
+          {
+            filename: 'index_20260101_120000_Auto.html',
+            createdAt: '2026-01-01T12:00:00.000Z'
+          }
+        ];
+        options.commitVersionEntries(versions);
+        return versions;
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      return currentStudioSessionStateReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    renderVersionsListCalls: [],
+    renderVersionsList(presentationUrl, versions) {
+      context.renderVersionsListCalls.push([presentationUrl, versions]);
+    },
+    studioEditorSessionToken: 18
+  };
+
+  vm.createContext(context);
+  vm.runInContext(loadCurrentStudioVersionHistorySource, context);
+
+  const versions = await context.loadCurrentStudioVersionHistory(
+    '/presentations/onboarding-presentation/index.html',
+    18
+  );
+
+  assert.deepEqual(versions, [
+    {
+      filename: 'index_20260101_120000_Auto.html',
+      createdAt: '2026-01-01T12:00:00.000Z'
+    }
+  ]);
+  assert.equal(capturedOptions.sessionToken, 18);
+  assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
+  assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.deepEqual(context.renderVersionsListCalls, [[
+    '/presentations/onboarding-presentation/index.html',
+    versions
+  ]]);
+});
+
 test('createCurrentStudioVersionActionContext captures the active editor deck identity and session', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createCurrentStudioVersionActionContextSource = extractFunctionSource(
