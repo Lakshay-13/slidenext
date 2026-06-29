@@ -4162,8 +4162,10 @@
     // 6. AutoSave debouncing pipeline
     let autoSaveDebounceTimer = null;
     function triggerAutoSave() {
-      const scheduledPresentationUrl = currentPresentationUrl;
-      const scheduledSessionToken = studioEditorSessionToken;
+      const {
+        presentationUrl: scheduledPresentationUrl,
+        sessionToken: scheduledSessionToken
+      } = captureCurrentStudioSessionSnapshot();
       setStudioAutoSaveStatus('saving');
       
       clearTimeout(autoSaveDebounceTimer);
@@ -4612,6 +4614,13 @@
         })
       );
     }
+
+    function captureCurrentStudioSessionSnapshot() {
+      return {
+        presentationUrl: currentPresentationUrl,
+        sessionToken: studioEditorSessionToken
+      };
+    }
     
     async function submitSaveVersion() {
       const input = document.getElementById('versionCheckpointName');
@@ -4631,8 +4640,10 @@
 
       closeSaveVersionModal();
 
-      const scheduledPresentationUrl = currentPresentationUrl;
-      const scheduledSessionToken = studioEditorSessionToken;
+      const {
+        presentationUrl: scheduledPresentationUrl,
+        sessionToken: scheduledSessionToken
+      } = captureCurrentStudioSessionSnapshot();
 
       setStudioSaveButtonState('saving-version');
 
@@ -4684,8 +4695,10 @@
     async function triggerAutoVersion(label) {
       // Frequent operations (e.g. dragging, typing) get debounced on 10s delay.
       // Structural operations (e.g. Adding/Deleting Slide, Adding/Deleting Element) save immediately.
-      const scheduledPresentationUrl = currentPresentationUrl;
-      const scheduledSessionToken = studioEditorSessionToken;
+      const {
+        presentationUrl: scheduledPresentationUrl,
+        sessionToken: scheduledSessionToken
+      } = captureCurrentStudioSessionSnapshot();
       
       if (SlideNextStudioVersionActions.shouldDebounceStudioAutoVersion(label)) {
         const timerKey = SlideNextStudioVersionActions.STUDIO_AUTO_VERSION_TIMER_KEY;

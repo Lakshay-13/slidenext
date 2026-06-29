@@ -43,6 +43,15 @@ function loadCreateCurrentStudioVersionPersistenceActionContext(fileContent, con
   vm.runInContext(helperSource, context);
 }
 
+function loadCaptureCurrentStudioSessionSnapshot(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function captureCurrentStudioSessionSnapshot() {',
+    '\n    \n    async function submitSaveVersion() {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
@@ -210,6 +219,24 @@ test('createCurrentStudioVersionPersistenceActionContext reuses the current save
   ]]);
 });
 
+test('captureCurrentStudioSessionSnapshot captures the current presentation identity and session token', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 13
+  };
+
+  vm.createContext(context);
+  loadCaptureCurrentStudioSessionSnapshot(fileContent, context);
+
+  const snapshot = context.captureCurrentStudioSessionSnapshot();
+
+  assert.deepEqual(JSON.parse(JSON.stringify(snapshot)), {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    sessionToken: 13
+  });
+});
+
 test('createCurrentStudioVersionPersistenceHandlerOptions reuses current session readers and forwards success hooks', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const currentStudioSessionStateReaders = {
@@ -374,6 +401,7 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioSessionSnapshot(fileContent, context);
   loadIsCurrentStudioPersistenceActionCurrent(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
@@ -484,6 +512,7 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioSessionSnapshot(fileContent, context);
   loadIsCurrentStudioPersistenceActionCurrent(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
@@ -604,6 +633,7 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioSessionSnapshot(fileContent, context);
   loadIsCurrentStudioPersistenceActionCurrent(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
@@ -724,6 +754,7 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioSessionSnapshot(fileContent, context);
   loadIsCurrentStudioPersistenceActionCurrent(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
@@ -950,6 +981,7 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioSessionSnapshot(fileContent, context);
   loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
@@ -1066,6 +1098,7 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioSessionSnapshot(fileContent, context);
   loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
@@ -1198,6 +1231,7 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioSessionSnapshot(fileContent, context);
   loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
@@ -1320,6 +1354,7 @@ test('triggerAutoSave clears the persisted playback baseline after a successful 
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioSessionSnapshot(fileContent, context);
   loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
