@@ -54,6 +54,8 @@
     const clone = doc.documentElement.cloneNode(true);
     const chromeNodeIds = Array.isArray(options.chromeNodeIds) ? options.chromeNodeIds : [];
     const removableClassNames = Array.isArray(options.removableClassNames) ? options.removableClassNames : [];
+    const editorElementIdAttr = typeof options.editorElementIdAttr === 'string' ? options.editorElementIdAttr.trim() : '';
+    const editorSlideIdAttr = typeof options.editorSlideIdAttr === 'string' ? options.editorSlideIdAttr.trim() : '';
 
     chromeNodeIds.forEach((nodeId) => {
       clone.querySelectorAll(`#${nodeId}`).forEach((node) => node.remove());
@@ -62,6 +64,12 @@
     removableClassNames.forEach((className) => {
       clone.querySelectorAll(`.${className}`).forEach((el) => {
         el.classList.remove(className);
+      });
+    });
+
+    [editorElementIdAttr, editorSlideIdAttr].filter(Boolean).forEach((attrName) => {
+      clone.querySelectorAll(`[${attrName}]`).forEach((node) => {
+        node.removeAttribute(attrName);
       });
     });
 

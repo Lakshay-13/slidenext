@@ -132,3 +132,46 @@ test('getLiveSelectedElements keeps only connected selections on the active slid
   assert.deepEqual(context.getLiveSelectedElements(), [activeElement]);
   assert.deepEqual(context.getLiveSelectedElements([offSlideElement, activeElement], null), []);
 });
+
+test('getEditorHistoryOptions includes editor runtime attr names for sanitized history snapshots', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorHistoryOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorHistoryOptions(options = {}) {',
+    '\n\n    function getEditorHistoryStackOptions(options = {}) {'
+  );
+
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay', 'editorGuidesLayer'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    getActiveSlideId() {
+      return 'slide-2';
+    },
+    getSelectedEditorElementIds() {
+      return ['node-1'];
+    },
+    areEditorIdListsEqual(left, right) {
+      return JSON.stringify(left) === JSON.stringify(right);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getEditorHistoryOptionsSource, context);
+
+  const options = context.getEditorHistoryOptions();
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(options.chromeNodeIds)),
+    ['editorSelectionOverlay', 'editorGuidesLayer']
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(options.removableClassNames)),
+    ['editor-selected', 'editor-hoverable', 'editor-dragging']
+  );
+  assert.equal(options.editorElementIdAttr, 'data-editor-id');
+  assert.equal(options.editorSlideIdAttr, 'data-slide-id');
+  assert.equal(typeof options.getActiveSlideId, 'function');
+  assert.equal(typeof options.getSelectedElementIds, 'function');
+  assert.equal(typeof options.areIdListsEqual, 'function');
+});

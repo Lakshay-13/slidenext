@@ -3,6 +3,46 @@ const assert = require('node:assert/strict');
 
 const studioHistory = require('../shared/studio-history.js');
 
+function createHistoryClassList(initialValues = []) {
+  const values = new Set(initialValues);
+  return {
+    remove(...entries) {
+      entries.forEach((entry) => values.delete(entry));
+    },
+    toString() {
+      return Array.from(values).join(' ');
+    }
+  };
+}
+
+function createHistorySerializableNode(tagName, attributes = {}, classNames = [], children = [], textContent = '') {
+  const nextAttributes = { ...attributes };
+  const node = {
+    removed: false,
+    classList: createHistoryClassList(classNames),
+    remove() {
+      this.removed = true;
+    },
+    removeAttribute(name) {
+      delete nextAttributes[name];
+    },
+    serialize() {
+      if (this.removed) return '';
+      const classes = this.classList.toString();
+      const attrEntries = Object.entries({
+        ...nextAttributes,
+        ...(classes ? { class: classes } : {})
+      });
+      const serializedAttrs = attrEntries.length === 0
+        ? ''
+        : ' ' + attrEntries.map(([name, value]) => `${name}="${value}"`).join(' ');
+      const serializedChildren = children.map((child) => child.serialize()).join('');
+      return `<${tagName}${serializedAttrs}>${textContent}${serializedChildren}</${tagName}>`;
+    }
+  };
+  return node;
+}
+
 test('createStudioHistoryEntry includes the canonical deck sidecar when provided', () => {
   const doc = { id: 'doc' };
   const canonicalDeck = {
@@ -160,6 +200,60 @@ test('captureStudioHistoryState stores normalized history entries in the undo st
     canonicalDeck: nextEntry.canonicalDeck
   });
   assert.deepEqual(result.redoStack, []);
+});
+
+test('buildStudioHistoryFrameHtml strips editor runtime ids from the captured html snapshot', () => {
+  const runtimeNode = createHistorySerializableNode(
+    'div',
+    { 'data-editor-id': 'node-1' },
+    ['editor-hoverable'],
+    [],
+    'Hero copy'
+  );
+  const slideNode = createHistorySerializableNode(
+    'section',
+    { 'data-slide-id': 'slide-runtime-1' },
+    ['slide', 'editor-selected'],
+    [runtimeNode]
+  );
+  const overlayNode = createHistorySerializableNode('div', { id: 'editorSelectionOverlay' });
+  const clone = {
+    querySelectorAll(selector) {
+      switch (selector) {
+        case '#editorSelectionOverlay':
+          return [overlayNode];
+        case '.editor-selected':
+          return [slideNode];
+        case '.editor-hoverable':
+          return [runtimeNode];
+        case '[data-editor-id]':
+          return [runtimeNode];
+        case '[data-slide-id]':
+          return [slideNode];
+        default:
+          return [];
+      }
+    },
+    get innerHTML() {
+      return slideNode.serialize() + overlayNode.serialize();
+    }
+  };
+  const doc = {
+    documentElement: {
+      cloneNode() {
+        return clone;
+      }
+    }
+  };
+
+  const html = studioHistory.buildStudioHistoryFrameHtml(doc, {
+    chromeNodeIds: ['editorSelectionOverlay'],
+    removableClassNames: ['editor-selected', 'editor-hoverable'],
+    editorElementIdAttr: 'data-editor-id',
+    editorSlideIdAttr: 'data-slide-id'
+  });
+
+  assert.equal(html, '<section class="slide"><div>Hero copy</div></section>');
 });
 
 test('restoreStudioHistoryFrameSetup falls back to rendered canonical deck html when snapshot html is empty', () => {
