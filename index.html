@@ -2348,16 +2348,6 @@
       return SlideNextStudioDeckContext.buildStudioPresentationMetadataSeed(presentationUrl, presentationTitle);
     }
 
-    function createCurrentStudioPresentationMetadataLoadOptions(options = {}) {
-      return {
-        ...createCurrentStudioSessionStateOptions({
-          sessionToken: options.sessionToken
-        }),
-        setCurrentPresentationMetadata: options.setCurrentPresentationMetadata,
-        onError: options.onError
-      };
-    }
-
     async function loadCurrentPresentationMetadata(
       presentationUrl = currentPresentationUrl,
       presentationTitle = currentTitle,
@@ -2366,7 +2356,10 @@
       return SlideNextStudioDeckContext.loadStudioPresentationMetadata(
         presentationUrl,
         presentationTitle,
-        createCurrentStudioPresentationMetadataLoadOptions({
+        SlideNextStudioDeckContext.createStudioPresentationMetadataLoadOptions({
+          ...createCurrentStudioSessionStateOptions({
+            sessionToken
+          }),
           sessionToken,
           setCurrentPresentationMetadata: (metadata) => {
             applyCurrentPresentationMetadata(metadata, { syncPersistedCanonicalDeck: true });

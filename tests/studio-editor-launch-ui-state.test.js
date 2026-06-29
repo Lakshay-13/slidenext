@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const deckContext = require('../shared/studio-deck-context.js');
 const editorSession = require('../shared/studio-editor-session.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -14,16 +15,6 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
   return fileContent.slice(start, end);
-}
-
-function loadCreateCurrentStudioPresentationMetadataLoadOptions(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioPresentationMetadataLoadOptions(options = {}) {',
-    '\n\n    async function loadCurrentPresentationMetadata('
-  );
-  vm.runInContext(helperSource, context);
 }
 
 function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
@@ -488,41 +479,6 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
   assert.equal(loadPresentationsCalls, 1);
 });
 
-test('createCurrentStudioPresentationMetadataLoadOptions reuses current session readers and forwards metadata hooks', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const currentStudioSessionStateReaders = {
-    getCurrentPresentationUrl() {
-      return context.currentPresentationUrl;
-    },
-    getCurrentSessionToken() {
-      return context.studioEditorSessionToken;
-    }
-  };
-  const hooks = {
-    sessionToken: 11,
-    setCurrentPresentationMetadata() {},
-    onError() {}
-  };
-  const context = {
-    createCurrentStudioSessionStateReaders() {
-      return currentStudioSessionStateReaders;
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 11
-  };
-
-  vm.createContext(context);
-  loadCreateCurrentStudioPresentationMetadataLoadOptions(fileContent, context);
-
-  const options = context.createCurrentStudioPresentationMetadataLoadOptions(hooks);
-
-  assert.equal(options.sessionToken, 11);
-  assert.equal(options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
-  assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
-  assert.equal(options.setCurrentPresentationMetadata, hooks.setCurrentPresentationMetadata);
-  assert.equal(options.onError, hooks.onError);
-});
-
 test('loadCurrentPresentationMetadata reuses current session readers when delegating to the deck context', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const loadCurrentPresentationMetadataSource = extractFunctionSource(
@@ -542,6 +498,7 @@ test('loadCurrentPresentationMetadata reuses current session readers when delega
   };
   const context = {
     SlideNextStudioDeckContext: {
+      ...deckContext,
       async loadStudioPresentationMetadata(presentationUrl, presentationTitle, options) {
         capturedOptions = options;
         options.setCurrentPresentationMetadata({
@@ -574,7 +531,7 @@ test('loadCurrentPresentationMetadata reuses current session readers when delega
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioPresentationMetadataLoadOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(loadCurrentPresentationMetadataSource, context);
 
   const metadata = await context.loadCurrentPresentationMetadata(
@@ -735,6 +692,7 @@ test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline
 
   const context = {
     SlideNextStudioDeckContext: {
+      ...deckContext,
       async loadStudioPresentationMetadata(presentationUrl, presentationTitle, options) {
         options.setCurrentPresentationMetadata(fetchedMetadata);
         return fetchedMetadata;
@@ -770,7 +728,7 @@ test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioPresentationMetadataLoadOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(loadCurrentPresentationMetadataSource, context);
 
   const metadata = await context.loadCurrentPresentationMetadata(

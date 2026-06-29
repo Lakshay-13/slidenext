@@ -59,6 +59,16 @@
     return deckLoader.buildPresentationMetadataSeed(presentationUrl, presentationTitle);
   }
 
+  function createStudioPresentationMetadataLoadOptions(options = {}) {
+    return {
+      sessionToken: normalizeSessionToken(options.sessionToken),
+      getCurrentPresentationUrl: options.getCurrentPresentationUrl,
+      getCurrentSessionToken: options.getCurrentSessionToken,
+      setCurrentPresentationMetadata: options.setCurrentPresentationMetadata,
+      onError: options.onError
+    };
+  }
+
   async function loadStudioPresentationMetadata(presentationUrl = '', presentationTitle = '', options = {}) {
     const loadMetadata = deckLoader && typeof deckLoader.loadPresentationMetadata === 'function'
       ? deckLoader.loadPresentationMetadata
@@ -154,6 +164,7 @@
 
   return {
     buildStudioPresentationMetadataSeed,
+    createStudioPresentationMetadataLoadOptions,
     loadStudioPresentationMetadata,
     mergeStudioPresentationMetadataCanonicalDeck,
     resolvePreferredStoredStudioCanonicalDeck,
