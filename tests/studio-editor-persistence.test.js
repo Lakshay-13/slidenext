@@ -593,6 +593,85 @@ test('createStudioAutoSavePersistenceState reuses the shared autosave plan and p
   });
 });
 
+test('resolveStudioAutoSavePersistenceState returns null without persisted html and otherwise reuses the shared autosave state helper', () => {
+  const persistedDeckState = {
+    doc: { label: 'iframe-doc' },
+    cleanHtml: '<html>live-save</html>',
+    canonicalDeck: canonicalDeckModel.createCanonicalDeck({
+      metadata: {
+        title: 'Project Onboarding'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    }),
+    playbackState: {
+      activeSlideIds: ['slide-live'],
+      slideCounterText: '2 / 4'
+    }
+  };
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioAutoSavePersistenceState(
+      persistedDeckState,
+      '/presentations/onboarding-presentation/index.html',
+      {
+        isPersistedState() {
+          return false;
+        },
+        buildSaveRequestBody(doc, cleanHtml, options = {}) {
+          return editorPersistence.buildStudioSaveRequestBody(
+            options.presentationUrl,
+            cleanHtml,
+            {
+              isAutoSave: options.isAutoSave,
+              canonicalDeck: options.canonicalDeck
+            }
+          );
+        },
+        sessionToken: 9
+      }
+    ),
+    editorPersistence.createStudioAutoSavePersistenceState(
+      persistedDeckState,
+      '/presentations/onboarding-presentation/index.html',
+      {
+        isPersistedState() {
+          return false;
+        },
+        buildSaveRequestBody(doc, cleanHtml, options = {}) {
+          return editorPersistence.buildStudioSaveRequestBody(
+            options.presentationUrl,
+            cleanHtml,
+            {
+              isAutoSave: options.isAutoSave,
+              canonicalDeck: options.canonicalDeck
+            }
+          );
+        },
+        sessionToken: 9
+      }
+    )
+  );
+
+  assert.equal(
+    editorPersistence.resolveStudioAutoSavePersistenceState(
+      {
+        doc: { label: 'iframe-doc' },
+        cleanHtml: '',
+        canonicalDeck: null,
+        playbackState: null
+      },
+      '/presentations/onboarding-presentation/index.html',
+      { sessionToken: 9 }
+    ),
+    null
+  );
+});
+
 test('buildStudioVersionCheckpointPersistencePlan reuses the shared playback fallback and persistence-plan wiring', () => {
   const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
     metadata: {

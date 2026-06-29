@@ -4149,12 +4149,8 @@
       sessionToken = studioEditorSessionToken,
       doc = getIframeDoc()
     ) {
-      const persistedDeckState = captureCurrentStudioPersistableDeckStateWithContent(doc);
-      if (!persistedDeckState) {
-        return null;
-      }
-      return SlideNextStudioEditorPersistence.createStudioAutoSavePersistenceState(
-        persistedDeckState,
+      return SlideNextStudioEditorPersistence.resolveStudioAutoSavePersistenceState(
+        captureCurrentStudioPersistableDeckState(doc),
         presentationUrl,
         {
           isPersistedState: isCurrentDeckStatePersisted,

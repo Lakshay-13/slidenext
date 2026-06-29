@@ -104,6 +104,10 @@ function loadHandleCurrentStudioPersistenceFailure(fileContent, context) {
 }
 
 function loadCaptureCurrentStudioAutoSavePersistenceState(fileContent, context) {
+  context.SlideNextStudioEditorPersistence = {
+    ...editorPersistence,
+    ...(context.SlideNextStudioEditorPersistence || {})
+  };
   const helperSource = extractFunctionSource(
     fileContent,
     'function captureCurrentStudioAutoSavePersistenceState(',
@@ -310,6 +314,7 @@ test('captureCurrentStudioVersionCheckpointPersistenceState returns null when no
 test('captureCurrentStudioAutoSavePersistenceState reuses current deck capture and autosave plan creation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
+  let capturedPersistedDeckState = null;
   const persistedDeckState = {
     doc: iframeDoc,
     cleanHtml: '<html>live-save</html>',
@@ -317,12 +322,14 @@ test('captureCurrentStudioAutoSavePersistenceState reuses current deck capture a
     playbackState: { activeSlideIds: ['slide-live'], slideCounterText: '2 / 4' }
   };
   const context = {
-    captureCurrentStudioPersistableDeckStateWithContent(doc) {
+    captureCurrentStudioPersistableDeckState(doc) {
       assert.deepEqual(doc, iframeDoc);
       return persistedDeckState;
     },
     SlideNextStudioEditorPersistence: {
-      createStudioAutoSavePersistenceState(nextPersistedDeckState, presentationUrl, options = {}) {
+      ...editorPersistence,
+      resolveStudioAutoSavePersistenceState(nextPersistedDeckState, presentationUrl, options = {}) {
+        capturedPersistedDeckState = nextPersistedDeckState;
         assert.deepEqual(
           JSON.parse(JSON.stringify(nextPersistedDeckState)),
           {
@@ -375,6 +382,12 @@ test('captureCurrentStudioAutoSavePersistenceState reuses current deck capture a
       }
     }
   );
+  assert.deepEqual(JSON.parse(JSON.stringify(capturedPersistedDeckState)), {
+    doc: { label: 'iframe-doc' },
+    cleanHtml: '<html>live-save</html>',
+    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
+    playbackState: { activeSlideIds: ['slide-live'], slideCounterText: '2 / 4' }
+  });
 });
 
 test('isCurrentStudioPersistenceActionCurrent reuses current session readers for save-version persistence checks', () => {
