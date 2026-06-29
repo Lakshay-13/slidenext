@@ -309,6 +309,7 @@ test('restoreStudioHistoryFrameSetup falls back to rendered canonical deck html 
 
   const result = studioHistory.restoreStudioHistoryFrameSetup({
     html: '',
+    activeSlideId: 'slide-2',
     canonicalDeck
   }, {
     doc,
@@ -348,11 +349,53 @@ test('restoreStudioHistoryFrameSetup falls back to rendered canonical deck html 
     'generateThumbnails'
   ]);
   assert.equal(calls[0][1], canonicalDeck);
-  assert.deepEqual(calls[0][2], {});
+  assert.deepEqual(calls[0][2], {
+    renderOptions: {
+      activeSlideId: 'slide-2'
+    }
+  });
   assert.equal(calls[1][1], doc);
   assert.equal(calls[1][2], '<head><style>.deck{}</style></head><body><main>rendered</main></body>');
   assert.equal(result.didRestoreDoc, true);
   assert.equal(result.restoredHtmlLength, '<head><style>.deck{}</style></head><body><main>rendered</main></body>'.length);
+});
+
+test('restoreStudioHistoryFrameSetup preserves an explicit render active slide override over the history entry active slide', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }, { id: 'slide-2', nodes: [] }]
+  };
+  const doc = {
+    documentElement: {
+      innerHTML: ''
+    }
+  };
+  const calls = [];
+
+  studioHistory.restoreStudioHistoryFrameSetup({
+    html: '',
+    activeSlideId: 'slide-2',
+    canonicalDeck
+  }, {
+    doc,
+    deckHtmlOptions: {
+      renderOptions: {
+        activeSlideId: 'slide-1'
+      }
+    },
+    buildDeckSourceHtml(deck, options) {
+      calls.push(['buildDeckSourceHtml', deck, options]);
+      return '<html><body><main>rendered</main></body></html>';
+    }
+  });
+
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0][2], {
+    renderOptions: {
+      activeSlideId: 'slide-1'
+    }
+  });
 });
 
 test('restoreStudioHistoryFrameSetup prefers captured history html over canonical deck fallback html', () => {

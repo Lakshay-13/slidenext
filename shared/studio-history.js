@@ -39,9 +39,28 @@
       return normalizeStudioHistoryFrameHtml(html);
     }
 
+    const historyActiveSlideId = historyEntry && typeof historyEntry.activeSlideId === 'string'
+      ? historyEntry.activeSlideId
+      : '';
+    const deckHtmlOptions = options.deckHtmlOptions && typeof options.deckHtmlOptions === 'object'
+      ? options.deckHtmlOptions
+      : {};
+    const renderOptions = deckHtmlOptions.renderOptions && typeof deckHtmlOptions.renderOptions === 'object'
+      ? deckHtmlOptions.renderOptions
+      : {};
+    const resolvedDeckHtmlOptions = historyActiveSlideId && !renderOptions.activeSlideId
+      ? {
+          ...deckHtmlOptions,
+          renderOptions: {
+            ...renderOptions,
+            activeSlideId: historyActiveSlideId
+          }
+        }
+      : deckHtmlOptions;
+
     try {
       return normalizeStudioHistoryFrameHtml(
-        buildDeckSourceHtml(canonicalDeck, options.deckHtmlOptions || {})
+        buildDeckSourceHtml(canonicalDeck, resolvedDeckHtmlOptions)
       );
     } catch (err) {
       return normalizeStudioHistoryFrameHtml(html);
