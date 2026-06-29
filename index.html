@@ -3936,7 +3936,7 @@
           observeDeckActiveSlideState
         })
       });
-      const restoredPlaybackState = capturePersistedDeckPlaybackState(iframeDoc);
+      const restoredPlaybackState = capturePersistedDeckPlaybackState(iframeDoc, historyEntry.canonicalDeck);
       updateEditorPersistedDeckState({ playbackState: restoredPlaybackState });
       setCurrentPresentationCanonicalDeck(historyEntry.canonicalDeck);
     }

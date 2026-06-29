@@ -671,8 +671,8 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
     bindDeckNavigationSync(doc) {
       callLog.push(['bindDeckNavigationSync', doc]);
     },
-    capturePersistedDeckPlaybackState(doc) {
-      callLog.push(['capturePersistedDeckPlaybackState', doc]);
+    capturePersistedDeckPlaybackState(doc, nextCanonicalDeck) {
+      callLog.push(['capturePersistedDeckPlaybackState', doc, nextCanonicalDeck]);
       return restoredPlaybackState;
     },
     currentSlideIndex: 2,
@@ -799,7 +799,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   assert.equal(callLog[16][2], iframeDoc);
   assert.deepEqual(callLog[17], ['restoreCommittedSelectionByIdsOnActiveSlide', ['node-1'], iframeDoc]);
   assert.deepEqual(callLog[18], ['observeDeckActiveSlideState', iframeDoc]);
-  assert.deepEqual(callLog[19], ['capturePersistedDeckPlaybackState', iframeDoc]);
+  assert.deepEqual(callLog[19], ['capturePersistedDeckPlaybackState', iframeDoc, canonicalDeck]);
   assert.equal(callLog[20][0], 'updateEditorPersistedDeckState');
   assert.deepEqual(
     JSON.parse(JSON.stringify(callLog[20][1])),
@@ -833,8 +833,8 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
     buildEditorCanonicalDeck() {
       return null;
     },
-    capturePersistedDeckPlaybackState(doc) {
-      callLog.push(['capturePersistedDeckPlaybackState', doc]);
+    capturePersistedDeckPlaybackState(doc, nextCanonicalDeck) {
+      callLog.push(['capturePersistedDeckPlaybackState', doc, nextCanonicalDeck]);
       return null;
     },
     currentSlideIndex: 0,
@@ -887,7 +887,7 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
     canonicalDeck: null
   });
 
-  assert.deepEqual(callLog[0], ['capturePersistedDeckPlaybackState', iframeDoc]);
+  assert.deepEqual(callLog[0], ['capturePersistedDeckPlaybackState', iframeDoc, null]);
   assert.deepEqual(
     JSON.parse(JSON.stringify(callLog[1])),
     ['updateEditorPersistedDeckState', { playbackState: null }]
