@@ -31,7 +31,17 @@ function createClassList(initialValues = []) {
   };
 }
 
+function loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionActionHandlerOptions(options = {}) {',
+    '\n\n    function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context) {
+  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {',
@@ -41,6 +51,7 @@ function loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context)
 }
 
 function loadHandleCurrentStudioVersionActionFailure(fileContent, context) {
+  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionActionFailure(versionActionContext, options = {}) {',
@@ -50,6 +61,7 @@ function loadHandleCurrentStudioVersionActionFailure(fileContent, context) {
 }
 
 function loadHandleCurrentStudioVersionRestoreSuccess(fileContent, context) {
+  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionRestoreSuccess(versionActionContext, options = {}) {',
@@ -313,6 +325,49 @@ test('createCurrentStudioVersionActionContext captures the active editor deck id
   assert.equal(calls[0][1], 'Project Onboarding');
   assert.equal(calls[0][2], 'General');
   assert.equal(calls[0][3].sessionToken, 21);
+});
+
+test('createCurrentStudioVersionActionHandlerOptions reuses current session readers and forwards supplied hooks', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const currentStudioSessionStateReaders = {
+    getCurrentPresentationUrl() {
+      return context.currentPresentationUrl;
+    },
+    getCurrentSessionToken() {
+      return context.studioEditorSessionToken;
+    }
+  };
+  const hooks = {
+    isCurrentSession() {
+      return true;
+    },
+    onSuccess() {},
+    onFailure() {},
+    hideVersionsDropdown() {},
+    relaunchEditor() {},
+    refreshVersionEntries() {}
+  };
+  const context = {
+    createCurrentStudioSessionStateReaders() {
+      return currentStudioSessionStateReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 8
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
+
+  const options = context.createCurrentStudioVersionActionHandlerOptions(hooks);
+
+  assert.equal(options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
+  assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.equal(options.isCurrentSession, hooks.isCurrentSession);
+  assert.equal(options.onSuccess, hooks.onSuccess);
+  assert.equal(options.onFailure, hooks.onFailure);
+  assert.equal(options.hideVersionsDropdown, hooks.hideVersionsDropdown);
+  assert.equal(options.relaunchEditor, hooks.relaunchEditor);
+  assert.equal(options.refreshVersionEntries, hooks.refreshVersionEntries);
 });
 
 test('handleCurrentStudioVersionListMutationSuccess reuses current session readers and refreshes version entries by default', () => {

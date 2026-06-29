@@ -4741,36 +4741,48 @@
       );
     }
 
-    function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {
-      const handlerOptions = {
+    function createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return {
         ...createCurrentStudioSessionStateReaders(),
         isCurrentSession: options.isCurrentSession,
-        onSuccess: options.onSuccess
+        onSuccess: options.onSuccess,
+        onFailure: options.onFailure,
+        hideVersionsDropdown: options.hideVersionsDropdown,
+        relaunchEditor: options.relaunchEditor,
+        refreshVersionEntries: options.refreshVersionEntries
       };
-      if (options.shouldRefreshVersionEntries !== false) {
-        handlerOptions.refreshVersionEntries = loadVersions;
-      }
+    }
+
+    function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {
       return SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
         versionActionContext,
-        handlerOptions
+        createCurrentStudioVersionActionHandlerOptions({
+          isCurrentSession: options.isCurrentSession,
+          onSuccess: options.onSuccess,
+          refreshVersionEntries: options.shouldRefreshVersionEntries !== false ? loadVersions : undefined
+        })
       );
     }
 
     function handleCurrentStudioVersionActionFailure(versionActionContext, options = {}) {
-      return SlideNextStudioVersionActions.handleStudioVersionActionFailure(versionActionContext, {
-        ...createCurrentStudioSessionStateReaders(),
-        isCurrentSession: options.isCurrentSession,
-        onFailure: options.onFailure
-      });
+      return SlideNextStudioVersionActions.handleStudioVersionActionFailure(
+        versionActionContext,
+        createCurrentStudioVersionActionHandlerOptions({
+          isCurrentSession: options.isCurrentSession,
+          onFailure: options.onFailure
+        })
+      );
     }
 
     function handleCurrentStudioVersionRestoreSuccess(versionActionContext, options = {}) {
-      return SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(versionActionContext, {
-        ...createCurrentStudioSessionStateReaders(),
-        onSuccess: options.onSuccess,
-        hideVersionsDropdown: options.hideVersionsDropdown,
-        relaunchEditor: options.relaunchEditor
-      });
+      return SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(
+        versionActionContext,
+        createCurrentStudioVersionActionHandlerOptions({
+          onSuccess: options.onSuccess,
+          hideVersionsDropdown: options.hideVersionsDropdown,
+          relaunchEditor: options.relaunchEditor
+        })
+      );
     }
 
     // Rollback backup version
