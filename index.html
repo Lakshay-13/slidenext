@@ -1435,7 +1435,7 @@
     function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {
       const persistedActiveSlideId = getPersistedActiveSlideId();
       if (doc) {
-        const liveActiveSlideId = getActiveSlideId(doc);
+        const liveActiveSlideId = resolveEditorLiveActiveSlideId(doc);
         if (typeof liveActiveSlideId === 'string' && liveActiveSlideId.trim()) {
           return liveActiveSlideId;
         }
@@ -1455,6 +1455,17 @@
       return activeSlide && typeof activeSlide.id === 'string' && activeSlide.id.trim()
         ? activeSlide.id
         : persistedActiveSlideId;
+    }
+
+    function resolveEditorLiveActiveSlideId(doc = getIframeDoc()) {
+      if (!doc || typeof doc.querySelector !== 'function') {
+        return '';
+      }
+      const activeSlide = doc.querySelector('.slide-active');
+      if (!activeSlide) {
+        return '';
+      }
+      return getActiveSlideId(doc);
     }
 
     function buildEditorDeckRenderOptions(doc = getIframeDoc(), canonicalDeck = null, options = {}) {
@@ -1485,7 +1496,7 @@
       const resolveCanonicalDeck = createEditorCanonicalDeckResolver(doc);
       const resolveLiveActiveSlideId = typeof options.resolveLiveActiveSlideId === 'function'
         ? options.resolveLiveActiveSlideId
-        : (sourceDoc) => sourceDoc ? (getActiveSlideId(sourceDoc) || '') : '';
+        : (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc);
       const liveActiveSlideId = resolveLiveActiveSlideId(doc);
       const resolvedCanonicalDeck = !doc
         ? resolveCanonicalDeck(doc)

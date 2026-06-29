@@ -158,7 +158,13 @@ test('buildEditorSourceHtml prefers the live active slide when the editor frame 
       { id: 'slide-2', nodes: [] }
     ]
   };
-  const iframeDoc = { label: 'iframe-doc' };
+  const iframeDoc = {
+    label: 'iframe-doc',
+    querySelector(selector) {
+      assert.equal(selector, '.slide-active');
+      return { label: 'active-slide' };
+    }
+  };
   const calls = [];
   const context = {
     SlideNextStudioDeckView: {
@@ -210,7 +216,13 @@ test('buildEditorSourceHtml reuses the resolved live canonical deck when source 
     schemaVersion: 1,
     slides: [{ id: 'slide-1', nodes: [] }]
   };
-  const iframeDoc = { label: 'iframe-doc' };
+  const iframeDoc = {
+    label: 'iframe-doc',
+    querySelector(selector) {
+      assert.equal(selector, '.slide-active');
+      return { label: 'active-slide' };
+    }
+  };
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
     SlideNextStudioDeckView: {
@@ -264,7 +276,13 @@ test('buildEditorSourceHtml falls back to the current session slide when live ac
       { id: 'slide-2', nodes: [] }
     ]
   };
-  const iframeDoc = { label: 'iframe-doc' };
+  const iframeDoc = {
+    label: 'iframe-doc',
+    querySelector(selector) {
+      assert.equal(selector, '.slide-active');
+      return null;
+    }
+  };
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
     SlideNextStudioDeckView: {
