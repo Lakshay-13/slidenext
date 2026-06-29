@@ -93,19 +93,6 @@ function loadHandleCurrentStudioPersistenceFailure(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadCaptureCurrentStudioAutoSavePersistenceState(fileContent, context) {
-  context.SlideNextStudioEditorPersistence = {
-    ...editorPersistence,
-    ...(context.SlideNextStudioEditorPersistence || {})
-  };
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function captureCurrentStudioAutoSavePersistenceState(',
-    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
 test('setStudioSaveButtonState renders the version button loading and idle states', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setStudioSaveButtonStateSource = extractFunctionSource(
@@ -242,100 +229,6 @@ test('captureCurrentStudioVersionCheckpointPersistenceState returns null when no
     ),
     null
   );
-});
-
-test('captureCurrentStudioAutoSavePersistenceState reuses current deck capture and autosave plan creation', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const iframeDoc = { label: 'iframe-doc' };
-  let capturedPersistableDeckStateArgs = null;
-  let capturedPersistedDeckState = null;
-  const persistedDeckState = {
-    cleanHtml: '<html>live-save</html>',
-    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-    playbackState: { activeSlideIds: ['slide-live'], slideCounterText: '2 / 4' }
-  };
-  const context = {
-    captureEditorPersistableDeckState(doc) {
-      assert.deepEqual(doc, iframeDoc);
-      return persistedDeckState;
-    },
-    getIframeDoc() {
-      return iframeDoc;
-    },
-    SlideNextStudioEditorPersistence: {
-      ...editorPersistence,
-      createStudioPersistableDeckState(doc, nextPersistedDeckState) {
-        capturedPersistableDeckStateArgs = [doc, nextPersistedDeckState];
-        return editorPersistence.createStudioPersistableDeckState(doc, nextPersistedDeckState);
-      },
-      resolveStudioAutoSavePersistenceState(nextPersistedDeckState, presentationUrl, options = {}) {
-        capturedPersistedDeckState = nextPersistedDeckState;
-        assert.deepEqual(
-          JSON.parse(JSON.stringify(nextPersistedDeckState)),
-          {
-            doc: iframeDoc,
-            cleanHtml: '<html>live-save</html>',
-            canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-            playbackState: { activeSlideIds: ['slide-live'], slideCounterText: '2 / 4' }
-          }
-        );
-        assert.equal(options.isPersistedState, context.isCurrentDeckStatePersisted);
-        assert.equal(options.buildSaveRequestBody, context.buildEditorSaveRequestBody);
-        return {
-          persistedDeckState: nextPersistedDeckState,
-          persistencePlan: {
-            presentationUrl,
-            sessionToken: options.sessionToken,
-            hasPersistedCurrentState: false
-          }
-        };
-      }
-    },
-    isCurrentDeckStatePersisted() {},
-    buildEditorSaveRequestBody() {
-      throw new Error('save request body builder should not run in this capture-state test');
-    }
-  };
-
-  vm.createContext(context);
-  loadCaptureCurrentStudioAutoSavePersistenceState(fileContent, context);
-
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(
-      context.captureCurrentStudioAutoSavePersistenceState(
-        '/presentations/onboarding-presentation/index.html',
-        14,
-        iframeDoc
-      )
-    )),
-    {
-      persistedDeckState: {
-        doc: { label: 'iframe-doc' },
-        cleanHtml: '<html>live-save</html>',
-        canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-        playbackState: { activeSlideIds: ['slide-live'], slideCounterText: '2 / 4' }
-      },
-      persistencePlan: {
-        presentationUrl: '/presentations/onboarding-presentation/index.html',
-        sessionToken: 14,
-        hasPersistedCurrentState: false
-      }
-    }
-  );
-  assert.deepEqual(JSON.parse(JSON.stringify(capturedPersistableDeckStateArgs)), [
-    { label: 'iframe-doc' },
-    {
-      cleanHtml: '<html>live-save</html>',
-      canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-      playbackState: { activeSlideIds: ['slide-live'], slideCounterText: '2 / 4' }
-    }
-  ]);
-  assert.deepEqual(JSON.parse(JSON.stringify(capturedPersistedDeckState)), {
-    doc: { label: 'iframe-doc' },
-    cleanHtml: '<html>live-save</html>',
-    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-    playbackState: { activeSlideIds: ['slide-live'], slideCounterText: '2 / 4' }
-  });
 });
 
 test('captureCurrentStudioSessionSnapshot captures the current presentation identity and session token', () => {
@@ -1079,7 +972,6 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCaptureCurrentStudioSessionSnapshot(fileContent, context);
-  loadCaptureCurrentStudioAutoSavePersistenceState(fileContent, context);
   loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
@@ -1204,7 +1096,6 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCaptureCurrentStudioSessionSnapshot(fileContent, context);
-  loadCaptureCurrentStudioAutoSavePersistenceState(fileContent, context);
   loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
@@ -1339,7 +1230,6 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCaptureCurrentStudioSessionSnapshot(fileContent, context);
-  loadCaptureCurrentStudioAutoSavePersistenceState(fileContent, context);
   loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
@@ -1463,7 +1353,6 @@ test('triggerAutoSave clears the persisted playback baseline after a successful 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCaptureCurrentStudioSessionSnapshot(fileContent, context);
-  loadCaptureCurrentStudioAutoSavePersistenceState(fileContent, context);
   loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);

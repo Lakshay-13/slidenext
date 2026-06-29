@@ -4144,25 +4144,6 @@
       );
     }
 
-    function captureCurrentStudioAutoSavePersistenceState(
-      presentationUrl = currentPresentationUrl,
-      sessionToken = studioEditorSessionToken,
-      doc = getIframeDoc()
-    ) {
-      return SlideNextStudioEditorPersistence.resolveStudioAutoSavePersistenceState(
-        SlideNextStudioEditorPersistence.createStudioPersistableDeckState(
-          doc,
-          captureEditorPersistableDeckState(doc)
-        ),
-        presentationUrl,
-        {
-          isPersistedState: isCurrentDeckStatePersisted,
-          buildSaveRequestBody: buildEditorSaveRequestBody,
-          sessionToken
-        }
-      );
-    }
-
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
       const persistencePlan = SlideNextStudioEditorPersistence.buildStudioVersionCheckpointPersistencePlan(
         versionLabel,
@@ -4207,9 +4188,17 @@
       autoSaveDebounceTimer = setTimeout(async () => {
         autoSaveDebounceTimer = null;
         if (isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
-        const autoSavePersistenceState = captureCurrentStudioAutoSavePersistenceState(
+        const autoSavePersistenceState = SlideNextStudioEditorPersistence.resolveStudioAutoSavePersistenceState(
+          SlideNextStudioEditorPersistence.createStudioPersistableDeckState(
+            getIframeDoc(),
+            captureEditorPersistableDeckState()
+          ),
           scheduledPresentationUrl,
-          scheduledSessionToken
+          {
+            isPersistedState: isCurrentDeckStatePersisted,
+            buildSaveRequestBody: buildEditorSaveRequestBody,
+            sessionToken: scheduledSessionToken
+          }
         );
         if (!autoSavePersistenceState) {
           setStudioAutoSaveStatus('saved');
