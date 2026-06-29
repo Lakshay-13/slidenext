@@ -296,6 +296,23 @@
     };
   }
 
+  function resolveStudioVersionCheckpointPersistenceState(
+    persistedDeckState = {},
+    presentationUrl = '',
+    options = {}
+  ) {
+    const nextPersistedDeckState = resolveStudioPersistableDeckStateWithContent(persistedDeckState);
+    if (!nextPersistedDeckState) {
+      return null;
+    }
+
+    return createStudioVersionCheckpointPersistenceState(
+      nextPersistedDeckState,
+      presentationUrl,
+      options
+    );
+  }
+
   function isStudioPersistedHtml(cleanHtml = '', persistedHtml = '') {
     return !!normalizeString(persistedHtml) && normalizeString(cleanHtml) === normalizeString(persistedHtml);
   }
@@ -460,6 +477,7 @@
     buildStudioVersionCheckpointPersistencePlan,
     createStudioVersionCheckpointRequestOptions,
     createStudioVersionCheckpointPersistenceState,
+    resolveStudioVersionCheckpointPersistenceState,
     isStudioPersistedHtml,
     isStudioPersistedCanonicalDeck,
     isStudioPersistedState,

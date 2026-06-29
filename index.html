@@ -4644,12 +4644,8 @@
       sessionToken = studioEditorSessionToken,
       doc = getIframeDoc()
     ) {
-      const persistedDeckState = captureCurrentStudioPersistableDeckStateWithContent(doc);
-      if (!persistedDeckState) {
-        return null;
-      }
-      return SlideNextStudioEditorPersistence.createStudioVersionCheckpointPersistenceState(
-        persistedDeckState,
+      return SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceState(
+        captureCurrentStudioPersistableDeckState(doc),
         presentationUrl,
         {
           sessionToken

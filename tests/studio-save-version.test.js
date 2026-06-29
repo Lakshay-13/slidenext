@@ -218,6 +218,7 @@ test('captureCurrentStudioPersistableDeckStateWithContent returns null when the 
 test('captureCurrentStudioVersionCheckpointPersistenceState reuses current deck capture and shared checkpoint state creation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
+  let capturedPersistedDeckState = null;
   const persistedDeckState = {
     cleanHtml: '<html>persisted</html>',
     canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
@@ -232,7 +233,9 @@ test('captureCurrentStudioVersionCheckpointPersistenceState reuses current deck 
       return iframeDoc;
     },
     SlideNextStudioEditorPersistence: {
-      createStudioVersionCheckpointPersistenceState(nextPersistedDeckState, presentationUrl, options = {}) {
+      ...editorPersistence,
+      resolveStudioVersionCheckpointPersistenceState(nextPersistedDeckState, presentationUrl, options = {}) {
+        capturedPersistedDeckState = nextPersistedDeckState;
         assert.deepEqual(
           JSON.parse(JSON.stringify(nextPersistedDeckState)),
           {
@@ -268,6 +271,12 @@ test('captureCurrentStudioVersionCheckpointPersistenceState reuses current deck 
       cleanHtml: '<html>persisted</html>'
     }
   );
+  assert.deepEqual(JSON.parse(JSON.stringify(capturedPersistedDeckState)), {
+    doc: iframeDoc,
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
+    playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
+  });
 });
 
 test('captureCurrentStudioVersionCheckpointPersistenceState returns null when no persistable deck content is available', () => {
@@ -280,11 +289,7 @@ test('captureCurrentStudioVersionCheckpointPersistenceState returns null when no
         playbackState: null
       };
     },
-    SlideNextStudioEditorPersistence: {
-      createStudioVersionCheckpointPersistenceState() {
-        throw new Error('persistence state should not be built without persistable deck content');
-      }
-    },
+    SlideNextStudioEditorPersistence: editorPersistence,
     getIframeDoc() {
       return null;
     }

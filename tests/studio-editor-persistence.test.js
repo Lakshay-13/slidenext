@@ -753,6 +753,49 @@ test('createStudioVersionCheckpointPersistenceState reuses the shared version co
   );
 });
 
+test('resolveStudioVersionCheckpointPersistenceState returns null without persisted html and otherwise reuses the shared checkpoint state helper', () => {
+  const persistedDeckState = {
+    doc: { label: 'iframe-doc' },
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: []
+    },
+    playbackState: {
+      activeSlideIds: ['slide-1'],
+      slideCounterText: '1 / 1'
+    }
+  };
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioVersionCheckpointPersistenceState(
+      persistedDeckState,
+      '/presentations/onboarding-presentation/index.html',
+      { sessionToken: 17 }
+    ),
+    editorPersistence.createStudioVersionCheckpointPersistenceState(
+      persistedDeckState,
+      '/presentations/onboarding-presentation/index.html',
+      { sessionToken: 17 }
+    )
+  );
+
+  assert.equal(
+    editorPersistence.resolveStudioVersionCheckpointPersistenceState(
+      {
+        doc: { label: 'iframe-doc' },
+        cleanHtml: '',
+        canonicalDeck: null,
+        playbackState: null
+      },
+      '/presentations/onboarding-presentation/index.html',
+      { sessionToken: 17 }
+    ),
+    null
+  );
+});
+
 test('isStudioPersistedHtml only reports true when a non-empty persisted html snapshot matches exactly', () => {
   assert.equal(
     editorPersistence.isStudioPersistedHtml('<html></html>', '<html></html>'),
