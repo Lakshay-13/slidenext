@@ -4546,7 +4546,7 @@
 
       const versionBtn = document.getElementById('studioVersionBtn');
       if (versionBtn) {
-        versionBtn.disabled = !hasPresentationSession;
+        versionBtn.disabled = !(hasPresentationSession && hasDeckContent);
       }
     }
 

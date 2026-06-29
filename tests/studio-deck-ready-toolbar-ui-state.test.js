@@ -109,7 +109,7 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when 
   context.updateDeckReadyToolbarActionState(null);
   assert.equal(elements.studioSaveBtn.disabled, true);
   assert.equal(elements.openSourceViewBtn.disabled, true);
-  assert.equal(elements.studioVersionBtn.disabled, false);
+  assert.equal(elements.studioVersionBtn.disabled, true);
 
   context.updateDeckReadyToolbarActionState({ documentElement: {} });
   assert.equal(elements.studioSaveBtn.disabled, false);
