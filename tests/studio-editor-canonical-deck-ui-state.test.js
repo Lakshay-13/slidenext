@@ -32,6 +32,52 @@ function loadResolveEditorCanonicalDeckViewState(fileContent, context) {
   vm.runInContext(resolveEditorCanonicalDeckViewStateSource, context);
 }
 
+test('resolveEditorStoredCanonicalBaseline prefers the current metadata canonical deck over the persisted baseline', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const currentMetadataCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-current', nodes: [] }
+    ]
+  };
+  const persistedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-persisted', nodes: [] }
+    ]
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckContext: {
+      resolveStoredStudioCanonicalDeck(metadata) {
+        calls.push(metadata);
+        if (metadata === context.currentPresentationMetadata) {
+          return currentMetadataCanonicalDeck;
+        }
+        if (metadata && metadata.canonicalDeck === persistedCanonicalDeck) {
+          return persistedCanonicalDeck;
+        }
+        return null;
+      }
+    },
+    currentPresentationMetadata: {
+      id: 'deck-1',
+      canonicalDeck: currentMetadataCanonicalDeck
+    },
+    lastPersistedCanonicalDeck: persistedCanonicalDeck
+  };
+
+  vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
+
+  const result = context.resolveEditorStoredCanonicalBaseline();
+
+  assert.equal(result, currentMetadataCanonicalDeck);
+  assert.deepEqual(calls, [context.currentPresentationMetadata]);
+});
+
 test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical deck for the active editor session', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorCanonicalDeckSource = extractFunctionSource(

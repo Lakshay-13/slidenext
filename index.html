@@ -2411,6 +2411,22 @@
       return resolveStoredCanonicalDeck(metadata) || null;
     }
 
+    function resolveEditorStoredCanonicalBaseline(options = {}) {
+      const nextPresentationMetadata = Object.prototype.hasOwnProperty.call(options, 'currentPresentationMetadata')
+        ? options.currentPresentationMetadata
+        : currentPresentationMetadata;
+      const persistedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'persistedCanonicalDeck')
+        ? options.persistedCanonicalDeck
+        : lastPersistedCanonicalDeck;
+      const currentMetadataCanonicalDeck = resolveEditorStoredCanonicalDeck(nextPresentationMetadata);
+      if (currentMetadataCanonicalDeck) {
+        return currentMetadataCanonicalDeck;
+      }
+      return resolveEditorStoredCanonicalDeck({
+        canonicalDeck: persistedCanonicalDeck
+      });
+    }
+
     function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
       if (!canonicalDeck || presentationUrl !== currentPresentationUrl) {
         return;
@@ -2427,14 +2443,7 @@
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
       if (!doc) {
-        const currentMetadataCanonicalDeck = resolveEditorStoredCanonicalDeck(currentPresentationMetadata);
-        if (currentMetadataCanonicalDeck) {
-          return currentMetadataCanonicalDeck;
-        }
-
-        const storedCanonicalDeck = resolveEditorStoredCanonicalDeck({
-          canonicalDeck: lastPersistedCanonicalDeck
-        });
+        const storedCanonicalDeck = resolveEditorStoredCanonicalBaseline();
         if (storedCanonicalDeck) {
           return storedCanonicalDeck;
         }
@@ -4517,8 +4526,7 @@
       const hasDeckDocument = !!(doc && doc.documentElement);
       const hasPresentationSession = !!currentPresentationUrl;
       const hasPersistedDeckHtml = typeof lastPersistedDeckHtml === 'string' && lastPersistedDeckHtml.trim() !== '';
-      const hasStoredCanonicalDeck = !!lastPersistedCanonicalDeck
-        || !!resolveEditorStoredCanonicalDeck(currentPresentationMetadata);
+      const hasStoredCanonicalDeck = !!resolveEditorStoredCanonicalBaseline();
       const hasDeckContent = hasDeckDocument || hasPersistedDeckHtml || hasStoredCanonicalDeck;
 
       const saveBtn = document.getElementById('studioSaveBtn');
