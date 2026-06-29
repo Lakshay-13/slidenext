@@ -282,6 +282,33 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
   assert.equal(calls[14][1], 2);
 });
 
+test('reorderSlides no-ops when the iframe document is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const reorderSlidesSource = extractFunctionSource(
+    fileContent,
+    'function reorderSlides(fromIdx, toIdx) {',
+    '\n\n    function updateActiveThumbnailCardState(activeSlideId) {'
+  );
+
+  const calls = [];
+  const context = {
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return null;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(reorderSlidesSource, context);
+
+  context.reorderSlides(0, 1);
+
+  assert.deepEqual(calls, [['getIframeDoc']]);
+});
+
 test('deleteSlideNode uses the shared iframe accessor and restores editor state after removing a slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const deleteSlideNodeSource = extractFunctionSource(
