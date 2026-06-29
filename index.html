@@ -4629,12 +4629,6 @@
       );
     }
 
-    function captureCurrentStudioPersistableDeckStateWithContent(doc = getIframeDoc()) {
-      return SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent(
-        captureCurrentStudioPersistableDeckState(doc)
-      );
-    }
-
     function captureCurrentStudioVersionCheckpointPersistenceState(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken,

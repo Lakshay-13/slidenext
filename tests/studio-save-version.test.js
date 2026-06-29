@@ -197,28 +197,6 @@ test('captureCurrentStudioPersistableDeckState reuses the shared iframe accessor
   ]);
 });
 
-test('captureCurrentStudioPersistableDeckStateWithContent returns null when the current deck has no persistable html', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const context = {
-    SlideNextStudioEditorPersistence: editorPersistence,
-    captureEditorPersistableDeckState() {
-      return {
-        cleanHtml: '',
-        canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-        playbackState: null
-      };
-    },
-    getIframeDoc() {
-      return null;
-    }
-  };
-
-  vm.createContext(context);
-  loadCaptureCurrentStudioPersistableDeckState(fileContent, context);
-
-  assert.equal(context.captureCurrentStudioPersistableDeckStateWithContent(), null);
-});
-
 test('captureCurrentStudioVersionCheckpointPersistenceState reuses current deck capture and shared checkpoint state creation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
