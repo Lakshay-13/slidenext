@@ -31,6 +31,15 @@ function createClassList(initialValues = []) {
   };
 }
 
+function loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {',
+    '\n\n    // Rollback backup version'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('resetStudioVersionUiState hides open version chrome and clears modal state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resetStudioVersionUiStateSource = extractFunctionSource(
@@ -221,6 +230,97 @@ test('createCurrentStudioVersionActionContext captures the active editor deck id
   assert.equal(calls[0][1], 'Project Onboarding');
   assert.equal(calls[0][2], 'General');
   assert.equal(calls[0][3].sessionToken, 21);
+});
+
+test('handleCurrentStudioVersionListMutationSuccess reuses current session readers and refreshes version entries by default', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    SlideNextStudioVersionActions: {
+      handleStudioVersionListMutationSuccess(versionActionContext, options) {
+        calls.push(['handleStudioVersionListMutationSuccess', versionActionContext, options]);
+        return true;
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+        getCurrentSessionToken: () => 9
+      };
+    },
+    loadVersions(presentationUrl, sessionToken) {
+      calls.push(['loadVersions', presentationUrl, sessionToken]);
+    }
+  };
+
+  vm.createContext(context);
+  loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context);
+
+  const versionActionContext = {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    sessionToken: 9
+  };
+  const result = context.handleCurrentStudioVersionListMutationSuccess(versionActionContext, {
+    onSuccess() {
+      calls.push(['onSuccess']);
+    }
+  });
+
+  assert.equal(result, true);
+  assert.equal(calls[0][0], 'handleStudioVersionListMutationSuccess');
+  assert.equal(calls[0][1], versionActionContext);
+  assert.equal(typeof calls[0][2].getCurrentPresentationUrl, 'function');
+  assert.equal(typeof calls[0][2].getCurrentSessionToken, 'function');
+  assert.equal(calls[0][2].getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(calls[0][2].getCurrentSessionToken(), 9);
+  calls[0][2].onSuccess();
+  calls[0][2].refreshVersionEntries('/presentations/onboarding-presentation/index.html', 9);
+  assert.deepEqual(calls.slice(1), [
+    ['onSuccess'],
+    ['loadVersions', '/presentations/onboarding-presentation/index.html', 9]
+  ]);
+});
+
+test('handleCurrentStudioVersionListMutationSuccess can skip version refresh wiring', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    SlideNextStudioVersionActions: {
+      handleStudioVersionListMutationSuccess(versionActionContext, options) {
+        calls.push(['handleStudioVersionListMutationSuccess', versionActionContext, options]);
+        return false;
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+        getCurrentSessionToken: () => 10
+      };
+    },
+    loadVersions() {
+      calls.push(['loadVersions']);
+    }
+  };
+
+  vm.createContext(context);
+  loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context);
+
+  const result = context.handleCurrentStudioVersionListMutationSuccess(
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      sessionToken: 10
+    },
+    {
+      shouldRefreshVersionEntries: false,
+      isCurrentSession: () => true
+    }
+  );
+
+  assert.equal(result, false);
+  assert.equal(calls[0][0], 'handleStudioVersionListMutationSuccess');
+  assert.equal(calls[0][2].refreshVersionEntries, undefined);
+  assert.equal(typeof calls[0][2].isCurrentSession, 'function');
+  assert.equal(calls.length, 1);
 });
 
 test('createCurrentStudioSessionStateReaders exposes live presentation and session getters', () => {

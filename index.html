@@ -4713,6 +4713,21 @@
       );
     }
 
+    function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {
+      const handlerOptions = {
+        ...createCurrentStudioSessionStateReaders(),
+        isCurrentSession: options.isCurrentSession,
+        onSuccess: options.onSuccess
+      };
+      if (options.shouldRefreshVersionEntries !== false) {
+        handlerOptions.refreshVersionEntries = loadVersions;
+      }
+      return SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
+        versionActionContext,
+        handlerOptions
+      );
+    }
+
     // Rollback backup version
     async function restoreVersion(filename) {
       if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
@@ -4830,14 +4845,10 @@
         
         const data = await response.json();
         if (data.success) {
-          SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(renameContext, {
-            ...createCurrentStudioSessionStateReaders(),
+          handleCurrentStudioVersionListMutationSuccess(renameContext, {
             isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
             onSuccess: () => {
               closeRenameVersionModal();
-            },
-            refreshVersionEntries: (presentationUrl, sessionToken) => {
-              loadVersions(presentationUrl, sessionToken);
             }
           });
         } else {
@@ -4858,9 +4869,9 @@
           }
         });
       } finally {
-        SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(renameContext, {
-          ...createCurrentStudioSessionStateReaders(),
+        handleCurrentStudioVersionListMutationSuccess(renameContext, {
           isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
+          shouldRefreshVersionEntries: false,
           onSuccess: () => {
             btn.disabled = false;
             btn.textContent = 'Rename';
@@ -4887,12 +4898,7 @@
         
         const data = await response.json();
         if (data.success) {
-          SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(deleteContext, {
-            ...createCurrentStudioSessionStateReaders(),
-            refreshVersionEntries: (presentationUrl, sessionToken) => {
-              loadVersions(presentationUrl, sessionToken);
-            }
-          });
+          handleCurrentStudioVersionListMutationSuccess(deleteContext);
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(deleteContext, {
             ...createCurrentStudioSessionStateReaders(),
