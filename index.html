@@ -1553,10 +1553,20 @@
     }
 
     function openSourceViewModal() {
+      const sourceViewBtn = document.getElementById('openSourceViewBtn');
+      if (sourceViewBtn && sourceViewBtn.disabled) {
+        return;
+      }
+      const modalEl = document.getElementById('sourceViewModal');
+      const contentEl = document.getElementById('sourceViewModalContent');
+      const textareaEl = document.getElementById('sourceViewContent');
+      if (!modalEl || !contentEl || !textareaEl) {
+        return;
+      }
       SlideNextStudioPreview.openSourceViewModal({
-        modalEl: document.getElementById('sourceViewModal'),
-        contentEl: document.getElementById('sourceViewModalContent'),
-        textareaEl: document.getElementById('sourceViewContent'),
+        modalEl,
+        contentEl,
+        textareaEl,
         sourceHtml: buildEditorSourceHtml()
       });
     }

@@ -77,6 +77,53 @@ test('resetStudioSourceViewUiState clears stale source modal chrome', () => {
   assert.equal(elements.sourceViewModalContent.classList.contains('scale-100'), false);
 });
 
+test('openSourceViewModal does not open when the source view button is disabled', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const openSourceViewModalSource = extractFunctionSource(
+    fileContent,
+    'function openSourceViewModal() {',
+    '\n\n    function closeSourceViewModal() {'
+  );
+
+  let buildEditorSourceHtmlCalls = 0;
+  let previewOpenCalls = 0;
+  const context = {
+    SlideNextStudioPreview: {
+      openSourceViewModal() {
+        previewOpenCalls += 1;
+      }
+    },
+    buildEditorSourceHtml() {
+      buildEditorSourceHtmlCalls += 1;
+      return '<html>source</html>';
+    },
+    document: {
+      getElementById(id) {
+        switch (id) {
+          case 'openSourceViewBtn':
+            return { disabled: true };
+          case 'sourceViewModal':
+            return { classList: createClassList(['hidden']) };
+          case 'sourceViewModalContent':
+            return { classList: createClassList(['scale-95']) };
+          case 'sourceViewContent':
+            return { value: '' };
+          default:
+            return null;
+        }
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(openSourceViewModalSource, context);
+
+  context.openSourceViewModal();
+
+  assert.equal(buildEditorSourceHtmlCalls, 0);
+  assert.equal(previewOpenCalls, 0);
+});
+
 test('buildEditorSourceHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(
