@@ -4072,7 +4072,7 @@
             setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl);
           },
           onSuccess: (nextContext) => {
-            if (nextContext.shouldUpdatePersistedHtml !== false && livePlaybackState) {
+            if (nextContext.shouldUpdatePersistedHtml !== false) {
               updateEditorPersistedDeckState({ playbackState: livePlaybackState });
             }
           }
@@ -4139,7 +4139,7 @@
                 setCurrentPresentationCanonicalDeck(nextCanonicalDeck, scheduledPresentationUrl);
               },
               onSuccess: (nextContext) => {
-                if (nextContext.shouldUpdatePersistedHtml !== false && livePlaybackState) {
+                if (nextContext.shouldUpdatePersistedHtml !== false) {
                   updateEditorPersistedDeckState({ playbackState: livePlaybackState });
                 }
                 setStudioAutoSaveStatus('saved');

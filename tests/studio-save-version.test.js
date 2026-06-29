@@ -826,12 +826,14 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
       canonicalDeck
     }
   ]]);
-  assert.equal(persistedStateUpdates.length, 2);
+  assert.equal(persistedStateUpdates.length, 3);
   assert.equal(persistedStateUpdates[0].cleanHtml, '<html>canonical-source</html>');
   assert.deepEqual(
     JSON.parse(JSON.stringify(persistedStateUpdates[1].canonicalDeck)),
     canonicalDeckModel.createCanonicalDeck(canonicalDeck)
   );
+  assert.ok(Object.prototype.hasOwnProperty.call(persistedStateUpdates[2], 'playbackState'));
+  assert.equal(persistedStateUpdates[2].playbackState, null);
   assert.equal(canonicalDeckUpdates.length, 1);
   assert.deepEqual(
     JSON.parse(JSON.stringify(canonicalDeckUpdates[0][0])),
@@ -963,5 +965,126 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
     canonicalDeckModel.createCanonicalDeck(canonicalDeck)
   );
   assert.deepEqual(persistedStateUpdates[2].playbackState, playbackState);
+  assert.equal(statusEl.innerHTML, 'saved');
+});
+
+test('triggerAutoSave clears the persisted playback baseline after a successful live-frame save rewrite without playback markers', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const triggerAutoSaveSource = extractFunctionSource(
+    fileContent,
+    'function triggerAutoSave() {',
+    '\n\n    // Custom styled checkpoint version modal controls'
+  );
+
+  let scheduledCallback = null;
+  const fetchCalls = [];
+  const persistedStateUpdates = [];
+  const statusEl = {
+    innerHTML: 'Saved to disk'
+  };
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+
+  const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
+    autoSaveDebounceTimer: null,
+    buildEditorSaveRequestBody(nextDoc, cleanHtml, options = {}) {
+      assert.equal(nextDoc, iframeDoc);
+      assert.equal(options.canonicalDeck, canonicalDeck);
+      return {
+        htmlPath: options.presentationUrl,
+        htmlContent: cleanHtml,
+        isAutoSave: !!options.isAutoSave,
+        canonicalDeck
+      };
+    },
+    buildPersistableDeckHtml(nextDoc, buildOptions = {}) {
+      assert.equal(nextDoc, iframeDoc);
+      assert.equal(typeof buildOptions.onCanonicalDeckResolved, 'function');
+      buildOptions.onCanonicalDeckResolved(canonicalDeck);
+      return '<html>null-playback-save</html>';
+    },
+    capturePersistedDeckPlaybackState(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return null;
+    },
+    clearTimeout() {},
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    document: {
+      getElementById(id) {
+        if (id === 'autoSaveStatus') {
+          return statusEl;
+        }
+        throw new Error(`Unexpected element lookup: ${id}`);
+      }
+    },
+    fetch: async (url, init) => {
+      fetchCalls.push([url, JSON.parse(init.body)]);
+      return {
+        async json() {
+          return { success: true };
+        }
+      };
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    isCurrentDeckStatePersisted() {
+      return false;
+    },
+    isStaleEditorPersistenceTask() {
+      return false;
+    },
+    setCurrentPresentationCanonicalDeck() {},
+    setStudioAutoSaveStatus(state) {
+      statusEl.innerHTML = state;
+    },
+    setTimeout(callback) {
+      scheduledCallback = callback;
+      return 1;
+    },
+    studioEditorSessionToken: 13,
+    updateEditorPersistedDeckState(nextState) {
+      persistedStateUpdates.push(nextState);
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
+  vm.runInContext(triggerAutoSaveSource, context);
+
+  context.triggerAutoSave();
+  assert.equal(statusEl.innerHTML, 'saving');
+  assert.equal(typeof scheduledCallback, 'function');
+
+  await scheduledCallback();
+
+  assert.deepEqual(fetchCalls, [[
+    '/api/save',
+    {
+      htmlPath: '/presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>null-playback-save</html>',
+      isAutoSave: true,
+      canonicalDeck
+    }
+  ]]);
+  assert.equal(persistedStateUpdates.length, 3);
+  assert.equal(persistedStateUpdates[0].cleanHtml, '<html>null-playback-save</html>');
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(persistedStateUpdates[1].canonicalDeck)),
+    canonicalDeckModel.createCanonicalDeck(canonicalDeck)
+  );
+  assert.ok(Object.prototype.hasOwnProperty.call(persistedStateUpdates[2], 'playbackState'));
+  assert.equal(persistedStateUpdates[2].playbackState, null);
   assert.equal(statusEl.innerHTML, 'saved');
 });

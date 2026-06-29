@@ -186,6 +186,102 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
   ]]);
 });
 
+test('saveVersionCheckpoint clears the persisted playback baseline after a successful save rewrite without live playback markers', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const saveVersionCheckpointSource = extractFunctionSource(
+    fileContent,
+    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {',
+    '\n\n    // 6. AutoSave debouncing pipeline'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const fetchCalls = [];
+  const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 5,
+    lastPersistedDeckHtml: '',
+    lastPersistedCanonicalDeck: null,
+    persistedDeckPlaybackState: {
+      activeSlideIds: ['slide-stale'],
+      slideCounterText: '4 / 4'
+    },
+    isCurrentDeckStatePersisted() {
+      return false;
+    },
+    updateEditorPersistedDeckState(nextState) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'cleanHtml')) {
+        context.lastPersistedDeckHtml = nextState.cleanHtml;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck')) {
+        context.lastPersistedCanonicalDeck = canonicalDeckModel.createCanonicalDeck(nextState.canonicalDeck);
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'playbackState')) {
+        context.persistedDeckPlaybackState = nextState.playbackState;
+      }
+    },
+    capturePersistedDeckPlaybackState(doc) {
+      assert.deepEqual(doc, { label: 'iframe-doc' });
+      return null;
+    },
+    buildEditorSaveRequestBody(doc, cleanHtml, options = {}) {
+      assert.equal(options.canonicalDeck, canonicalDeck);
+      return {
+        htmlPath: options.presentationUrl,
+        htmlContent: cleanHtml,
+        versionLabel: options.versionLabel,
+        canonicalDeck
+      };
+    },
+    fetch: async (url, init) => {
+      fetchCalls.push([url, JSON.parse(init.body)]);
+      return {
+        async json() {
+          return { success: true };
+        }
+      };
+    },
+    setCurrentPresentationCanonicalDeck() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(saveVersionCheckpointSource, context);
+
+  await context.saveVersionCheckpoint(
+    'Checkpoint Null Playback',
+    '<html>persisted</html>',
+    'presentations/onboarding-presentation/index.html',
+    {
+      sessionToken: 5,
+      doc: { label: 'iframe-doc' },
+      canonicalDeck
+    }
+  );
+
+  assert.deepEqual(fetchCalls, [[
+    '/api/save',
+    {
+      htmlPath: 'presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>persisted</html>',
+      versionLabel: 'Checkpoint Null Playback',
+      canonicalDeck
+    }
+  ]]);
+  assert.equal(context.lastPersistedDeckHtml, '<html>persisted</html>');
+  assert.deepEqual(context.lastPersistedCanonicalDeck, canonicalDeckModel.createCanonicalDeck(canonicalDeck));
+  assert.equal(context.persistedDeckPlaybackState, null);
+});
+
 test('saveVersionCheckpoint keeps save rewrites enabled when canonical state changed despite matching persisted html', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const saveVersionCheckpointSource = extractFunctionSource(
