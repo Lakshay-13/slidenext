@@ -238,6 +238,13 @@
     );
   }
 
+  function createStudioAutoSaveRequest(persistencePlan = {}) {
+    return {
+      url: '/api/save',
+      body: persistencePlan && persistencePlan.saveRequestBody
+    };
+  }
+
   function buildStudioVersionCheckpointPersistencePlan(
     versionLabel = '',
     cleanHtml = '',
@@ -505,6 +512,7 @@
     buildStudioAutoSavePersistencePlan,
     createStudioAutoSavePersistenceState,
     resolveStudioAutoSavePersistenceState,
+    createStudioAutoSaveRequest,
     buildStudioVersionCheckpointPersistencePlan,
     createStudioVersionCheckpointRequest,
     createStudioVersionCheckpointRequestOptions,

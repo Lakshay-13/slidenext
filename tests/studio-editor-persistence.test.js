@@ -672,6 +672,25 @@ test('resolveStudioAutoSavePersistenceState returns null without persisted html 
   );
 });
 
+test('createStudioAutoSaveRequest always posts the autosave payload to the save endpoint', () => {
+  const saveRequestBody = {
+    htmlPath: '/presentations/onboarding-presentation/index.html',
+    htmlContent: '<html>live-save</html>',
+    isAutoSave: true
+  };
+
+  assert.deepEqual(
+    editorPersistence.createStudioAutoSaveRequest({
+      hasPersistedCurrentState: false,
+      saveRequestBody
+    }),
+    {
+      url: '/api/save',
+      body: saveRequestBody
+    }
+  );
+});
+
 test('buildStudioVersionCheckpointPersistencePlan reuses the shared playback fallback and persistence-plan wiring', () => {
   const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
     metadata: {

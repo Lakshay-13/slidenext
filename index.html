@@ -4223,10 +4223,13 @@
         }
         
         try {
-          const response = await fetch('/api/save', {
+          const autoSaveRequest = SlideNextStudioEditorPersistence.createStudioAutoSaveRequest(
+            persistencePlan
+          );
+          const response = await fetch(autoSaveRequest.url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(persistencePlan.saveRequestBody)
+            body: JSON.stringify(autoSaveRequest.body)
           });
           
           const data = await response.json();
