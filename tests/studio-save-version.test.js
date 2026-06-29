@@ -847,6 +847,7 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
     autoSaveDebounceTimer: null,
     buildEditorSaveRequestBody(nextDoc, cleanHtml, options = {}) {
       assert.equal(nextDoc, iframeDoc);
+      assert.equal(options.canonicalDeck, canonicalDeck);
       return {
         htmlPath: options.presentationUrl,
         htmlContent: cleanHtml,
@@ -854,8 +855,10 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
         canonicalDeck
       };
     },
-    buildPersistableDeckHtml(nextDoc) {
+    buildPersistableDeckHtml(nextDoc, buildOptions = {}) {
       assert.equal(nextDoc, iframeDoc);
+      assert.equal(typeof buildOptions.onCanonicalDeckResolved, 'function');
+      buildOptions.onCanonicalDeckResolved(canonicalDeck);
       return '<html>live-save</html>';
     },
     capturePersistedDeckPlaybackState(nextDoc) {

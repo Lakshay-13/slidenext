@@ -3848,6 +3848,11 @@
         });
       }
       const livePlaybackState = capturePersistedDeckPlaybackState(doc) || persistedDeckPlaybackState;
+      const shouldReportCanonicalDeck = typeof buildOptions.onCanonicalDeckResolved === 'function';
+      const canonicalDeck = buildOptions.canonicalDeck || (shouldReportCanonicalDeck ? buildEditorCanonicalDeck(doc) : null);
+      if (shouldReportCanonicalDeck) {
+        buildOptions.onCanonicalDeckResolved(canonicalDeck);
+      }
       const deckSanitizerOptions = getEditorDeckSanitizerOptions();
       return SlideNextDeckPersistence.buildPersistableDeckHtml(doc, {
         editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,

@@ -444,6 +444,68 @@ test('buildPersistableDeckHtml captures the live playback state before persistin
   assert.equal(calls[1][2].persistedDeckPlaybackState, livePlaybackState);
 });
 
+test('buildPersistableDeckHtml reports the resolved live canonical deck when requested', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  let reportedCanonicalDeck = null;
+  let buildEditorCanonicalDeckCalls = 0;
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml(nextDoc) {
+        assert.equal(nextDoc, iframeDoc);
+        return '<html>persisted-live</html>';
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      buildEditorCanonicalDeckCalls += 1;
+      assert.equal(nextDoc, iframeDoc);
+      return canonicalDeck;
+    },
+    capturePersistedDeckPlaybackState(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return null;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    persistedDeckPlaybackState: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+
+  assert.equal(
+    context.buildPersistableDeckHtml(iframeDoc, {
+      onCanonicalDeckResolved(deck) {
+        reportedCanonicalDeck = deck;
+      }
+    }),
+    '<html>persisted-live</html>'
+  );
+  assert.equal(reportedCanonicalDeck, canonicalDeck);
+  assert.equal(buildEditorCanonicalDeckCalls, 1);
+});
+
 test('buildPersistableDeckHtml renders canonical deck html when the editor frame and persisted baseline are unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
