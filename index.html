@@ -2159,6 +2159,7 @@
     // Delete Active Slide Node
     function deleteSlideNode(idx) {
       const iframeDoc = getIframeDoc();
+      if (!iframeDoc) return;
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return;
       

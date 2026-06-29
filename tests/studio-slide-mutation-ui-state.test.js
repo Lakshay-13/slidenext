@@ -408,3 +408,30 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
   assert.equal(calls[13][2], iframeDoc);
   assert.equal(calls[14][1], 0);
 });
+
+test('deleteSlideNode no-ops when the iframe document is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const deleteSlideNodeSource = extractFunctionSource(
+    fileContent,
+    'function deleteSlideNode(idx) {',
+    '\n\n    function getIframeDoc() {'
+  );
+
+  const calls = [];
+  const context = {
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return null;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(deleteSlideNodeSource, context);
+
+  context.deleteSlideNode(0);
+
+  assert.deepEqual(calls, [['getIframeDoc']]);
+});
