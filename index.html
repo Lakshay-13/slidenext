@@ -4258,9 +4258,16 @@
 
     // Custom styled checkpoint version modal controls
     function openSaveVersionModal() {
+      const saveBtn = document.getElementById('studioSaveBtn');
+      if (saveBtn && saveBtn.disabled) {
+        return;
+      }
       const modal = document.getElementById('saveVersionModal');
       const content = document.getElementById('saveVersionModalContent');
       const input = document.getElementById('versionCheckpointName');
+      if (!modal || !content || !input) {
+        return;
+      }
       
       input.value = '';
       SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
@@ -4736,6 +4743,8 @@
 
     // 7. Versions and Backups listing
     function toggleVersionDropdown() {
+      const versionBtn = document.getElementById('studioVersionBtn');
+      if (versionBtn && versionBtn.disabled) return;
       const menu = document.getElementById('versionsDropdown');
       if (!menu) return;
       const shouldOpen = menu.classList.contains('hidden');

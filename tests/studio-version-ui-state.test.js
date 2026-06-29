@@ -166,6 +166,57 @@ test('resetStudioVersionUiState hides open version chrome and clears modal state
   );
 });
 
+test('openSaveVersionModal does not open when the save button is disabled', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const openSaveVersionModalSource = extractFunctionSource(
+    fileContent,
+    'function openSaveVersionModal() {',
+    '\n    \n    function closeSaveVersionModal() {'
+  );
+
+  const elements = {
+    studioSaveBtn: {
+      disabled: true
+    },
+    saveVersionModal: {
+      classList: createClassList(['hidden', 'opacity-0']),
+      offsetHeight: 0
+    },
+    saveVersionModalContent: {
+      classList: createClassList(['scale-95'])
+    },
+    versionCheckpointName: {
+      value: 'Checkpoint A',
+      focusCalls: 0,
+      focus() {
+        this.focusCalls += 1;
+      }
+    }
+  };
+
+  const context = {
+    SlideNextStudioModalVisibility: modalVisibility,
+    document: {
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(openSaveVersionModalSource, context);
+
+  context.openSaveVersionModal();
+
+  assert.equal(elements.saveVersionModal.classList.contains('hidden'), true);
+  assert.equal(elements.saveVersionModal.classList.contains('opacity-0'), true);
+  assert.equal(elements.saveVersionModal.classList.contains('opacity-100'), false);
+  assert.equal(elements.saveVersionModalContent.classList.contains('scale-95'), true);
+  assert.equal(elements.saveVersionModalContent.classList.contains('scale-100'), false);
+  assert.equal(elements.versionCheckpointName.value, 'Checkpoint A');
+  assert.equal(elements.versionCheckpointName.focusCalls, 0);
+});
+
 test('toggleVersionDropdown refreshes version history only when opening the menu', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const toggleVersionDropdownSource = extractFunctionSource(
@@ -177,6 +228,9 @@ test('toggleVersionDropdown refreshes version history only when opening the menu
   const loadVersionsCalls = [];
   const versionsDropdown = {
     classList: createClassList(['hidden'])
+  };
+  const versionButton = {
+    disabled: false
   };
   versionsDropdown.classList.toggle = function toggle(value) {
     if (this.contains(value)) {
@@ -191,8 +245,14 @@ test('toggleVersionDropdown refreshes version history only when opening the menu
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     document: {
       getElementById(id) {
-        assert.equal(id, 'versionsDropdown');
-        return versionsDropdown;
+        switch (id) {
+          case 'studioVersionBtn':
+            return versionButton;
+          case 'versionsDropdown':
+            return versionsDropdown;
+          default:
+            return null;
+        }
       }
     },
     loadVersions(presentationUrl, sessionToken) {
@@ -211,6 +271,14 @@ test('toggleVersionDropdown refreshes version history only when opening the menu
     14
   ]]);
 
+  context.toggleVersionDropdown();
+  assert.equal(versionsDropdown.classList.contains('hidden'), true);
+  assert.deepEqual(loadVersionsCalls, [[
+    '/presentations/onboarding-presentation/index.html',
+    14
+  ]]);
+
+  versionButton.disabled = true;
   context.toggleVersionDropdown();
   assert.equal(versionsDropdown.classList.contains('hidden'), true);
   assert.deepEqual(loadVersionsCalls, [[
