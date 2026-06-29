@@ -3805,9 +3805,12 @@
     }
 
     function buildPersistableDeckHtml(doc = getIframeDoc()) {
+      const buildOptions = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
+        ? arguments[1]
+        : {};
       if (!doc) {
         const persistedHtml = typeof lastPersistedDeckHtml === 'string' ? lastPersistedDeckHtml : '';
-        const canonicalDeck = buildEditorCanonicalDeck(doc);
+        const canonicalDeck = buildOptions.canonicalDeck || buildEditorCanonicalDeck(doc);
         const isPersistedCanonicalDeck = SlideNextStudioEditorPersistence
           && typeof SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck === 'function'
           ? SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck
@@ -3857,16 +3860,19 @@
       const presentationUrl = Object.prototype.hasOwnProperty.call(options, 'presentationUrl')
         ? options.presentationUrl
         : currentPresentationUrl;
+      const resolvedCanonicalDeck = buildEditorCanonicalDeck(doc);
       const resolvedCleanHtml = typeof cleanHtml === 'string'
         ? cleanHtml
-        : buildPersistableDeckHtml(doc);
+        : buildPersistableDeckHtml(doc, {
+            canonicalDeck: resolvedCanonicalDeck
+          });
       return SlideNextStudioEditorPersistence.buildStudioSaveRequestBody(
         presentationUrl,
         resolvedCleanHtml,
         {
           isAutoSave: !!options.isAutoSave,
           versionLabel: options.versionLabel,
-          canonicalDeck: buildEditorCanonicalDeck(doc)
+          canonicalDeck: resolvedCanonicalDeck
         }
       );
     }

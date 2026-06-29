@@ -85,6 +85,7 @@ test('buildEditorSaveRequestBody falls back to the persisted html baseline when 
     slides: []
   };
   let buildPersistableDeckHtmlCalls = 0;
+  let buildEditorCanonicalDeckCalls = 0;
   const context = {
     SlideNextStudioEditorPersistence: editorPersistence,
     SlideNextCanonicalDeck: {
@@ -92,12 +93,14 @@ test('buildEditorSaveRequestBody falls back to the persisted html baseline when 
         return !!deck && deck.kind === 'slidenext.deck' && Array.isArray(deck.slides);
       }
     },
-    buildPersistableDeckHtml(nextDoc) {
+    buildPersistableDeckHtml(nextDoc, buildOptions) {
       buildPersistableDeckHtmlCalls += 1;
       assert.equal(nextDoc, null);
+      assert.equal(buildOptions.canonicalDeck, canonicalDeck);
       return '<html>persisted-baseline</html>';
     },
     buildEditorCanonicalDeck(nextDoc) {
+      buildEditorCanonicalDeckCalls += 1;
       assert.equal(nextDoc, null);
       return canonicalDeck;
     },
@@ -121,6 +124,7 @@ test('buildEditorSaveRequestBody falls back to the persisted html baseline when 
     }
   );
   assert.equal(buildPersistableDeckHtmlCalls, 1);
+  assert.equal(buildEditorCanonicalDeckCalls, 1);
 });
 
 test('buildPersistableDeckHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
@@ -186,6 +190,72 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-baseline</html>');
   assert.equal(sharedBuildCalls, 0);
   assert.equal(buildEditorCanonicalDeckCalls, 1);
+});
+
+test('buildPersistableDeckHtml reuses a provided canonical deck when the editor frame is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+  );
+
+  let buildEditorCanonicalDeckCalls = 0;
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml() {
+        throw new Error('shared persistence builder should not run when the editor frame is unavailable');
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      isStudioPersistedCanonicalDeck(nextCanonicalDeck, persistedCanonicalDeck) {
+        assert.equal(nextCanonicalDeck, canonicalDeck);
+        assert.equal(persistedCanonicalDeck, canonicalDeck);
+        return true;
+      }
+    },
+    buildEditorCanonicalDeck() {
+      buildEditorCanonicalDeckCalls += 1;
+      return canonicalDeck;
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '<html>persisted-baseline</html>',
+    lastPersistedCanonicalDeck: canonicalDeck,
+    persistedDeckPlaybackState: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+
+  assert.equal(
+    context.buildPersistableDeckHtml(null, {
+      canonicalDeck
+    }),
+    '<html>persisted-baseline</html>'
+  );
+  assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
 test('buildPersistableDeckHtml captures the live playback state before persisting iframe html', () => {
