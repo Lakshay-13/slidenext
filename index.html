@@ -4082,7 +4082,7 @@
 
     function createCurrentStudioPersistenceHandlerOptions(options = {}) {
       return {
-        ...createCurrentStudioSessionStateReaders(),
+        ...createCurrentStudioSessionStateOptions(),
         setPersistedHtml: options.setPersistedHtml,
         setPersistedCanonicalDeck: options.setPersistedCanonicalDeck,
         setPersistedPlaybackState: options.setPersistedPlaybackState,
@@ -4575,14 +4575,15 @@
     }
 
     function isCurrentStudioPersistenceActionCurrent(persistenceContext) {
-      return SlideNextStudioEditorPersistence.isStudioPersistenceActionCurrent(persistenceContext, {
-        ...createCurrentStudioSessionStateReaders()
-      });
+      return SlideNextStudioEditorPersistence.isStudioPersistenceActionCurrent(
+        persistenceContext,
+        createCurrentStudioSessionStateOptions()
+      );
     }
 
     function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {
       return {
-        ...createCurrentStudioSessionStateReaders(),
+        ...createCurrentStudioSessionStateOptions(),
         onSuccess: options.onSuccess,
         refreshVersionEntries: options.refreshVersionEntries
       };

@@ -17,7 +17,17 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioSessionStateOptions(options = {}) {',
+    '\n\n    function createCurrentStudioFrameLoadStateOptions(options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',

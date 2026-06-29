@@ -25,7 +25,17 @@ function loadCaptureEditorPersistableDeckState(fileContent, context) {
   vm.runInContext(captureEditorPersistableDeckStateSource, context);
 }
 
+function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioSessionStateOptions(options = {}) {',
+    '\n\n    function createCurrentStudioFrameLoadStateOptions(options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context) {
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {',
@@ -45,6 +55,7 @@ function loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context) 
 }
 
 function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
@@ -54,6 +65,7 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
 }
 
 function loadIsCurrentStudioPersistenceActionCurrent(fileContent, context) {
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function isCurrentStudioPersistenceActionCurrent(persistenceContext) {',
