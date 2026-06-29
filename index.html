@@ -2333,21 +2333,33 @@
       return SlideNextStudioDeckContext.buildStudioPresentationMetadataSeed(presentationUrl, presentationTitle);
     }
 
+    function createCurrentStudioPresentationMetadataLoadOptions(options = {}) {
+      return {
+        sessionToken: options.sessionToken,
+        ...createCurrentStudioSessionStateReaders(),
+        setCurrentPresentationMetadata: options.setCurrentPresentationMetadata,
+        onError: options.onError
+      };
+    }
+
     async function loadCurrentPresentationMetadata(
       presentationUrl = currentPresentationUrl,
       presentationTitle = currentTitle,
       sessionToken = studioEditorSessionToken
     ) {
-      return SlideNextStudioDeckContext.loadStudioPresentationMetadata(presentationUrl, presentationTitle, {
-        sessionToken,
-        ...createCurrentStudioSessionStateReaders(),
-        setCurrentPresentationMetadata: (metadata) => {
-          applyCurrentPresentationMetadata(metadata, { syncPersistedCanonicalDeck: true });
-        },
-        onError: (err, metadataUrl) => {
-          console.warn(`Failed to load presentation metadata from ${metadataUrl}:`, err);
-        }
-      });
+      return SlideNextStudioDeckContext.loadStudioPresentationMetadata(
+        presentationUrl,
+        presentationTitle,
+        createCurrentStudioPresentationMetadataLoadOptions({
+          sessionToken,
+          setCurrentPresentationMetadata: (metadata) => {
+            applyCurrentPresentationMetadata(metadata, { syncPersistedCanonicalDeck: true });
+          },
+          onError: (err, metadataUrl) => {
+            console.warn(`Failed to load presentation metadata from ${metadataUrl}:`, err);
+          }
+        })
+      );
     }
 
     function applyCurrentPresentationMetadata(metadata, options = {}) {

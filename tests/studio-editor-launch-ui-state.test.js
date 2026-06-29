@@ -14,6 +14,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadCreateCurrentStudioPresentationMetadataLoadOptions(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioPresentationMetadataLoadOptions(options = {}) {',
+    '\n\n    async function loadCurrentPresentationMetadata('
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
@@ -435,6 +444,41 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
   assert.equal(loadPresentationsCalls, 1);
 });
 
+test('createCurrentStudioPresentationMetadataLoadOptions reuses current session readers and forwards metadata hooks', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const currentStudioSessionStateReaders = {
+    getCurrentPresentationUrl() {
+      return context.currentPresentationUrl;
+    },
+    getCurrentSessionToken() {
+      return context.studioEditorSessionToken;
+    }
+  };
+  const hooks = {
+    sessionToken: 11,
+    setCurrentPresentationMetadata() {},
+    onError() {}
+  };
+  const context = {
+    createCurrentStudioSessionStateReaders() {
+      return currentStudioSessionStateReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 11
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioPresentationMetadataLoadOptions(fileContent, context);
+
+  const options = context.createCurrentStudioPresentationMetadataLoadOptions(hooks);
+
+  assert.equal(options.sessionToken, 11);
+  assert.equal(options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
+  assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.equal(options.setCurrentPresentationMetadata, hooks.setCurrentPresentationMetadata);
+  assert.equal(options.onError, hooks.onError);
+});
+
 test('loadCurrentPresentationMetadata reuses current session readers when delegating to the deck context', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const loadCurrentPresentationMetadataSource = extractFunctionSource(
@@ -486,6 +530,7 @@ test('loadCurrentPresentationMetadata reuses current session readers when delega
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioPresentationMetadataLoadOptions(fileContent, context);
   vm.runInContext(loadCurrentPresentationMetadataSource, context);
 
   const metadata = await context.loadCurrentPresentationMetadata(
@@ -681,6 +726,7 @@ test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioPresentationMetadataLoadOptions(fileContent, context);
   vm.runInContext(loadCurrentPresentationMetadataSource, context);
 
   const metadata = await context.loadCurrentPresentationMetadata(
