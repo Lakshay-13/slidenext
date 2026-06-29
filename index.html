@@ -4027,6 +4027,23 @@
       autoVersionTimers = {};
     }
 
+    function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
+      return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistenceContext, {
+        ...createCurrentStudioSessionStateReaders(),
+        setPersistedHtml: (nextHtml) => {
+          updateEditorPersistedDeckState({ cleanHtml: nextHtml });
+        },
+        setPersistedCanonicalDeck: (nextCanonicalDeck) => {
+          updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
+          setCurrentPresentationCanonicalDeck(nextCanonicalDeck, persistenceContext.presentationUrl);
+        },
+        setPersistedPlaybackState: (nextPlaybackState) => {
+          updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
+        },
+        onSuccess: options.onSuccess
+      });
+    }
+
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
       const livePlaybackState = Object.prototype.hasOwnProperty.call(options, 'playbackState')
         ? options.playbackState
@@ -4061,19 +4078,7 @@
       const data = await response.json();
 
       if (data.success) {
-        SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistencePlan.persistenceContext, {
-          ...createCurrentStudioSessionStateReaders(),
-          setPersistedHtml: (nextHtml) => {
-            updateEditorPersistedDeckState({ cleanHtml: nextHtml });
-          },
-          setPersistedCanonicalDeck: (nextCanonicalDeck) => {
-            updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
-            setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl);
-          },
-          setPersistedPlaybackState: (nextPlaybackState) => {
-            updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
-          }
-        });
+        handleCurrentStudioPersistenceSuccess(persistencePlan.persistenceContext);
       }
 
       return data;
@@ -4127,18 +4132,7 @@
           
           const data = await response.json();
           if (data.success) {
-            SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(persistencePlan.persistenceContext, {
-              ...createCurrentStudioSessionStateReaders(),
-              setPersistedHtml: (nextHtml) => {
-                updateEditorPersistedDeckState({ cleanHtml: nextHtml });
-              },
-              setPersistedCanonicalDeck: (nextCanonicalDeck) => {
-                updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
-                setCurrentPresentationCanonicalDeck(nextCanonicalDeck, scheduledPresentationUrl);
-              },
-              setPersistedPlaybackState: (nextPlaybackState) => {
-                updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
-              },
+            handleCurrentStudioPersistenceSuccess(persistencePlan.persistenceContext, {
               onSuccess: (nextContext) => {
                 setStudioAutoSaveStatus('saved');
               }

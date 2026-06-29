@@ -17,6 +17,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadHandleCurrentStudioPersistenceSuccess(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',
+    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata updates for the active presentation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
@@ -74,6 +83,60 @@ test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata up
       ]
     })
   });
+});
+
+test('handleCurrentStudioPersistenceSuccess reuses current session readers and persisted deck setters', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-2'],
+    slideCounterText: '2 / 4'
+  };
+  const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 4,
+    updateEditorPersistedDeckState(nextState) {
+      calls.push(['updateEditorPersistedDeckState', nextState]);
+    },
+    setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl) {
+      calls.push(['setCurrentPresentationCanonicalDeck', nextCanonicalDeck, presentationUrl]);
+    }
+  };
+
+  vm.createContext(context);
+  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
+
+  const applied = context.handleCurrentStudioPersistenceSuccess({
+    presentationUrl: 'presentations/onboarding-presentation/index.html',
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck,
+    playbackState
+  }, {
+    onSuccess(nextContext) {
+      calls.push(['onSuccess', nextContext.presentationUrl]);
+    }
+  });
+
+  assert.equal(applied, true);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
+    ['updateEditorPersistedDeckState', { cleanHtml: '<html>persisted</html>' }],
+    ['updateEditorPersistedDeckState', { canonicalDeck }],
+    ['setCurrentPresentationCanonicalDeck', canonicalDeck, 'presentations/onboarding-presentation/index.html'],
+    ['updateEditorPersistedDeckState', { playbackState }],
+    ['onSuccess', 'presentations/onboarding-presentation/index.html']
+  ]);
 });
 
 test('saveVersionCheckpoint refreshes persisted html and canonical metadata after a successful save rewrite', async () => {
@@ -154,6 +217,7 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
   };
 
   vm.createContext(context);
+  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   const result = await context.saveVersionCheckpoint(
@@ -255,6 +319,7 @@ test('saveVersionCheckpoint clears the persisted playback baseline after a succe
   };
 
   vm.createContext(context);
+  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   await context.saveVersionCheckpoint(
@@ -353,6 +418,7 @@ test('saveVersionCheckpoint preserves the persisted playback baseline when no li
   };
 
   vm.createContext(context);
+  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   await context.saveVersionCheckpoint(
@@ -459,6 +525,7 @@ test('saveVersionCheckpoint keeps save rewrites enabled when canonical state cha
   };
 
   vm.createContext(context);
+  loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   await context.saveVersionCheckpoint(
