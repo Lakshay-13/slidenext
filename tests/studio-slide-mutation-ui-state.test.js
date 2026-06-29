@@ -351,6 +351,50 @@ test('reorderSlides no-ops when the requested slide indexes are unavailable', ()
   ]);
 });
 
+test('reorderSlides no-ops when the requested slide indexes are unchanged', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const reorderSlidesSource = extractFunctionSource(
+    fileContent,
+    'function reorderSlides(fromIdx, toIdx) {',
+    '\n\n    function updateActiveThumbnailCardState(activeSlideId) {'
+  );
+
+  const firstSlide = { id: 'slide-1', nextSibling: null };
+  const secondSlide = { id: 'slide-2', nextSibling: null };
+  const slides = [firstSlide, secondSlide];
+  const calls = [];
+  const iframeDoc = {
+    getElementById(id) {
+      assert.equal(id, 'slidesContainer');
+      return {};
+    }
+  };
+  const context = {
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    getSlides(doc) {
+      calls.push(['getSlides', doc]);
+      return slides;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(reorderSlidesSource, context);
+
+  const result = context.reorderSlides(1, 1);
+
+  assert.equal(result, false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getSlides', iframeDoc]
+  ]);
+});
+
 test('deleteSlideNode uses the shared iframe accessor and restores editor state after removing a slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const deleteSlideNodeSource = extractFunctionSource(

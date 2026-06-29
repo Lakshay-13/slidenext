@@ -1971,6 +1971,7 @@
       const draggedNode = slides[fromIdx];
       const targetNode = slides[toIdx];
       if (!draggedNode || !targetNode) return false;
+      if (fromIdx === toIdx) return false;
       saveHistoryState();
       const activeSlideId = getActiveSlideId(iframeDoc);
       const preservedSelectionIds = getCommittedSelectedEditorElementIds(iframeDoc);
