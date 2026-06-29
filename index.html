@@ -4020,7 +4020,7 @@
         cleanHtml,
         playbackState: typeof resolvedPlaybackState !== 'undefined'
           ? resolvedPlaybackState
-          : capturePersistedDeckPlaybackState(doc),
+          : capturePersistedDeckPlaybackState(doc, resolvedCanonicalDeck),
         canonicalDeck: cleanHtml && !resolvedCanonicalDeck
           ? buildEditorCanonicalDeck(doc)
           : resolvedCanonicalDeck

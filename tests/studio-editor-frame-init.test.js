@@ -74,6 +74,61 @@ test('captureEditorPersistableDeckState returns persisted html, canonical deck, 
   assert.equal(capturePersistedDeckPlaybackStateCalls, 0);
 });
 
+test('captureEditorPersistableDeckState reuses a resolved canonical deck when playback fallback runs after html capture', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] }
+    ]
+  };
+  let buildEditorCanonicalDeckCalls = 0;
+  let capturePersistedDeckPlaybackStateCalls = 0;
+
+  const context = {
+    buildPersistableDeckHtml(doc, options = {}) {
+      assert.equal(doc, iframeDoc);
+      assert.equal(typeof options.onCanonicalDeckResolved, 'function');
+      assert.equal(typeof options.onPlaybackStateResolved, 'function');
+      options.onCanonicalDeckResolved(canonicalDeck);
+      return '<html>persisted</html>';
+    },
+    buildEditorCanonicalDeck() {
+      buildEditorCanonicalDeckCalls += 1;
+      return canonicalDeck;
+    },
+    capturePersistedDeckPlaybackState(doc, nextCanonicalDeck) {
+      capturePersistedDeckPlaybackStateCalls += 1;
+      assert.equal(doc, iframeDoc);
+      assert.equal(nextCanonicalDeck, canonicalDeck);
+      return {
+        activeSlideIds: ['slide-1'],
+        slideCounterText: '1 / 1'
+      };
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
+
+  const persistedDeckState = JSON.parse(JSON.stringify(context.captureEditorPersistableDeckState()));
+  assert.deepEqual(persistedDeckState, {
+    cleanHtml: '<html>persisted</html>',
+    playbackState: {
+      activeSlideIds: ['slide-1'],
+      slideCounterText: '1 / 1'
+    },
+    canonicalDeck
+  });
+  assert.equal(buildEditorCanonicalDeckCalls, 0);
+  assert.equal(capturePersistedDeckPlaybackStateCalls, 1);
+});
+
 test('initStudioFrame refreshes inspector state after bootstrapping the iframe', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const initStudioFrameSource = extractFunctionSource(
