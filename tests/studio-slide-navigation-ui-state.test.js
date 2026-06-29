@@ -263,3 +263,102 @@ test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when 
   assert.equal(calls[5][0], 'saveHistoryState');
   assert.equal(calls[5][1], false);
 });
+
+test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when the live iframe has no explicit active slide', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncStudioChromeToActiveSlideSource = extractFunctionSource(
+    fileContent,
+    'function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function bindDeckNavigationSync(doc = getIframeDoc()) {'
+  );
+
+  const slideCountLabel = { textContent: '' };
+  const iframeDoc = { label: 'iframe-doc' };
+  const calls = [];
+  const context = {
+    buildEditorDeckSnapshot(doc) {
+      calls.push(['buildEditorDeckSnapshot', doc]);
+      return {
+        activeSlideId: 'slide-3',
+        activeSlideIndex: 2,
+        slides: [
+          { id: 'slide-1' },
+          { id: 'slide-2' },
+          { id: 'slide-3' },
+          { id: 'slide-4' }
+        ]
+      };
+    },
+    currentSlideIndex: 0,
+    deselectElement() {
+      calls.push(['deselectElement']);
+    },
+    document: {
+      getElementById(id) {
+        assert.equal(id, 'slideCountLabel');
+        return slideCountLabel;
+      }
+    },
+    getEditorSlideId() {
+      return 'slide-4';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlides() {
+      return [];
+    },
+    preserveSelectionOnNextActiveSlideSync: false,
+    pruneEditorChromeNodes() {},
+    saveHistoryState(debounce) {
+      calls.push(['saveHistoryState', debounce]);
+    },
+    SlideNextStudioDeckSnapshot: {
+      resolveStudioActiveSlideIndex(deckSnapshot, fallbackIndex) {
+        calls.push(['resolveStudioActiveSlideIndex', deckSnapshot, fallbackIndex]);
+        return deckSnapshot.activeSlideIndex;
+      }
+    },
+    SlideNextStudioDeckView: {
+      syncStudioActiveSlideView(doc, options) {
+        calls.push(['syncStudioActiveSlideView', doc, options]);
+        return {
+          didSync: false
+        };
+      }
+    },
+    updateActiveThumbnailCardState(activeSlideId) {
+      calls.push(['updateActiveThumbnailCardState', activeSlideId]);
+    },
+    updateCurrentPresentationSessionState(nextState) {
+      calls.push(['updateCurrentPresentationSessionState', nextState]);
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        context.currentSlideIndex = nextState.slideIndex;
+      }
+    },
+    updateIframeNavigationUI() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncStudioChromeToActiveSlideSource, context);
+
+  const didSync = context.syncStudioChromeToActiveSlide(iframeDoc, { captureHistory: true });
+
+  assert.equal(didSync, true);
+  assert.equal(context.currentSlideIndex, 2);
+  assert.equal(slideCountLabel.textContent, '3 / 4');
+  assert.equal(calls[0][0], 'syncStudioActiveSlideView');
+  assert.equal(calls[0][1], iframeDoc);
+  assert.equal(calls[1][0], 'buildEditorDeckSnapshot');
+  assert.equal(calls[1][1], iframeDoc);
+  assert.equal(calls[2][0], 'resolveStudioActiveSlideIndex');
+  assert.equal(calls[2][1].activeSlideId, 'slide-3');
+  assert.equal(calls[2][2], 0);
+  assert.equal(calls[3][0], 'updateCurrentPresentationSessionState');
+  assert.equal(calls[3][1].slideIndex, 2);
+  assert.equal(calls[4][0], 'updateActiveThumbnailCardState');
+  assert.equal(calls[4][1], 'slide-3');
+  assert.equal(calls[5][0], 'deselectElement');
+  assert.equal(calls[6][0], 'saveHistoryState');
+  assert.equal(calls[6][1], false);
+});

@@ -1968,8 +1968,7 @@
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
       const previousIndex = currentSlideIndex;
       const preserveSelection = !!options.preserveSelection || preserveSelectionOnNextActiveSlideSync;
-      if (!doc) {
-        const deckSnapshot = buildEditorDeckSnapshot(doc);
+      const syncToDeckSnapshotFallback = (deckSnapshot) => {
         const slideCount = Array.isArray(deckSnapshot.slides) ? deckSnapshot.slides.length : 0;
         if (slideCount === 0) {
           updateCurrentPresentationSessionState({ slideIndex: 0 });
@@ -1997,6 +1996,11 @@
           saveHistoryState(false);
         }
         return !!activeSlideSnapshot;
+      };
+
+      if (!doc) {
+        const deckSnapshot = buildEditorDeckSnapshot(doc);
+        return syncToDeckSnapshotFallback(deckSnapshot);
       }
 
       const nextViewState = SlideNextStudioDeckView.syncStudioActiveSlideView(doc, {
@@ -2021,6 +2025,10 @@
         getSlideId: getEditorSlideId,
         updateIframeNavigationUI
       });
+      if (!nextViewState.didSync) {
+        const deckSnapshot = buildEditorDeckSnapshot(doc);
+        return syncToDeckSnapshotFallback(deckSnapshot);
+      }
       preserveSelectionOnNextActiveSlideSync = false;
       if (options.captureHistory && nextViewState.didSync && previousIndex !== currentSlideIndex) {
         saveHistoryState(false);
