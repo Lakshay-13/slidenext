@@ -4587,17 +4587,6 @@
     function resetStudioSaveButtonState() {
       setStudioSaveButtonState('idle');
     }
-
-    function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
-      return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
-        persistenceContext,
-        SlideNextStudioEditorPersistence.createStudioVersionPersistenceHandlerOptions({
-          ...createCurrentStudioSessionStateOptions(),
-          onSuccess: options.onSuccess,
-          refreshVersionEntries: loadVersions
-        })
-      );
-    }
     
     async function submitSaveVersion() {
       const input = document.getElementById('versionCheckpointName');
@@ -4637,12 +4626,17 @@
           versionCheckpointPersistenceState.requestOptions
         );
         if (data.success) {
-          handleCurrentStudioVersionPersistenceSuccess(versionCheckpointPersistenceState.persistenceContext, {
-            onSuccess: () => {
-              alert('Successfully saved named version backup checkpoint!');
-              setStudioAutoSaveStatus('saved');
-            }
-          });
+          SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
+            versionCheckpointPersistenceState.persistenceContext,
+            SlideNextStudioEditorPersistence.createStudioVersionPersistenceHandlerOptions({
+              ...createCurrentStudioSessionStateOptions(),
+              refreshVersionEntries: loadVersions,
+              onSuccess: () => {
+                alert('Successfully saved named version backup checkpoint!');
+                setStudioAutoSaveStatus('saved');
+              }
+            })
+          );
         } else {
           handleCurrentStudioPersistenceFailure(versionCheckpointPersistenceState.persistenceContext, {
             onFailure: () => {
@@ -4713,11 +4707,16 @@
           versionCheckpointPersistenceState.requestOptions
         );
         if (data.success) {
-          handleCurrentStudioVersionPersistenceSuccess(versionCheckpointPersistenceState.persistenceContext, {
-            onSuccess: () => {
-              console.log(`Auto-created version checkpoint: ${label}`);
-            }
-          });
+          SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
+            versionCheckpointPersistenceState.persistenceContext,
+            SlideNextStudioEditorPersistence.createStudioVersionPersistenceHandlerOptions({
+              ...createCurrentStudioSessionStateOptions(),
+              refreshVersionEntries: loadVersions,
+              onSuccess: () => {
+                console.log(`Auto-created version checkpoint: ${label}`);
+              }
+            })
+          );
         }
       } catch (err) {
         console.error('Failed to auto-create version backup:', err);

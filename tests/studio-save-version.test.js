@@ -36,20 +36,6 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context) {
-  context.SlideNextStudioEditorPersistence = {
-    ...editorPersistence,
-    ...(context.SlideNextStudioEditorPersistence || {})
-  };
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {',
-    '\n    \n    async function submitSaveVersion() {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
 function loadHandleCurrentStudioPersistenceSuccess(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
@@ -101,44 +87,6 @@ test('setStudioSaveButtonState renders the version button loading and idle state
   context.setStudioSaveButtonState('idle');
   assert.equal(saveBtnEl.disabled, false);
   assert.match(saveBtnEl.innerHTML, /Save Version/);
-});
-
-test('handleCurrentStudioVersionPersistenceSuccess reuses current session readers and refreshes version entries', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const calls = [];
-  const context = {
-    SlideNextStudioEditorPersistence: editorPersistence,
-    createCurrentStudioSessionStateReaders() {
-      return {
-        getCurrentPresentationUrl: () => context.currentPresentationUrl,
-        getCurrentSessionToken: () => context.studioEditorSessionToken
-      };
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    loadVersions(presentationUrl, sessionToken) {
-      calls.push(['loadVersions', presentationUrl, sessionToken]);
-    },
-    studioEditorSessionToken: 10
-  };
-
-  vm.createContext(context);
-  loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
-
-  const applied = context.handleCurrentStudioVersionPersistenceSuccess({
-    presentationUrl: '/presentations/onboarding-presentation/index.html',
-    cleanHtml: '<html></html>',
-    sessionToken: 10
-  }, {
-    onSuccess(nextContext) {
-      calls.push(['onSuccess', nextContext.presentationUrl]);
-    }
-  });
-
-  assert.equal(applied, true);
-  assert.deepEqual(calls, [
-    ['onSuccess', '/presentations/onboarding-presentation/index.html'],
-    ['loadVersions', '/presentations/onboarding-presentation/index.html', 10]
-  ]);
 });
 
 test('submitSaveVersion keeps the save button idle when editor content is unavailable', async () => {
@@ -221,6 +169,7 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
       return { success: true };
     },
     SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
       createStudioPersistenceActionContext() {
         return {};
       },
@@ -235,8 +184,8 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
-  loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -344,8 +293,8 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
-  loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -463,8 +412,8 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
-  loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -582,8 +531,8 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadHandleCurrentStudioPersistenceFailure(fileContent, context);
-  loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   const savePromise = context.submitSaveVersion();
@@ -644,7 +593,7 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
-  loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -712,7 +661,7 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
-  loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
