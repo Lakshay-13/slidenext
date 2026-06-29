@@ -3811,6 +3811,9 @@
       if (!doc) {
         const persistedHtml = typeof lastPersistedDeckHtml === 'string' ? lastPersistedDeckHtml : '';
         const canonicalDeck = buildOptions.canonicalDeck || buildEditorCanonicalDeck(doc);
+        if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
+          buildOptions.onCanonicalDeckResolved(canonicalDeck);
+        }
         const isPersistedCanonicalDeck = SlideNextStudioEditorPersistence
           && typeof SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck === 'function'
           ? SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck
@@ -3860,7 +3863,7 @@
       const presentationUrl = Object.prototype.hasOwnProperty.call(options, 'presentationUrl')
         ? options.presentationUrl
         : currentPresentationUrl;
-      const resolvedCanonicalDeck = buildEditorCanonicalDeck(doc);
+      const resolvedCanonicalDeck = options.canonicalDeck || buildEditorCanonicalDeck(doc);
       const resolvedCleanHtml = typeof cleanHtml === 'string'
         ? cleanHtml
         : buildPersistableDeckHtml(doc, {
@@ -3977,7 +3980,12 @@
         autoSaveDebounceTimer = null;
         const iframeDoc = getIframeDoc();
         if (isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
-        const cleanHtml = buildPersistableDeckHtml(iframeDoc);
+        let resolvedCanonicalDeck = null;
+        const cleanHtml = buildPersistableDeckHtml(iframeDoc, {
+          onCanonicalDeckResolved(canonicalDeck) {
+            resolvedCanonicalDeck = canonicalDeck;
+          }
+        });
         const livePlaybackState = capturePersistedDeckPlaybackState(iframeDoc);
         if (!cleanHtml) {
           setStudioAutoSaveStatus('saved');
@@ -3990,7 +3998,8 @@
             isPersistedState: isCurrentDeckStatePersisted,
             buildSaveRequestBody: () => buildEditorSaveRequestBody(iframeDoc, cleanHtml, {
               presentationUrl: scheduledPresentationUrl,
-              isAutoSave: true
+              isAutoSave: true,
+              canonicalDeck: resolvedCanonicalDeck
             }),
             sessionToken: scheduledSessionToken
           }

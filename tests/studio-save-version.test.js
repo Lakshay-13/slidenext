@@ -673,6 +673,7 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
   const fetchCalls = [];
   const persistedStateUpdates = [];
   const canonicalDeckUpdates = [];
+  let buildEditorCanonicalDeckCalls = 0;
   const statusEl = {
     innerHTML: 'Saved to disk'
   };
@@ -687,6 +688,7 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
     autoSaveDebounceTimer: null,
     buildEditorSaveRequestBody(nextDoc, cleanHtml, options = {}) {
       assert.equal(nextDoc, null);
+      assert.equal(options.canonicalDeck, canonicalDeck);
       return {
         htmlPath: options.presentationUrl,
         htmlContent: cleanHtml,
@@ -694,9 +696,15 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
         canonicalDeck
       };
     },
-    buildPersistableDeckHtml(nextDoc) {
+    buildPersistableDeckHtml(nextDoc, buildOptions = {}) {
       assert.equal(nextDoc, null);
+      assert.equal(typeof buildOptions.onCanonicalDeckResolved, 'function');
+      buildOptions.onCanonicalDeckResolved(canonicalDeck);
       return '<html>canonical-source</html>';
+    },
+    buildEditorCanonicalDeck() {
+      buildEditorCanonicalDeckCalls += 1;
+      return canonicalDeck;
     },
     capturePersistedDeckPlaybackState(nextDoc) {
       assert.equal(nextDoc, null);
@@ -781,6 +789,7 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
     canonicalDeckModel.createCanonicalDeck(canonicalDeck)
   );
   assert.equal(canonicalDeckUpdates[0][1], '/presentations/onboarding-presentation/index.html');
+  assert.equal(buildEditorCanonicalDeckCalls, 0);
   assert.equal(statusEl.innerHTML, 'saved');
 });
 
