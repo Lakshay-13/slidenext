@@ -271,3 +271,57 @@ test('buildEditorPreviewHtml reuses the resolved live canonical deck when previe
   assert.equal(context.buildEditorPreviewHtml(), '<html>persisted-preview</html>');
   assert.equal(buildEditorCanonicalDeckCalls, 1);
 });
+
+test('buildEditorPreviewHtml falls back to the current session slide when live active slide state is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorPreviewHtmlSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorSourceHtml(doc = getIframeDoc()) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  const iframeDoc = { label: 'iframe-doc' };
+  let buildEditorCanonicalDeckCalls = 0;
+  const context = {
+    SlideNextStudioDeckView: {
+      buildStudioPreviewHtml(doc, options) {
+        assert.equal(options.buildCanonicalDeck(doc), canonicalDeck);
+        return options.deckHtmlOptions.renderOptions.activeSlideId;
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      buildEditorCanonicalDeckCalls += 1;
+      assert.equal(nextDoc, iframeDoc);
+      return canonicalDeck;
+    },
+    buildPersistableDeckHtml() {
+      throw new Error('buildPersistableDeckHtml should not run when preview html resolves through the canonical deck');
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentSlideIndex: 1,
+    getActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return '';
+    },
+    getPersistedActiveSlideId() {
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorPreviewHtmlSource, context);
+
+  assert.equal(context.buildEditorPreviewHtml(), 'slide-2');
+  assert.equal(buildEditorCanonicalDeckCalls, 1);
+});

@@ -272,3 +272,93 @@ test('buildEditorDeckSnapshot prefers the current session active slide fallback 
   assert.equal(result.activeSlideId, 'slide-2');
   assert.equal(result.activeSlideIndex, 1);
 });
+
+test('buildEditorDeckSnapshot falls back to the current session slide when live active slide state is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const getPersistedActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {',
+    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
+  );
+  const buildEditorDeckSnapshotSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function getStudioActiveSlideIndex(doc = getIframeDoc()) {'
+  );
+
+  const calls = [];
+  let buildEditorCanonicalDeckCalls = 0;
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  const iframeDoc = { label: 'iframe-doc' };
+  const context = {
+    SlideNextStudioDeckSnapshot: {
+      buildStudioDeckSnapshot(nextDoc, options) {
+        calls.push({
+          nextDoc,
+          options,
+          canonicalDeck: options.buildCanonicalDeck(nextDoc)
+        });
+        return {
+          activeSlideId: options.fallbackActiveSlideId,
+          activeSlideIndex: 1,
+          slides: []
+        };
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      buildEditorCanonicalDeckCalls += 1;
+      assert.equal(nextDoc, iframeDoc);
+      return canonicalDeck;
+    },
+    buildEditorDeckSnapshotFromDom() {},
+    buildEditorLayerSnapshot() {},
+    currentSlideIndex: 1,
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return null;
+    },
+    getActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return '';
+    },
+    getEditorSlideId() {
+      return '';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlideById() {
+      return null;
+    },
+    persistedDeckPlaybackState: {
+      activeSlideId: 'slide-1'
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(getPersistedActiveSlideIdSource, context);
+  vm.runInContext(buildEditorDeckSnapshotSource, context);
+
+  const result = context.buildEditorDeckSnapshot();
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].nextDoc, iframeDoc);
+  assert.equal(calls[0].canonicalDeck, canonicalDeck);
+  assert.equal(calls[0].options.fallbackActiveSlideId, 'slide-2');
+  assert.equal(buildEditorCanonicalDeckCalls, 1);
+  assert.equal(result.activeSlideId, 'slide-2');
+  assert.equal(result.activeSlideIndex, 1);
+});
