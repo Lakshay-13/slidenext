@@ -40,6 +40,14 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   const calls = [];
   const context = {
     assignEditorSlideId() {},
+    document: {
+      getElementById(id) {
+        if (id === 'addSlideBtn') {
+          return { disabled: false };
+        }
+        return null;
+      }
+    },
     generateThumbnails() {
       calls.push(['generateThumbnails']);
     },
@@ -101,6 +109,45 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   assert.equal(calls[4][1], iframeDoc);
   assert.equal(calls[6][1], 1);
   assert.equal(calls[9][1], 'Auto: Added Slide');
+});
+
+test('addSlideNode no-ops when the add-slide control is disabled or the iframe document is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const addSlideNodeSource = extractFunctionSource(
+    fileContent,
+    'function addSlideNode() {',
+    '\n\n    // Delete Active Slide Node'
+  );
+
+  const calls = [];
+  const addSlideBtn = { disabled: true };
+  const context = {
+    document: {
+      getElementById(id) {
+        if (id === 'addSlideBtn') {
+          return addSlideBtn;
+        }
+        return null;
+      }
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return null;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(addSlideNodeSource, context);
+
+  context.addSlideNode();
+  assert.deepEqual(calls, []);
+
+  addSlideBtn.disabled = false;
+  context.addSlideNode();
+  assert.deepEqual(calls, [['getIframeDoc']]);
 });
 
 test('reorderSlides uses the shared iframe accessor and restores editor state after moving a slide', () => {

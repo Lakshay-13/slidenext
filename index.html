@@ -2130,7 +2130,10 @@
 
     // Add Blank Slide Node
     function addSlideNode() {
+      const addSlideBtn = document.getElementById('addSlideBtn');
+      if (addSlideBtn && addSlideBtn.disabled) return;
       const iframeDoc = getIframeDoc();
+      if (!iframeDoc) return;
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return;
       saveHistoryState();
