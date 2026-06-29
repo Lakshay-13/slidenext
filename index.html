@@ -1457,11 +1457,15 @@
         : persistedActiveSlideId;
     }
 
-    function resolveEditorLiveActiveSlideId(doc = getIframeDoc()) {
+    function resolveEditorLiveActiveSlide(doc = getIframeDoc()) {
       if (!doc || typeof doc.querySelector !== 'function') {
-        return '';
+        return null;
       }
-      const activeSlide = doc.querySelector('.slide-active');
+      return doc.querySelector('.slide-active');
+    }
+
+    function resolveEditorLiveActiveSlideId(doc = getIframeDoc()) {
+      const activeSlide = resolveEditorLiveActiveSlide(doc);
       if (!activeSlide) {
         return '';
       }
@@ -2412,10 +2416,11 @@
         resolvedCanonicalDeck
       } = resolveEditorCanonicalDeckViewState(doc, {
         resolveLiveActiveSlideId: (sourceDoc) => {
-          const activeSlide = sourceDoc ? getActiveSlide(sourceDoc) : null;
+          const activeSlide = resolveEditorLiveActiveSlide(sourceDoc);
           return activeSlide ? (getEditorSlideId(activeSlide, sourceDoc) || '') : '';
         }
       });
+      const liveActiveSlide = liveActiveSlideId ? resolveEditorLiveActiveSlide(doc) : null;
       return SlideNextStudioDeckSnapshot.buildStudioDeckSnapshot(doc, {
         includeLayers: !!options.includeLayers,
         buildCanonicalDeck: doc
@@ -2423,7 +2428,7 @@
           : () => resolvedCanonicalDeck,
         buildDomSnapshot: (sourceDoc) => buildEditorDeckSnapshotFromDom(sourceDoc, options),
         fallbackActiveSlideId: liveActiveSlideId || resolveEditorFallbackActiveSlideId(doc, resolvedCanonicalDeck),
-        getActiveSlide,
+        getActiveSlide: () => liveActiveSlide,
         getActiveSlideId: getEditorSlideId,
         getSlideById,
         buildSlideLayerSnapshot: (slideEl) => buildEditorLayerSnapshot(slideEl)

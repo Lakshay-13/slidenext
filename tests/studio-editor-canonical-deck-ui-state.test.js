@@ -227,6 +227,14 @@ test('buildEditorDeckSnapshot prefers the current session active slide fallback 
       { id: 'slide-2', nodes: [] }
     ]
   };
+  const activeSlide = { id: 'slide-2' };
+  const iframeDoc = {
+    label: 'iframe-doc',
+    querySelector(selector) {
+      assert.equal(selector, '.slide-active');
+      return activeSlide;
+    }
+  };
   const context = {
     SlideNextStudioDeckSnapshot: {
       buildStudioDeckSnapshot(nextDoc, options) {
@@ -249,14 +257,11 @@ test('buildEditorDeckSnapshot prefers the current session active slide fallback 
     buildEditorDeckSnapshotFromDom() {},
     buildEditorLayerSnapshot() {},
     currentSlideIndex: 1,
-    getActiveSlide() {
-      return null;
-    },
     getEditorSlideId() {
-      return '';
+      return 'slide-2';
     },
     getIframeDoc() {
-      return null;
+      return iframeDoc;
     },
     getSlideById() {
       return null;
@@ -275,7 +280,7 @@ test('buildEditorDeckSnapshot prefers the current session active slide fallback 
   const result = context.buildEditorDeckSnapshot();
 
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].nextDoc, null);
+  assert.equal(calls[0].nextDoc, iframeDoc);
   assert.equal(calls[0].canonicalDeck, canonicalDeck);
   assert.equal(calls[0].options.fallbackActiveSlideId, 'slide-2');
   assert.equal(buildEditorCanonicalDeckCalls, 1);
@@ -311,7 +316,13 @@ test('buildEditorDeckSnapshot falls back to the current session slide when live 
       { id: 'slide-2', nodes: [] }
     ]
   };
-  const iframeDoc = { label: 'iframe-doc' };
+  const iframeDoc = {
+    label: 'iframe-doc',
+    querySelector(selector) {
+      assert.equal(selector, '.slide-active');
+      return null;
+    }
+  };
   const context = {
     SlideNextStudioDeckSnapshot: {
       buildStudioDeckSnapshot(nextDoc, options) {
@@ -335,10 +346,6 @@ test('buildEditorDeckSnapshot falls back to the current session slide when live 
     buildEditorDeckSnapshotFromDom() {},
     buildEditorLayerSnapshot() {},
     currentSlideIndex: 1,
-    getActiveSlide(nextDoc) {
-      assert.equal(nextDoc, iframeDoc);
-      return null;
-    },
     getActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return '';
