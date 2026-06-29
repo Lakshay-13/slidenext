@@ -51,6 +51,36 @@ test('createStudioVersionActionContext normalizes the captured deck state', () =
   );
 });
 
+test('createStudioVersionActionHandlerOptions preserves the supplied session readers and hooks', () => {
+  const getCurrentPresentationUrl = () => '/presentations/onboarding-presentation/index.html';
+  const getCurrentSessionToken = () => 8;
+  const hooks = {
+    isCurrentSession() {
+      return true;
+    },
+    onSuccess() {},
+    onFailure() {},
+    hideVersionsDropdown() {},
+    relaunchEditor() {},
+    refreshVersionEntries() {}
+  };
+
+  const options = versionActions.createStudioVersionActionHandlerOptions({
+    getCurrentPresentationUrl,
+    getCurrentSessionToken,
+    ...hooks
+  });
+
+  assert.equal(options.getCurrentPresentationUrl, getCurrentPresentationUrl);
+  assert.equal(options.getCurrentSessionToken, getCurrentSessionToken);
+  assert.equal(options.isCurrentSession, hooks.isCurrentSession);
+  assert.equal(options.onSuccess, hooks.onSuccess);
+  assert.equal(options.onFailure, hooks.onFailure);
+  assert.equal(options.hideVersionsDropdown, hooks.hideVersionsDropdown);
+  assert.equal(options.relaunchEditor, hooks.relaunchEditor);
+  assert.equal(options.refreshVersionEntries, hooks.refreshVersionEntries);
+});
+
 test('handleStudioRestoreVersionSuccess applies restore hooks for the active deck only', () => {
   const restoreContext = versionActions.createStudioVersionActionContext(
     '/presentations/onboarding-presentation/index.html',

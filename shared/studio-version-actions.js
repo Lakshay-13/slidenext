@@ -74,6 +74,19 @@
       || versionLabel.includes('Rearranged');
   }
 
+  function createStudioVersionActionHandlerOptions(options = {}) {
+    return {
+      getCurrentPresentationUrl: options.getCurrentPresentationUrl,
+      getCurrentSessionToken: options.getCurrentSessionToken,
+      isCurrentSession: options.isCurrentSession,
+      onSuccess: options.onSuccess,
+      onFailure: options.onFailure,
+      hideVersionsDropdown: options.hideVersionsDropdown,
+      relaunchEditor: options.relaunchEditor,
+      refreshVersionEntries: options.refreshVersionEntries
+    };
+  }
+
   function handleStudioRestoreVersionSuccess(context = {}, options = {}) {
     if (!isStudioVersionActionSessionCurrent(context, options)) {
       return false;
@@ -130,6 +143,7 @@
     isStudioVersionActionCurrent,
     isStudioVersionActionSessionCurrent,
     shouldDebounceStudioAutoVersion,
+    createStudioVersionActionHandlerOptions,
     handleStudioRestoreVersionSuccess,
     handleStudioVersionListMutationSuccess,
     handleStudioVersionActionFailure

@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const modalVisibility = require('../shared/studio-modal-visibility.js');
+const versionActions = require('../shared/studio-version-actions.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -40,18 +41,8 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioVersionActionHandlerOptions(options = {}) {',
-    '\n\n    function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
 function loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context) {
-  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {',
@@ -61,7 +52,7 @@ function loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context)
 }
 
 function loadHandleCurrentStudioVersionActionFailure(fileContent, context) {
-  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionActionFailure(versionActionContext, options = {}) {',
@@ -71,7 +62,7 @@ function loadHandleCurrentStudioVersionActionFailure(fileContent, context) {
 }
 
 function loadHandleCurrentStudioVersionRestoreSuccess(fileContent, context) {
-  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionRestoreSuccess(versionActionContext, options = {}) {',
@@ -341,54 +332,12 @@ test('createCurrentStudioVersionActionContext captures the active editor deck id
   assert.equal(calls[0][3].sessionToken, 21);
 });
 
-test('createCurrentStudioVersionActionHandlerOptions reuses current session readers and forwards supplied hooks', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const currentStudioSessionStateReaders = {
-    getCurrentPresentationUrl() {
-      return context.currentPresentationUrl;
-    },
-    getCurrentSessionToken() {
-      return context.studioEditorSessionToken;
-    }
-  };
-  const hooks = {
-    isCurrentSession() {
-      return true;
-    },
-    onSuccess() {},
-    onFailure() {},
-    hideVersionsDropdown() {},
-    relaunchEditor() {},
-    refreshVersionEntries() {}
-  };
-  const context = {
-    createCurrentStudioSessionStateReaders() {
-      return currentStudioSessionStateReaders;
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 8
-  };
-
-  vm.createContext(context);
-  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
-
-  const options = context.createCurrentStudioVersionActionHandlerOptions(hooks);
-
-  assert.equal(options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
-  assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
-  assert.equal(options.isCurrentSession, hooks.isCurrentSession);
-  assert.equal(options.onSuccess, hooks.onSuccess);
-  assert.equal(options.onFailure, hooks.onFailure);
-  assert.equal(options.hideVersionsDropdown, hooks.hideVersionsDropdown);
-  assert.equal(options.relaunchEditor, hooks.relaunchEditor);
-  assert.equal(options.refreshVersionEntries, hooks.refreshVersionEntries);
-});
-
 test('handleCurrentStudioVersionListMutationSuccess reuses current session readers and refreshes version entries by default', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
   const context = {
     SlideNextStudioVersionActions: {
+      ...versionActions,
       handleStudioVersionListMutationSuccess(versionActionContext, options) {
         calls.push(['handleStudioVersionListMutationSuccess', versionActionContext, options]);
         return true;
@@ -438,6 +387,7 @@ test('handleCurrentStudioVersionListMutationSuccess can skip version refresh wir
   const calls = [];
   const context = {
     SlideNextStudioVersionActions: {
+      ...versionActions,
       handleStudioVersionListMutationSuccess(versionActionContext, options) {
         calls.push(['handleStudioVersionListMutationSuccess', versionActionContext, options]);
         return false;
@@ -480,6 +430,7 @@ test('handleCurrentStudioVersionActionFailure reuses current session readers for
   const calls = [];
   const context = {
     SlideNextStudioVersionActions: {
+      ...versionActions,
       handleStudioVersionActionFailure(versionActionContext, options) {
         calls.push(['handleStudioVersionActionFailure', versionActionContext, options]);
         return true;
@@ -524,6 +475,7 @@ test('handleCurrentStudioVersionRestoreSuccess reuses current session readers an
   const calls = [];
   const context = {
     SlideNextStudioVersionActions: {
+      ...versionActions,
       handleStudioRestoreVersionSuccess(versionActionContext, options) {
         calls.push(['handleStudioRestoreVersionSuccess', versionActionContext, options]);
         return true;
