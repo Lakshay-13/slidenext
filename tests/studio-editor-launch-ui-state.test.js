@@ -15,6 +15,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 }
 
 function loadCreateCurrentStudioPresentationMetadataLoadOptions(fileContent, context) {
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioPresentationMetadataLoadOptions(options = {}) {',
@@ -23,7 +24,17 @@ function loadCreateCurrentStudioPresentationMetadataLoadOptions(fileContent, con
   vm.runInContext(helperSource, context);
 }
 
+function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioSessionStateOptions(options = {}) {',
+    '\n\n    function createCurrentStudioFrameLoadStateOptions(options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateCurrentStudioFrameLoadStateOptions(fileContent, context) {
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioFrameLoadStateOptions(options = {}) {',
@@ -166,6 +177,34 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
     '/presentations/onboarding-presentation/index.html',
     1
   ]]);
+});
+
+test('createCurrentStudioSessionStateOptions reuses live session readers and forwards the session token', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const currentStudioSessionStateReaders = {
+    getCurrentPresentationUrl() {
+      return context.currentPresentationUrl;
+    },
+    getCurrentSessionToken() {
+      return context.studioEditorSessionToken;
+    }
+  };
+  const context = {
+    createCurrentStudioSessionStateReaders() {
+      return currentStudioSessionStateReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 4
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+
+  const options = context.createCurrentStudioSessionStateOptions({ sessionToken: 4 });
+
+  assert.equal(options.sessionToken, 4);
+  assert.equal(options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
+  assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
 });
 
 test('createCurrentStudioFrameLoadStateOptions reuses current session readers and forwards frame load hooks', () => {

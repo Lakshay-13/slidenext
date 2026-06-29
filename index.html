@@ -1630,10 +1630,18 @@
       return document.getElementById('studioFrame');
     }
 
-    function createCurrentStudioFrameLoadStateOptions(options = {}) {
+    function createCurrentStudioSessionStateOptions(options = {}) {
       return {
         sessionToken: options.sessionToken,
-        ...createCurrentStudioSessionStateReaders(),
+        ...createCurrentStudioSessionStateReaders()
+      };
+    }
+
+    function createCurrentStudioFrameLoadStateOptions(options = {}) {
+      return {
+        ...createCurrentStudioSessionStateOptions({
+          sessionToken: options.sessionToken
+        }),
         isEditorActive: options.isEditorActive,
         handleLoad: options.handleLoad,
         afterLoad: options.afterLoad
@@ -2347,8 +2355,9 @@
 
     function createCurrentStudioPresentationMetadataLoadOptions(options = {}) {
       return {
-        sessionToken: options.sessionToken,
-        ...createCurrentStudioSessionStateReaders(),
+        ...createCurrentStudioSessionStateOptions({
+          sessionToken: options.sessionToken
+        }),
         setCurrentPresentationMetadata: options.setCurrentPresentationMetadata,
         onError: options.onError
       };
