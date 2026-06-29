@@ -4733,6 +4733,15 @@
       });
     }
 
+    function handleCurrentStudioVersionRestoreSuccess(versionActionContext, options = {}) {
+      return SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(versionActionContext, {
+        ...createCurrentStudioSessionStateReaders(),
+        onSuccess: options.onSuccess,
+        hideVersionsDropdown: options.hideVersionsDropdown,
+        relaunchEditor: options.relaunchEditor
+      });
+    }
+
     // Rollback backup version
     async function restoreVersion(filename) {
       if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
@@ -4752,8 +4761,7 @@
         
         const data = await response.json();
         if (data.success) {
-          SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(restoreContext, {
-            ...createCurrentStudioSessionStateReaders(),
+          handleCurrentStudioVersionRestoreSuccess(restoreContext, {
             onSuccess: () => {
               alert('Rollback successfully restored!');
             },

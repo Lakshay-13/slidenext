@@ -44,6 +44,15 @@ function loadHandleCurrentStudioVersionActionFailure(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionActionFailure(versionActionContext, options = {}) {',
+    '\n\n    function handleCurrentStudioVersionRestoreSuccess(versionActionContext, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadHandleCurrentStudioVersionRestoreSuccess(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function handleCurrentStudioVersionRestoreSuccess(versionActionContext, options = {}) {',
     '\n\n    // Rollback backup version'
   );
   vm.runInContext(helperSource, context);
@@ -374,6 +383,60 @@ test('handleCurrentStudioVersionActionFailure reuses current session readers for
   assert.equal(calls[0][2].getCurrentSessionToken(), 11);
   calls[0][2].onFailure();
   assert.deepEqual(calls.slice(1), [['onFailure']]);
+});
+
+test('handleCurrentStudioVersionRestoreSuccess reuses current session readers and restore hooks', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    SlideNextStudioVersionActions: {
+      handleStudioRestoreVersionSuccess(versionActionContext, options) {
+        calls.push(['handleStudioRestoreVersionSuccess', versionActionContext, options]);
+        return true;
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+        getCurrentSessionToken: () => 12
+      };
+    }
+  };
+
+  vm.createContext(context);
+  loadHandleCurrentStudioVersionRestoreSuccess(fileContent, context);
+
+  const versionActionContext = {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    sessionToken: 12
+  };
+  const result = context.handleCurrentStudioVersionRestoreSuccess(versionActionContext, {
+    onSuccess() {
+      calls.push(['onSuccess']);
+    },
+    hideVersionsDropdown() {
+      calls.push(['hideVersionsDropdown']);
+    },
+    relaunchEditor() {
+      calls.push(['relaunchEditor']);
+    }
+  });
+
+  assert.equal(result, true);
+  assert.equal(calls[0][0], 'handleStudioRestoreVersionSuccess');
+  assert.equal(calls[0][1], versionActionContext);
+  assert.equal(typeof calls[0][2].getCurrentPresentationUrl, 'function');
+  assert.equal(typeof calls[0][2].getCurrentSessionToken, 'function');
+  assert.equal(calls[0][2].getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(calls[0][2].getCurrentSessionToken(), 12);
+  calls[0][2].onSuccess();
+  calls[0][2].hideVersionsDropdown();
+  calls[0][2].relaunchEditor();
+  assert.deepEqual(calls.slice(1), [
+    ['onSuccess'],
+    ['hideVersionsDropdown'],
+    ['relaunchEditor']
+  ]);
 });
 
 test('createCurrentStudioSessionStateReaders exposes live presentation and session getters', () => {
