@@ -3653,9 +3653,11 @@
       undoDebounceTimer = nextCaptureState.nextTimer;
     }
 
-    function buildHistoryFrameHtml(doc = getIframeDoc()) {
+    function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {
       return SlideNextStudioHistory.buildStudioHistoryFrameHtml(doc, getEditorHistoryOptions())
-        || buildPersistableDeckHtml(doc);
+        || buildPersistableDeckHtml(doc, {
+          canonicalDeck: options.canonicalDeck
+        });
     }
 
     function createHistoryEntry(doc) {

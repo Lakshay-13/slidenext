@@ -99,7 +99,7 @@ test('createHistoryEntry falls back to persisted baseline state when the editor 
   );
   const buildHistoryFrameHtmlSource = extractFunctionSource(
     fileContent,
-    'function buildHistoryFrameHtml(doc = getIframeDoc()) {',
+    'function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {',
     '\n\n    function createHistoryEntry(doc) {'
   );
   const createHistoryEntrySource = extractFunctionSource(
@@ -143,8 +143,8 @@ test('createHistoryEntry falls back to persisted baseline state when the editor 
       calls.push(['buildEditorCanonicalDeck', doc]);
       return canonicalDeck;
     },
-    buildPersistableDeckHtml(doc) {
-      calls.push(['buildPersistableDeckHtml', doc]);
+    buildPersistableDeckHtml(doc, options = {}) {
+      calls.push(['buildPersistableDeckHtml', doc, options]);
       return '<html>persisted-baseline</html>';
     },
     currentSlideIndex: 1,
@@ -188,6 +188,7 @@ test('createHistoryEntry falls back to persisted baseline state when the editor 
   assert.equal(Array.isArray(calls[4][2].selectedElementIds), true);
   assert.equal(calls[4][2].selectedElementIds.length, 0);
   assert.equal(calls[7][1], null);
+  assert.equal(calls[7][2].canonicalDeck, canonicalDeck);
   assert.equal(entry.html, '<html>persisted-baseline</html>');
   assert.equal(entry.activeSlideId, 'slide-2');
   assert.equal(Array.isArray(entry.selectedElementIds), true);
@@ -209,7 +210,7 @@ test('buildHistoryFrameHtml reuses shared deck source sanitization for history s
   );
   const buildHistoryFrameHtmlSource = extractFunctionSource(
     fileContent,
-    'function buildHistoryFrameHtml(doc = getIframeDoc()) {',
+    'function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {',
     '\n\n    function createHistoryEntry(doc) {'
   );
 
@@ -361,7 +362,7 @@ test('buildHistoryFrameHtml strips editor style tags when the shared deck source
   );
   const buildHistoryFrameHtmlSource = extractFunctionSource(
     fileContent,
-    'function buildHistoryFrameHtml(doc = getIframeDoc()) {',
+    'function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {',
     '\n\n    function createHistoryEntry(doc) {'
   );
 
