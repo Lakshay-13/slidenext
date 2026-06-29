@@ -77,8 +77,9 @@ test('insertElement uses the shared iframe accessor before adding a heading elem
   vm.createContext(context);
   vm.runInContext(insertElementSource, context);
 
-  context.insertElement('h2');
+  const result = context.insertElement('h2');
 
+  assert.equal(result, true);
   assert.equal(appendedElement?.tagName, 'H2');
   assert.equal(appendedElement.textContent, 'New Heading');
   assert.equal(appendedElement.style.left, 'calc(30% + 30px)');
@@ -102,4 +103,62 @@ test('insertElement uses the shared iframe accessor before adding a heading elem
   assert.equal(calls[3][1], appendedElement);
   assert.equal(calls[5][1], appendedElement);
   assert.equal(calls[10][1], 'Auto: Added H2');
+});
+
+test('insertElement no-ops when no active slide is available or the element type is unsupported', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const insertElementSource = extractFunctionSource(
+    fileContent,
+    'function insertElement(type) {',
+    '\n\n    // Rearrange Selected Element Layers'
+  );
+
+  const calls = [];
+  const iframeDoc = {
+    createElement(tag) {
+      calls.push(['createElement', tag]);
+      return {
+        tagName: tag.toUpperCase(),
+        style: {},
+        appendChild() {}
+      };
+    }
+  };
+  let activeSlide = null;
+  const context = {
+    getActiveSlide(doc) {
+      calls.push(['getActiveSlide', doc]);
+      return activeSlide;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(insertElementSource, context);
+
+  assert.equal(context.insertElement('h2'), false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getActiveSlide', iframeDoc]
+  ]);
+
+  activeSlide = {
+    children: [],
+    appendChild() {
+      calls.push(['appendChild']);
+    }
+  };
+  calls.length = 0;
+
+  assert.equal(context.insertElement('unknown'), false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getActiveSlide', iframeDoc]
+  ]);
 });

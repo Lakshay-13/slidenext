@@ -3483,7 +3483,7 @@
       const iframeDoc = getIframeDoc();
       
       const activeSlide = getActiveSlide(iframeDoc);
-      if (!activeSlide) return;
+      if (!activeSlide) return false;
 
       const offset = (activeSlide.children.length * 15) % 150;
       
@@ -3587,7 +3587,10 @@
         triggerAutoSave();
         updateLayersList();
         triggerAutoVersion('Auto: Added ' + type.toUpperCase());
+        return true;
       }
+
+      return false;
     }
 
     // Rearrange Selected Element Layers
