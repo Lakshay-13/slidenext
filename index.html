@@ -4150,7 +4150,10 @@
       doc = getIframeDoc()
     ) {
       return SlideNextStudioEditorPersistence.resolveStudioAutoSavePersistenceState(
-        captureCurrentStudioPersistableDeckState(doc),
+        SlideNextStudioEditorPersistence.createStudioPersistableDeckState(
+          doc,
+          captureEditorPersistableDeckState(doc)
+        ),
         presentationUrl,
         {
           isPersistedState: isCurrentDeckStatePersisted,
@@ -4622,20 +4625,16 @@
       });
     }
 
-    function captureCurrentStudioPersistableDeckState(doc = getIframeDoc()) {
-      return SlideNextStudioEditorPersistence.createStudioPersistableDeckState(
-        doc,
-        captureEditorPersistableDeckState(doc)
-      );
-    }
-
     function captureCurrentStudioVersionCheckpointPersistenceState(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken,
       doc = getIframeDoc()
     ) {
       return SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceState(
-        captureCurrentStudioPersistableDeckState(doc),
+        SlideNextStudioEditorPersistence.createStudioPersistableDeckState(
+          doc,
+          captureEditorPersistableDeckState(doc)
+        ),
         presentationUrl,
         {
           sessionToken

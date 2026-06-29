@@ -46,14 +46,14 @@ function loadCaptureCurrentStudioSessionSnapshot(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadCaptureCurrentStudioPersistableDeckState(fileContent, context) {
+function loadCaptureCurrentStudioVersionCheckpointPersistenceState(fileContent, context) {
   context.SlideNextStudioEditorPersistence = {
     ...editorPersistence,
     ...(context.SlideNextStudioEditorPersistence || {})
   };
   const helperSource = extractFunctionSource(
     fileContent,
-    'function captureCurrentStudioPersistableDeckState(doc = getIframeDoc()) {',
+    'function captureCurrentStudioVersionCheckpointPersistenceState(',
     '\n    \n    async function submitSaveVersion() {'
   );
   vm.runInContext(helperSource, context);
@@ -149,57 +149,10 @@ test('setStudioSaveButtonState renders the version button loading and idle state
   assert.match(saveBtnEl.innerHTML, /Save Version/);
 });
 
-test('captureCurrentStudioPersistableDeckState reuses the shared iframe accessor and persistable deck capture', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const iframeDoc = { label: 'iframe-doc' };
-  let capturedPersistableDeckStateArgs = null;
-  const persistedDeckState = {
-    cleanHtml: '<html>persisted</html>',
-    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-    playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
-  };
-  const context = {
-    SlideNextStudioEditorPersistence: {
-      ...editorPersistence,
-      createStudioPersistableDeckState(doc, nextPersistedDeckState) {
-        capturedPersistableDeckStateArgs = [doc, nextPersistedDeckState];
-        return editorPersistence.createStudioPersistableDeckState(doc, nextPersistedDeckState);
-      }
-    },
-    captureEditorPersistableDeckState(doc) {
-      assert.equal(doc, iframeDoc);
-      return persistedDeckState;
-    },
-    getIframeDoc() {
-      return iframeDoc;
-    }
-  };
-
-  vm.createContext(context);
-  loadCaptureCurrentStudioPersistableDeckState(fileContent, context);
-
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(context.captureCurrentStudioPersistableDeckState())),
-    {
-      doc: iframeDoc,
-      cleanHtml: '<html>persisted</html>',
-      canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-      playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
-    }
-  );
-  assert.deepEqual(JSON.parse(JSON.stringify(capturedPersistableDeckStateArgs)), [
-    { label: 'iframe-doc' },
-    {
-      cleanHtml: '<html>persisted</html>',
-      canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
-      playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
-    }
-  ]);
-});
-
 test('captureCurrentStudioVersionCheckpointPersistenceState reuses current deck capture and shared checkpoint state creation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
+  let capturedPersistableDeckStateArgs = null;
   let capturedPersistedDeckState = null;
   const persistedDeckState = {
     cleanHtml: '<html>persisted</html>',
@@ -216,6 +169,10 @@ test('captureCurrentStudioVersionCheckpointPersistenceState reuses current deck 
     },
     SlideNextStudioEditorPersistence: {
       ...editorPersistence,
+      createStudioPersistableDeckState(doc, nextPersistedDeckState) {
+        capturedPersistableDeckStateArgs = [doc, nextPersistedDeckState];
+        return editorPersistence.createStudioPersistableDeckState(doc, nextPersistedDeckState);
+      },
       resolveStudioVersionCheckpointPersistenceState(nextPersistedDeckState, presentationUrl, options = {}) {
         capturedPersistedDeckState = nextPersistedDeckState;
         assert.deepEqual(
@@ -237,7 +194,7 @@ test('captureCurrentStudioVersionCheckpointPersistenceState reuses current deck 
   };
 
   vm.createContext(context);
-  loadCaptureCurrentStudioPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(
@@ -253,6 +210,14 @@ test('captureCurrentStudioVersionCheckpointPersistenceState reuses current deck 
       cleanHtml: '<html>persisted</html>'
     }
   );
+  assert.deepEqual(JSON.parse(JSON.stringify(capturedPersistableDeckStateArgs)), [
+    { label: 'iframe-doc' },
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
+      playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
+    }
+  ]);
   assert.deepEqual(JSON.parse(JSON.stringify(capturedPersistedDeckState)), {
     doc: iframeDoc,
     cleanHtml: '<html>persisted</html>',
@@ -278,7 +243,7 @@ test('captureCurrentStudioVersionCheckpointPersistenceState returns null when no
   };
 
   vm.createContext(context);
-  loadCaptureCurrentStudioPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
 
   assert.equal(
     context.captureCurrentStudioVersionCheckpointPersistenceState(
@@ -292,20 +257,27 @@ test('captureCurrentStudioVersionCheckpointPersistenceState returns null when no
 test('captureCurrentStudioAutoSavePersistenceState reuses current deck capture and autosave plan creation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
+  let capturedPersistableDeckStateArgs = null;
   let capturedPersistedDeckState = null;
   const persistedDeckState = {
-    doc: iframeDoc,
     cleanHtml: '<html>live-save</html>',
     canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
     playbackState: { activeSlideIds: ['slide-live'], slideCounterText: '2 / 4' }
   };
   const context = {
-    captureCurrentStudioPersistableDeckState(doc) {
+    captureEditorPersistableDeckState(doc) {
       assert.deepEqual(doc, iframeDoc);
       return persistedDeckState;
     },
+    getIframeDoc() {
+      return iframeDoc;
+    },
     SlideNextStudioEditorPersistence: {
       ...editorPersistence,
+      createStudioPersistableDeckState(doc, nextPersistedDeckState) {
+        capturedPersistableDeckStateArgs = [doc, nextPersistedDeckState];
+        return editorPersistence.createStudioPersistableDeckState(doc, nextPersistedDeckState);
+      },
       resolveStudioAutoSavePersistenceState(nextPersistedDeckState, presentationUrl, options = {}) {
         capturedPersistedDeckState = nextPersistedDeckState;
         assert.deepEqual(
@@ -360,6 +332,14 @@ test('captureCurrentStudioAutoSavePersistenceState reuses current deck capture a
       }
     }
   );
+  assert.deepEqual(JSON.parse(JSON.stringify(capturedPersistableDeckStateArgs)), [
+    { label: 'iframe-doc' },
+    {
+      cleanHtml: '<html>live-save</html>',
+      canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
+      playbackState: { activeSlideIds: ['slide-live'], slideCounterText: '2 / 4' }
+    }
+  ]);
   assert.deepEqual(JSON.parse(JSON.stringify(capturedPersistedDeckState)), {
     doc: { label: 'iframe-doc' },
     cleanHtml: '<html>live-save</html>',
@@ -985,7 +965,7 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
-  loadCaptureCurrentStudioPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
@@ -1054,7 +1034,7 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
-  loadCaptureCurrentStudioPersistableDeckState(fileContent, context);
+  loadCaptureCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
