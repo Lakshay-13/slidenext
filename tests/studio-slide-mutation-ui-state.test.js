@@ -244,10 +244,10 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
   assert.deepEqual(slides, [secondSlide, thirdSlide, firstSlide]);
   assert.deepEqual(calls.map(([name]) => name), [
     'getIframeDoc',
+    'getSlides',
     'saveHistoryState',
     'getActiveSlideId',
     'getCommittedSelectedEditorElementIds',
-    'getSlides',
     'insertBefore',
     'generateThumbnails',
     'getSlides',
@@ -256,7 +256,7 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
     'triggerAutoSave',
     'triggerAutoVersion'
   ]);
-  assert.equal(calls[2][1], iframeDoc);
+  assert.equal(calls[1][1], iframeDoc);
   assert.equal(calls[3][1], iframeDoc);
   assert.equal(calls[4][1], iframeDoc);
   assert.equal(calls[5][1], firstSlide);
@@ -307,6 +307,48 @@ test('reorderSlides no-ops when the iframe document is unavailable', () => {
   context.reorderSlides(0, 1);
 
   assert.deepEqual(calls, [['getIframeDoc']]);
+});
+
+test('reorderSlides no-ops when the requested slide indexes are unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const reorderSlidesSource = extractFunctionSource(
+    fileContent,
+    'function reorderSlides(fromIdx, toIdx) {',
+    '\n\n    function updateActiveThumbnailCardState(activeSlideId) {'
+  );
+
+  const slides = [{ id: 'slide-1' }, { id: 'slide-2' }];
+  const calls = [];
+  const iframeDoc = {
+    getElementById(id) {
+      assert.equal(id, 'slidesContainer');
+      return {};
+    }
+  };
+  const context = {
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    getSlides(doc) {
+      calls.push(['getSlides', doc]);
+      return slides;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(reorderSlidesSource, context);
+
+  const result = context.reorderSlides(0, 9);
+
+  assert.equal(result, false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getSlides', iframeDoc]
+  ]);
 });
 
 test('deleteSlideNode uses the shared iframe accessor and restores editor state after removing a slide', () => {

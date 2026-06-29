@@ -1967,14 +1967,13 @@
       if (!iframeDoc) return;
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return;
-      saveHistoryState();
-      const activeSlideId = getActiveSlideId(iframeDoc);
-      const preservedSelectionIds = getCommittedSelectedEditorElementIds(iframeDoc);
-      
       const slides = getSlides(iframeDoc);
       const draggedNode = slides[fromIdx];
       const targetNode = slides[toIdx];
-      if (!draggedNode || !targetNode) return;
+      if (!draggedNode || !targetNode) return false;
+      saveHistoryState();
+      const activeSlideId = getActiveSlideId(iframeDoc);
+      const preservedSelectionIds = getCommittedSelectedEditorElementIds(iframeDoc);
       
       if (fromIdx < toIdx) {
         container.insertBefore(draggedNode, targetNode.nextSibling);
@@ -1996,6 +1995,7 @@
       saveHistoryState();
       triggerAutoSave();
       triggerAutoVersion('Auto: Reordered Slides');
+      return true;
     }
 
     function updateActiveThumbnailCardState(activeSlideId) {
