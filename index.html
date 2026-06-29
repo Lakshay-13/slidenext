@@ -2138,6 +2138,7 @@
     }
 
     function getEditorHistoryOptions(options = {}) {
+      const chromeNodeIds = ['editor-style-tag', 'editor-theme-override-tag', ...EDITOR_CHROME_NODE_IDS];
       const removableClassNames = ['editor-selected', 'editor-hoverable', 'editor-dragging'];
       const deckImport = typeof SlideNextDeckImport !== 'undefined' ? SlideNextDeckImport : null;
       const deckPersistence = typeof SlideNextDeckPersistence !== 'undefined' ? SlideNextDeckPersistence : null;
@@ -2145,7 +2146,7 @@
         && typeof deckImport.sanitizeDeckSourceClone === 'function'
         ? (root) => {
             deckImport.sanitizeDeckSourceClone(root, {
-              ignoredNodeIds: ['editor-style-tag', 'editor-theme-override-tag', ...EDITOR_CHROME_NODE_IDS],
+              ignoredNodeIds: chromeNodeIds,
               transientClassNames: removableClassNames,
               editorElementIdAttr: EDITOR_ELEMENT_ID_ATTR,
               editorSlideIdAttr: EDITOR_SLIDE_ID_ATTR
@@ -2158,7 +2159,7 @@
             }
           : null;
       return {
-        chromeNodeIds: EDITOR_CHROME_NODE_IDS,
+        chromeNodeIds,
         removableClassNames,
         editorElementIdAttr: EDITOR_ELEMENT_ID_ATTR,
         editorSlideIdAttr: EDITOR_SLIDE_ID_ATTR,

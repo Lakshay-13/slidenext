@@ -341,6 +341,139 @@ test('buildHistoryFrameHtml reuses shared deck source sanitization for history s
   assert.equal(calls[0][2].editorSlideIdAttr, 'data-slide-id');
 });
 
+test('buildHistoryFrameHtml strips editor style tags when the shared deck source sanitizer is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorHistoryOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorHistoryOptions(options = {}) {',
+    '\n\n    function getEditorHistoryStackOptions(options = {}) {'
+  );
+  const buildHistoryFrameHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildHistoryFrameHtml(doc = getIframeDoc()) {',
+    '\n\n    function createHistoryEntry(doc) {'
+  );
+
+  function createSerializableNode(tagName, attributes = {}, classes = [], children = [], textContent = '') {
+    const state = {
+      removed: false,
+      attributes: { ...attributes },
+      classes: new Set(classes),
+      children: [...children],
+      textContent
+    };
+
+    return {
+      classList: {
+        remove(className) {
+          state.classes.delete(className);
+        }
+      },
+      remove() {
+        state.removed = true;
+      },
+      removeAttribute(name) {
+        delete state.attributes[name];
+      },
+      serialize() {
+        if (state.removed) return '';
+        const classNames = Array.from(state.classes);
+        const attributeEntries = Object.entries(state.attributes);
+        if (classNames.length > 0) {
+          attributeEntries.unshift(['class', classNames.join(' ')]);
+        }
+        const attributeText = attributeEntries
+          .map(([name, value]) => ` ${name}="${value}"`)
+          .join('');
+        const childHtml = state.children.map((child) => child.serialize()).join('');
+        return `<${tagName}${attributeText}>${state.textContent}${childHtml}</${tagName}>`;
+      }
+    };
+  }
+
+  const styleNode = createSerializableNode('style', { id: 'editor-style-tag' }, [], [], '.editor { color: red; }');
+  const themeOverrideNode = createSerializableNode('style', { id: 'editor-theme-override-tag' }, [], [], '.theme { color: blue; }');
+  const runtimeNode = createSerializableNode(
+    'div',
+    { 'data-editor-id': 'node-1' },
+    ['editor-hoverable'],
+    [],
+    'Hero copy'
+  );
+  const slideNode = createSerializableNode(
+    'section',
+    { 'data-slide-id': 'slide-runtime-1' },
+    ['slide', 'editor-selected'],
+    [runtimeNode]
+  );
+  const overlayNode = createSerializableNode('div', { id: 'editorSelectionOverlay' });
+  const clone = {
+    querySelectorAll(selector) {
+      switch (selector) {
+        case '#editor-style-tag':
+          return [styleNode];
+        case '#editor-theme-override-tag':
+          return [themeOverrideNode];
+        case '#editorSelectionOverlay':
+          return [overlayNode];
+        case '.editor-selected':
+          return [slideNode];
+        case '.editor-hoverable':
+          return [runtimeNode];
+        case '[data-editor-id]':
+          return [runtimeNode];
+        case '[data-slide-id]':
+          return [slideNode];
+        default:
+          return [];
+      }
+    },
+    get innerHTML() {
+      return styleNode.serialize() + themeOverrideNode.serialize() + slideNode.serialize() + overlayNode.serialize();
+    }
+  };
+  const doc = {
+    documentElement: {
+      cloneNode() {
+        return clone;
+      }
+    }
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioHistory: studioHistory,
+    SlideNextDeckPersistence: {
+      stripTransientDeckRuntimeState(root) {
+        calls.push(['stripTransientDeckRuntimeState', root]);
+      }
+    },
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    getActiveSlideId() {
+      return 'slide-1';
+    },
+    getSelectedEditorElementIds() {
+      return [];
+    },
+    areEditorIdListsEqual(left, right) {
+      return JSON.stringify(left) === JSON.stringify(right);
+    },
+    buildPersistableDeckHtml() {
+      throw new Error('buildPersistableDeckHtml should not run when history html is captured from the live frame');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getEditorHistoryOptionsSource, context);
+  vm.runInContext(buildHistoryFrameHtmlSource, context);
+
+  const html = context.buildHistoryFrameHtml(doc);
+
+  assert.equal(html, '<section class="slide"><div>Hero copy</div></section>');
+  assert.deepEqual(calls.map(([name]) => name), ['stripTransientDeckRuntimeState']);
+});
+
 test('captureState reads the live frame through the shared iframe accessor before updating history state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const captureStateSource = extractFunctionSource(

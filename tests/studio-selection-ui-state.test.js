@@ -168,7 +168,7 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(options.chromeNodeIds)),
-    ['editorSelectionOverlay', 'editorGuidesLayer']
+    ['editor-style-tag', 'editor-theme-override-tag', 'editorSelectionOverlay', 'editorGuidesLayer']
   );
   assert.deepEqual(
     JSON.parse(JSON.stringify(options.removableClassNames)),
