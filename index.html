@@ -4728,6 +4728,14 @@
       );
     }
 
+    function handleCurrentStudioVersionActionFailure(versionActionContext, options = {}) {
+      return SlideNextStudioVersionActions.handleStudioVersionActionFailure(versionActionContext, {
+        ...createCurrentStudioSessionStateReaders(),
+        isCurrentSession: options.isCurrentSession,
+        onFailure: options.onFailure
+      });
+    }
+
     // Rollback backup version
     async function restoreVersion(filename) {
       if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
@@ -4760,16 +4768,14 @@
             }
           });
         } else {
-          SlideNextStudioVersionActions.handleStudioVersionActionFailure(restoreContext, {
-            ...createCurrentStudioSessionStateReaders(),
+          handleCurrentStudioVersionActionFailure(restoreContext, {
             onFailure: () => {
               alert(`Restore failed: ${data.error}`);
             }
           });
         }
       } catch (err) {
-        SlideNextStudioVersionActions.handleStudioVersionActionFailure(restoreContext, {
-          ...createCurrentStudioSessionStateReaders(),
+        handleCurrentStudioVersionActionFailure(restoreContext, {
           onFailure: () => {
             alert(`Network error restoring version: ${err.message}`);
           }
@@ -4852,8 +4858,7 @@
             }
           });
         } else {
-          SlideNextStudioVersionActions.handleStudioVersionActionFailure(renameContext, {
-            ...createCurrentStudioSessionStateReaders(),
+          handleCurrentStudioVersionActionFailure(renameContext, {
             isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
             onFailure: () => {
               alert(`Rename failed: ${data.error}`);
@@ -4861,8 +4866,7 @@
           });
         }
       } catch (err) {
-        SlideNextStudioVersionActions.handleStudioVersionActionFailure(renameContext, {
-          ...createCurrentStudioSessionStateReaders(),
+        handleCurrentStudioVersionActionFailure(renameContext, {
           isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
           onFailure: () => {
             alert(`Error renaming version: ${err.message}`);
@@ -4900,16 +4904,14 @@
         if (data.success) {
           handleCurrentStudioVersionListMutationSuccess(deleteContext);
         } else {
-          SlideNextStudioVersionActions.handleStudioVersionActionFailure(deleteContext, {
-            ...createCurrentStudioSessionStateReaders(),
+          handleCurrentStudioVersionActionFailure(deleteContext, {
             onFailure: () => {
               alert(`Delete failed: ${data.error}`);
             }
           });
         }
       } catch (err) {
-        SlideNextStudioVersionActions.handleStudioVersionActionFailure(deleteContext, {
-          ...createCurrentStudioSessionStateReaders(),
+        handleCurrentStudioVersionActionFailure(deleteContext, {
           onFailure: () => {
             alert(`Error deleting version: ${err.message}`);
           }
