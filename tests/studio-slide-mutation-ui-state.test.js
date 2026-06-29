@@ -90,8 +90,9 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   vm.createContext(context);
   vm.runInContext(addSlideNodeSource, context);
 
-  context.addSlideNode();
+  const result = context.addSlideNode();
 
+  assert.equal(result, true);
   assert.deepEqual(slides, [existingSlide, newSlide]);
   assert.deepEqual(calls.map(([name]) => name), [
     'getIframeDoc',
@@ -142,11 +143,11 @@ test('addSlideNode no-ops when the add-slide control is disabled or the iframe d
   vm.createContext(context);
   vm.runInContext(addSlideNodeSource, context);
 
-  context.addSlideNode();
+  assert.equal(context.addSlideNode(), false);
   assert.deepEqual(calls, []);
 
   addSlideBtn.disabled = false;
-  context.addSlideNode();
+  assert.equal(context.addSlideNode(), false);
   assert.deepEqual(calls, [['getIframeDoc']]);
 });
 

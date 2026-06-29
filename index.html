@@ -2133,11 +2133,11 @@
     // Add Blank Slide Node
     function addSlideNode() {
       const addSlideBtn = document.getElementById('addSlideBtn');
-      if (addSlideBtn && addSlideBtn.disabled) return;
+      if (addSlideBtn && addSlideBtn.disabled) return false;
       const iframeDoc = getIframeDoc();
-      if (!iframeDoc) return;
+      if (!iframeDoc) return false;
       const container = iframeDoc.getElementById('slidesContainer');
-      if (!container) return;
+      if (!container) return false;
       saveHistoryState();
       
       const newIndex = getSlides(iframeDoc).length;
@@ -2146,7 +2146,7 @@
         assignSlideId: assignEditorSlideId,
         decorateSlide: makeElementsHoverable
       });
-      if (!newSlide) return;
+      if (!newSlide) return false;
       
       container.appendChild(newSlide);
       
@@ -2156,6 +2156,7 @@
       saveHistoryState();
       triggerAutoSave();
       triggerAutoVersion('Auto: Added Slide');
+      return true;
     }
 
     // Delete Active Slide Node
