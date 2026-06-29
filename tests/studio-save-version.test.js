@@ -208,6 +208,32 @@ test('captureCurrentStudioPersistableDeckStateWithContent returns null when the 
   assert.equal(context.captureCurrentStudioPersistableDeckStateWithContent(), null);
 });
 
+test('createStudioVersionCheckpointRequestOptions reuses the captured persistable deck state and session token', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const persistedDeckState = {
+    doc: { label: 'iframe-doc' },
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
+    playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
+  };
+  const context = {
+    studioEditorSessionToken: 17
+  };
+
+  vm.createContext(context);
+  loadCaptureCurrentStudioPersistableDeckState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.createStudioVersionCheckpointRequestOptions(persistedDeckState))),
+    {
+      sessionToken: 17,
+      doc: { label: 'iframe-doc' },
+      canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] },
+      playbackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 1' }
+    }
+  );
+});
+
 test('isCurrentStudioPersistenceActionCurrent reuses current session readers for save-version persistence checks', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let capturedOptions = null;

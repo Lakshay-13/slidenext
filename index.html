@@ -4677,6 +4677,18 @@
       const persistedDeckState = captureCurrentStudioPersistableDeckState(doc);
       return persistedDeckState.cleanHtml ? persistedDeckState : null;
     }
+
+    function createStudioVersionCheckpointRequestOptions(
+      persistedDeckState,
+      sessionToken = studioEditorSessionToken
+    ) {
+      return {
+        sessionToken,
+        doc: persistedDeckState.doc,
+        canonicalDeck: persistedDeckState.canonicalDeck,
+        playbackState: persistedDeckState.playbackState
+      };
+    }
     
     async function submitSaveVersion() {
       const input = document.getElementById('versionCheckpointName');
@@ -4709,12 +4721,12 @@
       );
       
       try {
-        const data = await saveVersionCheckpoint(versionName, cleanHtml, scheduledPresentationUrl, {
-          sessionToken: scheduledSessionToken,
-          doc: persistedDeckState.doc,
-          canonicalDeck: persistedDeckState.canonicalDeck,
-          playbackState: persistedDeckState.playbackState
-        });
+        const data = await saveVersionCheckpoint(
+          versionName,
+          cleanHtml,
+          scheduledPresentationUrl,
+          createStudioVersionCheckpointRequestOptions(persistedDeckState, scheduledSessionToken)
+        );
         if (data.success) {
           handleCurrentStudioVersionPersistenceSuccess(persistenceContext, {
             onSuccess: () => {
@@ -4780,12 +4792,12 @@
       );
       
       try {
-        const data = await saveVersionCheckpoint(label, cleanHtml, presentationUrl, {
-          sessionToken,
-          doc: persistedDeckState.doc,
-          canonicalDeck: persistedDeckState.canonicalDeck,
-          playbackState: persistedDeckState.playbackState
-        });
+        const data = await saveVersionCheckpoint(
+          label,
+          cleanHtml,
+          presentationUrl,
+          createStudioVersionCheckpointRequestOptions(persistedDeckState, sessionToken)
+        );
         if (data.success) {
           handleCurrentStudioVersionPersistenceSuccess(persistenceContext, {
             onSuccess: () => {
