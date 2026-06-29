@@ -4706,6 +4706,22 @@
         requestOptions: createStudioVersionCheckpointRequestOptions(persistedDeckState, sessionToken)
       };
     }
+
+    function captureCurrentStudioVersionCheckpointPersistenceState(
+      presentationUrl = currentPresentationUrl,
+      sessionToken = studioEditorSessionToken,
+      doc = getIframeDoc()
+    ) {
+      const persistedDeckState = captureCurrentStudioPersistableDeckStateWithContent(doc);
+      if (!persistedDeckState) {
+        return null;
+      }
+      return createStudioVersionCheckpointPersistenceState(
+        persistedDeckState,
+        presentationUrl,
+        sessionToken
+      );
+    }
     
     async function submitSaveVersion() {
       const input = document.getElementById('versionCheckpointName');
@@ -4715,24 +4731,20 @@
         return;
       }
 
-      const persistedDeckState = captureCurrentStudioPersistableDeckStateWithContent();
-      if (!persistedDeckState) {
-        alert('Save version failed: editor content is unavailable.');
-        return;
-      }
-      const cleanHtml = persistedDeckState.cleanHtml;
-
-      closeSaveVersionModal();
-
       const {
         presentationUrl: scheduledPresentationUrl,
         sessionToken: scheduledSessionToken
       } = captureCurrentStudioSessionSnapshot();
-      const versionCheckpointPersistenceState = createStudioVersionCheckpointPersistenceState(
-        persistedDeckState,
+      const versionCheckpointPersistenceState = captureCurrentStudioVersionCheckpointPersistenceState(
         scheduledPresentationUrl,
         scheduledSessionToken
       );
+      if (!versionCheckpointPersistenceState) {
+        alert('Save version failed: editor content is unavailable.');
+        return;
+      }
+
+      closeSaveVersionModal();
 
       setStudioSaveButtonState('saving-version');
       
@@ -4798,13 +4810,11 @@
 
     async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
       if (isStaleEditorPersistenceTask(presentationUrl, sessionToken)) return;
-      const persistedDeckState = captureCurrentStudioPersistableDeckStateWithContent();
-      if (!persistedDeckState) return;
-      const versionCheckpointPersistenceState = createStudioVersionCheckpointPersistenceState(
-        persistedDeckState,
+      const versionCheckpointPersistenceState = captureCurrentStudioVersionCheckpointPersistenceState(
         presentationUrl,
         sessionToken
       );
+      if (!versionCheckpointPersistenceState) return;
       
       try {
         const data = await saveVersionCheckpoint(

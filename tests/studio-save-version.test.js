@@ -283,6 +283,36 @@ test('createStudioVersionCheckpointPersistenceState reuses checkpoint options an
   );
 });
 
+test('captureCurrentStudioVersionCheckpointPersistenceState returns null when no persistable deck content is available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    captureEditorPersistableDeckState() {
+      return {
+        cleanHtml: '',
+        canonicalDeck: null,
+        playbackState: null
+      };
+    },
+    createStudioVersionCheckpointPersistenceState() {
+      throw new Error('persistence state should not be built without persistable deck content');
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureCurrentStudioPersistableDeckState(fileContent, context);
+
+  assert.equal(
+    context.captureCurrentStudioVersionCheckpointPersistenceState(
+      '/presentations/onboarding-presentation/index.html',
+      21
+    ),
+    null
+  );
+});
+
 test('isCurrentStudioPersistenceActionCurrent reuses current session readers for save-version persistence checks', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let capturedOptions = null;
@@ -519,6 +549,7 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
     setStudioAutoSaveStatus(state) {
       statusEl.innerHTML = state;
     },
+    studioEditorSessionToken: 0,
     saveVersionCheckpoint: async () => {
       saveVersionCalls += 1;
       return { success: true };
