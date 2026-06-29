@@ -1630,6 +1630,33 @@
       return document.getElementById('studioFrame');
     }
 
+    function createCurrentStudioFrameLoadHandler(
+      presentationUrl = currentPresentationUrl,
+      sessionToken = studioEditorSessionToken,
+      options = {}
+    ) {
+      return SlideNextStudioEditorSession.createStudioFrameLoadHandler({
+        presentationUrl,
+        sessionToken,
+        ...createCurrentStudioSessionStateReaders(),
+        isEditorActive: options.isEditorActive,
+        handleLoad: options.handleLoad,
+        afterLoad: options.afterLoad
+      });
+    }
+
+    function shouldHandleCurrentStudioFrameLoad(
+      presentationUrl = currentPresentationUrl,
+      sessionToken = studioEditorSessionToken,
+      options = {}
+    ) {
+      return SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(presentationUrl, {
+        sessionToken,
+        ...createCurrentStudioSessionStateReaders(),
+        isEditorActive: options.isEditorActive
+      });
+    }
+
     function updateCurrentPresentationSessionState(nextState = {}) {
       if (Object.prototype.hasOwnProperty.call(nextState, 'presentationUrl')) {
         currentPresentationUrl = typeof nextState.presentationUrl === 'string' ? nextState.presentationUrl : '';
@@ -1650,7 +1677,6 @@
 
     function launchStudioEditor(url, title, category) {
       const editorSessionToken = ++studioEditorSessionToken;
-      const currentStudioSessionStateReaders = createCurrentStudioSessionStateReaders();
       updateCurrentPresentationSessionState({
         presentationUrl: url,
         presentationTitle: title,
@@ -1665,6 +1691,7 @@
       
       const editor = document.getElementById('studioEditor');
       const iframe = getStudioFrame();
+      const isEditorActive = () => editor.classList.contains('active');
       
       document.getElementById('studioCategoryLabel').textContent = currentCategory;
       document.getElementById('studioTitleLabel').textContent = currentTitle;
@@ -1678,22 +1705,15 @@
       updateDeckReadyToolbarActionState();
       
       // Configure load triggers BEFORE setting src
-      iframe.onload = SlideNextStudioEditorSession.createStudioFrameLoadHandler({
-        presentationUrl: url,
-        sessionToken: editorSessionToken,
-        ...currentStudioSessionStateReaders,
-        isEditorActive: () => editor.classList.contains('active'),
+      iframe.onload = createCurrentStudioFrameLoadHandler(url, editorSessionToken, {
+        isEditorActive,
         handleLoad: () => {
           initStudioFrame();
         },
         afterLoad: () => {
           const savedZoom = localStorage.getItem('presentationZoom') || 'fit';
           setTimeout(() => {
-            if (!SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(url, {
-              sessionToken: editorSessionToken,
-              ...currentStudioSessionStateReaders,
-              isEditorActive: () => editor.classList.contains('active')
-            })) {
+            if (!shouldHandleCurrentStudioFrameLoad(url, editorSessionToken, { isEditorActive })) {
               return;
             }
             applyZoom(savedZoom);

@@ -60,22 +60,8 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   };
 
   const loadVersionsCalls = [];
-  let capturedFrameLoadOptions = null;
-  const currentStudioSessionStateReaders = {
-    getCurrentPresentationUrl() {
-      return context.currentPresentationUrl;
-    },
-    getCurrentSessionToken() {
-      return context.studioEditorSessionToken;
-    }
-  };
+  let capturedFrameLoadHandlerArgs = null;
   const context = {
-    SlideNextStudioEditorSession: {
-      createStudioFrameLoadHandler(options) {
-        capturedFrameLoadOptions = options;
-        return function onloadHandler() {};
-      }
-    },
     applyCurrentPresentationMetadata(metadata) {
       context.currentPresentationMetadata = metadata;
     },
@@ -83,8 +69,9 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
     buildCurrentPresentationMetadataSeed(url, title) {
       return { url, title };
     },
-    createCurrentStudioSessionStateReaders() {
-      return currentStudioSessionStateReaders;
+    createCurrentStudioFrameLoadHandler(presentationUrl, sessionToken, options) {
+      capturedFrameLoadHandlerArgs = { presentationUrl, sessionToken, options };
+      return function onloadHandler() {};
     },
     currentCategory: '',
     currentPresentationMetadata: null,
@@ -154,12 +141,121 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   assert.equal(elements.studioTitleLabel.textContent, 'Project Onboarding');
   assert.equal(elements.studioFrame.src, '/presentations/onboarding-presentation/index.html');
   assert.equal(elements.studioEditor.classList.contains('active'), true);
-  assert.equal(capturedFrameLoadOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
-  assert.equal(capturedFrameLoadOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.equal(capturedFrameLoadHandlerArgs.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedFrameLoadHandlerArgs.sessionToken, 1);
+  assert.equal(typeof capturedFrameLoadHandlerArgs.options.isEditorActive, 'function');
   assert.deepEqual(loadVersionsCalls, [[
     '/presentations/onboarding-presentation/index.html',
     1
   ]]);
+});
+
+test('createCurrentStudioFrameLoadHandler reuses current session readers when delegating to the editor session helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createCurrentStudioFrameLoadHandlerSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioFrameLoadHandler(',
+    '\n\n    function shouldHandleCurrentStudioFrameLoad('
+  );
+
+  let capturedOptions = null;
+  const currentStudioSessionStateReaders = {
+    getCurrentPresentationUrl() {
+      return context.currentPresentationUrl;
+    },
+    getCurrentSessionToken() {
+      return context.studioEditorSessionToken;
+    }
+  };
+  const context = {
+    SlideNextStudioEditorSession: {
+      createStudioFrameLoadHandler(options) {
+        capturedOptions = options;
+        return function onloadHandler() {};
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      return currentStudioSessionStateReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 6
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createCurrentStudioFrameLoadHandlerSource, context);
+
+  const handler = context.createCurrentStudioFrameLoadHandler(
+    '/presentations/onboarding-presentation/index.html',
+    6,
+    {
+      isEditorActive() {
+        return true;
+      },
+      handleLoad() {},
+      afterLoad() {}
+    }
+  );
+
+  assert.equal(typeof handler, 'function');
+  assert.equal(capturedOptions.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedOptions.sessionToken, 6);
+  assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
+  assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.equal(typeof capturedOptions.isEditorActive, 'function');
+  assert.equal(typeof capturedOptions.handleLoad, 'function');
+  assert.equal(typeof capturedOptions.afterLoad, 'function');
+});
+
+test('shouldHandleCurrentStudioFrameLoad reuses current session readers when delegating to the editor session helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const shouldHandleCurrentStudioFrameLoadSource = extractFunctionSource(
+    fileContent,
+    'function shouldHandleCurrentStudioFrameLoad(',
+    '\n\n    function updateCurrentPresentationSessionState(nextState = {}) {'
+  );
+
+  let capturedArguments = null;
+  const currentStudioSessionStateReaders = {
+    getCurrentPresentationUrl() {
+      return context.currentPresentationUrl;
+    },
+    getCurrentSessionToken() {
+      return context.studioEditorSessionToken;
+    }
+  };
+  const context = {
+    SlideNextStudioEditorSession: {
+      shouldHandleStudioFrameLoad(presentationUrl, options) {
+        capturedArguments = { presentationUrl, options };
+        return true;
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      return currentStudioSessionStateReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 7
+  };
+
+  vm.createContext(context);
+  vm.runInContext(shouldHandleCurrentStudioFrameLoadSource, context);
+
+  const result = context.shouldHandleCurrentStudioFrameLoad(
+    '/presentations/onboarding-presentation/index.html',
+    7,
+    {
+      isEditorActive() {
+        return true;
+      }
+    }
+  );
+
+  assert.equal(result, true);
+  assert.equal(capturedArguments.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedArguments.options.sessionToken, 7);
+  assert.equal(capturedArguments.options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
+  assert.equal(capturedArguments.options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.equal(typeof capturedArguments.options.isEditorActive, 'function');
 });
 
 test('updateCurrentPresentationSessionState updates only the provided session fields and delegates metadata commits', () => {
