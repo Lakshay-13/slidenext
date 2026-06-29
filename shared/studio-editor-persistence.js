@@ -258,6 +258,24 @@
     };
   }
 
+  async function executeStudioPersistenceRequest(request = {}, options = {}) {
+    const fetchImpl = typeof options.fetchImpl === 'function'
+      ? options.fetchImpl
+      : typeof fetch === 'function'
+        ? fetch
+        : null;
+    if (!fetchImpl) {
+      throw new TypeError('A fetch implementation is required to execute studio persistence requests.');
+    }
+
+    const response = await fetchImpl(normalizeString(request.url), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request && request.body)
+    });
+    return response.json();
+  }
+
   function buildStudioVersionCheckpointPersistencePlan(
     versionLabel = '',
     cleanHtml = '',
@@ -540,6 +558,7 @@
     resolveStudioAutoSavePersistenceState,
     resolveStudioAutoSavePersistenceStateFromCapture,
     createStudioAutoSaveRequest,
+    executeStudioPersistenceRequest,
     buildStudioVersionCheckpointPersistencePlan,
     createStudioVersionCheckpointRequest,
     createStudioVersionCheckpointRequestOptions,

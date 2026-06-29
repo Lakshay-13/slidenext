@@ -758,6 +758,43 @@ test('createStudioAutoSaveRequest always posts the autosave payload to the save 
   );
 });
 
+test('executeStudioPersistenceRequest posts JSON request bodies and returns parsed responses', async () => {
+  const fetchCalls = [];
+
+  const result = await editorPersistence.executeStudioPersistenceRequest(
+    {
+      url: '/api/save',
+      body: {
+        htmlPath: '/presentations/onboarding-presentation/index.html',
+        htmlContent: '<html>live-save</html>'
+      }
+    },
+    {
+      fetchImpl: async (url, init) => {
+        fetchCalls.push([url, init]);
+        return {
+          async json() {
+            return { success: true };
+          }
+        };
+      }
+    }
+  );
+
+  assert.deepEqual(fetchCalls, [[
+    '/api/save',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        htmlPath: '/presentations/onboarding-presentation/index.html',
+        htmlContent: '<html>live-save</html>'
+      })
+    }
+  ]]);
+  assert.deepEqual(result, { success: true });
+});
+
 test('buildStudioVersionCheckpointPersistencePlan reuses the shared playback fallback and persistence-plan wiring', () => {
   const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
     metadata: {

@@ -4160,12 +4160,12 @@
         presentationUrl,
         persistencePlan
       );
-      const response = await fetch(versionCheckpointRequest.url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(versionCheckpointRequest.body)
-      });
-      const data = await response.json();
+      const data = await SlideNextStudioEditorPersistence.executeStudioPersistenceRequest(
+        versionCheckpointRequest,
+        {
+          fetchImpl: fetch
+        }
+      );
 
       if (data.success) {
         SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
@@ -4216,13 +4216,12 @@
           const autoSaveRequest = SlideNextStudioEditorPersistence.createStudioAutoSaveRequest(
             persistencePlan
           );
-          const response = await fetch(autoSaveRequest.url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(autoSaveRequest.body)
-          });
-          
-          const data = await response.json();
+          const data = await SlideNextStudioEditorPersistence.executeStudioPersistenceRequest(
+            autoSaveRequest,
+            {
+              fetchImpl: fetch
+            }
+          );
           if (data.success) {
             SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
               persistencePlan.persistenceContext,
