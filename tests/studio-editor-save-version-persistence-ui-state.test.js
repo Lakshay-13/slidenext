@@ -28,16 +28,6 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadHandleCurrentStudioPersistenceFailure(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {',
-    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
 test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata updates for the active presentation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
@@ -95,38 +85,6 @@ test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata up
       ]
     })
   });
-});
-
-test('handleCurrentStudioPersistenceFailure reuses current session readers for failure handling', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const calls = [];
-  const context = {
-    SlideNextStudioEditorPersistence: editorPersistence,
-    createCurrentStudioSessionStateReaders() {
-      return {
-        getCurrentPresentationUrl: () => context.currentPresentationUrl,
-        getCurrentSessionToken: () => context.studioEditorSessionToken
-      };
-    },
-    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 5
-  };
-
-  vm.createContext(context);
-  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
-
-  const applied = context.handleCurrentStudioPersistenceFailure({
-    presentationUrl: 'presentations/onboarding-presentation/index.html',
-    cleanHtml: '<html>persisted</html>',
-    sessionToken: 5
-  }, {
-    onFailure(nextContext) {
-      calls.push(['onFailure', nextContext.presentationUrl]);
-    }
-  });
-
-  assert.equal(applied, true);
-  assert.deepEqual(calls, [['onFailure', 'presentations/onboarding-presentation/index.html']]);
 });
 
 test('saveVersionCheckpoint refreshes persisted html and canonical metadata after a successful save rewrite', async () => {

@@ -4114,16 +4114,6 @@
       autoVersionTimers = {};
     }
 
-    function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
-      return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
-        persistenceContext,
-        SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
-          ...createCurrentStudioSessionStateOptions(),
-          onFailure: options.onFailure
-        })
-      );
-    }
-
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
       const persistencePlan = SlideNextStudioEditorPersistence.buildStudioVersionCheckpointPersistencePlan(
         versionLabel,

@@ -36,16 +36,6 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadHandleCurrentStudioPersistenceFailure(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {',
-    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
 test('setStudioSaveButtonState renders the version button loading and idle states', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setStudioSaveButtonStateSource = extractFunctionSource(
