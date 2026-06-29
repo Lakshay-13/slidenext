@@ -31,7 +31,17 @@ function createClassList(initialValues = []) {
   };
 }
 
+function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioSessionStateOptions(options = {}) {',
+    '\n\n    function createCurrentStudioFrameLoadStateOptions(options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateCurrentStudioVersionHistoryLoadOptions(fileContent, context) {
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioVersionHistoryLoadOptions(options = {}) {',
@@ -41,6 +51,7 @@ function loadCreateCurrentStudioVersionHistoryLoadOptions(fileContent, context) 
 }
 
 function loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context) {
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioVersionActionHandlerOptions(options = {}) {',

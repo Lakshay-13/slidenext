@@ -4767,8 +4767,9 @@
 
     function createCurrentStudioVersionHistoryLoadOptions(options = {}) {
       return {
-        sessionToken: options.sessionToken,
-        ...createCurrentStudioSessionStateReaders(),
+        ...createCurrentStudioSessionStateOptions({
+          sessionToken: options.sessionToken
+        }),
         commitVersionEntries: options.commitVersionEntries
       };
     }
@@ -4811,7 +4812,7 @@
 
     function createCurrentStudioVersionActionHandlerOptions(options = {}) {
       return {
-        ...createCurrentStudioSessionStateReaders(),
+        ...createCurrentStudioSessionStateOptions(),
         isCurrentSession: options.isCurrentSession,
         onSuccess: options.onSuccess,
         onFailure: options.onFailure,
