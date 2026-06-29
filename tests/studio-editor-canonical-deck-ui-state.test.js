@@ -23,6 +23,15 @@ function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
   vm.runInContext(resolveEditorStoredCanonicalDeckSource, context);
 }
 
+function loadResolveEditorCanonicalDeckViewState(fileContent, context) {
+  const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
+    fileContent,
+    'function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(resolveEditorCanonicalDeckViewStateSource, context);
+}
+
 test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical deck for the active editor session', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorCanonicalDeckSource = extractFunctionSource(
@@ -260,6 +269,7 @@ test('buildEditorDeckSnapshot prefers the current session active slide fallback 
   vm.createContext(context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getPersistedActiveSlideIdSource, context);
+  loadResolveEditorCanonicalDeckViewState(fileContent, context);
   vm.runInContext(buildEditorDeckSnapshotSource, context);
 
   const result = context.buildEditorDeckSnapshot();
@@ -350,6 +360,7 @@ test('buildEditorDeckSnapshot falls back to the current session slide when live 
   vm.createContext(context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getPersistedActiveSlideIdSource, context);
+  loadResolveEditorCanonicalDeckViewState(fileContent, context);
   vm.runInContext(buildEditorDeckSnapshotSource, context);
 
   const result = context.buildEditorDeckSnapshot();
