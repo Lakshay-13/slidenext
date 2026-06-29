@@ -79,6 +79,24 @@ test('createStudioPersistenceActionContext normalizes persistence state', () => 
       })
     }
   );
+
+  assert.deepEqual(
+    editorPersistence.createStudioPersistenceActionContext(
+      '/presentations/onboarding-presentation/index.html',
+      '<html></html>',
+      {
+        playbackState: null,
+        shouldUpdatePersistedPlaybackState: true
+      }
+    ),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      cleanHtml: '<html></html>',
+      shouldUpdatePersistedHtml: true,
+      playbackState: null,
+      shouldUpdatePersistedPlaybackState: true
+    }
+  );
 });
 
 test('createStudioVersionPersistenceActionContext always disables persisted-html writes for checkpoint-only flows', () => {
@@ -86,12 +104,25 @@ test('createStudioVersionPersistenceActionContext always disables persisted-html
     editorPersistence.createStudioVersionPersistenceActionContext(
       '/presentations/onboarding-presentation/index.html',
       '<html></html>',
-      { shouldUpdatePersistedHtml: true, sessionToken: 12 }
+      {
+        shouldUpdatePersistedHtml: true,
+        playbackState: {
+          activeSlideIds: ['slide-2'],
+          slideCounterText: '2 / 4'
+        },
+        shouldUpdatePersistedPlaybackState: true,
+        sessionToken: 12
+      }
     ),
     {
       presentationUrl: '/presentations/onboarding-presentation/index.html',
       cleanHtml: '<html></html>',
       shouldUpdatePersistedHtml: false,
+      playbackState: {
+        activeSlideIds: ['slide-2'],
+        slideCounterText: '2 / 4'
+      },
+      shouldUpdatePersistedPlaybackState: false,
       sessionToken: 12
     }
   );
@@ -205,6 +236,11 @@ test('buildStudioPersistenceRequestPlan reuses persisted-html checks to skip red
           }
         );
       },
+      playbackState: {
+        activeSlideIds: ['slide-1'],
+        slideCounterText: '1 / 1'
+      },
+      shouldUpdatePersistedPlaybackState: true,
       sessionToken: 5
     }
   );
@@ -223,6 +259,11 @@ test('buildStudioPersistenceRequestPlan reuses persisted-html checks to skip red
       cleanHtml: '<html>changed</html>',
       shouldUpdatePersistedHtml: true,
       canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeck),
+      playbackState: {
+        activeSlideIds: ['slide-1'],
+        slideCounterText: '1 / 1'
+      },
+      shouldUpdatePersistedPlaybackState: true,
       sessionToken: 5
     }
   });
@@ -466,7 +507,8 @@ test('handleStudioPersistenceSuccess updates the active deck persistence state o
         kind: 'slidenext.deck',
         schemaVersion: 1,
         slides: []
-      }
+      },
+      playbackState: null
     }
   );
   const calls = [];
@@ -479,6 +521,9 @@ test('handleStudioPersistenceSuccess updates the active deck persistence state o
     setPersistedCanonicalDeck(nextCanonicalDeck) {
       calls.push(['setPersistedCanonicalDeck', nextCanonicalDeck.kind]);
     },
+    setPersistedPlaybackState(nextPlaybackState) {
+      calls.push(['setPersistedPlaybackState', nextPlaybackState]);
+    },
     onSuccess(nextContext) {
       calls.push(['onSuccess', nextContext.presentationUrl]);
     }
@@ -488,6 +533,7 @@ test('handleStudioPersistenceSuccess updates the active deck persistence state o
   assert.deepEqual(calls, [
     ['setPersistedHtml', '<html></html>'],
     ['setPersistedCanonicalDeck', 'slidenext.deck'],
+    ['setPersistedPlaybackState', null],
     ['onSuccess', '/presentations/onboarding-presentation/index.html']
   ]);
 });

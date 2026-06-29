@@ -4046,7 +4046,9 @@
             versionLabel,
             canonicalDeck: options.canonicalDeck
           }),
-          sessionToken: options.sessionToken
+          sessionToken: options.sessionToken,
+          playbackState: livePlaybackState,
+          shouldUpdatePersistedPlaybackState: !!options.doc
         }
       );
       const response = await fetch(persistencePlan.hasPersistedCurrentState ? '/api/versions/create' : '/api/save', {
@@ -4073,10 +4075,8 @@
             updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
             setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl);
           },
-          onSuccess: (nextContext) => {
-            if (nextContext.shouldUpdatePersistedHtml !== false && options.doc) {
-              updateEditorPersistedDeckState({ playbackState: livePlaybackState });
-            }
+          setPersistedPlaybackState: (nextPlaybackState) => {
+            updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
           }
         });
       }
@@ -4113,7 +4113,9 @@
               isAutoSave: true,
               canonicalDeck: persistedDeckState.canonicalDeck
             }),
-            sessionToken: scheduledSessionToken
+            sessionToken: scheduledSessionToken,
+            playbackState: livePlaybackState,
+            shouldUpdatePersistedPlaybackState: !!iframeDoc
           }
         );
 
@@ -4140,10 +4142,10 @@
                 updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
                 setCurrentPresentationCanonicalDeck(nextCanonicalDeck, scheduledPresentationUrl);
               },
+              setPersistedPlaybackState: (nextPlaybackState) => {
+                updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
+              },
               onSuccess: (nextContext) => {
-                if (nextContext.shouldUpdatePersistedHtml !== false && iframeDoc) {
-                  updateEditorPersistedDeckState({ playbackState: livePlaybackState });
-                }
                 setStudioAutoSaveStatus('saved');
               }
             });

@@ -81,13 +81,18 @@
     if (sessionToken !== null) {
       context.sessionToken = sessionToken;
     }
+    if (Object.prototype.hasOwnProperty.call(options, 'playbackState')) {
+      context.playbackState = options.playbackState;
+      context.shouldUpdatePersistedPlaybackState = options.shouldUpdatePersistedPlaybackState !== false;
+    }
     return context;
   }
 
   function createStudioVersionPersistenceActionContext(presentationUrl = '', cleanHtml = '', options = {}) {
     return createStudioPersistenceActionContext(presentationUrl, cleanHtml, {
       ...options,
-      shouldUpdatePersistedHtml: false
+      shouldUpdatePersistedHtml: false,
+      shouldUpdatePersistedPlaybackState: false
     });
   }
 
@@ -133,6 +138,19 @@
       ? null
       : tentativeSaveRequestBody || (buildSaveRequestBody ? buildSaveRequestBody(cleanHtml) : null);
 
+    const persistenceContextOptions = {
+      shouldUpdatePersistedHtml: !hasPersistedCurrentState,
+      canonicalDeck: saveRequestBody && saveRequestBody.canonicalDeck,
+      sessionToken: options.sessionToken,
+      createCanonicalDeck: options.createCanonicalDeck,
+      isCanonicalDeck: options.isCanonicalDeck,
+      resolvePresentationCanonicalDeck: options.resolvePresentationCanonicalDeck
+    };
+    if (Object.prototype.hasOwnProperty.call(options, 'playbackState')) {
+      persistenceContextOptions.playbackState = options.playbackState;
+      persistenceContextOptions.shouldUpdatePersistedPlaybackState = options.shouldUpdatePersistedPlaybackState !== false;
+    }
+
     return {
       hasPersistedCurrentHtml: hasPersistedCurrentState,
       hasPersistedCurrentState,
@@ -140,14 +158,7 @@
       persistenceContext: createStudioPersistenceActionContext(
         presentationUrl,
         cleanHtml,
-        {
-          shouldUpdatePersistedHtml: !hasPersistedCurrentState,
-          canonicalDeck: saveRequestBody && saveRequestBody.canonicalDeck,
-          sessionToken: options.sessionToken,
-          createCanonicalDeck: options.createCanonicalDeck,
-          isCanonicalDeck: options.isCanonicalDeck,
-          resolvePresentationCanonicalDeck: options.resolvePresentationCanonicalDeck
-        }
+        persistenceContextOptions
       )
     };
   }
@@ -238,6 +249,13 @@
     }
     if (context.canonicalDeck && typeof options.setPersistedCanonicalDeck === 'function') {
       options.setPersistedCanonicalDeck(context.canonicalDeck);
+    }
+    if (
+      Object.prototype.hasOwnProperty.call(context, 'playbackState')
+      && context.shouldUpdatePersistedPlaybackState !== false
+      && typeof options.setPersistedPlaybackState === 'function'
+    ) {
+      options.setPersistedPlaybackState(context.playbackState);
     }
     if (typeof options.onSuccess === 'function') {
       options.onSuccess(context);
