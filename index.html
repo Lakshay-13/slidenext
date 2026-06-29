@@ -4689,6 +4689,23 @@
         playbackState: persistedDeckState.playbackState
       };
     }
+
+    function createStudioVersionCheckpointPersistenceState(
+      persistedDeckState,
+      presentationUrl = currentPresentationUrl,
+      sessionToken = studioEditorSessionToken
+    ) {
+      const cleanHtml = persistedDeckState.cleanHtml;
+      return {
+        cleanHtml,
+        persistenceContext: createCurrentStudioVersionPersistenceActionContext(
+          cleanHtml,
+          presentationUrl,
+          sessionToken
+        ),
+        requestOptions: createStudioVersionCheckpointRequestOptions(persistedDeckState, sessionToken)
+      };
+    }
     
     async function submitSaveVersion() {
       const input = document.getElementById('versionCheckpointName');
@@ -4711,31 +4728,30 @@
         presentationUrl: scheduledPresentationUrl,
         sessionToken: scheduledSessionToken
       } = captureCurrentStudioSessionSnapshot();
-
-      setStudioSaveButtonState('saving-version');
-
-      const persistenceContext = createCurrentStudioVersionPersistenceActionContext(
-        cleanHtml,
+      const versionCheckpointPersistenceState = createStudioVersionCheckpointPersistenceState(
+        persistedDeckState,
         scheduledPresentationUrl,
         scheduledSessionToken
       );
+
+      setStudioSaveButtonState('saving-version');
       
       try {
         const data = await saveVersionCheckpoint(
           versionName,
-          cleanHtml,
+          versionCheckpointPersistenceState.cleanHtml,
           scheduledPresentationUrl,
-          createStudioVersionCheckpointRequestOptions(persistedDeckState, scheduledSessionToken)
+          versionCheckpointPersistenceState.requestOptions
         );
         if (data.success) {
-          handleCurrentStudioVersionPersistenceSuccess(persistenceContext, {
+          handleCurrentStudioVersionPersistenceSuccess(versionCheckpointPersistenceState.persistenceContext, {
             onSuccess: () => {
               alert('Successfully saved named version backup checkpoint!');
               setStudioAutoSaveStatus('saved');
             }
           });
         } else {
-          handleCurrentStudioPersistenceFailure(persistenceContext, {
+          handleCurrentStudioPersistenceFailure(versionCheckpointPersistenceState.persistenceContext, {
             onFailure: () => {
               alert(`Save version failed: ${data.error}`);
               setStudioAutoSaveStatus('save-version-failed');
@@ -4743,14 +4759,14 @@
           });
         }
       } catch (err) {
-        handleCurrentStudioPersistenceFailure(persistenceContext, {
+        handleCurrentStudioPersistenceFailure(versionCheckpointPersistenceState.persistenceContext, {
           onFailure: () => {
             alert(`Network error saving version: ${err.message}`);
             setStudioAutoSaveStatus('network-error');
           }
         });
       } finally {
-        if (isCurrentStudioPersistenceActionCurrent(persistenceContext)) {
+        if (isCurrentStudioPersistenceActionCurrent(versionCheckpointPersistenceState.persistenceContext)) {
           resetStudioSaveButtonState();
         }
       }
@@ -4784,9 +4800,8 @@
       if (isStaleEditorPersistenceTask(presentationUrl, sessionToken)) return;
       const persistedDeckState = captureCurrentStudioPersistableDeckStateWithContent();
       if (!persistedDeckState) return;
-      const cleanHtml = persistedDeckState.cleanHtml;
-      const persistenceContext = createCurrentStudioVersionPersistenceActionContext(
-        cleanHtml,
+      const versionCheckpointPersistenceState = createStudioVersionCheckpointPersistenceState(
+        persistedDeckState,
         presentationUrl,
         sessionToken
       );
@@ -4794,12 +4809,12 @@
       try {
         const data = await saveVersionCheckpoint(
           label,
-          cleanHtml,
+          versionCheckpointPersistenceState.cleanHtml,
           presentationUrl,
-          createStudioVersionCheckpointRequestOptions(persistedDeckState, sessionToken)
+          versionCheckpointPersistenceState.requestOptions
         );
         if (data.success) {
-          handleCurrentStudioVersionPersistenceSuccess(persistenceContext, {
+          handleCurrentStudioVersionPersistenceSuccess(versionCheckpointPersistenceState.persistenceContext, {
             onSuccess: () => {
               console.log(`Auto-created version checkpoint: ${label}`);
             }
