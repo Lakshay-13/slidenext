@@ -26,6 +26,26 @@
     };
   }
 
+  function createStudioPresentationSessionStateUpdate(nextState = {}) {
+    const sessionStateUpdate = {};
+    if (Object.prototype.hasOwnProperty.call(nextState, 'presentationUrl')) {
+      sessionStateUpdate.presentationUrl = normalizeString(nextState.presentationUrl);
+    }
+    if (Object.prototype.hasOwnProperty.call(nextState, 'presentationTitle')) {
+      sessionStateUpdate.presentationTitle = normalizeString(nextState.presentationTitle);
+    }
+    if (Object.prototype.hasOwnProperty.call(nextState, 'presentationCategory')) {
+      sessionStateUpdate.presentationCategory = normalizeString(nextState.presentationCategory);
+    }
+    if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+      sessionStateUpdate.slideIndex = Number.isInteger(nextState.slideIndex) ? nextState.slideIndex : 0;
+    }
+    if (Object.prototype.hasOwnProperty.call(nextState, 'presentationMetadata')) {
+      sessionStateUpdate.presentationMetadata = nextState.presentationMetadata;
+    }
+    return sessionStateUpdate;
+  }
+
   function isCurrentStudioEditorSession(options = {}) {
     const expectedSessionToken = Number.isInteger(options.sessionToken)
       ? options.sessionToken
@@ -93,6 +113,7 @@
   return {
     createStudioSessionStateOptions,
     createStudioSessionSnapshot,
+    createStudioPresentationSessionStateUpdate,
     isCurrentStudioEditorSession,
     shouldHandleStudioFrameLoad,
     createStudioFrameLoadStateOptions,

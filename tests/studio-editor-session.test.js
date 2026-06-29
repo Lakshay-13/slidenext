@@ -48,6 +48,33 @@ test('createStudioSessionSnapshot preserves the supplied presentation identity a
   });
 });
 
+test('createStudioPresentationSessionStateUpdate normalizes only the provided presentation session fields', () => {
+  const metadata = { id: 'deck-1' };
+  const sessionStateUpdate = editorSession.createStudioPresentationSessionStateUpdate({
+    presentationTitle: 'Renamed Deck',
+    slideIndex: 4,
+    presentationMetadata: metadata
+  });
+
+  assert.deepEqual(sessionStateUpdate, {
+    presentationTitle: 'Renamed Deck',
+    slideIndex: 4,
+    presentationMetadata: metadata
+  });
+
+  const normalizedSessionStateUpdate = editorSession.createStudioPresentationSessionStateUpdate({
+    presentationUrl: null,
+    presentationCategory: 42,
+    slideIndex: 'invalid'
+  });
+
+  assert.deepEqual(normalizedSessionStateUpdate, {
+    presentationUrl: '',
+    presentationCategory: '',
+    slideIndex: 0
+  });
+});
+
 test('shouldHandleStudioFrameLoad requires an active matching editor session', () => {
   assert.equal(editorSession.shouldHandleStudioFrameLoad('', {
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',

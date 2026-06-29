@@ -1673,20 +1673,21 @@
     }
 
     function updateCurrentPresentationSessionState(nextState = {}) {
-      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationUrl')) {
-        currentPresentationUrl = typeof nextState.presentationUrl === 'string' ? nextState.presentationUrl : '';
+      const sessionStateUpdate = SlideNextStudioEditorSession.createStudioPresentationSessionStateUpdate(nextState);
+      if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationUrl')) {
+        currentPresentationUrl = sessionStateUpdate.presentationUrl;
       }
-      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationTitle')) {
-        currentTitle = typeof nextState.presentationTitle === 'string' ? nextState.presentationTitle : '';
+      if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationTitle')) {
+        currentTitle = sessionStateUpdate.presentationTitle;
       }
-      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationCategory')) {
-        currentCategory = typeof nextState.presentationCategory === 'string' ? nextState.presentationCategory : '';
+      if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationCategory')) {
+        currentCategory = sessionStateUpdate.presentationCategory;
       }
-      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
-        currentSlideIndex = Number.isInteger(nextState.slideIndex) ? nextState.slideIndex : 0;
+      if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'slideIndex')) {
+        currentSlideIndex = sessionStateUpdate.slideIndex;
       }
-      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationMetadata')) {
-        applyCurrentPresentationMetadata(nextState.presentationMetadata);
+      if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationMetadata')) {
+        applyCurrentPresentationMetadata(sessionStateUpdate.presentationMetadata);
       }
     }
 

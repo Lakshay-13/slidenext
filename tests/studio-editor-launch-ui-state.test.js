@@ -322,8 +322,16 @@ test('updateCurrentPresentationSessionState updates only the provided session fi
   );
 
   const metadata = { id: 'deck-1' };
+  let capturedStateUpdate = null;
   const context = {
     Object,
+    SlideNextStudioEditorSession: {
+      ...editorSession,
+      createStudioPresentationSessionStateUpdate(nextState) {
+        capturedStateUpdate = nextState;
+        return editorSession.createStudioPresentationSessionStateUpdate(nextState);
+      }
+    },
     currentCategory: 'General',
     currentPresentationMetadata: { id: 'seed' },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
@@ -348,6 +356,11 @@ test('updateCurrentPresentationSessionState updates only the provided session fi
   assert.equal(context.currentCategory, 'General');
   assert.equal(context.currentSlideIndex, 4);
   assert.equal(context.currentPresentationMetadata, metadata);
+  assert.deepEqual(capturedStateUpdate, {
+    presentationTitle: 'Renamed Deck',
+    slideIndex: 4,
+    presentationMetadata: metadata
+  });
 });
 
 test('setStudioAutoSaveStatus renders saving and failure editor states', () => {
