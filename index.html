@@ -4213,6 +4213,25 @@
       );
     }
 
+    function captureCurrentStudioAutoSavePersistenceState(
+      presentationUrl = currentPresentationUrl,
+      sessionToken = studioEditorSessionToken,
+      doc = getIframeDoc()
+    ) {
+      const persistedDeckState = captureCurrentStudioPersistableDeckStateWithContent(doc);
+      if (!persistedDeckState) {
+        return null;
+      }
+      return {
+        persistedDeckState,
+        persistencePlan: createStudioAutoSavePersistencePlan(
+          persistedDeckState,
+          presentationUrl,
+          sessionToken
+        )
+      };
+    }
+
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
       const persistencePlan = createStudioVersionCheckpointPersistencePlan(
         versionLabel,
@@ -4254,16 +4273,15 @@
       autoSaveDebounceTimer = setTimeout(async () => {
         autoSaveDebounceTimer = null;
         if (isStaleEditorPersistenceTask(scheduledPresentationUrl, scheduledSessionToken)) return;
-        const persistedDeckState = captureCurrentStudioPersistableDeckStateWithContent();
-        if (!persistedDeckState) {
-          setStudioAutoSaveStatus('saved');
-          return;
-        }
-        const persistencePlan = createStudioAutoSavePersistencePlan(
-          persistedDeckState,
+        const autoSavePersistenceState = captureCurrentStudioAutoSavePersistenceState(
           scheduledPresentationUrl,
           scheduledSessionToken
         );
+        if (!autoSavePersistenceState) {
+          setStudioAutoSaveStatus('saved');
+          return;
+        }
+        const { persistencePlan } = autoSavePersistenceState;
 
         if (persistencePlan.hasPersistedCurrentState) {
           setStudioAutoSaveStatus('saved');
