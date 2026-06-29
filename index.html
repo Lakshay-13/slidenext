@@ -2138,15 +2138,28 @@
     }
 
     function getEditorHistoryOptions(options = {}) {
-      const sanitizeFrameRoot = SlideNextDeckPersistence
-        && typeof SlideNextDeckPersistence.stripTransientDeckRuntimeState === 'function'
+      const removableClassNames = ['editor-selected', 'editor-hoverable', 'editor-dragging'];
+      const deckImport = typeof SlideNextDeckImport !== 'undefined' ? SlideNextDeckImport : null;
+      const deckPersistence = typeof SlideNextDeckPersistence !== 'undefined' ? SlideNextDeckPersistence : null;
+      const sanitizeFrameRoot = deckImport
+        && typeof deckImport.sanitizeDeckSourceClone === 'function'
         ? (root) => {
-            SlideNextDeckPersistence.stripTransientDeckRuntimeState(root);
+            deckImport.sanitizeDeckSourceClone(root, {
+              ignoredNodeIds: ['editor-style-tag', 'editor-theme-override-tag', ...EDITOR_CHROME_NODE_IDS],
+              transientClassNames: removableClassNames,
+              editorElementIdAttr: EDITOR_ELEMENT_ID_ATTR,
+              editorSlideIdAttr: EDITOR_SLIDE_ID_ATTR
+            });
           }
-        : null;
+        : deckPersistence
+          && typeof deckPersistence.stripTransientDeckRuntimeState === 'function'
+          ? (root) => {
+              deckPersistence.stripTransientDeckRuntimeState(root);
+            }
+          : null;
       return {
         chromeNodeIds: EDITOR_CHROME_NODE_IDS,
-        removableClassNames: ['editor-selected', 'editor-hoverable', 'editor-dragging'],
+        removableClassNames,
         editorElementIdAttr: EDITOR_ELEMENT_ID_ATTR,
         editorSlideIdAttr: EDITOR_SLIDE_ID_ATTR,
         sanitizeFrameRoot,
