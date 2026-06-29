@@ -4638,20 +4638,28 @@
             })
           );
         } else {
-          handleCurrentStudioPersistenceFailure(versionCheckpointPersistenceState.persistenceContext, {
-            onFailure: () => {
-              alert(`Save version failed: ${data.error}`);
-              setStudioAutoSaveStatus('save-version-failed');
-            }
-          });
+          SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+            versionCheckpointPersistenceState.persistenceContext,
+            SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
+              ...createCurrentStudioSessionStateOptions(),
+              onFailure: () => {
+                alert(`Save version failed: ${data.error}`);
+                setStudioAutoSaveStatus('save-version-failed');
+              }
+            })
+          );
         }
       } catch (err) {
-        handleCurrentStudioPersistenceFailure(versionCheckpointPersistenceState.persistenceContext, {
-          onFailure: () => {
-            alert(`Network error saving version: ${err.message}`);
-            setStudioAutoSaveStatus('network-error');
-          }
-        });
+        SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+          versionCheckpointPersistenceState.persistenceContext,
+          SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
+            ...createCurrentStudioSessionStateOptions(),
+            onFailure: () => {
+              alert(`Network error saving version: ${err.message}`);
+              setStudioAutoSaveStatus('network-error');
+            }
+          })
+        );
       } finally {
         if (SlideNextStudioEditorPersistence.isStudioPersistenceActionCurrent(
           versionCheckpointPersistenceState.persistenceContext,

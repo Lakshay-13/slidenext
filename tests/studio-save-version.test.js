@@ -185,7 +185,6 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -294,7 +293,6 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -413,7 +411,6 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -532,7 +529,6 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   const savePromise = context.submitSaveVersion();
