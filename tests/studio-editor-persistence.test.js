@@ -469,6 +469,88 @@ test('buildStudioAutoSavePersistencePlan reuses current persisted deck state and
   });
 });
 
+test('buildStudioVersionCheckpointPersistencePlan reuses the shared playback fallback and persistence-plan wiring', () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+  const playbackState = {
+    activeSlideIds: ['slide-2'],
+    slideCounterText: '2 / 3'
+  };
+  const buildSaveRequestBodyCalls = [];
+  const resolvePlaybackStateCalls = [];
+
+  const persistencePlan = editorPersistence.buildStudioVersionCheckpointPersistencePlan(
+    'Checkpoint Plan',
+    '<html>persisted</html>',
+    'presentations/onboarding-presentation/index.html',
+    {
+      isPersistedState() {
+        return false;
+      },
+      buildSaveRequestBody(doc, cleanHtml, options = {}) {
+        buildSaveRequestBodyCalls.push({ doc, cleanHtml, options });
+        return editorPersistence.buildStudioSaveRequestBody(
+          options.presentationUrl,
+          cleanHtml,
+          {
+            versionLabel: options.versionLabel,
+            canonicalDeck: options.canonicalDeck
+          }
+        );
+      },
+      resolvePlaybackState(doc, nextCanonicalDeck) {
+        resolvePlaybackStateCalls.push([doc, nextCanonicalDeck]);
+        return playbackState;
+      },
+      sessionToken: 4,
+      doc: { label: 'iframe-doc' },
+      canonicalDeck
+    }
+  );
+
+  assert.deepEqual(buildSaveRequestBodyCalls, [
+    {
+      doc: { label: 'iframe-doc' },
+      cleanHtml: '<html>persisted</html>',
+      options: {
+        presentationUrl: 'presentations/onboarding-presentation/index.html',
+        versionLabel: 'Checkpoint Plan',
+        canonicalDeck
+      }
+    }
+  ]);
+  assert.deepEqual(resolvePlaybackStateCalls, [[{ label: 'iframe-doc' }, canonicalDeck]]);
+  assert.deepEqual(persistencePlan, {
+    hasPersistedCurrentHtml: false,
+    hasPersistedCurrentState: false,
+    saveRequestBody: {
+      htmlPath: 'presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>persisted</html>',
+      isAutoSave: false,
+      versionLabel: 'Checkpoint Plan',
+      canonicalDeck
+    },
+    persistenceContext: {
+      presentationUrl: 'presentations/onboarding-presentation/index.html',
+      cleanHtml: '<html>persisted</html>',
+      shouldUpdatePersistedHtml: true,
+      canonicalDeck,
+      playbackState,
+      shouldUpdatePersistedPlaybackState: true,
+      sessionToken: 4
+    }
+  });
+});
+
 test('isStudioPersistedHtml only reports true when a non-empty persisted html snapshot matches exactly', () => {
   assert.equal(
     editorPersistence.isStudioPersistedHtml('<html></html>', '<html></html>'),

@@ -4164,32 +4164,6 @@
       );
     }
 
-    function createStudioVersionCheckpointPersistencePlan(
-      versionLabel,
-      cleanHtml,
-      presentationUrl = currentPresentationUrl,
-      options = {}
-    ) {
-      const livePlaybackState = Object.prototype.hasOwnProperty.call(options, 'playbackState')
-        ? options.playbackState
-        : capturePersistedDeckPlaybackState(options.doc, options.canonicalDeck);
-      return SlideNextStudioEditorPersistence.buildStudioPersistenceRequestPlan(
-        presentationUrl,
-        cleanHtml,
-        {
-          isPersistedState: isCurrentDeckStatePersisted,
-          buildSaveRequestBody: () => buildEditorSaveRequestBody(options.doc, cleanHtml, {
-            presentationUrl,
-            versionLabel,
-            canonicalDeck: options.canonicalDeck
-          }),
-          sessionToken: options.sessionToken,
-          playbackState: livePlaybackState,
-          shouldUpdatePersistedPlaybackState: !!options.doc
-        }
-      );
-    }
-
     function captureCurrentStudioAutoSavePersistenceState(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken,
@@ -4214,11 +4188,16 @@
     }
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
-      const persistencePlan = createStudioVersionCheckpointPersistencePlan(
+      const persistencePlan = SlideNextStudioEditorPersistence.buildStudioVersionCheckpointPersistencePlan(
         versionLabel,
         cleanHtml,
         presentationUrl,
-        options
+        {
+          ...options,
+          isPersistedState: isCurrentDeckStatePersisted,
+          buildSaveRequestBody: buildEditorSaveRequestBody,
+          resolvePlaybackState: capturePersistedDeckPlaybackState
+        }
       );
       const response = await fetch(persistencePlan.hasPersistedCurrentState ? '/api/versions/create' : '/api/save', {
         method: 'POST',
