@@ -78,6 +78,51 @@ test('resolveEditorStoredCanonicalBaseline prefers the current metadata canonica
   assert.deepEqual(calls, [context.currentPresentationMetadata]);
 });
 
+test('resolveEditorStoredCanonicalBaseline delegates precedence to the shared deck context when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const currentMetadataCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-current', nodes: [] }
+    ]
+  };
+  const persistedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-persisted', nodes: [] }
+    ]
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckContext: {
+      resolvePreferredStoredStudioCanonicalDeck(primaryStoredPresentationMetadata, fallbackStoredPresentationMetadata) {
+        calls.push([primaryStoredPresentationMetadata, fallbackStoredPresentationMetadata]);
+        return currentMetadataCanonicalDeck;
+      }
+    },
+    currentPresentationMetadata: {
+      id: 'deck-1',
+      canonicalDeck: currentMetadataCanonicalDeck
+    },
+    lastPersistedCanonicalDeck: persistedCanonicalDeck
+  };
+
+  vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
+
+  const result = context.resolveEditorStoredCanonicalBaseline();
+
+  assert.equal(result, currentMetadataCanonicalDeck);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], context.currentPresentationMetadata);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[0][1])),
+    { canonicalDeck: persistedCanonicalDeck }
+  );
+});
+
 test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical deck for the active editor session', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorCanonicalDeckSource = extractFunctionSource(

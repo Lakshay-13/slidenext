@@ -36,6 +36,18 @@
     });
   }
 
+  function resolvePreferredStoredStudioCanonicalDeck(
+    primaryStoredPresentationMetadata = {},
+    fallbackStoredPresentationMetadata = {},
+    options = {}
+  ) {
+    const primaryCanonicalDeck = resolveStoredStudioCanonicalDeck(primaryStoredPresentationMetadata, options);
+    if (primaryCanonicalDeck) {
+      return primaryCanonicalDeck;
+    }
+    return resolveStoredStudioCanonicalDeck(fallbackStoredPresentationMetadata, options);
+  }
+
   function buildStudioPresentationMetadataSeed(presentationUrl = '', presentationTitle = '') {
     if (!deckLoader || typeof deckLoader.buildPresentationMetadataSeed !== 'function') {
       return {
@@ -144,6 +156,7 @@
     buildStudioPresentationMetadataSeed,
     loadStudioPresentationMetadata,
     mergeStudioPresentationMetadataCanonicalDeck,
+    resolvePreferredStoredStudioCanonicalDeck,
     resolveStoredStudioCanonicalDeck,
     buildStudioCanonicalDeck
   };

@@ -165,6 +165,50 @@ test('resolveStoredStudioCanonicalDeck delegates sidecar normalization to the sh
   assert.equal(typeof resolverCalls[0].options.isCanonicalDeck, 'function');
 });
 
+test('resolvePreferredStoredStudioCanonicalDeck prefers the primary stored canonical deck before the fallback baseline', () => {
+  const primaryStoredMetadata = {
+    canonicalDeck: {
+      id: 'primary'
+    }
+  };
+  const fallbackStoredMetadata = {
+    canonicalDeck: {
+      id: 'fallback'
+    }
+  };
+  const primaryCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-primary', nodes: [] }]
+  };
+  const fallbackCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-fallback', nodes: [] }]
+  };
+  const resolverCalls = [];
+
+  const result = deckContext.resolvePreferredStoredStudioCanonicalDeck(
+    primaryStoredMetadata,
+    fallbackStoredMetadata,
+    {
+      resolvePresentationCanonicalDeck(nextMetadata) {
+        resolverCalls.push(nextMetadata);
+        if (nextMetadata === primaryStoredMetadata) {
+          return primaryCanonicalDeck;
+        }
+        if (nextMetadata === fallbackStoredMetadata) {
+          return fallbackCanonicalDeck;
+        }
+        return null;
+      }
+    }
+  );
+
+  assert.equal(result, primaryCanonicalDeck);
+  assert.deepEqual(resolverCalls, [primaryStoredMetadata]);
+});
+
 test('mergeStudioPresentationMetadataCanonicalDeck seeds metadata and delegates canonical deck merging', () => {
   const mergeCalls = [];
   const mergedMetadata = {

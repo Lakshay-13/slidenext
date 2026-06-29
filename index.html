@@ -2418,13 +2418,22 @@
       const persistedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'persistedCanonicalDeck')
         ? options.persistedCanonicalDeck
         : lastPersistedCanonicalDeck;
-      const currentMetadataCanonicalDeck = resolveEditorStoredCanonicalDeck(nextPresentationMetadata);
-      if (currentMetadataCanonicalDeck) {
-        return currentMetadataCanonicalDeck;
-      }
-      return resolveEditorStoredCanonicalDeck({
-        canonicalDeck: persistedCanonicalDeck
-      });
+      const resolvePreferredStoredCanonicalDeck = SlideNextStudioDeckContext
+        && typeof SlideNextStudioDeckContext.resolvePreferredStoredStudioCanonicalDeck === 'function'
+        ? SlideNextStudioDeckContext.resolvePreferredStoredStudioCanonicalDeck
+        : (primaryStoredPresentationMetadata, fallbackStoredPresentationMetadata) => {
+            const primaryCanonicalDeck = resolveEditorStoredCanonicalDeck(primaryStoredPresentationMetadata);
+            if (primaryCanonicalDeck) {
+              return primaryCanonicalDeck;
+            }
+            return resolveEditorStoredCanonicalDeck(fallbackStoredPresentationMetadata);
+          };
+      return resolvePreferredStoredCanonicalDeck(
+        nextPresentationMetadata,
+        {
+          canonicalDeck: persistedCanonicalDeck
+        }
+      );
     }
 
     function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
