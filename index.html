@@ -1964,9 +1964,9 @@
     // Swap node indices in iframe and re-render
     function reorderSlides(fromIdx, toIdx) {
       const iframeDoc = getIframeDoc();
-      if (!iframeDoc) return;
+      if (!iframeDoc) return false;
       const container = iframeDoc.getElementById('slidesContainer');
-      if (!container) return;
+      if (!container) return false;
       const slides = getSlides(iframeDoc);
       const draggedNode = slides[fromIdx];
       const targetNode = slides[toIdx];

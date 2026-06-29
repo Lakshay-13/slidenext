@@ -305,9 +305,46 @@ test('reorderSlides no-ops when the iframe document is unavailable', () => {
   vm.createContext(context);
   vm.runInContext(reorderSlidesSource, context);
 
-  context.reorderSlides(0, 1);
+  assert.equal(context.reorderSlides(0, 1), false);
 
   assert.deepEqual(calls, [['getIframeDoc']]);
+});
+
+test('reorderSlides no-ops when the slide container is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const reorderSlidesSource = extractFunctionSource(
+    fileContent,
+    'function reorderSlides(fromIdx, toIdx) {',
+    '\n\n    function updateActiveThumbnailCardState(activeSlideId) {'
+  );
+
+  const calls = [];
+  const iframeDoc = {
+    getElementById(id) {
+      assert.equal(id, 'slidesContainer');
+      calls.push(['getElementById', id]);
+      return null;
+    }
+  };
+  const context = {
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(reorderSlidesSource, context);
+
+  assert.equal(context.reorderSlides(0, 1), false);
+
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getElementById', 'slidesContainer']
+  ]);
 });
 
 test('reorderSlides no-ops when the requested slide indexes are unavailable', () => {
