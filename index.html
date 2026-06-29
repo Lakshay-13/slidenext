@@ -4044,6 +4044,13 @@
       });
     }
 
+    function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
+      return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
+        ...createCurrentStudioSessionStateReaders(),
+        onFailure: options.onFailure
+      });
+    }
+
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
       const livePlaybackState = Object.prototype.hasOwnProperty.call(options, 'playbackState')
         ? options.playbackState
@@ -4138,8 +4145,7 @@
               }
             });
           } else {
-            SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistencePlan.persistenceContext, {
-              ...createCurrentStudioSessionStateReaders(),
+            handleCurrentStudioPersistenceFailure(persistencePlan.persistenceContext, {
               onFailure: () => {
                 setStudioAutoSaveStatus('autosave-failed');
               }
@@ -4147,8 +4153,7 @@
           }
         } catch (err) {
           console.error('AutoSave Error:', err);
-          SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistencePlan.persistenceContext, {
-            ...createCurrentStudioSessionStateReaders(),
+          handleCurrentStudioPersistenceFailure(persistencePlan.persistenceContext, {
             onFailure: () => {
               setStudioAutoSaveStatus('network-error');
             }
@@ -4555,8 +4560,7 @@
             }
           });
         } else {
-          SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
-            ...createCurrentStudioSessionStateReaders(),
+          handleCurrentStudioPersistenceFailure(persistenceContext, {
             onFailure: () => {
               alert(`Save version failed: ${data.error}`);
               setStudioAutoSaveStatus('save-version-failed');
@@ -4564,8 +4568,7 @@
           });
         }
       } catch (err) {
-        SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(persistenceContext, {
-          ...createCurrentStudioSessionStateReaders(),
+        handleCurrentStudioPersistenceFailure(persistenceContext, {
           onFailure: () => {
             alert(`Network error saving version: ${err.message}`);
             setStudioAutoSaveStatus('network-error');

@@ -21,6 +21,15 @@ function loadHandleCurrentStudioPersistenceSuccess(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',
+    '\n\n    function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadHandleCurrentStudioPersistenceFailure(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function handleCurrentStudioPersistenceFailure(persistenceContext, options = {}) {',
     '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
   );
   vm.runInContext(helperSource, context);
@@ -139,6 +148,38 @@ test('handleCurrentStudioPersistenceSuccess reuses current session readers and p
   ]);
 });
 
+test('handleCurrentStudioPersistenceFailure reuses current session readers for failure handling', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 5
+  };
+
+  vm.createContext(context);
+  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
+
+  const applied = context.handleCurrentStudioPersistenceFailure({
+    presentationUrl: 'presentations/onboarding-presentation/index.html',
+    cleanHtml: '<html>persisted</html>',
+    sessionToken: 5
+  }, {
+    onFailure(nextContext) {
+      calls.push(['onFailure', nextContext.presentationUrl]);
+    }
+  });
+
+  assert.equal(applied, true);
+  assert.deepEqual(calls, [['onFailure', 'presentations/onboarding-presentation/index.html']]);
+});
+
 test('saveVersionCheckpoint refreshes persisted html and canonical metadata after a successful save rewrite', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const saveVersionCheckpointSource = extractFunctionSource(
@@ -218,6 +259,7 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
 
   vm.createContext(context);
   loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
+  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   const result = await context.saveVersionCheckpoint(
@@ -320,6 +362,7 @@ test('saveVersionCheckpoint clears the persisted playback baseline after a succe
 
   vm.createContext(context);
   loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
+  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   await context.saveVersionCheckpoint(
@@ -419,6 +462,7 @@ test('saveVersionCheckpoint preserves the persisted playback baseline when no li
 
   vm.createContext(context);
   loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
+  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   await context.saveVersionCheckpoint(
@@ -526,6 +570,7 @@ test('saveVersionCheckpoint keeps save rewrites enabled when canonical state cha
 
   vm.createContext(context);
   loadHandleCurrentStudioPersistenceSuccess(fileContent, context);
+  loadHandleCurrentStudioPersistenceFailure(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   await context.saveVersionCheckpoint(
