@@ -44,6 +44,17 @@
       && isCurrentStudioEditorSession(options);
   }
 
+  function createStudioFrameLoadStateOptions(options = {}) {
+    return {
+      sessionToken: options.sessionToken,
+      getCurrentPresentationUrl: options.getCurrentPresentationUrl,
+      getCurrentSessionToken: options.getCurrentSessionToken,
+      isEditorActive: options.isEditorActive,
+      handleLoad: options.handleLoad,
+      afterLoad: options.afterLoad
+    };
+  }
+
   function createStudioFrameLoadHandler(options = {}) {
     return () => {
       const shouldHandleLoad = typeof options.shouldHandleLoad === 'function'
@@ -67,6 +78,7 @@
   return {
     isCurrentStudioEditorSession,
     shouldHandleStudioFrameLoad,
+    createStudioFrameLoadStateOptions,
     createStudioFrameLoadHandler
   };
 });

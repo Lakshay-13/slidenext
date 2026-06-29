@@ -4,6 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const editorSession = require('../shared/studio-editor-session.js');
+
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
@@ -28,16 +30,6 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioSessionStateOptions(options = {}) {',
-    '\n\n    function createCurrentStudioFrameLoadStateOptions(options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
-function loadCreateCurrentStudioFrameLoadStateOptions(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioFrameLoadStateOptions(options = {}) {',
     '\n\n    function createCurrentStudioFrameLoadHandler('
   );
   vm.runInContext(helperSource, context);
@@ -207,45 +199,6 @@ test('createCurrentStudioSessionStateOptions reuses live session readers and for
   assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
 });
 
-test('createCurrentStudioFrameLoadStateOptions reuses current session readers and forwards frame load hooks', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const currentStudioSessionStateReaders = {
-    getCurrentPresentationUrl() {
-      return context.currentPresentationUrl;
-    },
-    getCurrentSessionToken() {
-      return context.studioEditorSessionToken;
-    }
-  };
-  const hooks = {
-    sessionToken: 5,
-    isEditorActive() {
-      return true;
-    },
-    handleLoad() {},
-    afterLoad() {}
-  };
-  const context = {
-    createCurrentStudioSessionStateReaders() {
-      return currentStudioSessionStateReaders;
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 5
-  };
-
-  vm.createContext(context);
-  loadCreateCurrentStudioFrameLoadStateOptions(fileContent, context);
-
-  const options = context.createCurrentStudioFrameLoadStateOptions(hooks);
-
-  assert.equal(options.sessionToken, 5);
-  assert.equal(options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
-  assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
-  assert.equal(options.isEditorActive, hooks.isEditorActive);
-  assert.equal(options.handleLoad, hooks.handleLoad);
-  assert.equal(options.afterLoad, hooks.afterLoad);
-});
-
 test('createCurrentStudioFrameLoadHandler reuses current session readers when delegating to the editor session helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createCurrentStudioFrameLoadHandlerSource = extractFunctionSource(
@@ -265,6 +218,7 @@ test('createCurrentStudioFrameLoadHandler reuses current session readers when de
   };
   const context = {
     SlideNextStudioEditorSession: {
+      ...editorSession,
       createStudioFrameLoadHandler(options) {
         capturedOptions = options;
         return function onloadHandler() {};
@@ -278,7 +232,7 @@ test('createCurrentStudioFrameLoadHandler reuses current session readers when de
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioFrameLoadStateOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(createCurrentStudioFrameLoadHandlerSource, context);
 
   const handler = context.createCurrentStudioFrameLoadHandler(
@@ -322,6 +276,7 @@ test('shouldHandleCurrentStudioFrameLoad reuses current session readers when del
   };
   const context = {
     SlideNextStudioEditorSession: {
+      ...editorSession,
       shouldHandleStudioFrameLoad(presentationUrl, options) {
         capturedArguments = { presentationUrl, options };
         return true;
@@ -335,7 +290,7 @@ test('shouldHandleCurrentStudioFrameLoad reuses current session readers when del
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioFrameLoadStateOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(shouldHandleCurrentStudioFrameLoadSource, context);
 
   const result = context.shouldHandleCurrentStudioFrameLoad(

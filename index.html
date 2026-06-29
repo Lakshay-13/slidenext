@@ -1637,17 +1637,6 @@
       };
     }
 
-    function createCurrentStudioFrameLoadStateOptions(options = {}) {
-      return {
-        ...createCurrentStudioSessionStateOptions({
-          sessionToken: options.sessionToken
-        }),
-        isEditorActive: options.isEditorActive,
-        handleLoad: options.handleLoad,
-        afterLoad: options.afterLoad
-      };
-    }
-
     function createCurrentStudioFrameLoadHandler(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken,
@@ -1655,7 +1644,10 @@
     ) {
       return SlideNextStudioEditorSession.createStudioFrameLoadHandler({
         presentationUrl,
-        ...createCurrentStudioFrameLoadStateOptions({
+        ...SlideNextStudioEditorSession.createStudioFrameLoadStateOptions({
+          ...createCurrentStudioSessionStateOptions({
+            sessionToken
+          }),
           sessionToken,
           isEditorActive: options.isEditorActive,
           handleLoad: options.handleLoad,
@@ -1670,7 +1662,10 @@
       options = {}
     ) {
       return SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(presentationUrl, {
-        ...createCurrentStudioFrameLoadStateOptions({
+        ...SlideNextStudioEditorSession.createStudioFrameLoadStateOptions({
+          ...createCurrentStudioSessionStateOptions({
+            sessionToken
+          }),
           sessionToken,
           isEditorActive: options.isEditorActive
         })
