@@ -462,3 +462,47 @@ test('deleteSlideNode no-ops when the iframe document is unavailable', () => {
 
   assert.deepEqual(calls, [['getIframeDoc']]);
 });
+
+test('deleteSlideNode no-ops when the requested slide index is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const deleteSlideNodeSource = extractFunctionSource(
+    fileContent,
+    'function deleteSlideNode(idx) {',
+    '\n\n    function getIframeDoc() {'
+  );
+
+  const firstSlide = { id: 'slide-1', remove() {} };
+  const secondSlide = { id: 'slide-2', remove() {} };
+  const slides = [firstSlide, secondSlide];
+  const calls = [];
+  const iframeDoc = {
+    getElementById(id) {
+      assert.equal(id, 'slidesContainer');
+      return {};
+    }
+  };
+  const context = {
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    getSlides(doc) {
+      calls.push(['getSlides', doc]);
+      return slides;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(deleteSlideNodeSource, context);
+
+  const result = context.deleteSlideNode(9);
+
+  assert.equal(result, false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getSlides', iframeDoc]
+  ]);
+});

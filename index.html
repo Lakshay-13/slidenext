@@ -2169,12 +2169,14 @@
         alert("Action aborted: presentation requires at least one slide.");
         return;
       }
+      const deletedSlide = slides[idx];
+      if (!deletedSlide) return false;
       saveHistoryState();
       const activeSlideId = getActiveSlideId(iframeDoc);
-      const deletedSlideId = getEditorSlideId(slides[idx]);
+      const deletedSlideId = getEditorSlideId(deletedSlide);
       const preservedSelectionIds = getCommittedSelectedEditorElementIds(iframeDoc);
       
-      slides[idx].remove();
+      deletedSlide.remove();
       
       generateThumbnails();
       const remainingSlides = getSlides(iframeDoc);
