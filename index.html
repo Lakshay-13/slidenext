@@ -2137,9 +2137,32 @@
       };
     }
 
+    function getEditorDeckSanitizerOptions(options = {}) {
+      const defaultChromeNodeIds = ['editor-style-tag', 'editor-theme-override-tag', ...EDITOR_CHROME_NODE_IDS];
+      const chromeNodeIds = Array.isArray(options.chromeNodeIds) && options.chromeNodeIds.length > 0
+        ? options.chromeNodeIds
+        : defaultChromeNodeIds;
+      const transientClassNames = Array.isArray(options.transientClassNames) && options.transientClassNames.length > 0
+        ? options.transientClassNames
+        : ['editor-selected', 'editor-hoverable', 'editor-dragging'];
+      return {
+        chromeNodeIds,
+        transientClassNames,
+        editorElementIdAttr: typeof options.editorElementIdAttr === 'string' && options.editorElementIdAttr.trim()
+          ? options.editorElementIdAttr
+          : EDITOR_ELEMENT_ID_ATTR,
+        editorSlideIdAttr: typeof options.editorSlideIdAttr === 'string' && options.editorSlideIdAttr.trim()
+          ? options.editorSlideIdAttr
+          : EDITOR_SLIDE_ID_ATTR
+      };
+    }
+
     function getEditorHistoryOptions(options = {}) {
-      const chromeNodeIds = ['editor-style-tag', 'editor-theme-override-tag', ...EDITOR_CHROME_NODE_IDS];
-      const removableClassNames = ['editor-selected', 'editor-hoverable', 'editor-dragging'];
+      const deckSanitizerOptions = getEditorDeckSanitizerOptions();
+      const chromeNodeIds = deckSanitizerOptions.chromeNodeIds;
+      const removableClassNames = deckSanitizerOptions.transientClassNames;
+      const editorElementIdAttr = deckSanitizerOptions.editorElementIdAttr;
+      const editorSlideIdAttr = deckSanitizerOptions.editorSlideIdAttr;
       const deckImport = typeof SlideNextDeckImport !== 'undefined' ? SlideNextDeckImport : null;
       const deckPersistence = typeof SlideNextDeckPersistence !== 'undefined' ? SlideNextDeckPersistence : null;
       const sanitizeFrameRoot = deckImport
@@ -2148,8 +2171,8 @@
             deckImport.sanitizeDeckSourceClone(root, {
               ignoredNodeIds: chromeNodeIds,
               transientClassNames: removableClassNames,
-              editorElementIdAttr: EDITOR_ELEMENT_ID_ATTR,
-              editorSlideIdAttr: EDITOR_SLIDE_ID_ATTR
+              editorElementIdAttr,
+              editorSlideIdAttr
             });
           }
         : deckPersistence
@@ -3804,10 +3827,12 @@
         });
       }
       const livePlaybackState = capturePersistedDeckPlaybackState(doc) || persistedDeckPlaybackState;
+      const deckSanitizerOptions = getEditorDeckSanitizerOptions();
       return SlideNextDeckPersistence.buildPersistableDeckHtml(doc, {
-        editorChromeNodeIds: EDITOR_CHROME_NODE_IDS,
-        editorElementIdAttr: EDITOR_ELEMENT_ID_ATTR,
-        editorSlideIdAttr: EDITOR_SLIDE_ID_ATTR,
+        editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,
+        editorTransientClasses: deckSanitizerOptions.transientClassNames,
+        editorElementIdAttr: deckSanitizerOptions.editorElementIdAttr,
+        editorSlideIdAttr: deckSanitizerOptions.editorSlideIdAttr,
         persistedDeckPlaybackState: livePlaybackState
       });
     }

@@ -130,6 +130,11 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
     'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
   );
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
@@ -175,6 +180,7 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
 
   vm.createContext(context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-baseline</html>');
@@ -184,6 +190,11 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
 
 test('buildPersistableDeckHtml captures the live playback state before persisting iframe html', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
@@ -221,6 +232,7 @@ test('buildPersistableDeckHtml captures the live playback state before persistin
   };
 
   vm.createContext(context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-live</html>');
@@ -229,6 +241,16 @@ test('buildPersistableDeckHtml captures the live playback state before persistin
     'buildPersistableDeckHtml'
   ]);
   assert.equal(calls[1][1], iframeDoc);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[1][2].editorChromeNodeIds)),
+    ['editor-style-tag', 'editor-theme-override-tag', 'editorSelectionOverlay']
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[1][2].editorTransientClasses)),
+    ['editor-selected', 'editor-hoverable', 'editor-dragging']
+  );
+  assert.equal(calls[1][2].editorElementIdAttr, 'data-editor-id');
+  assert.equal(calls[1][2].editorSlideIdAttr, 'data-slide-id');
   assert.equal(calls[1][2].persistedDeckPlaybackState, livePlaybackState);
 });
 
@@ -238,6 +260,11 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
     fileContent,
     'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
   );
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
@@ -297,6 +324,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
 
   vm.createContext(context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
@@ -318,6 +346,11 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
     fileContent,
     'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
   );
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
@@ -383,6 +416,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
 
   vm.createContext(context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');

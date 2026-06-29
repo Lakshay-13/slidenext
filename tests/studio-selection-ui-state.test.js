@@ -135,6 +135,11 @@ test('getLiveSelectedElements keeps only connected selections on the active slid
 
 test('getEditorHistoryOptions includes editor runtime attr names for sanitized history snapshots', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
   const getEditorHistoryOptionsSource = extractFunctionSource(
     fileContent,
     'function getEditorHistoryOptions(options = {}) {',
@@ -162,6 +167,7 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
   };
 
   vm.createContext(context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(getEditorHistoryOptionsSource, context);
 
   const options = context.getEditorHistoryOptions();

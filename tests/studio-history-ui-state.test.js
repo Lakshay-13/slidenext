@@ -197,6 +197,11 @@ test('createHistoryEntry falls back to persisted baseline state when the editor 
 
 test('buildHistoryFrameHtml reuses shared deck source sanitization for history snapshots', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
   const getEditorHistoryOptionsSource = extractFunctionSource(
     fileContent,
     'function getEditorHistoryOptions(options = {}) {',
@@ -322,6 +327,7 @@ test('buildHistoryFrameHtml reuses shared deck source sanitization for history s
   };
 
   vm.createContext(context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(getEditorHistoryOptionsSource, context);
   vm.runInContext(buildHistoryFrameHtmlSource, context);
 
@@ -343,6 +349,11 @@ test('buildHistoryFrameHtml reuses shared deck source sanitization for history s
 
 test('buildHistoryFrameHtml strips editor style tags when the shared deck source sanitizer is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
   const getEditorHistoryOptionsSource = extractFunctionSource(
     fileContent,
     'function getEditorHistoryOptions(options = {}) {',
@@ -465,6 +476,7 @@ test('buildHistoryFrameHtml strips editor style tags when the shared deck source
   };
 
   vm.createContext(context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(getEditorHistoryOptionsSource, context);
   vm.runInContext(buildHistoryFrameHtmlSource, context);
 
