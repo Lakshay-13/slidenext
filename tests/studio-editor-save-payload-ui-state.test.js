@@ -195,7 +195,7 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
   );
 
   let sharedBuildCalls = 0;
@@ -260,7 +260,7 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
   );
 
   let buildEditorCanonicalDeckCalls = 0;
@@ -326,7 +326,7 @@ test('buildPersistableDeckHtml reports the resolved canonical deck when the edit
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
   );
 
   const canonicalDeck = {
@@ -388,7 +388,7 @@ test('buildPersistableDeckHtml captures the live playback state before persistin
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -454,7 +454,7 @@ test('buildPersistableDeckHtml does not reuse stale persisted playback state whe
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -496,6 +496,110 @@ test('buildPersistableDeckHtml does not reuse stale persisted playback state whe
   assert.equal(calls[1][2].persistedDeckPlaybackState, null);
 });
 
+test('buildPersistableDeckHtml reuses a provided canonical deck when playback-state fallback needs the current session slide', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+  const capturePersistedDeckPlaybackStateSource = extractFunctionSource(
+    fileContent,
+    'function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {'
+  );
+
+  const iframeDoc = {
+    label: 'iframe-doc',
+    querySelector(selector) {
+      assert.equal(selector, '.slide-active');
+      return null;
+    }
+  };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  let buildEditorCanonicalDeckCalls = 0;
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml(nextDoc, options) {
+        assert.equal(nextDoc, iframeDoc);
+        assert.deepEqual(
+          JSON.parse(JSON.stringify(options.persistedDeckPlaybackState)),
+          {
+            activeSlideIds: ['slide-2'],
+            slideCounterText: '2 / 5'
+          }
+        );
+        return '<html>persisted-live</html>';
+      },
+      capturePersistedDeckPlaybackState(nextDoc, options) {
+        assert.equal(nextDoc, iframeDoc);
+        assert.equal(options.getSlides, context.getSlides);
+        assert.equal(options.slideIdAttr, 'data-slide-id');
+        return {
+          activeSlideIds: [],
+          slideCounterText: '2 / 5'
+        };
+      }
+    },
+    buildEditorCanonicalDeck() {
+      buildEditorCanonicalDeckCalls += 1;
+      return canonicalDeck;
+    },
+    currentSlideIndex: 1,
+    getActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return '';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getPersistedActiveSlideId() {
+      return 'slide-stale';
+    },
+    getSlides() {
+      return [];
+    },
+    persistedDeckPlaybackState: {
+      activeSlideIds: ['slide-stale'],
+      slideCounterText: '1 / 5'
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  vm.runInContext(capturePersistedDeckPlaybackStateSource, context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+
+  assert.equal(
+    context.buildPersistableDeckHtml(iframeDoc, {
+      canonicalDeck
+    }),
+    '<html>persisted-live</html>'
+  );
+  assert.equal(buildEditorCanonicalDeckCalls, 0);
+});
+
 test('capturePersistedDeckPlaybackState preserves explicit live active slide ids from shared playback capture', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
@@ -505,7 +609,7 @@ test('capturePersistedDeckPlaybackState preserves explicit live active slide ids
   );
   const capturePersistedDeckPlaybackStateSource = extractFunctionSource(
     fileContent,
-    'function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {',
+    'function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {'
   );
 
@@ -571,7 +675,7 @@ test('capturePersistedDeckPlaybackState falls back to the current session slide 
   );
   const capturePersistedDeckPlaybackStateSource = extractFunctionSource(
     fileContent,
-    'function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {',
+    'function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {'
   );
 
@@ -649,7 +753,7 @@ test('buildPersistableDeckHtml reports the resolved live canonical deck when req
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -716,7 +820,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
   );
 
   const canonicalDeck = {
@@ -802,7 +906,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
   );
 
   const persistedCanonicalDeck = {

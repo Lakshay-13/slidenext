@@ -20,7 +20,7 @@ function loadCaptureEditorPersistableDeckState(fileContent, context) {
   const captureEditorPersistableDeckStateSource = extractFunctionSource(
     fileContent,
     'function captureEditorPersistableDeckState(doc = getIframeDoc()) {',
-    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {'
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
   );
   vm.runInContext(captureEditorPersistableDeckStateSource, context);
 }

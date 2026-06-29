@@ -3973,15 +3973,18 @@
         });
       }
       const livePlaybackState = doc
-        ? capturePersistedDeckPlaybackState(doc)
+        ? null
         : persistedDeckPlaybackState;
       const shouldReportCanonicalDeck = typeof buildOptions.onCanonicalDeckResolved === 'function';
       const canonicalDeck = buildOptions.canonicalDeck || (shouldReportCanonicalDeck ? buildEditorCanonicalDeck(doc) : null);
+      const resolvedPlaybackState = doc
+        ? capturePersistedDeckPlaybackState(doc, canonicalDeck)
+        : livePlaybackState;
       if (shouldReportCanonicalDeck) {
         buildOptions.onCanonicalDeckResolved(canonicalDeck);
       }
       if (typeof buildOptions.onPlaybackStateResolved === 'function') {
-        buildOptions.onPlaybackStateResolved(livePlaybackState);
+        buildOptions.onPlaybackStateResolved(resolvedPlaybackState);
       }
       const deckSanitizerOptions = getEditorDeckSanitizerOptions();
       return SlideNextDeckPersistence.buildPersistableDeckHtml(doc, {
@@ -3989,7 +3992,7 @@
         editorTransientClasses: deckSanitizerOptions.transientClassNames,
         editorElementIdAttr: deckSanitizerOptions.editorElementIdAttr,
         editorSlideIdAttr: deckSanitizerOptions.editorSlideIdAttr,
-        persistedDeckPlaybackState: livePlaybackState
+        persistedDeckPlaybackState: resolvedPlaybackState
       });
     }
 
@@ -4015,7 +4018,7 @@
       };
     }
 
-    function capturePersistedDeckPlaybackState(doc = getIframeDoc()) {
+    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {
       const playbackState = SlideNextDeckPersistence.capturePersistedDeckPlaybackState(doc, {
         getSlides,
         slideIdAttr: EDITOR_SLIDE_ID_ATTR
@@ -4027,7 +4030,7 @@
         return playbackState;
       }
 
-      const fallbackActiveSlideId = resolveEditorFallbackActiveSlideId(doc, buildEditorCanonicalDeck(doc));
+      const fallbackActiveSlideId = resolveEditorFallbackActiveSlideId(doc, canonicalDeck || buildEditorCanonicalDeck(doc));
       if (!fallbackActiveSlideId) {
         return playbackState;
       }
