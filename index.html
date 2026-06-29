@@ -3933,6 +3933,9 @@
         if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
           buildOptions.onCanonicalDeckResolved(canonicalDeck);
         }
+        if (typeof buildOptions.onPlaybackStateResolved === 'function') {
+          buildOptions.onPlaybackStateResolved(persistedDeckPlaybackState);
+        }
         const isPersistedCanonicalDeck = SlideNextStudioEditorPersistence
           && typeof SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck === 'function'
           ? SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck
@@ -3968,6 +3971,9 @@
       if (shouldReportCanonicalDeck) {
         buildOptions.onCanonicalDeckResolved(canonicalDeck);
       }
+      if (typeof buildOptions.onPlaybackStateResolved === 'function') {
+        buildOptions.onPlaybackStateResolved(livePlaybackState);
+      }
       const deckSanitizerOptions = getEditorDeckSanitizerOptions();
       return SlideNextDeckPersistence.buildPersistableDeckHtml(doc, {
         editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,
@@ -3980,15 +3986,20 @@
 
     function captureEditorPersistableDeckState(doc = getIframeDoc()) {
       let resolvedCanonicalDeck = null;
+      let resolvedPlaybackState;
       const cleanHtml = buildPersistableDeckHtml(doc, {
         onCanonicalDeckResolved(canonicalDeck) {
           resolvedCanonicalDeck = canonicalDeck;
+        },
+        onPlaybackStateResolved(playbackState) {
+          resolvedPlaybackState = playbackState;
         }
       });
-      const playbackState = capturePersistedDeckPlaybackState(doc);
       return {
         cleanHtml,
-        playbackState,
+        playbackState: typeof resolvedPlaybackState !== 'undefined'
+          ? resolvedPlaybackState
+          : capturePersistedDeckPlaybackState(doc),
         canonicalDeck: cleanHtml && !resolvedCanonicalDeck
           ? buildEditorCanonicalDeck(doc)
           : resolvedCanonicalDeck

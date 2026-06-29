@@ -36,12 +36,15 @@ test('captureEditorPersistableDeckState returns persisted html, canonical deck, 
     slideCounterText: '1 / 2'
   };
   let buildEditorCanonicalDeckCalls = 0;
+  let capturePersistedDeckPlaybackStateCalls = 0;
 
   const context = {
     buildPersistableDeckHtml(doc, options = {}) {
       assert.equal(doc, iframeDoc);
       assert.equal(typeof options.onCanonicalDeckResolved, 'function');
+      assert.equal(typeof options.onPlaybackStateResolved, 'function');
       options.onCanonicalDeckResolved(canonicalDeck);
+      options.onPlaybackStateResolved(playbackState);
       return '<html>persisted</html>';
     },
     buildEditorCanonicalDeck() {
@@ -49,6 +52,7 @@ test('captureEditorPersistableDeckState returns persisted html, canonical deck, 
       return canonicalDeck;
     },
     capturePersistedDeckPlaybackState(doc) {
+      capturePersistedDeckPlaybackStateCalls += 1;
       assert.equal(doc, iframeDoc);
       return playbackState;
     },
@@ -67,6 +71,7 @@ test('captureEditorPersistableDeckState returns persisted html, canonical deck, 
     canonicalDeck
   });
   assert.equal(buildEditorCanonicalDeckCalls, 0);
+  assert.equal(capturePersistedDeckPlaybackStateCalls, 0);
 });
 
 test('initStudioFrame refreshes inspector state after bootstrapping the iframe', () => {
@@ -284,8 +289,10 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
     buildPersistableDeckHtml(doc, options = {}) {
       assert.equal(doc, iframeDoc);
       assert.equal(typeof options.onCanonicalDeckResolved, 'function');
+      assert.equal(typeof options.onPlaybackStateResolved, 'function');
       calls.push(['buildPersistableDeckHtml', doc, options]);
       options.onCanonicalDeckResolved(canonicalDeck);
+      options.onPlaybackStateResolved(playbackState);
       return '<html>persisted-live</html>';
     },
     buildEditorCanonicalDeck() {
@@ -312,8 +319,7 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
 
   assert.deepEqual(calls.map(([name]) => name), [
     'saveHistoryState',
-    'buildPersistableDeckHtml',
-    'capturePersistedDeckPlaybackState'
+    'buildPersistableDeckHtml'
   ]);
   assert.equal(persistedStateUpdates.length, 1);
   assert.equal(persistedStateUpdates[0].playbackState, playbackState);
