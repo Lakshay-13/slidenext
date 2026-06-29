@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
+const editorSession = require('../shared/studio-editor-session.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -18,6 +19,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 }
 
 function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
+  context.SlideNextStudioEditorSession ??= editorSession;
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioSessionStateOptions(options = {}) {',

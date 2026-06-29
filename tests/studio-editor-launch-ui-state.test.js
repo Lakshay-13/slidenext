@@ -164,6 +164,7 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
 
 test('createCurrentStudioSessionStateOptions reuses live session readers and forwards the session token', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let capturedOptions = null;
   const currentStudioSessionStateReaders = {
     getCurrentPresentationUrl() {
       return context.currentPresentationUrl;
@@ -173,6 +174,13 @@ test('createCurrentStudioSessionStateOptions reuses live session readers and for
     }
   };
   const context = {
+    SlideNextStudioEditorSession: {
+      ...editorSession,
+      createStudioSessionStateOptions(options) {
+        capturedOptions = options;
+        return editorSession.createStudioSessionStateOptions(options);
+      }
+    },
     createCurrentStudioSessionStateReaders() {
       return currentStudioSessionStateReaders;
     },
@@ -188,6 +196,9 @@ test('createCurrentStudioSessionStateOptions reuses live session readers and for
   assert.equal(options.sessionToken, 4);
   assert.equal(options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
   assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.equal(capturedOptions.sessionToken, 4);
+  assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
+  assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
 });
 
 test('createCurrentStudioFrameLoadHandler reuses current session readers when delegating to the editor session helper', () => {
@@ -497,6 +508,7 @@ test('loadCurrentPresentationMetadata reuses current session readers when delega
     }
   };
   const context = {
+    SlideNextStudioEditorSession: editorSession,
     SlideNextStudioDeckContext: {
       ...deckContext,
       async loadStudioPresentationMetadata(presentationUrl, presentationTitle, options) {
@@ -566,6 +578,7 @@ test('applyCurrentPresentationMetadata refreshes the persisted canonical baselin
     }
   };
   const context = {
+    SlideNextStudioEditorSession: editorSession,
     SlideNextStudioDeckContext: {
       resolveStoredStudioCanonicalDeck(nextMetadata) {
         assert.equal(nextMetadata, metadata);
@@ -621,6 +634,7 @@ test('applyCurrentPresentationMetadata refreshes fallback deck chrome from store
   };
   const callLog = [];
   const context = {
+    SlideNextStudioEditorSession: editorSession,
     SlideNextStudioDeckContext: {
       resolveStoredStudioCanonicalDeck(nextMetadata) {
         assert.equal(nextMetadata, metadata);
@@ -691,6 +705,7 @@ test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline
   };
 
   const context = {
+    SlideNextStudioEditorSession: editorSession,
     SlideNextStudioDeckContext: {
       ...deckContext,
       async loadStudioPresentationMetadata(presentationUrl, presentationTitle, options) {

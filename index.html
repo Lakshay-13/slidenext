@@ -1631,10 +1631,10 @@
     }
 
     function createCurrentStudioSessionStateOptions(options = {}) {
-      return {
+      return SlideNextStudioEditorSession.createStudioSessionStateOptions({
         sessionToken: options.sessionToken,
         ...createCurrentStudioSessionStateReaders()
-      };
+      });
     }
 
     function createCurrentStudioFrameLoadHandler(

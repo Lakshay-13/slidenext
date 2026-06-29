@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const modalVisibility = require('../shared/studio-modal-visibility.js');
+const editorSession = require('../shared/studio-editor-session.js');
 const versionActions = require('../shared/studio-version-actions.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -33,6 +34,7 @@ function createClassList(initialValues = []) {
 }
 
 function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
+  context.SlideNextStudioEditorSession ??= editorSession;
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioSessionStateOptions(options = {}) {',

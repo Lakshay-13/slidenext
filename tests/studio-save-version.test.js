@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
+const editorSession = require('../shared/studio-editor-session.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
@@ -26,6 +27,7 @@ function loadCaptureEditorPersistableDeckState(fileContent, context) {
 }
 
 function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
+  context.SlideNextStudioEditorSession ??= editorSession;
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioSessionStateOptions(options = {}) {',

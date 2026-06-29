@@ -11,6 +11,14 @@
     return typeof value === 'string' ? value : fallback;
   }
 
+  function createStudioSessionStateOptions(options = {}) {
+    return {
+      sessionToken: Number.isInteger(options.sessionToken) ? options.sessionToken : null,
+      getCurrentPresentationUrl: options.getCurrentPresentationUrl,
+      getCurrentSessionToken: options.getCurrentSessionToken
+    };
+  }
+
   function isCurrentStudioEditorSession(options = {}) {
     const expectedSessionToken = Number.isInteger(options.sessionToken)
       ? options.sessionToken
@@ -76,6 +84,7 @@
   }
 
   return {
+    createStudioSessionStateOptions,
     isCurrentStudioEditorSession,
     shouldHandleStudioFrameLoad,
     createStudioFrameLoadStateOptions,
