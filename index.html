@@ -4178,10 +4178,8 @@
     // 6. AutoSave debouncing pipeline
     let autoSaveDebounceTimer = null;
     function triggerAutoSave() {
-      const {
-        presentationUrl: scheduledPresentationUrl,
-        sessionToken: scheduledSessionToken
-      } = captureCurrentStudioSessionSnapshot();
+      const scheduledPresentationUrl = currentPresentationUrl;
+      const scheduledSessionToken = studioEditorSessionToken;
       setStudioAutoSaveStatus('saving');
       
       clearTimeout(autoSaveDebounceTimer);
@@ -4600,13 +4598,6 @@
         })
       );
     }
-
-    function captureCurrentStudioSessionSnapshot() {
-      return SlideNextStudioEditorSession.createStudioSessionSnapshot({
-        presentationUrl: currentPresentationUrl,
-        sessionToken: studioEditorSessionToken
-      });
-    }
     
     async function submitSaveVersion() {
       const input = document.getElementById('versionCheckpointName');
@@ -4616,10 +4607,8 @@
         return;
       }
 
-      const {
-        presentationUrl: scheduledPresentationUrl,
-        sessionToken: scheduledSessionToken
-      } = captureCurrentStudioSessionSnapshot();
+      const scheduledPresentationUrl = currentPresentationUrl;
+      const scheduledSessionToken = studioEditorSessionToken;
       const iframeDoc = getIframeDoc();
       const versionCheckpointPersistenceState = SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceState(
         SlideNextStudioEditorPersistence.createStudioPersistableDeckState(
@@ -4685,10 +4674,8 @@
     async function triggerAutoVersion(label) {
       // Frequent operations (e.g. dragging, typing) get debounced on 10s delay.
       // Structural operations (e.g. Adding/Deleting Slide, Adding/Deleting Element) save immediately.
-      const {
-        presentationUrl: scheduledPresentationUrl,
-        sessionToken: scheduledSessionToken
-      } = captureCurrentStudioSessionSnapshot();
+      const scheduledPresentationUrl = currentPresentationUrl;
+      const scheduledSessionToken = studioEditorSessionToken;
       
       if (SlideNextStudioVersionActions.shouldDebounceStudioAutoVersion(label)) {
         const timerKey = SlideNextStudioVersionActions.STUDIO_AUTO_VERSION_TIMER_KEY;
