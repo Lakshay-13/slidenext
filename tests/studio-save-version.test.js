@@ -34,6 +34,15 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadCreateCurrentStudioVersionPersistenceActionContext(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionPersistenceActionContext(',
+    '\n\n    function handleCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
@@ -45,6 +54,7 @@ function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, co
 }
 
 function loadHandleCurrentStudioVersionPersistenceSuccess(fileContent, context) {
+  loadCreateCurrentStudioVersionPersistenceActionContext(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
@@ -163,6 +173,41 @@ test('isCurrentStudioPersistenceActionCurrent reuses current session readers for
   assert.equal(result, true);
   assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
   assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+});
+
+test('createCurrentStudioVersionPersistenceActionContext reuses the current save-version session identity', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      createStudioVersionPersistenceActionContext(presentationUrl, cleanHtml, options) {
+        calls.push([presentationUrl, cleanHtml, options]);
+        return {
+          presentationUrl,
+          cleanHtml,
+          sessionToken: options.sessionToken
+        };
+      }
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 12
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioVersionPersistenceActionContext(fileContent, context);
+
+  const persistenceContext = context.createCurrentStudioVersionPersistenceActionContext('<html></html>');
+
+  assert.deepEqual(persistenceContext, {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    cleanHtml: '<html></html>',
+    sessionToken: 12
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [[
+    '/presentations/onboarding-presentation/index.html',
+    '<html></html>',
+    { sessionToken: 12 }
+  ]]);
 });
 
 test('createCurrentStudioVersionPersistenceHandlerOptions reuses current session readers and forwards success hooks', () => {
