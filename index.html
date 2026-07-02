@@ -4777,11 +4777,8 @@
         }
         
         try {
-          const autoSaveRequest = SlideNextStudioEditorPersistence.createStudioAutoSaveRequest(
-            persistencePlan
-          );
-          const data = await SlideNextStudioEditorPersistence.executeStudioPersistenceRequest(
-            autoSaveRequest,
+          const data = await SlideNextStudioEditorPersistence.executeStudioAutoSavePersistenceRequest(
+            persistencePlan,
             {
               fetchImpl: fetch
             }

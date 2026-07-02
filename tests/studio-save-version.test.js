@@ -934,7 +934,7 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
   const fetchCalls = [];
   const persistedStateUpdates = [];
   const canonicalDeckUpdates = [];
-  let capturedAutoSaveRequestPlan = null;
+  let capturedAutoSaveExecutionArgs = null;
   let buildEditorCanonicalDeckCalls = 0;
   const statusEl = {
     innerHTML: 'Saved to disk'
@@ -948,9 +948,12 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
   const context = {
     SlideNextStudioEditorPersistence: {
       ...editorPersistence,
-      createStudioAutoSaveRequest(persistencePlan) {
-        capturedAutoSaveRequestPlan = persistencePlan;
-        return editorPersistence.createStudioAutoSaveRequest(persistencePlan);
+      async executeStudioAutoSavePersistenceRequest(persistencePlan, options = {}) {
+        capturedAutoSaveExecutionArgs = [persistencePlan, options];
+        return editorPersistence.executeStudioAutoSavePersistenceRequest(
+          persistencePlan,
+          options
+        );
       }
     },
     autoSaveDebounceTimer: null,
@@ -1048,7 +1051,8 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
       canonicalDeck
     }
   ]]);
-  assert.equal(capturedAutoSaveRequestPlan.hasPersistedCurrentState, false);
+  assert.equal(capturedAutoSaveExecutionArgs[0].hasPersistedCurrentState, false);
+  assert.equal(capturedAutoSaveExecutionArgs[1].fetchImpl, context.fetch);
   assert.equal(persistedStateUpdates.length, 2);
   assert.equal(persistedStateUpdates[0].cleanHtml, '<html>canonical-source</html>');
   assert.deepEqual(

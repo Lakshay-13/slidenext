@@ -337,6 +337,16 @@
     };
   }
 
+  async function executeStudioAutoSavePersistenceRequest(persistencePlan = {}, options = {}) {
+    const autoSaveRequest = createStudioAutoSaveRequest(persistencePlan);
+    return executeStudioPersistenceRequest(
+      autoSaveRequest,
+      {
+        fetchImpl: options.fetchImpl
+      }
+    );
+  }
+
   async function executeStudioPersistenceRequest(request = {}, options = {}) {
     const fetchImpl = typeof options.fetchImpl === 'function'
       ? options.fetchImpl
@@ -690,6 +700,7 @@
     resolveStudioAutoSavePersistenceState,
     resolveStudioAutoSavePersistenceStateFromCapture,
     createStudioAutoSaveRequest,
+    executeStudioAutoSavePersistenceRequest,
     executeStudioPersistenceRequest,
     buildStudioVersionCheckpointPersistencePlan,
     createStudioVersionCheckpointRequest,

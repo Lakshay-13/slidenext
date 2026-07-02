@@ -990,6 +990,38 @@ test('createStudioAutoSaveRequest always posts the autosave payload to the save 
   );
 });
 
+test('executeStudioAutoSavePersistenceRequest reuses the autosave request and request execution glue', async () => {
+  const saveRequestBody = {
+    htmlPath: '/presentations/onboarding-presentation/index.html',
+    htmlContent: '<html>live-save</html>',
+    isAutoSave: true
+  };
+  const fetchCalls = [];
+
+  const result = await editorPersistence.executeStudioAutoSavePersistenceRequest(
+    {
+      hasPersistedCurrentState: false,
+      saveRequestBody
+    },
+    {
+      fetchImpl: async (url, init) => {
+        fetchCalls.push([url, JSON.parse(init.body)]);
+        return {
+          async json() {
+            return { success: true };
+          }
+        };
+      }
+    }
+  );
+
+  assert.deepEqual(fetchCalls, [[
+    '/api/save',
+    saveRequestBody
+  ]]);
+  assert.deepEqual(result, { success: true });
+});
+
 test('executeStudioPersistenceRequest posts JSON request bodies and returns parsed responses', async () => {
   const fetchCalls = [];
 
