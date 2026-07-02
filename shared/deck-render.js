@@ -42,6 +42,10 @@
     return normalizeString(value).replace(/<\/style/gi, '<\\/style');
   }
 
+  function escapeScriptText(value) {
+    return normalizeString(value).replace(/<\/script/gi, '<\\/script');
+  }
+
   function buildMetaTag(name, content) {
     const normalizedContent = normalizeString(content).trim();
     if (!normalizedContent) {
@@ -72,11 +76,11 @@
     const normalizedValue = typeof value === 'string'
       ? value.trim()
       : String(value).trim();
-    if (!normalizedValue) {
-      return attributeName === 'crossorigin' ? true : null;
-    }
     if (booleanAttributeNames.has(attributeName)) {
       return true;
+    }
+    if (!normalizedValue) {
+      return attributeName === 'crossorigin' ? true : null;
     }
     return normalizedValue;
   }
@@ -116,6 +120,28 @@
         };
         applyAssetMetaAttributes(attributes, meta, ['media', 'crossorigin', 'integrity', 'referrerpolicy']);
         return `<link${renderAttributeMap(attributes)}>`;
+      });
+  }
+
+  function buildInlineHeadScriptTags(scripts = []) {
+    return (Array.isArray(scripts) ? scripts : [])
+      .map((script) => ({
+        content: normalizeString(script && script.content),
+        attributes: asPlainObject(script && script.attributes)
+      }))
+      .filter(({ content, attributes }) => content.trim() || Object.keys(attributes).length > 0)
+      .map(({ content, attributes }) => {
+        const normalizedAttributes = {};
+        Object.entries(attributes).forEach(([attributeName, attributeValue]) => {
+          if (attributeName === 'src') {
+            return;
+          }
+          const normalizedValue = normalizeAssetMetaAttributeValue(attributeName, attributeValue);
+          if (normalizedValue !== null) {
+            normalizedAttributes[attributeName] = normalizedValue;
+          }
+        });
+        return `<script${renderAttributeMap(normalizedAttributes)}>${escapeScriptText(content)}</script>`;
       });
   }
 
@@ -559,6 +585,7 @@
       : '';
     const preloadAssetLinkTags = buildPreloadAssetLinkTags(deck.assets);
     const headScriptAssetTags = buildScriptAssetTags(deck.assets, { location: 'head' });
+    const headInlineScriptTags = buildInlineHeadScriptTags(deck.source && deck.source.headInlineScripts);
     const stylesheetAssetLinkTags = buildStylesheetAssetLinkTags(deck.assets);
     const deckLayoutStyleBlock = buildCanonicalDeckLayoutStyleBlock(deck);
     const themeStyleBlocks = buildCanonicalDeckThemeStyleBlocks(deck);
@@ -572,6 +599,7 @@
       iconLinkTag,
       ...preloadAssetLinkTags,
       ...headScriptAssetTags,
+      ...headInlineScriptTags,
       ...stylesheetAssetLinkTags,
       deckLayoutStyleBlock,
       ...themeStyleBlocks

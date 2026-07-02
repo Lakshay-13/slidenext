@@ -333,6 +333,20 @@
     return attributes;
   }
 
+  function extractInlineScriptSeeds(rootEl, options = {}) {
+    if (!rootEl || typeof rootEl.querySelectorAll !== 'function') {
+      return [];
+    }
+
+    return Array.from(rootEl.querySelectorAll('script:not([src])'))
+      .map((scriptEl, index) => ({
+        id: `head-inline-script-${index + 1}`,
+        content: normalizeString(scriptEl.textContent),
+        attributes: extractAttributeMap(scriptEl)
+      }))
+      .filter((scriptSeed) => normalizeString(scriptSeed.content).trim() || Object.keys(asPlainObject(scriptSeed.attributes)).length > 0);
+  }
+
   function resolveImportedTransientClassNames(options = {}) {
     return Array.isArray(options.transientClassNames)
       ? options.transientClassNames
@@ -1180,7 +1194,8 @@
       html: buildDocumentHtml(sourceClone || doc),
       headHtml: sourceHead ? sourceHead.innerHTML : '',
       bodyHtml: sourceBody ? sourceBody.innerHTML : '',
-      bodyAttributes: sourceBody ? extractAttributeMap(sourceBody) : {}
+      bodyAttributes: sourceBody ? extractAttributeMap(sourceBody) : {},
+      headInlineScripts: sourceHead ? extractInlineScriptSeeds(sourceHead, options) : []
     };
   }
 

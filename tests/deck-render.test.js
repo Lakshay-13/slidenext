@@ -651,6 +651,50 @@ test('renderCanonicalDeckHtml emits canonical head script assets when source hea
   assert.equal((html.match(/<script src="\/presentations\/demo\/app\.js"><\/script>/g) || []).length, 1);
 });
 
+test('renderCanonicalDeckHtml emits canonical inline head scripts when source head html is absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'script',
+        src: '/presentations/demo/tailwind.js',
+        meta: {
+          location: 'head'
+        }
+      },
+      {
+        type: 'stylesheet',
+        src: '/presentations/demo/styles.css'
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: '',
+      headInlineScripts: [
+        {
+          content: 'tailwind.config = { darkMode: "class" };',
+          attributes: {
+            type: 'text/javascript'
+          }
+        }
+      ]
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<script src="\/presentations\/demo\/tailwind\.js"><\/script>\s*<script type="text\/javascript">tailwind\.config = \{ darkMode: "class" \};<\/script>\s*<link rel="stylesheet" href="\/presentations\/demo\/styles\.css">/);
+});
+
 test('renderCanonicalDeckHtml dedupes canonical singleton head tags over reused source head html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {

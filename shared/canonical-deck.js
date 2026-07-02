@@ -107,6 +107,15 @@
     };
   }
 
+  function createCanonicalInlineScript(seed = {}, index = 0) {
+    const script = asPlainObject(seed);
+    return {
+      id: normalizeString(script.id, `head-inline-script-${index + 1}`),
+      content: normalizeString(script.content),
+      attributes: asPlainObject(script.attributes)
+    };
+  }
+
   function createCanonicalDeck(seed = {}) {
     const deck = asPlainObject(seed);
     const metadata = asPlainObject(deck.metadata);
@@ -159,7 +168,10 @@
         html: normalizeString(source.html),
         headHtml: normalizeString(source.headHtml),
         bodyHtml: normalizeString(source.bodyHtml),
-        bodyAttributes: asPlainObject(source.bodyAttributes)
+        bodyAttributes: asPlainObject(source.bodyAttributes),
+        headInlineScripts: Array.isArray(source.headInlineScripts)
+          ? source.headInlineScripts.map((script, scriptIndex) => createCanonicalInlineScript(script, scriptIndex))
+          : []
       }
     };
   }
@@ -180,6 +192,7 @@
     createCanonicalAsset,
     createCanonicalNode,
     createCanonicalSlide,
+    createCanonicalInlineScript,
     createCanonicalDeck,
     isCanonicalDeck
   };

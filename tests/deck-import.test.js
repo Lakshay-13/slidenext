@@ -892,6 +892,57 @@ test('buildDeckSource serializes the sanitized clone instead of the live editor 
   assert.equal(source.headHtml, '<style>.deck{}</style>');
   assert.equal(source.bodyHtml, '<main>clean</main>');
   assert.deepEqual(source.bodyAttributes, { class: 'deck-body' });
+  assert.deepEqual(source.headInlineScripts, []);
+});
+
+test('buildDeckSource extracts sanitized inline head scripts alongside full source html', () => {
+  const sourceClone = {
+    querySelector(selector) {
+      if (selector === 'head') return this.head;
+      if (selector === 'body') return this.body;
+      return null;
+    },
+    querySelectorAll() {
+      return [];
+    },
+    head: {
+      innerHTML: '<script type="text/javascript">window.tailwindConfig = true;</script>',
+      querySelectorAll(selector) {
+        if (selector === 'script:not([src])') {
+          return [{
+            textContent: 'window.tailwindConfig = true;',
+            attributes: [{ name: 'type', value: 'text/javascript' }]
+          }];
+        }
+        return [];
+      }
+    },
+    body: {
+      innerHTML: '<main>clean</main>',
+      attributes: [{ name: 'class', value: 'deck-body' }]
+    }
+  };
+  const doc = {
+    documentElement: {
+      cloneNode() {
+        return sourceClone;
+      }
+    }
+  };
+
+  const source = deckImport.buildDeckSource(doc, {
+    stripTransientDeckRuntimeState() {}
+  });
+
+  assert.deepEqual(source.headInlineScripts, [
+    {
+      id: 'head-inline-script-1',
+      content: 'window.tailwindConfig = true;',
+      attributes: {
+        type: 'text/javascript'
+      }
+    }
+  ]);
 });
 
 test('importElementToCanonicalNode strips editor-only classes and attributes from the canonical node payload', () => {
