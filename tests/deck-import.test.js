@@ -1034,7 +1034,10 @@ test('importSlideToCanonicalSlide sanitizes stored slide source html fragments',
     tagName: 'SECTION',
     attributes: {
       class: 'slide editor-selected',
+      style: 'background: black;',
+      'aria-label': 'Imported Intro',
       'data-slide-id': 'slide-runtime-1',
+      'data-slide-name': 'Imported Slide',
       'data-speaker-notes': 'Key message'
     },
     children: [heading]
@@ -1046,7 +1049,14 @@ test('importSlideToCanonicalSlide sanitizes stored slide source html fragments',
   assert.equal(canonicalSlide.source.html.includes('editor-hoverable'), false);
   assert.equal(canonicalSlide.source.html.includes('data-slide-id'), false);
   assert.equal(canonicalSlide.source.html.includes('data-editor-id'), false);
-  assert.match(canonicalSlide.source.html, /class="slide"/);
+  assert.equal(canonicalSlide.source.html.includes('class="slide"'), false);
+  assert.equal(canonicalSlide.source.html.includes('style="background: black;"'), false);
+  assert.equal(canonicalSlide.source.html.includes('aria-label="Imported Intro"'), false);
+  assert.equal(canonicalSlide.source.html.includes('data-slide-name="Imported Slide"'), false);
+  assert.equal(canonicalSlide.source.html.includes('data-speaker-notes="Key message"'), false);
   assert.match(canonicalSlide.source.html, /class="title"/);
-  assert.match(canonicalSlide.source.html, /data-speaker-notes="Key message"/);
+  assert.equal(canonicalSlide.layout.background.className, 'slide');
+  assert.equal(canonicalSlide.layout.background.style, 'background: black;');
+  assert.equal(canonicalSlide.name, 'Imported Slide');
+  assert.equal(canonicalSlide.notes, 'Key message');
 });

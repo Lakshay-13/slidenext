@@ -436,6 +436,29 @@
     return nextAttributes;
   }
 
+  function stripCanonicalSlideSourceHtmlDuplicates(sourceHtml = '') {
+    const nextSourceHtml = normalizeString(sourceHtml);
+    if (!nextSourceHtml) {
+      return nextSourceHtml;
+    }
+
+    const openingTagMatch = nextSourceHtml.match(/^<([a-z][^\s/>]*)([^>]*?)(\/?)>/i);
+    if (!openingTagMatch) {
+      return nextSourceHtml;
+    }
+
+    const rebuiltOpeningTag = `<${openingTagMatch[1]}${stripOpeningTagAttributeText(openingTagMatch[2], [
+      'id',
+      'class',
+      'style',
+      'aria-label',
+      'data-slide-name',
+      'data-speaker-notes',
+      'data-notes'
+    ])}${openingTagMatch[3] || ''}>`;
+    return rebuiltOpeningTag + nextSourceHtml.slice(openingTagMatch[0].length);
+  }
+
   function sanitizeImportedDomNode(node, options = {}) {
     if (!node) {
       return;
@@ -672,7 +695,7 @@
         path: [childIndex + 1]
       })),
       source: {
-        html: buildImportedSourceHtml(slide, options),
+        html: stripCanonicalSlideSourceHtmlDuplicates(buildImportedSourceHtml(slide, options)),
         attributes: stripCanonicalSlideAttributeDuplicates(sanitizeImportedAttributeMap(slide, options))
       }
     });
@@ -1163,6 +1186,7 @@
     importElementToCanonicalNode,
     importSlideToCanonicalSlide,
     stripCanonicalNodeSourceHtmlDuplicates,
+    stripCanonicalSlideSourceHtmlDuplicates,
     stripCanonicalSlideAttributeDuplicates,
     sanitizeDeckSourceClone,
     sanitizeImportedElementClone,
