@@ -17,6 +17,10 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 function createControls() {
   return {
     addSlideBtn: { disabled: true },
+    toolbarInsertHeadingBtn: { disabled: true },
+    toolbarInsertParagraphBtn: { disabled: true },
+    toolbarInsertImageBtn: { disabled: true },
+    toolbarInsertShapeBtn: { disabled: true },
     insertHeadingBtn: { disabled: true },
     insertParagraphBtn: { disabled: true },
     insertImageBtn: { disabled: true },
@@ -59,6 +63,10 @@ test('updateInsertionActionState enables deck-ready insert controls only when th
   context.updateInsertionActionState(null);
   assert.deepEqual(getDisabledStates(controls), {
     addSlideBtn: true,
+    toolbarInsertHeadingBtn: true,
+    toolbarInsertParagraphBtn: true,
+    toolbarInsertImageBtn: true,
+    toolbarInsertShapeBtn: true,
     insertHeadingBtn: true,
     insertParagraphBtn: true,
     insertImageBtn: true,
@@ -74,6 +82,10 @@ test('updateInsertionActionState enables deck-ready insert controls only when th
   });
   assert.deepEqual(getDisabledStates(controls), {
     addSlideBtn: false,
+    toolbarInsertHeadingBtn: true,
+    toolbarInsertParagraphBtn: true,
+    toolbarInsertImageBtn: true,
+    toolbarInsertShapeBtn: true,
     insertHeadingBtn: true,
     insertParagraphBtn: true,
     insertImageBtn: true,
@@ -91,6 +103,10 @@ test('updateInsertionActionState enables deck-ready insert controls only when th
   context.updateInsertionActionState(readyDoc);
   assert.deepEqual(getDisabledStates(controls), {
     addSlideBtn: false,
+    toolbarInsertHeadingBtn: false,
+    toolbarInsertParagraphBtn: false,
+    toolbarInsertImageBtn: false,
+    toolbarInsertShapeBtn: false,
     insertHeadingBtn: false,
     insertParagraphBtn: false,
     insertImageBtn: false,

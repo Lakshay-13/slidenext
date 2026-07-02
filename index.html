@@ -519,19 +519,19 @@
 
       <!-- Center: Element Insert Tools -->
       <div class="flex items-center gap-1.5 bg-zinc-900/50 border border-white/5 rounded-lg p-1.5 backdrop-blur-md">
-        <button onclick="insertElement('h2')" class="px-2.5 py-1.5 hover:bg-white/5 text-zinc-300 hover:text-white rounded flex items-center gap-1 text-[11px] font-mono transition-all" title="Add Heading (H2)">
+        <button id="toolbarInsertHeadingBtn" onclick="insertElement('h2')" disabled class="px-2.5 py-1.5 hover:bg-white/5 text-zinc-300 hover:text-white rounded flex items-center gap-1 text-[11px] font-mono transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Add Heading (H2)">
           <span class="material-symbols-outlined text-[15px]">title</span>
           <span>Heading</span>
         </button>
-        <button onclick="insertElement('p')" class="px-2.5 py-1.5 hover:bg-white/5 text-zinc-300 hover:text-white rounded flex items-center gap-1 text-[11px] font-mono transition-all" title="Add Paragraph (P)">
+        <button id="toolbarInsertParagraphBtn" onclick="insertElement('p')" disabled class="px-2.5 py-1.5 hover:bg-white/5 text-zinc-300 hover:text-white rounded flex items-center gap-1 text-[11px] font-mono transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Add Paragraph (P)">
           <span class="material-symbols-outlined text-[15px]">notes</span>
           <span>Text</span>
         </button>
-        <button onclick="insertElement('img')" class="px-2.5 py-1.5 hover:bg-white/5 text-zinc-300 hover:text-white rounded flex items-center gap-1 text-[11px] font-mono transition-all" title="Add Image Placeholder">
+        <button id="toolbarInsertImageBtn" onclick="insertElement('img')" disabled class="px-2.5 py-1.5 hover:bg-white/5 text-zinc-300 hover:text-white rounded flex items-center gap-1 text-[11px] font-mono transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Add Image Placeholder">
           <span class="material-symbols-outlined text-[15px]">image</span>
           <span>Image</span>
         </button>
-        <button onclick="insertElement('shape')" class="px-2.5 py-1.5 hover:bg-white/5 text-zinc-300 hover:text-white rounded flex items-center gap-1 text-[11px] font-mono transition-all" title="Add Decorative Box">
+        <button id="toolbarInsertShapeBtn" onclick="insertElement('shape')" disabled class="px-2.5 py-1.5 hover:bg-white/5 text-zinc-300 hover:text-white rounded flex items-center gap-1 text-[11px] font-mono transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Add Decorative Box">
           <span class="material-symbols-outlined text-[15px]">layers</span>
           <span>Shape</span>
         </button>
@@ -5151,6 +5151,10 @@
 
       [
         'addSlideBtn',
+        'toolbarInsertHeadingBtn',
+        'toolbarInsertParagraphBtn',
+        'toolbarInsertImageBtn',
+        'toolbarInsertShapeBtn',
         'insertHeadingBtn',
         'insertParagraphBtn',
         'insertImageBtn',
@@ -5229,6 +5233,10 @@
       }
 
       [
+        'toolbarInsertHeadingBtn',
+        'toolbarInsertParagraphBtn',
+        'toolbarInsertImageBtn',
+        'toolbarInsertShapeBtn',
         'insertHeadingBtn',
         'insertParagraphBtn',
         'insertImageBtn',

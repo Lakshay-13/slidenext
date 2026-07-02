@@ -49,6 +49,10 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     toggleVisibilitySelectionIcon: { textContent: 'visibility' },
     toggleVisibilitySelectionLabel: { textContent: 'Show Selected' },
     addSlideBtn: { disabled: false },
+    toolbarInsertHeadingBtn: { disabled: false },
+    toolbarInsertParagraphBtn: { disabled: false },
+    toolbarInsertImageBtn: { disabled: false },
+    toolbarInsertShapeBtn: { disabled: false },
     insertHeadingBtn: { disabled: false },
     insertParagraphBtn: { disabled: false },
     insertImageBtn: { disabled: false },
@@ -137,6 +141,10 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
   assert.equal(elements.toggleVisibilitySelectionLabel.textContent, 'Hide Selected');
   [
     'addSlideBtn',
+    'toolbarInsertHeadingBtn',
+    'toolbarInsertParagraphBtn',
+    'toolbarInsertImageBtn',
+    'toolbarInsertShapeBtn',
     'insertHeadingBtn',
     'insertParagraphBtn',
     'insertImageBtn',
