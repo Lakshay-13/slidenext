@@ -27,6 +27,15 @@ function loadSyncLayerOrderZIndexInput(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function syncLayerOrderZIndexInput(target) {',
+    '\n\n    function refreshLayerOrderUi(options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadRefreshLayerOrderUi(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function refreshLayerOrderUi(options = {}) {',
     '\n\n    // Rearrange Selected Element Layers'
   );
   vm.runInContext(helperSource, context);
@@ -104,6 +113,30 @@ test('syncLayerOrderZIndexInput updates the z-index inspector only when a target
   assert.equal(result, zIndexInput);
   assert.equal(zIndexInput.value, '12');
   assert.deepEqual(calls, [['getElementById', 'elZIndex']]);
+});
+
+test('refreshLayerOrderUi refreshes layer state and optionally the layer list', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    updateLayerOrderActionState() {
+      calls.push(['updateLayerOrderActionState']);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    }
+  };
+
+  vm.createContext(context);
+  loadRefreshLayerOrderUi(fileContent, context);
+
+  assert.equal(context.refreshLayerOrderUi(), false);
+  assert.equal(context.refreshLayerOrderUi({ refreshLayersList: true, result: null }), null);
+  assert.deepEqual(calls, [
+    ['updateLayerOrderActionState'],
+    ['updateLayersList'],
+    ['updateLayerOrderActionState']
+  ]);
 });
 
 test('updateLayerOrderActionState enables layer order controls only when the iframe has a live active slide', () => {
@@ -230,6 +263,7 @@ test('arrangeElementLayer returns false when there is no live reorder target or 
   vm.createContext(context);
   loadFinalizeLayerOrderMutation(fileContent, context);
   loadSyncLayerOrderZIndexInput(fileContent, context);
+  loadRefreshLayerOrderUi(fileContent, context);
   vm.runInContext(arrangeElementLayerSource, context);
 
   assert.equal(context.arrangeElementLayer('front'), false);
@@ -307,6 +341,7 @@ test('arrangeElementLayer returns false and refreshes layer controls when the li
   vm.createContext(context);
   loadFinalizeLayerOrderMutation(fileContent, context);
   loadSyncLayerOrderZIndexInput(fileContent, context);
+  loadRefreshLayerOrderUi(fileContent, context);
   vm.runInContext(arrangeElementLayerSource, context);
 
   assert.equal(context.arrangeElementLayer('front'), false);
@@ -366,6 +401,7 @@ test('arrangeElementLayer returns true and tolerates a missing z-index input whe
   vm.createContext(context);
   loadFinalizeLayerOrderMutation(fileContent, context);
   loadSyncLayerOrderZIndexInput(fileContent, context);
+  loadRefreshLayerOrderUi(fileContent, context);
   vm.runInContext(arrangeElementLayerSource, context);
 
   assert.equal(context.arrangeElementLayer('front'), true);

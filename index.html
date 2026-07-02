@@ -4045,21 +4045,26 @@
       return zIndexInput;
     }
 
+    function refreshLayerOrderUi(options = {}) {
+      if (options.refreshLayersList) {
+        updateLayersList();
+      }
+      updateLayerOrderActionState();
+      return options.result === undefined ? false : options.result;
+    }
+
     // Rearrange Selected Element Layers
     function arrangeElementLayer(action) {
       const targets = getLiveSelectedElements();
       if (targets.length === 0) {
-        updateLayerOrderActionState();
-        return false;
+        return refreshLayerOrderUi();
       }
       if (selectionHasLockedElements(targets)) {
-        updateLayerOrderActionState();
-        return false;
+        return refreshLayerOrderUi();
       }
       const didChange = reorderSlideLayers(action, targets);
       if (!didChange) {
-        updateLayerOrderActionState();
-        return false;
+        return refreshLayerOrderUi();
       }
       syncLayerOrderZIndexInput(targets[0]);
       finalizeLayerOrderMutation();
@@ -5880,19 +5885,16 @@
       const parentRow = event.currentTarget.closest('[class*="border"]');
       const el = resolveLayerRowElement(parentRow);
       if (!el) {
-        updateLayersList();
-        updateLayerOrderActionState();
+        refreshLayerOrderUi({ refreshLayersList: true, result: null });
         return;
       }
       if (isElementLocked(el)) {
-        updateLayersList();
-        updateLayerOrderActionState();
+        refreshLayerOrderUi({ refreshLayersList: true, result: null });
         return;
       }
       const didChange = reorderSlideLayers(action, [el]);
       if (!didChange) {
-        updateLayersList();
-        updateLayerOrderActionState();
+        refreshLayerOrderUi({ refreshLayersList: true, result: null });
         return;
       }
       

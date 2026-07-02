@@ -27,6 +27,15 @@ function loadSyncLayerOrderZIndexInput(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function syncLayerOrderZIndexInput(target) {',
+    '\n\n    function refreshLayerOrderUi(options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadRefreshLayerOrderUi(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function refreshLayerOrderUi(options = {}) {',
     '\n\n    // Rearrange Selected Element Layers'
   );
   vm.runInContext(helperSource, context);
@@ -328,6 +337,7 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is loc
   vm.createContext(context);
   loadFinalizeLayerOrderMutation(fileContent, context);
   loadSyncLayerOrderZIndexInput(fileContent, context);
+  loadRefreshLayerOrderUi(fileContent, context);
   vm.runInContext(changeLayerZIndexByRefSource, context);
 
   const event = {
@@ -403,6 +413,7 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is sta
   vm.createContext(context);
   loadFinalizeLayerOrderMutation(fileContent, context);
   loadSyncLayerOrderZIndexInput(fileContent, context);
+  loadRefreshLayerOrderUi(fileContent, context);
   vm.runInContext(changeLayerZIndexByRefSource, context);
 
   const event = {
@@ -477,6 +488,7 @@ test('changeLayerZIndexByRef refreshes layer controls when the row reorder becom
   vm.createContext(context);
   loadFinalizeLayerOrderMutation(fileContent, context);
   loadSyncLayerOrderZIndexInput(fileContent, context);
+  loadRefreshLayerOrderUi(fileContent, context);
   vm.runInContext(changeLayerZIndexByRefSource, context);
 
   const event = {
@@ -571,6 +583,7 @@ test('changeLayerZIndexByRef updates layer controls after a successful row reord
   vm.createContext(context);
   loadFinalizeLayerOrderMutation(fileContent, context);
   loadSyncLayerOrderZIndexInput(fileContent, context);
+  loadRefreshLayerOrderUi(fileContent, context);
   vm.runInContext(changeLayerZIndexByRefSource, context);
 
   const event = {
@@ -675,6 +688,7 @@ test('changeLayerZIndexByRef tolerates a missing z-index input on successful row
   vm.createContext(context);
   loadFinalizeLayerOrderMutation(fileContent, context);
   loadSyncLayerOrderZIndexInput(fileContent, context);
+  loadRefreshLayerOrderUi(fileContent, context);
   vm.runInContext(changeLayerZIndexByRefSource, context);
 
   const event = {
