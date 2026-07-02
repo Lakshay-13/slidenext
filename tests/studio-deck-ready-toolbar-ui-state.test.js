@@ -122,3 +122,64 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when 
   assert.equal(elements.openSourceViewBtn.disabled, false);
   assert.equal(elements.studioVersionBtn.disabled, false);
 });
+
+test('updateDeckReadyToolbarActionState prefers the shared persisted-content resolver when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateDeckReadyToolbarActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {',
+    '\n\n    function resetStudioSaveButtonState() {'
+  );
+
+  const elements = {
+    launchPreviewBtn: { disabled: false },
+    studioSaveBtn: { disabled: false },
+    openSourceViewBtn: { disabled: false },
+    studioVersionBtn: { disabled: false }
+  };
+  const calls = [];
+  const context = {
+    currentPresentationMetadata: null,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    document: {
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedCanonicalDeck: null,
+    lastPersistedDeckHtml: '<html>persisted-baseline</html>',
+    persistedDeckPlaybackState: null,
+    SlideNextStudioDeckContext: {
+      resolveStoredStudioCanonicalDeck() {
+        return null;
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      resolveStudioPersistableDeckStateWithContent(persistedDeckState) {
+        calls.push(persistedDeckState);
+        return persistedDeckState;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  vm.runInContext(updateDeckReadyToolbarActionStateSource, context);
+
+  context.updateDeckReadyToolbarActionState(null);
+
+  assert.equal(calls.length, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0])), {
+    cleanHtml: '<html>persisted-baseline</html>',
+    canonicalDeck: null,
+    playbackState: null
+  });
+  assert.equal(elements.launchPreviewBtn.disabled, false);
+  assert.equal(elements.studioSaveBtn.disabled, false);
+  assert.equal(elements.openSourceViewBtn.disabled, false);
+  assert.equal(elements.studioVersionBtn.disabled, false);
+});

@@ -4980,7 +4980,19 @@
       };
       if (!doc) {
         const persistedDeckState = getCurrentEditorPersistedDeckState();
-        const persistedHtml = persistedDeckState.cleanHtml;
+        const resolveStudioPersistableDeckStateWithContent = (
+          typeof SlideNextStudioEditorPersistence !== 'undefined'
+          && SlideNextStudioEditorPersistence
+          && typeof SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent === 'function'
+        )
+          ? SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent
+          : null;
+        const persistedDeckStateWithContent = resolveStudioPersistableDeckStateWithContent
+          ? resolveStudioPersistableDeckStateWithContent(persistedDeckState)
+          : (persistedDeckState.cleanHtml.trim() ? persistedDeckState : null);
+        const persistedHtml = persistedDeckStateWithContent
+          ? persistedDeckStateWithContent.cleanHtml
+          : '';
         const canonicalDeck = resolveCanonicalDeckOverride(true);
         if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
           buildOptions.onCanonicalDeckResolved(canonicalDeck);
@@ -5009,7 +5021,7 @@
               }
             };
         const reusablePersistedHtml = resolveStudioPersistedHtmlReuse
-          ? resolveStudioPersistedHtmlReuse(persistedDeckState, {
+          ? resolveStudioPersistedHtmlReuse(persistedDeckStateWithContent || persistedDeckState, {
               canonicalDeck
             })
           : (persistedHtml.trim() && isPersistedCanonicalDeck(canonicalDeck, persistedDeckState.canonicalDeck)
@@ -5914,9 +5926,20 @@
 
     function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {
       const persistedDeckState = getCurrentEditorPersistedDeckState();
+      const resolveStudioPersistableDeckStateWithContent = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent
+        : null;
       const hasDeckDocument = !!(doc && doc.documentElement);
       const hasPresentationSession = !!currentPresentationUrl;
-      const hasPersistedDeckHtml = persistedDeckState.cleanHtml.trim() !== '';
+      const hasPersistedDeckHtml = !!(
+        resolveStudioPersistableDeckStateWithContent
+          ? resolveStudioPersistableDeckStateWithContent(persistedDeckState)
+          : (persistedDeckState.cleanHtml.trim() ? persistedDeckState : null)
+      );
       const hasStoredCanonicalDeck = !!resolveEditorStoredCanonicalBaseline();
       const hasDeckContent = hasDeckDocument || hasPersistedDeckHtml || hasStoredCanonicalDeck;
 

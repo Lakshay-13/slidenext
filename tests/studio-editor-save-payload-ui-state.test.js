@@ -648,6 +648,77 @@ test('buildPersistableDeckHtml delegates persisted html reuse checks to the shar
   assert.equal(delegatedArgs.options.canonicalDeck, canonicalDeck);
 });
 
+test('buildPersistableDeckHtml prefers the shared persisted-content resolver before checking html reuse', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const calls = [];
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml() {
+        throw new Error('shared persistence builder should not run when persisted html reuse succeeds');
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      resolveStudioPersistableDeckStateWithContent(persistedDeckState) {
+        calls.push(['resolveStudioPersistableDeckStateWithContent', persistedDeckState]);
+        return persistedDeckState;
+      },
+      resolveStudioPersistedHtmlReuse(persistedDeckState, options = {}) {
+        calls.push(['resolveStudioPersistedHtmlReuse', persistedDeckState, options]);
+        return persistedDeckState.cleanHtml;
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, null);
+      return canonicalDeck;
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '<html>persisted-baseline</html>',
+    lastPersistedCanonicalDeck: canonicalDeck,
+    persistedDeckPlaybackState: null
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+
+  assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-baseline</html>');
+  assert.deepEqual(calls.map(([name]) => name), [
+    'resolveStudioPersistableDeckStateWithContent',
+    'resolveStudioPersistedHtmlReuse'
+  ]);
+  assert.equal(calls[1][1].cleanHtml, '<html>persisted-baseline</html>');
+  assert.equal(calls[1][2].canonicalDeck, canonicalDeck);
+});
+
 test('buildPersistableDeckHtml sanitizes reusable persisted html when a DOM parser is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
