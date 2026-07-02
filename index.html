@@ -5252,9 +5252,17 @@
       const parentRow = event.currentTarget.closest('[class*="border"]');
       const el = resolveLayerRowElement(parentRow);
       if (el) {
-        if (isElementLocked(el)) return;
+        if (isElementLocked(el)) {
+          updateLayersList();
+          updateLayerOrderActionState();
+          return;
+        }
         const didChange = reorderSlideLayers(action, [el]);
-        if (!didChange) return;
+        if (!didChange) {
+          updateLayersList();
+          updateLayerOrderActionState();
+          return;
+        }
         
         // Update selection properties panel if currently selected
         if (SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement(selectedElements, el)) {
@@ -5264,6 +5272,7 @@
         saveHistoryState();
         triggerAutoSave();
         updateLayersList();
+        updateLayerOrderActionState();
         triggerAutoVersion('Auto: Rearranged Layers');
       }
     }
