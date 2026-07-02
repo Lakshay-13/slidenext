@@ -163,6 +163,38 @@ test('renderCanonicalDeckHtml can rebuild canonical slide bodies and honor a req
   assert.match(html, /<section class="slide agenda-slide slide-active"[^>]*id="slide-2"[^>]*><\/section>/);
 });
 
+test('renderCanonicalDeckHtml updates active classes and ids even when reusing slide source html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        source: {
+          html: '<section class="hero-slide slide-active"><p>Intro</p></section>'
+        }
+      },
+      {
+        id: 'slide-2',
+        source: {
+          html: '<section class="agenda-slide"><p>Agenda</p></section>'
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    activeSlideId: 'slide-2',
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<section class="slide hero-slide" id="slide-1"><p>Intro<\/p><\/section>/);
+  assert.match(html, /<section class="slide agenda-slide slide-active" id="slide-2"><p>Agenda<\/p><\/section>/);
+});
+
 test('renderCanonicalDeckHtml can rebuild canonical head when source head html is disabled', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {

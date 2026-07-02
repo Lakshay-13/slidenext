@@ -255,6 +255,14 @@
     return rebuiltOpeningTag + sourceHtml.slice(openingTagMatch[0].length);
   }
 
+  function readOpeningTagAttributeValue(attributeText = '', attributeName = '') {
+    const attributeMatch = new RegExp(`\\s${attributeName}=(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i')
+      .exec(normalizeString(attributeText));
+    return attributeMatch
+      ? normalizeString(attributeMatch[1] || attributeMatch[2] || attributeMatch[3]).trim()
+      : '';
+  }
+
   function tokenizeClassNames(className) {
     return normalizeString(className)
       .split(/\s+/)
@@ -402,8 +410,24 @@
 
   function renderCanonicalSlide(slide, index = 0, options = {}) {
     if (!slide || typeof slide !== 'object') return '';
+    const requestedActiveSlideId = normalizeString(options.activeSlideId).trim();
+    const isActiveSlide = requestedActiveSlideId
+      ? normalizeString(slide.id).trim() === requestedActiveSlideId
+      : index === 0;
     if (options.preferSlideSourceHtml !== false && slide.source && normalizeString(slide.source.html)) {
-      return slide.source.html;
+      const sourceHtml = normalizeString(slide.source.html);
+      const openingTagMatch = sourceHtml.match(/^<([a-z][^\s/>]*)([^>]*?)(\/?)>/i);
+      if (!openingTagMatch) {
+        return sourceHtml;
+      }
+
+      const existingClassName = readOpeningTagAttributeValue(openingTagMatch[2], 'class');
+      const existingId = readOpeningTagAttributeValue(openingTagMatch[2], 'id');
+      const rebuiltOpeningTag = `<${openingTagMatch[1]}${stripOpeningTagAttributeText(openingTagMatch[2], ['class', 'id'])}${renderAttributeMap({
+        class: buildRenderedSlideClassName(existingClassName, isActiveSlide),
+        id: normalizeString(slide.id).trim() || existingId
+      })}${openingTagMatch[3] || ''}>`;
+      return rebuiltOpeningTag + sourceHtml.slice(openingTagMatch[0].length);
     }
 
     const sourceAttributes = slide.source ? asPlainObject(slide.source.attributes) : {};
@@ -433,10 +457,6 @@
     if (needsPositionContext && !hasExplicitSourceStyle && !styleTextHasProperty(sourceAttributes.style, 'position')) {
       sourceAttributes.style = appendStyleDeclaration(sourceAttributes.style, 'position: relative;');
     }
-    const requestedActiveSlideId = normalizeString(options.activeSlideId).trim();
-    const isActiveSlide = requestedActiveSlideId
-      ? normalizeString(slide.id).trim() === requestedActiveSlideId
-      : index === 0;
     sourceAttributes.class = buildRenderedSlideClassName(sourceAttributes.class, isActiveSlide);
     if (!sourceAttributes.id && slide.id) {
       sourceAttributes.id = slide.id;
