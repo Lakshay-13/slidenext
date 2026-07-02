@@ -200,6 +200,51 @@ test('resolvePresentationPersistenceOptions normalizes configured persistence cl
   );
 });
 
+test('mergePresentationPersistenceOptions combines normalized cleanup settings additively', () => {
+  assert.deepEqual(
+    presentationMetadata.mergePresentationPersistenceOptions(
+      {
+        emptyContainerIds: [' indicatorDots ', 'pixelMatrix'],
+        styleCleanups: [
+          {
+            selector: ' .glass-panel ',
+            properties: [' opacity ', 'transform']
+          }
+        ],
+        transientClassNames: [' revealed ']
+      },
+      {
+        emptyContainerIds: ['gitNodesContainer', 'pixelMatrix'],
+        styleCleanups: [
+          {
+            selector: '.glass-panel',
+            properties: ['scale', 'opacity']
+          },
+          {
+            selector: '.hero-card',
+            properties: ['rotate']
+          }
+        ],
+        transientClassNames: ['voted', 'revealed']
+      }
+    ),
+    {
+      emptyContainerIds: ['indicatorDots', 'pixelMatrix', 'gitNodesContainer'],
+      styleCleanups: [
+        {
+          selector: '.glass-panel',
+          properties: ['opacity', 'transform', 'scale']
+        },
+        {
+          selector: '.hero-card',
+          properties: ['rotate']
+        }
+      ],
+      transientClassNames: ['revealed', 'voted']
+    }
+  );
+});
+
 test('mergePresentationCanonicalDeck preserves metadata and normalizes valid canonical sidecars', () => {
   const metadata = {
     id: 'onboarding-presentation',

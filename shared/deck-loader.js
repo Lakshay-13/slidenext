@@ -94,6 +94,19 @@
       : {};
   }
 
+  function mergePresentationPersistenceOptions(...optionSets) {
+    if (presentationMetadata && typeof presentationMetadata.mergePresentationPersistenceOptions === 'function') {
+      return presentationMetadata.mergePresentationPersistenceOptions(...optionSets);
+    }
+
+    return optionSets.reduce((mergedOptions, optionSet) => ({
+      ...mergedOptions,
+      ...(optionSet && typeof optionSet === 'object' && !Array.isArray(optionSet)
+        ? optionSet
+        : {})
+    }), {});
+  }
+
   async function loadPresentationMetadata(presentationUrl = '', presentationTitle = '', options = {}) {
     const fallbackMetadata = buildPresentationMetadataSeed(presentationUrl, presentationTitle);
     const metadataUrl = derivePresentationMetadataUrl(presentationUrl);
@@ -141,10 +154,10 @@
     const explicitPersistenceOptions = options.persistenceOptions && typeof options.persistenceOptions === 'object' && !Array.isArray(options.persistenceOptions)
       ? { ...options.persistenceOptions }
       : {};
-    const persistenceOptions = {
-      ...metadataPersistenceOptions,
-      ...explicitPersistenceOptions
-    };
+    const persistenceOptions = mergePresentationPersistenceOptions(
+      metadataPersistenceOptions,
+      explicitPersistenceOptions
+    );
     const additionalTransientClassNames = Array.isArray(persistenceOptions.transientClassNames)
       ? persistenceOptions.transientClassNames
       : [];

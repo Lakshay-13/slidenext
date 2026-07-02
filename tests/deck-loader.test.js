@@ -345,3 +345,200 @@ test('buildCanonicalDeckFromDocument applies metadata-configured transient class
 
   assert.deepEqual(deck.slides[0].nodes[0].classes, ['hero-card']);
 });
+
+test('buildCanonicalDeckFromDocument merges metadata and explicit persistence cleanup options additively', () => {
+  const stripperCalls = [];
+  const node = {
+    tagName: 'DIV',
+    style: {},
+    children: [],
+    className: 'hero-card editor-selected revealed voted',
+    classList: {
+      contains(className) {
+        return ['hero-card', 'editor-selected', 'revealed', 'voted'].includes(className);
+      },
+      [Symbol.iterator]: function* iterator() {
+        yield 'hero-card';
+        yield 'editor-selected';
+        yield 'revealed';
+        yield 'voted';
+      }
+    },
+    attributes: [
+      { name: 'class', value: 'hero-card editor-selected revealed voted' }
+    ],
+    childNodes: [],
+    hidden: false,
+    ownerDocument: null,
+    textContent: 'Hero copy',
+    getAttribute(name) {
+      if (name === 'class') return 'hero-card editor-selected revealed voted';
+      if (name === 'style') return '';
+      return '';
+    },
+    querySelector() {
+      return null;
+    },
+    cloneNode() {
+      return {
+        outerHTML: '<div class="hero-card editor-selected revealed voted">Hero copy</div>',
+        querySelector() {
+          return null;
+        },
+        querySelectorAll() {
+          return [];
+        }
+      };
+    },
+    get outerHTML() {
+      return '<div class="hero-card editor-selected revealed voted">Hero copy</div>';
+    }
+  };
+  const slide = {
+    id: 'custom-slide-1',
+    tagName: 'SECTION',
+    style: {},
+    children: [node],
+    className: 'custom-slide',
+    classList: {
+      contains(className) {
+        return className === 'custom-slide';
+      }
+    },
+    attributes: [],
+    childNodes: [],
+    hidden: false,
+    ownerDocument: null,
+    getAttribute(name) {
+      if (name === 'data-slide-name') return '';
+      if (name === 'data-speaker-notes') return '';
+      if (name === 'data-notes') return '';
+      if (name === 'style') return '';
+      return '';
+    },
+    querySelector(selector) {
+      if (selector === '.custom-title') {
+        return {
+          textContent: 'Custom Slide Title'
+        };
+      }
+      return null;
+    },
+    cloneNode() {
+      return {
+        outerHTML: '<section class="custom-slide"><div class="hero-card editor-selected revealed voted">Hero copy</div></section>',
+        querySelector(selector) {
+          if (selector === 'head') {
+            return { innerHTML: '' };
+          }
+          if (selector === 'body') {
+            return { innerHTML: '', attributes: [] };
+          }
+          return null;
+        },
+        querySelectorAll() {
+          return [];
+        }
+      };
+    },
+    get outerHTML() {
+      return '<section class="custom-slide"><div class="hero-card editor-selected revealed voted">Hero copy</div></section>';
+    }
+  };
+
+  const doc = {
+    querySelector(selector) {
+      if (selector === 'title') {
+        return { textContent: 'Fallback Deck Title' };
+      }
+      return null;
+    },
+    querySelectorAll(selector) {
+      if (selector === '.custom-slide') {
+        return [slide];
+      }
+      if (selector === '.slide') {
+        return [];
+      }
+      return [];
+    },
+    styleSheets: [],
+    documentElement: {
+      style: {
+        length: 0
+      },
+      cloneNode() {
+        return {
+          outerHTML: '<html><head></head><body></body></html>',
+          querySelector(selector) {
+            if (selector === 'head') {
+              return { innerHTML: '' };
+            }
+            if (selector === 'body') {
+              return { innerHTML: '', attributes: [] };
+            }
+            return null;
+          },
+          querySelectorAll() {
+            return [];
+          }
+        };
+      }
+    },
+    head: {
+      innerHTML: ''
+    },
+    body: {
+      innerHTML: '',
+      attributes: []
+    }
+  };
+  slide.ownerDocument = doc;
+  node.ownerDocument = doc;
+
+  const deck = deckLoader.buildCanonicalDeckFromDocument(doc, {
+    presentationMetadata: {
+      id: 'custom-deck',
+      persistence: {
+        emptyContainerIds: ['indicatorDots'],
+        styleCleanups: [
+          {
+            selector: '.hero-card',
+            properties: ['opacity']
+          }
+        ],
+        transientClassNames: ['revealed']
+      }
+    },
+    persistenceOptions: {
+      emptyContainerIds: ['gitNodesContainer'],
+      styleCleanups: [
+        {
+          selector: '.hero-card',
+          properties: ['transform']
+        }
+      ],
+      transientClassNames: ['voted']
+    },
+    transientClassNames: ['editor-selected'],
+    sourcePath: '/presentations/custom-deck/index.html',
+    slideSelector: '.custom-slide',
+    slideTitleSelector: '.custom-title',
+    stripTransientDeckRuntimeState(root, options) {
+      stripperCalls.push({ root, options });
+    }
+  });
+
+  assert.deepEqual(deck.slides[0].nodes[0].classes, ['hero-card']);
+  assert.equal(stripperCalls.length > 0, true);
+  stripperCalls.forEach(({ options }) => assert.deepEqual(options, {
+    emptyContainerIds: ['indicatorDots', 'gitNodesContainer'],
+    styleCleanups: [
+      {
+        selector: '.hero-card',
+        properties: ['opacity', 'transform']
+      }
+    ],
+    transientClassNames: ['revealed', 'voted']
+  }));
+});

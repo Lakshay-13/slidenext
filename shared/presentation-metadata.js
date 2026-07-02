@@ -58,6 +58,60 @@
     }, []);
   }
 
+  function mergeStyleCleanupEntries(...valueSets) {
+    const mergedEntries = [];
+    const entryIndexesBySelector = new Map();
+
+    valueSets.forEach((values) => {
+      normalizeStyleCleanupEntries(values).forEach((entry) => {
+        if (!entryIndexesBySelector.has(entry.selector)) {
+          entryIndexesBySelector.set(entry.selector, mergedEntries.length);
+          mergedEntries.push({
+            selector: entry.selector,
+            properties: [...entry.properties]
+          });
+          return;
+        }
+
+        const entryIndex = entryIndexesBySelector.get(entry.selector);
+        const mergedEntry = mergedEntries[entryIndex];
+        const nextProperties = normalizeUniqueTrimmedStringArray([
+          ...(Array.isArray(mergedEntry.properties) ? mergedEntry.properties : []),
+          ...entry.properties
+        ]);
+        mergedEntries[entryIndex] = {
+          selector: mergedEntry.selector,
+          properties: nextProperties
+        };
+      });
+    });
+
+    return mergedEntries;
+  }
+
+  function normalizePresentationPersistenceOptions(persistence = {}) {
+    const nextPersistence = asPlainObject(persistence);
+    const emptyContainerIds = normalizeUniqueTrimmedStringArray(nextPersistence.emptyContainerIds);
+    const styleCleanups = normalizeStyleCleanupEntries(nextPersistence.styleCleanups);
+    const transientClassNames = normalizeUniqueTrimmedStringArray(nextPersistence.transientClassNames);
+
+    if (emptyContainerIds.length === 0 && styleCleanups.length === 0 && transientClassNames.length === 0) {
+      return {};
+    }
+
+    const persistenceOptions = {};
+    if (emptyContainerIds.length > 0) {
+      persistenceOptions.emptyContainerIds = emptyContainerIds;
+    }
+    if (styleCleanups.length > 0) {
+      persistenceOptions.styleCleanups = styleCleanups;
+    }
+    if (transientClassNames.length > 0) {
+      persistenceOptions.transientClassNames = transientClassNames;
+    }
+    return persistenceOptions;
+  }
+
   function asPlainObject(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return {};
@@ -135,26 +189,33 @@
 
   function resolvePresentationPersistenceOptions(metadata = {}) {
     const nextMetadata = asPlainObject(metadata);
-    const persistence = asPlainObject(nextMetadata.persistence);
-    const emptyContainerIds = normalizeUniqueTrimmedStringArray(persistence.emptyContainerIds);
-    const styleCleanups = normalizeStyleCleanupEntries(persistence.styleCleanups);
-    const transientClassNames = normalizeUniqueTrimmedStringArray(persistence.transientClassNames);
+    return normalizePresentationPersistenceOptions(nextMetadata.persistence);
+  }
 
-    if (emptyContainerIds.length === 0 && styleCleanups.length === 0 && transientClassNames.length === 0) {
+  function mergePresentationPersistenceOptions(...optionSets) {
+    const normalizedOptionSets = optionSets
+      .map((optionSet) => normalizePresentationPersistenceOptions(optionSet))
+      .filter((optionSet) => Object.keys(optionSet).length > 0);
+
+    if (normalizedOptionSets.length === 0) {
       return {};
     }
 
-    const persistenceOptions = {};
-    if (emptyContainerIds.length > 0) {
-      persistenceOptions.emptyContainerIds = emptyContainerIds;
-    }
-    if (styleCleanups.length > 0) {
-      persistenceOptions.styleCleanups = styleCleanups;
-    }
-    if (transientClassNames.length > 0) {
-      persistenceOptions.transientClassNames = transientClassNames;
-    }
-    return persistenceOptions;
+    const emptyContainerIds = normalizeUniqueTrimmedStringArray(
+      normalizedOptionSets.flatMap((optionSet) => optionSet.emptyContainerIds || [])
+    );
+    const styleCleanups = mergeStyleCleanupEntries(
+      ...normalizedOptionSets.map((optionSet) => optionSet.styleCleanups || [])
+    );
+    const transientClassNames = normalizeUniqueTrimmedStringArray(
+      normalizedOptionSets.flatMap((optionSet) => optionSet.transientClassNames || [])
+    );
+
+    return normalizePresentationPersistenceOptions({
+      emptyContainerIds,
+      styleCleanups,
+      transientClassNames
+    });
   }
 
   function mergePresentationCanonicalDeck(metadata = {}, deckLike = null, options = {}) {
@@ -191,6 +252,7 @@
     buildPresentationMetadataSeed,
     resolvePresentationCanonicalDeck,
     resolvePresentationPersistenceOptions,
+    mergePresentationPersistenceOptions,
     mergePresentationCanonicalDeck,
     stripPresentationCanonicalDeck
   };
