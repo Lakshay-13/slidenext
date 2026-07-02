@@ -4202,10 +4202,22 @@
       const buildOptions = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
         ? arguments[1]
         : {};
+      const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(buildOptions, 'canonicalDeck')
+        ? buildOptions.canonicalDeck
+        : null;
+      const resolveCanonicalDeckOverride = () => (
+        providedCanonicalDeck
+        && typeof SlideNextCanonicalDeck !== 'undefined'
+        && SlideNextCanonicalDeck
+        && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
+        && !SlideNextCanonicalDeck.isCanonicalDeck(providedCanonicalDeck)
+      )
+        ? buildEditorCanonicalDeck(doc)
+        : providedCanonicalDeck;
       if (!doc) {
         const persistedDeckState = getCurrentEditorPersistedDeckState();
         const persistedHtml = persistedDeckState.cleanHtml;
-        const canonicalDeck = buildOptions.canonicalDeck || buildEditorCanonicalDeck(doc);
+        const canonicalDeck = resolveCanonicalDeckOverride() || buildEditorCanonicalDeck(doc);
         if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
           buildOptions.onCanonicalDeckResolved(canonicalDeck);
         }
@@ -4243,7 +4255,7 @@
         ? null
         : persistedDeckPlaybackState;
       const shouldReportCanonicalDeck = typeof buildOptions.onCanonicalDeckResolved === 'function';
-      const canonicalDeck = buildOptions.canonicalDeck || (shouldReportCanonicalDeck ? buildEditorCanonicalDeck(doc) : null);
+      const canonicalDeck = resolveCanonicalDeckOverride() || (shouldReportCanonicalDeck ? buildEditorCanonicalDeck(doc) : null);
       const resolvedPlaybackState = doc
         ? capturePersistedDeckPlaybackState(doc, canonicalDeck)
         : livePlaybackState;

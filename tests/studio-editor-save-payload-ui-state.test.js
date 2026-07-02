@@ -378,6 +378,81 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
   assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
+test('buildPersistableDeckHtml falls back to the editor canonical deck when a provided override is malformed', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+
+  let buildEditorCanonicalDeckCalls = 0;
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const malformedCanonicalDeck = {
+    slides: 'not-an-array'
+  };
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextCanonicalDeck: {
+      isCanonicalDeck(deck) {
+        return !!deck && deck.kind === 'slidenext.deck' && Array.isArray(deck.slides);
+      }
+    },
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml() {
+        throw new Error('shared persistence builder should not run when the editor frame is unavailable');
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      isStudioPersistedCanonicalDeck(nextCanonicalDeck, persistedCanonicalDeck) {
+        assert.equal(nextCanonicalDeck, canonicalDeck);
+        assert.equal(persistedCanonicalDeck, canonicalDeck);
+        return true;
+      }
+    },
+    buildEditorCanonicalDeck() {
+      buildEditorCanonicalDeckCalls += 1;
+      return canonicalDeck;
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '<html>persisted-baseline</html>',
+    lastPersistedCanonicalDeck: canonicalDeck,
+    persistedDeckPlaybackState: null
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+
+  assert.equal(
+    context.buildPersistableDeckHtml(null, {
+      canonicalDeck: malformedCanonicalDeck
+    }),
+    '<html>persisted-baseline</html>'
+  );
+  assert.equal(buildEditorCanonicalDeckCalls, 1);
+});
+
 test('buildPersistableDeckHtml reports the resolved canonical deck when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
