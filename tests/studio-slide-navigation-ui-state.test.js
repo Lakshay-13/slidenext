@@ -413,6 +413,205 @@ test('syncStudioChromeToActiveSlide tolerates a missing solid wallpaper picker w
   assert.equal(slideCountLabel.textContent, '5 / 8');
 });
 
+function createClassList(initialValues = []) {
+  const values = new Set(initialValues);
+  return {
+    add(...nextValues) {
+      nextValues.forEach((value) => values.add(value));
+    },
+    remove(...nextValues) {
+      nextValues.forEach((value) => values.delete(value));
+    },
+    contains(value) {
+      return values.has(value);
+    }
+  };
+}
+
+test('syncStudioChromeToActiveSlide syncs custom gradient controls from the active slide background', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncStudioChromeToActiveSlideSource = extractFunctionSource(
+    fileContent,
+    'function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function bindDeckNavigationSync(doc = getIframeDoc()) {'
+  );
+
+  const slideCountLabel = { textContent: '' };
+  const wallpaperCustomColor = { value: '#000000' };
+  const elements = {
+    cgLinearBtn: { className: 'linear-idle' },
+    cgRadialBtn: { className: 'radial-idle' },
+    cgAngleGroup: { classList: createClassList(['hidden']) },
+    cgColor1: { value: '#5050e8' },
+    cgColor2: { value: '#050505' },
+    cgAngle: { value: '135' },
+    cgAngleVal: { textContent: '135°' }
+  };
+  const iframeDoc = { label: 'iframe-doc' };
+  const activeSlide = {
+    style: {
+      background: 'linear-gradient(210deg, rgb(17, 34, 51) 0%, rgb(68, 85, 102) 100%)',
+      backgroundColor: '',
+      backgroundImage: 'linear-gradient(210deg, rgb(17, 34, 51) 0%, rgb(68, 85, 102) 100%)'
+    }
+  };
+  const rgbToHexCalls = [];
+  const context = {
+    currentSlideIndex: 1,
+    customGradientType: 'radial',
+    deselectElement() {},
+    document: {
+      getElementById(id) {
+        if (id === 'slideCountLabel') {
+          return slideCountLabel;
+        }
+        if (id === 'wallpaperCustomColor') {
+          return wallpaperCustomColor;
+        }
+        return elements[id] || null;
+      }
+    },
+    getActiveSlide(doc) {
+      assert.equal(doc, iframeDoc);
+      return activeSlide;
+    },
+    getEditorSlideId() {
+      return 'slide-4';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlides() {
+      return [];
+    },
+    preserveSelectionOnNextActiveSlideSync: false,
+    pruneEditorChromeNodes() {},
+    rgbToHex(value) {
+      rgbToHexCalls.push(value);
+      if (value === 'rgb(17, 34, 51)') {
+        return '#112233';
+      }
+      if (value === 'rgb(68, 85, 102)') {
+        return '#445566';
+      }
+      throw new Error(`Unexpected color: ${value}`);
+    },
+    saveHistoryState() {},
+    SlideNextStudioDeckView: {
+      syncStudioActiveSlideView(doc, options) {
+        assert.equal(doc, iframeDoc);
+        options.setCurrentSlideIndex(4);
+        options.setSlideCountLabel('5 / 8');
+        return {
+          didSync: true
+        };
+      }
+    },
+    updateActiveThumbnailCardState() {},
+    updateCurrentPresentationSessionState(nextState) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        context.currentSlideIndex = nextState.slideIndex;
+      }
+    },
+    updateIframeNavigationUI() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncStudioChromeToActiveSlideSource, context);
+
+  assert.equal(context.syncStudioChromeToActiveSlide(), true);
+  assert.deepEqual(rgbToHexCalls, ['rgb(17, 34, 51)', 'rgb(68, 85, 102)']);
+  assert.equal(context.customGradientType, 'linear');
+  assert.equal(elements.cgColor1.value, '#112233');
+  assert.equal(elements.cgColor2.value, '#445566');
+  assert.equal(elements.cgAngle.value, '210');
+  assert.equal(elements.cgAngleVal.textContent, '210°');
+  assert.equal(elements.cgAngleGroup.classList.contains('hidden'), false);
+  assert.match(elements.cgLinearBtn.className, /text-\[#7028d0\]/);
+  assert.match(elements.cgRadialBtn.className, /text-zinc-400/);
+  assert.equal(wallpaperCustomColor.value, '#000000');
+  assert.equal(slideCountLabel.textContent, '5 / 8');
+});
+
+test('syncStudioChromeToActiveSlide tolerates missing custom gradient controls while syncing the live frame', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncStudioChromeToActiveSlideSource = extractFunctionSource(
+    fileContent,
+    'function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function bindDeckNavigationSync(doc = getIframeDoc()) {'
+  );
+
+  const slideCountLabel = { textContent: '' };
+  const iframeDoc = { label: 'iframe-doc' };
+  const activeSlide = {
+    style: {
+      background: 'linear-gradient(210deg, #112233 0%, #445566 100%)',
+      backgroundColor: '',
+      backgroundImage: 'linear-gradient(210deg, #112233 0%, #445566 100%)'
+    }
+  };
+  const context = {
+    currentSlideIndex: 1,
+    customGradientType: 'radial',
+    deselectElement() {},
+    document: {
+      getElementById(id) {
+        if (id === 'slideCountLabel') {
+          return slideCountLabel;
+        }
+        if (id === 'wallpaperCustomColor') {
+          return null;
+        }
+        return null;
+      }
+    },
+    getActiveSlide(doc) {
+      assert.equal(doc, iframeDoc);
+      return activeSlide;
+    },
+    getEditorSlideId() {
+      return 'slide-4';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlides() {
+      return [];
+    },
+    preserveSelectionOnNextActiveSlideSync: false,
+    pruneEditorChromeNodes() {},
+    rgbToHex() {
+      throw new Error('rgbToHex should not run when custom gradient controls are missing');
+    },
+    saveHistoryState() {},
+    SlideNextStudioDeckView: {
+      syncStudioActiveSlideView(doc, options) {
+        assert.equal(doc, iframeDoc);
+        options.setCurrentSlideIndex(4);
+        options.setSlideCountLabel('5 / 8');
+        return {
+          didSync: true
+        };
+      }
+    },
+    updateActiveThumbnailCardState() {},
+    updateCurrentPresentationSessionState(nextState) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        context.currentSlideIndex = nextState.slideIndex;
+      }
+    },
+    updateIframeNavigationUI() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncStudioChromeToActiveSlideSource, context);
+
+  assert.doesNotThrow(() => context.syncStudioChromeToActiveSlide());
+  assert.equal(context.currentSlideIndex, 4);
+  assert.equal(context.customGradientType, 'radial');
+  assert.equal(slideCountLabel.textContent, '5 / 8');
+});
+
 test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when the iframe document is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const syncStudioChromeToActiveSlideSource = extractFunctionSource(

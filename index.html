@@ -2158,6 +2158,22 @@
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
       const previousIndex = currentSlideIndex;
       const preserveSelection = !!options.preserveSelection || preserveSelectionOnNextActiveSlideSync;
+      const normalizeColorInputValue = (value) => {
+        if (typeof value !== 'string') {
+          return '';
+        }
+        const trimmedValue = value.trim();
+        if (!trimmedValue) {
+          return '';
+        }
+        if (trimmedValue.startsWith('#')) {
+          return trimmedValue;
+        }
+        if (/^rgba?\(/i.test(trimmedValue)) {
+          return rgbToHex(trimmedValue);
+        }
+        return '';
+      };
       const syncSolidWallpaperControlToActiveSlide = (activeSlide) => {
         const solidWallpaperColorInput = document.getElementById('wallpaperCustomColor');
         if (!solidWallpaperColorInput || !activeSlide || !activeSlide.style) {
@@ -2195,6 +2211,63 @@
         }
 
         solidWallpaperColorInput.value = rgbToHex(solidColor);
+        return true;
+      };
+      const syncCustomGradientTypeChrome = (type) => {
+        const linearBtn = document.getElementById('cgLinearBtn');
+        const radialBtn = document.getElementById('cgRadialBtn');
+        const angleGroup = document.getElementById('cgAngleGroup');
+        if (!linearBtn || !radialBtn || !angleGroup) {
+          return false;
+        }
+
+        customGradientType = type;
+        if (type === 'linear') {
+          linearBtn.className = 'py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
+          radialBtn.className = 'py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
+          angleGroup.classList.remove('hidden');
+        } else {
+          radialBtn.className = 'py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
+          linearBtn.className = 'py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
+          angleGroup.classList.add('hidden');
+        }
+        return true;
+      };
+      const syncCustomGradientControlsToActiveSlide = (activeSlide) => {
+        const color1Input = document.getElementById('cgColor1');
+        const color2Input = document.getElementById('cgColor2');
+        const angleInput = document.getElementById('cgAngle');
+        const angleLabel = document.getElementById('cgAngleVal');
+        if (!color1Input || !color2Input || !angleInput || !angleLabel || !activeSlide || !activeSlide.style) {
+          return false;
+        }
+
+        const background = typeof activeSlide.style.background === 'string'
+          ? activeSlide.style.background.trim()
+          : '';
+        if (!background || !/gradient\(/i.test(background)) {
+          return false;
+        }
+
+        const linearGradientMatch = background.match(/^linear-gradient\(\s*(-?\d+(?:\.\d+)?)deg\s*,\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))\s+[^,]+\s*,\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))\s+[^)]+\)$/i);
+        const radialGradientMatch = linearGradientMatch
+          ? null
+          : background.match(/^radial-gradient\(\s*circle\s*,\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))\s+[^,]+\s*,\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))\s+[^)]+\)$/i);
+
+        const gradientType = linearGradientMatch ? 'linear' : radialGradientMatch ? 'radial' : '';
+        const color1Value = normalizeColorInputValue(linearGradientMatch ? linearGradientMatch[2] : radialGradientMatch ? radialGradientMatch[1] : '');
+        const color2Value = normalizeColorInputValue(linearGradientMatch ? linearGradientMatch[3] : radialGradientMatch ? radialGradientMatch[2] : '');
+        if (!gradientType || !color1Value || !color2Value || !syncCustomGradientTypeChrome(gradientType)) {
+          return false;
+        }
+
+        color1Input.value = color1Value;
+        color2Input.value = color2Value;
+        if (gradientType === 'linear') {
+          const angleValue = `${parseFloat(linearGradientMatch[1])}`;
+          angleInput.value = angleValue;
+          angleLabel.textContent = `${angleValue}°`;
+        }
         return true;
       };
       const setSlideCountLabel = (label) => {
@@ -2264,7 +2337,9 @@
         const deckSnapshot = buildEditorDeckSnapshot(doc);
         return syncToDeckSnapshotFallback(deckSnapshot);
       }
-      syncSolidWallpaperControlToActiveSlide(getActiveSlide(doc));
+      const activeSlide = getActiveSlide(doc);
+      syncSolidWallpaperControlToActiveSlide(activeSlide);
+      syncCustomGradientControlsToActiveSlide(activeSlide);
       preserveSelectionOnNextActiveSlideSync = false;
       if (options.captureHistory && nextViewState.didSync && previousIndex !== currentSlideIndex) {
         saveHistoryState(false);
