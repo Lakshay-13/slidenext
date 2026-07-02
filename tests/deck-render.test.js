@@ -261,6 +261,38 @@ test('renderCanonicalDeckHtml overlays canonical title onto reused source head h
   assert.doesNotMatch(html, /Stale Head Title/);
 });
 
+test('renderCanonicalDeckHtml overlays canonical description and keywords onto reused source head html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    metadata: {
+      description: 'Canonical head description',
+      tags: ['AI', 'Slides', 'Exports']
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '<meta name="description" content="stale description"><meta name="keywords" content="stale, keywords"><style>.deck-shell{color:red;}</style>',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<meta name="description" content="Canonical head description">/);
+  assert.match(html, /<meta name="keywords" content="AI, Slides, Exports">/);
+  assert.match(html, /<style>\.deck-shell\{color:red;\}<\/style>/);
+  assert.doesNotMatch(html, /stale description/);
+  assert.doesNotMatch(html, /stale, keywords/);
+});
+
 test('renderCanonicalDeckHtml updates active classes and ids even when reusing slide source html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [

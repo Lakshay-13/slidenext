@@ -579,22 +579,35 @@
   }
 
   function applyCanonicalDeckHeadSourceHtmlState(headHtml = '', deck = {}) {
-    const nextHeadHtml = normalizeString(headHtml);
+    let nextHeadHtml = normalizeString(headHtml);
     if (!nextHeadHtml) {
       return nextHeadHtml;
     }
 
     const metadata = asPlainObject(deck.metadata);
     const canonicalTitle = normalizeString(metadata.title).trim();
-    if (!canonicalTitle) {
-      return nextHeadHtml;
+    if (canonicalTitle) {
+      const titleTag = `<title>${escapeHtml(canonicalTitle)}</title>`;
+      nextHeadHtml = /<title\b[^>]*>[\s\S]*?<\/title>/i.test(nextHeadHtml)
+        ? nextHeadHtml.replace(/<title\b[^>]*>[\s\S]*?<\/title>/i, titleTag)
+        : `${titleTag}\n${nextHeadHtml}`;
     }
 
-    const titleTag = `<title>${escapeHtml(canonicalTitle)}</title>`;
-    if (/<title\b[^>]*>[\s\S]*?<\/title>/i.test(nextHeadHtml)) {
-      return nextHeadHtml.replace(/<title\b[^>]*>[\s\S]*?<\/title>/i, titleTag);
+    const descriptionMetaTag = buildMetaTag('description', metadata.description);
+    if (descriptionMetaTag) {
+      nextHeadHtml = /<meta\b(?=[^>]*\bname=(?:"description"|'description'))[^>]*>/i.test(nextHeadHtml)
+        ? nextHeadHtml.replace(/<meta\b(?=[^>]*\bname=(?:"description"|'description'))[^>]*>/i, descriptionMetaTag)
+        : `${descriptionMetaTag}\n${nextHeadHtml}`;
     }
-    return `${titleTag}\n${nextHeadHtml}`;
+
+    const keywordsMetaTag = buildMetaTag('keywords', Array.isArray(metadata.tags) ? metadata.tags.join(', ') : '');
+    if (keywordsMetaTag) {
+      nextHeadHtml = /<meta\b(?=[^>]*\bname=(?:"keywords"|'keywords'))[^>]*>/i.test(nextHeadHtml)
+        ? nextHeadHtml.replace(/<meta\b(?=[^>]*\bname=(?:"keywords"|'keywords'))[^>]*>/i, keywordsMetaTag)
+        : `${keywordsMetaTag}\n${nextHeadHtml}`;
+    }
+
+    return nextHeadHtml;
   }
 
   function buildDefaultBodyHtml(deck, options = {}) {
