@@ -4051,8 +4051,14 @@
 
     function updateHistoryButtons() {
       const historyButtonState = SlideNextStudioHistory.getStudioHistoryButtonState(undoStack, redoStack);
-      document.getElementById('studioUndoBtn').disabled = historyButtonState.undoDisabled;
-      document.getElementById('studioRedoBtn').disabled = historyButtonState.redoDisabled;
+      const undoButton = document.getElementById('studioUndoBtn');
+      if (undoButton) {
+        undoButton.disabled = historyButtonState.undoDisabled;
+      }
+      const redoButton = document.getElementById('studioRedoBtn');
+      if (redoButton) {
+        redoButton.disabled = historyButtonState.redoDisabled;
+      }
     }
 
     function editorUndo() {

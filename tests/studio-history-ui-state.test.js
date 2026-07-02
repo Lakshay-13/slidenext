@@ -15,6 +15,46 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+test('updateHistoryButtons tolerates missing history controls', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateHistoryButtonsSource = extractFunctionSource(
+    fileContent,
+    'function updateHistoryButtons() {',
+    '\n\n    function editorUndo() {'
+  );
+
+  const calls = [];
+  const context = {
+    SlideNextStudioHistory: {
+      getStudioHistoryButtonState(undoStack, redoStack) {
+        calls.push(['getStudioHistoryButtonState', undoStack, redoStack]);
+        return {
+          undoDisabled: true,
+          redoDisabled: false
+        };
+      }
+    },
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        return null;
+      }
+    },
+    undoStack: ['entry-1'],
+    redoStack: ['entry-2']
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateHistoryButtonsSource, context);
+
+  assert.doesNotThrow(() => context.updateHistoryButtons());
+  assert.deepEqual(calls, [
+    ['getStudioHistoryButtonState', ['entry-1'], ['entry-2']],
+    ['getElementById', 'studioUndoBtn'],
+    ['getElementById', 'studioRedoBtn']
+  ]);
+});
+
 test('createHistoryEntry attaches the current canonical deck sidecar and live editor state to history entries', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createHistoryEntrySource = extractFunctionSource(
