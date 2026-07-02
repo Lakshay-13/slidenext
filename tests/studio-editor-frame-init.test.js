@@ -228,6 +228,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     keydownHandlerFactory: 0,
     frameBootstrap: 0,
     updateInsertionActionState: 0,
+    updateZoomActionState: 0,
     updateWallpaperActionState: 0,
     updateDeckReadyToolbarActionState: 0,
     setStudioAutoSaveStatus: [],
@@ -304,6 +305,9 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     updateInsertionActionState() {
       calls.updateInsertionActionState += 1;
     },
+    updateZoomActionState() {
+      calls.updateZoomActionState += 1;
+    },
     updateWallpaperActionState() {
       calls.updateWallpaperActionState += 1;
     },
@@ -333,6 +337,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     keydownHandlerFactory: 1,
     frameBootstrap: 1,
     updateInsertionActionState: 1,
+    updateZoomActionState: 1,
     updateWallpaperActionState: 1,
     updateDeckReadyToolbarActionState: 1,
     setStudioAutoSaveStatus: ['saved'],
@@ -441,6 +446,7 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
     persistedDeckPlaybackState: null,
     lastPersistedDeckHtml: '',
     updateInsertionActionState() {},
+    updateZoomActionState() {},
     updateWallpaperActionState() {},
     updateDeckReadyToolbarActionState() {},
     setStudioAutoSaveStatus() {},
