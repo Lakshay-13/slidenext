@@ -46,12 +46,13 @@ function getControlStates(controls) {
   };
 }
 
-test('buildClipboardSelectionMutationPlan reuses the current selection, clipboard, and live slide guard', () => {
+test('buildClipboardSelectionMutationPlan reuses the current selection, clipboard, live slide guard, and payload viability', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
 
   const selection = [{ id: 'node-1' }];
   const clipboard = { items: [{ id: 'clipboard-item' }], pasteCount: 0 };
+  const payloadItems = [{ id: 'payload-item' }];
   const calls = [];
   const context = {
     selectedElements: selection,
@@ -65,6 +66,10 @@ test('buildClipboardSelectionMutationPlan reuses the current selection, clipboar
           selection: elements
         };
       }
+    },
+    buildClipboardPayload(elements, doc) {
+      calls.push(['buildClipboardPayload', elements, doc]);
+      return payloadItems;
     },
     getActiveSlide(doc) {
       calls.push(['getActiveSlide', doc]);
@@ -84,17 +89,19 @@ test('buildClipboardSelectionMutationPlan reuses the current selection, clipboar
   vm.createContext(context);
   vm.runInContext(buildClipboardSelectionMutationPlanSource, context);
 
-  assert.deepEqual(context.buildClipboardSelectionMutationPlan(), {
+  assert.deepEqual(JSON.parse(JSON.stringify(context.buildClipboardSelectionMutationPlan())), {
     canCopy: true,
     canDuplicate: true,
-    selection
+    selection,
+    payloadItems,
+    canBuildPayload: true
   });
   assert.deepEqual(calls, [
+    ['getIframeDoc', { activeSlide: { id: 'slide-1' } }],
     ['buildStudioClipboardMutationPlan', selection, clipboard],
-    ['getIframeDoc', { activeSlide: { id: 'slide-1' } }],
     ['getActiveSlide', { activeSlide: { id: 'slide-1' } }],
-    ['getIframeDoc', { activeSlide: { id: 'slide-1' } }],
-    ['getActiveSlide', { activeSlide: { id: 'slide-1' } }]
+    ['getActiveSlide', { activeSlide: { id: 'slide-1' } }],
+    ['buildClipboardPayload', selection, { activeSlide: { id: 'slide-1' } }]
   ]);
 });
 
@@ -161,7 +168,7 @@ test('finalizeInsertedElements commits the new selection and delegates persisten
   ]);
 });
 
-test('updateClipboardActionState enables clipboard controls only when the iframe has a live active slide', () => {
+test('updateClipboardActionState enables paste on a live slide and enables copy only when clipboard payloads can be built', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
   const updateClipboardActionStateSource = extractFunctionSource(
@@ -171,6 +178,8 @@ test('updateClipboardActionState enables clipboard controls only when the iframe
   );
 
   const controls = createControls();
+  const activeSlide = { id: 'slide-1' };
+  let payloadItems = [];
   const context = {
     selectedElements: [{ id: 'selected' }],
     editorClipboard: { items: [{ id: 'clipboard-item' }], pasteCount: 0 },
@@ -184,6 +193,9 @@ test('updateClipboardActionState enables clipboard controls only when the iframe
           canPaste: typeof options.canMutateDeck === 'function' ? options.canMutateDeck() : true
         };
       }
+    },
+    buildClipboardPayload() {
+      return payloadItems;
     },
     document: {
       getElementById(id) {
@@ -220,7 +232,17 @@ test('updateClipboardActionState enables clipboard controls only when the iframe
   });
 
   context.updateClipboardActionState({
-    activeSlide: {}
+    activeSlide
+  });
+  assert.deepEqual(getControlStates(controls), {
+    copySelectionBtn: true,
+    pasteClipboardBtn: false,
+    slidePasteClipboardBtn: false
+  });
+
+  payloadItems = [{ id: 'payload-item' }];
+  context.updateClipboardActionState({
+    activeSlide
   });
   assert.deepEqual(getControlStates(controls), {
     copySelectionBtn: false,
@@ -249,7 +271,9 @@ test('copySelectedElements returns false and refreshes clipboard controls when p
         calls.push(['buildStudioClipboardMutationPlan']);
         return {
           canCopy: true,
-          selection: [liveTarget]
+          selection: [liveTarget],
+          payloadItems: [],
+          canBuildPayload: false
         };
       },
       createStudioClipboardState() {
@@ -284,6 +308,7 @@ test('copySelectedElements returns false and refreshes clipboard controls when p
   assert.equal(context.copySelectedElements(), false);
   assert.equal(context.editorClipboard, null);
   assert.deepEqual(calls, [
+    ['getIframeDoc'],
     ['buildStudioClipboardMutationPlan'],
     ['buildClipboardPayload', [liveTarget]],
     ['updateClipboardActionState']
@@ -312,7 +337,9 @@ test('copySelectedElements returns true after creating clipboard state from copi
         calls.push(['buildStudioClipboardMutationPlan']);
         return {
           canCopy: true,
-          selection: [liveTarget]
+          selection: [liveTarget],
+          payloadItems: copiedItems,
+          canBuildPayload: true
         };
       },
       createStudioClipboardState(items) {
@@ -347,6 +374,7 @@ test('copySelectedElements returns true after creating clipboard state from copi
   assert.equal(context.copySelectedElements(), true);
   assert.equal(context.editorClipboard, nextClipboard);
   assert.deepEqual(calls, [
+    ['getIframeDoc'],
     ['buildStudioClipboardMutationPlan'],
     ['buildClipboardPayload', [liveTarget]],
     ['createStudioClipboardState', copiedItems],
@@ -373,7 +401,9 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
         calls.push(['buildStudioClipboardMutationPlan']);
         return {
           canDuplicate: false,
-          selection: []
+          selection: [],
+          payloadItems: [],
+          canBuildPayload: false
         };
       }
     },
@@ -399,6 +429,7 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
 
   assert.equal(context.duplicateSelectedElements(), false);
   assert.deepEqual(calls, [
+    ['getIframeDoc'],
     ['buildStudioClipboardMutationPlan'],
     ['updateClipboardActionState']
   ]);
@@ -424,7 +455,9 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
         calls.push(['buildStudioClipboardMutationPlan']);
         return {
           canDuplicate: true,
-          selection: [liveTarget]
+          selection: [liveTarget],
+          payloadItems: [{ id: 'clipboard-item' }],
+          canBuildPayload: true
         };
       }
     },
@@ -462,10 +495,67 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
 
   assert.equal(context.duplicateSelectedElements(), false);
   assert.deepEqual(calls, [
+    ['getIframeDoc'],
     ['buildStudioClipboardMutationPlan'],
     ['buildClipboardPayload', [liveTarget]],
     ['insertClipboardPayload', [{ id: 'clipboard-item' }], 1],
     ['updateClipboardActionState']
+  ]);
+});
+
+test('buildClipboardSelectionMutationPlan disables copy and duplicate when the selection cannot build a clipboard payload', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
+
+  const selection = [{ id: 'node-1' }];
+  const calls = [];
+  const context = {
+    selectedElements: selection,
+    editorClipboard: null,
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardMutationPlan(elements) {
+        calls.push(['buildStudioClipboardMutationPlan', elements]);
+        return {
+          canCopy: true,
+          canDuplicate: true,
+          canPaste: false,
+          selection: elements
+        };
+      }
+    },
+    buildClipboardPayload(elements, doc) {
+      calls.push(['buildClipboardPayload', elements, doc]);
+      return [];
+    },
+    getActiveSlide(doc) {
+      calls.push(['getActiveSlide', doc]);
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      const doc = { activeSlide: { id: 'slide-1' } };
+      calls.push(['getIframeDoc', doc]);
+      return doc;
+    },
+    isElementLocked() {
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildClipboardSelectionMutationPlanSource, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(context.buildClipboardSelectionMutationPlan())), {
+    canCopy: false,
+    canDuplicate: false,
+    canPaste: false,
+    selection,
+    payloadItems: [],
+    canBuildPayload: false
+  });
+  assert.deepEqual(calls, [
+    ['getIframeDoc', { activeSlide: { id: 'slide-1' } }],
+    ['buildStudioClipboardMutationPlan', selection],
+    ['buildClipboardPayload', selection, { activeSlide: { id: 'slide-1' } }]
   ]);
 });
 

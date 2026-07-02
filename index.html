@@ -3705,12 +3705,18 @@
       });
     }
 
-    function buildClipboardPayload(elements = selectedElements) {
-      const doc = getIframeDoc();
-      const slide = getActiveSlide(doc);
-      if (!doc || !slide || elements.length === 0) return [];
+    function buildClipboardPayload(elements = selectedElements, doc = getIframeDoc()) {
+      const resolvedDoc = doc || getIframeDoc();
+      const selection = Array.isArray(elements) ? elements : [];
+      const slide = getActiveSlide(resolvedDoc);
+      const getComputedStyle = resolvedDoc
+        && resolvedDoc.defaultView
+        && typeof resolvedDoc.defaultView.getComputedStyle === 'function'
+        ? resolvedDoc.defaultView.getComputedStyle.bind(resolvedDoc.defaultView)
+        : null;
+      if (!resolvedDoc || !slide || selection.length === 0 || !getComputedStyle) return [];
       const slideMetrics = getSlideMetrics(slide);
-      const orderedSelection = SlideNextStudioEditorClipboard.getStudioClipboardSelection(elements, {
+      const orderedSelection = SlideNextStudioEditorClipboard.getStudioClipboardSelection(selection, {
         orderedElements: getNormalizedSlideLayerOrder(slide)
       });
       if (orderedSelection.length === 0) return [];
@@ -3718,7 +3724,7 @@
       return SlideNextStudioEditorClipboard.buildStudioClipboardPayloadItems(orderedSelection, {
         sanitizeElement: sanitizeDuplicatedSubtree,
         hoverableClassName: 'editor-hoverable',
-        getComputedStyle: doc.defaultView.getComputedStyle.bind(doc.defaultView),
+        getComputedStyle,
         getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
         buildPositionedLayoutItem: SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem,
         positionedLayoutOptions: {
@@ -3772,10 +3778,23 @@
     }
 
     function buildClipboardSelectionMutationPlan(doc = null) {
-      return SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
+      const resolvedDoc = doc || getIframeDoc();
+      const clipboardMutationPlan = SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
         isLocked: isElementLocked,
-        canMutateDeck: () => !!getActiveSlide(doc || getIframeDoc())
+        canMutateDeck: () => !!getActiveSlide(resolvedDoc)
       });
+      const payloadItems = (clipboardMutationPlan.canCopy || clipboardMutationPlan.canDuplicate)
+        ? buildClipboardPayload(clipboardMutationPlan.selection, resolvedDoc)
+        : [];
+      const canBuildPayload = payloadItems.length > 0;
+
+      return {
+        ...clipboardMutationPlan,
+        payloadItems,
+        canBuildPayload,
+        canCopy: clipboardMutationPlan.canCopy && canBuildPayload,
+        canDuplicate: clipboardMutationPlan.canDuplicate && canBuildPayload
+      };
     }
 
     function finalizeClipboardActionResult(result) {
@@ -3794,7 +3813,7 @@
     function copySelectedElements() {
       const clipboardActionState = buildClipboardSelectionMutationPlan();
       if (!clipboardActionState.canCopy) return finalizeClipboardActionResult(false);
-      const items = buildClipboardPayload(clipboardActionState.selection);
+      const items = clipboardActionState.payloadItems;
       if (items.length === 0) return finalizeClipboardActionResult(false);
       editorClipboard = SlideNextStudioEditorClipboard.createStudioClipboardState(items);
       return finalizeClipboardActionResult(true);
@@ -3816,7 +3835,7 @@
     function duplicateSelectedElements() {
       const clipboardActionState = buildClipboardSelectionMutationPlan();
       if (!clipboardActionState.canDuplicate) return finalizeClipboardActionResult(false);
-      const duplicates = insertClipboardPayload(buildClipboardPayload(clipboardActionState.selection), 1);
+      const duplicates = insertClipboardPayload(clipboardActionState.payloadItems, 1);
       if (duplicates.length === 0) return finalizeClipboardActionResult(false);
       return finalizeClipboardActionResult(finalizeInsertedElements(duplicates, 'Auto: Duplicated Element'));
     }
