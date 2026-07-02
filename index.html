@@ -1719,8 +1719,14 @@
       const iframe = getStudioFrame();
       const isEditorActive = () => editor.classList.contains('active');
       
-      document.getElementById('studioCategoryLabel').textContent = currentCategory;
-      document.getElementById('studioTitleLabel').textContent = currentTitle;
+      const studioCategoryLabel = document.getElementById('studioCategoryLabel');
+      if (studioCategoryLabel) {
+        studioCategoryLabel.textContent = currentCategory;
+      }
+      const studioTitleLabel = document.getElementById('studioTitleLabel');
+      if (studioTitleLabel) {
+        studioTitleLabel.textContent = currentTitle;
+      }
       
       setStudioAutoSaveStatus('loading');
       resetStudioPresentationUiState();

@@ -162,6 +162,148 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   ]]);
 });
 
+test('launchStudioEditor tolerates missing header labels while bootstrapping the editor shell', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const launchStudioEditorSource = extractFunctionSource(
+    fileContent,
+    'function launchStudioEditor(url, title, category) {',
+    '\n\n    function closeStudioEditor() {'
+  );
+  const setStudioAutoSaveStatusSource = extractFunctionSource(
+    fileContent,
+    'function setStudioAutoSaveStatus(state) {',
+    '\n\n    function resetStudioSaveButtonState() {'
+  );
+
+  const elements = {
+    studioEditor: {
+      classList: createClassList(['hidden']),
+      style: {},
+      offsetWidth: 0
+    },
+    studioFrame: {
+      onload: null,
+      src: '',
+      contentDocument: null,
+      contentWindow: {}
+    },
+    autoSaveStatus: { innerHTML: 'Saved to disk' }
+  };
+
+  const calls = [];
+  const context = {
+    applyCurrentPresentationMetadata(metadata) {
+      context.currentPresentationMetadata = metadata;
+    },
+    applyEditorSelectionState() {
+      calls.push(['applyEditorSelectionState']);
+    },
+    buildCurrentPresentationMetadataSeed(url, title) {
+      calls.push(['buildCurrentPresentationMetadataSeed', url, title]);
+      return { url, title };
+    },
+    createCurrentStudioFrameLoadHandler(presentationUrl, sessionToken, options) {
+      calls.push(['createCurrentStudioFrameLoadHandler', presentationUrl, sessionToken, options]);
+      return function onloadHandler() {};
+    },
+    currentCategory: '',
+    currentPresentationMetadata: null,
+    currentPresentationUrl: '',
+    currentSlideIndex: 0,
+    currentTitle: '',
+    updateCurrentPresentationSessionState(nextState) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationUrl')) {
+        context.currentPresentationUrl = nextState.presentationUrl;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationTitle')) {
+        context.currentTitle = nextState.presentationTitle;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationCategory')) {
+        context.currentCategory = nextState.presentationCategory;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        context.currentSlideIndex = nextState.slideIndex;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationMetadata')) {
+        context.applyCurrentPresentationMetadata(nextState.presentationMetadata);
+      }
+    },
+    getStudioFrame() {
+      return elements.studioFrame;
+    },
+    document: {
+      body: {
+        style: {}
+      },
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (id === 'studioCategoryLabel' || id === 'studioTitleLabel') {
+          return null;
+        }
+        return elements[id] || null;
+      }
+    },
+    loadCurrentPresentationMetadata() {
+      calls.push(['loadCurrentPresentationMetadata']);
+      return Promise.resolve();
+    },
+    loadVersions(presentationUrl, sessionToken) {
+      calls.push(['loadVersions', presentationUrl, sessionToken]);
+    },
+    localStorage: {
+      getItem() {
+        return null;
+      }
+    },
+    resetEditorDeckPersistenceState() {
+      calls.push(['resetEditorDeckPersistenceState']);
+    },
+    resetEditorHistoryState() {
+      calls.push(['resetEditorHistoryState']);
+    },
+    resetEditorPersistenceTimers() {
+      calls.push(['resetEditorPersistenceTimers']);
+    },
+    resetStudioDeckUiState() {
+      calls.push(['resetStudioDeckUiState']);
+    },
+    resetStudioPresentationUiState() {
+      calls.push(['resetStudioPresentationUiState']);
+    },
+    resetStudioSaveButtonState() {
+      calls.push(['resetStudioSaveButtonState']);
+    },
+    resetStudioSourceViewUiState() {
+      calls.push(['resetStudioSourceViewUiState']);
+    },
+    resetStudioVersionUiState() {
+      calls.push(['resetStudioVersionUiState']);
+    },
+    setTimeout,
+    studioEditorSessionToken: 0,
+    updateDeckReadyToolbarActionState() {
+      calls.push(['updateDeckReadyToolbarActionState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setStudioAutoSaveStatusSource, context);
+  vm.runInContext(launchStudioEditorSource, context);
+
+  assert.doesNotThrow(() => {
+    context.launchStudioEditor('/presentations/onboarding-presentation/index.html', 'Project Onboarding', 'General');
+  });
+  assert.match(elements.autoSaveStatus.innerHTML, /Loading deck/);
+  assert.equal(elements.studioFrame.src, '/presentations/onboarding-presentation/index.html');
+  assert.equal(elements.studioEditor.classList.contains('active'), true);
+  assert.equal(context.currentCategory, 'General');
+  assert.equal(context.currentTitle, 'Project Onboarding');
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'studioCategoryLabel'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'studioTitleLabel'));
+  assert.ok(calls.some(([name]) => name === 'resetEditorHistoryState'));
+  assert.ok(calls.some(([name]) => name === 'loadVersions'));
+});
+
 test('createCurrentStudioSessionStateOptions reuses live session readers and forwards the session token', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let capturedOptions = null;
