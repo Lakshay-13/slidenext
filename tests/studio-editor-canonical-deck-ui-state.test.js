@@ -467,6 +467,79 @@ test('resolveEditorFallbackActiveSlideId delegates to the shared deck view helpe
   assert.equal(delegatedArgs.options.isCanonicalDeck, context.SlideNextCanonicalDeck.isCanonicalDeck);
 });
 
+test('resolveEditorFallbackActiveSlideId delegates canonical override resolution to the shared editor persistence helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const rebuiltCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  const malformedCanonicalDeck = {
+    metadata: {
+      title: 'Broken Deck'
+    }
+  };
+  let delegatedArgs = null;
+  const calls = [];
+  const context = {
+    SlideNextCanonicalDeck: {
+      isCanonicalDeck(deck) {
+        calls.push(['isCanonicalDeck', deck]);
+        return deck === rebuiltCanonicalDeck;
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      resolveStudioCanonicalDeckOverride(options) {
+        delegatedArgs = {
+          canonicalDeck: options.canonicalDeck,
+          buildCanonicalDeck: options.buildCanonicalDeck,
+          isCanonicalDeck: options.isCanonicalDeck
+        };
+        return options.buildCanonicalDeck();
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      calls.push(['buildEditorCanonicalDeck', nextDoc]);
+      return rebuiltCanonicalDeck;
+    },
+    currentSlideIndex: 1,
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getPersistedActiveSlideId() {
+      calls.push(['getPersistedActiveSlideId']);
+      return 'slide-persisted';
+    },
+    resolveEditorLiveActiveSlideId(nextDoc) {
+      calls.push(['resolveEditorLiveActiveSlideId', nextDoc]);
+      return '';
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+
+  const result = context.resolveEditorFallbackActiveSlideId(iframeDoc, malformedCanonicalDeck);
+
+  assert.equal(result, 'slide-2');
+  assert.equal(delegatedArgs.canonicalDeck, malformedCanonicalDeck);
+  assert.equal(typeof delegatedArgs.buildCanonicalDeck, 'function');
+  assert.equal(delegatedArgs.isCanonicalDeck, context.SlideNextCanonicalDeck.isCanonicalDeck);
+  assert.equal(calls[0][0], 'getPersistedActiveSlideId');
+  assert.equal(calls[1][0], 'buildEditorCanonicalDeck');
+  assert.equal(calls[1][1], iframeDoc);
+});
+
 test('resolveEditorLiveActiveSlideId delegates to the shared deck view helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorLiveActiveSlideIdSource = extractFunctionSource(

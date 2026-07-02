@@ -1459,6 +1459,13 @@
       )
         ? SlideNextCanonicalDeck.isCanonicalDeck
         : null;
+      const resolveStudioCanonicalDeckOverride = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+      )
+        && typeof SlideNextStudioEditorPersistence.resolveStudioCanonicalDeckOverride === 'function'
+        ? SlideNextStudioEditorPersistence.resolveStudioCanonicalDeckOverride
+        : null;
       if (resolveStudioFallbackActiveSlideId) {
         return resolveStudioFallbackActiveSlideId(doc, canonicalDeck, {
           currentSlideIndex,
@@ -1470,12 +1477,20 @@
       }
 
       const persistedActiveSlideId = getPersistedActiveSlideId();
-      const hasValidCanonicalDeck = canonicalDeckValidator
-        ? canonicalDeckValidator(canonicalDeck)
-        : !!(canonicalDeck && Array.isArray(canonicalDeck.slides));
-      const nextCanonicalDeck = hasValidCanonicalDeck
-        ? canonicalDeck
-        : (canonicalDeck ? buildEditorCanonicalDeck(doc) : null);
+      const nextCanonicalDeck = resolveStudioCanonicalDeckOverride
+        ? resolveStudioCanonicalDeckOverride({
+            canonicalDeck,
+            buildCanonicalDeck: canonicalDeck ? () => buildEditorCanonicalDeck(doc) : null,
+            isCanonicalDeck: canonicalDeckValidator
+          })
+        : (() => {
+            const hasValidCanonicalDeck = canonicalDeckValidator
+              ? canonicalDeckValidator(canonicalDeck)
+              : !!(canonicalDeck && Array.isArray(canonicalDeck.slides));
+            return hasValidCanonicalDeck
+              ? canonicalDeck
+              : (canonicalDeck ? buildEditorCanonicalDeck(doc) : null);
+          })();
       if (doc) {
         const liveActiveSlideId = resolveEditorLiveActiveSlideId(doc);
         if (typeof liveActiveSlideId === 'string' && liveActiveSlideId.trim()) {
