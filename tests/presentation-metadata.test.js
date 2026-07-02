@@ -121,6 +121,38 @@ test('resolvePresentationCanonicalDeck normalizes valid canonical sidecars and r
   );
 });
 
+test('resolvePresentationCanonicalDeck fills missing canonical metadata fields from surrounding presentation metadata', () => {
+  const canonicalDeck = presentationMetadata.resolvePresentationCanonicalDeck({
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    subtitle: 'Getting Started',
+    description: 'Deck description',
+    icon: 'science',
+    tags: ['Onboarding'],
+    sourcePath: 'presentations/onboarding-presentation/index.html',
+    canonicalDeck: {
+      metadata: {
+        title: '',
+        tags: []
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    }
+  });
+
+  assert.equal(canonicalDeck.metadata.id, 'onboarding-presentation');
+  assert.equal(canonicalDeck.metadata.title, 'Project Onboarding');
+  assert.equal(canonicalDeck.metadata.subtitle, 'Getting Started');
+  assert.equal(canonicalDeck.metadata.description, 'Deck description');
+  assert.equal(canonicalDeck.metadata.icon, 'science');
+  assert.deepEqual(canonicalDeck.metadata.tags, ['Onboarding']);
+  assert.equal(canonicalDeck.metadata.sourcePath, 'presentations/onboarding-presentation/index.html');
+});
+
 test('mergePresentationCanonicalDeck preserves metadata and normalizes valid canonical sidecars', () => {
   const metadata = {
     id: 'onboarding-presentation',

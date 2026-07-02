@@ -50,7 +50,9 @@ test('normalizeLoadedPresentationMetadata keeps a normalized canonical deck when
   });
 
   assert.equal(metadata.canonicalDeck.kind, 'slidenext.deck');
+  assert.equal(metadata.canonicalDeck.metadata.id, 'onboarding-presentation');
   assert.equal(metadata.canonicalDeck.metadata.title, 'Project Onboarding');
+  assert.equal(metadata.canonicalDeck.metadata.sourcePath, 'presentations/onboarding-presentation/index.html');
   assert.equal(metadata.canonicalDeck.slides.length, 1);
 });
 

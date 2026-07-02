@@ -14,6 +14,16 @@
     return typeof value === 'string' ? value : fallback;
   }
 
+  function resolveNormalizedString(value, fallback = '') {
+    const nextValue = normalizeString(value).trim();
+    return nextValue || normalizeString(fallback).trim();
+  }
+
+  function normalizeStringArray(values) {
+    if (!Array.isArray(values)) return [];
+    return values.filter(value => typeof value === 'string' && value.trim() !== '');
+  }
+
   function asPlainObject(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return {};
@@ -44,6 +54,23 @@
     };
   }
 
+  function resolvePresentationCanonicalDeckMetadata(rawDeckMetadata = {}, metadata = {}) {
+    const nextDeckMetadata = asPlainObject(rawDeckMetadata);
+    const nextMetadata = asPlainObject(metadata);
+    const deckTags = normalizeStringArray(nextDeckMetadata.tags);
+    const metadataTags = normalizeStringArray(nextMetadata.tags);
+
+    return {
+      id: resolveNormalizedString(nextDeckMetadata.id, nextMetadata.id),
+      title: resolveNormalizedString(nextDeckMetadata.title, nextMetadata.title),
+      subtitle: resolveNormalizedString(nextDeckMetadata.subtitle, nextMetadata.subtitle),
+      description: resolveNormalizedString(nextDeckMetadata.description, nextMetadata.description),
+      icon: resolveNormalizedString(nextDeckMetadata.icon, nextMetadata.icon),
+      tags: deckTags.length > 0 ? deckTags : metadataTags,
+      sourcePath: resolveNormalizedString(nextDeckMetadata.sourcePath, nextMetadata.sourcePath)
+    };
+  }
+
   function resolvePresentationCanonicalDeck(metadata = {}, options = {}) {
     const nextMetadata = asPlainObject(metadata);
     const rawDeck = nextMetadata.canonicalDeck;
@@ -61,7 +88,11 @@
       : canonicalDeck && typeof canonicalDeck.isCanonicalDeck === 'function'
         ? canonicalDeck.isCanonicalDeck
         : null;
-    const nextDeck = createCanonicalDeck ? createCanonicalDeck(rawDeck) : rawDeck;
+    const deckLike = {
+      ...asPlainObject(rawDeck),
+      metadata: resolvePresentationCanonicalDeckMetadata(rawDeck.metadata, nextMetadata)
+    };
+    const nextDeck = createCanonicalDeck ? createCanonicalDeck(deckLike) : deckLike;
 
     return isCanonicalDeck && isCanonicalDeck(nextDeck)
       ? nextDeck
