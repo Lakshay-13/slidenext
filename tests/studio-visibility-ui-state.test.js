@@ -14,6 +14,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadFinalizeEditorDeckMutation(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function finalizeEditorDeckMutation(versionLabel, options = {}) {',
+    '\n\n    // Apply styles immediately to active selected elements'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('updateVisibilityActionState enables the visibility control only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateVisibilityActionStateSource = extractFunctionSource(
@@ -138,6 +147,7 @@ test('toggleSelectedElementsVisibility returns false and skips persistence when 
   };
 
   vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility(), false);
@@ -214,6 +224,7 @@ test('toggleSelectedElementsVisibility returns true after hiding live targets an
   };
 
   vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility(), true);

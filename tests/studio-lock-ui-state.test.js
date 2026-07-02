@@ -14,6 +14,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadFinalizeEditorDeckMutation(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function finalizeEditorDeckMutation(versionLabel, options = {}) {',
+    '\n\n    // Apply styles immediately to active selected elements'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('updateLockActionState enables the lock control only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateLockActionStateSource = extractFunctionSource(
@@ -140,6 +149,7 @@ test('toggleSelectedElementsLockState returns false and skips persistence when p
   };
 
   vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
   assert.equal(context.toggleSelectedElementsLockState(), false);
@@ -218,6 +228,7 @@ test('toggleSelectedElementsLockState returns true after locking live targets an
   };
 
   vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
   assert.equal(context.toggleSelectedElementsLockState(), true);
