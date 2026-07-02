@@ -324,13 +324,15 @@ test('collectDeckAssets includes inline style asset urls, skips fragments, and d
       id: 'asset-1',
       type: 'image',
       name: 'chart.png',
-      src: 'assets/chart.png'
+      src: 'assets/chart.png',
+      mimeType: 'image/png'
     },
     {
       id: 'asset-2',
       type: 'image',
       name: 'hero.png',
-      src: 'assets/hero.png'
+      src: 'assets/hero.png',
+      mimeType: 'image/png'
     }
   ]);
 });
@@ -368,25 +370,29 @@ test('collectDeckAssets includes srcset and poster asset urls, skips fragments, 
       id: 'asset-1',
       type: 'image',
       name: 'poster.jpg',
-      src: 'assets/poster.jpg'
+      src: 'assets/poster.jpg',
+      mimeType: 'image/jpeg'
     },
     {
       id: 'asset-2',
       type: 'image',
       name: 'hero-small.png',
-      src: 'assets/hero-small.png'
+      src: 'assets/hero-small.png',
+      mimeType: 'image/png'
     },
     {
       id: 'asset-3',
       type: 'image',
       name: 'hero-large.png',
-      src: 'assets/hero-large.png'
+      src: 'assets/hero-large.png',
+      mimeType: 'image/png'
     },
     {
       id: 'asset-4',
       type: 'image',
       name: 'hero-xl.png',
-      src: 'assets/hero-xl.png'
+      src: 'assets/hero-xl.png',
+      mimeType: 'image/png'
     }
   ]);
 });

@@ -670,6 +670,45 @@
     return parts[parts.length - 1] || cleanUrl || 'asset';
   }
 
+  function inferAssetMimeType(seed = {}) {
+    const assetType = normalizeString(seed.type).toLowerCase();
+    const explicitMimeType = normalizeString(seed.mimeType || seed.typeAttribute).trim().toLowerCase();
+    if (explicitMimeType.includes('/')) {
+      return explicitMimeType;
+    }
+
+    const cleanUrl = normalizeString(seed.src).split('?')[0].split('#')[0].toLowerCase();
+    const extension = cleanUrl.includes('.')
+      ? cleanUrl.split('.').pop()
+      : '';
+
+    switch (extension) {
+      case 'png': return 'image/png';
+      case 'jpg':
+      case 'jpeg': return 'image/jpeg';
+      case 'gif': return 'image/gif';
+      case 'webp': return 'image/webp';
+      case 'svg': return 'image/svg+xml';
+      case 'avif': return 'image/avif';
+      case 'mp4': return 'video/mp4';
+      case 'webm': return 'video/webm';
+      case 'ogv': return 'video/ogg';
+      case 'mp3': return 'audio/mpeg';
+      case 'wav': return 'audio/wav';
+      case 'ogg': return assetType === 'video' ? 'video/ogg' : 'audio/ogg';
+      case 'm4a': return 'audio/mp4';
+      case 'aac': return 'audio/aac';
+      case 'flac': return 'audio/flac';
+      case 'css': return 'text/css';
+      case 'js':
+      case 'mjs': return 'application/javascript';
+      default:
+        if (assetType === 'stylesheet') return 'text/css';
+        if (assetType === 'script') return 'application/javascript';
+        return '';
+    }
+  }
+
   function appendDeckAsset(assetSeeds, seenUrls, seed = {}) {
     const src = normalizeString(seed.src);
     if (!src || seenUrls.has(src)) {
@@ -680,7 +719,8 @@
       id: `asset-${assetSeeds.length + 1}`,
       type: normalizeString(seed.type, 'file'),
       name: normalizeString(seed.name, buildAssetName(src)),
-      src
+      src,
+      mimeType: inferAssetMimeType(seed)
     });
   }
 
@@ -702,7 +742,8 @@
         type: el.tagName && el.tagName.toLowerCase() === 'video' && el.getAttribute('poster')
           ? 'image'
           : inferAssetType(el),
-        src: el.getAttribute('src') || el.getAttribute('href') || el.getAttribute('poster')
+        src: el.getAttribute('src') || el.getAttribute('href') || el.getAttribute('poster'),
+        typeAttribute: el.getAttribute('type')
       });
     });
 
