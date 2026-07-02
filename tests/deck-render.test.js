@@ -524,6 +524,43 @@ test('renderCanonicalDeckHtml strips reused source head scripts in favor of cano
   assert.ok(html.indexOf('.deck-shell{color:red;}') < html.indexOf('<script src="/presentations/demo/app.js" type="module"></script>'));
 });
 
+test('renderCanonicalDeckHtml dedupes canonical singleton head tags over reused source head html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    metadata: {
+      title: 'Canonical Head Title',
+      description: 'Canonical head description',
+      tags: ['AI', 'Slides'],
+      icon: '/assets/canonical-favicon.png'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '<title>Stale Title</title><title>Another Stale Title</title><meta name="description" content="stale description"><meta name="description" content="another stale description"><meta name="keywords" content="stale, keywords"><link rel="icon" href="/assets/stale-favicon.png"><link rel="shortcut icon" href="/assets/another-stale-favicon.png"><meta charset="iso-8859-1"><meta charset="windows-1252"><meta name="viewport" content="width=320"><meta name="viewport" content="initial-scale=2"><style>.deck-shell{color:red;}</style>',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.equal((html.match(/<title>Canonical Head Title<\/title>/g) || []).length, 1);
+  assert.equal((html.match(/<meta name="description" content="Canonical head description">/g) || []).length, 1);
+  assert.equal((html.match(/<meta name="keywords" content="AI, Slides">/g) || []).length, 1);
+  assert.equal((html.match(/<link rel="icon" href="\/assets\/canonical-favicon\.png">/g) || []).length, 1);
+  assert.equal((html.match(/<meta charset="utf-8">/g) || []).length, 1);
+  assert.equal((html.match(/<meta name="viewport" content="width=device-width, initial-scale=1.0">/g) || []).length, 1);
+  assert.match(html, /<style>\.deck-shell\{color:red;\}<\/style>/);
+  assert.doesNotMatch(html, /Another Stale Title|another stale description|stale, keywords|another-stale-favicon|windows-1252|initial-scale=2/);
+});
+
 test('renderCanonicalDeckHtml overlays canonical script assets onto reused source body html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     assets: [

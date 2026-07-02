@@ -587,6 +587,24 @@
     return themeStyleBlocks;
   }
 
+  function overlayCanonicalHeadSingletonTag(headHtml = '', matcher, tagHtml = '') {
+    const nextTagHtml = normalizeString(tagHtml).trim();
+    if (!nextTagHtml) {
+      return normalizeString(headHtml);
+    }
+
+    const tagMatcher = matcher instanceof RegExp ? matcher : null;
+    const normalizedHeadHtml = normalizeString(headHtml);
+    if (!tagMatcher) {
+      return `${nextTagHtml}\n${normalizedHeadHtml}`.trim();
+    }
+
+    const globalFlags = tagMatcher.flags.includes('g')
+      ? tagMatcher.flags
+      : `${tagMatcher.flags}g`;
+    return `${nextTagHtml}\n${normalizedHeadHtml.replace(new RegExp(tagMatcher.source, globalFlags), '')}`.trim();
+  }
+
   function applyCanonicalDeckHeadSourceHtmlState(headHtml = '', deck = {}) {
     let nextHeadHtml = normalizeString(headHtml);
     if (!nextHeadHtml) {
@@ -597,23 +615,29 @@
     const canonicalTitle = normalizeString(metadata.title).trim();
     if (canonicalTitle) {
       const titleTag = `<title>${escapeHtml(canonicalTitle)}</title>`;
-      nextHeadHtml = /<title\b[^>]*>[\s\S]*?<\/title>/i.test(nextHeadHtml)
-        ? nextHeadHtml.replace(/<title\b[^>]*>[\s\S]*?<\/title>/i, titleTag)
-        : `${titleTag}\n${nextHeadHtml}`;
+      nextHeadHtml = overlayCanonicalHeadSingletonTag(
+        nextHeadHtml,
+        /<title\b[^>]*>[\s\S]*?<\/title>\s*/i,
+        titleTag
+      );
     }
 
     const descriptionMetaTag = buildMetaTag('description', metadata.description);
     if (descriptionMetaTag) {
-      nextHeadHtml = /<meta\b(?=[^>]*\bname=(?:"description"|'description'))[^>]*>/i.test(nextHeadHtml)
-        ? nextHeadHtml.replace(/<meta\b(?=[^>]*\bname=(?:"description"|'description'))[^>]*>/i, descriptionMetaTag)
-        : `${descriptionMetaTag}\n${nextHeadHtml}`;
+      nextHeadHtml = overlayCanonicalHeadSingletonTag(
+        nextHeadHtml,
+        /<meta\b(?=[^>]*\bname=(?:"description"|'description'))[^>]*>\s*/i,
+        descriptionMetaTag
+      );
     }
 
     const keywordsMetaTag = buildMetaTag('keywords', Array.isArray(metadata.tags) ? metadata.tags.join(', ') : '');
     if (keywordsMetaTag) {
-      nextHeadHtml = /<meta\b(?=[^>]*\bname=(?:"keywords"|'keywords'))[^>]*>/i.test(nextHeadHtml)
-        ? nextHeadHtml.replace(/<meta\b(?=[^>]*\bname=(?:"keywords"|'keywords'))[^>]*>/i, keywordsMetaTag)
-        : `${keywordsMetaTag}\n${nextHeadHtml}`;
+      nextHeadHtml = overlayCanonicalHeadSingletonTag(
+        nextHeadHtml,
+        /<meta\b(?=[^>]*\bname=(?:"keywords"|'keywords'))[^>]*>\s*/i,
+        keywordsMetaTag
+      );
     }
 
     const iconHref = normalizeString(metadata.icon).trim();
@@ -621,9 +645,11 @@
       ? `<link rel="icon" href="${escapeAttribute(iconHref)}">`
       : '';
     if (iconLinkTag) {
-      nextHeadHtml = /<link\b(?=[^>]*\brel=(?:"[^"]*\bicon\b[^"]*"|'[^']*\bicon\b[^']*'))[^>]*>/i.test(nextHeadHtml)
-        ? nextHeadHtml.replace(/<link\b(?=[^>]*\brel=(?:"[^"]*\bicon\b[^"]*"|'[^']*\bicon\b[^']*'))[^>]*>/i, iconLinkTag)
-        : `${iconLinkTag}\n${nextHeadHtml}`;
+      nextHeadHtml = overlayCanonicalHeadSingletonTag(
+        nextHeadHtml,
+        /<link\b(?=[^>]*\brel=(?:"[^"]*\bicon\b[^"]*"|'[^']*\bicon\b[^']*'))[^>]*>\s*/i,
+        iconLinkTag
+      );
     }
 
     const stylesheetAssetLinkTags = buildStylesheetAssetLinkTags(deck.assets);
@@ -663,14 +689,18 @@
     }
 
     const viewportMetaTag = '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
-    nextHeadHtml = /<meta\b(?=[^>]*\bname=(?:"viewport"|'viewport'))[^>]*>/i.test(nextHeadHtml)
-      ? nextHeadHtml.replace(/<meta\b(?=[^>]*\bname=(?:"viewport"|'viewport'))[^>]*>/i, viewportMetaTag)
-      : `${viewportMetaTag}\n${nextHeadHtml}`;
+    nextHeadHtml = overlayCanonicalHeadSingletonTag(
+      nextHeadHtml,
+      /<meta\b(?=[^>]*\bname=(?:"viewport"|'viewport'))[^>]*>\s*/i,
+      viewportMetaTag
+    );
 
     const charsetMetaTag = '<meta charset="utf-8">';
-    nextHeadHtml = /<meta\b(?=[^>]*\bcharset=)[^>]*>/i.test(nextHeadHtml)
-      ? nextHeadHtml.replace(/<meta\b(?=[^>]*\bcharset=)[^>]*>/i, charsetMetaTag)
-      : `${charsetMetaTag}\n${nextHeadHtml}`;
+    nextHeadHtml = overlayCanonicalHeadSingletonTag(
+      nextHeadHtml,
+      /<meta\b(?=[^>]*\bcharset=)[^>]*>\s*/i,
+      charsetMetaTag
+    );
 
     return nextHeadHtml;
   }
