@@ -110,10 +110,12 @@
   function createCanonicalInlineScript(seed = {}, index = 0, options = {}) {
     const script = asPlainObject(seed);
     const idPrefix = normalizeString(options.idPrefix, 'inline-script').trim() || 'inline-script';
+    const order = normalizeFiniteNumber(script.order);
     return {
       id: normalizeString(script.id, `${idPrefix}-${index + 1}`),
       content: normalizeString(script.content),
-      attributes: asPlainObject(script.attributes)
+      attributes: asPlainObject(script.attributes),
+      ...(order !== null ? { order } : {})
     };
   }
 

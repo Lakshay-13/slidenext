@@ -586,7 +586,15 @@ test('collectDeckAssets preserves script asset metadata needed by canonical scri
     integrity: 'sha384-script',
     referrerpolicy: 'origin'
   });
-  scriptEl.parentElement = { tagName: 'HEAD' };
+  scriptEl.parentElement = {
+    tagName: 'HEAD',
+    querySelectorAll(selector) {
+      if (selector === 'script') {
+        return [scriptEl];
+      }
+      return [];
+    }
+  };
 
   const doc = {
     querySelectorAll(selector) {
@@ -617,7 +625,8 @@ test('collectDeckAssets preserves script asset metadata needed by canonical scri
         async: true,
         defer: true,
         nomodule: true,
-        location: 'head'
+        location: 'head',
+        order: 1
       }
     }
   ]);
@@ -947,7 +956,8 @@ test('buildDeckSource extracts sanitized inline head scripts alongside full sour
       content: 'window.tailwindConfig = true;',
       attributes: {
         type: 'text/javascript'
-      }
+      },
+      order: 1
     }
   ]);
   assert.deepEqual(source.bodyInlineScripts, []);
@@ -1003,7 +1013,8 @@ test('buildDeckSource extracts sanitized inline body scripts alongside full sour
       content: 'window.deckBoot = true;',
       attributes: {
         type: 'module'
-      }
+      },
+      order: 1
     }
   ]);
 });

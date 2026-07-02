@@ -145,6 +145,53 @@
       });
   }
 
+  function buildCanonicalOrderedScriptTags(entries = []) {
+    return (Array.isArray(entries) ? entries : [])
+      .map((entry, index) => ({
+        html: normalizeString(entry && entry.html),
+        order: Number.isFinite(entry && entry.order) ? entry.order : null,
+        fallbackGroup: entry && entry.fallbackGroup === 'inline' ? 1 : 0,
+        fallbackIndex: Number.isFinite(entry && entry.fallbackIndex) ? entry.fallbackIndex : index
+      }))
+      .filter((entry) => entry.html)
+      .sort((left, right) => {
+        const leftSortValue = left.order !== null ? left.order : 100000 + (left.fallbackGroup * 1000) + left.fallbackIndex;
+        const rightSortValue = right.order !== null ? right.order : 100000 + (right.fallbackGroup * 1000) + right.fallbackIndex;
+        if (leftSortValue !== rightSortValue) {
+          return leftSortValue - rightSortValue;
+        }
+        return left.fallbackIndex - right.fallbackIndex;
+      })
+      .map((entry) => entry.html);
+  }
+
+  function buildCanonicalHeadScriptTags(deck = {}) {
+    const headScriptAssetEntries = (Array.isArray(deck.assets) ? deck.assets : [])
+      .map((asset, assetIndex) => ({
+        asset,
+        assetIndex
+      }))
+      .filter(({ asset }) => asset && asset.type === 'script' && normalizeString(asPlainObject(asset.meta).location).trim().toLowerCase() === 'head')
+      .map(({ asset, assetIndex }) => ({
+        html: buildScriptAssetTags([asset])[0] || '',
+        order: Number.isFinite(asPlainObject(asset.meta).order) ? asPlainObject(asset.meta).order : null,
+        fallbackGroup: 'external',
+        fallbackIndex: assetIndex
+      }));
+    const headInlineScriptEntries = (Array.isArray(deck.source && deck.source.headInlineScripts) ? deck.source.headInlineScripts : [])
+      .map((script, scriptIndex) => ({
+        html: buildInlineScriptTags([script])[0] || '',
+        order: Number.isFinite(script && script.order) ? script.order : null,
+        fallbackGroup: 'inline',
+        fallbackIndex: scriptIndex
+      }));
+
+    return buildCanonicalOrderedScriptTags([
+      ...headScriptAssetEntries,
+      ...headInlineScriptEntries
+    ]);
+  }
+
   function buildScriptAssetTags(assets = [], options = {}) {
     const requestedLocation = normalizeString(options.location).trim().toLowerCase();
     const seenSrcs = new Set();
@@ -584,8 +631,7 @@
       ? `<link rel="icon" href="${escapeAttribute(iconHref)}">`
       : '';
     const preloadAssetLinkTags = buildPreloadAssetLinkTags(deck.assets);
-    const headScriptAssetTags = buildScriptAssetTags(deck.assets, { location: 'head' });
-    const headInlineScriptTags = buildInlineScriptTags(deck.source && deck.source.headInlineScripts);
+    const headScriptTags = buildCanonicalHeadScriptTags(deck);
     const stylesheetAssetLinkTags = buildStylesheetAssetLinkTags(deck.assets);
     const deckLayoutStyleBlock = buildCanonicalDeckLayoutStyleBlock(deck);
     const themeStyleBlocks = buildCanonicalDeckThemeStyleBlocks(deck);
@@ -598,8 +644,7 @@
       keywordsMetaTag,
       iconLinkTag,
       ...preloadAssetLinkTags,
-      ...headScriptAssetTags,
-      ...headInlineScriptTags,
+      ...headScriptTags,
       ...stylesheetAssetLinkTags,
       deckLayoutStyleBlock,
       ...themeStyleBlocks

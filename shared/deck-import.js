@@ -338,12 +338,15 @@
       return [];
     }
     const idPrefix = normalizeString(options.idPrefix, 'inline-script').trim() || 'inline-script';
+    const allScripts = Array.from(rootEl.querySelectorAll('script'));
+    const scriptOrderMap = new Map(allScripts.map((scriptEl, index) => [scriptEl, index + 1]));
 
     return Array.from(rootEl.querySelectorAll('script:not([src])'))
       .map((scriptEl, index) => ({
         id: `${idPrefix}-${index + 1}`,
         content: normalizeString(scriptEl.textContent),
-        attributes: extractAttributeMap(scriptEl)
+        attributes: extractAttributeMap(scriptEl),
+        order: scriptOrderMap.get(scriptEl) || index + 1
       }))
       .filter((scriptSeed) => normalizeString(scriptSeed.content).trim() || Object.keys(asPlainObject(scriptSeed.attributes)).length > 0);
   }
@@ -907,6 +910,21 @@
     return '';
   }
 
+  function inferImportedScriptOrder(el) {
+    if (!el || normalizeString(el.tagName).toLowerCase() !== 'script') {
+      return null;
+    }
+
+    const parentEl = el.parentElement || null;
+    if (!parentEl || typeof parentEl.querySelectorAll !== 'function') {
+      return null;
+    }
+
+    const scripts = Array.from(parentEl.querySelectorAll('script'));
+    const scriptIndex = scripts.indexOf(el);
+    return scriptIndex >= 0 ? scriptIndex + 1 : null;
+  }
+
   function buildImportedAssetMeta(el) {
     const tagName = normalizeString(el && el.tagName).toLowerCase();
     if (tagName !== 'link' && tagName !== 'script') {
@@ -958,6 +976,10 @@
       const location = inferImportedScriptLocation(el);
       if (location) {
         meta.location = location;
+      }
+      const order = inferImportedScriptOrder(el);
+      if (Number.isFinite(order)) {
+        meta.order = order;
       }
     }
 

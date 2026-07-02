@@ -753,6 +753,59 @@ test('renderCanonicalDeckHtml emits canonical html attributes when source html i
   assert.match(html, /<html lang="en" class="dark">/);
 });
 
+test('renderCanonicalDeckHtml preserves canonical head script order when source head html is not reused', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'script',
+        src: '/presentations/demo/tailwind.js',
+        meta: {
+          location: 'head',
+          order: 1
+        }
+      },
+      {
+        type: 'script',
+        src: '/presentations/demo/gsap.js',
+        meta: {
+          location: 'head',
+          order: 3
+        }
+      },
+      {
+        type: 'stylesheet',
+        src: '/presentations/demo/styles.css'
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: '',
+      headInlineScripts: [
+        {
+          content: 'tailwind.config = { darkMode: "class" };',
+          order: 2
+        }
+      ]
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.ok(html.indexOf('/presentations/demo/tailwind.js') < html.indexOf('tailwind.config = { darkMode: "class" };'));
+  assert.ok(html.indexOf('tailwind.config = { darkMode: "class" };') < html.indexOf('/presentations/demo/gsap.js'));
+  assert.ok(html.indexOf('/presentations/demo/gsap.js') < html.indexOf('/presentations/demo/styles.css'));
+});
+
 test('renderCanonicalDeckHtml dedupes canonical singleton head tags over reused source head html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {
