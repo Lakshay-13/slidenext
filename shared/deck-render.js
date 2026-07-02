@@ -60,19 +60,59 @@
       || /\.[a-z0-9]{2,8}(?:[?#].*)?$/i.test(normalizedValue);
   }
 
+  function normalizeAssetMetaAttributeValue(attributeName, value) {
+    if (value === true) {
+      return true;
+    }
+    if (value === false || value === null || value === undefined) {
+      return null;
+    }
+
+    const normalizedValue = typeof value === 'string'
+      ? value.trim()
+      : String(value).trim();
+    if (!normalizedValue) {
+      return attributeName === 'crossorigin' ? true : null;
+    }
+    return normalizedValue;
+  }
+
+  function applyAssetMetaAttributes(attributes, assetMeta, attributeNames) {
+    const meta = asPlainObject(assetMeta);
+    attributeNames.forEach((attributeName) => {
+      if (!Object.prototype.hasOwnProperty.call(meta, attributeName)) {
+        return;
+      }
+      const normalizedValue = normalizeAssetMetaAttributeValue(attributeName, meta[attributeName]);
+      if (normalizedValue !== null) {
+        attributes[attributeName] = normalizedValue;
+      }
+    });
+  }
+
   function buildStylesheetAssetLinkTags(assets = []) {
     const seenSrcs = new Set();
     return (Array.isArray(assets) ? assets : [])
       .filter((asset) => asset && asset.type === 'stylesheet')
-      .map((asset) => normalizeString(asset.src).trim())
-      .filter((src) => {
+      .map((asset) => ({
+        src: normalizeString(asset.src).trim(),
+        meta: asPlainObject(asset.meta)
+      }))
+      .filter(({ src }) => {
         if (!src || seenSrcs.has(src)) {
           return false;
         }
         seenSrcs.add(src);
         return true;
       })
-      .map((src) => `<link rel="stylesheet" href="${escapeAttribute(src)}">`);
+      .map(({ src, meta }) => {
+        const attributes = {
+          rel: 'stylesheet',
+          href: src
+        };
+        applyAssetMetaAttributes(attributes, meta, ['media', 'crossorigin', 'integrity', 'referrerpolicy']);
+        return `<link${renderAttributeMap(attributes)}>`;
+      });
   }
 
   function buildScriptAssetTags(assets = []) {
@@ -103,7 +143,8 @@
       .map((asset) => ({
         src: normalizeString(asset.src).trim(),
         as: preloadAsTypes[normalizeString(asset.type).trim()],
-        mimeType: normalizeString(asset.mimeType).trim()
+        mimeType: normalizeString(asset.mimeType).trim(),
+        meta: asPlainObject(asset.meta)
       }))
       .filter(({ src }) => {
         if (!src || seenSrcs.has(src)) {
@@ -112,7 +153,7 @@
         seenSrcs.add(src);
         return true;
       })
-      .map(({ src, as, mimeType }) => {
+      .map(({ src, as, mimeType, meta }) => {
         const attributes = {
           rel: 'preload',
           as,
@@ -121,7 +162,8 @@
         if (mimeType) {
           attributes.type = mimeType;
         }
-        if (as === 'font') {
+        applyAssetMetaAttributes(attributes, meta, ['media', 'crossorigin', 'integrity', 'referrerpolicy']);
+        if (as === 'font' && !Object.prototype.hasOwnProperty.call(meta, 'crossorigin')) {
           attributes.crossorigin = true;
         }
         return `<link${renderAttributeMap(attributes)}>`;

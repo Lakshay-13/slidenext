@@ -433,6 +433,44 @@ test('renderCanonicalDeckHtml emits canonical stylesheet assets when source head
   assert.doesNotMatch(html, /<link rel="stylesheet" href="\/presentations\/demo\/app\.js">/);
 });
 
+test('renderCanonicalDeckHtml preserves canonical stylesheet asset metadata when source head html is absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'stylesheet',
+        src: '/presentations/demo/styles.css',
+        meta: {
+          media: 'screen and (min-width: 960px)',
+          crossorigin: 'anonymous',
+          integrity: 'sha384-style',
+          referrerpolicy: 'no-referrer'
+        }
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(
+    html,
+    /<link rel="stylesheet" href="\/presentations\/demo\/styles\.css" media="screen and \(min-width: 960px\)" crossorigin="anonymous" integrity="sha384-style" referrerpolicy="no-referrer">/
+  );
+});
+
 test('renderCanonicalDeckHtml emits canonical preload asset tags when source head html is absent', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     assets: [
@@ -478,6 +516,45 @@ test('renderCanonicalDeckHtml emits canonical preload asset tags when source hea
   assert.equal((html.match(/rel="preload" as="font" href="\/presentations\/demo\/fonts\/deck-sans\.woff2"/g) || []).length, 1);
   assert.match(html, /<link rel="preload" as="image" href="\/presentations\/demo\/images\/hero\.avif" type="image\/avif">/);
   assert.doesNotMatch(html, /rel="preload" as="style" href="\/presentations\/demo\/styles\.css"/);
+});
+
+test('renderCanonicalDeckHtml preserves canonical preload asset metadata when source head html is absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'font',
+        src: '/presentations/demo/fonts/deck-sans.woff2',
+        mimeType: 'font/woff2',
+        meta: {
+          media: 'screen',
+          crossorigin: 'use-credentials',
+          integrity: 'sha384-font',
+          referrerpolicy: 'origin'
+        }
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(
+    html,
+    /<link rel="preload" as="font" href="\/presentations\/demo\/fonts\/deck-sans\.woff2" type="font\/woff2" media="screen" crossorigin="use-credentials" integrity="sha384-font" referrerpolicy="origin">/
+  );
 });
 
 test('renderCanonicalDeckHtml emits canonical script assets when source body html is absent', () => {

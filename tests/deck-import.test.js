@@ -4,8 +4,13 @@ const assert = require('node:assert/strict');
 const deckImport = require('../shared/deck-import.js');
 
 function createElement(tagName, attributes = {}) {
+  const attributeEntries = Object.entries(attributes);
   return {
     tagName,
+    attributes: attributeEntries.map(([name, value]) => ({ name, value })),
+    hasAttribute(name) {
+      return Object.prototype.hasOwnProperty.call(attributes, name);
+    },
     getAttribute(name) {
       return Object.prototype.hasOwnProperty.call(attributes, name)
         ? attributes[name]
@@ -506,6 +511,66 @@ test('collectDeckAssets includes preload assets and infers their canonical types
       name: 'hero.avif',
       src: '/images/hero.avif',
       mimeType: 'image/avif'
+    }
+  ]);
+});
+
+test('collectDeckAssets preserves link asset metadata needed by canonical stylesheet and preload tags', () => {
+  const stylesheetEl = createElement('LINK', {
+    rel: 'stylesheet',
+    href: '/styles/deck.css',
+    media: 'screen and (min-width: 960px)',
+    crossorigin: 'anonymous',
+    integrity: 'sha384-style',
+    referrerpolicy: 'no-referrer'
+  });
+  const preloadFontEl = createElement('LINK', {
+    rel: 'preload',
+    as: 'font',
+    href: '/fonts/deck-sans.woff2',
+    type: 'font/woff2',
+    crossorigin: 'use-credentials',
+    integrity: 'sha384-font'
+  });
+
+  const doc = {
+    querySelectorAll(selector) {
+      if (selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], link[rel~="preload"][href], video[poster]') {
+        return [stylesheetEl, preloadFontEl];
+      }
+      if (selector === 'img[srcset], source[srcset]' || selector === '[style*="url("]') {
+        return [];
+      }
+      return [];
+    }
+  };
+
+  const assets = deckImport.collectDeckAssets(doc);
+
+  assert.deepEqual(assets, [
+    {
+      id: 'asset-1',
+      type: 'stylesheet',
+      name: 'deck.css',
+      src: '/styles/deck.css',
+      mimeType: 'text/css',
+      meta: {
+        media: 'screen and (min-width: 960px)',
+        crossorigin: 'anonymous',
+        integrity: 'sha384-style',
+        referrerpolicy: 'no-referrer'
+      }
+    },
+    {
+      id: 'asset-2',
+      type: 'font',
+      name: 'deck-sans.woff2',
+      src: '/fonts/deck-sans.woff2',
+      mimeType: 'font/woff2',
+      meta: {
+        crossorigin: 'use-credentials',
+        integrity: 'sha384-font'
+      }
     }
   ]);
 });

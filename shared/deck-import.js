@@ -772,19 +772,69 @@
     }
   }
 
+  function hasElementAttribute(el, attributeName) {
+    if (!el || typeof attributeName !== 'string' || !attributeName) {
+      return false;
+    }
+    if (typeof el.hasAttribute === 'function') {
+      return el.hasAttribute(attributeName);
+    }
+    return Array.isArray(el.attributes)
+      ? el.attributes.some((attribute) => normalizeString(attribute && attribute.name) === attributeName)
+      : false;
+  }
+
+  function readElementAttributeIfPresent(el, attributeName) {
+    if (!hasElementAttribute(el, attributeName) || typeof el.getAttribute !== 'function') {
+      return null;
+    }
+    return el.getAttribute(attributeName);
+  }
+
+  function buildImportedAssetMeta(el) {
+    const tagName = normalizeString(el && el.tagName).toLowerCase();
+    if (tagName !== 'link') {
+      return null;
+    }
+
+    const meta = {};
+    ['media', 'crossorigin', 'integrity', 'referrerpolicy'].forEach((attributeName) => {
+      const attributeValue = readElementAttributeIfPresent(el, attributeName);
+      if (attributeValue === null) {
+        return;
+      }
+
+      const normalizedValue = normalizeString(attributeValue).trim();
+      if (attributeName === 'crossorigin') {
+        meta[attributeName] = normalizedValue || true;
+        return;
+      }
+      if (normalizedValue) {
+        meta[attributeName] = normalizedValue;
+      }
+    });
+
+    return Object.keys(meta).length > 0 ? meta : null;
+  }
+
   function appendDeckAsset(assetSeeds, seenUrls, seed = {}) {
     const src = normalizeString(seed.src);
     if (!src || seenUrls.has(src)) {
       return;
     }
     seenUrls.add(src);
-    assetSeeds.push({
+    const asset = {
       id: `asset-${assetSeeds.length + 1}`,
       type: normalizeString(seed.type, 'file'),
       name: normalizeString(seed.name, buildAssetName(src)),
       src,
       mimeType: inferAssetMimeType(seed)
-    });
+    };
+    const meta = asPlainObject(seed.meta);
+    if (Object.keys(meta).length > 0) {
+      asset.meta = meta;
+    }
+    assetSeeds.push(asset);
   }
 
   function appendDeckCssRuleAssets(rule, assetSeeds, seenUrls) {
@@ -832,7 +882,8 @@
           ? 'image'
           : inferAssetType(el),
         src: el.getAttribute('src') || el.getAttribute('href') || el.getAttribute('poster'),
-        typeAttribute: el.getAttribute('type')
+        typeAttribute: el.getAttribute('type'),
+        meta: buildImportedAssetMeta(el)
       });
     });
 
