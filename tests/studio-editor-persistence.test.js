@@ -215,6 +215,43 @@ test('createStudioPersistenceActionContext normalizes persistence state', () => 
   );
 });
 
+test('createStudioPersistedDeckStateActionContext reuses captured deck state fields when building a persistence action context', () => {
+  assert.deepEqual(
+    editorPersistence.createStudioPersistedDeckStateActionContext(
+      {
+        cleanHtml: '<html></html>',
+        canonicalDeck: {
+          kind: 'slidenext.deck',
+          schemaVersion: 1,
+          slides: []
+        },
+        playbackState: {
+          activeSlideIds: ['slide-2'],
+          slideCounterText: '2 / 4'
+        }
+      },
+      '/presentations/onboarding-presentation/index.html',
+      { sessionToken: 12 }
+    ),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      cleanHtml: '<html></html>',
+      shouldUpdatePersistedHtml: true,
+      canonicalDeck: canonicalDeckModel.createCanonicalDeck({
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: []
+      }),
+      playbackState: {
+        activeSlideIds: ['slide-2'],
+        slideCounterText: '2 / 4'
+      },
+      shouldUpdatePersistedPlaybackState: true,
+      sessionToken: 12
+    }
+  );
+});
+
 test('createStudioVersionPersistenceActionContext always disables persisted-html writes for checkpoint-only flows', () => {
   assert.deepEqual(
     editorPersistence.createStudioVersionPersistenceActionContext(

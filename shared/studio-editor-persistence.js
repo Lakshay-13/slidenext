@@ -183,6 +183,28 @@
     return context;
   }
 
+  function createStudioPersistedDeckStateActionContext(
+    persistedDeckState = {},
+    presentationUrl = '',
+    options = {}
+  ) {
+    const nextPersistedDeckState = asPlainObject(persistedDeckState);
+    const contextOptions = {
+      ...options,
+      canonicalDeck: nextPersistedDeckState.canonicalDeck
+    };
+
+    if (Object.prototype.hasOwnProperty.call(nextPersistedDeckState, 'playbackState')) {
+      contextOptions.playbackState = nextPersistedDeckState.playbackState;
+    }
+
+    return createStudioPersistenceActionContext(
+      presentationUrl,
+      normalizeString(nextPersistedDeckState.cleanHtml),
+      contextOptions
+    );
+  }
+
   function createStudioVersionPersistenceActionContext(presentationUrl = '', cleanHtml = '', options = {}) {
     return createStudioPersistenceActionContext(presentationUrl, cleanHtml, {
       ...options,
@@ -692,6 +714,7 @@
     resolveStudioSaveRequestCanonicalDeck,
     resolveStudioCanonicalDeckOverride,
     createStudioPersistenceActionContext,
+    createStudioPersistedDeckStateActionContext,
     createStudioVersionPersistenceActionContext,
     buildStudioSaveRequestBody,
     buildStudioPersistenceRequestPlan,
