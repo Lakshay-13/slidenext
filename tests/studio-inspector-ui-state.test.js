@@ -448,3 +448,142 @@ test('syncInspectorForSelection tolerates a missing text-color input when a live
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'elTextColor'));
   assert.ok(calls.some(([name, value]) => name === 'highlightAlignButton' && value === 'right'));
 });
+
+test('syncInspectorForSelection tolerates a missing font-weight control when a live selection is active', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncInspectorForSelectionSource = extractFunctionSource(
+    fileContent,
+    'function syncInspectorForSelection() {',
+    '\n\n    // Click Selection highlights'
+  );
+
+  const activeElement = {
+    isConnected: true,
+    onActiveSlide: true,
+    tagName: 'SPAN',
+    innerText: 'Label',
+    textContent: 'Label',
+    style: { zIndex: '3' },
+    classList: {
+      contains() {
+        return false;
+      }
+    },
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return {
+            fontSize: '14px',
+            fontFamily: "'Geist', sans-serif",
+            fontWeight: '600',
+            color: 'rgb(255, 255, 255)',
+            textAlign: 'left',
+            opacity: '1',
+            borderStyle: 'none',
+            borderWidth: '0px',
+            borderRadius: '0px',
+            borderColor: 'rgb(255, 255, 255)'
+          };
+        }
+      }
+    }
+  };
+
+  const elements = {
+    inspectorTargetLabel: { innerHTML: '' },
+    slideInspectorPanel: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    },
+    elementInspectorPanel: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    },
+    elTextContent: { value: '' },
+    inspectorImageGroup: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    },
+    elImageSrc: { value: '' },
+    inspectorTextContentGroup: {
+      classList: {
+        add() {},
+        remove() {},
+        toggle() {}
+      }
+    },
+    elFontSize: { value: '' },
+    fontSizeVal: { textContent: '' },
+    elFontFamily: {
+      value: '',
+      options: [{ value: "'Geist', sans-serif" }]
+    },
+    elTextColor: { value: '' },
+    elZIndex: { value: '' },
+    elOpacity: { value: '' },
+    opacityVal: { textContent: '' },
+    inspectorBorderGroup: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    }
+  };
+
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorLiveSelection: liveSelection,
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (id === 'elFontWeight') return null;
+        return elements[id] || null;
+      }
+    },
+    highlightAlignButton(value) {
+      calls.push(['highlightAlignButton', value]);
+    },
+    rgbToHex(value) {
+      calls.push(['rgbToHex', value]);
+      return '#ffffff';
+    },
+    selectedElements: [activeElement],
+    updateClipboardActionState() {
+      calls.push(['updateClipboardActionState']);
+    },
+    updateLayerOrderActionState() {
+      calls.push(['updateLayerOrderActionState']);
+    },
+    updateLockActionState() {
+      calls.push(['updateLockActionState']);
+    },
+    updateMotionActionState() {
+      calls.push(['updateMotionActionState']);
+    },
+    updateRemovalActionState() {
+      calls.push(['updateRemovalActionState']);
+    },
+    updateStyleActionState() {
+      calls.push(['updateStyleActionState']);
+    },
+    updateVisibilityActionState() {
+      calls.push(['updateVisibilityActionState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncInspectorForSelectionSource, context);
+
+  assert.doesNotThrow(() => context.syncInspectorForSelection());
+  assert.equal(elements.elTextContent.value, 'Label');
+  assert.equal(elements.elTextColor.value, '#ffffff');
+  assert.equal(elements.elZIndex.value, '3');
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'elFontWeight'));
+  assert.ok(calls.some(([name, value]) => name === 'highlightAlignButton' && value === 'left'));
+});

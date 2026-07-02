@@ -2887,7 +2887,10 @@
         }
       }
 
-      document.getElementById('elFontWeight').value = computedStyles.fontWeight;
+      const fontWeightInput = document.getElementById('elFontWeight');
+      if (fontWeightInput) {
+        fontWeightInput.value = computedStyles.fontWeight;
+      }
       const textColorInput = document.getElementById('elTextColor');
       if (textColorInput) {
         textColorInput.value = rgbToHex(computedStyles.color);
