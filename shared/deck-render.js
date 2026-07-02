@@ -837,6 +837,7 @@
     const headHtml = options.preferHeadSourceHtml === false
       ? buildDefaultHeadHtml(deck)
       : applyCanonicalDeckHeadSourceHtmlState(normalizeString(deck.source && deck.source.headHtml), deck) || buildDefaultHeadHtml(deck);
+    const htmlAttributes = asPlainObject(deck.source && deck.source.htmlAttributes);
     const bodyAttributes = asPlainObject(deck.source && deck.source.bodyAttributes);
     const bodyHtml = canReuseCanonicalDeckBodySourceHtml(options)
       ? applyCanonicalDeckBodySourceHtmlState(normalizeString(deck.source && deck.source.bodyHtml), deck) || buildDefaultBodyHtml(deck, options)
@@ -844,7 +845,7 @@
 
     return [
       '<!DOCTYPE html>',
-      '<html>',
+      `<html${renderAttributeMap(htmlAttributes)}>`,
       '<head>',
       headHtml,
       '</head>',

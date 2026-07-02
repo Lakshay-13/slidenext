@@ -169,6 +169,7 @@
         html: normalizeString(source.html),
         headHtml: normalizeString(source.headHtml),
         bodyHtml: normalizeString(source.bodyHtml),
+        htmlAttributes: asPlainObject(source.htmlAttributes),
         bodyAttributes: asPlainObject(source.bodyAttributes),
         headInlineScripts: Array.isArray(source.headInlineScripts)
           ? source.headInlineScripts.map((script, scriptIndex) => createCanonicalInlineScript(script, scriptIndex, {

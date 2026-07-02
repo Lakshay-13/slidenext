@@ -726,6 +726,33 @@ test('renderCanonicalDeckHtml emits canonical inline body scripts when source bo
   assert.match(html, /<div id="slidesContainer" class="slides-container"><section class="slide slide-active" id="slide-1"><\/section><\/div>\s*<script type="module">window\.deckBoot = true;<\/script>/);
 });
 
+test('renderCanonicalDeckHtml emits canonical html attributes when source html is not fully reused', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: '',
+      htmlAttributes: {
+        lang: 'en',
+        class: 'dark'
+      }
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<html lang="en" class="dark">/);
+});
+
 test('renderCanonicalDeckHtml dedupes canonical singleton head tags over reused source head html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {

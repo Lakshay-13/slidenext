@@ -850,6 +850,10 @@ test('sanitizeDeckSourceClone removes editor chrome nodes, ids, and transient cl
 test('buildDeckSource serializes the sanitized clone instead of the live editor document', () => {
   const sourceClone = {
     outerHTML: '<html><head><style>.deck{}</style></head><body class="deck-body"><main>clean</main></body></html>',
+    attributes: [
+      { name: 'lang', value: 'en' },
+      { name: 'class', value: 'dark' }
+    ],
     querySelector(selector) {
       if (selector === 'head') {
         return { innerHTML: '<style>.deck{}</style>' };
@@ -891,6 +895,7 @@ test('buildDeckSource serializes the sanitized clone instead of the live editor 
   assert.equal(source.html, '<!DOCTYPE html>\n<html><head><style>.deck{}</style></head><body class="deck-body"><main>clean</main></body></html>');
   assert.equal(source.headHtml, '<style>.deck{}</style>');
   assert.equal(source.bodyHtml, '<main>clean</main>');
+  assert.deepEqual(source.htmlAttributes, { lang: 'en', class: 'dark' });
   assert.deepEqual(source.bodyAttributes, { class: 'deck-body' });
   assert.deepEqual(source.headInlineScripts, []);
   assert.deepEqual(source.bodyInlineScripts, []);
@@ -935,6 +940,7 @@ test('buildDeckSource extracts sanitized inline head scripts alongside full sour
     stripTransientDeckRuntimeState() {}
   });
 
+  assert.deepEqual(source.htmlAttributes, {});
   assert.deepEqual(source.headInlineScripts, [
     {
       id: 'head-inline-script-1',
@@ -989,6 +995,7 @@ test('buildDeckSource extracts sanitized inline body scripts alongside full sour
     stripTransientDeckRuntimeState() {}
   });
 
+  assert.deepEqual(source.htmlAttributes, {});
   assert.deepEqual(source.headInlineScripts, []);
   assert.deepEqual(source.bodyInlineScripts, [
     {

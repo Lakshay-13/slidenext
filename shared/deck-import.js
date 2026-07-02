@@ -1190,11 +1190,13 @@
     const sourceBody = sourceClone && typeof sourceClone.querySelector === 'function'
       ? sourceClone.querySelector('body')
       : doc && doc.body ? doc.body : null;
+    const sourceHtml = sourceClone || (doc && doc.documentElement) || null;
 
     return {
       html: buildDocumentHtml(sourceClone || doc),
       headHtml: sourceHead ? sourceHead.innerHTML : '',
       bodyHtml: sourceBody ? sourceBody.innerHTML : '',
+      htmlAttributes: sourceHtml ? extractAttributeMap(sourceHtml) : {},
       bodyAttributes: sourceBody ? extractAttributeMap(sourceBody) : {},
       headInlineScripts: sourceHead ? extractInlineScriptSeeds(sourceHead, {
         ...options,

@@ -104,6 +104,7 @@ test('resolvePresentationCanonicalDeck normalizes valid canonical sidecars and r
         html: '',
         headHtml: '',
         bodyHtml: '',
+        htmlAttributes: {},
         bodyAttributes: {},
         headInlineScripts: [],
         bodyInlineScripts: []
@@ -239,6 +240,7 @@ test('mergePresentationCanonicalDeck preserves metadata and normalizes valid can
           html: '',
           headHtml: '',
           bodyHtml: '',
+          htmlAttributes: {},
           bodyAttributes: {},
           headInlineScripts: [],
           bodyInlineScripts: []
