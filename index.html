@@ -3961,10 +3961,14 @@
         const scaleY = stageHeight / 1080;
         zoomFactor = Math.min(scaleX, scaleY);
         zoomFactor = Math.max(0.15, Math.min(1.5, zoomFactor)); // bounds fitting
-        select.value = 'fit';
+        if (select) {
+          select.value = 'fit';
+        }
       } else {
         zoomFactor = parseFloat(scaleVal);
-        select.value = scaleVal;
+        if (select) {
+          select.value = scaleVal;
+        }
       }
       
       // Store in local storage
