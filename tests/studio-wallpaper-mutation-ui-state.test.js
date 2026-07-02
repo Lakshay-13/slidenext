@@ -389,3 +389,42 @@ test('applyCustomGradient exits cleanly when the custom gradient controls are un
     ['getElementById', 'cgAngle']
   ]);
 });
+
+test('setCustomGradientType exits cleanly when the gradient chrome is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setCustomGradientTypeSource = extractFunctionSource(
+    fileContent,
+    'function setCustomGradientType(type) {',
+    '\n\n    // Build background CSS based on custom stops'
+  );
+
+  const calls = [];
+  const context = {
+    applyCustomGradient() {
+      calls.push(['applyCustomGradient']);
+      return false;
+    },
+    customGradientType: 'radial',
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (id === 'cgLinearBtn' || id === 'cgRadialBtn' || id === 'cgAngleGroup') {
+          return null;
+        }
+        return null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setCustomGradientTypeSource, context);
+
+  assert.equal(context.setCustomGradientType('linear'), false);
+  assert.equal(context.customGradientType, 'linear');
+  assert.deepEqual(calls, [
+    ['getElementById', 'cgLinearBtn'],
+    ['getElementById', 'cgRadialBtn'],
+    ['getElementById', 'cgAngleGroup'],
+    ['applyCustomGradient']
+  ]);
+});

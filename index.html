@@ -3873,16 +3873,28 @@
       const angleGroup = document.getElementById('cgAngleGroup');
       
       if (type === 'linear') {
-        linearBtn.className = 'py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
-        radialBtn.className = 'py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
-        angleGroup.classList.remove('hidden');
+        if (linearBtn) {
+          linearBtn.className = 'py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
+        }
+        if (radialBtn) {
+          radialBtn.className = 'py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
+        }
+        if (angleGroup) {
+          angleGroup.classList.remove('hidden');
+        }
       } else {
-        radialBtn.className = 'py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
-        linearBtn.className = 'py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
-        angleGroup.classList.add('hidden');
+        if (radialBtn) {
+          radialBtn.className = 'py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
+        }
+        if (linearBtn) {
+          linearBtn.className = 'py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
+        }
+        if (angleGroup) {
+          angleGroup.classList.add('hidden');
+        }
       }
       
-      applyCustomGradient();
+      return applyCustomGradient();
     }
 
     // Build background CSS based on custom stops
