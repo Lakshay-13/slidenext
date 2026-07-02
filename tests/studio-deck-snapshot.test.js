@@ -36,6 +36,38 @@ test('buildDeckSnapshotFromCanonicalDeck falls back to the first slide when acti
   });
 });
 
+test('buildDeckSnapshotFromCanonicalDeck falls back to the first slide when activeSlideId is missing', () => {
+  const snapshot = deckModel.buildDeckSnapshotFromCanonicalDeck({
+    slides: [
+      { id: 'slide-1', title: 'Intro', nodes: [{ id: 'node-1' }] },
+      { id: 'slide-2', title: 'Agenda', nodes: [{ id: 'node-2' }] }
+    ]
+  }, {
+    activeSlideId: 'missing-slide'
+  });
+
+  assert.deepEqual(snapshot, {
+    activeSlideId: 'slide-1',
+    activeSlideIndex: 0,
+    slides: [
+      {
+        id: 'slide-1',
+        index: 0,
+        title: 'Intro',
+        backgroundLabel: 'Default',
+        elementCount: 1
+      },
+      {
+        id: 'slide-2',
+        index: 1,
+        title: 'Agenda',
+        backgroundLabel: 'Default',
+        elementCount: 1
+      }
+    ]
+  });
+});
+
 test('buildStudioDeckSnapshot prefers the canonical deck snapshot when available', () => {
   const doc = { label: 'doc' };
   const result = deckSnapshot.buildStudioDeckSnapshot(doc, {

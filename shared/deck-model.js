@@ -281,7 +281,12 @@
     const slides = deck && Array.isArray(deck.slides) ? deck.slides : [];
     const slideSnapshots = slides.map((slide, index) => buildSlideSnapshotFromCanonicalSlide(slide, index, options));
     const requestedActiveSlideId = normalizeString(options.activeSlideId);
-    const activeSlideId = requestedActiveSlideId || (slideSnapshots[0] ? slideSnapshots[0].id : '');
+    const hasRequestedActiveSlide = requestedActiveSlideId
+      ? slideSnapshots.some((slide) => slide.id === requestedActiveSlideId)
+      : false;
+    const activeSlideId = hasRequestedActiveSlide
+      ? requestedActiveSlideId
+      : (slideSnapshots[0] ? slideSnapshots[0].id : '');
     const activeSlideIndex = slideSnapshots.findIndex(slide => slide.id === activeSlideId);
 
     return {
