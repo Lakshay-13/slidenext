@@ -189,6 +189,78 @@ test('toggleLayerVisibilityByRef deselects the temporary target when the visibil
   assert.equal(calls[5][1].selectedElements[0], target);
 });
 
+test('toggleLayerVisibilityByRef skips temporary selection UI sync before restoring preserved selection on success', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toggleLayerVisibilityByRefSource = extractFunctionSource(
+    fileContent,
+    'function toggleLayerVisibilityByRef(event) {',
+    '\n    \n    function changeLayerZIndexByRef(event, action) {'
+  );
+
+  const target = { id: 'target' };
+  const row = { id: 'row-1' };
+  const calls = [];
+  const context = {
+    applyEditorSelectionState(nextSelectionState) {
+      calls.push(['applyEditorSelectionState', nextSelectionState]);
+    },
+    getCommittedSelectedEditorElementIds() {
+      calls.push(['getCommittedSelectedEditorElementIds']);
+      return ['el-1'];
+    },
+    refreshSelectionClasses() {
+      calls.push(['refreshSelectionClasses']);
+    },
+    resolveLayerRowElement(currentRow) {
+      calls.push(['resolveLayerRowElement', currentRow]);
+      return target;
+    },
+    restoreCommittedSelectionByIdsOnActiveSlide(ids) {
+      calls.push(['restoreCommittedSelectionByIdsOnActiveSlide', ids]);
+    },
+    toggleSelectedElementsVisibility(options) {
+      calls.push(['toggleSelectedElementsVisibility', options]);
+      return true;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(toggleLayerVisibilityByRefSource, context);
+
+  const event = {
+    currentTarget: {
+      closest(selector) {
+        calls.push(['closest', selector]);
+        return row;
+      }
+    },
+    preventDefault() {
+      calls.push(['preventDefault']);
+    },
+    stopPropagation() {
+      calls.push(['stopPropagation']);
+    }
+  };
+
+  context.toggleLayerVisibilityByRef(event);
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'preventDefault',
+    'stopPropagation',
+    'closest',
+    'resolveLayerRowElement',
+    'getCommittedSelectedEditorElementIds',
+    'applyEditorSelectionState',
+    'refreshSelectionClasses',
+    'toggleSelectedElementsVisibility',
+    'restoreCommittedSelectionByIdsOnActiveSlide'
+  ]);
+  assert.equal(calls[3][1], row);
+  assert.equal(calls[5][1].selectedElement, target);
+  assert.equal(calls[7][1].skipSelectionUi, true);
+  assert.deepEqual(calls[8][1], ['el-1']);
+});
+
 test('selectLayerElementByRef refreshes the layer list when the row target is stale', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectLayerElementByRefSource = extractFunctionSource(

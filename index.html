@@ -3797,8 +3797,10 @@
       return selectedElements;
     }
 
-    function finalizeSelectionToggleMutation(versionLabel) {
-      syncSelectionUiAfterMutation();
+    function finalizeSelectionToggleMutation(versionLabel, options = {}) {
+      if (!options.skipSelectionUi) {
+        syncSelectionUiAfterMutation();
+      }
       finalizeEditorDeckMutation(versionLabel, {
         refreshThumbnails: false
       });
@@ -3823,7 +3825,7 @@
       return finalizeSelectionToggleMutation(lockMutationPlan.versionLabel);
     }
 
-    function toggleSelectedElementsVisibility() {
+    function toggleSelectedElementsVisibility(options = {}) {
       const doc = getIframeDoc();
       const visibilityMutationPlan = SlideNextStudioEditorVisibilityState.buildStudioVisibilityMutationPlan(selectedElements, {
         isHidden: isElementHidden,
@@ -3838,7 +3840,7 @@
         changedCount += 1;
       });
       if (changedCount === 0) return false;
-      return finalizeSelectionToggleMutation(visibilityMutationPlan.versionLabel);
+      return finalizeSelectionToggleMutation(visibilityMutationPlan.versionLabel, options);
     }
 
     // Helper: RGB to hex converters
@@ -6449,7 +6451,9 @@
         selectedElement: target
       });
       refreshSelectionClasses();
-      const didToggle = toggleSelectedElementsVisibility();
+      const didToggle = toggleSelectedElementsVisibility({
+        skipSelectionUi: true
+      });
       if (!didToggle) {
         restorePreservedSelection();
         return;

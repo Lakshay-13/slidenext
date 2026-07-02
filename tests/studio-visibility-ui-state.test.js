@@ -27,7 +27,7 @@ function loadSyncSelectionUiAfterMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function syncSelectionUiAfterMutation() {',
-    '\n\n    function finalizeSelectionToggleMutation(versionLabel) {'
+    '\n\n    function finalizeSelectionToggleMutation(versionLabel, options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -35,7 +35,7 @@ function loadSyncSelectionUiAfterMutation(fileContent, context) {
 function loadFinalizeSelectionToggleMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function finalizeSelectionToggleMutation(versionLabel) {',
+    'function finalizeSelectionToggleMutation(versionLabel, options = {}) {',
     '\n\n    function toggleSelectedElementsLockState() {'
   );
   vm.runInContext(helperSource, context);
@@ -102,7 +102,7 @@ test('toggleSelectedElementsVisibility returns false and skips persistence when 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const toggleSelectedElementsVisibilitySource = extractFunctionSource(
     fileContent,
-    'function toggleSelectedElementsVisibility() {',
+    'function toggleSelectedElementsVisibility(options = {}) {',
     '\n\n    // Helper: RGB to hex converters'
   );
 
@@ -181,7 +181,7 @@ test('toggleSelectedElementsVisibility returns true after hiding live targets an
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const toggleSelectedElementsVisibilitySource = extractFunctionSource(
     fileContent,
-    'function toggleSelectedElementsVisibility() {',
+    'function toggleSelectedElementsVisibility(options = {}) {',
     '\n\n    // Helper: RGB to hex converters'
   );
 
@@ -257,6 +257,90 @@ test('toggleSelectedElementsVisibility returns true after hiding live targets an
     ['setElementHiddenState', liveTarget, true],
     ['refreshSelectionClasses'],
     ['syncStudioSelectionUi', [liveTarget], ['syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']],
+    ['saveHistoryState'],
+    ['triggerAutoSave'],
+    ['triggerAutoVersion', 'Auto: Hid Element']
+  ]);
+});
+
+test('toggleSelectedElementsVisibility can skip temporary selection UI sync when requested', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toggleSelectedElementsVisibilitySource = extractFunctionSource(
+    fileContent,
+    'function toggleSelectedElementsVisibility(options = {}) {',
+    '\n\n    // Helper: RGB to hex converters'
+  );
+
+  const liveTarget = { isConnected: true };
+  const calls = [];
+  const context = {
+    selectedElements: [liveTarget],
+    SlideNextStudioEditorSelection: {
+      syncStudioSelectionUi(selection, options) {
+        calls.push(['syncStudioSelectionUi', selection, Object.keys(options).sort()]);
+      }
+    },
+    SlideNextStudioEditorVisibilityState: {
+      buildStudioVisibilityMutationPlan() {
+        calls.push(['buildStudioVisibilityMutationPlan']);
+        return {
+          didChange: true,
+          selection: [liveTarget],
+          shouldHide: true,
+          versionLabel: 'Auto: Hid Element'
+        };
+      }
+    },
+    getActiveSlide() {
+      calls.push(['getActiveSlide']);
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return { label: 'iframe-doc' };
+    },
+    isElementHidden(element) {
+      calls.push(['isElementHidden', element]);
+      return false;
+    },
+    refreshSelectionClasses() {
+      calls.push(['refreshSelectionClasses']);
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    setElementHiddenState(element, shouldHide) {
+      calls.push(['setElementHiddenState', element, shouldHide]);
+    },
+    syncInspectorForSelection() {
+      calls.push(['syncInspectorForSelection']);
+    },
+    syncSelectionOverlay() {
+      calls.push(['syncSelectionOverlay']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    }
+  };
+
+  vm.createContext(context);
+  loadSyncSelectionUiAfterMutation(fileContent, context);
+  loadFinalizeSelectionToggleMutation(fileContent, context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
+  vm.runInContext(toggleSelectedElementsVisibilitySource, context);
+
+  assert.equal(context.toggleSelectedElementsVisibility({ skipSelectionUi: true }), true);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['buildStudioVisibilityMutationPlan'],
+    ['isElementHidden', liveTarget],
+    ['setElementHiddenState', liveTarget, true],
     ['saveHistoryState'],
     ['triggerAutoSave'],
     ['triggerAutoVersion', 'Auto: Hid Element']
