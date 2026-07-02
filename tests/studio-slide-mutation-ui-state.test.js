@@ -14,6 +14,43 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadFinalizeSlideMutationPersistence(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function finalizeSlideMutationPersistence(versionLabel) {',
+    '\n\n    // Add Blank Slide Node'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+test('finalizeSlideMutationPersistence saves, autosaves, and versions slide changes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
+
+  const result = context.finalizeSlideMutationPersistence('Auto: Added Slide');
+
+  assert.equal(result, 'Auto: Added Slide');
+  assert.deepEqual(calls, [
+    ['saveHistoryState'],
+    ['triggerAutoSave'],
+    ['triggerAutoVersion', 'Auto: Added Slide']
+  ]);
+});
+
 test('addSlideNode uses the shared iframe accessor and appends a new blank slide before refreshing editor state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const addSlideNodeSource = extractFunctionSource(
@@ -88,6 +125,7 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   };
 
   vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
   vm.runInContext(addSlideNodeSource, context);
 
   const result = context.addSlideNode();
@@ -141,6 +179,7 @@ test('addSlideNode no-ops when the add-slide control is disabled or the iframe d
   };
 
   vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
   vm.runInContext(addSlideNodeSource, context);
 
   assert.equal(context.addSlideNode(), false);
@@ -213,6 +252,7 @@ test('addSlideNode skips history when blank slide creation fails', () => {
   };
 
   vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
   vm.runInContext(addSlideNodeSource, context);
 
   assert.equal(context.addSlideNode(), false);
@@ -311,6 +351,7 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
   };
 
   vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   context.reorderSlides(0, 2);
@@ -376,6 +417,7 @@ test('reorderSlides no-ops when the iframe document is unavailable', () => {
   };
 
   vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   assert.equal(context.reorderSlides(0, 1), false);
@@ -410,6 +452,7 @@ test('reorderSlides no-ops when the slide container is unavailable', () => {
   };
 
   vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   assert.equal(context.reorderSlides(0, 1), false);
@@ -451,6 +494,7 @@ test('reorderSlides no-ops when the requested slide indexes are unavailable', ()
   };
 
   vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   const result = context.reorderSlides(0, 9);
@@ -495,6 +539,7 @@ test('reorderSlides no-ops when the requested slide indexes are unchanged', () =
   };
 
   vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   const result = context.reorderSlides(1, 1);
@@ -682,6 +727,7 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
   };
 
   vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   const result = context.deleteSlideNode(1);
@@ -747,6 +793,7 @@ test('deleteSlideNode no-ops when the iframe document is unavailable', () => {
   };
 
   vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   assert.equal(context.deleteSlideNode(0), false);
@@ -787,6 +834,7 @@ test('deleteSlideNode no-ops when the requested slide index is unavailable', () 
   };
 
   vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   const result = context.deleteSlideNode(9);
@@ -832,6 +880,7 @@ test('deleteSlideNode refuses to remove the final remaining slide', () => {
   };
 
   vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   const result = context.deleteSlideNode(0);

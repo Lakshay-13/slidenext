@@ -2149,9 +2149,7 @@
         fallbackIndex: slideCount === 0 ? 0 : Math.min(toIdx, slideCount - 1),
         setActiveSlideByIndex: (index) => setActiveSlide(index)
       });
-      saveHistoryState();
-      triggerAutoSave();
-      triggerAutoVersion('Auto: Reordered Slides');
+      finalizeSlideMutationPersistence('Auto: Reordered Slides');
       return true;
     }
 
@@ -2292,6 +2290,15 @@
       });
     }
 
+    function finalizeSlideMutationPersistence(versionLabel) {
+      saveHistoryState();
+      triggerAutoSave();
+      if (versionLabel) {
+        triggerAutoVersion(versionLabel);
+      }
+      return versionLabel;
+    }
+
     // Add Blank Slide Node
     function addSlideNode() {
       const addSlideBtn = document.getElementById('addSlideBtn');
@@ -2316,9 +2323,7 @@
       // Update UI
       generateThumbnails();
       setActiveSlide(newIndex);
-      saveHistoryState();
-      triggerAutoSave();
-      triggerAutoVersion('Auto: Added Slide');
+      finalizeSlideMutationPersistence('Auto: Added Slide');
       return true;
     }
 
@@ -2355,9 +2360,7 @@
         fallbackIndex: remainingSlides.length === 0 ? 0 : Math.max(0, Math.min(idx - 1, remainingSlides.length - 1)),
         setActiveSlideByIndex: (index) => setActiveSlide(index)
       });
-      saveHistoryState();
-      triggerAutoSave();
-      triggerAutoVersion('Auto: Deleted Slide');
+      finalizeSlideMutationPersistence('Auto: Deleted Slide');
       return true;
     }
 
