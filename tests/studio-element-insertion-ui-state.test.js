@@ -62,6 +62,7 @@ test('insertElement uses the shared iframe accessor before adding a heading elem
     },
     selectElement(node) {
       calls.push(['selectElement', node]);
+      context.updateLayersList();
     },
     triggerAutoSave() {
       calls.push(['triggerAutoSave']);
@@ -92,10 +93,10 @@ test('insertElement uses the shared iframe accessor before adding a heading elem
     'makeElementsHoverable',
     'appendChild',
     'selectElement',
+    'updateLayersList',
     'generateThumbnails',
     'saveHistoryState',
     'triggerAutoSave',
-    'updateLayersList',
     'triggerAutoVersion'
   ]);
   assert.equal(calls[1][1], iframeDoc);
