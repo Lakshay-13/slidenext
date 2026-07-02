@@ -217,3 +217,114 @@ test('copySelectedElements returns true after creating clipboard state from copi
     ['updateClipboardActionState']
   ]);
 });
+
+test('duplicateSelectedElements returns false and refreshes clipboard controls when duplication is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const duplicateSelectedElementsSource = extractFunctionSource(
+    fileContent,
+    'function duplicateSelectedElements() {',
+    '\n\n    function nudgeSelectedElements(dx, dy) {'
+  );
+
+  const calls = [];
+  const context = {
+    editorClipboard: null,
+    selectedElements: [{ isConnected: true }],
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardMutationPlan() {
+        calls.push(['buildStudioClipboardMutationPlan']);
+        return {
+          canDuplicate: false,
+          selection: []
+        };
+      }
+    },
+    getActiveSlide() {
+      calls.push(['getActiveSlide']);
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return { label: 'iframe-doc' };
+    },
+    isElementLocked() {
+      calls.push(['isElementLocked']);
+      return false;
+    },
+    updateClipboardActionState() {
+      calls.push(['updateClipboardActionState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(duplicateSelectedElementsSource, context);
+
+  assert.equal(context.duplicateSelectedElements(), false);
+  assert.deepEqual(calls, [
+    ['buildStudioClipboardMutationPlan'],
+    ['updateClipboardActionState']
+  ]);
+});
+
+test('duplicateSelectedElements returns false and refreshes clipboard controls when insertion yields no duplicates', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const duplicateSelectedElementsSource = extractFunctionSource(
+    fileContent,
+    'function duplicateSelectedElements() {',
+    '\n\n    function nudgeSelectedElements(dx, dy) {'
+  );
+
+  const liveTarget = { isConnected: true };
+  const calls = [];
+  const context = {
+    editorClipboard: null,
+    selectedElements: [liveTarget],
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardMutationPlan() {
+        calls.push(['buildStudioClipboardMutationPlan']);
+        return {
+          canDuplicate: true,
+          selection: [liveTarget]
+        };
+      }
+    },
+    buildClipboardPayload(selection) {
+      calls.push(['buildClipboardPayload', selection]);
+      return [{ id: 'clipboard-item' }];
+    },
+    finalizeInsertedElements() {
+      calls.push(['finalizeInsertedElements']);
+      return true;
+    },
+    getActiveSlide() {
+      calls.push(['getActiveSlide']);
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return { label: 'iframe-doc' };
+    },
+    insertClipboardPayload(items, offsetMultiplier) {
+      calls.push(['insertClipboardPayload', items, offsetMultiplier]);
+      return [];
+    },
+    isElementLocked() {
+      calls.push(['isElementLocked']);
+      return false;
+    },
+    updateClipboardActionState() {
+      calls.push(['updateClipboardActionState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(duplicateSelectedElementsSource, context);
+
+  assert.equal(context.duplicateSelectedElements(), false);
+  assert.deepEqual(calls, [
+    ['buildStudioClipboardMutationPlan'],
+    ['buildClipboardPayload', [liveTarget]],
+    ['insertClipboardPayload', [{ id: 'clipboard-item' }], 1],
+    ['updateClipboardActionState']
+  ]);
+});

@@ -3372,9 +3372,15 @@
         isLocked: isElementLocked,
         canMutateDeck: () => !!getActiveSlide(getIframeDoc())
       });
-      if (!clipboardActionState.canDuplicate) return false;
+      if (!clipboardActionState.canDuplicate) {
+        updateClipboardActionState();
+        return false;
+      }
       const duplicates = insertClipboardPayload(buildClipboardPayload(clipboardActionState.selection), 1);
-      if (duplicates.length === 0) return false;
+      if (duplicates.length === 0) {
+        updateClipboardActionState();
+        return false;
+      }
       return finalizeInsertedElements(duplicates, 'Auto: Duplicated Element');
     }
 
