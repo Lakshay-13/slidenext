@@ -1445,14 +1445,33 @@
     }
 
     function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {
-      const persistedActiveSlideId = getPersistedActiveSlideId();
-      const hasCanonicalDeckValidator = (
+      const resolveStudioFallbackActiveSlideId = (
+        typeof SlideNextStudioDeckView !== 'undefined'
+        && SlideNextStudioDeckView
+      )
+        && typeof SlideNextStudioDeckView.resolveStudioFallbackActiveSlideId === 'function'
+        ? SlideNextStudioDeckView.resolveStudioFallbackActiveSlideId
+        : null;
+      const canonicalDeckValidator = (
         typeof SlideNextCanonicalDeck !== 'undefined'
         && SlideNextCanonicalDeck
         && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-      );
-      const hasValidCanonicalDeck = hasCanonicalDeckValidator
-        ? SlideNextCanonicalDeck.isCanonicalDeck(canonicalDeck)
+      )
+        ? SlideNextCanonicalDeck.isCanonicalDeck
+        : null;
+      if (resolveStudioFallbackActiveSlideId) {
+        return resolveStudioFallbackActiveSlideId(doc, canonicalDeck, {
+          currentSlideIndex,
+          getPersistedActiveSlideId,
+          resolveCanonicalDeck: (nextDoc) => buildEditorCanonicalDeck(nextDoc),
+          resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
+          isCanonicalDeck: canonicalDeckValidator
+        });
+      }
+
+      const persistedActiveSlideId = getPersistedActiveSlideId();
+      const hasValidCanonicalDeck = canonicalDeckValidator
+        ? canonicalDeckValidator(canonicalDeck)
         : !!(canonicalDeck && Array.isArray(canonicalDeck.slides));
       const nextCanonicalDeck = hasValidCanonicalDeck
         ? canonicalDeck

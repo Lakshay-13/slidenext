@@ -17,6 +17,48 @@
     return !!deck && Array.isArray(deck.slides);
   }
 
+  function resolveStudioFallbackActiveSlideId(doc, canonicalDeck = null, options = {}) {
+    const getPersistedActiveSlideId = typeof options.getPersistedActiveSlideId === 'function'
+      ? options.getPersistedActiveSlideId
+      : () => '';
+    const persistedActiveSlideId = getPersistedActiveSlideId();
+    const resolveLiveActiveSlideId = typeof options.resolveLiveActiveSlideId === 'function'
+      ? options.resolveLiveActiveSlideId
+      : () => '';
+    const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
+      ? options.resolveCanonicalDeck
+      : () => null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : isCanonicalDeckLike;
+
+    const hasValidCanonicalDeck = !!canonicalDeck && isCanonicalDeck(canonicalDeck);
+    const nextCanonicalDeck = hasValidCanonicalDeck
+      ? canonicalDeck
+      : (canonicalDeck ? resolveCanonicalDeck(doc) : null);
+    if (doc) {
+      const liveActiveSlideId = resolveLiveActiveSlideId(doc);
+      if (typeof liveActiveSlideId === 'string' && liveActiveSlideId.trim()) {
+        return liveActiveSlideId;
+      }
+      if (!nextCanonicalDeck) {
+        return persistedActiveSlideId;
+      }
+    }
+
+    const resolvedCanonicalDeck = nextCanonicalDeck || resolveCanonicalDeck(doc);
+    if (!isCanonicalDeckLike(resolvedCanonicalDeck) || resolvedCanonicalDeck.slides.length === 0) {
+      return persistedActiveSlideId;
+    }
+
+    const fallbackIndex = Number.isInteger(options.currentSlideIndex) ? options.currentSlideIndex : 0;
+    const safeIndex = Math.max(0, Math.min(fallbackIndex, resolvedCanonicalDeck.slides.length - 1));
+    const activeSlide = resolvedCanonicalDeck.slides[safeIndex];
+    return activeSlide && typeof activeSlide.id === 'string' && activeSlide.id.trim()
+      ? activeSlide.id
+      : persistedActiveSlideId;
+  }
+
   function teardownStudioDeckActiveSlideSync(state = {}, options = {}) {
     const disconnectObserver = typeof options.disconnectObserver === 'function'
       ? options.disconnectObserver
@@ -528,6 +570,7 @@
     restoreStudioDeckViewAfterSlideMutation,
     updateStudioDeckNavigationUi,
     isCanonicalDeckLike,
+    resolveStudioFallbackActiveSlideId,
     buildStudioPreviewHtml,
     buildStudioSourceHtml
   };

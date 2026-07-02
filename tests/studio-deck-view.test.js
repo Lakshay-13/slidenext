@@ -3,6 +3,88 @@ const assert = require('node:assert/strict');
 
 const deckView = require('../shared/studio-deck-view.js');
 
+test('resolveStudioFallbackActiveSlideId prefers the live active slide id before fallback canonical resolution', () => {
+  const calls = [];
+
+  const result = deckView.resolveStudioFallbackActiveSlideId(
+    { label: 'iframe-doc' },
+    null,
+    {
+      currentSlideIndex: 1,
+      getPersistedActiveSlideId() {
+        calls.push('getPersistedActiveSlideId');
+        return 'slide-persisted';
+      },
+      resolveLiveActiveSlideId(doc) {
+        calls.push(['resolveLiveActiveSlideId', doc]);
+        return 'slide-live';
+      },
+      resolveCanonicalDeck() {
+        calls.push('resolveCanonicalDeck');
+        return {
+          slides: [
+            { id: 'slide-1', nodes: [] },
+            { id: 'slide-2', nodes: [] }
+          ]
+        };
+      }
+    }
+  );
+
+  assert.equal(result, 'slide-live');
+  assert.deepEqual(calls, [
+    'getPersistedActiveSlideId',
+    ['resolveLiveActiveSlideId', { label: 'iframe-doc' }]
+  ]);
+});
+
+test('resolveStudioFallbackActiveSlideId rebuilds malformed canonical decks before choosing the current session slide', () => {
+  const rebuiltCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  const malformedCanonicalDeck = {
+    slides: 'not-an-array'
+  };
+  const calls = [];
+
+  const result = deckView.resolveStudioFallbackActiveSlideId(
+    { label: 'iframe-doc' },
+    malformedCanonicalDeck,
+    {
+      currentSlideIndex: 1,
+      getPersistedActiveSlideId() {
+        calls.push('getPersistedActiveSlideId');
+        return 'slide-persisted';
+      },
+      resolveLiveActiveSlideId(doc) {
+        calls.push(['resolveLiveActiveSlideId', doc]);
+        return '';
+      },
+      resolveCanonicalDeck(doc) {
+        calls.push(['resolveCanonicalDeck', doc]);
+        return rebuiltCanonicalDeck;
+      },
+      isCanonicalDeck(deck) {
+        calls.push(['isCanonicalDeck', deck]);
+        return deck === rebuiltCanonicalDeck;
+      }
+    }
+  );
+
+  assert.equal(result, 'slide-2');
+  assert.deepEqual(calls, [
+    'getPersistedActiveSlideId',
+    ['isCanonicalDeck', malformedCanonicalDeck],
+    ['resolveCanonicalDeck', { label: 'iframe-doc' }],
+    ['resolveLiveActiveSlideId', { label: 'iframe-doc' }]
+  ]);
+});
+
 test('buildStudioPreviewHtml falls back when the canonical deck is malformed', () => {
   const result = deckView.buildStudioPreviewHtml(
     { label: 'doc' },
