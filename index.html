@@ -3403,9 +3403,21 @@
       if (visibilityLabel) visibilityLabel.textContent = visibilityActionState.allHidden ? 'Show Selected' : 'Hide Selected';
     }
 
+    function buildMotionSelectionActionState(doc = null) {
+      const resolvedDoc = doc || getIframeDoc();
+      const slide = getActiveSlide(resolvedDoc);
+      const nudgeSelectionState = getNudgeSelectionState();
+      return {
+        doc: resolvedDoc,
+        slide,
+        nudgeSelectionState,
+        canNudge: !!(resolvedDoc && slide && nudgeSelectionState.canNudge)
+      };
+    }
+
     function updateMotionActionState(doc = getIframeDoc()) {
-      const hasActiveSlide = !!getActiveSlide(doc);
-      const canNudge = hasActiveSlide && getNudgeSelectionState().canNudge;
+      const motionActionState = buildMotionSelectionActionState(doc);
+      const canNudge = motionActionState.canNudge;
       ['nudgeSelectionUpBtn', 'nudgeSelectionLeftBtn', 'nudgeSelectionRightBtn', 'nudgeSelectionDownBtn'].forEach(id => {
         const btn = document.getElementById(id);
         if (btn) btn.disabled = !canNudge;
@@ -3769,10 +3781,9 @@
     }
 
     function nudgeSelectedElements(dx, dy) {
-      const doc = getIframeDoc();
-      const slide = getActiveSlide(doc);
-      const nudgeSelectionState = getNudgeSelectionState();
-      if (!doc || !slide || !nudgeSelectionState.canNudge) {
+      const motionActionState = buildMotionSelectionActionState();
+      const { doc, slide, nudgeSelectionState } = motionActionState;
+      if (!motionActionState.canNudge) {
         updateMotionActionState(doc);
         return false;
       }

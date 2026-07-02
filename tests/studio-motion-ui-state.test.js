@@ -23,6 +23,15 @@ function loadFinalizeEditorDeckMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadBuildMotionSelectionActionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function buildMotionSelectionActionState(doc = null) {',
+    '\n\n    function updateMotionActionState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function createControls() {
   return {
     nudgeSelectionUpBtn: { disabled: true },
@@ -35,6 +44,45 @@ function createControls() {
 function getControlStates(controls) {
   return Object.fromEntries(Object.entries(controls).map(([id, control]) => [id, control.disabled]));
 }
+
+test('buildMotionSelectionActionState reuses the current doc, slide, and nudge selection state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = { activeSlide: { id: 'slide-1' } };
+  const nudgeSelectionState = {
+    canNudge: true,
+    selection: [{ id: 'node-1' }]
+  };
+  const calls = [];
+  const context = {
+    getActiveSlide(currentDoc) {
+      calls.push(['getActiveSlide', currentDoc]);
+      return currentDoc && currentDoc.activeSlide ? currentDoc.activeSlide : null;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return doc;
+    },
+    getNudgeSelectionState() {
+      calls.push(['getNudgeSelectionState']);
+      return nudgeSelectionState;
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildMotionSelectionActionState(fileContent, context);
+
+  const motionActionState = context.buildMotionSelectionActionState();
+
+  assert.equal(motionActionState.doc, doc);
+  assert.equal(motionActionState.slide, doc.activeSlide);
+  assert.equal(motionActionState.nudgeSelectionState, nudgeSelectionState);
+  assert.equal(motionActionState.canNudge, true);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getActiveSlide', doc],
+    ['getNudgeSelectionState']
+  ]);
+});
 
 test('updateMotionActionState enables nudge controls only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
@@ -63,6 +111,7 @@ test('updateMotionActionState enables nudge controls only when the iframe has a 
   };
 
   vm.createContext(context);
+  loadBuildMotionSelectionActionState(fileContent, context);
   vm.runInContext(updateMotionActionStateSource, context);
 
   context.updateMotionActionState(null);
@@ -128,6 +177,7 @@ test('nudgeSelectedElements returns false and refreshes motion controls when nud
   };
 
   vm.createContext(context);
+  loadBuildMotionSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
@@ -233,6 +283,7 @@ test('nudgeSelectedElements persists the moved selection through the shared muta
   };
 
   vm.createContext(context);
+  loadBuildMotionSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
