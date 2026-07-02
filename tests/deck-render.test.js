@@ -264,6 +264,37 @@ test('renderCanonicalDeckHtml overlays canonical slide metadata onto reused slid
   assert.doesNotMatch(html, /data-notes=/);
 });
 
+test('renderCanonicalDeckHtml overlays canonical slide source attributes onto reused slide source html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        source: {
+          html: '<section data-transition="wipe" data-stale="keep"><p>Intro</p></section>',
+          attributes: {
+            'data-transition': 'fade',
+            'data-theme': 'hero'
+          }
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /data-transition="fade"/);
+  assert.match(html, /data-theme="hero"/);
+  assert.match(html, /data-stale="keep"/);
+  assert.doesNotMatch(html, /data-transition="wipe"/);
+});
+
 test('renderCanonicalDeckHtml can rebuild canonical head when source head html is disabled', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {
@@ -907,7 +938,10 @@ test('renderCanonicalDeckHtml falls back to canonical slide background metadata 
     preferNodeSourceHtml: false
   });
 
-  assert.match(html, /<section class="slide hero-slide slide-active" style="background-color: #101820; background-image: linear-gradient\(135deg, #101820, #1f2937\);" id="slide-1"><\/section>/);
+  assert.match(html, /<section\b[^>]*><\/section>/);
+  assert.match(html, /\bclass="slide hero-slide slide-active"/);
+  assert.match(html, /\bid="slide-1"/);
+  assert.match(html, /\bstyle="background-color: #101820; background-image: linear-gradient\(135deg, #101820, #1f2937\);"/);
 });
 
 test('renderCanonicalDeckHtml preserves explicit slide source attributes over canonical background fallbacks', () => {
@@ -1071,6 +1105,9 @@ test('renderCanonicalDeckHtml adds slide positioning context for canonical absol
     preferNodeSourceHtml: false
   });
 
-  assert.match(html, /<section style="position: relative;" class="slide slide-active" id="slide-1">/);
+  assert.match(html, /<section\b[^>]*>/);
+  assert.match(html, /\bclass="slide slide-active"/);
+  assert.match(html, /\bid="slide-1"/);
+  assert.match(html, /\bstyle="position: relative;"/);
   assert.match(html, /<div style="position: absolute; left: 120px; top: 80px; width: 400px; height: 160px; z-index: 3;">Hero copy<\/div>/);
 });
