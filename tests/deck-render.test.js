@@ -358,6 +358,42 @@ test('renderCanonicalDeckHtml overlays canonical stylesheet assets onto reused s
   assert.doesNotMatch(html, /stale\.css/);
 });
 
+test('renderCanonicalDeckHtml overlays canonical preload assets onto reused source head html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'font',
+        src: '/presentations/demo/fonts/deck-sans.woff2',
+        mimeType: 'font/woff2',
+        meta: {
+          crossorigin: 'use-credentials'
+        }
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '<link rel="preload" as="font" href="/presentations/demo/stale-font.woff2"><style>.deck-shell{color:red;}</style>',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<link rel="preload" as="font" href="\/presentations\/demo\/fonts\/deck-sans\.woff2" type="font\/woff2" crossorigin="use-credentials">/);
+  assert.match(html, /<style>\.deck-shell\{color:red;\}<\/style>/);
+  assert.doesNotMatch(html, /stale-font/);
+});
+
 test('renderCanonicalDeckHtml updates active classes and ids even when reusing slide source html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [

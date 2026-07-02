@@ -626,6 +626,15 @@
       nextHeadHtml = `${stylesheetAssetLinkTags.join('\n')}\n${nextHeadHtml}`;
     }
 
+    const preloadAssetLinkTags = buildPreloadAssetLinkTags(deck.assets);
+    if (preloadAssetLinkTags.length > 0) {
+      nextHeadHtml = nextHeadHtml.replace(
+        /<link\b(?=[^>]*\brel=(?:"[^"]*\bpreload\b[^"]*"|'[^']*\bpreload\b[^']*'))[^>]*>\s*/gi,
+        ''
+      );
+      nextHeadHtml = `${preloadAssetLinkTags.join('\n')}\n${nextHeadHtml}`;
+    }
+
     return nextHeadHtml;
   }
 
