@@ -657,6 +657,24 @@
     ].join('\n');
   }
 
+  function applyCanonicalDeckBodySourceHtmlState(bodyHtml = '', deck = {}) {
+    let nextBodyHtml = normalizeString(bodyHtml);
+    if (!nextBodyHtml) {
+      return nextBodyHtml;
+    }
+
+    const scriptAssetTags = buildScriptAssetTags(deck.assets);
+    if (scriptAssetTags.length > 0) {
+      nextBodyHtml = nextBodyHtml.replace(
+        /<script\b(?=[^>]*\bsrc=)[\s\S]*?<\/script>\s*/gi,
+        ''
+      );
+      nextBodyHtml = `${nextBodyHtml}\n${scriptAssetTags.join('\n')}`.trim();
+    }
+
+    return nextBodyHtml;
+  }
+
   function canReuseCanonicalDeckSourceHtml(options = {}) {
     return options.preferSourceHtml !== false
       && options.preferHeadSourceHtml !== false
@@ -685,7 +703,7 @@
       : applyCanonicalDeckHeadSourceHtmlState(normalizeString(deck.source && deck.source.headHtml), deck) || buildDefaultHeadHtml(deck);
     const bodyAttributes = asPlainObject(deck.source && deck.source.bodyAttributes);
     const bodyHtml = canReuseCanonicalDeckBodySourceHtml(options)
-      ? normalizeString(deck.source && deck.source.bodyHtml) || buildDefaultBodyHtml(deck, options)
+      ? applyCanonicalDeckBodySourceHtmlState(normalizeString(deck.source && deck.source.bodyHtml), deck) || buildDefaultBodyHtml(deck, options)
       : buildDefaultBodyHtml(deck, options);
 
     return [

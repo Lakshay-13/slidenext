@@ -394,6 +394,42 @@ test('renderCanonicalDeckHtml overlays canonical preload assets onto reused sour
   assert.doesNotMatch(html, /stale-font/);
 });
 
+test('renderCanonicalDeckHtml overlays canonical script assets onto reused source body html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'script',
+        src: '/presentations/demo/app.js',
+        meta: {
+          type: 'module',
+          crossorigin: 'anonymous'
+        }
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: '<main>Body copy</main><script src="/presentations/demo/stale.js"></script>'
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: true,
+    preferSlideSourceHtml: true,
+    preferNodeSourceHtml: true
+  });
+
+  assert.match(html, /<main>Body copy<\/main>/);
+  assert.match(html, /<script src="\/presentations\/demo\/app\.js" type="module" crossorigin="anonymous"><\/script>/);
+  assert.doesNotMatch(html, /stale\.js/);
+});
+
 test('renderCanonicalDeckHtml updates active classes and ids even when reusing slide source html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [
