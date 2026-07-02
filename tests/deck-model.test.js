@@ -62,3 +62,41 @@ test('buildCanonicalLayerSnapshot skips explicit canonical node ids when generat
     ['node-2', 'node-1', 'node-3', 'custom-node', 'node-4']
   );
 });
+
+test('buildDeckSnapshotFromCanonicalDeck ignores structural slide classes when inferring background labels', () => {
+  const snapshot = deckModel.buildDeckSnapshotFromCanonicalDeck({
+    slides: [
+      {
+        id: 'slide-1',
+        title: 'Intro',
+        layout: {
+          background: {
+            className: 'slide slide-active'
+          }
+        },
+        nodes: []
+      }
+    ]
+  });
+
+  assert.equal(snapshot.slides[0].backgroundLabel, 'Default');
+});
+
+test('buildDeckSnapshotFromCanonicalDeck keeps custom background classes in the inferred label', () => {
+  const snapshot = deckModel.buildDeckSnapshotFromCanonicalDeck({
+    slides: [
+      {
+        id: 'slide-1',
+        title: 'Intro',
+        layout: {
+          background: {
+            className: 'slide theme-sunset'
+          }
+        },
+        nodes: []
+      }
+    ]
+  });
+
+  assert.equal(snapshot.slides[0].backgroundLabel, 'Gradient/Paint');
+});

@@ -253,8 +253,15 @@
     const background = slide && slide.layout && slide.layout.background
       ? slide.layout.background
       : {};
+    const hasMeaningfulBackgroundClass = normalizeString(background.className)
+      .split(/\s+/)
+      .map((className) => className.trim())
+      .filter(Boolean)
+      .some((className) => className !== 'slide' && className !== 'slide-active');
     return background.style || background.image || background.color || background.className
-      ? 'Gradient/Paint'
+      ? (background.style || background.image || background.color || hasMeaningfulBackgroundClass
+          ? 'Gradient/Paint'
+          : 'Default')
       : 'Default';
   }
 
