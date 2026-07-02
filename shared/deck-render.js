@@ -607,6 +607,16 @@
         : `${keywordsMetaTag}\n${nextHeadHtml}`;
     }
 
+    const iconHref = normalizeString(metadata.icon).trim();
+    const iconLinkTag = looksLikeAssetHref(iconHref)
+      ? `<link rel="icon" href="${escapeAttribute(iconHref)}">`
+      : '';
+    if (iconLinkTag) {
+      nextHeadHtml = /<link\b(?=[^>]*\brel=(?:"[^"]*\bicon\b[^"]*"|'[^']*\bicon\b[^']*'))[^>]*>/i.test(nextHeadHtml)
+        ? nextHeadHtml.replace(/<link\b(?=[^>]*\brel=(?:"[^"]*\bicon\b[^"]*"|'[^']*\bicon\b[^']*'))[^>]*>/i, iconLinkTag)
+        : `${iconLinkTag}\n${nextHeadHtml}`;
+    }
+
     return nextHeadHtml;
   }
 

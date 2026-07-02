@@ -293,6 +293,35 @@ test('renderCanonicalDeckHtml overlays canonical description and keywords onto r
   assert.doesNotMatch(html, /stale, keywords/);
 });
 
+test('renderCanonicalDeckHtml overlays canonical favicon onto reused source head html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    metadata: {
+      icon: '/assets/canonical-favicon.png'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '<link rel="icon" href="/assets/stale-favicon.png"><style>.deck-shell{color:red;}</style>',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<link rel="icon" href="\/assets\/canonical-favicon\.png">/);
+  assert.match(html, /<style>\.deck-shell\{color:red;\}<\/style>/);
+  assert.doesNotMatch(html, /stale-favicon/);
+});
+
 test('renderCanonicalDeckHtml updates active classes and ids even when reusing slide source html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [
