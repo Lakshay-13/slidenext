@@ -96,3 +96,124 @@ test('updateClipboardActionState enables clipboard controls only when the iframe
     slidePasteClipboardBtn: false
   });
 });
+
+test('copySelectedElements returns false and refreshes clipboard controls when payload build yields no items', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const copySelectedElementsSource = extractFunctionSource(
+    fileContent,
+    'function copySelectedElements() {',
+    '\n\n    function pasteClipboardElements() {'
+  );
+
+  const liveTarget = { isConnected: true };
+  const calls = [];
+  const context = {
+    editorClipboard: null,
+    selectedElements: [liveTarget],
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardMutationPlan() {
+        calls.push(['buildStudioClipboardMutationPlan']);
+        return {
+          canCopy: true,
+          selection: [liveTarget]
+        };
+      },
+      createStudioClipboardState() {
+        calls.push(['createStudioClipboardState']);
+        return { items: [{ id: 'clipboard-item' }], pasteCount: 0 };
+      }
+    },
+    buildClipboardPayload(selection) {
+      calls.push(['buildClipboardPayload', selection]);
+      return [];
+    },
+    getActiveSlide() {
+      calls.push(['getActiveSlide']);
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return { label: 'iframe-doc' };
+    },
+    isElementLocked() {
+      calls.push(['isElementLocked']);
+      return false;
+    },
+    updateClipboardActionState() {
+      calls.push(['updateClipboardActionState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(copySelectedElementsSource, context);
+
+  assert.equal(context.copySelectedElements(), false);
+  assert.equal(context.editorClipboard, null);
+  assert.deepEqual(calls, [
+    ['buildStudioClipboardMutationPlan'],
+    ['buildClipboardPayload', [liveTarget]],
+    ['updateClipboardActionState']
+  ]);
+});
+
+test('copySelectedElements returns true after creating clipboard state from copied items', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const copySelectedElementsSource = extractFunctionSource(
+    fileContent,
+    'function copySelectedElements() {',
+    '\n\n    function pasteClipboardElements() {'
+  );
+
+  const liveTarget = { isConnected: true };
+  const copiedItems = [{ id: 'clipboard-item' }];
+  const nextClipboard = { items: copiedItems, pasteCount: 0 };
+  const calls = [];
+  const context = {
+    editorClipboard: null,
+    selectedElements: [liveTarget],
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardMutationPlan() {
+        calls.push(['buildStudioClipboardMutationPlan']);
+        return {
+          canCopy: true,
+          selection: [liveTarget]
+        };
+      },
+      createStudioClipboardState(items) {
+        calls.push(['createStudioClipboardState', items]);
+        return nextClipboard;
+      }
+    },
+    buildClipboardPayload(selection) {
+      calls.push(['buildClipboardPayload', selection]);
+      return copiedItems;
+    },
+    getActiveSlide() {
+      calls.push(['getActiveSlide']);
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return { label: 'iframe-doc' };
+    },
+    isElementLocked() {
+      calls.push(['isElementLocked']);
+      return false;
+    },
+    updateClipboardActionState() {
+      calls.push(['updateClipboardActionState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(copySelectedElementsSource, context);
+
+  assert.equal(context.copySelectedElements(), true);
+  assert.equal(context.editorClipboard, nextClipboard);
+  assert.deepEqual(calls, [
+    ['buildStudioClipboardMutationPlan'],
+    ['buildClipboardPayload', [liveTarget]],
+    ['createStudioClipboardState', copiedItems],
+    ['updateClipboardActionState']
+  ]);
+});

@@ -3344,7 +3344,10 @@
         return false;
       }
       const items = buildClipboardPayload(clipboardActionState.selection);
-      if (items.length === 0) return false;
+      if (items.length === 0) {
+        updateClipboardActionState();
+        return false;
+      }
       editorClipboard = SlideNextStudioEditorClipboard.createStudioClipboardState(items);
       updateClipboardActionState();
       return true;
