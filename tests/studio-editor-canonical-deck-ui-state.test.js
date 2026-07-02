@@ -349,6 +349,71 @@ test('buildEditorCanonicalDeck prefers the current metadata canonical deck over 
   assert.equal(result, currentMetadataCanonicalDeck);
 });
 
+test('resolveEditorCanonicalDeckOverride delegates canonical override resolution through the shared editor persistence helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorCanonicalDeck(doc = getIframeDoc()) {',
+    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextCanonicalDeck: {
+      isCanonicalDeck(deck) {
+        return deck === canonicalDeck;
+      }
+    },
+    SlideNextStudioDeckContext: {
+      buildStudioCanonicalDeck() {
+        return canonicalDeck;
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      resolveStudioCanonicalDeckOverride(options) {
+        delegatedArgs = {
+          canonicalDeck: options.canonicalDeck,
+          buildCanonicalDeck: options.buildCanonicalDeck,
+          isCanonicalDeck: options.isCanonicalDeck
+        };
+        return options.buildCanonicalDeck();
+      }
+    },
+    buildCurrentPresentationMetadataSeed: () => ({ id: 'seed-deck' }),
+    currentPresentationMetadata: null,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    assignEditorElementId() {
+      return 'node-1';
+    },
+    getEditorSlideId() {
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    lastPersistedCanonicalDeck: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  const result = context.resolveEditorCanonicalDeckOverride(null, {
+    buildCanonicalDeck: () => context.buildEditorCanonicalDeck(iframeDoc)
+  });
+
+  assert.equal(result, canonicalDeck);
+  assert.equal(delegatedArgs.canonicalDeck, null);
+  assert.equal(typeof delegatedArgs.buildCanonicalDeck, 'function');
+  assert.equal(delegatedArgs.isCanonicalDeck, context.SlideNextCanonicalDeck.isCanonicalDeck);
+});
+
 test('resolveEditorFallbackActiveSlideId rebuilds a malformed canonical deck input before choosing the fallback slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
@@ -469,6 +534,11 @@ test('resolveEditorFallbackActiveSlideId delegates to the shared deck view helpe
 
 test('resolveEditorFallbackActiveSlideId delegates canonical override resolution to the shared editor persistence helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {',
+    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
+  );
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
     fileContent,
     'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
@@ -527,6 +597,7 @@ test('resolveEditorFallbackActiveSlideId delegates canonical override resolution
   };
 
   vm.createContext(context);
+  vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
 
   const result = context.resolveEditorFallbackActiveSlideId(iframeDoc, malformedCanonicalDeck);
