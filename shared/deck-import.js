@@ -379,10 +379,18 @@
     return attributes;
   }
 
-  function stripCanonicalNodeAttributeDuplicates(attributes = {}) {
+  function stripCanonicalNodeAttributeDuplicates(attributes = {}, visibility = {}) {
     const nextAttributes = { ...attributes };
     delete nextAttributes.class;
     delete nextAttributes.style;
+    if (visibility && visibility.hidden) {
+      delete nextAttributes.hidden;
+      delete nextAttributes['aria-hidden'];
+      delete nextAttributes['data-editor-hidden'];
+    }
+    if (visibility && visibility.locked) {
+      delete nextAttributes['data-editor-locked'];
+    }
     return nextAttributes;
   }
 
@@ -564,6 +572,7 @@
     const fallbackNodeId = context.path && context.path.length > 0
       ? `${context.slideId || 'slide'}-node-${context.path.join('-')}`
       : `node-${(context.nodeIndex || 0) + 1}`;
+    const visibility = buildImportedVisibility(el, win);
 
     return canonicalDeck.createCanonicalNode({
       id: typeof options.getNodeId === 'function'
@@ -575,10 +584,10 @@
       text: normalizeWhitespace(childElements.length === 0 ? (el.textContent || '') : extractDirectText(el)),
       html: buildImportedSourceHtml(el, options),
       classes: sanitizeImportedClassNames(el.classList || [], options),
-      attributes: stripCanonicalNodeAttributeDuplicates(sanitizeImportedAttributeMap(el, options)),
+      attributes: stripCanonicalNodeAttributeDuplicates(sanitizeImportedAttributeMap(el, options), visibility),
       style: normalizeString(el.getAttribute('style')),
       layout: buildImportedLayout(el, win),
-      visibility: buildImportedVisibility(el, win),
+      visibility,
       children: childElements.map((child, childIndex) => importElementToCanonicalNode(child, options, {
         slideId: context.slideId,
         nodeIndex: childIndex,

@@ -896,8 +896,11 @@ test('importElementToCanonicalNode strips editor-only classes and attributes fro
   const element = createImportedElement({
     tagName: 'DIV',
     classList: createIterableClassList(['hero-card', 'editor-hoverable']),
+    hidden: true,
     attributes: {
       class: 'hero-card editor-hoverable',
+      hidden: '',
+      'aria-hidden': 'false',
       'data-editor-id': 'node-1',
       'data-editor-hidden': 'true',
       'aria-label': 'Hero'
@@ -911,6 +914,10 @@ test('importElementToCanonicalNode strips editor-only classes and attributes fro
   assert.deepEqual(node.classes, ['hero-card']);
   assert.deepEqual(node.attributes, {
     'aria-label': 'Hero'
+  });
+  assert.deepEqual(node.visibility, {
+    hidden: true,
+    locked: false
   });
 });
 
