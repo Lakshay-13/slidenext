@@ -14,6 +14,14 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function extractClipboardActionFinalizerSource(fileContent) {
+  return extractFunctionSource(
+    fileContent,
+    'function finalizeClipboardActionResult(result) {',
+    '\n\n    function finalizeInsertedElements(insertedElements, versionLabel) {'
+  );
+}
+
 function createControls() {
   return {
     copySelectionBtn: { disabled: true },
@@ -29,6 +37,28 @@ function getControlStates(controls) {
     slidePasteClipboardBtn: controls.slidePasteClipboardBtn.disabled
   };
 }
+
+test('finalizeClipboardActionResult refreshes clipboard controls and preserves the action result', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
+
+  const calls = [];
+  const context = {
+    updateClipboardActionState() {
+      calls.push(['updateClipboardActionState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(finalizeClipboardActionResultSource, context);
+
+  assert.equal(context.finalizeClipboardActionResult(false), false);
+  assert.equal(context.finalizeClipboardActionResult(true), true);
+  assert.deepEqual(calls, [
+    ['updateClipboardActionState'],
+    ['updateClipboardActionState']
+  ]);
+});
 
 test('finalizeInsertedElements commits the new selection and delegates persistence through the shared mutation helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
@@ -140,6 +170,7 @@ test('updateClipboardActionState enables clipboard controls only when the iframe
 
 test('copySelectedElements returns false and refreshes clipboard controls when payload build yields no items', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
   const copySelectedElementsSource = extractFunctionSource(
     fileContent,
     'function copySelectedElements() {',
@@ -186,7 +217,7 @@ test('copySelectedElements returns false and refreshes clipboard controls when p
   };
 
   vm.createContext(context);
-  vm.runInContext(copySelectedElementsSource, context);
+  vm.runInContext(`${finalizeClipboardActionResultSource}\n${copySelectedElementsSource}`, context);
 
   assert.equal(context.copySelectedElements(), false);
   assert.equal(context.editorClipboard, null);
@@ -199,6 +230,7 @@ test('copySelectedElements returns false and refreshes clipboard controls when p
 
 test('copySelectedElements returns true after creating clipboard state from copied items', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
   const copySelectedElementsSource = extractFunctionSource(
     fileContent,
     'function copySelectedElements() {',
@@ -247,7 +279,7 @@ test('copySelectedElements returns true after creating clipboard state from copi
   };
 
   vm.createContext(context);
-  vm.runInContext(copySelectedElementsSource, context);
+  vm.runInContext(`${finalizeClipboardActionResultSource}\n${copySelectedElementsSource}`, context);
 
   assert.equal(context.copySelectedElements(), true);
   assert.equal(context.editorClipboard, nextClipboard);
@@ -261,6 +293,7 @@ test('copySelectedElements returns true after creating clipboard state from copi
 
 test('duplicateSelectedElements returns false and refreshes clipboard controls when duplication is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
   const duplicateSelectedElementsSource = extractFunctionSource(
     fileContent,
     'function duplicateSelectedElements() {',
@@ -298,7 +331,7 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
   };
 
   vm.createContext(context);
-  vm.runInContext(duplicateSelectedElementsSource, context);
+  vm.runInContext(`${finalizeClipboardActionResultSource}\n${duplicateSelectedElementsSource}`, context);
 
   assert.equal(context.duplicateSelectedElements(), false);
   assert.deepEqual(calls, [
@@ -309,6 +342,7 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
 
 test('duplicateSelectedElements returns false and refreshes clipboard controls when insertion yields no duplicates', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
   const duplicateSelectedElementsSource = extractFunctionSource(
     fileContent,
     'function duplicateSelectedElements() {',
@@ -359,7 +393,7 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
   };
 
   vm.createContext(context);
-  vm.runInContext(duplicateSelectedElementsSource, context);
+  vm.runInContext(`${finalizeClipboardActionResultSource}\n${duplicateSelectedElementsSource}`, context);
 
   assert.equal(context.duplicateSelectedElements(), false);
   assert.deepEqual(calls, [
@@ -372,6 +406,7 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
 
 test('pasteClipboardElements returns false and refreshes clipboard controls when paste is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
   const pasteClipboardElementsSource = extractFunctionSource(
     fileContent,
     'function pasteClipboardElements() {',
@@ -406,7 +441,7 @@ test('pasteClipboardElements returns false and refreshes clipboard controls when
   };
 
   vm.createContext(context);
-  vm.runInContext(pasteClipboardElementsSource, context);
+  vm.runInContext(`${finalizeClipboardActionResultSource}\n${pasteClipboardElementsSource}`, context);
 
   assert.equal(context.pasteClipboardElements(), false);
   assert.equal(context.editorClipboard, null);

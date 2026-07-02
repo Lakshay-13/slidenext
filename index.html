@@ -3721,6 +3721,11 @@
       return inserted;
     }
 
+    function finalizeClipboardActionResult(result) {
+      updateClipboardActionState();
+      return result;
+    }
+
     function finalizeInsertedElements(insertedElements, versionLabel) {
       if (!insertedElements || insertedElements.length === 0) return false;
       const nextSelectionState = SlideNextStudioEditorSelection.selectAllStudioElements(insertedElements);
@@ -3734,35 +3739,24 @@
         isLocked: isElementLocked,
         canMutateDeck: () => !!getActiveSlide(getIframeDoc())
       });
-      if (!clipboardActionState.canCopy) {
-        updateClipboardActionState();
-        return false;
-      }
+      if (!clipboardActionState.canCopy) return finalizeClipboardActionResult(false);
       const items = buildClipboardPayload(clipboardActionState.selection);
-      if (items.length === 0) {
-        updateClipboardActionState();
-        return false;
-      }
+      if (items.length === 0) return finalizeClipboardActionResult(false);
       editorClipboard = SlideNextStudioEditorClipboard.createStudioClipboardState(items);
-      updateClipboardActionState();
-      return true;
+      return finalizeClipboardActionResult(true);
     }
 
     function pasteClipboardElements() {
       const pastePlan = SlideNextStudioEditorClipboard.buildStudioClipboardPastePlan(editorClipboard, {
         canMutateDeck: () => !!getActiveSlide(getIframeDoc())
       });
-      if (!pastePlan.canPaste) {
-        updateClipboardActionState();
-        return false;
-      }
+      if (!pastePlan.canPaste) return finalizeClipboardActionResult(false);
       const pasted = insertClipboardPayload(pastePlan.items, pastePlan.nextPasteCount);
       const didPaste = finalizeInsertedElements(pasted, 'Auto: Pasted Element');
       if (didPaste) {
         editorClipboard = pastePlan.nextClipboard;
       }
-      updateClipboardActionState();
-      return didPaste;
+      return finalizeClipboardActionResult(didPaste);
     }
 
     function duplicateSelectedElements() {
@@ -3770,16 +3764,10 @@
         isLocked: isElementLocked,
         canMutateDeck: () => !!getActiveSlide(getIframeDoc())
       });
-      if (!clipboardActionState.canDuplicate) {
-        updateClipboardActionState();
-        return false;
-      }
+      if (!clipboardActionState.canDuplicate) return finalizeClipboardActionResult(false);
       const duplicates = insertClipboardPayload(buildClipboardPayload(clipboardActionState.selection), 1);
-      if (duplicates.length === 0) {
-        updateClipboardActionState();
-        return false;
-      }
-      return finalizeInsertedElements(duplicates, 'Auto: Duplicated Element');
+      if (duplicates.length === 0) return finalizeClipboardActionResult(false);
+      return finalizeClipboardActionResult(finalizeInsertedElements(duplicates, 'Auto: Duplicated Element'));
     }
 
     function nudgeSelectedElements(dx, dy) {
