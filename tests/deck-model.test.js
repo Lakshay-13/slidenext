@@ -100,3 +100,36 @@ test('buildDeckSnapshotFromCanonicalDeck keeps custom background classes in the 
 
   assert.equal(snapshot.slides[0].backgroundLabel, 'Gradient/Paint');
 });
+
+test('buildDomBackgroundLabel ignores structural slide classes', () => {
+  assert.equal(
+    deckModel.buildDomBackgroundLabel({
+      className: 'slide slide-active',
+      style: {}
+    }),
+    'Default'
+  );
+});
+
+test('buildDomBackgroundLabel treats custom slide classes as painted backgrounds', () => {
+  assert.equal(
+    deckModel.buildDomBackgroundLabel({
+      className: 'slide theme-sunset',
+      style: {}
+    }),
+    'Gradient/Paint'
+  );
+});
+
+test('buildDomBackgroundLabel recognizes non-shorthand inline slide backgrounds', () => {
+  assert.equal(
+    deckModel.buildDomBackgroundLabel({
+      className: 'slide',
+      style: {
+        background: '',
+        backgroundColor: 'rgb(0, 0, 0)'
+      }
+    }),
+    'Gradient/Paint'
+  );
+});

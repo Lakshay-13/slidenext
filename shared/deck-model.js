@@ -198,7 +198,7 @@
       id: slideId,
       index,
       title: firstHeading ? firstHeading.textContent.trim() : `Slide ${index + 1}`,
-      backgroundLabel: slide.style.background ? 'Gradient/Paint' : 'Default',
+      backgroundLabel: buildDomBackgroundLabel(slide),
       elementCount: editableElements.length
     };
 
@@ -265,6 +265,25 @@
       : 'Default';
   }
 
+  function buildDomBackgroundLabel(slide) {
+    if (!slide) {
+      return 'Default';
+    }
+    const className = normalizeString(slide.className);
+    const hasMeaningfulBackgroundClass = className
+      .split(/\s+/)
+      .map((token) => token.trim())
+      .filter(Boolean)
+      .some((token) => token !== 'slide' && token !== 'slide-active');
+    const inlineStyle = slide.style || {};
+    return normalizeString(inlineStyle.background).trim()
+      || normalizeString(inlineStyle.backgroundColor).trim()
+      || normalizeString(inlineStyle.backgroundImage).trim()
+      || hasMeaningfulBackgroundClass
+      ? 'Gradient/Paint'
+      : 'Default';
+  }
+
   function buildSlideSnapshotFromCanonicalSlide(slide, index, options = {}) {
     const slideId = typeof options.getSlideId === 'function'
       ? options.getSlideId(slide, index)
@@ -311,6 +330,7 @@
     buildSlideSnapshot,
     buildDeckSnapshot,
     countCanonicalSlideNodes,
+    buildDomBackgroundLabel,
     buildSlideSnapshotFromCanonicalSlide,
     buildDeckSnapshotFromCanonicalDeck
   };
