@@ -4479,6 +4479,21 @@
           resolvedPlaybackState = playbackState;
         }
       });
+      const resolveStudioCapturedPersistableDeckState = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+      )
+        && typeof SlideNextStudioEditorPersistence.resolveStudioCapturedPersistableDeckState === 'function'
+        ? SlideNextStudioEditorPersistence.resolveStudioCapturedPersistableDeckState
+        : null;
+      if (resolveStudioCapturedPersistableDeckState) {
+        return resolveStudioCapturedPersistableDeckState(cleanHtml, {
+          canonicalDeck: resolvedCanonicalDeck,
+          playbackState: resolvedPlaybackState,
+          buildCanonicalDeck: () => buildEditorCanonicalDeck(doc),
+          resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
+        });
+      }
       return {
         cleanHtml,
         playbackState: typeof resolvedPlaybackState !== 'undefined'

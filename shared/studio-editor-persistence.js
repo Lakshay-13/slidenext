@@ -37,6 +37,31 @@
     return normalizeString(nextPersistedDeckState.cleanHtml) ? nextPersistedDeckState : null;
   }
 
+  function resolveStudioCapturedPersistableDeckState(cleanHtml = '', options = {}) {
+    const nextCleanHtml = normalizeString(cleanHtml);
+    const resolvedCanonicalDeck = options.canonicalDeck || null;
+    const resolvedPlaybackState = options.playbackState;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const resolvePlaybackState = typeof options.resolvePlaybackState === 'function'
+      ? options.resolvePlaybackState
+      : null;
+
+    const canonicalDeck = nextCleanHtml && !resolvedCanonicalDeck && buildCanonicalDeck
+      ? buildCanonicalDeck()
+      : resolvedCanonicalDeck;
+    const playbackState = typeof resolvedPlaybackState !== 'undefined'
+      ? resolvedPlaybackState
+      : (resolvePlaybackState ? resolvePlaybackState(canonicalDeck) : null);
+
+    return {
+      cleanHtml: nextCleanHtml,
+      playbackState,
+      canonicalDeck
+    };
+  }
+
   function areStudioPersistenceCanonicalDecksEqual(left, right, options = {}) {
     const areCanonicalDecksEqual = typeof options.areCanonicalDecksEqual === 'function'
       ? options.areCanonicalDecksEqual
@@ -622,6 +647,7 @@
   return {
     createStudioPersistableDeckState,
     resolveStudioPersistableDeckStateWithContent,
+    resolveStudioCapturedPersistableDeckState,
     resolveStudioPersistenceCanonicalDeck,
     resolveStudioSaveRequestCanonicalDeck,
     resolveStudioCanonicalDeckOverride,

@@ -129,6 +129,72 @@ test('captureEditorPersistableDeckState reuses a resolved canonical deck when pl
   assert.equal(capturePersistedDeckPlaybackStateCalls, 1);
 });
 
+test('captureEditorPersistableDeckState delegates final capture-state resolution to the shared editor persistence helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] }
+    ]
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 1'
+  };
+  let delegatedArgs = null;
+
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      resolveStudioCapturedPersistableDeckState(cleanHtml, options = {}) {
+        delegatedArgs = {
+          cleanHtml,
+          options,
+          canonicalDeck: options.buildCanonicalDeck(),
+          playbackState: options.resolvePlaybackState(canonicalDeck)
+        };
+        return {
+          cleanHtml,
+          canonicalDeck: delegatedArgs.canonicalDeck,
+          playbackState: delegatedArgs.playbackState
+        };
+      }
+    },
+    buildPersistableDeckHtml(doc, options = {}) {
+      assert.equal(doc, iframeDoc);
+      assert.equal(typeof options.onCanonicalDeckResolved, 'function');
+      assert.equal(typeof options.onPlaybackStateResolved, 'function');
+      return '<html>persisted</html>';
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return canonicalDeck;
+    },
+    capturePersistedDeckPlaybackState(doc, nextCanonicalDeck) {
+      assert.equal(doc, iframeDoc);
+      assert.equal(nextCanonicalDeck, canonicalDeck);
+      return playbackState;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
+
+  const persistedDeckState = JSON.parse(JSON.stringify(context.captureEditorPersistableDeckState()));
+  assert.deepEqual(persistedDeckState, {
+    cleanHtml: '<html>persisted</html>',
+    playbackState,
+    canonicalDeck
+  });
+  assert.equal(delegatedArgs.cleanHtml, '<html>persisted</html>');
+  assert.equal(typeof delegatedArgs.options.buildCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.options.resolvePlaybackState, 'function');
+});
+
 test('initStudioFrame refreshes inspector state after bootstrapping the iframe', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const initStudioFrameSource = extractFunctionSource(

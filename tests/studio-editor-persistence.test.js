@@ -63,6 +63,63 @@ test('resolveStudioPersistableDeckStateWithContent requires non-empty persisted 
   );
 });
 
+test('resolveStudioCapturedPersistableDeckState rebuilds canonical and playback state only when capture did not report them', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 1'
+  };
+  let buildCanonicalDeckCalls = 0;
+  let resolvePlaybackStateCalls = 0;
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioCapturedPersistableDeckState('<html>persisted</html>', {
+      canonicalDeck,
+      playbackState,
+      buildCanonicalDeck() {
+        buildCanonicalDeckCalls += 1;
+        return null;
+      },
+      resolvePlaybackState() {
+        resolvePlaybackStateCalls += 1;
+        return null;
+      }
+    }),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck,
+      playbackState
+    }
+  );
+  assert.equal(buildCanonicalDeckCalls, 0);
+  assert.equal(resolvePlaybackStateCalls, 0);
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioCapturedPersistableDeckState('<html>persisted</html>', {
+      buildCanonicalDeck() {
+        buildCanonicalDeckCalls += 1;
+        return canonicalDeck;
+      },
+      resolvePlaybackState(nextCanonicalDeck) {
+        resolvePlaybackStateCalls += 1;
+        assert.equal(nextCanonicalDeck, canonicalDeck);
+        return playbackState;
+      }
+    }),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck,
+      playbackState
+    }
+  );
+  assert.equal(buildCanonicalDeckCalls, 1);
+  assert.equal(resolvePlaybackStateCalls, 1);
+});
+
 test('createStudioPersistenceActionContext normalizes persistence state', () => {
   assert.deepEqual(
     editorPersistence.createStudioPersistenceActionContext(
