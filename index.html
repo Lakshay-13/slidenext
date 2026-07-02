@@ -4034,6 +4034,17 @@
       return versionLabel;
     }
 
+    function syncLayerOrderZIndexInput(target) {
+      if (!target) {
+        return null;
+      }
+      const zIndexInput = document.getElementById('elZIndex');
+      if (zIndexInput) {
+        zIndexInput.value = target.style.zIndex || 0;
+      }
+      return zIndexInput;
+    }
+
     // Rearrange Selected Element Layers
     function arrangeElementLayer(action) {
       const targets = getLiveSelectedElements();
@@ -4050,13 +4061,7 @@
         updateLayerOrderActionState();
         return false;
       }
-
-      const zIndexInput = targets[0]
-        ? document.getElementById('elZIndex')
-        : null;
-      if (zIndexInput && targets[0]) {
-        zIndexInput.value = targets[0].style.zIndex || 0;
-      }
+      syncLayerOrderZIndexInput(targets[0]);
       finalizeLayerOrderMutation();
       return true;
     }
@@ -5893,10 +5898,7 @@
       
       // Update selection properties panel if currently selected
       if (SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement(selectedElements, el)) {
-        const zIndexInput = document.getElementById('elZIndex');
-        if (zIndexInput) {
-          zIndexInput.value = el.style.zIndex || 0;
-        }
+        syncLayerOrderZIndexInput(el);
       }
 
       finalizeLayerOrderMutation();
