@@ -1292,7 +1292,7 @@ test('renderCanonicalNode falls back to canonical absolute layout when style is 
   assert.equal(html, '<div style="position: absolute; left: 120px; top: 80px; width: 400px; height: 160px; z-index: 4;">Hero copy</div>');
 });
 
-test('renderCanonicalNode preserves explicit style over canonical layout fallbacks', () => {
+test('renderCanonicalNode merges explicit non-layout styles with canonical layout fallbacks', () => {
   const html = deckRender.renderCanonicalNode({
     tagName: 'div',
     text: 'Hero copy',
@@ -1307,7 +1307,7 @@ test('renderCanonicalNode preserves explicit style over canonical layout fallbac
     preferNodeSourceHtml: false
   });
 
-  assert.equal(html, '<div style="color: red;">Hero copy</div>');
+  assert.equal(html, '<div style="color: red; position: absolute; left: 120px; top: 80px; z-index: 4;">Hero copy</div>');
 });
 
 test('renderCanonicalNode renders hidden nodes as hidden when canonical visibility marks them hidden', () => {

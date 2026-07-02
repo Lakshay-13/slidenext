@@ -523,6 +523,23 @@
     );
   }
 
+  function isImportedNodeLayoutStyleProperty(propertyName = '') {
+    const normalizedPropertyName = normalizeString(propertyName).trim().toLowerCase();
+    return normalizedPropertyName === 'position'
+      || normalizedPropertyName === 'left'
+      || normalizedPropertyName === 'top'
+      || normalizedPropertyName === 'width'
+      || normalizedPropertyName === 'height'
+      || normalizedPropertyName === 'z-index';
+  }
+
+  function stripImportedNodeLayoutStyle(styleText = '') {
+    return filterInlineStyleDeclarations(
+      styleText,
+      (propertyName) => !isImportedNodeLayoutStyleProperty(propertyName)
+    );
+  }
+
   function sanitizeImportedAttributeMap(el, options = {}) {
     const transientAttributeNames = options.transientAttributeNames instanceof Set
       ? options.transientAttributeNames
@@ -795,6 +812,7 @@
       : `node-${(context.nodeIndex || 0) + 1}`;
     const visibility = buildImportedVisibility(el, win);
     const attributes = stripCanonicalNodeAttributeDuplicates(sanitizeImportedAttributeMap(el, options), visibility);
+    const inlineStyleText = normalizeString(el.getAttribute('style'));
 
     return canonicalDeck.createCanonicalNode({
       id: typeof options.getNodeId === 'function'
@@ -807,7 +825,7 @@
       html: stripCanonicalNodeSourceHtmlDuplicates(buildImportedSourceHtml(el, options), attributes, visibility),
       classes: sanitizeImportedClassNames(el.classList || [], options),
       attributes,
-      style: normalizeString(el.getAttribute('style')),
+      style: stripImportedNodeLayoutStyle(inlineStyleText),
       layout: buildImportedLayout(el, win),
       visibility,
       children: childElements.map((child, childIndex) => importElementToCanonicalNode(child, options, {
@@ -1418,6 +1436,7 @@
     extractSrcsetUrlValues,
     collectDeckAssets,
     inferImportedNodeType,
+    stripImportedNodeLayoutStyle,
     sanitizeImportedSlideBackgroundClassName,
     importElementToCanonicalNode,
     importSlideToCanonicalSlide,

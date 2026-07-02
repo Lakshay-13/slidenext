@@ -1155,6 +1155,40 @@ test('importElementToCanonicalNode sanitizes stored node html fragments', () => 
   assert.equal(node.style, 'color: red;');
 });
 
+test('importElementToCanonicalNode strips duplicated layout styles from canonical node style fields', () => {
+  const element = createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['hero-card']),
+    style: {
+      position: 'absolute',
+      left: '120px',
+      top: '80px',
+      width: '400px',
+      height: '160px',
+      zIndex: '4'
+    },
+    attributes: {
+      class: 'hero-card',
+      style: 'position: absolute; left: 120px; top: 80px; width: 400px; height: 160px; z-index: 4; color: red;',
+      'aria-label': 'Hero copy'
+    },
+    textContent: 'Hero copy',
+    outerHTML: '<div class="hero-card" style="position: absolute; left: 120px; top: 80px; width: 400px; height: 160px; z-index: 4; color: red;">Hero copy</div>'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+
+  assert.equal(node.style, 'color: red;');
+  assert.deepEqual(node.layout, {
+    mode: 'absolute',
+    x: 120,
+    y: 80,
+    width: 400,
+    height: 160,
+    zIndex: 4
+  });
+});
+
 test('importElementToCanonicalNode strips duplicate visibility attrs from stored node html fragments', () => {
   const element = createImportedElement({
     tagName: 'DIV',

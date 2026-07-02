@@ -378,14 +378,12 @@
     if (Array.isArray(node.classes) && node.classes.length > 0 && !attributes.class) {
       attributes.class = node.classes.join(' ');
     }
-    if (node.style && !attributes.style) {
-      attributes.style = node.style;
-    }
-    if (!attributes.style) {
-      const normalizedFallbackStyleText = normalizeString(fallbackStyleText).trim();
-      if (normalizedFallbackStyleText) {
-        attributes.style = normalizedFallbackStyleText;
-      }
+    const explicitStyleText = normalizeString(attributes.style || node.style).trim();
+    const mergedStyleText = mergeStyleTextWithFallback(explicitStyleText, fallbackStyleText);
+    if (mergedStyleText) {
+      attributes.style = mergedStyleText;
+    } else {
+      delete attributes.style;
     }
     if (node.visibility && node.visibility.locked) {
       attributes['data-editor-locked'] = 'true';
@@ -577,6 +575,34 @@
     return `${normalizedStyleText}${normalizedStyleText.endsWith(';') ? '' : ';'} ${normalizedDeclaration}`;
   }
 
+  function mergeStyleTextWithFallback(styleText = '', fallbackStyleText = '') {
+    let mergedStyleText = normalizeString(styleText).trim();
+    const normalizedFallbackStyleText = normalizeString(fallbackStyleText).trim();
+    if (!normalizedFallbackStyleText) {
+      return mergedStyleText;
+    }
+    if (!mergedStyleText) {
+      return normalizedFallbackStyleText;
+    }
+
+    normalizedFallbackStyleText
+      .split(';')
+      .map((declaration) => declaration.trim())
+      .filter(Boolean)
+      .forEach((declaration) => {
+        const separatorIndex = declaration.indexOf(':');
+        if (separatorIndex === -1) {
+          return;
+        }
+        const propertyName = declaration.slice(0, separatorIndex).trim();
+        if (!styleTextHasProperty(mergedStyleText, propertyName)) {
+          mergedStyleText = appendStyleDeclaration(mergedStyleText, `${declaration};`);
+        }
+      });
+
+    return mergedStyleText;
+  }
+
   function styleTextHasProperty(styleText, propertyName) {
     const normalizedStyleText = normalizeString(styleText).trim();
     const normalizedPropertyName = normalizeString(propertyName).trim();
@@ -639,15 +665,16 @@
 
   function renderCanonicalNode(node, options = {}) {
     if (!node || typeof node !== 'object') return '';
+    const layoutStyleText = buildRenderedNodeLayoutStyle(node.layout);
     if (options.preferNodeSourceHtml !== false && normalizeString(node.html)) {
       return applyCanonicalNodeSourceHtmlState(
         node.html,
         node,
-        !normalizeString(node.style).trim() ? buildRenderedNodeLayoutStyle(node.layout) : ''
+        layoutStyleText
       );
     }
 
-    const attributes = buildRenderedNodeAttributes(node, buildRenderedNodeLayoutStyle(node.layout));
+    const attributes = buildRenderedNodeAttributes(node, layoutStyleText);
 
     const tagName = normalizeString(node.tagName, node.type === 'image' ? 'img' : 'div').toLowerCase();
     const childrenHtml = Array.isArray(node.children)
