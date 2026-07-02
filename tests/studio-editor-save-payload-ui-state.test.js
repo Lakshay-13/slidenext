@@ -595,6 +595,111 @@ test('buildPersistableDeckHtml delegates persisted html reuse checks to the shar
   assert.equal(delegatedArgs.options.canonicalDeck, canonicalDeck);
 });
 
+test('buildPersistableDeckHtml sanitizes reusable persisted html when a DOM parser is available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const parsedDoc = {
+    documentElement: { outerHTML: '<html>parsed</html>' }
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-3'],
+    slideCounterText: '3 / 5'
+  };
+  const parserCalls = [];
+  const buildCalls = [];
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    DOMParser: class DOMParser {
+      parseFromString(html, type) {
+        parserCalls.push([html, type]);
+        return parsedDoc;
+      }
+    },
+    SlideNextDeckLoader: {
+      resolvePresentationPersistenceOptions(metadata) {
+        assert.equal(metadata, context.currentPresentationMetadata);
+        return {
+          emptyContainerIds: ['pixelMatrix']
+        };
+      }
+    },
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml(nextDoc, options) {
+        buildCalls.push([nextDoc, options]);
+        return '<html>sanitized-baseline</html>';
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      resolveStudioPersistedHtmlReuse(persistedDeckState, options = {}) {
+        assert.equal(persistedDeckState.playbackState, playbackState);
+        assert.equal(options.canonicalDeck, canonicalDeck);
+        return persistedDeckState.cleanHtml;
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, null);
+      return canonicalDeck;
+    },
+    currentPresentationMetadata: {
+      id: 'computer-vision-presentation',
+      persistence: {
+        emptyContainerIds: ['pixelMatrix']
+      }
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '<html>persisted-baseline</html>',
+    lastPersistedCanonicalDeck: canonicalDeck,
+    persistedDeckPlaybackState: playbackState
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+
+  assert.equal(context.buildPersistableDeckHtml(), '<html>sanitized-baseline</html>');
+  assert.deepEqual(parserCalls, [['<html>persisted-baseline</html>', 'text/html']]);
+  assert.equal(buildCalls.length, 1);
+  assert.equal(buildCalls[0][0], parsedDoc);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(buildCalls[0][1])),
+    {
+      emptyContainerIds: ['pixelMatrix'],
+      editorChromeNodeIds: ['editor-style-tag', 'editor-theme-override-tag', 'editorSelectionOverlay'],
+      editorTransientClasses: ['editor-selected', 'editor-hoverable', 'editor-dragging'],
+      editorElementIdAttr: 'data-editor-id',
+      editorSlideIdAttr: 'data-slide-id',
+      persistedDeckPlaybackState: playbackState
+    }
+  );
+});
+
 test('buildPersistableDeckHtml captures the live playback state before persisting iframe html', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
