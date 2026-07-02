@@ -504,8 +504,10 @@
     if (!sourceAttributes.class) {
       sourceAttributes.class = normalizeString(background.className).trim() || normalizeString(fallback.class).trim();
     }
-    const canonicalBackgroundStyleText = normalizeString(background.style).trim()
-      || buildRenderedSlideBackgroundStyle(background);
+    const canonicalBackgroundStyleText = mergeStyleTextWithFallback(
+      normalizeString(background.style).trim(),
+      buildRenderedSlideBackgroundStyle(background)
+    );
     const fallbackStyleText = normalizeString(fallback.style).trim();
     let resolvedStyleText = hasExplicitSourceStyle
       ? (

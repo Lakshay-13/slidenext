@@ -1334,3 +1334,39 @@ test('importSlideToCanonicalSlide sanitizes stored slide source html fragments',
     'data-transition': 'fade'
   });
 });
+
+test('importSlideToCanonicalSlide promotes explicit background color and image declarations into canonical background fields', () => {
+  const heading = createImportedElement({
+    tagName: 'H1',
+    classList: createIterableClassList(['editor-hoverable']),
+    textContent: 'Intro',
+    attributes: {
+      class: 'editor-hoverable'
+    },
+    outerHTML: '<h1 class="editor-hoverable">Intro</h1>'
+  });
+  const slide = createImportedElement({
+    tagName: 'SECTION',
+    classList: createIterableClassList(['slide', 'hero-slide']),
+    children: [heading],
+    textContent: 'Intro',
+    attributes: {
+      class: 'slide hero-slide',
+      style: 'background-color: #101820; background-image: linear-gradient(135deg, #101820, #1f2937); background-size: cover; position: relative;',
+      'data-slide-name': 'Imported Slide'
+    },
+    outerHTML: '<section class="slide hero-slide"><h1 class="editor-hoverable">Intro</h1></section>',
+    querySelector(selector) {
+      return selector === 'h1, h2, h3' ? heading : null;
+    }
+  });
+
+  const canonicalSlide = deckImport.importSlideToCanonicalSlide(slide, 0);
+
+  assert.equal(canonicalSlide.layout.background.color, '#101820');
+  assert.equal(canonicalSlide.layout.background.image, 'linear-gradient(135deg, #101820, #1f2937)');
+  assert.equal(canonicalSlide.layout.background.style, 'background-size: cover;');
+  assert.deepEqual(canonicalSlide.source.attributes, {
+    style: 'position: relative;'
+  });
+});

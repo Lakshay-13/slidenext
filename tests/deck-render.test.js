@@ -1906,6 +1906,46 @@ test('renderCanonicalDeckHtml merges non-background slide source styles with can
   assert.match(html, /<section class="slide source-slide slide-active" style="min-height: 100%; background: black;" id="slide-1"><\/section>/);
 });
 
+test('renderCanonicalDeckHtml merges canonical background style fragments with structured background fields', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        layout: {
+          background: {
+            className: 'hero-slide',
+            color: '#101820',
+            image: 'linear-gradient(135deg, #101820, #1f2937)',
+            style: 'background-size: cover;'
+          }
+        },
+        nodes: [],
+        source: {
+          html: '',
+          attributes: {
+            class: 'source-slide',
+            style: 'min-height: 100%;'
+          }
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(
+    html,
+    /<section class="slide source-slide slide-active" style="min-height: 100%; background-size: cover; background-color: #101820; background-image: linear-gradient\(135deg, #101820, #1f2937\);" id="slide-1"><\/section>/
+  );
+});
+
 test('renderCanonicalDeckHtml falls back to canonical slide name and notes attributes when source attributes are absent', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [

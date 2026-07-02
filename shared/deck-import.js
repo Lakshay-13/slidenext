@@ -504,15 +504,42 @@
       .join(' ');
   }
 
+  function findImportedStylePropertyValue(styleText = '', propertyName = '') {
+    const normalizedPropertyName = normalizeString(propertyName).trim().toLowerCase();
+    if (!normalizedPropertyName) {
+      return '';
+    }
+
+    let matchedValue = '';
+    splitInlineStyleDeclarations(styleText).forEach((declaration) => {
+      const separatorIndex = declaration.indexOf(':');
+      if (separatorIndex === -1) {
+        return;
+      }
+      const nextPropertyName = normalizeString(declaration.slice(0, separatorIndex)).trim().toLowerCase();
+      if (nextPropertyName !== normalizedPropertyName) {
+        return;
+      }
+      matchedValue = normalizeString(declaration.slice(separatorIndex + 1)).trim();
+    });
+    return matchedValue;
+  }
+
   function isImportedSlideBackgroundStyleProperty(propertyName = '') {
     const normalizedPropertyName = normalizeString(propertyName).trim().toLowerCase();
     return normalizedPropertyName === 'background' || normalizedPropertyName.startsWith('background-');
+  }
+
+  function isImportedStructuredSlideBackgroundStyleProperty(propertyName = '') {
+    const normalizedPropertyName = normalizeString(propertyName).trim().toLowerCase();
+    return normalizedPropertyName === 'background-color' || normalizedPropertyName === 'background-image';
   }
 
   function extractImportedSlideBackgroundStyle(styleText = '') {
     return filterInlineStyleDeclarations(
       styleText,
       (propertyName) => isImportedSlideBackgroundStyleProperty(propertyName)
+        && !isImportedStructuredSlideBackgroundStyleProperty(propertyName)
     );
   }
 
@@ -880,6 +907,10 @@
     const inlineStyleText = normalizeString(slide.getAttribute('style'));
     const backgroundStyleText = extractImportedSlideBackgroundStyle(inlineStyleText);
     const sourceStyleText = stripImportedSlideBackgroundStyle(inlineStyleText);
+    const backgroundColor = normalizeString(slide.style && slide.style.backgroundColor)
+      || findImportedStylePropertyValue(inlineStyleText, 'background-color');
+    const backgroundImage = normalizeString(slide.style && slide.style.backgroundImage)
+      || findImportedStylePropertyValue(inlineStyleText, 'background-image');
     if (sourceStyleText) {
       sourceAttributes.style = sourceStyleText;
     }
@@ -892,8 +923,8 @@
       layout: {
         mode: canonicalDeck.DEFAULT_LAYOUT_MODE,
         background: {
-          color: normalizeString(slide.style && slide.style.backgroundColor),
-          image: normalizeString(slide.style && slide.style.backgroundImage),
+          color: backgroundColor,
+          image: backgroundImage,
           className: sanitizeImportedSlideBackgroundClassName(slide.className, options),
           style: backgroundStyleText
         }
