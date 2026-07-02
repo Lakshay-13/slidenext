@@ -43,6 +43,15 @@ function loadApplyCurrentStudioPersistedPlaybackState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadApplyCurrentStudioPersistedHtml(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistedHtml(cleanHtml = \'\') {',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('getCurrentEditorPersistedDeckState returns the current persisted html, canonical deck, and playback baselines', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
@@ -191,6 +200,8 @@ test('resetEditorDeckPersistenceState clears the persisted baseline through the 
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(updateEditorPersistedDeckStateSource, context);
+  loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
+  loadApplyCurrentStudioPersistedPlaybackState(fileContent, context);
   vm.runInContext(resetEditorDeckPersistenceStateSource, context);
 
   context.resetEditorDeckPersistenceState();
@@ -248,6 +259,38 @@ test('applyCurrentStudioPersistedCanonicalDeck updates the canonical baseline an
 
   assert.deepEqual(context.lastPersistedCanonicalDeck, normalizedCanonicalDeck);
   assert.deepEqual(metadataSyncCalls, [[rawCanonicalDeck, '/presentations/onboarding-presentation/index.html']]);
+});
+
+test('applyCurrentStudioPersistedHtml updates the persisted html baseline', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateEditorPersistedDeckStateSource = extractFunctionSource(
+    fileContent,
+    'function updateEditorPersistedDeckState(nextState = {}) {',
+    '\n\n    function resetEditorDeckPersistenceState() {'
+  );
+
+  const context = {
+    lastPersistedDeckHtml: '<html>old</html>',
+    lastPersistedCanonicalDeck: null,
+    persistedDeckPlaybackState: null,
+    SlideNextDeckPersistence: deckPersistence,
+    SlideNextStudioDeckContext: {
+      resolveStoredStudioCanonicalDeck(metadata) {
+        return metadata && metadata.canonicalDeck ? metadata.canonicalDeck : null;
+      }
+    },
+    Object
+  };
+
+  vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
+  vm.runInContext(updateEditorPersistedDeckStateSource, context);
+  loadApplyCurrentStudioPersistedHtml(fileContent, context);
+
+  const result = context.applyCurrentStudioPersistedHtml('<html>new</html>');
+
+  assert.equal(result, '<html>new</html>');
+  assert.equal(context.lastPersistedDeckHtml, '<html>new</html>');
 });
 
 test('applyCurrentStudioPersistedPlaybackState updates the normalized playback baseline', () => {

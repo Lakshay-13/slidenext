@@ -2632,6 +2632,11 @@
       return playbackState;
     }
 
+    function applyCurrentStudioPersistedHtml(cleanHtml = '') {
+      updateEditorPersistedDeckState({ cleanHtml });
+      return cleanHtml;
+    }
+
     function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
       const nextPresentationMetadata = SlideNextStudioDeckContext.resolveStudioPresentationMetadataCanonicalDeckUpdate(
         canonicalDeck,
@@ -4301,11 +4306,11 @@
     }
 
     function resetEditorDeckPersistenceState() {
-      updateEditorPersistedDeckState({
-        cleanHtml: '',
-        canonicalDeck: null,
-        playbackState: null
+      applyCurrentStudioPersistedHtml('');
+      applyCurrentStudioPersistedCanonicalDeck(null, '', {
+        syncPresentationMetadata: false
       });
+      applyCurrentStudioPersistedPlaybackState(null);
     }
 
     function resetEditorHistoryState(options = {}) {
@@ -4698,7 +4703,7 @@
       return SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
         ...createCurrentStudioSessionStateOptions(),
         setPersistedHtml: (nextHtml) => {
-          updateEditorPersistedDeckState({ cleanHtml: nextHtml });
+          applyCurrentStudioPersistedHtml(nextHtml);
         },
         setPersistedCanonicalDeck: (nextCanonicalDeck) => {
           applyCurrentStudioPersistedCanonicalDeck(nextCanonicalDeck, persistencePresentationUrl);
