@@ -3391,7 +3391,10 @@
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
       const nudgeSelectionState = getNudgeSelectionState();
-      if (!doc || !slide || !nudgeSelectionState.canNudge) return false;
+      if (!doc || !slide || !nudgeSelectionState.canNudge) {
+        updateMotionActionState(doc);
+        return false;
+      }
       const slideMetrics = getSlideMetrics(slide);
       const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
       const nudgeLayoutItems = SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(nudgeSelectionState.selection, {

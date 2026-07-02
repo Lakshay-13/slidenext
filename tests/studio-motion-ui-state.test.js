@@ -86,3 +86,46 @@ test('updateMotionActionState enables nudge controls only when the iframe has a 
     nudgeSelectionDownBtn: false
   });
 });
+
+test('nudgeSelectedElements returns false and refreshes motion controls when nudging is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const nudgeSelectedElementsSource = extractFunctionSource(
+    fileContent,
+    'function nudgeSelectedElements(dx, dy) {',
+    '\n\n    // Element dragging + resize on an open canvas (no snapping)'
+  );
+
+  const doc = { label: 'iframe-doc' };
+  const calls = [];
+  const context = {
+    getActiveSlide(currentDoc) {
+      calls.push(['getActiveSlide', currentDoc]);
+      return null;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return doc;
+    },
+    getNudgeSelectionState() {
+      calls.push(['getNudgeSelectionState']);
+      return {
+        canNudge: false,
+        selection: []
+      };
+    },
+    updateMotionActionState(currentDoc) {
+      calls.push(['updateMotionActionState', currentDoc]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(nudgeSelectedElementsSource, context);
+
+  assert.equal(context.nudgeSelectedElements(1, 0), false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getActiveSlide', doc],
+    ['getNudgeSelectionState'],
+    ['updateMotionActionState', doc]
+  ]);
+});
