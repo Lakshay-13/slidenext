@@ -3126,7 +3126,14 @@
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!visibilityMutationPlan.didChange) return false;
-      visibilityMutationPlan.selection.forEach(el => setElementHiddenState(el, visibilityMutationPlan.shouldHide));
+      let changedCount = 0;
+      visibilityMutationPlan.selection.forEach(el => {
+        if (!el || !el.isConnected) return;
+        if (isElementHidden(el) === visibilityMutationPlan.shouldHide) return;
+        setElementHiddenState(el, visibilityMutationPlan.shouldHide);
+        changedCount += 1;
+      });
+      if (changedCount === 0) return false;
       refreshSelectionClasses();
       SlideNextStudioEditorSelection.syncStudioSelectionUi(selectedElements, {
         syncSelectionOverlay,
