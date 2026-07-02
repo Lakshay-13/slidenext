@@ -230,6 +230,40 @@ test('renderCanonicalDeckHtml overlays canonical slide styling onto reused slide
   assert.equal(html.includes('background: black;'), false);
 });
 
+test('renderCanonicalDeckHtml overlays canonical slide metadata onto reused slide source html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        title: 'Quarterly Roadmap',
+        name: 'Opening Slide',
+        notes: 'Remember to introduce the roadmap.',
+        nodes: [],
+        source: {
+          html: '<section aria-label="Stale Title" data-slide-name="Stale Slide" data-notes="Stale notes"><p>Intro</p></section>'
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /aria-label="Quarterly Roadmap"/);
+  assert.match(html, /data-slide-name="Opening Slide"/);
+  assert.match(html, /data-speaker-notes="Remember to introduce the roadmap\."[^>]*><p>Intro<\/p><\/section>/);
+  assert.doesNotMatch(html, /Stale Title/);
+  assert.doesNotMatch(html, /Stale Slide/);
+  assert.doesNotMatch(html, /Stale notes/);
+  assert.doesNotMatch(html, /data-notes=/);
+});
+
 test('renderCanonicalDeckHtml can rebuild canonical head when source head html is disabled', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {

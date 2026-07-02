@@ -327,10 +327,13 @@
     const isActiveSlide = requestedActiveSlideId
       ? normalizeString(slide.id).trim() === requestedActiveSlideId
       : index === 0;
+    const slideTitle = normalizeString(slide.title).trim();
+    const isDefaultSlideTitle = slideTitle === `Slide ${index + 1}` && !normalizeString(slide.name).trim();
     const canonicalClassName = normalizeString(background.className).trim() || existingClassName;
     const canonicalStyleText = normalizeString(background.style).trim()
       || buildRenderedSlideBackgroundStyle(background)
       || existingStyleText;
+    const attributeNamesToStrip = ['class', 'style', 'id'];
     const rebuiltAttributes = {
       class: buildRenderedSlideClassName(canonicalClassName, isActiveSlide),
       id: normalizeString(slide.id).trim() || readOpeningTagAttributeValue(openingTagMatch[2], 'id')
@@ -338,8 +341,20 @@
     if (canonicalStyleText) {
       rebuiltAttributes.style = canonicalStyleText;
     }
+    if (slideTitle && !hasHeadingNode(slide.nodes) && !isDefaultSlideTitle) {
+      attributeNamesToStrip.push('aria-label');
+      rebuiltAttributes['aria-label'] = slide.title;
+    }
+    if (normalizeString(slide.name).trim()) {
+      attributeNamesToStrip.push('data-slide-name');
+      rebuiltAttributes['data-slide-name'] = slide.name;
+    }
+    if (normalizeString(slide.notes).trim()) {
+      attributeNamesToStrip.push('data-speaker-notes', 'data-notes');
+      rebuiltAttributes['data-speaker-notes'] = slide.notes;
+    }
 
-    const rebuiltOpeningTag = `<${openingTagMatch[1]}${stripOpeningTagAttributeText(openingTagMatch[2], ['class', 'style', 'id'])}${renderAttributeMap(rebuiltAttributes)}${openingTagMatch[3] || ''}>`;
+    const rebuiltOpeningTag = `<${openingTagMatch[1]}${stripOpeningTagAttributeText(openingTagMatch[2], attributeNamesToStrip)}${renderAttributeMap(rebuiltAttributes)}${openingTagMatch[3] || ''}>`;
     return rebuiltOpeningTag + html.slice(openingTagMatch[0].length);
   }
 
