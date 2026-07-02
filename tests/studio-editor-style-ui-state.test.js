@@ -150,3 +150,117 @@ test('updateStyleActionState disables style controls whenever the current select
     elBorderColor: true
   });
 });
+
+test('applySelectedElementStyle returns false and refreshes style controls when style edits are unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applySelectedElementStyleSource = extractFunctionSource(
+    fileContent,
+    'function applySelectedElementStyle(prop, val) {',
+    '\n\n    // Delete active selection'
+  );
+
+  const doc = { label: 'iframe-doc' };
+  const calls = [];
+  const context = {
+    selectedElements: [],
+    SlideNextStudioEditorStyle: {
+      buildStudioStyleMutationPlan() {
+        calls.push(['buildStudioStyleMutationPlan']);
+        return {
+          canApply: false,
+          selection: [],
+          versionLabel: ''
+        };
+      },
+      applyStudioStyleMutation() {
+        calls.push(['applyStudioStyleMutation']);
+        return {
+          didApply: true
+        };
+      }
+    },
+    getActiveSlide(currentDoc) {
+      calls.push(['getActiveSlide', currentDoc]);
+      return null;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return doc;
+    },
+    isElementLocked() {
+      calls.push(['isElementLocked']);
+      return false;
+    },
+    updateStyleActionState(currentDoc) {
+      calls.push(['updateStyleActionState', currentDoc]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applySelectedElementStyleSource, context);
+
+  assert.equal(context.applySelectedElementStyle('color', '#fff'), false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['buildStudioStyleMutationPlan'],
+    ['updateStyleActionState', doc]
+  ]);
+});
+
+test('applySelectedElementStyle returns false and refreshes style controls when the mutation becomes a no-op', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applySelectedElementStyleSource = extractFunctionSource(
+    fileContent,
+    'function applySelectedElementStyle(prop, val) {',
+    '\n\n    // Delete active selection'
+  );
+
+  const liveTarget = { isConnected: true };
+  const doc = { label: 'iframe-doc' };
+  const calls = [];
+  const context = {
+    selectedElements: [liveTarget],
+    SlideNextStudioEditorStyle: {
+      buildStudioStyleMutationPlan() {
+        calls.push(['buildStudioStyleMutationPlan']);
+        return {
+          canApply: true,
+          selection: [liveTarget],
+          versionLabel: 'Auto: Styled Element'
+        };
+      },
+      applyStudioStyleMutation(selection, prop, value) {
+        calls.push(['applyStudioStyleMutation', selection, prop, value]);
+        return {
+          didApply: false
+        };
+      }
+    },
+    getActiveSlide(currentDoc) {
+      calls.push(['getActiveSlide', currentDoc]);
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return doc;
+    },
+    isElementLocked() {
+      calls.push(['isElementLocked']);
+      return false;
+    },
+    updateStyleActionState(currentDoc) {
+      calls.push(['updateStyleActionState', currentDoc]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applySelectedElementStyleSource, context);
+
+  assert.equal(context.applySelectedElementStyle('color', '#fff'), false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['buildStudioStyleMutationPlan'],
+    ['applyStudioStyleMutation', [liveTarget], 'color', '#fff'],
+    ['updateStyleActionState', doc]
+  ]);
+});

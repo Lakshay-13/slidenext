@@ -3178,9 +3178,15 @@
         isLocked: isElementLocked,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
-      if (!styleMutationPlan.canApply) return false;
+      if (!styleMutationPlan.canApply) {
+        updateStyleActionState(doc);
+        return false;
+      }
       const styleMutationResult = SlideNextStudioEditorStyle.applyStudioStyleMutation(styleMutationPlan.selection, prop, val);
-      if (!styleMutationResult.didApply) return false;
+      if (!styleMutationResult.didApply) {
+        updateStyleActionState(doc);
+        return false;
+      }
 
       if (prop === 'size') {
         document.getElementById('fontSizeVal').textContent = `${styleMutationResult.displayValue}px`;
