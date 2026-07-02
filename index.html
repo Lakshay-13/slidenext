@@ -700,7 +700,7 @@
               </div>
               <div class="flex items-center justify-between p-2 bg-zinc-900 border border-white/5 rounded-lg">
                 <span class="text-xs font-mono text-zinc-400">Solid Picker:</span>
-                <input type="color" id="wallpaperCustomColor" oninput="applyPresetWallpaper(this.value, true)" onchange="triggerAutoVersion('Auto: Changed Background')" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
+                <input type="color" id="wallpaperCustomColor" oninput="applyPresetWallpaper(this.value, true)" onchange="flushPendingWallpaperVersion()" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
               </div>
             </div>
 
@@ -724,13 +724,13 @@
               <!-- Color Stop 1 -->
               <div class="flex justify-between items-center bg-zinc-950/60 p-2 rounded border border-white/5">
                 <span class="text-xs font-mono text-zinc-400">Color 1:</span>
-                <input type="color" id="cgColor1" value="#5050e8" oninput="applyCustomGradient()" onchange="triggerAutoVersion('Auto: Changed Background')" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
+                <input type="color" id="cgColor1" value="#5050e8" oninput="applyCustomGradient()" onchange="flushPendingWallpaperVersion()" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
               </div>
 
               <!-- Color Stop 2 -->
               <div class="flex justify-between items-center bg-zinc-950/60 p-2 rounded border border-white/5">
                 <span class="text-xs font-mono text-zinc-400">Color 2:</span>
-                <input type="color" id="cgColor2" value="#050505" oninput="applyCustomGradient()" onchange="triggerAutoVersion('Auto: Changed Background')" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
+                <input type="color" id="cgColor2" value="#050505" oninput="applyCustomGradient()" onchange="flushPendingWallpaperVersion()" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
               </div>
 
               <!-- Angle Slider (Linear only) -->
@@ -739,7 +739,7 @@
                   <span>Linear Angle:</span>
                   <span id="cgAngleVal" class="text-white font-bold">135°</span>
                 </div>
-                <input type="range" id="cgAngle" min="0" max="360" value="135" oninput="updateCustomGradientAngle(this.value)" onchange="triggerAutoVersion('Auto: Changed Background')" class="w-full accent-[#7028d0] cursor-pointer" />
+                <input type="range" id="cgAngle" min="0" max="360" value="135" oninput="updateCustomGradientAngle(this.value)" onchange="flushPendingWallpaperVersion()" class="w-full accent-[#7028d0] cursor-pointer" />
               </div>
             </div>
 
@@ -1068,6 +1068,7 @@
     let isDraggingElement = false;
     let zoomFactor = 1.0;
     let customGradientType = 'linear';
+    let hasPendingCustomWallpaperVersion = false;
     let renamingFilename = '';
     let renamingVersionContext = null;
     let editorClipboard = null;
@@ -4195,6 +4196,13 @@
       return versionLabel;
     }
 
+    function flushPendingWallpaperVersion() {
+      if (!hasPendingCustomWallpaperVersion) return false;
+      hasPendingCustomWallpaperVersion = false;
+      triggerAutoVersion('Auto: Changed Background');
+      return true;
+    }
+
     function applyPresetWallpaper(val, isCustomInput = false) {
       const wallpaperTabBtn = typeof document !== 'undefined' && document && typeof document.getElementById === 'function'
         ? document.getElementById('wpTabSolid')
@@ -4207,6 +4215,7 @@
       if (activeSlide.style.background === val) return false;
 
       activeSlide.style.background = val;
+      hasPendingCustomWallpaperVersion = !!isCustomInput;
       finalizeWallpaperMutation(isCustomInput ? '' : 'Auto: Changed Background');
       return true;
     }
@@ -5128,6 +5137,7 @@
 
     function resetStudioDeckUiState(options = {}) {
       const isLoading = !!options.isLoading;
+      hasPendingCustomWallpaperVersion = false;
       const slideCountLabel = document.getElementById('slideCountLabel');
       if (slideCountLabel) {
         slideCountLabel.textContent = '0 / 0';

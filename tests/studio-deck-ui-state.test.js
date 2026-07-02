@@ -128,13 +128,15 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
   };
 
   const context = {
-    document: documentStub
+    document: documentStub,
+    hasPendingCustomWallpaperVersion: true
   };
 
   vm.createContext(context);
   vm.runInContext(resetStudioDeckUiStateSource, context);
 
   context.resetStudioDeckUiState({ isLoading: true });
+  assert.equal(context.hasPendingCustomWallpaperVersion, false);
   assert.equal(elements.slideCountLabel.textContent, '0 / 0');
   assert.match(elements.thumbnailsList.innerHTML, /Loading slides\.\.\./);
   assert.match(elements.slideLayersList.innerHTML, /Loading layers\.\.\./);

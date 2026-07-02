@@ -59,6 +59,72 @@ test('finalizeWallpaperMutation refreshes thumbnails and persists wallpaper chan
   ]);
 });
 
+test('flushPendingWallpaperVersion commits a custom wallpaper version only when a real custom mutation is pending', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyPresetWallpaperSource = extractFunctionSource(
+    fileContent,
+    'function applyPresetWallpaper(val, isCustomInput = false) {',
+    '\n\n    function setCustomGradientType(type) {'
+  );
+
+  const iframeDoc = { id: 'doc' };
+  const activeSlide = {
+    style: {
+      background: ''
+    }
+  };
+  const calls = [];
+  const context = {
+    hasPendingCustomWallpaperVersion: false,
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    getActiveSlide(doc) {
+      calls.push(['getActiveSlide', doc]);
+      return activeSlide;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
+  vm.runInContext(applyPresetWallpaperSource, context);
+
+  assert.equal(context.flushPendingWallpaperVersion(), false);
+  assert.equal(context.applyPresetWallpaper('#ffffff', true), true);
+  assert.equal(context.hasPendingCustomWallpaperVersion, true);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getActiveSlide', iframeDoc],
+    ['generateThumbnails'],
+    ['saveHistoryState'],
+    ['triggerAutoSave']
+  ]);
+
+  calls.length = 0;
+  assert.equal(context.flushPendingWallpaperVersion(), true);
+  assert.equal(context.hasPendingCustomWallpaperVersion, false);
+  assert.deepEqual(calls, [
+    ['triggerAutoVersion', 'Auto: Changed Background']
+  ]);
+
+  calls.length = 0;
+  assert.equal(context.flushPendingWallpaperVersion(), false);
+  assert.deepEqual(calls, []);
+});
+
 test('applyPresetWallpaper uses the shared iframe accessor and records a version only for non-custom wallpaper updates', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyPresetWallpaperSource = extractFunctionSource(
