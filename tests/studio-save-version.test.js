@@ -51,6 +51,15 @@ function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, co
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {',
+    '\n\n    function resolveCurrentStudioVersionCheckpointPersistenceState('
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveCurrentStudioVersionCheckpointPersistenceState(',
     '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
   );
   vm.runInContext(helperSource, context);
@@ -87,6 +96,65 @@ test('setStudioSaveButtonState renders the version button loading and idle state
   context.setStudioSaveButtonState('idle');
   assert.equal(saveBtnEl.disabled, false);
   assert.match(saveBtnEl.innerHTML, /Save Version/);
+});
+
+test('resolveCurrentStudioVersionCheckpointPersistenceState delegates checkpoint capture through the shared persistence helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const capturedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: []
+    },
+    playbackState: {
+      activeSlideIds: ['slide-1'],
+      slideCounterText: '1 / 1'
+    }
+  };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      resolveStudioVersionCheckpointPersistenceStateFromCapture(doc, nextCapturedDeckState, presentationUrl, options = {}) {
+        delegatedArgs = {
+          doc,
+          nextCapturedDeckState,
+          presentationUrl,
+          options
+        };
+        return {
+          cleanHtml: '<html>persisted</html>',
+          persistenceContext: {
+            presentationUrl
+          },
+          requestOptions: options
+        };
+      }
+    },
+    captureEditorPersistableDeckState(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return capturedDeckState;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    studioEditorSessionToken: 12
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
+
+  const result = context.resolveCurrentStudioVersionCheckpointPersistenceState();
+
+  assert.equal(result.cleanHtml, '<html>persisted</html>');
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(delegatedArgs.nextCapturedDeckState, capturedDeckState);
+  assert.equal(delegatedArgs.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.deepEqual(JSON.parse(JSON.stringify(delegatedArgs.options)), {
+    sessionToken: 12
+  });
 });
 
 test('submitSaveVersion keeps the save button idle when editor content is unavailable', async () => {
@@ -186,6 +254,7 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
+  loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -295,6 +364,7 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
+  loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -414,6 +484,7 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
+  loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -533,6 +604,7 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
+  loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   const savePromise = context.submitSaveVersion();
@@ -595,6 +667,7 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
+  loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -664,6 +737,7 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
+  loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');

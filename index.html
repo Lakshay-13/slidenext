@@ -4672,6 +4672,21 @@
       });
     }
 
+    function resolveCurrentStudioVersionCheckpointPersistenceState(
+      presentationUrl = currentPresentationUrl,
+      sessionToken = studioEditorSessionToken,
+      doc = getIframeDoc()
+    ) {
+      return SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture(
+        doc,
+        captureEditorPersistableDeckState(doc),
+        presentationUrl,
+        {
+          sessionToken
+        }
+      );
+    }
+
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
       const persistencePlan = SlideNextStudioEditorPersistence.buildStudioVersionCheckpointPersistencePlan(
         versionLabel,
@@ -5152,13 +5167,10 @@
       const scheduledPresentationUrl = currentPresentationUrl;
       const scheduledSessionToken = studioEditorSessionToken;
       const iframeDoc = getIframeDoc();
-      const versionCheckpointPersistenceState = SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture(
-        iframeDoc,
-        captureEditorPersistableDeckState(iframeDoc),
+      const versionCheckpointPersistenceState = resolveCurrentStudioVersionCheckpointPersistenceState(
         scheduledPresentationUrl,
-        {
-          sessionToken: scheduledSessionToken
-        }
+        scheduledSessionToken,
+        iframeDoc
       );
       if (!versionCheckpointPersistenceState) {
         alert('Save version failed: editor content is unavailable.');
@@ -5243,13 +5255,10 @@
     async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
       if (isStaleEditorPersistenceTask(presentationUrl, sessionToken)) return;
       const iframeDoc = getIframeDoc();
-      const versionCheckpointPersistenceState = SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture(
-        iframeDoc,
-        captureEditorPersistableDeckState(iframeDoc),
+      const versionCheckpointPersistenceState = resolveCurrentStudioVersionCheckpointPersistenceState(
         presentationUrl,
-        {
-          sessionToken
-        }
+        sessionToken,
+        iframeDoc
       );
       if (!versionCheckpointPersistenceState) return;
       
