@@ -3461,6 +3461,16 @@
       }
     }
 
+    function syncSelectionUiAfterMutation() {
+      refreshSelectionClasses();
+      SlideNextStudioEditorSelection.syncStudioSelectionUi(selectedElements, {
+        syncSelectionOverlay,
+        syncInspectorForSelection,
+        updateLayersList
+      });
+      return selectedElements;
+    }
+
     function toggleSelectedElementsLockState() {
       const doc = getIframeDoc();
       const lockMutationPlan = SlideNextStudioEditorLockState.buildStudioLockMutationPlan(selectedElements, {
@@ -3476,12 +3486,7 @@
         changedCount += 1;
       });
       if (changedCount === 0) return false;
-      refreshSelectionClasses();
-      SlideNextStudioEditorSelection.syncStudioSelectionUi(selectedElements, {
-        syncSelectionOverlay,
-        syncInspectorForSelection,
-        updateLayersList
-      });
+      syncSelectionUiAfterMutation();
       finalizeEditorDeckMutation(lockMutationPlan.versionLabel, {
         refreshThumbnails: false
       });
@@ -3503,12 +3508,7 @@
         changedCount += 1;
       });
       if (changedCount === 0) return false;
-      refreshSelectionClasses();
-      SlideNextStudioEditorSelection.syncStudioSelectionUi(selectedElements, {
-        syncSelectionOverlay,
-        syncInspectorForSelection,
-        updateLayersList
-      });
+      syncSelectionUiAfterMutation();
       finalizeEditorDeckMutation(visibilityMutationPlan.versionLabel, {
         refreshThumbnails: false
       });

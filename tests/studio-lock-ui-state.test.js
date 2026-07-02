@@ -23,6 +23,46 @@ function loadFinalizeEditorDeckMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadSyncSelectionUiAfterMutation(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function syncSelectionUiAfterMutation() {',
+    '\n\n    // Apply styles immediately to active selected elements'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+test('syncSelectionUiAfterMutation refreshes selection classes before syncing selection chrome', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectedElements = [{ id: 'node-1' }];
+  const calls = [];
+  const context = {
+    selectedElements,
+    SlideNextStudioEditorSelection: {
+      syncStudioSelectionUi(selection, options) {
+        calls.push(['syncStudioSelectionUi', selection, Object.keys(options).sort()]);
+      }
+    },
+    refreshSelectionClasses() {
+      calls.push(['refreshSelectionClasses']);
+    },
+    syncInspectorForSelection() {},
+    syncSelectionOverlay() {},
+    updateLayersList() {}
+  };
+
+  vm.createContext(context);
+  loadSyncSelectionUiAfterMutation(fileContent, context);
+
+  const result = context.syncSelectionUiAfterMutation();
+
+  assert.equal(result, selectedElements);
+  assert.deepEqual(calls, [
+    ['refreshSelectionClasses'],
+    ['syncStudioSelectionUi', selectedElements, ['syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']]
+  ]);
+});
+
 test('updateLockActionState enables the lock control only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateLockActionStateSource = extractFunctionSource(
@@ -149,6 +189,7 @@ test('toggleSelectedElementsLockState returns false and skips persistence when p
   };
 
   vm.createContext(context);
+  loadSyncSelectionUiAfterMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
@@ -228,6 +269,7 @@ test('toggleSelectedElementsLockState returns true after locking live targets an
   };
 
   vm.createContext(context);
+  loadSyncSelectionUiAfterMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
