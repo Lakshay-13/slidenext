@@ -674,6 +674,11 @@ test('captureState can store a persisted baseline history entry without a live f
 
 test('applyCurrentStudioRestoredHistoryState updates the playback baseline and live canonical deck together', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const persistedDeckStateHelperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
+    '\n\n    function applyCurrentStudioPersistedCanonicalDeck('
+  );
   const playbackHelperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistedPlaybackState(playbackState = null) {',
@@ -705,6 +710,7 @@ test('applyCurrentStudioRestoredHistoryState updates the playback baseline and l
   };
 
   vm.createContext(context);
+  vm.runInContext(persistedDeckStateHelperSource, context);
   vm.runInContext(playbackHelperSource, context);
   vm.runInContext(helperSource, context);
 
@@ -728,6 +734,11 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
     fileContent,
     'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const persistedDeckStateHelperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
+    '\n\n    function applyCurrentStudioPersistedCanonicalDeck('
   );
   const restoreFrameFromHistoryEntrySource = extractFunctionSource(
     fileContent,
@@ -847,6 +858,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
 
   vm.createContext(context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(persistedDeckStateHelperSource, context);
   vm.runInContext(
     extractFunctionSource(
       fileContent,
@@ -921,6 +933,11 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
     'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
   );
+  const persistedDeckStateHelperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
+    '\n\n    function applyCurrentStudioPersistedCanonicalDeck('
+  );
   const restoreFrameFromHistoryEntrySource = extractFunctionSource(
     fileContent,
     'function restoreFrameFromHistoryEntry(entry) {',
@@ -986,6 +1003,7 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
 
   vm.createContext(context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(persistedDeckStateHelperSource, context);
   vm.runInContext(
     extractFunctionSource(
       fileContent,

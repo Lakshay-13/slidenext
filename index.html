@@ -2614,26 +2614,40 @@
       );
     }
 
+    function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {
+      updateEditorPersistedDeckState(nextState);
+      if (!Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck') || options.syncPresentationMetadata === false) {
+        return nextState;
+      }
+      const presentationUrl = Object.prototype.hasOwnProperty.call(options, 'presentationUrl')
+        ? options.presentationUrl
+        : (typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '');
+      setCurrentPresentationCanonicalDeck(nextState.canonicalDeck, presentationUrl);
+      return nextState;
+    }
+
     function applyCurrentStudioPersistedCanonicalDeck(
       canonicalDeck,
       presentationUrl = typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '',
       options = {}
     ) {
-      updateEditorPersistedDeckState({ canonicalDeck });
-      if (options.syncPresentationMetadata === false) {
-        return canonicalDeck;
-      }
-      setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl);
+      applyCurrentStudioPersistedDeckState(
+        { canonicalDeck },
+        {
+          ...options,
+          presentationUrl
+        }
+      );
       return canonicalDeck;
     }
 
     function applyCurrentStudioPersistedPlaybackState(playbackState = null) {
-      updateEditorPersistedDeckState({ playbackState });
+      applyCurrentStudioPersistedDeckState({ playbackState });
       return playbackState;
     }
 
     function applyCurrentStudioPersistedHtml(cleanHtml = '') {
-      updateEditorPersistedDeckState({ cleanHtml });
+      applyCurrentStudioPersistedDeckState({ cleanHtml });
       return cleanHtml;
     }
 
@@ -4306,11 +4320,14 @@
     }
 
     function resetEditorDeckPersistenceState() {
-      applyCurrentStudioPersistedHtml('');
-      applyCurrentStudioPersistedCanonicalDeck(null, '', {
+      applyCurrentStudioPersistedDeckState({
+        cleanHtml: '',
+        canonicalDeck: null,
+        playbackState: null
+      }, {
+        presentationUrl: '',
         syncPresentationMetadata: false
       });
-      applyCurrentStudioPersistedPlaybackState(null);
     }
 
     function resetEditorHistoryState(options = {}) {

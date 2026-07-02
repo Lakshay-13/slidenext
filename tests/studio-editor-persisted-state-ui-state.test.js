@@ -20,9 +20,18 @@ function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
   const resolveEditorStoredCanonicalDeckSource = extractFunctionSource(
     fileContent,
     'function resolveEditorStoredCanonicalDeck(metadata) {',
-    '\n\n    function applyCurrentStudioPersistedCanonicalDeck('
+    '\n\n    function applyCurrentStudioPersistedDeckState('
   );
   vm.runInContext(resolveEditorStoredCanonicalDeckSource, context);
+}
+
+function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
+    '\n\n    function applyCurrentStudioPersistedCanonicalDeck('
+  );
+  vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
@@ -200,8 +209,7 @@ test('resetEditorDeckPersistenceState clears the persisted baseline through the 
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(updateEditorPersistedDeckStateSource, context);
-  loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
-  loadApplyCurrentStudioPersistedPlaybackState(fileContent, context);
+  loadApplyCurrentStudioPersistedDeckState(fileContent, context);
   vm.runInContext(resetEditorDeckPersistenceStateSource, context);
 
   context.resetEditorDeckPersistenceState();
@@ -209,6 +217,76 @@ test('resetEditorDeckPersistenceState clears the persisted baseline through the 
   assert.equal(context.lastPersistedDeckHtml, '');
   assert.equal(context.lastPersistedCanonicalDeck, null);
   assert.equal(context.persistedDeckPlaybackState, null);
+});
+
+test('applyCurrentStudioPersistedDeckState updates persisted baselines together and syncs canonical metadata only when allowed', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateEditorPersistedDeckStateSource = extractFunctionSource(
+    fileContent,
+    'function updateEditorPersistedDeckState(nextState = {}) {',
+    '\n\n    function resetEditorDeckPersistenceState() {'
+  );
+
+  const rawCanonicalDeck = {
+    metadata: {
+      id: 'onboarding-presentation'
+    },
+    slides: []
+  };
+  const normalizedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const metadataSyncCalls = [];
+  const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    lastPersistedDeckHtml: '<html>old</html>',
+    lastPersistedCanonicalDeck: null,
+    persistedDeckPlaybackState: null,
+    SlideNextDeckPersistence: deckPersistence,
+    SlideNextStudioDeckContext: {
+      resolveStoredStudioCanonicalDeck(metadata) {
+        return metadata && metadata.canonicalDeck ? normalizedCanonicalDeck : null;
+      }
+    },
+    setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl) {
+      metadataSyncCalls.push([nextCanonicalDeck, presentationUrl]);
+    },
+    Object
+  };
+
+  vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
+  vm.runInContext(updateEditorPersistedDeckStateSource, context);
+  loadApplyCurrentStudioPersistedDeckState(fileContent, context);
+
+  const result = context.applyCurrentStudioPersistedDeckState({
+    cleanHtml: '<html>new</html>',
+    canonicalDeck: rawCanonicalDeck,
+    playbackState: { activeSlideId: 'slide-3' }
+  });
+
+  context.applyCurrentStudioPersistedDeckState(
+    { canonicalDeck: rawCanonicalDeck },
+    {
+      presentationUrl: '/presentations/custom/index.html',
+      syncPresentationMetadata: false
+    }
+  );
+
+  assert.deepEqual(result, {
+    cleanHtml: '<html>new</html>',
+    canonicalDeck: rawCanonicalDeck,
+    playbackState: { activeSlideId: 'slide-3' }
+  });
+  assert.equal(context.lastPersistedDeckHtml, '<html>new</html>');
+  assert.deepEqual(context.lastPersistedCanonicalDeck, normalizedCanonicalDeck);
+  assert.deepEqual(context.persistedDeckPlaybackState, {
+    activeSlideIds: ['slide-3'],
+    slideCounterText: ''
+  });
+  assert.deepEqual(metadataSyncCalls, [[rawCanonicalDeck, '/presentations/onboarding-presentation/index.html']]);
 });
 
 test('applyCurrentStudioPersistedCanonicalDeck updates the canonical baseline and can skip presentation metadata sync', () => {
@@ -250,6 +328,7 @@ test('applyCurrentStudioPersistedCanonicalDeck updates the canonical baseline an
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(updateEditorPersistedDeckStateSource, context);
+  loadApplyCurrentStudioPersistedDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
 
   context.applyCurrentStudioPersistedCanonicalDeck(rawCanonicalDeck);
@@ -285,6 +364,7 @@ test('applyCurrentStudioPersistedHtml updates the persisted html baseline', () =
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(updateEditorPersistedDeckStateSource, context);
+  loadApplyCurrentStudioPersistedDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedHtml(fileContent, context);
 
   const result = context.applyCurrentStudioPersistedHtml('<html>new</html>');
@@ -317,6 +397,7 @@ test('applyCurrentStudioPersistedPlaybackState updates the normalized playback b
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(updateEditorPersistedDeckStateSource, context);
+  loadApplyCurrentStudioPersistedDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedPlaybackState(fileContent, context);
 
   const result = context.applyCurrentStudioPersistedPlaybackState({ activeSlideId: 'slide-3' });
