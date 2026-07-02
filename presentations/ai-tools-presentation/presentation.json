@@ -5,5 +5,8 @@
   "description": "Interactive showcase of cutting-edge AI models, coding companions, automated agents, and cooperative dev workflows.",
   "url": "ai-tools-presentation/index.html",
   "icon": "auto_awesome",
-  "tags": ["AI Tools", "Gemini", "Coding", "Agents"]
+  "tags": ["AI Tools", "Gemini", "Coding", "Agents"],
+  "persistence": {
+    "transientClassNames": ["voted", "revealed"]
+  }
 }

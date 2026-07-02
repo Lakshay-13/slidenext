@@ -157,6 +157,27 @@ test('resolvePresentationCanonicalDeck fills missing canonical metadata fields f
   assert.equal(canonicalDeck.metadata.sourcePath, 'presentations/onboarding-presentation/index.html');
 });
 
+test('resolvePresentationPersistenceOptions normalizes configured transient class names', () => {
+  assert.deepEqual(
+    presentationMetadata.resolvePresentationPersistenceOptions({
+      id: 'ai-tools-presentation',
+      persistence: {
+        transientClassNames: [' revealed ', '', 'voted', 42, 'revealed']
+      }
+    }),
+    {
+      transientClassNames: ['revealed', 'voted']
+    }
+  );
+
+  assert.deepEqual(
+    presentationMetadata.resolvePresentationPersistenceOptions({
+      id: 'ai-tools-presentation'
+    }),
+    {}
+  );
+});
+
 test('mergePresentationCanonicalDeck preserves metadata and normalizes valid canonical sidecars', () => {
   const metadata = {
     id: 'onboarding-presentation',

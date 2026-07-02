@@ -99,6 +99,24 @@
       : null;
   }
 
+  function resolvePresentationPersistenceOptions(metadata = {}) {
+    const nextMetadata = asPlainObject(metadata);
+    const persistence = asPlainObject(nextMetadata.persistence);
+    const transientClassNames = Array.from(new Set(
+      normalizeStringArray(persistence.transientClassNames)
+        .map((className) => className.trim())
+        .filter(Boolean)
+    ));
+
+    if (transientClassNames.length === 0) {
+      return {};
+    }
+
+    return {
+      transientClassNames
+    };
+  }
+
   function mergePresentationCanonicalDeck(metadata = {}, deckLike = null, options = {}) {
     const nextMetadata = asPlainObject(metadata);
     const nextCanonicalDeck = resolvePresentationCanonicalDeck({
@@ -132,6 +150,7 @@
     derivePresentationIdFromHtmlPath,
     buildPresentationMetadataSeed,
     resolvePresentationCanonicalDeck,
+    resolvePresentationPersistenceOptions,
     mergePresentationCanonicalDeck,
     stripPresentationCanonicalDeck
   };

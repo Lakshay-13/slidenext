@@ -81,6 +81,19 @@
       : nextMetadata;
   }
 
+  function resolvePresentationPersistenceOptions(metadata = {}) {
+    if (presentationMetadata && typeof presentationMetadata.resolvePresentationPersistenceOptions === 'function') {
+      return presentationMetadata.resolvePresentationPersistenceOptions(metadata);
+    }
+
+    const nextMetadata = metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+      ? metadata
+      : {};
+    return nextMetadata.persistence && typeof nextMetadata.persistence === 'object' && !Array.isArray(nextMetadata.persistence)
+      ? { ...nextMetadata.persistence }
+      : {};
+  }
+
   async function loadPresentationMetadata(presentationUrl = '', presentationTitle = '', options = {}) {
     const fallbackMetadata = buildPresentationMetadataSeed(presentationUrl, presentationTitle);
     const metadataUrl = derivePresentationMetadataUrl(presentationUrl);
@@ -124,10 +137,30 @@
       return null;
     }
 
+    const metadataPersistenceOptions = resolvePresentationPersistenceOptions(options.presentationMetadata || {});
+    const explicitPersistenceOptions = options.persistenceOptions && typeof options.persistenceOptions === 'object' && !Array.isArray(options.persistenceOptions)
+      ? { ...options.persistenceOptions }
+      : {};
+    const persistenceOptions = {
+      ...metadataPersistenceOptions,
+      ...explicitPersistenceOptions
+    };
+    const additionalTransientClassNames = Array.isArray(persistenceOptions.transientClassNames)
+      ? persistenceOptions.transientClassNames
+      : [];
+    const explicitTransientClassNames = Array.isArray(options.transientClassNames)
+      ? options.transientClassNames
+      : [];
+
     return deckImport.importHtmlDeckToCanonicalDeck(doc, {
       ...options,
       presentationMetadata: options.presentationMetadata || {},
       sourcePath: normalizeString(options.sourcePath),
+      persistenceOptions,
+      transientClassNames: Array.from(new Set([
+        ...explicitTransientClassNames,
+        ...additionalTransientClassNames
+      ])),
       getSlideId: options.getSlideId,
       getNodeId: options.getNodeId
     });
@@ -139,6 +172,7 @@
     derivePresentationMetadataUrl,
     normalizeLoadedPresentationMetadata,
     loadPresentationMetadata,
+    resolvePresentationPersistenceOptions,
     buildCanonicalDeckFromDocument
   };
 });

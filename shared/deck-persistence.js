@@ -37,6 +37,11 @@
 
     const emptyContainerIds = options.emptyContainerIds || DEFAULT_EMPTY_CONTAINER_IDS;
     const styleCleanups = options.styleCleanups || DEFAULT_STYLE_CLEANUPS;
+    const transientClassNames = Array.isArray(options.transientClassNames)
+      ? options.transientClassNames
+        .map((className) => typeof className === 'string' ? className.trim() : '')
+        .filter(Boolean)
+      : [];
     const usesTailwindCdn = !!root.querySelector('script[src*="cdn.tailwindcss.com"]');
 
     if (usesTailwindCdn) {
@@ -61,6 +66,14 @@
     styleCleanups.forEach(({ selector, properties }) => {
       root.querySelectorAll(selector).forEach(node => {
         stripInlineStyleProperties(node, properties);
+      });
+    });
+
+    transientClassNames.forEach((className) => {
+      root.querySelectorAll(`.${className}`).forEach((node) => {
+        if (node && node.classList && typeof node.classList.remove === 'function') {
+          node.classList.remove(className);
+        }
       });
     });
 

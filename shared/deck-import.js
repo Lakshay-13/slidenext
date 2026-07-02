@@ -412,9 +412,15 @@
   }
 
   function resolveImportedTransientClassNames(options = {}) {
-    return Array.isArray(options.transientClassNames)
+    const additionalTransientClassNames = Array.isArray(options.transientClassNames)
       ? options.transientClassNames
-      : DEFAULT_SOURCE_TRANSIENT_CLASSES;
+      : [];
+    return Array.from(new Set([
+      ...DEFAULT_SOURCE_TRANSIENT_CLASSES,
+      ...additionalTransientClassNames
+        .map((className) => normalizeString(className).trim())
+        .filter(Boolean)
+    ]));
   }
 
   function sanitizeImportedClassNames(classNamesLike, options = {}) {
@@ -1409,9 +1415,7 @@
     const ignoredNodeIds = Array.isArray(options.ignoredNodeIds)
       ? options.ignoredNodeIds
       : DEFAULT_SOURCE_IGNORED_NODE_IDS;
-    const transientClassNames = Array.isArray(options.transientClassNames)
-      ? options.transientClassNames
-      : DEFAULT_SOURCE_TRANSIENT_CLASSES;
+    const transientClassNames = resolveImportedTransientClassNames(options);
     const editorElementIdAttr = options.editorElementIdAttr || 'data-editor-id';
     const editorSlideIdAttr = options.editorSlideIdAttr || 'data-slide-id';
 

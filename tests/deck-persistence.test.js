@@ -75,6 +75,49 @@ test('ensurePersistedDeckPlaybackStateActiveSlideId injects a fallback active sl
   );
 });
 
+test('stripTransientDeckRuntimeState removes configured transient class names from the cloned deck html', () => {
+  function createClassList(initialValues = []) {
+    const values = new Set(initialValues);
+    return {
+      contains(value) {
+        return values.has(value);
+      },
+      remove(...entries) {
+        entries.forEach((entry) => values.delete(entry));
+      }
+    };
+  }
+
+  const revealedNode = {
+    classList: createClassList(['revealed', 'hero-card'])
+  };
+  const votedNode = {
+    classList: createClassList(['voted'])
+  };
+  const root = {
+    querySelector() {
+      return null;
+    },
+    querySelectorAll(selector) {
+      if (selector === '.revealed') {
+        return [revealedNode];
+      }
+      if (selector === '.voted') {
+        return [votedNode];
+      }
+      return [];
+    }
+  };
+
+  deckPersistence.stripTransientDeckRuntimeState(root, {
+    transientClassNames: ['revealed', 'voted']
+  });
+
+  assert.equal(revealedNode.classList.contains('revealed'), false);
+  assert.equal(revealedNode.classList.contains('hero-card'), true);
+  assert.equal(votedNode.classList.contains('voted'), false);
+});
+
 test('restorePersistedDeckPlaybackState accepts legacy activeSlideId values', () => {
   const slideNumNode = { textContent: '' };
   const slides = [

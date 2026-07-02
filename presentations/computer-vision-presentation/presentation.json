@@ -5,5 +5,8 @@
   "description": "An interactive, visual introduction to Computer Vision covering sensors, 2D images, video understanding, 3D perception, autonomous vehicles, and deep learning limitations.",
   "url": "computer-vision-presentation/index.html",
   "icon": "visibility",
-  "tags": ["Computer Vision", "Sensors", "3D Analysis", "Deep Learning"]
+  "tags": ["Computer Vision", "Sensors", "3D Analysis", "Deep Learning"],
+  "persistence": {
+    "transientClassNames": ["grayscale", "grayscale-0"]
+  }
 }

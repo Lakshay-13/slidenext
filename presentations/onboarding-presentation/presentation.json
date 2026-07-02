@@ -5,5 +5,8 @@
   "description": "Interactive onboarding guide covering VS Code editor workspace, Git version controls, and Docker containerization.",
   "url": "onboarding-presentation/index.html",
   "icon": "terminal",
-  "tags": ["Onboarding", "VS Code", "Git", "Docker"]
+  "tags": ["Onboarding", "VS Code", "Git", "Docker"],
+  "persistence": {
+    "transientClassNames": ["animate-fade-in", "flipped"]
+  }
 }

@@ -1247,6 +1247,26 @@ test('importElementToCanonicalNode strips duplicate visibility attrs from stored
   assert.equal(node.visibility.locked, true);
 });
 
+test('importElementToCanonicalNode merges configured transient classes with editor-only transient classes', () => {
+  const element = createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['hero-card', 'editor-hoverable', 'revealed']),
+    attributes: {
+      class: 'hero-card editor-hoverable revealed'
+    },
+    textContent: 'Hero copy',
+    outerHTML: '<div class="hero-card editor-hoverable revealed">Hero copy</div>'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element, {
+    transientClassNames: ['revealed']
+  });
+
+  assert.deepEqual(node.classes, ['hero-card']);
+  assert.equal(node.html.includes('editor-hoverable'), false);
+  assert.equal(node.html.includes('revealed'), false);
+});
+
 test('importElementToCanonicalNode ignores computed hidden styles when visibility is not explicitly encoded', () => {
   const element = createImportedElement({
     tagName: 'DIV',
