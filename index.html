@@ -1317,19 +1317,31 @@
             presentationLibraryData = nextData;
           },
           onSuccess: (nextData) => {
-            document.getElementById('loader').classList.add('hidden');
-            document.getElementById('categoryTabs').classList.remove('hidden');
-            document.getElementById('presentationsGrid').classList.remove('hidden');
+            const loader = document.getElementById('loader');
+            if (loader) {
+              loader.classList.add('hidden');
+            }
+            const categoryTabs = document.getElementById('categoryTabs');
+            if (categoryTabs) {
+              categoryTabs.classList.remove('hidden');
+            }
+            const presentationsGrid = document.getElementById('presentationsGrid');
+            if (presentationsGrid) {
+              presentationsGrid.classList.remove('hidden');
+            }
 
             renderCategories(nextData);
             renderGrid(nextData);
           },
           onError: (err) => {
             console.error('Error fetching presentations:', err);
-            document.getElementById('loader').innerHTML = `
-              <span class="material-symbols-outlined text-[36px] text-rose-500">error</span>
-              <p class="text-xs text-rose-400 font-mono mt-2 uppercase tracking-widest">Failed to load SlideNext workspace</p>
-            `;
+            const loader = document.getElementById('loader');
+            if (loader) {
+              loader.innerHTML = `
+                <span class="material-symbols-outlined text-[36px] text-rose-500">error</span>
+                <p class="text-xs text-rose-400 font-mono mt-2 uppercase tracking-widest">Failed to load SlideNext workspace</p>
+              `;
+            }
           }
         });
       } catch (err) {

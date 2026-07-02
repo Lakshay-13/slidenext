@@ -121,3 +121,82 @@ test('loadPresentations resets the dashboard to loading state before refreshing 
     ['grid', sampleLibrary]
   ]);
 });
+
+test('loadPresentations tolerates missing dashboard chrome during success and error updates', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setPresentationLibraryLoadingStateSource = extractFunctionSource(
+    fileContent,
+    'function setPresentationLibraryLoadingState() {',
+    '\n\n    async function loadPresentations() {'
+  );
+  const loadPresentationsSource = extractFunctionSource(
+    fileContent,
+    'async function loadPresentations() {',
+    '\n\n    // Render category tab filters'
+  );
+
+  const sampleLibrary = [
+    {
+      category: 'General',
+      presentations: [
+        { title: 'Onboarding' }
+      ]
+    }
+  ];
+
+  const calls = [];
+  let committedData = null;
+  const context = {
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (
+          id === 'loader'
+          || id === 'categoryTabs'
+          || id === 'presentationsGrid'
+        ) {
+          return null;
+        }
+        throw new Error(`Unexpected element lookup: ${id}`);
+      }
+    },
+    presentationLibraryData: [],
+    presentationLibraryLoadToken: 0,
+    renderCategories(data) {
+      calls.push(['renderCategories', data]);
+    },
+    renderGrid(data) {
+      calls.push(['renderGrid', data]);
+    },
+    SlideNextPresentationLibrary: {
+      async loadPresentationLibrary(options) {
+        options.commitPresentationLibraryData(sampleLibrary);
+        committedData = sampleLibrary;
+        options.onSuccess(sampleLibrary);
+        options.onError(new Error('network failed'));
+        return sampleLibrary;
+      }
+    },
+    console: {
+      error(...args) {
+        calls.push(['console.error', ...args]);
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${setPresentationLibraryLoadingStateSource}\n${loadPresentationsSource}`, context);
+
+  await assert.doesNotReject(async () => {
+    await context.loadPresentations();
+  });
+
+  assert.deepEqual(context.presentationLibraryData, sampleLibrary);
+  assert.deepEqual(committedData, sampleLibrary);
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'loader'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'categoryTabs'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'presentationsGrid'));
+  assert.ok(calls.some(([name]) => name === 'renderCategories'));
+  assert.ok(calls.some(([name]) => name === 'renderGrid'));
+  assert.ok(calls.some(([name]) => name === 'console.error'));
+});
