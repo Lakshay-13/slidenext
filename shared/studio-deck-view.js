@@ -185,6 +185,22 @@
       : persistedActiveSlideId;
   }
 
+  function buildStudioDeckHtml(doc, options = {}) {
+    const canonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck(doc)
+      : null;
+    if (isCanonicalDeckLike(canonicalDeck) && typeof options.buildCanonicalHtml === 'function') {
+      return options.buildCanonicalHtml(canonicalDeck, doc);
+    }
+
+    const fallbackHtml = typeof options.buildFallbackHtml === 'function'
+      ? options.buildFallbackHtml(doc)
+      : '';
+    return typeof options.transformFallbackHtml === 'function'
+      ? options.transformFallbackHtml(fallbackHtml, doc)
+      : fallbackHtml;
+  }
+
   function teardownStudioDeckActiveSlideSync(state = {}, options = {}) {
     const disconnectObserver = typeof options.disconnectObserver === 'function'
       ? options.disconnectObserver
@@ -637,51 +653,45 @@
   }
 
   function buildStudioPreviewHtml(doc, options = {}) {
-    if (deckHtml && typeof deckHtml.buildDeckPreviewHtml === 'function') {
-      const canonicalDeck = typeof options.buildCanonicalDeck === 'function'
-        ? options.buildCanonicalDeck(doc)
-        : null;
-      if (isCanonicalDeckLike(canonicalDeck)) {
-        return deckHtml.buildDeckPreviewHtml(canonicalDeck, options.presentationUrl || '', options.deckHtmlOptions || {});
+    return buildStudioDeckHtml(doc, {
+      ...options,
+      buildCanonicalHtml: deckHtml && typeof deckHtml.buildDeckPreviewHtml === 'function'
+        ? (canonicalDeck) => deckHtml.buildDeckPreviewHtml(
+            canonicalDeck,
+            options.presentationUrl || '',
+            options.deckHtmlOptions || {}
+          )
+        : null,
+      transformFallbackHtml(fallbackHtml) {
+        if (!fallbackHtml) {
+          return fallbackHtml;
+        }
+
+        const injectBaseHrefIntoHtml = deckHtml && typeof deckHtml.injectBaseHrefIntoHtml === 'function'
+          ? deckHtml.injectBaseHrefIntoHtml
+          : null;
+        const buildPresentationBaseHref = deckHtml && typeof deckHtml.buildPresentationBaseHref === 'function'
+          ? deckHtml.buildPresentationBaseHref
+          : null;
+        if (!injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
+          return fallbackHtml;
+        }
+
+        return injectBaseHrefIntoHtml(
+          fallbackHtml,
+          buildPresentationBaseHref(options.presentationUrl || '', options.deckHtmlOptions || {})
+        );
       }
-    }
-
-    const fallbackHtml = typeof options.buildFallbackHtml === 'function'
-      ? options.buildFallbackHtml(doc)
-      : '';
-    if (!fallbackHtml) {
-      return fallbackHtml;
-    }
-
-    const injectBaseHrefIntoHtml = deckHtml && typeof deckHtml.injectBaseHrefIntoHtml === 'function'
-      ? deckHtml.injectBaseHrefIntoHtml
-      : null;
-    const buildPresentationBaseHref = deckHtml && typeof deckHtml.buildPresentationBaseHref === 'function'
-      ? deckHtml.buildPresentationBaseHref
-      : null;
-    if (!injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
-      return fallbackHtml;
-    }
-
-    return injectBaseHrefIntoHtml(
-      fallbackHtml,
-      buildPresentationBaseHref(options.presentationUrl || '', options.deckHtmlOptions || {})
-    );
+    });
   }
 
   function buildStudioSourceHtml(doc, options = {}) {
-    if (deckHtml && typeof deckHtml.buildDeckSourceHtml === 'function') {
-      const canonicalDeck = typeof options.buildCanonicalDeck === 'function'
-        ? options.buildCanonicalDeck(doc)
-        : null;
-      if (isCanonicalDeckLike(canonicalDeck)) {
-        return deckHtml.buildDeckSourceHtml(canonicalDeck, options.deckHtmlOptions || {});
-      }
-    }
-
-    return typeof options.buildFallbackHtml === 'function'
-      ? options.buildFallbackHtml(doc)
-      : '';
+    return buildStudioDeckHtml(doc, {
+      ...options,
+      buildCanonicalHtml: deckHtml && typeof deckHtml.buildDeckSourceHtml === 'function'
+        ? (canonicalDeck) => deckHtml.buildDeckSourceHtml(canonicalDeck, options.deckHtmlOptions || {})
+        : null
+    });
   }
 
   return {
@@ -703,6 +713,7 @@
     resolveStudioLiveActiveSlide,
     resolveStudioLiveActiveSlideId,
     resolveStudioFallbackActiveSlideId,
+    buildStudioDeckHtml,
     buildStudioPreviewHtml,
     buildStudioSourceHtml
   };

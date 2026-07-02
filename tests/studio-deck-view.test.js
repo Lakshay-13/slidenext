@@ -292,6 +292,75 @@ test('resolveStudioFallbackActiveSlideId rebuilds malformed canonical decks befo
   ]);
 });
 
+test('buildStudioDeckHtml prefers the canonical builder when the canonical deck is valid', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] }
+    ]
+  };
+
+  assert.equal(
+    deckView.buildStudioDeckHtml(
+      { label: 'doc' },
+      {
+        buildCanonicalDeck(doc) {
+          assert.equal(doc.label, 'doc');
+          return canonicalDeck;
+        },
+        buildCanonicalHtml(nextCanonicalDeck, doc) {
+          assert.equal(nextCanonicalDeck, canonicalDeck);
+          assert.equal(doc.label, 'doc');
+          return '<html>canonical</html>';
+        },
+        buildFallbackHtml() {
+          throw new Error('buildFallbackHtml should not run when the canonical deck is valid');
+        }
+      }
+    ),
+    '<html>canonical</html>'
+  );
+});
+
+test('buildStudioDeckHtml falls back and can transform fallback html when the canonical deck is unavailable', () => {
+  const calls = [];
+
+  assert.equal(
+    deckView.buildStudioDeckHtml(
+      { label: 'doc' },
+      {
+        buildCanonicalDeck(doc) {
+          calls.push(['buildCanonicalDeck', doc]);
+          return {
+            metadata: {
+              title: 'Broken Deck'
+            }
+          };
+        },
+        buildCanonicalHtml() {
+          throw new Error('buildCanonicalHtml should not run without a valid canonical deck');
+        },
+        buildFallbackHtml(doc) {
+          calls.push(['buildFallbackHtml', doc]);
+          return '<html>fallback</html>';
+        },
+        transformFallbackHtml(fallbackHtml, doc) {
+          calls.push(['transformFallbackHtml', fallbackHtml, doc]);
+          return `${fallbackHtml}:transformed`;
+        }
+      }
+    ),
+    '<html>fallback</html>:transformed'
+  );
+
+  assert.deepEqual(calls, [
+    ['buildCanonicalDeck', { label: 'doc' }],
+    ['buildFallbackHtml', { label: 'doc' }],
+    ['transformFallbackHtml', '<html>fallback</html>', { label: 'doc' }]
+  ]);
+});
+
 test('buildStudioPreviewHtml falls back when the canonical deck is malformed', () => {
   const result = deckView.buildStudioPreviewHtml(
     { label: 'doc' },
