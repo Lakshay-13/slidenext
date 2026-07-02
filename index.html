@@ -4364,6 +4364,15 @@
       triggerAutoSave();
     }
 
+    function applyCurrentStudioRestoredHistoryState(historyEntry = {}, playbackState = null) {
+      updateEditorPersistedDeckState({ playbackState });
+      setCurrentPresentationCanonicalDeck(
+        Object.prototype.hasOwnProperty.call(historyEntry, 'canonicalDeck')
+          ? historyEntry.canonicalDeck
+          : null
+      );
+    }
+
     function restoreFrameFromHistoryEntry(entry) {
       const iframeDoc = getIframeDoc();
       const historyEntry = normalizeHistoryEntry(entry);
@@ -4401,8 +4410,7 @@
         })
       });
       const restoredPlaybackState = capturePersistedDeckPlaybackState(iframeDoc, historyEntry.canonicalDeck);
-      updateEditorPersistedDeckState({ playbackState: restoredPlaybackState });
-      setCurrentPresentationCanonicalDeck(historyEntry.canonicalDeck);
+      applyCurrentStudioRestoredHistoryState(historyEntry, restoredPlaybackState);
     }
 
     function buildPersistableDeckHtml(doc = getIframeDoc()) {
