@@ -204,6 +204,72 @@ test('captureEditorPersistableDeckState delegates final capture-state resolution
   assert.equal(typeof delegatedArgs.options.resolvePlaybackState, 'function');
 });
 
+test('captureEditorPersistableDeckState honors a provided canonical deck override when html capture does not report one', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] }
+    ]
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 1'
+  };
+  let delegatedArgs = null;
+  let buildEditorCanonicalDeckCalls = 0;
+
+  const context = {
+    resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+      delegatedArgs = {
+        canonicalDeck: nextCanonicalDeck,
+        buildCanonicalDeck: options.buildCanonicalDeck
+      };
+      return canonicalDeck;
+    },
+    buildPersistableDeckHtml(doc, options = {}) {
+      assert.equal(doc, iframeDoc);
+      assert.equal(options.canonicalDeck, canonicalDeck);
+      return '<html>persisted</html>';
+    },
+    buildEditorCanonicalDeck() {
+      buildEditorCanonicalDeckCalls += 1;
+      return {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: [{ id: 'slide-fallback', nodes: [] }]
+      };
+    },
+    capturePersistedDeckPlaybackState(doc, nextCanonicalDeck) {
+      assert.equal(doc, iframeDoc);
+      assert.equal(nextCanonicalDeck, canonicalDeck);
+      return playbackState;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
+
+  const persistedDeckState = JSON.parse(JSON.stringify(
+    context.captureEditorPersistableDeckState(iframeDoc, {
+      canonicalDeck
+    })
+  ));
+  assert.deepEqual(persistedDeckState, {
+    cleanHtml: '<html>persisted</html>',
+    playbackState,
+    canonicalDeck
+  });
+  assert.equal(delegatedArgs.canonicalDeck, canonicalDeck);
+  assert.equal(typeof delegatedArgs.buildCanonicalDeck, 'function');
+  assert.equal(buildEditorCanonicalDeckCalls, 0);
+});
+
 test('initStudioFrame refreshes inspector state after bootstrapping the iframe', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const initStudioFrameSource = extractFunctionSource(
