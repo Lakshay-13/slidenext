@@ -4468,10 +4468,29 @@
         getSlides,
         slideIdAttr: EDITOR_SLIDE_ID_ATTR
       });
+      if (!doc) {
+        return playbackState;
+      }
+      const ensurePersistedDeckPlaybackStateActiveSlideId = (
+        typeof SlideNextDeckPersistence !== 'undefined'
+        && SlideNextDeckPersistence
+      )
+        && typeof SlideNextDeckPersistence.ensurePersistedDeckPlaybackStateActiveSlideId === 'function'
+        ? SlideNextDeckPersistence.ensurePersistedDeckPlaybackStateActiveSlideId
+        : null;
+      if (ensurePersistedDeckPlaybackStateActiveSlideId) {
+        return ensurePersistedDeckPlaybackStateActiveSlideId(playbackState, {
+          resolveFallbackActiveSlideId: () => resolveEditorFallbackActiveSlideId(
+            doc,
+            canonicalDeck || buildEditorCanonicalDeck(doc)
+          )
+        });
+      }
+
       const hasActiveSlideIds = !!(playbackState
         && Array.isArray(playbackState.activeSlideIds)
         && playbackState.activeSlideIds.some((slideId) => typeof slideId === 'string' && slideId.trim()));
-      if (hasActiveSlideIds || !doc) {
+      if (hasActiveSlideIds) {
         return playbackState;
       }
 

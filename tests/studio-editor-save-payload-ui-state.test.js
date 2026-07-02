@@ -814,6 +814,99 @@ test('capturePersistedDeckPlaybackState preserves explicit live active slide ids
   assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
+test('capturePersistedDeckPlaybackState delegates fallback active slide resolution to the shared deck persistence helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const capturePersistedDeckPlaybackStateSource = extractFunctionSource(
+    fileContent,
+    'function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {'
+  );
+
+  const iframeDoc = {
+    label: 'iframe-doc',
+    querySelector(selector) {
+      assert.equal(selector, '.slide-active');
+      return null;
+    }
+  };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  const playbackState = {
+    activeSlideIds: [],
+    slideCounterText: '2 / 5'
+  };
+  let delegatedArgs = null;
+  let buildEditorCanonicalDeckCalls = 0;
+  const context = {
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      capturePersistedDeckPlaybackState(nextDoc, options) {
+        assert.equal(nextDoc, iframeDoc);
+        assert.equal(options.getSlides, context.getSlides);
+        assert.equal(options.slideIdAttr, 'data-slide-id');
+        return playbackState;
+      },
+      ensurePersistedDeckPlaybackStateActiveSlideId(nextPlaybackState, options) {
+        delegatedArgs = {
+          nextPlaybackState,
+          options,
+          fallbackActiveSlideId: options.resolveFallbackActiveSlideId(nextPlaybackState)
+        };
+        return {
+          activeSlideIds: [delegatedArgs.fallbackActiveSlideId],
+          slideCounterText: nextPlaybackState.slideCounterText
+        };
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      buildEditorCanonicalDeckCalls += 1;
+      assert.equal(nextDoc, iframeDoc);
+      return canonicalDeck;
+    },
+    currentSlideIndex: 1,
+    getActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return '';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getPersistedActiveSlideId() {
+      return 'slide-stale';
+    },
+    getSlides() {
+      return [];
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(capturePersistedDeckPlaybackStateSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.capturePersistedDeckPlaybackState())),
+    {
+      activeSlideIds: ['slide-2'],
+      slideCounterText: '2 / 5'
+    }
+  );
+  assert.equal(delegatedArgs.nextPlaybackState, playbackState);
+  assert.equal(typeof delegatedArgs.options.resolveFallbackActiveSlideId, 'function');
+  assert.equal(delegatedArgs.fallbackActiveSlideId, 'slide-2');
+  assert.equal(buildEditorCanonicalDeckCalls, 1);
+});
+
 test('capturePersistedDeckPlaybackState falls back to the current session slide when shared playback capture has no active slide ids', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(

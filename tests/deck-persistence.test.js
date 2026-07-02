@@ -35,6 +35,46 @@ test('resolvePersistedDeckActiveSlideId returns the first normalized active slid
   assert.equal(deckPersistence.resolvePersistedDeckActiveSlideId(null), '');
 });
 
+test('ensurePersistedDeckPlaybackStateActiveSlideId preserves existing active slide ids without resolving a fallback', () => {
+  const playbackState = {
+    activeSlideIds: ['slide-2'],
+    slideCounterText: '2 / 5'
+  };
+  let fallbackCalls = 0;
+
+  const result = deckPersistence.ensurePersistedDeckPlaybackStateActiveSlideId(playbackState, {
+    resolveFallbackActiveSlideId() {
+      fallbackCalls += 1;
+      return 'slide-fallback';
+    }
+  });
+
+  assert.equal(result, playbackState);
+  assert.equal(fallbackCalls, 0);
+});
+
+test('ensurePersistedDeckPlaybackStateActiveSlideId injects a fallback active slide id when playback markers are missing', () => {
+  assert.deepEqual(
+    deckPersistence.ensurePersistedDeckPlaybackStateActiveSlideId({
+      activeSlideIds: [],
+      slideCounterText: '2 / 5'
+    }, {
+      fallbackActiveSlideId: 'slide-2'
+    }),
+    {
+      activeSlideIds: ['slide-2'],
+      slideCounterText: '2 / 5'
+    }
+  );
+
+  assert.equal(
+    deckPersistence.ensurePersistedDeckPlaybackStateActiveSlideId(null, {
+      fallbackActiveSlideId: ''
+    }),
+    null
+  );
+});
+
 test('restorePersistedDeckPlaybackState accepts legacy activeSlideId values', () => {
   const slideNumNode = { textContent: '' };
   const slides = [

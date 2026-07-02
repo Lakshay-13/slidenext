@@ -110,6 +110,29 @@
     return normalizedPlaybackState.activeSlideIds.find((slideId) => typeof slideId === 'string' && slideId.trim()) || '';
   }
 
+  function ensurePersistedDeckPlaybackStateActiveSlideId(playbackState, options = {}) {
+    if (resolvePersistedDeckActiveSlideId(playbackState)) {
+      return playbackState;
+    }
+
+    const fallbackActiveSlideId = typeof options.resolveFallbackActiveSlideId === 'function'
+      ? options.resolveFallbackActiveSlideId(playbackState)
+      : typeof options.fallbackActiveSlideId === 'string'
+        ? options.fallbackActiveSlideId.trim()
+        : '';
+    if (!fallbackActiveSlideId) {
+      return playbackState;
+    }
+
+    const normalizedPlaybackState = normalizePersistedDeckPlaybackState(playbackState);
+    return {
+      activeSlideIds: [fallbackActiveSlideId],
+      slideCounterText: normalizedPlaybackState && typeof normalizedPlaybackState.slideCounterText === 'string'
+        ? normalizedPlaybackState.slideCounterText
+        : ''
+    };
+  }
+
   function capturePersistedDeckPlaybackState(doc, options = {}) {
     if (!doc) return null;
     const getSlides = typeof options.getSlides === 'function'
@@ -195,6 +218,7 @@
     stripTransientDeckRuntimeState,
     normalizePersistedDeckPlaybackState,
     resolvePersistedDeckActiveSlideId,
+    ensurePersistedDeckPlaybackStateActiveSlideId,
     capturePersistedDeckPlaybackState,
     restorePersistedDeckPlaybackState,
     buildPersistableDeckHtml
