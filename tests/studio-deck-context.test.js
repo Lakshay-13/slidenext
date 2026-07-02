@@ -299,6 +299,105 @@ test('mergeStudioPresentationMetadataCanonicalDeck seeds metadata and delegates 
   assert.equal(typeof mergeCalls[0].mergeOptions.isCanonicalDeck, 'function');
 });
 
+test('resolveStudioPresentationMetadataCanonicalDeckUpdate normalizes active deck-like updates before merging metadata', () => {
+  const result = deckContext.resolveStudioPresentationMetadataCanonicalDeckUpdate(
+    {
+      metadata: {
+        title: 'Project Onboarding'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    },
+    {
+      currentPresentationMetadata: {
+        id: 'onboarding-presentation',
+        title: 'Project Onboarding',
+        sourcePath: '/presentations/onboarding-presentation/index.html'
+      },
+      currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      presentationTitle: 'Project Onboarding',
+      createCanonicalDeck: canonicalDeck.createCanonicalDeck,
+      isCanonicalDeck: canonicalDeck.isCanonicalDeck
+    }
+  );
+
+  assert.deepEqual(result, {
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: '/presentations/onboarding-presentation/index.html',
+    canonicalDeck: canonicalDeck.createCanonicalDeck({
+      metadata: {
+        title: 'Project Onboarding'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    })
+  });
+});
+
+test('resolveStudioPresentationMetadataCanonicalDeckUpdate rejects malformed active deck-like updates', () => {
+  const result = deckContext.resolveStudioPresentationMetadataCanonicalDeckUpdate(
+    {
+      metadata: {
+        title: 'Broken Deck'
+      }
+    },
+    {
+      currentPresentationMetadata: {
+        id: 'onboarding-presentation',
+        title: 'Project Onboarding',
+        sourcePath: '/presentations/onboarding-presentation/index.html'
+      },
+      currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      presentationTitle: 'Project Onboarding',
+      createCanonicalDeck: canonicalDeck.createCanonicalDeck,
+      isCanonicalDeck: canonicalDeck.isCanonicalDeck
+    }
+  );
+
+  assert.equal(result, null);
+});
+
+test('resolveStudioPresentationMetadataCanonicalDeckUpdate rejects inactive presentation updates', () => {
+  const result = deckContext.resolveStudioPresentationMetadataCanonicalDeckUpdate(
+    {
+      metadata: {
+        title: 'AI Tools'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    },
+    {
+      currentPresentationMetadata: {
+        id: 'onboarding-presentation',
+        title: 'Project Onboarding',
+        sourcePath: '/presentations/onboarding-presentation/index.html'
+      },
+      currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+      presentationUrl: '/presentations/ai-tools-presentation/index.html',
+      presentationTitle: 'AI Tools',
+      createCanonicalDeck: canonicalDeck.createCanonicalDeck,
+      isCanonicalDeck: canonicalDeck.isCanonicalDeck
+    }
+  );
+
+  assert.equal(result, null);
+});
+
 test('buildStudioCanonicalDeck returns the validated deck from the canonical builder', () => {
   const doc = { label: 'doc' };
   const presentationMetadata = {

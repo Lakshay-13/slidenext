@@ -2490,26 +2490,20 @@
     }
 
     function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
-      if (!canonicalDeck || presentationUrl !== currentPresentationUrl) {
-        return;
-      }
-      const nextCanonicalDeck = SlideNextStudioDeckContext
-        && typeof SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck === 'function'
-        ? SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck({
-            canonicalDeck
-          })
-        : canonicalDeck;
-      if (!nextCanonicalDeck) {
-        return;
-      }
-      applyCurrentPresentationMetadata(
-        SlideNextStudioDeckContext.mergeStudioPresentationMetadataCanonicalDeck(nextCanonicalDeck, {
+      const nextPresentationMetadata = SlideNextStudioDeckContext.resolveStudioPresentationMetadataCanonicalDeckUpdate(
+        canonicalDeck,
+        {
           currentPresentationMetadata,
+          currentPresentationUrl,
           presentationUrl,
           presentationTitle,
           buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed
-        })
+        }
       );
+      if (!nextPresentationMetadata) {
+        return;
+      }
+      applyCurrentPresentationMetadata(nextPresentationMetadata);
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {

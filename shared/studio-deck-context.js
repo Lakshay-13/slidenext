@@ -116,6 +116,28 @@
     });
   }
 
+  function resolveStudioPresentationMetadataCanonicalDeckUpdate(canonicalDeckLike = null, options = {}) {
+    const currentPresentationUrl = Object.prototype.hasOwnProperty.call(options, 'currentPresentationUrl')
+      ? options.currentPresentationUrl
+      : options.presentationUrl;
+    if (!canonicalDeckLike || options.presentationUrl !== currentPresentationUrl) {
+      return null;
+    }
+
+    const nextCanonicalDeck = resolveStoredStudioCanonicalDeck({
+      canonicalDeck: canonicalDeckLike
+    }, {
+      createCanonicalDeck: options.createCanonicalDeck,
+      isCanonicalDeck: options.isCanonicalDeck,
+      resolvePresentationCanonicalDeck: options.resolvePresentationCanonicalDeck
+    });
+    if (!nextCanonicalDeck) {
+      return null;
+    }
+
+    return mergeStudioPresentationMetadataCanonicalDeck(nextCanonicalDeck, options);
+  }
+
   function buildStudioCanonicalDeck(doc, options = {}) {
     const createCanonicalDeck = typeof options.createCanonicalDeck === 'function'
       ? options.createCanonicalDeck
@@ -167,6 +189,7 @@
     createStudioPresentationMetadataLoadOptions,
     loadStudioPresentationMetadata,
     mergeStudioPresentationMetadataCanonicalDeck,
+    resolveStudioPresentationMetadataCanonicalDeckUpdate,
     resolvePreferredStoredStudioCanonicalDeck,
     resolveStoredStudioCanonicalDeck,
     buildStudioCanonicalDeck
