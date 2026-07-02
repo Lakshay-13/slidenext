@@ -410,6 +410,77 @@ test('submitRenameVersion no-ops when the rename input is missing', async () => 
   ]);
 });
 
+test('restoreVersion tolerates a missing versions dropdown after a successful restore', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const restoreVersionSource = extractFunctionSource(
+    fileContent,
+    'async function restoreVersion(filename) {',
+    '\n\n    function promptRenameVersion(filename, currentLabel) {'
+  );
+
+  const calls = [];
+  const context = {
+    alert(message) {
+      calls.push(['alert', message]);
+    },
+    confirm(message) {
+      calls.push(['confirm', message]);
+      return true;
+    },
+    createCurrentStudioVersionActionContext() {
+      calls.push(['createCurrentStudioVersionActionContext']);
+      return {
+        presentationUrl: '/presentations/onboarding-presentation/index.html',
+        presentationTitle: 'Project Onboarding',
+        presentationCategory: 'General'
+      };
+    },
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (id === 'versionsDropdown') {
+          return null;
+        }
+        return null;
+      }
+    },
+    fetch(url, options) {
+      calls.push(['fetch', url, options]);
+      return Promise.resolve({
+        async json() {
+          calls.push(['response.json']);
+          return {
+            success: true
+          };
+        }
+      });
+    },
+    handleCurrentStudioVersionActionFailure() {
+      calls.push(['handleCurrentStudioVersionActionFailure']);
+    },
+    handleCurrentStudioVersionRestoreSuccess(restoreContext, options) {
+      calls.push(['handleCurrentStudioVersionRestoreSuccess', restoreContext, options]);
+      options.hideVersionsDropdown();
+      options.onSuccess();
+      return true;
+    },
+    launchStudioEditor(presentationUrl, presentationTitle, presentationCategory) {
+      calls.push(['launchStudioEditor', presentationUrl, presentationTitle, presentationCategory]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(restoreVersionSource, context);
+
+  await assert.doesNotReject(async () => {
+    await context.restoreVersion('index_20260101_120000_Auto.html');
+  });
+  assert.ok(calls.some(([name]) => name === 'handleCurrentStudioVersionRestoreSuccess'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'versionsDropdown'));
+  assert.ok(calls.some(([name, message]) => name === 'alert' && /Rollback successfully restored!/.test(message)));
+  assert.ok(!calls.some(([name]) => name === 'handleCurrentStudioVersionActionFailure'));
+});
+
 test('loadCurrentStudioVersionHistory reuses current session readers when delegating to the version history loader', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const loadCurrentStudioVersionHistorySource = extractFunctionSource(

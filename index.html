@@ -5097,7 +5097,10 @@
               alert('Rollback successfully restored!');
             },
             hideVersionsDropdown: () => {
-              document.getElementById('versionsDropdown').classList.add('hidden');
+              const versionsDropdown = document.getElementById('versionsDropdown');
+              if (versionsDropdown) {
+                versionsDropdown.classList.add('hidden');
+              }
             },
             relaunchEditor: (presentationUrl, presentationTitle, presentationCategory) => {
               launchStudioEditor(presentationUrl, presentationTitle, presentationCategory);
