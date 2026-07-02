@@ -50,6 +50,8 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     wpPanelSolid: { classList: createClassList(['hidden']) },
     wpPanelPresets: { classList: createClassList([]) },
     wpPanelCustom: { classList: createClassList([]) },
+    cgAngleGroup: { classList: createClassList(['hidden']) },
+    cgAngleVal: { textContent: '210°' },
     toggleLockSelectionIcon: { textContent: 'lock_open' },
     toggleLockSelectionLabel: { textContent: 'Unlock Selected' },
     toggleVisibilitySelectionIcon: { textContent: 'visibility' },
@@ -75,11 +77,11 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     wpTabPresets: { disabled: false, className: 'stale-presets' },
     wpTabCustom: { disabled: false, className: 'stale-custom' },
     wallpaperCustomColor: { disabled: false },
-    cgLinearBtn: { disabled: false },
-    cgRadialBtn: { disabled: false },
-    cgColor1: { disabled: false },
-    cgColor2: { disabled: false },
-    cgAngle: { disabled: false },
+    cgLinearBtn: { disabled: false, className: 'stale-linear' },
+    cgRadialBtn: { disabled: false, className: 'stale-radial' },
+    cgColor1: { disabled: false, value: '#112233' },
+    cgColor2: { disabled: false, value: '#445566' },
+    cgAngle: { disabled: false, value: '210' },
     applyWallpaperToAllSlidesBtn: { disabled: false },
     studioUndoBtn: { disabled: false },
     studioRedoBtn: { disabled: false },
@@ -140,7 +142,8 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
   const context = {
     document: documentStub,
     hasPendingCustomWallpaperVersion: true,
-    wallpaperTab: 'custom'
+    wallpaperTab: 'custom',
+    customGradientType: 'radial'
   };
 
   vm.createContext(context);
@@ -149,6 +152,7 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
   context.resetStudioDeckUiState({ isLoading: true });
   assert.equal(context.hasPendingCustomWallpaperVersion, false);
   assert.equal(context.wallpaperTab, 'solid');
+  assert.equal(context.customGradientType, 'linear');
   assert.equal(elements.slideCountLabel.textContent, '0 / 0');
   assert.match(elements.thumbnailsList.innerHTML, /Loading slides\.\.\./);
   assert.match(elements.slideLayersList.innerHTML, /Loading layers\.\.\./);
@@ -164,6 +168,13 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
   assert.match(elements.wpTabSolid.className, /bg-white\/5/);
   assert.equal(elements.wpTabPresets.className, 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400');
   assert.equal(elements.wpTabCustom.className, 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400');
+  assert.equal(elements.cgLinearBtn.className, 'py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]');
+  assert.equal(elements.cgRadialBtn.className, 'py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400');
+  assert.equal(elements.cgAngleGroup.classList.contains('hidden'), false);
+  assert.equal(elements.cgColor1.value, '#5050e8');
+  assert.equal(elements.cgColor2.value, '#050505');
+  assert.equal(elements.cgAngle.value, '135');
+  assert.equal(elements.cgAngleVal.textContent, '135°');
   assert.equal(elements.toggleLockSelectionIcon.textContent, 'lock');
   assert.equal(elements.toggleLockSelectionLabel.textContent, 'Lock Selected');
   assert.equal(elements.toggleVisibilitySelectionIcon.textContent, 'visibility_off');

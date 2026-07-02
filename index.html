@@ -5147,6 +5147,7 @@
       const isLoading = !!options.isLoading;
       hasPendingCustomWallpaperVersion = false;
       wallpaperTab = 'solid';
+      customGradientType = 'linear';
       const slideCountLabel = document.getElementById('slideCountLabel');
       if (slideCountLabel) {
         slideCountLabel.textContent = '0 / 0';
@@ -5223,6 +5224,41 @@
       const customWallpaperPanel = document.getElementById('wpPanelCustom');
       if (customWallpaperPanel) {
         customWallpaperPanel.classList.add('hidden');
+      }
+
+      const linearGradientBtn = document.getElementById('cgLinearBtn');
+      if (linearGradientBtn) {
+        linearGradientBtn.className = 'py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
+      }
+
+      const radialGradientBtn = document.getElementById('cgRadialBtn');
+      if (radialGradientBtn) {
+        radialGradientBtn.className = 'py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
+      }
+
+      const angleGroup = document.getElementById('cgAngleGroup');
+      if (angleGroup) {
+        angleGroup.classList.remove('hidden');
+      }
+
+      const color1Input = document.getElementById('cgColor1');
+      if (color1Input) {
+        color1Input.value = '#5050e8';
+      }
+
+      const color2Input = document.getElementById('cgColor2');
+      if (color2Input) {
+        color2Input.value = '#050505';
+      }
+
+      const angleInput = document.getElementById('cgAngle');
+      if (angleInput) {
+        angleInput.value = '135';
+      }
+
+      const angleLabel = document.getElementById('cgAngleVal');
+      if (angleLabel) {
+        angleLabel.textContent = '135°';
       }
 
       const lockIcon = document.getElementById('toggleLockSelectionIcon');
