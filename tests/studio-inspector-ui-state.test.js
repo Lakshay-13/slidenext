@@ -866,3 +866,150 @@ test('syncInspectorForSelection tolerates missing font-size controls when a live
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'fontSizeVal'));
   assert.ok(calls.some(([name, value]) => name === 'highlightAlignButton' && value === 'center'));
 });
+
+test('syncInspectorForSelection tolerates missing border inspector controls when a live selection is shape-like', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncInspectorForSelectionSource = extractFunctionSource(
+    fileContent,
+    'function syncInspectorForSelection() {',
+    '\n\n    // Click Selection highlights'
+  );
+
+  const activeElement = {
+    isConnected: true,
+    onActiveSlide: true,
+    tagName: 'DIV',
+    innerText: 'Card',
+    textContent: 'Card',
+    style: { zIndex: '8' },
+    classList: {
+      contains(className) {
+        return className === 'editor-shape';
+      }
+    },
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return {
+            fontSize: '20px',
+            fontFamily: "'Geist', sans-serif",
+            fontWeight: '600',
+            color: 'rgb(255, 255, 255)',
+            textAlign: 'center',
+            opacity: '0.8',
+            borderStyle: 'solid',
+            borderWidth: '3px',
+            borderRadius: '12px',
+            borderColor: 'rgb(255, 255, 255)'
+          };
+        }
+      }
+    }
+  };
+
+  const elements = {
+    inspectorTargetLabel: { innerHTML: '' },
+    slideInspectorPanel: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    },
+    elementInspectorPanel: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    },
+    elTextContent: { value: '' },
+    inspectorImageGroup: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    },
+    elImageSrc: { value: '' },
+    inspectorTextContentGroup: {
+      classList: {
+        add() {},
+        remove() {},
+        toggle() {}
+      }
+    },
+    elFontSize: { value: '' },
+    fontSizeVal: { textContent: '' },
+    elFontFamily: {
+      value: '',
+      options: [{ value: "'Geist', sans-serif" }]
+    },
+    elFontWeight: { value: '' },
+    elTextColor: { value: '' },
+    elZIndex: { value: '' },
+    elOpacity: { value: '' },
+    opacityVal: { textContent: '' }
+  };
+
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorLiveSelection: liveSelection,
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (
+          id === 'inspectorBorderGroup'
+          || id === 'elBorderStyle'
+          || id === 'elBorderWidth'
+          || id === 'borderWidthVal'
+          || id === 'elBorderRadius'
+          || id === 'borderRadiusVal'
+          || id === 'elBorderColor'
+        ) {
+          return null;
+        }
+        return elements[id] || null;
+      }
+    },
+    highlightAlignButton(value) {
+      calls.push(['highlightAlignButton', value]);
+    },
+    rgbToHex(value) {
+      calls.push(['rgbToHex', value]);
+      return '#ffffff';
+    },
+    selectedElements: [activeElement],
+    updateClipboardActionState() {
+      calls.push(['updateClipboardActionState']);
+    },
+    updateLayerOrderActionState() {
+      calls.push(['updateLayerOrderActionState']);
+    },
+    updateLockActionState() {
+      calls.push(['updateLockActionState']);
+    },
+    updateMotionActionState() {
+      calls.push(['updateMotionActionState']);
+    },
+    updateRemovalActionState() {
+      calls.push(['updateRemovalActionState']);
+    },
+    updateStyleActionState() {
+      calls.push(['updateStyleActionState']);
+    },
+    updateVisibilityActionState() {
+      calls.push(['updateVisibilityActionState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncInspectorForSelectionSource, context);
+
+  assert.doesNotThrow(() => context.syncInspectorForSelection());
+  assert.equal(elements.elTextContent.value, 'Card');
+  assert.equal(elements.elFontWeight.value, '600');
+  assert.equal(elements.elTextColor.value, '#ffffff');
+  assert.equal(elements.elOpacity.value, 80);
+  assert.equal(elements.opacityVal.textContent, '80%');
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'inspectorBorderGroup'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'elBorderColor'));
+  assert.ok(calls.some(([name, value]) => name === 'highlightAlignButton' && value === 'center'));
+});

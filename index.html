@@ -2918,18 +2918,41 @@
       }
 
       const isImgOrShape = liveSelectionState.selection.some(node => node.tagName.toLowerCase() === 'img' || node.classList.contains('editor-shape') || node.tagName.toLowerCase() === 'table' || node.tagName.toLowerCase() === 'div');
+      const borderGroup = document.getElementById('inspectorBorderGroup');
       if (isImgOrShape) {
-        document.getElementById('inspectorBorderGroup').classList.remove('hidden');
-        document.getElementById('elBorderStyle').value = computedStyles.borderStyle || 'none';
+        if (borderGroup) {
+          borderGroup.classList.remove('hidden');
+        }
+        const borderStyleInput = document.getElementById('elBorderStyle');
+        if (borderStyleInput) {
+          borderStyleInput.value = computedStyles.borderStyle || 'none';
+        }
         const bWidth = parseInt(computedStyles.borderWidth) || 0;
-        document.getElementById('elBorderWidth').value = bWidth;
-        document.getElementById('borderWidthVal').textContent = bWidth + 'px';
+        const borderWidthInput = document.getElementById('elBorderWidth');
+        if (borderWidthInput) {
+          borderWidthInput.value = bWidth;
+        }
+        const borderWidthLabel = document.getElementById('borderWidthVal');
+        if (borderWidthLabel) {
+          borderWidthLabel.textContent = bWidth + 'px';
+        }
         const bRadius = parseInt(computedStyles.borderRadius) || 0;
-        document.getElementById('elBorderRadius').value = bRadius;
-        document.getElementById('borderRadiusVal').textContent = bRadius + 'px';
-        document.getElementById('elBorderColor').value = rgbToHex(computedStyles.borderColor || '#ffffff');
+        const borderRadiusInput = document.getElementById('elBorderRadius');
+        if (borderRadiusInput) {
+          borderRadiusInput.value = bRadius;
+        }
+        const borderRadiusLabel = document.getElementById('borderRadiusVal');
+        if (borderRadiusLabel) {
+          borderRadiusLabel.textContent = bRadius + 'px';
+        }
+        const borderColorInput = document.getElementById('elBorderColor');
+        if (borderColorInput) {
+          borderColorInput.value = rgbToHex(computedStyles.borderColor || '#ffffff');
+        }
       } else {
-        document.getElementById('inspectorBorderGroup').classList.add('hidden');
+        if (borderGroup) {
+          borderGroup.classList.add('hidden');
+        }
       }
     }
 
