@@ -428,6 +428,39 @@ test('renderCanonicalDeckHtml overlays canonical layout sizing onto reused sourc
   assert.ok(html.indexOf('width: 10px;') < html.indexOf('width: 1920px;'));
 });
 
+test('renderCanonicalDeckHtml overlays canonical theme styles onto reused source head html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    theme: {
+      tokens: {
+        '--color-primary': '#00f2ff'
+      },
+      customCss: '.slide { color: var(--color-primary); }'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '<style>:root { --color-primary: #111111; }</style><style>.slide { color: red; }</style>',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<style>\s*:root\s*\{\s*--color-primary: #00f2ff;\s*\}\s*<\/style>/);
+  assert.match(html, /<style>\s*\.slide \{ color: var\(--color-primary\); \}\s*<\/style>/);
+  assert.ok(html.indexOf('--color-primary: #111111;') < html.indexOf('--color-primary: #00f2ff;'));
+  assert.ok(html.indexOf('color: red;') < html.indexOf('color: var(--color-primary);'));
+});
+
 test('renderCanonicalDeckHtml overlays canonical script assets onto reused source body html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     assets: [

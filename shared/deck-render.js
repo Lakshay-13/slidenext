@@ -649,6 +649,11 @@
       nextHeadHtml = `${nextHeadHtml}\n${deckLayoutStyleBlock}`.trim();
     }
 
+    const themeStyleBlocks = buildCanonicalDeckThemeStyleBlocks(deck);
+    if (themeStyleBlocks.length > 0) {
+      nextHeadHtml = `${nextHeadHtml}\n${themeStyleBlocks.join('\n')}`.trim();
+    }
+
     return nextHeadHtml;
   }
 
