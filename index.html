@@ -4689,6 +4689,27 @@
       });
     }
 
+    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
+      return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
+        persistenceContext,
+        createCurrentStudioPersistenceHandlerOptions(options)
+      );
+    }
+
+    function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
+      return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+        persistenceContext,
+        createCurrentStudioPersistenceHandlerOptions(options)
+      );
+    }
+
+    function applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
+      return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
+        persistenceContext,
+        createCurrentStudioVersionPersistenceHandlerOptions(options)
+      );
+    }
+
     function resolveCurrentStudioVersionCheckpointPersistenceState(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken,
@@ -4720,11 +4741,11 @@
       const { data, persistencePlan } = versionCheckpointResult;
 
       if (data.success) {
-        SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
+        applyCurrentStudioPersistenceSuccess(
           persistencePlan.persistenceContext,
-          createCurrentStudioPersistenceHandlerOptions({
+          {
             presentationUrl: persistencePlan.persistenceContext.presentationUrl
-          })
+          }
         );
       }
 
@@ -4784,34 +4805,34 @@
             }
           );
           if (data.success) {
-            SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
+            applyCurrentStudioPersistenceSuccess(
               persistencePlan.persistenceContext,
-              createCurrentStudioPersistenceHandlerOptions({
+              {
                 presentationUrl: persistencePlan.persistenceContext.presentationUrl,
                 onSuccess: () => {
                   setStudioAutoSaveStatus('saved');
                 }
-              })
+              }
             );
           } else {
-            SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+            applyCurrentStudioPersistenceFailure(
               persistencePlan.persistenceContext,
-              createCurrentStudioPersistenceHandlerOptions({
+              {
                 onFailure: () => {
                   setStudioAutoSaveStatus('autosave-failed');
                 }
-              })
+              }
             );
           }
         } catch (err) {
           console.error('AutoSave Error:', err);
-          SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+          applyCurrentStudioPersistenceFailure(
             persistencePlan.persistenceContext,
-            createCurrentStudioPersistenceHandlerOptions({
+            {
               onFailure: () => {
                 setStudioAutoSaveStatus('network-error');
               }
-            })
+            }
           );
         }
       }, 1500); // 1.5s debounce delay
@@ -5206,35 +5227,35 @@
           versionCheckpointPersistenceState.requestOptions
         );
         if (data.success) {
-          SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
+          applyCurrentStudioVersionPersistenceSuccess(
             versionCheckpointPersistenceState.persistenceContext,
-            createCurrentStudioVersionPersistenceHandlerOptions({
+            {
               onSuccess: () => {
                 alert('Successfully saved named version backup checkpoint!');
                 setStudioAutoSaveStatus('saved');
               }
-            })
+            }
           );
         } else {
-          SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+          applyCurrentStudioPersistenceFailure(
             versionCheckpointPersistenceState.persistenceContext,
-            createCurrentStudioPersistenceHandlerOptions({
+            {
               onFailure: () => {
                 alert(`Save version failed: ${data.error}`);
                 setStudioAutoSaveStatus('save-version-failed');
               }
-            })
+            }
           );
         }
       } catch (err) {
-        SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+        applyCurrentStudioPersistenceFailure(
           versionCheckpointPersistenceState.persistenceContext,
-          createCurrentStudioPersistenceHandlerOptions({
+          {
             onFailure: () => {
               alert(`Network error saving version: ${err.message}`);
               setStudioAutoSaveStatus('network-error');
             }
-          })
+          }
         );
       } finally {
         SlideNextStudioEditorPersistence.runStudioPersistenceActionIfCurrent(
@@ -5287,13 +5308,13 @@
           versionCheckpointPersistenceState.requestOptions
         );
         if (data.success) {
-          SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
+          applyCurrentStudioVersionPersistenceSuccess(
             versionCheckpointPersistenceState.persistenceContext,
-            createCurrentStudioVersionPersistenceHandlerOptions({
+            {
               onSuccess: () => {
                 console.log(`Auto-created version checkpoint: ${label}`);
               }
-            })
+            }
           );
         }
       } catch (err) {
