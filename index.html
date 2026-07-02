@@ -2021,12 +2021,18 @@
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
       const previousIndex = currentSlideIndex;
       const preserveSelection = !!options.preserveSelection || preserveSelectionOnNextActiveSlideSync;
+      const setSlideCountLabel = (label) => {
+        const slideCountLabel = document.getElementById('slideCountLabel');
+        if (slideCountLabel) {
+          slideCountLabel.textContent = label;
+        }
+      };
       const syncToDeckSnapshotFallback = (deckSnapshot) => {
         const slideCount = Array.isArray(deckSnapshot.slides) ? deckSnapshot.slides.length : 0;
         if (slideCount === 0) {
           updateCurrentPresentationSessionState({ slideIndex: 0 });
           updateActiveThumbnailCardState('');
-          document.getElementById('slideCountLabel').textContent = '0 / 0';
+          setSlideCountLabel('0 / 0');
           if (!preserveSelection) {
             deselectElement();
           }
@@ -2040,7 +2046,7 @@
 
         updateCurrentPresentationSessionState({ slideIndex: activeIndex });
         updateActiveThumbnailCardState(activeSlideId);
-        document.getElementById('slideCountLabel').textContent = `${activeIndex + 1} / ${slideCount}`;
+        setSlideCountLabel(`${activeIndex + 1} / ${slideCount}`);
         if (!preserveSelection) {
           deselectElement();
         }
@@ -2065,7 +2071,7 @@
         },
         updateActiveThumbnailCardState,
         setSlideCountLabel: (label) => {
-          document.getElementById('slideCountLabel').textContent = label;
+          setSlideCountLabel(label);
         },
         deselectElement,
         applyViewportTransform: (nextDoc, activeIndex) => {

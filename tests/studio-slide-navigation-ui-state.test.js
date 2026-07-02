@@ -176,6 +176,76 @@ test('syncStudioChromeToActiveSlide routes active slide index updates through th
   assert.equal(calls[1][1].slideIndex, 4);
 });
 
+test('syncStudioChromeToActiveSlide tolerates a missing slide count label while syncing the live frame', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncStudioChromeToActiveSlideSource = extractFunctionSource(
+    fileContent,
+    'function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function bindDeckNavigationSync(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const calls = [];
+  const context = {
+    currentSlideIndex: 1,
+    deselectElement() {
+      calls.push(['deselectElement']);
+    },
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (id === 'slideCountLabel') {
+          return null;
+        }
+        return null;
+      }
+    },
+    getEditorSlideId() {
+      return 'slide-4';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlides() {
+      return [];
+    },
+    preserveSelectionOnNextActiveSlideSync: false,
+    pruneEditorChromeNodes() {},
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    SlideNextStudioDeckView: {
+      syncStudioActiveSlideView(doc, options) {
+        calls.push(['syncStudioActiveSlideView', doc]);
+        options.setCurrentSlideIndex(4);
+        options.setSlideCountLabel('5 / 8');
+        return {
+          didSync: true
+        };
+      }
+    },
+    updateActiveThumbnailCardState() {
+      calls.push(['updateActiveThumbnailCardState']);
+    },
+    updateCurrentPresentationSessionState(nextState) {
+      calls.push(['updateCurrentPresentationSessionState', nextState]);
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        context.currentSlideIndex = nextState.slideIndex;
+      }
+    },
+    updateIframeNavigationUI() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncStudioChromeToActiveSlideSource, context);
+
+  assert.doesNotThrow(() => context.syncStudioChromeToActiveSlide());
+  assert.equal(context.currentSlideIndex, 4);
+  assert.ok(calls.some(([name]) => name === 'syncStudioActiveSlideView'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'slideCountLabel'));
+  assert.ok(calls.some(([name]) => name === 'updateCurrentPresentationSessionState'));
+});
+
 test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when the iframe document is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const syncStudioChromeToActiveSlideSource = extractFunctionSource(
