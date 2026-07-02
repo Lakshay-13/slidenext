@@ -193,6 +193,7 @@ test('removeSelectedElement returns false and skips persistence when planned tar
     },
     deselectElement() {
       calls.push(['deselectElement']);
+      context.updateLayersList();
     },
     generateThumbnails() {
       calls.push(['generateThumbnails']);
@@ -322,6 +323,7 @@ test('removeSelectedElement returns true after removing live targets and persist
     },
     deselectElement() {
       calls.push(['deselectElement']);
+      context.updateLayersList();
     },
     generateThumbnails() {
       calls.push(['generateThumbnails']);
@@ -367,8 +369,8 @@ test('removeSelectedElement returns true after removing live targets and persist
     ['getIframeDoc'],
     ['buildStudioRemovalActionState'],
     ['deselectElement'],
-    ['generateThumbnails'],
     ['updateLayersList'],
+    ['generateThumbnails'],
     ['saveHistoryState'],
     ['triggerAutoSave'],
     ['triggerAutoVersion', 'Auto: Deleted Element']
