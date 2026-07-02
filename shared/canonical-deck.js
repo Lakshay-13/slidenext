@@ -171,6 +171,7 @@
         html: normalizeString(source.html),
         headHtml: normalizeString(source.headHtml),
         bodyHtml: normalizeString(source.bodyHtml),
+        bodyScaffoldHtml: normalizeString(source.bodyScaffoldHtml),
         htmlAttributes: asPlainObject(source.htmlAttributes),
         bodyAttributes: asPlainObject(source.bodyAttributes),
         headInlineScripts: Array.isArray(source.headInlineScripts)

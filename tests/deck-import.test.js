@@ -904,6 +904,7 @@ test('buildDeckSource serializes the sanitized clone instead of the live editor 
   assert.equal(source.html, '<!DOCTYPE html>\n<html><head><style>.deck{}</style></head><body class="deck-body"><main>clean</main></body></html>');
   assert.equal(source.headHtml, '<style>.deck{}</style>');
   assert.equal(source.bodyHtml, '<main>clean</main>');
+  assert.equal(source.bodyScaffoldHtml, '');
   assert.deepEqual(source.htmlAttributes, { lang: 'en', class: 'dark' });
   assert.deepEqual(source.bodyAttributes, { class: 'deck-body' });
   assert.deepEqual(source.headInlineScripts, []);
@@ -949,6 +950,7 @@ test('buildDeckSource extracts sanitized inline head scripts alongside full sour
     stripTransientDeckRuntimeState() {}
   });
 
+  assert.equal(source.bodyScaffoldHtml, '');
   assert.deepEqual(source.htmlAttributes, {});
   assert.deepEqual(source.headInlineScripts, [
     {
@@ -1005,6 +1007,7 @@ test('buildDeckSource extracts sanitized inline body scripts alongside full sour
     stripTransientDeckRuntimeState() {}
   });
 
+  assert.equal(source.bodyScaffoldHtml, '');
   assert.deepEqual(source.htmlAttributes, {});
   assert.deepEqual(source.headInlineScripts, []);
   assert.deepEqual(source.bodyInlineScripts, [
@@ -1017,6 +1020,71 @@ test('buildDeckSource extracts sanitized inline body scripts alongside full sour
       order: 1
     }
   ]);
+});
+
+test('buildDeckSource extracts sanitized body scaffold html around the slide host', () => {
+  function createBodyClone() {
+    const host = {
+      innerHTML: '<section class="slide">One</section><section class="slide">Two</section>'
+    };
+    const slideOne = { parentElement: host };
+    const slideTwo = { parentElement: host };
+    return {
+      get innerHTML() {
+        return `<div class="bg-layer"></div><div id="slidesContainer" class="slides-container">${host.innerHTML}</div><nav class="nav-shell"></nav>`;
+      },
+      querySelector(selector) {
+        return selector === '#slidesContainer' ? host : null;
+      },
+      querySelectorAll(selector) {
+        if (selector === 'script') {
+          return [];
+        }
+        if (selector === '.slide') {
+          return [slideOne, slideTwo];
+        }
+        return [];
+      }
+    };
+  }
+
+  const sourceBody = {
+    innerHTML: '<div class="bg-layer"></div><div id="slidesContainer" class="slides-container"><section class="slide">One</section><section class="slide">Two</section></div><nav class="nav-shell"></nav>',
+    attributes: [{ name: 'class', value: 'deck-body' }],
+    querySelectorAll() {
+      return [];
+    },
+    cloneNode() {
+      return createBodyClone();
+    }
+  };
+  const doc = {
+    documentElement: {
+      cloneNode() {
+        return {
+          outerHTML: '<html><body></body></html>',
+          querySelector(selector) {
+            if (selector === 'head') {
+              return { innerHTML: '', querySelectorAll() { return []; } };
+            }
+            if (selector === 'body') {
+              return sourceBody;
+            }
+            return null;
+          }
+        };
+      }
+    }
+  };
+
+  const source = deckImport.buildDeckSource(doc, {
+    stripTransientDeckRuntimeState() {}
+  });
+
+  assert.equal(
+    source.bodyScaffoldHtml,
+    '<div class="bg-layer"></div><div id="slidesContainer" class="slides-container">{{SLIDENEXT_CANONICAL_SLIDES}}</div><nav class="nav-shell"></nav>'
+  );
 });
 
 test('importElementToCanonicalNode strips editor-only classes and attributes from the canonical node payload', () => {

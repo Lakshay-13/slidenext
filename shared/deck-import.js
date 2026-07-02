@@ -29,6 +29,7 @@
     'data-editor-prev-display'
   ]);
   const STYLE_URL_PATTERN = /url\((?:'([^']*)'|"([^"]*)"|([^)]*))\)/gi;
+  const BODY_SCAFFOLD_PLACEHOLDER = '{{SLIDENEXT_CANONICAL_SLIDES}}';
 
   function asPlainObject(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -349,6 +350,65 @@
         order: scriptOrderMap.get(scriptEl) || index + 1
       }))
       .filter((scriptSeed) => normalizeString(scriptSeed.content).trim() || Object.keys(asPlainObject(scriptSeed.attributes)).length > 0);
+  }
+
+  function resolveImportedBodyScaffoldHost(bodyEl, options = {}) {
+    if (!bodyEl) {
+      return null;
+    }
+
+    if (typeof bodyEl.querySelector === 'function') {
+      const slidesContainer = bodyEl.querySelector('#slidesContainer');
+      if (slidesContainer) {
+        return slidesContainer;
+      }
+    }
+
+    const slideSelector = normalizeString(options.slideSelector, '.slide').trim() || '.slide';
+    const slideNodes = typeof bodyEl.querySelectorAll === 'function'
+      ? Array.from(bodyEl.querySelectorAll(slideSelector))
+      : [];
+    if (slideNodes.length === 0) {
+      return null;
+    }
+
+    const sharedParent = slideNodes[0] && slideNodes[0].parentElement
+      ? slideNodes[0].parentElement
+      : null;
+    if (!sharedParent || sharedParent === bodyEl) {
+      return null;
+    }
+
+    return slideNodes.every((slideNode) => slideNode && slideNode.parentElement === sharedParent)
+      ? sharedParent
+      : null;
+  }
+
+  function buildImportedBodyScaffoldHtml(bodyEl, options = {}) {
+    if (!bodyEl || typeof bodyEl.cloneNode !== 'function') {
+      return '';
+    }
+
+    const bodyClone = bodyEl.cloneNode(true);
+    if (!bodyClone) {
+      return '';
+    }
+
+    if (typeof bodyClone.querySelectorAll === 'function') {
+      bodyClone.querySelectorAll('script').forEach((scriptEl) => {
+        if (scriptEl && typeof scriptEl.remove === 'function') {
+          scriptEl.remove();
+        }
+      });
+    }
+
+    const scaffoldHost = resolveImportedBodyScaffoldHost(bodyClone, options);
+    if (!scaffoldHost || typeof scaffoldHost.innerHTML !== 'string') {
+      return '';
+    }
+
+    scaffoldHost.innerHTML = BODY_SCAFFOLD_PLACEHOLDER;
+    return normalizeString(bodyClone.innerHTML).trim();
   }
 
   function resolveImportedTransientClassNames(options = {}) {
@@ -1218,6 +1278,7 @@
       html: buildDocumentHtml(sourceClone || doc),
       headHtml: sourceHead ? sourceHead.innerHTML : '',
       bodyHtml: sourceBody ? sourceBody.innerHTML : '',
+      bodyScaffoldHtml: sourceBody ? buildImportedBodyScaffoldHtml(sourceBody, options) : '',
       htmlAttributes: sourceHtml ? extractAttributeMap(sourceHtml) : {},
       bodyAttributes: sourceBody ? extractAttributeMap(sourceBody) : {},
       headInlineScripts: sourceHead ? extractInlineScriptSeeds(sourceHead, {

@@ -15,6 +15,7 @@
   }
 
   const SELF_CLOSING_TAG_NAMES = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source']);
+  const BODY_SCAFFOLD_PLACEHOLDER = '{{SLIDENEXT_CANONICAL_SLIDES}}';
 
   function asPlainObject(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -876,9 +877,13 @@
         activeSlideId: resolvedActiveSlideId
       })).join('\n')
       : '';
+    const bodyScaffoldHtml = normalizeString(deck.source && deck.source.bodyScaffoldHtml).trim();
     const bodyScriptTags = buildCanonicalBodyScriptTags(deck);
+    const scaffoldBodyHtml = bodyScaffoldHtml && bodyScaffoldHtml.includes(BODY_SCAFFOLD_PLACEHOLDER)
+      ? bodyScaffoldHtml.replace(BODY_SCAFFOLD_PLACEHOLDER, slidesHtml)
+      : '';
     return [
-      `<div id="slidesContainer" class="slides-container">${slidesHtml}</div>`,
+      scaffoldBodyHtml || `<div id="slidesContainer" class="slides-container">${slidesHtml}</div>`,
       ...bodyScriptTags
     ].join('\n');
   }
