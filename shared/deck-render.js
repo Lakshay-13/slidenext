@@ -617,6 +617,15 @@
         : `${iconLinkTag}\n${nextHeadHtml}`;
     }
 
+    const stylesheetAssetLinkTags = buildStylesheetAssetLinkTags(deck.assets);
+    if (stylesheetAssetLinkTags.length > 0) {
+      nextHeadHtml = nextHeadHtml.replace(
+        /<link\b(?=[^>]*\brel=(?:"[^"]*\bstylesheet\b[^"]*"|'[^']*\bstylesheet\b[^']*'))[^>]*>\s*/gi,
+        ''
+      );
+      nextHeadHtml = `${stylesheetAssetLinkTags.join('\n')}\n${nextHeadHtml}`;
+    }
+
     return nextHeadHtml;
   }
 

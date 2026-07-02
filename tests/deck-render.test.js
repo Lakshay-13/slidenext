@@ -322,6 +322,42 @@ test('renderCanonicalDeckHtml overlays canonical favicon onto reused source head
   assert.doesNotMatch(html, /stale-favicon/);
 });
 
+test('renderCanonicalDeckHtml overlays canonical stylesheet assets onto reused source head html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'stylesheet',
+        src: '/presentations/demo/styles.css',
+        meta: {
+          media: 'screen',
+          crossorigin: 'anonymous'
+        }
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '<link rel="stylesheet" href="/presentations/demo/stale.css"><style>.deck-shell{color:red;}</style>',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<link rel="stylesheet" href="\/presentations\/demo\/styles\.css" media="screen" crossorigin="anonymous">/);
+  assert.match(html, /<style>\.deck-shell\{color:red;\}<\/style>/);
+  assert.doesNotMatch(html, /stale\.css/);
+});
+
 test('renderCanonicalDeckHtml updates active classes and ids even when reusing slide source html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [
