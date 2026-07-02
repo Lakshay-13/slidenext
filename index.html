@@ -3209,9 +3209,14 @@
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!removalActionState.canRemove) return false;
+      let removedCount = 0;
       removalActionState.selection.forEach(el => {
-        if (el && el.isConnected) el.remove();
+        if (el && el.isConnected) {
+          el.remove();
+          removedCount += 1;
+        }
       });
+      if (removedCount === 0) return false;
       deselectElement();
       generateThumbnails();
       updateLayersList();
