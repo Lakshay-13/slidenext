@@ -5835,6 +5835,7 @@
       listContainer.innerHTML = layers.map(layer => {
         const liveElement = getElementByEditorId(layer.id, iframeDoc);
         const canRunLayerActions = !!liveElement;
+        const canToggleLayerVisibility = canRunLayerActions && !layer.isLocked;
         const layerOrderActionState = buildLayerOrderSelectionActionState(
           liveElement ? [liveElement] : [],
           {
@@ -5858,7 +5859,7 @@
               <span class="text-[9px] text-zinc-500 font-bold ml-auto flex-shrink-0">z:${layer.zIndex}</span>
             </button>
             <div class="flex items-center gap-1 flex-shrink-0 ml-1">
-              <button onclick="toggleLayerVisibilityByRef(event)" ${canRunLayerActions ? '' : 'disabled'} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="${layer.isHidden ? 'Show Element' : 'Hide Element'}">
+              <button onclick="toggleLayerVisibilityByRef(event)" ${canToggleLayerVisibility ? '' : 'disabled'} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="${layer.isHidden ? 'Show Element' : 'Hide Element'}">
                 <span class="material-symbols-outlined text-[12px]">${layer.isHidden ? 'visibility' : 'visibility_off'}</span>
               </button>
               <button onclick="changeLayerZIndexByRef(event, 'forward')" ${layerOrderActionState.canBringForward ? '' : 'disabled'} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Bring Forward">

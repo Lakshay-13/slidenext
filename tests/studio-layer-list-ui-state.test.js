@@ -53,6 +53,17 @@ function getLayerButtonAttributes(html, displayName) {
   };
 }
 
+function getLayerVisibilityButtonAttrs(html, displayName) {
+  const escapedDisplayName = displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(
+    `${escapedDisplayName}[\\s\\S]*?toggleLayerVisibilityByRef\\(event\\)"([^>]*)title="(?:Show|Hide) Element"`,
+    'm'
+  );
+  const match = html.match(pattern);
+  assert.ok(match, `Missing visibility button for ${displayName}`);
+  return match[1];
+}
+
 function hasDisabledAttribute(attrs) {
   return /\sdisabled(?=\s|=|$)/.test(attrs);
 }
@@ -133,10 +144,12 @@ test('updateLayersList disables row layer controls when a layer cannot move in t
   const middleLayerButtons = getLayerButtonAttributes(listContainer.innerHTML, 'Middle Layer');
   assert.equal(hasDisabledAttribute(middleLayerButtons.forwardAttrs), false);
   assert.equal(hasDisabledAttribute(middleLayerButtons.backwardAttrs), false);
+  assert.equal(hasDisabledAttribute(getLayerVisibilityButtonAttrs(listContainer.innerHTML, 'Middle Layer')), false);
 
   const lockedFrontLayerButtons = getLayerButtonAttributes(listContainer.innerHTML, 'Locked Front Layer');
   assert.equal(hasDisabledAttribute(lockedFrontLayerButtons.forwardAttrs), true);
   assert.equal(hasDisabledAttribute(lockedFrontLayerButtons.backwardAttrs), true);
+  assert.equal(hasDisabledAttribute(getLayerVisibilityButtonAttrs(listContainer.innerHTML, 'Locked Front Layer')), true);
   assert.equal(getIframeDocCalls, 1);
 });
 
