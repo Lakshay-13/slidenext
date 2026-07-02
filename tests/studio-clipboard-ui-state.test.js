@@ -17,7 +17,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 function extractClipboardMutationPlanBuilderSource(fileContent) {
   return extractFunctionSource(
     fileContent,
-    'function buildClipboardSelectionMutationPlan() {',
+    'function buildClipboardSelectionMutationPlan(doc = null) {',
     '\n\n    function finalizeClipboardActionResult(result) {'
   );
 }
@@ -163,6 +163,7 @@ test('finalizeInsertedElements commits the new selection and delegates persisten
 
 test('updateClipboardActionState enables clipboard controls only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
   const updateClipboardActionStateSource = extractFunctionSource(
     fileContent,
     'function updateClipboardActionState(doc = getIframeDoc()) {',
@@ -198,7 +199,7 @@ test('updateClipboardActionState enables clipboard controls only when the iframe
   };
 
   vm.createContext(context);
-  vm.runInContext(updateClipboardActionStateSource, context);
+  vm.runInContext(`${buildClipboardSelectionMutationPlanSource}\n${updateClipboardActionStateSource}`, context);
 
   context.updateClipboardActionState(null);
   assert.deepEqual(getControlStates(controls), {

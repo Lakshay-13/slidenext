@@ -3636,10 +3636,7 @@
     }
 
     function updateClipboardActionState(doc = getIframeDoc()) {
-      const clipboardActionState = SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
-        isLocked: isElementLocked,
-        canMutateDeck: () => !!getActiveSlide(doc)
-      });
+      const clipboardActionState = buildClipboardSelectionMutationPlan(doc);
       const copyBtn = document.getElementById('copySelectionBtn');
       const pasteBtn = document.getElementById('pasteClipboardBtn');
       const slidePasteBtn = document.getElementById('slidePasteClipboardBtn');
@@ -3721,10 +3718,10 @@
       return inserted;
     }
 
-    function buildClipboardSelectionMutationPlan() {
+    function buildClipboardSelectionMutationPlan(doc = null) {
       return SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
         isLocked: isElementLocked,
-        canMutateDeck: () => !!getActiveSlide(getIframeDoc())
+        canMutateDeck: () => !!getActiveSlide(doc || getIframeDoc())
       });
     }
 
