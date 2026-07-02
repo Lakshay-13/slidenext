@@ -2831,6 +2831,9 @@
     function syncInspectorForSelection() {
       const liveSelectionState = SlideNextStudioEditorLiveSelection.buildStudioLiveSelectionState(selectedElements);
       const count = liveSelectionState.count;
+      const inspectorTargetLabel = document.getElementById('inspectorTargetLabel');
+      const slideInspectorPanel = document.getElementById('slideInspectorPanel');
+      const elementInspectorPanel = document.getElementById('elementInspectorPanel');
       updateClipboardActionState();
       updateRemovalActionState();
       updateLockActionState();
@@ -2839,24 +2842,36 @@
       updateStyleActionState();
       updateLayerOrderActionState();
       if (!liveSelectionState.hasSelection) {
-        document.getElementById('inspectorTargetLabel').innerHTML = `
-          <span class="material-symbols-outlined text-[16px] text-[#7028d0]">settings_suggest</span>
-          No selection active
-        `;
-        document.getElementById('slideInspectorPanel').classList.remove('hidden');
-        document.getElementById('elementInspectorPanel').classList.add('hidden');
+        if (inspectorTargetLabel) {
+          inspectorTargetLabel.innerHTML = `
+            <span class="material-symbols-outlined text-[16px] text-[#7028d0]">settings_suggest</span>
+            No selection active
+          `;
+        }
+        if (slideInspectorPanel) {
+          slideInspectorPanel.classList.remove('hidden');
+        }
+        if (elementInspectorPanel) {
+          elementInspectorPanel.classList.add('hidden');
+        }
         return;
       }
 
       const el = liveSelectionState.primaryElement;
       const isMulti = count > 1;
-      document.getElementById('inspectorTargetLabel').innerHTML = `
-        <span class="material-symbols-outlined text-[16px] text-[#7028d0]">edit</span>
-        ${isMulti ? `Editing ${count} elements` : `Editing ${el.tagName.toLowerCase()}`}
-      `;
+      if (inspectorTargetLabel) {
+        inspectorTargetLabel.innerHTML = `
+          <span class="material-symbols-outlined text-[16px] text-[#7028d0]">edit</span>
+          ${isMulti ? `Editing ${count} elements` : `Editing ${el.tagName.toLowerCase()}`}
+        `;
+      }
 
-      document.getElementById('slideInspectorPanel').classList.add('hidden');
-      document.getElementById('elementInspectorPanel').classList.remove('hidden');
+      if (slideInspectorPanel) {
+        slideInspectorPanel.classList.add('hidden');
+      }
+      if (elementInspectorPanel) {
+        elementInspectorPanel.classList.remove('hidden');
+      }
 
       const textVal = el.innerText || el.textContent || '';
       const textContentInput = document.getElementById('elTextContent');

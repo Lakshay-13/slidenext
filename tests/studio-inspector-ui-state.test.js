@@ -16,6 +16,77 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+test('syncInspectorForSelection tolerates missing inspector chrome when no selection is active', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncInspectorForSelectionSource = extractFunctionSource(
+    fileContent,
+    'function syncInspectorForSelection() {',
+    '\n\n    // Click Selection highlights'
+  );
+
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorLiveSelection: liveSelection,
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (
+          id === 'inspectorTargetLabel'
+          || id === 'slideInspectorPanel'
+          || id === 'elementInspectorPanel'
+        ) {
+          return null;
+        }
+        return null;
+      }
+    },
+    highlightAlignButton(value) {
+      calls.push(['highlightAlignButton', value]);
+    },
+    rgbToHex(value) {
+      calls.push(['rgbToHex', value]);
+      return '#ffffff';
+    },
+    selectedElements: [],
+    updateClipboardActionState() {
+      calls.push(['updateClipboardActionState']);
+    },
+    updateLayerOrderActionState() {
+      calls.push(['updateLayerOrderActionState']);
+    },
+    updateLockActionState() {
+      calls.push(['updateLockActionState']);
+    },
+    updateMotionActionState() {
+      calls.push(['updateMotionActionState']);
+    },
+    updateRemovalActionState() {
+      calls.push(['updateRemovalActionState']);
+    },
+    updateStyleActionState() {
+      calls.push(['updateStyleActionState']);
+    },
+    updateVisibilityActionState() {
+      calls.push(['updateVisibilityActionState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncInspectorForSelectionSource, context);
+
+  assert.doesNotThrow(() => context.syncInspectorForSelection());
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'inspectorTargetLabel'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'slideInspectorPanel'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'elementInspectorPanel'));
+  assert.ok(calls.some(([name]) => name === 'updateClipboardActionState'));
+  assert.ok(calls.some(([name]) => name === 'updateLayerOrderActionState'));
+  assert.ok(calls.some(([name]) => name === 'updateLockActionState'));
+  assert.ok(calls.some(([name]) => name === 'updateMotionActionState'));
+  assert.ok(calls.some(([name]) => name === 'updateRemovalActionState'));
+  assert.ok(calls.some(([name]) => name === 'updateStyleActionState'));
+  assert.ok(calls.some(([name]) => name === 'updateVisibilityActionState'));
+});
+
 test('syncInspectorForSelection tolerates a missing z-index input when a live selection is active', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const syncInspectorForSelectionSource = extractFunctionSource(
