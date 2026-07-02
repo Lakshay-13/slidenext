@@ -3721,6 +3721,13 @@
       return inserted;
     }
 
+    function buildClipboardSelectionMutationPlan() {
+      return SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(getIframeDoc())
+      });
+    }
+
     function finalizeClipboardActionResult(result) {
       updateClipboardActionState();
       return result;
@@ -3735,10 +3742,7 @@
     }
 
     function copySelectedElements() {
-      const clipboardActionState = SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
-        isLocked: isElementLocked,
-        canMutateDeck: () => !!getActiveSlide(getIframeDoc())
-      });
+      const clipboardActionState = buildClipboardSelectionMutationPlan();
       if (!clipboardActionState.canCopy) return finalizeClipboardActionResult(false);
       const items = buildClipboardPayload(clipboardActionState.selection);
       if (items.length === 0) return finalizeClipboardActionResult(false);
@@ -3760,10 +3764,7 @@
     }
 
     function duplicateSelectedElements() {
-      const clipboardActionState = SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
-        isLocked: isElementLocked,
-        canMutateDeck: () => !!getActiveSlide(getIframeDoc())
-      });
+      const clipboardActionState = buildClipboardSelectionMutationPlan();
       if (!clipboardActionState.canDuplicate) return finalizeClipboardActionResult(false);
       const duplicates = insertClipboardPayload(buildClipboardPayload(clipboardActionState.selection), 1);
       if (duplicates.length === 0) return finalizeClipboardActionResult(false);

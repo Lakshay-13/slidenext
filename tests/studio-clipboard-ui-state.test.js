@@ -14,6 +14,14 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function extractClipboardMutationPlanBuilderSource(fileContent) {
+  return extractFunctionSource(
+    fileContent,
+    'function buildClipboardSelectionMutationPlan() {',
+    '\n\n    function finalizeClipboardActionResult(result) {'
+  );
+}
+
 function extractClipboardActionFinalizerSource(fileContent) {
   return extractFunctionSource(
     fileContent,
@@ -37,6 +45,58 @@ function getControlStates(controls) {
     slidePasteClipboardBtn: controls.slidePasteClipboardBtn.disabled
   };
 }
+
+test('buildClipboardSelectionMutationPlan reuses the current selection, clipboard, and live slide guard', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
+
+  const selection = [{ id: 'node-1' }];
+  const clipboard = { items: [{ id: 'clipboard-item' }], pasteCount: 0 };
+  const calls = [];
+  const context = {
+    selectedElements: selection,
+    editorClipboard: clipboard,
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardMutationPlan(elements, nextClipboard, options = {}) {
+        calls.push(['buildStudioClipboardMutationPlan', elements, nextClipboard]);
+        return {
+          canCopy: options.canMutateDeck(),
+          canDuplicate: options.canMutateDeck(),
+          selection: elements
+        };
+      }
+    },
+    getActiveSlide(doc) {
+      calls.push(['getActiveSlide', doc]);
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      const doc = { activeSlide: { id: 'slide-1' } };
+      calls.push(['getIframeDoc', doc]);
+      return doc;
+    },
+    isElementLocked(element) {
+      calls.push(['isElementLocked', element]);
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildClipboardSelectionMutationPlanSource, context);
+
+  assert.deepEqual(context.buildClipboardSelectionMutationPlan(), {
+    canCopy: true,
+    canDuplicate: true,
+    selection
+  });
+  assert.deepEqual(calls, [
+    ['buildStudioClipboardMutationPlan', selection, clipboard],
+    ['getIframeDoc', { activeSlide: { id: 'slide-1' } }],
+    ['getActiveSlide', { activeSlide: { id: 'slide-1' } }],
+    ['getIframeDoc', { activeSlide: { id: 'slide-1' } }],
+    ['getActiveSlide', { activeSlide: { id: 'slide-1' } }]
+  ]);
+});
 
 test('finalizeClipboardActionResult refreshes clipboard controls and preserves the action result', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
@@ -170,6 +230,7 @@ test('updateClipboardActionState enables clipboard controls only when the iframe
 
 test('copySelectedElements returns false and refreshes clipboard controls when payload build yields no items', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
   const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
   const copySelectedElementsSource = extractFunctionSource(
     fileContent,
@@ -217,7 +278,7 @@ test('copySelectedElements returns false and refreshes clipboard controls when p
   };
 
   vm.createContext(context);
-  vm.runInContext(`${finalizeClipboardActionResultSource}\n${copySelectedElementsSource}`, context);
+  vm.runInContext(`${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${copySelectedElementsSource}`, context);
 
   assert.equal(context.copySelectedElements(), false);
   assert.equal(context.editorClipboard, null);
@@ -230,6 +291,7 @@ test('copySelectedElements returns false and refreshes clipboard controls when p
 
 test('copySelectedElements returns true after creating clipboard state from copied items', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
   const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
   const copySelectedElementsSource = extractFunctionSource(
     fileContent,
@@ -279,7 +341,7 @@ test('copySelectedElements returns true after creating clipboard state from copi
   };
 
   vm.createContext(context);
-  vm.runInContext(`${finalizeClipboardActionResultSource}\n${copySelectedElementsSource}`, context);
+  vm.runInContext(`${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${copySelectedElementsSource}`, context);
 
   assert.equal(context.copySelectedElements(), true);
   assert.equal(context.editorClipboard, nextClipboard);
@@ -293,6 +355,7 @@ test('copySelectedElements returns true after creating clipboard state from copi
 
 test('duplicateSelectedElements returns false and refreshes clipboard controls when duplication is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
   const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
   const duplicateSelectedElementsSource = extractFunctionSource(
     fileContent,
@@ -331,7 +394,7 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
   };
 
   vm.createContext(context);
-  vm.runInContext(`${finalizeClipboardActionResultSource}\n${duplicateSelectedElementsSource}`, context);
+  vm.runInContext(`${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${duplicateSelectedElementsSource}`, context);
 
   assert.equal(context.duplicateSelectedElements(), false);
   assert.deepEqual(calls, [
@@ -342,6 +405,7 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
 
 test('duplicateSelectedElements returns false and refreshes clipboard controls when insertion yields no duplicates', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
   const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
   const duplicateSelectedElementsSource = extractFunctionSource(
     fileContent,
@@ -393,7 +457,7 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
   };
 
   vm.createContext(context);
-  vm.runInContext(`${finalizeClipboardActionResultSource}\n${duplicateSelectedElementsSource}`, context);
+  vm.runInContext(`${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${duplicateSelectedElementsSource}`, context);
 
   assert.equal(context.duplicateSelectedElements(), false);
   assert.deepEqual(calls, [
