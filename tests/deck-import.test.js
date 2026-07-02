@@ -575,6 +575,52 @@ test('collectDeckAssets preserves link asset metadata needed by canonical styles
   ]);
 });
 
+test('collectDeckAssets preserves script asset metadata needed by canonical script tags', () => {
+  const scriptEl = createElement('SCRIPT', {
+    src: '/scripts/deck.js',
+    type: 'module',
+    async: '',
+    defer: '',
+    nomodule: '',
+    crossorigin: 'anonymous',
+    integrity: 'sha384-script',
+    referrerpolicy: 'origin'
+  });
+
+  const doc = {
+    querySelectorAll(selector) {
+      if (selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], link[rel~="preload"][href], video[poster]') {
+        return [scriptEl];
+      }
+      if (selector === 'img[srcset], source[srcset]' || selector === '[style*="url("]') {
+        return [];
+      }
+      return [];
+    }
+  };
+
+  const assets = deckImport.collectDeckAssets(doc);
+
+  assert.deepEqual(assets, [
+    {
+      id: 'asset-1',
+      type: 'script',
+      name: 'deck.js',
+      src: '/scripts/deck.js',
+      mimeType: 'application/javascript',
+      meta: {
+        type: 'module',
+        crossorigin: 'anonymous',
+        integrity: 'sha384-script',
+        referrerpolicy: 'origin',
+        async: true,
+        defer: true,
+        nomodule: true
+      }
+    }
+  ]);
+});
+
 test('importHtmlDeckToCanonicalDeck falls back to head metadata for missing description, icon, and tags', () => {
   const deck = deckImport.importHtmlDeckToCanonicalDeck(createMetadataDocument({
     title: 'HTML Deck Title',

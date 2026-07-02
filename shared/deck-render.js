@@ -61,6 +61,7 @@
   }
 
   function normalizeAssetMetaAttributeValue(attributeName, value) {
+    const booleanAttributeNames = new Set(['async', 'defer', 'nomodule']);
     if (value === true) {
       return true;
     }
@@ -73,6 +74,9 @@
       : String(value).trim();
     if (!normalizedValue) {
       return attributeName === 'crossorigin' ? true : null;
+    }
+    if (booleanAttributeNames.has(attributeName)) {
+      return true;
     }
     return normalizedValue;
   }
@@ -119,15 +123,32 @@
     const seenSrcs = new Set();
     return (Array.isArray(assets) ? assets : [])
       .filter((asset) => asset && asset.type === 'script')
-      .map((asset) => normalizeString(asset.src).trim())
-      .filter((src) => {
+      .map((asset) => ({
+        src: normalizeString(asset.src).trim(),
+        meta: asPlainObject(asset.meta)
+      }))
+      .filter(({ src }) => {
         if (!src || seenSrcs.has(src)) {
           return false;
         }
         seenSrcs.add(src);
         return true;
       })
-      .map((src) => `<script src="${escapeAttribute(src)}"></script>`);
+      .map(({ src, meta }) => {
+        const attributes = {
+          src
+        };
+        applyAssetMetaAttributes(attributes, meta, [
+          'type',
+          'async',
+          'defer',
+          'nomodule',
+          'crossorigin',
+          'integrity',
+          'referrerpolicy'
+        ]);
+        return `<script${renderAttributeMap(attributes)}></script>`;
+      });
   }
 
   function buildPreloadAssetLinkTags(assets = []) {

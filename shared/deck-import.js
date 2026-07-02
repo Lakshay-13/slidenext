@@ -793,26 +793,52 @@
 
   function buildImportedAssetMeta(el) {
     const tagName = normalizeString(el && el.tagName).toLowerCase();
-    if (tagName !== 'link') {
+    if (tagName !== 'link' && tagName !== 'script') {
       return null;
     }
 
     const meta = {};
-    ['media', 'crossorigin', 'integrity', 'referrerpolicy'].forEach((attributeName) => {
-      const attributeValue = readElementAttributeIfPresent(el, attributeName);
-      if (attributeValue === null) {
-        return;
-      }
+    if (tagName === 'link') {
+      ['media', 'crossorigin', 'integrity', 'referrerpolicy'].forEach((attributeName) => {
+        const attributeValue = readElementAttributeIfPresent(el, attributeName);
+        if (attributeValue === null) {
+          return;
+        }
 
-      const normalizedValue = normalizeString(attributeValue).trim();
-      if (attributeName === 'crossorigin') {
-        meta[attributeName] = normalizedValue || true;
-        return;
-      }
-      if (normalizedValue) {
-        meta[attributeName] = normalizedValue;
-      }
-    });
+        const normalizedValue = normalizeString(attributeValue).trim();
+        if (attributeName === 'crossorigin') {
+          meta[attributeName] = normalizedValue || true;
+          return;
+        }
+        if (normalizedValue) {
+          meta[attributeName] = normalizedValue;
+        }
+      });
+    }
+
+    if (tagName === 'script') {
+      ['type', 'crossorigin', 'integrity', 'referrerpolicy'].forEach((attributeName) => {
+        const attributeValue = readElementAttributeIfPresent(el, attributeName);
+        if (attributeValue === null) {
+          return;
+        }
+
+        const normalizedValue = normalizeString(attributeValue).trim();
+        if (attributeName === 'crossorigin') {
+          meta[attributeName] = normalizedValue || true;
+          return;
+        }
+        if (normalizedValue) {
+          meta[attributeName] = normalizedValue;
+        }
+      });
+
+      ['async', 'defer', 'nomodule'].forEach((attributeName) => {
+        if (hasElementAttribute(el, attributeName)) {
+          meta[attributeName] = true;
+        }
+      });
+    }
 
     return Object.keys(meta).length > 0 ? meta : null;
   }

@@ -596,6 +596,47 @@ test('renderCanonicalDeckHtml emits canonical script assets when source body htm
   assert.doesNotMatch(html, /<script[^>]*styles\.css/);
 });
 
+test('renderCanonicalDeckHtml preserves canonical script asset metadata when source body html is absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'script',
+        src: '/presentations/demo/app.js',
+        meta: {
+          type: 'module',
+          async: true,
+          defer: true,
+          nomodule: true,
+          crossorigin: 'anonymous',
+          integrity: 'sha384-script',
+          referrerpolicy: 'origin'
+        }
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(
+    html,
+    /<script src="\/presentations\/demo\/app\.js" type="module" async defer nomodule crossorigin="anonymous" integrity="sha384-script" referrerpolicy="origin"><\/script>/
+  );
+});
+
 test('renderCanonicalDeckHtml falls back to canonical slide background metadata when source attributes are absent', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [
