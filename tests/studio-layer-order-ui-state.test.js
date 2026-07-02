@@ -141,6 +141,9 @@ test('arrangeElementLayer returns false when there is no live reorder target or 
     triggerAutoVersion(label) {
       calls.push(['triggerAutoVersion', label]);
     },
+    updateLayerOrderActionState() {
+      calls.push(['updateLayerOrderActionState']);
+    },
     updateLayersList() {
       calls.push(['updateLayersList']);
     }
@@ -150,7 +153,10 @@ test('arrangeElementLayer returns false when there is no live reorder target or 
   vm.runInContext(arrangeElementLayerSource, context);
 
   assert.equal(context.arrangeElementLayer('front'), false);
-  assert.deepEqual(calls, [['getLiveSelectedElements']]);
+  assert.deepEqual(calls, [
+    ['getLiveSelectedElements'],
+    ['updateLayerOrderActionState']
+  ]);
 
   const target = { style: { zIndex: '7' } };
   calls.length = 0;
@@ -167,7 +173,65 @@ test('arrangeElementLayer returns false when there is no live reorder target or 
   assert.deepEqual(calls, [
     ['getLiveSelectedElements'],
     ['selectionHasLockedElements'],
-    ['reorderSlideLayers', 'front', [target]]
+    ['reorderSlideLayers', 'front', [target]],
+    ['updateLayerOrderActionState']
+  ]);
+});
+
+test('arrangeElementLayer returns false and refreshes layer controls when the live selection is locked', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const arrangeElementLayerSource = extractFunctionSource(
+    fileContent,
+    'function arrangeElementLayer(action) {',
+    '\n\n    // Wallpaper / Background styles Tabs'
+  );
+
+  const lockedTarget = { style: { zIndex: '5' } };
+  const calls = [];
+  const context = {
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        return null;
+      }
+    },
+    getLiveSelectedElements() {
+      calls.push(['getLiveSelectedElements']);
+      return [lockedTarget];
+    },
+    reorderSlideLayers() {
+      calls.push(['reorderSlideLayers']);
+      return true;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    selectionHasLockedElements(targets) {
+      calls.push(['selectionHasLockedElements', targets]);
+      return true;
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    },
+    updateLayerOrderActionState() {
+      calls.push(['updateLayerOrderActionState']);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(arrangeElementLayerSource, context);
+
+  assert.equal(context.arrangeElementLayer('front'), false);
+  assert.deepEqual(calls, [
+    ['getLiveSelectedElements'],
+    ['selectionHasLockedElements', [lockedTarget]],
+    ['updateLayerOrderActionState']
   ]);
 });
 
@@ -208,6 +272,9 @@ test('arrangeElementLayer returns true and tolerates a missing z-index input whe
     },
     triggerAutoVersion(label) {
       calls.push(['triggerAutoVersion', label]);
+    },
+    updateLayerOrderActionState() {
+      calls.push(['updateLayerOrderActionState']);
     },
     updateLayersList() {
       calls.push(['updateLayersList']);

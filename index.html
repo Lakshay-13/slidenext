@@ -3633,10 +3633,19 @@
     // Rearrange Selected Element Layers
     function arrangeElementLayer(action) {
       const targets = getLiveSelectedElements();
-      if (targets.length === 0) return false;
-      if (selectionHasLockedElements(targets)) return false;
+      if (targets.length === 0) {
+        updateLayerOrderActionState();
+        return false;
+      }
+      if (selectionHasLockedElements(targets)) {
+        updateLayerOrderActionState();
+        return false;
+      }
       const didChange = reorderSlideLayers(action, targets);
-      if (!didChange) return false;
+      if (!didChange) {
+        updateLayerOrderActionState();
+        return false;
+      }
 
       const zIndexInput = targets[0]
         ? document.getElementById('elZIndex')
