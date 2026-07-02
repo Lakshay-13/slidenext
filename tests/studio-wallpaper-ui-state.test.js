@@ -121,3 +121,154 @@ test('updateWallpaperActionState enables wallpaper controls only when the iframe
     gradientButtons: [false, false]
   });
 });
+
+function createClassList(initialValues = []) {
+  const values = new Set(initialValues);
+  return {
+    add(...nextValues) {
+      nextValues.forEach((value) => values.add(value));
+    },
+    remove(...nextValues) {
+      nextValues.forEach((value) => values.delete(value));
+    },
+    contains(value) {
+      return values.has(value);
+    }
+  };
+}
+
+test('setWallpaperTab returns false without mutating chrome when the target tab is disabled', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setWallpaperTabSource = extractFunctionSource(
+    fileContent,
+    'function setWallpaperTab(tab) {',
+    '\n\n    // Render preset solid & gradient options'
+  );
+
+  const elements = {
+    wpTabSolid: { disabled: false, className: 'solid-idle' },
+    wpTabPresets: { disabled: false, className: 'presets-idle' },
+    wpTabCustom: { disabled: true, className: 'custom-idle' },
+    wpPanelSolid: { classList: createClassList([]) },
+    wpPanelPresets: { classList: createClassList(['hidden']) },
+    wpPanelCustom: { classList: createClassList(['hidden']) }
+  };
+  const context = {
+    wallpaperTab: 'solid',
+    document: {
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setWallpaperTabSource, context);
+
+  assert.equal(context.setWallpaperTab('custom'), false);
+  assert.equal(context.wallpaperTab, 'solid');
+  assert.equal(elements.wpTabSolid.className, 'solid-idle');
+  assert.equal(elements.wpTabPresets.className, 'presets-idle');
+  assert.equal(elements.wpTabCustom.className, 'custom-idle');
+  assert.equal(elements.wpPanelSolid.classList.contains('hidden'), false);
+  assert.equal(elements.wpPanelPresets.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelCustom.classList.contains('hidden'), true);
+});
+
+test('wallpaper mutation helpers no-op when wallpaper controls are disabled', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyPresetWallpaperSource = extractFunctionSource(
+    fileContent,
+    'function applyPresetWallpaper(val, isCustomInput = false) {',
+    '\n\n    function setCustomGradientType(type) {'
+  );
+  const setCustomGradientTypeSource = extractFunctionSource(
+    fileContent,
+    'function setCustomGradientType(type) {',
+    '\n\n    function updateCustomGradientAngle(value) {'
+  );
+  const updateCustomGradientAngleSource = extractFunctionSource(
+    fileContent,
+    'function updateCustomGradientAngle(value) {',
+    '\n\n    // Build background CSS based on custom stops'
+  );
+  const applyCustomGradientSource = extractFunctionSource(
+    fileContent,
+    'function applyCustomGradient() {',
+    '\n\n    function applyWallpaperToAllSlides() {'
+  );
+  const applyWallpaperToAllSlidesSource = extractFunctionSource(
+    fileContent,
+    'function applyWallpaperToAllSlides() {',
+    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+  );
+
+  const activeSlide = { style: { background: 'black' } };
+  const siblingSlide = { style: { background: 'white' } };
+  const elements = {
+    wpTabSolid: { disabled: true },
+    cgLinearBtn: { disabled: true, className: 'linear-idle' },
+    cgRadialBtn: { disabled: true, className: 'radial-idle' },
+    cgAngleGroup: { classList: createClassList([]) },
+    cgAngle: { disabled: true, value: '135' },
+    cgAngleVal: { textContent: '135°' },
+    cgColor1: { disabled: true, value: '#5050e8' },
+    cgColor2: { disabled: true, value: '#050505' },
+    applyWallpaperToAllSlidesBtn: { disabled: true }
+  };
+  let finalizeCalls = 0;
+  let alertCalls = 0;
+  const iframeDoc = {
+    activeSlide,
+    slides: [activeSlide, siblingSlide]
+  };
+  const context = {
+    customGradientType: 'linear',
+    document: {
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getSlides(doc) {
+      return doc && Array.isArray(doc.slides) ? doc.slides : [];
+    },
+    finalizeWallpaperMutation() {
+      finalizeCalls += 1;
+    },
+    alert() {
+      alertCalls += 1;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(
+    [
+      applyPresetWallpaperSource,
+      setCustomGradientTypeSource,
+      updateCustomGradientAngleSource,
+      applyCustomGradientSource,
+      applyWallpaperToAllSlidesSource
+    ].join('\n\n'),
+    context
+  );
+
+  assert.equal(context.applyPresetWallpaper('#ffffff'), false);
+  assert.equal(activeSlide.style.background, 'black');
+  assert.equal(context.setCustomGradientType('radial'), false);
+  assert.equal(context.customGradientType, 'linear');
+  assert.equal(elements.cgLinearBtn.className, 'linear-idle');
+  assert.equal(elements.cgRadialBtn.className, 'radial-idle');
+  assert.equal(context.updateCustomGradientAngle('180'), false);
+  assert.equal(elements.cgAngleVal.textContent, '135°');
+  assert.equal(context.applyCustomGradient(), false);
+  assert.equal(context.applyWallpaperToAllSlides(), false);
+  assert.equal(siblingSlide.style.background, 'white');
+  assert.equal(finalizeCalls, 0);
+  assert.equal(alertCalls, 0);
+});

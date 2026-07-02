@@ -471,12 +471,11 @@ test('setCustomGradientType exits cleanly when the gradient chrome is unavailabl
   vm.runInContext(setCustomGradientTypeSource, context);
 
   assert.equal(context.setCustomGradientType('linear'), false);
-  assert.equal(context.customGradientType, 'linear');
+  assert.equal(context.customGradientType, 'radial');
   assert.deepEqual(calls, [
     ['getElementById', 'cgLinearBtn'],
     ['getElementById', 'cgRadialBtn'],
-    ['getElementById', 'cgAngleGroup'],
-    ['applyCustomGradient']
+    ['getElementById', 'cgAngleGroup']
   ]);
 });
 
@@ -510,6 +509,7 @@ test('updateCustomGradientAngle exits cleanly when the angle label is unavailabl
 
   assert.equal(context.updateCustomGradientAngle('180'), false);
   assert.deepEqual(calls, [
+    ['getElementById', 'cgAngle'],
     ['getElementById', 'cgAngleVal'],
     ['applyCustomGradient']
   ]);

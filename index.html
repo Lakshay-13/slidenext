@@ -4123,15 +4123,23 @@
 
     // Wallpaper / Background styles Tabs
     function setWallpaperTab(tab) {
-      wallpaperTab = tab;
-      
       const solidTab = document.getElementById('wpTabSolid');
       const presetsTab = document.getElementById('wpTabPresets');
       const customTab = document.getElementById('wpTabCustom');
-      
+      const nextTabButton = tab === 'solid'
+        ? solidTab
+        : tab === 'presets'
+          ? presetsTab
+          : customTab;
+
       const solidPanel = document.getElementById('wpPanelSolid');
       const presetsPanel = document.getElementById('wpPanelPresets');
       const customPanel = document.getElementById('wpPanelCustom');
+      if (!solidTab || !presetsTab || !customTab || !nextTabButton || nextTabButton.disabled || !solidPanel || !presetsPanel || !customPanel) {
+        return false;
+      }
+
+      wallpaperTab = tab;
       
       // Clear tab visual selection styles
       [solidTab, presetsTab, customTab].forEach(t => {
@@ -4154,6 +4162,7 @@
         customTab.className = 'py-1 text-center text-[10px] font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
         customPanel.classList.remove('hidden');
       }
+      return true;
     }
 
     // Render preset solid & gradient options
@@ -4187,6 +4196,10 @@
     }
 
     function applyPresetWallpaper(val, isCustomInput = false) {
+      const wallpaperTabBtn = typeof document !== 'undefined' && document && typeof document.getElementById === 'function'
+        ? document.getElementById('wpTabSolid')
+        : null;
+      if (wallpaperTabBtn && wallpaperTabBtn.disabled) return false;
       const iframeDoc = getIframeDoc();
       const activeSlide = getActiveSlide(iframeDoc);
       
@@ -4199,10 +4212,15 @@
     }
 
     function setCustomGradientType(type) {
-      customGradientType = type;
       const linearBtn = document.getElementById('cgLinearBtn');
       const radialBtn = document.getElementById('cgRadialBtn');
       const angleGroup = document.getElementById('cgAngleGroup');
+      const nextGradientTypeBtn = type === 'radial' ? radialBtn : linearBtn;
+      if (!linearBtn || !radialBtn || !angleGroup || !nextGradientTypeBtn || nextGradientTypeBtn.disabled) {
+        return false;
+      }
+
+      customGradientType = type;
       
       if (type === 'linear') {
         if (linearBtn) {
@@ -4230,6 +4248,8 @@
     }
 
     function updateCustomGradientAngle(value) {
+      const angleInput = document.getElementById('cgAngle');
+      if (angleInput && angleInput.disabled) return false;
       const angleLabel = document.getElementById('cgAngleVal');
       if (angleLabel) {
         angleLabel.textContent = `${value}°`;
@@ -4242,7 +4262,7 @@
       const color1Input = document.getElementById('cgColor1');
       const color2Input = document.getElementById('cgColor2');
       const angleInput = document.getElementById('cgAngle');
-      if (!color1Input || !color2Input || !angleInput) {
+      if (!color1Input || !color2Input || !angleInput || color1Input.disabled || color2Input.disabled || angleInput.disabled) {
         return false;
       }
       const color1 = color1Input.value;
@@ -4260,6 +4280,10 @@
     }
 
     function applyWallpaperToAllSlides() {
+      const applyBtn = typeof document !== 'undefined' && document && typeof document.getElementById === 'function'
+        ? document.getElementById('applyWallpaperToAllSlidesBtn')
+        : null;
+      if (applyBtn && applyBtn.disabled) return false;
       const iframeDoc = getIframeDoc();
       const activeSlide = getActiveSlide(iframeDoc);
       
