@@ -4104,6 +4104,16 @@
       `).join('');
     }
 
+    function finalizeWallpaperMutation(versionLabel = '') {
+      generateThumbnails();
+      saveHistoryState();
+      triggerAutoSave();
+      if (versionLabel) {
+        triggerAutoVersion(versionLabel);
+      }
+      return versionLabel;
+    }
+
     function applyPresetWallpaper(val, isCustomInput = false) {
       const iframeDoc = getIframeDoc();
       const activeSlide = getActiveSlide(iframeDoc);
@@ -4112,12 +4122,7 @@
       if (activeSlide.style.background === val) return false;
 
       activeSlide.style.background = val;
-      generateThumbnails();
-      saveHistoryState();
-      triggerAutoSave();
-      if (!isCustomInput) {
-        triggerAutoVersion('Auto: Changed Background');
-      }
+      finalizeWallpaperMutation(isCustomInput ? '' : 'Auto: Changed Background');
       return true;
     }
 
@@ -4198,11 +4203,8 @@
         changedCount += 1;
       });
       if (changedCount === 0) return false;
-      
-      generateThumbnails();
-      saveHistoryState();
-      triggerAutoSave();
-      triggerAutoVersion('Auto: Applied Background to All Slides');
+
+      finalizeWallpaperMutation('Auto: Applied Background to All Slides');
       
       alert("Successfully applied active background paint to all slides in the deck.");
       return true;

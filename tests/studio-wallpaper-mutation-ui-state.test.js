@@ -14,6 +14,51 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadFinalizeWallpaperMutation(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function finalizeWallpaperMutation(versionLabel = \'\') {',
+    '\n\n    function applyPresetWallpaper(val, isCustomInput = false) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+test('finalizeWallpaperMutation refreshes thumbnails and persists wallpaper changes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
+
+  const result = context.finalizeWallpaperMutation('Auto: Changed Background');
+  context.finalizeWallpaperMutation('');
+
+  assert.equal(result, 'Auto: Changed Background');
+  assert.deepEqual(calls, [
+    ['generateThumbnails'],
+    ['saveHistoryState'],
+    ['triggerAutoSave'],
+    ['triggerAutoVersion', 'Auto: Changed Background'],
+    ['generateThumbnails'],
+    ['saveHistoryState'],
+    ['triggerAutoSave']
+  ]);
+});
+
 test('applyPresetWallpaper uses the shared iframe accessor and records a version only for non-custom wallpaper updates', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyPresetWallpaperSource = extractFunctionSource(
@@ -53,6 +98,7 @@ test('applyPresetWallpaper uses the shared iframe accessor and records a version
   };
 
   vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
   assert.equal(context.applyPresetWallpaper('linear-gradient(red, blue)'), true);
@@ -111,6 +157,7 @@ test('applyPresetWallpaper exits cleanly when the shared iframe accessor has no 
   };
 
   vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
   assert.equal(context.applyPresetWallpaper('#000000'), false);
@@ -160,6 +207,7 @@ test('applyPresetWallpaper skips persistence when the active slide already has t
   };
 
   vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
   assert.equal(context.applyPresetWallpaper('linear-gradient(red, blue)'), false);
@@ -220,6 +268,7 @@ test('applyWallpaperToAllSlides uses the shared iframe accessor and propagates t
   };
 
   vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
   vm.runInContext(applyWallpaperToAllSlidesSource, context);
 
   assert.equal(context.applyWallpaperToAllSlides(), true);
@@ -282,6 +331,7 @@ test('applyWallpaperToAllSlides exits when the shared iframe accessor has no act
   };
 
   vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
   vm.runInContext(applyWallpaperToAllSlidesSource, context);
 
   assert.equal(context.applyWallpaperToAllSlides(), false);
@@ -343,6 +393,7 @@ test('applyWallpaperToAllSlides skips persistence and alerts when every slide al
   };
 
   vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
   vm.runInContext(applyWallpaperToAllSlidesSource, context);
 
   assert.equal(context.applyWallpaperToAllSlides(), false);
