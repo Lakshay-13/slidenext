@@ -670,6 +670,48 @@
     return parts[parts.length - 1] || cleanUrl || 'asset';
   }
 
+  function inferAssetTypeFromUrl(url, fallbackType = 'file') {
+    const cleanUrl = normalizeString(url).split('?')[0].split('#')[0].toLowerCase();
+    const extension = cleanUrl.includes('.')
+      ? cleanUrl.split('.').pop()
+      : '';
+
+    switch (extension) {
+      case 'png':
+      case 'jpg':
+      case 'jpeg':
+      case 'gif':
+      case 'webp':
+      case 'svg':
+      case 'avif':
+        return 'image';
+      case 'mp4':
+      case 'webm':
+      case 'ogv':
+        return 'video';
+      case 'mp3':
+      case 'wav':
+      case 'ogg':
+      case 'm4a':
+      case 'aac':
+      case 'flac':
+        return 'audio';
+      case 'woff':
+      case 'woff2':
+      case 'ttf':
+      case 'otf':
+      case 'eot':
+        return 'font';
+      case 'css':
+        return 'stylesheet';
+      case 'js':
+      case 'mjs':
+        return 'script';
+      default:
+        return fallbackType;
+    }
+  }
+
   function inferAssetMimeType(seed = {}) {
     const assetType = normalizeString(seed.type).toLowerCase();
     const explicitMimeType = normalizeString(seed.mimeType || seed.typeAttribute).trim().toLowerCase();
@@ -699,6 +741,11 @@
       case 'm4a': return 'audio/mp4';
       case 'aac': return 'audio/aac';
       case 'flac': return 'audio/flac';
+      case 'woff': return 'font/woff';
+      case 'woff2': return 'font/woff2';
+      case 'ttf': return 'font/ttf';
+      case 'otf': return 'font/otf';
+      case 'eot': return 'application/vnd.ms-fontobject';
       case 'css': return 'text/css';
       case 'js':
       case 'mjs': return 'application/javascript';
@@ -722,6 +769,31 @@
       src,
       mimeType: inferAssetMimeType(seed)
     });
+  }
+
+  function appendDeckCssRuleAssets(rule, assetSeeds, seenUrls) {
+    if (!rule) {
+      return;
+    }
+
+    extractCssUrlValues(normalizeString(rule.cssText)).forEach((src) => {
+      appendDeckAsset(assetSeeds, seenUrls, {
+        type: inferAssetTypeFromUrl(src),
+        src
+      });
+    });
+
+    let nestedRules = [];
+    try {
+      nestedRules = Array.isArray(rule.cssRules)
+        ? rule.cssRules
+        : rule.cssRules && typeof rule.cssRules.length === 'number'
+          ? Array.from(rule.cssRules)
+          : [];
+    } catch (err) {
+      nestedRules = [];
+    }
+    nestedRules.forEach((nestedRule) => appendDeckCssRuleAssets(nestedRule, assetSeeds, seenUrls));
   }
 
   function collectDeckAssets(doc) {
@@ -763,6 +835,22 @@
           src
         });
       });
+    });
+
+    const ignoredStyleIds = DEFAULT_IGNORED_THEME_STYLE_IDS;
+    Array.from(doc.styleSheets || []).forEach((styleSheet) => {
+      const ownerNodeId = normalizeString(styleSheet && styleSheet.ownerNode && styleSheet.ownerNode.id);
+      if (ignoredStyleIds.has(ownerNodeId)) {
+        return;
+      }
+
+      let cssRules = [];
+      try {
+        cssRules = Array.from(styleSheet.cssRules || styleSheet.rules || []);
+      } catch (err) {
+        cssRules = [];
+      }
+      cssRules.forEach((rule) => appendDeckCssRuleAssets(rule, assetSeeds, seenUrls));
     });
 
     return assetSeeds;

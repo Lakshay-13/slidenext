@@ -397,6 +397,74 @@ test('collectDeckAssets includes srcset and poster asset urls, skips fragments, 
   ]);
 });
 
+test('collectDeckAssets includes asset urls from accessible stylesheet rules and ignores editor chrome stylesheets', () => {
+  const doc = {
+    querySelectorAll(selector) {
+      if (
+        selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], video[poster]'
+        || selector === 'img[srcset], source[srcset]'
+        || selector === '[style*="url("]'
+      ) {
+        return [];
+      }
+      return [];
+    },
+    styleSheets: [
+      {
+        ownerNode: {
+          id: 'editor-style-tag'
+        },
+        cssRules: [
+          {
+            cssText: '.editor-selected { background-image: url("/chrome.png"); }'
+          }
+        ]
+      },
+      {
+        ownerNode: {
+          id: 'deck-style-tag'
+        },
+        cssRules: [
+          {
+            cssText: '@font-face { font-family: "Deck Sans"; src: url("/fonts/deck-sans.woff2") format("woff2"); }'
+          },
+          {
+            cssRules: [
+              {
+                cssText: '.hero { background-image: url("/images/hero-bg.webp"), url(#noise); }'
+              }
+            ]
+          }
+        ]
+      },
+      {
+        get cssRules() {
+          throw new Error('Cross-origin stylesheet');
+        }
+      }
+    ]
+  };
+
+  const assets = deckImport.collectDeckAssets(doc);
+
+  assert.deepEqual(assets, [
+    {
+      id: 'asset-1',
+      type: 'font',
+      name: 'deck-sans.woff2',
+      src: '/fonts/deck-sans.woff2',
+      mimeType: 'font/woff2'
+    },
+    {
+      id: 'asset-2',
+      type: 'image',
+      name: 'hero-bg.webp',
+      src: '/images/hero-bg.webp',
+      mimeType: 'image/webp'
+    }
+  ]);
+});
+
 test('importHtmlDeckToCanonicalDeck falls back to head metadata for missing description, icon, and tags', () => {
   const deck = deckImport.importHtmlDeckToCanonicalDeck(createMetadataDocument({
     title: 'HTML Deck Title',
