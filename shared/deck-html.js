@@ -14,6 +14,20 @@
     return typeof value === 'string' ? value : fallback;
   }
 
+  function buildCanonicalDeckRenderOptions(renderOptions = {}) {
+    const nextRenderOptions = renderOptions && typeof renderOptions === 'object'
+      ? { ...renderOptions }
+      : {};
+    return {
+      preferSourceHtml: false,
+      preferHeadSourceHtml: false,
+      preferBodySourceHtml: false,
+      preferSlideSourceHtml: false,
+      preferNodeSourceHtml: false,
+      ...nextRenderOptions
+    };
+  }
+
   function buildPresentationBaseHref(presentationUrl, options = {}) {
     if (!presentationUrl) return '';
     const currentLocationHref = normalizeString(
@@ -48,7 +62,7 @@
         : null;
 
     if (!renderDeckHtml) return '';
-    return renderDeckHtml(deckLike, options.renderOptions || {});
+    return renderDeckHtml(deckLike, buildCanonicalDeckRenderOptions(options.renderOptions));
   }
 
   function buildDeckPreviewHtml(deckLike, presentationUrl, options = {}) {
@@ -58,6 +72,7 @@
   }
 
   return {
+    buildCanonicalDeckRenderOptions,
     buildPresentationBaseHref,
     injectBaseHrefIntoHtml,
     buildDeckSourceHtml,
