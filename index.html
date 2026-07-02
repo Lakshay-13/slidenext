@@ -5274,7 +5274,10 @@
         
         // Update selection properties panel if currently selected
         if (SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement(selectedElements, el)) {
-          document.getElementById('elZIndex').value = el.style.zIndex || 0;
+          const zIndexInput = document.getElementById('elZIndex');
+          if (zIndexInput) {
+            zIndexInput.value = el.style.zIndex || 0;
+          }
         }
         
         saveHistoryState();
