@@ -2414,17 +2414,21 @@
           updateWallpaperActionState(nextDoc);
         }
       };
+      const syncSelectionChrome = () => {
+        if (!preserveSelection) {
+          deselectElement();
+          return;
+        }
+        refreshLayersList();
+      };
       const syncToDeckSnapshotFallback = (deckSnapshot) => {
         const slideCount = Array.isArray(deckSnapshot.slides) ? deckSnapshot.slides.length : 0;
         if (slideCount === 0) {
           updateCurrentPresentationSessionState({ slideIndex: 0 });
           updateActiveThumbnailCardState('');
           setSlideCountLabel('0 / 0');
-          refreshLayersList();
           refreshActionStateChrome(doc);
-          if (!preserveSelection) {
-            deselectElement();
-          }
+          syncSelectionChrome();
           preserveSelectionOnNextActiveSlideSync = false;
           return false;
         }
@@ -2436,11 +2440,8 @@
         updateCurrentPresentationSessionState({ slideIndex: activeIndex });
         updateActiveThumbnailCardState(activeSlideId);
         setSlideCountLabel(`${activeIndex + 1} / ${slideCount}`);
-        refreshLayersList();
         refreshActionStateChrome(doc);
-        if (!preserveSelection) {
-          deselectElement();
-        }
+        syncSelectionChrome();
         preserveSelectionOnNextActiveSlideSync = false;
         if (options.captureHistory && activeSlideSnapshot && previousIndex !== currentSlideIndex) {
           saveHistoryState(false);
@@ -2485,8 +2486,8 @@
         didSyncCustomGradientControls
       });
       syncSolidWallpaperControlToActiveSlide(activeSlide);
-      refreshLayersList();
       refreshActionStateChrome(doc);
+      syncSelectionChrome();
       preserveSelectionOnNextActiveSlideSync = false;
       if (options.captureHistory && nextViewState.didSync && previousIndex !== currentSlideIndex) {
         saveHistoryState(false);

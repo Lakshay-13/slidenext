@@ -120,6 +120,7 @@ test('syncStudioChromeToActiveSlide routes active slide index updates through th
     currentSlideIndex: 1,
     deselectElement() {
       calls.push(['deselectElement']);
+      context.updateLayersList();
     },
     document: {
       getElementById(id) {
@@ -194,10 +195,11 @@ test('syncStudioChromeToActiveSlide routes active slide index updates through th
   assert.equal(calls[0][1], iframeDoc);
   assert.equal(calls[1][0], 'updateCurrentPresentationSessionState');
   assert.equal(calls[1][1].slideIndex, 4);
-  assert.equal(calls[2][0], 'updateLayersList');
-  assert.deepEqual(calls[3], ['updateInsertionActionState', iframeDoc]);
-  assert.deepEqual(calls[4], ['updateZoomActionState', iframeDoc]);
-  assert.deepEqual(calls[5], ['updateWallpaperActionState', iframeDoc]);
+  assert.deepEqual(calls[2], ['updateInsertionActionState', iframeDoc]);
+  assert.deepEqual(calls[3], ['updateZoomActionState', iframeDoc]);
+  assert.deepEqual(calls[4], ['updateWallpaperActionState', iframeDoc]);
+  assert.equal(calls[5][0], 'deselectElement');
+  assert.equal(calls[6][0], 'updateLayersList');
 });
 
 test('syncStudioChromeToActiveSlide tolerates a missing slide count label while syncing the live frame', () => {
@@ -903,6 +905,7 @@ test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when 
     currentSlideIndex: 0,
     deselectElement() {
       calls.push(['deselectElement']);
+      context.updateLayersList();
     },
     document: {
       getElementById(id) {
@@ -971,11 +974,11 @@ test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when 
   assert.equal(calls[2][1].slideIndex, 2);
   assert.equal(calls[3][0], 'updateActiveThumbnailCardState');
   assert.equal(calls[3][1], 'slide-3');
-  assert.equal(calls[4][0], 'updateLayersList');
-  assert.deepEqual(calls[5], ['updateInsertionActionState', null]);
-  assert.deepEqual(calls[6], ['updateZoomActionState', null]);
-  assert.deepEqual(calls[7], ['updateWallpaperActionState', null]);
-  assert.equal(calls[8][0], 'deselectElement');
+  assert.deepEqual(calls[4], ['updateInsertionActionState', null]);
+  assert.deepEqual(calls[5], ['updateZoomActionState', null]);
+  assert.deepEqual(calls[6], ['updateWallpaperActionState', null]);
+  assert.equal(calls[7][0], 'deselectElement');
+  assert.equal(calls[8][0], 'updateLayersList');
   assert.equal(calls[9][0], 'saveHistoryState');
   assert.equal(calls[9][1], false);
 });
