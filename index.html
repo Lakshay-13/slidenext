@@ -3452,12 +3452,31 @@
       });
     }
 
+    function buildLayerOrderSelectionActionState(elements = selectedElements, options = {}) {
+      const hasDocOverride = Object.prototype.hasOwnProperty.call(options, 'doc');
+      const resolvedDoc = hasDocOverride ? options.doc : getIframeDoc();
+      const hasSlideOverride = Object.prototype.hasOwnProperty.call(options, 'slide');
+      const resolvedSlide = hasSlideOverride ? options.slide : getActiveSlide(resolvedDoc);
+      const orderedElements = Array.isArray(options.orderedElements)
+        ? options.orderedElements
+        : (resolvedSlide ? getNormalizedSlideLayerOrder(resolvedSlide) : []);
+      const canMutateDeck = typeof options.canMutateDeck === 'function'
+        ? options.canMutateDeck
+        : () => !!resolvedSlide;
+
+      return SlideNextStudioEditorLayerOrder.buildStudioLayerOrderActionState(elements, {
+        orderedElements,
+        isLocked: typeof options.isLocked === 'function' ? options.isLocked : isElementLocked,
+        canMutateDeck
+      });
+    }
+
     function updateLayerOrderActionState(doc = getIframeDoc()) {
       const slide = getActiveSlide(doc);
       const canMutateDeck = () => !!slide;
-      const layerOrderActionState = SlideNextStudioEditorLayerOrder.buildStudioLayerOrderActionState(selectedElements, {
+      const layerOrderActionState = buildLayerOrderSelectionActionState(selectedElements, {
+        slide,
         orderedElements: slide ? getNormalizedSlideLayerOrder(slide) : [],
-        isLocked: isElementLocked,
         canMutateDeck
       });
       const buttonStates = {
@@ -5777,19 +5796,19 @@
         listContainer.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-2">No elements found</p>`;
         return;
       }
-
+      
       listContainer.innerHTML = layers.map(layer => {
         const liveElement = getElementByEditorId(layer.id, iframeDoc);
         const canRunLayerActions = !!liveElement;
-        const layerOrderActionState = liveElement
-          ? SlideNextStudioEditorLayerOrder.buildStudioLayerOrderActionState([liveElement], {
+        const layerOrderActionState = buildLayerOrderSelectionActionState(
+          liveElement ? [liveElement] : [],
+          {
+            doc: iframeDoc,
+            slide: activeSlide,
             orderedElements: orderedLayerElements,
-            isLocked: isElementLocked
-          })
-          : {
-            canBringForward: false,
-            canSendBackward: false
-          };
+            canMutateDeck: () => canRunLayerActions
+          }
+        );
         const activeClass = layer.isSelected 
           ? 'border-[#7028d0] bg-[#7028d0]/10 text-white font-semibold' 
           : 'border-white/5 bg-zinc-950/40 hover:bg-zinc-900/60 text-zinc-300 hover:text-white';

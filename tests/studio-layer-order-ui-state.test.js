@@ -41,6 +41,15 @@ function loadRefreshLayerOrderUi(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadBuildLayerOrderSelectionActionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function buildLayerOrderSelectionActionState(elements = selectedElements, options = {}) {',
+    '\n\n    function updateLayerOrderActionState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function createControls() {
   return {
     arrangeLayerFrontBtn: { disabled: true },
@@ -54,6 +63,58 @@ function createControls() {
 function getDisabledStates(controls) {
   return Object.fromEntries(Object.entries(controls).map(([id, control]) => [id, control.disabled]));
 }
+
+test('buildLayerOrderSelectionActionState reuses the current slide ordering and live deck guard', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selection = [{ id: 'selected' }];
+  const slide = { id: 'slide-1' };
+  const orderedElements = [{ id: 'selected' }, { id: 'other' }];
+  const calls = [];
+  const context = {
+    selectedElements: selection,
+    SlideNextStudioEditorLayerOrder: {
+      buildStudioLayerOrderActionState(elements, options = {}) {
+        calls.push(['buildStudioLayerOrderActionState', elements, options.orderedElements]);
+        return {
+          canBringToFront: typeof options.canMutateDeck === 'function' ? options.canMutateDeck() : true,
+          canSendToBack: false,
+          canBringForward: true,
+          canSendBackward: false
+        };
+      }
+    },
+    getActiveSlide(doc) {
+      calls.push(['getActiveSlide', doc]);
+      return slide;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return { activeSlide: slide };
+    },
+    getNormalizedSlideLayerOrder(currentSlide) {
+      calls.push(['getNormalizedSlideLayerOrder', currentSlide]);
+      return orderedElements;
+    },
+    isElementLocked() {
+      calls.push(['isElementLocked']);
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildLayerOrderSelectionActionState(fileContent, context);
+
+  const actionState = context.buildLayerOrderSelectionActionState();
+
+  assert.equal(actionState.canBringToFront, true);
+  assert.equal(actionState.canBringForward, true);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getActiveSlide', { activeSlide: slide }],
+    ['getNormalizedSlideLayerOrder', slide],
+    ['buildStudioLayerOrderActionState', selection, orderedElements]
+  ]);
+});
 
 test('finalizeLayerOrderMutation refreshes layer chrome before versioning', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
@@ -189,6 +250,7 @@ test('updateLayerOrderActionState enables layer order controls only when the ifr
   };
 
   vm.createContext(context);
+  loadBuildLayerOrderSelectionActionState(fileContent, context);
   vm.runInContext(updateLayerOrderActionStateSource, context);
 
   context.updateLayerOrderActionState(null);

@@ -16,6 +16,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadBuildLayerOrderSelectionActionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function buildLayerOrderSelectionActionState(elements = selectedElements, options = {}) {',
+    '\n\n    function updateLayerOrderActionState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function createListContainer() {
   let html = '';
   return {
@@ -112,6 +121,7 @@ test('updateLayersList disables row layer controls when a layer cannot move in t
   };
 
   vm.createContext(context);
+  loadBuildLayerOrderSelectionActionState(fileContent, context);
   vm.runInContext(updateLayersListSource, context);
 
   context.updateLayersList();
@@ -191,6 +201,7 @@ test('updateLayersList renders canonical layer snapshots when the editor frame i
   };
 
   vm.createContext(context);
+  loadBuildLayerOrderSelectionActionState(fileContent, context);
   vm.runInContext(updateLayersListSource, context);
 
   context.updateLayersList();
