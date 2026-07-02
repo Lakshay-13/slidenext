@@ -2888,7 +2888,10 @@
       document.getElementById('elFontWeight').value = computedStyles.fontWeight;
       document.getElementById('elTextColor').value = rgbToHex(computedStyles.color);
       highlightAlignButton(computedStyles.textAlign || 'left');
-      document.getElementById('elZIndex').value = el.style.zIndex || 0;
+      const zIndexInput = document.getElementById('elZIndex');
+      if (zIndexInput) {
+        zIndexInput.value = el.style.zIndex || 0;
+      }
 
       const opacityVal = Math.round((parseFloat(computedStyles.opacity || '1')) * 100);
       document.getElementById('elOpacity').value = opacityVal;
