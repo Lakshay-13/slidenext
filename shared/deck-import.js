@@ -533,7 +533,10 @@
       || normalizedPropertyName === 'z-index';
   }
 
-  function stripImportedNodeLayoutStyle(styleText = '') {
+  function stripImportedNodeLayoutStyle(styleText = '', layout = {}) {
+    if (normalizeString(layout && layout.mode) !== 'absolute') {
+      return normalizeString(styleText).trim();
+    }
     return filterInlineStyleDeclarations(
       styleText,
       (propertyName) => !isImportedNodeLayoutStyleProperty(propertyName)
@@ -761,31 +764,42 @@
       : null;
     const inlineStyle = el.style || {};
     const position = normalizeString(inlineStyle.position || (computedStyle && computedStyle.position));
+    const isAbsoluteLayout = position === 'absolute' || position === 'fixed';
 
     return {
-      mode: position === 'absolute' || position === 'fixed'
+      mode: isAbsoluteLayout
         ? 'absolute'
         : canonicalDeck.DEFAULT_LAYOUT_MODE,
-      x: firstFiniteNumber([
-        parsePixelValue(inlineStyle.left || ''),
-        parsePixelValue(computedStyle ? computedStyle.left : '')
-      ]),
-      y: firstFiniteNumber([
-        parsePixelValue(inlineStyle.top || ''),
-        parsePixelValue(computedStyle ? computedStyle.top : '')
-      ]),
-      width: firstFiniteNumber([
-        parsePixelValue(inlineStyle.width || ''),
-        parsePixelValue(computedStyle ? computedStyle.width : '')
-      ]),
-      height: firstFiniteNumber([
-        parsePixelValue(inlineStyle.height || ''),
-        parsePixelValue(computedStyle ? computedStyle.height : '')
-      ]),
-      zIndex: firstFiniteNumber([
-        Number.parseInt(inlineStyle.zIndex || '', 10),
-        Number.parseInt(computedStyle ? computedStyle.zIndex : '', 10)
-      ], 0)
+      x: isAbsoluteLayout
+        ? firstFiniteNumber([
+            parsePixelValue(inlineStyle.left || ''),
+            parsePixelValue(computedStyle ? computedStyle.left : '')
+          ])
+        : null,
+      y: isAbsoluteLayout
+        ? firstFiniteNumber([
+            parsePixelValue(inlineStyle.top || ''),
+            parsePixelValue(computedStyle ? computedStyle.top : '')
+          ])
+        : null,
+      width: isAbsoluteLayout
+        ? firstFiniteNumber([
+            parsePixelValue(inlineStyle.width || ''),
+            parsePixelValue(computedStyle ? computedStyle.width : '')
+          ])
+        : null,
+      height: isAbsoluteLayout
+        ? firstFiniteNumber([
+            parsePixelValue(inlineStyle.height || ''),
+            parsePixelValue(computedStyle ? computedStyle.height : '')
+          ])
+        : null,
+      zIndex: isAbsoluteLayout
+        ? firstFiniteNumber([
+            Number.parseInt(inlineStyle.zIndex || '', 10),
+            Number.parseInt(computedStyle ? computedStyle.zIndex : '', 10)
+          ], 0)
+        : 0
     };
   }
 
@@ -810,6 +824,7 @@
     const fallbackNodeId = context.path && context.path.length > 0
       ? `${context.slideId || 'slide'}-node-${context.path.join('-')}`
       : `node-${(context.nodeIndex || 0) + 1}`;
+    const importedLayout = buildImportedLayout(el, win);
     const visibility = buildImportedVisibility(el, win);
     const attributes = stripCanonicalNodeAttributeDuplicates(sanitizeImportedAttributeMap(el, options), visibility);
     const inlineStyleText = normalizeString(el.getAttribute('style'));
@@ -825,8 +840,8 @@
       html: stripCanonicalNodeSourceHtmlDuplicates(buildImportedSourceHtml(el, options), attributes, visibility),
       classes: sanitizeImportedClassNames(el.classList || [], options),
       attributes,
-      style: stripImportedNodeLayoutStyle(inlineStyleText),
-      layout: buildImportedLayout(el, win),
+      style: stripImportedNodeLayoutStyle(inlineStyleText, importedLayout),
+      layout: importedLayout,
       visibility,
       children: childElements.map((child, childIndex) => importElementToCanonicalNode(child, options, {
         slideId: context.slideId,

@@ -1189,6 +1189,36 @@ test('importElementToCanonicalNode strips duplicated layout styles from canonica
   });
 });
 
+test('importElementToCanonicalNode preserves flow sizing styles outside canonical layout metadata', () => {
+  const element = createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['hero-card']),
+    style: {
+      width: '400px',
+      height: '160px'
+    },
+    attributes: {
+      class: 'hero-card',
+      style: 'width: 400px; height: 160px; color: red;',
+      'aria-label': 'Hero copy'
+    },
+    textContent: 'Hero copy',
+    outerHTML: '<div class="hero-card" style="width: 400px; height: 160px; color: red;">Hero copy</div>'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+
+  assert.equal(node.style, 'width: 400px; height: 160px; color: red;');
+  assert.deepEqual(node.layout, {
+    mode: 'flow',
+    x: null,
+    y: null,
+    width: null,
+    height: null,
+    zIndex: 0
+  });
+});
+
 test('importElementToCanonicalNode strips duplicate visibility attrs from stored node html fragments', () => {
   const element = createImportedElement({
     tagName: 'DIV',
