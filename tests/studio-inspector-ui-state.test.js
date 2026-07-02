@@ -1013,3 +1013,151 @@ test('syncInspectorForSelection tolerates missing border inspector controls when
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'elBorderColor'));
   assert.ok(calls.some(([name, value]) => name === 'highlightAlignButton' && value === 'center'));
 });
+
+test('syncInspectorForSelection tolerates missing content and image controls for an image selection', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncInspectorForSelectionSource = extractFunctionSource(
+    fileContent,
+    'function syncInspectorForSelection() {',
+    '\n\n    // Click Selection highlights'
+  );
+
+  const activeElement = {
+    isConnected: true,
+    onActiveSlide: true,
+    tagName: 'IMG',
+    src: 'https://example.com/hero.png',
+    style: { zIndex: '5' },
+    classList: {
+      contains() {
+        return false;
+      }
+    },
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return {
+            fontSize: '18px',
+            fontFamily: "'Geist', sans-serif",
+            fontWeight: '500',
+            color: 'rgb(255, 255, 255)',
+            textAlign: 'left',
+            opacity: '0.65',
+            borderStyle: 'solid',
+            borderWidth: '1px',
+            borderRadius: '6px',
+            borderColor: 'rgb(255, 255, 255)'
+          };
+        }
+      }
+    }
+  };
+
+  const elements = {
+    inspectorTargetLabel: { innerHTML: '' },
+    slideInspectorPanel: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    },
+    elementInspectorPanel: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    },
+    elFontSize: { value: '' },
+    fontSizeVal: { textContent: '' },
+    elFontFamily: {
+      value: '',
+      options: [{ value: "'Geist', sans-serif" }]
+    },
+    elFontWeight: { value: '' },
+    elTextColor: { value: '' },
+    elZIndex: { value: '' },
+    elOpacity: { value: '' },
+    opacityVal: { textContent: '' },
+    inspectorBorderGroup: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    },
+    elBorderStyle: { value: '' },
+    elBorderWidth: { value: '' },
+    borderWidthVal: { textContent: '' },
+    elBorderRadius: { value: '' },
+    borderRadiusVal: { textContent: '' },
+    elBorderColor: { value: '' }
+  };
+
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorLiveSelection: liveSelection,
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (
+          id === 'elTextContent'
+          || id === 'inspectorImageGroup'
+          || id === 'elImageSrc'
+          || id === 'inspectorTextContentGroup'
+        ) {
+          return null;
+        }
+        return elements[id] || null;
+      }
+    },
+    highlightAlignButton(value) {
+      calls.push(['highlightAlignButton', value]);
+    },
+    rgbToHex(value) {
+      calls.push(['rgbToHex', value]);
+      return '#ffffff';
+    },
+    selectedElements: [activeElement],
+    updateClipboardActionState() {
+      calls.push(['updateClipboardActionState']);
+    },
+    updateLayerOrderActionState() {
+      calls.push(['updateLayerOrderActionState']);
+    },
+    updateLockActionState() {
+      calls.push(['updateLockActionState']);
+    },
+    updateMotionActionState() {
+      calls.push(['updateMotionActionState']);
+    },
+    updateRemovalActionState() {
+      calls.push(['updateRemovalActionState']);
+    },
+    updateStyleActionState() {
+      calls.push(['updateStyleActionState']);
+    },
+    updateVisibilityActionState() {
+      calls.push(['updateVisibilityActionState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncInspectorForSelectionSource, context);
+
+  assert.doesNotThrow(() => context.syncInspectorForSelection());
+  assert.equal(elements.elFontWeight.value, '500');
+  assert.equal(elements.elTextColor.value, '#ffffff');
+  assert.equal(elements.elZIndex.value, '5');
+  assert.equal(elements.elOpacity.value, 65);
+  assert.equal(elements.opacityVal.textContent, '65%');
+  assert.equal(elements.elBorderStyle.value, 'solid');
+  assert.equal(elements.elBorderWidth.value, 1);
+  assert.equal(elements.borderWidthVal.textContent, '1px');
+  assert.equal(elements.elBorderRadius.value, 6);
+  assert.equal(elements.borderRadiusVal.textContent, '6px');
+  assert.equal(elements.elBorderColor.value, '#ffffff');
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'elTextContent'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'inspectorImageGroup'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'elImageSrc'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'inspectorTextContentGroup'));
+  assert.ok(calls.some(([name, value]) => name === 'highlightAlignButton' && value === 'left'));
+});

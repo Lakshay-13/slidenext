@@ -2859,15 +2859,32 @@
       document.getElementById('elementInspectorPanel').classList.remove('hidden');
 
       const textVal = el.innerText || el.textContent || '';
-      document.getElementById('elTextContent').value = textVal;
+      const textContentInput = document.getElementById('elTextContent');
+      if (textContentInput) {
+        textContentInput.value = textVal;
+      }
+
+      const imageGroup = document.getElementById('inspectorImageGroup');
+      const imageSrcInput = document.getElementById('elImageSrc');
+      const textContentGroup = document.getElementById('inspectorTextContentGroup');
 
       if (!isMulti && el.tagName.toLowerCase() === 'img') {
-        document.getElementById('inspectorImageGroup').classList.remove('hidden');
-        document.getElementById('elImageSrc').value = el.src || '';
-        document.getElementById('inspectorTextContentGroup').classList.add('hidden');
+        if (imageGroup) {
+          imageGroup.classList.remove('hidden');
+        }
+        if (imageSrcInput) {
+          imageSrcInput.value = el.src || '';
+        }
+        if (textContentGroup) {
+          textContentGroup.classList.add('hidden');
+        }
       } else {
-        document.getElementById('inspectorImageGroup').classList.add('hidden');
-        document.getElementById('inspectorTextContentGroup').classList.toggle('hidden', isMulti);
+        if (imageGroup) {
+          imageGroup.classList.add('hidden');
+        }
+        if (textContentGroup) {
+          textContentGroup.classList.toggle('hidden', isMulti);
+        }
       }
 
       const computedStyles = el.ownerDocument.defaultView.getComputedStyle(el);
