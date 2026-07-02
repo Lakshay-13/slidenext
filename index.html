@@ -4716,7 +4716,7 @@
     }
 
     function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {
-      return SlideNextStudioHistory.buildStudioHistoryFrameHtml(doc, getEditorHistoryOptions())
+      return SlideNextStudioHistory.buildStudioHistoryFrameHtml(doc, getEditorHistoryOptions(options))
         || (doc
           ? buildPersistableDeckHtml(doc, {
               canonicalDeck: options.canonicalDeck

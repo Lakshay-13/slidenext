@@ -405,6 +405,67 @@ test('buildHistoryFrameHtml reuses shared deck source sanitization for history s
   );
 });
 
+test('buildHistoryFrameHtml forwards sanitizer overrides into getEditorHistoryOptions', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildHistoryFrameHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function createHistoryEntry(doc) {'
+  );
+
+  const doc = { label: 'iframe-doc' };
+  const calls = [];
+  const sanitizer = () => {};
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const context = {
+    SlideNextStudioHistory: {
+      buildStudioHistoryFrameHtml(nextDoc, options) {
+        calls.push(['buildStudioHistoryFrameHtml', nextDoc, options]);
+        return '<section>history</section>';
+      }
+    },
+    getEditorHistoryOptions(options = {}) {
+      calls.push(['getEditorHistoryOptions', options]);
+      return {
+        chromeNodeIds: options.chromeNodeIds || [],
+        sanitizeFrameRoot: options.sanitizeFrameRoot || null
+      };
+    },
+    buildPersistableDeckHtml() {
+      throw new Error('buildPersistableDeckHtml should not run when history html serialization succeeds');
+    },
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildHistoryFrameHtmlSource, context);
+
+  const html = context.buildHistoryFrameHtml(doc, {
+    chromeNodeIds: ['editorHistoryOverlay'],
+    sanitizeFrameRoot: sanitizer,
+    canonicalDeck
+  });
+
+  assert.equal(html, '<section>history</section>');
+  assert.deepEqual(calls, [
+    ['getEditorHistoryOptions', {
+      chromeNodeIds: ['editorHistoryOverlay'],
+      sanitizeFrameRoot: sanitizer,
+      canonicalDeck
+    }],
+    ['buildStudioHistoryFrameHtml', doc, {
+      chromeNodeIds: ['editorHistoryOverlay'],
+      sanitizeFrameRoot: sanitizer
+    }]
+  ]);
+});
+
 test('buildHistoryFrameHtml strips editor style tags when the shared deck source sanitizer is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
