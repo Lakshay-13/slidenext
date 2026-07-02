@@ -38,6 +38,15 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
   vm.runInContext(helperSource, context);
 }
 
+function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistedCanonicalDeck(',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadApplyCurrentStudioPersistenceSuccess(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -293,6 +302,7 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
   };
 
   vm.createContext(context);
+  loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
@@ -402,6 +412,7 @@ test('saveVersionCheckpoint clears the persisted playback baseline after a succe
   };
 
   vm.createContext(context);
+  loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
@@ -537,6 +548,7 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
   };
 
   vm.createContext(context);
+  loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(getPersistedActiveSlideIdSource, context);
@@ -645,6 +657,7 @@ test('saveVersionCheckpoint preserves the persisted playback baseline when no li
   };
 
   vm.createContext(context);
+  loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
@@ -753,6 +766,7 @@ test('saveVersionCheckpoint keeps save rewrites enabled when canonical state cha
   };
 
   vm.createContext(context);
+  loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);

@@ -2563,7 +2563,13 @@
 
       const storedCanonicalDeck = resolveEditorStoredCanonicalDeck(currentPresentationMetadata);
       if (storedCanonicalDeck) {
-        updateEditorPersistedDeckState({ canonicalDeck: storedCanonicalDeck });
+        applyCurrentStudioPersistedCanonicalDeck(
+          storedCanonicalDeck,
+          typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '',
+          {
+            syncPresentationMetadata: false
+          }
+        );
         const iframeDoc = getIframeDoc();
         if (!iframeDoc) {
           generateThumbnails();
@@ -2606,6 +2612,19 @@
           canonicalDeck: persistedCanonicalDeck
         }
       );
+    }
+
+    function applyCurrentStudioPersistedCanonicalDeck(
+      canonicalDeck,
+      presentationUrl = typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '',
+      options = {}
+    ) {
+      updateEditorPersistedDeckState({ canonicalDeck });
+      if (options.syncPresentationMetadata === false) {
+        return canonicalDeck;
+      }
+      setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl);
+      return canonicalDeck;
     }
 
     function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
@@ -4669,8 +4688,7 @@
           updateEditorPersistedDeckState({ cleanHtml: nextHtml });
         },
         setPersistedCanonicalDeck: (nextCanonicalDeck) => {
-          updateEditorPersistedDeckState({ canonicalDeck: nextCanonicalDeck });
-          setCurrentPresentationCanonicalDeck(nextCanonicalDeck, persistencePresentationUrl);
+          applyCurrentStudioPersistedCanonicalDeck(nextCanonicalDeck, persistencePresentationUrl);
         },
         setPersistedPlaybackState: (nextPlaybackState) => {
           updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
