@@ -2877,11 +2877,13 @@
 
       const fFamily = computedStyles.fontFamily.replace(/['"]/g, '');
       const familySelect = document.getElementById('elFontFamily');
-      familySelect.value = "'Geist', sans-serif";
-      for (let opt of familySelect.options) {
-        if (opt.value.replace(/['"]/g, '').includes(fFamily)) {
-          familySelect.value = opt.value;
-          break;
+      if (familySelect) {
+        familySelect.value = "'Geist', sans-serif";
+        for (let opt of familySelect.options) {
+          if (opt.value.replace(/['"]/g, '').includes(fFamily)) {
+            familySelect.value = opt.value;
+            break;
+          }
         }
       }
 
