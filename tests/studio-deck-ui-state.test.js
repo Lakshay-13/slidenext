@@ -44,6 +44,9 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     inspectorTargetLabel: { innerHTML: '<span>Editing div</span>' },
     slideInspectorPanel: { classList: createClassList(['hidden']) },
     elementInspectorPanel: { classList: createClassList([]) },
+    inspectorTextContentGroup: { classList: createClassList(['hidden']) },
+    inspectorImageGroup: { classList: createClassList([]) },
+    inspectorBorderGroup: { classList: createClassList([]) },
     toggleLockSelectionIcon: { textContent: 'lock_open' },
     toggleLockSelectionLabel: { textContent: 'Unlock Selected' },
     toggleVisibilitySelectionIcon: { textContent: 'visibility' },
@@ -103,22 +106,26 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     arrangeLayerBackBtn: { disabled: false },
     arrangeLayerForwardBtn: { disabled: false },
     arrangeLayerBackwardBtn: { disabled: false },
-    elZIndex: { disabled: false },
-    elTextContent: { disabled: false },
-    elImageSrc: { disabled: false },
-    elFontSize: { disabled: false },
-    elFontFamily: { disabled: false },
-    elFontWeight: { disabled: false },
+    elZIndex: { disabled: false, value: '9' },
+    elTextContent: { disabled: false, value: 'Stale copy' },
+    elImageSrc: { disabled: false, value: 'https://example.com/stale.png' },
+    elFontSize: { disabled: false, value: '42' },
+    fontSizeVal: { textContent: '42px' },
+    elFontFamily: { disabled: false, value: 'Georgia, serif' },
+    elFontWeight: { disabled: false, value: '700' },
     alignLeftBtn: { disabled: false },
     alignCenterBtn: { disabled: false },
     alignRightBtn: { disabled: false },
     alignJustifyBtn: { disabled: false },
-    elTextColor: { disabled: false },
-    elOpacity: { disabled: false },
-    elBorderStyle: { disabled: false },
-    elBorderWidth: { disabled: false },
-    elBorderRadius: { disabled: false },
-    elBorderColor: { disabled: false }
+    elTextColor: { disabled: false, value: '#123456' },
+    elOpacity: { disabled: false, value: '27' },
+    opacityVal: { textContent: '27%' },
+    elBorderStyle: { disabled: false, value: 'dashed' },
+    elBorderWidth: { disabled: false, value: '7' },
+    borderWidthVal: { textContent: '7px' },
+    elBorderRadius: { disabled: false, value: '13' },
+    borderRadiusVal: { textContent: '13px' },
+    elBorderColor: { disabled: false, value: '#abcdef' }
   };
 
   const documentStub = {
@@ -143,10 +150,29 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
   assert.match(elements.inspectorTargetLabel.innerHTML, /No selection active/);
   assert.equal(elements.slideInspectorPanel.classList.contains('hidden'), false);
   assert.equal(elements.elementInspectorPanel.classList.contains('hidden'), true);
+  assert.equal(elements.inspectorTextContentGroup.classList.contains('hidden'), false);
+  assert.equal(elements.inspectorImageGroup.classList.contains('hidden'), true);
+  assert.equal(elements.inspectorBorderGroup.classList.contains('hidden'), true);
   assert.equal(elements.toggleLockSelectionIcon.textContent, 'lock');
   assert.equal(elements.toggleLockSelectionLabel.textContent, 'Lock Selected');
   assert.equal(elements.toggleVisibilitySelectionIcon.textContent, 'visibility_off');
   assert.equal(elements.toggleVisibilitySelectionLabel.textContent, 'Hide Selected');
+  assert.equal(elements.elTextContent.value, '');
+  assert.equal(elements.elImageSrc.value, '');
+  assert.equal(elements.elFontSize.value, '16');
+  assert.equal(elements.fontSizeVal.textContent, '16px');
+  assert.equal(elements.elFontFamily.value, "'Geist', sans-serif");
+  assert.equal(elements.elFontWeight.value, '400');
+  assert.equal(elements.elTextColor.value, '#ffffff');
+  assert.equal(elements.elZIndex.value, '0');
+  assert.equal(elements.elOpacity.value, '100');
+  assert.equal(elements.opacityVal.textContent, '100%');
+  assert.equal(elements.elBorderStyle.value, 'none');
+  assert.equal(elements.elBorderWidth.value, '0');
+  assert.equal(elements.borderWidthVal.textContent, '0px');
+  assert.equal(elements.elBorderRadius.value, '0');
+  assert.equal(elements.borderRadiusVal.textContent, '0px');
+  assert.equal(elements.elBorderColor.value, '#ffffff');
   [
     'launchPreviewBtn',
     'studioSaveBtn',

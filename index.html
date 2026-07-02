@@ -5171,6 +5171,21 @@
         elementInspectorPanel.classList.add('hidden');
       }
 
+      const textContentGroup = document.getElementById('inspectorTextContentGroup');
+      if (textContentGroup) {
+        textContentGroup.classList.remove('hidden');
+      }
+
+      const imageGroup = document.getElementById('inspectorImageGroup');
+      if (imageGroup) {
+        imageGroup.classList.add('hidden');
+      }
+
+      const borderGroup = document.getElementById('inspectorBorderGroup');
+      if (borderGroup) {
+        borderGroup.classList.add('hidden');
+      }
+
       const lockIcon = document.getElementById('toggleLockSelectionIcon');
       if (lockIcon) {
         lockIcon.textContent = 'lock';
@@ -5189,6 +5204,86 @@
       const visibilityLabel = document.getElementById('toggleVisibilitySelectionLabel');
       if (visibilityLabel) {
         visibilityLabel.textContent = 'Hide Selected';
+      }
+
+      const textContentInput = document.getElementById('elTextContent');
+      if (textContentInput) {
+        textContentInput.value = '';
+      }
+
+      const imageSrcInput = document.getElementById('elImageSrc');
+      if (imageSrcInput) {
+        imageSrcInput.value = '';
+      }
+
+      const fontSizeInput = document.getElementById('elFontSize');
+      if (fontSizeInput) {
+        fontSizeInput.value = '16';
+      }
+
+      const fontSizeLabel = document.getElementById('fontSizeVal');
+      if (fontSizeLabel) {
+        fontSizeLabel.textContent = '16px';
+      }
+
+      const fontFamilyInput = document.getElementById('elFontFamily');
+      if (fontFamilyInput) {
+        fontFamilyInput.value = "'Geist', sans-serif";
+      }
+
+      const fontWeightInput = document.getElementById('elFontWeight');
+      if (fontWeightInput) {
+        fontWeightInput.value = '400';
+      }
+
+      const textColorInput = document.getElementById('elTextColor');
+      if (textColorInput) {
+        textColorInput.value = '#ffffff';
+      }
+
+      const zIndexInput = document.getElementById('elZIndex');
+      if (zIndexInput) {
+        zIndexInput.value = '0';
+      }
+
+      const opacityInput = document.getElementById('elOpacity');
+      if (opacityInput) {
+        opacityInput.value = '100';
+      }
+
+      const opacityLabel = document.getElementById('opacityVal');
+      if (opacityLabel) {
+        opacityLabel.textContent = '100%';
+      }
+
+      const borderStyleInput = document.getElementById('elBorderStyle');
+      if (borderStyleInput) {
+        borderStyleInput.value = 'none';
+      }
+
+      const borderWidthInput = document.getElementById('elBorderWidth');
+      if (borderWidthInput) {
+        borderWidthInput.value = '0';
+      }
+
+      const borderWidthLabel = document.getElementById('borderWidthVal');
+      if (borderWidthLabel) {
+        borderWidthLabel.textContent = '0px';
+      }
+
+      const borderRadiusInput = document.getElementById('elBorderRadius');
+      if (borderRadiusInput) {
+        borderRadiusInput.value = '0';
+      }
+
+      const borderRadiusLabel = document.getElementById('borderRadiusVal');
+      if (borderRadiusLabel) {
+        borderRadiusLabel.textContent = '0px';
+      }
+
+      const borderColorInput = document.getElementById('elBorderColor');
+      if (borderColorInput) {
+        borderColorInput.value = '#ffffff';
       }
 
       [
