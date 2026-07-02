@@ -307,3 +307,144 @@ test('syncInspectorForSelection tolerates a missing font-family select when a li
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'elFontFamily'));
   assert.ok(calls.some(([name, value]) => name === 'highlightAlignButton' && value === 'left'));
 });
+
+test('syncInspectorForSelection tolerates a missing text-color input when a live selection is active', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncInspectorForSelectionSource = extractFunctionSource(
+    fileContent,
+    'function syncInspectorForSelection() {',
+    '\n\n    // Click Selection highlights'
+  );
+
+  const activeElement = {
+    isConnected: true,
+    onActiveSlide: true,
+    tagName: 'P',
+    innerText: 'Caption',
+    textContent: 'Caption',
+    style: { zIndex: '2' },
+    classList: {
+      contains() {
+        return false;
+      }
+    },
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return {
+            fontSize: '16px',
+            fontFamily: "'Geist', sans-serif",
+            fontWeight: '500',
+            color: 'rgb(188, 201, 198)',
+            textAlign: 'right',
+            opacity: '0.9',
+            borderStyle: 'none',
+            borderWidth: '0px',
+            borderRadius: '0px',
+            borderColor: 'rgb(255, 255, 255)'
+          };
+        }
+      }
+    }
+  };
+
+  const elements = {
+    inspectorTargetLabel: { innerHTML: '' },
+    slideInspectorPanel: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    },
+    elementInspectorPanel: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    },
+    elTextContent: { value: '' },
+    inspectorImageGroup: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    },
+    elImageSrc: { value: '' },
+    inspectorTextContentGroup: {
+      classList: {
+        add() {},
+        remove() {},
+        toggle() {}
+      }
+    },
+    elFontSize: { value: '' },
+    fontSizeVal: { textContent: '' },
+    elFontFamily: {
+      value: '',
+      options: [{ value: "'Geist', sans-serif" }]
+    },
+    elFontWeight: { value: '' },
+    elZIndex: { value: '' },
+    elOpacity: { value: '' },
+    opacityVal: { textContent: '' },
+    inspectorBorderGroup: {
+      classList: {
+        add() {},
+        remove() {}
+      }
+    }
+  };
+
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorLiveSelection: liveSelection,
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (id === 'elTextColor') return null;
+        return elements[id] || null;
+      }
+    },
+    highlightAlignButton(value) {
+      calls.push(['highlightAlignButton', value]);
+    },
+    rgbToHex(value) {
+      calls.push(['rgbToHex', value]);
+      return '#bcc9c6';
+    },
+    selectedElements: [activeElement],
+    updateClipboardActionState() {
+      calls.push(['updateClipboardActionState']);
+    },
+    updateLayerOrderActionState() {
+      calls.push(['updateLayerOrderActionState']);
+    },
+    updateLockActionState() {
+      calls.push(['updateLockActionState']);
+    },
+    updateMotionActionState() {
+      calls.push(['updateMotionActionState']);
+    },
+    updateRemovalActionState() {
+      calls.push(['updateRemovalActionState']);
+    },
+    updateStyleActionState() {
+      calls.push(['updateStyleActionState']);
+    },
+    updateVisibilityActionState() {
+      calls.push(['updateVisibilityActionState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncInspectorForSelectionSource, context);
+
+  assert.doesNotThrow(() => context.syncInspectorForSelection());
+  assert.equal(elements.elTextContent.value, 'Caption');
+  assert.equal(elements.elFontWeight.value, '500');
+  assert.equal(elements.elZIndex.value, '2');
+  assert.equal(elements.elOpacity.value, 90);
+  assert.equal(elements.opacityVal.textContent, '90%');
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'elTextColor'));
+  assert.ok(calls.some(([name, value]) => name === 'highlightAlignButton' && value === 'right'));
+});

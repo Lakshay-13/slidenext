@@ -2888,7 +2888,10 @@
       }
 
       document.getElementById('elFontWeight').value = computedStyles.fontWeight;
-      document.getElementById('elTextColor').value = rgbToHex(computedStyles.color);
+      const textColorInput = document.getElementById('elTextColor');
+      if (textColorInput) {
+        textColorInput.value = rgbToHex(computedStyles.color);
+      }
       highlightAlignButton(computedStyles.textAlign || 'left');
       const zIndexInput = document.getElementById('elZIndex');
       if (zIndexInput) {
