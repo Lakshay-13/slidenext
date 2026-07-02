@@ -352,3 +352,40 @@ test('applyWallpaperToAllSlides skips persistence and alerts when every slide al
     ['getSlides', iframeDoc]
   ]);
 });
+
+test('applyCustomGradient exits cleanly when the custom gradient controls are unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyCustomGradientSource = extractFunctionSource(
+    fileContent,
+    'function applyCustomGradient() {',
+    '\n\n    function applyWallpaperToAllSlides() {'
+  );
+
+  const calls = [];
+  const context = {
+    applyPresetWallpaper() {
+      calls.push(['applyPresetWallpaper']);
+      return true;
+    },
+    customGradientType: 'linear',
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (id === 'cgColor1' || id === 'cgColor2' || id === 'cgAngle') {
+          return null;
+        }
+        return null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyCustomGradientSource, context);
+
+  assert.equal(context.applyCustomGradient(), false);
+  assert.deepEqual(calls, [
+    ['getElementById', 'cgColor1'],
+    ['getElementById', 'cgColor2'],
+    ['getElementById', 'cgAngle']
+  ]);
+});
