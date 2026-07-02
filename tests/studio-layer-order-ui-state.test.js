@@ -293,6 +293,7 @@ test('arrangeElementLayer returns true and tolerates a missing z-index input whe
     ['saveHistoryState'],
     ['triggerAutoSave'],
     ['updateLayersList'],
+    ['updateLayerOrderActionState'],
     ['triggerAutoVersion', 'Auto: Rearranged Layers']
   ]);
 });
