@@ -4332,9 +4332,11 @@
 
     function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {
       return SlideNextStudioHistory.buildStudioHistoryFrameHtml(doc, getEditorHistoryOptions())
-        || buildPersistableDeckHtml(doc, {
-          canonicalDeck: options.canonicalDeck
-        });
+        || (doc
+          ? buildPersistableDeckHtml(doc, {
+              canonicalDeck: options.canonicalDeck
+            })
+          : '');
     }
 
     function createHistoryEntry(doc) {

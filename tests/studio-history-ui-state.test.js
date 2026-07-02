@@ -130,7 +130,7 @@ test('createHistoryEntry attaches the current canonical deck sidecar and live ed
   });
 });
 
-test('createHistoryEntry falls back to persisted baseline state when the editor frame is unavailable', () => {
+test('createHistoryEntry captures a model-only history entry when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
     fileContent,
@@ -183,9 +183,8 @@ test('createHistoryEntry falls back to persisted baseline state when the editor 
       calls.push(['buildEditorCanonicalDeck', doc]);
       return canonicalDeck;
     },
-    buildPersistableDeckHtml(doc, options = {}) {
-      calls.push(['buildPersistableDeckHtml', doc, options]);
-      return '<html>persisted-baseline</html>';
+    buildPersistableDeckHtml() {
+      throw new Error('buildPersistableDeckHtml should not run without a live editor frame');
     },
     currentSlideIndex: 1,
     getPersistedActiveSlideId() {
@@ -219,17 +218,14 @@ test('createHistoryEntry falls back to persisted baseline state when the editor 
     'getPersistedActiveSlideId',
     'createStudioHistoryEntry',
     'getEditorHistoryOptions',
-    'buildStudioHistoryFrameHtml',
-    'buildPersistableDeckHtml'
+    'buildStudioHistoryFrameHtml'
   ]);
   assert.equal(calls[1][1], null);
   assert.equal(calls[4][1], null);
   assert.equal(calls[4][2].activeSlideId, 'slide-2');
   assert.equal(Array.isArray(calls[4][2].selectedElementIds), true);
   assert.equal(calls[4][2].selectedElementIds.length, 0);
-  assert.equal(calls[7][1], null);
-  assert.equal(calls[7][2].canonicalDeck, canonicalDeck);
-  assert.equal(entry.html, '<html>persisted-baseline</html>');
+  assert.equal(entry.html, '');
   assert.equal(entry.activeSlideId, 'slide-2');
   assert.equal(Array.isArray(entry.selectedElementIds), true);
   assert.equal(entry.selectedElementIds.length, 0);
