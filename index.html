@@ -3372,11 +3372,15 @@
       if (lockLabel) lockLabel.textContent = lockActionState.allLocked ? 'Unlock Selected' : 'Lock Selected';
     }
 
-    function updateRemovalActionState(doc = getIframeDoc()) {
-      const removalActionState = SlideNextStudioEditorRemoval.buildStudioRemovalActionState(selectedElements, {
+    function buildRemovalSelectionActionState(doc = null) {
+      return SlideNextStudioEditorRemoval.buildStudioRemovalActionState(selectedElements, {
         isLocked: isElementLocked,
-        canMutateDeck: () => !!getActiveSlide(doc)
+        canMutateDeck: () => !!getActiveSlide(doc || getIframeDoc())
       });
+    }
+
+    function updateRemovalActionState(doc = getIframeDoc()) {
+      const removalActionState = buildRemovalSelectionActionState(doc);
       const removeBtn = document.getElementById('removeSelectionBtn');
       if (removeBtn) removeBtn.disabled = !removalActionState.canRemove;
     }
@@ -3609,10 +3613,7 @@
     // Delete active selection
     function removeSelectedElement() {
       const doc = getIframeDoc();
-      const removalActionState = SlideNextStudioEditorRemoval.buildStudioRemovalActionState(selectedElements, {
-        isLocked: isElementLocked,
-        canMutateDeck: () => !!getActiveSlide(doc)
-      });
+      const removalActionState = buildRemovalSelectionActionState(doc);
       if (!removalActionState.canRemove) {
         updateRemovalActionState(doc);
         return false;

@@ -14,6 +14,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadBuildRemovalSelectionActionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function buildRemovalSelectionActionState(doc = null) {',
+    '\n\n    function updateRemovalActionState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadFinalizeEditorDeckMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -22,6 +31,50 @@ function loadFinalizeEditorDeckMutation(fileContent, context) {
   );
   vm.runInContext(helperSource, context);
 }
+
+test('buildRemovalSelectionActionState reuses the current selection and live slide guard', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selection = [{ id: 'selected' }];
+  const doc = { activeSlide: { id: 'slide-1' } };
+  const calls = [];
+  const context = {
+    selectedElements: selection,
+    SlideNextStudioEditorRemoval: {
+      buildStudioRemovalActionState(elements, options = {}) {
+        calls.push(['buildStudioRemovalActionState', elements]);
+        return {
+          canRemove: typeof options.canMutateDeck === 'function' ? options.canMutateDeck() : true,
+          selection: elements
+        };
+      }
+    },
+    getActiveSlide(currentDoc) {
+      calls.push(['getActiveSlide', currentDoc]);
+      return currentDoc && currentDoc.activeSlide ? currentDoc.activeSlide : null;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return doc;
+    },
+    isElementLocked() {
+      calls.push(['isElementLocked']);
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildRemovalSelectionActionState(fileContent, context);
+
+  assert.deepEqual(context.buildRemovalSelectionActionState(), {
+    canRemove: true,
+    selection
+  });
+  assert.deepEqual(calls, [
+    ['buildStudioRemovalActionState', selection],
+    ['getIframeDoc'],
+    ['getActiveSlide', doc]
+  ]);
+});
 
 test('updateRemovalActionState enables the delete control only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
@@ -58,6 +111,7 @@ test('updateRemovalActionState enables the delete control only when the iframe h
   };
 
   vm.createContext(context);
+  loadBuildRemovalSelectionActionState(fileContent, context);
   vm.runInContext(updateRemovalActionStateSource, context);
 
   context.updateRemovalActionState(null);
@@ -138,6 +192,7 @@ test('removeSelectedElement returns false and skips persistence when planned tar
   };
 
   vm.createContext(context);
+  loadBuildRemovalSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 
@@ -188,6 +243,7 @@ test('removeSelectedElement returns false and refreshes removal controls when de
   };
 
   vm.createContext(context);
+  loadBuildRemovalSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 
@@ -263,6 +319,7 @@ test('removeSelectedElement returns true after removing live targets and persist
   };
 
   vm.createContext(context);
+  loadBuildRemovalSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 
