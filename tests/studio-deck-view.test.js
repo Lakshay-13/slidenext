@@ -3,6 +3,63 @@ const assert = require('node:assert/strict');
 
 const deckView = require('../shared/studio-deck-view.js');
 
+test('createStudioCanonicalDeckResolver caches the first canonical deck build for a view session', () => {
+  const doc = { label: 'iframe-doc' };
+  const calls = [];
+  const resolveCanonicalDeck = deckView.createStudioCanonicalDeckResolver(doc, {
+    buildCanonicalDeck(nextDoc) {
+      calls.push(nextDoc);
+      return { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+    }
+  });
+
+  const firstDeck = resolveCanonicalDeck();
+  const secondDeck = resolveCanonicalDeck({ label: 'ignored-doc' });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0], doc);
+  assert.equal(firstDeck, secondDeck);
+});
+
+test('resolveStudioCanonicalDeckViewState eagerly resolves the canonical deck only when no live active slide is available', () => {
+  const doc = { label: 'iframe-doc' };
+  let resolveCanonicalDeckCalls = 0;
+
+  const withLiveSlide = deckView.resolveStudioCanonicalDeckViewState(doc, {
+    resolveCanonicalDeck() {
+      resolveCanonicalDeckCalls += 1;
+      return { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+    },
+    resolveLiveActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, doc);
+      return 'slide-live';
+    }
+  });
+
+  assert.equal(withLiveSlide.liveActiveSlideId, 'slide-live');
+  assert.equal(withLiveSlide.resolvedCanonicalDeck, null);
+  assert.equal(resolveCanonicalDeckCalls, 0);
+
+  const withoutLiveSlide = deckView.resolveStudioCanonicalDeckViewState(doc, {
+    resolveCanonicalDeck() {
+      resolveCanonicalDeckCalls += 1;
+      return { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+    },
+    resolveLiveActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, doc);
+      return '';
+    }
+  });
+
+  assert.equal(withoutLiveSlide.liveActiveSlideId, '');
+  assert.deepEqual(withoutLiveSlide.resolvedCanonicalDeck, {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  });
+  assert.equal(resolveCanonicalDeckCalls, 1);
+});
+
 test('resolveStudioFallbackActiveSlideId prefers the live active slide id before fallback canonical resolution', () => {
   const calls = [];
 

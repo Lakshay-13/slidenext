@@ -17,6 +17,43 @@
     return !!deck && Array.isArray(deck.slides);
   }
 
+  function createStudioCanonicalDeckResolver(doc, options = {}) {
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : () => null;
+    let didResolveCanonicalDeck = false;
+    let resolvedCanonicalDeck = null;
+
+    return function resolveCanonicalDeck(sourceDoc = doc) {
+      if (!didResolveCanonicalDeck) {
+        resolvedCanonicalDeck = buildCanonicalDeck(sourceDoc);
+        didResolveCanonicalDeck = true;
+      }
+      return resolvedCanonicalDeck;
+    };
+  }
+
+  function resolveStudioCanonicalDeckViewState(doc, options = {}) {
+    const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
+      ? options.resolveCanonicalDeck
+      : createStudioCanonicalDeckResolver(doc, {
+          buildCanonicalDeck: options.buildCanonicalDeck
+        });
+    const resolveLiveActiveSlideId = typeof options.resolveLiveActiveSlideId === 'function'
+      ? options.resolveLiveActiveSlideId
+      : () => '';
+    const liveActiveSlideId = resolveLiveActiveSlideId(doc);
+    const resolvedCanonicalDeck = !doc
+      ? resolveCanonicalDeck(doc)
+      : (liveActiveSlideId ? null : resolveCanonicalDeck(doc));
+
+    return {
+      resolveCanonicalDeck,
+      liveActiveSlideId,
+      resolvedCanonicalDeck
+    };
+  }
+
   function resolveStudioFallbackActiveSlideId(doc, canonicalDeck = null, options = {}) {
     const getPersistedActiveSlideId = typeof options.getPersistedActiveSlideId === 'function'
       ? options.getPersistedActiveSlideId
@@ -570,6 +607,8 @@
     restoreStudioDeckViewAfterSlideMutation,
     updateStudioDeckNavigationUi,
     isCanonicalDeckLike,
+    createStudioCanonicalDeckResolver,
+    resolveStudioCanonicalDeckViewState,
     resolveStudioFallbackActiveSlideId,
     buildStudioPreviewHtml,
     buildStudioSourceHtml

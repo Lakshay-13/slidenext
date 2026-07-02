@@ -467,6 +467,64 @@ test('resolveEditorFallbackActiveSlideId delegates to the shared deck view helpe
   assert.equal(delegatedArgs.options.isCanonicalDeck, context.SlideNextCanonicalDeck.isCanonicalDeck);
 });
 
+test('resolveEditorCanonicalDeckViewState delegates resolver orchestration to the shared deck view helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
+    fileContent,
+    'function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  let delegatedArgs = null;
+  let buildEditorCanonicalDeckCalls = 0;
+  const context = {
+    SlideNextStudioDeckView: {
+      createStudioCanonicalDeckResolver(doc, options) {
+        return function resolveCanonicalDeck(nextDoc = doc) {
+          return options.buildCanonicalDeck(nextDoc);
+        };
+      },
+      resolveStudioCanonicalDeckViewState(doc, options) {
+        delegatedArgs = { doc, options };
+        return {
+          resolveCanonicalDeck: options.resolveCanonicalDeck,
+          liveActiveSlideId: 'slide-live',
+          resolvedCanonicalDeck: null
+        };
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      buildEditorCanonicalDeckCalls += 1;
+      assert.equal(nextDoc, iframeDoc);
+      return { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    resolveEditorLiveActiveSlideId() {
+      return '';
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorCanonicalDeckViewStateSource, context);
+
+  const result = context.resolveEditorCanonicalDeckViewState(iframeDoc);
+
+  assert.equal(result.liveActiveSlideId, 'slide-live');
+  assert.equal(result.resolvedCanonicalDeck, null);
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(typeof delegatedArgs.options.resolveCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.options.resolveLiveActiveSlideId, 'function');
+  assert.deepEqual(delegatedArgs.options.resolveCanonicalDeck(iframeDoc), {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  });
+  assert.equal(buildEditorCanonicalDeckCalls, 1);
+});
+
 test('buildEditorDeckSnapshot prefers the current session active slide fallback when the iframe is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
