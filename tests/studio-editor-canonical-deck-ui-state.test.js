@@ -223,6 +223,84 @@ test('buildEditorCanonicalDeck reuses the in-memory persisted canonical baseline
   assert.equal(calls[1][1].canonicalDeck, persistedCanonicalDeck);
 });
 
+test('buildEditorCanonicalDeck falls back to the stored canonical baseline when the live canonical build is malformed', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorCanonicalDeck(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
+  );
+
+  const doc = { label: 'iframe-doc' };
+  const persistedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+  const malformedLiveCanonicalDeck = {
+    slides: 'not-an-array'
+  };
+  const calls = [];
+  const context = {
+    SlideNextCanonicalDeck: {
+      isCanonicalDeck(deck) {
+        calls.push(['isCanonicalDeck', deck]);
+        return deck === persistedCanonicalDeck;
+      }
+    },
+    SlideNextStudioDeckContext: {
+      resolveStoredStudioCanonicalDeck(metadata) {
+        calls.push(['resolveStoredStudioCanonicalDeck', metadata]);
+        return metadata && metadata.canonicalDeck === persistedCanonicalDeck
+          ? persistedCanonicalDeck
+          : null;
+      },
+      buildStudioCanonicalDeck(nextDoc, options) {
+        calls.push(['buildStudioCanonicalDeck', nextDoc, options]);
+        return malformedLiveCanonicalDeck;
+      }
+    },
+    currentPresentationMetadata: null,
+    lastPersistedCanonicalDeck: persistedCanonicalDeck,
+    buildCurrentPresentationMetadataSeed: () => ({ id: 'seed-deck' }),
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    getEditorSlideId() {
+      return 'slide-1';
+    },
+    assignEditorElementId() {
+      return 'node-1';
+    },
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
+  vm.runInContext(buildEditorCanonicalDeckSource, context);
+
+  const result = context.buildEditorCanonicalDeck();
+
+  assert.equal(result, persistedCanonicalDeck);
+  assert.equal(calls[0][0], 'buildStudioCanonicalDeck');
+  assert.equal(calls[0][1], doc);
+  assert.equal(calls[1][0], 'isCanonicalDeck');
+  assert.equal(calls[1][1], malformedLiveCanonicalDeck);
+  assert.equal(calls[2][0], 'resolveStoredStudioCanonicalDeck');
+  assert.equal(calls[2][1], null);
+  assert.equal(calls[3][0], 'resolveStoredStudioCanonicalDeck');
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[3][1])),
+    { canonicalDeck: persistedCanonicalDeck }
+  );
+});
+
 test('buildEditorCanonicalDeck prefers the current metadata canonical deck over the persisted baseline when the iframe is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorCanonicalDeckSource = extractFunctionSource(
