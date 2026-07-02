@@ -138,6 +138,62 @@ test('setCurrentPresentationCanonicalDeck ignores malformed deck-like metadata u
   assert.equal(context.currentPresentationMetadata, null);
 });
 
+test('setCurrentPresentationCanonicalDeck ignores updates for inactive presentations', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {',
+    '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
+  );
+
+  let applyCalls = 0;
+  const activeMetadata = {
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: 'presentations/onboarding-presentation/index.html'
+  };
+  const context = {
+    SlideNextStudioDeckContext: require('../shared/studio-deck-context.js'),
+    applyCurrentPresentationMetadata(metadata) {
+      applyCalls += 1;
+      context.currentPresentationMetadata = metadata;
+      return metadata;
+    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    currentPresentationMetadata: activeMetadata,
+    buildCurrentPresentationMetadataSeed(presentationUrl, presentationTitle) {
+      return {
+        id: 'onboarding-presentation',
+        title: presentationTitle,
+        sourcePath: presentationUrl
+      };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setCurrentPresentationCanonicalDeckSource, context);
+
+  context.setCurrentPresentationCanonicalDeck(
+    {
+      metadata: {
+        title: 'AI Tools'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    },
+    'presentations/ai-tools-presentation/index.html',
+    'AI Tools'
+  );
+
+  assert.equal(applyCalls, 0);
+  assert.equal(context.currentPresentationMetadata, activeMetadata);
+});
+
 test('saveVersionCheckpoint refreshes persisted html and canonical metadata after a successful save rewrite', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const saveVersionCheckpointSource = extractFunctionSource(
