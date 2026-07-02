@@ -163,6 +163,75 @@ test('renderCanonicalDeckHtml can rebuild canonical slide bodies and honor a req
   assert.match(html, /<section class="slide agenda-slide slide-active"[^>]*id="slide-2"[^>]*><\/section>/);
 });
 
+test('renderCanonicalDeckHtml does not short-circuit to full source html when more specific canonical rebuild flags are disabled', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    metadata: {
+      title: 'Canonical Deck'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [
+          {
+            tagName: 'h1',
+            text: 'Canonical intro'
+          }
+        ],
+        source: {}
+      }
+    ],
+    source: {
+      html: '<!DOCTYPE html><html><head><title>Stale Deck</title></head><body><main>stale body html</main></body></html>',
+      headHtml: '<title>Stale Deck</title>',
+      bodyHtml: '<main>stale body html</main>'
+    }
+  }, {
+    preferSourceHtml: true,
+    preferHeadSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<title>Canonical Deck<\/title>/);
+  assert.match(html, /<h1>Canonical intro<\/h1>/);
+  assert.doesNotMatch(html, /Stale Deck/);
+  assert.doesNotMatch(html, /stale body html/);
+});
+
+test('renderCanonicalDeckHtml does not reuse source body html when canonical slide or node rebuild flags are disabled', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [
+          {
+            tagName: 'p',
+            text: 'Canonical body'
+          }
+        ],
+        source: {
+          html: '<section><p>stale slide html</p></section>'
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: '<main>stale body html</main>'
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: true,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<p>Canonical body<\/p>/);
+  assert.doesNotMatch(html, /stale body html/);
+  assert.doesNotMatch(html, /stale slide html/);
+});
+
 test('renderCanonicalDeckHtml updates active classes and ids even when reusing slide source html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [
