@@ -337,10 +337,11 @@
     if (!rootEl || typeof rootEl.querySelectorAll !== 'function') {
       return [];
     }
+    const idPrefix = normalizeString(options.idPrefix, 'inline-script').trim() || 'inline-script';
 
     return Array.from(rootEl.querySelectorAll('script:not([src])'))
       .map((scriptEl, index) => ({
-        id: `head-inline-script-${index + 1}`,
+        id: `${idPrefix}-${index + 1}`,
         content: normalizeString(scriptEl.textContent),
         attributes: extractAttributeMap(scriptEl)
       }))
@@ -1195,7 +1196,14 @@
       headHtml: sourceHead ? sourceHead.innerHTML : '',
       bodyHtml: sourceBody ? sourceBody.innerHTML : '',
       bodyAttributes: sourceBody ? extractAttributeMap(sourceBody) : {},
-      headInlineScripts: sourceHead ? extractInlineScriptSeeds(sourceHead, options) : []
+      headInlineScripts: sourceHead ? extractInlineScriptSeeds(sourceHead, {
+        ...options,
+        idPrefix: 'head-inline-script'
+      }) : [],
+      bodyInlineScripts: sourceBody ? extractInlineScriptSeeds(sourceBody, {
+        ...options,
+        idPrefix: 'body-inline-script'
+      }) : []
     };
   }
 

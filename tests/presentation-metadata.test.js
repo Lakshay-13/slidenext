@@ -105,7 +105,8 @@ test('resolvePresentationCanonicalDeck normalizes valid canonical sidecars and r
         headHtml: '',
         bodyHtml: '',
         bodyAttributes: {},
-        headInlineScripts: []
+        headInlineScripts: [],
+        bodyInlineScripts: []
       }
     }
   );
@@ -239,7 +240,8 @@ test('mergePresentationCanonicalDeck preserves metadata and normalizes valid can
           headHtml: '',
           bodyHtml: '',
           bodyAttributes: {},
-          headInlineScripts: []
+          headInlineScripts: [],
+          bodyInlineScripts: []
         }
       }
     }

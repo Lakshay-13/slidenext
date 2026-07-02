@@ -893,6 +893,7 @@ test('buildDeckSource serializes the sanitized clone instead of the live editor 
   assert.equal(source.bodyHtml, '<main>clean</main>');
   assert.deepEqual(source.bodyAttributes, { class: 'deck-body' });
   assert.deepEqual(source.headInlineScripts, []);
+  assert.deepEqual(source.bodyInlineScripts, []);
 });
 
 test('buildDeckSource extracts sanitized inline head scripts alongside full source html', () => {
@@ -940,6 +941,61 @@ test('buildDeckSource extracts sanitized inline head scripts alongside full sour
       content: 'window.tailwindConfig = true;',
       attributes: {
         type: 'text/javascript'
+      }
+    }
+  ]);
+  assert.deepEqual(source.bodyInlineScripts, []);
+});
+
+test('buildDeckSource extracts sanitized inline body scripts alongside full source html', () => {
+  const sourceClone = {
+    querySelector(selector) {
+      if (selector === 'head') return this.head;
+      if (selector === 'body') return this.body;
+      return null;
+    },
+    querySelectorAll() {
+      return [];
+    },
+    head: {
+      innerHTML: '',
+      querySelectorAll() {
+        return [];
+      }
+    },
+    body: {
+      innerHTML: '<main>clean</main><script type="module">window.deckBoot = true;</script>',
+      attributes: [{ name: 'class', value: 'deck-body' }],
+      querySelectorAll(selector) {
+        if (selector === 'script:not([src])') {
+          return [{
+            textContent: 'window.deckBoot = true;',
+            attributes: [{ name: 'type', value: 'module' }]
+          }];
+        }
+        return [];
+      }
+    }
+  };
+  const doc = {
+    documentElement: {
+      cloneNode() {
+        return sourceClone;
+      }
+    }
+  };
+
+  const source = deckImport.buildDeckSource(doc, {
+    stripTransientDeckRuntimeState() {}
+  });
+
+  assert.deepEqual(source.headInlineScripts, []);
+  assert.deepEqual(source.bodyInlineScripts, [
+    {
+      id: 'body-inline-script-1',
+      content: 'window.deckBoot = true;',
+      attributes: {
+        type: 'module'
       }
     }
   ]);

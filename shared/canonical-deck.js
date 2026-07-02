@@ -107,10 +107,11 @@
     };
   }
 
-  function createCanonicalInlineScript(seed = {}, index = 0) {
+  function createCanonicalInlineScript(seed = {}, index = 0, options = {}) {
     const script = asPlainObject(seed);
+    const idPrefix = normalizeString(options.idPrefix, 'inline-script').trim() || 'inline-script';
     return {
-      id: normalizeString(script.id, `head-inline-script-${index + 1}`),
+      id: normalizeString(script.id, `${idPrefix}-${index + 1}`),
       content: normalizeString(script.content),
       attributes: asPlainObject(script.attributes)
     };
@@ -170,7 +171,14 @@
         bodyHtml: normalizeString(source.bodyHtml),
         bodyAttributes: asPlainObject(source.bodyAttributes),
         headInlineScripts: Array.isArray(source.headInlineScripts)
-          ? source.headInlineScripts.map((script, scriptIndex) => createCanonicalInlineScript(script, scriptIndex))
+          ? source.headInlineScripts.map((script, scriptIndex) => createCanonicalInlineScript(script, scriptIndex, {
+            idPrefix: 'head-inline-script'
+          }))
+          : [],
+        bodyInlineScripts: Array.isArray(source.bodyInlineScripts)
+          ? source.bodyInlineScripts.map((script, scriptIndex) => createCanonicalInlineScript(script, scriptIndex, {
+            idPrefix: 'body-inline-script'
+          }))
           : []
       }
     };

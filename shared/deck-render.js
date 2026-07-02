@@ -123,7 +123,7 @@
       });
   }
 
-  function buildInlineHeadScriptTags(scripts = []) {
+  function buildInlineScriptTags(scripts = []) {
     return (Array.isArray(scripts) ? scripts : [])
       .map((script) => ({
         content: normalizeString(script && script.content),
@@ -585,7 +585,7 @@
       : '';
     const preloadAssetLinkTags = buildPreloadAssetLinkTags(deck.assets);
     const headScriptAssetTags = buildScriptAssetTags(deck.assets, { location: 'head' });
-    const headInlineScriptTags = buildInlineHeadScriptTags(deck.source && deck.source.headInlineScripts);
+    const headInlineScriptTags = buildInlineScriptTags(deck.source && deck.source.headInlineScripts);
     const stylesheetAssetLinkTags = buildStylesheetAssetLinkTags(deck.assets);
     const deckLayoutStyleBlock = buildCanonicalDeckLayoutStyleBlock(deck);
     const themeStyleBlocks = buildCanonicalDeckThemeStyleBlocks(deck);
@@ -780,9 +780,11 @@
         activeSlideId: resolvedActiveSlideId
       })).join('\n')
       : '';
+    const bodyInlineScriptTags = buildInlineScriptTags(deck.source && deck.source.bodyInlineScripts);
     const scriptAssetTags = buildScriptAssetTags(deck.assets, { location: 'body' });
     return [
       `<div id="slidesContainer" class="slides-container">${slidesHtml}</div>`,
+      ...bodyInlineScriptTags,
       ...scriptAssetTags
     ].join('\n');
   }

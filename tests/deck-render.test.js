@@ -695,6 +695,37 @@ test('renderCanonicalDeckHtml emits canonical inline head scripts when source he
   assert.match(html, /<script src="\/presentations\/demo\/tailwind\.js"><\/script>\s*<script type="text\/javascript">tailwind\.config = \{ darkMode: "class" \};<\/script>\s*<link rel="stylesheet" href="\/presentations\/demo\/styles\.css">/);
 });
 
+test('renderCanonicalDeckHtml emits canonical inline body scripts when source body html is absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: '',
+      bodyInlineScripts: [
+        {
+          content: 'window.deckBoot = true;',
+          attributes: {
+            type: 'module'
+          }
+        }
+      ]
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<div id="slidesContainer" class="slides-container"><section class="slide slide-active" id="slide-1"><\/section><\/div>\s*<script type="module">window\.deckBoot = true;<\/script>/);
+});
+
 test('renderCanonicalDeckHtml dedupes canonical singleton head tags over reused source head html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {
