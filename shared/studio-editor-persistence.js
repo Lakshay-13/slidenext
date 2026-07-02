@@ -75,6 +75,43 @@
       : null;
   }
 
+  function resolveStudioSaveRequestCanonicalDeck(options = {}) {
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    const resolutionOptions = {
+      createCanonicalDeck: options.createCanonicalDeck,
+      isCanonicalDeck,
+      resolvePresentationCanonicalDeck: options.resolvePresentationCanonicalDeck
+    };
+    const canonicalDeck = resolveStudioPersistenceCanonicalDeck(options.canonicalDeck, resolutionOptions);
+    if (canonicalDeck) {
+      return isCanonicalDeck && isCanonicalDeck(options.canonicalDeck)
+        ? options.canonicalDeck
+        : canonicalDeck;
+    }
+
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    if (!buildCanonicalDeck) {
+      return null;
+    }
+
+    const fallbackCanonicalDeck = buildCanonicalDeck();
+    const resolvedFallbackCanonicalDeck = resolveStudioPersistenceCanonicalDeck(
+      fallbackCanonicalDeck,
+      resolutionOptions
+    );
+    if (!resolvedFallbackCanonicalDeck) {
+      return null;
+    }
+
+    return isCanonicalDeck && isCanonicalDeck(fallbackCanonicalDeck)
+      ? fallbackCanonicalDeck
+      : resolvedFallbackCanonicalDeck;
+  }
+
   function createStudioPersistenceActionContext(presentationUrl = '', cleanHtml = '', options = {}) {
     const context = {
       presentationUrl: normalizeString(presentationUrl),
@@ -119,11 +156,7 @@
       body.versionLabel = versionLabel;
     }
 
-    const canonicalDeck = resolveStudioPersistenceCanonicalDeck(options.canonicalDeck, {
-      createCanonicalDeck: options.createCanonicalDeck,
-      isCanonicalDeck: options.isCanonicalDeck,
-      resolvePresentationCanonicalDeck: options.resolvePresentationCanonicalDeck
-    });
+    const canonicalDeck = resolveStudioSaveRequestCanonicalDeck(options);
     if (canonicalDeck) {
       body.canonicalDeck = canonicalDeck;
     }
@@ -553,6 +586,7 @@
     createStudioPersistableDeckState,
     resolveStudioPersistableDeckStateWithContent,
     resolveStudioPersistenceCanonicalDeck,
+    resolveStudioSaveRequestCanonicalDeck,
     createStudioPersistenceActionContext,
     createStudioVersionPersistenceActionContext,
     buildStudioSaveRequestBody,

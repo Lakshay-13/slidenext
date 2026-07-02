@@ -240,6 +240,77 @@ test('buildStudioSaveRequestBody includes canonical deck sidecars only when they
   );
 });
 
+test('resolveStudioSaveRequestCanonicalDeck falls back to the provided canonical deck builder when an override is malformed', () => {
+  const fallbackCanonicalDeck = {
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+  let buildCanonicalDeckCalls = 0;
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioSaveRequestCanonicalDeck({
+      canonicalDeck: {
+        metadata: {
+          title: 'Broken Deck'
+        }
+      },
+      buildCanonicalDeck() {
+        buildCanonicalDeckCalls += 1;
+        return fallbackCanonicalDeck;
+      }
+    }),
+    canonicalDeckModel.createCanonicalDeck(fallbackCanonicalDeck)
+  );
+  assert.equal(buildCanonicalDeckCalls, 1);
+});
+
+test('buildStudioSaveRequestBody can rebuild a canonical deck sidecar from a fallback deck builder', () => {
+  const fallbackCanonicalDeck = {
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+  let buildCanonicalDeckCalls = 0;
+
+  assert.deepEqual(
+    editorPersistence.buildStudioSaveRequestBody(
+      '/presentations/onboarding-presentation/index.html',
+      '<html></html>',
+      {
+        canonicalDeck: {
+          metadata: {
+            title: 'Broken Deck'
+          }
+        },
+        buildCanonicalDeck() {
+          buildCanonicalDeckCalls += 1;
+          return fallbackCanonicalDeck;
+        }
+      }
+    ),
+    {
+      htmlPath: '/presentations/onboarding-presentation/index.html',
+      htmlContent: '<html></html>',
+      isAutoSave: false,
+      canonicalDeck: canonicalDeckModel.createCanonicalDeck(fallbackCanonicalDeck)
+    }
+  );
+  assert.equal(buildCanonicalDeckCalls, 1);
+});
+
 test('buildStudioPersistenceRequestPlan reuses persisted-html checks to skip redundant save payloads', () => {
   const canonicalDeck = {
     metadata: {

@@ -281,6 +281,7 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
       }
     },
     SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
       isStudioPersistedCanonicalDeck(nextCanonicalDeck, persistedCanonicalDeck) {
         assert.equal(nextCanonicalDeck, canonicalDeck);
         assert.equal(persistedCanonicalDeck, canonicalDeck);
@@ -345,6 +346,7 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
       }
     },
     SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
       isStudioPersistedCanonicalDeck(nextCanonicalDeck, persistedCanonicalDeck) {
         assert.equal(nextCanonicalDeck, canonicalDeck);
         assert.equal(persistedCanonicalDeck, canonicalDeck);
@@ -420,6 +422,7 @@ test('buildPersistableDeckHtml falls back to the editor canonical deck when a pr
       }
     },
     SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
       isStudioPersistedCanonicalDeck(nextCanonicalDeck, persistedCanonicalDeck) {
         assert.equal(nextCanonicalDeck, canonicalDeck);
         assert.equal(persistedCanonicalDeck, canonicalDeck);
@@ -487,6 +490,7 @@ test('buildPersistableDeckHtml reports the resolved canonical deck when the edit
       }
     },
     SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
       isStudioPersistedCanonicalDeck(nextCanonicalDeck, persistedCanonicalDeck) {
         assert.equal(nextCanonicalDeck, canonicalDeck);
         assert.equal(persistedCanonicalDeck, canonicalDeck);
@@ -990,6 +994,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
       }
     },
     SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
       isStudioPersistedCanonicalDeck() {
         throw new Error('persisted canonical deck comparison should not run without a persisted html baseline');
       }
@@ -1081,6 +1086,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
       }
     },
     SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
       isStudioPersistedCanonicalDeck(nextCanonicalDeck, nextPersistedCanonicalDeck) {
         assert.equal(nextCanonicalDeck, currentCanonicalDeck);
         assert.equal(nextPersistedCanonicalDeck, persistedCanonicalDeck);
