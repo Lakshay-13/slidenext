@@ -501,7 +501,9 @@
       return deck.source.html;
     }
 
-    const headHtml = normalizeString(deck.source && deck.source.headHtml) || buildDefaultHeadHtml(deck);
+    const headHtml = options.preferHeadSourceHtml === false
+      ? buildDefaultHeadHtml(deck)
+      : normalizeString(deck.source && deck.source.headHtml) || buildDefaultHeadHtml(deck);
     const bodyAttributes = asPlainObject(deck.source && deck.source.bodyAttributes);
     const bodyHtml = options.preferBodySourceHtml === false
       ? buildDefaultBodyHtml(deck, options)

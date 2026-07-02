@@ -183,6 +183,7 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
   assert.equal(calls[0].canonicalDeck, canonicalDeck);
   assert.equal(calls[0].options.deckHtmlOptions.renderOptions.activeSlideId, 'slide-2');
   assert.equal(calls[0].options.deckHtmlOptions.renderOptions.preferSourceHtml, false);
+  assert.equal(calls[0].options.deckHtmlOptions.renderOptions.preferHeadSourceHtml, false);
   assert.equal(calls[0].options.deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
   assert.equal(calls[0].options.deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
   assert.equal(buildEditorCanonicalDeckCalls, 1);

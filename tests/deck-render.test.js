@@ -163,6 +163,41 @@ test('renderCanonicalDeckHtml can rebuild canonical slide bodies and honor a req
   assert.match(html, /<section class="slide agenda-slide slide-active"[^>]*id="slide-2"[^>]*><\/section>/);
 });
 
+test('renderCanonicalDeckHtml can rebuild canonical head when source head html is disabled', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    metadata: {
+      title: 'Canonical Head Deck',
+      description: 'Canonical description'
+    },
+    theme: {
+      customCss: '.slide { color: cyan; }'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '<meta name="description" content="stale description"><style>.stale{color:red;}</style>',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferHeadSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<title>Canonical Head Deck<\/title>/);
+  assert.match(html, /<meta name="description" content="Canonical description">/);
+  assert.match(html, /<style>\s*\.slide \{ color: cyan; \}\s*<\/style>/);
+  assert.doesNotMatch(html, /stale description/);
+  assert.doesNotMatch(html, /\.stale\{color:red;\}/);
+});
+
 test('renderCanonicalNode uses dedicated class and style fields when attributes omit them', () => {
   const html = deckRender.renderCanonicalNode({
     tagName: 'div',

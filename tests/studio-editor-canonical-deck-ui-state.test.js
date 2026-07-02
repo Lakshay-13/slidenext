@@ -834,6 +834,7 @@ test('buildEditorDeckRenderOptions delegates render-option composition to the sh
         return {
           activeSlideId: 'slide-shared',
           preferSourceHtml: false,
+          preferHeadSourceHtml: false,
           preferBodySourceHtml: false,
           preferSlideSourceHtml: false
         };
@@ -857,6 +858,7 @@ test('buildEditorDeckRenderOptions delegates render-option composition to the sh
   assert.deepEqual(result, {
     activeSlideId: 'slide-shared',
     preferSourceHtml: false,
+    preferHeadSourceHtml: false,
     preferBodySourceHtml: false,
     preferSlideSourceHtml: false
   });

@@ -112,6 +112,7 @@
     return {
       activeSlideId: explicitActiveSlideId || resolveFallbackActiveSlideId(doc, canonicalDeck),
       preferSourceHtml: false,
+      preferHeadSourceHtml: false,
       preferBodySourceHtml: false,
       preferSlideSourceHtml: false
     };

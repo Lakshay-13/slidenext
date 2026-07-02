@@ -1201,6 +1201,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
   assert.equal(calls[0][1].buildFallbackHtml(), '');
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.activeSlideId, 'slide-1');
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSourceHtml, false);
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferHeadSourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
 });
@@ -1294,6 +1295,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
   assert.equal(calls[0][1].buildFallbackHtml(), '<html>persisted-baseline</html>');
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.activeSlideId, 'slide-next');
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSourceHtml, false);
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferHeadSourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
 });

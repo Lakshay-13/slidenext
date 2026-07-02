@@ -897,6 +897,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   assert.equal(callLog[5][2], iframeDoc);
   assert.equal(callLog[5][3].renderOptions.activeSlideId, 'slide-3');
   assert.equal(callLog[5][3].renderOptions.preferSourceHtml, false);
+  assert.equal(callLog[5][3].renderOptions.preferHeadSourceHtml, false);
   assert.equal(callLog[5][3].renderOptions.preferBodySourceHtml, false);
   assert.equal(callLog[5][3].renderOptions.preferSlideSourceHtml, false);
   assert.equal(callLog[6][0], 'syncIframeTheme');

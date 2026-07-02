@@ -136,6 +136,7 @@ test('createStudioDeckRenderOptions prefers an explicit active slide id and othe
   assert.deepEqual(explicitRenderOptions, {
     activeSlideId: 'slide-explicit',
     preferSourceHtml: false,
+    preferHeadSourceHtml: false,
     preferBodySourceHtml: false,
     preferSlideSourceHtml: false
   });
@@ -151,6 +152,7 @@ test('createStudioDeckRenderOptions prefers an explicit active slide id and othe
   assert.deepEqual(fallbackRenderOptions, {
     activeSlideId: 'slide-fallback',
     preferSourceHtml: false,
+    preferHeadSourceHtml: false,
     preferBodySourceHtml: false,
     preferSlideSourceHtml: false
   });
