@@ -227,9 +227,6 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     clickHandlerFactory: 0,
     keydownHandlerFactory: 0,
     frameBootstrap: 0,
-    updateInsertionActionState: 0,
-    updateZoomActionState: 0,
-    updateWallpaperActionState: 0,
     updateDeckReadyToolbarActionState: 0,
     setStudioAutoSaveStatus: [],
     syncInspectorForSelection: 0
@@ -302,15 +299,6 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     },
     persistedDeckPlaybackState: null,
     lastPersistedDeckHtml: '',
-    updateInsertionActionState() {
-      calls.updateInsertionActionState += 1;
-    },
-    updateZoomActionState() {
-      calls.updateZoomActionState += 1;
-    },
-    updateWallpaperActionState() {
-      calls.updateWallpaperActionState += 1;
-    },
     updateDeckReadyToolbarActionState() {
       calls.updateDeckReadyToolbarActionState += 1;
     },
@@ -336,9 +324,6 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     clickHandlerFactory: 1,
     keydownHandlerFactory: 1,
     frameBootstrap: 1,
-    updateInsertionActionState: 1,
-    updateZoomActionState: 1,
-    updateWallpaperActionState: 1,
     updateDeckReadyToolbarActionState: 1,
     setStudioAutoSaveStatus: ['saved'],
     syncInspectorForSelection: 1
