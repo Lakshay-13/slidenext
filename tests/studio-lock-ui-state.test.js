@@ -70,3 +70,166 @@ test('updateLockActionState enables the lock control only when the iframe has a 
   assert.equal(toggleLockSelectionIcon.textContent, 'lock_open');
   assert.equal(toggleLockSelectionLabel.textContent, 'Unlock Selected');
 });
+
+test('toggleSelectedElementsLockState returns false and skips persistence when planned targets disconnect before apply', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toggleSelectedElementsLockStateSource = extractFunctionSource(
+    fileContent,
+    'function toggleSelectedElementsLockState() {',
+    '\n\n    function toggleSelectedElementsVisibility() {'
+  );
+
+  const disconnectedTarget = { isConnected: false };
+  const calls = [];
+  const context = {
+    selectedElements: [disconnectedTarget],
+    SlideNextStudioEditorLockState: {
+      buildStudioLockMutationPlan() {
+        calls.push(['buildStudioLockMutationPlan']);
+        return {
+          didChange: true,
+          selection: [disconnectedTarget],
+          shouldLock: true,
+          versionLabel: 'Auto: Locked Element'
+        };
+      }
+    },
+    SlideNextStudioEditorSelection: {
+      syncStudioSelectionUi() {
+        calls.push(['syncStudioSelectionUi']);
+      }
+    },
+    SlideNextStudioElementState: {
+      setStudioElementLockedState() {
+        calls.push(['setStudioElementLockedState']);
+      }
+    },
+    getActiveSlide() {
+      calls.push(['getActiveSlide']);
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return { label: 'iframe-doc' };
+    },
+    isElementLocked() {
+      calls.push(['isElementLocked']);
+      return false;
+    },
+    refreshSelectionClasses() {
+      calls.push(['refreshSelectionClasses']);
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    syncInspectorForSelection() {
+      calls.push(['syncInspectorForSelection']);
+    },
+    syncSelectionOverlay() {
+      calls.push(['syncSelectionOverlay']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(toggleSelectedElementsLockStateSource, context);
+
+  assert.equal(context.toggleSelectedElementsLockState(), false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['buildStudioLockMutationPlan']
+  ]);
+});
+
+test('toggleSelectedElementsLockState returns true after locking live targets and persisting the change', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toggleSelectedElementsLockStateSource = extractFunctionSource(
+    fileContent,
+    'function toggleSelectedElementsLockState() {',
+    '\n\n    function toggleSelectedElementsVisibility() {'
+  );
+
+  const liveTarget = { isConnected: true };
+  const calls = [];
+  const context = {
+    selectedElements: [liveTarget],
+    SlideNextStudioEditorLockState: {
+      buildStudioLockMutationPlan() {
+        calls.push(['buildStudioLockMutationPlan']);
+        return {
+          didChange: true,
+          selection: [liveTarget],
+          shouldLock: true,
+          versionLabel: 'Auto: Locked Element'
+        };
+      }
+    },
+    SlideNextStudioEditorSelection: {
+      syncStudioSelectionUi(selection, options) {
+        calls.push(['syncStudioSelectionUi', selection, Object.keys(options).sort()]);
+      }
+    },
+    SlideNextStudioElementState: {
+      setStudioElementLockedState(element, shouldLock) {
+        calls.push(['setStudioElementLockedState', element, shouldLock]);
+      }
+    },
+    getActiveSlide() {
+      calls.push(['getActiveSlide']);
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return { label: 'iframe-doc' };
+    },
+    isElementLocked(element) {
+      calls.push(['isElementLocked', element]);
+      return false;
+    },
+    refreshSelectionClasses() {
+      calls.push(['refreshSelectionClasses']);
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    syncInspectorForSelection() {
+      calls.push(['syncInspectorForSelection']);
+    },
+    syncSelectionOverlay() {
+      calls.push(['syncSelectionOverlay']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(toggleSelectedElementsLockStateSource, context);
+
+  assert.equal(context.toggleSelectedElementsLockState(), true);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['buildStudioLockMutationPlan'],
+    ['isElementLocked', liveTarget],
+    ['setStudioElementLockedState', liveTarget, true],
+    ['refreshSelectionClasses'],
+    ['syncStudioSelectionUi', [liveTarget], ['syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']],
+    ['saveHistoryState'],
+    ['triggerAutoSave'],
+    ['triggerAutoVersion', 'Auto: Locked Element']
+  ]);
+});

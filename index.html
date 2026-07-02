@@ -3099,10 +3099,14 @@
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!lockMutationPlan.didChange) return false;
+      let changedCount = 0;
       lockMutationPlan.selection.forEach(el => {
         if (!el || !el.isConnected) return;
+        if (isElementLocked(el) === lockMutationPlan.shouldLock) return;
         SlideNextStudioElementState.setStudioElementLockedState(el, lockMutationPlan.shouldLock);
+        changedCount += 1;
       });
+      if (changedCount === 0) return false;
       refreshSelectionClasses();
       SlideNextStudioEditorSelection.syncStudioSelectionUi(selectedElements, {
         syncSelectionOverlay,
