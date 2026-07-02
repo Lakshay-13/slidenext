@@ -743,7 +743,9 @@
   }
 
   function canReuseCanonicalDeckSourceHtml(options = {}) {
+    const requestedActiveSlideId = normalizeString(options.activeSlideId).trim();
     return options.preferSourceHtml !== false
+      && !requestedActiveSlideId
       && options.preferHeadSourceHtml !== false
       && options.preferBodySourceHtml !== false
       && options.preferSlideSourceHtml !== false
@@ -751,7 +753,9 @@
   }
 
   function canReuseCanonicalDeckBodySourceHtml(options = {}) {
+    const requestedActiveSlideId = normalizeString(options.activeSlideId).trim();
     return options.preferBodySourceHtml !== false
+      && !requestedActiveSlideId
       && options.preferSlideSourceHtml !== false
       && options.preferNodeSourceHtml !== false;
   }

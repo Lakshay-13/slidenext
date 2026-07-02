@@ -232,6 +232,86 @@ test('renderCanonicalDeckHtml does not reuse source body html when canonical sli
   assert.doesNotMatch(html, /stale slide html/);
 });
 
+test('renderCanonicalDeckHtml does not reuse full source html when an explicit active slide id is requested', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    metadata: {
+      title: 'Canonical Deck'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {
+          html: '<section class="slide slide-active"><p>Intro</p></section>'
+        }
+      },
+      {
+        id: 'slide-2',
+        nodes: [],
+        source: {
+          html: '<section class="slide"><p>Agenda</p></section>'
+        }
+      }
+    ],
+    source: {
+      html: '<!DOCTYPE html><html><head><title>Stale Deck</title></head><body><main>stale body html</main></body></html>',
+      headHtml: '<title>Stale Deck</title>',
+      bodyHtml: '<main>stale body html</main>'
+    }
+  }, {
+    activeSlideId: 'slide-2',
+    preferSourceHtml: true,
+    preferHeadSourceHtml: true,
+    preferBodySourceHtml: true,
+    preferSlideSourceHtml: true,
+    preferNodeSourceHtml: true
+  });
+
+  assert.match(html, /<title>Canonical Deck<\/title>/);
+  assert.match(html, /<section class="slide" id="slide-1"><p>Intro<\/p><\/section>/);
+  assert.match(html, /<section class="slide slide-active" id="slide-2"><p>Agenda<\/p><\/section>/);
+  assert.doesNotMatch(html, /stale body html/);
+  assert.doesNotMatch(html, /Stale Deck/);
+});
+
+test('renderCanonicalDeckHtml does not reuse source body html when an explicit active slide id is requested', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {
+          html: '<section class="slide slide-active"><p>Intro</p></section>'
+        }
+      },
+      {
+        id: 'slide-2',
+        nodes: [],
+        source: {
+          html: '<section class="slide"><p>Agenda</p></section>'
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '<style>.deck-shell{color:red;}</style>',
+      bodyHtml: '<main><section class="slide slide-active" id="slide-1"><p>Intro</p></section><section class="slide" id="slide-2"><p>Agenda</p></section></main>'
+    }
+  }, {
+    activeSlideId: 'slide-2',
+    preferSourceHtml: false,
+    preferBodySourceHtml: true,
+    preferSlideSourceHtml: true,
+    preferNodeSourceHtml: true
+  });
+
+  assert.match(html, /<style>\.deck-shell\{color:red;\}<\/style>/);
+  assert.match(html, /<section class="slide" id="slide-1"><p>Intro<\/p><\/section>/);
+  assert.match(html, /<section class="slide slide-active" id="slide-2"><p>Agenda<\/p><\/section>/);
+  assert.match(html, /<div id="slidesContainer" class="slides-container">/);
+  assert.doesNotMatch(html, /<body>\s*<main>/);
+});
+
 test('renderCanonicalDeckHtml overlays canonical title onto reused source head html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {
