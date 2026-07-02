@@ -76,7 +76,7 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     wpTabSolid: { disabled: false, className: 'stale-solid' },
     wpTabPresets: { disabled: false, className: 'stale-presets' },
     wpTabCustom: { disabled: false, className: 'stale-custom' },
-    wallpaperCustomColor: { disabled: false },
+    wallpaperCustomColor: { disabled: false, value: '#abcdef', defaultValue: '#000000' },
     cgLinearBtn: { disabled: false, className: 'stale-linear' },
     cgRadialBtn: { disabled: false, className: 'stale-radial' },
     cgColor1: { disabled: false, value: '#112233' },
@@ -165,6 +165,7 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
   assert.equal(elements.wpPanelSolid.classList.contains('hidden'), false);
   assert.equal(elements.wpPanelPresets.classList.contains('hidden'), true);
   assert.equal(elements.wpPanelCustom.classList.contains('hidden'), true);
+  assert.equal(elements.wallpaperCustomColor.value, '#000000');
   assert.match(elements.wpTabSolid.className, /bg-white\/5/);
   assert.equal(elements.wpTabPresets.className, 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400');
   assert.equal(elements.wpTabCustom.className, 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400');
