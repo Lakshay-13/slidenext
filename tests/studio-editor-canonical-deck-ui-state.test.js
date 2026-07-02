@@ -509,6 +509,37 @@ test('resolveEditorLiveActiveSlideId delegates to the shared deck view helper wh
   assert.equal(delegatedArgs.options.getActiveSlideId(iframeDoc, activeSlide), 'slide-live');
 });
 
+test('getPersistedActiveSlideId delegates to the shared deck persistence helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getPersistedActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {',
+    '\n\n    function getCurrentEditorPersistedDeckState() {'
+  );
+
+  let delegatedPlaybackState = null;
+  const context = {
+    SlideNextDeckPersistence: {
+      resolvePersistedDeckActiveSlideId(playbackState) {
+        delegatedPlaybackState = playbackState;
+        return 'slide-shared';
+      }
+    },
+    persistedDeckPlaybackState: {
+      activeSlideIds: ['slide-2'],
+      slideCounterText: '2 / 4'
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getPersistedActiveSlideIdSource, context);
+
+  const result = context.getPersistedActiveSlideId();
+
+  assert.equal(result, 'slide-shared');
+  assert.equal(delegatedPlaybackState, context.persistedDeckPlaybackState);
+});
+
 test('resolveEditorCanonicalDeckViewState delegates resolver orchestration to the shared deck view helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(

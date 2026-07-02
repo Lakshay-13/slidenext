@@ -2630,6 +2630,17 @@
     }
 
     function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {
+      const resolvePersistedDeckActiveSlideId = (
+        typeof SlideNextDeckPersistence !== 'undefined'
+        && SlideNextDeckPersistence
+      )
+        && typeof SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId === 'function'
+        ? SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId
+        : null;
+      if (resolvePersistedDeckActiveSlideId) {
+        return resolvePersistedDeckActiveSlideId(playbackState);
+      }
+
       if (!playbackState || typeof playbackState !== 'object') {
         return '';
       }

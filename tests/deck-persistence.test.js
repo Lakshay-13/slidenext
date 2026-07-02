@@ -16,6 +16,25 @@ test('normalizePersistedDeckPlaybackState upgrades legacy activeSlideId values t
   );
 });
 
+test('resolvePersistedDeckActiveSlideId returns the first normalized active slide id and tolerates missing playback state', () => {
+  assert.equal(
+    deckPersistence.resolvePersistedDeckActiveSlideId({
+      activeSlideIds: ['slide-2', 'slide-3'],
+      slideCounterText: '2 / 5'
+    }),
+    'slide-2'
+  );
+
+  assert.equal(
+    deckPersistence.resolvePersistedDeckActiveSlideId({
+      activeSlideId: 'slide-legacy'
+    }),
+    'slide-legacy'
+  );
+
+  assert.equal(deckPersistence.resolvePersistedDeckActiveSlideId(null), '');
+});
+
 test('restorePersistedDeckPlaybackState accepts legacy activeSlideId values', () => {
   const slideNumNode = { textContent: '' };
   const slides = [
