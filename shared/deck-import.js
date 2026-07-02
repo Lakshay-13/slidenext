@@ -570,6 +570,26 @@
     );
   }
 
+  function stripImportedNodeHiddenStyle(styleText = '', visibility = {}) {
+    if (!visibility || !visibility.hidden) {
+      return normalizeString(styleText).trim();
+    }
+    return filterInlineStyleDeclarations(
+      styleText,
+      (propertyName, propertyValue) => {
+        const normalizedPropertyName = normalizeString(propertyName).trim().toLowerCase();
+        const normalizedPropertyValue = normalizeString(propertyValue).trim().toLowerCase();
+        if (normalizedPropertyName === 'display' && normalizedPropertyValue === 'none') {
+          return false;
+        }
+        if (normalizedPropertyName === 'visibility' && normalizedPropertyValue === 'hidden') {
+          return false;
+        }
+        return true;
+      }
+    );
+  }
+
   function sanitizeImportedAttributeMap(el, options = {}) {
     const transientAttributeNames = options.transientAttributeNames instanceof Set
       ? options.transientAttributeNames
@@ -863,7 +883,10 @@
       html: stripCanonicalNodeSourceHtmlDuplicates(buildImportedSourceHtml(el, options), attributes, visibility),
       classes: sanitizeImportedClassNames(el.classList || [], options),
       attributes,
-      style: stripImportedNodeLayoutStyle(inlineStyleText, importedLayout),
+      style: stripImportedNodeHiddenStyle(
+        stripImportedNodeLayoutStyle(inlineStyleText, importedLayout),
+        visibility
+      ),
       layout: importedLayout,
       visibility,
       children: childElements.map((child, childIndex) => importElementToCanonicalNode(child, options, {
@@ -1478,6 +1501,7 @@
     extractSrcsetUrlValues,
     collectDeckAssets,
     inferImportedNodeType,
+    stripImportedNodeHiddenStyle,
     stripImportedNodeLayoutStyle,
     sanitizeImportedSlideBackgroundClassName,
     importElementToCanonicalNode,

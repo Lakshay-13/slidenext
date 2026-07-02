@@ -1274,6 +1274,28 @@ test('importElementToCanonicalNode ignores computed hidden styles when visibilit
   assert.equal(node.visibility.locked, false);
 });
 
+test('importElementToCanonicalNode strips only hidden style flags once visibility is captured structurally', () => {
+  const element = createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['hero-card']),
+    style: {
+      display: 'none',
+      visibility: 'hidden'
+    },
+    attributes: {
+      class: 'hero-card',
+      style: 'display: none; visibility: hidden; color: red;'
+    },
+    textContent: 'Hero copy',
+    outerHTML: '<div class="hero-card" style="display: none; visibility: hidden; color: red;">Hero copy</div>'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+
+  assert.equal(node.visibility.hidden, true);
+  assert.equal(node.style, 'color: red;');
+});
+
 test('importSlideToCanonicalSlide strips canonical duplicate slide attributes while preserving custom attrs', () => {
   const heading = createImportedElement({
     tagName: 'H1',
