@@ -5158,15 +5158,21 @@
       renamingFilename = '';
       renamingVersionContext = null;
       
-      modal.classList.remove('opacity-100');
-      content.classList.remove('scale-100');
-      content.classList.add('scale-95');
-      SlideNextStudioModalVisibility.scheduleStudioModalHide(modal, {
-        hideDelayMs: 200,
-        onHide: () => {
-          modal.classList.add('hidden');
-        }
-      });
+      if (modal) {
+        modal.classList.remove('opacity-100');
+      }
+      if (content) {
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+      }
+      if (modal) {
+        SlideNextStudioModalVisibility.scheduleStudioModalHide(modal, {
+          hideDelayMs: 200,
+          onHide: () => {
+            modal.classList.add('hidden');
+          }
+        });
+      }
     }
     
     async function submitRenameVersion() {

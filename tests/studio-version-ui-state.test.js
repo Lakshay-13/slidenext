@@ -354,6 +354,45 @@ test('promptRenameVersion tolerates a missing rename input', () => {
   assert.ok(calls.some(([name]) => name === 'scheduleStudioModalCallback'));
 });
 
+test('closeRenameVersionModal tolerates missing rename modal nodes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const closeRenameVersionModalSource = extractFunctionSource(
+    fileContent,
+    'function closeRenameVersionModal() {',
+    '\n    \n    async function submitRenameVersion() {'
+  );
+
+  const calls = [];
+  const context = {
+    SlideNextStudioModalVisibility: {
+      scheduleStudioModalHide() {
+        calls.push(['scheduleStudioModalHide']);
+      }
+    },
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        return null;
+      }
+    },
+    renamingFilename: 'index_20260101_120000_Auto.html',
+    renamingVersionContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(closeRenameVersionModalSource, context);
+
+  assert.doesNotThrow(() => context.closeRenameVersionModal());
+  assert.equal(context.renamingFilename, '');
+  assert.equal(context.renamingVersionContext, null);
+  assert.deepEqual(calls, [
+    ['getElementById', 'renameVersionModal'],
+    ['getElementById', 'renameVersionModalContent']
+  ]);
+});
+
 test('submitRenameVersion no-ops when the rename input is missing', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const submitRenameVersionSource = extractFunctionSource(
