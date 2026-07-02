@@ -148,6 +148,9 @@ test('syncStudioChromeToActiveSlide routes active slide index updates through th
     },
     preserveSelectionOnNextActiveSlideSync: false,
     pruneEditorChromeNodes() {},
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    },
     saveHistoryState() {
       calls.push(['saveHistoryState']);
     },
@@ -182,6 +185,7 @@ test('syncStudioChromeToActiveSlide routes active slide index updates through th
   assert.equal(calls[0][1], iframeDoc);
   assert.equal(calls[1][0], 'updateCurrentPresentationSessionState');
   assert.equal(calls[1][1].slideIndex, 4);
+  assert.equal(calls[2][0], 'updateLayersList');
 });
 
 test('syncStudioChromeToActiveSlide tolerates a missing slide count label while syncing the live frame', () => {
@@ -898,6 +902,9 @@ test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when 
       return null;
     },
     preserveSelectionOnNextActiveSlideSync: false,
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    },
     saveHistoryState(debounce) {
       calls.push(['saveHistoryState', debounce]);
     },
@@ -931,7 +938,7 @@ test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when 
   assert.equal(didSync, true);
   assert.equal(context.currentSlideIndex, 2);
   assert.equal(slideCountLabel.textContent, '3 / 4');
-  assert.equal(calls.length, 6);
+  assert.equal(calls.length, 7);
   assert.equal(calls[0][0], 'buildEditorDeckSnapshot');
   assert.equal(calls[0][1], null);
   assert.equal(calls[1][0], 'resolveStudioActiveSlideIndex');
@@ -943,9 +950,10 @@ test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when 
   assert.equal(calls[2][1].slideIndex, 2);
   assert.equal(calls[3][0], 'updateActiveThumbnailCardState');
   assert.equal(calls[3][1], 'slide-3');
-  assert.equal(calls[4][0], 'deselectElement');
-  assert.equal(calls[5][0], 'saveHistoryState');
-  assert.equal(calls[5][1], false);
+  assert.equal(calls[4][0], 'updateLayersList');
+  assert.equal(calls[5][0], 'deselectElement');
+  assert.equal(calls[6][0], 'saveHistoryState');
+  assert.equal(calls[6][1], false);
 });
 
 test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when the live iframe has no explicit active slide', () => {

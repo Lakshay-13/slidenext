@@ -2401,12 +2401,18 @@
           slideCountLabel.textContent = label;
         }
       };
+      const refreshLayersList = () => {
+        if (typeof updateLayersList === 'function') {
+          updateLayersList();
+        }
+      };
       const syncToDeckSnapshotFallback = (deckSnapshot) => {
         const slideCount = Array.isArray(deckSnapshot.slides) ? deckSnapshot.slides.length : 0;
         if (slideCount === 0) {
           updateCurrentPresentationSessionState({ slideIndex: 0 });
           updateActiveThumbnailCardState('');
           setSlideCountLabel('0 / 0');
+          refreshLayersList();
           if (!preserveSelection) {
             deselectElement();
           }
@@ -2421,6 +2427,7 @@
         updateCurrentPresentationSessionState({ slideIndex: activeIndex });
         updateActiveThumbnailCardState(activeSlideId);
         setSlideCountLabel(`${activeIndex + 1} / ${slideCount}`);
+        refreshLayersList();
         if (!preserveSelection) {
           deselectElement();
         }
@@ -2468,6 +2475,7 @@
         didSyncCustomGradientControls
       });
       syncSolidWallpaperControlToActiveSlide(activeSlide);
+      refreshLayersList();
       preserveSelectionOnNextActiveSlideSync = false;
       if (options.captureHistory && nextViewState.didSync && previousIndex !== currentSlideIndex) {
         saveHistoryState(false);
