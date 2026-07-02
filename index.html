@@ -1515,6 +1515,23 @@
     }
 
     function buildEditorDeckRenderOptions(doc = getIframeDoc(), canonicalDeck = null, options = {}) {
+      const createStudioDeckRenderOptions = (
+        typeof SlideNextStudioDeckView !== 'undefined'
+        && SlideNextStudioDeckView
+      )
+        && typeof SlideNextStudioDeckView.createStudioDeckRenderOptions === 'function'
+        ? SlideNextStudioDeckView.createStudioDeckRenderOptions
+        : null;
+      if (createStudioDeckRenderOptions) {
+        return createStudioDeckRenderOptions(doc, canonicalDeck, {
+          activeSlideId: options.activeSlideId,
+          resolveFallbackActiveSlideId: (nextDoc, nextCanonicalDeck) => resolveEditorFallbackActiveSlideId(
+            nextDoc,
+            nextCanonicalDeck
+          )
+        });
+      }
+
       const explicitActiveSlideId = typeof options.activeSlideId === 'string' && options.activeSlideId.trim()
         ? options.activeSlideId
         : '';

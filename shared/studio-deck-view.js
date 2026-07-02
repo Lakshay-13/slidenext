@@ -101,6 +101,22 @@
     };
   }
 
+  function createStudioDeckRenderOptions(doc, canonicalDeck = null, options = {}) {
+    const explicitActiveSlideId = typeof options.activeSlideId === 'string' && options.activeSlideId.trim()
+      ? options.activeSlideId
+      : '';
+    const resolveFallbackActiveSlideId = typeof options.resolveFallbackActiveSlideId === 'function'
+      ? options.resolveFallbackActiveSlideId
+      : () => '';
+
+    return {
+      activeSlideId: explicitActiveSlideId || resolveFallbackActiveSlideId(doc, canonicalDeck),
+      preferSourceHtml: false,
+      preferBodySourceHtml: false,
+      preferSlideSourceHtml: false
+    };
+  }
+
   function resolveStudioFallbackActiveSlideId(doc, canonicalDeck = null, options = {}) {
     const getPersistedActiveSlideId = typeof options.getPersistedActiveSlideId === 'function'
       ? options.getPersistedActiveSlideId
@@ -657,6 +673,7 @@
     createStudioCanonicalDeckResolver,
     resolveStudioCanonicalDeckViewState,
     createStudioDeckViewBuildOptions,
+    createStudioDeckRenderOptions,
     resolveStudioFallbackActiveSlideId,
     buildStudioPreviewHtml,
     buildStudioSourceHtml

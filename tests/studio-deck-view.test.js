@@ -116,6 +116,47 @@ test('createStudioDeckViewBuildOptions reuses shared canonical view state for fa
   });
 });
 
+test('createStudioDeckRenderOptions prefers an explicit active slide id and otherwise falls back through the resolver', () => {
+  const doc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const calls = [];
+
+  const explicitRenderOptions = deckView.createStudioDeckRenderOptions(doc, canonicalDeck, {
+    activeSlideId: 'slide-explicit',
+    resolveFallbackActiveSlideId(nextDoc, nextCanonicalDeck) {
+      calls.push([nextDoc, nextCanonicalDeck]);
+      return 'slide-fallback';
+    }
+  });
+
+  assert.deepEqual(explicitRenderOptions, {
+    activeSlideId: 'slide-explicit',
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false
+  });
+  assert.deepEqual(calls, []);
+
+  const fallbackRenderOptions = deckView.createStudioDeckRenderOptions(doc, canonicalDeck, {
+    resolveFallbackActiveSlideId(nextDoc, nextCanonicalDeck) {
+      calls.push([nextDoc, nextCanonicalDeck]);
+      return 'slide-fallback';
+    }
+  });
+
+  assert.deepEqual(fallbackRenderOptions, {
+    activeSlideId: 'slide-fallback',
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false
+  });
+  assert.deepEqual(calls, [[doc, canonicalDeck]]);
+});
+
 test('resolveStudioFallbackActiveSlideId prefers the live active slide id before fallback canonical resolution', () => {
   const calls = [];
 
