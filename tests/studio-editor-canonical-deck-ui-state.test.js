@@ -467,6 +467,48 @@ test('resolveEditorFallbackActiveSlideId delegates to the shared deck view helpe
   assert.equal(delegatedArgs.options.isCanonicalDeck, context.SlideNextCanonicalDeck.isCanonicalDeck);
 });
 
+test('resolveEditorLiveActiveSlideId delegates to the shared deck view helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorLiveActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorLiveActiveSlide(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorDeckRenderOptions(doc = getIframeDoc(), canonicalDeck = null, options = {}) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const activeSlide = { label: 'slide-active' };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioDeckView: {
+      resolveStudioLiveActiveSlide(doc) {
+        return doc === iframeDoc ? activeSlide : null;
+      },
+      resolveStudioLiveActiveSlideId(doc, options) {
+        delegatedArgs = { doc, options };
+        return 'slide-shared';
+      }
+    },
+    getActiveSlideId(nextDoc) {
+      return nextDoc === iframeDoc ? 'slide-live' : '';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorLiveActiveSlideIdSource, context);
+
+  const result = context.resolveEditorLiveActiveSlideId(iframeDoc);
+
+  assert.equal(result, 'slide-shared');
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(typeof delegatedArgs.options.resolveLiveActiveSlide, 'function');
+  assert.equal(typeof delegatedArgs.options.getActiveSlideId, 'function');
+  assert.equal(delegatedArgs.options.resolveLiveActiveSlide(iframeDoc), activeSlide);
+  assert.equal(delegatedArgs.options.getActiveSlideId(iframeDoc, activeSlide), 'slide-live');
+});
+
 test('resolveEditorCanonicalDeckViewState delegates resolver orchestration to the shared deck view helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(

@@ -157,6 +157,55 @@ test('createStudioDeckRenderOptions prefers an explicit active slide id and othe
   assert.deepEqual(calls, [[doc, canonicalDeck]]);
 });
 
+test('resolveStudioLiveActiveSlide returns the active slide node when present and null otherwise', () => {
+  const activeSlide = { label: 'slide-active' };
+  const doc = {
+    querySelector(selector) {
+      assert.equal(selector, '.slide-active');
+      return activeSlide;
+    }
+  };
+
+  assert.equal(deckView.resolveStudioLiveActiveSlide(doc), activeSlide);
+  assert.equal(deckView.resolveStudioLiveActiveSlide(null), null);
+});
+
+test('resolveStudioLiveActiveSlideId resolves through the provided live slide and id readers', () => {
+  const activeSlide = { label: 'slide-active' };
+  const doc = { label: 'iframe-doc' };
+  const calls = [];
+
+  assert.equal(
+    deckView.resolveStudioLiveActiveSlideId(doc, {
+      resolveLiveActiveSlide(nextDoc) {
+        calls.push(['resolveLiveActiveSlide', nextDoc]);
+        return activeSlide;
+      },
+      getActiveSlideId(nextDoc, nextActiveSlide) {
+        calls.push(['getActiveSlideId', nextDoc, nextActiveSlide]);
+        return 'slide-2';
+      }
+    }),
+    'slide-2'
+  );
+  assert.deepEqual(calls, [
+    ['resolveLiveActiveSlide', doc],
+    ['getActiveSlideId', doc, activeSlide]
+  ]);
+
+  assert.equal(
+    deckView.resolveStudioLiveActiveSlideId(doc, {
+      resolveLiveActiveSlide() {
+        return null;
+      },
+      getActiveSlideId() {
+        throw new Error('getActiveSlideId should not run without an active slide');
+      }
+    }),
+    ''
+  );
+});
+
 test('resolveStudioFallbackActiveSlideId prefers the live active slide id before fallback canonical resolution', () => {
   const calls = [];
 

@@ -117,6 +117,30 @@
     };
   }
 
+  function resolveStudioLiveActiveSlide(doc, options = {}) {
+    const querySelector = typeof options.querySelector === 'function'
+      ? options.querySelector
+      : (nextDoc, selector) => nextDoc && typeof nextDoc.querySelector === 'function'
+          ? nextDoc.querySelector(selector)
+          : null;
+    return querySelector(doc, '.slide-active') || null;
+  }
+
+  function resolveStudioLiveActiveSlideId(doc, options = {}) {
+    const resolveLiveActiveSlide = typeof options.resolveLiveActiveSlide === 'function'
+      ? options.resolveLiveActiveSlide
+      : (nextDoc) => resolveStudioLiveActiveSlide(nextDoc, options);
+    const activeSlide = resolveLiveActiveSlide(doc);
+    if (!activeSlide) {
+      return '';
+    }
+
+    const getActiveSlideId = typeof options.getActiveSlideId === 'function'
+      ? options.getActiveSlideId
+      : () => '';
+    return getActiveSlideId(doc, activeSlide) || '';
+  }
+
   function resolveStudioFallbackActiveSlideId(doc, canonicalDeck = null, options = {}) {
     const getPersistedActiveSlideId = typeof options.getPersistedActiveSlideId === 'function'
       ? options.getPersistedActiveSlideId
@@ -674,6 +698,8 @@
     resolveStudioCanonicalDeckViewState,
     createStudioDeckViewBuildOptions,
     createStudioDeckRenderOptions,
+    resolveStudioLiveActiveSlide,
+    resolveStudioLiveActiveSlideId,
     resolveStudioFallbackActiveSlideId,
     buildStudioPreviewHtml,
     buildStudioSourceHtml
