@@ -302,6 +302,84 @@ test('getEditorHistoryOptions threads sanitizer overrides and explicit persisten
   );
 });
 
+test('getEditorHistoryOptions prefers the shared merged persistence resolver for frame sanitization', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const getEditorHistoryOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorHistoryOptions(options = {}) {',
+    '\n\n    function getEditorHistoryStackOptions(options = {}) {'
+  );
+
+  const sanitizeCalls = [];
+  const calls = [];
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckLoader: {
+      resolveMergedPresentationPersistenceOptions(metadata, explicitOptions) {
+        calls.push(['resolveMergedPresentationPersistenceOptions', metadata, explicitOptions]);
+        assert.equal(metadata, context.currentPresentationMetadata);
+        assert.deepEqual(JSON.parse(JSON.stringify(explicitOptions)), {
+          emptyContainerIds: ['pixelMatrix']
+        });
+        return {
+          emptyContainerIds: ['gitNodesContainer', 'pixelMatrix']
+        };
+      },
+      resolvePresentationPersistenceOptions() {
+        throw new Error('resolvePresentationPersistenceOptions should not run when merged resolver is available');
+      }
+    },
+    SlideNextDeckImport: {
+      sanitizeDeckSourceClone(root, options) {
+        sanitizeCalls.push([root, options]);
+      }
+    },
+    currentPresentationMetadata: {
+      id: 'onboarding-presentation',
+      persistence: {
+        emptyContainerIds: ['gitNodesContainer']
+      }
+    },
+    getActiveSlideId() {
+      return 'slide-3';
+    },
+    getSelectedEditorElementIds() {
+      return ['node-9'];
+    },
+    areEditorIdListsEqual(left, right) {
+      return JSON.stringify(left) === JSON.stringify(right);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  vm.runInContext(getEditorHistoryOptionsSource, context);
+
+  const options = context.getEditorHistoryOptions({
+    persistenceOptions: {
+      emptyContainerIds: ['pixelMatrix']
+    }
+  });
+  const root = { id: 'history-root' };
+  options.sanitizeFrameRoot(root);
+
+  assert.deepEqual(calls.map(([name]) => name), ['resolveMergedPresentationPersistenceOptions']);
+  assert.equal(sanitizeCalls.length, 1);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(sanitizeCalls[0][1].persistenceOptions)),
+    {
+      emptyContainerIds: ['gitNodesContainer', 'pixelMatrix']
+    }
+  );
+});
+
 test('getEditorHistoryStackOptions forwards sanitizer overrides into the underlying history options', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorHistoryStackOptionsSource = extractFunctionSource(

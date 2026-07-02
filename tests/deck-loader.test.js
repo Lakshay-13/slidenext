@@ -75,6 +75,45 @@ test('normalizeLoadedPresentationMetadata strips malformed canonical sidecars fr
   });
 });
 
+test('resolveMergedPresentationPersistenceOptions combines metadata and explicit cleanup settings additively', () => {
+  assert.deepEqual(
+    deckLoader.resolveMergedPresentationPersistenceOptions(
+      {
+        persistence: {
+          emptyContainerIds: ['indicatorDots'],
+          styleCleanups: [
+            {
+              selector: '.hero-card',
+              properties: ['opacity']
+            }
+          ],
+          transientClassNames: ['revealed']
+        }
+      },
+      {
+        emptyContainerIds: ['gitNodesContainer'],
+        styleCleanups: [
+          {
+            selector: '.hero-card',
+            properties: ['transform']
+          }
+        ],
+        transientClassNames: ['voted']
+      }
+    ),
+    {
+      emptyContainerIds: ['indicatorDots', 'gitNodesContainer'],
+      styleCleanups: [
+        {
+          selector: '.hero-card',
+          properties: ['opacity', 'transform']
+        }
+      ],
+      transientClassNames: ['revealed', 'voted']
+    }
+  );
+});
+
 test('buildCanonicalDeckFromDocument forwards shared import options to the canonical deck importer', () => {
   const slide = {
     id: 'custom-slide-1',

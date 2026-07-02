@@ -107,6 +107,17 @@
     }), {});
   }
 
+  function resolveMergedPresentationPersistenceOptions(metadata = {}, explicitOptions = {}) {
+    const normalizedExplicitOptions = explicitOptions && typeof explicitOptions === 'object' && !Array.isArray(explicitOptions)
+      ? { ...explicitOptions }
+      : {};
+
+    return mergePresentationPersistenceOptions(
+      resolvePresentationPersistenceOptions(metadata),
+      normalizedExplicitOptions
+    );
+  }
+
   async function loadPresentationMetadata(presentationUrl = '', presentationTitle = '', options = {}) {
     const fallbackMetadata = buildPresentationMetadataSeed(presentationUrl, presentationTitle);
     const metadataUrl = derivePresentationMetadataUrl(presentationUrl);
@@ -150,13 +161,9 @@
       return null;
     }
 
-    const metadataPersistenceOptions = resolvePresentationPersistenceOptions(options.presentationMetadata || {});
-    const explicitPersistenceOptions = options.persistenceOptions && typeof options.persistenceOptions === 'object' && !Array.isArray(options.persistenceOptions)
-      ? { ...options.persistenceOptions }
-      : {};
-    const persistenceOptions = mergePresentationPersistenceOptions(
-      metadataPersistenceOptions,
-      explicitPersistenceOptions
+    const persistenceOptions = resolveMergedPresentationPersistenceOptions(
+      options.presentationMetadata || {},
+      options.persistenceOptions
     );
     const additionalTransientClassNames = Array.isArray(persistenceOptions.transientClassNames)
       ? persistenceOptions.transientClassNames
@@ -186,6 +193,7 @@
     normalizeLoadedPresentationMetadata,
     loadPresentationMetadata,
     resolvePresentationPersistenceOptions,
+    resolveMergedPresentationPersistenceOptions,
     buildCanonicalDeckFromDocument
   };
 });

@@ -2730,37 +2730,48 @@
       const activePresentationMetadata = typeof currentPresentationMetadata !== 'undefined'
         ? currentPresentationMetadata
         : null;
-      const metadataPersistenceOptions = (
+      const resolveMergedPresentationPersistenceOptions = (
         typeof SlideNextDeckLoader !== 'undefined'
         && SlideNextDeckLoader
-        && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
+        && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
       )
-        ? SlideNextDeckLoader.resolvePresentationPersistenceOptions(activePresentationMetadata || {})
-        : activePresentationMetadata
-          && activePresentationMetadata.persistence
-          && typeof activePresentationMetadata.persistence === 'object'
-          && !Array.isArray(activePresentationMetadata.persistence)
-          ? { ...activePresentationMetadata.persistence }
-          : {};
-      const explicitPersistenceOptions = options.persistenceOptions && typeof options.persistenceOptions === 'object' && !Array.isArray(options.persistenceOptions)
-        ? { ...options.persistenceOptions }
-        : {};
-      const mergePresentationPersistenceOptions = (
-        typeof SlideNextPresentationMetadata !== 'undefined'
-        && SlideNextPresentationMetadata
-        && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
-      )
-        ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
-        : (...optionSets) => optionSets.reduce((mergedOptions, optionSet) => ({
-            ...mergedOptions,
-            ...(optionSet && typeof optionSet === 'object' && !Array.isArray(optionSet)
-              ? optionSet
-              : {})
-          }), {});
-      const persistenceOptions = mergePresentationPersistenceOptions(
-        metadataPersistenceOptions,
-        explicitPersistenceOptions
-      );
+        ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
+        : null;
+      const persistenceOptions = resolveMergedPresentationPersistenceOptions
+        ? resolveMergedPresentationPersistenceOptions(activePresentationMetadata || {}, options.persistenceOptions)
+        : (() => {
+            const metadataPersistenceOptions = (
+              typeof SlideNextDeckLoader !== 'undefined'
+              && SlideNextDeckLoader
+              && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
+            )
+              ? SlideNextDeckLoader.resolvePresentationPersistenceOptions(activePresentationMetadata || {})
+              : activePresentationMetadata
+                && activePresentationMetadata.persistence
+                && typeof activePresentationMetadata.persistence === 'object'
+                && !Array.isArray(activePresentationMetadata.persistence)
+                ? { ...activePresentationMetadata.persistence }
+                : {};
+            const explicitPersistenceOptions = options.persistenceOptions && typeof options.persistenceOptions === 'object' && !Array.isArray(options.persistenceOptions)
+              ? { ...options.persistenceOptions }
+              : {};
+            const mergePresentationPersistenceOptions = (
+              typeof SlideNextPresentationMetadata !== 'undefined'
+              && SlideNextPresentationMetadata
+              && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
+            )
+              ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
+              : (...optionSets) => optionSets.reduce((mergedOptions, optionSet) => ({
+                  ...mergedOptions,
+                  ...(optionSet && typeof optionSet === 'object' && !Array.isArray(optionSet)
+                    ? optionSet
+                    : {})
+                }), {});
+            return mergePresentationPersistenceOptions(
+              metadataPersistenceOptions,
+              explicitPersistenceOptions
+            );
+          })();
       const {
         chromeNodeIds: _overrideChromeNodeIds,
         transientClassNames: _overrideTransientClassNames,
@@ -4918,6 +4929,16 @@
         const activePresentationMetadata = typeof currentPresentationMetadata !== 'undefined'
           ? currentPresentationMetadata
           : null;
+        const resolveMergedPresentationPersistenceOptions = (
+          typeof SlideNextDeckLoader !== 'undefined'
+          && SlideNextDeckLoader
+          && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
+        )
+          ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
+          : null;
+        if (resolveMergedPresentationPersistenceOptions) {
+          return resolveMergedPresentationPersistenceOptions(activePresentationMetadata || {});
+        }
         return (
           typeof SlideNextDeckLoader !== 'undefined'
           && SlideNextDeckLoader
