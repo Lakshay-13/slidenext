@@ -84,6 +84,90 @@ test('buildStudioDeckSnapshot prefers the canonical deck snapshot when available
   });
 });
 
+test('createStudioDeckSnapshotBuildOptions resolves live snapshot state from the shared canonical view state', () => {
+  const doc = { label: 'doc' };
+  const canonicalDeck = {
+    slides: [
+      { id: 'slide-1', title: 'Intro', nodes: [{ id: 'node-1' }] },
+      { id: 'slide-2', title: 'Agenda', nodes: [{ id: 'node-2' }] }
+    ]
+  };
+  const activeSlide = { id: 'active-slide-el' };
+  let fallbackCalls = 0;
+  let canonicalDeckCalls = 0;
+
+  const result = deckSnapshot.createStudioDeckSnapshotBuildOptions(doc, {
+    resolveCanonicalDeckViewState(nextDoc) {
+      assert.equal(nextDoc, doc);
+      return {
+        resolveCanonicalDeck(sourceDoc) {
+          canonicalDeckCalls += 1;
+          assert.equal(sourceDoc, doc);
+          return canonicalDeck;
+        },
+        liveActiveSlideId: 'slide-2',
+        resolvedCanonicalDeck: null
+      };
+    },
+    resolveFallbackActiveSlideId() {
+      fallbackCalls += 1;
+      return 'slide-fallback';
+    },
+    resolveLiveActiveSlide(nextDoc) {
+      assert.equal(nextDoc, doc);
+      return activeSlide;
+    }
+  });
+
+  assert.equal(result.fallbackActiveSlideId, 'slide-2');
+  assert.equal(result.getActiveSlide(), activeSlide);
+  assert.deepEqual(result.buildCanonicalDeck(doc), canonicalDeck);
+  assert.equal(result.liveActiveSlideId, 'slide-2');
+  assert.equal(result.resolvedCanonicalDeck, null);
+  assert.equal(canonicalDeckCalls, 1);
+  assert.equal(fallbackCalls, 0);
+});
+
+test('createStudioDeckSnapshotBuildOptions reuses the resolved canonical deck when the editor frame is unavailable', () => {
+  const canonicalDeck = {
+    slides: [
+      { id: 'slide-1', title: 'Intro', nodes: [{ id: 'node-1' }] },
+      { id: 'slide-2', title: 'Agenda', nodes: [{ id: 'node-2' }] }
+    ]
+  };
+  let canonicalDeckCalls = 0;
+  let fallbackArgs = null;
+
+  const result = deckSnapshot.createStudioDeckSnapshotBuildOptions(null, {
+    resolveCanonicalDeckViewState(nextDoc) {
+      assert.equal(nextDoc, null);
+      return {
+        resolveCanonicalDeck() {
+          canonicalDeckCalls += 1;
+          return null;
+        },
+        liveActiveSlideId: '',
+        resolvedCanonicalDeck: canonicalDeck
+      };
+    },
+    resolveFallbackActiveSlideId(nextDoc, resolvedCanonicalDeck) {
+      fallbackArgs = { nextDoc, resolvedCanonicalDeck };
+      return 'slide-2';
+    }
+  });
+
+  assert.deepEqual(result.buildCanonicalDeck(), canonicalDeck);
+  assert.equal(result.fallbackActiveSlideId, 'slide-2');
+  assert.equal(result.getActiveSlide(), null);
+  assert.equal(result.liveActiveSlideId, '');
+  assert.equal(result.resolvedCanonicalDeck, canonicalDeck);
+  assert.equal(canonicalDeckCalls, 0);
+  assert.deepEqual(fallbackArgs, {
+    nextDoc: null,
+    resolvedCanonicalDeck: canonicalDeck
+  });
+});
+
 test('buildStudioDeckSnapshot merges live layer snapshots onto canonical slides when requested', () => {
   const doc = { label: 'doc' };
   const slideElsById = new Map([

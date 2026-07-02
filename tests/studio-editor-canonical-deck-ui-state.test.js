@@ -726,6 +726,108 @@ test('buildEditorDeckRenderOptions delegates render-option composition to the sh
   );
 });
 
+test('buildEditorDeckSnapshot delegates snapshot build-option composition to the shared snapshot helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorDeckSnapshotSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function getStudioActiveSlideIndex(doc = getIframeDoc()) {'
+  );
+
+  const calls = [];
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  const activeSlide = { id: 'active-slide-el' };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioDeckSnapshot: {
+      createStudioDeckSnapshotBuildOptions(nextDoc, options) {
+        delegatedArgs = {
+          nextDoc,
+          options,
+          canonicalDeckViewState: options.resolveCanonicalDeckViewState(nextDoc),
+          fallbackActiveSlideId: options.resolveFallbackActiveSlideId(nextDoc, canonicalDeck),
+          liveActiveSlide: options.resolveLiveActiveSlide(nextDoc)
+        };
+        return {
+          buildCanonicalDeck: () => canonicalDeck,
+          fallbackActiveSlideId: 'slide-shared',
+          getActiveSlide: () => activeSlide
+        };
+      },
+      buildStudioDeckSnapshot(nextDoc, options) {
+        calls.push({
+          nextDoc,
+          options,
+          canonicalDeck: options.buildCanonicalDeck(nextDoc),
+          activeSlide: options.getActiveSlide(nextDoc)
+        });
+        return {
+          activeSlideId: options.fallbackActiveSlideId,
+          activeSlideIndex: 1,
+          slides: []
+        };
+      }
+    },
+    buildEditorDeckSnapshotFromDom() {},
+    buildEditorLayerSnapshot() {},
+    getEditorSlideId(nextSlide, nextDoc) {
+      assert.equal(nextSlide, activeSlide);
+      assert.equal(nextDoc, iframeDoc);
+      return 'slide-live';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlideById() {
+      return null;
+    },
+    resolveEditorCanonicalDeckViewState(nextDoc, options = {}) {
+      assert.equal(nextDoc, iframeDoc);
+      return {
+        resolveCanonicalDeck() {
+          return canonicalDeck;
+        },
+        liveActiveSlideId: options.resolveLiveActiveSlideId(nextDoc),
+        resolvedCanonicalDeck: null
+      };
+    },
+    resolveEditorFallbackActiveSlideId(nextDoc, nextCanonicalDeck) {
+      assert.equal(nextDoc, iframeDoc);
+      assert.equal(nextCanonicalDeck, canonicalDeck);
+      return 'slide-fallback';
+    },
+    resolveEditorLiveActiveSlide(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return activeSlide;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorDeckSnapshotSource, context);
+
+  const result = context.buildEditorDeckSnapshot();
+
+  assert.equal(delegatedArgs.nextDoc, iframeDoc);
+  assert.equal(delegatedArgs.canonicalDeckViewState.liveActiveSlideId, 'slide-live');
+  assert.equal(delegatedArgs.fallbackActiveSlideId, 'slide-fallback');
+  assert.equal(delegatedArgs.liveActiveSlide, activeSlide);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].nextDoc, iframeDoc);
+  assert.equal(calls[0].options.fallbackActiveSlideId, 'slide-shared');
+  assert.equal(calls[0].canonicalDeck, canonicalDeck);
+  assert.equal(calls[0].activeSlide, activeSlide);
+  assert.equal(result.activeSlideId, 'slide-shared');
+  assert.equal(result.activeSlideIndex, 1);
+});
+
 test('buildEditorDeckSnapshot prefers the current session active slide fallback when the iframe is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
