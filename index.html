@@ -4355,30 +4355,31 @@
       )
         ? SlideNextCanonicalDeck.isCanonicalDeck
         : null;
+      const resolveStudioCanonicalDeckOverride = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+      )
+        && typeof SlideNextStudioEditorPersistence.resolveStudioCanonicalDeckOverride === 'function'
+        ? SlideNextStudioEditorPersistence.resolveStudioCanonicalDeckOverride
+        : null;
       const resolveCanonicalDeckOverride = (shouldBuildFallbackCanonicalDeck = false) => {
-        if (!canonicalDeckValidator) {
-          return providedCanonicalDeck || (shouldBuildFallbackCanonicalDeck ? buildEditorCanonicalDeck(doc) : null);
-        }
-        const resolveStudioSaveRequestCanonicalDeck = (
-          typeof SlideNextStudioEditorPersistence !== 'undefined'
-          && SlideNextStudioEditorPersistence
-        )
-          && typeof SlideNextStudioEditorPersistence.resolveStudioSaveRequestCanonicalDeck === 'function'
-          ? SlideNextStudioEditorPersistence.resolveStudioSaveRequestCanonicalDeck
+        const buildCanonicalDeck = shouldBuildFallbackCanonicalDeck
+          ? () => buildEditorCanonicalDeck(doc)
           : null;
-        if (resolveStudioSaveRequestCanonicalDeck) {
-          return resolveStudioSaveRequestCanonicalDeck({
+        if (resolveStudioCanonicalDeckOverride) {
+          return resolveStudioCanonicalDeckOverride({
             canonicalDeck: providedCanonicalDeck,
-            buildCanonicalDeck: shouldBuildFallbackCanonicalDeck
-              ? () => buildEditorCanonicalDeck(doc)
-              : null,
+            buildCanonicalDeck,
             isCanonicalDeck: canonicalDeckValidator
           });
         }
-        if (providedCanonicalDeck && canonicalDeckValidator && !canonicalDeckValidator(providedCanonicalDeck)) {
-          return shouldBuildFallbackCanonicalDeck ? buildEditorCanonicalDeck(doc) : null;
+        if (!canonicalDeckValidator) {
+          return providedCanonicalDeck || (buildCanonicalDeck ? buildCanonicalDeck() : null);
         }
-        return providedCanonicalDeck || (shouldBuildFallbackCanonicalDeck ? buildEditorCanonicalDeck(doc) : null);
+        if (providedCanonicalDeck && canonicalDeckValidator && !canonicalDeckValidator(providedCanonicalDeck)) {
+          return buildCanonicalDeck ? buildCanonicalDeck() : null;
+        }
+        return providedCanonicalDeck || (buildCanonicalDeck ? buildCanonicalDeck() : null);
       };
       if (!doc) {
         const persistedDeckState = getCurrentEditorPersistedDeckState();
@@ -4521,30 +4522,27 @@
       )
         ? SlideNextCanonicalDeck.isCanonicalDeck
         : null;
-      const resolvedCanonicalDeck = !canonicalDeckValidator
-        ? (providedCanonicalDeck || buildEditorCanonicalDeck(doc))
-        : (() => {
-            const resolveStudioSaveRequestCanonicalDeck = (
-              typeof SlideNextStudioEditorPersistence !== 'undefined'
-              && SlideNextStudioEditorPersistence
-            )
-              && typeof SlideNextStudioEditorPersistence.resolveStudioSaveRequestCanonicalDeck === 'function'
-              ? SlideNextStudioEditorPersistence.resolveStudioSaveRequestCanonicalDeck
-              : null;
-            if (resolveStudioSaveRequestCanonicalDeck) {
-              return resolveStudioSaveRequestCanonicalDeck({
-                canonicalDeck: providedCanonicalDeck,
-                buildCanonicalDeck: () => buildEditorCanonicalDeck(doc),
-                isCanonicalDeck: canonicalDeckValidator
-              });
-            }
-            return (
+      const resolveStudioCanonicalDeckOverride = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+      )
+        && typeof SlideNextStudioEditorPersistence.resolveStudioCanonicalDeckOverride === 'function'
+        ? SlideNextStudioEditorPersistence.resolveStudioCanonicalDeckOverride
+        : null;
+      const resolvedCanonicalDeck = resolveStudioCanonicalDeckOverride
+        ? resolveStudioCanonicalDeckOverride({
+            canonicalDeck: providedCanonicalDeck,
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc),
+            isCanonicalDeck: canonicalDeckValidator
+          })
+        : !canonicalDeckValidator
+          ? (providedCanonicalDeck || buildEditorCanonicalDeck(doc))
+          : (
               providedCanonicalDeck
               && !canonicalDeckValidator(providedCanonicalDeck)
             )
-              ? buildEditorCanonicalDeck(doc)
-              : (providedCanonicalDeck || buildEditorCanonicalDeck(doc));
-          })();
+            ? buildEditorCanonicalDeck(doc)
+            : (providedCanonicalDeck || buildEditorCanonicalDeck(doc));
       const resolvedCleanHtml = typeof cleanHtml === 'string'
         ? cleanHtml
         : buildPersistableDeckHtml(doc, {

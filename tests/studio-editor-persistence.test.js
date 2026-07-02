@@ -271,6 +271,66 @@ test('resolveStudioSaveRequestCanonicalDeck falls back to the provided canonical
   assert.equal(buildCanonicalDeckCalls, 1);
 });
 
+test('resolveStudioCanonicalDeckOverride preserves the provided override when no canonical validator is available', () => {
+  const providedCanonicalDeck = {
+    metadata: {
+      title: 'Unvalidated Deck'
+    }
+  };
+  let buildCanonicalDeckCalls = 0;
+
+  assert.equal(
+    editorPersistence.resolveStudioCanonicalDeckOverride({
+      canonicalDeck: providedCanonicalDeck,
+      buildCanonicalDeck() {
+        buildCanonicalDeckCalls += 1;
+        return {
+          slides: [
+            {
+              id: 'slide-1',
+              nodes: []
+            }
+          ]
+        };
+      }
+    }),
+    providedCanonicalDeck
+  );
+  assert.equal(buildCanonicalDeckCalls, 0);
+});
+
+test('resolveStudioCanonicalDeckOverride rebuilds malformed overrides when a canonical validator is available', () => {
+  const fallbackCanonicalDeck = {
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+  let buildCanonicalDeckCalls = 0;
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioCanonicalDeckOverride({
+      canonicalDeck: {
+        metadata: {
+          title: 'Broken Deck'
+        }
+      },
+      buildCanonicalDeck() {
+        buildCanonicalDeckCalls += 1;
+        return fallbackCanonicalDeck;
+      },
+      isCanonicalDeck: canonicalDeckModel.isCanonicalDeck
+    }),
+    canonicalDeckModel.createCanonicalDeck(fallbackCanonicalDeck)
+  );
+  assert.equal(buildCanonicalDeckCalls, 1);
+});
+
 test('buildStudioSaveRequestBody can rebuild a canonical deck sidecar from a fallback deck builder', () => {
   const fallbackCanonicalDeck = {
     metadata: {

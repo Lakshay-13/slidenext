@@ -112,6 +112,27 @@
       : resolvedFallbackCanonicalDeck;
   }
 
+  function resolveStudioCanonicalDeckOverride(options = {}) {
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+
+    if (!isCanonicalDeck) {
+      return options.canonicalDeck || (buildCanonicalDeck ? buildCanonicalDeck() : null);
+    }
+
+    return resolveStudioSaveRequestCanonicalDeck({
+      canonicalDeck: options.canonicalDeck,
+      buildCanonicalDeck,
+      createCanonicalDeck: options.createCanonicalDeck,
+      isCanonicalDeck,
+      resolvePresentationCanonicalDeck: options.resolvePresentationCanonicalDeck
+    });
+  }
+
   function createStudioPersistenceActionContext(presentationUrl = '', cleanHtml = '', options = {}) {
     const context = {
       presentationUrl: normalizeString(presentationUrl),
@@ -587,6 +608,7 @@
     resolveStudioPersistableDeckStateWithContent,
     resolveStudioPersistenceCanonicalDeck,
     resolveStudioSaveRequestCanonicalDeck,
+    resolveStudioCanonicalDeckOverride,
     createStudioPersistenceActionContext,
     createStudioVersionPersistenceActionContext,
     buildStudioSaveRequestBody,
