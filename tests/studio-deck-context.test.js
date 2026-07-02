@@ -568,6 +568,33 @@ test('buildStudioCanonicalDeck falls back to stored canonical metadata when a fo
   assert.deepEqual(result, canonicalDeck.createCanonicalDeck(storedCanonicalDeck));
 });
 
+test('buildStudioCanonicalDeck falls back to the provided persisted canonical baseline when live metadata is unavailable', () => {
+  const persistedCanonicalDeck = {
+    metadata: {
+      id: 'persisted-deck'
+    },
+    slides: [
+      {
+        id: 'slide-persisted',
+        nodes: []
+      }
+    ]
+  };
+
+  const result = deckContext.buildStudioCanonicalDeck(null, {
+    currentPresentationMetadata: null,
+    fallbackStoredPresentationMetadata: {
+      canonicalDeck: persistedCanonicalDeck
+    },
+    preferStoredCanonicalDeck: false,
+    buildCanonicalDeckFromDocument() {
+      throw new Error('DOM import should not run when the persisted fallback baseline is valid');
+    }
+  });
+
+  assert.deepEqual(result, canonicalDeck.createCanonicalDeck(persistedCanonicalDeck));
+});
+
 test('buildStudioCanonicalDeck falls back to stored canonical metadata when a live rebuild returns malformed data', () => {
   const storedCanonicalDeck = {
     metadata: {
@@ -600,6 +627,38 @@ test('buildStudioCanonicalDeck falls back to stored canonical metadata when a li
   });
 
   assert.deepEqual(result, canonicalDeck.createCanonicalDeck(storedCanonicalDeck));
+});
+
+test('buildStudioCanonicalDeck falls back to the provided persisted canonical baseline when a live rebuild returns malformed data', () => {
+  const persistedCanonicalDeck = {
+    metadata: {
+      id: 'persisted-deck'
+    },
+    slides: [
+      {
+        id: 'slide-persisted',
+        nodes: []
+      }
+    ]
+  };
+
+  const result = deckContext.buildStudioCanonicalDeck({ label: 'doc' }, {
+    currentPresentationMetadata: null,
+    fallbackStoredPresentationMetadata: {
+      canonicalDeck: persistedCanonicalDeck
+    },
+    preferStoredCanonicalDeck: false,
+    buildCanonicalDeckFromDocument() {
+      return {
+        metadata: {
+          title: 'Broken Deck'
+        }
+      };
+    },
+    isCanonicalDeck: canonicalDeck.isCanonicalDeck
+  });
+
+  assert.deepEqual(result, canonicalDeck.createCanonicalDeck(persistedCanonicalDeck));
 });
 
 test('buildStudioCanonicalDeck returns null when the canonical builder yields malformed data', () => {

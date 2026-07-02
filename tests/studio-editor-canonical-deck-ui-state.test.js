@@ -141,6 +141,7 @@ test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical dec
       }
     },
     currentPresentationMetadata: { id: 'deck-1' },
+    lastPersistedCanonicalDeck: null,
     buildCurrentPresentationMetadataSeed: () => ({ id: 'seed-deck' }),
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
@@ -156,7 +157,6 @@ test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical dec
   };
 
   vm.createContext(context);
-  loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(buildEditorCanonicalDeckSource, context);
 
   context.buildEditorCanonicalDeck();
@@ -167,6 +167,10 @@ test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical dec
   assert.equal(calls[0].options.presentationUrl, '/presentations/onboarding-presentation/index.html');
   assert.equal(calls[0].options.presentationTitle, 'Project Onboarding');
   assert.equal(calls[0].options.preferStoredCanonicalDeck, false);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[0].options.fallbackStoredPresentationMetadata)),
+    { canonicalDeck: null }
+  );
   assert.equal(typeof calls[0].options.getSlideId, 'function');
   assert.equal(typeof calls[0].options.getNodeId, 'function');
 });
@@ -189,38 +193,39 @@ test('buildEditorCanonicalDeck reuses the in-memory persisted canonical baseline
       }
     ]
   };
-  const calls = [];
   const context = {
     SlideNextStudioDeckContext: {
-      resolveStoredStudioCanonicalDeck(metadata) {
-        calls.push(['resolveStoredStudioCanonicalDeck', metadata]);
-        return metadata && metadata.canonicalDeck === persistedCanonicalDeck
-          ? persistedCanonicalDeck
-          : null;
-      },
-      buildStudioCanonicalDeck() {
-        throw new Error('metadata canonical resolution should satisfy this fallback without rebuilding');
+      buildStudioCanonicalDeck(nextDoc, options) {
+        assert.equal(nextDoc, null);
+        assert.deepEqual(
+          JSON.parse(JSON.stringify(options.fallbackStoredPresentationMetadata)),
+          { canonicalDeck: persistedCanonicalDeck }
+        );
+        return persistedCanonicalDeck;
       }
     },
     currentPresentationMetadata: null,
     lastPersistedCanonicalDeck: persistedCanonicalDeck,
+    buildCurrentPresentationMetadataSeed: () => ({ id: 'seed-deck' }),
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    getEditorSlideId() {
+      return 'slide-1';
+    },
+    assignEditorElementId() {
+      return 'node-1';
+    },
     getIframeDoc() {
       return null;
     }
   };
 
   vm.createContext(context);
-  loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(buildEditorCanonicalDeckSource, context);
 
   const result = context.buildEditorCanonicalDeck();
 
   assert.equal(result, persistedCanonicalDeck);
-  assert.equal(calls.length, 2);
-  assert.equal(calls[0][0], 'resolveStoredStudioCanonicalDeck');
-  assert.equal(calls[0][1], null);
-  assert.equal(calls[1][0], 'resolveStoredStudioCanonicalDeck');
-  assert.equal(calls[1][1].canonicalDeck, persistedCanonicalDeck);
 });
 
 test('buildEditorCanonicalDeck falls back to the stored canonical baseline when the live canonical build is malformed', () => {
@@ -242,27 +247,15 @@ test('buildEditorCanonicalDeck falls back to the stored canonical baseline when 
       }
     ]
   };
-  const malformedLiveCanonicalDeck = {
-    slides: 'not-an-array'
-  };
-  const calls = [];
   const context = {
-    SlideNextCanonicalDeck: {
-      isCanonicalDeck(deck) {
-        calls.push(['isCanonicalDeck', deck]);
-        return deck === persistedCanonicalDeck;
-      }
-    },
     SlideNextStudioDeckContext: {
-      resolveStoredStudioCanonicalDeck(metadata) {
-        calls.push(['resolveStoredStudioCanonicalDeck', metadata]);
-        return metadata && metadata.canonicalDeck === persistedCanonicalDeck
-          ? persistedCanonicalDeck
-          : null;
-      },
       buildStudioCanonicalDeck(nextDoc, options) {
-        calls.push(['buildStudioCanonicalDeck', nextDoc, options]);
-        return malformedLiveCanonicalDeck;
+        assert.equal(nextDoc, doc);
+        assert.deepEqual(
+          JSON.parse(JSON.stringify(options.fallbackStoredPresentationMetadata)),
+          { canonicalDeck: persistedCanonicalDeck }
+        );
+        return persistedCanonicalDeck;
       }
     },
     currentPresentationMetadata: null,
@@ -282,23 +275,11 @@ test('buildEditorCanonicalDeck falls back to the stored canonical baseline when 
   };
 
   vm.createContext(context);
-  loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(buildEditorCanonicalDeckSource, context);
 
   const result = context.buildEditorCanonicalDeck();
 
   assert.equal(result, persistedCanonicalDeck);
-  assert.equal(calls[0][0], 'buildStudioCanonicalDeck');
-  assert.equal(calls[0][1], doc);
-  assert.equal(calls[1][0], 'isCanonicalDeck');
-  assert.equal(calls[1][1], malformedLiveCanonicalDeck);
-  assert.equal(calls[2][0], 'resolveStoredStudioCanonicalDeck');
-  assert.equal(calls[2][1], null);
-  assert.equal(calls[3][0], 'resolveStoredStudioCanonicalDeck');
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(calls[3][1])),
-    { canonicalDeck: persistedCanonicalDeck }
-  );
 });
 
 test('buildEditorCanonicalDeck prefers the current metadata canonical deck over the persisted baseline when the iframe is unavailable', () => {
@@ -329,21 +310,16 @@ test('buildEditorCanonicalDeck prefers the current metadata canonical deck over 
       }
     ]
   };
-  const calls = [];
   const context = {
     SlideNextStudioDeckContext: {
-      resolveStoredStudioCanonicalDeck(metadata) {
-        calls.push(['resolveStoredStudioCanonicalDeck', metadata]);
-        if (metadata === context.currentPresentationMetadata) {
-          return currentMetadataCanonicalDeck;
-        }
-        if (metadata && metadata.canonicalDeck === persistedCanonicalDeck) {
-          return persistedCanonicalDeck;
-        }
-        return null;
-      },
-      buildStudioCanonicalDeck() {
-        throw new Error('stored metadata canonical resolution should satisfy this fallback without rebuilding');
+      buildStudioCanonicalDeck(nextDoc, options) {
+        assert.equal(nextDoc, null);
+        assert.equal(options.currentPresentationMetadata, context.currentPresentationMetadata);
+        assert.deepEqual(
+          JSON.parse(JSON.stringify(options.fallbackStoredPresentationMetadata)),
+          { canonicalDeck: persistedCanonicalDeck }
+        );
+        return currentMetadataCanonicalDeck;
       }
     },
     currentPresentationMetadata: {
@@ -351,21 +327,26 @@ test('buildEditorCanonicalDeck prefers the current metadata canonical deck over 
       canonicalDeck: currentMetadataCanonicalDeck
     },
     lastPersistedCanonicalDeck: persistedCanonicalDeck,
+    buildCurrentPresentationMetadataSeed: () => ({ id: 'seed-deck' }),
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    getEditorSlideId() {
+      return 'slide-1';
+    },
+    assignEditorElementId() {
+      return 'node-1';
+    },
     getIframeDoc() {
       return null;
     }
   };
 
   vm.createContext(context);
-  loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(buildEditorCanonicalDeckSource, context);
 
   const result = context.buildEditorCanonicalDeck();
 
   assert.equal(result, currentMetadataCanonicalDeck);
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0][0], 'resolveStoredStudioCanonicalDeck');
-  assert.equal(calls[0][1], context.currentPresentationMetadata);
 });
 
 test('resolveEditorFallbackActiveSlideId rebuilds a malformed canonical deck input before choosing the fallback slide', () => {

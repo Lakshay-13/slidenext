@@ -2507,15 +2507,11 @@
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
-      if (!doc) {
-        const storedCanonicalDeck = resolveEditorStoredCanonicalBaseline();
-        if (storedCanonicalDeck) {
-          return storedCanonicalDeck;
-        }
-      }
-
-      const liveCanonicalDeck = SlideNextStudioDeckContext.buildStudioCanonicalDeck(doc, {
+      return SlideNextStudioDeckContext.buildStudioCanonicalDeck(doc, {
         currentPresentationMetadata,
+        fallbackStoredPresentationMetadata: {
+          canonicalDeck: lastPersistedCanonicalDeck
+        },
         buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
         presentationUrl: currentPresentationUrl,
         presentationTitle: currentTitle,
@@ -2523,18 +2519,6 @@
         getSlideId: getEditorSlideId,
         getNodeId: assignEditorElementId
       });
-      if (
-        typeof SlideNextCanonicalDeck !== 'undefined'
-        && SlideNextCanonicalDeck
-        && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-        && !SlideNextCanonicalDeck.isCanonicalDeck(liveCanonicalDeck)
-      ) {
-        const storedCanonicalDeck = resolveEditorStoredCanonicalBaseline();
-        if (storedCanonicalDeck) {
-          return storedCanonicalDeck;
-        }
-      }
-      return liveCanonicalDeck;
     }
 
     function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {

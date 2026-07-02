@@ -154,10 +154,17 @@
       || (typeof options.buildPresentationMetadataSeed === 'function'
         ? options.buildPresentationMetadataSeed(options.presentationUrl, options.presentationTitle)
         : buildStudioPresentationMetadataSeed(options.presentationUrl, options.presentationTitle));
-    const storedCanonicalDeck = resolveStoredStudioCanonicalDeck(currentPresentationMetadata, {
+    const fallbackStoredPresentationMetadata = Object.prototype.hasOwnProperty.call(options, 'fallbackStoredPresentationMetadata')
+      ? options.fallbackStoredPresentationMetadata
+      : null;
+    const storedCanonicalDeck = resolvePreferredStoredStudioCanonicalDeck(
+      currentPresentationMetadata,
+      fallbackStoredPresentationMetadata,
+      {
       createCanonicalDeck,
       isCanonicalDeck
-    });
+      }
+    );
     if (storedCanonicalDeck && (options.preferStoredCanonicalDeck !== false || !doc)) {
       return storedCanonicalDeck;
     }
