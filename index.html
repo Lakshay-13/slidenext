@@ -1887,10 +1887,18 @@
       const canDeleteSlides = slides.length > 1;
       
       const listContainer = document.getElementById('thumbnailsList');
-      listContainer.innerHTML = '';
+      if (listContainer) {
+        listContainer.innerHTML = '';
+      }
       
       const visibleIndex = slides.length === 0 ? 0 : getStudioActiveSlideIndex(iframeDoc) + 1;
-      document.getElementById('slideCountLabel').textContent = `${visibleIndex} / ${slides.length}`;
+      const slideCountLabel = document.getElementById('slideCountLabel');
+      if (slideCountLabel) {
+        slideCountLabel.textContent = `${visibleIndex} / ${slides.length}`;
+      }
+      if (!listContainer) {
+        return;
+      }
       
       slides.forEach((slide) => {
         const isActive = slide.id === deckSnapshot.activeSlideId;

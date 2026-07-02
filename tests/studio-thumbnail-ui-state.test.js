@@ -207,3 +207,67 @@ test('generateThumbnails renders a read-only canonical fallback when the editor 
   assert.equal(setupDragAndDropCalls, 0);
   assert.equal(getIframeDocCalls, 1);
 });
+
+test('generateThumbnails tolerates missing organizer chrome nodes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const generateThumbnailsSource = extractFunctionSource(
+    fileContent,
+    'function generateThumbnails() {',
+    '\n\n    // HTML5 Drag and Drop handlers for thumbnail cards'
+  );
+
+  const calls = [];
+  const context = {
+    buildEditorDeckSnapshot() {
+      return {
+        activeSlideId: 'slide-1',
+        slides: [
+          {
+            id: 'slide-1',
+            index: 0,
+            title: 'Only Slide',
+            backgroundLabel: 'Solid'
+          }
+        ]
+      };
+    },
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (id === 'thumbnailsList' || id === 'slideCountLabel') {
+          return null;
+        }
+        return null;
+      },
+      createElement() {
+        calls.push(['createElement']);
+        return createThumbCard();
+      }
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return { id: 'doc' };
+    },
+    getStudioActiveSlideIndex() {
+      calls.push(['getStudioActiveSlideIndex']);
+      return 0;
+    },
+    setActiveSlideById() {
+      calls.push(['setActiveSlideById']);
+    },
+    setupDragAndDropThumbnail() {
+      calls.push(['setupDragAndDropThumbnail']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(generateThumbnailsSource, context);
+
+  assert.doesNotThrow(() => context.generateThumbnails());
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getElementById', 'thumbnailsList'],
+    ['getStudioActiveSlideIndex'],
+    ['getElementById', 'slideCountLabel']
+  ]);
+});
