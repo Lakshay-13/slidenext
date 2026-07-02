@@ -434,6 +434,12 @@
     return sanitizeImportedClassNames(className, options).join(' ');
   }
 
+  function sanitizeImportedSlideBackgroundClassName(className, options = {}) {
+    return sanitizeImportedClassNames(className, options)
+      .filter((token) => token !== 'slide' && token !== 'slide-active')
+      .join(' ');
+  }
+
   function sanitizeImportedAttributeMap(el, options = {}) {
     const transientAttributeNames = options.transientAttributeNames instanceof Set
       ? options.transientAttributeNames
@@ -766,7 +772,7 @@
         background: {
           color: normalizeString(slide.style && slide.style.backgroundColor),
           image: normalizeString(slide.style && slide.style.backgroundImage),
-          className: sanitizeImportedClassNameString(slide.className, options),
+          className: sanitizeImportedSlideBackgroundClassName(slide.className, options),
           style: normalizeString(slide.getAttribute('style'))
         }
       },
@@ -1323,6 +1329,7 @@
     extractSrcsetUrlValues,
     collectDeckAssets,
     inferImportedNodeType,
+    sanitizeImportedSlideBackgroundClassName,
     importElementToCanonicalNode,
     importSlideToCanonicalSlide,
     stripCanonicalNodeSourceHtmlDuplicates,

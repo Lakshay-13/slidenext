@@ -1195,11 +1195,11 @@ test('importSlideToCanonicalSlide strips canonical duplicate slide attributes wh
   });
   const slide = createImportedElement({
     tagName: 'SECTION',
-    classList: createIterableClassList(['slide', 'editor-selected']),
+    classList: createIterableClassList(['slide', 'hero-slide', 'editor-selected']),
     children: [heading],
     textContent: 'Intro',
     attributes: {
-      class: 'slide editor-selected',
+      class: 'slide hero-slide editor-selected',
       style: 'background: black;',
       'aria-label': 'Imported Intro',
       'data-slide-id': 'slide-runtime-1',
@@ -1207,7 +1207,7 @@ test('importSlideToCanonicalSlide strips canonical duplicate slide attributes wh
       'data-speaker-notes': 'Key message',
       'data-transition': 'fade'
     },
-    outerHTML: '<section class="slide editor-selected" data-slide-id="slide-runtime-1"><h1 class="editor-hoverable">Intro</h1></section>',
+    outerHTML: '<section class="slide hero-slide editor-selected" data-slide-id="slide-runtime-1"><h1 class="editor-hoverable">Intro</h1></section>',
     querySelector(selector) {
       return selector === 'h1, h2, h3' ? heading : null;
     }
@@ -1215,7 +1215,7 @@ test('importSlideToCanonicalSlide strips canonical duplicate slide attributes wh
 
   const canonicalSlide = deckImport.importSlideToCanonicalSlide(slide, 0);
 
-  assert.equal(canonicalSlide.layout.background.className, 'slide');
+  assert.equal(canonicalSlide.layout.background.className, 'hero-slide');
   assert.equal(canonicalSlide.layout.background.style, 'background: black;');
   assert.equal(canonicalSlide.name, 'Imported Slide');
   assert.equal(canonicalSlide.notes, 'Key message');
@@ -1260,7 +1260,7 @@ test('importSlideToCanonicalSlide sanitizes stored slide source html fragments',
   assert.equal(canonicalSlide.source.html.includes('data-speaker-notes="Key message"'), false);
   assert.equal(canonicalSlide.source.html.includes('data-transition="fade"'), false);
   assert.match(canonicalSlide.source.html, /class="title"/);
-  assert.equal(canonicalSlide.layout.background.className, 'slide');
+  assert.equal(canonicalSlide.layout.background.className, '');
   assert.equal(canonicalSlide.layout.background.style, 'background: black;');
   assert.equal(canonicalSlide.name, 'Imported Slide');
   assert.equal(canonicalSlide.notes, 'Key message');
