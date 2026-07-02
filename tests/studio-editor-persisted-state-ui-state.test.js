@@ -88,6 +88,42 @@ test('getCurrentEditorPersistedDeckState returns the current persisted html, can
   );
 });
 
+test('getCurrentEditorPersistedDeckState.resolveWithContent prefers the shared persisted-content resolver when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function getCurrentEditorPersistedDeckState() {',
+    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
+  );
+
+  const calls = [];
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: { id: 'persisted-deck' },
+    playbackState: { activeSlideIds: ['slide-2'], slideCounterText: '2 / 4' }
+  };
+  const context = {
+    lastPersistedDeckHtml: persistedDeckState.cleanHtml,
+    lastPersistedCanonicalDeck: persistedDeckState.canonicalDeck,
+    persistedDeckPlaybackState: persistedDeckState.playbackState,
+    SlideNextStudioEditorPersistence: {
+      resolveStudioPersistableDeckStateWithContent(nextPersistedDeckState) {
+        calls.push(nextPersistedDeckState);
+        return nextPersistedDeckState;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState.resolveWithContent())),
+    persistedDeckState
+  );
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [persistedDeckState]);
+});
+
 test('updateEditorPersistedDeckState updates only the provided persisted baseline fields', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
