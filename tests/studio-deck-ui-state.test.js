@@ -47,6 +47,9 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     inspectorTextContentGroup: { classList: createClassList(['hidden']) },
     inspectorImageGroup: { classList: createClassList([]) },
     inspectorBorderGroup: { classList: createClassList([]) },
+    wpPanelSolid: { classList: createClassList(['hidden']) },
+    wpPanelPresets: { classList: createClassList([]) },
+    wpPanelCustom: { classList: createClassList([]) },
     toggleLockSelectionIcon: { textContent: 'lock_open' },
     toggleLockSelectionLabel: { textContent: 'Unlock Selected' },
     toggleVisibilitySelectionIcon: { textContent: 'visibility' },
@@ -68,9 +71,9 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     insertShapeBtn: { disabled: false },
     insertTableBtn: { disabled: false },
     insertCodeBtn: { disabled: false },
-    wpTabSolid: { disabled: false },
-    wpTabPresets: { disabled: false },
-    wpTabCustom: { disabled: false },
+    wpTabSolid: { disabled: false, className: 'stale-solid' },
+    wpTabPresets: { disabled: false, className: 'stale-presets' },
+    wpTabCustom: { disabled: false, className: 'stale-custom' },
     wallpaperCustomColor: { disabled: false },
     cgLinearBtn: { disabled: false },
     cgRadialBtn: { disabled: false },
@@ -136,7 +139,8 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
 
   const context = {
     document: documentStub,
-    hasPendingCustomWallpaperVersion: true
+    hasPendingCustomWallpaperVersion: true,
+    wallpaperTab: 'custom'
   };
 
   vm.createContext(context);
@@ -144,6 +148,7 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
 
   context.resetStudioDeckUiState({ isLoading: true });
   assert.equal(context.hasPendingCustomWallpaperVersion, false);
+  assert.equal(context.wallpaperTab, 'solid');
   assert.equal(elements.slideCountLabel.textContent, '0 / 0');
   assert.match(elements.thumbnailsList.innerHTML, /Loading slides\.\.\./);
   assert.match(elements.slideLayersList.innerHTML, /Loading layers\.\.\./);
@@ -153,6 +158,12 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
   assert.equal(elements.inspectorTextContentGroup.classList.contains('hidden'), false);
   assert.equal(elements.inspectorImageGroup.classList.contains('hidden'), true);
   assert.equal(elements.inspectorBorderGroup.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelSolid.classList.contains('hidden'), false);
+  assert.equal(elements.wpPanelPresets.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelCustom.classList.contains('hidden'), true);
+  assert.match(elements.wpTabSolid.className, /bg-white\/5/);
+  assert.equal(elements.wpTabPresets.className, 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400');
+  assert.equal(elements.wpTabCustom.className, 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400');
   assert.equal(elements.toggleLockSelectionIcon.textContent, 'lock');
   assert.equal(elements.toggleLockSelectionLabel.textContent, 'Lock Selected');
   assert.equal(elements.toggleVisibilitySelectionIcon.textContent, 'visibility_off');

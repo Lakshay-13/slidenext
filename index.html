@@ -5146,6 +5146,7 @@
     function resetStudioDeckUiState(options = {}) {
       const isLoading = !!options.isLoading;
       hasPendingCustomWallpaperVersion = false;
+      wallpaperTab = 'solid';
       const slideCountLabel = document.getElementById('slideCountLabel');
       if (slideCountLabel) {
         slideCountLabel.textContent = '0 / 0';
@@ -5192,6 +5193,36 @@
       const borderGroup = document.getElementById('inspectorBorderGroup');
       if (borderGroup) {
         borderGroup.classList.add('hidden');
+      }
+
+      const solidWallpaperTab = document.getElementById('wpTabSolid');
+      if (solidWallpaperTab) {
+        solidWallpaperTab.className = 'py-1 text-center text-[10px] font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
+      }
+
+      const presetsWallpaperTab = document.getElementById('wpTabPresets');
+      if (presetsWallpaperTab) {
+        presetsWallpaperTab.className = 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
+      }
+
+      const customWallpaperTab = document.getElementById('wpTabCustom');
+      if (customWallpaperTab) {
+        customWallpaperTab.className = 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
+      }
+
+      const solidWallpaperPanel = document.getElementById('wpPanelSolid');
+      if (solidWallpaperPanel) {
+        solidWallpaperPanel.classList.remove('hidden');
+      }
+
+      const presetsWallpaperPanel = document.getElementById('wpPanelPresets');
+      if (presetsWallpaperPanel) {
+        presetsWallpaperPanel.classList.add('hidden');
+      }
+
+      const customWallpaperPanel = document.getElementById('wpPanelCustom');
+      if (customWallpaperPanel) {
+        customWallpaperPanel.classList.add('hidden');
       }
 
       const lockIcon = document.getElementById('toggleLockSelectionIcon');
