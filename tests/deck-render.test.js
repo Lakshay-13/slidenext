@@ -489,6 +489,41 @@ test('renderCanonicalDeckHtml overlays canonical charset and viewport onto reuse
   assert.doesNotMatch(html, /width=320/);
 });
 
+test('renderCanonicalDeckHtml strips reused source head scripts in favor of canonical script assets', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'script',
+        src: '/presentations/demo/app.js',
+        meta: {
+          type: 'module'
+        }
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '<script src="/presentations/demo/app.js"></script><style>.deck-shell{color:red;}</style>',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<style>\.deck-shell\{color:red;\}<\/style>/);
+  assert.equal((html.match(/<script src="\/presentations\/demo\/app\.js" type="module"><\/script>/g) || []).length, 1);
+  assert.ok(html.indexOf('.deck-shell{color:red;}') < html.indexOf('<script src="/presentations/demo/app.js" type="module"></script>'));
+});
+
 test('renderCanonicalDeckHtml overlays canonical script assets onto reused source body html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     assets: [

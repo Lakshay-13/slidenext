@@ -644,6 +644,14 @@
       nextHeadHtml = `${preloadAssetLinkTags.join('\n')}\n${nextHeadHtml}`;
     }
 
+    const scriptAssetTags = buildScriptAssetTags(deck.assets);
+    if (scriptAssetTags.length > 0) {
+      nextHeadHtml = nextHeadHtml.replace(
+        /<script\b(?=[^>]*\bsrc=)[\s\S]*?<\/script>\s*/gi,
+        ''
+      );
+    }
+
     const deckLayoutStyleBlock = buildCanonicalDeckLayoutStyleBlock(deck);
     if (deckLayoutStyleBlock) {
       nextHeadHtml = `${nextHeadHtml}\n${deckLayoutStyleBlock}`.trim();
