@@ -941,7 +941,7 @@ test('importElementToCanonicalNode sanitizes stored node html fragments', () => 
   assert.match(node.html, /class="eyebrow"/);
 });
 
-test('importSlideToCanonicalSlide strips editor-only slide metadata from canonical slide attributes', () => {
+test('importSlideToCanonicalSlide strips canonical duplicate slide attributes while preserving custom attrs', () => {
   const heading = createImportedElement({
     tagName: 'H1',
     classList: createIterableClassList(['editor-hoverable']),
@@ -958,8 +958,12 @@ test('importSlideToCanonicalSlide strips editor-only slide metadata from canonic
     textContent: 'Intro',
     attributes: {
       class: 'slide editor-selected',
+      style: 'background: black;',
+      'aria-label': 'Imported Intro',
       'data-slide-id': 'slide-runtime-1',
-      'data-speaker-notes': 'Key message'
+      'data-slide-name': 'Imported Slide',
+      'data-speaker-notes': 'Key message',
+      'data-transition': 'fade'
     },
     outerHTML: '<section class="slide editor-selected" data-slide-id="slide-runtime-1"><h1 class="editor-hoverable">Intro</h1></section>',
     querySelector(selector) {
@@ -970,9 +974,11 @@ test('importSlideToCanonicalSlide strips editor-only slide metadata from canonic
   const canonicalSlide = deckImport.importSlideToCanonicalSlide(slide, 0);
 
   assert.equal(canonicalSlide.layout.background.className, 'slide');
+  assert.equal(canonicalSlide.layout.background.style, 'background: black;');
+  assert.equal(canonicalSlide.name, 'Imported Slide');
+  assert.equal(canonicalSlide.notes, 'Key message');
   assert.deepEqual(canonicalSlide.source.attributes, {
-    class: 'slide',
-    'data-speaker-notes': 'Key message'
+    'data-transition': 'fade'
   });
 });
 

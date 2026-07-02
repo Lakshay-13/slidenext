@@ -386,6 +386,18 @@
     return nextAttributes;
   }
 
+  function stripCanonicalSlideAttributeDuplicates(attributes = {}) {
+    const nextAttributes = { ...attributes };
+    delete nextAttributes.id;
+    delete nextAttributes.class;
+    delete nextAttributes.style;
+    delete nextAttributes['aria-label'];
+    delete nextAttributes['data-slide-name'];
+    delete nextAttributes['data-speaker-notes'];
+    delete nextAttributes['data-notes'];
+    return nextAttributes;
+  }
+
   function sanitizeImportedDomNode(node, options = {}) {
     if (!node) {
       return;
@@ -622,7 +634,7 @@
       })),
       source: {
         html: buildImportedSourceHtml(slide, options),
-        attributes: sanitizeImportedAttributeMap(slide, options)
+        attributes: stripCanonicalSlideAttributeDuplicates(sanitizeImportedAttributeMap(slide, options))
       }
     });
   }
@@ -1111,6 +1123,7 @@
     inferImportedNodeType,
     importElementToCanonicalNode,
     importSlideToCanonicalSlide,
+    stripCanonicalSlideAttributeDuplicates,
     sanitizeDeckSourceClone,
     sanitizeImportedElementClone,
     importHtmlDeckToCanonicalDeck
