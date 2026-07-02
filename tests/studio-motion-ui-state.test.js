@@ -323,7 +323,7 @@ test('nudgeSelectedElements returns false and refreshes motion controls when nud
   ]);
 });
 
-test('nudgeSelectedElements persists the moved selection through the shared mutation helper without refreshing thumbnails', () => {
+test('nudgeSelectedElements persists the moved selection through the shared mutation helper without refreshing thumbnails or layers', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const nudgeSelectedElementsSource = extractFunctionSource(
     fileContent,
@@ -398,9 +398,6 @@ test('nudgeSelectedElements persists the moved selection through the shared muta
     syncSelectionOverlay() {
       calls.push(['syncSelectionOverlay']);
     },
-    updateLayersList() {
-      calls.push(['updateLayersList']);
-    },
     saveHistoryState(immediate) {
       calls.push(['saveHistoryState', immediate]);
     },
@@ -431,7 +428,6 @@ test('nudgeSelectedElements persists the moved selection through the shared muta
     'buildStudioPositionedLayoutItems',
     'buildStudioNudgedLayout',
     'syncSelectionOverlay',
-    'updateLayersList',
     'saveHistoryState',
     'triggerAutoSave',
     'triggerAutoVersion'
@@ -443,6 +439,6 @@ test('nudgeSelectedElements persists the moved selection through the shared muta
   assert.equal(calls[5][1][0].element, movedElement);
   assert.deepEqual(JSON.parse(JSON.stringify(calls[5][2])), { dx: 5, dy: -3 });
   assert.deepEqual(JSON.parse(JSON.stringify(calls[5][3])), { width: 1920, height: 1080 });
-  assert.deepEqual(calls[8], ['saveHistoryState', true]);
-  assert.deepEqual(calls[10], ['triggerAutoVersion', 'Auto: Nudged Element']);
+  assert.deepEqual(calls[7], ['saveHistoryState', true]);
+  assert.deepEqual(calls[9], ['triggerAutoVersion', 'Auto: Nudged Element']);
 });
