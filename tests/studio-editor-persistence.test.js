@@ -460,6 +460,50 @@ test('buildStudioPersistenceRequestPlan reuses persisted-html checks to skip red
   assert.deepEqual(buildSaveRequestBodyCalls, ['dirty']);
 });
 
+test('resolveStudioPersistedHtmlReuse returns persisted html only when the canonical deck still matches', () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+
+  assert.equal(
+    editorPersistence.resolveStudioPersistedHtmlReuse({
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck
+    }, {
+      canonicalDeck
+    }),
+    '<html>persisted</html>'
+  );
+
+  assert.equal(
+    editorPersistence.resolveStudioPersistedHtmlReuse({
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck
+    }, {
+      canonicalDeck: canonicalDeckModel.createCanonicalDeck({
+        metadata: {
+          title: 'Different Deck'
+        },
+        slides: [
+          {
+            id: 'slide-2',
+            nodes: []
+          }
+        ]
+      })
+    }),
+    ''
+  );
+});
+
 test('isStudioPersistedState requires both html and canonical deck sidecars to match when a canonical deck is present', () => {
   const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
     metadata: {

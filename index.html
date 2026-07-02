@@ -4406,6 +4406,10 @@
         if (typeof buildOptions.onPlaybackStateResolved === 'function') {
           buildOptions.onPlaybackStateResolved(persistedDeckState.playbackState);
         }
+        const resolveStudioPersistedHtmlReuse = SlideNextStudioEditorPersistence
+          && typeof SlideNextStudioEditorPersistence.resolveStudioPersistedHtmlReuse === 'function'
+          ? SlideNextStudioEditorPersistence.resolveStudioPersistedHtmlReuse
+          : null;
         const isPersistedCanonicalDeck = SlideNextStudioEditorPersistence
           && typeof SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck === 'function'
           ? SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck
@@ -4422,8 +4426,15 @@
                 return false;
               }
             };
-        if (persistedHtml.trim() && isPersistedCanonicalDeck(canonicalDeck, persistedDeckState.canonicalDeck)) {
-          return persistedHtml;
+        const reusablePersistedHtml = resolveStudioPersistedHtmlReuse
+          ? resolveStudioPersistedHtmlReuse(persistedDeckState, {
+              canonicalDeck
+            })
+          : (persistedHtml.trim() && isPersistedCanonicalDeck(canonicalDeck, persistedDeckState.canonicalDeck)
+              ? persistedHtml
+              : '');
+        if (reusablePersistedHtml) {
+          return reusablePersistedHtml;
         }
         return SlideNextStudioDeckView.buildStudioSourceHtml(doc, {
           buildCanonicalDeck: () => canonicalDeck,

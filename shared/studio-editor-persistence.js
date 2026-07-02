@@ -466,6 +466,22 @@
     return areStudioPersistenceCanonicalDecksEqual(nextCanonicalDeck, nextPersistedCanonicalDeck, options);
   }
 
+  function resolveStudioPersistedHtmlReuse(persistedDeckState = {}, options = {}) {
+    const nextPersistedDeckState = asPlainObject(persistedDeckState);
+    const persistedHtml = normalizeString(nextPersistedDeckState.cleanHtml);
+    if (!persistedHtml.trim()) {
+      return '';
+    }
+
+    return isStudioPersistedCanonicalDeck(
+      options.canonicalDeck,
+      nextPersistedDeckState.canonicalDeck,
+      options
+    )
+      ? persistedHtml
+      : '';
+  }
+
   function isStudioPersistedState(cleanHtml = '', canonicalDeck = null, options = {}) {
     if (!isStudioPersistedHtml(cleanHtml, options.persistedHtml)) {
       return false;
@@ -627,6 +643,7 @@
     resolveStudioVersionCheckpointPersistenceStateFromCapture,
     isStudioPersistedHtml,
     isStudioPersistedCanonicalDeck,
+    resolveStudioPersistedHtmlReuse,
     isStudioPersistedState,
     isStudioPersistenceTaskStale,
     isStudioPersistenceActionCurrent,
