@@ -461,6 +461,34 @@ test('renderCanonicalDeckHtml overlays canonical theme styles onto reused source
   assert.ok(html.indexOf('color: red;') < html.indexOf('color: var(--color-primary);'));
 });
 
+test('renderCanonicalDeckHtml overlays canonical charset and viewport onto reused source head html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '<meta charset="iso-8859-1"><meta name="viewport" content="width=320"><style>.deck-shell{color:red;}</style>',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<meta charset="utf-8">/);
+  assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1.0">/);
+  assert.match(html, /<style>\.deck-shell\{color:red;\}<\/style>/);
+  assert.doesNotMatch(html, /iso-8859-1/);
+  assert.doesNotMatch(html, /width=320/);
+});
+
 test('renderCanonicalDeckHtml overlays canonical script assets onto reused source body html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     assets: [

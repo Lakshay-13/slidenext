@@ -654,6 +654,16 @@
       nextHeadHtml = `${nextHeadHtml}\n${themeStyleBlocks.join('\n')}`.trim();
     }
 
+    const viewportMetaTag = '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
+    nextHeadHtml = /<meta\b(?=[^>]*\bname=(?:"viewport"|'viewport'))[^>]*>/i.test(nextHeadHtml)
+      ? nextHeadHtml.replace(/<meta\b(?=[^>]*\bname=(?:"viewport"|'viewport'))[^>]*>/i, viewportMetaTag)
+      : `${viewportMetaTag}\n${nextHeadHtml}`;
+
+    const charsetMetaTag = '<meta charset="utf-8">';
+    nextHeadHtml = /<meta\b(?=[^>]*\bcharset=)[^>]*>/i.test(nextHeadHtml)
+      ? nextHeadHtml.replace(/<meta\b(?=[^>]*\bcharset=)[^>]*>/i, charsetMetaTag)
+      : `${charsetMetaTag}\n${nextHeadHtml}`;
+
     return nextHeadHtml;
   }
 
