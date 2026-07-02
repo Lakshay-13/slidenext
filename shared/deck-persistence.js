@@ -32,6 +32,40 @@
     }
   }
 
+  function normalizeStyleCleanupEntries(values) {
+    if (!Array.isArray(values)) {
+      return [];
+    }
+
+    const seenEntries = new Set();
+    return values.reduce((entries, value) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return entries;
+      }
+      const selector = typeof value.selector === 'string' ? value.selector.trim() : '';
+      const properties = Array.isArray(value.properties)
+        ? Array.from(new Set(
+            value.properties
+              .map((property) => typeof property === 'string' ? property.trim() : '')
+              .filter(Boolean)
+          ))
+        : [];
+      if (!selector || properties.length === 0) {
+        return entries;
+      }
+      const entryKey = JSON.stringify([selector, properties]);
+      if (seenEntries.has(entryKey)) {
+        return entries;
+      }
+      seenEntries.add(entryKey);
+      entries.push({
+        selector,
+        properties
+      });
+      return entries;
+    }, []);
+  }
+
   function stripTransientDeckRuntimeState(root, options = {}) {
     if (!root) return;
 
@@ -43,7 +77,12 @@
             .filter(Boolean)
         ]))
       : DEFAULT_EMPTY_CONTAINER_IDS;
-    const styleCleanups = options.styleCleanups || DEFAULT_STYLE_CLEANUPS;
+    const styleCleanups = Array.isArray(options.styleCleanups)
+      ? [
+          ...DEFAULT_STYLE_CLEANUPS,
+          ...normalizeStyleCleanupEntries(options.styleCleanups)
+        ]
+      : DEFAULT_STYLE_CLEANUPS;
     const transientClassNames = Array.isArray(options.transientClassNames)
       ? options.transientClassNames
         .map((className) => typeof className === 'string' ? className.trim() : '')

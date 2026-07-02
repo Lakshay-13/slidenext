@@ -8,6 +8,12 @@
   "tags": ["Computer Vision", "Sensors", "3D Analysis", "Deep Learning"],
   "persistence": {
     "emptyContainerIds": ["pixelMatrix"],
+    "styleCleanups": [
+      {
+        "selector": ".glass-panel, .glass-card, h1, h2, p, .pipeline-flow, .guardrail-card, .vision-hud-container, .fail-card, .cv-hard-box",
+        "properties": ["translate", "rotate", "scale", "transform", "opacity"]
+      }
+    ],
     "transientClassNames": ["grayscale", "grayscale-0"]
   }
 }

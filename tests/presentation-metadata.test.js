@@ -163,11 +163,31 @@ test('resolvePresentationPersistenceOptions normalizes configured persistence cl
       id: 'ai-tools-presentation',
       persistence: {
         emptyContainerIds: [' indicatorDots ', '', 'pixelMatrix', 42, 'indicatorDots'],
+        styleCleanups: [
+          {
+            selector: ' .glass-panel ',
+            properties: [' opacity ', '', 'transform', 'opacity']
+          },
+          {
+            selector: ' .glass-panel ',
+            properties: ['opacity', 'transform']
+          },
+          {
+            selector: '',
+            properties: ['opacity']
+          }
+        ],
         transientClassNames: [' revealed ', '', 'voted', 42, 'revealed']
       }
     }),
     {
       emptyContainerIds: ['indicatorDots', 'pixelMatrix'],
+      styleCleanups: [
+        {
+          selector: '.glass-panel',
+          properties: ['opacity', 'transform']
+        }
+      ],
       transientClassNames: ['revealed', 'voted']
     }
   );

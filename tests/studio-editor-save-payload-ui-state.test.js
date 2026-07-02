@@ -682,7 +682,13 @@ test('buildPersistableDeckHtml forwards metadata-derived persistence cleanup opt
   const currentPresentationMetadata = {
     id: 'computer-vision-presentation',
     persistence: {
-      emptyContainerIds: ['pixelMatrix']
+      emptyContainerIds: ['pixelMatrix'],
+      styleCleanups: [
+        {
+          selector: '.glass-panel, h1',
+          properties: ['transform', 'opacity']
+        }
+      ]
     }
   };
   const calls = [];
@@ -695,7 +701,13 @@ test('buildPersistableDeckHtml forwards metadata-derived persistence cleanup opt
         calls.push(['resolvePresentationPersistenceOptions', metadata]);
         assert.equal(metadata, currentPresentationMetadata);
         return {
-          emptyContainerIds: ['pixelMatrix']
+          emptyContainerIds: ['pixelMatrix'],
+          styleCleanups: [
+            {
+              selector: '.glass-panel, h1',
+              properties: ['transform', 'opacity']
+            }
+          ]
         };
       }
     },
@@ -730,6 +742,15 @@ test('buildPersistableDeckHtml forwards metadata-derived persistence cleanup opt
   assert.deepEqual(
     JSON.parse(JSON.stringify(calls[2][2].emptyContainerIds)),
     ['pixelMatrix']
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[2][2].styleCleanups)),
+    [
+      {
+        selector: '.glass-panel, h1',
+        properties: ['transform', 'opacity']
+      }
+    ]
   );
   assert.equal(calls[2][2].persistedDeckPlaybackState, livePlaybackState);
 });

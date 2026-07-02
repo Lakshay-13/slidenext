@@ -32,6 +32,32 @@
     ));
   }
 
+  function normalizeStyleCleanupEntries(values) {
+    if (!Array.isArray(values)) {
+      return [];
+    }
+
+    const seenEntries = new Set();
+    return values.reduce((entries, value) => {
+      const nextValue = asPlainObject(value);
+      const selector = normalizeString(nextValue.selector).trim();
+      const properties = normalizeUniqueTrimmedStringArray(nextValue.properties);
+      if (!selector || properties.length === 0) {
+        return entries;
+      }
+      const entryKey = JSON.stringify([selector, properties]);
+      if (seenEntries.has(entryKey)) {
+        return entries;
+      }
+      seenEntries.add(entryKey);
+      entries.push({
+        selector,
+        properties
+      });
+      return entries;
+    }, []);
+  }
+
   function asPlainObject(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return {};
@@ -111,15 +137,19 @@
     const nextMetadata = asPlainObject(metadata);
     const persistence = asPlainObject(nextMetadata.persistence);
     const emptyContainerIds = normalizeUniqueTrimmedStringArray(persistence.emptyContainerIds);
+    const styleCleanups = normalizeStyleCleanupEntries(persistence.styleCleanups);
     const transientClassNames = normalizeUniqueTrimmedStringArray(persistence.transientClassNames);
 
-    if (emptyContainerIds.length === 0 && transientClassNames.length === 0) {
+    if (emptyContainerIds.length === 0 && styleCleanups.length === 0 && transientClassNames.length === 0) {
       return {};
     }
 
     const persistenceOptions = {};
     if (emptyContainerIds.length > 0) {
       persistenceOptions.emptyContainerIds = emptyContainerIds;
+    }
+    if (styleCleanups.length > 0) {
+      persistenceOptions.styleCleanups = styleCleanups;
     }
     if (transientClassNames.length > 0) {
       persistenceOptions.transientClassNames = transientClassNames;

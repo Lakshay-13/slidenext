@@ -154,6 +154,72 @@ test('stripTransientDeckRuntimeState empties configured runtime containers in ad
   assert.equal(pixelMatrixNode.replaceChildrenCalls, 1);
 });
 
+test('stripTransientDeckRuntimeState applies configured style cleanup rules in addition to the default style cleanup list', () => {
+  function createStyledNode(initialProperties = {}) {
+    const styleProperties = new Map(Object.entries(initialProperties));
+    return {
+      removedStyleAttribute: false,
+      style: {
+        removeProperty(property) {
+          styleProperties.delete(property);
+        }
+      },
+      getAttribute(name) {
+        if (name !== 'style') {
+          return '';
+        }
+        return Array.from(styleProperties.entries())
+          .map(([property, value]) => `${property}: ${value}`)
+          .join('; ');
+      },
+      removeAttribute(name) {
+        if (name === 'style') {
+          this.removedStyleAttribute = true;
+        }
+      }
+    };
+  }
+
+  const progressLineNode = createStyledNode({
+    width: '10%',
+    'background-color': 'red'
+  });
+  const animatedCardNode = createStyledNode({
+    transform: 'translate3d(0px, 30px, 0px)',
+    opacity: '0',
+    color: 'rgb(15, 23, 42)'
+  });
+  const root = {
+    querySelector() {
+      return null;
+    },
+    querySelectorAll(selector) {
+      if (selector === '#progressLine') {
+        return [progressLineNode];
+      }
+      if (selector === '.glass-panel, h1') {
+        return [animatedCardNode];
+      }
+      return [];
+    }
+  };
+
+  deckPersistence.stripTransientDeckRuntimeState(root, {
+    styleCleanups: [
+      {
+        selector: ' .glass-panel, h1 ',
+        properties: [' transform ', 'opacity', '', 'transform']
+      }
+    ]
+  });
+
+  assert.equal(progressLineNode.getAttribute('style').includes('width:'), false);
+  assert.equal(progressLineNode.getAttribute('style').includes('background-color: red'), true);
+  assert.equal(animatedCardNode.getAttribute('style').includes('transform:'), false);
+  assert.equal(animatedCardNode.getAttribute('style').includes('opacity:'), false);
+  assert.equal(animatedCardNode.getAttribute('style').includes('color: rgb(15, 23, 42)'), true);
+});
+
 test('restorePersistedDeckPlaybackState accepts legacy activeSlideId values', () => {
   const slideNumNode = { textContent: '' };
   const slides = [
