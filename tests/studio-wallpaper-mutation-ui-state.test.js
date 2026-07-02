@@ -55,7 +55,7 @@ test('applyPresetWallpaper uses the shared iframe accessor and records a version
   vm.createContext(context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
-  context.applyPresetWallpaper('linear-gradient(red, blue)');
+  assert.equal(context.applyPresetWallpaper('linear-gradient(red, blue)'), true);
   assert.equal(activeSlide.style.background, 'linear-gradient(red, blue)');
   assert.deepEqual(calls, [
     ['getIframeDoc'],
@@ -67,7 +67,7 @@ test('applyPresetWallpaper uses the shared iframe accessor and records a version
   ]);
 
   calls.length = 0;
-  context.applyPresetWallpaper('#ffffff', true);
+  assert.equal(context.applyPresetWallpaper('#ffffff', true), true);
   assert.equal(activeSlide.style.background, '#ffffff');
   assert.deepEqual(calls, [
     ['getIframeDoc'],
@@ -113,11 +113,59 @@ test('applyPresetWallpaper exits cleanly when the shared iframe accessor has no 
   vm.createContext(context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
-  context.applyPresetWallpaper('#000000');
+  assert.equal(context.applyPresetWallpaper('#000000'), false);
 
   assert.deepEqual(calls, [
     ['getIframeDoc'],
     ['getActiveSlide', null]
+  ]);
+});
+
+test('applyPresetWallpaper skips persistence when the active slide already has the requested background', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyPresetWallpaperSource = extractFunctionSource(
+    fileContent,
+    'function applyPresetWallpaper(val, isCustomInput = false) {',
+    '\n\n    function setCustomGradientType(type) {'
+  );
+
+  const iframeDoc = { id: 'doc' };
+  const activeSlide = {
+    style: {
+      background: 'linear-gradient(red, blue)'
+    }
+  };
+  const calls = [];
+  const context = {
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    getActiveSlide(doc) {
+      calls.push(['getActiveSlide', doc]);
+      return activeSlide;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyPresetWallpaperSource, context);
+
+  assert.equal(context.applyPresetWallpaper('linear-gradient(red, blue)'), false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getActiveSlide', iframeDoc]
   ]);
 });
 

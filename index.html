@@ -3730,15 +3730,17 @@
       const iframeDoc = getIframeDoc();
       const activeSlide = getActiveSlide(iframeDoc);
       
-      if (activeSlide) {
-        activeSlide.style.background = val;
-        generateThumbnails();
-        saveHistoryState();
-        triggerAutoSave();
-        if (!isCustomInput) {
-          triggerAutoVersion('Auto: Changed Background');
-        }
+      if (!activeSlide) return false;
+      if (activeSlide.style.background === val) return false;
+
+      activeSlide.style.background = val;
+      generateThumbnails();
+      saveHistoryState();
+      triggerAutoSave();
+      if (!isCustomInput) {
+        triggerAutoVersion('Auto: Changed Background');
       }
+      return true;
     }
 
     function setCustomGradientType(type) {
