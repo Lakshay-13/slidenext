@@ -1247,6 +1247,33 @@ test('importElementToCanonicalNode strips duplicate visibility attrs from stored
   assert.equal(node.visibility.locked, true);
 });
 
+test('importElementToCanonicalNode ignores computed hidden styles when visibility is not explicitly encoded', () => {
+  const element = createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['hero-card']),
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return {
+            display: 'none',
+            visibility: 'hidden'
+          };
+        }
+      }
+    },
+    attributes: {
+      class: 'hero-card'
+    },
+    textContent: 'Hero copy',
+    outerHTML: '<div class="hero-card">Hero copy</div>'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+
+  assert.equal(node.visibility.hidden, false);
+  assert.equal(node.visibility.locked, false);
+});
+
 test('importSlideToCanonicalSlide strips canonical duplicate slide attributes while preserving custom attrs', () => {
   const heading = createImportedElement({
     tagName: 'H1',

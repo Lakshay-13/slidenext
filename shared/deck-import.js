@@ -831,16 +831,12 @@
   }
 
   function buildImportedVisibility(el, win) {
-    const computedStyle = win && typeof win.getComputedStyle === 'function'
-      ? win.getComputedStyle(el)
-      : null;
     return {
       hidden: !!el.hidden
         || el.getAttribute('aria-hidden') === 'true'
         || el.getAttribute('data-editor-hidden') === 'true'
         || normalizeString(el.style && el.style.display) === 'none'
-        || normalizeString(computedStyle && computedStyle.display) === 'none'
-        || normalizeString(computedStyle && computedStyle.visibility) === 'hidden',
+        || normalizeString(el.style && el.style.visibility) === 'hidden',
       locked: el.getAttribute('data-editor-locked') === 'true'
     };
   }
