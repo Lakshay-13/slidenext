@@ -793,13 +793,13 @@
           <!-- Text content editor -->
           <div class="flex flex-col gap-2" id="inspectorTextContentGroup">
             <label class="text-[10px] font-mono text-zinc-500 uppercase">Text Copy Content</label>
-            <textarea id="elTextContent" oninput="applySelectedElementStyle('text', this.value)" onchange="triggerAutoVersion('Auto: Edited Text')" rows="3" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all resize-none"></textarea>
+            <textarea id="elTextContent" oninput="applySelectedElementStyle('text', this.value)" rows="3" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all resize-none"></textarea>
           </div>
 
           <!-- Image Source editor (Only displays for images) -->
           <div class="flex flex-col gap-2 hidden" id="inspectorImageGroup">
             <label class="text-[10px] font-mono text-zinc-500 uppercase">Image Asset URL</label>
-            <input type="text" id="elImageSrc" oninput="applySelectedElementStyle('src', this.value)" onchange="triggerAutoVersion('Auto: Changed Image Source')" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-mono text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
+            <input type="text" id="elImageSrc" oninput="applySelectedElementStyle('src', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-mono text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
           </div>
 
           <!-- Font Typography size & font -->
@@ -812,7 +812,7 @@
                 <span>Font Size:</span>
                 <span class="text-white font-bold" id="fontSizeVal">16px</span>
               </div>
-              <input type="range" id="elFontSize" min="8" max="96" value="16" oninput="applySelectedElementStyle('size', this.value)" onchange="triggerAutoVersion('Auto: Changed Font Size')" class="w-full accent-[#7028d0] cursor-pointer" />
+              <input type="range" id="elFontSize" min="8" max="96" value="16" oninput="applySelectedElementStyle('size', this.value)" class="w-full accent-[#7028d0] cursor-pointer" />
             </div>
 
             <!-- Font Family -->
@@ -860,7 +860,7 @@
             <!-- Custom text color -->
             <div class="flex items-center justify-between p-2.5 bg-zinc-900 border border-white/5 rounded-lg">
               <span class="text-xs font-mono text-zinc-400">Text Paint:</span>
-              <input type="color" id="elTextColor" oninput="applySelectedElementStyle('color', this.value)" onchange="triggerAutoVersion('Auto: Changed Text Color')" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
+              <input type="color" id="elTextColor" oninput="applySelectedElementStyle('color', this.value)" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
             </div>
 
             <div class="flex flex-col gap-2">
@@ -868,7 +868,7 @@
                 <span>Opacity:</span>
                 <span class="text-white font-bold" id="opacityVal">100%</span>
               </div>
-              <input type="range" id="elOpacity" min="10" max="100" value="100" oninput="applySelectedElementStyle('opacity', this.value)" onchange="triggerAutoVersion('Auto: Changed Opacity')" class="w-full accent-[#7028d0] cursor-pointer" />
+              <input type="range" id="elOpacity" min="10" max="100" value="100" oninput="applySelectedElementStyle('opacity', this.value)" class="w-full accent-[#7028d0] cursor-pointer" />
             </div>
           </div>
 
@@ -894,7 +894,7 @@
                 <span>Border Width:</span>
                 <span class="text-white font-bold" id="borderWidthVal">0px</span>
               </div>
-              <input type="range" id="elBorderWidth" min="0" max="20" value="0" oninput="applySelectedElementStyle('borderWidth', this.value)" onchange="triggerAutoVersion('Auto: Changed Border Width')" class="w-full accent-[#7028d0] cursor-pointer" />
+              <input type="range" id="elBorderWidth" min="0" max="20" value="0" oninput="applySelectedElementStyle('borderWidth', this.value)" class="w-full accent-[#7028d0] cursor-pointer" />
             </div>
 
             <!-- Border Radius -->
@@ -903,13 +903,13 @@
                 <span>Corner Radius:</span>
                 <span class="text-white font-bold" id="borderRadiusVal">0px</span>
               </div>
-              <input type="range" id="elBorderRadius" min="0" max="100" value="0" oninput="applySelectedElementStyle('borderRadius', this.value)" onchange="triggerAutoVersion('Auto: Changed Corner Radius')" class="w-full accent-[#7028d0] cursor-pointer" />
+              <input type="range" id="elBorderRadius" min="0" max="100" value="0" oninput="applySelectedElementStyle('borderRadius', this.value)" class="w-full accent-[#7028d0] cursor-pointer" />
             </div>
 
             <!-- Border Color -->
             <div class="flex items-center justify-between p-2.5 bg-zinc-900 border border-white/5 rounded-lg">
               <span class="text-xs font-mono text-zinc-400">Border Color:</span>
-              <input type="color" id="elBorderColor" oninput="applySelectedElementStyle('borderColor', this.value)" onchange="triggerAutoVersion('Auto: Changed Border Color')" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
+              <input type="color" id="elBorderColor" oninput="applySelectedElementStyle('borderColor', this.value)" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
             </div>
           </div>
 

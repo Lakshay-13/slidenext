@@ -93,6 +93,27 @@ test('finalizeEditorDeckMutation refreshes requested editor chrome before persis
   ]);
 });
 
+test('style inspector inputs do not wire duplicate inline version checkpoints', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  [
+    'elTextContent',
+    'elImageSrc',
+    'elFontSize',
+    'elTextColor',
+    'elOpacity',
+    'elBorderWidth',
+    'elBorderRadius',
+    'elBorderColor'
+  ].forEach((id) => {
+    assert.doesNotMatch(
+      fileContent,
+      new RegExp(`<[^>]*id="${id}"[^>]*onchange="triggerAutoVersion\\(`),
+      `${id} should rely on applySelectedElementStyle for versioning`
+    );
+  });
+});
+
 test('updateStyleActionState disables style controls whenever the current selection cannot accept style edits', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateStyleActionStateSource = extractFunctionSource(
