@@ -824,14 +824,13 @@ test('applyCurrentPresentationMetadata refreshes fallback deck chrome from store
   context.applyCurrentPresentationMetadata(metadata, { syncPersistedCanonicalDeck: true });
 
   assert.equal(context.currentPresentationMetadata, metadata);
-  assert.equal(callLog.length, 6);
+  assert.equal(callLog.length, 5);
   assert.equal(callLog[0][0], 'updateEditorPersistedDeckState');
   assert.equal(callLog[0][1].canonicalDeck, resolvedCanonicalDeck);
   assert.equal(callLog[1], 'getIframeDoc');
   assert.equal(callLog[2], 'generateThumbnails');
   assert.deepEqual(callLog[3], ['syncStudioChromeToActiveSlide', null]);
-  assert.equal(callLog[4], 'updateLayersList');
-  assert.deepEqual(callLog[5], ['updateDeckReadyToolbarActionState', null]);
+  assert.deepEqual(callLog[4], ['updateDeckReadyToolbarActionState', null]);
 });
 
 test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline from stored metadata sidecars', async () => {
