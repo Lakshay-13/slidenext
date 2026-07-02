@@ -4705,7 +4705,7 @@
     }
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
-      const persistencePlan = SlideNextStudioEditorPersistence.buildStudioVersionCheckpointPersistencePlan(
+      const versionCheckpointResult = await SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequest(
         versionLabel,
         cleanHtml,
         presentationUrl,
@@ -4713,20 +4713,11 @@
           ...options,
           isPersistedState: isCurrentDeckStatePersisted,
           buildSaveRequestBody: buildEditorSaveRequestBody,
-          resolvePlaybackState: capturePersistedDeckPlaybackState
-        }
-      );
-      const versionCheckpointRequest = SlideNextStudioEditorPersistence.createStudioVersionCheckpointRequest(
-        versionLabel,
-        presentationUrl,
-        persistencePlan
-      );
-      const data = await SlideNextStudioEditorPersistence.executeStudioPersistenceRequest(
-        versionCheckpointRequest,
-        {
+          resolvePlaybackState: capturePersistedDeckPlaybackState,
           fetchImpl: fetch
         }
       );
+      const { data, persistencePlan } = versionCheckpointResult;
 
       if (data.success) {
         SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(

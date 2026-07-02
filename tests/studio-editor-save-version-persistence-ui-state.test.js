@@ -213,7 +213,7 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
     activeSlideIds: ['slide-2'],
     slideCounterText: '2 / 3'
   };
-  let capturedVersionCheckpointRequestArgs = null;
+  let capturedVersionCheckpointExecutionArgs = null;
   const context = {
     SlideNextCanonicalDeck: {
       isCanonicalDeck(deck) {
@@ -222,9 +222,14 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
     },
     SlideNextStudioEditorPersistence: {
       ...editorPersistence,
-      createStudioVersionCheckpointRequest(versionLabel, presentationUrl, persistencePlan) {
-        capturedVersionCheckpointRequestArgs = [versionLabel, presentationUrl, persistencePlan];
-        return editorPersistence.createStudioVersionCheckpointRequest(versionLabel, presentationUrl, persistencePlan);
+      async executeStudioVersionCheckpointPersistenceRequest(versionLabel, cleanHtml, presentationUrl, options = {}) {
+        capturedVersionCheckpointExecutionArgs = [versionLabel, cleanHtml, presentationUrl, options];
+        return editorPersistence.executeStudioVersionCheckpointPersistenceRequest(
+          versionLabel,
+          cleanHtml,
+          presentationUrl,
+          options
+        );
       }
     },
     createCurrentStudioSessionStateReaders() {
@@ -303,9 +308,12 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
       canonicalDeck
     }
   ]]);
-  assert.equal(capturedVersionCheckpointRequestArgs[0], 'Checkpoint A');
-  assert.equal(capturedVersionCheckpointRequestArgs[1], 'presentations/onboarding-presentation/index.html');
-  assert.equal(capturedVersionCheckpointRequestArgs[2].hasPersistedCurrentState, false);
+  assert.equal(capturedVersionCheckpointExecutionArgs[0], 'Checkpoint A');
+  assert.equal(capturedVersionCheckpointExecutionArgs[1], '<html>persisted</html>');
+  assert.equal(capturedVersionCheckpointExecutionArgs[2], 'presentations/onboarding-presentation/index.html');
+  assert.equal(capturedVersionCheckpointExecutionArgs[3].sessionToken, 4);
+  assert.deepEqual(capturedVersionCheckpointExecutionArgs[3].doc, { label: 'iframe-doc' });
+  assert.equal(capturedVersionCheckpointExecutionArgs[3].canonicalDeck, canonicalDeck);
   assert.equal(context.lastPersistedDeckHtml, '<html>persisted</html>');
   assert.deepEqual(context.lastPersistedCanonicalDeck, canonicalDeckModel.createCanonicalDeck(canonicalDeck));
   assert.deepEqual(context.persistedDeckPlaybackState, livePlaybackState);

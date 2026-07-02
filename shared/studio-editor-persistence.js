@@ -405,6 +405,36 @@
     };
   }
 
+  async function executeStudioVersionCheckpointPersistenceRequest(
+    versionLabel = '',
+    cleanHtml = '',
+    presentationUrl = '',
+    options = {}
+  ) {
+    const persistencePlan = buildStudioVersionCheckpointPersistencePlan(
+      versionLabel,
+      cleanHtml,
+      presentationUrl,
+      options
+    );
+    const versionCheckpointRequest = createStudioVersionCheckpointRequest(
+      versionLabel,
+      presentationUrl,
+      persistencePlan
+    );
+    const data = await executeStudioPersistenceRequest(
+      versionCheckpointRequest,
+      {
+        fetchImpl: options.fetchImpl
+      }
+    );
+
+    return {
+      data,
+      persistencePlan
+    };
+  }
+
   function createStudioVersionCheckpointRequestOptions(persistedDeckState = {}, options = {}) {
     const nextPersistedDeckState = asPlainObject(persistedDeckState);
     const requestOptions = {
@@ -663,6 +693,7 @@
     executeStudioPersistenceRequest,
     buildStudioVersionCheckpointPersistencePlan,
     createStudioVersionCheckpointRequest,
+    executeStudioVersionCheckpointPersistenceRequest,
     createStudioVersionCheckpointRequestOptions,
     createStudioVersionCheckpointPersistenceState,
     resolveStudioVersionCheckpointPersistenceState,

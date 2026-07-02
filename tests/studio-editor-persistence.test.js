@@ -1150,6 +1150,92 @@ test('createStudioVersionCheckpointRequest selects the correct endpoint and requ
   );
 });
 
+test('executeStudioVersionCheckpointPersistenceRequest reuses the shared checkpoint plan and request execution glue', async () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+  const playbackState = {
+    activeSlideIds: ['slide-2'],
+    slideCounterText: '2 / 3'
+  };
+  const fetchCalls = [];
+
+  const result = await editorPersistence.executeStudioVersionCheckpointPersistenceRequest(
+    'Checkpoint Plan',
+    '<html>persisted</html>',
+    'presentations/onboarding-presentation/index.html',
+    {
+      isPersistedState() {
+        return false;
+      },
+      buildSaveRequestBody(doc, cleanHtml, options = {}) {
+        return editorPersistence.buildStudioSaveRequestBody(
+          options.presentationUrl,
+          cleanHtml,
+          {
+            versionLabel: options.versionLabel,
+            canonicalDeck: options.canonicalDeck
+          }
+        );
+      },
+      doc: { label: 'iframe-doc' },
+      canonicalDeck,
+      playbackState,
+      sessionToken: 4,
+      fetchImpl: async (url, init) => {
+        fetchCalls.push([url, JSON.parse(init.body)]);
+        return {
+          async json() {
+            return { success: true };
+          }
+        };
+      }
+    }
+  );
+
+  assert.deepEqual(fetchCalls, [[
+    '/api/save',
+    {
+      htmlPath: 'presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>persisted</html>',
+      isAutoSave: false,
+      versionLabel: 'Checkpoint Plan',
+      canonicalDeck
+    }
+  ]]);
+  assert.deepEqual(result, {
+    data: { success: true },
+    persistencePlan: {
+      hasPersistedCurrentHtml: false,
+      hasPersistedCurrentState: false,
+      saveRequestBody: {
+        htmlPath: 'presentations/onboarding-presentation/index.html',
+        htmlContent: '<html>persisted</html>',
+        isAutoSave: false,
+        versionLabel: 'Checkpoint Plan',
+        canonicalDeck
+      },
+      persistenceContext: {
+        presentationUrl: 'presentations/onboarding-presentation/index.html',
+        cleanHtml: '<html>persisted</html>',
+        shouldUpdatePersistedHtml: true,
+        canonicalDeck,
+        playbackState,
+        shouldUpdatePersistedPlaybackState: true,
+        sessionToken: 4
+      }
+    }
+  });
+});
+
 test('createStudioVersionCheckpointRequestOptions preserves the captured deck state and session token', () => {
   assert.deepEqual(
     editorPersistence.createStudioVersionCheckpointRequestOptions(
