@@ -195,6 +195,41 @@ test('renderCanonicalDeckHtml updates active classes and ids even when reusing s
   assert.match(html, /<section class="slide agenda-slide slide-active" id="slide-2"><p>Agenda<\/p><\/section>/);
 });
 
+test('renderCanonicalDeckHtml overlays canonical slide styling onto reused slide source html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        layout: {
+          background: {
+            className: 'hero-slide',
+            style: 'background-color: #101820;'
+          }
+        },
+        source: {
+          html: '<section class="stale-slide" style="background: black;"><p>Intro</p></section>'
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(
+    html,
+    /<section class="slide hero-slide slide-active"[^>]*id="slide-1"[^>]*style="background-color: #101820;"[^>]*><p>Intro<\/p><\/section>/
+  );
+  assert.equal(html.includes('stale-slide'), false);
+  assert.equal(html.includes('background: black;'), false);
+});
+
 test('renderCanonicalDeckHtml can rebuild canonical head when source head html is disabled', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {

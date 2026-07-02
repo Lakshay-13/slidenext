@@ -309,6 +309,40 @@
     return styleFragments.join(' ');
   }
 
+  function applyCanonicalSlideSourceHtmlState(sourceHtml = '', slide = {}, index = 0, options = {}) {
+    const html = normalizeString(sourceHtml);
+    if (!html) {
+      return html;
+    }
+
+    const openingTagMatch = html.match(/^<([a-z][^\s/>]*)([^>]*?)(\/?)>/i);
+    if (!openingTagMatch) {
+      return html;
+    }
+
+    const background = slide.layout ? asPlainObject(slide.layout.background) : {};
+    const existingClassName = readOpeningTagAttributeValue(openingTagMatch[2], 'class');
+    const existingStyleText = readOpeningTagAttributeValue(openingTagMatch[2], 'style');
+    const requestedActiveSlideId = normalizeString(options.activeSlideId).trim();
+    const isActiveSlide = requestedActiveSlideId
+      ? normalizeString(slide.id).trim() === requestedActiveSlideId
+      : index === 0;
+    const canonicalClassName = normalizeString(background.className).trim() || existingClassName;
+    const canonicalStyleText = normalizeString(background.style).trim()
+      || buildRenderedSlideBackgroundStyle(background)
+      || existingStyleText;
+    const rebuiltAttributes = {
+      class: buildRenderedSlideClassName(canonicalClassName, isActiveSlide),
+      id: normalizeString(slide.id).trim() || readOpeningTagAttributeValue(openingTagMatch[2], 'id')
+    };
+    if (canonicalStyleText) {
+      rebuiltAttributes.style = canonicalStyleText;
+    }
+
+    const rebuiltOpeningTag = `<${openingTagMatch[1]}${stripOpeningTagAttributeText(openingTagMatch[2], ['class', 'style', 'id'])}${renderAttributeMap(rebuiltAttributes)}${openingTagMatch[3] || ''}>`;
+    return rebuiltOpeningTag + html.slice(openingTagMatch[0].length);
+  }
+
   function appendStyleDeclaration(styleText, declaration) {
     const normalizedStyleText = normalizeString(styleText).trim();
     const normalizedDeclaration = normalizeString(declaration).trim();
@@ -428,30 +462,18 @@
 
   function renderCanonicalSlide(slide, index = 0, options = {}) {
     if (!slide || typeof slide !== 'object') return '';
-    const requestedActiveSlideId = normalizeString(options.activeSlideId).trim();
-    const isActiveSlide = requestedActiveSlideId
-      ? normalizeString(slide.id).trim() === requestedActiveSlideId
-      : index === 0;
     if (options.preferSlideSourceHtml !== false && slide.source && normalizeString(slide.source.html)) {
-      const sourceHtml = normalizeString(slide.source.html);
-      const openingTagMatch = sourceHtml.match(/^<([a-z][^\s/>]*)([^>]*?)(\/?)>/i);
-      if (!openingTagMatch) {
-        return sourceHtml;
-      }
-
-      const existingClassName = readOpeningTagAttributeValue(openingTagMatch[2], 'class');
-      const existingId = readOpeningTagAttributeValue(openingTagMatch[2], 'id');
-      const rebuiltOpeningTag = `<${openingTagMatch[1]}${stripOpeningTagAttributeText(openingTagMatch[2], ['class', 'id'])}${renderAttributeMap({
-        class: buildRenderedSlideClassName(existingClassName, isActiveSlide),
-        id: normalizeString(slide.id).trim() || existingId
-      })}${openingTagMatch[3] || ''}>`;
-      return rebuiltOpeningTag + sourceHtml.slice(openingTagMatch[0].length);
+      return applyCanonicalSlideSourceHtmlState(slide.source.html, slide, index, options);
     }
 
     const sourceAttributes = slide.source ? asPlainObject(slide.source.attributes) : {};
     const background = slide.layout ? asPlainObject(slide.layout.background) : {};
     const hasExplicitSourceStyle = !!normalizeString(sourceAttributes.style).trim();
     const needsPositionContext = hasAbsolutePositionedNode(slide.nodes);
+    const requestedActiveSlideId = normalizeString(options.activeSlideId).trim();
+    const isActiveSlide = requestedActiveSlideId
+      ? normalizeString(slide.id).trim() === requestedActiveSlideId
+      : index === 0;
     const slideTitle = normalizeString(slide.title).trim();
     const isDefaultSlideTitle = slideTitle === `Slide ${index + 1}` && !normalizeString(slide.name).trim();
     if (!sourceAttributes['aria-label'] && slideTitle && !hasHeadingNode(slide.nodes) && !isDefaultSlideTitle) {
