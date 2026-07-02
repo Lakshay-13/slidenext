@@ -5189,11 +5189,15 @@
       const versionFilename = renamingFilename;
       if (!versionFilename || !renameContext.presentationUrl) return;
       const modal = document.getElementById('renameVersionModal');
-      const renameSessionToken = SlideNextStudioModalVisibility.getCurrentStudioModalVisibilityToken(modal);
+      const renameSessionToken = modal
+        ? SlideNextStudioModalVisibility.getCurrentStudioModalVisibilityToken(modal)
+        : 0;
       
       const btn = document.getElementById('confirmRenameVersionBtn');
-      btn.disabled = true;
-      btn.textContent = 'Renaming...';
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Renaming...';
+      }
       
       try {
         const response = await fetch('/api/versions/rename', {
@@ -5209,14 +5213,14 @@
         const data = await response.json();
         if (data.success) {
           handleCurrentStudioVersionListMutationSuccess(renameContext, {
-            isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
+            isCurrentSession: () => !modal || SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
             onSuccess: () => {
               closeRenameVersionModal();
             }
           });
         } else {
           handleCurrentStudioVersionActionFailure(renameContext, {
-            isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
+            isCurrentSession: () => !modal || SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
             onFailure: () => {
               alert(`Rename failed: ${data.error}`);
             }
@@ -5224,18 +5228,20 @@
         }
       } catch (err) {
         handleCurrentStudioVersionActionFailure(renameContext, {
-          isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
+          isCurrentSession: () => !modal || SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
           onFailure: () => {
             alert(`Error renaming version: ${err.message}`);
           }
         });
       } finally {
         handleCurrentStudioVersionListMutationSuccess(renameContext, {
-          isCurrentSession: () => SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
+          isCurrentSession: () => !modal || SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
           shouldRefreshVersionEntries: false,
           onSuccess: () => {
-            btn.disabled = false;
-            btn.textContent = 'Rename';
+            if (btn) {
+              btn.disabled = false;
+              btn.textContent = 'Rename';
+            }
           }
         });
       }

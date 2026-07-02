@@ -513,6 +513,93 @@ test('submitRenameVersion no-ops when the rename input is missing', async () => 
   ]);
 });
 
+test('submitRenameVersion tolerates missing rename modal chrome during a successful rename', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const submitRenameVersionSource = extractFunctionSource(
+    fileContent,
+    'async function submitRenameVersion() {',
+    '\n\n    async function deleteVersion(filename) {'
+  );
+
+  const calls = [];
+  const context = {
+    SlideNextStudioModalVisibility: {
+      getCurrentStudioModalVisibilityToken() {
+        calls.push(['getCurrentStudioModalVisibilityToken']);
+        return 7;
+      },
+      isStudioModalVisibilityCurrent() {
+        calls.push(['isStudioModalVisibilityCurrent']);
+        return true;
+      }
+    },
+    closeRenameVersionModal() {
+      calls.push(['closeRenameVersionModal']);
+    },
+    createCurrentStudioVersionActionContext() {
+      calls.push(['createCurrentStudioVersionActionContext']);
+      return {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      };
+    },
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (id === 'newVersionNameInput') {
+          return {
+            value: 'Draft Name'
+          };
+        }
+        return null;
+      }
+    },
+    fetch(url, options) {
+      calls.push(['fetch', url, options]);
+      return Promise.resolve({
+        async json() {
+          calls.push(['response.json']);
+          return {
+            success: true
+          };
+        }
+      });
+    },
+    handleCurrentStudioVersionActionFailure() {
+      calls.push(['handleCurrentStudioVersionActionFailure']);
+    },
+    handleCurrentStudioVersionListMutationSuccess(renameContext, options) {
+      calls.push(['handleCurrentStudioVersionListMutationSuccess', renameContext, options.shouldRefreshVersionEntries]);
+      if (options.isCurrentSession) {
+        calls.push(['isCurrentSession', options.isCurrentSession()]);
+      }
+      if (options.onSuccess) {
+        options.onSuccess();
+      }
+      return true;
+    },
+    renamingFilename: 'index_20260101_120000_Auto.html',
+    renamingVersionContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(submitRenameVersionSource, context);
+
+  await assert.doesNotReject(async () => {
+    await context.submitRenameVersion();
+  });
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'renameVersionModal'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'confirmRenameVersionBtn'));
+  assert.ok(calls.some(([name]) => name === 'fetch'));
+  assert.ok(calls.some(([name]) => name === 'closeRenameVersionModal'));
+  assert.ok(calls.filter(([name]) => name === 'handleCurrentStudioVersionListMutationSuccess').length === 2);
+  assert.ok(calls.some(([name, result]) => name === 'isCurrentSession' && result === true));
+  assert.ok(!calls.some(([name]) => name === 'getCurrentStudioModalVisibilityToken'));
+  assert.ok(!calls.some(([name]) => name === 'isStudioModalVisibilityCurrent'));
+  assert.ok(!calls.some(([name]) => name === 'handleCurrentStudioVersionActionFailure'));
+});
+
 test('restoreVersion tolerates a missing versions dropdown after a successful restore', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const restoreVersionSource = extractFunctionSource(
