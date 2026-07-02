@@ -125,6 +125,7 @@
     }
 
     return deckImport.importHtmlDeckToCanonicalDeck(doc, {
+      ...options,
       presentationMetadata: options.presentationMetadata || {},
       sourcePath: normalizeString(options.sourcePath),
       getSlideId: options.getSlideId,
