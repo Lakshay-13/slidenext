@@ -1446,24 +1446,35 @@
 
     function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {
       const persistedActiveSlideId = getPersistedActiveSlideId();
+      const hasCanonicalDeckValidator = (
+        typeof SlideNextCanonicalDeck !== 'undefined'
+        && SlideNextCanonicalDeck
+        && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
+      );
+      const hasValidCanonicalDeck = hasCanonicalDeckValidator
+        ? SlideNextCanonicalDeck.isCanonicalDeck(canonicalDeck)
+        : !!(canonicalDeck && Array.isArray(canonicalDeck.slides));
+      const nextCanonicalDeck = hasValidCanonicalDeck
+        ? canonicalDeck
+        : (canonicalDeck ? buildEditorCanonicalDeck(doc) : null);
       if (doc) {
         const liveActiveSlideId = resolveEditorLiveActiveSlideId(doc);
         if (typeof liveActiveSlideId === 'string' && liveActiveSlideId.trim()) {
           return liveActiveSlideId;
         }
-        if (!canonicalDeck) {
+        if (!nextCanonicalDeck) {
           return persistedActiveSlideId;
         }
       }
 
-      const nextCanonicalDeck = canonicalDeck || buildEditorCanonicalDeck(doc);
-      if (!nextCanonicalDeck || !Array.isArray(nextCanonicalDeck.slides) || nextCanonicalDeck.slides.length === 0) {
+      const resolvedCanonicalDeck = nextCanonicalDeck || buildEditorCanonicalDeck(doc);
+      if (!resolvedCanonicalDeck || !Array.isArray(resolvedCanonicalDeck.slides) || resolvedCanonicalDeck.slides.length === 0) {
         return persistedActiveSlideId;
       }
 
       const fallbackIndex = Number.isInteger(currentSlideIndex) ? currentSlideIndex : 0;
-      const safeIndex = Math.max(0, Math.min(fallbackIndex, nextCanonicalDeck.slides.length - 1));
-      const activeSlide = nextCanonicalDeck.slides[safeIndex];
+      const safeIndex = Math.max(0, Math.min(fallbackIndex, resolvedCanonicalDeck.slides.length - 1));
+      const activeSlide = resolvedCanonicalDeck.slides[safeIndex];
       return activeSlide && typeof activeSlide.id === 'string' && activeSlide.id.trim()
         ? activeSlide.id
         : persistedActiveSlideId;

@@ -368,6 +368,65 @@ test('buildEditorCanonicalDeck prefers the current metadata canonical deck over 
   assert.equal(calls[0][1], context.currentPresentationMetadata);
 });
 
+test('resolveEditorFallbackActiveSlideId rebuilds a malformed canonical deck input before choosing the fallback slide', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const rebuiltCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  const malformedCanonicalDeck = {
+    slides: 'not-an-array'
+  };
+  const calls = [];
+  const context = {
+    SlideNextCanonicalDeck: {
+      isCanonicalDeck(deck) {
+        calls.push(['isCanonicalDeck', deck]);
+        return deck === rebuiltCanonicalDeck;
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      calls.push(['buildEditorCanonicalDeck', nextDoc]);
+      return rebuiltCanonicalDeck;
+    },
+    currentSlideIndex: 1,
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getPersistedActiveSlideId() {
+      calls.push(['getPersistedActiveSlideId']);
+      return 'slide-persisted';
+    },
+    resolveEditorLiveActiveSlideId(nextDoc) {
+      calls.push(['resolveEditorLiveActiveSlideId', nextDoc]);
+      return '';
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+
+  const result = context.resolveEditorFallbackActiveSlideId(iframeDoc, malformedCanonicalDeck);
+
+  assert.equal(result, 'slide-2');
+  assert.equal(calls[0][0], 'getPersistedActiveSlideId');
+  assert.equal(calls[1][0], 'isCanonicalDeck');
+  assert.equal(calls[1][1], malformedCanonicalDeck);
+  assert.equal(calls[2][0], 'buildEditorCanonicalDeck');
+  assert.equal(calls[2][1], iframeDoc);
+});
+
 test('buildEditorDeckSnapshot prefers the current session active slide fallback when the iframe is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
