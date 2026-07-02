@@ -38,6 +38,7 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
 
 function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadApplyCurrentStudioPersistedPlaybackState(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
@@ -50,6 +51,15 @@ function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistedCanonicalDeck(',
+    '\n\n    function applyCurrentStudioPersistedPlaybackState('
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadApplyCurrentStudioPersistedPlaybackState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistedPlaybackState(playbackState = null) {',
     '\n\n    function setCurrentPresentationCanonicalDeck('
   );
   vm.runInContext(helperSource, context);

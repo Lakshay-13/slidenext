@@ -2627,6 +2627,11 @@
       return canonicalDeck;
     }
 
+    function applyCurrentStudioPersistedPlaybackState(playbackState = null) {
+      updateEditorPersistedDeckState({ playbackState });
+      return playbackState;
+    }
+
     function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
       const nextPresentationMetadata = SlideNextStudioDeckContext.resolveStudioPresentationMetadataCanonicalDeckUpdate(
         canonicalDeck,
@@ -4365,7 +4370,7 @@
     }
 
     function applyCurrentStudioRestoredHistoryState(historyEntry = {}, playbackState = null) {
-      updateEditorPersistedDeckState({ playbackState });
+      applyCurrentStudioPersistedPlaybackState(playbackState);
       setCurrentPresentationCanonicalDeck(
         Object.prototype.hasOwnProperty.call(historyEntry, 'canonicalDeck')
           ? historyEntry.canonicalDeck
@@ -4699,7 +4704,7 @@
           applyCurrentStudioPersistedCanonicalDeck(nextCanonicalDeck, persistencePresentationUrl);
         },
         setPersistedPlaybackState: (nextPlaybackState) => {
-          updateEditorPersistedDeckState({ playbackState: nextPlaybackState });
+          applyCurrentStudioPersistedPlaybackState(nextPlaybackState);
         },
         onSuccess: options.onSuccess,
         onFailure: options.onFailure

@@ -674,6 +674,11 @@ test('captureState can store a persisted baseline history entry without a live f
 
 test('applyCurrentStudioRestoredHistoryState updates the playback baseline and live canonical deck together', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const playbackHelperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistedPlaybackState(playbackState = null) {',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioRestoredHistoryState(historyEntry = {}, playbackState = null) {',
@@ -700,6 +705,7 @@ test('applyCurrentStudioRestoredHistoryState updates the playback baseline and l
   };
 
   vm.createContext(context);
+  vm.runInContext(playbackHelperSource, context);
   vm.runInContext(helperSource, context);
 
   context.applyCurrentStudioRestoredHistoryState({ canonicalDeck }, playbackState);
@@ -844,6 +850,14 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   vm.runInContext(
     extractFunctionSource(
       fileContent,
+      'function applyCurrentStudioPersistedPlaybackState(playbackState = null) {',
+      '\n\n    function setCurrentPresentationCanonicalDeck('
+    ),
+    context
+  );
+  vm.runInContext(
+    extractFunctionSource(
+      fileContent,
       'function applyCurrentStudioRestoredHistoryState(historyEntry = {}, playbackState = null) {',
       '\n\n    function restoreFrameFromHistoryEntry(entry) {'
     ),
@@ -972,6 +986,14 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
 
   vm.createContext(context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(
+    extractFunctionSource(
+      fileContent,
+      'function applyCurrentStudioPersistedPlaybackState(playbackState = null) {',
+      '\n\n    function setCurrentPresentationCanonicalDeck('
+    ),
+    context
+  );
   vm.runInContext(
     extractFunctionSource(
       fileContent,
