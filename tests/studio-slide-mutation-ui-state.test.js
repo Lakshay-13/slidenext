@@ -18,6 +18,15 @@ function loadFinalizeSlideMutationPersistence(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function finalizeSlideMutationPersistence(versionLabel) {',
+    '\n\n    function restoreDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadRestoreDeckViewAfterSlideMutation(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function restoreDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, options = {}) {',
     '\n\n    // Add Blank Slide Node'
   );
   vm.runInContext(helperSource, context);
@@ -49,6 +58,64 @@ test('finalizeSlideMutationPersistence saves, autosaves, and versions slide chan
     ['triggerAutoSave'],
     ['triggerAutoVersion', 'Auto: Added Slide']
   ]);
+});
+
+test('restoreDeckViewAfterSlideMutation delegates slide restore callbacks through shared selection and navigation helpers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { id: 'doc' };
+  const selectionIds = ['node-1', 'node-2'];
+  let restorePayload = null;
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      restoreStudioDeckViewAfterSlideMutation(payload) {
+        restorePayload = payload;
+        calls.push(['restoreStudioDeckViewAfterSlideMutation', payload]);
+        return { restored: true };
+      }
+    },
+    restoreSelectionAfterPreservedSlideMutation(ids, doc) {
+      calls.push(['restoreSelectionAfterPreservedSlideMutation', ids, doc]);
+    },
+    setActiveSlide(index) {
+      calls.push(['setActiveSlide', index]);
+    },
+    setActiveSlideById(slideId, doc, options) {
+      calls.push(['setActiveSlideById', slideId, doc, options]);
+    },
+    Object
+  };
+
+  vm.createContext(context);
+  loadRestoreDeckViewAfterSlideMutation(fileContent, context);
+
+  const result = context.restoreDeckViewAfterSlideMutation(iframeDoc, selectionIds, {
+    preservedActiveSlideId: 'slide-2',
+    removedSlideId: 'slide-1',
+    fallbackIndex: 1
+  });
+
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), { restored: true });
+  assert.equal(restorePayload.preservedActiveSlideId, 'slide-2');
+  assert.equal(restorePayload.removedSlideId, 'slide-1');
+  assert.equal(restorePayload.fallbackIndex, 1);
+
+  restorePayload.restoreActiveSlideById('slide-2');
+  restorePayload.restoreSelectionState();
+  restorePayload.setActiveSlideByIndex(1);
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'restoreStudioDeckViewAfterSlideMutation',
+    'setActiveSlideById',
+    'restoreSelectionAfterPreservedSlideMutation',
+    'setActiveSlide'
+  ]);
+  assert.equal(calls[1][1], 'slide-2');
+  assert.equal(calls[1][2], iframeDoc);
+  assert.equal(calls[1][3].preserveSelection, true);
+  assert.deepEqual(calls[2][1], selectionIds);
+  assert.equal(calls[2][2], iframeDoc);
+  assert.equal(calls[3][1], 1);
 });
 
 test('addSlideNode uses the shared iframe accessor and appends a new blank slide before refreshing editor state', () => {
@@ -126,6 +193,7 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
 
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   vm.runInContext(addSlideNodeSource, context);
 
   const result = context.addSlideNode();
@@ -180,6 +248,7 @@ test('addSlideNode no-ops when the add-slide control is disabled or the iframe d
 
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   vm.runInContext(addSlideNodeSource, context);
 
   assert.equal(context.addSlideNode(), false);
@@ -253,6 +322,7 @@ test('addSlideNode skips history when blank slide creation fails', () => {
 
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   vm.runInContext(addSlideNodeSource, context);
 
   assert.equal(context.addSlideNode(), false);
@@ -352,6 +422,7 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
 
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   context.reorderSlides(0, 2);
@@ -418,6 +489,7 @@ test('reorderSlides no-ops when the iframe document is unavailable', () => {
 
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   assert.equal(context.reorderSlides(0, 1), false);
@@ -453,6 +525,7 @@ test('reorderSlides no-ops when the slide container is unavailable', () => {
 
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   assert.equal(context.reorderSlides(0, 1), false);
@@ -495,6 +568,7 @@ test('reorderSlides no-ops when the requested slide indexes are unavailable', ()
 
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   const result = context.reorderSlides(0, 9);
@@ -540,6 +614,7 @@ test('reorderSlides no-ops when the requested slide indexes are unchanged', () =
 
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   const result = context.reorderSlides(1, 1);
@@ -728,6 +803,7 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
 
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   const result = context.deleteSlideNode(1);
@@ -794,6 +870,7 @@ test('deleteSlideNode no-ops when the iframe document is unavailable', () => {
 
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   assert.equal(context.deleteSlideNode(0), false);
@@ -835,6 +912,7 @@ test('deleteSlideNode no-ops when the requested slide index is unavailable', () 
 
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   const result = context.deleteSlideNode(9);
@@ -881,6 +959,7 @@ test('deleteSlideNode refuses to remove the final remaining slide', () => {
 
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   const result = context.deleteSlideNode(0);

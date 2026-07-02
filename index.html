@@ -2140,14 +2140,9 @@
       
       generateThumbnails();
       const slideCount = getSlides(iframeDoc).length;
-      SlideNextStudioDeckView.restoreStudioDeckViewAfterSlideMutation({
+      restoreDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, {
         preservedActiveSlideId: activeSlideId,
-        restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc, { preserveSelection: true }),
-        restoreSelectionState: () => {
-          restoreSelectionAfterPreservedSlideMutation(preservedSelectionIds, iframeDoc);
-        },
         fallbackIndex: slideCount === 0 ? 0 : Math.min(toIdx, slideCount - 1),
-        setActiveSlideByIndex: (index) => setActiveSlide(index)
       });
       finalizeSlideMutationPersistence('Auto: Reordered Slides');
       return true;
@@ -2299,6 +2294,24 @@
       return versionLabel;
     }
 
+    function restoreDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, options = {}) {
+      const restoreOptions = {
+        restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc, { preserveSelection: true }),
+        restoreSelectionState: () => {
+          restoreSelectionAfterPreservedSlideMutation(preservedSelectionIds, iframeDoc);
+        },
+        fallbackIndex: options.fallbackIndex,
+        setActiveSlideByIndex: (index) => setActiveSlide(index)
+      };
+      if (Object.prototype.hasOwnProperty.call(options, 'preservedActiveSlideId')) {
+        restoreOptions.preservedActiveSlideId = options.preservedActiveSlideId;
+      }
+      if (Object.prototype.hasOwnProperty.call(options, 'removedSlideId')) {
+        restoreOptions.removedSlideId = options.removedSlideId;
+      }
+      return SlideNextStudioDeckView.restoreStudioDeckViewAfterSlideMutation(restoreOptions);
+    }
+
     // Add Blank Slide Node
     function addSlideNode() {
       const addSlideBtn = document.getElementById('addSlideBtn');
@@ -2350,15 +2363,10 @@
       
       generateThumbnails();
       const remainingSlides = getSlides(iframeDoc);
-      SlideNextStudioDeckView.restoreStudioDeckViewAfterSlideMutation({
+      restoreDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, {
         preservedActiveSlideId: activeSlideId,
         removedSlideId: deletedSlideId,
-        restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc, { preserveSelection: true }),
-        restoreSelectionState: () => {
-          restoreSelectionAfterPreservedSlideMutation(preservedSelectionIds, iframeDoc);
-        },
         fallbackIndex: remainingSlides.length === 0 ? 0 : Math.max(0, Math.min(idx - 1, remainingSlides.length - 1)),
-        setActiveSlideByIndex: (index) => setActiveSlide(index)
       });
       finalizeSlideMutationPersistence('Auto: Deleted Slide');
       return true;
