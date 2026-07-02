@@ -3268,15 +3268,27 @@
       }
 
       if (prop === 'size') {
-        document.getElementById('fontSizeVal').textContent = `${styleMutationResult.displayValue}px`;
+        const fontSizeLabel = document.getElementById('fontSizeVal');
+        if (fontSizeLabel) {
+          fontSizeLabel.textContent = `${styleMutationResult.displayValue}px`;
+        }
       } else if (prop === 'align') {
         highlightAlignButton(val);
       } else if (prop === 'borderWidth') {
-        document.getElementById('borderWidthVal').textContent = `${styleMutationResult.displayValue}px`;
+        const borderWidthLabel = document.getElementById('borderWidthVal');
+        if (borderWidthLabel) {
+          borderWidthLabel.textContent = `${styleMutationResult.displayValue}px`;
+        }
       } else if (prop === 'borderRadius') {
-        document.getElementById('borderRadiusVal').textContent = `${styleMutationResult.displayValue}px`;
+        const borderRadiusLabel = document.getElementById('borderRadiusVal');
+        if (borderRadiusLabel) {
+          borderRadiusLabel.textContent = `${styleMutationResult.displayValue}px`;
+        }
       } else if (prop === 'opacity') {
-        document.getElementById('opacityVal').textContent = `${styleMutationResult.displayValue}%`;
+        const opacityLabel = document.getElementById('opacityVal');
+        if (opacityLabel) {
+          opacityLabel.textContent = `${styleMutationResult.displayValue}%`;
+        }
       }
 
       syncSelectionOverlay();
