@@ -64,6 +64,9 @@
       if (typeof el.setAttribute === 'function') {
         el.setAttribute('aria-hidden', 'true');
       }
+      if (el.classList && typeof el.classList.add === 'function') {
+        el.classList.add('hidden');
+      }
       if (el.style) {
         el.style.display = 'none';
       }

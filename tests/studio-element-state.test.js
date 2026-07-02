@@ -98,6 +98,7 @@ test('setStudioElementHiddenState hides an element using both editor dataset and
   assert.equal(el.dataset.editorPrevDisplay, 'flex');
   assert.equal(el.dataset.editorPrevAriaHidden, '');
   assert.equal(el.dataset.editorHidden, 'true');
+  assert.equal(el.classList.contains('hidden'), true);
   assert.equal(el.hidden, true);
   assert.equal(el.getAttribute('aria-hidden'), 'true');
   assert.equal(el.style.display, 'none');
@@ -160,6 +161,9 @@ function createClassList(initialValues = []) {
   return {
     contains(value) {
       return values.has(value);
+    },
+    add(...entries) {
+      entries.forEach((entry) => values.add(entry));
     },
     remove(...entries) {
       entries.forEach((entry) => values.delete(entry));
