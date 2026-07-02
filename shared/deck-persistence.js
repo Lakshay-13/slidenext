@@ -158,13 +158,15 @@
     const slides = Array.from(root.querySelectorAll(`.slide[${slideIdAttr}]`));
 
     if (slides.length > 0) {
-      slides.forEach(slide => slide.classList.remove('slide-active'));
-      normalizedPlaybackState.activeSlideIds.forEach(slideId => {
-        const match = root.querySelector(`.slide[${slideIdAttr}="${slideId}"]`);
-        if (match) {
-          match.classList.add('slide-active');
-        }
-      });
+      const matchingSlides = normalizedPlaybackState.activeSlideIds
+        .map((slideId) => root.querySelector(`.slide[${slideIdAttr}="${slideId}"]`))
+        .filter(Boolean);
+      if (matchingSlides.length > 0) {
+        slides.forEach(slide => slide.classList.remove('slide-active'));
+        matchingSlides.forEach((slide) => {
+          slide.classList.add('slide-active');
+        });
+      }
     }
 
     const slideNumNode = root.querySelector('#slideNum');
