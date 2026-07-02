@@ -314,6 +314,30 @@ test('renderCanonicalNode emits editor lock metadata when canonical visibility m
   assert.equal(html, '<div data-editor-locked="true">Locked copy</div>');
 });
 
+test('renderCanonicalNode removes stale source-html visibility attrs when canonical visibility is clear', () => {
+  const html = deckRender.renderCanonicalNode({
+    html: '<div hidden aria-hidden="true" data-editor-hidden="true" data-editor-locked="true">Visible copy</div>',
+    visibility: {
+      hidden: false,
+      locked: false
+    }
+  });
+
+  assert.equal(html, '<div>Visible copy</div>');
+});
+
+test('renderCanonicalNode overlays canonical visibility onto source html fragments', () => {
+  const html = deckRender.renderCanonicalNode({
+    html: '<div class="hero-copy">Hidden copy</div>',
+    visibility: {
+      hidden: true,
+      locked: true
+    }
+  });
+
+  assert.match(html, /^<div class="hero-copy" data-editor-hidden="true" hidden aria-hidden="true" data-editor-locked="true">Hidden copy<\/div>$/);
+});
+
 test('renderCanonicalDeckHtml emits theme tokens and custom css when rendering without source head html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {

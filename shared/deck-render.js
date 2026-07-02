@@ -217,6 +217,44 @@
       .join('');
   }
 
+  function stripOpeningTagAttributeText(attributeText = '', attributeNames = []) {
+    return attributeNames.reduce((nextAttributeText, attributeName) => nextAttributeText.replace(
+      new RegExp(`\\s${attributeName}(?:=(?:"[^"]*"|'[^']*'|[^\\s>]+))?`, 'gi'),
+      ''
+    ), normalizeString(attributeText));
+  }
+
+  function applyCanonicalNodeSourceHtmlVisibility(html, visibility = {}) {
+    const sourceHtml = normalizeString(html);
+    if (!sourceHtml) {
+      return sourceHtml;
+    }
+
+    const openingTagMatch = sourceHtml.match(/^<([a-z][^\s/>]*)([^>]*?)(\/?)>/i);
+    if (!openingTagMatch) {
+      return sourceHtml;
+    }
+
+    const strippedAttributeText = stripOpeningTagAttributeText(openingTagMatch[2], [
+      'hidden',
+      'aria-hidden',
+      'data-editor-hidden',
+      'data-editor-locked'
+    ]);
+    const canonicalVisibilityAttributes = {};
+    if (visibility && visibility.hidden) {
+      canonicalVisibilityAttributes['data-editor-hidden'] = 'true';
+      canonicalVisibilityAttributes.hidden = true;
+      canonicalVisibilityAttributes['aria-hidden'] = 'true';
+    }
+    if (visibility && visibility.locked) {
+      canonicalVisibilityAttributes['data-editor-locked'] = 'true';
+    }
+
+    const rebuiltOpeningTag = `<${openingTagMatch[1]}${strippedAttributeText}${renderAttributeMap(canonicalVisibilityAttributes)}${openingTagMatch[3] || ''}>`;
+    return rebuiltOpeningTag + sourceHtml.slice(openingTagMatch[0].length);
+  }
+
   function tokenizeClassNames(className) {
     return normalizeString(className)
       .split(/\s+/)
@@ -324,7 +362,7 @@
   function renderCanonicalNode(node, options = {}) {
     if (!node || typeof node !== 'object') return '';
     if (options.preferNodeSourceHtml !== false && normalizeString(node.html)) {
-      return node.html;
+      return applyCanonicalNodeSourceHtmlVisibility(node.html, node.visibility);
     }
 
     const attributes = asPlainObject(node.attributes);
