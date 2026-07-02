@@ -2406,6 +2406,17 @@
           updateLayersList();
         }
       };
+      const refreshActionStateChrome = (nextDoc = doc) => {
+        if (typeof updateInsertionActionState === 'function') {
+          updateInsertionActionState(nextDoc);
+        }
+        if (typeof updateZoomActionState === 'function') {
+          updateZoomActionState(nextDoc);
+        }
+        if (typeof updateWallpaperActionState === 'function') {
+          updateWallpaperActionState(nextDoc);
+        }
+      };
       const syncToDeckSnapshotFallback = (deckSnapshot) => {
         const slideCount = Array.isArray(deckSnapshot.slides) ? deckSnapshot.slides.length : 0;
         if (slideCount === 0) {
@@ -2413,6 +2424,7 @@
           updateActiveThumbnailCardState('');
           setSlideCountLabel('0 / 0');
           refreshLayersList();
+          refreshActionStateChrome(doc);
           if (!preserveSelection) {
             deselectElement();
           }
@@ -2428,6 +2440,7 @@
         updateActiveThumbnailCardState(activeSlideId);
         setSlideCountLabel(`${activeIndex + 1} / ${slideCount}`);
         refreshLayersList();
+        refreshActionStateChrome(doc);
         if (!preserveSelection) {
           deselectElement();
         }
@@ -2476,6 +2489,7 @@
       });
       syncSolidWallpaperControlToActiveSlide(activeSlide);
       refreshLayersList();
+      refreshActionStateChrome(doc);
       preserveSelectionOnNextActiveSlideSync = false;
       if (options.captureHistory && nextViewState.didSync && previousIndex !== currentSlideIndex) {
         saveHistoryState(false);

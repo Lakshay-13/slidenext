@@ -148,8 +148,17 @@ test('syncStudioChromeToActiveSlide routes active slide index updates through th
     },
     preserveSelectionOnNextActiveSlideSync: false,
     pruneEditorChromeNodes() {},
+    updateInsertionActionState(doc) {
+      calls.push(['updateInsertionActionState', doc]);
+    },
     updateLayersList() {
       calls.push(['updateLayersList']);
+    },
+    updateWallpaperActionState(doc) {
+      calls.push(['updateWallpaperActionState', doc]);
+    },
+    updateZoomActionState(doc) {
+      calls.push(['updateZoomActionState', doc]);
     },
     saveHistoryState() {
       calls.push(['saveHistoryState']);
@@ -186,6 +195,9 @@ test('syncStudioChromeToActiveSlide routes active slide index updates through th
   assert.equal(calls[1][0], 'updateCurrentPresentationSessionState');
   assert.equal(calls[1][1].slideIndex, 4);
   assert.equal(calls[2][0], 'updateLayersList');
+  assert.deepEqual(calls[3], ['updateInsertionActionState', iframeDoc]);
+  assert.deepEqual(calls[4], ['updateZoomActionState', iframeDoc]);
+  assert.deepEqual(calls[5], ['updateWallpaperActionState', iframeDoc]);
 });
 
 test('syncStudioChromeToActiveSlide tolerates a missing slide count label while syncing the live frame', () => {
@@ -902,8 +914,17 @@ test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when 
       return null;
     },
     preserveSelectionOnNextActiveSlideSync: false,
+    updateInsertionActionState(doc) {
+      calls.push(['updateInsertionActionState', doc]);
+    },
     updateLayersList() {
       calls.push(['updateLayersList']);
+    },
+    updateWallpaperActionState(doc) {
+      calls.push(['updateWallpaperActionState', doc]);
+    },
+    updateZoomActionState(doc) {
+      calls.push(['updateZoomActionState', doc]);
     },
     saveHistoryState(debounce) {
       calls.push(['saveHistoryState', debounce]);
@@ -938,7 +959,7 @@ test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when 
   assert.equal(didSync, true);
   assert.equal(context.currentSlideIndex, 2);
   assert.equal(slideCountLabel.textContent, '3 / 4');
-  assert.equal(calls.length, 7);
+  assert.equal(calls.length, 10);
   assert.equal(calls[0][0], 'buildEditorDeckSnapshot');
   assert.equal(calls[0][1], null);
   assert.equal(calls[1][0], 'resolveStudioActiveSlideIndex');
@@ -951,9 +972,12 @@ test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when 
   assert.equal(calls[3][0], 'updateActiveThumbnailCardState');
   assert.equal(calls[3][1], 'slide-3');
   assert.equal(calls[4][0], 'updateLayersList');
-  assert.equal(calls[5][0], 'deselectElement');
-  assert.equal(calls[6][0], 'saveHistoryState');
-  assert.equal(calls[6][1], false);
+  assert.deepEqual(calls[5], ['updateInsertionActionState', null]);
+  assert.deepEqual(calls[6], ['updateZoomActionState', null]);
+  assert.deepEqual(calls[7], ['updateWallpaperActionState', null]);
+  assert.equal(calls[8][0], 'deselectElement');
+  assert.equal(calls[9][0], 'saveHistoryState');
+  assert.equal(calls[9][1], false);
 });
 
 test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when the live iframe has no explicit active slide', () => {
