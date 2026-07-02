@@ -27,7 +27,16 @@ function loadSyncSelectionUiAfterMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function syncSelectionUiAfterMutation() {',
-    '\n\n    // Apply styles immediately to active selected elements'
+    '\n\n    function finalizeSelectionToggleMutation(versionLabel) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadFinalizeSelectionToggleMutation(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function finalizeSelectionToggleMutation(versionLabel) {',
+    '\n\n    function toggleSelectedElementsLockState() {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -157,6 +166,7 @@ test('toggleSelectedElementsVisibility returns false and skips persistence when 
 
   vm.createContext(context);
   loadSyncSelectionUiAfterMutation(fileContent, context);
+  loadFinalizeSelectionToggleMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
@@ -235,6 +245,7 @@ test('toggleSelectedElementsVisibility returns true after hiding live targets an
 
   vm.createContext(context);
   loadSyncSelectionUiAfterMutation(fileContent, context);
+  loadFinalizeSelectionToggleMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 

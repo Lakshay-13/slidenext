@@ -3480,6 +3480,14 @@
       return selectedElements;
     }
 
+    function finalizeSelectionToggleMutation(versionLabel) {
+      syncSelectionUiAfterMutation();
+      finalizeEditorDeckMutation(versionLabel, {
+        refreshThumbnails: false
+      });
+      return true;
+    }
+
     function toggleSelectedElementsLockState() {
       const doc = getIframeDoc();
       const lockMutationPlan = SlideNextStudioEditorLockState.buildStudioLockMutationPlan(selectedElements, {
@@ -3495,11 +3503,7 @@
         changedCount += 1;
       });
       if (changedCount === 0) return false;
-      syncSelectionUiAfterMutation();
-      finalizeEditorDeckMutation(lockMutationPlan.versionLabel, {
-        refreshThumbnails: false
-      });
-      return true;
+      return finalizeSelectionToggleMutation(lockMutationPlan.versionLabel);
     }
 
     function toggleSelectedElementsVisibility() {
@@ -3517,11 +3521,7 @@
         changedCount += 1;
       });
       if (changedCount === 0) return false;
-      syncSelectionUiAfterMutation();
-      finalizeEditorDeckMutation(visibilityMutationPlan.versionLabel, {
-        refreshThumbnails: false
-      });
-      return true;
+      return finalizeSelectionToggleMutation(visibilityMutationPlan.versionLabel);
     }
 
     // Helper: RGB to hex converters
