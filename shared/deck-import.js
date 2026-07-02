@@ -436,7 +436,7 @@
     return nextAttributes;
   }
 
-  function stripCanonicalSlideSourceHtmlDuplicates(sourceHtml = '') {
+  function stripCanonicalSlideSourceHtmlDuplicates(sourceHtml = '', attributes = {}) {
     const nextSourceHtml = normalizeString(sourceHtml);
     if (!nextSourceHtml) {
       return nextSourceHtml;
@@ -454,7 +454,8 @@
       'aria-label',
       'data-slide-name',
       'data-speaker-notes',
-      'data-notes'
+      'data-notes',
+      ...Object.keys(asPlainObject(attributes))
     ])}${openingTagMatch[3] || ''}>`;
     return rebuiltOpeningTag + nextSourceHtml.slice(openingTagMatch[0].length);
   }
@@ -675,6 +676,7 @@
       : normalizeString(slide.id || slide.getAttribute('data-slide-id'), `slide-${index + 1}`);
     const childElements = Array.from(slide.children || []).filter(child => shouldImportElement(child, options));
     const title = inferSlideTitle(slide, index, options);
+    const sourceAttributes = stripCanonicalSlideAttributeDuplicates(sanitizeImportedAttributeMap(slide, options));
 
     return canonicalDeck.createCanonicalSlide({
       id: slideId,
@@ -696,8 +698,8 @@
         path: [childIndex + 1]
       })),
       source: {
-        html: stripCanonicalSlideSourceHtmlDuplicates(buildImportedSourceHtml(slide, options)),
-        attributes: stripCanonicalSlideAttributeDuplicates(sanitizeImportedAttributeMap(slide, options))
+        html: stripCanonicalSlideSourceHtmlDuplicates(buildImportedSourceHtml(slide, options), sourceAttributes),
+        attributes: sourceAttributes
       }
     });
   }

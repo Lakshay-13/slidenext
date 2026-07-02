@@ -1046,7 +1046,8 @@ test('importSlideToCanonicalSlide sanitizes stored slide source html fragments',
       'aria-label': 'Imported Intro',
       'data-slide-id': 'slide-runtime-1',
       'data-slide-name': 'Imported Slide',
-      'data-speaker-notes': 'Key message'
+      'data-speaker-notes': 'Key message',
+      'data-transition': 'fade'
     },
     children: [heading]
   });
@@ -1062,9 +1063,13 @@ test('importSlideToCanonicalSlide sanitizes stored slide source html fragments',
   assert.equal(canonicalSlide.source.html.includes('aria-label="Imported Intro"'), false);
   assert.equal(canonicalSlide.source.html.includes('data-slide-name="Imported Slide"'), false);
   assert.equal(canonicalSlide.source.html.includes('data-speaker-notes="Key message"'), false);
+  assert.equal(canonicalSlide.source.html.includes('data-transition="fade"'), false);
   assert.match(canonicalSlide.source.html, /class="title"/);
   assert.equal(canonicalSlide.layout.background.className, 'slide');
   assert.equal(canonicalSlide.layout.background.style, 'background: black;');
   assert.equal(canonicalSlide.name, 'Imported Slide');
   assert.equal(canonicalSlide.notes, 'Key message');
+  assert.deepEqual(canonicalSlide.source.attributes, {
+    'data-transition': 'fade'
+  });
 });
