@@ -123,10 +123,15 @@ test('syncStudioChromeToActiveSlide routes active slide index updates through th
     },
     document: {
       getElementById(id) {
-        assert.equal(id, 'slideCountLabel');
-        return {
-          textContent: ''
-        };
+        if (id === 'slideCountLabel') {
+          return {
+            textContent: ''
+          };
+        }
+        if (id === 'wallpaperCustomColor') {
+          return null;
+        }
+        return null;
       }
     },
     getEditorSlideId() {
@@ -137,6 +142,9 @@ test('syncStudioChromeToActiveSlide routes active slide index updates through th
     },
     getSlides() {
       return [];
+    },
+    getActiveSlide() {
+      return null;
     },
     preserveSelectionOnNextActiveSlideSync: false,
     pruneEditorChromeNodes() {},
@@ -209,6 +217,9 @@ test('syncStudioChromeToActiveSlide tolerates a missing slide count label while 
     getSlides() {
       return [];
     },
+    getActiveSlide() {
+      return null;
+    },
     preserveSelectionOnNextActiveSlideSync: false,
     pruneEditorChromeNodes() {},
     saveHistoryState() {
@@ -244,6 +255,162 @@ test('syncStudioChromeToActiveSlide tolerates a missing slide count label while 
   assert.ok(calls.some(([name]) => name === 'syncStudioActiveSlideView'));
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'slideCountLabel'));
   assert.ok(calls.some(([name]) => name === 'updateCurrentPresentationSessionState'));
+});
+
+test('syncStudioChromeToActiveSlide syncs the solid wallpaper picker from the active slide', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncStudioChromeToActiveSlideSource = extractFunctionSource(
+    fileContent,
+    'function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function bindDeckNavigationSync(doc = getIframeDoc()) {'
+  );
+
+  const slideCountLabel = { textContent: '' };
+  const wallpaperCustomColor = { value: '#000000' };
+  const iframeDoc = { label: 'iframe-doc' };
+  const activeSlide = {
+    style: {
+      background: 'rgb(17, 34, 51)',
+      backgroundColor: 'rgb(17, 34, 51)',
+      backgroundImage: 'none'
+    }
+  };
+  const context = {
+    currentSlideIndex: 1,
+    deselectElement() {},
+    document: {
+      getElementById(id) {
+        if (id === 'slideCountLabel') {
+          return slideCountLabel;
+        }
+        if (id === 'wallpaperCustomColor') {
+          return wallpaperCustomColor;
+        }
+        return null;
+      }
+    },
+    getActiveSlide(doc) {
+      assert.equal(doc, iframeDoc);
+      return activeSlide;
+    },
+    getEditorSlideId() {
+      return 'slide-4';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlides() {
+      return [];
+    },
+    preserveSelectionOnNextActiveSlideSync: false,
+    pruneEditorChromeNodes() {},
+    rgbToHex(value) {
+      assert.equal(value, 'rgb(17, 34, 51)');
+      return '#112233';
+    },
+    saveHistoryState() {},
+    SlideNextStudioDeckView: {
+      syncStudioActiveSlideView(doc, options) {
+        assert.equal(doc, iframeDoc);
+        options.setCurrentSlideIndex(4);
+        options.setSlideCountLabel('5 / 8');
+        return {
+          didSync: true
+        };
+      }
+    },
+    updateActiveThumbnailCardState() {},
+    updateCurrentPresentationSessionState(nextState) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        context.currentSlideIndex = nextState.slideIndex;
+      }
+    },
+    updateIframeNavigationUI() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncStudioChromeToActiveSlideSource, context);
+
+  assert.equal(context.syncStudioChromeToActiveSlide(), true);
+  assert.equal(wallpaperCustomColor.value, '#112233');
+  assert.equal(slideCountLabel.textContent, '5 / 8');
+});
+
+test('syncStudioChromeToActiveSlide tolerates a missing solid wallpaper picker while syncing the live frame', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncStudioChromeToActiveSlideSource = extractFunctionSource(
+    fileContent,
+    'function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function bindDeckNavigationSync(doc = getIframeDoc()) {'
+  );
+
+  const slideCountLabel = { textContent: '' };
+  const iframeDoc = { label: 'iframe-doc' };
+  const activeSlide = {
+    style: {
+      background: 'rgb(17, 34, 51)',
+      backgroundColor: 'rgb(17, 34, 51)',
+      backgroundImage: 'none'
+    }
+  };
+  const context = {
+    currentSlideIndex: 1,
+    deselectElement() {},
+    document: {
+      getElementById(id) {
+        if (id === 'slideCountLabel') {
+          return slideCountLabel;
+        }
+        if (id === 'wallpaperCustomColor') {
+          return null;
+        }
+        return null;
+      }
+    },
+    getActiveSlide(doc) {
+      assert.equal(doc, iframeDoc);
+      return activeSlide;
+    },
+    getEditorSlideId() {
+      return 'slide-4';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlides() {
+      return [];
+    },
+    preserveSelectionOnNextActiveSlideSync: false,
+    pruneEditorChromeNodes() {},
+    rgbToHex() {
+      throw new Error('rgbToHex should not run when the wallpaper picker is missing');
+    },
+    saveHistoryState() {},
+    SlideNextStudioDeckView: {
+      syncStudioActiveSlideView(doc, options) {
+        assert.equal(doc, iframeDoc);
+        options.setCurrentSlideIndex(4);
+        options.setSlideCountLabel('5 / 8');
+        return {
+          didSync: true
+        };
+      }
+    },
+    updateActiveThumbnailCardState() {},
+    updateCurrentPresentationSessionState(nextState) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        context.currentSlideIndex = nextState.slideIndex;
+      }
+    },
+    updateIframeNavigationUI() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncStudioChromeToActiveSlideSource, context);
+
+  assert.doesNotThrow(() => context.syncStudioChromeToActiveSlide());
+  assert.equal(context.currentSlideIndex, 4);
+  assert.equal(slideCountLabel.textContent, '5 / 8');
 });
 
 test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when the iframe document is unavailable', () => {

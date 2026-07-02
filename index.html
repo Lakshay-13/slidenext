@@ -2158,6 +2158,45 @@
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
       const previousIndex = currentSlideIndex;
       const preserveSelection = !!options.preserveSelection || preserveSelectionOnNextActiveSlideSync;
+      const syncSolidWallpaperControlToActiveSlide = (activeSlide) => {
+        const solidWallpaperColorInput = document.getElementById('wallpaperCustomColor');
+        if (!solidWallpaperColorInput || !activeSlide || !activeSlide.style) {
+          return false;
+        }
+
+        const backgroundImage = typeof activeSlide.style.backgroundImage === 'string'
+          ? activeSlide.style.backgroundImage.trim()
+          : '';
+        if (backgroundImage && backgroundImage !== 'none') {
+          return false;
+        }
+
+        const backgroundColor = typeof activeSlide.style.backgroundColor === 'string'
+          ? activeSlide.style.backgroundColor.trim()
+          : '';
+        const background = typeof activeSlide.style.background === 'string'
+          ? activeSlide.style.background.trim()
+          : '';
+        const fallbackColorMatch = background && !/gradient\(/i.test(background)
+          ? background.match(/#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)/)
+          : null;
+        const solidColor = backgroundColor || (fallbackColorMatch ? fallbackColorMatch[0] : '');
+        if (!solidColor) {
+          return false;
+        }
+
+        if (solidColor.startsWith('#')) {
+          solidWallpaperColorInput.value = solidColor;
+          return true;
+        }
+
+        if (!/^rgba?\(/i.test(solidColor)) {
+          return false;
+        }
+
+        solidWallpaperColorInput.value = rgbToHex(solidColor);
+        return true;
+      };
       const setSlideCountLabel = (label) => {
         const slideCountLabel = document.getElementById('slideCountLabel');
         if (slideCountLabel) {
@@ -2225,6 +2264,7 @@
         const deckSnapshot = buildEditorDeckSnapshot(doc);
         return syncToDeckSnapshotFallback(deckSnapshot);
       }
+      syncSolidWallpaperControlToActiveSlide(getActiveSlide(doc));
       preserveSelectionOnNextActiveSlideSync = false;
       if (options.captureHistory && nextViewState.didSync && previousIndex !== currentSlideIndex) {
         saveHistoryState(false);
