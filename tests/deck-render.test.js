@@ -1321,7 +1321,7 @@ test('renderCanonicalNode renders hidden nodes as hidden when canonical visibili
     preferNodeSourceHtml: false
   });
 
-  assert.equal(html, '<div data-editor-hidden="true" hidden aria-hidden="true">Hidden copy</div>');
+  assert.equal(html, '<div class="hidden" data-editor-hidden="true" hidden aria-hidden="true">Hidden copy</div>');
 });
 
 test('renderCanonicalNode emits editor lock metadata when canonical visibility marks the node locked', () => {
@@ -1340,14 +1340,14 @@ test('renderCanonicalNode emits editor lock metadata when canonical visibility m
 
 test('renderCanonicalNode removes stale source-html visibility attrs when canonical visibility is clear', () => {
   const html = deckRender.renderCanonicalNode({
-    html: '<div hidden aria-hidden="true" data-editor-hidden="true" data-editor-locked="true">Visible copy</div>',
+    html: '<div class="hero-copy hidden" hidden aria-hidden="true" data-editor-hidden="true" data-editor-locked="true">Visible copy</div>',
     visibility: {
       hidden: false,
       locked: false
     }
   });
 
-  assert.equal(html, '<div>Visible copy</div>');
+  assert.equal(html, '<div class="hero-copy">Visible copy</div>');
 });
 
 test('renderCanonicalNode overlays canonical visibility onto source html fragments', () => {
@@ -1360,11 +1360,26 @@ test('renderCanonicalNode overlays canonical visibility onto source html fragmen
   });
 
   assert.match(html, /^<div\b[^>]*>Hidden copy<\/div>$/);
-  assert.match(html, /\bclass="hero-copy"/);
+  assert.match(html, /\bclass="hero-copy hidden"/);
   assert.match(html, /\bdata-editor-hidden="true"/);
   assert.match(html, /\bhidden\b/);
   assert.match(html, /\baria-hidden="true"/);
   assert.match(html, /\bdata-editor-locked="true"/);
+});
+
+test('renderCanonicalNode strips stale hidden utility classes from canonical class lists when visibility is clear', () => {
+  const html = deckRender.renderCanonicalNode({
+    tagName: 'div',
+    text: 'Visible copy',
+    classes: ['hero-copy', 'hidden'],
+    visibility: {
+      hidden: false
+    }
+  }, {
+    preferNodeSourceHtml: false
+  });
+
+  assert.equal(html, '<div class="hero-copy">Visible copy</div>');
 });
 
 test('renderCanonicalNode overlays canonical class and style onto source html fragments', () => {

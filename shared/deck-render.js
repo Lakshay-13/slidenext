@@ -373,10 +373,24 @@
     ), normalizeString(attributeText));
   }
 
+  function buildRenderedNodeClassName(className = '', visibility = {}) {
+    const nextClassNames = tokenizeClassNames(className)
+      .filter((token) => token !== 'hidden');
+    if (visibility && visibility.hidden) {
+      nextClassNames.push('hidden');
+    }
+    return nextClassNames.join(' ');
+  }
+
   function buildRenderedNodeAttributes(node = {}, fallbackStyleText = '') {
     const attributes = asPlainObject(node.attributes);
-    if (Array.isArray(node.classes) && node.classes.length > 0 && !attributes.class) {
-      attributes.class = node.classes.join(' ');
+    const explicitClassName = normalizeString(attributes.class).trim()
+      || (Array.isArray(node.classes) && node.classes.length > 0 ? node.classes.join(' ') : '');
+    const renderedClassName = buildRenderedNodeClassName(explicitClassName, node.visibility);
+    if (renderedClassName) {
+      attributes.class = renderedClassName;
+    } else {
+      delete attributes.class;
     }
     const explicitStyleText = normalizeString(attributes.style || node.style).trim();
     const mergedStyleText = mergeStyleTextWithFallback(explicitStyleText, fallbackStyleText);
@@ -410,8 +424,12 @@
     const existingClassName = readOpeningTagAttributeValue(openingTagMatch[2], 'class');
     const existingStyleText = readOpeningTagAttributeValue(openingTagMatch[2], 'style');
     const canonicalAttributes = buildRenderedNodeAttributes(node, canonicalStyleText);
-    if (!canonicalAttributes.class && existingClassName) {
-      canonicalAttributes.class = existingClassName;
+    const hasExplicitCanonicalClass = !!(
+      normalizeString(node && node.attributes && node.attributes.class).trim()
+      || (Array.isArray(node.classes) && node.classes.length > 0)
+    );
+    if (existingClassName && !hasExplicitCanonicalClass) {
+      canonicalAttributes.class = buildRenderedNodeClassName(existingClassName, node.visibility);
     }
     if (!canonicalAttributes.style && existingStyleText) {
       canonicalAttributes.style = existingStyleText;
