@@ -404,7 +404,7 @@ test('applySelectedElementStyle falls back to style-action refresh when inspecto
   ]);
 });
 
-test('applySelectedElementStyle tolerates missing style feedback labels after successful mutations', () => {
+test('applySelectedElementStyle tolerates missing style feedback labels after successful non-layer mutations', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(
     fileContent,
@@ -497,10 +497,98 @@ test('applySelectedElementStyle tolerates missing style feedback labels after su
     assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === testCase.missingId));
     assert.ok(calls.some(([name]) => name === 'syncSelectionOverlay'));
     assert.ok(calls.some(([name]) => name === 'generateThumbnails'));
-    assert.ok(calls.some(([name]) => name === 'updateLayersList'));
+    assert.equal(calls.some(([name]) => name === 'updateLayersList'), false);
     assert.ok(calls.some(([name, immediate]) => name === 'saveHistoryState' && immediate === true));
     assert.ok(calls.some(([name]) => name === 'triggerAutoSave'));
     assert.ok(calls.some(([name, label]) => name === 'triggerAutoVersion' && label === testCase.versionLabel));
     assert.ok(!calls.some(([name]) => name === 'updateStyleActionState'));
   }
+});
+
+test('applySelectedElementStyle refreshes the layer list when the z-index changes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applySelectedElementStyleSource = extractFunctionSource(
+    fileContent,
+    'function applySelectedElementStyle(prop, val) {',
+    '\n\n    // Delete active selection'
+  );
+
+  const liveTarget = { isConnected: true };
+  const doc = { label: 'iframe-doc-z-index' };
+  const calls = [];
+  const context = {
+    selectedElements: [liveTarget],
+    SlideNextStudioEditorStyle: {
+      buildStudioStyleMutationPlan(selection, prop, value) {
+        calls.push(['buildStudioStyleMutationPlan', selection, prop, value]);
+        return {
+          canApply: true,
+          selection: [liveTarget],
+          versionLabel: 'Auto: Updated Layer Order'
+        };
+      },
+      applyStudioStyleMutation(selection, prop, value) {
+        calls.push(['applyStudioStyleMutation', selection, prop, value]);
+        return {
+          didApply: true,
+          displayValue: 9
+        };
+      }
+    },
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        return { textContent: '' };
+      }
+    },
+    getActiveSlide(currentDoc) {
+      calls.push(['getActiveSlide', currentDoc]);
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return doc;
+    },
+    isElementLocked() {
+      calls.push(['isElementLocked']);
+      return false;
+    },
+    highlightAlignButton(value) {
+      calls.push(['highlightAlignButton', value]);
+    },
+    syncSelectionOverlay() {
+      calls.push(['syncSelectionOverlay']);
+    },
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    },
+    saveHistoryState(immediate) {
+      calls.push(['saveHistoryState', immediate]);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    },
+    updateStyleActionState(currentDoc) {
+      calls.push(['updateStyleActionState', currentDoc]);
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
+  vm.runInContext(applySelectedElementStyleSource, context);
+
+  assert.equal(context.applySelectedElementStyle('zIndex', '9'), true);
+  assert.ok(calls.some(([name]) => name === 'syncSelectionOverlay'));
+  assert.ok(calls.some(([name]) => name === 'generateThumbnails'));
+  assert.ok(calls.some(([name]) => name === 'updateLayersList'));
+  assert.ok(calls.some(([name, immediate]) => name === 'saveHistoryState' && immediate === true));
+  assert.ok(calls.some(([name]) => name === 'triggerAutoSave'));
+  assert.ok(calls.some(([name, label]) => name === 'triggerAutoVersion' && label === 'Auto: Updated Layer Order'));
+  assert.ok(!calls.some(([name]) => name === 'updateStyleActionState'));
 });

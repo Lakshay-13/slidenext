@@ -3936,7 +3936,7 @@
       }
       finalizeEditorDeckMutation(styleMutationPlan.versionLabel, {
         syncSelectionOverlay: true,
-        refreshLayersList: true,
+        refreshLayersList: prop === 'zIndex',
         debounceHistory: true
       });
       return true;
