@@ -23,6 +23,15 @@ function loadBuildRemovalSelectionActionState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadFinalizeRemovalActionResult(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function finalizeRemovalActionResult(result, doc = getIframeDoc()) {',
+    '\n\n    function updateVisibilityActionState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadFinalizeEditorDeckMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -81,7 +90,7 @@ test('updateRemovalActionState enables the delete control only when the iframe h
   const updateRemovalActionStateSource = extractFunctionSource(
     fileContent,
     'function updateRemovalActionState(doc = getIframeDoc()) {',
-    '\n\n    function updateVisibilityActionState(doc = getIframeDoc()) {'
+    '\n\n    function finalizeRemovalActionResult(result, doc = getIframeDoc()) {'
   );
 
   const removeSelectionBtn = { disabled: true };
@@ -128,6 +137,32 @@ test('updateRemovalActionState enables the delete control only when the iframe h
     activeSlide: {}
   });
   assert.equal(removeSelectionBtn.disabled, false);
+});
+
+test('finalizeRemovalActionResult refreshes removal controls and preserves the action result', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = { label: 'iframe-doc' };
+  const calls = [];
+  const context = {
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return doc;
+    },
+    updateRemovalActionState(currentDoc) {
+      calls.push(['updateRemovalActionState', currentDoc]);
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeRemovalActionResult(fileContent, context);
+
+  assert.equal(context.finalizeRemovalActionResult(false, doc), false);
+  assert.equal(context.finalizeRemovalActionResult(true), true);
+  assert.deepEqual(calls, [
+    ['updateRemovalActionState', doc],
+    ['getIframeDoc'],
+    ['updateRemovalActionState', doc]
+  ]);
 });
 
 test('removeSelectedElement returns false and skips persistence when planned targets disconnect before removal', () => {
@@ -193,6 +228,7 @@ test('removeSelectedElement returns false and skips persistence when planned tar
 
   vm.createContext(context);
   loadBuildRemovalSelectionActionState(fileContent, context);
+  loadFinalizeRemovalActionResult(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 
@@ -244,6 +280,7 @@ test('removeSelectedElement returns false and refreshes removal controls when de
 
   vm.createContext(context);
   loadBuildRemovalSelectionActionState(fileContent, context);
+  loadFinalizeRemovalActionResult(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 
@@ -320,6 +357,7 @@ test('removeSelectedElement returns true after removing live targets and persist
 
   vm.createContext(context);
   loadBuildRemovalSelectionActionState(fileContent, context);
+  loadFinalizeRemovalActionResult(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 

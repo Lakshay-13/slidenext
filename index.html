@@ -3385,6 +3385,11 @@
       if (removeBtn) removeBtn.disabled = !removalActionState.canRemove;
     }
 
+    function finalizeRemovalActionResult(result, doc = getIframeDoc()) {
+      updateRemovalActionState(doc);
+      return result;
+    }
+
     function updateVisibilityActionState(doc = getIframeDoc()) {
       const visibilityActionState = SlideNextStudioEditorVisibilityState.buildStudioVisibilityActionState(selectedElements, {
         isHidden: isElementHidden,
@@ -3614,10 +3619,7 @@
     function removeSelectedElement() {
       const doc = getIframeDoc();
       const removalActionState = buildRemovalSelectionActionState(doc);
-      if (!removalActionState.canRemove) {
-        updateRemovalActionState(doc);
-        return false;
-      }
+      if (!removalActionState.canRemove) return finalizeRemovalActionResult(false, doc);
       let removedCount = 0;
       removalActionState.selection.forEach(el => {
         if (el && el.isConnected) {
@@ -3625,10 +3627,7 @@
           removedCount += 1;
         }
       });
-      if (removedCount === 0) {
-        updateRemovalActionState(doc);
-        return false;
-      }
+      if (removedCount === 0) return finalizeRemovalActionResult(false, doc);
       deselectElement();
       finalizeEditorDeckMutation('Auto: Deleted Element', {
         refreshLayersList: true
