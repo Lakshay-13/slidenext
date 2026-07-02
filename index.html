@@ -4314,7 +4314,18 @@
       const presentationUrl = Object.prototype.hasOwnProperty.call(options, 'presentationUrl')
         ? options.presentationUrl
         : currentPresentationUrl;
-      const resolvedCanonicalDeck = options.canonicalDeck || buildEditorCanonicalDeck(doc);
+      const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
+        ? options.canonicalDeck
+        : null;
+      const resolvedCanonicalDeck = (
+        providedCanonicalDeck
+        && typeof SlideNextCanonicalDeck !== 'undefined'
+        && SlideNextCanonicalDeck
+        && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
+        && !SlideNextCanonicalDeck.isCanonicalDeck(providedCanonicalDeck)
+      )
+        ? buildEditorCanonicalDeck(doc)
+        : (providedCanonicalDeck || buildEditorCanonicalDeck(doc));
       const resolvedCleanHtml = typeof cleanHtml === 'string'
         ? cleanHtml
         : buildPersistableDeckHtml(doc, {

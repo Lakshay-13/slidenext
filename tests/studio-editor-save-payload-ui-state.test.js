@@ -189,6 +189,62 @@ test('buildEditorSaveRequestBody reuses a provided canonical deck override', () 
   assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
+test('buildEditorSaveRequestBody falls back to the editor canonical deck when a provided override is malformed', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSaveRequestBodySource = extractFunctionSource(
+    fileContent,
+    'function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {',
+    '\n\n    function isCurrentDeckHtmlPersisted(cleanHtml) {'
+  );
+
+  const fallbackCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const malformedCanonicalDeck = {
+    slides: 'not-an-array'
+  };
+  let buildEditorCanonicalDeckCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
+    SlideNextCanonicalDeck: {
+      isCanonicalDeck(deck) {
+        return !!deck && deck.kind === 'slidenext.deck' && Array.isArray(deck.slides);
+      }
+    },
+    buildPersistableDeckHtml(nextDoc, buildOptions) {
+      assert.equal(nextDoc, null);
+      assert.equal(buildOptions.canonicalDeck, fallbackCanonicalDeck);
+      return '<html>persisted-baseline</html>';
+    },
+    buildEditorCanonicalDeck() {
+      buildEditorCanonicalDeckCalls += 1;
+      return fallbackCanonicalDeck;
+    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorSaveRequestBodySource, context);
+
+  assert.deepEqual(
+    context.buildEditorSaveRequestBody(null, null, {
+      canonicalDeck: malformedCanonicalDeck
+    }),
+    {
+      htmlPath: 'presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>persisted-baseline</html>',
+      isAutoSave: false,
+      canonicalDeck: canonicalDeckModel.createCanonicalDeck(fallbackCanonicalDeck)
+    }
+  );
+  assert.equal(buildEditorCanonicalDeckCalls, 1);
+});
+
 test('buildPersistableDeckHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
