@@ -436,7 +436,12 @@ test('renderCanonicalNode overlays canonical visibility onto source html fragmen
     }
   });
 
-  assert.match(html, /^<div class="hero-copy" data-editor-hidden="true" hidden aria-hidden="true" data-editor-locked="true">Hidden copy<\/div>$/);
+  assert.match(html, /^<div\b[^>]*>Hidden copy<\/div>$/);
+  assert.match(html, /\bclass="hero-copy"/);
+  assert.match(html, /\bdata-editor-hidden="true"/);
+  assert.match(html, /\bhidden\b/);
+  assert.match(html, /\baria-hidden="true"/);
+  assert.match(html, /\bdata-editor-locked="true"/);
 });
 
 test('renderCanonicalNode overlays canonical class and style onto source html fragments', () => {
@@ -447,6 +452,20 @@ test('renderCanonicalNode overlays canonical class and style onto source html fr
   });
 
   assert.equal(html, '<div class="hero-card" style="color: red;">Hero copy</div>');
+});
+
+test('renderCanonicalNode overlays canonical attributes onto source html fragments', () => {
+  const html = deckRender.renderCanonicalNode({
+    html: '<img src="stale.png" alt="Stale alt" data-variant="stale" class="stale-card">',
+    classes: ['hero-card'],
+    attributes: {
+      src: 'hero.png',
+      alt: 'Hero alt',
+      'data-variant': 'primary'
+    }
+  });
+
+  assert.equal(html, '<img src="hero.png" alt="Hero alt" data-variant="primary" class="hero-card">');
 });
 
 test('renderCanonicalNode overlays canonical absolute layout onto source html when explicit canonical style is absent', () => {

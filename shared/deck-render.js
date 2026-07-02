@@ -224,6 +224,31 @@
     ), normalizeString(attributeText));
   }
 
+  function buildRenderedNodeAttributes(node = {}, fallbackStyleText = '') {
+    const attributes = asPlainObject(node.attributes);
+    if (Array.isArray(node.classes) && node.classes.length > 0 && !attributes.class) {
+      attributes.class = node.classes.join(' ');
+    }
+    if (node.style && !attributes.style) {
+      attributes.style = node.style;
+    }
+    if (!attributes.style) {
+      const normalizedFallbackStyleText = normalizeString(fallbackStyleText).trim();
+      if (normalizedFallbackStyleText) {
+        attributes.style = normalizedFallbackStyleText;
+      }
+    }
+    if (node.visibility && node.visibility.locked) {
+      attributes['data-editor-locked'] = 'true';
+    }
+    if (node.visibility && node.visibility.hidden) {
+      attributes['data-editor-hidden'] = 'true';
+      attributes.hidden = true;
+      attributes['aria-hidden'] = attributes['aria-hidden'] || 'true';
+    }
+    return attributes;
+  }
+
   function applyCanonicalNodeSourceHtmlState(html, node = {}, canonicalStyleText = '') {
     const sourceHtml = normalizeString(html);
     if (!sourceHtml) {
@@ -237,33 +262,25 @@
 
     const existingClassName = readOpeningTagAttributeValue(openingTagMatch[2], 'class');
     const existingStyleText = readOpeningTagAttributeValue(openingTagMatch[2], 'style');
-    const strippedAttributeText = stripOpeningTagAttributeText(openingTagMatch[2], [
-      'class',
-      'style',
-      'hidden',
-      'aria-hidden',
-      'data-editor-hidden',
-      'data-editor-locked'
-    ]);
-    const canonicalAttributes = {};
-    const canonicalClassName = Array.isArray(node.classes) && node.classes.length > 0
-      ? node.classes.join(' ')
-      : existingClassName;
-    if (canonicalClassName) {
-      canonicalAttributes.class = canonicalClassName;
+    const canonicalAttributes = buildRenderedNodeAttributes(node, canonicalStyleText);
+    if (!canonicalAttributes.class && existingClassName) {
+      canonicalAttributes.class = existingClassName;
     }
-    const resolvedStyleText = normalizeString(node.style).trim() || normalizeString(canonicalStyleText).trim() || existingStyleText;
-    if (resolvedStyleText) {
-      canonicalAttributes.style = resolvedStyleText;
+    if (!canonicalAttributes.style && existingStyleText) {
+      canonicalAttributes.style = existingStyleText;
     }
-    if (node.visibility && node.visibility.hidden) {
-      canonicalAttributes['data-editor-hidden'] = 'true';
-      canonicalAttributes.hidden = true;
-      canonicalAttributes['aria-hidden'] = 'true';
-    }
-    if (node.visibility && node.visibility.locked) {
-      canonicalAttributes['data-editor-locked'] = 'true';
-    }
+    const strippedAttributeText = stripOpeningTagAttributeText(
+      openingTagMatch[2],
+      Array.from(new Set([
+        'class',
+        'style',
+        'hidden',
+        'aria-hidden',
+        'data-editor-hidden',
+        'data-editor-locked',
+        ...Object.keys(canonicalAttributes)
+      ]))
+    );
 
     const rebuiltOpeningTag = `<${openingTagMatch[1]}${strippedAttributeText}${renderAttributeMap(canonicalAttributes)}${openingTagMatch[3] || ''}>`;
     return rebuiltOpeningTag + sourceHtml.slice(openingTagMatch[0].length);
@@ -440,27 +457,7 @@
       );
     }
 
-    const attributes = asPlainObject(node.attributes);
-    if (Array.isArray(node.classes) && node.classes.length > 0 && !attributes.class) {
-      attributes.class = node.classes.join(' ');
-    }
-    if (node.style && !attributes.style) {
-      attributes.style = node.style;
-    }
-    if (!attributes.style) {
-      const layoutStyle = buildRenderedNodeLayoutStyle(node.layout);
-      if (layoutStyle) {
-        attributes.style = layoutStyle;
-      }
-    }
-    if (node.visibility && node.visibility.locked) {
-      attributes['data-editor-locked'] = 'true';
-    }
-    if (node.visibility && node.visibility.hidden) {
-      attributes['data-editor-hidden'] = 'true';
-      attributes.hidden = true;
-      attributes['aria-hidden'] = attributes['aria-hidden'] || 'true';
-    }
+    const attributes = buildRenderedNodeAttributes(node, buildRenderedNodeLayoutStyle(node.layout));
 
     const tagName = normalizeString(node.tagName, node.type === 'image' ? 'img' : 'div').toLowerCase();
     const childrenHtml = Array.isArray(node.children)
