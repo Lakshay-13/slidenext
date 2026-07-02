@@ -598,6 +598,30 @@ test('resolveStudioPersistedHtmlReuse returns persisted html only when the canon
   );
 });
 
+test('resolveStudioPersistedHtmlReuse ignores whitespace-only persisted html baselines', () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+
+  assert.equal(
+    editorPersistence.resolveStudioPersistedHtmlReuse({
+      cleanHtml: '   ',
+      canonicalDeck
+    }, {
+      canonicalDeck
+    }),
+    ''
+  );
+});
+
 test('isStudioPersistedState requires both html and canonical deck sidecars to match when a canonical deck is present', () => {
   const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
     metadata: {

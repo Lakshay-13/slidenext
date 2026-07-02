@@ -322,20 +322,52 @@
     };
   }
 
+  function resolveStudioPersistenceStateWithContent(
+    persistedDeckState = {},
+    presentationUrl = '',
+    options = {},
+    createPersistenceState = null
+  ) {
+    const nextPersistedDeckState = resolveStudioPersistableDeckStateWithContent(persistedDeckState);
+    if (!nextPersistedDeckState || typeof createPersistenceState !== 'function') {
+      return null;
+    }
+
+    return createPersistenceState(
+      nextPersistedDeckState,
+      presentationUrl,
+      options
+    );
+  }
+
+  function resolveStudioPersistenceStateFromCapture(
+    doc = null,
+    capturedDeckState = {},
+    presentationUrl = '',
+    options = {},
+    resolvePersistenceState = null
+  ) {
+    if (typeof resolvePersistenceState !== 'function') {
+      return null;
+    }
+
+    return resolvePersistenceState(
+      createStudioPersistableDeckState(doc, capturedDeckState),
+      presentationUrl,
+      options
+    );
+  }
+
   function resolveStudioAutoSavePersistenceState(
     persistedDeckState = {},
     presentationUrl = '',
     options = {}
   ) {
-    const nextPersistedDeckState = resolveStudioPersistableDeckStateWithContent(persistedDeckState);
-    if (!nextPersistedDeckState) {
-      return null;
-    }
-
-    return createStudioAutoSavePersistenceState(
-      nextPersistedDeckState,
+    return resolveStudioPersistenceStateWithContent(
+      persistedDeckState,
       presentationUrl,
-      options
+      options,
+      createStudioAutoSavePersistenceState
     );
   }
 
@@ -345,10 +377,12 @@
     presentationUrl = '',
     options = {}
   ) {
-    return resolveStudioAutoSavePersistenceState(
-      createStudioPersistableDeckState(doc, capturedDeckState),
+    return resolveStudioPersistenceStateFromCapture(
+      doc,
+      capturedDeckState,
       presentationUrl,
-      options
+      options,
+      resolveStudioAutoSavePersistenceState
     );
   }
 
@@ -510,15 +544,11 @@
     presentationUrl = '',
     options = {}
   ) {
-    const nextPersistedDeckState = resolveStudioPersistableDeckStateWithContent(persistedDeckState);
-    if (!nextPersistedDeckState) {
-      return null;
-    }
-
-    return createStudioVersionCheckpointPersistenceState(
-      nextPersistedDeckState,
+    return resolveStudioPersistenceStateWithContent(
+      persistedDeckState,
       presentationUrl,
-      options
+      options,
+      createStudioVersionCheckpointPersistenceState
     );
   }
 
@@ -528,10 +558,12 @@
     presentationUrl = '',
     options = {}
   ) {
-    return resolveStudioVersionCheckpointPersistenceState(
-      createStudioPersistableDeckState(doc, capturedDeckState),
+    return resolveStudioPersistenceStateFromCapture(
+      doc,
+      capturedDeckState,
       presentationUrl,
-      options
+      options,
+      resolveStudioVersionCheckpointPersistenceState
     );
   }
 
@@ -554,7 +586,10 @@
   }
 
   function resolveStudioPersistedHtmlReuse(persistedDeckState = {}, options = {}) {
-    const nextPersistedDeckState = asPlainObject(persistedDeckState);
+    const nextPersistedDeckState = resolveStudioPersistableDeckStateWithContent(persistedDeckState);
+    if (!nextPersistedDeckState) {
+      return '';
+    }
     const persistedHtml = normalizeString(nextPersistedDeckState.cleanHtml);
     if (!persistedHtml.trim()) {
       return '';
