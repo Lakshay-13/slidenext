@@ -243,6 +243,66 @@ test('selectLayerElementByRef refreshes the layer list when the row target is st
   assert.equal(calls[3][1], row);
 });
 
+test('selectLayerElementByRef relies on selection sync to refresh the layer list for a live row target', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectLayerElementByRefSource = extractFunctionSource(
+    fileContent,
+    'function selectLayerElementByRef(event) {',
+    '\n\n    function toggleLayerVisibilityByRef(event) {'
+  );
+
+  const row = { id: 'row-1' };
+  const target = { id: 'target-1' };
+  const calls = [];
+  const context = {
+    resolveLayerRowElement(currentRow) {
+      calls.push(['resolveLayerRowElement', currentRow]);
+      return target;
+    },
+    selectElement(nextTarget, options) {
+      calls.push(['selectElement', nextTarget, options]);
+      context.updateLayersList();
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(selectLayerElementByRefSource, context);
+
+  const event = {
+    currentTarget: {
+      closest(selector) {
+        calls.push(['closest', selector]);
+        return row;
+      }
+    },
+    preventDefault() {
+      calls.push(['preventDefault']);
+    },
+    shiftKey: true,
+    stopPropagation() {
+      calls.push(['stopPropagation']);
+    }
+  };
+
+  context.selectLayerElementByRef(event);
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'preventDefault',
+    'stopPropagation',
+    'closest',
+    'resolveLayerRowElement',
+    'selectElement',
+    'updateLayersList'
+  ]);
+  assert.equal(calls[3][1], row);
+  assert.equal(calls[4][1], target);
+  assert.equal(calls[4][2].additive, true);
+  assert.equal(calls[4][2].toggle, true);
+});
+
 test('toggleLayerVisibilityByRef refreshes the layer list when the row target is stale', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const toggleLayerVisibilityByRefSource = extractFunctionSource(
