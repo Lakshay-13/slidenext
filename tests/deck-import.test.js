@@ -934,6 +934,7 @@ test('importElementToCanonicalNode sanitizes stored node html fragments', () => 
     tagName: 'DIV',
     attributes: {
       class: 'hero-card editor-hoverable',
+      style: 'color: red;',
       'data-editor-id': 'node-1'
     },
     children: [child]
@@ -944,14 +945,18 @@ test('importElementToCanonicalNode sanitizes stored node html fragments', () => 
   assert.equal(node.html.includes('editor-hoverable'), false);
   assert.equal(node.html.includes('editor-selected'), false);
   assert.equal(node.html.includes('data-editor-id'), false);
-  assert.match(node.html, /class="hero-card"/);
+  assert.equal(node.html.includes('class="hero-card"'), false);
+  assert.equal(node.html.includes('style="color: red;"'), false);
   assert.match(node.html, /class="eyebrow"/);
+  assert.deepEqual(node.classes, ['hero-card']);
+  assert.equal(node.style, 'color: red;');
 });
 
 test('importElementToCanonicalNode strips duplicate visibility attrs from stored node html fragments', () => {
   const element = createImportedElement({
     tagName: 'DIV',
     hidden: true,
+    classList: createIterableClassList(['hero-card']),
     attributes: {
       class: 'hero-card',
       hidden: '',
@@ -969,7 +974,8 @@ test('importElementToCanonicalNode strips duplicate visibility attrs from stored
   assert.equal(node.html.includes('aria-hidden='), false);
   assert.equal(node.html.includes('data-editor-hidden='), false);
   assert.equal(node.html.includes('data-editor-locked='), false);
-  assert.match(node.html, /class="hero-card"/);
+  assert.equal(node.html.includes('class="hero-card"'), false);
+  assert.deepEqual(node.classes, ['hero-card']);
   assert.equal(node.visibility.hidden, true);
   assert.equal(node.visibility.locked, true);
 });

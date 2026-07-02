@@ -407,15 +407,12 @@
       return nextSourceHtml;
     }
 
-    const attributeNames = [];
+    const attributeNames = ['class', 'style'];
     if (visibility && visibility.hidden) {
       attributeNames.push('hidden', 'aria-hidden', 'data-editor-hidden');
     }
     if (visibility && visibility.locked) {
       attributeNames.push('data-editor-locked');
-    }
-    if (attributeNames.length === 0) {
-      return nextSourceHtml;
     }
 
     const openingTagMatch = nextSourceHtml.match(/^<([a-z][^\s/>]*)([^>]*?)(\/?)>/i);
