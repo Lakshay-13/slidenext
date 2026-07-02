@@ -90,6 +90,44 @@
       .map((src) => `<script src="${escapeAttribute(src)}"></script>`);
   }
 
+  function buildPreloadAssetLinkTags(assets = []) {
+    const preloadAsTypes = {
+      font: 'font',
+      image: 'image',
+      video: 'video',
+      audio: 'audio'
+    };
+    const seenSrcs = new Set();
+    return (Array.isArray(assets) ? assets : [])
+      .filter((asset) => asset && preloadAsTypes[normalizeString(asset.type).trim()])
+      .map((asset) => ({
+        src: normalizeString(asset.src).trim(),
+        as: preloadAsTypes[normalizeString(asset.type).trim()],
+        mimeType: normalizeString(asset.mimeType).trim()
+      }))
+      .filter(({ src }) => {
+        if (!src || seenSrcs.has(src)) {
+          return false;
+        }
+        seenSrcs.add(src);
+        return true;
+      })
+      .map(({ src, as, mimeType }) => {
+        const attributes = {
+          rel: 'preload',
+          as,
+          href: src
+        };
+        if (mimeType) {
+          attributes.type = mimeType;
+        }
+        if (as === 'font') {
+          attributes.crossorigin = true;
+        }
+        return `<link${renderAttributeMap(attributes)}>`;
+      });
+  }
+
   function normalizeAspectRatioCssValue(value) {
     const normalizedValue = normalizeString(value).trim();
     if (!normalizedValue) {
@@ -321,6 +359,7 @@
     const iconLinkTag = looksLikeAssetHref(iconHref)
       ? `<link rel="icon" href="${escapeAttribute(iconHref)}">`
       : '';
+    const preloadAssetLinkTags = buildPreloadAssetLinkTags(deck.assets);
     const stylesheetAssetLinkTags = buildStylesheetAssetLinkTags(deck.assets);
     const layoutCssUnit = normalizeString(layoutSize.unit, 'px').trim() || 'px';
     const layoutAspectRatio = normalizeAspectRatioCssValue(layout.aspectRatio);
@@ -364,6 +403,7 @@
       descriptionMetaTag,
       keywordsMetaTag,
       iconLinkTag,
+      ...preloadAssetLinkTags,
       ...stylesheetAssetLinkTags,
       deckLayoutStyleBlock,
       ...themeStyleBlocks
