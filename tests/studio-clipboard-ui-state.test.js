@@ -328,3 +328,49 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
     ['updateClipboardActionState']
   ]);
 });
+
+test('pasteClipboardElements returns false and refreshes clipboard controls when paste is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const pasteClipboardElementsSource = extractFunctionSource(
+    fileContent,
+    'function pasteClipboardElements() {',
+    '\n\n    function duplicateSelectedElements() {'
+  );
+
+  const calls = [];
+  const context = {
+    editorClipboard: null,
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardPastePlan() {
+        calls.push(['buildStudioClipboardPastePlan']);
+        return {
+          canPaste: false,
+          items: [],
+          nextPasteCount: 1,
+          nextClipboard: null
+        };
+      }
+    },
+    getActiveSlide() {
+      calls.push(['getActiveSlide']);
+      return null;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return { label: 'iframe-doc' };
+    },
+    updateClipboardActionState() {
+      calls.push(['updateClipboardActionState']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(pasteClipboardElementsSource, context);
+
+  assert.equal(context.pasteClipboardElements(), false);
+  assert.equal(context.editorClipboard, null);
+  assert.deepEqual(calls, [
+    ['buildStudioClipboardPastePlan'],
+    ['updateClipboardActionState']
+  ]);
+});

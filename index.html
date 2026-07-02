@@ -3357,7 +3357,10 @@
       const pastePlan = SlideNextStudioEditorClipboard.buildStudioClipboardPastePlan(editorClipboard, {
         canMutateDeck: () => !!getActiveSlide(getIframeDoc())
       });
-      if (!pastePlan.canPaste) return false;
+      if (!pastePlan.canPaste) {
+        updateClipboardActionState();
+        return false;
+      }
       const pasted = insertClipboardPayload(pastePlan.items, pastePlan.nextPasteCount);
       const didPaste = finalizeInsertedElements(pasted, 'Auto: Pasted Element');
       if (didPaste) {
