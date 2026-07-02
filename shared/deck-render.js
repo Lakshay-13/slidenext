@@ -146,10 +146,11 @@
   }
 
   function buildCanonicalOrderedScriptTags(entries = []) {
-    return (Array.isArray(entries) ? entries : [])
+    const orderedEntries = (Array.isArray(entries) ? entries : [])
       .map((entry, index) => ({
         html: normalizeString(entry && entry.html),
         order: Number.isFinite(entry && entry.order) ? entry.order : null,
+        dedupeKey: normalizeString(entry && entry.dedupeKey),
         fallbackGroup: entry && entry.fallbackGroup === 'inline' ? 1 : 0,
         fallbackIndex: Number.isFinite(entry && entry.fallbackIndex) ? entry.fallbackIndex : index
       }))
@@ -161,6 +162,19 @@
           return leftSortValue - rightSortValue;
         }
         return left.fallbackIndex - right.fallbackIndex;
+      });
+
+    const seenKeys = new Set();
+    return orderedEntries
+      .filter((entry) => {
+        if (!entry.dedupeKey) {
+          return true;
+        }
+        if (seenKeys.has(entry.dedupeKey)) {
+          return false;
+        }
+        seenKeys.add(entry.dedupeKey);
+        return true;
       })
       .map((entry) => entry.html);
   }
@@ -174,6 +188,7 @@
       .filter(({ asset }) => asset && asset.type === 'script' && normalizeString(asPlainObject(asset.meta).location).trim().toLowerCase() === 'head')
       .map(({ asset, assetIndex }) => ({
         html: buildScriptAssetTags([asset])[0] || '',
+        dedupeKey: normalizeString(asset && asset.src).trim(),
         order: Number.isFinite(asPlainObject(asset.meta).order) ? asPlainObject(asset.meta).order : null,
         fallbackGroup: 'external',
         fallbackIndex: assetIndex
@@ -189,6 +204,34 @@
     return buildCanonicalOrderedScriptTags([
       ...headScriptAssetEntries,
       ...headInlineScriptEntries
+    ]);
+  }
+
+  function buildCanonicalBodyScriptTags(deck = {}) {
+    const bodyScriptAssetEntries = (Array.isArray(deck.assets) ? deck.assets : [])
+      .map((asset, assetIndex) => ({
+        asset,
+        assetIndex
+      }))
+      .filter(({ asset }) => asset && asset.type === 'script' && normalizeString(asPlainObject(asset.meta).location).trim().toLowerCase() !== 'head')
+      .map(({ asset, assetIndex }) => ({
+        html: buildScriptAssetTags([asset])[0] || '',
+        dedupeKey: normalizeString(asset && asset.src).trim(),
+        order: Number.isFinite(asPlainObject(asset.meta).order) ? asPlainObject(asset.meta).order : null,
+        fallbackGroup: 'external',
+        fallbackIndex: assetIndex
+      }));
+    const bodyInlineScriptEntries = (Array.isArray(deck.source && deck.source.bodyInlineScripts) ? deck.source.bodyInlineScripts : [])
+      .map((script, scriptIndex) => ({
+        html: buildInlineScriptTags([script])[0] || '',
+        order: Number.isFinite(script && script.order) ? script.order : null,
+        fallbackGroup: 'inline',
+        fallbackIndex: scriptIndex
+      }));
+
+    return buildCanonicalOrderedScriptTags([
+      ...bodyScriptAssetEntries,
+      ...bodyInlineScriptEntries
     ]);
   }
 
@@ -833,12 +876,10 @@
         activeSlideId: resolvedActiveSlideId
       })).join('\n')
       : '';
-    const bodyInlineScriptTags = buildInlineScriptTags(deck.source && deck.source.bodyInlineScripts);
-    const scriptAssetTags = buildScriptAssetTags(deck.assets, { location: 'body' });
+    const bodyScriptTags = buildCanonicalBodyScriptTags(deck);
     return [
       `<div id="slidesContainer" class="slides-container">${slidesHtml}</div>`,
-      ...bodyInlineScriptTags,
-      ...scriptAssetTags
+      ...bodyScriptTags
     ].join('\n');
   }
 
@@ -848,13 +889,21 @@
       return nextBodyHtml;
     }
 
-    const scriptAssetTags = buildScriptAssetTags(deck.assets, { location: 'body' });
-    if (scriptAssetTags.length > 0) {
+    const bodyScriptTags = buildCanonicalBodyScriptTags(deck);
+    if (bodyScriptTags.length > 0) {
+      const hasOrderedBodyScripts = (Array.isArray(deck.assets) ? deck.assets : []).some((asset) => asset
+        && asset.type === 'script'
+        && normalizeString(asPlainObject(asset.meta).location).trim().toLowerCase() !== 'head'
+        && Number.isFinite(asPlainObject(asset.meta).order))
+        || (Array.isArray(deck.source && deck.source.bodyInlineScripts) ? deck.source.bodyInlineScripts : [])
+          .some((script) => Number.isFinite(script && script.order));
       nextBodyHtml = nextBodyHtml.replace(
-        /<script\b(?=[^>]*\bsrc=)[\s\S]*?<\/script>\s*/gi,
+        hasOrderedBodyScripts
+          ? /<script\b[\s\S]*?<\/script>\s*/gi
+          : /<script\b(?=[^>]*\bsrc=)[\s\S]*?<\/script>\s*/gi,
         ''
       );
-      nextBodyHtml = `${nextBodyHtml}\n${scriptAssetTags.join('\n')}`.trim();
+      nextBodyHtml = `${nextBodyHtml}\n${bodyScriptTags.join('\n')}`.trim();
     }
 
     return nextBodyHtml;

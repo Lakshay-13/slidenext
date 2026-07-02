@@ -857,6 +857,105 @@ test('renderCanonicalDeckHtml preserves canonical head script order when reusing
   assert.doesNotMatch(html, /window\.staleConfig = true/);
 });
 
+test('renderCanonicalDeckHtml preserves canonical body script order when source body html is not reused', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'script',
+        src: '/presentations/demo/app.js',
+        meta: {
+          location: 'body',
+          order: 2
+        }
+      },
+      {
+        type: 'script',
+        src: '/presentations/demo/analytics.js',
+        meta: {
+          location: 'body',
+          order: 3
+        }
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: '',
+      bodyInlineScripts: [
+        {
+          content: 'window.deckBoot = true;',
+          order: 1
+        }
+      ]
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.ok(html.indexOf('window.deckBoot = true;') < html.indexOf('/presentations/demo/app.js'));
+  assert.ok(html.indexOf('/presentations/demo/app.js') < html.indexOf('/presentations/demo/analytics.js'));
+});
+
+test('renderCanonicalDeckHtml preserves canonical body script order when reusing source body html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'script',
+        src: '/presentations/demo/app.js',
+        meta: {
+          location: 'body',
+          order: 2
+        }
+      },
+      {
+        type: 'script',
+        src: '/presentations/demo/analytics.js',
+        meta: {
+          location: 'body',
+          order: 3
+        }
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: '<main>Body copy</main><script src="/presentations/demo/app.js"></script><script>window.staleBoot = true;</script><script src="/presentations/demo/analytics.js"></script>',
+      bodyInlineScripts: [
+        {
+          content: 'window.deckBoot = true;',
+          order: 1
+        }
+      ]
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: true,
+    preferSlideSourceHtml: true,
+    preferNodeSourceHtml: true
+  });
+
+  assert.match(html, /<main>Body copy<\/main>/);
+  assert.ok(html.indexOf('window.deckBoot = true;') < html.indexOf('/presentations/demo/app.js'));
+  assert.ok(html.indexOf('/presentations/demo/app.js') < html.indexOf('/presentations/demo/analytics.js'));
+  assert.doesNotMatch(html, /window\.staleBoot = true/);
+});
+
 test('renderCanonicalDeckHtml dedupes canonical singleton head tags over reused source head html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {
