@@ -60,6 +60,62 @@ test('resolveStudioCanonicalDeckViewState eagerly resolves the canonical deck on
   assert.equal(resolveCanonicalDeckCalls, 1);
 });
 
+test('createStudioDeckViewBuildOptions reuses shared canonical view state for fallback html and render options', () => {
+  const doc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] }
+    ]
+  };
+  let fallbackArgs = null;
+  let renderArgs = null;
+
+  const buildOptions = deckView.createStudioDeckViewBuildOptions(doc, {
+    resolveCanonicalDeckViewState(nextDoc) {
+      assert.equal(nextDoc, doc);
+      return {
+        resolveCanonicalDeck(sourceDoc = nextDoc) {
+          assert.equal(sourceDoc, doc);
+          return canonicalDeck;
+        },
+        liveActiveSlideId: 'slide-live',
+        resolvedCanonicalDeck: null
+      };
+    },
+    buildFallbackHtml(sourceDoc, nextCanonicalDeck) {
+      fallbackArgs = { sourceDoc, nextCanonicalDeck };
+      return '<html>fallback</html>';
+    },
+    buildRenderOptions(sourceDoc, nextCanonicalDeck, options = {}) {
+      renderArgs = { sourceDoc, nextCanonicalDeck, options };
+      return {
+        activeSlideId: options.activeSlideId,
+        preferSourceHtml: false
+      };
+    }
+  });
+
+  assert.equal(buildOptions.buildCanonicalDeck(doc), canonicalDeck);
+  assert.equal(buildOptions.buildFallbackHtml(doc), '<html>fallback</html>');
+  assert.deepEqual(fallbackArgs, {
+    sourceDoc: doc,
+    nextCanonicalDeck: canonicalDeck
+  });
+  assert.deepEqual(renderArgs, {
+    sourceDoc: doc,
+    nextCanonicalDeck: null,
+    options: {
+      activeSlideId: 'slide-live'
+    }
+  });
+  assert.deepEqual(buildOptions.deckHtmlOptions.renderOptions, {
+    activeSlideId: 'slide-live',
+    preferSourceHtml: false
+  });
+});
+
 test('resolveStudioFallbackActiveSlideId prefers the live active slide id before fallback canonical resolution', () => {
   const calls = [];
 

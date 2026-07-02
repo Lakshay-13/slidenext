@@ -525,6 +525,76 @@ test('resolveEditorCanonicalDeckViewState delegates resolver orchestration to th
   assert.equal(buildEditorCanonicalDeckCalls, 1);
 });
 
+test('createEditorDeckViewBuildOptions delegates build-option composition to the shared deck view helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
+    fileContent,
+    'function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  let delegatedArgs = null;
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const context = {
+    SlideNextStudioDeckView: {
+      createStudioCanonicalDeckResolver(doc, options) {
+        return function resolveCanonicalDeck(nextDoc = doc) {
+          return options.buildCanonicalDeck(nextDoc);
+        };
+      },
+      resolveStudioCanonicalDeckViewState(doc, options) {
+        return {
+          resolveCanonicalDeck: options.resolveCanonicalDeck,
+          liveActiveSlideId: 'slide-live',
+          resolvedCanonicalDeck: null
+        };
+      },
+      createStudioDeckViewBuildOptions(doc, options) {
+        delegatedArgs = { doc, options };
+        return {
+          buildCanonicalDeck: () => canonicalDeck,
+          buildFallbackHtml: () => '<html>fallback</html>',
+          deckHtmlOptions: {
+            renderOptions: {
+              activeSlideId: 'slide-live'
+            }
+          }
+        };
+      }
+    },
+    buildEditorCanonicalDeck() {
+      return canonicalDeck;
+    },
+    buildPersistableDeckHtml(nextDoc, options = {}) {
+      return JSON.stringify({ nextDoc, canonicalDeck: options.canonicalDeck });
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    resolveEditorLiveActiveSlideId() {
+      return '';
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorCanonicalDeckViewStateSource, context);
+
+  const result = context.createEditorDeckViewBuildOptions(iframeDoc);
+
+  assert.equal(result.buildCanonicalDeck(), canonicalDeck);
+  assert.equal(result.buildFallbackHtml(), '<html>fallback</html>');
+  assert.equal(result.deckHtmlOptions.renderOptions.activeSlideId, 'slide-live');
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(typeof delegatedArgs.options.resolveCanonicalDeckViewState, 'function');
+  assert.equal(typeof delegatedArgs.options.buildFallbackHtml, 'function');
+  assert.equal(typeof delegatedArgs.options.buildRenderOptions, 'function');
+});
+
 test('buildEditorDeckSnapshot prefers the current session active slide fallback when the iframe is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
