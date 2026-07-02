@@ -3409,11 +3409,31 @@
       const resolvedDoc = doc || getIframeDoc();
       const slide = getActiveSlide(resolvedDoc);
       const nudgeSelectionState = getNudgeSelectionState();
+      const slideMetrics = slide ? getSlideMetrics(slide) : null;
+      const slideBounds = slideMetrics
+        ? {
+            width: slideMetrics.logicalWidth,
+            height: slideMetrics.logicalHeight
+          }
+        : null;
+      const nudgeLayoutItems = resolvedDoc && slide && nudgeSelectionState.canNudge
+        ? SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(nudgeSelectionState.selection, {
+            getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+            getRectOnSlide,
+            slideMetrics
+          })
+        : [];
+      const canResolveNudgeLayout = nudgeLayoutItems.length === nudgeSelectionState.selection.length
+        && nudgeLayoutItems.length > 0;
       return {
         doc: resolvedDoc,
         slide,
+        slideMetrics,
+        slideBounds,
         nudgeSelectionState,
-        canNudge: !!(resolvedDoc && slide && nudgeSelectionState.canNudge)
+        nudgeLayoutItems,
+        canResolveNudgeLayout,
+        canNudge: !!(resolvedDoc && slide && nudgeSelectionState.canNudge && canResolveNudgeLayout)
       };
     }
 
@@ -3803,19 +3823,11 @@
 
     function nudgeSelectedElements(dx, dy) {
       const motionActionState = buildMotionSelectionActionState();
-      const { doc, slide, nudgeSelectionState } = motionActionState;
+      const { doc, nudgeLayoutItems, slideBounds } = motionActionState;
       if (!motionActionState.canNudge) {
         updateMotionActionState(doc);
         return false;
       }
-      const slideMetrics = getSlideMetrics(slide);
-      const slideBounds = { width: slideMetrics.logicalWidth, height: slideMetrics.logicalHeight };
-      const nudgeLayoutItems = SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(nudgeSelectionState.selection, {
-        getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
-        getRectOnSlide,
-        slideMetrics
-      });
-      if (nudgeLayoutItems.length !== nudgeSelectionState.selection.length) return false;
       const nudgeResult = SlideNextStudioEditorNudge.buildStudioNudgedLayout(nudgeLayoutItems, { dx, dy }, slideBounds);
       if (!nudgeResult.didChange) return false;
       nudgeResult.nextItems.forEach((item) => {
