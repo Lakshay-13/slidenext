@@ -118,6 +118,42 @@ test('stripTransientDeckRuntimeState removes configured transient class names fr
   assert.equal(votedNode.classList.contains('voted'), false);
 });
 
+test('stripTransientDeckRuntimeState empties configured runtime containers in addition to the default container cleanup list', () => {
+  const indicatorDotsNode = {
+    replaceChildrenCalls: 0,
+    replaceChildren() {
+      this.replaceChildrenCalls += 1;
+    }
+  };
+  const pixelMatrixNode = {
+    replaceChildrenCalls: 0,
+    replaceChildren() {
+      this.replaceChildrenCalls += 1;
+    }
+  };
+  const root = {
+    querySelector() {
+      return null;
+    },
+    querySelectorAll(selector) {
+      if (selector === '#indicatorDots') {
+        return [indicatorDotsNode];
+      }
+      if (selector === '#pixelMatrix') {
+        return [pixelMatrixNode];
+      }
+      return [];
+    }
+  };
+
+  deckPersistence.stripTransientDeckRuntimeState(root, {
+    emptyContainerIds: [' pixelMatrix ', '', 'pixelMatrix']
+  });
+
+  assert.equal(indicatorDotsNode.replaceChildrenCalls, 1);
+  assert.equal(pixelMatrixNode.replaceChildrenCalls, 1);
+});
+
 test('restorePersistedDeckPlaybackState accepts legacy activeSlideId values', () => {
   const slideNumNode = { textContent: '' };
   const slides = [

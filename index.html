@@ -4934,7 +4934,23 @@
         buildOptions.onPlaybackStateResolved(resolvedPlaybackState);
       }
       const deckSanitizerOptions = getEditorDeckSanitizerOptions();
+      const activePresentationMetadata = typeof currentPresentationMetadata !== 'undefined'
+        ? currentPresentationMetadata
+        : null;
+      const metadataPersistenceOptions = (
+        typeof SlideNextDeckLoader !== 'undefined'
+        && SlideNextDeckLoader
+        && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
+      )
+        ? SlideNextDeckLoader.resolvePresentationPersistenceOptions(activePresentationMetadata || {})
+        : activePresentationMetadata
+          && activePresentationMetadata.persistence
+          && typeof activePresentationMetadata.persistence === 'object'
+          && !Array.isArray(activePresentationMetadata.persistence)
+          ? { ...activePresentationMetadata.persistence }
+          : {};
       return SlideNextDeckPersistence.buildPersistableDeckHtml(doc, {
+        ...metadataPersistenceOptions,
         editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,
         editorTransientClasses: deckSanitizerOptions.transientClassNames,
         editorElementIdAttr: deckSanitizerOptions.editorElementIdAttr,

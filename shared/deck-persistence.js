@@ -35,7 +35,14 @@
   function stripTransientDeckRuntimeState(root, options = {}) {
     if (!root) return;
 
-    const emptyContainerIds = options.emptyContainerIds || DEFAULT_EMPTY_CONTAINER_IDS;
+    const emptyContainerIds = Array.isArray(options.emptyContainerIds)
+      ? Array.from(new Set([
+          ...DEFAULT_EMPTY_CONTAINER_IDS,
+          ...options.emptyContainerIds
+            .map((nodeId) => typeof nodeId === 'string' ? nodeId.trim() : '')
+            .filter(Boolean)
+        ]))
+      : DEFAULT_EMPTY_CONTAINER_IDS;
     const styleCleanups = options.styleCleanups || DEFAULT_STYLE_CLEANUPS;
     const transientClassNames = Array.isArray(options.transientClassNames)
       ? options.transientClassNames

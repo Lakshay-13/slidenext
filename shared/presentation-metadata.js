@@ -24,6 +24,14 @@
     return values.filter(value => typeof value === 'string' && value.trim() !== '');
   }
 
+  function normalizeUniqueTrimmedStringArray(values) {
+    return Array.from(new Set(
+      normalizeStringArray(values)
+        .map((value) => value.trim())
+        .filter(Boolean)
+    ));
+  }
+
   function asPlainObject(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return {};
@@ -102,19 +110,21 @@
   function resolvePresentationPersistenceOptions(metadata = {}) {
     const nextMetadata = asPlainObject(metadata);
     const persistence = asPlainObject(nextMetadata.persistence);
-    const transientClassNames = Array.from(new Set(
-      normalizeStringArray(persistence.transientClassNames)
-        .map((className) => className.trim())
-        .filter(Boolean)
-    ));
+    const emptyContainerIds = normalizeUniqueTrimmedStringArray(persistence.emptyContainerIds);
+    const transientClassNames = normalizeUniqueTrimmedStringArray(persistence.transientClassNames);
 
-    if (transientClassNames.length === 0) {
+    if (emptyContainerIds.length === 0 && transientClassNames.length === 0) {
       return {};
     }
 
-    return {
-      transientClassNames
-    };
+    const persistenceOptions = {};
+    if (emptyContainerIds.length > 0) {
+      persistenceOptions.emptyContainerIds = emptyContainerIds;
+    }
+    if (transientClassNames.length > 0) {
+      persistenceOptions.transientClassNames = transientClassNames;
+    }
+    return persistenceOptions;
   }
 
   function mergePresentationCanonicalDeck(metadata = {}, deckLike = null, options = {}) {

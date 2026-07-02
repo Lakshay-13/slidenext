@@ -157,15 +157,17 @@ test('resolvePresentationCanonicalDeck fills missing canonical metadata fields f
   assert.equal(canonicalDeck.metadata.sourcePath, 'presentations/onboarding-presentation/index.html');
 });
 
-test('resolvePresentationPersistenceOptions normalizes configured transient class names', () => {
+test('resolvePresentationPersistenceOptions normalizes configured persistence cleanup settings', () => {
   assert.deepEqual(
     presentationMetadata.resolvePresentationPersistenceOptions({
       id: 'ai-tools-presentation',
       persistence: {
+        emptyContainerIds: [' indicatorDots ', '', 'pixelMatrix', 42, 'indicatorDots'],
         transientClassNames: [' revealed ', '', 'voted', 42, 'revealed']
       }
     }),
     {
+      emptyContainerIds: ['indicatorDots', 'pixelMatrix'],
       transientClassNames: ['revealed', 'voted']
     }
   );

@@ -661,6 +661,79 @@ test('buildPersistableDeckHtml captures the live playback state before persistin
   assert.equal(calls[1][2].persistedDeckPlaybackState, livePlaybackState);
 });
 
+test('buildPersistableDeckHtml forwards metadata-derived persistence cleanup options when persisting live iframe html', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const livePlaybackState = {
+    activeSlideIds: ['slide-3'],
+    slideCounterText: '3 / 5'
+  };
+  const currentPresentationMetadata = {
+    id: 'computer-vision-presentation',
+    persistence: {
+      emptyContainerIds: ['pixelMatrix']
+    }
+  };
+  const calls = [];
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckLoader: {
+      resolvePresentationPersistenceOptions(metadata) {
+        calls.push(['resolvePresentationPersistenceOptions', metadata]);
+        assert.equal(metadata, currentPresentationMetadata);
+        return {
+          emptyContainerIds: ['pixelMatrix']
+        };
+      }
+    },
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml(nextDoc, options) {
+        calls.push(['buildPersistableDeckHtml', nextDoc, options]);
+        return '<html>persisted-live</html>';
+      }
+    },
+    capturePersistedDeckPlaybackState(nextDoc) {
+      calls.push(['capturePersistedDeckPlaybackState', nextDoc]);
+      assert.equal(nextDoc, iframeDoc);
+      return livePlaybackState;
+    },
+    currentPresentationMetadata,
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+
+  assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-live</html>');
+  assert.deepEqual(calls.map(([name]) => name), [
+    'capturePersistedDeckPlaybackState',
+    'resolvePresentationPersistenceOptions',
+    'buildPersistableDeckHtml'
+  ]);
+  assert.equal(calls[2][1], iframeDoc);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[2][2].emptyContainerIds)),
+    ['pixelMatrix']
+  );
+  assert.equal(calls[2][2].persistedDeckPlaybackState, livePlaybackState);
+});
+
 test('buildPersistableDeckHtml does not reuse stale persisted playback state when the live iframe has no playback markers', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
