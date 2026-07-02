@@ -4,6 +4,19 @@ const assert = require('node:assert/strict');
 const selection = require('../shared/studio-editor-selection.js');
 const deckView = require('../shared/studio-deck-view.js');
 const history = require('../shared/studio-history.js');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+function extractFunctionSource(fileContent, startMarker, endMarker) {
+  const start = fileContent.indexOf(startMarker);
+  assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
+  const end = fileContent.indexOf(endMarker, start);
+  assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
+  return fileContent.slice(start, end);
+}
 
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
@@ -558,4 +571,160 @@ test('restoreStudioHistorySelectionState uses committed-selection restore callba
     updateLayersList: 0,
     observeDeckActiveSlideState: [doc]
   });
+});
+
+test('setupIframeDragging finalizes drag sessions without redundantly refreshing the layer list', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setupIframeDraggingSource = extractFunctionSource(
+    fileContent,
+    'function setupIframeDragging(doc) {',
+    '\n\n    // Insert New elements'
+  );
+
+  const calls = [];
+  const bodyListeners = new Map();
+  const windowListeners = new Map();
+  const slide = { id: 'slide-1' };
+  const doc = {
+    addEventListener(type, handler) {
+      calls.push(['doc.addEventListener', type]);
+    },
+    body: {
+      addEventListener(type, handler) {
+        bodyListeners.set(type, handler);
+      }
+    },
+    defaultView: {
+      addEventListener(type, handler) {
+        windowListeners.set(type, handler);
+      }
+    }
+  };
+  const context = {
+    DRAG_OVERFLOW_MARGIN_PX: 24,
+    DRAG_START_THRESHOLD_PX: 3,
+    MIN_ELEMENT_SIZE_PX: 12,
+    SlideNextStudioEditorDom: {
+      getStudioClosestPositionedAncestor() {
+        return null;
+      }
+    },
+    SlideNextStudioEditorTransform: {
+      resolveStudioTransformSessionStart() {
+        return {
+          session: { slideMetrics: { logicalWidth: 1920, logicalHeight: 1080 } },
+          startBounds: { left: 0, top: 0, width: 100, height: 60 }
+        };
+      },
+      shouldHandleStudioTransformPointerEvent(session) {
+        return !!session;
+      },
+      buildStudioTransformFrameState() {
+        return {
+          isActive: false
+        };
+      },
+      applyStudioTransformBounds() {},
+      finalizeStudioTransformSession(session) {
+        calls.push(['finalizeStudioTransformSession', session]);
+        return { id: 'finalize-result' };
+      },
+      buildStudioTransformCompletionPlan(result) {
+        calls.push(['buildStudioTransformCompletionPlan', result]);
+        return {
+          shouldPersist: true,
+          versionLabel: 'Auto: Moved Element'
+        };
+      }
+    },
+    getActiveSlide(currentDoc) {
+      calls.push(['getActiveSlide', currentDoc]);
+      return slide;
+    },
+    getRectOnSlide() {
+      return { left: 0, top: 0, width: 100, height: 60 };
+    },
+    getPointerOnSlide() {
+      return { x: 10, y: 20 };
+    },
+    getSelectionBounds() {
+      return { left: 0, top: 0, width: 100, height: 60 };
+    },
+    getSlideMetrics() {
+      return { logicalWidth: 1920, logicalHeight: 1080 };
+    },
+    getTransformSelectionState() {
+      return { canTransform: true, selection: [] };
+    },
+    hideDragHud() {
+      calls.push(['hideDragHud']);
+    },
+    hideGuides() {
+      calls.push(['hideGuides']);
+    },
+    isDraggingElement: false,
+    resolveEditableTarget() {
+      return null;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    selectElement() {},
+    ensureSelectionOverlay() {
+      return {};
+    },
+    showGuides() {},
+    showDragHud() {},
+    syncInspectorForSelection() {
+      calls.push(['syncInspectorForSelection']);
+    },
+    syncSelectionOverlay() {
+      calls.push(['syncSelectionOverlay']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    },
+    updateDragHud(bounds) {
+      calls.push(['updateDragHud', bounds]);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setupIframeDraggingSource, context);
+
+  context.setupIframeDragging(doc);
+
+  bodyListeners.get('pointerdown')({
+    preventDefault() {},
+    stopPropagation() {}
+  });
+  bodyListeners.get('pointerup')({});
+
+  assert.equal(typeof windowListeners.get('blur'), 'function');
+  assert.deepEqual(calls.map(([name]) => name), [
+    'doc.addEventListener',
+    'getActiveSlide',
+    'updateDragHud',
+    'finalizeStudioTransformSession',
+    'buildStudioTransformCompletionPlan',
+    'hideGuides',
+    'hideDragHud',
+    'syncSelectionOverlay',
+    'syncInspectorForSelection',
+    'saveHistoryState',
+    'triggerAutoSave',
+    'triggerAutoVersion'
+  ]);
+  assert.equal(context.isDraggingElement, false);
+  assert.equal(calls.some(([name]) => name === 'updateLayersList'), false);
+  assert.equal(calls[0][1], 'dragstart');
+  assert.equal(calls[1][1], doc);
+  assert.deepEqual(calls[2][1], { left: 0, top: 0, width: 100, height: 60 });
+  assert.equal(calls[11][1], 'Auto: Moved Element');
 });
