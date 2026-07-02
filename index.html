@@ -5133,23 +5133,29 @@
       const modal = document.getElementById('renameVersionModal');
       const content = document.getElementById('renameVersionModalContent');
       const btn = document.getElementById('confirmRenameVersionBtn');
-      btn.disabled = false;
-      btn.textContent = 'Rename';
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Rename';
+      }
       
-      SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
-      modal.classList.remove('hidden');
-      SlideNextStudioModalVisibility.scheduleStudioModalCallback(modal, {
-        delayMs: 10,
-        callback: () => {
-          modal.classList.add('opacity-100');
-          content.classList.remove('scale-95');
-          content.classList.add('scale-100');
-          if (renameInput) {
-            renameInput.focus();
-            renameInput.select();
+      if (modal) {
+        SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
+        modal.classList.remove('hidden');
+        SlideNextStudioModalVisibility.scheduleStudioModalCallback(modal, {
+          delayMs: 10,
+          callback: () => {
+            modal.classList.add('opacity-100');
+            if (content) {
+              content.classList.remove('scale-95');
+              content.classList.add('scale-100');
+            }
+            if (renameInput) {
+              renameInput.focus();
+              renameInput.select();
+            }
           }
-        }
-      });
+        });
+      }
     }
     
     function closeRenameVersionModal() {

@@ -354,6 +354,70 @@ test('promptRenameVersion tolerates a missing rename input', () => {
   assert.ok(calls.some(([name]) => name === 'scheduleStudioModalCallback'));
 });
 
+test('promptRenameVersion tolerates missing rename modal chrome', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const promptRenameVersionSource = extractFunctionSource(
+    fileContent,
+    'function promptRenameVersion(filename, currentLabel) {',
+    '\n    \n    function closeRenameVersionModal() {'
+  );
+
+  const renameInput = {
+    value: '',
+    focusCalls: 0,
+    selectCalls: 0,
+    focus() {
+      this.focusCalls += 1;
+    },
+    select() {
+      this.selectCalls += 1;
+    }
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioModalVisibility: {
+      cancelStudioModalHide() {
+        calls.push(['cancelStudioModalHide']);
+      },
+      scheduleStudioModalCallback() {
+        calls.push(['scheduleStudioModalCallback']);
+      }
+    },
+    createCurrentStudioVersionActionContext() {
+      calls.push(['createCurrentStudioVersionActionContext']);
+      return {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      };
+    },
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (id === 'newVersionNameInput') {
+          return renameInput;
+        }
+        return null;
+      }
+    },
+    renamingFilename: '',
+    renamingVersionContext: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(promptRenameVersionSource, context);
+
+  assert.doesNotThrow(() => context.promptRenameVersion('index_20260101_120000_Auto.html', 'Draft Name'));
+  assert.equal(context.renamingFilename, 'index_20260101_120000_Auto.html');
+  assert.equal(context.renamingVersionContext.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(renameInput.value, 'Draft Name');
+  assert.equal(renameInput.focusCalls, 0);
+  assert.equal(renameInput.selectCalls, 0);
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'renameVersionModal'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'renameVersionModalContent'));
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'confirmRenameVersionBtn'));
+  assert.ok(!calls.some(([name]) => name === 'cancelStudioModalHide'));
+  assert.ok(!calls.some(([name]) => name === 'scheduleStudioModalCallback'));
+});
+
 test('closeRenameVersionModal tolerates missing rename modal nodes', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const closeRenameVersionModalSource = extractFunctionSource(
