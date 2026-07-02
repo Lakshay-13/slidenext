@@ -119,10 +119,24 @@
       });
   }
 
-  function buildScriptAssetTags(assets = []) {
+  function buildScriptAssetTags(assets = [], options = {}) {
+    const requestedLocation = normalizeString(options.location).trim().toLowerCase();
     const seenSrcs = new Set();
     return (Array.isArray(assets) ? assets : [])
       .filter((asset) => asset && asset.type === 'script')
+      .filter((asset) => {
+        if (!requestedLocation) {
+          return true;
+        }
+        const assetLocation = normalizeString(asPlainObject(asset.meta).location).trim().toLowerCase();
+        if (requestedLocation === 'head') {
+          return assetLocation === 'head';
+        }
+        if (requestedLocation === 'body') {
+          return assetLocation !== 'head';
+        }
+        return true;
+      })
       .map((asset) => ({
         src: normalizeString(asset.src).trim(),
         meta: asPlainObject(asset.meta)
@@ -149,6 +163,24 @@
         ]);
         return `<script${renderAttributeMap(attributes)}></script>`;
       });
+  }
+
+  function insertCanonicalHeadScriptTags(headHtml = '', scriptTags = []) {
+    const normalizedHeadHtml = normalizeString(headHtml);
+    const nextScriptTags = (Array.isArray(scriptTags) ? scriptTags : [])
+      .filter((scriptTag) => normalizeString(scriptTag).trim())
+      .join('\n')
+      .trim();
+    if (!nextScriptTags) {
+      return normalizedHeadHtml;
+    }
+
+    const insertionMatch = /<(script\b(?![^>]*\bsrc=)|style\b|link\b(?=[^>]*\brel=(?:"[^"]*\bstylesheet\b[^"]*"|'[^']*\bstylesheet\b[^']*')))/i.exec(normalizedHeadHtml);
+    if (!insertionMatch || !Number.isInteger(insertionMatch.index)) {
+      return `${normalizedHeadHtml}\n${nextScriptTags}`.trim();
+    }
+
+    return `${normalizedHeadHtml.slice(0, insertionMatch.index)}${nextScriptTags}\n${normalizedHeadHtml.slice(insertionMatch.index)}`.trim();
   }
 
   function buildPreloadAssetLinkTags(assets = []) {
@@ -526,6 +558,7 @@
       ? `<link rel="icon" href="${escapeAttribute(iconHref)}">`
       : '';
     const preloadAssetLinkTags = buildPreloadAssetLinkTags(deck.assets);
+    const headScriptAssetTags = buildScriptAssetTags(deck.assets, { location: 'head' });
     const stylesheetAssetLinkTags = buildStylesheetAssetLinkTags(deck.assets);
     const deckLayoutStyleBlock = buildCanonicalDeckLayoutStyleBlock(deck);
     const themeStyleBlocks = buildCanonicalDeckThemeStyleBlocks(deck);
@@ -538,6 +571,7 @@
       keywordsMetaTag,
       iconLinkTag,
       ...preloadAssetLinkTags,
+      ...headScriptAssetTags,
       ...stylesheetAssetLinkTags,
       deckLayoutStyleBlock,
       ...themeStyleBlocks
@@ -670,12 +704,13 @@
       nextHeadHtml = `${preloadAssetLinkTags.join('\n')}\n${nextHeadHtml}`;
     }
 
-    const scriptAssetTags = buildScriptAssetTags(deck.assets);
-    if (scriptAssetTags.length > 0) {
+    const headScriptAssetTags = buildScriptAssetTags(deck.assets, { location: 'head' });
+    if (headScriptAssetTags.length > 0) {
       nextHeadHtml = nextHeadHtml.replace(
         /<script\b(?=[^>]*\bsrc=)[\s\S]*?<\/script>\s*/gi,
         ''
       );
+      nextHeadHtml = insertCanonicalHeadScriptTags(nextHeadHtml, headScriptAssetTags);
     }
 
     const deckLayoutStyleBlock = buildCanonicalDeckLayoutStyleBlock(deck);
@@ -717,7 +752,7 @@
         activeSlideId: resolvedActiveSlideId
       })).join('\n')
       : '';
-    const scriptAssetTags = buildScriptAssetTags(deck.assets);
+    const scriptAssetTags = buildScriptAssetTags(deck.assets, { location: 'body' });
     return [
       `<div id="slidesContainer" class="slides-container">${slidesHtml}</div>`,
       ...scriptAssetTags
@@ -730,7 +765,7 @@
       return nextBodyHtml;
     }
 
-    const scriptAssetTags = buildScriptAssetTags(deck.assets);
+    const scriptAssetTags = buildScriptAssetTags(deck.assets, { location: 'body' });
     if (scriptAssetTags.length > 0) {
       nextBodyHtml = nextBodyHtml.replace(
         /<script\b(?=[^>]*\bsrc=)[\s\S]*?<\/script>\s*/gi,

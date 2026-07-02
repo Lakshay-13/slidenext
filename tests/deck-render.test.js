@@ -576,7 +576,8 @@ test('renderCanonicalDeckHtml strips reused source head scripts in favor of cano
         type: 'script',
         src: '/presentations/demo/app.js',
         meta: {
-          type: 'module'
+          type: 'module',
+          location: 'head'
         }
       }
     ],
@@ -601,7 +602,53 @@ test('renderCanonicalDeckHtml strips reused source head scripts in favor of cano
 
   assert.match(html, /<style>\.deck-shell\{color:red;\}<\/style>/);
   assert.equal((html.match(/<script src="\/presentations\/demo\/app\.js" type="module"><\/script>/g) || []).length, 1);
-  assert.ok(html.indexOf('.deck-shell{color:red;}') < html.indexOf('<script src="/presentations/demo/app.js" type="module"></script>'));
+  assert.ok(html.indexOf('<script src="/presentations/demo/app.js" type="module"></script>') < html.indexOf('.deck-shell{color:red;}'));
+});
+
+test('renderCanonicalDeckHtml emits canonical head script assets when source head html is absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [
+      {
+        type: 'script',
+        src: '/presentations/demo/tailwind.js',
+        meta: {
+          location: 'head'
+        }
+      },
+      {
+        type: 'script',
+        src: '/presentations/demo/app.js',
+        meta: {
+          location: 'body'
+        }
+      },
+      {
+        type: 'stylesheet',
+        src: '/presentations/demo/styles.css'
+      }
+    ],
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<script src="\/presentations\/demo\/tailwind\.js"><\/script>\s*<link rel="stylesheet" href="\/presentations\/demo\/styles\.css">/);
+  assert.match(html, /<div id="slidesContainer" class="slides-container"><section class="slide slide-active" id="slide-1"><\/section><\/div>\s*<script src="\/presentations\/demo\/app\.js"><\/script>/);
+  assert.equal((html.match(/<script src="\/presentations\/demo\/tailwind\.js"><\/script>/g) || []).length, 1);
+  assert.equal((html.match(/<script src="\/presentations\/demo\/app\.js"><\/script>/g) || []).length, 1);
 });
 
 test('renderCanonicalDeckHtml dedupes canonical singleton head tags over reused source head html', () => {

@@ -868,6 +868,30 @@
     return el.getAttribute(attributeName);
   }
 
+  function inferImportedScriptLocation(el) {
+    if (!el || normalizeString(el.tagName).toLowerCase() !== 'script') {
+      return '';
+    }
+
+    if (typeof el.closest === 'function') {
+      const headAncestor = el.closest('head');
+      if (headAncestor) {
+        return 'head';
+      }
+      const bodyAncestor = el.closest('body');
+      if (bodyAncestor) {
+        return 'body';
+      }
+    }
+
+    const parentTagName = normalizeString(el.parentElement && el.parentElement.tagName).toLowerCase();
+    if (parentTagName === 'head' || parentTagName === 'body') {
+      return parentTagName;
+    }
+
+    return '';
+  }
+
   function buildImportedAssetMeta(el) {
     const tagName = normalizeString(el && el.tagName).toLowerCase();
     if (tagName !== 'link' && tagName !== 'script') {
@@ -915,6 +939,11 @@
           meta[attributeName] = true;
         }
       });
+
+      const location = inferImportedScriptLocation(el);
+      if (location) {
+        meta.location = location;
+      }
     }
 
     return Object.keys(meta).length > 0 ? meta : null;

@@ -586,6 +586,7 @@ test('collectDeckAssets preserves script asset metadata needed by canonical scri
     integrity: 'sha384-script',
     referrerpolicy: 'origin'
   });
+  scriptEl.parentElement = { tagName: 'HEAD' };
 
   const doc = {
     querySelectorAll(selector) {
@@ -615,7 +616,8 @@ test('collectDeckAssets preserves script asset metadata needed by canonical scri
         referrerpolicy: 'origin',
         async: true,
         defer: true,
-        nomodule: true
+        nomodule: true,
+        location: 'head'
       }
     }
   ]);
