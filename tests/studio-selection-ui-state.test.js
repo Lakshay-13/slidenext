@@ -208,3 +208,96 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
   assert.equal(typeof options.getSelectedElementIds, 'function');
   assert.equal(typeof options.areIdListsEqual, 'function');
 });
+
+test('getEditorHistoryOptions threads sanitizer overrides and explicit persistence options into the frame sanitizer', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const getEditorHistoryOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorHistoryOptions(options = {}) {',
+    '\n\n    function getEditorHistoryStackOptions(options = {}) {'
+  );
+
+  const sanitizeCalls = [];
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckLoader: {
+      resolvePresentationPersistenceOptions(metadata) {
+        assert.equal(metadata, context.currentPresentationMetadata);
+        return {
+          emptyContainerIds: ['gitNodesContainer']
+        };
+      }
+    },
+    SlideNextPresentationMetadata: {
+      mergePresentationPersistenceOptions(...optionSets) {
+        return {
+          emptyContainerIds: Array.from(new Set(optionSets.flatMap((optionSet) => optionSet.emptyContainerIds || [])))
+        };
+      }
+    },
+    SlideNextDeckImport: {
+      sanitizeDeckSourceClone(root, options) {
+        sanitizeCalls.push([root, options]);
+      }
+    },
+    currentPresentationMetadata: {
+      id: 'onboarding-presentation',
+      persistence: {
+        emptyContainerIds: ['gitNodesContainer']
+      }
+    },
+    getActiveSlideId() {
+      return 'slide-3';
+    },
+    getSelectedEditorElementIds() {
+      return ['node-9'];
+    },
+    areEditorIdListsEqual(left, right) {
+      return JSON.stringify(left) === JSON.stringify(right);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  vm.runInContext(getEditorHistoryOptionsSource, context);
+
+  const options = context.getEditorHistoryOptions({
+    chromeNodeIds: ['editorHistoryOverlay'],
+    transientClassNames: ['history-selected'],
+    editorElementIdAttr: 'data-history-id',
+    editorSlideIdAttr: 'data-history-slide-id',
+    persistenceOptions: {
+      emptyContainerIds: ['pixelMatrix']
+    },
+    customFlag: true
+  });
+  const root = { id: 'history-root' };
+  options.sanitizeFrameRoot(root);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(options.chromeNodeIds)), ['editorHistoryOverlay']);
+  assert.deepEqual(JSON.parse(JSON.stringify(options.removableClassNames)), ['history-selected']);
+  assert.equal(options.editorElementIdAttr, 'data-history-id');
+  assert.equal(options.editorSlideIdAttr, 'data-history-slide-id');
+  assert.equal(options.customFlag, true);
+  assert.equal(sanitizeCalls.length, 1);
+  assert.equal(sanitizeCalls[0][0], root);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(sanitizeCalls[0][1])),
+    {
+      ignoredNodeIds: ['editorHistoryOverlay'],
+      transientClassNames: ['history-selected'],
+      editorElementIdAttr: 'data-history-id',
+      editorSlideIdAttr: 'data-history-slide-id',
+      persistenceOptions: {
+        emptyContainerIds: ['gitNodesContainer', 'pixelMatrix']
+      }
+    }
+  );
+});

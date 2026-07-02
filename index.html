@@ -2722,7 +2722,7 @@
     }
 
     function getEditorHistoryOptions(options = {}) {
-      const deckSanitizerOptions = getEditorDeckSanitizerOptions();
+      const deckSanitizerOptions = getEditorDeckSanitizerOptions(options);
       const chromeNodeIds = deckSanitizerOptions.chromeNodeIds;
       const removableClassNames = deckSanitizerOptions.transientClassNames;
       const editorElementIdAttr = deckSanitizerOptions.editorElementIdAttr;
@@ -2742,6 +2742,33 @@
           && !Array.isArray(activePresentationMetadata.persistence)
           ? { ...activePresentationMetadata.persistence }
           : {};
+      const explicitPersistenceOptions = options.persistenceOptions && typeof options.persistenceOptions === 'object' && !Array.isArray(options.persistenceOptions)
+        ? { ...options.persistenceOptions }
+        : {};
+      const mergePresentationPersistenceOptions = (
+        typeof SlideNextPresentationMetadata !== 'undefined'
+        && SlideNextPresentationMetadata
+        && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
+      )
+        ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
+        : (...optionSets) => optionSets.reduce((mergedOptions, optionSet) => ({
+            ...mergedOptions,
+            ...(optionSet && typeof optionSet === 'object' && !Array.isArray(optionSet)
+              ? optionSet
+              : {})
+          }), {});
+      const persistenceOptions = mergePresentationPersistenceOptions(
+        metadataPersistenceOptions,
+        explicitPersistenceOptions
+      );
+      const {
+        chromeNodeIds: _overrideChromeNodeIds,
+        transientClassNames: _overrideTransientClassNames,
+        editorElementIdAttr: _overrideEditorElementIdAttr,
+        editorSlideIdAttr: _overrideEditorSlideIdAttr,
+        persistenceOptions: _overridePersistenceOptions,
+        ...historyOptions
+      } = options;
       const deckImport = typeof SlideNextDeckImport !== 'undefined' ? SlideNextDeckImport : null;
       const deckPersistence = typeof SlideNextDeckPersistence !== 'undefined' ? SlideNextDeckPersistence : null;
       const sanitizeFrameRoot = deckImport
@@ -2752,25 +2779,25 @@
               transientClassNames: removableClassNames,
               editorElementIdAttr,
               editorSlideIdAttr,
-              persistenceOptions: metadataPersistenceOptions
+              persistenceOptions
             });
           }
         : deckPersistence
           && typeof deckPersistence.stripTransientDeckRuntimeState === 'function'
           ? (root) => {
-              deckPersistence.stripTransientDeckRuntimeState(root, metadataPersistenceOptions);
+              deckPersistence.stripTransientDeckRuntimeState(root, persistenceOptions);
             }
           : null;
       return {
         chromeNodeIds,
         removableClassNames,
-        editorElementIdAttr: EDITOR_ELEMENT_ID_ATTR,
-        editorSlideIdAttr: EDITOR_SLIDE_ID_ATTR,
+        editorElementIdAttr,
+        editorSlideIdAttr,
         sanitizeFrameRoot,
         getActiveSlideId,
         getSelectedElementIds: () => getSelectedEditorElementIds(),
         areIdListsEqual: areEditorIdListsEqual,
-        ...options
+        ...historyOptions
       };
     }
 
