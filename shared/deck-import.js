@@ -394,6 +394,39 @@
     return nextAttributes;
   }
 
+  function stripOpeningTagAttributeText(attributeText = '', attributeNames = []) {
+    return attributeNames.reduce((nextAttributeText, attributeName) => nextAttributeText.replace(
+      new RegExp(`\\s${attributeName}(?:=(?:"[^"]*"|'[^']*'|[^\\s>]+))?`, 'gi'),
+      ''
+    ), normalizeString(attributeText));
+  }
+
+  function stripCanonicalNodeSourceHtmlDuplicates(sourceHtml = '', visibility = {}) {
+    const nextSourceHtml = normalizeString(sourceHtml);
+    if (!nextSourceHtml) {
+      return nextSourceHtml;
+    }
+
+    const attributeNames = [];
+    if (visibility && visibility.hidden) {
+      attributeNames.push('hidden', 'aria-hidden', 'data-editor-hidden');
+    }
+    if (visibility && visibility.locked) {
+      attributeNames.push('data-editor-locked');
+    }
+    if (attributeNames.length === 0) {
+      return nextSourceHtml;
+    }
+
+    const openingTagMatch = nextSourceHtml.match(/^<([a-z][^\s/>]*)([^>]*?)(\/?)>/i);
+    if (!openingTagMatch) {
+      return nextSourceHtml;
+    }
+
+    const rebuiltOpeningTag = `<${openingTagMatch[1]}${stripOpeningTagAttributeText(openingTagMatch[2], attributeNames)}${openingTagMatch[3] || ''}>`;
+    return rebuiltOpeningTag + nextSourceHtml.slice(openingTagMatch[0].length);
+  }
+
   function stripCanonicalSlideAttributeDuplicates(attributes = {}) {
     const nextAttributes = { ...attributes };
     delete nextAttributes.id;
@@ -582,7 +615,7 @@
       name: buildImportedNodeName(el),
       tagName: el.tagName.toLowerCase(),
       text: normalizeWhitespace(childElements.length === 0 ? (el.textContent || '') : extractDirectText(el)),
-      html: buildImportedSourceHtml(el, options),
+      html: stripCanonicalNodeSourceHtmlDuplicates(buildImportedSourceHtml(el, options), visibility),
       classes: sanitizeImportedClassNames(el.classList || [], options),
       attributes: stripCanonicalNodeAttributeDuplicates(sanitizeImportedAttributeMap(el, options), visibility),
       style: normalizeString(el.getAttribute('style')),
@@ -1132,6 +1165,7 @@
     inferImportedNodeType,
     importElementToCanonicalNode,
     importSlideToCanonicalSlide,
+    stripCanonicalNodeSourceHtmlDuplicates,
     stripCanonicalSlideAttributeDuplicates,
     sanitizeDeckSourceClone,
     sanitizeImportedElementClone,

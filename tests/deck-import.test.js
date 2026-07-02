@@ -948,6 +948,32 @@ test('importElementToCanonicalNode sanitizes stored node html fragments', () => 
   assert.match(node.html, /class="eyebrow"/);
 });
 
+test('importElementToCanonicalNode strips duplicate visibility attrs from stored node html fragments', () => {
+  const element = createImportedElement({
+    tagName: 'DIV',
+    hidden: true,
+    attributes: {
+      class: 'hero-card',
+      hidden: '',
+      'aria-hidden': 'true',
+      'data-editor-hidden': 'true',
+      'data-editor-locked': 'true'
+    },
+    textContent: 'Hero copy',
+    outerHTML: '<div class="hero-card" hidden aria-hidden="true" data-editor-hidden="true" data-editor-locked="true">Hero copy</div>'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+
+  assert.equal(node.html.includes(' hidden'), false);
+  assert.equal(node.html.includes('aria-hidden='), false);
+  assert.equal(node.html.includes('data-editor-hidden='), false);
+  assert.equal(node.html.includes('data-editor-locked='), false);
+  assert.match(node.html, /class="hero-card"/);
+  assert.equal(node.visibility.hidden, true);
+  assert.equal(node.visibility.locked, true);
+});
+
 test('importSlideToCanonicalSlide strips canonical duplicate slide attributes while preserving custom attrs', () => {
   const heading = createImportedElement({
     tagName: 'H1',
