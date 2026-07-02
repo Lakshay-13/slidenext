@@ -2902,8 +2902,14 @@
       }
 
       const opacityVal = Math.round((parseFloat(computedStyles.opacity || '1')) * 100);
-      document.getElementById('elOpacity').value = opacityVal;
-      document.getElementById('opacityVal').textContent = opacityVal + '%';
+      const opacityInput = document.getElementById('elOpacity');
+      if (opacityInput) {
+        opacityInput.value = opacityVal;
+      }
+      const opacityLabel = document.getElementById('opacityVal');
+      if (opacityLabel) {
+        opacityLabel.textContent = opacityVal + '%';
+      }
 
       const isImgOrShape = liveSelectionState.selection.some(node => node.tagName.toLowerCase() === 'img' || node.classList.contains('editor-shape') || node.tagName.toLowerCase() === 'table' || node.tagName.toLowerCase() === 'div');
       if (isImgOrShape) {
