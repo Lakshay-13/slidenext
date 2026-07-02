@@ -265,6 +265,9 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
       calls.push(['isElementLocked']);
       return false;
     },
+    syncInspectorForSelection() {
+      calls.push(['syncInspectorForSelection']);
+    },
     updateStyleActionState(currentDoc) {
       calls.push(['updateStyleActionState', currentDoc]);
     }
@@ -278,7 +281,7 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
   assert.deepEqual(calls, [
     ['getIframeDoc'],
     ['buildStudioStyleMutationPlan'],
-    ['updateStyleActionState', doc]
+    ['syncInspectorForSelection']
   ]);
 });
 
@@ -323,6 +326,9 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
       calls.push(['isElementLocked']);
       return false;
     },
+    syncInspectorForSelection() {
+      calls.push(['syncInspectorForSelection']);
+    },
     updateStyleActionState(currentDoc) {
       calls.push(['updateStyleActionState', currentDoc]);
     }
@@ -337,6 +343,63 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
     ['getIframeDoc'],
     ['buildStudioStyleMutationPlan'],
     ['applyStudioStyleMutation', [liveTarget], 'color', '#fff'],
+    ['syncInspectorForSelection']
+  ]);
+});
+
+test('applySelectedElementStyle falls back to style-action refresh when inspector sync is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applySelectedElementStyleSource = extractFunctionSource(
+    fileContent,
+    'function applySelectedElementStyle(prop, val) {',
+    '\n\n    // Delete active selection'
+  );
+
+  const doc = { label: 'iframe-doc' };
+  const calls = [];
+  const context = {
+    selectedElements: [],
+    SlideNextStudioEditorStyle: {
+      buildStudioStyleMutationPlan() {
+        calls.push(['buildStudioStyleMutationPlan']);
+        return {
+          canApply: false,
+          selection: [],
+          versionLabel: ''
+        };
+      },
+      applyStudioStyleMutation() {
+        calls.push(['applyStudioStyleMutation']);
+        return {
+          didApply: true
+        };
+      }
+    },
+    getActiveSlide(currentDoc) {
+      calls.push(['getActiveSlide', currentDoc]);
+      return null;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return doc;
+    },
+    isElementLocked() {
+      calls.push(['isElementLocked']);
+      return false;
+    },
+    updateStyleActionState(currentDoc) {
+      calls.push(['updateStyleActionState', currentDoc]);
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
+  vm.runInContext(applySelectedElementStyleSource, context);
+
+  assert.equal(context.applySelectedElementStyle('color', '#fff'), false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['buildStudioStyleMutationPlan'],
     ['updateStyleActionState', doc]
   ]);
 });

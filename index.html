@@ -3630,12 +3630,20 @@
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!styleMutationPlan.canApply) {
-        updateStyleActionState(doc);
+        if (typeof syncInspectorForSelection === 'function') {
+          syncInspectorForSelection();
+        } else {
+          updateStyleActionState(doc);
+        }
         return false;
       }
       const styleMutationResult = SlideNextStudioEditorStyle.applyStudioStyleMutation(styleMutationPlan.selection, prop, val);
       if (!styleMutationResult.didApply) {
-        updateStyleActionState(doc);
+        if (typeof syncInspectorForSelection === 'function') {
+          syncInspectorForSelection();
+        } else {
+          updateStyleActionState(doc);
+        }
         return false;
       }
 
