@@ -2128,9 +2128,7 @@
       const targetNode = slides[toIdx];
       if (!draggedNode || !targetNode) return false;
       if (fromIdx === toIdx) return false;
-      saveHistoryState();
-      const activeSlideId = getActiveSlideId(iframeDoc);
-      const preservedSelectionIds = getCommittedSelectedEditorElementIds(iframeDoc);
+      const slideMutationState = captureSlideMutationRestoreState(iframeDoc);
       
       if (fromIdx < toIdx) {
         container.insertBefore(draggedNode, targetNode.nextSibling);
@@ -2140,8 +2138,8 @@
       
       generateThumbnails();
       const slideCount = getSlides(iframeDoc).length;
-      restoreDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, {
-        preservedActiveSlideId: activeSlideId,
+      restoreDeckViewAfterSlideMutation(iframeDoc, slideMutationState.preservedSelectionIds, {
+        preservedActiveSlideId: slideMutationState.preservedActiveSlideId,
         fallbackIndex: slideCount === 0 ? 0 : Math.min(toIdx, slideCount - 1),
       });
       finalizeSlideMutationPersistence('Auto: Reordered Slides');
@@ -2294,6 +2292,14 @@
       return versionLabel;
     }
 
+    function captureSlideMutationRestoreState(iframeDoc) {
+      saveHistoryState();
+      return {
+        preservedActiveSlideId: getActiveSlideId(iframeDoc),
+        preservedSelectionIds: getCommittedSelectedEditorElementIds(iframeDoc)
+      };
+    }
+
     function restoreDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, options = {}) {
       const restoreOptions = {
         restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc, { preserveSelection: true }),
@@ -2354,17 +2360,15 @@
       }
       const deletedSlide = slides[idx];
       if (!deletedSlide) return false;
-      saveHistoryState();
-      const activeSlideId = getActiveSlideId(iframeDoc);
+      const slideMutationState = captureSlideMutationRestoreState(iframeDoc);
       const deletedSlideId = getEditorSlideId(deletedSlide);
-      const preservedSelectionIds = getCommittedSelectedEditorElementIds(iframeDoc);
       
       deletedSlide.remove();
       
       generateThumbnails();
       const remainingSlides = getSlides(iframeDoc);
-      restoreDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, {
-        preservedActiveSlideId: activeSlideId,
+      restoreDeckViewAfterSlideMutation(iframeDoc, slideMutationState.preservedSelectionIds, {
+        preservedActiveSlideId: slideMutationState.preservedActiveSlideId,
         removedSlideId: deletedSlideId,
         fallbackIndex: remainingSlides.length === 0 ? 0 : Math.max(0, Math.min(idx - 1, remainingSlides.length - 1)),
       });
