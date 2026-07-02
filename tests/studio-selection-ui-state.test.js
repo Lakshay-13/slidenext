@@ -301,3 +301,50 @@ test('getEditorHistoryOptions threads sanitizer overrides and explicit persisten
     }
   );
 });
+
+test('getEditorHistoryStackOptions forwards sanitizer overrides into the underlying history options', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorHistoryStackOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorHistoryStackOptions(options = {}) {',
+    '\n\n    function createEditorSlideId() {'
+  );
+
+  const calls = [];
+  const context = {
+    normalizeHistoryEntry(entry) {
+      return { normalized: entry };
+    },
+    SlideNextStudioHistory: {
+      areStudioHistoryEntriesEqual(left, right) {
+        return left === right;
+      }
+    },
+    getEditorHistoryOptions(options = {}) {
+      calls.push(options);
+      return {
+        chromeNodeIds: options.chromeNodeIds || [],
+        sanitizeFrameRoot: options.sanitizeFrameRoot || null
+      };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getEditorHistoryStackOptionsSource, context);
+
+  const sanitizer = () => {};
+  const options = context.getEditorHistoryStackOptions({
+    chromeNodeIds: ['editorHistoryOverlay'],
+    sanitizeFrameRoot: sanitizer
+  });
+
+  assert.deepEqual(calls, [{
+    chromeNodeIds: ['editorHistoryOverlay'],
+    sanitizeFrameRoot: sanitizer
+  }]);
+  assert.deepEqual(JSON.parse(JSON.stringify(options.chromeNodeIds)), ['editorHistoryOverlay']);
+  assert.equal(options.sanitizeFrameRoot, sanitizer);
+  assert.equal(options.normalizeEntry('entry').normalized, 'entry');
+  assert.equal(options.areEntriesEqual('a', 'a'), true);
+  assert.equal(options.maxUndoEntries, 50);
+});
