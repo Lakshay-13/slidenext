@@ -436,6 +436,43 @@ test('buildStudioCanonicalDeck returns the validated deck from the canonical bui
   assert.equal(builderCalls[0].options.getNodeId(), 'node-1');
 });
 
+test('buildStudioCanonicalDeck forwards shared canonical import options through the deck builder', () => {
+  const doc = { label: 'doc' };
+  const presentationMetadata = {
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: '/presentations/onboarding-presentation/index.html'
+  };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const builderCalls = [];
+
+  const result = deckContext.buildStudioCanonicalDeck(doc, {
+    currentPresentationMetadata: presentationMetadata,
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    slideSelector: '.custom-slide',
+    slideTitleSelector: '.custom-title',
+    stripTransientDeckRuntimeState() {},
+    buildCanonicalDeckFromDocument(nextDoc, options) {
+      builderCalls.push({ nextDoc, options });
+      return canonicalDeck;
+    },
+    isCanonicalDeck: (deck) => deck === canonicalDeck
+  });
+
+  assert.equal(result, canonicalDeck);
+  assert.equal(builderCalls.length, 1);
+  assert.equal(builderCalls[0].nextDoc, doc);
+  assert.equal(builderCalls[0].options.slideSelector, '.custom-slide');
+  assert.equal(builderCalls[0].options.slideTitleSelector, '.custom-title');
+  assert.equal(typeof builderCalls[0].options.stripTransientDeckRuntimeState, 'function');
+  assert.equal(builderCalls[0].options.presentationMetadata, presentationMetadata);
+  assert.equal(builderCalls[0].options.sourcePath, '/presentations/onboarding-presentation/index.html');
+});
+
 test('buildStudioCanonicalDeck prefers a valid stored canonical deck from presentation metadata', () => {
   const storedCanonicalDeck = {
     metadata: {
@@ -467,7 +504,14 @@ test('buildStudioCanonicalDeck prefers a valid stored canonical deck from presen
     }
   });
 
-  assert.deepEqual(result, canonicalDeck.createCanonicalDeck(storedCanonicalDeck));
+  assert.deepEqual(result, canonicalDeck.createCanonicalDeck({
+    ...storedCanonicalDeck,
+    metadata: {
+      ...storedCanonicalDeck.metadata,
+      title: 'Project Onboarding',
+      sourcePath: '/presentations/onboarding-presentation/index.html'
+    }
+  }));
 });
 
 test('buildStudioCanonicalDeck falls back to DOM import when stored canonical metadata is malformed', () => {
@@ -565,7 +609,14 @@ test('buildStudioCanonicalDeck falls back to stored canonical metadata when a fo
     }
   });
 
-  assert.deepEqual(result, canonicalDeck.createCanonicalDeck(storedCanonicalDeck));
+  assert.deepEqual(result, canonicalDeck.createCanonicalDeck({
+    ...storedCanonicalDeck,
+    metadata: {
+      ...storedCanonicalDeck.metadata,
+      title: 'Project Onboarding',
+      sourcePath: '/presentations/onboarding-presentation/index.html'
+    }
+  }));
 });
 
 test('buildStudioCanonicalDeck falls back to the provided persisted canonical baseline when live metadata is unavailable', () => {
@@ -626,7 +677,14 @@ test('buildStudioCanonicalDeck falls back to stored canonical metadata when a li
     isCanonicalDeck: canonicalDeck.isCanonicalDeck
   });
 
-  assert.deepEqual(result, canonicalDeck.createCanonicalDeck(storedCanonicalDeck));
+  assert.deepEqual(result, canonicalDeck.createCanonicalDeck({
+    ...storedCanonicalDeck,
+    metadata: {
+      ...storedCanonicalDeck.metadata,
+      title: 'Project Onboarding',
+      sourcePath: '/presentations/onboarding-presentation/index.html'
+    }
+  }));
 });
 
 test('buildStudioCanonicalDeck falls back to the provided persisted canonical baseline when a live rebuild returns malformed data', () => {

@@ -178,7 +178,21 @@
       return storedCanonicalDeck || null;
     }
 
+    const {
+      currentPresentationMetadata: _currentPresentationMetadata,
+      fallbackStoredPresentationMetadata: _fallbackStoredPresentationMetadata,
+      presentationTitle: _presentationTitle,
+      presentationUrl: _presentationUrl,
+      createCanonicalDeck: _createCanonicalDeck,
+      isCanonicalDeck: _isCanonicalDeck,
+      buildCanonicalDeckFromDocument: _buildCanonicalDeckFromDocument,
+      preferStoredCanonicalDeck: _preferStoredCanonicalDeck,
+      resolvePresentationCanonicalDeck: _resolvePresentationCanonicalDeck,
+      ...canonicalBuildOptions
+    } = options;
+
     const deck = buildCanonicalDeckFromDocument(doc, {
+      ...canonicalBuildOptions,
       presentationMetadata: currentPresentationMetadata,
       sourcePath: options.presentationUrl || '',
       getSlideId: options.getSlideId,
