@@ -2184,6 +2184,43 @@
         }
         return '';
       };
+      const splitGradientSegments = (value) => {
+        if (typeof value !== 'string' || !value.trim()) {
+          return [];
+        }
+
+        const segments = [];
+        let currentSegment = '';
+        let depth = 0;
+        for (let index = 0; index < value.length; index += 1) {
+          const char = value[index];
+          if (char === '(') {
+            depth += 1;
+          } else if (char === ')' && depth > 0) {
+            depth -= 1;
+          }
+
+          if (char === ',' && depth === 0) {
+            segments.push(currentSegment.trim());
+            currentSegment = '';
+            continue;
+          }
+
+          currentSegment += char;
+        }
+
+        if (currentSegment.trim()) {
+          segments.push(currentSegment.trim());
+        }
+        return segments;
+      };
+      const extractGradientStopColor = (segment) => {
+        if (typeof segment !== 'string') {
+          return '';
+        }
+        const colorMatch = segment.trim().match(/^(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))/i);
+        return colorMatch ? colorMatch[1] : '';
+      };
       const resolveActiveSlideSolidWallpaperColor = (activeSlide) => {
         const backgroundImage = getActiveSlideInlineBackgroundImage(activeSlide);
         if (backgroundImage && backgroundImage !== 'none') {
@@ -2235,7 +2272,7 @@
 
         return '';
       };
-      const syncWallpaperTabChromeToActiveSlide = (activeSlide) => {
+      const syncWallpaperTabChromeToActiveSlide = (activeSlide, options = {}) => {
         const solidTab = document.getElementById('wpTabSolid');
         const presetsTab = document.getElementById('wpTabPresets');
         const customTab = document.getElementById('wpTabCustom');
@@ -2246,9 +2283,12 @@
           return false;
         }
 
-        const nextTab = resolveActiveSlideGradientBackground(activeSlide)
+        const hasGradientBackground = !!resolveActiveSlideGradientBackground(activeSlide);
+        const nextTab = options.didSyncCustomGradientControls
           ? 'custom'
-          : resolveActiveSlideSolidWallpaperColor(activeSlide)
+          : hasGradientBackground
+            ? 'presets'
+            : resolveActiveSlideSolidWallpaperColor(activeSlide)
             ? 'solid'
             : '';
         if (!nextTab) {
@@ -2259,11 +2299,15 @@
         const inactiveTabClass = 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
         const activeTabClass = 'py-1 text-center text-[10px] font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
         solidTab.className = nextTab === 'solid' ? activeTabClass : inactiveTabClass;
-        presetsTab.className = inactiveTabClass;
+        presetsTab.className = nextTab === 'presets' ? activeTabClass : inactiveTabClass;
         customTab.className = nextTab === 'custom' ? activeTabClass : inactiveTabClass;
         if (nextTab === 'solid') {
           solidPanel.classList.remove('hidden');
           presetsPanel.classList.add('hidden');
+          customPanel.classList.add('hidden');
+        } else if (nextTab === 'presets') {
+          solidPanel.classList.add('hidden');
+          presetsPanel.classList.remove('hidden');
           customPanel.classList.add('hidden');
         } else {
           solidPanel.classList.add('hidden');
@@ -2306,14 +2350,38 @@
           return false;
         }
 
-        const linearGradientMatch = background.match(/^linear-gradient\(\s*(-?\d+(?:\.\d+)?)deg\s*,\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))\s+[^,]+\s*,\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))\s+[^)]+\)$/i);
+        const linearGradientMatch = background.match(/^linear-gradient\((.*)\)$/i);
         const radialGradientMatch = linearGradientMatch
           ? null
-          : background.match(/^radial-gradient\(\s*circle\s*,\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))\s+[^,]+\s*,\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))\s+[^)]+\)$/i);
-
-        const gradientType = linearGradientMatch ? 'linear' : radialGradientMatch ? 'radial' : '';
-        const color1Value = normalizeColorInputValue(linearGradientMatch ? linearGradientMatch[2] : radialGradientMatch ? radialGradientMatch[1] : '');
-        const color2Value = normalizeColorInputValue(linearGradientMatch ? linearGradientMatch[3] : radialGradientMatch ? radialGradientMatch[2] : '');
+          : background.match(/^radial-gradient\((.*)\)$/i);
+        const linearGradientSegments = linearGradientMatch
+          ? splitGradientSegments(linearGradientMatch[1])
+          : [];
+        const radialGradientSegments = radialGradientMatch
+          ? splitGradientSegments(radialGradientMatch[1])
+          : [];
+        const linearGradientAngleMatch = linearGradientSegments.length === 3
+          ? linearGradientSegments[0].match(/^(-?\d+(?:\.\d+)?)deg$/i)
+          : null;
+        const gradientType = linearGradientAngleMatch
+          ? 'linear'
+          : radialGradientSegments.length === 3 && /^circle$/i.test(radialGradientSegments[0])
+            ? 'radial'
+            : '';
+        const color1Value = normalizeColorInputValue(
+          gradientType === 'linear'
+            ? extractGradientStopColor(linearGradientSegments[1])
+            : gradientType === 'radial'
+              ? extractGradientStopColor(radialGradientSegments[1])
+              : ''
+        );
+        const color2Value = normalizeColorInputValue(
+          gradientType === 'linear'
+            ? extractGradientStopColor(linearGradientSegments[2])
+            : gradientType === 'radial'
+              ? extractGradientStopColor(radialGradientSegments[2])
+              : ''
+        );
         if (!gradientType || !color1Value || !color2Value || !syncCustomGradientTypeChrome(gradientType)) {
           return false;
         }
@@ -2321,7 +2389,7 @@
         color1Input.value = color1Value;
         color2Input.value = color2Value;
         if (gradientType === 'linear') {
-          const angleValue = `${parseFloat(linearGradientMatch[1])}`;
+          const angleValue = `${parseFloat(linearGradientAngleMatch[1])}`;
           angleInput.value = angleValue;
           angleLabel.textContent = `${angleValue}°`;
         }
@@ -2395,9 +2463,11 @@
         return syncToDeckSnapshotFallback(deckSnapshot);
       }
       const activeSlide = getActiveSlide(doc);
-      syncWallpaperTabChromeToActiveSlide(activeSlide);
+      const didSyncCustomGradientControls = syncCustomGradientControlsToActiveSlide(activeSlide);
+      syncWallpaperTabChromeToActiveSlide(activeSlide, {
+        didSyncCustomGradientControls
+      });
       syncSolidWallpaperControlToActiveSlide(activeSlide);
-      syncCustomGradientControlsToActiveSlide(activeSlide);
       preserveSelectionOnNextActiveSlideSync = false;
       if (options.captureHistory && nextViewState.didSync && previousIndex !== currentSlideIndex) {
         saveHistoryState(false);

@@ -677,6 +677,110 @@ test('syncStudioChromeToActiveSlide syncs radial gradient controls from the acti
   assert.equal(slideCountLabel.textContent, '5 / 8');
 });
 
+test('syncStudioChromeToActiveSlide routes uneditable gradients to the wallpaper themes tab', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncStudioChromeToActiveSlideSource = extractFunctionSource(
+    fileContent,
+    'function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function bindDeckNavigationSync(doc = getIframeDoc()) {'
+  );
+
+  const slideCountLabel = { textContent: '' };
+  const elements = {
+    wpTabSolid: { className: 'stale-solid' },
+    wpTabPresets: { className: 'stale-presets' },
+    wpTabCustom: { className: 'stale-custom' },
+    wpPanelSolid: { classList: createClassList([]) },
+    wpPanelPresets: { classList: createClassList(['hidden']) },
+    wpPanelCustom: { classList: createClassList(['hidden']) },
+    cgLinearBtn: { className: 'linear-idle' },
+    cgRadialBtn: { className: 'radial-idle' },
+    cgAngleGroup: { classList: createClassList(['hidden']) },
+    cgColor1: { value: '#5050e8' },
+    cgColor2: { value: '#050505' },
+    cgAngle: { value: '135' },
+    cgAngleVal: { textContent: '135°' }
+  };
+  const iframeDoc = { label: 'iframe-doc' };
+  const activeSlide = {
+    style: {
+      background: 'linear-gradient(135deg, #0b0f19 0%, #111827 50%, #050505 100%)',
+      backgroundColor: '',
+      backgroundImage: 'linear-gradient(135deg, #0b0f19 0%, #111827 50%, #050505 100%)'
+    }
+  };
+  const context = {
+    currentSlideIndex: 1,
+    customGradientType: 'linear',
+    deselectElement() {},
+    document: {
+      getElementById(id) {
+        if (id === 'slideCountLabel') {
+          return slideCountLabel;
+        }
+        if (id === 'wallpaperCustomColor') {
+          return null;
+        }
+        return elements[id] || null;
+      }
+    },
+    getActiveSlide(doc) {
+      assert.equal(doc, iframeDoc);
+      return activeSlide;
+    },
+    getEditorSlideId() {
+      return 'slide-4';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlides() {
+      return [];
+    },
+    wallpaperTab: 'solid',
+    preserveSelectionOnNextActiveSlideSync: false,
+    pruneEditorChromeNodes() {},
+    rgbToHex() {
+      throw new Error('rgbToHex should not run for uneditable gradients');
+    },
+    saveHistoryState() {},
+    SlideNextStudioDeckView: {
+      syncStudioActiveSlideView(doc, options) {
+        assert.equal(doc, iframeDoc);
+        options.setCurrentSlideIndex(4);
+        options.setSlideCountLabel('5 / 8');
+        return {
+          didSync: true
+        };
+      }
+    },
+    updateActiveThumbnailCardState() {},
+    updateCurrentPresentationSessionState(nextState) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        context.currentSlideIndex = nextState.slideIndex;
+      }
+    },
+    updateIframeNavigationUI() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncStudioChromeToActiveSlideSource, context);
+
+  assert.equal(context.syncStudioChromeToActiveSlide(), true);
+  assert.equal(context.wallpaperTab, 'presets');
+  assert.equal(elements.wpPanelSolid.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelPresets.classList.contains('hidden'), false);
+  assert.equal(elements.wpPanelCustom.classList.contains('hidden'), true);
+  assert.match(elements.wpTabSolid.className, /text-zinc-400/);
+  assert.match(elements.wpTabPresets.className, /bg-white\/5/);
+  assert.match(elements.wpTabCustom.className, /text-zinc-400/);
+  assert.equal(elements.cgColor1.value, '#5050e8');
+  assert.equal(elements.cgColor2.value, '#050505');
+  assert.equal(elements.cgAngle.value, '135');
+  assert.equal(elements.cgAngleVal.textContent, '135°');
+  assert.equal(slideCountLabel.textContent, '5 / 8');
+});
+
 test('syncStudioChromeToActiveSlide tolerates missing custom gradient controls while syncing the live frame', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const syncStudioChromeToActiveSlideSource = extractFunctionSource(
