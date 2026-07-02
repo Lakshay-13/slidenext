@@ -5623,6 +5623,25 @@
         iframeDoc
       );
       if (!versionCheckpointPersistenceState) return;
+
+      const saveRequestBody = typeof buildEditorSaveRequestBody === 'function'
+        ? buildEditorSaveRequestBody(
+            versionCheckpointPersistenceState.requestOptions.doc,
+            versionCheckpointPersistenceState.cleanHtml,
+            {
+              presentationUrl,
+              versionLabel: label,
+              canonicalDeck: versionCheckpointPersistenceState.requestOptions.canonicalDeck
+            }
+          )
+        : null;
+      if (
+        saveRequestBody
+        && typeof isCurrentDeckStatePersisted === 'function'
+        && isCurrentDeckStatePersisted(saveRequestBody, versionCheckpointPersistenceState.cleanHtml)
+      ) {
+        return false;
+      }
       
       try {
         const data = await saveVersionCheckpoint(

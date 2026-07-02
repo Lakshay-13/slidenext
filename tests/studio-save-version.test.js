@@ -1023,6 +1023,102 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   assert.deepEqual(logCalls, ['Auto-created version checkpoint: Auto: Edited Text']);
 });
 
+test('executeSaveAutoVersion skips redundant auto version saves when the captured state already matches the persisted baseline', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const executeSaveAutoVersionSource = extractFunctionSource(
+    fileContent,
+    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
+    '\n\n    // 7. Versions and Backups listing'
+  );
+
+  const loadVersionsCalls = [];
+  const logCalls = [];
+  const saveVersionCalls = [];
+  const buildRequestBodyCalls = [];
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const context = {
+    buildEditorSaveRequestBody(nextDoc, cleanHtml, options = {}) {
+      buildRequestBodyCalls.push([nextDoc, cleanHtml, options]);
+      return {
+        htmlPath: options.presentationUrl,
+        htmlContent: cleanHtml,
+        versionLabel: options.versionLabel,
+        canonicalDeck: options.canonicalDeck
+      };
+    },
+    buildPersistableDeckHtml(nextDoc, buildOptions = {}) {
+      assert.equal(nextDoc, null);
+      assert.equal(typeof buildOptions.onCanonicalDeckResolved, 'function');
+      buildOptions.onCanonicalDeckResolved(canonicalDeck);
+      return '<html>persisted-baseline</html>';
+    },
+    capturePersistedDeckPlaybackState() {
+      return null;
+    },
+    console: {
+      error() {
+        throw new Error('executeSaveAutoVersion should not report errors when skipping redundant version saves');
+      },
+      log(message) {
+        logCalls.push(message);
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    getIframeDoc() {
+      return null;
+    },
+    isCurrentDeckStatePersisted(saveRequestBody, cleanHtml) {
+      assert.equal(cleanHtml, '<html>persisted-baseline</html>');
+      assert.deepEqual(saveRequestBody, {
+        htmlPath: '/presentations/onboarding-presentation/index.html',
+        htmlContent: '<html>persisted-baseline</html>',
+        versionLabel: 'Auto: Edited Text',
+        canonicalDeck
+      });
+      return true;
+    },
+    isStaleEditorPersistenceTask() {
+      return false;
+    },
+    loadVersions(presentationUrl, sessionToken) {
+      loadVersionsCalls.push([presentationUrl, sessionToken]);
+    },
+    saveVersionCheckpoint: async (...args) => {
+      saveVersionCalls.push(args);
+      return { success: true };
+    },
+    SlideNextStudioEditorPersistence: editorPersistence,
+    studioEditorSessionToken: 4
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
+  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
+  loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
+  vm.runInContext(executeSaveAutoVersionSource, context);
+
+  const result = await context.executeSaveAutoVersion('Auto: Edited Text');
+
+  assert.equal(result, false);
+  assert.equal(saveVersionCalls.length, 0);
+  assert.equal(buildRequestBodyCalls.length, 1);
+  assert.deepEqual(loadVersionsCalls, []);
+  assert.deepEqual(logCalls, []);
+});
+
 test('triggerAutoSave skips persistence when the shared iframe accessor has no live document and no fallback html', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const triggerAutoSaveSource = extractFunctionSource(
