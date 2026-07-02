@@ -48,15 +48,20 @@
     const renderOptions = deckHtmlOptions.renderOptions && typeof deckHtmlOptions.renderOptions === 'object'
       ? deckHtmlOptions.renderOptions
       : {};
-    const resolvedDeckHtmlOptions = historyActiveSlideId && !renderOptions.activeSlideId
-      ? {
-          ...deckHtmlOptions,
-          renderOptions: {
-            ...renderOptions,
-            activeSlideId: historyActiveSlideId
-          }
-        }
-      : deckHtmlOptions;
+    const resolvedDeckHtmlOptions = {
+      ...deckHtmlOptions,
+      renderOptions: {
+        preferSourceHtml: false,
+        preferHeadSourceHtml: false,
+        preferBodySourceHtml: false,
+        preferSlideSourceHtml: false,
+        preferNodeSourceHtml: false,
+        ...(historyActiveSlideId && !renderOptions.activeSlideId
+          ? { activeSlideId: historyActiveSlideId }
+          : {}),
+        ...renderOptions
+      }
+    };
 
     try {
       return normalizeStudioHistoryFrameHtml(

@@ -351,6 +351,11 @@ test('restoreStudioHistoryFrameSetup falls back to rendered canonical deck html 
   assert.equal(calls[0][1], canonicalDeck);
   assert.deepEqual(calls[0][2], {
     renderOptions: {
+      preferSourceHtml: false,
+      preferHeadSourceHtml: false,
+      preferBodySourceHtml: false,
+      preferSlideSourceHtml: false,
+      preferNodeSourceHtml: false,
       activeSlideId: 'slide-2'
     }
   });
@@ -393,7 +398,55 @@ test('restoreStudioHistoryFrameSetup preserves an explicit render active slide o
   assert.equal(calls.length, 1);
   assert.deepEqual(calls[0][2], {
     renderOptions: {
+      preferSourceHtml: false,
+      preferHeadSourceHtml: false,
+      preferBodySourceHtml: false,
+      preferSlideSourceHtml: false,
+      preferNodeSourceHtml: false,
       activeSlideId: 'slide-1'
+    }
+  });
+});
+
+test('restoreStudioHistoryFrameSetup preserves explicit canonical render preference overrides over shared defaults', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const calls = [];
+
+  studioHistory.restoreStudioHistoryFrameSetup({
+    html: '',
+    activeSlideId: 'slide-2',
+    canonicalDeck
+  }, {
+    doc: {
+      documentElement: {
+        innerHTML: ''
+      }
+    },
+    deckHtmlOptions: {
+      renderOptions: {
+        preferSourceHtml: true,
+        preferNodeSourceHtml: true
+      }
+    },
+    buildDeckSourceHtml(deck, options) {
+      calls.push(['buildDeckSourceHtml', deck, options]);
+      return '<html><body><main>rendered</main></body></html>';
+    }
+  });
+
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0][2], {
+    renderOptions: {
+      preferSourceHtml: true,
+      preferHeadSourceHtml: false,
+      preferBodySourceHtml: false,
+      preferSlideSourceHtml: false,
+      preferNodeSourceHtml: true,
+      activeSlideId: 'slide-2'
     }
   });
 });
