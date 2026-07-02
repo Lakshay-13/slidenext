@@ -232,6 +232,35 @@ test('renderCanonicalDeckHtml does not reuse source body html when canonical sli
   assert.doesNotMatch(html, /stale slide html/);
 });
 
+test('renderCanonicalDeckHtml overlays canonical title onto reused source head html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    metadata: {
+      title: 'Canonical Head Title'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '<title>Stale Head Title</title><style>.deck-shell{color:red;}</style>',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<title>Canonical Head Title<\/title>/);
+  assert.match(html, /<style>\.deck-shell\{color:red;\}<\/style>/);
+  assert.doesNotMatch(html, /Stale Head Title/);
+});
+
 test('renderCanonicalDeckHtml updates active classes and ids even when reusing slide source html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [

@@ -578,6 +578,25 @@
     ].filter(Boolean).join('\n');
   }
 
+  function applyCanonicalDeckHeadSourceHtmlState(headHtml = '', deck = {}) {
+    const nextHeadHtml = normalizeString(headHtml);
+    if (!nextHeadHtml) {
+      return nextHeadHtml;
+    }
+
+    const metadata = asPlainObject(deck.metadata);
+    const canonicalTitle = normalizeString(metadata.title).trim();
+    if (!canonicalTitle) {
+      return nextHeadHtml;
+    }
+
+    const titleTag = `<title>${escapeHtml(canonicalTitle)}</title>`;
+    if (/<title\b[^>]*>[\s\S]*?<\/title>/i.test(nextHeadHtml)) {
+      return nextHeadHtml.replace(/<title\b[^>]*>[\s\S]*?<\/title>/i, titleTag);
+    }
+    return `${titleTag}\n${nextHeadHtml}`;
+  }
+
   function buildDefaultBodyHtml(deck, options = {}) {
     const slides = Array.isArray(deck.slides) ? deck.slides : [];
     const requestedActiveSlideId = normalizeString(options.activeSlideId).trim();
@@ -622,7 +641,7 @@
 
     const headHtml = options.preferHeadSourceHtml === false
       ? buildDefaultHeadHtml(deck)
-      : normalizeString(deck.source && deck.source.headHtml) || buildDefaultHeadHtml(deck);
+      : applyCanonicalDeckHeadSourceHtmlState(normalizeString(deck.source && deck.source.headHtml), deck) || buildDefaultHeadHtml(deck);
     const bodyAttributes = asPlainObject(deck.source && deck.source.bodyAttributes);
     const bodyHtml = canReuseCanonicalDeckBodySourceHtml(options)
       ? normalizeString(deck.source && deck.source.bodyHtml) || buildDefaultBodyHtml(deck, options)
