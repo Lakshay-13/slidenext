@@ -162,6 +162,110 @@ test('toggleLayerVisibilityByRef deselects the temporary target when the visibil
   assert.equal(calls[5][1].selectedElements[0], target);
 });
 
+test('selectLayerElementByRef refreshes the layer list when the row target is stale', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectLayerElementByRefSource = extractFunctionSource(
+    fileContent,
+    'function selectLayerElementByRef(event) {',
+    '\n\n    function toggleLayerVisibilityByRef(event) {'
+  );
+
+  const row = { id: 'row-1' };
+  const calls = [];
+  const context = {
+    resolveLayerRowElement(currentRow) {
+      calls.push(['resolveLayerRowElement', currentRow]);
+      return null;
+    },
+    selectElement(target, options) {
+      calls.push(['selectElement', target, options]);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(selectLayerElementByRefSource, context);
+
+  const event = {
+    currentTarget: {
+      closest(selector) {
+        calls.push(['closest', selector]);
+        return row;
+      }
+    },
+    preventDefault() {
+      calls.push(['preventDefault']);
+    },
+    shiftKey: false,
+    stopPropagation() {
+      calls.push(['stopPropagation']);
+    }
+  };
+
+  context.selectLayerElementByRef(event);
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'preventDefault',
+    'stopPropagation',
+    'closest',
+    'resolveLayerRowElement',
+    'updateLayersList'
+  ]);
+  assert.equal(calls[3][1], row);
+});
+
+test('toggleLayerVisibilityByRef refreshes the layer list when the row target is stale', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toggleLayerVisibilityByRefSource = extractFunctionSource(
+    fileContent,
+    'function toggleLayerVisibilityByRef(event) {',
+    '\n    \n    function changeLayerZIndexByRef(event, action) {'
+  );
+
+  const row = { id: 'row-1' };
+  const calls = [];
+  const context = {
+    resolveLayerRowElement(currentRow) {
+      calls.push(['resolveLayerRowElement', currentRow]);
+      return null;
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(toggleLayerVisibilityByRefSource, context);
+
+  const event = {
+    currentTarget: {
+      closest(selector) {
+        calls.push(['closest', selector]);
+        return row;
+      }
+    },
+    preventDefault() {
+      calls.push(['preventDefault']);
+    },
+    stopPropagation() {
+      calls.push(['stopPropagation']);
+    }
+  };
+
+  context.toggleLayerVisibilityByRef(event);
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'preventDefault',
+    'stopPropagation',
+    'closest',
+    'resolveLayerRowElement',
+    'updateLayersList'
+  ]);
+  assert.equal(calls[3][1], row);
+});
+
 test('changeLayerZIndexByRef refreshes layer controls when the row target is locked', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const changeLayerZIndexByRefSource = extractFunctionSource(
@@ -234,6 +338,77 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is loc
   ]);
   assert.equal(calls[3][1], row);
   assert.equal(calls[4][1], target);
+});
+
+test('changeLayerZIndexByRef refreshes layer controls when the row target is stale', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const changeLayerZIndexByRefSource = extractFunctionSource(
+    fileContent,
+    'function changeLayerZIndexByRef(event, action) {',
+    '\n\n    // Presentation Live Preview from workspace'
+  );
+
+  const row = { id: 'row-1' };
+  const calls = [];
+  const context = {
+    isElementLocked(element) {
+      calls.push(['isElementLocked', element]);
+      return false;
+    },
+    reorderSlideLayers() {
+      calls.push(['reorderSlideLayers']);
+      return true;
+    },
+    resolveLayerRowElement(currentRow) {
+      calls.push(['resolveLayerRowElement', currentRow]);
+      return null;
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    },
+    updateLayerOrderActionState() {
+      calls.push(['updateLayerOrderActionState']);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(changeLayerZIndexByRefSource, context);
+
+  const event = {
+    currentTarget: {
+      closest(selector) {
+        calls.push(['closest', selector]);
+        return row;
+      }
+    },
+    preventDefault() {
+      calls.push(['preventDefault']);
+    },
+    stopPropagation() {
+      calls.push(['stopPropagation']);
+    }
+  };
+
+  context.changeLayerZIndexByRef(event, 'forward');
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'preventDefault',
+    'stopPropagation',
+    'closest',
+    'resolveLayerRowElement',
+    'updateLayersList',
+    'updateLayerOrderActionState'
+  ]);
+  assert.equal(calls[3][1], row);
 });
 
 test('changeLayerZIndexByRef refreshes layer controls when the row reorder becomes a no-op', () => {

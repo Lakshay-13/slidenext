@@ -5221,10 +5221,12 @@
       event.stopPropagation();
       const parentRow = event.currentTarget.closest('[class*="border"]');
       const target = resolveLayerRowElement(parentRow);
-      if (target) {
-        selectElement(target, { additive: event.shiftKey, toggle: event.shiftKey });
+      if (!target) {
         updateLayersList();
+        return;
       }
+      selectElement(target, { additive: event.shiftKey, toggle: event.shiftKey });
+      updateLayersList();
     }
 
     function toggleLayerVisibilityByRef(event) {
@@ -5232,7 +5234,10 @@
       event.stopPropagation();
       const parentRow = event.currentTarget.closest('[class*="border"]');
       const target = resolveLayerRowElement(parentRow);
-      if (!target) return;
+      if (!target) {
+        updateLayersList();
+        return;
+      }
       const preservedSelectionIds = getCommittedSelectedEditorElementIds();
       const restorePreservedSelection = () => {
         if (preservedSelectionIds.length === 0) {
@@ -5259,33 +5264,36 @@
       event.stopPropagation();
       const parentRow = event.currentTarget.closest('[class*="border"]');
       const el = resolveLayerRowElement(parentRow);
-      if (el) {
-        if (isElementLocked(el)) {
-          updateLayersList();
-          updateLayerOrderActionState();
-          return;
-        }
-        const didChange = reorderSlideLayers(action, [el]);
-        if (!didChange) {
-          updateLayersList();
-          updateLayerOrderActionState();
-          return;
-        }
-        
-        // Update selection properties panel if currently selected
-        if (SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement(selectedElements, el)) {
-          const zIndexInput = document.getElementById('elZIndex');
-          if (zIndexInput) {
-            zIndexInput.value = el.style.zIndex || 0;
-          }
-        }
-        
-        saveHistoryState();
-        triggerAutoSave();
+      if (!el) {
         updateLayersList();
         updateLayerOrderActionState();
-        triggerAutoVersion('Auto: Rearranged Layers');
+        return;
       }
+      if (isElementLocked(el)) {
+        updateLayersList();
+        updateLayerOrderActionState();
+        return;
+      }
+      const didChange = reorderSlideLayers(action, [el]);
+      if (!didChange) {
+        updateLayersList();
+        updateLayerOrderActionState();
+        return;
+      }
+      
+      // Update selection properties panel if currently selected
+      if (SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement(selectedElements, el)) {
+        const zIndexInput = document.getElementById('elZIndex');
+        if (zIndexInput) {
+          zIndexInput.value = el.style.zIndex || 0;
+        }
+      }
+      
+      saveHistoryState();
+      triggerAutoSave();
+      updateLayersList();
+      updateLayerOrderActionState();
+      triggerAutoVersion('Auto: Rearranged Layers');
     }
 
     // Presentation Live Preview from workspace
