@@ -1039,6 +1039,7 @@
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
+  <script src="/shared/studio-deck-ready.js"></script>
   <script src="/shared/deck-html.js"></script>
   <script src="/shared/studio-deck-view.js"></script>
   <script src="/shared/studio-preview.js"></script>
@@ -5935,34 +5936,53 @@
 
     function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {
       const persistedDeckState = getCurrentEditorPersistedDeckState();
-      const hasDeckDocument = !!(doc && doc.documentElement);
-      const hasPresentationSession = !!currentPresentationUrl;
-      const hasPersistedDeckHtml = !!(
+      const persistedDeckStateWithContent = (
         typeof getCurrentEditorPersistedDeckState.resolveWithContent === 'function'
           ? getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState)
           : (persistedDeckState.cleanHtml.trim() ? persistedDeckState : null)
       );
-      const hasStoredCanonicalDeck = !!resolveEditorStoredCanonicalBaseline();
-      const hasDeckContent = hasDeckDocument || hasPersistedDeckHtml || hasStoredCanonicalDeck;
+      const storedCanonicalDeck = resolveEditorStoredCanonicalBaseline();
+      const resolveStudioDeckReadyActionState = (
+        typeof SlideNextStudioDeckReady !== 'undefined'
+        && SlideNextStudioDeckReady
+        && typeof SlideNextStudioDeckReady.resolveStudioDeckReadyActionState === 'function'
+      )
+        ? SlideNextStudioDeckReady.resolveStudioDeckReadyActionState
+        : null;
+      const actionState = resolveStudioDeckReadyActionState
+        ? resolveStudioDeckReadyActionState({
+            doc,
+            presentationUrl: currentPresentationUrl,
+            persistedDeckStateWithContent,
+            storedCanonicalDeck
+          })
+        : {
+            canUseDeckActions: !!currentPresentationUrl && !!(
+              (doc && doc.documentElement)
+              || persistedDeckStateWithContent
+              || storedCanonicalDeck
+            ),
+            canLaunchPreview: !!currentPresentationUrl
+          };
 
       const saveBtn = document.getElementById('studioSaveBtn');
       if (saveBtn) {
-        saveBtn.disabled = !(hasPresentationSession && hasDeckContent);
+        saveBtn.disabled = !actionState.canUseDeckActions;
       }
 
       const sourceViewBtn = document.getElementById('openSourceViewBtn');
       if (sourceViewBtn) {
-        sourceViewBtn.disabled = !(hasPresentationSession && hasDeckContent);
+        sourceViewBtn.disabled = !actionState.canUseDeckActions;
       }
 
       const versionBtn = document.getElementById('studioVersionBtn');
       if (versionBtn) {
-        versionBtn.disabled = !(hasPresentationSession && hasDeckContent);
+        versionBtn.disabled = !actionState.canUseDeckActions;
       }
 
       const previewBtn = document.getElementById('launchPreviewBtn');
       if (previewBtn) {
-        previewBtn.disabled = !hasPresentationSession;
+        previewBtn.disabled = !actionState.canLaunchPreview;
       }
     }
 

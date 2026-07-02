@@ -183,3 +183,75 @@ test('updateDeckReadyToolbarActionState prefers the shared persisted-content res
   assert.equal(elements.openSourceViewBtn.disabled, false);
   assert.equal(elements.studioVersionBtn.disabled, false);
 });
+
+test('updateDeckReadyToolbarActionState delegates action gating to the shared deck-ready helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateDeckReadyToolbarActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {',
+    '\n\n    function resetStudioSaveButtonState() {'
+  );
+
+  const doc = { documentElement: {} };
+  const elements = {
+    launchPreviewBtn: { disabled: false },
+    studioSaveBtn: { disabled: false },
+    openSourceViewBtn: { disabled: false },
+    studioVersionBtn: { disabled: false }
+  };
+  const calls = [];
+  const persistedDeckStateWithContent = {
+    cleanHtml: '<html>persisted-baseline</html>'
+  };
+  const storedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    slides: []
+  };
+  const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    document: {
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getCurrentEditorPersistedDeckState() {
+      return {
+        cleanHtml: '<html>persisted-baseline</html>',
+        canonicalDeck: null,
+        playbackState: null
+      };
+    },
+    resolveEditorStoredCanonicalBaseline() {
+      return storedCanonicalDeck;
+    },
+    SlideNextStudioDeckReady: {
+      resolveStudioDeckReadyActionState(options = {}) {
+        calls.push(options);
+        return {
+          canUseDeckActions: true,
+          canLaunchPreview: true
+        };
+      }
+    }
+  };
+  context.getCurrentEditorPersistedDeckState.resolveWithContent = () => persistedDeckStateWithContent;
+
+  vm.createContext(context);
+  vm.runInContext(updateDeckReadyToolbarActionStateSource, context);
+
+  context.updateDeckReadyToolbarActionState(doc);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    doc,
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    persistedDeckStateWithContent,
+    storedCanonicalDeck
+  }]);
+  assert.equal(elements.launchPreviewBtn.disabled, false);
+  assert.equal(elements.studioSaveBtn.disabled, false);
+  assert.equal(elements.openSourceViewBtn.disabled, false);
+  assert.equal(elements.studioVersionBtn.disabled, false);
+});
