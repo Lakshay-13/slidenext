@@ -394,6 +394,40 @@ test('renderCanonicalDeckHtml overlays canonical preload assets onto reused sour
   assert.doesNotMatch(html, /stale-font/);
 });
 
+test('renderCanonicalDeckHtml overlays canonical layout sizing onto reused source head html', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    layout: {
+      size: {
+        width: 1920,
+        height: 1080,
+        unit: 'px'
+      },
+      aspectRatio: '16:9'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [],
+        source: {}
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '<style>.slide { width: 10px; }</style><style>.deck-shell{color:red;}</style>',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<style>\.deck-shell\{color:red;\}<\/style>/);
+  assert.match(html, /<style>\s*\.slide \{\s*width: 1920px;\s*height: 1080px;\s*aspect-ratio: 16 \/ 9;\s*box-sizing: border-box;\s*overflow: hidden;\s*\}\s*<\/style>/);
+  assert.ok(html.indexOf('width: 10px;') < html.indexOf('width: 1920px;'));
+});
+
 test('renderCanonicalDeckHtml overlays canonical script assets onto reused source body html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     assets: [

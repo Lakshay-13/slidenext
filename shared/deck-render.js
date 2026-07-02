@@ -518,8 +518,6 @@
 
   function buildDefaultHeadHtml(deck) {
     const metadata = asPlainObject(deck.metadata);
-    const layout = asPlainObject(deck.layout);
-    const layoutSize = asPlainObject(layout.size);
     const title = normalizeString(metadata.title, 'SlideNext Deck');
     const descriptionMetaTag = buildMetaTag('description', metadata.description);
     const keywordsMetaTag = buildMetaTag('keywords', Array.isArray(metadata.tags) ? metadata.tags.join(', ') : '');
@@ -529,6 +527,26 @@
       : '';
     const preloadAssetLinkTags = buildPreloadAssetLinkTags(deck.assets);
     const stylesheetAssetLinkTags = buildStylesheetAssetLinkTags(deck.assets);
+    const deckLayoutStyleBlock = buildCanonicalDeckLayoutStyleBlock(deck);
+    const themeStyleBlocks = buildCanonicalDeckThemeStyleBlocks(deck);
+
+    return [
+      '<meta charset="utf-8">',
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+      `<title>${escapeHtml(title)}</title>`,
+      descriptionMetaTag,
+      keywordsMetaTag,
+      iconLinkTag,
+      ...preloadAssetLinkTags,
+      ...stylesheetAssetLinkTags,
+      deckLayoutStyleBlock,
+      ...themeStyleBlocks
+    ].filter(Boolean).join('\n');
+  }
+
+  function buildCanonicalDeckLayoutStyleBlock(deck = {}) {
+    const layout = asPlainObject(deck.layout);
+    const layoutSize = asPlainObject(layout.size);
     const layoutCssUnit = normalizeString(layoutSize.unit, 'px').trim() || 'px';
     const layoutAspectRatio = normalizeAspectRatioCssValue(layout.aspectRatio);
     const layoutStyleLines = [];
@@ -545,9 +563,12 @@
       layoutStyleLines.push('  box-sizing: border-box;');
       layoutStyleLines.push('  overflow: hidden;');
     }
-    const deckLayoutStyleBlock = layoutStyleLines.length > 0
+    return layoutStyleLines.length > 0
       ? `<style>\n.slide {\n${layoutStyleLines.join('\n')}\n}\n</style>`
       : '';
+  }
+
+  function buildCanonicalDeckThemeStyleBlocks(deck = {}) {
     const themeTokens = asPlainObject(deck.theme && deck.theme.tokens);
     const themeTokenEntries = Object.entries(themeTokens)
       .filter(([tokenName, tokenValue]) => tokenName.startsWith('--') && normalizeString(tokenValue).trim() !== '');
@@ -563,19 +584,7 @@
     if (themeCustomCss) {
       themeStyleBlocks.push(`<style>\n${escapeStyleText(themeCustomCss)}\n</style>`);
     }
-
-    return [
-      '<meta charset="utf-8">',
-      '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
-      `<title>${escapeHtml(title)}</title>`,
-      descriptionMetaTag,
-      keywordsMetaTag,
-      iconLinkTag,
-      ...preloadAssetLinkTags,
-      ...stylesheetAssetLinkTags,
-      deckLayoutStyleBlock,
-      ...themeStyleBlocks
-    ].filter(Boolean).join('\n');
+    return themeStyleBlocks;
   }
 
   function applyCanonicalDeckHeadSourceHtmlState(headHtml = '', deck = {}) {
@@ -633,6 +642,11 @@
         ''
       );
       nextHeadHtml = `${preloadAssetLinkTags.join('\n')}\n${nextHeadHtml}`;
+    }
+
+    const deckLayoutStyleBlock = buildCanonicalDeckLayoutStyleBlock(deck);
+    if (deckLayoutStyleBlock) {
+      nextHeadHtml = `${nextHeadHtml}\n${deckLayoutStyleBlock}`.trim();
     }
 
     return nextHeadHtml;
