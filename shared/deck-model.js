@@ -123,17 +123,47 @@
 
   function buildCanonicalLayerSnapshot(nodes = [], options = {}) {
     const snapshots = [];
+    const usedIds = new Set();
+    let fallbackIndex = 1;
+
+    function collectUsedIds(nextNodes = []) {
+      nextNodes.forEach((node) => {
+        if (!node || typeof node !== 'object') {
+          return;
+        }
+        const nodeId = normalizeString(node.id).trim();
+        if (nodeId) {
+          usedIds.add(nodeId);
+        }
+        if (Array.isArray(node.children) && node.children.length > 0) {
+          collectUsedIds(node.children);
+        }
+      });
+    }
+
+    function reserveFallbackId() {
+      let fallbackId = `node-${fallbackIndex}`;
+      while (usedIds.has(fallbackId)) {
+        fallbackIndex += 1;
+        fallbackId = `node-${fallbackIndex}`;
+      }
+      usedIds.add(fallbackId);
+      fallbackIndex += 1;
+      return fallbackId;
+    }
+
+    collectUsedIds(Array.isArray(nodes) ? nodes : []);
 
     function appendNodeSnapshots(nextNodes = []) {
-      nextNodes.forEach((node, index) => {
+      nextNodes.forEach((node) => {
         if (!node || typeof node !== 'object') {
           return;
         }
 
         const { typeIcon, displayName } = resolveCanonicalNodeDisplayMetadata(node);
-        const fallbackId = `node-${snapshots.length + index + 1}`;
+        const resolvedId = normalizeString(node.id).trim() || reserveFallbackId();
         snapshots.push({
-          id: normalizeString(node.id, fallbackId),
+          id: resolvedId,
           typeIcon,
           displayName,
           zIndex: Number.isFinite(node.layout && node.layout.zIndex)
