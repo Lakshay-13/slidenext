@@ -7,6 +7,10 @@
     root.SlideNextStudioElementState = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function hasStudioHiddenClass(el) {
+    return !!(el && el.classList && typeof el.classList.contains === 'function' && el.classList.contains('hidden'));
+  }
+
   function isStudioElementLocked(el) {
     return !!(el && el.dataset && el.dataset.editorLocked === 'true');
   }
@@ -31,6 +35,7 @@
       || (el.style && el.style.display === 'none')
       || (computedStyle && computedStyle.display === 'none')
       || (computedStyle && computedStyle.visibility === 'hidden')
+      || hasStudioHiddenClass(el)
       || el.hidden === true
     ));
   }
@@ -63,6 +68,10 @@
         el.style.display = 'none';
       }
       return;
+    }
+
+    if (hasStudioHiddenClass(el) && el.classList && typeof el.classList.remove === 'function') {
+      el.classList.remove('hidden');
     }
 
     const prevDisplay = el.dataset && Object.prototype.hasOwnProperty.call(el.dataset, 'editorPrevDisplay')

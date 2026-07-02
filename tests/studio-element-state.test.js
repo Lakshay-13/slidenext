@@ -21,6 +21,7 @@ function createElement(options = {}) {
   return {
     dataset: { ...(options.dataset || {}) },
     hidden: !!options.hidden,
+    classList: options.classList || createClassList(options.classNames || []),
     style: options.style || createStyle(options.display || ''),
     ownerDocument: options.computedStyle
       ? {
@@ -80,6 +81,9 @@ test('isStudioElementHidden treats either dataset or hidden attribute state as h
   })), true);
   assert.equal(studioElementState.isStudioElementHidden(createElement({
     hidden: true
+  })), true);
+  assert.equal(studioElementState.isStudioElementHidden(createElement({
+    classNames: ['hidden']
   })), true);
   assert.equal(studioElementState.isStudioElementHidden(createElement()), false);
 });
@@ -162,6 +166,22 @@ function createClassList(initialValues = []) {
     }
   };
 }
+
+test('setStudioElementHiddenState removes a deck-authored hidden class when showing an element', () => {
+  const style = createStyle('');
+  const el = createElement({
+    classNames: ['hidden', 'hero-card'],
+    style
+  });
+
+  studioElementState.setStudioElementHiddenState(el, false);
+
+  assert.equal(el.classList.contains('hidden'), false);
+  assert.equal(el.hidden, false);
+  assert.equal(el.getAttribute('aria-hidden'), null);
+  assert.equal(style.display, '');
+  assert.deepEqual(style.removePropertyCalls, ['display']);
+});
 
 function createSanitizableElement(options = {}) {
   const element = createElement({

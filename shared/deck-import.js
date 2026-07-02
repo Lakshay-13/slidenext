@@ -851,8 +851,10 @@
   }
 
   function buildImportedVisibility(el, win) {
+    const hasHiddenClass = !!(el && el.classList && typeof el.classList.contains === 'function' && el.classList.contains('hidden'));
     return {
       hidden: !!el.hidden
+        || hasHiddenClass
         || el.getAttribute('aria-hidden') === 'true'
         || el.getAttribute('data-editor-hidden') === 'true'
         || normalizeString(el.style && el.style.display) === 'none'

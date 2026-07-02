@@ -1274,6 +1274,23 @@ test('importElementToCanonicalNode ignores computed hidden styles when visibilit
   assert.equal(node.visibility.locked, false);
 });
 
+test('importElementToCanonicalNode promotes an explicit hidden utility class into canonical visibility', () => {
+  const element = createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['hero-card', 'hidden']),
+    attributes: {
+      class: 'hero-card hidden'
+    },
+    textContent: 'Hero copy',
+    outerHTML: '<div class="hero-card hidden">Hero copy</div>'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+
+  assert.equal(node.visibility.hidden, true);
+  assert.deepEqual(node.classes, ['hero-card', 'hidden']);
+});
+
 test('importElementToCanonicalNode strips only hidden style flags once visibility is captured structurally', () => {
   const element = createImportedElement({
     tagName: 'DIV',
