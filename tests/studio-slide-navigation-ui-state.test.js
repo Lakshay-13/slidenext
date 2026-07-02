@@ -267,6 +267,14 @@ test('syncStudioChromeToActiveSlide syncs the solid wallpaper picker from the ac
 
   const slideCountLabel = { textContent: '' };
   const wallpaperCustomColor = { value: '#000000' };
+  const elements = {
+    wpTabSolid: { className: 'solid-idle' },
+    wpTabPresets: { className: 'presets-idle' },
+    wpTabCustom: { className: 'custom-idle' },
+    wpPanelSolid: { classList: createClassList(['hidden']) },
+    wpPanelPresets: { classList: createClassList(['hidden']) },
+    wpPanelCustom: { classList: createClassList([]) }
+  };
   const iframeDoc = { label: 'iframe-doc' };
   const activeSlide = {
     style: {
@@ -286,7 +294,7 @@ test('syncStudioChromeToActiveSlide syncs the solid wallpaper picker from the ac
         if (id === 'wallpaperCustomColor') {
           return wallpaperCustomColor;
         }
-        return null;
+        return elements[id] || null;
       }
     },
     getActiveSlide(doc) {
@@ -302,6 +310,7 @@ test('syncStudioChromeToActiveSlide syncs the solid wallpaper picker from the ac
     getSlides() {
       return [];
     },
+    wallpaperTab: 'custom',
     preserveSelectionOnNextActiveSlideSync: false,
     pruneEditorChromeNodes() {},
     rgbToHex(value) {
@@ -332,7 +341,13 @@ test('syncStudioChromeToActiveSlide syncs the solid wallpaper picker from the ac
   vm.runInContext(syncStudioChromeToActiveSlideSource, context);
 
   assert.equal(context.syncStudioChromeToActiveSlide(), true);
+  assert.equal(context.wallpaperTab, 'solid');
   assert.equal(wallpaperCustomColor.value, '#112233');
+  assert.equal(elements.wpPanelSolid.classList.contains('hidden'), false);
+  assert.equal(elements.wpPanelPresets.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelCustom.classList.contains('hidden'), true);
+  assert.match(elements.wpTabSolid.className, /bg-white\/5/);
+  assert.match(elements.wpTabCustom.className, /text-zinc-400/);
   assert.equal(slideCountLabel.textContent, '5 / 8');
 });
 
@@ -439,6 +454,12 @@ test('syncStudioChromeToActiveSlide syncs custom gradient controls from the acti
   const slideCountLabel = { textContent: '' };
   const wallpaperCustomColor = { value: '#000000' };
   const elements = {
+    wpTabSolid: { className: 'stale-solid' },
+    wpTabPresets: { className: 'stale-presets' },
+    wpTabCustom: { className: 'stale-custom' },
+    wpPanelSolid: { classList: createClassList([]) },
+    wpPanelPresets: { classList: createClassList(['hidden']) },
+    wpPanelCustom: { classList: createClassList(['hidden']) },
     cgLinearBtn: { className: 'linear-idle' },
     cgRadialBtn: { className: 'radial-idle' },
     cgAngleGroup: { classList: createClassList(['hidden']) },
@@ -484,6 +505,7 @@ test('syncStudioChromeToActiveSlide syncs custom gradient controls from the acti
     getSlides() {
       return [];
     },
+    wallpaperTab: 'solid',
     preserveSelectionOnNextActiveSlideSync: false,
     pruneEditorChromeNodes() {},
     rgbToHex(value) {
@@ -521,7 +543,13 @@ test('syncStudioChromeToActiveSlide syncs custom gradient controls from the acti
 
   assert.equal(context.syncStudioChromeToActiveSlide(), true);
   assert.deepEqual(rgbToHexCalls, ['rgb(17, 34, 51)', 'rgb(68, 85, 102)']);
+  assert.equal(context.wallpaperTab, 'custom');
   assert.equal(context.customGradientType, 'linear');
+  assert.equal(elements.wpPanelSolid.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelPresets.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelCustom.classList.contains('hidden'), false);
+  assert.match(elements.wpTabSolid.className, /text-zinc-400/);
+  assert.match(elements.wpTabCustom.className, /bg-white\/5/);
   assert.equal(elements.cgColor1.value, '#112233');
   assert.equal(elements.cgColor2.value, '#445566');
   assert.equal(elements.cgAngle.value, '210');
@@ -543,6 +571,12 @@ test('syncStudioChromeToActiveSlide syncs radial gradient controls from the acti
 
   const slideCountLabel = { textContent: '' };
   const elements = {
+    wpTabSolid: { className: 'stale-solid' },
+    wpTabPresets: { className: 'stale-presets' },
+    wpTabCustom: { className: 'stale-custom' },
+    wpPanelSolid: { classList: createClassList([]) },
+    wpPanelPresets: { classList: createClassList(['hidden']) },
+    wpPanelCustom: { classList: createClassList(['hidden']) },
     cgLinearBtn: { className: 'linear-idle' },
     cgRadialBtn: { className: 'radial-idle' },
     cgAngleGroup: { classList: createClassList([]) },
@@ -588,6 +622,7 @@ test('syncStudioChromeToActiveSlide syncs radial gradient controls from the acti
     getSlides() {
       return [];
     },
+    wallpaperTab: 'solid',
     preserveSelectionOnNextActiveSlideSync: false,
     pruneEditorChromeNodes() {},
     rgbToHex(value) {
@@ -625,7 +660,13 @@ test('syncStudioChromeToActiveSlide syncs radial gradient controls from the acti
 
   assert.equal(context.syncStudioChromeToActiveSlide(), true);
   assert.deepEqual(rgbToHexCalls, ['rgb(17, 34, 51)', 'rgb(68, 85, 102)']);
+  assert.equal(context.wallpaperTab, 'custom');
   assert.equal(context.customGradientType, 'radial');
+  assert.equal(elements.wpPanelSolid.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelPresets.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelCustom.classList.contains('hidden'), false);
+  assert.match(elements.wpTabSolid.className, /text-zinc-400/);
+  assert.match(elements.wpTabCustom.className, /bg-white\/5/);
   assert.equal(elements.cgColor1.value, '#112233');
   assert.equal(elements.cgColor2.value, '#445566');
   assert.equal(elements.cgAngle.value, '135');

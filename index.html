@@ -2158,6 +2158,16 @@
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
       const previousIndex = currentSlideIndex;
       const preserveSelection = !!options.preserveSelection || preserveSelectionOnNextActiveSlideSync;
+      const getActiveSlideInlineBackground = (activeSlide) => (
+        activeSlide && activeSlide.style && typeof activeSlide.style.background === 'string'
+          ? activeSlide.style.background.trim()
+          : ''
+      );
+      const getActiveSlideInlineBackgroundImage = (activeSlide) => (
+        activeSlide && activeSlide.style && typeof activeSlide.style.backgroundImage === 'string'
+          ? activeSlide.style.backgroundImage.trim()
+          : ''
+      );
       const normalizeColorInputValue = (value) => {
         if (typeof value !== 'string') {
           return '';
@@ -2174,29 +2184,28 @@
         }
         return '';
       };
+      const resolveActiveSlideSolidWallpaperColor = (activeSlide) => {
+        const backgroundImage = getActiveSlideInlineBackgroundImage(activeSlide);
+        if (backgroundImage && backgroundImage !== 'none') {
+          return '';
+        }
+
+        const backgroundColor = activeSlide && activeSlide.style && typeof activeSlide.style.backgroundColor === 'string'
+          ? activeSlide.style.backgroundColor.trim()
+          : '';
+        const background = getActiveSlideInlineBackground(activeSlide);
+        const fallbackColorMatch = background && !/gradient\(/i.test(background)
+          ? background.match(/#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)/)
+          : null;
+        return backgroundColor || (fallbackColorMatch ? fallbackColorMatch[0] : '');
+      };
       const syncSolidWallpaperControlToActiveSlide = (activeSlide) => {
         const solidWallpaperColorInput = document.getElementById('wallpaperCustomColor');
         if (!solidWallpaperColorInput || !activeSlide || !activeSlide.style) {
           return false;
         }
 
-        const backgroundImage = typeof activeSlide.style.backgroundImage === 'string'
-          ? activeSlide.style.backgroundImage.trim()
-          : '';
-        if (backgroundImage && backgroundImage !== 'none') {
-          return false;
-        }
-
-        const backgroundColor = typeof activeSlide.style.backgroundColor === 'string'
-          ? activeSlide.style.backgroundColor.trim()
-          : '';
-        const background = typeof activeSlide.style.background === 'string'
-          ? activeSlide.style.background.trim()
-          : '';
-        const fallbackColorMatch = background && !/gradient\(/i.test(background)
-          ? background.match(/#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)/)
-          : null;
-        const solidColor = backgroundColor || (fallbackColorMatch ? fallbackColorMatch[0] : '');
+        const solidColor = resolveActiveSlideSolidWallpaperColor(activeSlide);
         if (!solidColor) {
           return false;
         }
@@ -2211,6 +2220,56 @@
         }
 
         solidWallpaperColorInput.value = rgbToHex(solidColor);
+        return true;
+      };
+      const resolveActiveSlideGradientBackground = (activeSlide) => {
+        const background = getActiveSlideInlineBackground(activeSlide);
+        if (background && /gradient\(/i.test(background)) {
+          return background;
+        }
+
+        const backgroundImage = getActiveSlideInlineBackgroundImage(activeSlide);
+        if (backgroundImage && backgroundImage !== 'none' && /gradient\(/i.test(backgroundImage)) {
+          return backgroundImage;
+        }
+
+        return '';
+      };
+      const syncWallpaperTabChromeToActiveSlide = (activeSlide) => {
+        const solidTab = document.getElementById('wpTabSolid');
+        const presetsTab = document.getElementById('wpTabPresets');
+        const customTab = document.getElementById('wpTabCustom');
+        const solidPanel = document.getElementById('wpPanelSolid');
+        const presetsPanel = document.getElementById('wpPanelPresets');
+        const customPanel = document.getElementById('wpPanelCustom');
+        if (!solidTab || !presetsTab || !customTab || !solidPanel || !presetsPanel || !customPanel) {
+          return false;
+        }
+
+        const nextTab = resolveActiveSlideGradientBackground(activeSlide)
+          ? 'custom'
+          : resolveActiveSlideSolidWallpaperColor(activeSlide)
+            ? 'solid'
+            : '';
+        if (!nextTab) {
+          return false;
+        }
+
+        wallpaperTab = nextTab;
+        const inactiveTabClass = 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
+        const activeTabClass = 'py-1 text-center text-[10px] font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
+        solidTab.className = nextTab === 'solid' ? activeTabClass : inactiveTabClass;
+        presetsTab.className = inactiveTabClass;
+        customTab.className = nextTab === 'custom' ? activeTabClass : inactiveTabClass;
+        if (nextTab === 'solid') {
+          solidPanel.classList.remove('hidden');
+          presetsPanel.classList.add('hidden');
+          customPanel.classList.add('hidden');
+        } else {
+          solidPanel.classList.add('hidden');
+          presetsPanel.classList.add('hidden');
+          customPanel.classList.remove('hidden');
+        }
         return true;
       };
       const syncCustomGradientTypeChrome = (type) => {
@@ -2242,9 +2301,7 @@
           return false;
         }
 
-        const background = typeof activeSlide.style.background === 'string'
-          ? activeSlide.style.background.trim()
-          : '';
+        const background = resolveActiveSlideGradientBackground(activeSlide);
         if (!background || !/gradient\(/i.test(background)) {
           return false;
         }
@@ -2338,6 +2395,7 @@
         return syncToDeckSnapshotFallback(deckSnapshot);
       }
       const activeSlide = getActiveSlide(doc);
+      syncWallpaperTabChromeToActiveSlide(activeSlide);
       syncSolidWallpaperControlToActiveSlide(activeSlide);
       syncCustomGradientControlsToActiveSlide(activeSlide);
       preserveSelectionOnNextActiveSlideSync = false;
