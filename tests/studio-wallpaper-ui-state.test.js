@@ -175,6 +175,46 @@ test('setWallpaperTab returns false without mutating chrome when the target tab 
   assert.equal(elements.wpPanelCustom.classList.contains('hidden'), true);
 });
 
+test('setWallpaperTab keeps disabled-aware idle classes on inactive wallpaper tabs', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setWallpaperTabSource = extractFunctionSource(
+    fileContent,
+    'function setWallpaperTab(tab) {',
+    '\n\n    // Render preset solid & gradient options'
+  );
+
+  const elements = {
+    wpTabSolid: { disabled: false, className: 'solid-idle' },
+    wpTabPresets: { disabled: false, className: 'presets-idle' },
+    wpTabCustom: { disabled: false, className: 'custom-idle' },
+    wpPanelSolid: { classList: createClassList([]) },
+    wpPanelPresets: { classList: createClassList(['hidden']) },
+    wpPanelCustom: { classList: createClassList(['hidden']) }
+  };
+  const context = {
+    wallpaperTab: 'solid',
+    document: {
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setWallpaperTabSource, context);
+
+  assert.equal(context.setWallpaperTab('custom'), true);
+  assert.equal(context.wallpaperTab, 'custom');
+  assert.match(elements.wpTabSolid.className, /disabled:opacity-40/);
+  assert.match(elements.wpTabSolid.className, /disabled:hover:text-zinc-400/);
+  assert.match(elements.wpTabPresets.className, /disabled:opacity-40/);
+  assert.match(elements.wpTabPresets.className, /disabled:hover:text-zinc-400/);
+  assert.match(elements.wpTabCustom.className, /bg-white\/5/);
+  assert.equal(elements.wpPanelSolid.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelPresets.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelCustom.classList.contains('hidden'), false);
+});
+
 test('wallpaper mutation helpers no-op when wallpaper controls are disabled', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyPresetWallpaperSource = extractFunctionSource(
