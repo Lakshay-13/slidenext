@@ -900,6 +900,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   assert.equal(callLog[5][3].renderOptions.preferHeadSourceHtml, false);
   assert.equal(callLog[5][3].renderOptions.preferBodySourceHtml, false);
   assert.equal(callLog[5][3].renderOptions.preferSlideSourceHtml, false);
+  assert.equal(callLog[5][3].renderOptions.preferNodeSourceHtml, false);
   assert.equal(callLog[6][0], 'syncIframeTheme');
   assert.equal(callLog[7][0], 'makeElementsHoverable');
   assert.equal(callLog[7][1], iframeDoc);

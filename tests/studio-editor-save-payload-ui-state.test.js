@@ -1204,6 +1204,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferHeadSourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferNodeSourceHtml, false);
 });
 
 test('buildPersistableDeckHtml prefers rendered canonical html when the current canonical deck differs from the persisted baseline', () => {
@@ -1298,4 +1299,5 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferHeadSourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
+  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferNodeSourceHtml, false);
 });

@@ -138,7 +138,8 @@ test('createStudioDeckRenderOptions prefers an explicit active slide id and othe
     preferSourceHtml: false,
     preferHeadSourceHtml: false,
     preferBodySourceHtml: false,
-    preferSlideSourceHtml: false
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
   });
   assert.deepEqual(calls, []);
 
@@ -154,7 +155,8 @@ test('createStudioDeckRenderOptions prefers an explicit active slide id and othe
     preferSourceHtml: false,
     preferHeadSourceHtml: false,
     preferBodySourceHtml: false,
-    preferSlideSourceHtml: false
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
   });
   assert.deepEqual(calls, [[doc, canonicalDeck]]);
 });

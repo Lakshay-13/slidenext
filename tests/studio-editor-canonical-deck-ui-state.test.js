@@ -836,7 +836,8 @@ test('buildEditorDeckRenderOptions delegates render-option composition to the sh
           preferSourceHtml: false,
           preferHeadSourceHtml: false,
           preferBodySourceHtml: false,
-          preferSlideSourceHtml: false
+          preferSlideSourceHtml: false,
+          preferNodeSourceHtml: false
         };
       }
     },
@@ -860,7 +861,8 @@ test('buildEditorDeckRenderOptions delegates render-option composition to the sh
     preferSourceHtml: false,
     preferHeadSourceHtml: false,
     preferBodySourceHtml: false,
-    preferSlideSourceHtml: false
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
   });
   assert.equal(delegatedArgs.doc, iframeDoc);
   assert.equal(delegatedArgs.nextCanonicalDeck, canonicalDeck);

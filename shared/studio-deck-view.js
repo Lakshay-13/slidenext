@@ -114,7 +114,8 @@
       preferSourceHtml: false,
       preferHeadSourceHtml: false,
       preferBodySourceHtml: false,
-      preferSlideSourceHtml: false
+      preferSlideSourceHtml: false,
+      preferNodeSourceHtml: false
     };
   }
 
