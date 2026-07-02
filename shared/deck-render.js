@@ -777,13 +777,21 @@
       nextHeadHtml = `${preloadAssetLinkTags.join('\n')}\n${nextHeadHtml}`;
     }
 
-    const headScriptAssetTags = buildScriptAssetTags(deck.assets, { location: 'head' });
-    if (headScriptAssetTags.length > 0) {
+    const headScriptTags = buildCanonicalHeadScriptTags(deck);
+    if (headScriptTags.length > 0) {
+      const hasOrderedHeadScripts = (Array.isArray(deck.assets) ? deck.assets : []).some((asset) => asset
+        && asset.type === 'script'
+        && normalizeString(asPlainObject(asset.meta).location).trim().toLowerCase() === 'head'
+        && Number.isFinite(asPlainObject(asset.meta).order))
+        || (Array.isArray(deck.source && deck.source.headInlineScripts) ? deck.source.headInlineScripts : [])
+          .some((script) => Number.isFinite(script && script.order));
       nextHeadHtml = nextHeadHtml.replace(
-        /<script\b(?=[^>]*\bsrc=)[\s\S]*?<\/script>\s*/gi,
+        hasOrderedHeadScripts
+          ? /<script\b[\s\S]*?<\/script>\s*/gi
+          : /<script\b(?=[^>]*\bsrc=)[\s\S]*?<\/script>\s*/gi,
         ''
       );
-      nextHeadHtml = insertCanonicalHeadScriptTags(nextHeadHtml, headScriptAssetTags);
+      nextHeadHtml = insertCanonicalHeadScriptTags(nextHeadHtml, headScriptTags);
     }
 
     const deckLayoutStyleBlock = buildCanonicalDeckLayoutStyleBlock(deck);
