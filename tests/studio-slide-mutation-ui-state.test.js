@@ -96,18 +96,18 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   assert.deepEqual(slides, [existingSlide, newSlide]);
   assert.deepEqual(calls.map(([name]) => name), [
     'getIframeDoc',
-    'saveHistoryState',
     'getSlides',
     'getEditorDomOptions',
     'createStudioBlankSlide',
+    'saveHistoryState',
     'generateThumbnails',
     'setActiveSlide',
     'saveHistoryState',
     'triggerAutoSave',
     'triggerAutoVersion'
   ]);
-  assert.equal(calls[2][1], iframeDoc);
-  assert.equal(calls[4][1], iframeDoc);
+  assert.equal(calls[1][1], iframeDoc);
+  assert.equal(calls[3][1], iframeDoc);
   assert.equal(calls[6][1], 1);
   assert.equal(calls[9][1], 'Auto: Added Slide');
 });
@@ -149,6 +149,79 @@ test('addSlideNode no-ops when the add-slide control is disabled or the iframe d
   addSlideBtn.disabled = false;
   assert.equal(context.addSlideNode(), false);
   assert.deepEqual(calls, [['getIframeDoc']]);
+});
+
+test('addSlideNode skips history when blank slide creation fails', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const addSlideNodeSource = extractFunctionSource(
+    fileContent,
+    'function addSlideNode() {',
+    '\n\n    // Delete Active Slide Node'
+  );
+
+  const iframeDoc = {
+    getElementById(id) {
+      assert.equal(id, 'slidesContainer');
+      return {};
+    }
+  };
+  const calls = [];
+  const context = {
+    assignEditorSlideId() {},
+    document: {
+      getElementById(id) {
+        if (id === 'addSlideBtn') {
+          return { disabled: false };
+        }
+        return null;
+      }
+    },
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    getEditorDomOptions() {
+      calls.push(['getEditorDomOptions']);
+      return {};
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    getSlides(doc) {
+      calls.push(['getSlides', doc]);
+      return [{ id: 'slide-1' }];
+    },
+    makeElementsHoverable() {},
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    setActiveSlide(index) {
+      calls.push(['setActiveSlide', index]);
+    },
+    SlideNextStudioEditorDom: {
+      createStudioBlankSlide(doc, options) {
+        calls.push(['createStudioBlankSlide', doc, options]);
+        return null;
+      }
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(addSlideNodeSource, context);
+
+  assert.equal(context.addSlideNode(), false);
+  assert.deepEqual(calls.map(([name]) => name), [
+    'getIframeDoc',
+    'getSlides',
+    'getEditorDomOptions',
+    'createStudioBlankSlide'
+  ]);
 });
 
 test('reorderSlides uses the shared iframe accessor and restores editor state after moving a slide', () => {

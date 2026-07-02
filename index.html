@@ -2138,7 +2138,6 @@
       if (!iframeDoc) return false;
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return false;
-      saveHistoryState();
       
       const newIndex = getSlides(iframeDoc).length;
       const newSlide = SlideNextStudioEditorDom.createStudioBlankSlide(iframeDoc, {
@@ -2147,6 +2146,8 @@
         decorateSlide: makeElementsHoverable
       });
       if (!newSlide) return false;
+
+      saveHistoryState();
       
       container.appendChild(newSlide);
       
