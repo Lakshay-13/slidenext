@@ -120,6 +120,9 @@ test('removeSelectedElement returns false and skips persistence when planned tar
     triggerAutoVersion(label) {
       calls.push(['triggerAutoVersion', label]);
     },
+    updateRemovalActionState(doc) {
+      calls.push(['updateRemovalActionState', doc]);
+    },
     updateLayersList() {
       calls.push(['updateLayersList']);
     }
@@ -131,7 +134,57 @@ test('removeSelectedElement returns false and skips persistence when planned tar
   assert.equal(context.removeSelectedElement(), false);
   assert.deepEqual(calls, [
     ['getIframeDoc'],
-    ['buildStudioRemovalActionState']
+    ['buildStudioRemovalActionState'],
+    ['updateRemovalActionState', { label: 'iframe-doc' }]
+  ]);
+});
+
+test('removeSelectedElement returns false and refreshes removal controls when deletion is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const removeSelectedElementSource = extractFunctionSource(
+    fileContent,
+    'function removeSelectedElement() {',
+    '\n\n    function updateClipboardActionState(doc = getIframeDoc()) {'
+  );
+
+  const doc = { label: 'iframe-doc' };
+  const calls = [];
+  const context = {
+    selectedElements: [],
+    SlideNextStudioEditorRemoval: {
+      buildStudioRemovalActionState() {
+        calls.push(['buildStudioRemovalActionState']);
+        return {
+          canRemove: false,
+          selection: []
+        };
+      }
+    },
+    getActiveSlide() {
+      calls.push(['getActiveSlide']);
+      return null;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return doc;
+    },
+    isElementLocked() {
+      calls.push(['isElementLocked']);
+      return false;
+    },
+    updateRemovalActionState(currentDoc) {
+      calls.push(['updateRemovalActionState', currentDoc]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(removeSelectedElementSource, context);
+
+  assert.equal(context.removeSelectedElement(), false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['buildStudioRemovalActionState'],
+    ['updateRemovalActionState', doc]
   ]);
 });
 
@@ -189,6 +242,9 @@ test('removeSelectedElement returns true after removing live targets and persist
     },
     triggerAutoVersion(label) {
       calls.push(['triggerAutoVersion', label]);
+    },
+    updateRemovalActionState(doc) {
+      calls.push(['updateRemovalActionState', doc]);
     },
     updateLayersList() {
       calls.push(['updateLayersList']);

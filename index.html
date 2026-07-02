@@ -3219,7 +3219,10 @@
         isLocked: isElementLocked,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
-      if (!removalActionState.canRemove) return false;
+      if (!removalActionState.canRemove) {
+        updateRemovalActionState(doc);
+        return false;
+      }
       let removedCount = 0;
       removalActionState.selection.forEach(el => {
         if (el && el.isConnected) {
@@ -3227,7 +3230,10 @@
           removedCount += 1;
         }
       });
-      if (removedCount === 0) return false;
+      if (removedCount === 0) {
+        updateRemovalActionState(doc);
+        return false;
+      }
       deselectElement();
       generateThumbnails();
       updateLayersList();
