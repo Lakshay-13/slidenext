@@ -3525,6 +3525,24 @@
       });
     }
 
+    function finalizeEditorDeckMutation(versionLabel, options = {}) {
+      if (options.syncSelectionOverlay) {
+        syncSelectionOverlay();
+      }
+      if (options.refreshThumbnails !== false) {
+        generateThumbnails();
+      }
+      if (options.refreshLayersList) {
+        updateLayersList();
+      }
+      saveHistoryState(options.debounceHistory === true);
+      triggerAutoSave();
+      if (versionLabel) {
+        triggerAutoVersion(versionLabel);
+      }
+      return versionLabel;
+    }
+
     // Apply styles immediately to active selected elements
     function applySelectedElementStyle(prop, val) {
       const doc = getIframeDoc();
@@ -3565,22 +3583,11 @@
           opacityLabel.textContent = `${styleMutationResult.displayValue}%`;
         }
       }
-
-      syncSelectionOverlay();
-      // Refresh thumbnail to sync visual text changes
-      generateThumbnails();
-
-      // Update sidebar layers list
-      updateLayersList();
-
-      // Debounce saving state for range inputs / key typing. We will capture state on slide changes, save actions, input focus shifts, or simple delay
-      saveHistoryState(true);
-      triggerAutoSave();
-
-      // Trigger version checkpoints for discrete changes
-      if (styleMutationPlan.versionLabel) {
-        triggerAutoVersion(styleMutationPlan.versionLabel);
-      }
+      finalizeEditorDeckMutation(styleMutationPlan.versionLabel, {
+        syncSelectionOverlay: true,
+        refreshLayersList: true,
+        debounceHistory: true
+      });
       return true;
     }
 
@@ -3607,11 +3614,9 @@
         return false;
       }
       deselectElement();
-      generateThumbnails();
-      updateLayersList();
-      saveHistoryState();
-      triggerAutoSave();
-      triggerAutoVersion('Auto: Deleted Element');
+      finalizeEditorDeckMutation('Auto: Deleted Element', {
+        refreshLayersList: true
+      });
       return true;
     }
 
@@ -3705,10 +3710,7 @@
       if (!insertedElements || insertedElements.length === 0) return false;
       const nextSelectionState = SlideNextStudioEditorSelection.selectAllStudioElements(insertedElements);
       commitEditorSelectionState(nextSelectionState);
-      generateThumbnails();
-      saveHistoryState();
-      triggerAutoSave();
-      triggerAutoVersion(versionLabel);
+      finalizeEditorDeckMutation(versionLabel);
       return true;
     }
 

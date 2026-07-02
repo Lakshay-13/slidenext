@@ -30,6 +30,47 @@ function getControlStates(controls) {
   };
 }
 
+test('finalizeInsertedElements commits the new selection and delegates persistence through the shared mutation helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const finalizeInsertedElementsSource = extractFunctionSource(
+    fileContent,
+    'function finalizeInsertedElements(insertedElements, versionLabel) {',
+    '\n\n    function copySelectedElements() {'
+  );
+
+  const insertedElements = [{ id: 'node-1' }, { id: 'node-2' }];
+  const nextSelectionState = {
+    selectedElement: insertedElements[0],
+    selectedElements: insertedElements
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorSelection: {
+      selectAllStudioElements(elements) {
+        calls.push(['selectAllStudioElements', elements]);
+        return nextSelectionState;
+      }
+    },
+    commitEditorSelectionState(selectionState) {
+      calls.push(['commitEditorSelectionState', selectionState]);
+    },
+    finalizeEditorDeckMutation(versionLabel) {
+      calls.push(['finalizeEditorDeckMutation', versionLabel]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(finalizeInsertedElementsSource, context);
+
+  assert.equal(context.finalizeInsertedElements(insertedElements, 'Auto: Pasted Element'), true);
+  assert.equal(context.finalizeInsertedElements([], 'Auto: Pasted Element'), false);
+  assert.deepEqual(calls, [
+    ['selectAllStudioElements', insertedElements],
+    ['commitEditorSelectionState', nextSelectionState],
+    ['finalizeEditorDeckMutation', 'Auto: Pasted Element']
+  ]);
+});
+
 test('updateClipboardActionState enables clipboard controls only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateClipboardActionStateSource = extractFunctionSource(

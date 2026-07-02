@@ -14,6 +14,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadFinalizeEditorDeckMutation(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function finalizeEditorDeckMutation(versionLabel, options = {}) {',
+    '\n\n    // Apply styles immediately to active selected elements'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('updateRemovalActionState enables the delete control only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateRemovalActionStateSource = extractFunctionSource(
@@ -129,6 +138,7 @@ test('removeSelectedElement returns false and skips persistence when planned tar
   };
 
   vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 
   assert.equal(context.removeSelectedElement(), false);
@@ -178,6 +188,7 @@ test('removeSelectedElement returns false and refreshes removal controls when de
   };
 
   vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 
   assert.equal(context.removeSelectedElement(), false);
@@ -252,6 +263,7 @@ test('removeSelectedElement returns true after removing live targets and persist
   };
 
   vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 
   assert.equal(context.removeSelectedElement(), true);

@@ -16,6 +16,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadFinalizeEditorDeckMutation(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function finalizeEditorDeckMutation(versionLabel, options = {}) {',
+    '\n\n    // Apply styles immediately to active selected elements'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function createControlMap() {
   return {
     elTextContent: { disabled: false },
@@ -39,6 +48,50 @@ function createControlMap() {
 function getDisabledStates(controls) {
   return Object.fromEntries(Object.entries(controls).map(([id, control]) => [id, control.disabled]));
 }
+
+test('finalizeEditorDeckMutation refreshes requested editor chrome before persisting', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    syncSelectionOverlay() {
+      calls.push(['syncSelectionOverlay']);
+    },
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    },
+    saveHistoryState(immediate) {
+      calls.push(['saveHistoryState', immediate]);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
+
+  const result = context.finalizeEditorDeckMutation('Auto: Styled Element', {
+    syncSelectionOverlay: true,
+    refreshLayersList: true,
+    debounceHistory: true
+  });
+
+  assert.equal(result, 'Auto: Styled Element');
+  assert.deepEqual(calls, [
+    ['syncSelectionOverlay'],
+    ['generateThumbnails'],
+    ['updateLayersList'],
+    ['saveHistoryState', true],
+    ['triggerAutoSave'],
+    ['triggerAutoVersion', 'Auto: Styled Element']
+  ]);
+});
 
 test('updateStyleActionState disables style controls whenever the current selection cannot accept style edits', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
@@ -197,6 +250,7 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
   };
 
   vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), false);
@@ -254,6 +308,7 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
   };
 
   vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), false);
@@ -351,6 +406,7 @@ test('applySelectedElementStyle tolerates missing style feedback labels after su
     };
 
     vm.createContext(context);
+    loadFinalizeEditorDeckMutation(fileContent, context);
     vm.runInContext(applySelectedElementStyleSource, context);
 
     assert.equal(context.applySelectedElementStyle(testCase.prop, testCase.value), true);
