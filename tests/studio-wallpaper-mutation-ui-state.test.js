@@ -428,3 +428,38 @@ test('setCustomGradientType exits cleanly when the gradient chrome is unavailabl
     ['applyCustomGradient']
   ]);
 });
+
+test('updateCustomGradientAngle exits cleanly when the angle label is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateCustomGradientAngleSource = extractFunctionSource(
+    fileContent,
+    'function updateCustomGradientAngle(value) {',
+    '\n\n    // Build background CSS based on custom stops'
+  );
+
+  const calls = [];
+  const context = {
+    applyCustomGradient() {
+      calls.push(['applyCustomGradient']);
+      return false;
+    },
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (id === 'cgAngleVal') {
+          return null;
+        }
+        return null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateCustomGradientAngleSource, context);
+
+  assert.equal(context.updateCustomGradientAngle('180'), false);
+  assert.deepEqual(calls, [
+    ['getElementById', 'cgAngleVal'],
+    ['applyCustomGradient']
+  ]);
+});

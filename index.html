@@ -739,7 +739,7 @@
                   <span>Linear Angle:</span>
                   <span id="cgAngleVal" class="text-white font-bold">135°</span>
                 </div>
-                <input type="range" id="cgAngle" min="0" max="360" value="135" oninput="document.getElementById('cgAngleVal').textContent = this.value + '°'; applyCustomGradient();" onchange="triggerAutoVersion('Auto: Changed Background')" class="w-full accent-[#7028d0] cursor-pointer" />
+                <input type="range" id="cgAngle" min="0" max="360" value="135" oninput="updateCustomGradientAngle(this.value)" onchange="triggerAutoVersion('Auto: Changed Background')" class="w-full accent-[#7028d0] cursor-pointer" />
               </div>
             </div>
 
@@ -3894,6 +3894,14 @@
         }
       }
       
+      return applyCustomGradient();
+    }
+
+    function updateCustomGradientAngle(value) {
+      const angleLabel = document.getElementById('cgAngleVal');
+      if (angleLabel) {
+        angleLabel.textContent = `${value}°`;
+      }
       return applyCustomGradient();
     }
 
