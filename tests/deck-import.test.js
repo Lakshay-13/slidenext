@@ -304,8 +304,11 @@ test('collectDeckAssets includes inline style asset urls, skips fragments, and d
 
   const doc = {
     querySelectorAll(selector) {
-      if (selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href]') {
+      if (selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], video[poster]') {
         return [imageEl];
+      }
+      if (selector === 'img[srcset], source[srcset]') {
+        return [];
       }
       if (selector === '[style*="url("]') {
         return [inlineBackgroundEl, duplicateBackgroundEl];
@@ -328,6 +331,62 @@ test('collectDeckAssets includes inline style asset urls, skips fragments, and d
       type: 'image',
       name: 'hero.png',
       src: 'assets/hero.png'
+    }
+  ]);
+});
+
+test('collectDeckAssets includes srcset and poster asset urls, skips fragments, and deduplicates repeated candidates', () => {
+  const posterVideoEl = createElement('VIDEO', {
+    poster: 'assets/poster.jpg'
+  });
+  const srcsetImageEl = createElement('IMG', {
+    srcset: 'assets/hero-small.png 1x, assets/hero-large.png 2x, #ignored 3x'
+  });
+  const duplicateSourceEl = createElement('SOURCE', {
+    srcset: 'assets/hero-large.png 1280w, assets/hero-xl.png 1920w'
+  });
+
+  const doc = {
+    querySelectorAll(selector) {
+      if (selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], video[poster]') {
+        return [posterVideoEl];
+      }
+      if (selector === 'img[srcset], source[srcset]') {
+        return [srcsetImageEl, duplicateSourceEl];
+      }
+      if (selector === '[style*="url("]') {
+        return [];
+      }
+      return [];
+    }
+  };
+
+  const assets = deckImport.collectDeckAssets(doc);
+
+  assert.deepEqual(assets, [
+    {
+      id: 'asset-1',
+      type: 'image',
+      name: 'poster.jpg',
+      src: 'assets/poster.jpg'
+    },
+    {
+      id: 'asset-2',
+      type: 'image',
+      name: 'hero-small.png',
+      src: 'assets/hero-small.png'
+    },
+    {
+      id: 'asset-3',
+      type: 'image',
+      name: 'hero-large.png',
+      src: 'assets/hero-large.png'
+    },
+    {
+      id: 'asset-4',
+      type: 'image',
+      name: 'hero-xl.png',
+      src: 'assets/hero-xl.png'
     }
   ]);
 });

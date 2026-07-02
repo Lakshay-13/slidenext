@@ -88,6 +88,19 @@
     return urls;
   }
 
+  function extractSrcsetUrlValues(value) {
+    if (typeof value !== 'string' || !value.trim()) {
+      return [];
+    }
+
+    return value
+      .split(',')
+      .map((candidate) => normalizeString(candidate).trim())
+      .filter(Boolean)
+      .map((candidate) => normalizeString(candidate.split(/\s+/)[0]).trim())
+      .filter((url) => url && !url.startsWith('#'));
+  }
+
   function extractCustomPropertyMap(styleDeclaration) {
     const tokens = {};
     if (!styleDeclaration) {
@@ -680,13 +693,25 @@
       'audio[src]',
       'source[src]',
       'script[src]',
-      'link[rel~="stylesheet"][href]'
+      'link[rel~="stylesheet"][href]',
+      'video[poster]'
     ];
 
     doc.querySelectorAll(assetSelectors.join(', ')).forEach((el) => {
       appendDeckAsset(assetSeeds, seenUrls, {
-        type: inferAssetType(el),
-        src: el.getAttribute('src') || el.getAttribute('href')
+        type: el.tagName && el.tagName.toLowerCase() === 'video' && el.getAttribute('poster')
+          ? 'image'
+          : inferAssetType(el),
+        src: el.getAttribute('src') || el.getAttribute('href') || el.getAttribute('poster')
+      });
+    });
+
+    doc.querySelectorAll('img[srcset], source[srcset]').forEach((el) => {
+      extractSrcsetUrlValues(normalizeString(el.getAttribute('srcset'))).forEach((src) => {
+        appendDeckAsset(assetSeeds, seenUrls, {
+          type: 'image',
+          src
+        });
       });
     });
 
@@ -858,6 +883,7 @@
     collectDeckCustomCss,
     collectDeckThemeTokens,
     extractCssUrlValues,
+    extractSrcsetUrlValues,
     collectDeckAssets,
     inferImportedNodeType,
     importElementToCanonicalNode,
