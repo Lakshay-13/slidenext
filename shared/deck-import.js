@@ -401,13 +401,13 @@
     ), normalizeString(attributeText));
   }
 
-  function stripCanonicalNodeSourceHtmlDuplicates(sourceHtml = '', visibility = {}) {
+  function stripCanonicalNodeSourceHtmlDuplicates(sourceHtml = '', attributes = {}, visibility = {}) {
     const nextSourceHtml = normalizeString(sourceHtml);
     if (!nextSourceHtml) {
       return nextSourceHtml;
     }
 
-    const attributeNames = ['class', 'style'];
+    const attributeNames = ['class', 'style', ...Object.keys(asPlainObject(attributes))];
     if (visibility && visibility.hidden) {
       attributeNames.push('hidden', 'aria-hidden', 'data-editor-hidden');
     }
@@ -626,6 +626,7 @@
       ? `${context.slideId || 'slide'}-node-${context.path.join('-')}`
       : `node-${(context.nodeIndex || 0) + 1}`;
     const visibility = buildImportedVisibility(el, win);
+    const attributes = stripCanonicalNodeAttributeDuplicates(sanitizeImportedAttributeMap(el, options), visibility);
 
     return canonicalDeck.createCanonicalNode({
       id: typeof options.getNodeId === 'function'
@@ -635,9 +636,9 @@
       name: buildImportedNodeName(el),
       tagName: el.tagName.toLowerCase(),
       text: normalizeWhitespace(childElements.length === 0 ? (el.textContent || '') : extractDirectText(el)),
-      html: stripCanonicalNodeSourceHtmlDuplicates(buildImportedSourceHtml(el, options), visibility),
+      html: stripCanonicalNodeSourceHtmlDuplicates(buildImportedSourceHtml(el, options), attributes, visibility),
       classes: sanitizeImportedClassNames(el.classList || [], options),
-      attributes: stripCanonicalNodeAttributeDuplicates(sanitizeImportedAttributeMap(el, options), visibility),
+      attributes,
       style: normalizeString(el.getAttribute('style')),
       layout: buildImportedLayout(el, win),
       visibility,

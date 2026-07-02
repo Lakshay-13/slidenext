@@ -935,6 +935,8 @@ test('importElementToCanonicalNode sanitizes stored node html fragments', () => 
     attributes: {
       class: 'hero-card editor-hoverable',
       style: 'color: red;',
+      'aria-label': 'Hero copy',
+      'data-variant': 'primary',
       'data-editor-id': 'node-1'
     },
     children: [child]
@@ -947,8 +949,14 @@ test('importElementToCanonicalNode sanitizes stored node html fragments', () => 
   assert.equal(node.html.includes('data-editor-id'), false);
   assert.equal(node.html.includes('class="hero-card"'), false);
   assert.equal(node.html.includes('style="color: red;"'), false);
+  assert.equal(node.html.includes('aria-label="Hero copy"'), false);
+  assert.equal(node.html.includes('data-variant="primary"'), false);
   assert.match(node.html, /class="eyebrow"/);
   assert.deepEqual(node.classes, ['hero-card']);
+  assert.deepEqual(node.attributes, {
+    'aria-label': 'Hero copy',
+    'data-variant': 'primary'
+  });
   assert.equal(node.style, 'color: red;');
 });
 
