@@ -5226,18 +5226,24 @@
       const target = resolveLayerRowElement(parentRow);
       if (!target) return;
       const preservedSelectionIds = getCommittedSelectedEditorElementIds();
+      const restorePreservedSelection = () => {
+        if (preservedSelectionIds.length === 0) {
+          deselectElement();
+          return;
+        }
+        restoreCommittedSelectionByIdsOnActiveSlide(preservedSelectionIds);
+      };
       applyEditorSelectionState({
         selectedElements: [target],
         selectedElement: target
       });
       refreshSelectionClasses();
       const didToggle = toggleSelectedElementsVisibility();
-      if (!didToggle) return;
-      if (preservedSelectionIds.length === 0) {
-        deselectElement();
+      if (!didToggle) {
+        restorePreservedSelection();
         return;
       }
-      restoreCommittedSelectionByIdsOnActiveSlide(preservedSelectionIds);
+      restorePreservedSelection();
     }
     
     function changeLayerZIndexByRef(event, action) {
