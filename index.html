@@ -3782,14 +3782,18 @@
       const iframeDoc = getIframeDoc();
       const activeSlide = getActiveSlide(iframeDoc);
       
-      if (!activeSlide) return;
+      if (!activeSlide) return false;
       const paint = activeSlide.style.background;
-      if (!paint) return;
+      if (!paint) return false;
       
       const slides = getSlides(iframeDoc);
+      let changedCount = 0;
       slides.forEach(slide => {
+        if (slide.style.background === paint) return;
         slide.style.background = paint;
+        changedCount += 1;
       });
+      if (changedCount === 0) return false;
       
       generateThumbnails();
       saveHistoryState();
@@ -3797,6 +3801,7 @@
       triggerAutoVersion('Auto: Applied Background to All Slides');
       
       alert("Successfully applied active background paint to all slides in the deck.");
+      return true;
     }
 
     // 4. Zoom Engine (Center workspace stage)

@@ -222,7 +222,7 @@ test('applyWallpaperToAllSlides uses the shared iframe accessor and propagates t
   vm.createContext(context);
   vm.runInContext(applyWallpaperToAllSlidesSource, context);
 
-  context.applyWallpaperToAllSlides();
+  assert.equal(context.applyWallpaperToAllSlides(), true);
 
   assert.equal(activeSlide.style.background, 'linear-gradient(red, blue)');
   assert.equal(siblingSlide.style.background, 'linear-gradient(red, blue)');
@@ -284,10 +284,71 @@ test('applyWallpaperToAllSlides exits when the shared iframe accessor has no act
   vm.createContext(context);
   vm.runInContext(applyWallpaperToAllSlidesSource, context);
 
-  context.applyWallpaperToAllSlides();
+  assert.equal(context.applyWallpaperToAllSlides(), false);
 
   assert.deepEqual(calls, [
     ['getIframeDoc'],
     ['getActiveSlide', null]
+  ]);
+});
+
+test('applyWallpaperToAllSlides skips persistence and alerts when every slide already matches the active background', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyWallpaperToAllSlidesSource = extractFunctionSource(
+    fileContent,
+    'function applyWallpaperToAllSlides() {',
+    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+  );
+
+  const iframeDoc = { id: 'doc' };
+  const activeSlide = {
+    style: {
+      background: 'linear-gradient(red, blue)'
+    }
+  };
+  const siblingSlide = {
+    style: {
+      background: 'linear-gradient(red, blue)'
+    }
+  };
+  const calls = [];
+  const context = {
+    alert(message) {
+      calls.push(['alert', message]);
+    },
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    getActiveSlide(doc) {
+      calls.push(['getActiveSlide', doc]);
+      return activeSlide;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    getSlides(doc) {
+      calls.push(['getSlides', doc]);
+      return [activeSlide, siblingSlide];
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyWallpaperToAllSlidesSource, context);
+
+  assert.equal(context.applyWallpaperToAllSlides(), false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getActiveSlide', iframeDoc],
+    ['getSlides', iframeDoc]
   ]);
 });
