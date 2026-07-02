@@ -136,6 +136,9 @@ test('insertElement no-ops when no active slide is available or the element type
     },
     saveHistoryState() {
       calls.push(['saveHistoryState']);
+    },
+    updateInsertionActionState(doc) {
+      calls.push(['updateInsertionActionState', doc]);
     }
   };
 
@@ -145,7 +148,8 @@ test('insertElement no-ops when no active slide is available or the element type
   assert.equal(context.insertElement('h2'), false);
   assert.deepEqual(calls, [
     ['getIframeDoc'],
-    ['getActiveSlide', iframeDoc]
+    ['getActiveSlide', iframeDoc],
+    ['updateInsertionActionState', iframeDoc]
   ]);
 
   activeSlide = {
@@ -159,6 +163,7 @@ test('insertElement no-ops when no active slide is available or the element type
   assert.equal(context.insertElement('unknown'), false);
   assert.deepEqual(calls, [
     ['getIframeDoc'],
-    ['getActiveSlide', iframeDoc]
+    ['getActiveSlide', iframeDoc],
+    ['updateInsertionActionState', iframeDoc]
   ]);
 });

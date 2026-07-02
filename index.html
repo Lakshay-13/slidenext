@@ -3526,7 +3526,10 @@
       const iframeDoc = getIframeDoc();
       
       const activeSlide = getActiveSlide(iframeDoc);
-      if (!activeSlide) return false;
+      if (!activeSlide) {
+        updateInsertionActionState(iframeDoc);
+        return false;
+      }
 
       const offset = (activeSlide.children.length * 15) % 150;
       
@@ -3633,6 +3636,7 @@
         return true;
       }
 
+      updateInsertionActionState(iframeDoc);
       return false;
     }
 
