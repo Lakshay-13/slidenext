@@ -224,7 +224,7 @@
     ), normalizeString(attributeText));
   }
 
-  function applyCanonicalNodeSourceHtmlVisibility(html, visibility = {}) {
+  function applyCanonicalNodeSourceHtmlState(html, node = {}, canonicalStyleText = '') {
     const sourceHtml = normalizeString(html);
     if (!sourceHtml) {
       return sourceHtml;
@@ -235,23 +235,37 @@
       return sourceHtml;
     }
 
+    const existingClassName = readOpeningTagAttributeValue(openingTagMatch[2], 'class');
+    const existingStyleText = readOpeningTagAttributeValue(openingTagMatch[2], 'style');
     const strippedAttributeText = stripOpeningTagAttributeText(openingTagMatch[2], [
+      'class',
+      'style',
       'hidden',
       'aria-hidden',
       'data-editor-hidden',
       'data-editor-locked'
     ]);
-    const canonicalVisibilityAttributes = {};
-    if (visibility && visibility.hidden) {
-      canonicalVisibilityAttributes['data-editor-hidden'] = 'true';
-      canonicalVisibilityAttributes.hidden = true;
-      canonicalVisibilityAttributes['aria-hidden'] = 'true';
+    const canonicalAttributes = {};
+    const canonicalClassName = Array.isArray(node.classes) && node.classes.length > 0
+      ? node.classes.join(' ')
+      : existingClassName;
+    if (canonicalClassName) {
+      canonicalAttributes.class = canonicalClassName;
     }
-    if (visibility && visibility.locked) {
-      canonicalVisibilityAttributes['data-editor-locked'] = 'true';
+    const resolvedStyleText = normalizeString(node.style).trim() || normalizeString(canonicalStyleText).trim() || existingStyleText;
+    if (resolvedStyleText) {
+      canonicalAttributes.style = resolvedStyleText;
+    }
+    if (node.visibility && node.visibility.hidden) {
+      canonicalAttributes['data-editor-hidden'] = 'true';
+      canonicalAttributes.hidden = true;
+      canonicalAttributes['aria-hidden'] = 'true';
+    }
+    if (node.visibility && node.visibility.locked) {
+      canonicalAttributes['data-editor-locked'] = 'true';
     }
 
-    const rebuiltOpeningTag = `<${openingTagMatch[1]}${strippedAttributeText}${renderAttributeMap(canonicalVisibilityAttributes)}${openingTagMatch[3] || ''}>`;
+    const rebuiltOpeningTag = `<${openingTagMatch[1]}${strippedAttributeText}${renderAttributeMap(canonicalAttributes)}${openingTagMatch[3] || ''}>`;
     return rebuiltOpeningTag + sourceHtml.slice(openingTagMatch[0].length);
   }
 
@@ -370,7 +384,11 @@
   function renderCanonicalNode(node, options = {}) {
     if (!node || typeof node !== 'object') return '';
     if (options.preferNodeSourceHtml !== false && normalizeString(node.html)) {
-      return applyCanonicalNodeSourceHtmlVisibility(node.html, node.visibility);
+      return applyCanonicalNodeSourceHtmlState(
+        node.html,
+        node,
+        !normalizeString(node.style).trim() ? buildRenderedNodeLayoutStyle(node.layout) : ''
+      );
     }
 
     const attributes = asPlainObject(node.attributes);

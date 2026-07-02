@@ -370,6 +370,32 @@ test('renderCanonicalNode overlays canonical visibility onto source html fragmen
   assert.match(html, /^<div class="hero-copy" data-editor-hidden="true" hidden aria-hidden="true" data-editor-locked="true">Hidden copy<\/div>$/);
 });
 
+test('renderCanonicalNode overlays canonical class and style onto source html fragments', () => {
+  const html = deckRender.renderCanonicalNode({
+    html: '<div class="stale-class" style="color: blue;">Hero copy</div>',
+    classes: ['hero-card'],
+    style: 'color: red;'
+  });
+
+  assert.equal(html, '<div class="hero-card" style="color: red;">Hero copy</div>');
+});
+
+test('renderCanonicalNode overlays canonical absolute layout onto source html when explicit canonical style is absent', () => {
+  const html = deckRender.renderCanonicalNode({
+    html: '<div style="left: 0;">Hero copy</div>',
+    layout: {
+      mode: 'absolute',
+      x: 120,
+      y: 80,
+      width: 400,
+      height: 160,
+      zIndex: 4
+    }
+  });
+
+  assert.equal(html, '<div style="position: absolute; left: 120px; top: 80px; width: 400px; height: 160px; z-index: 4;">Hero copy</div>');
+});
+
 test('renderCanonicalDeckHtml emits theme tokens and custom css when rendering without source head html', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     metadata: {
