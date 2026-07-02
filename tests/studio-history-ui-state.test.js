@@ -338,6 +338,15 @@ test('buildHistoryFrameHtml reuses shared deck source sanitization for history s
   const calls = [];
   const context = {
     SlideNextStudioHistory: studioHistory,
+    SlideNextDeckLoader: {
+      resolvePresentationPersistenceOptions(metadata) {
+        calls.push(['resolvePresentationPersistenceOptions', metadata]);
+        assert.equal(metadata, context.currentPresentationMetadata);
+        return {
+          emptyContainerIds: ['pixelMatrix']
+        };
+      }
+    },
     SlideNextDeckImport: {
       sanitizeDeckSourceClone(root, options) {
         calls.push(['sanitizeDeckSourceClone', root, options]);
@@ -355,6 +364,12 @@ test('buildHistoryFrameHtml reuses shared deck source sanitization for history s
     getSelectedEditorElementIds() {
       return [];
     },
+    currentPresentationMetadata: {
+      id: 'computer-vision-presentation',
+      persistence: {
+        emptyContainerIds: ['pixelMatrix']
+      }
+    },
     areEditorIdListsEqual(left, right) {
       return JSON.stringify(left) === JSON.stringify(right);
     },
@@ -371,17 +386,23 @@ test('buildHistoryFrameHtml reuses shared deck source sanitization for history s
   const html = context.buildHistoryFrameHtml(doc);
 
   assert.equal(html, '<section class="slide"><div>Hero copy</div></section>');
-  assert.deepEqual(calls.map(([name]) => name), ['sanitizeDeckSourceClone']);
+  assert.deepEqual(calls.map(([name]) => name), ['resolvePresentationPersistenceOptions', 'sanitizeDeckSourceClone']);
   assert.deepEqual(
-    JSON.parse(JSON.stringify(calls[0][2].ignoredNodeIds)),
+    JSON.parse(JSON.stringify(calls[1][2].ignoredNodeIds)),
     ['editor-style-tag', 'editor-theme-override-tag', 'editorSelectionOverlay']
   );
   assert.deepEqual(
-    JSON.parse(JSON.stringify(calls[0][2].transientClassNames)),
+    JSON.parse(JSON.stringify(calls[1][2].transientClassNames)),
     ['editor-selected', 'editor-hoverable', 'editor-dragging']
   );
-  assert.equal(calls[0][2].editorElementIdAttr, 'data-editor-id');
-  assert.equal(calls[0][2].editorSlideIdAttr, 'data-slide-id');
+  assert.equal(calls[1][2].editorElementIdAttr, 'data-editor-id');
+  assert.equal(calls[1][2].editorSlideIdAttr, 'data-slide-id');
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[1][2].persistenceOptions)),
+    {
+      emptyContainerIds: ['pixelMatrix']
+    }
+  );
 });
 
 test('buildHistoryFrameHtml strips editor style tags when the shared deck source sanitizer is unavailable', () => {

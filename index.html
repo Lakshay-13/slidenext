@@ -2727,6 +2727,21 @@
       const removableClassNames = deckSanitizerOptions.transientClassNames;
       const editorElementIdAttr = deckSanitizerOptions.editorElementIdAttr;
       const editorSlideIdAttr = deckSanitizerOptions.editorSlideIdAttr;
+      const activePresentationMetadata = typeof currentPresentationMetadata !== 'undefined'
+        ? currentPresentationMetadata
+        : null;
+      const metadataPersistenceOptions = (
+        typeof SlideNextDeckLoader !== 'undefined'
+        && SlideNextDeckLoader
+        && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
+      )
+        ? SlideNextDeckLoader.resolvePresentationPersistenceOptions(activePresentationMetadata || {})
+        : activePresentationMetadata
+          && activePresentationMetadata.persistence
+          && typeof activePresentationMetadata.persistence === 'object'
+          && !Array.isArray(activePresentationMetadata.persistence)
+          ? { ...activePresentationMetadata.persistence }
+          : {};
       const deckImport = typeof SlideNextDeckImport !== 'undefined' ? SlideNextDeckImport : null;
       const deckPersistence = typeof SlideNextDeckPersistence !== 'undefined' ? SlideNextDeckPersistence : null;
       const sanitizeFrameRoot = deckImport
@@ -2736,13 +2751,14 @@
               ignoredNodeIds: chromeNodeIds,
               transientClassNames: removableClassNames,
               editorElementIdAttr,
-              editorSlideIdAttr
+              editorSlideIdAttr,
+              persistenceOptions: metadataPersistenceOptions
             });
           }
         : deckPersistence
           && typeof deckPersistence.stripTransientDeckRuntimeState === 'function'
           ? (root) => {
-              deckPersistence.stripTransientDeckRuntimeState(root);
+              deckPersistence.stripTransientDeckRuntimeState(root, metadataPersistenceOptions);
             }
           : null;
       return {

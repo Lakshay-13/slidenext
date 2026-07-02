@@ -150,9 +150,24 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay', 'editorGuidesLayer'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckLoader: {
+      resolvePresentationPersistenceOptions(metadata) {
+        assert.equal(metadata, context.currentPresentationMetadata);
+        return {
+          emptyContainerIds: ['gitNodesContainer']
+        };
+      }
+    },
     SlideNextDeckPersistence: {
-      stripTransientDeckRuntimeState(root) {
+      stripTransientDeckRuntimeState(root, options) {
         context.sanitizedRoot = root;
+        context.sanitizedOptions = options;
+      }
+    },
+    currentPresentationMetadata: {
+      id: 'onboarding-presentation',
+      persistence: {
+        emptyContainerIds: ['gitNodesContainer']
       }
     },
     getActiveSlideId() {
@@ -186,6 +201,9 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
   const root = { id: 'history-root' };
   options.sanitizeFrameRoot(root);
   assert.equal(context.sanitizedRoot, root);
+  assert.deepEqual(JSON.parse(JSON.stringify(context.sanitizedOptions)), {
+    emptyContainerIds: ['gitNodesContainer']
+  });
   assert.equal(typeof options.getActiveSlideId, 'function');
   assert.equal(typeof options.getSelectedElementIds, 'function');
   assert.equal(typeof options.areIdListsEqual, 'function');
