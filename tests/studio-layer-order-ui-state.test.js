@@ -14,6 +14,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadFinalizeLayerOrderMutation(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function finalizeLayerOrderMutation(versionLabel = \'Auto: Rearranged Layers\') {',
+    '\n\n    // Rearrange Selected Element Layers'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function createControls() {
   return {
     arrangeLayerFrontBtn: { disabled: true },
@@ -27,6 +36,42 @@ function createControls() {
 function getDisabledStates(controls) {
   return Object.fromEntries(Object.entries(controls).map(([id, control]) => [id, control.disabled]));
 }
+
+test('finalizeLayerOrderMutation refreshes layer chrome before versioning', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    },
+    updateLayerOrderActionState() {
+      calls.push(['updateLayerOrderActionState']);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeLayerOrderMutation(fileContent, context);
+
+  const result = context.finalizeLayerOrderMutation();
+
+  assert.equal(result, 'Auto: Rearranged Layers');
+  assert.deepEqual(calls, [
+    ['saveHistoryState'],
+    ['triggerAutoSave'],
+    ['updateLayersList'],
+    ['updateLayerOrderActionState'],
+    ['triggerAutoVersion', 'Auto: Rearranged Layers']
+  ]);
+});
 
 test('updateLayerOrderActionState enables layer order controls only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
@@ -150,6 +195,7 @@ test('arrangeElementLayer returns false when there is no live reorder target or 
   };
 
   vm.createContext(context);
+  loadFinalizeLayerOrderMutation(fileContent, context);
   vm.runInContext(arrangeElementLayerSource, context);
 
   assert.equal(context.arrangeElementLayer('front'), false);
@@ -225,6 +271,7 @@ test('arrangeElementLayer returns false and refreshes layer controls when the li
   };
 
   vm.createContext(context);
+  loadFinalizeLayerOrderMutation(fileContent, context);
   vm.runInContext(arrangeElementLayerSource, context);
 
   assert.equal(context.arrangeElementLayer('front'), false);
@@ -282,6 +329,7 @@ test('arrangeElementLayer returns true and tolerates a missing z-index input whe
   };
 
   vm.createContext(context);
+  loadFinalizeLayerOrderMutation(fileContent, context);
   vm.runInContext(arrangeElementLayerSource, context);
 
   assert.equal(context.arrangeElementLayer('front'), true);

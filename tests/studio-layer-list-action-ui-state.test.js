@@ -14,6 +14,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadFinalizeLayerOrderMutation(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function finalizeLayerOrderMutation(versionLabel = \'Auto: Rearranged Layers\') {',
+    '\n\n    // Rearrange Selected Element Layers'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('toggleLayerVisibilityByRef restores preserved selection when the visibility toggle fails', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const toggleLayerVisibilityByRefSource = extractFunctionSource(
@@ -308,6 +317,7 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is loc
   };
 
   vm.createContext(context);
+  loadFinalizeLayerOrderMutation(fileContent, context);
   vm.runInContext(changeLayerZIndexByRefSource, context);
 
   const event = {
@@ -381,6 +391,7 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is sta
   };
 
   vm.createContext(context);
+  loadFinalizeLayerOrderMutation(fileContent, context);
   vm.runInContext(changeLayerZIndexByRefSource, context);
 
   const event = {
@@ -453,6 +464,7 @@ test('changeLayerZIndexByRef refreshes layer controls when the row reorder becom
   };
 
   vm.createContext(context);
+  loadFinalizeLayerOrderMutation(fileContent, context);
   vm.runInContext(changeLayerZIndexByRefSource, context);
 
   const event = {
@@ -545,6 +557,7 @@ test('changeLayerZIndexByRef updates layer controls after a successful row reord
   };
 
   vm.createContext(context);
+  loadFinalizeLayerOrderMutation(fileContent, context);
   vm.runInContext(changeLayerZIndexByRefSource, context);
 
   const event = {
@@ -647,6 +660,7 @@ test('changeLayerZIndexByRef tolerates a missing z-index input on successful row
   };
 
   vm.createContext(context);
+  loadFinalizeLayerOrderMutation(fileContent, context);
   vm.runInContext(changeLayerZIndexByRefSource, context);
 
   const event = {

@@ -4008,6 +4008,17 @@
       return false;
     }
 
+    function finalizeLayerOrderMutation(versionLabel = 'Auto: Rearranged Layers') {
+      saveHistoryState();
+      triggerAutoSave();
+      updateLayersList();
+      updateLayerOrderActionState();
+      if (versionLabel) {
+        triggerAutoVersion(versionLabel);
+      }
+      return versionLabel;
+    }
+
     // Rearrange Selected Element Layers
     function arrangeElementLayer(action) {
       const targets = getLiveSelectedElements();
@@ -4031,11 +4042,7 @@
       if (zIndexInput && targets[0]) {
         zIndexInput.value = targets[0].style.zIndex || 0;
       }
-      saveHistoryState();
-      triggerAutoSave();
-      updateLayersList();
-      updateLayerOrderActionState();
-      triggerAutoVersion('Auto: Rearranged Layers');
+      finalizeLayerOrderMutation();
       return true;
     }
 
@@ -5874,12 +5881,8 @@
           zIndexInput.value = el.style.zIndex || 0;
         }
       }
-      
-      saveHistoryState();
-      triggerAutoSave();
-      updateLayersList();
-      updateLayerOrderActionState();
-      triggerAutoVersion('Auto: Rearranged Layers');
+
+      finalizeLayerOrderMutation();
     }
 
     // Presentation Live Preview from workspace
