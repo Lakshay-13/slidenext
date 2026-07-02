@@ -2493,8 +2493,17 @@
       if (!canonicalDeck || presentationUrl !== currentPresentationUrl) {
         return;
       }
+      const nextCanonicalDeck = SlideNextStudioDeckContext
+        && typeof SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck === 'function'
+        ? SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck({
+            canonicalDeck
+          })
+        : canonicalDeck;
+      if (!nextCanonicalDeck) {
+        return;
+      }
       applyCurrentPresentationMetadata(
-        SlideNextStudioDeckContext.mergeStudioPresentationMetadataCanonicalDeck(canonicalDeck, {
+        SlideNextStudioDeckContext.mergeStudioPresentationMetadataCanonicalDeck(nextCanonicalDeck, {
           currentPresentationMetadata,
           presentationUrl,
           presentationTitle,

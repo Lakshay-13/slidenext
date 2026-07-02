@@ -97,6 +97,47 @@ test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata up
   });
 });
 
+test('setCurrentPresentationCanonicalDeck ignores malformed deck-like metadata updates for the active presentation', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {',
+    '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
+  );
+
+  let applyCalls = 0;
+  const context = {
+    SlideNextStudioDeckContext: require('../shared/studio-deck-context.js'),
+    applyCurrentPresentationMetadata(metadata) {
+      applyCalls += 1;
+      context.currentPresentationMetadata = metadata;
+      return metadata;
+    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    currentPresentationMetadata: null,
+    buildCurrentPresentationMetadataSeed(presentationUrl, presentationTitle) {
+      return {
+        id: 'onboarding-presentation',
+        title: presentationTitle,
+        sourcePath: presentationUrl
+      };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setCurrentPresentationCanonicalDeckSource, context);
+
+  context.setCurrentPresentationCanonicalDeck({
+    metadata: {
+      title: 'Broken Deck'
+    }
+  });
+
+  assert.equal(applyCalls, 0);
+  assert.equal(context.currentPresentationMetadata, null);
+});
+
 test('saveVersionCheckpoint refreshes persisted html and canonical metadata after a successful save rewrite', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const saveVersionCheckpointSource = extractFunctionSource(
