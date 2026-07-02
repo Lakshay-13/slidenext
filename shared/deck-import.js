@@ -660,7 +660,23 @@
     if (tagName === 'video') return 'video';
     if (tagName === 'audio' || tagName === 'source') return 'audio';
     if (tagName === 'script') return 'script';
-    if (tagName === 'link') return 'stylesheet';
+    if (tagName === 'link') {
+      const rel = normalizeString(el.getAttribute('rel')).toLowerCase();
+      if (rel.split(/\s+/).includes('stylesheet')) return 'stylesheet';
+      if (rel.split(/\s+/).includes('preload')) {
+        const asType = normalizeString(el.getAttribute('as')).toLowerCase();
+        switch (asType) {
+          case 'style': return 'stylesheet';
+          case 'script': return 'script';
+          case 'image': return 'image';
+          case 'video': return 'video';
+          case 'audio': return 'audio';
+          case 'font': return 'font';
+          default:
+            return inferAssetTypeFromUrl(el.getAttribute('href'));
+        }
+      }
+    }
     return 'file';
   }
 
@@ -806,6 +822,7 @@
       'source[src]',
       'script[src]',
       'link[rel~="stylesheet"][href]',
+      'link[rel~="preload"][href]',
       'video[poster]'
     ];
 

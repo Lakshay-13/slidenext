@@ -304,7 +304,7 @@ test('collectDeckAssets includes inline style asset urls, skips fragments, and d
 
   const doc = {
     querySelectorAll(selector) {
-      if (selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], video[poster]') {
+      if (selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], link[rel~="preload"][href], video[poster]') {
         return [imageEl];
       }
       if (selector === 'img[srcset], source[srcset]') {
@@ -350,7 +350,7 @@ test('collectDeckAssets includes srcset and poster asset urls, skips fragments, 
 
   const doc = {
     querySelectorAll(selector) {
-      if (selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], video[poster]') {
+      if (selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], link[rel~="preload"][href], video[poster]') {
         return [posterVideoEl];
       }
       if (selector === 'img[srcset], source[srcset]') {
@@ -401,7 +401,7 @@ test('collectDeckAssets includes asset urls from accessible stylesheet rules and
   const doc = {
     querySelectorAll(selector) {
       if (
-        selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], video[poster]'
+        selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], link[rel~="preload"][href], video[poster]'
         || selector === 'img[srcset], source[srcset]'
         || selector === '[style*="url("]'
       ) {
@@ -461,6 +461,51 @@ test('collectDeckAssets includes asset urls from accessible stylesheet rules and
       name: 'hero-bg.webp',
       src: '/images/hero-bg.webp',
       mimeType: 'image/webp'
+    }
+  ]);
+});
+
+test('collectDeckAssets includes preload assets and infers their canonical types from the as attribute', () => {
+  const preloadFontEl = createElement('LINK', {
+    rel: 'preload',
+    as: 'font',
+    href: '/fonts/deck-sans.woff2',
+    type: 'font/woff2'
+  });
+  const preloadImageEl = createElement('LINK', {
+    rel: 'preload',
+    as: 'image',
+    href: '/images/hero.avif'
+  });
+
+  const doc = {
+    querySelectorAll(selector) {
+      if (selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], link[rel~="preload"][href], video[poster]') {
+        return [preloadFontEl, preloadImageEl];
+      }
+      if (selector === 'img[srcset], source[srcset]' || selector === '[style*="url("]') {
+        return [];
+      }
+      return [];
+    }
+  };
+
+  const assets = deckImport.collectDeckAssets(doc);
+
+  assert.deepEqual(assets, [
+    {
+      id: 'asset-1',
+      type: 'font',
+      name: 'deck-sans.woff2',
+      src: '/fonts/deck-sans.woff2',
+      mimeType: 'font/woff2'
+    },
+    {
+      id: 'asset-2',
+      type: 'image',
+      name: 'hero.avif',
+      src: '/images/hero.avif',
+      mimeType: 'image/avif'
     }
   ]);
 });
