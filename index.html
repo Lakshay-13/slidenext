@@ -5122,7 +5122,10 @@
     function promptRenameVersion(filename, currentLabel) {
       renamingFilename = filename;
       renamingVersionContext = createCurrentStudioVersionActionContext();
-      document.getElementById('newVersionNameInput').value = currentLabel;
+      const renameInput = document.getElementById('newVersionNameInput');
+      if (renameInput) {
+        renameInput.value = currentLabel;
+      }
       
       const modal = document.getElementById('renameVersionModal');
       const content = document.getElementById('renameVersionModalContent');
@@ -5138,8 +5141,10 @@
           modal.classList.add('opacity-100');
           content.classList.remove('scale-95');
           content.classList.add('scale-100');
-          document.getElementById('newVersionNameInput').focus();
-          document.getElementById('newVersionNameInput').select();
+          if (renameInput) {
+            renameInput.focus();
+            renameInput.select();
+          }
         }
       });
     }
@@ -5162,7 +5167,8 @@
     }
     
     async function submitRenameVersion() {
-      const newLabel = document.getElementById('newVersionNameInput').value.trim();
+      const renameInput = document.getElementById('newVersionNameInput');
+      const newLabel = renameInput ? renameInput.value.trim() : '';
       if (!newLabel) return;
       const renameContext = renamingVersionContext || createCurrentStudioVersionActionContext();
       const versionFilename = renamingFilename;

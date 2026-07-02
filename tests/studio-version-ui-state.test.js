@@ -287,6 +287,129 @@ test('toggleVersionDropdown refreshes version history only when opening the menu
   ]]);
 });
 
+test('promptRenameVersion tolerates a missing rename input', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const promptRenameVersionSource = extractFunctionSource(
+    fileContent,
+    'function promptRenameVersion(filename, currentLabel) {',
+    '\n    \n    function closeRenameVersionModal() {'
+  );
+
+  const calls = [];
+  const elements = {
+    renameVersionModal: {
+      classList: createClassList(['hidden'])
+    },
+    renameVersionModalContent: {
+      classList: createClassList(['scale-95'])
+    },
+    confirmRenameVersionBtn: {
+      disabled: true,
+      textContent: 'Renaming...'
+    }
+  };
+
+  const context = {
+    SlideNextStudioModalVisibility: {
+      cancelStudioModalHide(modal) {
+        calls.push(['cancelStudioModalHide', modal]);
+      },
+      scheduleStudioModalCallback(modal, options) {
+        calls.push(['scheduleStudioModalCallback', modal]);
+        options.callback();
+      }
+    },
+    createCurrentStudioVersionActionContext() {
+      calls.push(['createCurrentStudioVersionActionContext']);
+      return {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      };
+    },
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (id === 'newVersionNameInput') {
+          return null;
+        }
+        return elements[id] || null;
+      }
+    },
+    renamingFilename: '',
+    renamingVersionContext: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(promptRenameVersionSource, context);
+
+  assert.doesNotThrow(() => context.promptRenameVersion('index_20260101_120000_Auto.html', 'Draft Name'));
+  assert.equal(context.renamingFilename, 'index_20260101_120000_Auto.html');
+  assert.equal(context.renamingVersionContext.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(elements.confirmRenameVersionBtn.disabled, false);
+  assert.equal(elements.confirmRenameVersionBtn.textContent, 'Rename');
+  assert.equal(elements.renameVersionModal.classList.contains('hidden'), false);
+  assert.equal(elements.renameVersionModal.classList.contains('opacity-100'), true);
+  assert.equal(elements.renameVersionModalContent.classList.contains('scale-95'), false);
+  assert.equal(elements.renameVersionModalContent.classList.contains('scale-100'), true);
+  assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'newVersionNameInput'));
+  assert.ok(calls.some(([name]) => name === 'scheduleStudioModalCallback'));
+});
+
+test('submitRenameVersion no-ops when the rename input is missing', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const submitRenameVersionSource = extractFunctionSource(
+    fileContent,
+    'async function submitRenameVersion() {',
+    '\n\n    async function deleteVersion(filename) {'
+  );
+
+  const calls = [];
+  const context = {
+    SlideNextStudioModalVisibility: {
+      getCurrentStudioModalVisibilityToken() {
+        calls.push(['getCurrentStudioModalVisibilityToken']);
+        return 0;
+      },
+      isStudioModalVisibilityCurrent() {
+        calls.push(['isStudioModalVisibilityCurrent']);
+        return true;
+      }
+    },
+    createCurrentStudioVersionActionContext() {
+      calls.push(['createCurrentStudioVersionActionContext']);
+      return {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      };
+    },
+    document: {
+      getElementById(id) {
+        calls.push(['getElementById', id]);
+        if (id === 'newVersionNameInput') {
+          return null;
+        }
+        return null;
+      }
+    },
+    fetch() {
+      calls.push(['fetch']);
+      throw new Error('fetch should not run when the rename input is missing');
+    },
+    renamingFilename: 'index_20260101_120000_Auto.html',
+    renamingVersionContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(submitRenameVersionSource, context);
+
+  await assert.doesNotReject(async () => {
+    await context.submitRenameVersion();
+  });
+  assert.deepEqual(calls, [
+    ['getElementById', 'newVersionNameInput']
+  ]);
+});
+
 test('loadCurrentStudioVersionHistory reuses current session readers when delegating to the version history loader', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const loadCurrentStudioVersionHistorySource = extractFunctionSource(
