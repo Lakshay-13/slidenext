@@ -1871,6 +1871,41 @@ test('renderCanonicalDeckHtml preserves explicit slide source attributes over ca
   assert.match(html, /<section class="slide source-slide slide-active" style="background: black;" id="slide-1"><\/section>/);
 });
 
+test('renderCanonicalDeckHtml merges non-background slide source styles with canonical background styles', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [
+      {
+        id: 'slide-1',
+        layout: {
+          background: {
+            className: 'hero-slide',
+            style: 'background: black;'
+          }
+        },
+        nodes: [],
+        source: {
+          html: '',
+          attributes: {
+            class: 'source-slide',
+            style: 'min-height: 100%;'
+          }
+        }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /<section class="slide source-slide slide-active" style="min-height: 100%; background: black;" id="slide-1"><\/section>/);
+});
+
 test('renderCanonicalDeckHtml falls back to canonical slide name and notes attributes when source attributes are absent', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [

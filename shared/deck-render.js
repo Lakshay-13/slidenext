@@ -475,11 +475,17 @@
     return styleFragments.join(' ');
   }
 
+  function styleTextHasBackgroundProperty(styleText) {
+    const normalizedStyleText = normalizeString(styleText).trim();
+    return /(^|;)\s*background(?:-[a-z-]+)?\s*:/i.test(normalizedStyleText);
+  }
+
   function buildRenderedSlideAttributes(slide = {}, index = 0, options = {}, fallbackAttributes = {}) {
     const sourceAttributes = asPlainObject(slide.source && slide.source.attributes);
     const background = slide.layout ? asPlainObject(slide.layout.background) : {};
     const fallback = asPlainObject(fallbackAttributes);
-    const hasExplicitSourceStyle = !!normalizeString(sourceAttributes.style).trim();
+    const explicitSourceStyleText = normalizeString(sourceAttributes.style).trim();
+    const hasExplicitSourceStyle = !!explicitSourceStyleText;
     const needsPositionContext = hasAbsolutePositionedNode(slide.nodes);
     const requestedActiveSlideId = normalizeString(options.activeSlideId).trim();
     const isActiveSlide = requestedActiveSlideId
@@ -500,20 +506,26 @@
     if (!sourceAttributes.class) {
       sourceAttributes.class = normalizeString(background.className).trim() || normalizeString(fallback.class).trim();
     }
-    const resolvedStyleText = normalizeString(sourceAttributes.style).trim()
-      || normalizeString(background.style).trim()
-      || buildRenderedSlideBackgroundStyle(background)
-      || normalizeString(fallback.style).trim();
+    const canonicalBackgroundStyleText = normalizeString(background.style).trim()
+      || buildRenderedSlideBackgroundStyle(background);
+    const fallbackStyleText = normalizeString(fallback.style).trim();
+    let resolvedStyleText = hasExplicitSourceStyle
+      ? (
+          styleTextHasBackgroundProperty(explicitSourceStyleText)
+            ? explicitSourceStyleText
+            : appendStyleDeclaration(explicitSourceStyleText, canonicalBackgroundStyleText)
+        )
+      : (canonicalBackgroundStyleText || fallbackStyleText);
     if (!sourceAttributes.id) {
       sourceAttributes.id = normalizeString(slide.id).trim() || normalizeString(fallback.id).trim();
     }
-    if (!sourceAttributes.style) {
-      if (resolvedStyleText) {
-        sourceAttributes.style = resolvedStyleText;
-      }
+    if (needsPositionContext && !styleTextHasProperty(resolvedStyleText, 'position')) {
+      resolvedStyleText = appendStyleDeclaration(resolvedStyleText, 'position: relative;');
     }
-    if (needsPositionContext && !hasExplicitSourceStyle && !styleTextHasProperty(sourceAttributes.style, 'position')) {
-      sourceAttributes.style = appendStyleDeclaration(sourceAttributes.style, 'position: relative;');
+    if (resolvedStyleText) {
+      sourceAttributes.style = resolvedStyleText;
+    } else {
+      delete sourceAttributes.style;
     }
     sourceAttributes.class = buildRenderedSlideClassName(sourceAttributes.class, isActiveSlide);
 

@@ -440,6 +440,89 @@
       .join(' ');
   }
 
+  function splitInlineStyleDeclarations(styleText = '') {
+    const declarations = [];
+    const sourceText = normalizeString(styleText);
+    let current = '';
+    let quote = '';
+    let parenDepth = 0;
+
+    for (let index = 0; index < sourceText.length; index += 1) {
+      const char = sourceText[index];
+      if (quote) {
+        current += char;
+        if (char === quote && sourceText[index - 1] !== '\\') {
+          quote = '';
+        }
+        continue;
+      }
+      if (char === '"' || char === '\'') {
+        quote = char;
+        current += char;
+        continue;
+      }
+      if (char === '(') {
+        parenDepth += 1;
+        current += char;
+        continue;
+      }
+      if (char === ')' && parenDepth > 0) {
+        parenDepth -= 1;
+        current += char;
+        continue;
+      }
+      if (char === ';' && parenDepth === 0) {
+        const declaration = current.trim();
+        if (declaration) {
+          declarations.push(declaration);
+        }
+        current = '';
+        continue;
+      }
+      current += char;
+    }
+
+    const trailingDeclaration = current.trim();
+    if (trailingDeclaration) {
+      declarations.push(trailingDeclaration);
+    }
+    return declarations;
+  }
+
+  function filterInlineStyleDeclarations(styleText = '', predicate = () => true) {
+    return splitInlineStyleDeclarations(styleText)
+      .filter((declaration) => {
+        const separatorIndex = declaration.indexOf(':');
+        if (separatorIndex === -1) {
+          return false;
+        }
+        const propertyName = normalizeString(declaration.slice(0, separatorIndex)).trim().toLowerCase();
+        const propertyValue = normalizeString(declaration.slice(separatorIndex + 1)).trim();
+        return !!predicate(propertyName, propertyValue, declaration);
+      })
+      .map((declaration) => declaration.endsWith(';') ? declaration : `${declaration};`)
+      .join(' ');
+  }
+
+  function isImportedSlideBackgroundStyleProperty(propertyName = '') {
+    const normalizedPropertyName = normalizeString(propertyName).trim().toLowerCase();
+    return normalizedPropertyName === 'background' || normalizedPropertyName.startsWith('background-');
+  }
+
+  function extractImportedSlideBackgroundStyle(styleText = '') {
+    return filterInlineStyleDeclarations(
+      styleText,
+      (propertyName) => isImportedSlideBackgroundStyleProperty(propertyName)
+    );
+  }
+
+  function stripImportedSlideBackgroundStyle(styleText = '') {
+    return filterInlineStyleDeclarations(
+      styleText,
+      (propertyName) => !isImportedSlideBackgroundStyleProperty(propertyName)
+    );
+  }
+
   function sanitizeImportedAttributeMap(el, options = {}) {
     const transientAttributeNames = options.transientAttributeNames instanceof Set
       ? options.transientAttributeNames
@@ -761,6 +844,12 @@
     const childElements = Array.from(slide.children || []).filter(child => shouldImportElement(child, options));
     const title = inferSlideTitle(slide, index, options);
     const sourceAttributes = stripCanonicalSlideAttributeDuplicates(sanitizeImportedAttributeMap(slide, options));
+    const inlineStyleText = normalizeString(slide.getAttribute('style'));
+    const backgroundStyleText = extractImportedSlideBackgroundStyle(inlineStyleText);
+    const sourceStyleText = stripImportedSlideBackgroundStyle(inlineStyleText);
+    if (sourceStyleText) {
+      sourceAttributes.style = sourceStyleText;
+    }
 
     return canonicalDeck.createCanonicalSlide({
       id: slideId,
@@ -773,7 +862,7 @@
           color: normalizeString(slide.style && slide.style.backgroundColor),
           image: normalizeString(slide.style && slide.style.backgroundImage),
           className: sanitizeImportedSlideBackgroundClassName(slide.className, options),
-          style: normalizeString(slide.getAttribute('style'))
+          style: backgroundStyleText
         }
       },
       nodes: childElements.map((child, childIndex) => importElementToCanonicalNode(child, options, {

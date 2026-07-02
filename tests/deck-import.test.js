@@ -1200,7 +1200,7 @@ test('importSlideToCanonicalSlide strips canonical duplicate slide attributes wh
     textContent: 'Intro',
     attributes: {
       class: 'slide hero-slide editor-selected',
-      style: 'background: black;',
+      style: 'background: black; position: relative; min-height: 100%;',
       'aria-label': 'Imported Intro',
       'data-slide-id': 'slide-runtime-1',
       'data-slide-name': 'Imported Slide',
@@ -1220,6 +1220,7 @@ test('importSlideToCanonicalSlide strips canonical duplicate slide attributes wh
   assert.equal(canonicalSlide.name, 'Imported Slide');
   assert.equal(canonicalSlide.notes, 'Key message');
   assert.deepEqual(canonicalSlide.source.attributes, {
+    style: 'position: relative; min-height: 100%;',
     'data-transition': 'fade'
   });
 });
@@ -1237,7 +1238,7 @@ test('importSlideToCanonicalSlide sanitizes stored slide source html fragments',
     tagName: 'SECTION',
     attributes: {
       class: 'slide editor-selected',
-      style: 'background: black;',
+      style: 'background: black; position: relative; min-height: 100%;',
       'aria-label': 'Imported Intro',
       'data-slide-id': 'slide-runtime-1',
       'data-slide-name': 'Imported Slide',
@@ -1265,6 +1266,7 @@ test('importSlideToCanonicalSlide sanitizes stored slide source html fragments',
   assert.equal(canonicalSlide.name, 'Imported Slide');
   assert.equal(canonicalSlide.notes, 'Key message');
   assert.deepEqual(canonicalSlide.source.attributes, {
+    style: 'position: relative; min-height: 100%;',
     'data-transition': 'fade'
   });
 });
