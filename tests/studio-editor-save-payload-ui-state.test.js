@@ -298,6 +298,67 @@ test('buildEditorSaveRequestBody reuses the captured persistable deck state when
   assert.deepEqual(calls.map(([name]) => name), ['captureEditorPersistableDeckState']);
 });
 
+test('buildEditorSaveRequestBody reuses the local save canonical deck helper when capture state omits a canonical deck', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSaveRequestBodySource = extractFunctionSource(
+    fileContent,
+    'function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {',
+    '\n\n    function isCurrentDeckHtmlPersisted(cleanHtml) {'
+  );
+
+  const doc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
+    captureEditorPersistableDeckState(nextDoc, captureOptions = {}) {
+      calls.push(['captureEditorPersistableDeckState', nextDoc, captureOptions]);
+      assert.equal(nextDoc, doc);
+      assert.equal(captureOptions.canonicalDeck, null);
+      return {
+        cleanHtml: '<html>captured</html>'
+      };
+    },
+    resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
+      assert.equal(nextDoc, doc);
+      assert.equal(nextCanonicalDeck, null);
+      return canonicalDeck;
+    },
+    buildPersistableDeckHtml() {
+      throw new Error('buildPersistableDeckHtml should not run when captureEditorPersistableDeckState provides html');
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('buildEditorCanonicalDeck should not run when resolveEditorSaveCanonicalDeck is available');
+    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorSaveRequestBodySource, context);
+
+  assert.deepEqual(
+    context.buildEditorSaveRequestBody(),
+    {
+      htmlPath: 'presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>captured</html>',
+      isAutoSave: false,
+      canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeck)
+    }
+  );
+  assert.deepEqual(calls.map(([name]) => name), [
+    'captureEditorPersistableDeckState',
+    'resolveEditorSaveCanonicalDeck'
+  ]);
+});
+
 test('buildPersistableDeckHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
