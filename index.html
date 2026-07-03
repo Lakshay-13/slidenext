@@ -1846,12 +1846,6 @@
       }));
     }
 
-    function renderEditorSourceDeckHtml(doc = getIframeDoc(), sourceViewOptions = {}, options = {}) {
-      return buildEditorSourceDeckHtml(doc, {
-        buildViewOptions: () => sourceViewOptions
-      });
-    }
-
     function buildEditorSourceHtml(doc = getIframeDoc()) {
       return buildEditorSourceDeckHtml(doc);
     }
