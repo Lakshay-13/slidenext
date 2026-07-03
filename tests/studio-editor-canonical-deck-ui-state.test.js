@@ -980,11 +980,25 @@ test('createEditorDeckViewSharedOptions reuses the local deck canonical override
     slides: []
   };
   const calls = [];
+  const helperCalls = [];
   const isCanonicalDeck = (deck) => deck === canonicalDeck;
   const context = {
     currentSlideIndex: 2,
     getPersistedActiveSlideId() {
       return 'slide-persisted';
+    },
+    createEditorCanonicalDeckViewStateOptions() {
+      helperCalls.push('createEditorCanonicalDeckViewStateOptions');
+      return {
+        buildCanonicalDeck(nextDoc) {
+          calls.push(['buildCanonicalDeck', nextDoc]);
+          return canonicalDeck;
+        },
+        resolveLiveActiveSlideId(nextDoc) {
+          calls.push(['resolveLiveActiveSlideId', nextDoc]);
+          return 'slide-live';
+        }
+      };
     },
     buildEditorCanonicalDeck(nextDoc) {
       calls.push(['buildEditorCanonicalDeck', nextDoc]);
@@ -1021,12 +1035,13 @@ test('createEditorDeckViewSharedOptions reuses the local deck canonical override
   assert.equal(options.resolveCanonicalDeckOverride(canonicalDeck, iframeDoc), canonicalDeck);
   assert.equal(options.resolveLiveActiveSlideId(iframeDoc), 'slide-live');
   assert.equal(options.isCanonicalDeck, isCanonicalDeck);
+  assert.deepEqual(helperCalls, ['createEditorCanonicalDeckViewStateOptions']);
   assert.deepEqual(calls, [
     ['resolveEditorDeckCanonicalOverrideResolver', iframeDoc],
     ['getEditorCanonicalDeckValidator'],
-    ['buildEditorCanonicalDeck', iframeDoc],
+    ['buildCanonicalDeck', iframeDoc],
     ['resolveCanonicalDeckOverride', canonicalDeck, iframeDoc],
-    ['resolveEditorLiveActiveSlideId', iframeDoc]
+    ['resolveLiveActiveSlideId', iframeDoc]
   ]);
 });
 
