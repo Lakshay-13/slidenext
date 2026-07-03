@@ -3505,10 +3505,10 @@
         && typeof SlideNextStudioDeckSnapshot.createStudioDeckSnapshotBuildOptions === 'function'
         ? SlideNextStudioDeckSnapshot.createStudioDeckSnapshotBuildOptions
         : null;
+      const deckViewStateOptions = createEditorCanonicalDeckViewStateOptions();
       const snapshotBuildOptions = createStudioDeckSnapshotBuildOptions
         ? createStudioDeckSnapshotBuildOptions(doc, {
-            buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
-            resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
+            ...deckViewStateOptions,
             resolveFallbackActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
               sourceDoc,
               canonicalDeck

@@ -2668,6 +2668,7 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
     }
   };
   let delegatedArgs = null;
+  const helperCalls = [];
   const context = {
     SlideNextStudioDeckSnapshot: {
       createStudioDeckSnapshotBuildOptions(nextDoc, options) {
@@ -2698,6 +2699,19 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
           slides: []
         };
       }
+    },
+    createEditorCanonicalDeckViewStateOptions() {
+      helperCalls.push('createEditorCanonicalDeckViewStateOptions');
+      return {
+        buildCanonicalDeck(nextDoc) {
+          assert.equal(nextDoc, iframeDoc);
+          return canonicalDeck;
+        },
+        resolveLiveActiveSlideId(nextDoc) {
+          assert.equal(nextDoc, iframeDoc);
+          return 'slide-live';
+        }
+      };
     },
     buildEditorCanonicalDeck(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
@@ -2751,6 +2765,7 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
   assert.equal(delegatedArgs.canonicalDeck, canonicalDeck);
   assert.equal(delegatedArgs.fallbackActiveSlideId, 'slide-fallback');
   assert.equal(delegatedArgs.liveActiveSlide, activeSlide);
+  assert.deepEqual(helperCalls, ['createEditorCanonicalDeckViewStateOptions']);
   assert.equal(calls.length, 1);
   assert.equal(calls[0].nextDoc, iframeDoc);
   assert.equal(calls[0].options.fallbackActiveSlideId, 'slide-shared');
