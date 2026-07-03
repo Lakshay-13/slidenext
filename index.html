@@ -5370,14 +5370,6 @@
             : null
         }
       );
-      const resolveMetadataPersistenceOptions = () => resolveEditorMetadataPersistenceOptions();
-      const sanitizeReusablePersistedHtml = (persistedHtml, playbackState = null) => sanitizeEditorReusablePersistedHtml(
-        persistedHtml,
-        {
-          playbackState,
-          resolveMetadataPersistenceOptions
-        }
-      );
       if (!doc) {
         const persistedDeckState = getCurrentEditorPersistedDeckState();
         const persistedDeckStateWithContent = resolveEditorPersistedDeckStateWithContent(persistedDeckState);
@@ -5400,7 +5392,10 @@
           }
         );
         if (reusablePersistedHtml) {
-          return sanitizeReusablePersistedHtml(reusablePersistedHtml, persistedDeckState.playbackState);
+          return sanitizeEditorReusablePersistedHtml(reusablePersistedHtml, {
+            playbackState: persistedDeckState.playbackState,
+            resolveMetadataPersistenceOptions: resolveEditorMetadataPersistenceOptions
+          });
         }
         const sourceViewOptions = createEditorDeckViewBuildOptions(doc, {
           buildCanonicalDeck: () => canonicalDeck,
@@ -5430,7 +5425,7 @@
         buildOptions.onPlaybackStateResolved(resolvedPlaybackState);
       }
       const persistableDeckSanitizerOptions = buildEditorPersistableDeckSanitizerOptions(resolvedPlaybackState, {
-        resolveMetadataPersistenceOptions
+        resolveMetadataPersistenceOptions: resolveEditorMetadataPersistenceOptions
       });
       return SlideNextDeckPersistence.buildPersistableDeckHtml(doc, {
         ...persistableDeckSanitizerOptions

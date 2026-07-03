@@ -208,6 +208,10 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
       calls.push(['getIframeDoc']);
       return null;
     },
+    resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorFallbackCanonicalDeck', nextDoc, nextCanonicalDeck]);
+      return nextCanonicalDeck;
+    },
     persistedDeckPlaybackState: {
       activeSlideIds: ['slide-1']
     }
@@ -225,15 +229,17 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
     'buildEditorCanonicalDeck',
     'getEditorHistoryOptions',
     'getPersistedActiveSlideId',
+    'resolveEditorFallbackCanonicalDeck',
     'createStudioHistoryEntry',
     'getEditorHistoryOptions',
     'buildStudioHistoryFrameHtml'
   ]);
   assert.equal(calls[1][1], null);
   assert.equal(calls[4][1], null);
-  assert.equal(calls[4][2].activeSlideId, 'slide-2');
-  assert.equal(Array.isArray(calls[4][2].selectedElementIds), true);
-  assert.equal(calls[4][2].selectedElementIds.length, 0);
+  assert.equal(calls[5][1], null);
+  assert.equal(calls[5][2].activeSlideId, 'slide-2');
+  assert.equal(Array.isArray(calls[5][2].selectedElementIds), true);
+  assert.equal(calls[5][2].selectedElementIds.length, 0);
   assert.equal(entry.html, '');
   assert.equal(entry.activeSlideId, 'slide-2');
   assert.equal(Array.isArray(entry.selectedElementIds), true);
@@ -1236,6 +1242,10 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
       return entry;
     },
     observeDeckActiveSlideState() {},
+    resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      callLog.push(['resolveEditorFallbackCanonicalDeck', nextDoc, nextCanonicalDeck]);
+      return nextCanonicalDeck;
+    },
     restoreCommittedSelectionByIdsOnActiveSlide() {},
     setCurrentPresentationCanonicalDeck(nextCanonicalDeck) {
       callLog.push(['setCurrentPresentationCanonicalDeck', nextCanonicalDeck]);
@@ -1287,10 +1297,11 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
     canonicalDeck: null
   });
 
-  assert.deepEqual(callLog[0], ['capturePersistedDeckPlaybackState', iframeDoc, null]);
+  assert.deepEqual(callLog[0], ['resolveEditorFallbackCanonicalDeck', null, null]);
+  assert.deepEqual(callLog[1], ['capturePersistedDeckPlaybackState', iframeDoc, null]);
   assert.deepEqual(
-    JSON.parse(JSON.stringify(callLog[1])),
+    JSON.parse(JSON.stringify(callLog[2])),
     ['updateEditorPersistedDeckState', { playbackState: null }]
   );
-  assert.deepEqual(callLog[2], ['setCurrentPresentationCanonicalDeck', null]);
+  assert.deepEqual(callLog[3], ['setCurrentPresentationCanonicalDeck', null]);
 });
