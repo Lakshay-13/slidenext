@@ -7902,21 +7902,29 @@
       }).join('');
     }
 
+    function createCurrentStudioVersionHistoryLoadOptions(options = {}) {
+      return SlideNextStudioVersionHistory.createStudioVersionHistoryLoadOptions({
+        ...createCurrentStudioSessionStateOptions({
+          sessionToken: options.sessionToken
+        }),
+        sessionToken: options.sessionToken,
+        commitVersionEntries: options.commitVersionEntries
+      });
+    }
+
     async function loadCurrentStudioVersionHistory(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken
     ) {
+      const loadOptions = createCurrentStudioVersionHistoryLoadOptions({
+        sessionToken,
+        commitVersionEntries: (versions) => {
+          renderVersionsList(presentationUrl, versions);
+        }
+      });
       return SlideNextStudioVersionHistory.loadStudioVersionHistory(
         presentationUrl,
-        SlideNextStudioVersionHistory.createStudioVersionHistoryLoadOptions({
-          ...createCurrentStudioSessionStateOptions({
-            sessionToken
-          }),
-          sessionToken,
-          commitVersionEntries: (versions) => {
-            renderVersionsList(presentationUrl, versions);
-          }
-        })
+        loadOptions
       );
     }
 
