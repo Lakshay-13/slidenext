@@ -1712,10 +1712,68 @@
     }
 
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
-      return SlideNextStudioDeckView.buildStudioPreviewHtml(doc, {
+      const buildStudioPreviewHtml = (
+        typeof SlideNextStudioDeckView !== 'undefined'
+        && SlideNextStudioDeckView
+        && typeof SlideNextStudioDeckView.buildStudioPreviewHtml === 'function'
+      )
+        ? SlideNextStudioDeckView.buildStudioPreviewHtml
+        : null;
+      const previewOptions = {
         ...createEditorDeckViewBuildOptions(doc),
-        presentationUrl: currentPresentationUrl,
-      });
+        presentationUrl: currentPresentationUrl
+      };
+      if (buildStudioPreviewHtml) {
+        return buildStudioPreviewHtml(doc, previewOptions);
+      }
+
+      const buildCanonicalDeck = typeof previewOptions.buildCanonicalDeck === 'function'
+        ? previewOptions.buildCanonicalDeck
+        : () => null;
+      const buildFallbackHtml = typeof previewOptions.buildFallbackHtml === 'function'
+        ? previewOptions.buildFallbackHtml
+        : () => '';
+      const deckHtmlOptions = previewOptions.deckHtmlOptions && typeof previewOptions.deckHtmlOptions === 'object'
+        ? previewOptions.deckHtmlOptions
+        : {};
+      const buildDeckPreviewHtml = (
+        typeof SlideNextDeckHtml !== 'undefined'
+        && SlideNextDeckHtml
+        && typeof SlideNextDeckHtml.buildDeckPreviewHtml === 'function'
+      )
+        ? SlideNextDeckHtml.buildDeckPreviewHtml
+        : null;
+      const canonicalDeck = buildCanonicalDeck(doc);
+      if (buildDeckPreviewHtml && canonicalDeck && Array.isArray(canonicalDeck.slides)) {
+        return buildDeckPreviewHtml(canonicalDeck, currentPresentationUrl || '', deckHtmlOptions);
+      }
+
+      const fallbackHtml = buildFallbackHtml(doc);
+      if (!fallbackHtml) {
+        return fallbackHtml;
+      }
+      const injectBaseHrefIntoHtml = (
+        typeof SlideNextDeckHtml !== 'undefined'
+        && SlideNextDeckHtml
+        && typeof SlideNextDeckHtml.injectBaseHrefIntoHtml === 'function'
+      )
+        ? SlideNextDeckHtml.injectBaseHrefIntoHtml
+        : null;
+      const buildPresentationBaseHref = (
+        typeof SlideNextDeckHtml !== 'undefined'
+        && SlideNextDeckHtml
+        && typeof SlideNextDeckHtml.buildPresentationBaseHref === 'function'
+      )
+        ? SlideNextDeckHtml.buildPresentationBaseHref
+        : null;
+      if (!injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
+        return fallbackHtml;
+      }
+
+      return injectBaseHrefIntoHtml(
+        fallbackHtml,
+        buildPresentationBaseHref(currentPresentationUrl || '', deckHtmlOptions)
+      );
     }
 
     function buildEditorSourceHtml(doc = getIframeDoc()) {
