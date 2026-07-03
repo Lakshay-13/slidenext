@@ -2089,6 +2089,38 @@
       });
     }
 
+    function renderEditorSourceDeckHtml(doc = getIframeDoc(), sourceViewOptions = {}, options = {}) {
+      if (typeof buildEditorSourceDeckHtml === 'function') {
+        return buildEditorSourceDeckHtml(doc, {
+          buildViewOptions: () => sourceViewOptions
+        });
+      }
+
+      const buildStudioSourceHtml = typeof options.buildStudioSourceHtml === 'function'
+        ? options.buildStudioSourceHtml
+        : resolveStudioDeckViewMethod('buildStudioSourceHtml');
+      if (buildStudioSourceHtml) {
+        return buildStudioSourceHtml(doc, sourceViewOptions);
+      }
+
+      const buildDeckSourceHtml = typeof options.buildDeckSourceHtml === 'function'
+        ? options.buildDeckSourceHtml
+        : resolveDeckHtmlMethod('buildDeckSourceHtml');
+      const canonicalDeck = typeof sourceViewOptions.buildCanonicalDeck === 'function'
+        ? sourceViewOptions.buildCanonicalDeck(doc)
+        : null;
+      if (buildDeckSourceHtml && canonicalDeck && Array.isArray(canonicalDeck.slides)) {
+        return buildDeckSourceHtml(canonicalDeck, sourceViewOptions.deckHtmlOptions || {});
+      }
+
+      const buildFallbackHtml = typeof options.buildFallbackHtml === 'function'
+        ? options.buildFallbackHtml
+        : typeof sourceViewOptions.buildFallbackHtml === 'function'
+          ? sourceViewOptions.buildFallbackHtml
+          : () => '';
+      return buildFallbackHtml(doc);
+    }
+
     function buildEditorSourceHtml(doc = getIframeDoc()) {
       return buildEditorSourceDeckHtml(doc);
     }
@@ -5869,6 +5901,11 @@
                 renderOptions: buildEditorDeckRenderOptions(doc, canonicalDeck)
               }
             };
+        if (typeof renderEditorSourceDeckHtml === 'function') {
+          return renderEditorSourceDeckHtml(doc, sourceViewOptions, {
+            buildFallbackHtml: () => persistedHtml
+          });
+        }
         if (typeof buildEditorSourceDeckHtml === 'function') {
           return buildEditorSourceDeckHtml(doc, {
             buildViewOptions: () => sourceViewOptions

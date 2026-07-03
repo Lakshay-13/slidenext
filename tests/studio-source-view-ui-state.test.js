@@ -392,6 +392,48 @@ test('buildEditorSourceDeckHtml reuses the local source deck view options helper
   assert.equal(delegatedArgs.buildDeckSourceHtml, buildDeckSourceHtml);
 });
 
+test('renderEditorSourceDeckHtml reuses buildEditorSourceDeckHtml when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const renderEditorSourceDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function renderEditorSourceDeckHtml(doc = getIframeDoc(), sourceViewOptions = {}, options = {}) {',
+    '\n\n    function buildEditorSourceHtml(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const sourceViewOptions = {
+    buildCanonicalDeck() {
+      return {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: []
+      };
+    }
+  };
+  const calls = [];
+  const context = {
+    __buildEditorSourceDeckHtml(nextDoc, options) {
+      calls.push([nextDoc, options]);
+      return '<html>source-from-build-editor-source-deck-html</html>';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(renderEditorSourceDeckHtmlSource, context);
+  vm.runInContext('buildEditorSourceDeckHtml = __buildEditorSourceDeckHtml;', context);
+
+  const result = context.renderEditorSourceDeckHtml(iframeDoc, sourceViewOptions);
+
+  assert.equal(result, '<html>source-from-build-editor-source-deck-html</html>');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], iframeDoc);
+  assert.equal(typeof calls[0][1].buildViewOptions, 'function');
+  assert.equal(calls[0][1].buildViewOptions(), sourceViewOptions);
+});
+
 test('buildEditorSourceHtml prefers the live active slide when the editor frame is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(

@@ -1691,7 +1691,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferNodeSourceHtml, false);
 });
 
-test('buildPersistableDeckHtml reuses buildEditorSourceDeckHtml when rendering canonical source without a persisted baseline', () => {
+test('buildPersistableDeckHtml reuses renderEditorSourceDeckHtml when rendering canonical source without a persisted baseline', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
     fileContent,
@@ -1732,8 +1732,9 @@ test('buildPersistableDeckHtml reuses buildEditorSourceDeckHtml when rendering c
     SlideNextStudioEditorPersistence: {
       ...editorPersistence
     },
-    buildEditorSourceDeckHtml(nextDoc, options) {
+    renderEditorSourceDeckHtml(nextDoc, sourceViewOptions, options) {
       calls.push([nextDoc, options]);
+      assert.equal(sourceViewOptions.buildCanonicalDeck(), canonicalDeck);
       return '<html>canonical-source</html>';
     },
     buildEditorCanonicalDeck(nextDoc) {
@@ -1763,7 +1764,8 @@ test('buildPersistableDeckHtml reuses buildEditorSourceDeckHtml when rendering c
   assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
   assert.equal(calls.length, 1);
   assert.equal(calls[0][0], null);
-  assert.equal(typeof calls[0][1].buildViewOptions, 'function');
+  assert.equal(typeof calls[0][1].buildFallbackHtml, 'function');
+  assert.equal(calls[0][1].buildFallbackHtml(), '');
 });
 
 test('buildPersistableDeckHtml prefers rendered canonical html when the current canonical deck differs from the persisted baseline', () => {
