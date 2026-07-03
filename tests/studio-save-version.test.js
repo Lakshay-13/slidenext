@@ -69,12 +69,6 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
 function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
@@ -1060,7 +1054,15 @@ test('applyCurrentStudioPersistenceSuccess delegates through the shared persiste
   let capturedHandlerOptionsArgs = null;
   let delegatedArgs = null;
   const context = {
+    currentPresentationUrl: '/presentations/default/index.html',
     SlideNextStudioEditorPersistence: {
+      createStudioPersistenceHandlerOptions(options = {}) {
+        capturedHandlerOptionsArgs = options;
+        return {
+          marker: 'persistence-handler-options',
+          ...options
+        };
+      },
       handleStudioPersistenceSuccess(nextPersistenceContext, handlerOptions) {
         delegatedArgs = {
           nextPersistenceContext,
@@ -1069,11 +1071,9 @@ test('applyCurrentStudioPersistenceSuccess delegates through the shared persiste
         return 'applied';
       }
     },
-    createCurrentStudioPersistenceHandlerOptions(options = {}) {
-      capturedHandlerOptionsArgs = options;
+    createCurrentStudioSessionStateOptions() {
       return {
-        marker: 'persistence-handler-options',
-        ...options
+        sessionMarker: 'session-options'
       };
     }
   };
@@ -1087,10 +1087,12 @@ test('applyCurrentStudioPersistenceSuccess delegates through the shared persiste
   });
 
   assert.equal(result, 'applied');
-  assert.equal(capturedHandlerOptionsArgs.presentationUrl, persistenceContext.presentationUrl);
+  assert.equal(capturedHandlerOptionsArgs.sessionMarker, 'session-options');
   assert.equal(capturedHandlerOptionsArgs.onSuccess, onSuccess);
   assert.equal(delegatedArgs.nextPersistenceContext, persistenceContext);
   assert.equal(delegatedArgs.handlerOptions.marker, 'persistence-handler-options');
+  assert.equal(delegatedArgs.handlerOptions.sessionMarker, 'session-options');
+  assert.equal(delegatedArgs.handlerOptions.presentationUrl, undefined);
   assert.equal(delegatedArgs.handlerOptions.onSuccess, onSuccess);
 });
 
@@ -1101,7 +1103,15 @@ test('applyCurrentStudioPersistenceFailure delegates through the shared failure 
   let capturedHandlerOptionsArgs = null;
   let delegatedArgs = null;
   const context = {
+    currentPresentationUrl: '/presentations/default/index.html',
     SlideNextStudioEditorPersistence: {
+      createStudioPersistenceHandlerOptions(options = {}) {
+        capturedHandlerOptionsArgs = options;
+        return {
+          marker: 'failure-handler-options',
+          ...options
+        };
+      },
       handleStudioPersistenceFailure(nextPersistenceContext, handlerOptions) {
         delegatedArgs = {
           nextPersistenceContext,
@@ -1110,11 +1120,9 @@ test('applyCurrentStudioPersistenceFailure delegates through the shared failure 
         return 'failed';
       }
     },
-    createCurrentStudioPersistenceHandlerOptions(options = {}) {
-      capturedHandlerOptionsArgs = options;
+    createCurrentStudioSessionStateOptions() {
       return {
-        marker: 'failure-handler-options',
-        ...options
+        sessionMarker: 'session-options'
       };
     }
   };
@@ -1127,9 +1135,11 @@ test('applyCurrentStudioPersistenceFailure delegates through the shared failure 
   });
 
   assert.equal(result, 'failed');
+  assert.equal(capturedHandlerOptionsArgs.sessionMarker, 'session-options');
   assert.equal(capturedHandlerOptionsArgs.onFailure, onFailure);
   assert.equal(delegatedArgs.nextPersistenceContext, persistenceContext);
   assert.equal(delegatedArgs.handlerOptions.marker, 'failure-handler-options');
+  assert.equal(delegatedArgs.handlerOptions.sessionMarker, 'session-options');
   assert.equal(delegatedArgs.handlerOptions.onFailure, onFailure);
 });
 

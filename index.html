@@ -5597,40 +5597,55 @@
       autoVersionTimers = clearedTimerState.autoVersionTimers;
     }
 
-    function createCurrentStudioPersistenceHandlerOptions(options = {}) {
+    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
       const persistencePresentationUrl = typeof options.presentationUrl === 'string' && options.presentationUrl
         ? options.presentationUrl
         : currentPresentationUrl;
-      return SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
-        ...createCurrentStudioSessionStateOptions(),
-        setPersistedHtml: (nextHtml) => {
-          applyCurrentStudioPersistedDeckState({ cleanHtml: nextHtml });
-        },
-        setPersistedCanonicalDeck: (nextCanonicalDeck) => {
-          applyCurrentStudioPersistedDeckState(
-            { canonicalDeck: nextCanonicalDeck },
-            { presentationUrl: persistencePresentationUrl }
-          );
-        },
-        setPersistedPlaybackState: (nextPlaybackState) => {
-          applyCurrentStudioPersistedDeckState({ playbackState: nextPlaybackState });
-        },
-        onSuccess: options.onSuccess,
-        onFailure: options.onFailure
-      });
-    }
-
-    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
       return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
         persistenceContext,
-        createCurrentStudioPersistenceHandlerOptions(options)
+        SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
+          ...createCurrentStudioSessionStateOptions(),
+          setPersistedHtml: (nextHtml) => {
+            applyCurrentStudioPersistedDeckState({ cleanHtml: nextHtml });
+          },
+          setPersistedCanonicalDeck: (nextCanonicalDeck) => {
+            applyCurrentStudioPersistedDeckState(
+              { canonicalDeck: nextCanonicalDeck },
+              { presentationUrl: persistencePresentationUrl }
+            );
+          },
+          setPersistedPlaybackState: (nextPlaybackState) => {
+            applyCurrentStudioPersistedDeckState({ playbackState: nextPlaybackState });
+          },
+          onSuccess: options.onSuccess,
+          onFailure: options.onFailure
+        })
       );
     }
 
     function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
+      const persistencePresentationUrl = typeof options.presentationUrl === 'string' && options.presentationUrl
+        ? options.presentationUrl
+        : currentPresentationUrl;
       return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
         persistenceContext,
-        createCurrentStudioPersistenceHandlerOptions(options)
+        SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
+          ...createCurrentStudioSessionStateOptions(),
+          setPersistedHtml: (nextHtml) => {
+            applyCurrentStudioPersistedDeckState({ cleanHtml: nextHtml });
+          },
+          setPersistedCanonicalDeck: (nextCanonicalDeck) => {
+            applyCurrentStudioPersistedDeckState(
+              { canonicalDeck: nextCanonicalDeck },
+              { presentationUrl: persistencePresentationUrl }
+            );
+          },
+          setPersistedPlaybackState: (nextPlaybackState) => {
+            applyCurrentStudioPersistedDeckState({ playbackState: nextPlaybackState });
+          },
+          onSuccess: options.onSuccess,
+          onFailure: options.onFailure
+        })
       );
     }
 

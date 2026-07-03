@@ -41,12 +41,6 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
 function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
