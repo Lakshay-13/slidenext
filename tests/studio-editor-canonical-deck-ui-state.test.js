@@ -1220,6 +1220,9 @@ test('resolveEditorCapturedCanonicalDeck falls back to the live editor canonical
   };
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
+    resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+      return options.buildCanonicalDeck();
+    },
     buildEditorCanonicalDeck(nextDoc) {
       buildEditorCanonicalDeckCalls += 1;
       assert.equal(nextDoc, iframeDoc);
