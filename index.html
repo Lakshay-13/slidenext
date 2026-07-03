@@ -1777,7 +1777,40 @@
     }
 
     function buildEditorSourceHtml(doc = getIframeDoc()) {
-      return SlideNextStudioDeckView.buildStudioSourceHtml(doc, createEditorDeckViewBuildOptions(doc));
+      const buildStudioSourceHtml = (
+        typeof SlideNextStudioDeckView !== 'undefined'
+        && SlideNextStudioDeckView
+        && typeof SlideNextStudioDeckView.buildStudioSourceHtml === 'function'
+      )
+        ? SlideNextStudioDeckView.buildStudioSourceHtml
+        : null;
+      const sourceOptions = createEditorDeckViewBuildOptions(doc);
+      if (buildStudioSourceHtml) {
+        return buildStudioSourceHtml(doc, sourceOptions);
+      }
+
+      const buildCanonicalDeck = typeof sourceOptions.buildCanonicalDeck === 'function'
+        ? sourceOptions.buildCanonicalDeck
+        : () => null;
+      const buildFallbackHtml = typeof sourceOptions.buildFallbackHtml === 'function'
+        ? sourceOptions.buildFallbackHtml
+        : () => '';
+      const deckHtmlOptions = sourceOptions.deckHtmlOptions && typeof sourceOptions.deckHtmlOptions === 'object'
+        ? sourceOptions.deckHtmlOptions
+        : {};
+      const buildDeckSourceHtml = (
+        typeof SlideNextDeckHtml !== 'undefined'
+        && SlideNextDeckHtml
+        && typeof SlideNextDeckHtml.buildDeckSourceHtml === 'function'
+      )
+        ? SlideNextDeckHtml.buildDeckSourceHtml
+        : null;
+      const canonicalDeck = buildCanonicalDeck(doc);
+      if (buildDeckSourceHtml && canonicalDeck && Array.isArray(canonicalDeck.slides)) {
+        return buildDeckSourceHtml(canonicalDeck, deckHtmlOptions);
+      }
+
+      return buildFallbackHtml(doc);
     }
 
     function launchPresentationHtml(html, startSlideIdx) {

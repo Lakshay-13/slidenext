@@ -196,6 +196,58 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
   assert.equal(result, '<html>persisted-baseline</html>');
 });
 
+test('buildEditorSourceHtml falls back to the shared deck html source builder when the deck view helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSourceHtmlSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function launchPresentationHtml(html, startSlideIdx) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {},
+    SlideNextDeckHtml: {
+      buildDeckSourceHtml(nextCanonicalDeck, options) {
+        calls.push({ nextCanonicalDeck, options });
+        return '<html>source-from-deck-html</html>';
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, null);
+      return canonicalDeck;
+    },
+    buildPersistableDeckHtml() {
+      throw new Error('buildPersistableDeckHtml should not run when source html renders from the canonical deck');
+    },
+    currentSlideIndex: 1,
+    getPersistedActiveSlideId() {
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorSourceHtmlSource, context);
+
+  const result = context.buildEditorSourceHtml();
+
+  assert.equal(result, '<html>source-from-deck-html</html>');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].nextCanonicalDeck, canonicalDeck);
+  assert.equal(calls[0].options.renderOptions.activeSlideId, 'slide-2');
+});
+
 test('buildEditorSourceHtml prefers the live active slide when the editor frame is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(
