@@ -454,10 +454,20 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
     schemaVersion: 1,
     slides: []
   };
+  const calls = [];
   const context = {
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    createEditorPersistableCanonicalDeckOverrideResolver(nextDoc, nextCanonicalDeck) {
+      calls.push(['createEditorPersistableCanonicalDeckOverrideResolver', nextDoc, nextCanonicalDeck]);
+      assert.equal(nextDoc, null);
+      assert.equal(nextCanonicalDeck, canonicalDeck);
+      return (shouldBuildFallbackCanonicalDeck = false) => {
+        calls.push(['resolveCanonicalDeckOverride', shouldBuildFallbackCanonicalDeck]);
+        return canonicalDeck;
+      };
+    },
     SlideNextDeckPersistence: {
       buildPersistableDeckHtml() {
         throw new Error('shared persistence builder should not run when the editor frame is unavailable');
@@ -496,6 +506,10 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
     '<html>persisted-baseline</html>'
   );
   assert.equal(buildEditorCanonicalDeckCalls, 0);
+  assert.deepEqual(calls, [
+    ['createEditorPersistableCanonicalDeckOverrideResolver', null, canonicalDeck],
+    ['resolveCanonicalDeckOverride', true]
+  ]);
 });
 
 test('buildPersistableDeckHtml falls back to the editor canonical deck when a provided override is malformed', () => {
