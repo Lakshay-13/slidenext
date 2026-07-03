@@ -150,6 +150,43 @@ test('openPresentationModalWithContent applies html launches through the shared 
   assert.equal(bodyEl.style.overflow, 'hidden');
 });
 
+test('openPresentationModalWithContent can resolve html launch chrome from the document', () => {
+  const iframeEl = createIframe();
+  const modalEl = {
+    classList: createClassList(['hidden', 'opacity-0', 'pointer-events-none'])
+  };
+  const bodyEl = {
+    style: {
+      overflow: ''
+    }
+  };
+  const documentStub = {
+    body: bodyEl,
+    getElementById(id) {
+      switch (id) {
+        case 'presentationModal':
+          return modalEl;
+        case 'presentationFrame':
+          return iframeEl;
+        default:
+          return null;
+      }
+    }
+  };
+
+  preview.openPresentationModalWithContent({
+    document: documentStub,
+    contentType: 'html',
+    html: '<html>preview</html>',
+    startSlideIdx: 1
+  });
+
+  assert.equal(iframeEl.srcdoc, '<html>preview</html>');
+  assert.equal(typeof iframeEl.onload, 'function');
+  assert.equal(modalEl.classList.contains('active'), true);
+  assert.equal(bodyEl.style.overflow, 'hidden');
+});
+
 test('launchStudioPresentation prefers preview html over the presentation url when both are available', () => {
   const iframeEl = createIframe();
   const modalEl = {
@@ -198,6 +235,44 @@ test('launchStudioPresentation falls back to the presentation url when no previe
   assert.equal(result, 'url');
   assert.equal(iframeEl.src, '/presentations/onboarding-presentation/index.html');
   assert.equal(iframeEl.srcdoc, '');
+});
+
+test('launchStudioPresentation can resolve preview chrome from the document', () => {
+  const iframeEl = createIframe();
+  const modalEl = {
+    classList: createClassList(['hidden', 'opacity-0', 'pointer-events-none'])
+  };
+  const bodyEl = {
+    style: {
+      overflow: ''
+    }
+  };
+  const documentStub = {
+    body: bodyEl,
+    getElementById(id) {
+      switch (id) {
+        case 'presentationModal':
+          return modalEl;
+        case 'presentationFrame':
+          return iframeEl;
+        default:
+          return null;
+      }
+    }
+  };
+
+  const result = preview.launchStudioPresentation({
+    document: documentStub,
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    previewHtml: '<html>preview</html>',
+    startSlideIdx: 2
+  });
+
+  assert.equal(result, 'html');
+  assert.equal(iframeEl.srcdoc, '<html>preview</html>');
+  assert.equal(iframeEl.src, '');
+  assert.equal(modalEl.classList.contains('active'), true);
+  assert.equal(bodyEl.style.overflow, 'hidden');
 });
 
 test('resetPresentationModal clears preview state immediately', () => {

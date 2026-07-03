@@ -87,13 +87,12 @@
   }
 
   function openPresentationModalWithLoader(options = {}) {
-    const {
-      modalEl,
-      iframeEl,
-      bodyEl,
-      startSlideIdx,
-      slideReadyDelayMs = 300
-    } = options;
+    const documentRef = resolvePreviewDocument(options);
+    const modalEl = options.modalEl || resolvePreviewDocumentElement(documentRef, 'presentationModal');
+    const iframeEl = options.iframeEl || resolvePreviewDocumentElement(documentRef, 'presentationFrame');
+    const bodyEl = options.bodyEl || (documentRef && documentRef.body ? documentRef.body : null);
+    const startSlideIdx = options.startSlideIdx;
+    const slideReadyDelayMs = Number.isFinite(options.slideReadyDelayMs) ? options.slideReadyDelayMs : 300;
 
     if (!modalEl || !iframeEl) {
       return { modalEl, iframeEl };

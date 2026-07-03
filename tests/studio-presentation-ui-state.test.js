@@ -185,9 +185,9 @@ test('launchPreview delegates the launch-mode decision to the shared preview hel
   context.launchPreview();
 
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
-    modalEl: { id: 'presentationModal' },
-    iframeEl: { id: 'presentationFrame' },
-    bodyEl: { style: {} },
+    document: {
+      body: { style: {} }
+    },
     startSlideIdx: 2,
     presentationUrl: '/presentations/onboarding-presentation/index.html',
     previewHtml: '<html>preview</html>'

@@ -1691,9 +1691,7 @@
 
     function launchPresentationHtml(html, startSlideIdx) {
       SlideNextStudioPreview.launchPresentationHtml({
-        modalEl: document.getElementById('presentationModal'),
-        iframeEl: document.getElementById('presentationFrame'),
-        bodyEl: document.body,
+        document,
         startSlideIdx,
         html
       });
@@ -6643,9 +6641,7 @@
       if (previewBtn && previewBtn.disabled) return;
       if (!currentPresentationUrl) return;
       SlideNextStudioPreview.launchStudioPresentation({
-        modalEl: document.getElementById('presentationModal'),
-        iframeEl: document.getElementById('presentationFrame'),
-        bodyEl: document.body,
+        document,
         startSlideIdx: getStudioActiveSlideIndex(),
         presentationUrl: currentPresentationUrl,
         previewHtml: buildEditorPreviewHtml()
