@@ -405,6 +405,89 @@ test('buildHistoryFrameHtml reuses shared deck source sanitization for history s
   );
 });
 
+test('getEditorHistoryOptions reuses the local metadata persistence resolver when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const getEditorHistoryOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorHistoryOptions(options = {}) {',
+    '\n\n    function getEditorHistoryStackOptions(options = {}) {'
+  );
+
+  const calls = [];
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckImport: {
+      sanitizeDeckSourceClone(root, options) {
+        calls.push(['sanitizeDeckSourceClone', root, options]);
+      }
+    },
+    __resolveEditorMetadataPersistenceOptions(options = {}) {
+      calls.push(['resolveEditorMetadataPersistenceOptions', options]);
+      return {
+        emptyContainerIds: ['pixelMatrix'],
+        transientClassNames: ['revealed']
+      };
+    },
+    getActiveSlideId() {
+      return 'slide-1';
+    },
+    getSelectedEditorElementIds() {
+      return [];
+    },
+    areEditorIdListsEqual(left, right) {
+      return JSON.stringify(left) === JSON.stringify(right);
+    }
+  };
+  const root = { label: 'frame-root' };
+
+  vm.createContext(context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  vm.runInContext(getEditorHistoryOptionsSource, context);
+  vm.runInContext('resolveEditorMetadataPersistenceOptions = __resolveEditorMetadataPersistenceOptions;', context);
+
+  const result = context.getEditorHistoryOptions({
+    persistenceOptions: {
+      transientClassNames: ['revealed']
+    }
+  });
+
+  result.sanitizeFrameRoot(root);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls)),
+    [
+      [
+        'resolveEditorMetadataPersistenceOptions',
+        {
+          persistenceOptions: {
+            transientClassNames: ['revealed']
+          }
+        }
+      ],
+      [
+        'sanitizeDeckSourceClone',
+        root,
+        {
+          ignoredNodeIds: ['editor-style-tag', 'editor-theme-override-tag', 'editorSelectionOverlay'],
+          transientClassNames: ['editor-selected', 'editor-hoverable', 'editor-dragging'],
+          editorElementIdAttr: 'data-editor-id',
+          editorSlideIdAttr: 'data-slide-id',
+          persistenceOptions: {
+            emptyContainerIds: ['pixelMatrix'],
+            transientClassNames: ['revealed']
+          }
+        }
+      ]
+    ]
+  );
+});
+
 test('buildHistoryFrameHtml forwards sanitizer overrides into getEditorHistoryOptions', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildHistoryFrameHtmlSource = extractFunctionSource(

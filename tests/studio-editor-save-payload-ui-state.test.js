@@ -745,11 +745,77 @@ test('resolveEditorMetadataPersistenceOptions prefers the shared merged persiste
       transientClassNames: ['revealed']
     }
   );
-  assert.deepEqual(calls, [[
-    'resolveMergedPresentationPersistenceOptions',
-    currentPresentationMetadata,
-    undefined
-  ]]);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls)),
+    [[
+      'resolveMergedPresentationPersistenceOptions',
+      currentPresentationMetadata,
+      {}
+    ]]
+  );
+});
+
+test('resolveEditorMetadataPersistenceOptions merges explicit persistence options when the merged resolver is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+
+  const currentPresentationMetadata = {
+    id: 'computer-vision-presentation',
+    persistence: {
+      emptyContainerIds: ['pixelMatrix']
+    }
+  };
+  const calls = [];
+  const context = {
+    SlideNextDeckLoader: {
+      resolvePresentationPersistenceOptions(metadata) {
+        calls.push(['resolvePresentationPersistenceOptions', metadata]);
+        return {
+          emptyContainerIds: ['pixelMatrix']
+        };
+      }
+    },
+    SlideNextPresentationMetadata: {
+      mergePresentationPersistenceOptions(...optionSets) {
+        calls.push(['mergePresentationPersistenceOptions', optionSets]);
+        return optionSets.reduce((merged, optionSet) => ({
+          ...merged,
+          ...(optionSet || {})
+        }), {});
+      }
+    },
+    currentPresentationMetadata
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveEditorMetadataPersistenceOptions({
+      persistenceOptions: {
+        transientClassNames: ['revealed']
+      }
+    }))),
+    {
+      emptyContainerIds: ['pixelMatrix'],
+      transientClassNames: ['revealed']
+    }
+  );
+  assert.deepEqual(calls[0], ['resolvePresentationPersistenceOptions', currentPresentationMetadata]);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[1])),
+    [
+      'mergePresentationPersistenceOptions',
+      [
+        { emptyContainerIds: ['pixelMatrix'] },
+        { transientClassNames: ['revealed'] }
+      ]
+    ]
+  );
 });
 
 test('buildPersistableDeckHtml reuses the local reusable persisted html resolver when available', () => {

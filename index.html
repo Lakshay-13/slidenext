@@ -3137,19 +3137,27 @@
       const removableClassNames = deckSanitizerOptions.transientClassNames;
       const editorElementIdAttr = deckSanitizerOptions.editorElementIdAttr;
       const editorSlideIdAttr = deckSanitizerOptions.editorSlideIdAttr;
-      const activePresentationMetadata = typeof currentPresentationMetadata !== 'undefined'
-        ? currentPresentationMetadata
-        : null;
-      const resolveMergedPresentationPersistenceOptions = (
-        typeof SlideNextDeckLoader !== 'undefined'
-        && SlideNextDeckLoader
-        && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
-      )
-        ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
-        : null;
-      const persistenceOptions = resolveMergedPresentationPersistenceOptions
-        ? resolveMergedPresentationPersistenceOptions(activePresentationMetadata || {}, options.persistenceOptions)
+      const persistenceOptions = typeof resolveEditorMetadataPersistenceOptions === 'function'
+        ? resolveEditorMetadataPersistenceOptions({
+            persistenceOptions: options.persistenceOptions
+          })
         : (() => {
+            const activePresentationMetadata = typeof currentPresentationMetadata !== 'undefined'
+              ? currentPresentationMetadata
+              : null;
+            const resolveMergedPresentationPersistenceOptions = (
+              typeof SlideNextDeckLoader !== 'undefined'
+              && SlideNextDeckLoader
+              && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
+            )
+              ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
+              : null;
+            const explicitPersistenceOptions = options.persistenceOptions && typeof options.persistenceOptions === 'object' && !Array.isArray(options.persistenceOptions)
+              ? { ...options.persistenceOptions }
+              : {};
+            if (resolveMergedPresentationPersistenceOptions) {
+              return resolveMergedPresentationPersistenceOptions(activePresentationMetadata || {}, explicitPersistenceOptions);
+            }
             const metadataPersistenceOptions = (
               typeof SlideNextDeckLoader !== 'undefined'
               && SlideNextDeckLoader
@@ -3162,9 +3170,6 @@
                 && !Array.isArray(activePresentationMetadata.persistence)
                 ? { ...activePresentationMetadata.persistence }
                 : {};
-            const explicitPersistenceOptions = options.persistenceOptions && typeof options.persistenceOptions === 'object' && !Array.isArray(options.persistenceOptions)
-              ? { ...options.persistenceOptions }
-              : {};
             const mergePresentationPersistenceOptions = (
               typeof SlideNextPresentationMetadata !== 'undefined'
               && SlideNextPresentationMetadata
@@ -5823,6 +5828,9 @@
         : (typeof currentPresentationMetadata !== 'undefined'
             ? currentPresentationMetadata
             : null);
+      const explicitPersistenceOptions = options.persistenceOptions && typeof options.persistenceOptions === 'object' && !Array.isArray(options.persistenceOptions)
+        ? { ...options.persistenceOptions }
+        : {};
       const resolveMergedPresentationPersistenceOptions = typeof options.resolveMergedPresentationPersistenceOptions === 'function'
         ? options.resolveMergedPresentationPersistenceOptions
         : (
@@ -5833,9 +5841,9 @@
           ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
           : null;
       if (resolveMergedPresentationPersistenceOptions) {
-        return resolveMergedPresentationPersistenceOptions(activePresentationMetadata || {}, options.persistenceOptions);
+        return resolveMergedPresentationPersistenceOptions(activePresentationMetadata || {}, explicitPersistenceOptions);
       }
-      return (
+      const metadataPersistenceOptions = (
         typeof options.resolvePresentationPersistenceOptions === 'function'
           ? options.resolvePresentationPersistenceOptions
           : (
@@ -5857,6 +5865,24 @@
           && !Array.isArray(activePresentationMetadata.persistence)
           ? { ...activePresentationMetadata.persistence }
           : {};
+      const mergePresentationPersistenceOptions = typeof options.mergePresentationPersistenceOptions === 'function'
+        ? options.mergePresentationPersistenceOptions
+        : (
+            typeof SlideNextPresentationMetadata !== 'undefined'
+            && SlideNextPresentationMetadata
+            && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
+          )
+          ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
+          : (...optionSets) => optionSets.reduce((mergedOptions, optionSet) => ({
+              ...mergedOptions,
+              ...(optionSet && typeof optionSet === 'object' && !Array.isArray(optionSet)
+                ? optionSet
+                : {})
+            }), {});
+      return mergePresentationPersistenceOptions(
+        metadataPersistenceOptions,
+        explicitPersistenceOptions
+      );
     }
 
     function buildPersistableDeckHtml(doc = getIframeDoc()) {
