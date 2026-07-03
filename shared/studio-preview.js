@@ -107,18 +107,35 @@
     return { modalEl, iframeEl };
   }
 
-  function launchPresentationUrl(options = {}) {
+  function openPresentationModalWithContent(options = {}) {
     const { iframeEl } = openPresentationModalWithLoader(options);
-    if (!iframeEl) return;
-    iframeEl.removeAttribute('srcdoc');
-    iframeEl.src = options.url || '';
+    if (!iframeEl) {
+      return { modalEl: options.modalEl, iframeEl };
+    }
+
+    if (options.contentType === 'url') {
+      iframeEl.removeAttribute('srcdoc');
+      iframeEl.src = options.url || '';
+      return { modalEl: options.modalEl, iframeEl };
+    }
+
+    iframeEl.removeAttribute('src');
+    iframeEl.srcdoc = options.html || '';
+    return { modalEl: options.modalEl, iframeEl };
+  }
+
+  function launchPresentationUrl(options = {}) {
+    openPresentationModalWithContent({
+      ...options,
+      contentType: 'url'
+    });
   }
 
   function launchPresentationHtml(options = {}) {
-    const { iframeEl } = openPresentationModalWithLoader(options);
-    if (!iframeEl) return;
-    iframeEl.removeAttribute('src');
-    iframeEl.srcdoc = options.html || '';
+    openPresentationModalWithContent({
+      ...options,
+      contentType: 'html'
+    });
   }
 
   function closePresentationModal(options = {}) {
@@ -259,6 +276,7 @@
     clearPresentationFrameLoadHandler,
     createPresentationFrameLoadHandler,
     openPresentationModalWithLoader,
+    openPresentationModalWithContent,
     launchPresentationUrl,
     launchPresentationHtml,
     closePresentationModal,

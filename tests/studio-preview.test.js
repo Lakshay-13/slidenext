@@ -98,6 +98,58 @@ test('closePresentationModal clears the preview load handler before removing sou
   assert.equal(modalEl.classList.contains('active'), false);
 });
 
+test('openPresentationModalWithContent applies url launches through the shared modal loader', () => {
+  const iframeEl = createIframe();
+  const modalEl = {
+    classList: createClassList(['hidden', 'opacity-0', 'pointer-events-none'])
+  };
+  const bodyEl = {
+    style: {
+      overflow: ''
+    }
+  };
+
+  preview.openPresentationModalWithContent({
+    modalEl,
+    iframeEl,
+    bodyEl,
+    contentType: 'url',
+    url: '/presentations/onboarding-presentation/index.html',
+    startSlideIdx: 2
+  });
+
+  assert.equal(iframeEl.src, '/presentations/onboarding-presentation/index.html');
+  assert.equal(typeof iframeEl.onload, 'function');
+  assert.equal(modalEl.classList.contains('active'), true);
+  assert.equal(bodyEl.style.overflow, 'hidden');
+});
+
+test('openPresentationModalWithContent applies html launches through the shared modal loader', () => {
+  const iframeEl = createIframe();
+  const modalEl = {
+    classList: createClassList(['hidden', 'opacity-0', 'pointer-events-none'])
+  };
+  const bodyEl = {
+    style: {
+      overflow: ''
+    }
+  };
+
+  preview.openPresentationModalWithContent({
+    modalEl,
+    iframeEl,
+    bodyEl,
+    contentType: 'html',
+    html: '<html>preview</html>',
+    startSlideIdx: 1
+  });
+
+  assert.equal(iframeEl.srcdoc, '<html>preview</html>');
+  assert.equal(typeof iframeEl.onload, 'function');
+  assert.equal(modalEl.classList.contains('active'), true);
+  assert.equal(bodyEl.style.overflow, 'hidden');
+});
+
 test('resetPresentationModal clears preview state immediately', () => {
   const iframeEl = createIframe();
   iframeEl.onload = () => {};
