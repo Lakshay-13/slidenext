@@ -1716,15 +1716,17 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
     isCurrentDeckStatePersisted() {
       throw new Error('isCurrentDeckStatePersisted should not run when editor content is unavailable');
     },
-    isStaleEditorPersistenceTask() {
-      return false;
-    },
     loadVersions() {},
     saveVersionCheckpoint: async () => {
       saveVersionCalls += 1;
       return { success: true };
     },
-    SlideNextStudioEditorPersistence: editorPersistence,
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      isStudioPersistenceTaskStale() {
+        return false;
+      }
+    },
     studioEditorSessionToken: 4
   };
 
@@ -1813,9 +1815,6 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
       });
       return false;
     },
-    isStaleEditorPersistenceTask() {
-      return false;
-    },
     loadVersions(presentationUrl, sessionToken) {
       loadVersionsCalls.push([presentationUrl, sessionToken]);
     },
@@ -1823,7 +1822,12 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
       saveVersionCalls.push(args);
       return { success: true };
     },
-    SlideNextStudioEditorPersistence: editorPersistence,
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      isStudioPersistenceTaskStale() {
+        return false;
+      }
+    },
     studioEditorSessionToken: 4
   };
 
@@ -1921,9 +1925,6 @@ test('executeSaveAutoVersion skips redundant auto version saves when the capture
       });
       return true;
     },
-    isStaleEditorPersistenceTask() {
-      return false;
-    },
     loadVersions(presentationUrl, sessionToken) {
       loadVersionsCalls.push([presentationUrl, sessionToken]);
     },
@@ -1931,7 +1932,12 @@ test('executeSaveAutoVersion skips redundant auto version saves when the capture
       saveVersionCalls.push(args);
       return { success: true };
     },
-    SlideNextStudioEditorPersistence: editorPersistence,
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      isStudioPersistenceTaskStale() {
+        return false;
+      }
+    },
     studioEditorSessionToken: 4
   };
 
@@ -2234,14 +2240,16 @@ test('executeSaveAutoVersion reuses the local version checkpoint failure-aware h
     getIframeDoc() {
       return { label: 'iframe-doc' };
     },
-    isStaleEditorPersistenceTask() {
-      return false;
-    },
     resolveCurrentStudioVersionCheckpointPersistenceState() {
       return versionCheckpointPersistenceState;
     },
     saveVersionCheckpoint() {
       throw new Error('executeSaveAutoVersion should reuse executeCurrentStudioVersionCheckpointSave when it is available');
+    },
+    SlideNextStudioEditorPersistence: {
+      isStudioPersistenceTaskStale() {
+        return false;
+      }
     },
     studioEditorSessionToken: 4
   };
@@ -2308,11 +2316,13 @@ test('executeSaveAutoVersion reports unsuccessful checkpoint responses through t
     isCurrentStudioVersionCheckpointSavePersisted() {
       return false;
     },
-    isStaleEditorPersistenceTask() {
-      return false;
-    },
     resolveCurrentStudioVersionCheckpointPersistenceState() {
       return versionCheckpointPersistenceState;
+    },
+    SlideNextStudioEditorPersistence: {
+      isStudioPersistenceTaskStale() {
+        return false;
+      }
     },
     studioEditorSessionToken: 4
   };
@@ -2374,9 +2384,6 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
     isCurrentStudioVersionCheckpointSavePersisted() {
       return false;
     },
-    isStaleEditorPersistenceTask() {
-      return false;
-    },
     resolveCurrentStudioVersionCheckpointPersistenceState() {
       return versionCheckpointPersistenceState;
     },
@@ -2384,6 +2391,9 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
       success: true
     }),
     SlideNextStudioEditorPersistence: {
+      isStudioPersistenceTaskStale() {
+        return false;
+      },
       executeStudioVersionCheckpointSaveWithFailure: editorPersistence.executeStudioVersionCheckpointSaveWithFailure,
       executeStudioVersionCheckpointSaveWithSuccess: editorPersistence.executeStudioVersionCheckpointSaveWithSuccess
     },
@@ -2531,9 +2541,6 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
     isCurrentDeckStatePersisted() {
       return false;
     },
-    isStaleEditorPersistenceTask() {
-      return false;
-    },
     setStudioAutoSaveStatus(state) {
       statusEl.innerHTML = state;
     },
@@ -2541,6 +2548,12 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
     setTimeout(callback) {
       scheduledCallback = callback;
       return 1;
+    },
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      isStudioPersistenceTaskStale() {
+        return false;
+      }
     },
     studioEditorSessionToken: 9
   };
@@ -2593,6 +2606,9 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
   const context = {
     SlideNextStudioEditorPersistence: {
       ...editorPersistence,
+      isStudioPersistenceTaskStale() {
+        return false;
+      },
       async executeStudioAutoSavePersistenceRequestWithHandlers(...args) {
         capturedAutoSaveExecutionArgs = args;
         return editorPersistence.executeStudioAutoSavePersistenceRequestWithHandlers(
@@ -2653,9 +2669,6 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
       return null;
     },
     isCurrentDeckStatePersisted() {
-      return false;
-    },
-    isStaleEditorPersistenceTask() {
       return false;
     },
     setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl) {
@@ -2795,9 +2808,6 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
     isCurrentDeckStatePersisted() {
       return false;
     },
-    isStaleEditorPersistenceTask() {
-      return false;
-    },
     setCurrentPresentationCanonicalDeck() {},
     setStudioAutoSaveStatus(state) {
       statusEl.innerHTML = state;
@@ -2805,6 +2815,12 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
     setTimeout(callback) {
       scheduledCallback = callback;
       return 1;
+    },
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      isStudioPersistenceTaskStale() {
+        return false;
+      }
     },
     studioEditorSessionToken: 11,
     updateEditorPersistedDeckState(nextState) {
@@ -2921,9 +2937,6 @@ test('triggerAutoSave clears the persisted playback baseline after a successful 
     isCurrentDeckStatePersisted() {
       return false;
     },
-    isStaleEditorPersistenceTask() {
-      return false;
-    },
     setCurrentPresentationCanonicalDeck() {},
     setStudioAutoSaveStatus(state) {
       statusEl.innerHTML = state;
@@ -2931,6 +2944,12 @@ test('triggerAutoSave clears the persisted playback baseline after a successful 
     setTimeout(callback) {
       scheduledCallback = callback;
       return 1;
+    },
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      isStudioPersistenceTaskStale() {
+        return false;
+      }
     },
     studioEditorSessionToken: 13,
     updateEditorPersistedDeckState(nextState) {
