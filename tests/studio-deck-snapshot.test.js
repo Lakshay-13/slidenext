@@ -205,6 +205,39 @@ test('createStudioDeckSnapshotBuildOptions reuses the shared deck-view canonical
   assert.equal(typeof (delegatedOptions && delegatedOptions.options.resolveLiveActiveSlideId), 'function');
 });
 
+test('createStudioDeckSnapshotBuildOptions reuses the shared deck-view live active slide resolver when available', { concurrency: false }, () => {
+  const doc = { label: 'doc' };
+  const activeSlide = { id: 'active-slide-el' };
+  const originalResolveStudioLiveActiveSlide = deckView.resolveStudioLiveActiveSlide;
+  let delegatedOptions = null;
+
+  deckView.resolveStudioLiveActiveSlide = (nextDoc, options = {}) => {
+    delegatedOptions = { nextDoc, options };
+    return activeSlide;
+  };
+
+  try {
+    const result = deckSnapshot.createStudioDeckSnapshotBuildOptions(doc, {
+      resolveCanonicalDeckViewState() {
+        return {
+          resolveCanonicalDeck() {
+            return null;
+          },
+          liveActiveSlideId: 'slide-1',
+          resolvedCanonicalDeck: null
+        };
+      }
+    });
+
+    assert.equal(result.getActiveSlide(), activeSlide);
+  } finally {
+    deckView.resolveStudioLiveActiveSlide = originalResolveStudioLiveActiveSlide;
+  }
+
+  assert.equal(delegatedOptions && delegatedOptions.nextDoc, doc);
+  assert.equal(typeof (delegatedOptions && delegatedOptions.options.querySelector), 'undefined');
+});
+
 test('createStudioDeckSnapshotBuildOptions resolves live snapshot state from the shared canonical view state', () => {
   const doc = { label: 'doc' };
   const canonicalDeck = {

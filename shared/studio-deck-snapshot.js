@@ -96,6 +96,22 @@
     };
   }
 
+  function resolveStudioDeckSnapshotLiveActiveSlide(doc, options = {}) {
+    const deckView = resolveStudioDeckView();
+    if (deckView && typeof deckView.resolveStudioLiveActiveSlide === 'function') {
+      return deckView.resolveStudioLiveActiveSlide(doc, {
+        querySelector: options.querySelector
+      });
+    }
+
+    const querySelector = typeof options.querySelector === 'function'
+      ? options.querySelector
+      : (sourceDoc, selector) => sourceDoc && typeof sourceDoc.querySelector === 'function'
+          ? sourceDoc.querySelector(selector)
+          : null;
+    return querySelector(doc, '.slide-active') || null;
+  }
+
   function createStudioDeckSnapshotBuildOptions(doc, options = {}) {
     const resolveCanonicalDeckViewState = typeof options.resolveCanonicalDeckViewState === 'function'
       ? options.resolveCanonicalDeckViewState
@@ -105,14 +121,7 @@
       : () => '';
     const resolveLiveActiveSlide = typeof options.resolveLiveActiveSlide === 'function'
       ? options.resolveLiveActiveSlide
-      : (nextDoc) => {
-          const querySelector = typeof options.querySelector === 'function'
-            ? options.querySelector
-            : (sourceDoc, selector) => sourceDoc && typeof sourceDoc.querySelector === 'function'
-                ? sourceDoc.querySelector(selector)
-                : null;
-          return querySelector(nextDoc, '.slide-active') || null;
-        };
+      : (nextDoc) => resolveStudioDeckSnapshotLiveActiveSlide(nextDoc, options);
     const canonicalDeckViewState = resolveCanonicalDeckViewState(doc);
     const resolveCanonicalDeck = canonicalDeckViewState && typeof canonicalDeckViewState.resolveCanonicalDeck === 'function'
       ? canonicalDeckViewState.resolveCanonicalDeck
