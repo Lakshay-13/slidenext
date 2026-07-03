@@ -48,6 +48,35 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
   vm.runInContext(helperSource, context);
 }
 
+function loadBuildEditorSaveRequestBody(fileContent, context, helperSource) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  if (typeof context.resolveEditorCanonicalDeckOverride !== 'function') {
+    const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
+      fileContent,
+      'function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {',
+      '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
+    );
+    vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
+  }
+  if (typeof context.resolveEditorSaveCanonicalDeck !== 'function') {
+    const resolveEditorSaveCanonicalDeckSource = extractFunctionSource(
+      fileContent,
+      'function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
+      '\n\n    function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {'
+    );
+    vm.runInContext(resolveEditorSaveCanonicalDeckSource, context);
+  }
+  if (typeof context.createEditorSaveCanonicalDeckResolver !== 'function') {
+    const createEditorSaveCanonicalDeckResolverSource = extractFunctionSource(
+      fileContent,
+      'function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {',
+      '\n\n    function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {'
+    );
+    vm.runInContext(createEditorSaveCanonicalDeckResolverSource, context);
+  }
+  vm.runInContext(helperSource, context);
+}
+
 test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requests', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(
@@ -84,7 +113,7 @@ test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requ
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorSaveRequestBodySource, context);
+  loadBuildEditorSaveRequestBody(fileContent, context, buildEditorSaveRequestBodySource);
 
   assert.deepEqual(
     context.buildEditorSaveRequestBody(doc, '<html>persisted</html>', {
@@ -143,7 +172,7 @@ test('buildEditorSaveRequestBody falls back to the persisted html baseline when 
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorSaveRequestBodySource, context);
+  loadBuildEditorSaveRequestBody(fileContent, context, buildEditorSaveRequestBodySource);
 
   assert.deepEqual(
     context.buildEditorSaveRequestBody(),
@@ -195,7 +224,7 @@ test('buildEditorSaveRequestBody reuses a provided canonical deck override', () 
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorSaveRequestBodySource, context);
+  loadBuildEditorSaveRequestBody(fileContent, context, buildEditorSaveRequestBodySource);
 
   assert.deepEqual(
     context.buildEditorSaveRequestBody(null, null, {
@@ -251,7 +280,7 @@ test('buildEditorSaveRequestBody falls back to the editor canonical deck when a 
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorSaveRequestBodySource, context);
+  loadBuildEditorSaveRequestBody(fileContent, context, buildEditorSaveRequestBodySource);
 
   assert.deepEqual(
     context.buildEditorSaveRequestBody(null, null, {
@@ -306,7 +335,7 @@ test('buildEditorSaveRequestBody reuses the captured persistable deck state when
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorSaveRequestBodySource, context);
+  loadBuildEditorSaveRequestBody(fileContent, context, buildEditorSaveRequestBodySource);
 
   assert.deepEqual(
     context.buildEditorSaveRequestBody(),
@@ -337,7 +366,7 @@ test('buildEditorSaveRequestBody reuses the local save canonical deck helper whe
   const calls = [];
   const context = {
     SlideNextStudioEditorPersistence: editorPersistence,
-    createEditorSaveCanonicalDeckResolver(nextDoc) {
+    __createEditorSaveCanonicalDeckResolver(nextDoc) {
       calls.push(['createEditorSaveCanonicalDeckResolver', nextDoc]);
       assert.equal(nextDoc, doc);
       return (nextCanonicalDeck) => {
@@ -367,7 +396,11 @@ test('buildEditorSaveRequestBody reuses the local save canonical deck helper whe
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorSaveRequestBodySource, context);
+  loadBuildEditorSaveRequestBody(fileContent, context, buildEditorSaveRequestBodySource);
+  vm.runInContext(
+    'createEditorSaveCanonicalDeckResolver = __createEditorSaveCanonicalDeckResolver;',
+    context
+  );
 
   assert.deepEqual(
     context.buildEditorSaveRequestBody(),

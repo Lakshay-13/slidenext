@@ -6238,31 +6238,7 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
         ? options.canonicalDeck
         : null;
-      const resolveSaveCanonicalDeck = typeof createEditorSaveCanonicalDeckResolver === 'function'
-        ? createEditorSaveCanonicalDeckResolver(doc)
-        : typeof resolveEditorSaveCanonicalDeck === 'function'
-          ? (nextCanonicalDeck) => resolveEditorSaveCanonicalDeck(doc, nextCanonicalDeck)
-        : (nextCanonicalDeck) => typeof resolveEditorCanonicalDeckOverride === 'function'
-          ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
-              buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
-            })
-          : (() => {
-              const canonicalDeckValidator = (
-                typeof SlideNextCanonicalDeck !== 'undefined'
-                && SlideNextCanonicalDeck
-                && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-              )
-                ? SlideNextCanonicalDeck.isCanonicalDeck
-                : null;
-              return !canonicalDeckValidator
-                ? (nextCanonicalDeck || buildEditorCanonicalDeck(doc))
-                : (
-                    nextCanonicalDeck
-                    && !canonicalDeckValidator(nextCanonicalDeck)
-                  )
-                  ? buildEditorCanonicalDeck(doc)
-                  : (nextCanonicalDeck || buildEditorCanonicalDeck(doc));
-            })();
+      const resolveSaveCanonicalDeck = createEditorSaveCanonicalDeckResolver(doc);
       const capturedDeckState = typeof cleanHtml === 'string' || typeof captureEditorPersistableDeckState !== 'function'
         ? null
         : captureEditorPersistableDeckState(doc, {
