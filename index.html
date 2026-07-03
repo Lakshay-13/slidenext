@@ -1458,11 +1458,13 @@
           getPersistedActiveSlideId,
           resolveCanonicalDeck: (nextDoc) => buildEditorCanonicalDeck(nextDoc),
           resolveCanonicalDeckOverride: (nextCanonicalDeck, nextDoc) => (
-            typeof resolveEditorCanonicalDeckOverride === 'function'
-              ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
-                  buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
-                })
-              : nextCanonicalDeck
+            typeof resolveEditorDeckCanonicalOverride === 'function'
+              ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
+              : typeof resolveEditorCanonicalDeckOverride === 'function'
+                ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+                    buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+                  })
+                : nextCanonicalDeck
           ),
           resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
           isCanonicalDeck: (
@@ -1579,11 +1581,13 @@
           getPersistedActiveSlideId,
           resolveCanonicalDeck: (nextDoc) => buildEditorCanonicalDeck(nextDoc),
           resolveCanonicalDeckOverride: (nextCanonicalDeck, nextDoc) => (
-            typeof resolveEditorCanonicalDeckOverride === 'function'
-              ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
-                  buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
-                })
-              : nextCanonicalDeck
+            typeof resolveEditorDeckCanonicalOverride === 'function'
+              ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
+              : typeof resolveEditorCanonicalDeckOverride === 'function'
+                ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+                    buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+                  })
+                : nextCanonicalDeck
           ),
           resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
           isCanonicalDeck: (
@@ -3427,6 +3431,15 @@
         return buildCanonicalDeck ? buildCanonicalDeck() : null;
       }
       return canonicalDeck || (buildCanonicalDeck ? buildCanonicalDeck() : null);
+    }
+
+    function resolveEditorDeckCanonicalOverride(doc = getIframeDoc(), canonicalDeck = null) {
+      if (typeof resolveEditorCanonicalDeckOverride === 'function') {
+        return resolveEditorCanonicalDeckOverride(canonicalDeck, {
+          buildCanonicalDeck: canonicalDeck ? () => buildEditorCanonicalDeck(doc) : null
+        });
+      }
+      return canonicalDeck;
     }
 
     function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
