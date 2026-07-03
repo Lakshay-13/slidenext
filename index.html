@@ -6350,27 +6350,7 @@
                 buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
               })
             : buildEditorCanonicalDeck(doc);
-      const capturePersistableDeckBuildState = typeof captureEditorPersistableDeckBuildState === 'function'
-        ? captureEditorPersistableDeckBuildState
-        : (nextDoc, buildOptions = {}) => {
-            let resolvedCanonicalDeck = null;
-            let resolvedPlaybackState;
-            const cleanHtml = buildPersistableDeckHtml(nextDoc, {
-              ...buildOptions,
-              onCanonicalDeckResolved(canonicalDeck) {
-                resolvedCanonicalDeck = canonicalDeck;
-              },
-              onPlaybackStateResolved(playbackState) {
-                resolvedPlaybackState = playbackState;
-              }
-            });
-            return {
-              cleanHtml,
-              canonicalDeck: resolvedCanonicalDeck,
-              playbackState: resolvedPlaybackState
-            };
-          };
-      const capturedBuildState = capturePersistableDeckBuildState(doc, {
+      const capturedBuildState = captureEditorPersistableDeckBuildState(doc, {
         canonicalDeck: providedCanonicalDeck
       });
       const cleanHtml = typeof capturedBuildState.cleanHtml === 'string'

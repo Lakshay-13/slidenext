@@ -19,6 +19,12 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 
 function loadCaptureEditorPersistableDeckState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(
+    fileContent,
+    'function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {',
+    '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(captureEditorPersistableDeckBuildStateSource, context);
   const resolveEditorCapturedPersistableDeckStateSource = extractFunctionSource(
     fileContent,
     'function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {',

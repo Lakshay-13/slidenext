@@ -17,6 +17,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 
 function loadCaptureEditorPersistableDeckState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  loadCaptureEditorPersistableDeckBuildState(fileContent, context);
   loadResolveEditorCapturedPersistableDeckState(fileContent, context);
   const captureEditorPersistableDeckStateSource = extractFunctionSource(
     fileContent,
