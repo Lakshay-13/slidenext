@@ -345,6 +345,81 @@ test('buildEditorCanonicalDeck reuses the local stored canonical resolver when t
   assert.deepEqual(calls, [context.currentPresentationMetadata]);
 });
 
+test('buildEditorCanonicalDeck prefers the local stored canonical baseline helper when the deck context builder is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorCanonicalDeck(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
+  );
+
+  const storedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      {
+        id: 'slide-current',
+        nodes: []
+      }
+    ]
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckContext: {},
+    currentPresentationMetadata: {
+      id: 'deck-1'
+    },
+    lastPersistedCanonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: [
+        {
+          id: 'slide-persisted',
+          nodes: []
+        }
+      ]
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    resolveEditorStoredCanonicalBaseline(options = {}) {
+      calls.push(options);
+      return storedCanonicalDeck;
+    },
+    resolveEditorStoredCanonicalDeck() {
+      throw new Error('resolveEditorStoredCanonicalDeck should not run when the baseline helper is available');
+    },
+    getEditorSlideId() {
+      return 'slide-1';
+    },
+    assignEditorElementId() {
+      return 'node-1';
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorCanonicalDeckSource, context);
+
+  const result = context.buildEditorCanonicalDeck();
+
+  assert.equal(result, storedCanonicalDeck);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    currentPresentationMetadata: { id: 'deck-1' },
+    persistedCanonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: [
+        {
+          id: 'slide-persisted',
+          nodes: []
+        }
+      ]
+    }
+  }]);
+});
+
 test('buildEditorCanonicalDeck reuses the in-memory persisted canonical baseline when the iframe is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorCanonicalDeckSource = extractFunctionSource(

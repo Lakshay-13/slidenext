@@ -3311,8 +3311,13 @@
               isCanonicalDeck
             })
           : (metadata) => metadata && metadata.canonicalDeck ? metadata.canonicalDeck : null;
-      const storedCanonicalDeck = resolveStoredCanonicalDeck(currentPresentationMetadata)
-        || resolveStoredCanonicalDeck({ canonicalDeck: lastPersistedCanonicalDeck });
+      const storedCanonicalDeck = typeof resolveEditorStoredCanonicalBaseline === 'function'
+        ? resolveEditorStoredCanonicalBaseline({
+            currentPresentationMetadata,
+            persistedCanonicalDeck: lastPersistedCanonicalDeck
+          })
+        : resolveStoredCanonicalDeck(currentPresentationMetadata)
+          || resolveStoredCanonicalDeck({ canonicalDeck: lastPersistedCanonicalDeck });
       if (!doc && storedCanonicalDeck) {
         return storedCanonicalDeck;
       }
