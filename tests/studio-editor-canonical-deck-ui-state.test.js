@@ -1412,9 +1412,12 @@ test('createEditorPersistableCanonicalDeckOverrideResolver reuses the local cano
   };
   const calls = [];
   const context = {
-    resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
-      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
-      return canonicalDeck;
+    createEditorSaveCanonicalDeckResolver(nextDoc) {
+      calls.push(['createEditorSaveCanonicalDeckResolver', nextDoc]);
+      return (nextCanonicalDeck) => {
+        calls.push(['resolveSaveCanonicalDeck', nextCanonicalDeck]);
+        return canonicalDeck;
+      };
     },
     resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
       calls.push(['resolveEditorCanonicalDeckOverride', nextCanonicalDeck, options.buildCanonicalDeck]);
@@ -1432,7 +1435,8 @@ test('createEditorPersistableCanonicalDeckOverrideResolver reuses the local cano
 
   assert.equal(resolveCanonicalDeckOverride(true), canonicalDeck);
   assert.deepEqual(calls, [
-    ['resolveEditorSaveCanonicalDeck', iframeDoc, canonicalDeck]
+    ['createEditorSaveCanonicalDeckResolver', iframeDoc],
+    ['resolveSaveCanonicalDeck', canonicalDeck]
   ]);
 });
 
