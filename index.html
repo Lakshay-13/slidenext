@@ -1453,36 +1453,37 @@
         ? SlideNextStudioDeckView.resolveStudioFallbackActiveSlideId
         : null;
       if (resolveStudioFallbackActiveSlideId) {
-        const resolveCanonicalDeckOverride = typeof resolveEditorDeckCanonicalOverrideResolver === 'function'
-          ? resolveEditorDeckCanonicalOverrideResolver(doc)
-          : (nextCanonicalDeck, nextDoc = doc) => (
-              typeof createEditorDeckCanonicalOverrideResolver === 'function'
-                ? createEditorDeckCanonicalOverrideResolver(nextDoc)(nextCanonicalDeck, nextDoc)
-                : typeof resolveEditorDeckCanonicalOverride === 'function'
-                  ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
-                  : typeof resolveEditorCanonicalDeckOverride === 'function'
-                    ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
-                        buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
-                      })
-                    : nextCanonicalDeck
-            );
-        const isCanonicalDeck = typeof getEditorCanonicalDeckValidator === 'function'
-          ? getEditorCanonicalDeckValidator()
-          : (
-              typeof SlideNextCanonicalDeck !== 'undefined'
-              && SlideNextCanonicalDeck
-              && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-            )
-            ? SlideNextCanonicalDeck.isCanonicalDeck
-            : null;
-        return resolveStudioFallbackActiveSlideId(doc, canonicalDeck, {
-          currentSlideIndex,
-          getPersistedActiveSlideId,
-          resolveCanonicalDeck: (nextDoc) => buildEditorCanonicalDeck(nextDoc),
-          resolveCanonicalDeckOverride,
-          resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
-          isCanonicalDeck
-        });
+        const deckViewSharedOptions = typeof createEditorDeckViewSharedOptions === 'function'
+          ? createEditorDeckViewSharedOptions(doc)
+          : {
+              currentSlideIndex,
+              getPersistedActiveSlideId,
+              resolveCanonicalDeck: (nextDoc) => buildEditorCanonicalDeck(nextDoc),
+              resolveCanonicalDeckOverride: typeof resolveEditorDeckCanonicalOverrideResolver === 'function'
+                ? resolveEditorDeckCanonicalOverrideResolver(doc)
+                : (nextCanonicalDeck, nextDoc = doc) => (
+                    typeof createEditorDeckCanonicalOverrideResolver === 'function'
+                      ? createEditorDeckCanonicalOverrideResolver(nextDoc)(nextCanonicalDeck, nextDoc)
+                      : typeof resolveEditorDeckCanonicalOverride === 'function'
+                        ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
+                        : typeof resolveEditorCanonicalDeckOverride === 'function'
+                          ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+                              buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+                            })
+                          : nextCanonicalDeck
+                  ),
+              resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
+              isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+                ? getEditorCanonicalDeckValidator()
+                : (
+                    typeof SlideNextCanonicalDeck !== 'undefined'
+                    && SlideNextCanonicalDeck
+                    && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
+                  )
+                  ? SlideNextCanonicalDeck.isCanonicalDeck
+                  : null
+            };
+        return resolveStudioFallbackActiveSlideId(doc, canonicalDeck, deckViewSharedOptions);
       }
 
       const persistedActiveSlideId = getPersistedActiveSlideId();
@@ -1587,36 +1588,39 @@
         ? SlideNextStudioDeckView.createStudioDeckRenderOptions
         : null;
       if (createStudioDeckRenderOptions) {
-        const resolveCanonicalDeckOverride = typeof resolveEditorDeckCanonicalOverrideResolver === 'function'
-          ? resolveEditorDeckCanonicalOverrideResolver(doc)
-          : (nextCanonicalDeck, nextDoc = doc) => (
-              typeof createEditorDeckCanonicalOverrideResolver === 'function'
-                ? createEditorDeckCanonicalOverrideResolver(nextDoc)(nextCanonicalDeck, nextDoc)
-                : typeof resolveEditorDeckCanonicalOverride === 'function'
-                  ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
-                  : typeof resolveEditorCanonicalDeckOverride === 'function'
-                    ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
-                        buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
-                      })
-                    : nextCanonicalDeck
-            );
-        const isCanonicalDeck = typeof getEditorCanonicalDeckValidator === 'function'
-          ? getEditorCanonicalDeckValidator()
-          : (
-              typeof SlideNextCanonicalDeck !== 'undefined'
-              && SlideNextCanonicalDeck
-              && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-            )
-            ? SlideNextCanonicalDeck.isCanonicalDeck
-            : null;
+        const deckViewSharedOptions = typeof createEditorDeckViewSharedOptions === 'function'
+          ? createEditorDeckViewSharedOptions(doc)
+          : {
+              currentSlideIndex,
+              getPersistedActiveSlideId,
+              resolveCanonicalDeck: (nextDoc) => buildEditorCanonicalDeck(nextDoc),
+              resolveCanonicalDeckOverride: typeof resolveEditorDeckCanonicalOverrideResolver === 'function'
+                ? resolveEditorDeckCanonicalOverrideResolver(doc)
+                : (nextCanonicalDeck, nextDoc = doc) => (
+                    typeof createEditorDeckCanonicalOverrideResolver === 'function'
+                      ? createEditorDeckCanonicalOverrideResolver(nextDoc)(nextCanonicalDeck, nextDoc)
+                      : typeof resolveEditorDeckCanonicalOverride === 'function'
+                        ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
+                        : typeof resolveEditorCanonicalDeckOverride === 'function'
+                          ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+                              buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+                            })
+                          : nextCanonicalDeck
+                  ),
+              resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
+              isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+                ? getEditorCanonicalDeckValidator()
+                : (
+                    typeof SlideNextCanonicalDeck !== 'undefined'
+                    && SlideNextCanonicalDeck
+                    && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
+                  )
+                  ? SlideNextCanonicalDeck.isCanonicalDeck
+                  : null
+            };
         return createStudioDeckRenderOptions(doc, canonicalDeck, {
           activeSlideId: options.activeSlideId,
-          currentSlideIndex,
-          getPersistedActiveSlideId,
-          resolveCanonicalDeck: (nextDoc) => buildEditorCanonicalDeck(nextDoc),
-          resolveCanonicalDeckOverride,
-          resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
-          isCanonicalDeck
+          ...deckViewSharedOptions
         });
       }
 
@@ -3491,6 +3495,39 @@
                   })
                 : canonicalDeck
           );
+    }
+
+    function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {
+      const resolveCanonicalDeckOverride = typeof resolveEditorDeckCanonicalOverrideResolver === 'function'
+        ? resolveEditorDeckCanonicalOverrideResolver(doc)
+        : (nextCanonicalDeck, nextDoc = doc) => (
+            typeof createEditorDeckCanonicalOverrideResolver === 'function'
+              ? createEditorDeckCanonicalOverrideResolver(nextDoc)(nextCanonicalDeck, nextDoc)
+              : typeof resolveEditorDeckCanonicalOverride === 'function'
+                ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
+                : typeof resolveEditorCanonicalDeckOverride === 'function'
+                  ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+                      buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+                    })
+                  : nextCanonicalDeck
+          );
+      const isCanonicalDeck = typeof getEditorCanonicalDeckValidator === 'function'
+        ? getEditorCanonicalDeckValidator()
+        : (
+            typeof SlideNextCanonicalDeck !== 'undefined'
+            && SlideNextCanonicalDeck
+            && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
+          )
+          ? SlideNextCanonicalDeck.isCanonicalDeck
+          : null;
+      return {
+        currentSlideIndex,
+        getPersistedActiveSlideId,
+        resolveCanonicalDeck: (nextDoc) => buildEditorCanonicalDeck(nextDoc),
+        resolveCanonicalDeckOverride,
+        resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
+        isCanonicalDeck
+      };
     }
 
     function resolveEditorDeckCanonicalOverride(doc = getIframeDoc(), canonicalDeck = null) {
