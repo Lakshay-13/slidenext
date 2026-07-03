@@ -113,18 +113,13 @@ function loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {',
-    '\n\n    function applyCurrentStudioVersionCheckpointSaveSuccess(versionCheckpointPersistenceState, options = {}) {'
+    '\n\n    function applyCurrentStudioCapturedDeckState('
   );
   vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyCurrentStudioVersionCheckpointSaveSuccess(versionCheckpointPersistenceState, options = {}) {',
-    '\n\n    function applyCurrentStudioCapturedDeckState('
-  );
-  vm.runInContext(helperSource, context);
+  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
 }
 
 function loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context) {
@@ -725,19 +720,19 @@ test('executeCurrentStudioVersionCheckpointSaveWithSuccess delegates through the
   let successArgs = null;
   const onSuccess = () => {};
   const context = {
+    applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
+      successArgs = {
+        persistenceContext,
+        options
+      };
+      return 'applied';
+    },
     SlideNextStudioEditorPersistence: editorPersistence,
     saveVersionCheckpoint: async (...args) => {
       saveArgs = args;
       return {
         success: true
       };
-    },
-    applyCurrentStudioVersionCheckpointSaveSuccess(nextVersionCheckpointPersistenceState, options = {}) {
-      successArgs = {
-        nextVersionCheckpointPersistenceState,
-        options
-      };
-      return 'applied';
     }
   };
 
@@ -761,7 +756,7 @@ test('executeCurrentStudioVersionCheckpointSaveWithSuccess delegates through the
       sessionToken: 12
     }
   ]);
-  assert.equal(successArgs.nextVersionCheckpointPersistenceState, versionCheckpointPersistenceState);
+  assert.equal(successArgs.persistenceContext, versionCheckpointPersistenceState.persistenceContext);
   assert.equal(successArgs.options.onSuccess, onSuccess);
   assert.deepEqual(JSON.parse(JSON.stringify(result)), {
     data: {
@@ -792,7 +787,7 @@ test('executeCurrentStudioVersionCheckpointSaveWithSuccess reuses the shared com
   };
   let helperArgs = null;
   const context = {
-    applyCurrentStudioVersionCheckpointSaveSuccess() {
+    applyCurrentStudioVersionPersistenceSuccess() {
       throw new Error('executeCurrentStudioVersionCheckpointSaveWithSuccess should reuse the shared combined helper when it is available');
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
@@ -828,7 +823,7 @@ test('executeCurrentStudioVersionCheckpointSaveWithSuccess reuses the shared com
   assert.equal(helperArgs[1], versionCheckpointPersistenceState);
   assert.equal(helperArgs[2], '/presentations/onboarding-presentation/index.html');
   assert.equal(helperArgs[3].saveVersionCheckpoint, context.saveVersionCheckpoint);
-  assert.equal(helperArgs[3].applyVersionCheckpointSaveSuccess, context.applyCurrentStudioVersionCheckpointSaveSuccess);
+  assert.equal(typeof helperArgs[3].applyVersionCheckpointSaveSuccess, 'function');
   assert.deepEqual(JSON.parse(JSON.stringify(helperArgs[3].successOptions)), {
     marker: 'version-success'
   });
@@ -989,7 +984,7 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure reuses the shared fai
   assert.equal(helperArgs[1], versionCheckpointPersistenceState);
   assert.equal(helperArgs[2], '/presentations/onboarding-presentation/index.html');
   assert.equal(helperArgs[3].saveVersionCheckpoint, context.saveVersionCheckpoint);
-  assert.equal(helperArgs[3].applyVersionCheckpointSaveSuccess, context.applyCurrentStudioVersionCheckpointSaveSuccess);
+  assert.equal(typeof helperArgs[3].applyVersionCheckpointSaveSuccess, 'function');
   assert.equal(helperArgs[3].applyPersistenceFailure, context.applyCurrentStudioPersistenceFailure);
   assert.equal(typeof helperArgs[3].successOptions.onSuccess, 'function');
   const failureOptions = helperArgs[3].buildFailureOptions({
@@ -1181,40 +1176,6 @@ test('applyCurrentStudioVersionPersistenceSuccess delegates through the shared v
   assert.equal(delegatedArgs.nextPersistenceContext, persistenceContext);
   assert.equal(delegatedArgs.handlerOptions.marker, 'version-handler-options');
   assert.equal(delegatedArgs.handlerOptions.onSuccess, onSuccess);
-});
-
-test('applyCurrentStudioVersionCheckpointSaveSuccess delegates through the local version persistence helper with checkpoint context', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const versionCheckpointPersistenceState = {
-    persistenceContext: {
-      presentationUrl: '/presentations/onboarding-presentation/index.html'
-    }
-  };
-  let delegatedArgs = null;
-  const onSuccess = () => {};
-  const context = {
-    applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
-      delegatedArgs = {
-        persistenceContext,
-        options
-      };
-      return 'applied';
-    }
-  };
-
-  vm.createContext(context);
-  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
-
-  const result = context.applyCurrentStudioVersionCheckpointSaveSuccess(
-    versionCheckpointPersistenceState,
-    {
-      onSuccess
-    }
-  );
-
-  assert.equal(result, 'applied');
-  assert.equal(delegatedArgs.persistenceContext, versionCheckpointPersistenceState.persistenceContext);
-  assert.equal(delegatedArgs.options.onSuccess, onSuccess);
 });
 
 test('submitSaveVersion keeps the save button idle when editor content is unavailable', async () => {
@@ -2134,9 +2095,9 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
     applyCurrentStudioPersistenceFailure() {
       throw new Error('submitSaveVersion should not use the failure path for a successful helper result');
     },
-    __applyCurrentStudioVersionCheckpointSaveSuccess(nextVersionCheckpointPersistenceState, options = {}) {
+    __applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
       successHelperArgs = {
-        nextVersionCheckpointPersistenceState,
+        persistenceContext,
         options
       };
       if (typeof options.onSuccess === 'function') {
@@ -2200,12 +2161,12 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
   vm.createContext(context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithSuccess(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
-  vm.runInContext('applyCurrentStudioVersionCheckpointSaveSuccess = __applyCurrentStudioVersionCheckpointSaveSuccess;', context);
+  vm.runInContext('applyCurrentStudioVersionPersistenceSuccess = __applyCurrentStudioVersionPersistenceSuccess;', context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
 
-  assert.equal(successHelperArgs.nextVersionCheckpointPersistenceState, versionCheckpointPersistenceState);
+  assert.equal(successHelperArgs.persistenceContext, versionCheckpointPersistenceState.persistenceContext);
   assert.equal(typeof successHelperArgs.options.onSuccess, 'function');
   assert.equal(typeof context.executeCurrentStudioVersionCheckpointSaveWithFailure, 'function');
   assert.deepEqual(alerts, ['Successfully saved named version backup checkpoint!']);
@@ -2375,9 +2336,9 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
     applyCurrentStudioPersistenceFailure() {
       throw new Error('applyCurrentStudioPersistenceFailure should not run for a successful helper result');
     },
-    __applyCurrentStudioVersionCheckpointSaveSuccess(nextVersionCheckpointPersistenceState, options = {}) {
+    __applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
       successHelperArgs = {
-        nextVersionCheckpointPersistenceState,
+        persistenceContext,
         options
       };
       if (typeof options.onSuccess === 'function') {
@@ -2419,12 +2380,12 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
   vm.createContext(context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithSuccess(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
-  vm.runInContext('applyCurrentStudioVersionCheckpointSaveSuccess = __applyCurrentStudioVersionCheckpointSaveSuccess;', context);
+  vm.runInContext('applyCurrentStudioVersionPersistenceSuccess = __applyCurrentStudioVersionPersistenceSuccess;', context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
 
-  assert.equal(successHelperArgs.nextVersionCheckpointPersistenceState, versionCheckpointPersistenceState);
+  assert.equal(successHelperArgs.persistenceContext, versionCheckpointPersistenceState.persistenceContext);
   assert.equal(typeof successHelperArgs.options.onSuccess, 'function');
   assert.deepEqual(logCalls, ['Auto-created version checkpoint: Auto: Edited Text']);
 });

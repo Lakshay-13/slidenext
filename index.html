@@ -5649,16 +5649,6 @@
       );
     }
 
-    function applyCurrentStudioVersionCheckpointSaveSuccess(versionCheckpointPersistenceState, options = {}) {
-      if (!versionCheckpointPersistenceState || !versionCheckpointPersistenceState.persistenceContext) {
-        return false;
-      }
-      return applyCurrentStudioVersionPersistenceSuccess(
-        versionCheckpointPersistenceState.persistenceContext,
-        options
-      );
-    }
-
     function applyCurrentStudioCapturedDeckState(
       persistedDeckState = {},
       presentationUrl = currentPresentationUrl,
@@ -5766,7 +5756,15 @@
         presentationUrl,
         {
           saveVersionCheckpoint,
-          applyVersionCheckpointSaveSuccess: applyCurrentStudioVersionCheckpointSaveSuccess,
+          applyVersionCheckpointSaveSuccess: (nextVersionCheckpointPersistenceState, successOptions = {}) => {
+            if (!nextVersionCheckpointPersistenceState || !nextVersionCheckpointPersistenceState.persistenceContext) {
+              return false;
+            }
+            return applyCurrentStudioVersionPersistenceSuccess(
+              nextVersionCheckpointPersistenceState.persistenceContext,
+              successOptions
+            );
+          },
           successOptions: options
         }
       );
@@ -5790,7 +5788,15 @@
         presentationUrl,
         {
           saveVersionCheckpoint,
-          applyVersionCheckpointSaveSuccess: applyCurrentStudioVersionCheckpointSaveSuccess,
+          applyVersionCheckpointSaveSuccess: (nextVersionCheckpointPersistenceState, successOptions = {}) => {
+            if (!nextVersionCheckpointPersistenceState || !nextVersionCheckpointPersistenceState.persistenceContext) {
+              return false;
+            }
+            return applyCurrentStudioVersionPersistenceSuccess(
+              nextVersionCheckpointPersistenceState.persistenceContext,
+              successOptions
+            );
+          },
           successOptions: {
             onSuccess
           },
