@@ -67,8 +67,18 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
 }
 
 function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  loadApplyCurrentStudioPersistedDeckState(fileContent, context);
+  if (typeof context.createCurrentStudioSessionStateOptions !== 'function') {
+    loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  }
+  if (typeof context.applyCurrentStudioPersistedDeckState !== 'function') {
+    loadApplyCurrentStudioPersistedDeckState(fileContent, context);
+  }
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
+    '\n\n    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
@@ -80,6 +90,7 @@ function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, co
 }
 
 function loadApplyCurrentStudioPersistenceSuccess(fileContent, context) {
+  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',
@@ -89,6 +100,7 @@ function loadApplyCurrentStudioPersistenceSuccess(fileContent, context) {
 }
 
 function loadApplyCurrentStudioPersistenceFailure(fileContent, context) {
+  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {',
