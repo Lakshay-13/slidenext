@@ -778,19 +778,14 @@ test('resolveEditorDeckCanonicalOverride delegates deck-view canonical override 
   };
   let delegatedArgs = null;
   const context = {
-    resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+    createEditorPersistableCanonicalDeckOverrideResolver(nextDoc, nextCanonicalDeck) {
       delegatedArgs = {
-        canonicalDeck: nextCanonicalDeck,
-        buildCanonicalDeck: options.buildCanonicalDeck
+        doc: nextDoc,
+        canonicalDeck: nextCanonicalDeck
       };
-      return canonicalDeck;
-    },
-    buildEditorCanonicalDeck(nextDoc) {
-      assert.equal(nextDoc, iframeDoc);
-      return {
-        kind: 'slidenext.deck',
-        schemaVersion: 1,
-        slides: [{ id: 'slide-fallback', nodes: [] }]
+      return (shouldBuildFallbackCanonicalDeck = false) => {
+        delegatedArgs.shouldBuildFallbackCanonicalDeck = shouldBuildFallbackCanonicalDeck;
+        return canonicalDeck;
       };
     },
     getIframeDoc() {
@@ -802,8 +797,9 @@ test('resolveEditorDeckCanonicalOverride delegates deck-view canonical override 
   vm.runInContext(helperSource, context);
 
   assert.equal(context.resolveEditorDeckCanonicalOverride(iframeDoc, canonicalDeck), canonicalDeck);
+  assert.equal(delegatedArgs.doc, iframeDoc);
   assert.equal(delegatedArgs.canonicalDeck, canonicalDeck);
-  assert.equal(typeof delegatedArgs.buildCanonicalDeck, 'function');
+  assert.equal(delegatedArgs.shouldBuildFallbackCanonicalDeck, true);
 });
 
 test('resolveEditorDeckCanonicalOverride reuses the provided canonical deck when the shared override helper is unavailable', () => {
@@ -827,22 +823,12 @@ test('resolveEditorDeckCanonicalOverride reuses the provided canonical deck when
   };
   const calls = [];
   const context = {
-    SlideNextStudioEditorPersistence: {
-      resolveStudioCanonicalDeckOverride(options) {
-        calls.push(['resolveStudioCanonicalDeckOverride', options.canonicalDeck]);
-        return options.canonicalDeck;
-      }
-    },
-    buildEditorCanonicalDeck() {
-      calls.push(['buildEditorCanonicalDeck']);
-      return {
-        kind: 'slidenext.deck',
-        schemaVersion: 1,
-        slides: [{ id: 'slide-fallback', nodes: [] }]
+    createEditorPersistableCanonicalDeckOverrideResolver(nextDoc, nextCanonicalDeck) {
+      calls.push(['createEditorPersistableCanonicalDeckOverrideResolver', nextDoc, nextCanonicalDeck]);
+      return (shouldBuildFallbackCanonicalDeck = false) => {
+        calls.push(['resolveCanonicalDeckOverride', shouldBuildFallbackCanonicalDeck]);
+        return nextCanonicalDeck;
       };
-    },
-    getEditorCanonicalDeckValidator() {
-      return null;
     },
     getIframeDoc() {
       return iframeDoc;
@@ -850,12 +836,12 @@ test('resolveEditorDeckCanonicalOverride reuses the provided canonical deck when
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
   vm.runInContext(helperSource, context);
 
   assert.equal(context.resolveEditorDeckCanonicalOverride(iframeDoc, canonicalDeck), canonicalDeck);
   assert.deepEqual(calls, [
-    ['resolveStudioCanonicalDeckOverride', canonicalDeck]
+    ['createEditorPersistableCanonicalDeckOverrideResolver', iframeDoc, canonicalDeck],
+    ['resolveCanonicalDeckOverride', true]
   ]);
 });
 
@@ -1491,6 +1477,13 @@ test('resolveEditorFallbackActiveSlideId rebuilds a malformed canonical deck inp
     buildEditorCanonicalDeck(nextDoc) {
       calls.push(['buildEditorCanonicalDeck', nextDoc]);
       return rebuiltCanonicalDeck;
+    },
+    createEditorPersistableCanonicalDeckOverrideResolver(nextDoc, nextCanonicalDeck) {
+      return (shouldBuildFallbackCanonicalDeck = false) => context.resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+        buildCanonicalDeck: shouldBuildFallbackCanonicalDeck
+          ? () => context.buildEditorCanonicalDeck(nextDoc)
+          : null
+      });
     },
     currentSlideIndex: 1,
     getIframeDoc() {
@@ -2963,6 +2956,13 @@ test('buildEditorDeckSnapshot falls back to the current session slide when live 
       buildEditorCanonicalDeckCalls += 1;
       assert.equal(nextDoc, iframeDoc);
       return canonicalDeck;
+    },
+    createEditorPersistableCanonicalDeckOverrideResolver(nextDoc, nextCanonicalDeck) {
+      return (shouldBuildFallbackCanonicalDeck = false) => context.resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+        buildCanonicalDeck: shouldBuildFallbackCanonicalDeck
+          ? () => context.buildEditorCanonicalDeck(nextDoc)
+          : null
+      });
     },
     buildEditorDeckSnapshotFromDom() {},
     buildEditorLayerSnapshot() {},

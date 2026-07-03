@@ -3416,9 +3416,7 @@
     }
 
     function resolveEditorDeckCanonicalOverride(doc = getIframeDoc(), canonicalDeck = null) {
-      return resolveEditorCanonicalDeckOverride(canonicalDeck, {
-        buildCanonicalDeck: canonicalDeck ? () => buildEditorCanonicalDeck(doc) : null
-      });
+      return createEditorPersistableCanonicalDeckOverrideResolver(doc, canonicalDeck)(!!canonicalDeck);
     }
 
     function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
