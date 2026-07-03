@@ -6067,18 +6067,12 @@
         versionCheckpointPersistenceState,
         presentationUrl,
         {
-          saveVersionCheckpoint: typeof saveVersionCheckpoint === 'function'
-            ? saveVersionCheckpoint
-            : null,
-          applyVersionCheckpointSaveSuccess: typeof applyCurrentStudioVersionCheckpointSaveSuccess === 'function'
-            ? applyCurrentStudioVersionCheckpointSaveSuccess
-            : null,
+          saveVersionCheckpoint,
+          applyVersionCheckpointSaveSuccess: applyCurrentStudioVersionCheckpointSaveSuccess,
           successOptions: {
             onSuccess: options.onSuccess
           },
-          applyPersistenceFailure: typeof applyCurrentStudioPersistenceFailure === 'function'
-            ? applyCurrentStudioPersistenceFailure
-            : null,
+          applyPersistenceFailure: applyCurrentStudioPersistenceFailure,
           buildFailureOptions: (data) => ({
             onFailure: () => {
               if (typeof options.onFailure === 'function') {

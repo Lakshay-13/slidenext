@@ -1815,6 +1815,9 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
     slides: []
   };
   const context = {
+    applyCurrentStudioPersistenceFailure() {
+      throw new Error('applyCurrentStudioPersistenceFailure should not run for successful persisted baseline saves');
+    },
     buildEditorSaveRequestBody(nextDoc, cleanHtml, options = {}) {
       assert.equal(nextDoc, null);
       return {
@@ -2394,6 +2397,9 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
     }
   };
   const context = {
+    applyCurrentStudioPersistenceFailure() {
+      throw new Error('applyCurrentStudioPersistenceFailure should not run for a successful helper result');
+    },
     __applyCurrentStudioVersionCheckpointSaveSuccess(nextVersionCheckpointPersistenceState, options = {}) {
       successHelperArgs = {
         nextVersionCheckpointPersistenceState,
