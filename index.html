@@ -5814,6 +5814,12 @@
       presentationUrl = currentPresentationUrl,
       options = {}
     ) {
+      const onSuccess = typeof options.onSuccess === 'function'
+        ? options.onSuccess
+        : null;
+      const onFailure = typeof options.onFailure === 'function'
+        ? options.onFailure
+        : null;
       return SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSaveWithFailure(
         versionLabel,
         versionCheckpointPersistenceState,
@@ -5822,15 +5828,15 @@
           saveVersionCheckpoint,
           applyVersionCheckpointSaveSuccess: applyCurrentStudioVersionCheckpointSaveSuccess,
           successOptions: {
-            onSuccess: options.onSuccess
+            onSuccess
           },
           applyPersistenceFailure: applyCurrentStudioPersistenceFailure,
           buildFailureOptions: (data) => ({
-            onFailure: () => {
-              if (typeof options.onFailure === 'function') {
-                options.onFailure(data);
-              }
-            }
+            onFailure: onFailure
+              ? () => {
+                  onFailure(data);
+                }
+              : undefined
           })
         }
       );
