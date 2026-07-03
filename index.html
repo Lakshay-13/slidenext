@@ -3417,15 +3417,7 @@
 
     function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {
       const resolveCanonicalDeckOverride = resolveEditorDeckCanonicalOverrideResolver(doc);
-      const isCanonicalDeck = typeof getEditorCanonicalDeckValidator === 'function'
-        ? getEditorCanonicalDeckValidator()
-        : (
-            typeof SlideNextCanonicalDeck !== 'undefined'
-            && SlideNextCanonicalDeck
-            && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-          )
-          ? SlideNextCanonicalDeck.isCanonicalDeck
-          : null;
+      const isCanonicalDeck = getEditorCanonicalDeckValidator();
       return {
         currentSlideIndex,
         getPersistedActiveSlideId,
