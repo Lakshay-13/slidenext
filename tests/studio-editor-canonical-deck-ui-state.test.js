@@ -1140,7 +1140,7 @@ test('createEditorSaveCanonicalDeckResolver reuses the local save canonical deck
   const helperSource = extractFunctionSource(
     fileContent,
     'function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {',
-    '\n\n    function createEditorPersistableCanonicalDeckOverrideResolver(doc = getIframeDoc(), canonicalDeck = null) {'
+    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -1166,46 +1166,6 @@ test('createEditorSaveCanonicalDeckResolver reuses the local save canonical deck
   const resolveSaveCanonicalDeck = context.createEditorSaveCanonicalDeckResolver(iframeDoc);
 
   assert.equal(resolveSaveCanonicalDeck(canonicalDeck), canonicalDeck);
-  assert.deepEqual(calls, [
-    ['resolveEditorSaveCanonicalDeck', iframeDoc, canonicalDeck]
-  ]);
-});
-
-test('createEditorPersistableCanonicalDeckOverrideResolver reuses the local save canonical deck helper when available', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createEditorPersistableCanonicalDeckOverrideResolver(doc = getIframeDoc(), canonicalDeck = null) {',
-    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
-  );
-
-  const iframeDoc = { label: 'iframe-doc' };
-  const canonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: [{ id: 'slide-1', nodes: [] }]
-  };
-  const calls = [];
-  const context = {
-    resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
-      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
-      return canonicalDeck;
-    },
-    resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
-      calls.push(['resolveEditorCanonicalDeckOverride', nextCanonicalDeck, options.buildCanonicalDeck]);
-      return canonicalDeck;
-    },
-    getIframeDoc() {
-      return iframeDoc;
-    }
-  };
-
-  vm.createContext(context);
-  vm.runInContext(helperSource, context);
-
-  const resolveCanonicalDeckOverride = context.createEditorPersistableCanonicalDeckOverrideResolver(iframeDoc, canonicalDeck);
-
-  assert.equal(resolveCanonicalDeckOverride(true), canonicalDeck);
   assert.deepEqual(calls, [
     ['resolveEditorSaveCanonicalDeck', iframeDoc, canonicalDeck]
   ]);

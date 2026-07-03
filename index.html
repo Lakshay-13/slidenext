@@ -3437,17 +3437,6 @@
       };
     }
 
-    function createEditorPersistableCanonicalDeckOverrideResolver(doc = getIframeDoc(), canonicalDeck = null) {
-      return function resolveCanonicalDeckOverride(shouldBuildFallbackCanonicalDeck = false) {
-        if (shouldBuildFallbackCanonicalDeck) {
-          return resolveEditorSaveCanonicalDeck(doc, canonicalDeck);
-        }
-        return resolveEditorCanonicalDeckOverride(canonicalDeck, {
-          buildCanonicalDeck: null
-        });
-      };
-    }
-
     function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {
       const resolvePersistedDeckActiveSlideId = (
         typeof SlideNextDeckPersistence !== 'undefined'
