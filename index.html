@@ -2634,9 +2634,7 @@
       const refreshActionStateChrome = (nextDoc = doc) => {
         updateInsertionActionState(nextDoc);
         updateZoomActionState(nextDoc);
-        if (typeof updateWallpaperActionState === 'function') {
-          updateWallpaperActionState(nextDoc);
-        }
+        updateWallpaperActionState(nextDoc);
       };
       const syncSelectionChrome = () => {
         if (!preserveSelection) {
