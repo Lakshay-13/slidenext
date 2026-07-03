@@ -1818,7 +1818,7 @@
       });
     }
 
-    function buildEditorSourceHtml(doc = getIframeDoc()) {
+    function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {
       const buildStudioSourceHtml = (
         typeof SlideNextStudioDeckView !== 'undefined'
         && SlideNextStudioDeckView
@@ -1836,11 +1836,17 @@
 
       return buildEditorDeckViewHtml(doc, {
         buildSharedHtml: buildStudioSourceHtml,
-        buildViewOptions: (sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc),
+        buildViewOptions: typeof options.buildViewOptions === 'function'
+          ? options.buildViewOptions
+          : (sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc),
         buildCanonicalHtml: buildDeckSourceHtml
           ? (canonicalDeck, deckHtmlOptions) => buildDeckSourceHtml(canonicalDeck, deckHtmlOptions)
           : null
       });
+    }
+
+    function buildEditorSourceHtml(doc = getIframeDoc()) {
+      return buildEditorSourceDeckHtml(doc);
     }
 
     function launchPresentationHtml(html, startSlideIdx) {
@@ -5351,20 +5357,6 @@
         if (reusablePersistedHtml) {
           return sanitizeReusablePersistedHtml(reusablePersistedHtml, persistedDeckState.playbackState);
         }
-        const buildStudioSourceHtml = (
-          typeof SlideNextStudioDeckView !== 'undefined'
-          && SlideNextStudioDeckView
-          && typeof SlideNextStudioDeckView.buildStudioSourceHtml === 'function'
-        )
-          ? SlideNextStudioDeckView.buildStudioSourceHtml
-          : null;
-        const buildDeckSourceHtml = (
-          typeof SlideNextDeckHtml !== 'undefined'
-          && SlideNextDeckHtml
-          && typeof SlideNextDeckHtml.buildDeckSourceHtml === 'function'
-        )
-          ? SlideNextDeckHtml.buildDeckSourceHtml
-          : null;
         const sourceViewOptions = {
           buildCanonicalDeck: () => canonicalDeck,
           buildFallbackHtml: () => persistedHtml,
@@ -5372,18 +5364,28 @@
             renderOptions: buildEditorDeckRenderOptions(doc, canonicalDeck)
           }
         };
-        if (typeof buildEditorDeckViewHtml === 'function') {
-          return buildEditorDeckViewHtml(doc, {
-            buildSharedHtml: buildStudioSourceHtml,
-            buildViewOptions: () => sourceViewOptions,
-            buildCanonicalHtml: buildDeckSourceHtml
-              ? (nextCanonicalDeck, deckHtmlOptions) => buildDeckSourceHtml(nextCanonicalDeck, deckHtmlOptions)
-              : null
+        if (typeof buildEditorSourceDeckHtml === 'function') {
+          return buildEditorSourceDeckHtml(doc, {
+            buildViewOptions: () => sourceViewOptions
           });
         }
+        const buildStudioSourceHtml = (
+          typeof SlideNextStudioDeckView !== 'undefined'
+          && SlideNextStudioDeckView
+          && typeof SlideNextStudioDeckView.buildStudioSourceHtml === 'function'
+        )
+          ? SlideNextStudioDeckView.buildStudioSourceHtml
+          : null;
         if (buildStudioSourceHtml) {
           return buildStudioSourceHtml(doc, sourceViewOptions);
         }
+        const buildDeckSourceHtml = (
+          typeof SlideNextDeckHtml !== 'undefined'
+          && SlideNextDeckHtml
+          && typeof SlideNextDeckHtml.buildDeckSourceHtml === 'function'
+        )
+          ? SlideNextDeckHtml.buildDeckSourceHtml
+          : null;
         if (buildDeckSourceHtml && canonicalDeck && Array.isArray(canonicalDeck.slides)) {
           return buildDeckSourceHtml(canonicalDeck, sourceViewOptions.deckHtmlOptions || {});
         }
