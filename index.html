@@ -6699,29 +6699,14 @@
       const capturePersistableDeckState = typeof nextOptions.capturePersistableDeckState === 'function'
         ? nextOptions.capturePersistableDeckState
         : captureEditorPersistableDeckState;
-      const resolvePersistenceStateFromDocumentCapture = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture
-        : null;
-      if (resolvePersistenceStateFromDocumentCapture) {
-        return resolvePersistenceStateFromDocumentCapture(
-          doc,
-          presentationUrl,
-          {
-            capturePersistableDeckState,
-            persistenceOptions
-          },
-          resolvePersistenceStateFromCapture
-        );
-      }
-      return resolvePersistenceStateFromCapture(
+      return SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture(
         doc,
-        capturePersistableDeckState(doc),
         presentationUrl,
-        persistenceOptions
+        {
+          capturePersistableDeckState,
+          persistenceOptions
+        },
+        resolvePersistenceStateFromCapture
       );
     }
 

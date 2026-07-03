@@ -228,7 +228,7 @@ test('setStudioSaveButtonState renders the version button loading and idle state
   assert.match(saveBtnEl.innerHTML, /Save Version/);
 });
 
-test('resolveCurrentStudioPersistenceStateFromCapture captures the current deck state before delegating to a persistence resolver', () => {
+test('resolveCurrentStudioPersistenceStateFromCapture delegates current deck capture through the shared persistence helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
   const capturedDeckState = {
@@ -245,6 +245,7 @@ test('resolveCurrentStudioPersistenceStateFromCapture captures the current deck 
   };
   let delegatedArgs = null;
   const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
     captureEditorPersistableDeckState(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return capturedDeckState;
@@ -286,7 +287,7 @@ test('resolveCurrentStudioPersistenceStateFromCapture captures the current deck 
   });
 });
 
-test('resolveCurrentStudioPersistenceStateFromCapture reuses the shared document capture helper when available', () => {
+test('resolveCurrentStudioPersistenceStateFromCapture passes capture callbacks and persistence options through the shared helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
   const capturedDeckState = {
