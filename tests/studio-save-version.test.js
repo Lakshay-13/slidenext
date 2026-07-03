@@ -124,6 +124,7 @@ function loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context
 }
 
 function loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context) {
+  loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function resolveCurrentStudioVersionCheckpointPersistenceState(',
@@ -133,6 +134,7 @@ function loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, 
 }
 
 function loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context) {
+  loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function resolveCurrentStudioAutoSavePersistenceState(',
@@ -386,6 +388,7 @@ test('resolveCurrentStudioVersionCheckpointPersistenceState delegates checkpoint
   let delegatedArgs = null;
   const context = {
     SlideNextStudioEditorPersistence: {
+      resolveStudioPersistenceStateFromDocumentCapture: editorPersistence.resolveStudioPersistenceStateFromDocumentCapture,
       resolveStudioVersionCheckpointPersistenceStateFromCapture(doc, nextCapturedDeckState, presentationUrl, options = {}) {
         delegatedArgs = {
           doc,
@@ -427,7 +430,7 @@ test('resolveCurrentStudioVersionCheckpointPersistenceState delegates checkpoint
   });
 });
 
-test('resolveCurrentStudioVersionCheckpointPersistenceState reuses the local capture delegation helper when available', () => {
+test('resolveCurrentStudioVersionCheckpointPersistenceState delegates through the local capture helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
   let delegatedArgs = null;
@@ -488,6 +491,7 @@ test('resolveCurrentStudioAutoSavePersistenceState delegates autosave capture th
   let delegatedArgs = null;
   const context = {
     SlideNextStudioEditorPersistence: {
+      resolveStudioPersistenceStateFromDocumentCapture: editorPersistence.resolveStudioPersistenceStateFromDocumentCapture,
       resolveStudioAutoSavePersistenceStateFromCapture(doc, nextCapturedDeckState, presentationUrl, options = {}) {
         delegatedArgs = {
           doc,

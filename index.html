@@ -6715,20 +6715,7 @@
       sessionToken = studioEditorSessionToken,
       doc = getIframeDoc()
     ) {
-      const resolvePersistenceStateFromCapture = typeof resolveCurrentStudioPersistenceStateFromCapture === 'function'
-        ? resolveCurrentStudioPersistenceStateFromCapture
-        : (nextDoc, options = {}) => {
-            const nextOptions = options && typeof options === 'object'
-              ? options
-              : {};
-            return nextOptions.resolvePersistenceStateFromCapture(
-              nextDoc,
-              captureEditorPersistableDeckState(nextDoc),
-              nextOptions.presentationUrl,
-              nextOptions.persistenceOptions || {}
-            );
-          };
-      return resolvePersistenceStateFromCapture(doc, {
+      return resolveCurrentStudioPersistenceStateFromCapture(doc, {
         presentationUrl,
         resolvePersistenceStateFromCapture: SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture,
         persistenceOptions: {
