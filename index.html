@@ -1657,11 +1657,33 @@
         });
       }
 
+      return typeof createEditorCanonicalDeckResolverWithBuilder === 'function'
+        ? createEditorCanonicalDeckResolverWithBuilder(
+            doc,
+            (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)
+          )
+        : (() => {
+            let didResolveCanonicalDeck = false;
+            let resolvedCanonicalDeck = null;
+            return function resolveCanonicalDeck(sourceDoc = doc) {
+              if (!didResolveCanonicalDeck) {
+                resolvedCanonicalDeck = buildEditorCanonicalDeck(sourceDoc);
+                didResolveCanonicalDeck = true;
+              }
+              return resolvedCanonicalDeck;
+            };
+          })();
+    }
+
+    function createEditorCanonicalDeckResolverWithBuilder(doc = getIframeDoc(), buildCanonicalDeck = null) {
+      const resolveCanonicalDeckBuilder = typeof buildCanonicalDeck === 'function'
+        ? buildCanonicalDeck
+        : (sourceDoc) => buildEditorCanonicalDeck(sourceDoc);
       let didResolveCanonicalDeck = false;
       let resolvedCanonicalDeck = null;
       return function resolveCanonicalDeck(sourceDoc = doc) {
         if (!didResolveCanonicalDeck) {
-          resolvedCanonicalDeck = buildEditorCanonicalDeck(sourceDoc);
+          resolvedCanonicalDeck = resolveCanonicalDeckBuilder(sourceDoc);
           didResolveCanonicalDeck = true;
         }
         return resolvedCanonicalDeck;
@@ -1709,17 +1731,19 @@
       }
 
       const resolveCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-        ? (() => {
-            let didResolveCanonicalDeck = false;
-            let resolvedCanonicalDeck = null;
-            return function resolveCanonicalDeckOverride(sourceDoc = doc) {
-              if (!didResolveCanonicalDeck) {
-                resolvedCanonicalDeck = buildCanonicalDeck(sourceDoc);
-                didResolveCanonicalDeck = true;
-              }
-              return resolvedCanonicalDeck;
-            };
-          })()
+        ? (typeof createEditorCanonicalDeckResolverWithBuilder === 'function'
+            ? createEditorCanonicalDeckResolverWithBuilder(doc, buildCanonicalDeck)
+            : (() => {
+                let didResolveCanonicalDeck = false;
+                let resolvedCanonicalDeck = null;
+                return function resolveCanonicalDeckOverride(sourceDoc = doc) {
+                  if (!didResolveCanonicalDeck) {
+                    resolvedCanonicalDeck = buildCanonicalDeck(sourceDoc);
+                    didResolveCanonicalDeck = true;
+                  }
+                  return resolvedCanonicalDeck;
+                };
+              })())
         : createEditorCanonicalDeckResolver(doc);
       const liveActiveSlideId = resolveLiveActiveSlideId(doc);
       const resolvedCanonicalDeck = !doc
