@@ -2629,9 +2629,7 @@
         }
       };
       const refreshLayersList = () => {
-        if (typeof updateLayersList === 'function') {
-          updateLayersList();
-        }
+        updateLayersList();
       };
       const refreshActionStateChrome = (nextDoc = doc) => {
         if (typeof updateInsertionActionState === 'function') {

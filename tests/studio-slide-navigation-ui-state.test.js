@@ -202,6 +202,94 @@ test('syncStudioChromeToActiveSlide routes active slide index updates through th
   assert.equal(calls[6][0], 'updateLayersList');
 });
 
+test('syncStudioChromeToActiveSlide preserves selection by refreshing the layer list when requested', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncStudioChromeToActiveSlideSource = extractFunctionSource(
+    fileContent,
+    'function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function bindDeckNavigationSync(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const calls = [];
+  const context = {
+    currentSlideIndex: 0,
+    deselectElement() {
+      calls.push(['deselectElement']);
+    },
+    document: {
+      getElementById(id) {
+        if (id === 'slideCountLabel') {
+          return { textContent: '' };
+        }
+        if (id === 'wallpaperCustomColor') {
+          return null;
+        }
+        return null;
+      }
+    },
+    getEditorSlideId() {
+      return 'slide-2';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlides() {
+      return [];
+    },
+    getActiveSlide() {
+      return null;
+    },
+    preserveSelectionOnNextActiveSlideSync: true,
+    pruneEditorChromeNodes() {},
+    updateInsertionActionState(doc) {
+      calls.push(['updateInsertionActionState', doc]);
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    },
+    updateWallpaperActionState(doc) {
+      calls.push(['updateWallpaperActionState', doc]);
+    },
+    updateZoomActionState(doc) {
+      calls.push(['updateZoomActionState', doc]);
+    },
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    SlideNextStudioDeckView: {
+      syncStudioActiveSlideView(doc, options) {
+        calls.push(['syncStudioActiveSlideView', doc]);
+        options.setCurrentSlideIndex(1);
+        options.setSlideCountLabel('2 / 3');
+        return {
+          didSync: true
+        };
+      }
+    },
+    updateActiveThumbnailCardState(activeSlideId) {
+      calls.push(['updateActiveThumbnailCardState', activeSlideId]);
+    },
+    updateCurrentPresentationSessionState(nextState) {
+      calls.push(['updateCurrentPresentationSessionState', nextState]);
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        context.currentSlideIndex = nextState.slideIndex;
+      }
+    },
+    updateIframeNavigationUI() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncStudioChromeToActiveSlideSource, context);
+
+  const didSync = context.syncStudioChromeToActiveSlide();
+
+  assert.equal(didSync, true);
+  assert.equal(context.currentSlideIndex, 1);
+  assert.equal(calls.some(([name]) => name === 'deselectElement'), false);
+  assert.equal(calls.some(([name]) => name === 'updateLayersList'), true);
+});
+
 test('syncStudioChromeToActiveSlide tolerates a missing slide count label while syncing the live frame', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const syncStudioChromeToActiveSlideSource = extractFunctionSource(
