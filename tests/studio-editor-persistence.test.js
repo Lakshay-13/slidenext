@@ -1590,6 +1590,59 @@ test('executeStudioVersionCheckpointSaveWithSuccess reuses checkpoint save execu
   });
 });
 
+test('executeStudioVersionCheckpointSaveWithFailure reuses version save execution and applies failure callbacks for unsuccessful responses', async () => {
+  const versionCheckpointPersistenceState = {
+    cleanHtml: '<html>persisted</html>',
+    requestOptions: {
+      sessionToken: 12
+    },
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+  let failureArgs = null;
+
+  const result = await editorPersistence.executeStudioVersionCheckpointSaveWithFailure(
+    'Checkpoint Baseline',
+    versionCheckpointPersistenceState,
+    '/presentations/onboarding-presentation/index.html',
+    {
+      saveVersionCheckpoint: async () => ({
+        success: false,
+        error: 'disk full'
+      }),
+      applyPersistenceFailure(persistenceContext, options = {}) {
+        failureArgs = {
+          persistenceContext,
+          options
+        };
+      },
+      buildFailureOptions(data) {
+        return {
+          marker: 'version-failure',
+          data
+        };
+      }
+    }
+  );
+
+  assert.equal(failureArgs.persistenceContext, versionCheckpointPersistenceState.persistenceContext);
+  assert.deepEqual(failureArgs.options, {
+    marker: 'version-failure',
+    data: {
+      success: false,
+      error: 'disk full'
+    }
+  });
+  assert.deepEqual(result, {
+    data: {
+      success: false,
+      error: 'disk full'
+    },
+    versionCheckpointPersistenceState
+  });
+});
+
 test('isStudioVersionCheckpointSavePersisted reuses the checkpoint persistence plan wiring', () => {
   const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
     metadata: {

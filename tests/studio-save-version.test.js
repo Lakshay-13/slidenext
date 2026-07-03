@@ -912,6 +912,93 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure applies the failure h
   });
 });
 
+test('executeCurrentStudioVersionCheckpointSaveWithFailure reuses the shared failure-aware helper when available', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const versionCheckpointPersistenceState = {
+    cleanHtml: '<html>persisted</html>',
+    requestOptions: {
+      sessionToken: 12
+    },
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+  let helperArgs = null;
+  const failureCalls = [];
+  const context = {
+    applyCurrentStudioPersistenceFailure() {
+      throw new Error('executeCurrentStudioVersionCheckpointSaveWithFailure should pass the failure helper to the shared helper');
+    },
+    applyCurrentStudioVersionCheckpointSaveSuccess() {
+      throw new Error('executeCurrentStudioVersionCheckpointSaveWithFailure should pass the success helper to the shared helper');
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    saveVersionCheckpoint() {
+      throw new Error('executeCurrentStudioVersionCheckpointSaveWithFailure should pass saveVersionCheckpoint to the shared helper');
+    },
+    SlideNextStudioEditorPersistence: {
+      executeStudioVersionCheckpointSaveWithFailure: async (...args) => {
+        helperArgs = args;
+        return {
+          data: {
+            success: false,
+            error: 'disk full'
+          },
+          versionCheckpointPersistenceState
+        };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
+
+  const result = await context.executeCurrentStudioVersionCheckpointSaveWithFailure(
+    'Checkpoint Baseline',
+    versionCheckpointPersistenceState,
+    '/presentations/onboarding-presentation/index.html',
+    {
+      onSuccess() {},
+      onFailure(data) {
+        failureCalls.push(data);
+      }
+    }
+  );
+
+  assert.equal(helperArgs[0], 'Checkpoint Baseline');
+  assert.equal(helperArgs[1], versionCheckpointPersistenceState);
+  assert.equal(helperArgs[2], '/presentations/onboarding-presentation/index.html');
+  assert.equal(helperArgs[3].saveVersionCheckpoint, context.saveVersionCheckpoint);
+  assert.equal(helperArgs[3].applyVersionCheckpointSaveSuccess, context.applyCurrentStudioVersionCheckpointSaveSuccess);
+  assert.equal(helperArgs[3].applyPersistenceFailure, context.applyCurrentStudioPersistenceFailure);
+  assert.equal(typeof helperArgs[3].successOptions.onSuccess, 'function');
+  const failureOptions = helperArgs[3].buildFailureOptions({
+    success: false,
+    error: 'disk full'
+  });
+  assert.equal(typeof failureOptions.onFailure, 'function');
+  failureOptions.onFailure();
+  assert.deepEqual(failureCalls, [{
+    success: false,
+    error: 'disk full'
+  }]);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    data: {
+      success: false,
+      error: 'disk full'
+    },
+    versionCheckpointPersistenceState: {
+      cleanHtml: '<html>persisted</html>',
+      requestOptions: {
+        sessionToken: 12
+      },
+      persistenceContext: {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      }
+    }
+  });
+});
+
 test('isCurrentStudioVersionCheckpointSavePersisted reuses the shared persisted-state helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const versionCheckpointPersistenceState = {

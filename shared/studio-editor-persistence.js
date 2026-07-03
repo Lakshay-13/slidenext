@@ -621,6 +621,52 @@
     return versionCheckpointSaveResult;
   }
 
+  async function executeStudioVersionCheckpointSaveWithFailure(
+    versionLabel = '',
+    versionCheckpointPersistenceState = null,
+    presentationUrl = '',
+    options = {}
+  ) {
+    const versionCheckpointSaveResult = await executeStudioVersionCheckpointSaveWithSuccess(
+      versionLabel,
+      versionCheckpointPersistenceState,
+      presentationUrl,
+      {
+        saveVersionCheckpoint: options.saveVersionCheckpoint,
+        applyVersionCheckpointSaveSuccess: options.applyVersionCheckpointSaveSuccess,
+        successOptions: options.successOptions
+      }
+    );
+    const applyPersistenceFailure = typeof options.applyPersistenceFailure === 'function'
+      ? options.applyPersistenceFailure
+      : null;
+    const buildFailureOptions = typeof options.buildFailureOptions === 'function'
+      ? options.buildFailureOptions
+      : null;
+    const failureContext = versionCheckpointSaveResult
+      && versionCheckpointSaveResult.versionCheckpointPersistenceState
+      && versionCheckpointSaveResult.versionCheckpointPersistenceState.persistenceContext
+        ? versionCheckpointSaveResult.versionCheckpointPersistenceState.persistenceContext
+        : versionCheckpointPersistenceState && versionCheckpointPersistenceState.persistenceContext;
+
+    if (
+      applyPersistenceFailure
+      && versionCheckpointSaveResult
+      && versionCheckpointSaveResult.data
+      && !versionCheckpointSaveResult.data.success
+      && failureContext
+    ) {
+      applyPersistenceFailure(
+        failureContext,
+        buildFailureOptions
+          ? asPlainObject(buildFailureOptions(versionCheckpointSaveResult.data))
+          : asPlainObject(options.failureOptions)
+      );
+    }
+
+    return versionCheckpointSaveResult;
+  }
+
   function isStudioVersionCheckpointSavePersisted(
     versionLabel = '',
     versionCheckpointPersistenceState = null,
@@ -911,6 +957,7 @@
     executeStudioVersionCheckpointPersistenceRequest,
     executeStudioVersionCheckpointSave,
     executeStudioVersionCheckpointSaveWithSuccess,
+    executeStudioVersionCheckpointSaveWithFailure,
     isStudioVersionCheckpointSavePersisted,
     createStudioVersionCheckpointRequestOptions,
     createStudioVersionCheckpointPersistenceState,
