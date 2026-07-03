@@ -1004,7 +1004,7 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure reuses the shared fai
   });
 });
 
-test('isCurrentStudioVersionCheckpointSavePersisted reuses the shared persisted-state helper when available', () => {
+test('isCurrentStudioVersionCheckpointSavePersisted delegates through the shared persisted-state helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const versionCheckpointPersistenceState = {
     cleanHtml: '<html>persisted</html>',
