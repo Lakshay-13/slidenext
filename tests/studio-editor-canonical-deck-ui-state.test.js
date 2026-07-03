@@ -103,17 +103,9 @@ function loadCreateEditorDeckViewSharedOptions(fileContent, context) {
     const createEditorDeckCanonicalOverrideResolverSource = extractFunctionSource(
       fileContent,
       'function createEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {',
-      '\n\n    function resolveEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {'
-    );
-    vm.runInContext(createEditorDeckCanonicalOverrideResolverSource, context);
-  }
-  if (typeof context.resolveEditorDeckCanonicalOverrideResolver !== 'function') {
-    const resolveEditorDeckCanonicalOverrideResolverSource = extractFunctionSource(
-      fileContent,
-      'function resolveEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {',
       '\n\n    function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {'
     );
-    vm.runInContext(resolveEditorDeckCanonicalOverrideResolverSource, context);
+    vm.runInContext(createEditorDeckCanonicalOverrideResolverSource, context);
   }
   if (typeof context.createEditorDeckViewSharedOptions !== 'function') {
     const createEditorDeckViewSharedOptionsSource = extractFunctionSource(
@@ -875,7 +867,7 @@ test('createEditorDeckCanonicalOverrideResolver reuses the local deck canonical 
   const helperSource = extractFunctionSource(
     fileContent,
     'function createEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {',
-    '\n\n    function resolveEditorDeckCanonicalOverride(doc = getIframeDoc(), canonicalDeck = null) {'
+    '\n\n    function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -908,46 +900,6 @@ test('createEditorDeckCanonicalOverrideResolver reuses the local deck canonical 
   assert.equal(resolveCanonicalDeckOverride(canonicalDeck, iframeDoc), rebuiltCanonicalDeck);
   assert.deepEqual(calls, [
     ['resolveEditorDeckCanonicalOverride', iframeDoc, canonicalDeck]
-  ]);
-});
-
-test('resolveEditorDeckCanonicalOverrideResolver reuses the local deck canonical override resolver when available', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {',
-    '\n\n    function resolveEditorDeckCanonicalOverride(doc = getIframeDoc(), canonicalDeck = null) {'
-  );
-
-  const iframeDoc = { label: 'iframe-doc' };
-  const canonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: []
-  };
-  const calls = [];
-  const context = {
-    createEditorDeckCanonicalOverrideResolver(nextDoc) {
-      calls.push(['createEditorDeckCanonicalOverrideResolver', nextDoc]);
-      return (nextCanonicalDeck, sourceDoc) => {
-        calls.push(['resolveCanonicalDeckOverride', nextCanonicalDeck, sourceDoc]);
-        return canonicalDeck;
-      };
-    },
-    getIframeDoc() {
-      return iframeDoc;
-    }
-  };
-
-  vm.createContext(context);
-  vm.runInContext(helperSource, context);
-
-  const resolveCanonicalDeckOverride = context.resolveEditorDeckCanonicalOverrideResolver(iframeDoc);
-
-  assert.equal(resolveCanonicalDeckOverride(canonicalDeck, iframeDoc), canonicalDeck);
-  assert.deepEqual(calls, [
-    ['createEditorDeckCanonicalOverrideResolver', iframeDoc],
-    ['resolveCanonicalDeckOverride', canonicalDeck, iframeDoc]
   ]);
 });
 
@@ -997,8 +949,8 @@ test('createEditorDeckViewSharedOptions reuses the local deck canonical override
     getIframeDoc() {
       return iframeDoc;
     },
-    resolveEditorDeckCanonicalOverrideResolver(nextDoc) {
-      calls.push(['resolveEditorDeckCanonicalOverrideResolver', nextDoc]);
+    createEditorDeckCanonicalOverrideResolver(nextDoc) {
+      calls.push(['createEditorDeckCanonicalOverrideResolver', nextDoc]);
       return (nextCanonicalDeck, sourceDoc) => {
         calls.push(['resolveCanonicalDeckOverride', nextCanonicalDeck, sourceDoc]);
         return canonicalDeck;
@@ -1023,7 +975,7 @@ test('createEditorDeckViewSharedOptions reuses the local deck canonical override
   assert.equal(options.isCanonicalDeck, isCanonicalDeck);
   assert.deepEqual(helperCalls, ['createEditorCanonicalDeckViewStateOptions']);
   assert.deepEqual(calls, [
-    ['resolveEditorDeckCanonicalOverrideResolver', iframeDoc],
+    ['createEditorDeckCanonicalOverrideResolver', iframeDoc],
     ['getEditorCanonicalDeckValidator'],
     ['buildCanonicalDeck', iframeDoc],
     ['resolveCanonicalDeckOverride', canonicalDeck, iframeDoc],

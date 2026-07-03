@@ -3394,12 +3394,8 @@
       };
     }
 
-    function resolveEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {
-      return createEditorDeckCanonicalOverrideResolver(doc);
-    }
-
     function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {
-      const resolveCanonicalDeckOverride = resolveEditorDeckCanonicalOverrideResolver(doc);
+      const resolveCanonicalDeckOverride = createEditorDeckCanonicalOverrideResolver(doc);
       const isCanonicalDeck = getEditorCanonicalDeckValidator();
       const {
         buildCanonicalDeck,
