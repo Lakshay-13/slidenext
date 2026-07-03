@@ -29,6 +29,14 @@ function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
 
 function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  if (typeof context.resolveEditorMetadataPersistenceOptions !== 'function') {
+    const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
+      fileContent,
+      'function resolveEditorMetadataPersistenceOptions(options = {}) {',
+      '\n\n    function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {'
+    );
+    vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+  }
   if (typeof context.resolveEditorCanonicalDeckOverride !== 'function') {
     const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
       fileContent,

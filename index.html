@@ -5768,35 +5768,7 @@
         ? buildOptions.canonicalDeck
         : null;
       const resolveCanonicalDeckOverride = createEditorPersistableCanonicalDeckOverrideResolver(doc, providedCanonicalDeck);
-      const resolveMetadataPersistenceOptions = () => typeof resolveEditorMetadataPersistenceOptions === 'function'
-        ? resolveEditorMetadataPersistenceOptions()
-        : (() => {
-            const activePresentationMetadata = typeof currentPresentationMetadata !== 'undefined'
-              ? currentPresentationMetadata
-              : null;
-            const resolveMergedPresentationPersistenceOptions = (
-              typeof SlideNextDeckLoader !== 'undefined'
-              && SlideNextDeckLoader
-              && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
-            )
-              ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
-              : null;
-            if (resolveMergedPresentationPersistenceOptions) {
-              return resolveMergedPresentationPersistenceOptions(activePresentationMetadata || {});
-            }
-            return (
-              typeof SlideNextDeckLoader !== 'undefined'
-              && SlideNextDeckLoader
-              && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
-            )
-              ? SlideNextDeckLoader.resolvePresentationPersistenceOptions(activePresentationMetadata || {})
-              : activePresentationMetadata
-                && activePresentationMetadata.persistence
-                && typeof activePresentationMetadata.persistence === 'object'
-                && !Array.isArray(activePresentationMetadata.persistence)
-                ? { ...activePresentationMetadata.persistence }
-                : {};
-          })();
+      const resolveMetadataPersistenceOptions = () => resolveEditorMetadataPersistenceOptions();
       const sanitizeReusablePersistedHtml = typeof sanitizeEditorReusablePersistedHtml === 'function'
         ? (persistedHtml, playbackState = null) => sanitizeEditorReusablePersistedHtml(persistedHtml, {
             playbackState,
