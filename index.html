@@ -3932,6 +3932,14 @@
         : null;
     };
 
+    function resolveEditorPersistedDeckStateWithContent(persistedDeckState = getCurrentEditorPersistedDeckState()) {
+      return typeof getCurrentEditorPersistedDeckState.resolveWithContent === 'function'
+        ? getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState)
+        : (persistedDeckState && typeof persistedDeckState.cleanHtml === 'string' && persistedDeckState.cleanHtml.trim()
+            ? persistedDeckState
+            : null);
+    }
+
     function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {
       const createStudioDeckSnapshotBuildOptions = (
         typeof SlideNextStudioDeckSnapshot !== 'undefined'
@@ -6118,9 +6126,11 @@
           };
       if (!doc) {
         const persistedDeckState = getCurrentEditorPersistedDeckState();
-        const persistedDeckStateWithContent = typeof getCurrentEditorPersistedDeckState.resolveWithContent === 'function'
-          ? getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState)
-          : (persistedDeckState.cleanHtml.trim() ? persistedDeckState : null);
+        const persistedDeckStateWithContent = typeof resolveEditorPersistedDeckStateWithContent === 'function'
+          ? resolveEditorPersistedDeckStateWithContent(persistedDeckState)
+          : (typeof getCurrentEditorPersistedDeckState.resolveWithContent === 'function'
+              ? getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState)
+              : (persistedDeckState.cleanHtml.trim() ? persistedDeckState : null));
         const persistedHtml = persistedDeckStateWithContent
           ? persistedDeckStateWithContent.cleanHtml
           : '';
@@ -7133,11 +7143,13 @@
 
     function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {
       const persistedDeckState = getCurrentEditorPersistedDeckState();
-      const persistedDeckStateWithContent = (
-        typeof getCurrentEditorPersistedDeckState.resolveWithContent === 'function'
-          ? getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState)
-          : (persistedDeckState.cleanHtml.trim() ? persistedDeckState : null)
-      );
+      const persistedDeckStateWithContent = typeof resolveEditorPersistedDeckStateWithContent === 'function'
+        ? resolveEditorPersistedDeckStateWithContent(persistedDeckState)
+        : (
+            typeof getCurrentEditorPersistedDeckState.resolveWithContent === 'function'
+              ? getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState)
+              : (persistedDeckState.cleanHtml.trim() ? persistedDeckState : null)
+          );
       const storedCanonicalDeck = resolveEditorStoredCanonicalBaseline();
       const resolveStudioDeckReadyActionState = (
         typeof SlideNextStudioDeckReady !== 'undefined'
