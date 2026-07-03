@@ -1971,6 +1971,83 @@ test('isStudioPersistedHtml only reports true when a non-empty persisted html sn
   );
 });
 
+test('isStudioPersistedDeckHtml reuses persisted deck-state baselines for html comparisons', () => {
+  assert.equal(
+    editorPersistence.isStudioPersistedDeckHtml('<html></html>', {
+      cleanHtml: '<html></html>',
+      canonicalDeck: null
+    }),
+    true
+  );
+
+  assert.equal(
+    editorPersistence.isStudioPersistedDeckHtml('<html></html>', {
+      cleanHtml: '<html>changed</html>'
+    }),
+    false
+  );
+
+  assert.equal(
+    editorPersistence.isStudioPersistedDeckHtml('<html></html>', null),
+    false
+  );
+});
+
+test('isStudioPersistedSaveRequest reuses persisted deck-state baselines for html and canonical deck comparisons', () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+  const persistedDeckState = {
+    cleanHtml: '<html></html>',
+    canonicalDeck
+  };
+
+  assert.equal(
+    editorPersistence.isStudioPersistedSaveRequest(
+      {
+        htmlContent: '<html></html>',
+        canonicalDeck
+      },
+      persistedDeckState
+    ),
+    true
+  );
+
+  assert.equal(
+    editorPersistence.isStudioPersistedSaveRequest(
+      {
+        htmlContent: '<html>changed</html>',
+        canonicalDeck
+      },
+      persistedDeckState
+    ),
+    false
+  );
+
+  assert.equal(
+    editorPersistence.isStudioPersistedSaveRequest(
+      {
+        htmlContent: '<html></html>',
+        canonicalDeck: canonicalDeckModel.createCanonicalDeck({
+          slides: [
+            {
+              id: 'slide-2',
+              nodes: []
+            }
+          ]
+        })
+      },
+      persistedDeckState
+    ),
+    false
+  );
+});
+
 test('isStudioPersistenceTaskStale rejects missing or stale deck/session combinations', () => {
   assert.equal(
     editorPersistence.isStudioPersistenceTaskStale('', {

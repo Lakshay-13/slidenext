@@ -5558,21 +5558,17 @@
     }
 
     function isCurrentDeckHtmlPersisted(cleanHtml) {
-      return SlideNextStudioEditorPersistence.isStudioPersistedHtml(
+      return SlideNextStudioEditorPersistence.isStudioPersistedDeckHtml(
         cleanHtml,
-        getCurrentEditorPersistedDeckState().cleanHtml
+        getCurrentEditorPersistedDeckState()
       );
     }
 
     function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {
-      const persistedDeckState = getCurrentEditorPersistedDeckState();
-      return SlideNextStudioEditorPersistence.isStudioPersistedState(
-        cleanHtml,
-        saveRequestBody && saveRequestBody.canonicalDeck,
-        {
-          persistedHtml: persistedDeckState.cleanHtml,
-          persistedCanonicalDeck: persistedDeckState.canonicalDeck
-        }
+      return SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest(
+        saveRequestBody,
+        getCurrentEditorPersistedDeckState(),
+        cleanHtml
       );
     }
 

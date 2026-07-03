@@ -835,6 +835,31 @@
     return isStudioPersistedCanonicalDeck(canonicalDeck, options.persistedCanonicalDeck, options);
   }
 
+  function isStudioPersistedDeckHtml(cleanHtml = '', persistedDeckState = {}) {
+    return isStudioPersistedHtml(
+      cleanHtml,
+      asPlainObject(persistedDeckState).cleanHtml
+    );
+  }
+
+  function isStudioPersistedSaveRequest(
+    saveRequestBody = null,
+    persistedDeckState = {},
+    cleanHtml = saveRequestBody && saveRequestBody.htmlContent,
+    options = {}
+  ) {
+    const nextPersistedDeckState = asPlainObject(persistedDeckState);
+    return isStudioPersistedState(
+      cleanHtml,
+      saveRequestBody && saveRequestBody.canonicalDeck,
+      {
+        ...options,
+        persistedHtml: nextPersistedDeckState.cleanHtml,
+        persistedCanonicalDeck: nextPersistedDeckState.canonicalDeck
+      }
+    );
+  }
+
   function isStudioPersistenceTaskStale(presentationUrl = '', options = {}) {
     const requestedPresentationUrl = normalizeString(presentationUrl);
     const currentPresentationUrl = normalizeString(
@@ -1022,6 +1047,8 @@
     isStudioPersistedCanonicalDeck,
     resolveStudioPersistedHtmlReuse,
     isStudioPersistedState,
+    isStudioPersistedDeckHtml,
+    isStudioPersistedSaveRequest,
     isStudioPersistenceTaskStale,
     clearStudioPersistenceTimers,
     isStudioPersistenceActionCurrent,
