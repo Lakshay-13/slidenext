@@ -7984,32 +7984,13 @@
       const restoreContext = createCurrentStudioVersionActionContext();
       
       try {
-        const executeRestoreVersionRequest = (
-          typeof SlideNextStudioVersionActions !== 'undefined'
-          && SlideNextStudioVersionActions
-          && typeof SlideNextStudioVersionActions.executeStudioRestoreVersionRequest === 'function'
-        )
-          ? SlideNextStudioVersionActions.executeStudioRestoreVersionRequest
-          : null;
-        const data = executeRestoreVersionRequest
-          ? await executeRestoreVersionRequest(
-              filename,
-              restoreContext,
-              {
-                fetchImpl: fetch
-              }
-            )
-          : await (async () => {
-              const response = await fetch('/api/restore', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  htmlPath: restoreContext.presentationUrl,
-                  versionFilename: filename
-                })
-              });
-              return response.json();
-            })();
+        const data = await SlideNextStudioVersionActions.executeStudioRestoreVersionRequest(
+          filename,
+          restoreContext,
+          {
+            fetchImpl: fetch
+          }
+        );
         if (data.success) {
           handleCurrentStudioVersionRestoreSuccess(restoreContext, {
             onSuccess: () => {
@@ -8119,34 +8100,14 @@
       }
       
       try {
-        const executeRenameVersionRequest = (
-          typeof SlideNextStudioVersionActions !== 'undefined'
-          && SlideNextStudioVersionActions
-          && typeof SlideNextStudioVersionActions.executeStudioRenameVersionRequest === 'function'
-        )
-          ? SlideNextStudioVersionActions.executeStudioRenameVersionRequest
-          : null;
-        const data = executeRenameVersionRequest
-          ? await executeRenameVersionRequest(
-              versionFilename,
-              newLabel,
-              renameContext,
-              {
-                fetchImpl: fetch
-              }
-            )
-          : await (async () => {
-              const response = await fetch('/api/versions/rename', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  htmlPath: renameContext.presentationUrl,
-                  versionFilename,
-                  newLabel
-                })
-              });
-              return response.json();
-            })();
+        const data = await SlideNextStudioVersionActions.executeStudioRenameVersionRequest(
+          versionFilename,
+          newLabel,
+          renameContext,
+          {
+            fetchImpl: fetch
+          }
+        );
         if (data.success) {
           handleCurrentStudioVersionListMutationSuccess(renameContext, {
             isCurrentSession: () => !modal || SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
@@ -8190,32 +8151,13 @@
       const deleteContext = createCurrentStudioVersionActionContext();
       
       try {
-        const executeDeleteVersionRequest = (
-          typeof SlideNextStudioVersionActions !== 'undefined'
-          && SlideNextStudioVersionActions
-          && typeof SlideNextStudioVersionActions.executeStudioDeleteVersionRequest === 'function'
-        )
-          ? SlideNextStudioVersionActions.executeStudioDeleteVersionRequest
-          : null;
-        const data = executeDeleteVersionRequest
-          ? await executeDeleteVersionRequest(
-              filename,
-              deleteContext,
-              {
-                fetchImpl: fetch
-              }
-            )
-          : await (async () => {
-              const response = await fetch('/api/versions/delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  htmlPath: deleteContext.presentationUrl,
-                  versionFilename: filename
-                })
-              });
-              return response.json();
-            })();
+        const data = await SlideNextStudioVersionActions.executeStudioDeleteVersionRequest(
+          filename,
+          deleteContext,
+          {
+            fetchImpl: fetch
+          }
+        );
         if (data.success) {
           handleCurrentStudioVersionListMutationSuccess(deleteContext);
         } else {

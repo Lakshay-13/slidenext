@@ -533,6 +533,12 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
         return true;
       }
     },
+    SlideNextStudioVersionActions: {
+      async executeStudioRenameVersionRequest(...args) {
+        calls.push(['executeStudioRenameVersionRequest', ...args]);
+        return { success: true };
+      }
+    },
     closeRenameVersionModal() {
       calls.push(['closeRenameVersionModal']);
     },
@@ -553,16 +559,8 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
         return null;
       }
     },
-    fetch(url, options) {
-      calls.push(['fetch', url, options]);
-      return Promise.resolve({
-        async json() {
-          calls.push(['response.json']);
-          return {
-            success: true
-          };
-        }
-      });
+    fetch() {
+      calls.push(['fetch']);
     },
     handleCurrentStudioVersionActionFailure() {
       calls.push(['handleCurrentStudioVersionActionFailure']);
@@ -591,7 +589,8 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
   });
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'renameVersionModal'));
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'confirmRenameVersionBtn'));
-  assert.ok(calls.some(([name]) => name === 'fetch'));
+  assert.ok(calls.some(([name]) => name === 'executeStudioRenameVersionRequest'));
+  assert.ok(calls.some(([name, , , , options]) => name === 'executeStudioRenameVersionRequest' && options.fetchImpl === context.fetch));
   assert.ok(calls.some(([name]) => name === 'closeRenameVersionModal'));
   assert.ok(calls.filter(([name]) => name === 'handleCurrentStudioVersionListMutationSuccess').length === 2);
   assert.ok(calls.some(([name, result]) => name === 'isCurrentSession' && result === true));
@@ -746,6 +745,12 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
 
   const calls = [];
   const context = {
+    SlideNextStudioVersionActions: {
+      async executeStudioRestoreVersionRequest(...args) {
+        calls.push(['executeStudioRestoreVersionRequest', ...args]);
+        return { success: true };
+      }
+    },
     alert(message) {
       calls.push(['alert', message]);
     },
@@ -770,16 +775,8 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
         return null;
       }
     },
-    fetch(url, options) {
-      calls.push(['fetch', url, options]);
-      return Promise.resolve({
-        async json() {
-          calls.push(['response.json']);
-          return {
-            success: true
-          };
-        }
-      });
+    fetch() {
+      calls.push(['fetch']);
     },
     handleCurrentStudioVersionActionFailure() {
       calls.push(['handleCurrentStudioVersionActionFailure']);
@@ -801,6 +798,8 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
   await assert.doesNotReject(async () => {
     await context.restoreVersion('index_20260101_120000_Auto.html');
   });
+  assert.ok(calls.some(([name]) => name === 'executeStudioRestoreVersionRequest'));
+  assert.ok(calls.some(([name, , , options]) => name === 'executeStudioRestoreVersionRequest' && options.fetchImpl === context.fetch));
   assert.ok(calls.some(([name]) => name === 'handleCurrentStudioVersionRestoreSuccess'));
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'versionsDropdown'));
   assert.ok(calls.some(([name, message]) => name === 'alert' && /Rollback successfully restored!/.test(message)));
