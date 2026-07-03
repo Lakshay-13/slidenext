@@ -3659,15 +3659,7 @@
 
     function createEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {
       return function resolveCanonicalDeckOverride(canonicalDeck = null, nextDoc = doc) {
-        if (typeof resolveEditorDeckCanonicalOverride === 'function') {
-          return resolveEditorDeckCanonicalOverride(nextDoc, canonicalDeck);
-        }
-        if (typeof resolveEditorCanonicalDeckOverride === 'function') {
-          return resolveEditorCanonicalDeckOverride(canonicalDeck, {
-            buildCanonicalDeck: canonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
-          });
-        }
-        return canonicalDeck;
+        return resolveEditorDeckCanonicalOverride(nextDoc, canonicalDeck);
       };
     }
 
