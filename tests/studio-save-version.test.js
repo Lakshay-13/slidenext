@@ -1744,6 +1744,9 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
 
   let saveVersionCalls = 0;
   const context = {
+    buildEditorSaveRequestBody() {
+      throw new Error('buildEditorSaveRequestBody should not run when editor content is unavailable');
+    },
     buildPersistableDeckHtml(nextDoc) {
       assert.equal(nextDoc, null);
       return '';
@@ -1760,6 +1763,9 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     getIframeDoc() {
       return null;
+    },
+    isCurrentDeckStatePersisted() {
+      throw new Error('isCurrentDeckStatePersisted should not run when editor content is unavailable');
     },
     isStaleEditorPersistenceTask() {
       return false;
@@ -1809,6 +1815,15 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
     slides: []
   };
   const context = {
+    buildEditorSaveRequestBody(nextDoc, cleanHtml, options = {}) {
+      assert.equal(nextDoc, null);
+      return {
+        htmlPath: options.presentationUrl,
+        htmlContent: cleanHtml,
+        versionLabel: options.versionLabel,
+        canonicalDeck: options.canonicalDeck
+      };
+    },
     buildPersistableDeckHtml(nextDoc, buildOptions = {}) {
       assert.equal(nextDoc, null);
       assert.equal(typeof buildOptions.onCanonicalDeckResolved, 'function');
@@ -1835,6 +1850,16 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     getIframeDoc() {
       return null;
+    },
+    isCurrentDeckStatePersisted(saveRequestBody, cleanHtml) {
+      assert.equal(cleanHtml, '<html>persisted-baseline</html>');
+      assert.deepEqual(saveRequestBody, {
+        htmlPath: '/presentations/onboarding-presentation/index.html',
+        htmlContent: '<html>persisted-baseline</html>',
+        versionLabel: 'Auto: Edited Text',
+        canonicalDeck
+      });
+      return false;
     },
     isStaleEditorPersistenceTask() {
       return false;

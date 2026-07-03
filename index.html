@@ -6107,12 +6107,8 @@
         versionCheckpointPersistenceState,
         presentationUrl,
         {
-          isPersistedState: typeof isCurrentDeckStatePersisted === 'function'
-            ? isCurrentDeckStatePersisted
-            : null,
-          buildSaveRequestBody: typeof buildEditorSaveRequestBody === 'function'
-            ? buildEditorSaveRequestBody
-            : null
+          isPersistedState: isCurrentDeckStatePersisted,
+          buildSaveRequestBody: buildEditorSaveRequestBody
         }
       );
     }
