@@ -790,7 +790,7 @@ test('resolveEditorDeckCanonicalOverride delegates empty deck-view overrides thr
   assert.equal(delegatedArgs.buildCanonicalDeck, null);
 });
 
-test('resolveEditorDeckCanonicalOverride reuses the provided canonical deck through the local save helper when available', () => {
+test('resolveEditorDeckCanonicalOverride reuses the provided canonical deck through the local override helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
@@ -806,8 +806,8 @@ test('resolveEditorDeckCanonicalOverride reuses the provided canonical deck thro
   };
   const calls = [];
   const context = {
-    resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
-      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
+    resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+      calls.push(['resolveEditorCanonicalDeckOverride', nextCanonicalDeck, options.buildCanonicalDeck]);
       return nextCanonicalDeck;
     },
     getIframeDoc() {
@@ -819,9 +819,10 @@ test('resolveEditorDeckCanonicalOverride reuses the provided canonical deck thro
   vm.runInContext(helperSource, context);
 
   assert.equal(context.resolveEditorDeckCanonicalOverride(iframeDoc, canonicalDeck), canonicalDeck);
-  assert.deepEqual(calls, [
-    ['resolveEditorSaveCanonicalDeck', iframeDoc, canonicalDeck]
-  ]);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'resolveEditorCanonicalDeckOverride');
+  assert.equal(calls[0][1], canonicalDeck);
+  assert.equal(typeof calls[0][2], 'function');
 });
 
 test('getEditorCanonicalDeckValidator returns the shared canonical deck validator when available', () => {
