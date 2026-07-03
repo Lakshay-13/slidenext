@@ -6145,11 +6145,7 @@
           };
       if (!doc) {
         const persistedDeckState = getCurrentEditorPersistedDeckState();
-        const persistedDeckStateWithContent = typeof resolveEditorPersistedDeckStateWithContent === 'function'
-          ? resolveEditorPersistedDeckStateWithContent(persistedDeckState)
-          : (typeof getCurrentEditorPersistedDeckState.resolveWithContent === 'function'
-              ? getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState)
-              : (persistedDeckState.cleanHtml.trim() ? persistedDeckState : null));
+        const persistedDeckStateWithContent = resolveEditorPersistedDeckStateWithContent(persistedDeckState);
         const persistedHtml = persistedDeckStateWithContent
           ? persistedDeckStateWithContent.cleanHtml
           : '';
@@ -7394,13 +7390,7 @@
 
     function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {
       const persistedDeckState = getCurrentEditorPersistedDeckState();
-      const persistedDeckStateWithContent = typeof resolveEditorPersistedDeckStateWithContent === 'function'
-        ? resolveEditorPersistedDeckStateWithContent(persistedDeckState)
-        : (
-            typeof getCurrentEditorPersistedDeckState.resolveWithContent === 'function'
-              ? getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState)
-              : (persistedDeckState.cleanHtml.trim() ? persistedDeckState : null)
-          );
+      const persistedDeckStateWithContent = resolveEditorPersistedDeckStateWithContent(persistedDeckState);
       const storedCanonicalDeck = resolveEditorStoredCanonicalBaseline();
       const resolveStudioDeckReadyActionState = (
         typeof SlideNextStudioDeckReady !== 'undefined'

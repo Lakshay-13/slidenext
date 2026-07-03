@@ -300,6 +300,10 @@ test('updateDeckReadyToolbarActionState delegates action gating to the shared de
   context.getCurrentEditorPersistedDeckState.resolveWithContent = () => persistedDeckStateWithContent;
 
   vm.createContext(context);
+  vm.runInContext(
+    'resolveEditorPersistedDeckStateWithContent = (persistedDeckState) => getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState);',
+    context
+  );
   vm.runInContext(updateDeckReadyToolbarActionStateSource, context);
 
   context.updateDeckReadyToolbarActionState(doc);
