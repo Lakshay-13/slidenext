@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const editorPersistence = require('../shared/studio-editor-persistence.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -149,7 +150,7 @@ test('captureEditorPersistableDeckBuildState captures and forwards canonical dec
   assert.equal(reportedPlaybackState, playbackState);
 });
 
-test('resolveEditorCapturedPersistableDeckState resolves canonical deck and playback fallbacks when shared persistence helpers are unavailable', () => {
+test('resolveEditorCapturedPersistableDeckState delegates capture-state fallback resolution through the shared persistence helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const canonicalDeck = {
     kind: 'slidenext.deck',
@@ -158,7 +159,9 @@ test('resolveEditorCapturedPersistableDeckState resolves canonical deck and play
   };
   let buildCanonicalDeckCalls = 0;
   let resolvePlaybackStateCalls = 0;
-  const context = {};
+  const context = {
+    SlideNextStudioEditorPersistence: editorPersistence
+  };
 
   vm.createContext(context);
   loadResolveEditorCapturedPersistableDeckState(fileContent, context);
