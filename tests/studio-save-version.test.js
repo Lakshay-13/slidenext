@@ -1651,6 +1651,7 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithSuccess(fileContent, context);
+  loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   loadIsCurrentStudioVersionCheckpointSavePersisted(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
@@ -1727,6 +1728,7 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithSuccess(fileContent, context);
+  loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   loadIsCurrentStudioVersionCheckpointSavePersisted(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
@@ -2080,7 +2082,7 @@ test('submitSaveVersion reuses the local version checkpoint success helper when 
   assert.equal(statusEl.innerHTML, 'saved');
 });
 
-test('executeSaveAutoVersion reuses the local version checkpoint save-with-success helper when available', async () => {
+test('executeSaveAutoVersion reuses the local version checkpoint failure-aware helper when available', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const executeSaveAutoVersionSource = extractFunctionSource(
     fileContent,
@@ -2109,7 +2111,7 @@ test('executeSaveAutoVersion reuses the local version checkpoint save-with-succe
       }
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    __executeCurrentStudioVersionCheckpointSaveWithSuccess: async (...args) => {
+    __executeCurrentStudioVersionCheckpointSaveWithFailure: async (...args) => {
       helperArgs = args;
       const helperOptions = args[3] || {};
       if (typeof helperOptions.onSuccess === 'function') {
@@ -2138,7 +2140,7 @@ test('executeSaveAutoVersion reuses the local version checkpoint save-with-succe
   };
 
   vm.createContext(context);
-  vm.runInContext('executeCurrentStudioVersionCheckpointSaveWithSuccess = __executeCurrentStudioVersionCheckpointSaveWithSuccess;', context);
+  vm.runInContext('executeCurrentStudioVersionCheckpointSaveWithFailure = __executeCurrentStudioVersionCheckpointSaveWithFailure;', context);
   vm.runInContext('isCurrentStudioVersionCheckpointSavePersisted = () => false;', context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
@@ -2148,10 +2150,76 @@ test('executeSaveAutoVersion reuses the local version checkpoint save-with-succe
   assert.equal(helperArgs[1], versionCheckpointPersistenceState);
   assert.equal(helperArgs[2], '/presentations/onboarding-presentation/index.html');
   assert.equal(typeof helperArgs[3].onSuccess, 'function');
+  assert.equal(typeof helperArgs[3].onFailure, 'function');
   assert.deepEqual(logCalls, ['Auto-created version checkpoint: Auto: Edited Text']);
 });
 
-test('executeSaveAutoVersion reuses the local version checkpoint success helper when the save-with-success helper delegates to it', async () => {
+test('executeSaveAutoVersion reports unsuccessful checkpoint responses through the failure-aware helper', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const executeSaveAutoVersionSource = extractFunctionSource(
+    fileContent,
+    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
+    '\n\n    // 7. Versions and Backups listing'
+  );
+
+  const errorCalls = [];
+  const versionCheckpointPersistenceState = {
+    cleanHtml: '<html>persisted-baseline</html>',
+    requestOptions: {
+      sessionToken: 4
+    },
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+  const context = {
+    console: {
+      error(message) {
+        errorCalls.push(message);
+      },
+      log() {
+        throw new Error('executeSaveAutoVersion should not report success for an unsuccessful helper result');
+      }
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    __executeCurrentStudioVersionCheckpointSaveWithFailure: async (...args) => {
+      const helperOptions = args[3] || {};
+      if (typeof helperOptions.onFailure === 'function') {
+        helperOptions.onFailure({ error: 'disk full' });
+      }
+      return {
+        data: {
+          success: false,
+          error: 'disk full'
+        },
+        versionCheckpointPersistenceState
+      };
+    },
+    getIframeDoc() {
+      return { label: 'iframe-doc' };
+    },
+    isCurrentStudioVersionCheckpointSavePersisted() {
+      return false;
+    },
+    isStaleEditorPersistenceTask() {
+      return false;
+    },
+    resolveCurrentStudioVersionCheckpointPersistenceState() {
+      return versionCheckpointPersistenceState;
+    },
+    studioEditorSessionToken: 4
+  };
+
+  vm.createContext(context);
+  vm.runInContext('executeCurrentStudioVersionCheckpointSaveWithFailure = __executeCurrentStudioVersionCheckpointSaveWithFailure;', context);
+  vm.runInContext(executeSaveAutoVersionSource, context);
+
+  await context.executeSaveAutoVersion('Auto: Edited Text');
+
+  assert.deepEqual(errorCalls, ['Failed to auto-create version backup: disk full']);
+});
+
+test('executeSaveAutoVersion reuses the local version checkpoint success helper when the failure-aware helper delegates to it', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const executeSaveAutoVersionSource = extractFunctionSource(
     fileContent,
@@ -2213,6 +2281,7 @@ test('executeSaveAutoVersion reuses the local version checkpoint success helper 
 
   vm.createContext(context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithSuccess(fileContent, context);
+  loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext('applyCurrentStudioVersionCheckpointSaveSuccess = __applyCurrentStudioVersionCheckpointSaveSuccess;', context);
   vm.runInContext('executeCurrentStudioVersionCheckpointSave = __executeCurrentStudioVersionCheckpointSave;', context);
   vm.runInContext(executeSaveAutoVersionSource, context);

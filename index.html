@@ -7775,13 +7775,16 @@
       }
       
       try {
-        await executeCurrentStudioVersionCheckpointSaveWithSuccess(
+        await executeCurrentStudioVersionCheckpointSaveWithFailure(
           label,
           versionCheckpointPersistenceState,
           presentationUrl,
           {
             onSuccess: () => {
               console.log(`Auto-created version checkpoint: ${label}`);
+            },
+            onFailure: (data = {}) => {
+              console.error(`Failed to auto-create version backup: ${data.error}`);
             }
           }
         );
