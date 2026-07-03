@@ -16,6 +16,8 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 }
 
 function loadCaptureEditorPersistableDeckState(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  loadResolveEditorCapturedPersistableDeckState(fileContent, context);
   const captureEditorPersistableDeckStateSource = extractFunctionSource(
     fileContent,
     'function captureEditorPersistableDeckState(doc = getIframeDoc()) {',
