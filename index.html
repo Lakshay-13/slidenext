@@ -6862,6 +6862,41 @@
       return versionCheckpointSaveResult;
     }
 
+    async function executeCurrentStudioVersionCheckpointSaveWithFailure(
+      versionLabel,
+      versionCheckpointPersistenceState,
+      presentationUrl = currentPresentationUrl,
+      options = {}
+    ) {
+      const versionCheckpointSaveResult = await executeCurrentStudioVersionCheckpointSaveWithSuccess(
+        versionLabel,
+        versionCheckpointPersistenceState,
+        presentationUrl,
+        {
+          onSuccess: options.onSuccess
+        }
+      );
+      if (
+        versionCheckpointSaveResult
+        && versionCheckpointSaveResult.data
+        && !versionCheckpointSaveResult.data.success
+      ) {
+        applyCurrentStudioPersistenceFailure(
+          versionCheckpointSaveResult.versionCheckpointPersistenceState
+            ? versionCheckpointSaveResult.versionCheckpointPersistenceState.persistenceContext
+            : versionCheckpointPersistenceState.persistenceContext,
+          {
+            onFailure: () => {
+              if (typeof options.onFailure === 'function') {
+                options.onFailure(versionCheckpointSaveResult.data);
+              }
+            }
+          }
+        );
+      }
+      return versionCheckpointSaveResult;
+    }
+
     function isCurrentStudioVersionCheckpointSavePersisted(
       versionLabel,
       versionCheckpointPersistenceState,
@@ -7667,7 +7702,7 @@
       setStudioSaveButtonState('saving-version');
       
       try {
-        const { data } = await executeCurrentStudioVersionCheckpointSaveWithSuccess(
+        await executeCurrentStudioVersionCheckpointSaveWithFailure(
           versionName,
           versionCheckpointPersistenceState,
           scheduledPresentationUrl,
@@ -7675,20 +7710,13 @@
             onSuccess: () => {
               alert('Successfully saved named version backup checkpoint!');
               setStudioAutoSaveStatus('saved');
+            },
+            onFailure: (data = {}) => {
+              alert(`Save version failed: ${data.error}`);
+              setStudioAutoSaveStatus('save-version-failed');
             }
           }
         );
-        if (!data.success) {
-          applyCurrentStudioPersistenceFailure(
-            versionCheckpointPersistenceState.persistenceContext,
-            {
-              onFailure: () => {
-                alert(`Save version failed: ${data.error}`);
-                setStudioAutoSaveStatus('save-version-failed');
-              }
-            }
-          );
-        }
       } catch (err) {
         applyCurrentStudioPersistenceFailure(
           versionCheckpointPersistenceState.persistenceContext,
