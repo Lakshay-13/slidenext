@@ -1496,6 +1496,80 @@ test('executeStudioVersionCheckpointPersistenceRequest reuses the shared checkpo
   });
 });
 
+test('executeStudioVersionCheckpointPersistenceRequestWithSuccess reuses checkpoint request execution and applies success callbacks', async () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+  const playbackState = {
+    activeSlideIds: ['slide-2'],
+    slideCounterText: '2 / 3'
+  };
+  let successArgs = null;
+
+  const result = await editorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess(
+    'Checkpoint Plan',
+    '<html>persisted</html>',
+    'presentations/onboarding-presentation/index.html',
+    {
+      isPersistedState() {
+        return false;
+      },
+      buildSaveRequestBody(doc, cleanHtml, options = {}) {
+        return editorPersistence.buildStudioSaveRequestBody(
+          options.presentationUrl,
+          cleanHtml,
+          {
+            versionLabel: options.versionLabel,
+            canonicalDeck: options.canonicalDeck
+          }
+        );
+      },
+      doc: { label: 'iframe-doc' },
+      canonicalDeck,
+      playbackState,
+      sessionToken: 4,
+      fetchImpl: async () => ({
+        async json() {
+          return { success: true };
+        }
+      }),
+      applyPersistenceSuccess(persistenceContext, options = {}) {
+        successArgs = {
+          persistenceContext,
+          options
+        };
+      },
+      successOptions: {
+        marker: 'version-request-success'
+      }
+    }
+  );
+
+  assert.deepEqual(successArgs.options, {
+    marker: 'version-request-success'
+  });
+  assert.equal(
+    successArgs.persistenceContext.presentationUrl,
+    'presentations/onboarding-presentation/index.html'
+  );
+  assert.equal(successArgs.persistenceContext.cleanHtml, '<html>persisted</html>');
+  assert.deepEqual(successArgs.persistenceContext.playbackState, playbackState);
+  assert.equal(successArgs.persistenceContext.sessionToken, 4);
+  assert.deepEqual(result.data, { success: true });
+  assert.equal(
+    result.persistencePlan.persistenceContext.presentationUrl,
+    'presentations/onboarding-presentation/index.html'
+  );
+});
+
 test('executeStudioVersionCheckpointSave delegates checkpoint saves through a provided callback and preserves the state bundle', async () => {
   const versionCheckpointPersistenceState = {
     cleanHtml: '<html>persisted</html>',

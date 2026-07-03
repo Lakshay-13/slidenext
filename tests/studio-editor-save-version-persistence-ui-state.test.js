@@ -296,7 +296,7 @@ test('setCurrentPresentationCanonicalDeck ignores updates for inactive presentat
   assert.equal(context.currentPresentationMetadata, activeMetadata);
 });
 
-test('saveVersionCheckpoint refreshes persisted html and canonical metadata after a successful save rewrite', async () => {
+test('saveVersionCheckpoint refreshes persisted html and canonical metadata after a successful save rewrite through the shared helper', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const saveVersionCheckpointSource = extractFunctionSource(
     fileContent,
@@ -324,9 +324,9 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
     },
     SlideNextStudioEditorPersistence: {
       ...editorPersistence,
-      async executeStudioVersionCheckpointPersistenceRequest(versionLabel, cleanHtml, presentationUrl, options = {}) {
+      async executeStudioVersionCheckpointPersistenceRequestWithSuccess(versionLabel, cleanHtml, presentationUrl, options = {}) {
         capturedVersionCheckpointExecutionArgs = [versionLabel, cleanHtml, presentationUrl, options];
-        return editorPersistence.executeStudioVersionCheckpointPersistenceRequest(
+        return editorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess(
           versionLabel,
           cleanHtml,
           presentationUrl,
@@ -418,6 +418,13 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
   assert.equal(capturedVersionCheckpointExecutionArgs[3].sessionToken, 4);
   assert.deepEqual(capturedVersionCheckpointExecutionArgs[3].doc, { label: 'iframe-doc' });
   assert.equal(capturedVersionCheckpointExecutionArgs[3].canonicalDeck, canonicalDeck);
+  assert.equal(
+    capturedVersionCheckpointExecutionArgs[3].applyPersistenceSuccess,
+    context.applyCurrentStudioPersistenceSuccess
+  );
+  assert.deepEqual(JSON.parse(JSON.stringify(capturedVersionCheckpointExecutionArgs[3].successOptions)), {
+    presentationUrl: 'presentations/onboarding-presentation/index.html'
+  });
   assert.equal(context.lastPersistedDeckHtml, '<html>persisted</html>');
   assert.deepEqual(context.lastPersistedCanonicalDeck, canonicalDeckModel.createCanonicalDeck(canonicalDeck));
   assert.deepEqual(context.persistedDeckPlaybackState, livePlaybackState);

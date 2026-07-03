@@ -6753,6 +6753,33 @@
     }
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
+      const executeVersionCheckpointPersistenceRequestWithSuccess = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess
+        : null;
+      if (executeVersionCheckpointPersistenceRequestWithSuccess) {
+        const versionCheckpointResult = await executeVersionCheckpointPersistenceRequestWithSuccess(
+          versionLabel,
+          cleanHtml,
+          presentationUrl,
+          {
+            ...options,
+            isPersistedState: isCurrentDeckStatePersisted,
+            buildSaveRequestBody: buildEditorSaveRequestBody,
+            resolvePlaybackState: capturePersistedDeckPlaybackState,
+            fetchImpl: fetch,
+            applyPersistenceSuccess: applyCurrentStudioPersistenceSuccess,
+            successOptions: {
+              presentationUrl
+            }
+          }
+        );
+        return versionCheckpointResult ? versionCheckpointResult.data : null;
+      }
+
       const versionCheckpointResult = await SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequest(
         versionLabel,
         cleanHtml,
