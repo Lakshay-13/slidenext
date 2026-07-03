@@ -87,7 +87,7 @@ function loadCreateEditorDeckViewSharedOptions(fileContent, context) {
     const getEditorCanonicalDeckValidatorSource = extractFunctionSource(
       fileContent,
       'function getEditorCanonicalDeckValidator() {',
-      '\n\n    function createEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {'
+      '\n\n    function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {'
     );
     vm.runInContext(getEditorCanonicalDeckValidatorSource, context);
   }
@@ -98,14 +98,6 @@ function loadCreateEditorDeckViewSharedOptions(fileContent, context) {
       '\n\n    function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {'
     );
     vm.runInContext(resolveEditorDeckCanonicalOverrideSource, context);
-  }
-  if (typeof context.createEditorDeckCanonicalOverrideResolver !== 'function') {
-    const createEditorDeckCanonicalOverrideResolverSource = extractFunctionSource(
-      fileContent,
-      'function createEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {',
-      '\n\n    function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {'
-    );
-    vm.runInContext(createEditorDeckCanonicalOverrideResolverSource, context);
   }
   if (typeof context.createEditorDeckViewSharedOptions !== 'function') {
     const createEditorDeckViewSharedOptionsSource = extractFunctionSource(
@@ -837,7 +829,7 @@ test('getEditorCanonicalDeckValidator returns the shared canonical deck validato
   const helperSource = extractFunctionSource(
     fileContent,
     'function getEditorCanonicalDeckValidator() {',
-    '\n\n    function createEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {'
+    '\n\n    function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {'
   );
 
   const context = {
@@ -855,47 +847,6 @@ test('getEditorCanonicalDeckValidator returns the shared canonical deck validato
     context.getEditorCanonicalDeckValidator(),
     context.SlideNextCanonicalDeck.isCanonicalDeck
   );
-});
-
-test('createEditorDeckCanonicalOverrideResolver reuses the local deck canonical override helper when available', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {',
-    '\n\n    function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {'
-  );
-
-  const iframeDoc = { label: 'iframe-doc' };
-  const canonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: []
-  };
-  const rebuiltCanonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: [{ id: 'slide-1', nodes: [] }]
-  };
-  const calls = [];
-  const context = {
-    resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck) {
-      calls.push(['resolveEditorDeckCanonicalOverride', nextDoc, nextCanonicalDeck]);
-      return rebuiltCanonicalDeck;
-    },
-    getIframeDoc() {
-      return iframeDoc;
-    }
-  };
-
-  vm.createContext(context);
-  vm.runInContext(helperSource, context);
-
-  const resolveCanonicalDeckOverride = context.createEditorDeckCanonicalOverrideResolver(iframeDoc);
-
-  assert.equal(resolveCanonicalDeckOverride(canonicalDeck, iframeDoc), rebuiltCanonicalDeck);
-  assert.deepEqual(calls, [
-    ['resolveEditorDeckCanonicalOverride', iframeDoc, canonicalDeck]
-  ]);
 });
 
 test('createEditorDeckViewSharedOptions reuses the local deck canonical override selector and validator when available', () => {

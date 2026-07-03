@@ -3388,12 +3388,6 @@
         : null;
     }
 
-    function createEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {
-      return function resolveCanonicalDeckOverride(canonicalDeck = null, nextDoc = doc) {
-        return resolveEditorDeckCanonicalOverride(nextDoc, canonicalDeck);
-      };
-    }
-
     function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {
       const resolveCanonicalDeckOverride = (canonicalDeck = null, nextDoc = doc) => resolveEditorDeckCanonicalOverride(nextDoc, canonicalDeck);
       const isCanonicalDeck = getEditorCanonicalDeckValidator();
