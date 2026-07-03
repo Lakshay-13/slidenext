@@ -112,7 +112,7 @@ test('updateEditorPersistedDeckState updates only the provided persisted baselin
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
     fileContent,
     'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function resetEditorDeckPersistenceState() {'
+    '\n\n    function captureState() {'
   );
 
   const context = {
@@ -147,7 +147,7 @@ test('updateEditorPersistedDeckState normalizes the persisted canonical baseline
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
     fileContent,
     'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function resetEditorDeckPersistenceState() {'
+    '\n\n    function captureState() {'
   );
 
   const rawCanonicalDeck = {
@@ -199,51 +199,12 @@ test('updateEditorPersistedDeckState normalizes the persisted canonical baseline
   assert.equal(context.lastPersistedCanonicalDeck, normalizedCanonicalDeck);
 });
 
-test('resetEditorDeckPersistenceState clears the persisted baseline through the shared helper', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateEditorPersistedDeckStateSource = extractFunctionSource(
-    fileContent,
-    'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function resetEditorDeckPersistenceState() {'
-  );
-  const resetEditorDeckPersistenceStateSource = extractFunctionSource(
-    fileContent,
-    'function resetEditorDeckPersistenceState() {',
-    '\n\n    function captureState() {'
-  );
-
-  const context = {
-    lastPersistedDeckHtml: '<html>old</html>',
-    lastPersistedCanonicalDeck: { id: 'old-deck' },
-    persistedDeckPlaybackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 2' },
-    SlideNextDeckPersistence: deckPersistence,
-    SlideNextStudioDeckContext: {
-      resolveStoredStudioCanonicalDeck(metadata) {
-        return metadata && metadata.canonicalDeck ? metadata.canonicalDeck : null;
-      }
-    },
-    Object
-  };
-
-  vm.createContext(context);
-  loadResolveEditorStoredCanonicalDeck(fileContent, context);
-  vm.runInContext(updateEditorPersistedDeckStateSource, context);
-  loadApplyCurrentStudioPersistedDeckState(fileContent, context);
-  vm.runInContext(resetEditorDeckPersistenceStateSource, context);
-
-  context.resetEditorDeckPersistenceState();
-
-  assert.equal(context.lastPersistedDeckHtml, '');
-  assert.equal(context.lastPersistedCanonicalDeck, null);
-  assert.equal(context.persistedDeckPlaybackState, null);
-});
-
 test('applyCurrentStudioPersistedDeckState updates persisted baselines together and syncs canonical metadata only when allowed', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
     fileContent,
     'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function resetEditorDeckPersistenceState() {'
+    '\n\n    function captureState() {'
   );
 
   const rawCanonicalDeck = {
@@ -313,7 +274,7 @@ test('applyCurrentStudioPersistedCanonicalDeck updates the canonical baseline an
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
     fileContent,
     'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function resetEditorDeckPersistenceState() {'
+    '\n\n    function captureState() {'
   );
 
   const rawCanonicalDeck = {

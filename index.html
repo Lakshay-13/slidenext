@@ -1996,7 +1996,14 @@
         presentationMetadata: buildCurrentPresentationMetadataSeed(url, title)
       });
       resetEditorPersistenceTimers();
-      resetEditorDeckPersistenceState();
+      applyCurrentStudioPersistedDeckState({
+        cleanHtml: '',
+        canonicalDeck: null,
+        playbackState: null
+      }, {
+        presentationUrl: '',
+        syncPresentationMetadata: false
+      });
       applyEditorSelectionState({});
       undoStack = [];
       redoStack = [];
@@ -2067,7 +2074,14 @@
         presentationMetadata: null
       });
       resetEditorPersistenceTimers();
-      resetEditorDeckPersistenceState();
+      applyCurrentStudioPersistedDeckState({
+        cleanHtml: '',
+        canonicalDeck: null,
+        playbackState: null
+      }, {
+        presentationUrl: '',
+        syncPresentationMetadata: false
+      });
       resetStudioPresentationUiState();
       resetStudioSourceViewUiState();
       resetStudioVersionUiState();
@@ -5050,17 +5064,6 @@
           ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(nextState.playbackState)
           : (nextState.playbackState || null);
       }
-    }
-
-    function resetEditorDeckPersistenceState() {
-      applyCurrentStudioPersistedDeckState({
-        cleanHtml: '',
-        canonicalDeck: null,
-        playbackState: null
-      }, {
-        presentationUrl: '',
-        syncPresentationMetadata: false
-      });
     }
 
     function captureState() {

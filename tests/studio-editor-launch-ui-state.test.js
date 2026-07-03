@@ -138,7 +138,7 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
         return null;
       }
     },
-    resetEditorDeckPersistenceState() {},
+    applyCurrentStudioPersistedDeckState() {},
     resetEditorPersistenceTimers() {},
     resetStudioDeckUiState() {},
     resetStudioPresentationUiState() {},
@@ -268,8 +268,8 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
         return null;
       }
     },
-    resetEditorDeckPersistenceState() {
-      calls.push(['resetEditorDeckPersistenceState']);
+    applyCurrentStudioPersistedDeckState(nextState, options) {
+      calls.push(['applyCurrentStudioPersistedDeckState', nextState, options]);
     },
     resetEditorPersistenceTimers() {
       calls.push(['resetEditorPersistenceTimers']);
@@ -315,6 +315,18 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
   assert.equal(context.currentTitle, 'Project Onboarding');
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'studioCategoryLabel'));
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'studioTitleLabel'));
+  assert.ok(calls.some(([name, nextState, options]) => (
+    name === 'applyCurrentStudioPersistedDeckState'
+    && JSON.stringify(nextState) === JSON.stringify({
+      cleanHtml: '',
+      canonicalDeck: null,
+      playbackState: null
+    })
+    && JSON.stringify(options) === JSON.stringify({
+      presentationUrl: '',
+      syncPresentationMetadata: false
+    })
+  )));
   assert.ok(calls.some(([name]) => name === 'updateHistoryButtons'));
   assert.deepEqual(JSON.parse(JSON.stringify(context.undoStack)), []);
   assert.deepEqual(JSON.parse(JSON.stringify(context.redoStack)), []);
@@ -577,6 +589,7 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
   };
   let getStudioFrameCalls = 0;
   let loadPresentationsCalls = 0;
+  const calls = [];
 
   const context = {
     currentCategory: 'General',
@@ -623,7 +636,9 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
     loadPresentations() {
       loadPresentationsCalls += 1;
     },
-    resetEditorDeckPersistenceState() {},
+    applyCurrentStudioPersistedDeckState(nextState, options) {
+      calls.push(['applyCurrentStudioPersistedDeckState', nextState, options]);
+    },
     resetEditorPersistenceTimers() {},
     resetStudioDeckUiState() {},
     resetStudioPresentationUiState() {},
@@ -661,6 +676,18 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
   assert.equal(context.currentPresentationMetadata, null);
   assert.equal(context.studioEditorSessionToken, 5);
   assert.equal(context.document.body.style.overflow, '');
+  assert.ok(calls.some(([name, nextState, options]) => (
+    name === 'applyCurrentStudioPersistedDeckState'
+    && JSON.stringify(nextState) === JSON.stringify({
+      cleanHtml: '',
+      canonicalDeck: null,
+      playbackState: null
+    })
+    && JSON.stringify(options) === JSON.stringify({
+      presentationUrl: '',
+      syncPresentationMetadata: false
+    })
+  )));
   assert.deepEqual(JSON.parse(JSON.stringify(context.undoStack)), []);
   assert.deepEqual(JSON.parse(JSON.stringify(context.redoStack)), []);
   assert.equal(loadPresentationsCalls, 1);
