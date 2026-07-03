@@ -597,6 +597,64 @@ test('executeCurrentStudioVersionCheckpointSave saves the resolved checkpoint st
   assert.equal(result.versionCheckpointPersistenceState, versionCheckpointPersistenceState);
 });
 
+test('executeCurrentStudioVersionCheckpointSave reuses the shared version checkpoint save helper when available', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const versionCheckpointPersistenceState = {
+    cleanHtml: '<html>persisted</html>',
+    requestOptions: {
+      sessionToken: 12
+    },
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+  let helperArgs = null;
+  const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    saveVersionCheckpoint() {
+      throw new Error('executeCurrentStudioVersionCheckpointSave should reuse the shared helper when it is available');
+    },
+    SlideNextStudioEditorPersistence: {
+      executeStudioVersionCheckpointSave: async (...args) => {
+        helperArgs = args;
+        return {
+          data: {
+            success: true
+          },
+          versionCheckpointPersistenceState
+        };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
+
+  const result = await context.executeCurrentStudioVersionCheckpointSave(
+    'Checkpoint Baseline',
+    versionCheckpointPersistenceState
+  );
+
+  assert.equal(helperArgs[0], 'Checkpoint Baseline');
+  assert.equal(helperArgs[1], versionCheckpointPersistenceState);
+  assert.equal(helperArgs[2], '/presentations/onboarding-presentation/index.html');
+  assert.equal(typeof helperArgs[3].saveVersionCheckpoint, 'function');
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    data: {
+      success: true
+    },
+    versionCheckpointPersistenceState: {
+      cleanHtml: '<html>persisted</html>',
+      requestOptions: {
+        sessionToken: 12
+      },
+      persistenceContext: {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      }
+    }
+  });
+});
+
 test('applyCurrentStudioPersistenceSuccess delegates through the shared persistence helper with current handler options', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const persistenceContext = { presentationUrl: '/presentations/onboarding-presentation/index.html' };

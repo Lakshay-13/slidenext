@@ -6778,6 +6778,24 @@
         return null;
       }
 
+      const executeVersionCheckpointSave = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSave === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSave
+        : null;
+      if (executeVersionCheckpointSave) {
+        return executeVersionCheckpointSave(
+          versionLabel,
+          versionCheckpointPersistenceState,
+          presentationUrl,
+          {
+            saveVersionCheckpoint
+          }
+        );
+      }
+
       const data = await saveVersionCheckpoint(
         versionLabel,
         versionCheckpointPersistenceState.cleanHtml,

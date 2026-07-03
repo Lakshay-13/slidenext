@@ -1381,6 +1381,46 @@ test('executeStudioVersionCheckpointPersistenceRequest reuses the shared checkpo
   });
 });
 
+test('executeStudioVersionCheckpointSave delegates checkpoint saves through a provided callback and preserves the state bundle', async () => {
+  const versionCheckpointPersistenceState = {
+    cleanHtml: '<html>persisted</html>',
+    requestOptions: {
+      sessionToken: 12
+    },
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+  let saveArgs = null;
+
+  const result = await editorPersistence.executeStudioVersionCheckpointSave(
+    'Checkpoint Baseline',
+    versionCheckpointPersistenceState,
+    '/presentations/onboarding-presentation/index.html',
+    {
+      saveVersionCheckpoint: async (...args) => {
+        saveArgs = args;
+        return {
+          success: true
+        };
+      }
+    }
+  );
+
+  assert.deepEqual(saveArgs, [
+    'Checkpoint Baseline',
+    '<html>persisted</html>',
+    '/presentations/onboarding-presentation/index.html',
+    versionCheckpointPersistenceState.requestOptions
+  ]);
+  assert.deepEqual(result, {
+    data: {
+      success: true
+    },
+    versionCheckpointPersistenceState
+  });
+});
+
 test('createStudioVersionCheckpointRequestOptions preserves the captured deck state and session token', () => {
   assert.deepEqual(
     editorPersistence.createStudioVersionCheckpointRequestOptions(
