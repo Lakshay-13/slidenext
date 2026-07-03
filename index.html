@@ -5633,7 +5633,9 @@
       return resolveEditorCapturedPersistableDeckState(cleanHtml, {
         canonicalDeck: resolvedCanonicalDeck,
         playbackState: resolvedPlaybackState,
-        buildCanonicalDeck: () => resolveEditorSaveCanonicalDeck(doc, providedCanonicalDeck),
+        buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
+          buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+        }),
         resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
       });
     }

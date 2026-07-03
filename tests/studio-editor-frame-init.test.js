@@ -18,7 +18,14 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 function loadCaptureEditorPersistableDeckState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
   loadCaptureEditorPersistableDeckBuildState(fileContent, context);
-  loadResolveEditorSaveCanonicalDeck(fileContent, context);
+  if (typeof context.resolveEditorCanonicalDeckOverride !== 'function') {
+    const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
+      fileContent,
+      'function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {',
+      '\n\n    function getEditorCanonicalDeckValidator() {'
+    );
+    vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
+  }
   loadResolveEditorCapturedPersistableDeckState(fileContent, context);
   const captureEditorPersistableDeckStateSource = extractFunctionSource(
     fileContent,
@@ -42,18 +49,6 @@ function loadResolveEditorCapturedPersistableDeckState(fileContent, context) {
     fileContent,
     'function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {',
     '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
-function loadResolveEditorSaveCanonicalDeck(fileContent, context) {
-  if (typeof context.resolveEditorSaveCanonicalDeck === 'function') {
-    return;
-  }
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
-    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -509,7 +504,7 @@ test('captureEditorPersistableDeckState honors a provided canonical deck overrid
   assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
-test('captureEditorPersistableDeckState reuses the local save canonical deck helper when html capture does not report one', () => {
+test('captureEditorPersistableDeckState reuses the local canonical override helper when html capture does not report one', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
   const canonicalDeck = {
@@ -526,10 +521,10 @@ test('captureEditorPersistableDeckState reuses the local save canonical deck hel
   const calls = [];
 
   const context = {
-    __resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
-      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
-      assert.equal(nextDoc, iframeDoc);
+    __resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+      calls.push(['resolveEditorCanonicalDeckOverride', nextCanonicalDeck, options.buildCanonicalDeck]);
       assert.equal(nextCanonicalDeck, null);
+      assert.equal(typeof options.buildCanonicalDeck, 'function');
       return canonicalDeck;
     },
     buildPersistableDeckHtml(doc, options = {}) {
@@ -538,7 +533,7 @@ test('captureEditorPersistableDeckState reuses the local save canonical deck hel
       return '<html>persisted</html>';
     },
     buildEditorCanonicalDeck() {
-      throw new Error('buildEditorCanonicalDeck should not run when resolveEditorSaveCanonicalDeck is available');
+      throw new Error('buildEditorCanonicalDeck should not run when resolveEditorCanonicalDeckOverride is available');
     },
     capturePersistedDeckPlaybackState(doc, nextCanonicalDeck) {
       calls.push(['capturePersistedDeckPlaybackState', doc, nextCanonicalDeck]);
@@ -554,7 +549,7 @@ test('captureEditorPersistableDeckState reuses the local save canonical deck hel
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(
-    'resolveEditorSaveCanonicalDeck = __resolveEditorSaveCanonicalDeck;',
+    'resolveEditorCanonicalDeckOverride = __resolveEditorCanonicalDeckOverride;',
     context
   );
 
@@ -565,7 +560,7 @@ test('captureEditorPersistableDeckState reuses the local save canonical deck hel
     canonicalDeck
   });
   assert.deepEqual(calls.map(([name]) => name), [
-    'resolveEditorSaveCanonicalDeck',
+    'resolveEditorCanonicalDeckOverride',
     'capturePersistedDeckPlaybackState'
   ]);
 });
