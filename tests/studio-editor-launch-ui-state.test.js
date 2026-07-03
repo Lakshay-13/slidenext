@@ -352,17 +352,9 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
   assert.ok(calls.some(([name]) => name === 'loadVersions'));
 });
 
-test('createCurrentStudioSessionStateOptions reuses live session readers and forwards the session token', () => {
+test('createCurrentStudioSessionStateOptions exposes live session getters and forwards the session token', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let capturedOptions = null;
-  const currentStudioSessionStateReaders = {
-    getCurrentPresentationUrl() {
-      return context.currentPresentationUrl;
-    },
-    getCurrentSessionToken() {
-      return context.studioEditorSessionToken;
-    }
-  };
   const context = {
     SlideNextStudioEditorSession: {
       ...editorSession,
@@ -370,9 +362,6 @@ test('createCurrentStudioSessionStateOptions reuses live session readers and for
         capturedOptions = options;
         return editorSession.createStudioSessionStateOptions(options);
       }
-    },
-    createCurrentStudioSessionStateReaders() {
-      return currentStudioSessionStateReaders;
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     studioEditorSessionToken: 4
@@ -384,14 +373,25 @@ test('createCurrentStudioSessionStateOptions reuses live session readers and for
   const options = context.createCurrentStudioSessionStateOptions({ sessionToken: 4 });
 
   assert.equal(options.sessionToken, 4);
-  assert.equal(options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
-  assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
   assert.equal(capturedOptions.sessionToken, 4);
-  assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
-  assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.equal(typeof options.getCurrentPresentationUrl, 'function');
+  assert.equal(typeof options.getCurrentSessionToken, 'function');
+  assert.equal(typeof capturedOptions.getCurrentPresentationUrl, 'function');
+  assert.equal(typeof capturedOptions.getCurrentSessionToken, 'function');
+  assert.equal(options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(options.getCurrentSessionToken(), 4);
+  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedOptions.getCurrentSessionToken(), 4);
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 5;
+  assert.equal(options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(options.getCurrentSessionToken(), 5);
+  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(capturedOptions.getCurrentSessionToken(), 5);
 });
 
-test('createCurrentStudioFrameLoadHandler reuses current session readers when delegating to the editor session helper', () => {
+test('createCurrentStudioFrameLoadHandler passes live session getters when delegating to the editor session helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createCurrentStudioFrameLoadHandlerSource = extractFunctionSource(
     fileContent,
@@ -400,14 +400,6 @@ test('createCurrentStudioFrameLoadHandler reuses current session readers when de
   );
 
   let capturedOptions = null;
-  const currentStudioSessionStateReaders = {
-    getCurrentPresentationUrl() {
-      return context.currentPresentationUrl;
-    },
-    getCurrentSessionToken() {
-      return context.studioEditorSessionToken;
-    }
-  };
   const context = {
     SlideNextStudioEditorSession: {
       ...editorSession,
@@ -415,9 +407,6 @@ test('createCurrentStudioFrameLoadHandler reuses current session readers when de
         capturedOptions = options;
         return function onloadHandler() {};
       }
-    },
-    createCurrentStudioSessionStateReaders() {
-      return currentStudioSessionStateReaders;
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     studioEditorSessionToken: 6
@@ -442,14 +431,21 @@ test('createCurrentStudioFrameLoadHandler reuses current session readers when de
   assert.equal(typeof handler, 'function');
   assert.equal(capturedOptions.presentationUrl, '/presentations/onboarding-presentation/index.html');
   assert.equal(capturedOptions.sessionToken, 6);
-  assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
-  assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.equal(typeof capturedOptions.getCurrentPresentationUrl, 'function');
+  assert.equal(typeof capturedOptions.getCurrentSessionToken, 'function');
+  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedOptions.getCurrentSessionToken(), 6);
   assert.equal(typeof capturedOptions.isEditorActive, 'function');
   assert.equal(typeof capturedOptions.handleLoad, 'function');
   assert.equal(typeof capturedOptions.afterLoad, 'function');
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 8;
+  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(capturedOptions.getCurrentSessionToken(), 8);
 });
 
-test('shouldHandleCurrentStudioFrameLoad reuses current session readers when delegating to the editor session helper', () => {
+test('shouldHandleCurrentStudioFrameLoad passes live session getters when delegating to the editor session helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const shouldHandleCurrentStudioFrameLoadSource = extractFunctionSource(
     fileContent,
@@ -458,14 +454,6 @@ test('shouldHandleCurrentStudioFrameLoad reuses current session readers when del
   );
 
   let capturedArguments = null;
-  const currentStudioSessionStateReaders = {
-    getCurrentPresentationUrl() {
-      return context.currentPresentationUrl;
-    },
-    getCurrentSessionToken() {
-      return context.studioEditorSessionToken;
-    }
-  };
   const context = {
     SlideNextStudioEditorSession: {
       ...editorSession,
@@ -473,9 +461,6 @@ test('shouldHandleCurrentStudioFrameLoad reuses current session readers when del
         capturedArguments = { presentationUrl, options };
         return true;
       }
-    },
-    createCurrentStudioSessionStateReaders() {
-      return currentStudioSessionStateReaders;
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     studioEditorSessionToken: 7
@@ -498,9 +483,16 @@ test('shouldHandleCurrentStudioFrameLoad reuses current session readers when del
   assert.equal(result, true);
   assert.equal(capturedArguments.presentationUrl, '/presentations/onboarding-presentation/index.html');
   assert.equal(capturedArguments.options.sessionToken, 7);
-  assert.equal(capturedArguments.options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
-  assert.equal(capturedArguments.options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.equal(typeof capturedArguments.options.getCurrentPresentationUrl, 'function');
+  assert.equal(typeof capturedArguments.options.getCurrentSessionToken, 'function');
+  assert.equal(capturedArguments.options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedArguments.options.getCurrentSessionToken(), 7);
   assert.equal(typeof capturedArguments.options.isEditorActive, 'function');
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 9;
+  assert.equal(capturedArguments.options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(capturedArguments.options.getCurrentSessionToken(), 9);
 });
 
 test('updateCurrentPresentationSessionState updates only the provided session fields and delegates metadata commits', () => {
@@ -722,7 +714,7 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
   assert.equal(loadPresentationsCalls, 1);
 });
 
-test('loadCurrentPresentationMetadata reuses current session readers when delegating to the deck context', async () => {
+test('loadCurrentPresentationMetadata passes live session getters when delegating to the deck context', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const loadCurrentPresentationMetadataSource = extractFunctionSource(
     fileContent,
@@ -731,14 +723,6 @@ test('loadCurrentPresentationMetadata reuses current session readers when delega
   );
 
   let capturedOptions = null;
-  const currentStudioSessionStateReaders = {
-    getCurrentPresentationUrl() {
-      return context.currentPresentationUrl;
-    },
-    getCurrentSessionToken() {
-      return context.studioEditorSessionToken;
-    }
-  };
   const context = {
     SlideNextStudioEditorSession: editorSession,
     SlideNextStudioDeckContext: {
@@ -759,9 +743,6 @@ test('loadCurrentPresentationMetadata reuses current session readers when delega
       resolveStoredStudioCanonicalDeck() {
         return null;
       }
-    },
-    createCurrentStudioSessionStateReaders() {
-      return currentStudioSessionStateReaders;
     },
     currentPresentationMetadata: null,
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
@@ -790,9 +771,16 @@ test('loadCurrentPresentationMetadata reuses current session readers when delega
     sourcePath: '/presentations/onboarding-presentation/index.html'
   });
   assert.equal(capturedOptions.sessionToken, 12);
-  assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
-  assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.equal(typeof capturedOptions.getCurrentPresentationUrl, 'function');
+  assert.equal(typeof capturedOptions.getCurrentSessionToken, 'function');
+  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedOptions.getCurrentSessionToken(), 12);
   assert.deepEqual(context.currentPresentationMetadata, metadata);
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 13;
+  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(capturedOptions.getCurrentSessionToken(), 13);
 });
 
 test('buildCurrentPresentationMetadataSeed falls back to the shared deck loader when the deck context helper is unavailable', () => {

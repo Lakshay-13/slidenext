@@ -1928,7 +1928,8 @@
     function createCurrentStudioSessionStateOptions(options = {}) {
       return SlideNextStudioEditorSession.createStudioSessionStateOptions({
         sessionToken: options.sessionToken,
-        ...createCurrentStudioSessionStateReaders()
+        getCurrentPresentationUrl: () => currentPresentationUrl,
+        getCurrentSessionToken: () => studioEditorSessionToken
       });
     }
 
@@ -5582,13 +5583,6 @@
         getCurrentEditorPersistedDeckState(),
         cleanHtml
       );
-    }
-
-    function createCurrentStudioSessionStateReaders() {
-      return SlideNextStudioEditorSession.createStudioSessionStateReaders({
-        getCurrentPresentationUrl: () => currentPresentationUrl,
-        getCurrentSessionToken: () => studioEditorSessionToken
-      });
     }
 
     function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {

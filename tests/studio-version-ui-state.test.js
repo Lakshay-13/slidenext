@@ -899,7 +899,7 @@ test('restoreVersion reuses the shared restore request helper when available', a
   assert.ok(calls.some(([name, message]) => name === 'alert' && /Rollback successfully restored!/.test(message)));
 });
 
-test('loadCurrentStudioVersionHistory reuses current session readers when delegating to the version history loader', async () => {
+test('loadCurrentStudioVersionHistory passes live session getters when delegating to the version history loader', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const loadCurrentStudioVersionHistorySource = extractFunctionSource(
     fileContent,
@@ -908,14 +908,6 @@ test('loadCurrentStudioVersionHistory reuses current session readers when delega
   );
 
   let capturedOptions = null;
-  const currentStudioSessionStateReaders = {
-    getCurrentPresentationUrl() {
-      return context.currentPresentationUrl;
-    },
-    getCurrentSessionToken() {
-      return context.studioEditorSessionToken;
-    }
-  };
   const context = {
     SlideNextStudioVersionHistory: {
       createStudioVersionHistoryLoadOptions(options) {
@@ -932,9 +924,6 @@ test('loadCurrentStudioVersionHistory reuses current session readers when delega
         options.commitVersionEntries(versions);
         return versions;
       }
-    },
-    createCurrentStudioSessionStateReaders() {
-      return currentStudioSessionStateReaders;
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     renderVersionsListCalls: [],
@@ -960,12 +949,19 @@ test('loadCurrentStudioVersionHistory reuses current session readers when delega
     }
   ]);
   assert.equal(capturedOptions.sessionToken, 18);
-  assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
-  assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
+  assert.equal(typeof capturedOptions.getCurrentPresentationUrl, 'function');
+  assert.equal(typeof capturedOptions.getCurrentSessionToken, 'function');
+  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedOptions.getCurrentSessionToken(), 18);
   assert.deepEqual(context.renderVersionsListCalls, [[
     '/presentations/onboarding-presentation/index.html',
     versions
   ]]);
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 19;
+  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(capturedOptions.getCurrentSessionToken(), 19);
 });
 
 test('createCurrentStudioVersionActionContext captures the active editor deck identity and session', () => {
@@ -1075,9 +1071,11 @@ test('handleCurrentStudioVersionListMutationSuccess reuses current session reade
         getCurrentSessionToken: () => 9
       };
     },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     loadVersions(presentationUrl, sessionToken) {
       calls.push(['loadVersions', presentationUrl, sessionToken]);
-    }
+    },
+    studioEditorSessionToken: 9
   };
 
   vm.createContext(context);
@@ -1125,9 +1123,11 @@ test('handleCurrentStudioVersionListMutationSuccess can skip version refresh wir
         getCurrentSessionToken: () => 10
       };
     },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     loadVersions() {
       calls.push(['loadVersions']);
-    }
+    },
+    studioEditorSessionToken: 10
   };
 
   vm.createContext(context);
@@ -1167,7 +1167,9 @@ test('handleCurrentStudioVersionActionFailure reuses current session readers for
         getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
         getCurrentSessionToken: () => 11
       };
-    }
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 11
   };
 
   vm.createContext(context);
@@ -1212,7 +1214,9 @@ test('handleCurrentStudioVersionRestoreSuccess reuses current session readers an
         getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
         getCurrentSessionToken: () => 12
       };
-    }
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 12
   };
 
   vm.createContext(context);
@@ -1251,23 +1255,15 @@ test('handleCurrentStudioVersionRestoreSuccess reuses current session readers an
   ]);
 });
 
-test('createCurrentStudioSessionStateReaders exposes live presentation and session getters', () => {
+test('createCurrentStudioSessionStateOptions exposes live presentation and session getters', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const createCurrentStudioSessionStateReadersSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioSessionStateReaders() {',
-    '\n\n    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
-  );
-
-  const calls = [];
+  let capturedOptions = null;
   const context = {
     SlideNextStudioEditorSession: {
-      createStudioSessionStateReaders(options) {
-        calls.push(options);
-        return {
-          getCurrentPresentationUrl: options.getCurrentPresentationUrl,
-          getCurrentSessionToken: options.getCurrentSessionToken
-        };
+      ...editorSession,
+      createStudioSessionStateOptions(options) {
+        capturedOptions = options;
+        return editorSession.createStudioSessionStateOptions(options);
       }
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
@@ -1275,15 +1271,20 @@ test('createCurrentStudioSessionStateReaders exposes live presentation and sessi
   };
 
   vm.createContext(context);
-  vm.runInContext(createCurrentStudioSessionStateReadersSource, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
 
-  const readers = context.createCurrentStudioSessionStateReaders();
-  assert.equal(calls.length, 1);
-  assert.equal(readers.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
-  assert.equal(readers.getCurrentSessionToken(), 4);
+  const options = context.createCurrentStudioSessionStateOptions({ sessionToken: 4 });
+  assert.equal(options.sessionToken, 4);
+  assert.equal(capturedOptions.sessionToken, 4);
+  assert.equal(options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(options.getCurrentSessionToken(), 4);
+  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedOptions.getCurrentSessionToken(), 4);
 
   context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
   context.studioEditorSessionToken = 5;
-  assert.equal(readers.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
-  assert.equal(readers.getCurrentSessionToken(), 5);
+  assert.equal(options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(options.getCurrentSessionToken(), 5);
+  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(capturedOptions.getCurrentSessionToken(), 5);
 });
