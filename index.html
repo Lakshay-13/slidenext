@@ -3512,11 +3512,6 @@
             resolveFallbackActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
               sourceDoc,
               canonicalDeck
-            ),
-            querySelector: (sourceDoc, selector) => (
-              sourceDoc && typeof sourceDoc.querySelector === 'function'
-                ? sourceDoc.querySelector(selector)
-                : null
             )
           })
         : (() => {
