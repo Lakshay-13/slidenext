@@ -1016,6 +1016,10 @@ test('resolveEditorFallbackCanonicalDeck rebuilds malformed canonical deck input
 
   vm.createContext(context);
   vm.runInContext(helperSource, context);
+  vm.runInContext(
+    'resolveEditorDeckCanonicalOverrideResolver = (nextDoc) => (nextCanonicalDeck, sourceDoc = nextDoc) => resolveEditorDeckCanonicalOverride(sourceDoc, nextCanonicalDeck);',
+    context
+  );
 
   const result = context.resolveEditorFallbackCanonicalDeck(iframeDoc, malformedCanonicalDeck);
 

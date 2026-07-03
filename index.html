@@ -3698,19 +3698,7 @@
     }
 
     function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
-      const resolveCanonicalDeckOverride = typeof resolveEditorDeckCanonicalOverrideResolver === 'function'
-        ? resolveEditorDeckCanonicalOverrideResolver(doc)
-        : (nextCanonicalDeck, nextDoc = doc) => (
-            typeof createEditorDeckCanonicalOverrideResolver === 'function'
-              ? createEditorDeckCanonicalOverrideResolver(nextDoc)(nextCanonicalDeck, nextDoc)
-              : typeof resolveEditorDeckCanonicalOverride === 'function'
-                ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
-                : typeof resolveEditorCanonicalDeckOverride === 'function'
-                  ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
-                      buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
-                    })
-                  : nextCanonicalDeck
-          );
+      const resolveCanonicalDeckOverride = resolveEditorDeckCanonicalOverrideResolver(doc);
       const nextCanonicalDeck = resolveCanonicalDeckOverride(canonicalDeck, doc);
       const canonicalDeckValidator = typeof getEditorCanonicalDeckValidator === 'function'
         ? getEditorCanonicalDeckValidator()
