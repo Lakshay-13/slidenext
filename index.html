@@ -1836,8 +1836,12 @@
     }
 
     function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {
-      const buildStudioSourceHtml = resolveStudioDeckViewMethod('buildStudioSourceHtml');
-      const buildDeckSourceHtml = resolveDeckHtmlMethod('buildDeckSourceHtml');
+      const buildStudioSourceHtml = typeof options.buildStudioSourceHtml === 'function'
+        ? options.buildStudioSourceHtml
+        : resolveStudioDeckViewMethod('buildStudioSourceHtml');
+      const buildDeckSourceHtml = typeof options.buildDeckSourceHtml === 'function'
+        ? options.buildDeckSourceHtml
+        : resolveDeckHtmlMethod('buildDeckSourceHtml');
 
       return buildEditorDeckViewHtml(doc, createEditorDeckViewHtmlOptions({
         buildSharedHtml: buildStudioSourceHtml,
@@ -5197,17 +5201,29 @@
       const buildFallbackHtml = typeof options.buildFallbackHtml === 'function'
         ? options.buildFallbackHtml
         : () => persistedHtml;
+      const buildStudioSourceHtml = typeof options.buildStudioSourceHtml === 'function'
+        ? options.buildStudioSourceHtml
+        : undefined;
+      const buildDeckSourceHtml = typeof options.buildDeckSourceHtml === 'function'
+        ? options.buildDeckSourceHtml
+        : undefined;
       const renderSourceDeckHtml = typeof options.renderEditorSourceDeckHtml === 'function'
         ? options.renderEditorSourceDeckHtml
-        : renderEditorSourceDeckHtml;
-      return renderSourceDeckHtml(doc, sourceViewOptions, {
+        : (sourceDoc, nextSourceViewOptions, renderOptions = {}) => buildEditorSourceDeckHtml(sourceDoc, {
+            buildViewOptions: () => nextSourceViewOptions,
+            buildStudioSourceHtml: renderOptions.buildStudioSourceHtml,
+            buildDeckSourceHtml: renderOptions.buildDeckSourceHtml
+          });
+      const nextSourceViewOptions = sourceViewOptions && typeof sourceViewOptions === 'object' && !Array.isArray(sourceViewOptions)
+        ? {
+            ...sourceViewOptions,
+            buildFallbackHtml
+          }
+        : sourceViewOptions;
+      return renderSourceDeckHtml(doc, nextSourceViewOptions, {
         buildFallbackHtml,
-        buildStudioSourceHtml: typeof options.buildStudioSourceHtml === 'function'
-          ? options.buildStudioSourceHtml
-          : undefined,
-        buildDeckSourceHtml: typeof options.buildDeckSourceHtml === 'function'
-          ? options.buildDeckSourceHtml
-          : undefined
+        buildStudioSourceHtml,
+        buildDeckSourceHtml
       });
     }
 

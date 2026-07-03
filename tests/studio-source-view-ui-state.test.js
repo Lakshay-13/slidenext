@@ -386,6 +386,126 @@ test('buildEditorSourceDeckHtml forwards source deck view builders when local he
   ]);
 });
 
+test('buildEditorSourceDeckHtml prefers provided source deck html builder overrides when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSourceHtmlSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function launchPresentationHtml(html, startSlideIdx) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const deckHtmlOptions = {
+    renderOptions: {
+      activeSlideId: 'slide-live'
+    }
+  };
+  const customBuildStudioSourceHtml = function customBuildStudioSourceHtml() {};
+  const customBuildDeckSourceHtml = function customBuildDeckSourceHtml(...args) {
+    return JSON.stringify(args);
+  };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioDeckView: {
+      buildStudioSourceHtml() {
+        throw new Error('default studio source html builder should not run');
+      }
+    },
+    SlideNextDeckHtml: {
+      buildDeckSourceHtml() {
+        throw new Error('default deck source html builder should not run');
+      }
+    },
+    __buildEditorDeckViewHtml(doc, options) {
+      delegatedArgs = { doc, options };
+      return '<html>source-from-shared-deck-view-helper</html>';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorSourceHtmlSource, context);
+  vm.runInContext('buildEditorDeckViewHtml = __buildEditorDeckViewHtml;', context);
+
+  const result = context.buildEditorSourceDeckHtml(iframeDoc, {
+    buildStudioSourceHtml: customBuildStudioSourceHtml,
+    buildDeckSourceHtml: customBuildDeckSourceHtml
+  });
+
+  assert.equal(result, '<html>source-from-shared-deck-view-helper</html>');
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(delegatedArgs.options.buildSharedHtml, customBuildStudioSourceHtml);
+  assert.equal(
+    delegatedArgs.options.buildCanonicalHtml(canonicalDeck, deckHtmlOptions),
+    JSON.stringify([canonicalDeck, deckHtmlOptions])
+  );
+});
+
+test('renderEditorPersistableSourceDeckHtml reuses buildEditorSourceDeckHtml when a custom renderer is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const renderEditorPersistableSourceDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function renderEditorPersistableSourceDeckHtml(doc = getIframeDoc(), sourceViewOptions = {}, persistedHtml = \'\', options = {}) {',
+    '\n\n    function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const sourceViewOptions = {
+    buildCanonicalDeck() {
+      return canonicalDeck;
+    }
+  };
+  const calls = [];
+  const customBuildStudioSourceHtml = function customBuildStudioSourceHtml() {};
+  const customBuildDeckSourceHtml = function customBuildDeckSourceHtml() {};
+  const context = {
+    __buildEditorSourceDeckHtml(nextDoc, options) {
+      calls.push([nextDoc, options]);
+      return '<html>persistable-source</html>';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(renderEditorPersistableSourceDeckHtmlSource, context);
+  vm.runInContext('buildEditorSourceDeckHtml = __buildEditorSourceDeckHtml;', context);
+
+  const result = context.renderEditorPersistableSourceDeckHtml(iframeDoc, sourceViewOptions, '<html>persisted</html>', {
+    buildStudioSourceHtml: customBuildStudioSourceHtml,
+    buildDeckSourceHtml: customBuildDeckSourceHtml
+  });
+
+  assert.equal(result, '<html>persistable-source</html>');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], iframeDoc);
+  assert.equal(calls[0][1].buildStudioSourceHtml, customBuildStudioSourceHtml);
+  assert.equal(calls[0][1].buildDeckSourceHtml, customBuildDeckSourceHtml);
+  assert.equal(typeof calls[0][1].buildViewOptions, 'function');
+  const delegatedSourceViewOptions = calls[0][1].buildViewOptions();
+  assert.equal(typeof delegatedSourceViewOptions.buildFallbackHtml, 'function');
+  assert.equal(delegatedSourceViewOptions.buildFallbackHtml(), '<html>persisted</html>');
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(
+      delegatedSourceViewOptions.buildCanonicalDeck()
+    )),
+    canonicalDeck
+  );
+});
+
 test('buildEditorSourceHtml prefers the live active slide when the editor frame is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(
