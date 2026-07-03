@@ -8190,16 +8190,32 @@
       const deleteContext = createCurrentStudioVersionActionContext();
       
       try {
-        const response = await fetch('/api/versions/delete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            htmlPath: deleteContext.presentationUrl,
-            versionFilename: filename
-          })
-        });
-        
-        const data = await response.json();
+        const executeDeleteVersionRequest = (
+          typeof SlideNextStudioVersionActions !== 'undefined'
+          && SlideNextStudioVersionActions
+          && typeof SlideNextStudioVersionActions.executeStudioDeleteVersionRequest === 'function'
+        )
+          ? SlideNextStudioVersionActions.executeStudioDeleteVersionRequest
+          : null;
+        const data = executeDeleteVersionRequest
+          ? await executeDeleteVersionRequest(
+              filename,
+              deleteContext,
+              {
+                fetchImpl: fetch
+              }
+            )
+          : await (async () => {
+              const response = await fetch('/api/versions/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  htmlPath: deleteContext.presentationUrl,
+                  versionFilename: filename
+                })
+              });
+              return response.json();
+            })();
         if (data.success) {
           handleCurrentStudioVersionListMutationSuccess(deleteContext);
         } else {

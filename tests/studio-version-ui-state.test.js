@@ -683,6 +683,59 @@ test('submitRenameVersion reuses the shared rename request helper when available
   assert.ok(calls.some(([name]) => name === 'closeRenameVersionModal'));
 });
 
+test('deleteVersion reuses the shared delete request helper when available', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const deleteVersionSource = extractFunctionSource(
+    fileContent,
+    'async function deleteVersion(filename) {',
+    '\n\n    // Slide Elements / Layers List Inspector Panel'
+  );
+
+  let helperArgs = null;
+  const calls = [];
+  const context = {
+    SlideNextStudioVersionActions: {
+      executeStudioDeleteVersionRequest: async (...args) => {
+        helperArgs = args;
+        return { success: true };
+      }
+    },
+    alert() {
+      throw new Error('deleteVersion should not alert on a successful shared helper result');
+    },
+    confirm() {
+      return true;
+    },
+    createCurrentStudioVersionActionContext() {
+      return {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      };
+    },
+    fetch() {
+      throw new Error('deleteVersion should pass fetch to the shared delete helper instead of calling it directly');
+    },
+    handleCurrentStudioVersionActionFailure() {
+      throw new Error('deleteVersion should not use the failure handler for a successful shared helper result');
+    },
+    handleCurrentStudioVersionListMutationSuccess(deleteContext) {
+      calls.push(['handleCurrentStudioVersionListMutationSuccess', deleteContext]);
+      return true;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(deleteVersionSource, context);
+
+  await context.deleteVersion('index_20260101_120000_Auto.html');
+
+  assert.equal(helperArgs[0], 'index_20260101_120000_Auto.html');
+  assert.deepEqual(helperArgs[1], {
+    presentationUrl: '/presentations/onboarding-presentation/index.html'
+  });
+  assert.equal(helperArgs[2].fetchImpl, context.fetch);
+  assert.ok(calls.some(([name]) => name === 'handleCurrentStudioVersionListMutationSuccess'));
+});
+
 test('restoreVersion tolerates a missing versions dropdown after a successful restore', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const restoreVersionSource = extractFunctionSource(

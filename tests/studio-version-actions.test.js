@@ -203,6 +203,65 @@ test('executeStudioRenameVersionRequest posts the rename request and returns the
   assert.deepEqual(result, { success: true });
 });
 
+test('createStudioDeleteVersionRequest builds the delete endpoint payload from the active version context', () => {
+  const deleteContext = versionActions.createStudioVersionActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    'General'
+  );
+
+  assert.deepEqual(
+    versionActions.createStudioDeleteVersionRequest(
+      'index_20260101_120000_Auto.html',
+      deleteContext
+    ),
+    {
+      url: '/api/versions/delete',
+      init: {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          htmlPath: '/presentations/onboarding-presentation/index.html',
+          versionFilename: 'index_20260101_120000_Auto.html'
+        })
+      }
+    }
+  );
+});
+
+test('executeStudioDeleteVersionRequest posts the delete request and returns the parsed response payload', async () => {
+  const deleteContext = versionActions.createStudioVersionActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    'General'
+  );
+  const fetchCalls = [];
+
+  const result = await versionActions.executeStudioDeleteVersionRequest(
+    'index_20260101_120000_Auto.html',
+    deleteContext,
+    {
+      fetchImpl: async (url, init) => {
+        fetchCalls.push([url, JSON.parse(init.body)]);
+        return {
+          async json() {
+            return { success: true };
+          }
+        };
+      }
+    }
+  );
+
+  assert.deepEqual(fetchCalls, [[
+    '/api/versions/delete',
+    {
+      htmlPath: '/presentations/onboarding-presentation/index.html',
+      versionFilename: 'index_20260101_120000_Auto.html'
+    }
+  ]]);
+  assert.deepEqual(result, { success: true });
+});
+
 test('handleStudioRestoreVersionSuccess applies restore hooks for the active deck only', () => {
   const restoreContext = versionActions.createStudioVersionActionContext(
     '/presentations/onboarding-presentation/index.html',
