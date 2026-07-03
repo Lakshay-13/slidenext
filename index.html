@@ -6651,6 +6651,16 @@
       );
     }
 
+    function applyCurrentStudioVersionCheckpointSaveSuccess(versionCheckpointPersistenceState, options = {}) {
+      if (!versionCheckpointPersistenceState || !versionCheckpointPersistenceState.persistenceContext) {
+        return false;
+      }
+      return applyCurrentStudioVersionPersistenceSuccess(
+        versionCheckpointPersistenceState.persistenceContext,
+        options
+      );
+    }
+
     function applyCurrentStudioCapturedDeckState(
       persistedDeckState = {},
       presentationUrl = currentPresentationUrl,
@@ -7566,9 +7576,15 @@
           versionCheckpointPersistenceState,
           scheduledPresentationUrl,
         );
+        const applyVersionCheckpointSaveSuccess = typeof applyCurrentStudioVersionCheckpointSaveSuccess === 'function'
+          ? applyCurrentStudioVersionCheckpointSaveSuccess
+          : (nextVersionCheckpointPersistenceState, options = {}) => applyCurrentStudioVersionPersistenceSuccess(
+              nextVersionCheckpointPersistenceState.persistenceContext,
+              options
+            );
         if (data.success) {
-          applyCurrentStudioVersionPersistenceSuccess(
-            versionCheckpointPersistenceState.persistenceContext,
+          applyVersionCheckpointSaveSuccess(
+            versionCheckpointPersistenceState,
             {
               onSuccess: () => {
                 alert('Successfully saved named version backup checkpoint!');
@@ -7650,9 +7666,15 @@
           versionCheckpointPersistenceState,
           presentationUrl,
         );
+        const applyVersionCheckpointSaveSuccess = typeof applyCurrentStudioVersionCheckpointSaveSuccess === 'function'
+          ? applyCurrentStudioVersionCheckpointSaveSuccess
+          : (nextVersionCheckpointPersistenceState, options = {}) => applyCurrentStudioVersionPersistenceSuccess(
+              nextVersionCheckpointPersistenceState.persistenceContext,
+              options
+            );
         if (data.success) {
-          applyCurrentStudioVersionPersistenceSuccess(
-            versionCheckpointPersistenceState.persistenceContext,
+          applyVersionCheckpointSaveSuccess(
+            versionCheckpointPersistenceState,
             {
               onSuccess: () => {
                 console.log(`Auto-created version checkpoint: ${label}`);

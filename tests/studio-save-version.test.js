@@ -109,7 +109,16 @@ function loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {',
-    '\n\n    function resolveCurrentStudioVersionCheckpointPersistenceState('
+    '\n\n    function applyCurrentStudioVersionCheckpointSaveSuccess(versionCheckpointPersistenceState, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioVersionCheckpointSaveSuccess(versionCheckpointPersistenceState, options = {}) {',
+    '\n\n    function applyCurrentStudioCapturedDeckState('
   );
   vm.runInContext(helperSource, context);
 }
@@ -817,6 +826,40 @@ test('applyCurrentStudioVersionPersistenceSuccess delegates through the shared v
   assert.equal(delegatedArgs.nextPersistenceContext, persistenceContext);
   assert.equal(delegatedArgs.handlerOptions.marker, 'version-handler-options');
   assert.equal(delegatedArgs.handlerOptions.onSuccess, onSuccess);
+});
+
+test('applyCurrentStudioVersionCheckpointSaveSuccess delegates through the local version persistence helper with checkpoint context', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const versionCheckpointPersistenceState = {
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+  let delegatedArgs = null;
+  const onSuccess = () => {};
+  const context = {
+    applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
+      delegatedArgs = {
+        persistenceContext,
+        options
+      };
+      return 'applied';
+    }
+  };
+
+  vm.createContext(context);
+  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
+
+  const result = context.applyCurrentStudioVersionCheckpointSaveSuccess(
+    versionCheckpointPersistenceState,
+    {
+      onSuccess
+    }
+  );
+
+  assert.equal(result, 'applied');
+  assert.equal(delegatedArgs.persistenceContext, versionCheckpointPersistenceState.persistenceContext);
+  assert.equal(delegatedArgs.options.onSuccess, onSuccess);
 });
 
 test('submitSaveVersion keeps the save button idle when editor content is unavailable', async () => {
@@ -1659,6 +1702,120 @@ test('submitSaveVersion reuses the local version checkpoint save helper when ava
   assert.equal(statusEl.innerHTML, 'saved');
 });
 
+test('submitSaveVersion reuses the local version checkpoint success helper when available', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const submitSaveVersionSource = extractFunctionSource(
+    fileContent,
+    'async function submitSaveVersion() {',
+    '\n\n    // Automatically save a labeled checkpoint version in the background'
+  );
+
+  const alerts = [];
+  let closeModalCalls = 0;
+  let successHelperArgs = null;
+  const inputEl = { value: 'Checkpoint Baseline' };
+  const saveBtnEl = {
+    disabled: false,
+    innerHTML: '<span>Save Version</span>'
+  };
+  const statusEl = {
+    innerHTML: 'Saved to disk'
+  };
+  const versionCheckpointPersistenceState = {
+    cleanHtml: '<html>persisted-baseline</html>',
+    requestOptions: {
+      sessionToken: 4
+    },
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+  const context = {
+    alert(message) {
+      alerts.push(message);
+    },
+    applyCurrentStudioPersistenceFailure() {
+      throw new Error('submitSaveVersion should not use the failure path for a successful helper result');
+    },
+    __applyCurrentStudioVersionCheckpointSaveSuccess(nextVersionCheckpointPersistenceState, options = {}) {
+      successHelperArgs = {
+        nextVersionCheckpointPersistenceState,
+        options
+      };
+      if (typeof options.onSuccess === 'function') {
+        options.onSuccess();
+      }
+      return 'applied';
+    },
+    closeSaveVersionModal() {
+      closeModalCalls += 1;
+    },
+    createCurrentStudioSessionStateOptions() {
+      return {};
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    document: {
+      getElementById(id) {
+        switch (id) {
+          case 'versionCheckpointName':
+            return inputEl;
+          case 'studioSaveBtn':
+            return saveBtnEl;
+          case 'autoSaveStatus':
+            return statusEl;
+          default:
+            throw new Error(`Unexpected element lookup: ${id}`);
+        }
+      }
+    },
+    executeCurrentStudioVersionCheckpointSave: async () => ({
+      data: {
+        success: true
+      },
+      versionCheckpointPersistenceState
+    }),
+    getIframeDoc() {
+      return { label: 'iframe-doc' };
+    },
+    resetStudioSaveButtonState() {
+      saveBtnEl.disabled = false;
+      saveBtnEl.innerHTML = '<span>Save Version</span>';
+    },
+    resolveCurrentStudioVersionCheckpointPersistenceState() {
+      return versionCheckpointPersistenceState;
+    },
+    setStudioAutoSaveStatus(state) {
+      statusEl.innerHTML = state;
+    },
+    setStudioSaveButtonState(state) {
+      if (state === 'saving-version') {
+        saveBtnEl.disabled = true;
+        saveBtnEl.innerHTML = '<span>Creating version...</span>';
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      runStudioPersistenceActionIfCurrent(persistenceContext, sessionOptions, action) {
+        action();
+      }
+    },
+    studioEditorSessionToken: 4
+  };
+
+  vm.createContext(context);
+  vm.runInContext('applyCurrentStudioVersionCheckpointSaveSuccess = __applyCurrentStudioVersionCheckpointSaveSuccess;', context);
+  vm.runInContext(submitSaveVersionSource, context);
+
+  await context.submitSaveVersion();
+
+  assert.equal(successHelperArgs.nextVersionCheckpointPersistenceState, versionCheckpointPersistenceState);
+  assert.equal(typeof successHelperArgs.options.onSuccess, 'function');
+  assert.deepEqual(alerts, ['Successfully saved named version backup checkpoint!']);
+  assert.equal(closeModalCalls, 1);
+  assert.equal(saveBtnEl.disabled, false);
+  assert.equal(saveBtnEl.innerHTML, '<span>Save Version</span>');
+  assert.equal(statusEl.innerHTML, 'saved');
+});
+
 test('executeSaveAutoVersion reuses the local version checkpoint save helper when available', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const executeSaveAutoVersionSource = extractFunctionSource(
@@ -1735,6 +1892,77 @@ test('executeSaveAutoVersion reuses the local version checkpoint save helper whe
     '/presentations/onboarding-presentation/index.html'
   ]);
   assert.equal(successArgs.persistenceContext, versionCheckpointPersistenceState.persistenceContext);
+  assert.deepEqual(logCalls, ['Auto-created version checkpoint: Auto: Edited Text']);
+});
+
+test('executeSaveAutoVersion reuses the local version checkpoint success helper when available', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const executeSaveAutoVersionSource = extractFunctionSource(
+    fileContent,
+    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
+    '\n\n    // 7. Versions and Backups listing'
+  );
+
+  let successHelperArgs = null;
+  const logCalls = [];
+  const versionCheckpointPersistenceState = {
+    cleanHtml: '<html>persisted-baseline</html>',
+    requestOptions: {
+      sessionToken: 4
+    },
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+  const context = {
+    __applyCurrentStudioVersionCheckpointSaveSuccess(nextVersionCheckpointPersistenceState, options = {}) {
+      successHelperArgs = {
+        nextVersionCheckpointPersistenceState,
+        options
+      };
+      if (typeof options.onSuccess === 'function') {
+        options.onSuccess();
+      }
+      return 'applied';
+    },
+    console: {
+      error() {
+        throw new Error('executeSaveAutoVersion should not report errors for a successful helper result');
+      },
+      log(message) {
+        logCalls.push(message);
+      }
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    executeCurrentStudioVersionCheckpointSave: async () => ({
+      data: {
+        success: true
+      },
+      versionCheckpointPersistenceState
+    }),
+    getIframeDoc() {
+      return { label: 'iframe-doc' };
+    },
+    isCurrentStudioVersionCheckpointSavePersisted() {
+      return false;
+    },
+    isStaleEditorPersistenceTask() {
+      return false;
+    },
+    resolveCurrentStudioVersionCheckpointPersistenceState() {
+      return versionCheckpointPersistenceState;
+    },
+    studioEditorSessionToken: 4
+  };
+
+  vm.createContext(context);
+  vm.runInContext('applyCurrentStudioVersionCheckpointSaveSuccess = __applyCurrentStudioVersionCheckpointSaveSuccess;', context);
+  vm.runInContext(executeSaveAutoVersionSource, context);
+
+  await context.executeSaveAutoVersion('Auto: Edited Text');
+
+  assert.equal(successHelperArgs.nextVersionCheckpointPersistenceState, versionCheckpointPersistenceState);
+  assert.equal(typeof successHelperArgs.options.onSuccess, 'function');
   assert.deepEqual(logCalls, ['Auto-created version checkpoint: Auto: Edited Text']);
 });
 
