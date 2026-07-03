@@ -1033,6 +1033,10 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
     getSlideById() {
       return null;
     },
+    resolveEditorLiveActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return 'slide-live';
+    },
     resolveEditorCanonicalDeckViewState(nextDoc, options = {}) {
       assert.equal(nextDoc, iframeDoc);
       return {
@@ -1131,6 +1135,10 @@ test('buildEditorDeckSnapshot prefers the current session active slide fallback 
     buildEditorDeckSnapshotFromDom() {},
     buildEditorLayerSnapshot() {},
     currentSlideIndex: 1,
+    getActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return 'slide-2';
+    },
     getEditorSlideId() {
       return 'slide-2';
     },

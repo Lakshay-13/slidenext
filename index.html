@@ -3106,10 +3106,7 @@
       const snapshotBuildOptions = createStudioDeckSnapshotBuildOptions
         ? createStudioDeckSnapshotBuildOptions(doc, {
             buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
-            resolveLiveActiveSlideId: (nextDoc) => {
-              const activeSlide = resolveEditorLiveActiveSlide(nextDoc);
-              return activeSlide ? (getEditorSlideId(activeSlide, nextDoc) || '') : '';
-            },
+            resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
             resolveFallbackActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
               sourceDoc,
               canonicalDeck
@@ -3121,12 +3118,7 @@
               resolveCanonicalDeck,
               liveActiveSlideId,
               resolvedCanonicalDeck
-            } = resolveEditorCanonicalDeckViewState(doc, {
-              resolveLiveActiveSlideId: (sourceDoc) => {
-                const activeSlide = resolveEditorLiveActiveSlide(sourceDoc);
-                return activeSlide ? (getEditorSlideId(activeSlide, sourceDoc) || '') : '';
-              }
-            });
+            } = resolveEditorCanonicalDeckViewState(doc);
             const liveActiveSlide = liveActiveSlideId ? resolveEditorLiveActiveSlide(doc) : null;
             return {
               buildCanonicalDeck: doc
