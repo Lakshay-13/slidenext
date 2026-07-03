@@ -5152,14 +5152,13 @@
       
       SlideNextStudioHistory.restoreStudioHistoryEntry(historyEntry, {
         restoreFrameSetup: (nextHistoryEntry) => {
-          const historyRestoreDeckViewOptions = createEditorDeckViewBuildOptions(null, {
-            activeSlideId: nextHistoryEntry.activeSlideId,
-            buildCanonicalDeck: () => nextHistoryEntry.canonicalDeck,
-            buildFallbackHtml: () => ''
-          });
           return SlideNextStudioHistory.restoreStudioHistoryFrameSetup(nextHistoryEntry, {
             doc: iframeDoc,
-            deckHtmlOptions: historyRestoreDeckViewOptions.deckHtmlOptions,
+            deckHtmlOptions: createEditorDeckViewBuildOptions(null, {
+              activeSlideId: nextHistoryEntry.activeSlideId,
+              buildCanonicalDeck: () => nextHistoryEntry.canonicalDeck,
+              buildFallbackHtml: () => ''
+            }).deckHtmlOptions,
             replaceFrameHtml: (doc, html) => {
               doc.documentElement.innerHTML = html;
             },
