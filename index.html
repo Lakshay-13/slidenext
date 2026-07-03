@@ -1998,7 +1998,9 @@
       resetEditorPersistenceTimers();
       resetEditorDeckPersistenceState();
       applyEditorSelectionState({});
-      resetEditorHistoryState({ syncButtons: true });
+      undoStack = [];
+      redoStack = [];
+      updateHistoryButtons();
       
       const editor = document.getElementById('studioEditor');
       const iframe = getStudioFrame();
@@ -2072,7 +2074,9 @@
       resetStudioSaveButtonState();
       updateDeckReadyToolbarActionState();
       deselectElement();
-      resetEditorHistoryState({ syncButtons: true });
+      undoStack = [];
+      redoStack = [];
+      updateHistoryButtons();
       
       iframe.onload = null;
       iframe.src = '';
@@ -5067,14 +5071,6 @@
         presentationUrl: '',
         syncPresentationMetadata: false
       });
-    }
-
-    function resetEditorHistoryState(options = {}) {
-      undoStack = [];
-      redoStack = [];
-      if (options.syncButtons) {
-        updateHistoryButtons();
-      }
     }
 
     function captureState() {

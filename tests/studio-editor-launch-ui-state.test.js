@@ -139,7 +139,6 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
       }
     },
     resetEditorDeckPersistenceState() {},
-    resetEditorHistoryState() {},
     resetEditorPersistenceTimers() {},
     resetStudioDeckUiState() {},
     resetStudioPresentationUiState() {},
@@ -147,7 +146,10 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
     resetStudioSourceViewUiState() {},
     resetStudioVersionUiState() {},
     setTimeout,
+    redoStack: ['redo-entry'],
     studioEditorSessionToken: 0,
+    undoStack: ['undo-entry'],
+    updateHistoryButtons() {},
     updateDeckReadyToolbarActionState() {}
   };
 
@@ -165,6 +167,8 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   assert.equal(capturedFrameLoadHandlerArgs.presentationUrl, '/presentations/onboarding-presentation/index.html');
   assert.equal(capturedFrameLoadHandlerArgs.sessionToken, 1);
   assert.equal(typeof capturedFrameLoadHandlerArgs.options.isEditorActive, 'function');
+  assert.deepEqual(JSON.parse(JSON.stringify(context.undoStack)), []);
+  assert.deepEqual(JSON.parse(JSON.stringify(context.redoStack)), []);
   assert.deepEqual(loadVersionsCalls, [[
     '/presentations/onboarding-presentation/index.html',
     1
@@ -267,9 +271,6 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
     resetEditorDeckPersistenceState() {
       calls.push(['resetEditorDeckPersistenceState']);
     },
-    resetEditorHistoryState() {
-      calls.push(['resetEditorHistoryState']);
-    },
     resetEditorPersistenceTimers() {
       calls.push(['resetEditorPersistenceTimers']);
     },
@@ -289,7 +290,12 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
       calls.push(['resetStudioVersionUiState']);
     },
     setTimeout,
+    redoStack: ['redo-entry'],
     studioEditorSessionToken: 0,
+    undoStack: ['undo-entry'],
+    updateHistoryButtons() {
+      calls.push(['updateHistoryButtons']);
+    },
     updateDeckReadyToolbarActionState() {
       calls.push(['updateDeckReadyToolbarActionState']);
     }
@@ -309,7 +315,9 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
   assert.equal(context.currentTitle, 'Project Onboarding');
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'studioCategoryLabel'));
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'studioTitleLabel'));
-  assert.ok(calls.some(([name]) => name === 'resetEditorHistoryState'));
+  assert.ok(calls.some(([name]) => name === 'updateHistoryButtons'));
+  assert.deepEqual(JSON.parse(JSON.stringify(context.undoStack)), []);
+  assert.deepEqual(JSON.parse(JSON.stringify(context.redoStack)), []);
   assert.ok(calls.some(([name]) => name === 'loadVersions'));
 });
 
@@ -616,19 +624,21 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
       loadPresentationsCalls += 1;
     },
     resetEditorDeckPersistenceState() {},
-    resetEditorHistoryState() {},
     resetEditorPersistenceTimers() {},
     resetStudioDeckUiState() {},
     resetStudioPresentationUiState() {},
     resetStudioSaveButtonState() {},
     resetStudioSourceViewUiState() {},
     resetStudioVersionUiState() {},
+    redoStack: ['redo-entry'],
     setTimeout(callback) {
       callback();
       return 1;
     },
     studioEditorSessionToken: 4,
     teardownDeckActiveSlideSync() {},
+    undoStack: ['undo-entry'],
+    updateHistoryButtons() {},
     updateDeckReadyToolbarActionState() {}
   };
 
@@ -651,6 +661,8 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
   assert.equal(context.currentPresentationMetadata, null);
   assert.equal(context.studioEditorSessionToken, 5);
   assert.equal(context.document.body.style.overflow, '');
+  assert.deepEqual(JSON.parse(JSON.stringify(context.undoStack)), []);
+  assert.deepEqual(JSON.parse(JSON.stringify(context.redoStack)), []);
   assert.equal(loadPresentationsCalls, 1);
 });
 
