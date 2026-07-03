@@ -15,6 +15,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadResolveEditorMetadataPersistenceOptions(fileContent, context) {
+  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
+    '\n\n    function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {'
+  );
+  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+}
+
 test('updateHistoryButtons tolerates missing history controls', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateHistoryButtonsSource = extractFunctionSource(
@@ -380,6 +389,7 @@ test('buildHistoryFrameHtml reuses shared deck source sanitization for history s
 
   vm.createContext(context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  loadResolveEditorMetadataPersistenceOptions(fileContent, context);
   vm.runInContext(getEditorHistoryOptionsSource, context);
   vm.runInContext(buildHistoryFrameHtmlSource, context);
 
@@ -745,6 +755,7 @@ test('buildHistoryFrameHtml strips editor style tags when the shared deck source
 
   vm.createContext(context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  loadResolveEditorMetadataPersistenceOptions(fileContent, context);
   vm.runInContext(getEditorHistoryOptionsSource, context);
   vm.runInContext(buildHistoryFrameHtmlSource, context);
 
