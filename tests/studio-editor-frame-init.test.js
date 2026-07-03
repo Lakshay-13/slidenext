@@ -32,6 +32,15 @@ function loadCaptureEditorPersistableDeckBuildState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadResolveEditorCapturedPersistableDeckState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {',
+    '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadApplyCurrentStudioCapturedDeckState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -138,6 +147,47 @@ test('captureEditorPersistableDeckBuildState captures and forwards canonical dec
   });
   assert.equal(reportedCanonicalDeck, canonicalDeck);
   assert.equal(reportedPlaybackState, playbackState);
+});
+
+test('resolveEditorCapturedPersistableDeckState resolves canonical deck and playback fallbacks when shared persistence helpers are unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  let buildCanonicalDeckCalls = 0;
+  let resolvePlaybackStateCalls = 0;
+  const context = {};
+
+  vm.createContext(context);
+  loadResolveEditorCapturedPersistableDeckState(fileContent, context);
+
+  const capturedDeckState = JSON.parse(JSON.stringify(context.resolveEditorCapturedPersistableDeckState('<html>persisted</html>', {
+    buildCanonicalDeck() {
+      buildCanonicalDeckCalls += 1;
+      return canonicalDeck;
+    },
+    resolvePlaybackState(nextCanonicalDeck) {
+      resolvePlaybackStateCalls += 1;
+      assert.equal(nextCanonicalDeck, canonicalDeck);
+      return {
+        activeSlideIds: ['slide-1'],
+        slideCounterText: '1 / 1'
+      };
+    }
+  })));
+
+  assert.deepEqual(capturedDeckState, {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck,
+    playbackState: {
+      activeSlideIds: ['slide-1'],
+      slideCounterText: '1 / 1'
+    }
+  });
+  assert.equal(buildCanonicalDeckCalls, 1);
+  assert.equal(resolvePlaybackStateCalls, 1);
 });
 
 test('captureEditorPersistableDeckState reuses a resolved canonical deck when playback fallback runs after html capture', () => {
@@ -259,6 +309,68 @@ test('captureEditorPersistableDeckState delegates final capture-state resolution
   assert.equal(delegatedArgs.cleanHtml, '<html>persisted</html>');
   assert.equal(typeof delegatedArgs.options.buildCanonicalDeck, 'function');
   assert.equal(typeof delegatedArgs.options.resolvePlaybackState, 'function');
+});
+
+test('captureEditorPersistableDeckState reuses the local captured persistable deck-state resolver when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 2'
+  };
+  const calls = [];
+  const context = {
+    __resolveEditorCapturedPersistableDeckState(cleanHtml, options = {}) {
+      calls.push(['resolveEditorCapturedPersistableDeckState', cleanHtml, options]);
+      return {
+        cleanHtml,
+        canonicalDeck,
+        playbackState
+      };
+    },
+    __captureEditorPersistableDeckBuildState(doc, buildOptions = {}) {
+      calls.push(['captureEditorPersistableDeckBuildState', doc, buildOptions]);
+      return {
+        cleanHtml: '<html>persisted</html>',
+        canonicalDeck: null,
+        playbackState: undefined
+      };
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('buildEditorCanonicalDeck should not run directly when helper delegation succeeds');
+    },
+    capturePersistedDeckPlaybackState() {
+      throw new Error('capturePersistedDeckPlaybackState should not run directly when helper delegation succeeds');
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
+  vm.runInContext('captureEditorPersistableDeckBuildState = __captureEditorPersistableDeckBuildState;', context);
+  vm.runInContext('resolveEditorCapturedPersistableDeckState = __resolveEditorCapturedPersistableDeckState;', context);
+
+  const persistedDeckState = JSON.parse(JSON.stringify(context.captureEditorPersistableDeckState()));
+  assert.deepEqual(persistedDeckState, {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck,
+    playbackState
+  });
+  assert.deepEqual(calls.map(([name]) => name), [
+    'captureEditorPersistableDeckBuildState',
+    'resolveEditorCapturedPersistableDeckState'
+  ]);
+  assert.equal(calls[0][1], iframeDoc);
+  assert.equal(calls[1][1], '<html>persisted</html>');
+  assert.equal(typeof calls[1][2].buildCanonicalDeck, 'function');
+  assert.equal(typeof calls[1][2].resolvePlaybackState, 'function');
 });
 
 test('captureEditorPersistableDeckState reuses the local persistable build-state capture helper when available', () => {
