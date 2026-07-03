@@ -1864,18 +1864,10 @@
 
       return {
         buildSharedHtml,
-        buildViewOptions: typeof createEditorDeckViewBuildViewOptionsResolver === 'function'
-          ? createEditorDeckViewBuildViewOptionsResolver({
-              buildViewOptions,
-              extendViewOptions
-            })
-          : buildViewOptions
-            ? extendViewOptions
-              ? (sourceDoc) => extendViewOptions(buildViewOptions(sourceDoc), sourceDoc)
-              : buildViewOptions
-            : extendViewOptions
-              ? (sourceDoc) => extendViewOptions(createEditorDeckViewBuildOptions(sourceDoc), sourceDoc)
-              : (sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc),
+        buildViewOptions: createEditorDeckViewBuildViewOptionsResolver({
+          buildViewOptions,
+          extendViewOptions
+        }),
         buildCanonicalHtml: typeof createEditorDeckViewCanonicalHtmlResolver === 'function'
           ? createEditorDeckViewCanonicalHtmlResolver({
               buildCanonicalHtml,
