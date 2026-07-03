@@ -5410,14 +5410,9 @@
           buildViewOptions: () => sourceViewOptions
         });
       }
-      const livePlaybackState = doc
-        ? null
-        : persistedDeckPlaybackState;
       const shouldReportCanonicalDeck = typeof buildOptions.onCanonicalDeckResolved === 'function';
       const canonicalDeck = resolveCanonicalDeckOverride() || (shouldReportCanonicalDeck ? buildEditorCanonicalDeck(doc) : null);
-      const resolvedPlaybackState = doc
-        ? capturePersistedDeckPlaybackState(doc, canonicalDeck)
-        : livePlaybackState;
+      const resolvedPlaybackState = capturePersistedDeckPlaybackState(doc, canonicalDeck);
       if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
         buildOptions.onCanonicalDeckResolved(canonicalDeck);
       }
