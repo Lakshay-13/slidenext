@@ -3917,19 +3917,7 @@
     }
 
     getCurrentEditorPersistedDeckState.resolveWithContent = function (persistedDeckState = getCurrentEditorPersistedDeckState()) {
-      const resolveStudioPersistableDeckStateWithContent = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent
-        : null;
-      if (resolveStudioPersistableDeckStateWithContent) {
-        return resolveStudioPersistableDeckStateWithContent(persistedDeckState);
-      }
-      return persistedDeckState && typeof persistedDeckState.cleanHtml === 'string' && persistedDeckState.cleanHtml.trim()
-        ? persistedDeckState
-        : null;
+      return SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent(persistedDeckState);
     };
 
     function resolveEditorPersistedDeckStateWithContent(persistedDeckState = getCurrentEditorPersistedDeckState()) {

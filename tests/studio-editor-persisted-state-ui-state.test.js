@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const deckPersistence = require('../shared/deck-persistence.js');
+const editorPersistence = require('../shared/studio-editor-persistence.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -23,6 +24,16 @@ function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
     '\n\n    function applyCurrentStudioPersistedDeckState('
   );
   vm.runInContext(resolveEditorStoredCanonicalDeckSource, context);
+}
+
+function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function getCurrentEditorPersistedDeckState() {',
+    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
@@ -63,11 +74,6 @@ function loadApplyCurrentStudioPersistedHtml(fileContent, context) {
 
 test('getCurrentEditorPersistedDeckState returns the current persisted html, canonical deck, and playback baselines', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function getCurrentEditorPersistedDeckState() {',
-    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
-  );
 
   const context = {
     lastPersistedDeckHtml: '<html>persisted</html>',
@@ -76,7 +82,7 @@ test('getCurrentEditorPersistedDeckState returns the current persisted html, can
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState())),
@@ -90,11 +96,6 @@ test('getCurrentEditorPersistedDeckState returns the current persisted html, can
 
 test('getCurrentEditorPersistedDeckState.resolveWithContent prefers the shared persisted-content resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function getCurrentEditorPersistedDeckState() {',
-    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
-  );
 
   const calls = [];
   const persistedDeckState = {
@@ -115,7 +116,7 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent prefers the shared p
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState.resolveWithContent())),

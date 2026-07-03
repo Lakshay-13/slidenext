@@ -18,6 +18,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 }
 
 function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
   const helperSource = extractFunctionSource(
     fileContent,
     'function getCurrentEditorPersistedDeckState() {',

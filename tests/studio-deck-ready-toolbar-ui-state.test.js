@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const editorPersistence = require('../shared/studio-editor-persistence.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -24,6 +25,7 @@ function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
 }
 
 function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
   const helperSource = extractFunctionSource(
     fileContent,
     'function getCurrentEditorPersistedDeckState() {',
