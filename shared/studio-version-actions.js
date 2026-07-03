@@ -87,6 +87,25 @@
     };
   }
 
+  async function executeStudioVersionActionRequest(request = {}, options = {}) {
+    const fetchImpl = typeof options.fetchImpl === 'function'
+      ? options.fetchImpl
+      : root && typeof root.fetch === 'function'
+        ? root.fetch.bind(root)
+        : null;
+    if (!fetchImpl) {
+      throw new TypeError(
+        normalizeString(
+          options.missingFetchErrorMessage,
+          'A fetch implementation is required to execute studio version requests.'
+        )
+      );
+    }
+
+    const response = await fetchImpl(normalizeString(request.url), request.init || {});
+    return response.json();
+  }
+
   function createStudioRestoreVersionRequest(versionFilename = '', context = {}) {
     return {
       url: '/api/restore',
@@ -102,18 +121,11 @@
   }
 
   async function executeStudioRestoreVersionRequest(versionFilename = '', context = {}, options = {}) {
-    const fetchImpl = typeof options.fetchImpl === 'function'
-      ? options.fetchImpl
-      : root && typeof root.fetch === 'function'
-        ? root.fetch.bind(root)
-        : null;
-    if (!fetchImpl) {
-      throw new TypeError('A fetch implementation is required to execute studio restore version requests.');
-    }
-
     const request = createStudioRestoreVersionRequest(versionFilename, context);
-    const response = await fetchImpl(request.url, request.init);
-    return response.json();
+    return executeStudioVersionActionRequest(request, {
+      fetchImpl: options.fetchImpl,
+      missingFetchErrorMessage: 'A fetch implementation is required to execute studio restore version requests.'
+    });
   }
 
   function createStudioRenameVersionRequest(versionFilename = '', newLabel = '', context = {}) {
@@ -132,18 +144,11 @@
   }
 
   async function executeStudioRenameVersionRequest(versionFilename = '', newLabel = '', context = {}, options = {}) {
-    const fetchImpl = typeof options.fetchImpl === 'function'
-      ? options.fetchImpl
-      : root && typeof root.fetch === 'function'
-        ? root.fetch.bind(root)
-        : null;
-    if (!fetchImpl) {
-      throw new TypeError('A fetch implementation is required to execute studio rename version requests.');
-    }
-
     const request = createStudioRenameVersionRequest(versionFilename, newLabel, context);
-    const response = await fetchImpl(request.url, request.init);
-    return response.json();
+    return executeStudioVersionActionRequest(request, {
+      fetchImpl: options.fetchImpl,
+      missingFetchErrorMessage: 'A fetch implementation is required to execute studio rename version requests.'
+    });
   }
 
   function createStudioDeleteVersionRequest(versionFilename = '', context = {}) {
@@ -161,18 +166,11 @@
   }
 
   async function executeStudioDeleteVersionRequest(versionFilename = '', context = {}, options = {}) {
-    const fetchImpl = typeof options.fetchImpl === 'function'
-      ? options.fetchImpl
-      : root && typeof root.fetch === 'function'
-        ? root.fetch.bind(root)
-        : null;
-    if (!fetchImpl) {
-      throw new TypeError('A fetch implementation is required to execute studio delete version requests.');
-    }
-
     const request = createStudioDeleteVersionRequest(versionFilename, context);
-    const response = await fetchImpl(request.url, request.init);
-    return response.json();
+    return executeStudioVersionActionRequest(request, {
+      fetchImpl: options.fetchImpl,
+      missingFetchErrorMessage: 'A fetch implementation is required to execute studio delete version requests.'
+    });
   }
 
   function handleStudioRestoreVersionSuccess(context = {}, options = {}) {
@@ -232,6 +230,7 @@
     isStudioVersionActionSessionCurrent,
     shouldDebounceStudioAutoVersion,
     createStudioVersionActionHandlerOptions,
+    executeStudioVersionActionRequest,
     createStudioRestoreVersionRequest,
     executeStudioRestoreVersionRequest,
     createStudioRenameVersionRequest,

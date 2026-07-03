@@ -81,6 +81,41 @@ test('createStudioVersionActionHandlerOptions preserves the supplied session rea
   assert.equal(options.refreshVersionEntries, hooks.refreshVersionEntries);
 });
 
+test('executeStudioVersionActionRequest posts the supplied request init and returns the parsed response payload', async () => {
+  const fetchCalls = [];
+
+  const result = await versionActions.executeStudioVersionActionRequest(
+    {
+      url: '/api/versions/delete',
+      init: {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          htmlPath: '/presentations/onboarding-presentation/index.html'
+        })
+      }
+    },
+    {
+      fetchImpl: async (url, init) => {
+        fetchCalls.push([url, JSON.parse(init.body)]);
+        return {
+          async json() {
+            return { success: true };
+          }
+        };
+      }
+    }
+  );
+
+  assert.deepEqual(fetchCalls, [[
+    '/api/versions/delete',
+    {
+      htmlPath: '/presentations/onboarding-presentation/index.html'
+    }
+  ]]);
+  assert.deepEqual(result, { success: true });
+});
+
 test('createStudioRestoreVersionRequest builds the restore endpoint payload from the active version context', () => {
   const restoreContext = versionActions.createStudioVersionActionContext(
     '/presentations/onboarding-presentation/index.html',
