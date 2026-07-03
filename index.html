@@ -7576,14 +7576,8 @@
           versionCheckpointPersistenceState,
           scheduledPresentationUrl,
         );
-        const applyVersionCheckpointSaveSuccess = typeof applyCurrentStudioVersionCheckpointSaveSuccess === 'function'
-          ? applyCurrentStudioVersionCheckpointSaveSuccess
-          : (nextVersionCheckpointPersistenceState, options = {}) => applyCurrentStudioVersionPersistenceSuccess(
-              nextVersionCheckpointPersistenceState.persistenceContext,
-              options
-            );
         if (data.success) {
-          applyVersionCheckpointSaveSuccess(
+          applyCurrentStudioVersionCheckpointSaveSuccess(
             versionCheckpointPersistenceState,
             {
               onSuccess: () => {
@@ -7666,14 +7660,8 @@
           versionCheckpointPersistenceState,
           presentationUrl,
         );
-        const applyVersionCheckpointSaveSuccess = typeof applyCurrentStudioVersionCheckpointSaveSuccess === 'function'
-          ? applyCurrentStudioVersionCheckpointSaveSuccess
-          : (nextVersionCheckpointPersistenceState, options = {}) => applyCurrentStudioVersionPersistenceSuccess(
-              nextVersionCheckpointPersistenceState.persistenceContext,
-              options
-            );
         if (data.success) {
-          applyVersionCheckpointSaveSuccess(
+          applyCurrentStudioVersionCheckpointSaveSuccess(
             versionCheckpointPersistenceState,
             {
               onSuccess: () => {

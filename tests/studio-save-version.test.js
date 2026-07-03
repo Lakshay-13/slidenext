@@ -962,6 +962,7 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
+  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
@@ -1075,6 +1076,7 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
+  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
@@ -1199,6 +1201,7 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
+  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
@@ -1323,6 +1326,7 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
+  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
@@ -1389,6 +1393,7 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
+  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
@@ -1462,6 +1467,7 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
+  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
@@ -1566,6 +1572,7 @@ test('executeSaveAutoVersion skips redundant auto version saves when the capture
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
+  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
@@ -1685,6 +1692,7 @@ test('submitSaveVersion reuses the local version checkpoint save helper when ava
   };
 
   vm.createContext(context);
+  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -1881,6 +1889,7 @@ test('executeSaveAutoVersion reuses the local version checkpoint save helper whe
 
   vm.createContext(context);
   loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
+  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   vm.runInContext('executeCurrentStudioVersionCheckpointSave = __executeCurrentStudioVersionCheckpointSave;', context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
