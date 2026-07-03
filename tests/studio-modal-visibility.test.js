@@ -58,6 +58,23 @@ test('getCurrentStudioModalVisibilityToken returns the modal visibility token wi
   assert.equal(modalVisibility.getCurrentStudioModalVisibilityToken(modalEl), 1);
 });
 
+test('createStudioModalVisibilityGuard returns a session checker for the captured modal token', () => {
+  const modalEl = createModal();
+
+  modalVisibility.cancelStudioModalHide(modalEl);
+  const currentSessionGuard = modalVisibility.createStudioModalVisibilityGuard(
+    modalEl,
+    modalVisibility.getCurrentStudioModalVisibilityToken(modalEl)
+  );
+  const missingModalGuard = modalVisibility.createStudioModalVisibilityGuard(null, 0);
+
+  assert.equal(currentSessionGuard(), true);
+  assert.equal(missingModalGuard(), true);
+
+  modalVisibility.cancelStudioModalHide(modalEl);
+  assert.equal(currentSessionGuard(), false);
+});
+
 test('scheduleStudioModalCallback skips stale delayed callbacks after the modal session changes', () => {
   const modalEl = createModal();
   const calls = [];

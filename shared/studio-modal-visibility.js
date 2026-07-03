@@ -28,6 +28,12 @@
     return !!modalEl && modalEl.__slideNextModalVisibilityToken === visibilityToken;
   }
 
+  function createStudioModalVisibilityGuard(modalEl, visibilityToken) {
+    return function isCurrentStudioModalVisibilitySession() {
+      return !modalEl || isStudioModalVisibilityCurrent(modalEl, visibilityToken);
+    };
+  }
+
   function cancelStudioModalHide(modalEl) {
     return getNextStudioModalVisibilityToken(modalEl);
   }
@@ -76,6 +82,7 @@
     getNextStudioModalVisibilityToken,
     getCurrentStudioModalVisibilityToken,
     isStudioModalVisibilityCurrent,
+    createStudioModalVisibilityGuard,
     cancelStudioModalHide,
     scheduleStudioModalCallback,
     scheduleStudioModalHide

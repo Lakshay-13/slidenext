@@ -8101,6 +8101,10 @@
       const renameSessionToken = modal
         ? SlideNextStudioModalVisibility.getCurrentStudioModalVisibilityToken(modal)
         : 0;
+      const isCurrentRenameSession = SlideNextStudioModalVisibility.createStudioModalVisibilityGuard(
+        modal,
+        renameSessionToken
+      );
       
       const btn = document.getElementById('confirmRenameVersionBtn');
       if (btn) {
@@ -8119,14 +8123,14 @@
         );
         if (data.success) {
           handleCurrentStudioVersionListMutationSuccess(renameContext, {
-            isCurrentSession: () => !modal || SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
+            isCurrentSession: isCurrentRenameSession,
             onSuccess: () => {
               closeRenameVersionModal();
             }
           });
         } else {
           handleCurrentStudioVersionActionFailure(renameContext, {
-            isCurrentSession: () => !modal || SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
+            isCurrentSession: isCurrentRenameSession,
             onFailure: () => {
               alert(`Rename failed: ${data.error}`);
             }
@@ -8134,14 +8138,14 @@
         }
       } catch (err) {
         handleCurrentStudioVersionActionFailure(renameContext, {
-          isCurrentSession: () => !modal || SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
+          isCurrentSession: isCurrentRenameSession,
           onFailure: () => {
             alert(`Error renaming version: ${err.message}`);
           }
         });
       } finally {
         handleCurrentStudioVersionListMutationSuccess(renameContext, {
-          isCurrentSession: () => !modal || SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),
+          isCurrentSession: isCurrentRenameSession,
           shouldRefreshVersionEntries: false,
           onSuccess: () => {
             if (btn) {

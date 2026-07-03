@@ -542,6 +542,10 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
         calls.push(['getCurrentStudioModalVisibilityToken']);
         return 7;
       },
+      createStudioModalVisibilityGuard(modal, visibilityToken) {
+        calls.push(['createStudioModalVisibilityGuard', modal, visibilityToken]);
+        return () => true;
+      },
       isStudioModalVisibilityCurrent() {
         calls.push(['isStudioModalVisibilityCurrent']);
         return true;
@@ -603,13 +607,12 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
   });
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'renameVersionModal'));
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'confirmRenameVersionBtn'));
+  assert.ok(calls.some(([name, , visibilityToken]) => name === 'createStudioModalVisibilityGuard' && visibilityToken === 0));
   assert.ok(calls.some(([name]) => name === 'executeStudioRenameVersionRequest'));
   assert.ok(calls.some(([name, , , , options]) => name === 'executeStudioRenameVersionRequest' && options.fetchImpl === context.fetch));
   assert.ok(calls.some(([name]) => name === 'closeRenameVersionModal'));
   assert.ok(calls.filter(([name]) => name === 'handleCurrentStudioVersionListMutationSuccess').length === 2);
   assert.ok(calls.some(([name, result]) => name === 'isCurrentSession' && result === true));
-  assert.ok(!calls.some(([name]) => name === 'getCurrentStudioModalVisibilityToken'));
-  assert.ok(!calls.some(([name]) => name === 'isStudioModalVisibilityCurrent'));
   assert.ok(!calls.some(([name]) => name === 'handleCurrentStudioVersionActionFailure'));
 });
 
@@ -627,6 +630,9 @@ test('submitRenameVersion reuses the shared rename request helper when available
     SlideNextStudioModalVisibility: {
       getCurrentStudioModalVisibilityToken() {
         return 7;
+      },
+      createStudioModalVisibilityGuard() {
+        return () => true;
       },
       isStudioModalVisibilityCurrent() {
         return true;
