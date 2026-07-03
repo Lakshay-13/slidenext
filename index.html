@@ -5878,21 +5878,9 @@
         ? capturePersistedDeckPlaybackState(doc, canonicalDeck)
         : livePlaybackState;
       reportPersistableDeckBuildState(buildOptions, canonicalDeck, resolvedPlaybackState);
-      const persistableDeckSanitizerOptions = typeof buildEditorPersistableDeckSanitizerOptions === 'function'
-        ? buildEditorPersistableDeckSanitizerOptions(resolvedPlaybackState, {
-            resolveMetadataPersistenceOptions
-          })
-        : (() => {
-            const deckSanitizerOptions = getEditorDeckSanitizerOptions();
-            return {
-              ...resolveMetadataPersistenceOptions(),
-              editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,
-              editorTransientClasses: deckSanitizerOptions.transientClassNames,
-              editorElementIdAttr: deckSanitizerOptions.editorElementIdAttr,
-              editorSlideIdAttr: deckSanitizerOptions.editorSlideIdAttr,
-              persistedDeckPlaybackState: resolvedPlaybackState
-            };
-          })();
+      const persistableDeckSanitizerOptions = buildEditorPersistableDeckSanitizerOptions(resolvedPlaybackState, {
+        resolveMetadataPersistenceOptions
+      });
       return SlideNextDeckPersistence.buildPersistableDeckHtml(doc, {
         ...persistableDeckSanitizerOptions
       });
