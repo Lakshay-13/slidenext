@@ -3107,18 +3107,80 @@
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
-      return SlideNextStudioDeckContext.buildStudioCanonicalDeck(doc, {
-        currentPresentationMetadata,
-        fallbackStoredPresentationMetadata: {
-          canonicalDeck: lastPersistedCanonicalDeck
-        },
-        buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
-        presentationUrl: currentPresentationUrl,
-        presentationTitle: currentTitle,
-        preferStoredCanonicalDeck: false,
+      const buildStudioCanonicalDeck = SlideNextStudioDeckContext
+        && typeof SlideNextStudioDeckContext.buildStudioCanonicalDeck === 'function'
+        ? SlideNextStudioDeckContext.buildStudioCanonicalDeck
+        : null;
+      if (buildStudioCanonicalDeck) {
+        return buildStudioCanonicalDeck(doc, {
+          currentPresentationMetadata,
+          fallbackStoredPresentationMetadata: {
+            canonicalDeck: lastPersistedCanonicalDeck
+          },
+          buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
+          presentationUrl: currentPresentationUrl,
+          presentationTitle: currentTitle,
+          preferStoredCanonicalDeck: false,
+          getSlideId: getEditorSlideId,
+          getNodeId: assignEditorElementId
+        });
+      }
+
+      const createCanonicalDeck = (
+        typeof SlideNextCanonicalDeck !== 'undefined'
+        && SlideNextCanonicalDeck
+        && typeof SlideNextCanonicalDeck.createCanonicalDeck === 'function'
+      )
+        ? SlideNextCanonicalDeck.createCanonicalDeck
+        : null;
+      const isCanonicalDeck = (
+        typeof SlideNextCanonicalDeck !== 'undefined'
+        && SlideNextCanonicalDeck
+        && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
+      )
+        ? SlideNextCanonicalDeck.isCanonicalDeck
+        : null;
+      const resolvePresentationCanonicalDeck = (
+        typeof SlideNextPresentationMetadata !== 'undefined'
+        && SlideNextPresentationMetadata
+        && typeof SlideNextPresentationMetadata.resolvePresentationCanonicalDeck === 'function'
+      )
+        ? SlideNextPresentationMetadata.resolvePresentationCanonicalDeck
+        : null;
+      const resolveStoredCanonicalDeck = typeof resolvePresentationCanonicalDeck === 'function'
+        ? (metadata) => resolvePresentationCanonicalDeck(metadata, {
+            createCanonicalDeck,
+            isCanonicalDeck
+          })
+        : (metadata) => metadata && metadata.canonicalDeck ? metadata.canonicalDeck : null;
+      const storedCanonicalDeck = resolveStoredCanonicalDeck(currentPresentationMetadata)
+        || resolveStoredCanonicalDeck({ canonicalDeck: lastPersistedCanonicalDeck });
+      if (!doc && storedCanonicalDeck) {
+        return storedCanonicalDeck;
+      }
+
+      const buildCanonicalDeckFromDocument = (
+        typeof SlideNextDeckLoader !== 'undefined'
+        && SlideNextDeckLoader
+        && typeof SlideNextDeckLoader.buildCanonicalDeckFromDocument === 'function'
+      )
+        ? SlideNextDeckLoader.buildCanonicalDeckFromDocument
+        : null;
+      if (!buildCanonicalDeckFromDocument) {
+        return storedCanonicalDeck || null;
+      }
+
+      const canonicalDeck = buildCanonicalDeckFromDocument(doc, {
+        presentationMetadata: currentPresentationMetadata || buildCurrentPresentationMetadataSeed(currentPresentationUrl, currentTitle),
+        sourcePath: currentPresentationUrl,
         getSlideId: getEditorSlideId,
         getNodeId: assignEditorElementId
       });
+      if (canonicalDeck && (!isCanonicalDeck || isCanonicalDeck(canonicalDeck))) {
+        return canonicalDeck;
+      }
+
+      return storedCanonicalDeck || null;
     }
 
     function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {

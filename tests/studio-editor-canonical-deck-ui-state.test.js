@@ -175,6 +175,67 @@ test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical dec
   assert.equal(typeof calls[0].options.getNodeId, 'function');
 });
 
+test('buildEditorCanonicalDeck falls back to the shared deck loader when the deck context builder is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorCanonicalDeck(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
+  );
+
+  const doc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const currentPresentationMetadata = {
+    id: 'deck-1',
+    title: 'Project Onboarding',
+    sourcePath: '/presentations/onboarding-presentation/index.html'
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckContext: {},
+    SlideNextDeckLoader: {
+      buildCanonicalDeckFromDocument(nextDoc, options) {
+        calls.push({ nextDoc, options });
+        return canonicalDeck;
+      }
+    },
+    SlideNextCanonicalDeck: {
+      isCanonicalDeck: (deck) => deck === canonicalDeck
+    },
+    currentPresentationMetadata,
+    lastPersistedCanonicalDeck: null,
+    buildCurrentPresentationMetadataSeed: () => ({ id: 'seed-deck' }),
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    getEditorSlideId() {
+      return 'slide-1';
+    },
+    assignEditorElementId() {
+      return 'node-1';
+    },
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorCanonicalDeckSource, context);
+
+  const result = context.buildEditorCanonicalDeck();
+
+  assert.equal(result, canonicalDeck);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].nextDoc, doc);
+  assert.equal(calls[0].options.presentationMetadata, currentPresentationMetadata);
+  assert.equal(calls[0].options.sourcePath, '/presentations/onboarding-presentation/index.html');
+  assert.equal(typeof calls[0].options.getSlideId, 'function');
+  assert.equal(typeof calls[0].options.getNodeId, 'function');
+});
+
 test('buildEditorCanonicalDeck reuses the in-memory persisted canonical baseline when the iframe is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorCanonicalDeckSource = extractFunctionSource(
