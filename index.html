@@ -5077,6 +5077,21 @@
     }
 
     function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {
+      const buildStudioHistoryCaptureHtml = SlideNextStudioHistory
+        && typeof SlideNextStudioHistory.buildStudioHistoryCaptureHtml === 'function'
+        ? SlideNextStudioHistory.buildStudioHistoryCaptureHtml
+        : null;
+      if (buildStudioHistoryCaptureHtml) {
+        return buildStudioHistoryCaptureHtml(doc, {
+          frameOptions: getEditorHistoryOptions(options),
+          canonicalDeck: options.canonicalDeck,
+          buildFallbackHtml: (sourceDoc) => sourceDoc
+            ? buildPersistableDeckHtml(sourceDoc, {
+                canonicalDeck: options.canonicalDeck
+              })
+            : ''
+        });
+      }
       return SlideNextStudioHistory.buildStudioHistoryFrameHtml(doc, getEditorHistoryOptions(options))
         || (doc
           ? buildPersistableDeckHtml(doc, {

@@ -294,6 +294,35 @@ test('buildStudioHistoryFrameHtml runs the shared frame sanitizer before seriali
   assert.equal(html, '<div>Runtime state</div>');
 });
 
+test('buildStudioHistoryCaptureHtml prefers live frame capture before falling back', () => {
+  const clone = {
+    querySelectorAll() {
+      return [];
+    },
+    get innerHTML() {
+      return '<section>live-history</section>';
+    }
+  };
+  const doc = {
+    documentElement: {
+      cloneNode() {
+        return clone;
+      }
+    }
+  };
+  let fallbackCalls = 0;
+
+  const html = studioHistory.buildStudioHistoryCaptureHtml(doc, {
+    buildFallbackHtml() {
+      fallbackCalls += 1;
+      return '<html>fallback-history</html>';
+    }
+  });
+
+  assert.equal(html, '<section>live-history</section>');
+  assert.equal(fallbackCalls, 0);
+});
+
 test('restoreStudioHistoryFrameSetup falls back to rendered canonical deck html when snapshot html is empty', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',

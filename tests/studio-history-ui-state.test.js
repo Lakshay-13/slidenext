@@ -466,6 +466,72 @@ test('buildHistoryFrameHtml forwards sanitizer overrides into getEditorHistoryOp
   ]);
 });
 
+test('buildHistoryFrameHtml reuses the shared history capture helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildHistoryFrameHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function createHistoryEntry(doc) {'
+  );
+
+  const doc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioHistory: {
+      buildStudioHistoryCaptureHtml(nextDoc, options) {
+        calls.push(['buildStudioHistoryCaptureHtml', nextDoc, options]);
+        return options.buildFallbackHtml(nextDoc, options);
+      }
+    },
+    getEditorHistoryOptions(options = {}) {
+      calls.push(['getEditorHistoryOptions', options]);
+      return {
+        chromeNodeIds: options.chromeNodeIds || []
+      };
+    },
+    buildPersistableDeckHtml(nextDoc, options = {}) {
+      calls.push(['buildPersistableDeckHtml', nextDoc, options]);
+      return '<html>persisted-history</html>';
+    },
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildHistoryFrameHtmlSource, context);
+
+  const html = context.buildHistoryFrameHtml(doc, {
+    chromeNodeIds: ['editorHistoryOverlay'],
+    canonicalDeck
+  });
+
+  assert.equal(html, '<html>persisted-history</html>');
+  assert.deepEqual(calls.map(([name]) => name), [
+    'getEditorHistoryOptions',
+    'buildStudioHistoryCaptureHtml',
+    'buildPersistableDeckHtml'
+  ]);
+  assert.equal(calls[1][1], doc);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[1][2].frameOptions)),
+    { chromeNodeIds: ['editorHistoryOverlay'] }
+  );
+  assert.equal(calls[1][2].canonicalDeck, canonicalDeck);
+  assert.equal(typeof calls[1][2].buildFallbackHtml, 'function');
+  assert.equal(calls[2][0], 'buildPersistableDeckHtml');
+  assert.equal(calls[2][1], doc);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[2][2])),
+    { canonicalDeck }
+  );
+});
+
 test('buildHistoryFrameHtml strips editor style tags when the shared deck source sanitizer is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(

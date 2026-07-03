@@ -107,6 +107,21 @@
     return clone.innerHTML;
   }
 
+  function buildStudioHistoryCaptureHtml(doc, options = {}) {
+    const frameOptions = options.frameOptions && typeof options.frameOptions === 'object'
+      ? options.frameOptions
+      : options;
+    const frameHtml = buildStudioHistoryFrameHtml(doc, frameOptions);
+    if (frameHtml) {
+      return frameHtml;
+    }
+
+    const buildFallbackHtml = typeof options.buildFallbackHtml === 'function'
+      ? options.buildFallbackHtml
+      : () => '';
+    return buildFallbackHtml(doc, options) || '';
+  }
+
   function createStudioHistoryEntry(doc, options = {}) {
     const buildHistoryHtml = typeof options.buildHistoryHtml === 'function'
       ? options.buildHistoryHtml
@@ -452,6 +467,7 @@
   return {
     normalizeStudioHistoryFrameHtml,
     buildStudioHistoryFrameHtml,
+    buildStudioHistoryCaptureHtml,
     createStudioHistoryEntry,
     normalizeStudioHistoryEntry,
     areStudioHistoryEntriesEqual,
