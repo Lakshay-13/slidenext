@@ -3395,7 +3395,7 @@
     }
 
     function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {
-      const resolveCanonicalDeckOverride = createEditorDeckCanonicalOverrideResolver(doc);
+      const resolveCanonicalDeckOverride = (canonicalDeck = null, nextDoc = doc) => resolveEditorDeckCanonicalOverride(nextDoc, canonicalDeck);
       const isCanonicalDeck = getEditorCanonicalDeckValidator();
       const {
         buildCanonicalDeck,

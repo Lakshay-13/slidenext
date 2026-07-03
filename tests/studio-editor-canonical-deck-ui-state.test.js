@@ -944,12 +944,9 @@ test('createEditorDeckViewSharedOptions reuses the local deck canonical override
     getIframeDoc() {
       return iframeDoc;
     },
-    createEditorDeckCanonicalOverrideResolver(nextDoc) {
-      calls.push(['createEditorDeckCanonicalOverrideResolver', nextDoc]);
-      return (nextCanonicalDeck, sourceDoc) => {
-        calls.push(['resolveCanonicalDeckOverride', nextCanonicalDeck, sourceDoc]);
-        return canonicalDeck;
-      };
+    resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorDeckCanonicalOverride', nextDoc, nextCanonicalDeck]);
+      return canonicalDeck;
     },
     resolveEditorLiveActiveSlideId(nextDoc) {
       calls.push(['resolveEditorLiveActiveSlideId', nextDoc]);
@@ -970,10 +967,9 @@ test('createEditorDeckViewSharedOptions reuses the local deck canonical override
   assert.equal(options.isCanonicalDeck, isCanonicalDeck);
   assert.deepEqual(helperCalls, ['createEditorCanonicalDeckViewStateOptions']);
   assert.deepEqual(calls, [
-    ['createEditorDeckCanonicalOverrideResolver', iframeDoc],
     ['getEditorCanonicalDeckValidator'],
     ['buildCanonicalDeck', iframeDoc],
-    ['resolveCanonicalDeckOverride', canonicalDeck, iframeDoc],
+    ['resolveEditorDeckCanonicalOverride', iframeDoc, canonicalDeck],
     ['resolveLiveActiveSlideId', iframeDoc]
   ]);
 });
