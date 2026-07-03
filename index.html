@@ -1711,6 +1711,31 @@
       };
     }
 
+    function buildEditorDeckHtml(doc = getIframeDoc(), options = {}) {
+      const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : () => null;
+      const buildFallbackHtml = typeof options.buildFallbackHtml === 'function'
+        ? options.buildFallbackHtml
+        : () => '';
+      const deckHtmlOptions = options.deckHtmlOptions && typeof options.deckHtmlOptions === 'object'
+        ? options.deckHtmlOptions
+        : {};
+      const buildCanonicalHtml = typeof options.buildCanonicalHtml === 'function'
+        ? options.buildCanonicalHtml
+        : null;
+
+      const canonicalDeck = buildCanonicalDeck(doc);
+      if (buildCanonicalHtml && canonicalDeck && Array.isArray(canonicalDeck.slides)) {
+        return buildCanonicalHtml(canonicalDeck, deckHtmlOptions);
+      }
+
+      const fallbackHtml = buildFallbackHtml(doc);
+      return typeof options.transformFallbackHtml === 'function'
+        ? options.transformFallbackHtml(fallbackHtml, deckHtmlOptions)
+        : fallbackHtml;
+    }
+
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
       const buildStudioPreviewHtml = (
         typeof SlideNextStudioDeckView !== 'undefined'
@@ -1727,15 +1752,6 @@
         return buildStudioPreviewHtml(doc, previewOptions);
       }
 
-      const buildCanonicalDeck = typeof previewOptions.buildCanonicalDeck === 'function'
-        ? previewOptions.buildCanonicalDeck
-        : () => null;
-      const buildFallbackHtml = typeof previewOptions.buildFallbackHtml === 'function'
-        ? previewOptions.buildFallbackHtml
-        : () => '';
-      const deckHtmlOptions = previewOptions.deckHtmlOptions && typeof previewOptions.deckHtmlOptions === 'object'
-        ? previewOptions.deckHtmlOptions
-        : {};
       const buildDeckPreviewHtml = (
         typeof SlideNextDeckHtml !== 'undefined'
         && SlideNextDeckHtml
@@ -1743,15 +1759,6 @@
       )
         ? SlideNextDeckHtml.buildDeckPreviewHtml
         : null;
-      const canonicalDeck = buildCanonicalDeck(doc);
-      if (buildDeckPreviewHtml && canonicalDeck && Array.isArray(canonicalDeck.slides)) {
-        return buildDeckPreviewHtml(canonicalDeck, currentPresentationUrl || '', deckHtmlOptions);
-      }
-
-      const fallbackHtml = buildFallbackHtml(doc);
-      if (!fallbackHtml) {
-        return fallbackHtml;
-      }
       const injectBaseHrefIntoHtml = (
         typeof SlideNextDeckHtml !== 'undefined'
         && SlideNextDeckHtml
@@ -1766,14 +1773,26 @@
       )
         ? SlideNextDeckHtml.buildPresentationBaseHref
         : null;
-      if (!injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
-        return fallbackHtml;
-      }
 
-      return injectBaseHrefIntoHtml(
-        fallbackHtml,
-        buildPresentationBaseHref(currentPresentationUrl || '', deckHtmlOptions)
-      );
+      return buildEditorDeckHtml(doc, {
+        ...previewOptions,
+        buildCanonicalHtml: buildDeckPreviewHtml
+          ? (canonicalDeck, deckHtmlOptions) => buildDeckPreviewHtml(
+              canonicalDeck,
+              currentPresentationUrl || '',
+              deckHtmlOptions
+            )
+          : null,
+        transformFallbackHtml: (fallbackHtml, deckHtmlOptions) => {
+          if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
+            return fallbackHtml;
+          }
+          return injectBaseHrefIntoHtml(
+            fallbackHtml,
+            buildPresentationBaseHref(currentPresentationUrl || '', deckHtmlOptions)
+          );
+        }
+      });
     }
 
     function buildEditorSourceHtml(doc = getIframeDoc()) {
@@ -1789,15 +1808,6 @@
         return buildStudioSourceHtml(doc, sourceOptions);
       }
 
-      const buildCanonicalDeck = typeof sourceOptions.buildCanonicalDeck === 'function'
-        ? sourceOptions.buildCanonicalDeck
-        : () => null;
-      const buildFallbackHtml = typeof sourceOptions.buildFallbackHtml === 'function'
-        ? sourceOptions.buildFallbackHtml
-        : () => '';
-      const deckHtmlOptions = sourceOptions.deckHtmlOptions && typeof sourceOptions.deckHtmlOptions === 'object'
-        ? sourceOptions.deckHtmlOptions
-        : {};
       const buildDeckSourceHtml = (
         typeof SlideNextDeckHtml !== 'undefined'
         && SlideNextDeckHtml
@@ -1805,12 +1815,13 @@
       )
         ? SlideNextDeckHtml.buildDeckSourceHtml
         : null;
-      const canonicalDeck = buildCanonicalDeck(doc);
-      if (buildDeckSourceHtml && canonicalDeck && Array.isArray(canonicalDeck.slides)) {
-        return buildDeckSourceHtml(canonicalDeck, deckHtmlOptions);
-      }
 
-      return buildFallbackHtml(doc);
+      return buildEditorDeckHtml(doc, {
+        ...sourceOptions,
+        buildCanonicalHtml: buildDeckSourceHtml
+          ? (canonicalDeck, deckHtmlOptions) => buildDeckSourceHtml(canonicalDeck, deckHtmlOptions)
+          : null
+      });
     }
 
     function launchPresentationHtml(html, startSlideIdx) {
