@@ -5875,6 +5875,11 @@
       autoSavePersistenceState = null,
       options = {}
     ) {
+      const persistenceContext = autoSavePersistenceState
+        && autoSavePersistenceState.persistencePlan
+        && autoSavePersistenceState.persistencePlan.persistenceContext
+        ? autoSavePersistenceState.persistencePlan.persistenceContext
+        : null;
       return SlideNextStudioEditorPersistence.executeStudioAutoSavePersistenceRequestWithHandlers(
         autoSavePersistenceState,
         {
@@ -5882,10 +5887,8 @@
           applyPersistenceSuccess: applyCurrentStudioPersistenceSuccess,
           applyPersistenceFailure: applyCurrentStudioPersistenceFailure,
           successOptions: {
-            presentationUrl: autoSavePersistenceState
-              && autoSavePersistenceState.persistencePlan
-              && autoSavePersistenceState.persistencePlan.persistenceContext
-              ? autoSavePersistenceState.persistencePlan.persistenceContext.presentationUrl
+            presentationUrl: persistenceContext
+              ? persistenceContext.presentationUrl
               : currentPresentationUrl,
             onSuccess: options.onSuccess
           },
