@@ -6725,34 +6725,7 @@
     }
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
-      const executeVersionCheckpointPersistenceRequestWithSuccess = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess
-        : null;
-      if (executeVersionCheckpointPersistenceRequestWithSuccess) {
-        const versionCheckpointResult = await executeVersionCheckpointPersistenceRequestWithSuccess(
-          versionLabel,
-          cleanHtml,
-          presentationUrl,
-          {
-            ...options,
-            isPersistedState: isCurrentDeckStatePersisted,
-            buildSaveRequestBody: buildEditorSaveRequestBody,
-            resolvePlaybackState: capturePersistedDeckPlaybackState,
-            fetchImpl: fetch,
-            applyPersistenceSuccess: applyCurrentStudioPersistenceSuccess,
-            successOptions: {
-              presentationUrl
-            }
-          }
-        );
-        return versionCheckpointResult ? versionCheckpointResult.data : null;
-      }
-
-      const versionCheckpointResult = await SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequest(
+      const versionCheckpointResult = await SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess(
         versionLabel,
         cleanHtml,
         presentationUrl,
@@ -6761,21 +6734,14 @@
           isPersistedState: isCurrentDeckStatePersisted,
           buildSaveRequestBody: buildEditorSaveRequestBody,
           resolvePlaybackState: capturePersistedDeckPlaybackState,
-          fetchImpl: fetch
+          fetchImpl: fetch,
+          applyPersistenceSuccess: applyCurrentStudioPersistenceSuccess,
+          successOptions: {
+            presentationUrl
+          }
         }
       );
-      const { data, persistencePlan } = versionCheckpointResult;
-
-      if (data.success) {
-        applyCurrentStudioPersistenceSuccess(
-          persistencePlan.persistenceContext,
-          {
-            presentationUrl: persistencePlan.persistenceContext.presentationUrl
-          }
-        );
-      }
-
-      return data;
+      return versionCheckpointResult ? versionCheckpointResult.data : null;
     }
 
     async function executeCurrentStudioVersionCheckpointSave(
