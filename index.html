@@ -3933,11 +3933,7 @@
     };
 
     function resolveEditorPersistedDeckStateWithContent(persistedDeckState = getCurrentEditorPersistedDeckState()) {
-      return typeof getCurrentEditorPersistedDeckState.resolveWithContent === 'function'
-        ? getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState)
-        : (persistedDeckState && typeof persistedDeckState.cleanHtml === 'string' && persistedDeckState.cleanHtml.trim()
-            ? persistedDeckState
-            : null);
+      return getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState);
     }
 
     function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {
