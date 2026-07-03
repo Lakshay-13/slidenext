@@ -14,6 +14,12 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function ensureSyncStudioChromeActionStateHelpers(context) {
+  if (typeof context.updateInsertionActionState !== 'function') {
+    context.updateInsertionActionState = () => {};
+  }
+}
+
 test('setActiveSlide reads the live frame through the shared iframe accessor and forwards the requested options', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setActiveSlideSource = extractFunctionSource(
@@ -184,6 +190,7 @@ test('syncStudioChromeToActiveSlide routes active slide index updates through th
     updateIframeNavigationUI() {}
   };
 
+  ensureSyncStudioChromeActionStateHelpers(context);
   vm.createContext(context);
   vm.runInContext(syncStudioChromeToActiveSlideSource, context);
 
@@ -279,6 +286,7 @@ test('syncStudioChromeToActiveSlide preserves selection by refreshing the layer 
     updateIframeNavigationUI() {}
   };
 
+  ensureSyncStudioChromeActionStateHelpers(context);
   vm.createContext(context);
   vm.runInContext(syncStudioChromeToActiveSlideSource, context);
 
@@ -353,6 +361,7 @@ test('syncStudioChromeToActiveSlide tolerates a missing slide count label while 
     updateIframeNavigationUI() {}
   };
 
+  ensureSyncStudioChromeActionStateHelpers(context);
   vm.createContext(context);
   vm.runInContext(syncStudioChromeToActiveSlideSource, context);
 
@@ -443,6 +452,7 @@ test('syncStudioChromeToActiveSlide syncs the solid wallpaper picker from the ac
     updateIframeNavigationUI() {}
   };
 
+  ensureSyncStudioChromeActionStateHelpers(context);
   vm.createContext(context);
   vm.runInContext(syncStudioChromeToActiveSlideSource, context);
 
@@ -526,6 +536,7 @@ test('syncStudioChromeToActiveSlide tolerates a missing solid wallpaper picker w
     updateIframeNavigationUI() {}
   };
 
+  ensureSyncStudioChromeActionStateHelpers(context);
   vm.createContext(context);
   vm.runInContext(syncStudioChromeToActiveSlideSource, context);
 
@@ -644,6 +655,7 @@ test('syncStudioChromeToActiveSlide syncs custom gradient controls from the acti
     updateIframeNavigationUI() {}
   };
 
+  ensureSyncStudioChromeActionStateHelpers(context);
   vm.createContext(context);
   vm.runInContext(syncStudioChromeToActiveSlideSource, context);
 
@@ -761,6 +773,7 @@ test('syncStudioChromeToActiveSlide syncs radial gradient controls from the acti
     updateIframeNavigationUI() {}
   };
 
+  ensureSyncStudioChromeActionStateHelpers(context);
   vm.createContext(context);
   vm.runInContext(syncStudioChromeToActiveSlideSource, context);
 
@@ -869,6 +882,7 @@ test('syncStudioChromeToActiveSlide routes uneditable gradients to the wallpaper
     updateIframeNavigationUI() {}
   };
 
+  ensureSyncStudioChromeActionStateHelpers(context);
   vm.createContext(context);
   vm.runInContext(syncStudioChromeToActiveSlideSource, context);
 
@@ -957,6 +971,7 @@ test('syncStudioChromeToActiveSlide tolerates missing custom gradient controls w
     updateIframeNavigationUI() {}
   };
 
+  ensureSyncStudioChromeActionStateHelpers(context);
   vm.createContext(context);
   vm.runInContext(syncStudioChromeToActiveSlideSource, context);
 
@@ -1042,6 +1057,7 @@ test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when 
     }
   };
 
+  ensureSyncStudioChromeActionStateHelpers(context);
   vm.createContext(context);
   vm.runInContext(syncStudioChromeToActiveSlideSource, context);
 
@@ -1146,6 +1162,7 @@ test('syncStudioChromeToActiveSlide falls back to canonical snapshot state when 
     updateIframeNavigationUI() {}
   };
 
+  ensureSyncStudioChromeActionStateHelpers(context);
   vm.createContext(context);
   vm.runInContext(syncStudioChromeToActiveSlideSource, context);
 

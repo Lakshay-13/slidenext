@@ -2632,9 +2632,7 @@
         updateLayersList();
       };
       const refreshActionStateChrome = (nextDoc = doc) => {
-        if (typeof updateInsertionActionState === 'function') {
-          updateInsertionActionState(nextDoc);
-        }
+        updateInsertionActionState(nextDoc);
         if (typeof updateZoomActionState === 'function') {
           updateZoomActionState(nextDoc);
         }
