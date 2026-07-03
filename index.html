@@ -6549,13 +6549,23 @@
       }
     }
 
+    function createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+        ...createCurrentStudioSessionStateOptions(),
+        isCurrentSession: options.isCurrentSession,
+        onSuccess: options.onSuccess,
+        onFailure: options.onFailure,
+        refreshVersionEntries: options.refreshVersionEntries,
+        hideVersionsDropdown: options.hideVersionsDropdown,
+        relaunchEditor: options.relaunchEditor
+      });
+    }
+
     function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {
       return SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
         versionActionContext,
-        SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-          ...createCurrentStudioSessionStateOptions(),
-          isCurrentSession: options.isCurrentSession,
-          onSuccess: options.onSuccess,
+        createCurrentStudioVersionActionHandlerOptions({
+          ...options,
           refreshVersionEntries: options.shouldRefreshVersionEntries !== false ? loadVersions : undefined
         })
       );
@@ -6564,23 +6574,14 @@
     function handleCurrentStudioVersionActionFailure(versionActionContext, options = {}) {
       return SlideNextStudioVersionActions.handleStudioVersionActionFailure(
         versionActionContext,
-        SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-          ...createCurrentStudioSessionStateOptions(),
-          isCurrentSession: options.isCurrentSession,
-          onFailure: options.onFailure
-        })
+        createCurrentStudioVersionActionHandlerOptions(options)
       );
     }
 
     function handleCurrentStudioVersionRestoreSuccess(versionActionContext, options = {}) {
       return SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(
         versionActionContext,
-        SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-          ...createCurrentStudioSessionStateOptions(),
-          onSuccess: options.onSuccess,
-          hideVersionsDropdown: options.hideVersionsDropdown,
-          relaunchEditor: options.relaunchEditor
-        })
+        createCurrentStudioVersionActionHandlerOptions(options)
       );
     }
 

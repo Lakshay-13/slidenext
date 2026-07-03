@@ -77,8 +77,16 @@ function loadHandleCurrentStudioVersionRestoreSuccess(fileContent, context) {
 }
 
 function loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  if (typeof context.createCurrentStudioSessionStateOptions !== 'function') {
+    loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  }
   context.SlideNextStudioVersionActions ??= versionActions;
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionActionHandlerOptions(options = {}) {',
+    '\n\n    function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
 }
 
 test('resetStudioVersionUiState hides open version chrome and clears modal state', () => {
