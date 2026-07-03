@@ -5885,6 +5885,23 @@
       );
     }
 
+    function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {
+      const resolveMetadataPersistenceOptions = typeof options.resolveMetadataPersistenceOptions === 'function'
+        ? options.resolveMetadataPersistenceOptions
+        : () => ({});
+      const deckSanitizerOptions = typeof options.getDeckSanitizerOptions === 'function'
+        ? options.getDeckSanitizerOptions()
+        : getEditorDeckSanitizerOptions();
+      return {
+        ...resolveMetadataPersistenceOptions(),
+        editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,
+        editorTransientClasses: deckSanitizerOptions.transientClassNames,
+        editorElementIdAttr: deckSanitizerOptions.editorElementIdAttr,
+        editorSlideIdAttr: deckSanitizerOptions.editorSlideIdAttr,
+        persistedDeckPlaybackState: playbackState
+      };
+    }
+
     function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {
       const nextPersistedHtml = typeof persistedHtml === 'string'
         ? persistedHtml
@@ -5910,18 +5927,35 @@
         const resolveMetadataPersistenceOptions = typeof options.resolveMetadataPersistenceOptions === 'function'
           ? options.resolveMetadataPersistenceOptions
           : () => ({});
-        const deckSanitizerOptions = typeof options.getDeckSanitizerOptions === 'function'
-          ? options.getDeckSanitizerOptions()
-          : getEditorDeckSanitizerOptions();
+        const persistableDeckSanitizerOptions = typeof buildEditorPersistableDeckSanitizerOptions === 'function'
+          ? buildEditorPersistableDeckSanitizerOptions(
+              Object.prototype.hasOwnProperty.call(options, 'playbackState')
+                ? options.playbackState
+                : null,
+              {
+                resolveMetadataPersistenceOptions,
+                getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
+                  ? options.getDeckSanitizerOptions
+                  : undefined
+              }
+            )
+          : (() => {
+              const deckSanitizerOptions = typeof options.getDeckSanitizerOptions === 'function'
+                ? options.getDeckSanitizerOptions()
+                : getEditorDeckSanitizerOptions();
+              return {
+                ...resolveMetadataPersistenceOptions(),
+                editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,
+                editorTransientClasses: deckSanitizerOptions.transientClassNames,
+                editorElementIdAttr: deckSanitizerOptions.editorElementIdAttr,
+                editorSlideIdAttr: deckSanitizerOptions.editorSlideIdAttr,
+                persistedDeckPlaybackState: Object.prototype.hasOwnProperty.call(options, 'playbackState')
+                  ? options.playbackState
+                  : null
+              };
+            })();
         return buildPersistableDeckHtml(parsedDoc, {
-          ...resolveMetadataPersistenceOptions(),
-          editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,
-          editorTransientClasses: deckSanitizerOptions.transientClassNames,
-          editorElementIdAttr: deckSanitizerOptions.editorElementIdAttr,
-          editorSlideIdAttr: deckSanitizerOptions.editorSlideIdAttr,
-          persistedDeckPlaybackState: Object.prototype.hasOwnProperty.call(options, 'playbackState')
-            ? options.playbackState
-            : null
+          ...persistableDeckSanitizerOptions
         });
       } catch (err) {
         return nextPersistedHtml;
@@ -6141,15 +6175,23 @@
       if (typeof buildOptions.onPlaybackStateResolved === 'function') {
         buildOptions.onPlaybackStateResolved(resolvedPlaybackState);
       }
-      const deckSanitizerOptions = getEditorDeckSanitizerOptions();
-      const metadataPersistenceOptions = resolveMetadataPersistenceOptions();
+      const persistableDeckSanitizerOptions = typeof buildEditorPersistableDeckSanitizerOptions === 'function'
+        ? buildEditorPersistableDeckSanitizerOptions(resolvedPlaybackState, {
+            resolveMetadataPersistenceOptions
+          })
+        : (() => {
+            const deckSanitizerOptions = getEditorDeckSanitizerOptions();
+            return {
+              ...resolveMetadataPersistenceOptions(),
+              editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,
+              editorTransientClasses: deckSanitizerOptions.transientClassNames,
+              editorElementIdAttr: deckSanitizerOptions.editorElementIdAttr,
+              editorSlideIdAttr: deckSanitizerOptions.editorSlideIdAttr,
+              persistedDeckPlaybackState: resolvedPlaybackState
+            };
+          })();
       return SlideNextDeckPersistence.buildPersistableDeckHtml(doc, {
-        ...metadataPersistenceOptions,
-        editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,
-        editorTransientClasses: deckSanitizerOptions.transientClassNames,
-        editorElementIdAttr: deckSanitizerOptions.editorElementIdAttr,
-        editorSlideIdAttr: deckSanitizerOptions.editorSlideIdAttr,
-        persistedDeckPlaybackState: resolvedPlaybackState
+        ...persistableDeckSanitizerOptions
       });
     }
 
