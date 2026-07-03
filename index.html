@@ -5026,11 +5026,15 @@
     function createHistoryEntry(doc) {
       const nextDoc = doc || getIframeDoc();
       const canonicalDeck = buildEditorCanonicalDeck(nextDoc);
+      const historyOptions = getEditorHistoryOptions();
+      const activeSlideId = nextDoc
+        ? ''
+        : resolveEditorFallbackActiveSlideId(nextDoc, canonicalDeck);
       return SlideNextStudioHistory.createStudioHistoryEntry(nextDoc, {
-        ...getEditorHistoryOptions(),
+        ...historyOptions,
         getActiveSlideId,
         getSelectedElementIds: getCommittedSelectedEditorElementIds,
-        activeSlideId: nextDoc ? '' : resolveEditorFallbackActiveSlideId(nextDoc, canonicalDeck),
+        activeSlideId,
         selectedElementIds: [],
         buildHistoryHtml: buildHistoryFrameHtml,
         canonicalDeck
