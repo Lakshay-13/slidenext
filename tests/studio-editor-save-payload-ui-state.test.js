@@ -89,7 +89,7 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
     const resolveEditorSaveCanonicalDeckSource = extractFunctionSource(
       fileContent,
       'function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
-      '\n\n    function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {'
+      '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
     );
     vm.runInContext(resolveEditorSaveCanonicalDeckSource, context);
   }
@@ -110,17 +110,9 @@ function loadBuildEditorSaveRequestBody(fileContent, context, helperSource) {
     const resolveEditorSaveCanonicalDeckSource = extractFunctionSource(
       fileContent,
       'function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
-      '\n\n    function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {'
-    );
-    vm.runInContext(resolveEditorSaveCanonicalDeckSource, context);
-  }
-  if (typeof context.createEditorSaveCanonicalDeckResolver !== 'function') {
-    const createEditorSaveCanonicalDeckResolverSource = extractFunctionSource(
-      fileContent,
-      'function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {',
       '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
     );
-    vm.runInContext(createEditorSaveCanonicalDeckResolverSource, context);
+    vm.runInContext(resolveEditorSaveCanonicalDeckSource, context);
   }
   vm.runInContext(helperSource, context);
 }
@@ -432,7 +424,7 @@ test('buildEditorSaveRequestBody reuses the local save canonical deck helper whe
       throw new Error('buildPersistableDeckHtml should not run when captureEditorPersistableDeckState provides html');
     },
     buildEditorCanonicalDeck() {
-      throw new Error('buildEditorCanonicalDeck should not run when createEditorSaveCanonicalDeckResolver is available');
+      throw new Error('buildEditorCanonicalDeck should not run when resolveEditorSaveCanonicalDeck is available');
     },
     currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
     getIframeDoc() {

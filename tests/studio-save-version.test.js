@@ -29,17 +29,9 @@ function loadCaptureEditorPersistableDeckState(fileContent, context) {
     const resolveEditorSaveCanonicalDeckSource = extractFunctionSource(
       fileContent,
       'function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
-      '\n\n    function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {'
-    );
-    vm.runInContext(resolveEditorSaveCanonicalDeckSource, context);
-  }
-  if (typeof context.createEditorSaveCanonicalDeckResolver !== 'function') {
-    const createEditorSaveCanonicalDeckResolverSource = extractFunctionSource(
-      fileContent,
-      'function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {',
       '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
     );
-    vm.runInContext(createEditorSaveCanonicalDeckResolverSource, context);
+    vm.runInContext(resolveEditorSaveCanonicalDeckSource, context);
   }
   const resolveEditorCapturedPersistableDeckStateSource = extractFunctionSource(
     fileContent,

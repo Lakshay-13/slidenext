@@ -118,7 +118,7 @@ function loadResolveEditorFallbackCanonicalDeck(fileContent, context) {
     const resolveEditorSaveCanonicalDeckSource = extractFunctionSource(
       fileContent,
       'function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
-      '\n\n    function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {'
+      '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
     );
     vm.runInContext(resolveEditorSaveCanonicalDeckSource, context);
   }
@@ -1133,42 +1133,6 @@ test('resolveEditorSaveCanonicalDeck reuses a valid provided canonical deck when
 
   assert.equal(context.resolveEditorSaveCanonicalDeck(iframeDoc, canonicalDeck), canonicalDeck);
   assert.equal(buildEditorCanonicalDeckCalls, 0);
-});
-
-test('createEditorSaveCanonicalDeckResolver reuses the local save canonical deck helper when available', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {',
-    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
-  );
-
-  const iframeDoc = { label: 'iframe-doc' };
-  const canonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: [{ id: 'slide-1', nodes: [] }]
-  };
-  const calls = [];
-  const context = {
-    resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
-      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
-      return canonicalDeck;
-    },
-    getIframeDoc() {
-      return iframeDoc;
-    }
-  };
-
-  vm.createContext(context);
-  vm.runInContext(helperSource, context);
-
-  const resolveSaveCanonicalDeck = context.createEditorSaveCanonicalDeckResolver(iframeDoc);
-
-  assert.equal(resolveSaveCanonicalDeck(canonicalDeck), canonicalDeck);
-  assert.deepEqual(calls, [
-    ['resolveEditorSaveCanonicalDeck', iframeDoc, canonicalDeck]
-  ]);
 });
 
 test('resolveEditorFallbackActiveSlideId rebuilds a malformed canonical deck input before choosing the fallback slide', () => {

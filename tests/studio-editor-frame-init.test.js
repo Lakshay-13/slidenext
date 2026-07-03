@@ -19,7 +19,6 @@ function loadCaptureEditorPersistableDeckState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
   loadCaptureEditorPersistableDeckBuildState(fileContent, context);
   loadResolveEditorSaveCanonicalDeck(fileContent, context);
-  loadCreateEditorSaveCanonicalDeckResolver(fileContent, context);
   loadResolveEditorCapturedPersistableDeckState(fileContent, context);
   const captureEditorPersistableDeckStateSource = extractFunctionSource(
     fileContent,
@@ -54,18 +53,6 @@ function loadResolveEditorSaveCanonicalDeck(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
-    '\n\n    function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
-function loadCreateEditorSaveCanonicalDeckResolver(fileContent, context) {
-  if (typeof context.createEditorSaveCanonicalDeckResolver === 'function') {
-    return;
-  }
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {',
     '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
   );
   vm.runInContext(helperSource, context);
