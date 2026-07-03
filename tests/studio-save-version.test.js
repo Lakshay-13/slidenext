@@ -92,22 +92,9 @@ function loadApplyCurrentStudioPersistenceFailure(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {',
-    '\n\n    function applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
-function loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {',
     '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
   );
   vm.runInContext(helperSource, context);
-}
-
-function loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context) {
-  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
 }
 
 function loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context) {
@@ -568,54 +555,6 @@ test('applyCurrentStudioPersistenceFailure delegates through the shared failure 
   assert.equal(delegatedArgs.handlerOptions.onFailure, onFailure);
 });
 
-test('applyCurrentStudioVersionPersistenceSuccess delegates through the shared version helper with current handler options', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const persistenceContext = { presentationUrl: '/presentations/onboarding-presentation/index.html' };
-  const onSuccess = () => {};
-  const loadVersions = () => {};
-  let capturedHandlerOptionsArgs = null;
-  let delegatedArgs = null;
-  const context = {
-    SlideNextStudioEditorPersistence: {
-      createStudioVersionPersistenceHandlerOptions(options = {}) {
-        capturedHandlerOptionsArgs = options;
-        return {
-          marker: 'version-handler-options',
-          ...options
-        };
-      },
-      handleStudioVersionPersistenceSuccess(nextPersistenceContext, handlerOptions) {
-        delegatedArgs = {
-          nextPersistenceContext,
-          handlerOptions
-        };
-        return 'version-applied';
-      }
-    },
-    createCurrentStudioSessionStateOptions() {
-      return {
-        marker: 'session-options'
-      };
-    },
-    loadVersions
-  };
-
-  vm.createContext(context);
-  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
-
-  const result = context.applyCurrentStudioVersionPersistenceSuccess(persistenceContext, {
-    onSuccess
-  });
-
-  assert.equal(result, 'version-applied');
-  assert.equal(capturedHandlerOptionsArgs.onSuccess, onSuccess);
-  assert.equal(capturedHandlerOptionsArgs.refreshVersionEntries, loadVersions);
-  assert.equal(capturedHandlerOptionsArgs.marker, 'session-options');
-  assert.equal(delegatedArgs.nextPersistenceContext, persistenceContext);
-  assert.equal(delegatedArgs.handlerOptions.marker, 'session-options');
-  assert.equal(delegatedArgs.handlerOptions.onSuccess, onSuccess);
-});
-
 test('submitSaveVersion keeps the save button idle when editor content is unavailable', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const submitSaveVersionSource = extractFunctionSource(
@@ -715,8 +654,6 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
-  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
-  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
@@ -829,8 +766,6 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
-  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
-  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
@@ -954,8 +889,6 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
-  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
-  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
@@ -1079,8 +1012,6 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
-  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
-  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
@@ -1154,8 +1085,6 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
-  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
@@ -1252,8 +1181,6 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
-  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
@@ -1359,8 +1286,6 @@ test('executeSaveAutoVersion skips redundant auto version saves when the capture
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
-  loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
@@ -1524,16 +1449,6 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
     applyCurrentStudioPersistenceFailure() {
       throw new Error('submitSaveVersion should not use the failure path for a successful helper result');
     },
-    __applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
-      successHelperArgs = {
-        persistenceContext,
-        options
-      };
-      if (typeof options.onSuccess === 'function') {
-        options.onSuccess();
-      }
-      return 'applied';
-    },
     closeSaveVersionModal() {
       closeModalCalls += 1;
     },
@@ -1558,6 +1473,7 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
     getIframeDoc() {
       return { label: 'iframe-doc' };
     },
+    loadVersions() {},
     resetStudioSaveButtonState() {
       saveBtnEl.disabled = false;
       saveBtnEl.innerHTML = '<span>Save Version</span>';
@@ -1578,8 +1494,21 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
       success: true
     }),
     SlideNextStudioEditorPersistence: {
+      createStudioVersionPersistenceHandlerOptions(options = {}) {
+        return options;
+      },
       executeStudioVersionCheckpointSaveWithFailure: editorPersistence.executeStudioVersionCheckpointSaveWithFailure,
       executeStudioVersionCheckpointSaveWithSuccess: editorPersistence.executeStudioVersionCheckpointSaveWithSuccess,
+      handleStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
+        successHelperArgs = {
+          persistenceContext,
+          options
+        };
+        if (typeof options.onSuccess === 'function') {
+          options.onSuccess();
+        }
+        return 'applied';
+      },
       runStudioPersistenceActionIfCurrent(persistenceContext, sessionOptions, action) {
         action();
       }
@@ -1589,7 +1518,6 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
 
   vm.createContext(context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
-  vm.runInContext('applyCurrentStudioVersionPersistenceSuccess = __applyCurrentStudioVersionPersistenceSuccess;', context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -1782,16 +1710,6 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
     applyCurrentStudioPersistenceFailure() {
       throw new Error('applyCurrentStudioPersistenceFailure should not run for a successful helper result');
     },
-    __applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
-      successHelperArgs = {
-        persistenceContext,
-        options
-      };
-      if (typeof options.onSuccess === 'function') {
-        options.onSuccess();
-      }
-      return 'applied';
-    },
     console: {
       error() {
         throw new Error('executeSaveAutoVersion should not report errors for a successful helper result');
@@ -1803,6 +1721,9 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
     buildEditorSaveRequestBody() {
       return {};
     },
+    createCurrentStudioSessionStateOptions() {
+      return {};
+    },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     getIframeDoc() {
       return { label: 'iframe-doc' };
@@ -1810,6 +1731,7 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
     isCurrentDeckStatePersisted() {
       return false;
     },
+    loadVersions() {},
     resolveCurrentStudioPersistenceStateFromCapture() {
       return versionCheckpointPersistenceState;
     },
@@ -1817,6 +1739,19 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
       success: true
     }),
     SlideNextStudioEditorPersistence: {
+      createStudioVersionPersistenceHandlerOptions(options = {}) {
+        return options;
+      },
+      handleStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
+        successHelperArgs = {
+          persistenceContext,
+          options
+        };
+        if (typeof options.onSuccess === 'function') {
+          options.onSuccess();
+        }
+        return 'applied';
+      },
       isStudioPersistenceTaskStale() {
         return false;
       },
@@ -1831,7 +1766,6 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
 
   vm.createContext(context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
-  vm.runInContext('applyCurrentStudioVersionPersistenceSuccess = __applyCurrentStudioVersionPersistenceSuccess;', context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
