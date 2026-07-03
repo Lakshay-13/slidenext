@@ -6769,6 +6769,28 @@
       return data;
     }
 
+    async function executeCurrentStudioVersionCheckpointSave(
+      versionLabel,
+      versionCheckpointPersistenceState,
+      presentationUrl = currentPresentationUrl
+    ) {
+      if (!versionCheckpointPersistenceState) {
+        return null;
+      }
+
+      const data = await saveVersionCheckpoint(
+        versionLabel,
+        versionCheckpointPersistenceState.cleanHtml,
+        presentationUrl,
+        versionCheckpointPersistenceState.requestOptions
+      );
+
+      return {
+        data,
+        versionCheckpointPersistenceState
+      };
+    }
+
     function resolveCurrentStudioAutoSavePersistenceState(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken,
@@ -7471,11 +7493,10 @@
       setStudioSaveButtonState('saving-version');
       
       try {
-        const data = await saveVersionCheckpoint(
+        const { data } = await executeCurrentStudioVersionCheckpointSave(
           versionName,
-          versionCheckpointPersistenceState.cleanHtml,
+          versionCheckpointPersistenceState,
           scheduledPresentationUrl,
-          versionCheckpointPersistenceState.requestOptions
         );
         if (data.success) {
           applyCurrentStudioVersionPersistenceSuccess(
@@ -7571,11 +7592,10 @@
       }
       
       try {
-        const data = await saveVersionCheckpoint(
+        const { data } = await executeCurrentStudioVersionCheckpointSave(
           label,
-          versionCheckpointPersistenceState.cleanHtml,
+          versionCheckpointPersistenceState,
           presentationUrl,
-          versionCheckpointPersistenceState.requestOptions
         );
         if (data.success) {
           applyCurrentStudioVersionPersistenceSuccess(
