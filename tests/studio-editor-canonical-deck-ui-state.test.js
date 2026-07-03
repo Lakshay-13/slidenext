@@ -277,6 +277,74 @@ test('buildEditorCanonicalDeck falls back to the shared deck loader when the dec
   assert.equal(typeof calls[0].options.getNodeId, 'function');
 });
 
+test('buildEditorCanonicalDeck reuses the local stored canonical resolver when the deck context builder is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorCanonicalDeck(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {'
+  );
+
+  const currentMetadataCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      {
+        id: 'slide-current',
+        nodes: []
+      }
+    ]
+  };
+  const persistedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      {
+        id: 'slide-persisted',
+        nodes: []
+      }
+    ]
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckContext: {},
+    currentPresentationMetadata: {
+      id: 'deck-1',
+      canonicalDeck: currentMetadataCanonicalDeck
+    },
+    lastPersistedCanonicalDeck: persistedCanonicalDeck,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    resolveEditorStoredCanonicalDeck(metadata) {
+      calls.push(metadata);
+      if (metadata === context.currentPresentationMetadata) {
+        return currentMetadataCanonicalDeck;
+      }
+      if (metadata && metadata.canonicalDeck === persistedCanonicalDeck) {
+        return persistedCanonicalDeck;
+      }
+      return null;
+    },
+    getEditorSlideId() {
+      return 'slide-1';
+    },
+    assignEditorElementId() {
+      return 'node-1';
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorCanonicalDeckSource, context);
+
+  const result = context.buildEditorCanonicalDeck();
+
+  assert.equal(result, currentMetadataCanonicalDeck);
+  assert.deepEqual(calls, [context.currentPresentationMetadata]);
+});
+
 test('buildEditorCanonicalDeck reuses the in-memory persisted canonical baseline when the iframe is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorCanonicalDeckSource = extractFunctionSource(

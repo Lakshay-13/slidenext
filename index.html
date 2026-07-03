@@ -3289,12 +3289,14 @@
       )
         ? SlideNextPresentationMetadata.resolvePresentationCanonicalDeck
         : null;
-      const resolveStoredCanonicalDeck = typeof resolvePresentationCanonicalDeck === 'function'
-        ? (metadata) => resolvePresentationCanonicalDeck(metadata, {
-            createCanonicalDeck,
-            isCanonicalDeck
-          })
-        : (metadata) => metadata && metadata.canonicalDeck ? metadata.canonicalDeck : null;
+      const resolveStoredCanonicalDeck = typeof resolveEditorStoredCanonicalDeck === 'function'
+        ? resolveEditorStoredCanonicalDeck
+        : typeof resolvePresentationCanonicalDeck === 'function'
+          ? (metadata) => resolvePresentationCanonicalDeck(metadata, {
+              createCanonicalDeck,
+              isCanonicalDeck
+            })
+          : (metadata) => metadata && metadata.canonicalDeck ? metadata.canonicalDeck : null;
       const storedCanonicalDeck = resolveStoredCanonicalDeck(currentPresentationMetadata)
         || resolveStoredCanonicalDeck({ canonicalDeck: lastPersistedCanonicalDeck });
       if (!doc && storedCanonicalDeck) {
