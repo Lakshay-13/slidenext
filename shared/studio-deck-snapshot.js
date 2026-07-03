@@ -2,19 +2,35 @@
   const deckModel = typeof module === 'object' && module.exports
     ? require('./deck-model')
     : root && root.SlideNextDeckModel;
-  const api = factory(deckModel);
+  const loadDeckView = typeof module === 'object' && module.exports
+    ? () => require('./studio-deck-view')
+    : () => root && root.SlideNextStudioDeckView;
+  const api = factory(deckModel, loadDeckView);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioDeckSnapshot = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (deckModel) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (deckModel, loadDeckView) {
   function isCanonicalDeckLike(deck) {
     return !!deck && Array.isArray(deck.slides);
   }
 
+  function resolveStudioDeckView() {
+    return typeof loadDeckView === 'function'
+      ? loadDeckView()
+      : null;
+  }
+
   function createStudioDeckSnapshotCanonicalDeckResolver(doc, options = {}) {
+    const deckView = resolveStudioDeckView();
+    if (deckView && typeof deckView.createStudioCanonicalDeckResolver === 'function') {
+      return deckView.createStudioCanonicalDeckResolver(doc, {
+        buildCanonicalDeck: options.buildCanonicalDeck
+      });
+    }
+
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : () => null;
@@ -50,29 +66,40 @@
     });
   }
 
+  function resolveStudioDeckSnapshotCanonicalDeckViewState(doc, options = {}) {
+    const deckView = resolveStudioDeckView();
+    if (deckView && typeof deckView.resolveStudioCanonicalDeckViewState === 'function') {
+      return deckView.resolveStudioCanonicalDeckViewState(doc, {
+        buildCanonicalDeck: options.buildCanonicalDeck,
+        resolveLiveActiveSlideId: options.resolveLiveActiveSlideId,
+        resolveCanonicalDeck: options.resolveCanonicalDeck
+      });
+    }
+
+    const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
+      ? options.resolveCanonicalDeck
+      : createStudioDeckSnapshotCanonicalDeckResolver(doc, {
+          buildCanonicalDeck: options.buildCanonicalDeck
+        });
+    const resolveLiveActiveSlideId = typeof options.resolveLiveActiveSlideId === 'function'
+      ? options.resolveLiveActiveSlideId
+      : () => '';
+    const liveActiveSlideId = resolveLiveActiveSlideId(doc);
+    const resolvedCanonicalDeck = !doc
+      ? resolveCanonicalDeck(doc)
+      : (liveActiveSlideId ? null : resolveCanonicalDeck(doc));
+
+    return {
+      resolveCanonicalDeck,
+      liveActiveSlideId,
+      resolvedCanonicalDeck
+    };
+  }
+
   function createStudioDeckSnapshotBuildOptions(doc, options = {}) {
     const resolveCanonicalDeckViewState = typeof options.resolveCanonicalDeckViewState === 'function'
       ? options.resolveCanonicalDeckViewState
-      : (nextDoc) => {
-          const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
-            ? options.resolveCanonicalDeck
-            : createStudioDeckSnapshotCanonicalDeckResolver(nextDoc, {
-                buildCanonicalDeck: options.buildCanonicalDeck
-              });
-          const resolveLiveActiveSlideId = typeof options.resolveLiveActiveSlideId === 'function'
-            ? options.resolveLiveActiveSlideId
-            : () => '';
-          const liveActiveSlideId = resolveLiveActiveSlideId(nextDoc);
-          const resolvedCanonicalDeck = !nextDoc
-            ? resolveCanonicalDeck(nextDoc)
-            : (liveActiveSlideId ? null : resolveCanonicalDeck(nextDoc));
-
-          return {
-            resolveCanonicalDeck,
-            liveActiveSlideId,
-            resolvedCanonicalDeck
-        };
-      };
+      : (nextDoc) => resolveStudioDeckSnapshotCanonicalDeckViewState(nextDoc, options);
     const resolveFallbackActiveSlideId = typeof options.resolveFallbackActiveSlideId === 'function'
       ? options.resolveFallbackActiveSlideId
       : () => '';

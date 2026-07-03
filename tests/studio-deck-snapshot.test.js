@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 
 const deckModel = require('../shared/deck-model.js');
 const deckSnapshot = require('../shared/studio-deck-snapshot.js');
+const deckView = require('../shared/studio-deck-view.js');
 
 test('buildDeckSnapshotFromCanonicalDeck falls back to the first slide when activeSlideId is empty', () => {
   const snapshot = deckModel.buildDeckSnapshotFromCanonicalDeck({
@@ -114,6 +115,94 @@ test('buildStudioDeckSnapshot prefers the canonical deck snapshot when available
       }
     ]
   });
+});
+
+test('createStudioDeckSnapshotCanonicalDeckResolver reuses the shared deck-view resolver when available', { concurrency: false }, () => {
+  const doc = { label: 'doc' };
+  const canonicalDeck = {
+    slides: [
+      { id: 'slide-1', title: 'Intro', nodes: [] }
+    ]
+  };
+  const originalCreateStudioCanonicalDeckResolver = deckView.createStudioCanonicalDeckResolver;
+  let delegatedDoc = null;
+  let delegatedBuildCanonicalDeck = null;
+  let buildCanonicalDeckCalls = 0;
+
+  deckView.createStudioCanonicalDeckResolver = (nextDoc, options = {}) => {
+    delegatedDoc = nextDoc;
+    delegatedBuildCanonicalDeck = options.buildCanonicalDeck;
+    return originalCreateStudioCanonicalDeckResolver(nextDoc, options);
+  };
+
+  try {
+    const resolveCanonicalDeck = deckSnapshot.createStudioDeckSnapshotCanonicalDeckResolver(doc, {
+      buildCanonicalDeck(nextDoc) {
+        buildCanonicalDeckCalls += 1;
+        assert.equal(nextDoc, doc);
+        return canonicalDeck;
+      }
+    });
+
+    assert.equal(resolveCanonicalDeck(), canonicalDeck);
+    assert.equal(resolveCanonicalDeck({ label: 'ignored-doc' }), canonicalDeck);
+  } finally {
+    deckView.createStudioCanonicalDeckResolver = originalCreateStudioCanonicalDeckResolver;
+  }
+
+  assert.equal(delegatedDoc, doc);
+  assert.equal(typeof delegatedBuildCanonicalDeck, 'function');
+  assert.equal(buildCanonicalDeckCalls, 1);
+});
+
+test('createStudioDeckSnapshotBuildOptions reuses the shared deck-view canonical view state when available', { concurrency: false }, () => {
+  const doc = { label: 'doc' };
+  const activeSlide = { id: 'active-slide-el' };
+  const canonicalDeck = {
+    slides: [
+      { id: 'slide-1', title: 'Intro', nodes: [] },
+      { id: 'slide-2', title: 'Agenda', nodes: [] }
+    ]
+  };
+  const originalResolveStudioCanonicalDeckViewState = deckView.resolveStudioCanonicalDeckViewState;
+  let delegatedOptions = null;
+
+  deckView.resolveStudioCanonicalDeckViewState = (nextDoc, options = {}) => {
+    delegatedOptions = { nextDoc, options };
+    return {
+      resolveCanonicalDeck() {
+        return canonicalDeck;
+      },
+      liveActiveSlideId: 'slide-2',
+      resolvedCanonicalDeck: null
+    };
+  };
+
+  try {
+    const result = deckSnapshot.createStudioDeckSnapshotBuildOptions(doc, {
+      buildCanonicalDeck() {
+        throw new Error('shared view-state resolver should supply the canonical deck resolver');
+      },
+      resolveLiveActiveSlideId(nextDoc) {
+        assert.equal(nextDoc, doc);
+        return 'slide-2';
+      },
+      resolveLiveActiveSlide(nextDoc) {
+        assert.equal(nextDoc, doc);
+        return activeSlide;
+      }
+    });
+
+    assert.equal(result.fallbackActiveSlideId, 'slide-2');
+    assert.equal(result.getActiveSlide(), activeSlide);
+    assert.equal(result.buildCanonicalDeck(doc), canonicalDeck);
+  } finally {
+    deckView.resolveStudioCanonicalDeckViewState = originalResolveStudioCanonicalDeckViewState;
+  }
+
+  assert.deepEqual(delegatedOptions && delegatedOptions.nextDoc, doc);
+  assert.equal(typeof (delegatedOptions && delegatedOptions.options.buildCanonicalDeck), 'function');
+  assert.equal(typeof (delegatedOptions && delegatedOptions.options.resolveLiveActiveSlideId), 'function');
 });
 
 test('createStudioDeckSnapshotBuildOptions resolves live snapshot state from the shared canonical view state', () => {
