@@ -3429,15 +3429,7 @@
     function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
       const resolveCanonicalDeckOverride = resolveEditorDeckCanonicalOverrideResolver(doc);
       const nextCanonicalDeck = resolveCanonicalDeckOverride(canonicalDeck, doc);
-      const canonicalDeckValidator = typeof getEditorCanonicalDeckValidator === 'function'
-        ? getEditorCanonicalDeckValidator()
-        : (
-            typeof SlideNextCanonicalDeck !== 'undefined'
-            && SlideNextCanonicalDeck
-            && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-          )
-          ? SlideNextCanonicalDeck.isCanonicalDeck
-          : null;
+      const canonicalDeckValidator = getEditorCanonicalDeckValidator();
       const hasValidCanonicalDeck = canonicalDeckValidator
         ? canonicalDeckValidator(nextCanonicalDeck)
         : !!(nextCanonicalDeck && Array.isArray(nextCanonicalDeck.slides));

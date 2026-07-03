@@ -1129,6 +1129,9 @@ test('resolveEditorFallbackCanonicalDeck rebuilds malformed canonical deck input
       calls.push(['buildEditorCanonicalDeck', nextDoc]);
       return rebuiltCanonicalDeck;
     },
+    getEditorCanonicalDeckValidator() {
+      return context.SlideNextCanonicalDeck.isCanonicalDeck;
+    },
     getIframeDoc() {
       return iframeDoc;
     }
