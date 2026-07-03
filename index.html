@@ -5969,6 +5969,15 @@
       };
     }
 
+    function reportEditorPersistableDeckBuildState(buildOptions = {}, canonicalDeck = null, playbackState = null) {
+      if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
+        buildOptions.onCanonicalDeckResolved(canonicalDeck);
+      }
+      if (typeof buildOptions.onPlaybackStateResolved === 'function') {
+        buildOptions.onPlaybackStateResolved(playbackState);
+      }
+    }
+
     function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {
       const nextPersistedHtml = typeof persistedHtml === 'string'
         ? persistedHtml
@@ -6124,6 +6133,16 @@
               return persistedHtml;
             }
           };
+      const reportPersistableDeckBuildState = typeof reportEditorPersistableDeckBuildState === 'function'
+        ? reportEditorPersistableDeckBuildState
+        : (nextBuildOptions = {}, canonicalDeck = null, playbackState = null) => {
+            if (typeof nextBuildOptions.onCanonicalDeckResolved === 'function') {
+              nextBuildOptions.onCanonicalDeckResolved(canonicalDeck);
+            }
+            if (typeof nextBuildOptions.onPlaybackStateResolved === 'function') {
+              nextBuildOptions.onPlaybackStateResolved(playbackState);
+            }
+          };
       if (!doc) {
         const persistedDeckState = getCurrentEditorPersistedDeckState();
         const persistedDeckStateWithContent = typeof resolveEditorPersistedDeckStateWithContent === 'function'
@@ -6135,12 +6154,7 @@
           ? persistedDeckStateWithContent.cleanHtml
           : '';
         const canonicalDeck = resolveCanonicalDeckOverride(true);
-        if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
-          buildOptions.onCanonicalDeckResolved(canonicalDeck);
-        }
-        if (typeof buildOptions.onPlaybackStateResolved === 'function') {
-          buildOptions.onPlaybackStateResolved(persistedDeckState.playbackState);
-        }
+        reportPersistableDeckBuildState(buildOptions, canonicalDeck, persistedDeckState.playbackState);
         const reusablePersistedHtml = typeof resolveEditorReusablePersistedHtml === 'function'
           ? resolveEditorReusablePersistedHtml(persistedDeckStateWithContent || persistedDeckState, {
               canonicalDeck,
@@ -6246,12 +6260,7 @@
       const resolvedPlaybackState = doc
         ? capturePersistedDeckPlaybackState(doc, canonicalDeck)
         : livePlaybackState;
-      if (shouldReportCanonicalDeck) {
-        buildOptions.onCanonicalDeckResolved(canonicalDeck);
-      }
-      if (typeof buildOptions.onPlaybackStateResolved === 'function') {
-        buildOptions.onPlaybackStateResolved(resolvedPlaybackState);
-      }
+      reportPersistableDeckBuildState(buildOptions, canonicalDeck, resolvedPlaybackState);
       const persistableDeckSanitizerOptions = typeof buildEditorPersistableDeckSanitizerOptions === 'function'
         ? buildEditorPersistableDeckSanitizerOptions(resolvedPlaybackState, {
             resolveMetadataPersistenceOptions
