@@ -37,6 +37,14 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
     );
     vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
   }
+  if (typeof context.renderEditorPersistableSourceDeckHtml !== 'function') {
+    const renderEditorPersistableSourceDeckHtmlSource = extractFunctionSource(
+      fileContent,
+      'function renderEditorPersistableSourceDeckHtml(doc = getIframeDoc(), sourceViewOptions = {}, persistedHtml = \'\', options = {}) {',
+      '\n\n    function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {'
+    );
+    vm.runInContext(renderEditorPersistableSourceDeckHtmlSource, context);
+  }
   if (typeof context.resolveEditorCanonicalDeckOverride !== 'function') {
     const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
       fileContent,
