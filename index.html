@@ -6718,22 +6718,11 @@
       );
     }
 
-    function createCurrentStudioVersionActionHandlerOptions(options = {}) {
-      return SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-        ...createCurrentStudioSessionStateOptions(),
-        isCurrentSession: options.isCurrentSession,
-        onSuccess: options.onSuccess,
-        onFailure: options.onFailure,
-        hideVersionsDropdown: options.hideVersionsDropdown,
-        relaunchEditor: options.relaunchEditor,
-        refreshVersionEntries: options.refreshVersionEntries
-      });
-    }
-
     function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {
       return SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
         versionActionContext,
-        createCurrentStudioVersionActionHandlerOptions({
+        SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+          ...createCurrentStudioSessionStateOptions(),
           isCurrentSession: options.isCurrentSession,
           onSuccess: options.onSuccess,
           refreshVersionEntries: options.shouldRefreshVersionEntries !== false ? loadVersions : undefined
@@ -6744,7 +6733,8 @@
     function handleCurrentStudioVersionActionFailure(versionActionContext, options = {}) {
       return SlideNextStudioVersionActions.handleStudioVersionActionFailure(
         versionActionContext,
-        createCurrentStudioVersionActionHandlerOptions({
+        SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+          ...createCurrentStudioSessionStateOptions(),
           isCurrentSession: options.isCurrentSession,
           onFailure: options.onFailure
         })
@@ -6754,7 +6744,8 @@
     function handleCurrentStudioVersionRestoreSuccess(versionActionContext, options = {}) {
       return SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(
         versionActionContext,
-        createCurrentStudioVersionActionHandlerOptions({
+        SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+          ...createCurrentStudioSessionStateOptions(),
           onSuccess: options.onSuccess,
           hideVersionsDropdown: options.hideVersionsDropdown,
           relaunchEditor: options.relaunchEditor

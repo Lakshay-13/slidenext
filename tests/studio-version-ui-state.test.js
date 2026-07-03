@@ -79,12 +79,6 @@ function loadHandleCurrentStudioVersionRestoreSuccess(fileContent, context) {
 function loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   context.SlideNextStudioVersionActions ??= versionActions;
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioVersionActionHandlerOptions(options = {}) {',
-    '\n\n    function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
 }
 
 test('resetStudioVersionUiState hides open version chrome and clears modal state', () => {
@@ -1010,48 +1004,61 @@ test('createCurrentStudioVersionActionContext captures the active editor deck id
   assert.equal(calls[0][3].sessionToken, 21);
 });
 
-test('createCurrentStudioVersionActionHandlerOptions reuses current session readers and supplied hooks', () => {
+test('handleCurrentStudioVersionListMutationSuccess delegates through the shared action handler options builder', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const context = {
-    SlideNextStudioEditorSession: editorSession,
-    SlideNextStudioVersionActions: versionActions,
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    createCurrentStudioSessionStateReaders() {
-      return {
-        getCurrentPresentationUrl: () => context.currentPresentationUrl,
-        getCurrentSessionToken: () => context.studioEditorSessionToken
-      };
-    },
-    studioEditorSessionToken: 31
+  const versionActionContext = {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    sessionToken: 31
   };
   const isCurrentSession = () => true;
   const onSuccess = () => {};
-  const onFailure = () => {};
-  const hideVersionsDropdown = () => {};
-  const relaunchEditor = () => {};
-  const refreshVersionEntries = () => {};
+  let capturedBuilderOptions = null;
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioEditorSession: editorSession,
+    SlideNextStudioVersionActions: {
+      ...versionActions,
+      createStudioVersionActionHandlerOptions(options) {
+        capturedBuilderOptions = options;
+        return {
+          marker: 'version-action-handler-options',
+          ...options
+        };
+      },
+      handleStudioVersionListMutationSuccess(nextVersionActionContext, handlerOptions) {
+        delegatedArgs = {
+          nextVersionActionContext,
+          handlerOptions
+        };
+        return 'handled';
+      }
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    loadVersions() {},
+    studioEditorSessionToken: 31
+  };
 
   vm.createContext(context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
+  loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context);
 
-  const options = context.createCurrentStudioVersionActionHandlerOptions({
+  const result = context.handleCurrentStudioVersionListMutationSuccess(versionActionContext, {
     isCurrentSession,
-    onSuccess,
-    onFailure,
-    hideVersionsDropdown,
-    relaunchEditor,
-    refreshVersionEntries
+    onSuccess
   });
 
-  assert.equal(options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
-  assert.equal(options.getCurrentSessionToken(), 31);
-  assert.equal(options.isCurrentSession, isCurrentSession);
-  assert.equal(options.onSuccess, onSuccess);
-  assert.equal(options.onFailure, onFailure);
-  assert.equal(options.hideVersionsDropdown, hideVersionsDropdown);
-  assert.equal(options.relaunchEditor, relaunchEditor);
-  assert.equal(options.refreshVersionEntries, refreshVersionEntries);
+  assert.equal(result, 'handled');
+  assert.equal(delegatedArgs.nextVersionActionContext, versionActionContext);
+  assert.equal(delegatedArgs.handlerOptions.marker, 'version-action-handler-options');
+  assert.equal(typeof capturedBuilderOptions.getCurrentPresentationUrl, 'function');
+  assert.equal(typeof capturedBuilderOptions.getCurrentSessionToken, 'function');
+  assert.equal(capturedBuilderOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedBuilderOptions.getCurrentSessionToken(), 31);
+  assert.equal(capturedBuilderOptions.isCurrentSession, isCurrentSession);
+  assert.equal(capturedBuilderOptions.onSuccess, onSuccess);
+  assert.equal(capturedBuilderOptions.refreshVersionEntries, context.loadVersions);
+  assert.equal(delegatedArgs.handlerOptions.isCurrentSession, isCurrentSession);
+  assert.equal(delegatedArgs.handlerOptions.onSuccess, onSuccess);
+  assert.equal(delegatedArgs.handlerOptions.refreshVersionEntries, context.loadVersions);
 });
 
 test('handleCurrentStudioVersionListMutationSuccess reuses current session readers and refreshes version entries by default', () => {
