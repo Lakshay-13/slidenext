@@ -5751,6 +5751,26 @@
       applyCurrentStudioRestoredHistoryState(historyEntry, restoredPlaybackState);
     }
 
+    function createEditorPersistableSourceViewOptions(doc = getIframeDoc(), canonicalDeck = null, persistedHtml = '') {
+      return typeof createEditorDeckViewBuildOptions === 'function'
+        ? createEditorDeckViewBuildOptions(doc, {
+            buildCanonicalDeck: () => canonicalDeck,
+            buildFallbackHtml: () => persistedHtml,
+            buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
+              sourceDoc,
+              nextCanonicalDeck,
+              options
+            )
+          })
+        : {
+            buildCanonicalDeck: () => canonicalDeck,
+            buildFallbackHtml: () => persistedHtml,
+            deckHtmlOptions: {
+              renderOptions: buildEditorDeckRenderOptions(doc, canonicalDeck)
+            }
+          };
+    }
+
     function buildPersistableDeckHtml(doc = getIframeDoc()) {
       const buildOptions = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
         ? arguments[1]
@@ -5884,23 +5904,25 @@
         if (reusablePersistedHtml) {
           return sanitizeReusablePersistedHtml(reusablePersistedHtml, persistedDeckState.playbackState);
         }
-        const sourceViewOptions = typeof createEditorDeckViewBuildOptions === 'function'
-          ? createEditorDeckViewBuildOptions(doc, {
-              buildCanonicalDeck: () => canonicalDeck,
-              buildFallbackHtml: () => persistedHtml,
-              buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
-                sourceDoc,
-                nextCanonicalDeck,
-                options
-              )
-            })
-          : {
-              buildCanonicalDeck: () => canonicalDeck,
-              buildFallbackHtml: () => persistedHtml,
-              deckHtmlOptions: {
-                renderOptions: buildEditorDeckRenderOptions(doc, canonicalDeck)
-              }
-            };
+        const sourceViewOptions = typeof createEditorPersistableSourceViewOptions === 'function'
+          ? createEditorPersistableSourceViewOptions(doc, canonicalDeck, persistedHtml)
+          : typeof createEditorDeckViewBuildOptions === 'function'
+            ? createEditorDeckViewBuildOptions(doc, {
+                buildCanonicalDeck: () => canonicalDeck,
+                buildFallbackHtml: () => persistedHtml,
+                buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
+                  sourceDoc,
+                  nextCanonicalDeck,
+                  options
+                )
+              })
+            : {
+                buildCanonicalDeck: () => canonicalDeck,
+                buildFallbackHtml: () => persistedHtml,
+                deckHtmlOptions: {
+                  renderOptions: buildEditorDeckRenderOptions(doc, canonicalDeck)
+                }
+              };
         if (typeof renderEditorSourceDeckHtml === 'function') {
           return renderEditorSourceDeckHtml(doc, sourceViewOptions, {
             buildFallbackHtml: () => persistedHtml
