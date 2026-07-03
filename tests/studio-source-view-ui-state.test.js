@@ -248,6 +248,54 @@ test('buildEditorSourceHtml falls back to the shared deck html source builder wh
   assert.equal(calls[0].options.renderOptions.activeSlideId, 'slide-2');
 });
 
+test('buildEditorSourceHtml reuses the shared deck-view html builder when the source helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSourceHtmlSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function launchPresentationHtml(html, startSlideIdx) {'
+  );
+
+  const calls = [];
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  const context = {
+    SlideNextStudioDeckView: {
+      buildStudioDeckHtml(doc, options) {
+        calls.push({ doc, options });
+        return '<html>source-from-deck-view-html</html>';
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, null);
+      return canonicalDeck;
+    },
+    currentSlideIndex: 1,
+    getPersistedActiveSlideId() {
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorSourceHtmlSource, context);
+
+  const result = context.buildEditorSourceHtml();
+
+  assert.equal(result, '<html>source-from-deck-view-html</html>');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].doc, null);
+  assert.equal(typeof calls[0].options.buildFallbackHtml, 'function');
+});
+
 test('buildEditorSourceHtml prefers the live active slide when the editor frame is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(
