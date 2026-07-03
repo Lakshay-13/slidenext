@@ -43,17 +43,6 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadCreateCurrentStudioVersionHistoryLoadOptions(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  context.SlideNextStudioVersionHistory ??= require('../shared/studio-version-history.js');
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioVersionHistoryLoadOptions(options = {}) {',
-    '\n\n    async function loadCurrentStudioVersionHistory('
-  );
-  vm.runInContext(helperSource, context);
-}
-
 function loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
@@ -956,7 +945,7 @@ test('loadCurrentStudioVersionHistory reuses current session readers when delega
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioVersionHistoryLoadOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(loadCurrentStudioVersionHistorySource, context);
 
   const versions = await context.loadCurrentStudioVersionHistory(
@@ -977,40 +966,6 @@ test('loadCurrentStudioVersionHistory reuses current session readers when delega
     '/presentations/onboarding-presentation/index.html',
     versions
   ]]);
-});
-
-test('createCurrentStudioVersionHistoryLoadOptions reuses current session readers and supplied commit hook', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const currentStudioSessionStateReaders = {
-    getCurrentPresentationUrl() {
-      return context.currentPresentationUrl;
-    },
-    getCurrentSessionToken() {
-      return context.studioEditorSessionToken;
-    }
-  };
-  const commitVersionEntries = () => {};
-  const context = {
-    SlideNextStudioVersionHistory: require('../shared/studio-version-history.js'),
-    createCurrentStudioSessionStateReaders() {
-      return currentStudioSessionStateReaders;
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 27
-  };
-
-  vm.createContext(context);
-  loadCreateCurrentStudioVersionHistoryLoadOptions(fileContent, context);
-
-  const options = context.createCurrentStudioVersionHistoryLoadOptions({
-    sessionToken: 18,
-    commitVersionEntries
-  });
-
-  assert.equal(options.sessionToken, 18);
-  assert.equal(options.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
-  assert.equal(options.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
-  assert.equal(options.commitVersionEntries, commitVersionEntries);
 });
 
 test('createCurrentStudioVersionActionContext captures the active editor deck identity and session', () => {

@@ -6665,21 +6665,14 @@
       }).join('');
     }
 
-    function createCurrentStudioVersionHistoryLoadOptions(options = {}) {
-      return SlideNextStudioVersionHistory.createStudioVersionHistoryLoadOptions({
-        ...createCurrentStudioSessionStateOptions({
-          sessionToken: options.sessionToken
-        }),
-        sessionToken: options.sessionToken,
-        commitVersionEntries: options.commitVersionEntries
-      });
-    }
-
     async function loadCurrentStudioVersionHistory(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken
     ) {
-      const loadOptions = createCurrentStudioVersionHistoryLoadOptions({
+      const loadOptions = SlideNextStudioVersionHistory.createStudioVersionHistoryLoadOptions({
+        ...createCurrentStudioSessionStateOptions({
+          sessionToken
+        }),
         sessionToken,
         commitVersionEntries: (versions) => {
           renderVersionsList(presentationUrl, versions);
