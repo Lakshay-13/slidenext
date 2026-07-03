@@ -315,6 +315,15 @@ test('buildEditorSaveRequestBody reuses the local save canonical deck helper whe
   const calls = [];
   const context = {
     SlideNextStudioEditorPersistence: editorPersistence,
+    createEditorSaveCanonicalDeckResolver(nextDoc) {
+      calls.push(['createEditorSaveCanonicalDeckResolver', nextDoc]);
+      assert.equal(nextDoc, doc);
+      return (nextCanonicalDeck) => {
+        calls.push(['resolveSaveCanonicalDeck', nextCanonicalDeck]);
+        assert.equal(nextCanonicalDeck, null);
+        return canonicalDeck;
+      };
+    },
     captureEditorPersistableDeckState(nextDoc, captureOptions = {}) {
       calls.push(['captureEditorPersistableDeckState', nextDoc, captureOptions]);
       assert.equal(nextDoc, doc);
@@ -323,17 +332,11 @@ test('buildEditorSaveRequestBody reuses the local save canonical deck helper whe
         cleanHtml: '<html>captured</html>'
       };
     },
-    resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
-      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
-      assert.equal(nextDoc, doc);
-      assert.equal(nextCanonicalDeck, null);
-      return canonicalDeck;
-    },
     buildPersistableDeckHtml() {
       throw new Error('buildPersistableDeckHtml should not run when captureEditorPersistableDeckState provides html');
     },
     buildEditorCanonicalDeck() {
-      throw new Error('buildEditorCanonicalDeck should not run when resolveEditorSaveCanonicalDeck is available');
+      throw new Error('buildEditorCanonicalDeck should not run when createEditorSaveCanonicalDeckResolver is available');
     },
     currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
     getIframeDoc() {
@@ -354,8 +357,9 @@ test('buildEditorSaveRequestBody reuses the local save canonical deck helper whe
     }
   );
   assert.deepEqual(calls.map(([name]) => name), [
+    'createEditorSaveCanonicalDeckResolver',
     'captureEditorPersistableDeckState',
-    'resolveEditorSaveCanonicalDeck'
+    'resolveSaveCanonicalDeck'
   ]);
 });
 

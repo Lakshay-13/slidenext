@@ -3541,6 +3541,37 @@
           : (canonicalDeck || buildCanonicalDeck());
     }
 
+    function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {
+      return function resolveSaveCanonicalDeck(canonicalDeck = null) {
+        if (typeof resolveEditorSaveCanonicalDeck === 'function') {
+          return resolveEditorSaveCanonicalDeck(doc, canonicalDeck);
+        }
+        if (typeof resolveEditorCanonicalDeckOverride === 'function') {
+          return resolveEditorCanonicalDeckOverride(canonicalDeck, {
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+          });
+        }
+
+        const canonicalDeckValidator = typeof getEditorCanonicalDeckValidator === 'function'
+          ? getEditorCanonicalDeckValidator()
+          : (
+              typeof SlideNextCanonicalDeck !== 'undefined'
+              && SlideNextCanonicalDeck
+              && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
+            )
+            ? SlideNextCanonicalDeck.isCanonicalDeck
+            : null;
+        return !canonicalDeckValidator
+          ? (canonicalDeck || buildEditorCanonicalDeck(doc))
+          : (
+              canonicalDeck
+              && !canonicalDeckValidator(canonicalDeck)
+            )
+            ? buildEditorCanonicalDeck(doc)
+            : (canonicalDeck || buildEditorCanonicalDeck(doc));
+      };
+    }
+
     function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
       if (typeof resolveEditorCanonicalDeckOverride === 'function') {
         return resolveEditorCanonicalDeckOverride(canonicalDeck, {
@@ -5739,8 +5770,10 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
         ? options.canonicalDeck
         : null;
-      const resolveSaveCanonicalDeck = typeof resolveEditorSaveCanonicalDeck === 'function'
-        ? (nextCanonicalDeck) => resolveEditorSaveCanonicalDeck(doc, nextCanonicalDeck)
+      const resolveSaveCanonicalDeck = typeof createEditorSaveCanonicalDeckResolver === 'function'
+        ? createEditorSaveCanonicalDeckResolver(doc)
+        : typeof resolveEditorSaveCanonicalDeck === 'function'
+          ? (nextCanonicalDeck) => resolveEditorSaveCanonicalDeck(doc, nextCanonicalDeck)
         : (nextCanonicalDeck) => typeof resolveEditorCanonicalDeckOverride === 'function'
           ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
               buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)

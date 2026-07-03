@@ -1015,6 +1015,42 @@ test('resolveEditorSaveCanonicalDeck reuses a valid provided canonical deck when
   assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
+test('createEditorSaveCanonicalDeckResolver reuses the local save canonical deck helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {',
+    '\n\n    function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const calls = [];
+  const context = {
+    resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
+      return canonicalDeck;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  const resolveSaveCanonicalDeck = context.createEditorSaveCanonicalDeckResolver(iframeDoc);
+
+  assert.equal(resolveSaveCanonicalDeck(canonicalDeck), canonicalDeck);
+  assert.deepEqual(calls, [
+    ['resolveEditorSaveCanonicalDeck', iframeDoc, canonicalDeck]
+  ]);
+});
+
 test('resolveEditorCapturedCanonicalDeck delegates capture canonical resolution through resolveEditorCanonicalDeckOverride when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
