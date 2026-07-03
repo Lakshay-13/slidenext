@@ -1942,21 +1942,11 @@
           presentationUrl,
           deckHtmlOptions
         ],
-        transformFallbackHtml: typeof createEditorPreviewFallbackHtmlTransformer === 'function'
-          ? createEditorPreviewFallbackHtmlTransformer({
-              injectBaseHrefIntoHtml,
-              buildPresentationBaseHref,
-              presentationUrl
-            })
-          : (fallbackHtml, deckHtmlOptions) => {
-              if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
-                return fallbackHtml;
-              }
-              return injectBaseHrefIntoHtml(
-                fallbackHtml,
-                buildPresentationBaseHref(presentationUrl, deckHtmlOptions)
-              );
-            }
+        transformFallbackHtml: createEditorPreviewFallbackHtmlTransformer({
+          injectBaseHrefIntoHtml,
+          buildPresentationBaseHref,
+          presentationUrl
+        })
       });
     }
 
