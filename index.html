@@ -1453,16 +1453,18 @@
         ? SlideNextStudioDeckView.resolveStudioFallbackActiveSlideId
         : null;
       if (resolveStudioFallbackActiveSlideId) {
-        const resolveCanonicalDeckOverride = typeof createEditorDeckCanonicalOverrideResolver === 'function'
-          ? createEditorDeckCanonicalOverrideResolver(doc)
+        const resolveCanonicalDeckOverride = typeof resolveEditorDeckCanonicalOverrideResolver === 'function'
+          ? resolveEditorDeckCanonicalOverrideResolver(doc)
           : (nextCanonicalDeck, nextDoc = doc) => (
-              typeof resolveEditorDeckCanonicalOverride === 'function'
-                ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
-                : typeof resolveEditorCanonicalDeckOverride === 'function'
-                ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
-                      buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
-                    })
-                  : nextCanonicalDeck
+              typeof createEditorDeckCanonicalOverrideResolver === 'function'
+                ? createEditorDeckCanonicalOverrideResolver(nextDoc)(nextCanonicalDeck, nextDoc)
+                : typeof resolveEditorDeckCanonicalOverride === 'function'
+                  ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
+                  : typeof resolveEditorCanonicalDeckOverride === 'function'
+                    ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+                        buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+                      })
+                    : nextCanonicalDeck
             );
         const isCanonicalDeck = typeof getEditorCanonicalDeckValidator === 'function'
           ? getEditorCanonicalDeckValidator()
@@ -1585,16 +1587,18 @@
         ? SlideNextStudioDeckView.createStudioDeckRenderOptions
         : null;
       if (createStudioDeckRenderOptions) {
-        const resolveCanonicalDeckOverride = typeof createEditorDeckCanonicalOverrideResolver === 'function'
-          ? createEditorDeckCanonicalOverrideResolver(doc)
+        const resolveCanonicalDeckOverride = typeof resolveEditorDeckCanonicalOverrideResolver === 'function'
+          ? resolveEditorDeckCanonicalOverrideResolver(doc)
           : (nextCanonicalDeck, nextDoc = doc) => (
-              typeof resolveEditorDeckCanonicalOverride === 'function'
-                ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
-                : typeof resolveEditorCanonicalDeckOverride === 'function'
-                ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
-                      buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
-                    })
-                  : nextCanonicalDeck
+              typeof createEditorDeckCanonicalOverrideResolver === 'function'
+                ? createEditorDeckCanonicalOverrideResolver(nextDoc)(nextCanonicalDeck, nextDoc)
+                : typeof resolveEditorDeckCanonicalOverride === 'function'
+                  ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
+                  : typeof resolveEditorCanonicalDeckOverride === 'function'
+                    ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+                        buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+                      })
+                    : nextCanonicalDeck
             );
         const isCanonicalDeck = typeof getEditorCanonicalDeckValidator === 'function'
           ? getEditorCanonicalDeckValidator()
@@ -3475,6 +3479,20 @@
       };
     }
 
+    function resolveEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {
+      return typeof createEditorDeckCanonicalOverrideResolver === 'function'
+        ? createEditorDeckCanonicalOverrideResolver(doc)
+        : (canonicalDeck = null, nextDoc = doc) => (
+            typeof resolveEditorDeckCanonicalOverride === 'function'
+              ? resolveEditorDeckCanonicalOverride(nextDoc, canonicalDeck)
+              : typeof resolveEditorCanonicalDeckOverride === 'function'
+                ? resolveEditorCanonicalDeckOverride(canonicalDeck, {
+                    buildCanonicalDeck: canonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+                  })
+                : canonicalDeck
+          );
+    }
+
     function resolveEditorDeckCanonicalOverride(doc = getIframeDoc(), canonicalDeck = null) {
       if (typeof resolveEditorCanonicalDeckOverride === 'function') {
         return resolveEditorCanonicalDeckOverride(canonicalDeck, {
@@ -3485,16 +3503,18 @@
     }
 
     function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
-      const resolveCanonicalDeckOverride = typeof createEditorDeckCanonicalOverrideResolver === 'function'
-        ? createEditorDeckCanonicalOverrideResolver(doc)
+      const resolveCanonicalDeckOverride = typeof resolveEditorDeckCanonicalOverrideResolver === 'function'
+        ? resolveEditorDeckCanonicalOverrideResolver(doc)
         : (nextCanonicalDeck, nextDoc = doc) => (
-            typeof resolveEditorDeckCanonicalOverride === 'function'
-              ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
-              : typeof resolveEditorCanonicalDeckOverride === 'function'
-                ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
-                    buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
-                  })
-                : nextCanonicalDeck
+            typeof createEditorDeckCanonicalOverrideResolver === 'function'
+              ? createEditorDeckCanonicalOverrideResolver(nextDoc)(nextCanonicalDeck, nextDoc)
+              : typeof resolveEditorDeckCanonicalOverride === 'function'
+                ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
+                : typeof resolveEditorCanonicalDeckOverride === 'function'
+                  ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+                      buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+                    })
+                  : nextCanonicalDeck
           );
       const nextCanonicalDeck = resolveCanonicalDeckOverride(canonicalDeck, doc);
       const canonicalDeckValidator = typeof getEditorCanonicalDeckValidator === 'function'
