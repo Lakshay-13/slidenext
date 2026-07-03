@@ -287,6 +287,33 @@
     });
   }
 
+  function openStudioSourceView(options = {}) {
+    const documentRef = resolvePreviewDocument(options);
+    const sourceViewBtnEl = options.sourceViewBtnEl || resolvePreviewDocumentElement(documentRef, 'openSourceViewBtn');
+    if (sourceViewBtnEl && sourceViewBtnEl.disabled) {
+      return false;
+    }
+
+    const modalEl = options.modalEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModal');
+    const contentEl = options.contentEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModalContent');
+    const textareaEl = options.textareaEl || resolvePreviewDocumentElement(documentRef, 'sourceViewContent');
+    if (!modalEl || !contentEl || !textareaEl) {
+      return false;
+    }
+
+    const sourceHtml = typeof options.resolveSourceHtml === 'function'
+      ? options.resolveSourceHtml()
+      : options.sourceHtml;
+    openSourceViewModal({
+      ...options,
+      modalEl,
+      contentEl,
+      textareaEl,
+      sourceHtml
+    });
+    return true;
+  }
+
   function closeSourceViewModal(options = {}) {
     const {
       modalEl,
@@ -307,6 +334,15 @@
       return;
     }
     setTimeout(() => modalEl.classList.add('hidden'), hideDelayMs);
+  }
+
+  function closeStudioSourceView(options = {}) {
+    const documentRef = resolvePreviewDocument(options);
+    closeSourceViewModal({
+      ...options,
+      modalEl: options.modalEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModal'),
+      contentEl: options.contentEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModalContent')
+    });
   }
 
   function resetSourceViewModal(options = {}) {
@@ -357,7 +393,9 @@
     resetPresentationModal,
     resetStudioPresentationUiState,
     openSourceViewModal,
+    openStudioSourceView,
     closeSourceViewModal,
+    closeStudioSourceView,
     resetSourceViewModal,
     resetStudioSourceViewUiState
   };

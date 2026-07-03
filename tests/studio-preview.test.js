@@ -291,6 +291,76 @@ test('resetStudioPresentationUiState resolves preview chrome from the document a
   assert.equal(fullscreenIconEl.textContent, 'fullscreen');
 });
 
+test('openStudioSourceView skips lazy source generation when the source view button is disabled', () => {
+  let resolveSourceHtmlCalls = 0;
+  const documentStub = {
+    getElementById(id) {
+      switch (id) {
+        case 'openSourceViewBtn':
+          return { disabled: true };
+        case 'sourceViewModal':
+          return { classList: createClassList(['hidden']) };
+        case 'sourceViewModalContent':
+          return { classList: createClassList(['scale-95']) };
+        case 'sourceViewContent':
+          return { value: '', scrollTop: 0 };
+        default:
+          return null;
+      }
+    }
+  };
+
+  const didOpen = preview.openStudioSourceView({
+    document: documentStub,
+    resolveSourceHtml() {
+      resolveSourceHtmlCalls += 1;
+      return '<html>source</html>';
+    }
+  });
+
+  assert.equal(didOpen, false);
+  assert.equal(resolveSourceHtmlCalls, 0);
+});
+
+test('openStudioSourceView resolves source modal chrome from the document', async () => {
+  const modalEl = { classList: createClassList(['hidden', 'opacity-0']) };
+  const contentEl = { classList: createClassList(['scale-95']) };
+  const textareaEl = {
+    value: '',
+    scrollTop: 12
+  };
+  const documentStub = {
+    getElementById(id) {
+      switch (id) {
+        case 'openSourceViewBtn':
+          return { disabled: false };
+        case 'sourceViewModal':
+          return modalEl;
+        case 'sourceViewModalContent':
+          return contentEl;
+        case 'sourceViewContent':
+          return textareaEl;
+        default:
+          return null;
+      }
+    }
+  };
+
+  const didOpen = preview.openStudioSourceView({
+    document: documentStub,
+    sourceHtml: '<html>source</html>'
+  });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  assert.equal(didOpen, true);
+  assert.equal(textareaEl.value, '<html>source</html>');
+  assert.equal(textareaEl.scrollTop, 0);
+  assert.equal(modalEl.classList.contains('hidden'), false);
+  assert.equal(modalEl.classList.contains('opacity-0'), false);
+  assert.equal(contentEl.classList.contains('scale-95'), false);
+  assert.equal(contentEl.classList.contains('scale-100'), true);
+});
+
 test('resetSourceViewModal clears source modal state immediately', () => {
   const modalEl = { classList: createClassList(['opacity-100']) };
   const contentEl = { classList: createClassList(['scale-100']) };
@@ -314,6 +384,34 @@ test('resetSourceViewModal clears source modal state immediately', () => {
   assert.equal(contentEl.classList.contains('scale-95'), true);
   assert.equal(contentEl.classList.contains('scale-100'), false);
   assert.equal(modalEl.__slideNextModalVisibilityToken, tokenBefore + 1);
+});
+
+test('closeStudioSourceView resolves source modal chrome from the document', async () => {
+  const modalEl = { classList: createClassList([]) };
+  const contentEl = { classList: createClassList(['scale-100']) };
+  const documentStub = {
+    getElementById(id) {
+      switch (id) {
+        case 'sourceViewModal':
+          return modalEl;
+        case 'sourceViewModalContent':
+          return contentEl;
+        default:
+          return null;
+      }
+    }
+  };
+
+  preview.closeStudioSourceView({
+    document: documentStub,
+    hideDelayMs: 0
+  });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  assert.equal(modalEl.classList.contains('opacity-0'), true);
+  assert.equal(modalEl.classList.contains('hidden'), true);
+  assert.equal(contentEl.classList.contains('scale-95'), true);
+  assert.equal(contentEl.classList.contains('scale-100'), false);
 });
 
 test('resetStudioSourceViewUiState resolves source modal chrome from the document', () => {

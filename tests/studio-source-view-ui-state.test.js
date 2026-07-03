@@ -77,7 +77,7 @@ test('resetStudioSourceViewUiState clears stale source modal chrome', () => {
   assert.equal(elements.sourceViewModalContent.classList.contains('scale-100'), false);
 });
 
-test('openSourceViewModal does not open when the source view button is disabled', () => {
+test('openSourceViewModal delegates source view opening to the shared preview helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const openSourceViewModalSource = extractFunctionSource(
     fileContent,
@@ -86,11 +86,12 @@ test('openSourceViewModal does not open when the source view button is disabled'
   );
 
   let buildEditorSourceHtmlCalls = 0;
-  let previewOpenCalls = 0;
+  const previewOpenCalls = [];
   const context = {
     SlideNextStudioPreview: {
-      openSourceViewModal() {
-        previewOpenCalls += 1;
+      openStudioSourceView(options = {}) {
+        previewOpenCalls.push(options);
+        return true;
       }
     },
     buildEditorSourceHtml() {
@@ -120,8 +121,12 @@ test('openSourceViewModal does not open when the source view button is disabled'
 
   context.openSourceViewModal();
 
+  assert.equal(previewOpenCalls.length, 1);
+  assert.equal(previewOpenCalls[0].document, context.document);
+  assert.equal(typeof previewOpenCalls[0].resolveSourceHtml, 'function');
   assert.equal(buildEditorSourceHtmlCalls, 0);
-  assert.equal(previewOpenCalls, 0);
+  assert.equal(previewOpenCalls[0].resolveSourceHtml(), '<html>source</html>');
+  assert.equal(buildEditorSourceHtmlCalls, 1);
 });
 
 test('buildEditorSourceHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
