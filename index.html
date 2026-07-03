@@ -5006,6 +5006,7 @@
         && typeof SlideNextStudioHistory.buildStudioHistoryCaptureHtml === 'function'
         ? SlideNextStudioHistory.buildStudioHistoryCaptureHtml
         : null;
+      const historyOptions = getEditorHistoryOptions(options);
       const buildFallbackHistoryHtml = (sourceDoc = doc) => sourceDoc
         ? buildPersistableDeckHtml(sourceDoc, {
             canonicalDeck: options.canonicalDeck
@@ -5013,12 +5014,12 @@
         : '';
       if (buildStudioHistoryCaptureHtml) {
         return buildStudioHistoryCaptureHtml(doc, {
-          frameOptions: getEditorHistoryOptions(options),
+          frameOptions: historyOptions,
           canonicalDeck: options.canonicalDeck,
           buildFallbackHtml: buildFallbackHistoryHtml
         });
       }
-      return SlideNextStudioHistory.buildStudioHistoryFrameHtml(doc, getEditorHistoryOptions(options))
+      return SlideNextStudioHistory.buildStudioHistoryFrameHtml(doc, historyOptions)
         || buildFallbackHistoryHtml(doc);
     }
 
