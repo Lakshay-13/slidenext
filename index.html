@@ -2904,7 +2904,7 @@
     function getEditorHistoryStackOptions(options = {}) {
       return {
         ...getEditorHistoryOptions(options),
-        normalizeEntry: normalizeHistoryEntry,
+        normalizeEntry: SlideNextStudioHistory.normalizeStudioHistoryEntry,
         areEntriesEqual: SlideNextStudioHistory.areStudioHistoryEntriesEqual,
         maxUndoEntries: 50,
         ...options
@@ -5041,10 +5041,6 @@
       });
     }
 
-    function normalizeHistoryEntry(entry) {
-      return SlideNextStudioHistory.normalizeStudioHistoryEntry(entry);
-    }
-
     function updateEditorPersistedDeckState(nextState = {}) {
       if (Object.prototype.hasOwnProperty.call(nextState, 'cleanHtml')) {
         lastPersistedDeckHtml = typeof nextState.cleanHtml === 'string' ? nextState.cleanHtml : '';
@@ -5136,7 +5132,7 @@
 
     function restoreFrameFromHistoryEntry(entry) {
       const iframeDoc = getIframeDoc();
-      const historyEntry = normalizeHistoryEntry(entry);
+      const historyEntry = SlideNextStudioHistory.normalizeStudioHistoryEntry(entry);
       const fallbackIndex = currentSlideIndex;
       
       applyEditorSelectionState({});

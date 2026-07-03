@@ -135,6 +135,11 @@ test('getLiveSelectedElements keeps only connected selections on the active slid
 
 test('getEditorHistoryOptions includes editor runtime attr names for sanitized history snapshots', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
+    '\n\n    function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {'
+  );
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
     fileContent,
     'function getEditorDeckSanitizerOptions(options = {}) {',
@@ -182,6 +187,7 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
   };
 
   vm.createContext(context);
+  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(getEditorHistoryOptionsSource, context);
 
@@ -211,6 +217,11 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
 
 test('getEditorHistoryOptions threads sanitizer overrides and explicit persistence options into the frame sanitizer', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
+    '\n\n    function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {'
+  );
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
     fileContent,
     'function getEditorDeckSanitizerOptions(options = {}) {',
@@ -265,6 +276,7 @@ test('getEditorHistoryOptions threads sanitizer overrides and explicit persisten
   };
 
   vm.createContext(context);
+  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(getEditorHistoryOptionsSource, context);
 
@@ -304,6 +316,11 @@ test('getEditorHistoryOptions threads sanitizer overrides and explicit persisten
 
 test('getEditorHistoryOptions prefers the shared merged persistence resolver for frame sanitization', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
+    '\n\n    function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {'
+  );
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
     fileContent,
     'function getEditorDeckSanitizerOptions(options = {}) {',
@@ -359,6 +376,7 @@ test('getEditorHistoryOptions prefers the shared merged persistence resolver for
   };
 
   vm.createContext(context);
+  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(getEditorHistoryOptionsSource, context);
 
@@ -390,10 +408,10 @@ test('getEditorHistoryStackOptions forwards sanitizer overrides into the underly
 
   const calls = [];
   const context = {
-    normalizeHistoryEntry(entry) {
-      return { normalized: entry };
-    },
     SlideNextStudioHistory: {
+      normalizeStudioHistoryEntry(entry) {
+        return { normalized: entry };
+      },
       areStudioHistoryEntriesEqual(left, right) {
         return left === right;
       }

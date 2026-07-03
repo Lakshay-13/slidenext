@@ -69,7 +69,7 @@ test('createHistoryEntry attaches the current canonical deck sidecar and live ed
   const createHistoryEntrySource = extractFunctionSource(
     fileContent,
     'function createHistoryEntry(doc) {',
-    '\n\n    function normalizeHistoryEntry(entry) {'
+    '\n\n    function updateEditorPersistedDeckState(nextState = {}) {'
   );
 
   const iframeDoc = { id: 'doc' };
@@ -154,7 +154,7 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
   const createHistoryEntrySource = extractFunctionSource(
     fileContent,
     'function createHistoryEntry(doc) {',
-    '\n\n    function normalizeHistoryEntry(entry) {'
+    '\n\n    function updateEditorPersistedDeckState(nextState = {}) {'
   );
 
   const canonicalDeck = {
@@ -998,13 +998,6 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
     makeElementsHoverable(doc) {
       callLog.push(['makeElementsHoverable', doc]);
     },
-    normalizeHistoryEntry(entry) {
-      callLog.push(['normalizeHistoryEntry', entry]);
-      return {
-        ...entry,
-        normalized: true
-      };
-    },
     observeDeckActiveSlideState(doc) {
       callLog.push(['observeDeckActiveSlideState', doc]);
     },
@@ -1024,6 +1017,13 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
       callLog.push(['setupIframeDragging', doc]);
     },
     SlideNextStudioHistory: {
+      normalizeStudioHistoryEntry(entry) {
+        callLog.push(['normalizeStudioHistoryEntry', entry]);
+        return {
+          ...entry,
+          normalized: true
+        };
+      },
       restoreStudioHistoryActiveSlide(nextHistoryEntry, options) {
         callLog.push(['restoreStudioHistoryActiveSlide', nextHistoryEntry, options.fallbackIndex]);
         options.restoreActiveSlideById('slide-2');
@@ -1081,7 +1081,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
 
   assert.equal(iframeDoc.documentElement.innerHTML, '<html>restored</html>');
   assert.equal(callLog[0][0], 'getIframeDoc');
-  assert.equal(callLog[1][0], 'normalizeHistoryEntry');
+  assert.equal(callLog[1][0], 'normalizeStudioHistoryEntry');
   assert.equal(callLog[1][1].html, '<html>snapshot</html>');
   assert.deepEqual(callLog[1][1].selectedElementIds, ['node-1']);
   assert.equal(callLog[2][0], 'applyEditorSelectionState');
@@ -1174,9 +1174,6 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
       return [];
     },
     makeElementsHoverable() {},
-    normalizeHistoryEntry(entry) {
-      return entry;
-    },
     observeDeckActiveSlideState() {},
     resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
       callLog.push(['resolveEditorFallbackCanonicalDeck', nextDoc, nextCanonicalDeck]);
@@ -1190,6 +1187,9 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
     setActiveSlideById() {},
     setupIframeDragging() {},
     SlideNextStudioHistory: {
+      normalizeStudioHistoryEntry(entry) {
+        return entry;
+      },
       restoreStudioHistoryActiveSlide() {},
       restoreStudioHistoryEntry(nextHistoryEntry, options) {
         options.restoreFrameSetup(nextHistoryEntry);
