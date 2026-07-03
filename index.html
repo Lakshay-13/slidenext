@@ -1747,6 +1747,26 @@
         : fallbackHtml;
     }
 
+    function buildEditorDeckViewHtml(doc = getIframeDoc(), options = {}) {
+      const buildSharedHtml = typeof options.buildSharedHtml === 'function'
+        ? options.buildSharedHtml
+        : null;
+      const deckViewOptions = typeof options.buildViewOptions === 'function'
+        ? options.buildViewOptions(doc)
+        : {};
+      if (buildSharedHtml) {
+        return buildSharedHtml(doc, deckViewOptions);
+      }
+
+      return buildEditorDeckHtml(doc, {
+        ...deckViewOptions,
+        buildCanonicalHtml: typeof options.buildCanonicalHtml === 'function'
+          ? (canonicalDeck, deckHtmlOptions) => options.buildCanonicalHtml(canonicalDeck, deckHtmlOptions)
+          : null,
+        transformFallbackHtml: options.transformFallbackHtml
+      });
+    }
+
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
       const buildStudioPreviewHtml = (
         typeof SlideNextStudioDeckView !== 'undefined'
@@ -1755,14 +1775,6 @@
       )
         ? SlideNextStudioDeckView.buildStudioPreviewHtml
         : null;
-      const previewOptions = {
-        ...createEditorDeckViewBuildOptions(doc),
-        presentationUrl: currentPresentationUrl
-      };
-      if (buildStudioPreviewHtml) {
-        return buildStudioPreviewHtml(doc, previewOptions);
-      }
-
       const buildDeckPreviewHtml = (
         typeof SlideNextDeckHtml !== 'undefined'
         && SlideNextDeckHtml
@@ -1785,14 +1797,14 @@
         ? SlideNextDeckHtml.buildPresentationBaseHref
         : null;
 
-      return buildEditorDeckHtml(doc, {
-        ...previewOptions,
+      return buildEditorDeckViewHtml(doc, {
+        buildSharedHtml: buildStudioPreviewHtml,
+        buildViewOptions: (sourceDoc) => ({
+          ...createEditorDeckViewBuildOptions(sourceDoc),
+          presentationUrl: currentPresentationUrl
+        }),
         buildCanonicalHtml: buildDeckPreviewHtml
-          ? (canonicalDeck, deckHtmlOptions) => buildDeckPreviewHtml(
-              canonicalDeck,
-              currentPresentationUrl || '',
-              deckHtmlOptions
-            )
+          ? (canonicalDeck, deckHtmlOptions) => buildDeckPreviewHtml(canonicalDeck, currentPresentationUrl || '', deckHtmlOptions)
           : null,
         transformFallbackHtml: (fallbackHtml, deckHtmlOptions) => {
           if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
@@ -1814,11 +1826,6 @@
       )
         ? SlideNextStudioDeckView.buildStudioSourceHtml
         : null;
-      const sourceOptions = createEditorDeckViewBuildOptions(doc);
-      if (buildStudioSourceHtml) {
-        return buildStudioSourceHtml(doc, sourceOptions);
-      }
-
       const buildDeckSourceHtml = (
         typeof SlideNextDeckHtml !== 'undefined'
         && SlideNextDeckHtml
@@ -1827,8 +1834,9 @@
         ? SlideNextDeckHtml.buildDeckSourceHtml
         : null;
 
-      return buildEditorDeckHtml(doc, {
-        ...sourceOptions,
+      return buildEditorDeckViewHtml(doc, {
+        buildSharedHtml: buildStudioSourceHtml,
+        buildViewOptions: (sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc),
         buildCanonicalHtml: buildDeckSourceHtml
           ? (canonicalDeck, deckHtmlOptions) => buildDeckSourceHtml(canonicalDeck, deckHtmlOptions)
           : null
