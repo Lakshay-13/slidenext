@@ -1549,35 +1549,6 @@
       };
     }
 
-    function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {
-      const {
-        buildCanonicalDeck
-      } = createEditorCanonicalDeckViewStateOptions();
-      const createSharedCanonicalDeckResolver = (
-        typeof SlideNextStudioDeckView !== 'undefined'
-        && SlideNextStudioDeckView
-      )
-        && typeof SlideNextStudioDeckView.createStudioCanonicalDeckResolver === 'function'
-        ? SlideNextStudioDeckView.createStudioCanonicalDeckResolver
-        : (
-          typeof SlideNextStudioDeckSnapshot !== 'undefined'
-          && SlideNextStudioDeckSnapshot
-          && typeof SlideNextStudioDeckSnapshot.createStudioDeckSnapshotCanonicalDeckResolver === 'function'
-        )
-          ? SlideNextStudioDeckSnapshot.createStudioDeckSnapshotCanonicalDeckResolver
-        : null;
-      if (createSharedCanonicalDeckResolver) {
-        return createSharedCanonicalDeckResolver(doc, {
-          buildCanonicalDeck
-        });
-      }
-
-      return createEditorCanonicalDeckResolverWithBuilder(
-        doc,
-        buildCanonicalDeck
-      );
-    }
-
     function createEditorCanonicalDeckResolverWithBuilder(
       doc = getIframeDoc(),
       buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)
@@ -1625,9 +1596,26 @@
         });
       }
 
+      const createSharedCanonicalDeckResolver = (
+        typeof SlideNextStudioDeckView !== 'undefined'
+        && SlideNextStudioDeckView
+      )
+        && typeof SlideNextStudioDeckView.createStudioCanonicalDeckResolver === 'function'
+        ? SlideNextStudioDeckView.createStudioCanonicalDeckResolver
+        : (
+          typeof SlideNextStudioDeckSnapshot !== 'undefined'
+          && SlideNextStudioDeckSnapshot
+          && typeof SlideNextStudioDeckSnapshot.createStudioDeckSnapshotCanonicalDeckResolver === 'function'
+        )
+          ? SlideNextStudioDeckSnapshot.createStudioDeckSnapshotCanonicalDeckResolver
+        : null;
       const resolveCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
         ? createEditorCanonicalDeckResolverWithBuilder(doc, buildCanonicalDeck)
-        : createEditorCanonicalDeckResolver(doc);
+        : createSharedCanonicalDeckResolver
+          ? createSharedCanonicalDeckResolver(doc, {
+              buildCanonicalDeck
+            })
+          : createEditorCanonicalDeckResolverWithBuilder(doc, buildCanonicalDeck);
       const liveActiveSlideId = resolveLiveActiveSlideId(doc);
       const resolvedCanonicalDeck = !doc
         ? resolveCanonicalDeck(doc)

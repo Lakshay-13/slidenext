@@ -46,7 +46,7 @@ function loadResolveEditorStoredCanonicalBaseline(fileContent, context) {
 function loadResolveEditorCanonicalDeckViewState(fileContent, context) {
   const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
     fileContent,
-    'function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {',
+    'function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
   );
   vm.runInContext(resolveEditorCanonicalDeckViewStateSource, context);
@@ -1518,7 +1518,7 @@ test('resolveEditorCanonicalDeckViewState delegates resolver orchestration to th
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
     fileContent,
-    'function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {',
+    'function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
   );
 
@@ -1714,12 +1714,12 @@ test('resolveEditorCanonicalDeckViewState reuses the local canonical deck resolv
   ]);
 });
 
-test('createEditorCanonicalDeckResolver delegates fallback resolver creation to the shared snapshot helper when deck view helper is unavailable', () => {
+test('resolveEditorCanonicalDeckViewState delegates fallback resolver creation to the shared snapshot helper when deck view helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const createEditorCanonicalDeckResolverSource = extractFunctionSource(
+  const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
     fileContent,
-    'function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {',
-    '\n\n    function resolveEditorCanonicalDeckViewState(doc = getIframeDoc(), options = {}) {'
+    'function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {',
+    '\n\n    function createEditorDeckViewBuildOptions(doc = getIframeDoc()) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -1744,25 +1744,29 @@ test('createEditorCanonicalDeckResolver delegates fallback resolver creation to 
     },
     getIframeDoc() {
       return iframeDoc;
+    },
+    resolveEditorLiveActiveSlideId() {
+      return '';
     }
   };
 
   vm.createContext(context);
-  vm.runInContext(createEditorCanonicalDeckResolverSource, context);
+  vm.runInContext(resolveEditorCanonicalDeckViewStateSource, context);
 
-  const resolveCanonicalDeck = context.createEditorCanonicalDeckResolver(iframeDoc);
+  const result = context.resolveEditorCanonicalDeckViewState(iframeDoc);
 
   assert.equal(delegatedArgs.doc, iframeDoc);
   assert.equal(typeof delegatedArgs.options.buildCanonicalDeck, 'function');
-  assert.equal(resolveCanonicalDeck(iframeDoc), canonicalDeck);
+  assert.equal(typeof result.resolveCanonicalDeck, 'function');
+  assert.equal(result.resolvedCanonicalDeck, canonicalDeck);
 });
 
-test('createEditorCanonicalDeckResolver reuses the local canonical deck resolver builder helper when shared resolvers are unavailable', () => {
+test('resolveEditorCanonicalDeckViewState reuses the local canonical deck resolver builder helper when shared resolvers are unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const createEditorCanonicalDeckResolverSource = extractFunctionSource(
+  const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
     fileContent,
-    'function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {',
-    '\n\n    function resolveEditorCanonicalDeckViewState(doc = getIframeDoc(), options = {}) {'
+    'function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {',
+    '\n\n    function createEditorDeckViewBuildOptions(doc = getIframeDoc()) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -1798,13 +1802,14 @@ test('createEditorCanonicalDeckResolver reuses the local canonical deck resolver
   };
 
   vm.createContext(context);
-  vm.runInContext(createEditorCanonicalDeckResolverSource, context);
+  vm.runInContext(resolveEditorCanonicalDeckViewStateSource, context);
   vm.runInContext('createEditorCanonicalDeckViewStateOptions = __createEditorCanonicalDeckViewStateOptions;', context);
   vm.runInContext('createEditorCanonicalDeckResolverWithBuilder = __createEditorCanonicalDeckResolverWithBuilder;', context);
 
-  const resolveCanonicalDeck = context.createEditorCanonicalDeckResolver(iframeDoc);
+  const result = context.resolveEditorCanonicalDeckViewState(iframeDoc);
 
-  assert.equal(resolveCanonicalDeck(iframeDoc), canonicalDeck);
+  assert.equal(typeof result.resolveCanonicalDeck, 'function');
+  assert.equal(result.resolvedCanonicalDeck, canonicalDeck);
   assert.deepEqual(calls, [
     ['createEditorCanonicalDeckViewStateOptions'],
     ['createEditorCanonicalDeckResolverWithBuilder', iframeDoc, 'function'],
@@ -1816,7 +1821,7 @@ test('createEditorDeckViewBuildOptions delegates build-option composition to the
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
     fileContent,
-    'function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {',
+    'function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
   );
 
@@ -1945,7 +1950,7 @@ test('createEditorDeckViewBuildOptions forwards custom build overrides to the sh
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
     fileContent,
-    'function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {',
+    'function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
   );
 
@@ -2035,7 +2040,7 @@ test('buildEditorDeckRenderOptions delegates render-option composition to the sh
   const buildEditorDeckRenderOptionsSource = extractFunctionSource(
     fileContent,
     'function buildEditorDeckRenderOptions(doc = getIframeDoc(), canonicalDeck = null, options = {}) {',
-    '\n\n    function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {'
+    '\n\n    function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -2117,7 +2122,7 @@ test('buildEditorDeckRenderOptions reuses the local deck view shared options hel
   const buildEditorDeckRenderOptionsSource = extractFunctionSource(
     fileContent,
     'function buildEditorDeckRenderOptions(doc = getIframeDoc(), canonicalDeck = null, options = {}) {',
-    '\n\n    function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {'
+    '\n\n    function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
