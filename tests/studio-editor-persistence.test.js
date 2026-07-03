@@ -1421,6 +1421,60 @@ test('executeStudioVersionCheckpointSave delegates checkpoint saves through a pr
   });
 });
 
+test('executeStudioVersionCheckpointSaveWithSuccess reuses checkpoint save execution and applies success callbacks', async () => {
+  const versionCheckpointPersistenceState = {
+    cleanHtml: '<html>persisted</html>',
+    requestOptions: {
+      sessionToken: 12
+    },
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+  let saveArgs = null;
+  let successArgs = null;
+
+  const result = await editorPersistence.executeStudioVersionCheckpointSaveWithSuccess(
+    'Checkpoint Baseline',
+    versionCheckpointPersistenceState,
+    '/presentations/onboarding-presentation/index.html',
+    {
+      saveVersionCheckpoint: async (...args) => {
+        saveArgs = args;
+        return {
+          success: true
+        };
+      },
+      applyVersionCheckpointSaveSuccess(nextVersionCheckpointPersistenceState, options = {}) {
+        successArgs = {
+          nextVersionCheckpointPersistenceState,
+          options
+        };
+      },
+      successOptions: {
+        marker: 'version-success'
+      }
+    }
+  );
+
+  assert.deepEqual(saveArgs, [
+    'Checkpoint Baseline',
+    '<html>persisted</html>',
+    '/presentations/onboarding-presentation/index.html',
+    versionCheckpointPersistenceState.requestOptions
+  ]);
+  assert.equal(successArgs.nextVersionCheckpointPersistenceState, versionCheckpointPersistenceState);
+  assert.deepEqual(successArgs.options, {
+    marker: 'version-success'
+  });
+  assert.deepEqual(result, {
+    data: {
+      success: true
+    },
+    versionCheckpointPersistenceState
+  });
+});
+
 test('isStudioVersionCheckpointSavePersisted reuses the checkpoint persistence plan wiring', () => {
   const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
     metadata: {
