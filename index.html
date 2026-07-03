@@ -3392,7 +3392,14 @@
     }
 
     function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {
-      const resolveCanonicalDeckOverride = (canonicalDeck = null, nextDoc = doc) => resolveEditorDeckCanonicalOverride(nextDoc, canonicalDeck);
+      const resolveCanonicalDeckOverride = (canonicalDeck = null, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
+        canonicalDeck,
+        {
+          buildCanonicalDeck: canonicalDeck
+            ? () => buildEditorCanonicalDeck(nextDoc)
+            : null
+        }
+      );
       const isCanonicalDeck = getEditorCanonicalDeckValidator();
       const {
         buildCanonicalDeck,
@@ -3408,16 +3415,12 @@
       };
     }
 
-    function resolveEditorDeckCanonicalOverride(doc = getIframeDoc(), canonicalDeck = null) {
-      return resolveEditorCanonicalDeckOverride(canonicalDeck, {
+    function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
+      const nextCanonicalDeck = resolveEditorCanonicalDeckOverride(canonicalDeck, {
         buildCanonicalDeck: canonicalDeck
           ? () => buildEditorCanonicalDeck(doc)
           : null
       });
-    }
-
-    function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
-      const nextCanonicalDeck = resolveEditorDeckCanonicalOverride(doc, canonicalDeck);
       const canonicalDeckValidator = getEditorCanonicalDeckValidator();
       const hasValidCanonicalDeck = canonicalDeckValidator
         ? canonicalDeckValidator(nextCanonicalDeck)
