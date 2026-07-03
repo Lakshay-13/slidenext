@@ -6678,30 +6678,23 @@
       }).join('');
     }
 
-    async function loadCurrentStudioVersionHistory(
-      presentationUrl = currentPresentationUrl,
-      sessionToken = studioEditorSessionToken
-    ) {
-      const loadOptions = SlideNextStudioVersionHistory.createStudioVersionHistoryLoadOptions({
-        ...createCurrentStudioSessionStateOptions({
-          sessionToken
-        }),
-        sessionToken,
-        commitVersionEntries: (versions) => {
-          renderVersionsList(presentationUrl, versions);
-        }
-      });
-      return SlideNextStudioVersionHistory.loadStudioVersionHistory(
-        presentationUrl,
-        loadOptions
-      );
-    }
-
     // Fetch versions checklist
     async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
       if (!presentationUrl) return;
       try {
-        await loadCurrentStudioVersionHistory(presentationUrl, sessionToken);
+        const loadOptions = SlideNextStudioVersionHistory.createStudioVersionHistoryLoadOptions({
+          ...createCurrentStudioSessionStateOptions({
+            sessionToken
+          }),
+          sessionToken,
+          commitVersionEntries: (versions) => {
+            renderVersionsList(presentationUrl, versions);
+          }
+        });
+        await SlideNextStudioVersionHistory.loadStudioVersionHistory(
+          presentationUrl,
+          loadOptions
+        );
       } catch (err) {
         console.error('Failed to load version history:', err);
       }

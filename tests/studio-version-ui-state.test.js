@@ -893,15 +893,16 @@ test('restoreVersion reuses the shared restore request helper when available', a
   assert.ok(calls.some(([name, message]) => name === 'alert' && /Rollback successfully restored!/.test(message)));
 });
 
-test('loadCurrentStudioVersionHistory passes live session getters when delegating to the version history loader', async () => {
+test('loadVersions passes live session getters when delegating to the version history loader', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const loadCurrentStudioVersionHistorySource = extractFunctionSource(
+  const loadVersionsSource = extractFunctionSource(
     fileContent,
-    'async function loadCurrentStudioVersionHistory(',
-    '\n\n    // Fetch versions checklist'
+    'async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
+    '\n\n    function createCurrentStudioVersionActionContext() {'
   );
 
   let capturedOptions = null;
+  const errorCalls = [];
   const context = {
     SlideNextStudioVersionHistory: {
       createStudioVersionHistoryLoadOptions(options) {
@@ -919,6 +920,11 @@ test('loadCurrentStudioVersionHistory passes live session getters when delegatin
         return versions;
       }
     },
+    console: {
+      error(...args) {
+        errorCalls.push(args);
+      }
+    },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     renderVersionsListCalls: [],
     renderVersionsList(presentationUrl, versions) {
@@ -929,19 +935,13 @@ test('loadCurrentStudioVersionHistory passes live session getters when delegatin
 
   vm.createContext(context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  vm.runInContext(loadCurrentStudioVersionHistorySource, context);
+  vm.runInContext(loadVersionsSource, context);
 
-  const versions = await context.loadCurrentStudioVersionHistory(
+  await context.loadVersions(
     '/presentations/onboarding-presentation/index.html',
     18
   );
 
-  assert.deepEqual(versions, [
-    {
-      filename: 'index_20260101_120000_Auto.html',
-      createdAt: '2026-01-01T12:00:00.000Z'
-    }
-  ]);
   assert.equal(capturedOptions.sessionToken, 18);
   assert.equal(typeof capturedOptions.getCurrentPresentationUrl, 'function');
   assert.equal(typeof capturedOptions.getCurrentSessionToken, 'function');
@@ -949,8 +949,14 @@ test('loadCurrentStudioVersionHistory passes live session getters when delegatin
   assert.equal(capturedOptions.getCurrentSessionToken(), 18);
   assert.deepEqual(context.renderVersionsListCalls, [[
     '/presentations/onboarding-presentation/index.html',
-    versions
+    [
+      {
+        filename: 'index_20260101_120000_Auto.html',
+        createdAt: '2026-01-01T12:00:00.000Z'
+      }
+    ]
   ]]);
+  assert.deepEqual(errorCalls, []);
 
   context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
   context.studioEditorSessionToken = 19;
