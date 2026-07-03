@@ -6700,17 +6700,6 @@
       }
     }
 
-    function createCurrentStudioVersionActionContext() {
-      return SlideNextStudioVersionActions.createStudioVersionActionContext(
-        currentPresentationUrl,
-        currentTitle,
-        currentCategory,
-        {
-          sessionToken: studioEditorSessionToken
-        }
-      );
-    }
-
     function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {
       return SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
         versionActionContext,
@@ -6751,7 +6740,14 @@
       if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
         return;
       }
-      const restoreContext = createCurrentStudioVersionActionContext();
+      const restoreContext = SlideNextStudioVersionActions.createStudioVersionActionContext(
+        currentPresentationUrl,
+        currentTitle,
+        currentCategory,
+        {
+          sessionToken: studioEditorSessionToken
+        }
+      );
       
       try {
         const data = await SlideNextStudioVersionActions.executeStudioRestoreVersionRequest(
@@ -6794,7 +6790,14 @@
 
     function promptRenameVersion(filename, currentLabel) {
       renamingFilename = filename;
-      renamingVersionContext = createCurrentStudioVersionActionContext();
+      renamingVersionContext = SlideNextStudioVersionActions.createStudioVersionActionContext(
+        currentPresentationUrl,
+        currentTitle,
+        currentCategory,
+        {
+          sessionToken: studioEditorSessionToken
+        }
+      );
       const renameInput = document.getElementById('newVersionNameInput');
       if (renameInput) {
         renameInput.value = currentLabel;
@@ -6855,7 +6858,14 @@
       const renameInput = document.getElementById('newVersionNameInput');
       const newLabel = renameInput ? renameInput.value.trim() : '';
       if (!newLabel) return;
-      const renameContext = renamingVersionContext || createCurrentStudioVersionActionContext();
+      const renameContext = renamingVersionContext || SlideNextStudioVersionActions.createStudioVersionActionContext(
+        currentPresentationUrl,
+        currentTitle,
+        currentCategory,
+        {
+          sessionToken: studioEditorSessionToken
+        }
+      );
       const versionFilename = renamingFilename;
       if (!versionFilename || !renameContext.presentationUrl) return;
       const modal = document.getElementById('renameVersionModal');
@@ -6922,7 +6932,14 @@
       if (!confirm('Are you sure you want to delete this version? This action cannot be undone.')) {
         return;
       }
-      const deleteContext = createCurrentStudioVersionActionContext();
+      const deleteContext = SlideNextStudioVersionActions.createStudioVersionActionContext(
+        currentPresentationUrl,
+        currentTitle,
+        currentCategory,
+        {
+          sessionToken: studioEditorSessionToken
+        }
+      );
       
       try {
         const data = await SlideNextStudioVersionActions.executeStudioDeleteVersionRequest(

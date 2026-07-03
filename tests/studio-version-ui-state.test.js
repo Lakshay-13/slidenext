@@ -318,6 +318,14 @@ test('promptRenameVersion tolerates a missing rename input', () => {
   };
 
   const context = {
+    SlideNextStudioVersionActions: {
+      createStudioVersionActionContext() {
+        calls.push(['createStudioVersionActionContext']);
+        return {
+          presentationUrl: '/presentations/onboarding-presentation/index.html'
+        };
+      }
+    },
     SlideNextStudioModalVisibility: {
       cancelStudioModalHide(modal) {
         calls.push(['cancelStudioModalHide', modal]);
@@ -327,12 +335,9 @@ test('promptRenameVersion tolerates a missing rename input', () => {
         options.callback();
       }
     },
-    createCurrentStudioVersionActionContext() {
-      calls.push(['createCurrentStudioVersionActionContext']);
-      return {
-        presentationUrl: '/presentations/onboarding-presentation/index.html'
-      };
-    },
+    currentCategory: 'General',
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
     document: {
       getElementById(id) {
         calls.push(['getElementById', id]);
@@ -343,7 +348,8 @@ test('promptRenameVersion tolerates a missing rename input', () => {
       }
     },
     renamingFilename: '',
-    renamingVersionContext: null
+    renamingVersionContext: null,
+    studioEditorSessionToken: 21
   };
 
   vm.createContext(context);
@@ -383,6 +389,14 @@ test('promptRenameVersion tolerates missing rename modal chrome', () => {
   };
   const calls = [];
   const context = {
+    SlideNextStudioVersionActions: {
+      createStudioVersionActionContext() {
+        calls.push(['createStudioVersionActionContext']);
+        return {
+          presentationUrl: '/presentations/onboarding-presentation/index.html'
+        };
+      }
+    },
     SlideNextStudioModalVisibility: {
       cancelStudioModalHide() {
         calls.push(['cancelStudioModalHide']);
@@ -391,12 +405,9 @@ test('promptRenameVersion tolerates missing rename modal chrome', () => {
         calls.push(['scheduleStudioModalCallback']);
       }
     },
-    createCurrentStudioVersionActionContext() {
-      calls.push(['createCurrentStudioVersionActionContext']);
-      return {
-        presentationUrl: '/presentations/onboarding-presentation/index.html'
-      };
-    },
+    currentCategory: 'General',
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
     document: {
       getElementById(id) {
         calls.push(['getElementById', id]);
@@ -407,7 +418,8 @@ test('promptRenameVersion tolerates missing rename modal chrome', () => {
       }
     },
     renamingFilename: '',
-    renamingVersionContext: null
+    renamingVersionContext: null,
+    studioEditorSessionToken: 22
   };
 
   vm.createContext(context);
@@ -705,9 +717,19 @@ test('deleteVersion reuses the shared delete request helper when available', asy
   );
 
   let helperArgs = null;
+  let builderArgs = null;
   const calls = [];
   const context = {
     SlideNextStudioVersionActions: {
+      createStudioVersionActionContext(presentationUrl, presentationTitle, presentationCategory, options) {
+        builderArgs = [presentationUrl, presentationTitle, presentationCategory, options];
+        return {
+          presentationUrl,
+          presentationTitle,
+          presentationCategory,
+          sessionToken: options.sessionToken
+        };
+      },
       executeStudioDeleteVersionRequest: async (...args) => {
         helperArgs = args;
         return { success: true };
@@ -719,11 +741,9 @@ test('deleteVersion reuses the shared delete request helper when available', asy
     confirm() {
       return true;
     },
-    createCurrentStudioVersionActionContext() {
-      return {
-        presentationUrl: '/presentations/onboarding-presentation/index.html'
-      };
-    },
+    currentCategory: 'General',
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
     fetch() {
       throw new Error('deleteVersion should pass fetch to the shared delete helper instead of calling it directly');
     },
@@ -733,7 +753,8 @@ test('deleteVersion reuses the shared delete request helper when available', asy
     handleCurrentStudioVersionListMutationSuccess(deleteContext) {
       calls.push(['handleCurrentStudioVersionListMutationSuccess', deleteContext]);
       return true;
-    }
+    },
+    studioEditorSessionToken: 17
   };
 
   vm.createContext(context);
@@ -741,9 +762,16 @@ test('deleteVersion reuses the shared delete request helper when available', asy
 
   await context.deleteVersion('index_20260101_120000_Auto.html');
 
+  assert.equal(builderArgs[0], '/presentations/onboarding-presentation/index.html');
+  assert.equal(builderArgs[1], 'Project Onboarding');
+  assert.equal(builderArgs[2], 'General');
+  assert.equal(builderArgs[3].sessionToken, 17);
   assert.equal(helperArgs[0], 'index_20260101_120000_Auto.html');
   assert.deepEqual(helperArgs[1], {
-    presentationUrl: '/presentations/onboarding-presentation/index.html'
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    presentationTitle: 'Project Onboarding',
+    presentationCategory: 'General',
+    sessionToken: 17
   });
   assert.equal(helperArgs[2].fetchImpl, context.fetch);
   assert.ok(calls.some(([name]) => name === 'handleCurrentStudioVersionListMutationSuccess'));
@@ -760,6 +788,15 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
   const calls = [];
   const context = {
     SlideNextStudioVersionActions: {
+      createStudioVersionActionContext(presentationUrl, presentationTitle, presentationCategory, options) {
+        calls.push(['createStudioVersionActionContext', presentationUrl, presentationTitle, presentationCategory, options]);
+        return {
+          presentationUrl,
+          presentationTitle,
+          presentationCategory,
+          sessionToken: options.sessionToken
+        };
+      },
       async executeStudioRestoreVersionRequest(...args) {
         calls.push(['executeStudioRestoreVersionRequest', ...args]);
         return { success: true };
@@ -772,14 +809,9 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
       calls.push(['confirm', message]);
       return true;
     },
-    createCurrentStudioVersionActionContext() {
-      calls.push(['createCurrentStudioVersionActionContext']);
-      return {
-        presentationUrl: '/presentations/onboarding-presentation/index.html',
-        presentationTitle: 'Project Onboarding',
-        presentationCategory: 'General'
-      };
-    },
+    currentCategory: 'General',
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
     document: {
       getElementById(id) {
         calls.push(['getElementById', id]);
@@ -803,7 +835,8 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
     },
     launchStudioEditor(presentationUrl, presentationTitle, presentationCategory) {
       calls.push(['launchStudioEditor', presentationUrl, presentationTitle, presentationCategory]);
-    }
+    },
+    studioEditorSessionToken: 12
   };
 
   vm.createContext(context);
@@ -814,6 +847,7 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
   });
   assert.ok(calls.some(([name]) => name === 'executeStudioRestoreVersionRequest'));
   assert.ok(calls.some(([name, , , options]) => name === 'executeStudioRestoreVersionRequest' && options.fetchImpl === context.fetch));
+  assert.ok(calls.some(([name]) => name === 'createStudioVersionActionContext'));
   assert.ok(calls.some(([name]) => name === 'handleCurrentStudioVersionRestoreSuccess'));
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'versionsDropdown'));
   assert.ok(calls.some(([name, message]) => name === 'alert' && /Rollback successfully restored!/.test(message)));
@@ -829,9 +863,19 @@ test('restoreVersion reuses the shared restore request helper when available', a
   );
 
   let helperArgs = null;
+  let builderArgs = null;
   const calls = [];
   const context = {
     SlideNextStudioVersionActions: {
+      createStudioVersionActionContext(presentationUrl, presentationTitle, presentationCategory, options) {
+        builderArgs = [presentationUrl, presentationTitle, presentationCategory, options];
+        return {
+          presentationUrl,
+          presentationTitle,
+          presentationCategory,
+          sessionToken: options.sessionToken
+        };
+      },
       executeStudioRestoreVersionRequest: async (...args) => {
         helperArgs = args;
         return { success: true };
@@ -843,13 +887,9 @@ test('restoreVersion reuses the shared restore request helper when available', a
     confirm() {
       return true;
     },
-    createCurrentStudioVersionActionContext() {
-      return {
-        presentationUrl: '/presentations/onboarding-presentation/index.html',
-        presentationTitle: 'Project Onboarding',
-        presentationCategory: 'General'
-      };
-    },
+    currentCategory: 'General',
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
     fetch() {
       throw new Error('restoreVersion should pass fetch to the shared restore helper instead of calling it directly');
     },
@@ -874,7 +914,8 @@ test('restoreVersion reuses the shared restore request helper when available', a
       options.onSuccess();
       return true;
     },
-    launchStudioEditor() {}
+    launchStudioEditor() {},
+    studioEditorSessionToken: 13
   };
 
   vm.createContext(context);
@@ -882,11 +923,16 @@ test('restoreVersion reuses the shared restore request helper when available', a
 
   await context.restoreVersion('index_20260101_120000_Auto.html');
 
+  assert.equal(builderArgs[0], '/presentations/onboarding-presentation/index.html');
+  assert.equal(builderArgs[1], 'Project Onboarding');
+  assert.equal(builderArgs[2], 'General');
+  assert.equal(builderArgs[3].sessionToken, 13);
   assert.equal(helperArgs[0], 'index_20260101_120000_Auto.html');
   assert.deepEqual(helperArgs[1], {
     presentationUrl: '/presentations/onboarding-presentation/index.html',
     presentationTitle: 'Project Onboarding',
-    presentationCategory: 'General'
+    presentationCategory: 'General',
+    sessionToken: 13
   });
   assert.equal(helperArgs[2].fetchImpl, context.fetch);
   assert.ok(calls.some(([name]) => name === 'handleCurrentStudioVersionRestoreSuccess'));
@@ -898,7 +944,7 @@ test('loadVersions passes live session getters when delegating to the version hi
   const loadVersionsSource = extractFunctionSource(
     fileContent,
     'async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
-    '\n\n    function createCurrentStudioVersionActionContext() {'
+    '\n\n    // Rollback backup version'
   );
 
   let capturedOptions = null;
@@ -962,52 +1008,6 @@ test('loadVersions passes live session getters when delegating to the version hi
   context.studioEditorSessionToken = 19;
   assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
   assert.equal(capturedOptions.getCurrentSessionToken(), 19);
-});
-
-test('createCurrentStudioVersionActionContext captures the active editor deck identity and session', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const createCurrentStudioVersionActionContextSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioVersionActionContext() {',
-    '\n\n    // Rollback backup version'
-  );
-
-  const calls = [];
-  const context = {
-    SlideNextStudioVersionActions: {
-      createStudioVersionActionContext(presentationUrl, presentationTitle, presentationCategory, options) {
-        calls.push([presentationUrl, presentationTitle, presentationCategory, options]);
-        return {
-          presentationUrl,
-          presentationTitle,
-          presentationCategory,
-          sessionToken: options.sessionToken
-        };
-      }
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    currentTitle: 'Project Onboarding',
-    currentCategory: 'General',
-    studioEditorSessionToken: 21
-  };
-
-  vm.createContext(context);
-  vm.runInContext(createCurrentStudioVersionActionContextSource, context);
-
-  assert.deepEqual(
-    context.createCurrentStudioVersionActionContext(),
-    {
-      presentationUrl: '/presentations/onboarding-presentation/index.html',
-      presentationTitle: 'Project Onboarding',
-      presentationCategory: 'General',
-      sessionToken: 21
-    }
-  );
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0][0], '/presentations/onboarding-presentation/index.html');
-  assert.equal(calls[0][1], 'Project Onboarding');
-  assert.equal(calls[0][2], 'General');
-  assert.equal(calls[0][3].sessionToken, 21);
 });
 
 test('handleCurrentStudioVersionListMutationSuccess delegates through the shared action handler options builder', () => {
