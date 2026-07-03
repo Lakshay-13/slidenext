@@ -49,15 +49,6 @@ function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistedCanonicalDeck(',
-    '\n\n    function applyCurrentStudioPersistedPlaybackState('
-  );
-  vm.runInContext(helperSource, context);
-}
-
-function loadApplyCurrentStudioPersistedPlaybackState(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyCurrentStudioPersistedPlaybackState(playbackState = null) {',
     '\n\n    function setCurrentPresentationCanonicalDeck('
   );
   vm.runInContext(helperSource, context);
@@ -366,40 +357,4 @@ test('applyCurrentStudioPersistedCanonicalDeck updates the canonical baseline an
 
   assert.deepEqual(context.lastPersistedCanonicalDeck, normalizedCanonicalDeck);
   assert.deepEqual(metadataSyncCalls, [[rawCanonicalDeck, '/presentations/onboarding-presentation/index.html']]);
-});
-
-test('applyCurrentStudioPersistedPlaybackState updates the normalized playback baseline', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateEditorPersistedDeckStateSource = extractFunctionSource(
-    fileContent,
-    'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function resetEditorDeckPersistenceState() {'
-  );
-
-  const context = {
-    lastPersistedDeckHtml: '<html>old</html>',
-    lastPersistedCanonicalDeck: null,
-    persistedDeckPlaybackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 2' },
-    SlideNextDeckPersistence: deckPersistence,
-    SlideNextStudioDeckContext: {
-      resolveStoredStudioCanonicalDeck(metadata) {
-        return metadata && metadata.canonicalDeck ? metadata.canonicalDeck : null;
-      }
-    },
-    Object
-  };
-
-  vm.createContext(context);
-  loadResolveEditorStoredCanonicalDeck(fileContent, context);
-  vm.runInContext(updateEditorPersistedDeckStateSource, context);
-  loadApplyCurrentStudioPersistedDeckState(fileContent, context);
-  loadApplyCurrentStudioPersistedPlaybackState(fileContent, context);
-
-  const result = context.applyCurrentStudioPersistedPlaybackState({ activeSlideId: 'slide-3' });
-
-  assert.deepEqual(result, { activeSlideId: 'slide-3' });
-  assert.deepEqual(context.persistedDeckPlaybackState, {
-    activeSlideIds: ['slide-3'],
-    slideCounterText: ''
-  });
 });

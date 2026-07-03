@@ -1063,14 +1063,6 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext('createEditorDeckViewBuildOptions = __createEditorDeckViewBuildOptions;', context);
   vm.runInContext(persistedDeckStateHelperSource, context);
-  vm.runInContext(
-    extractFunctionSource(
-      fileContent,
-      'function applyCurrentStudioPersistedPlaybackState(playbackState = null) {',
-      '\n\n    function setCurrentPresentationCanonicalDeck('
-    ),
-    context
-  );
   vm.runInContext(restoreFrameFromHistoryEntrySource, context);
 
   context.restoreFrameFromHistoryEntry({
@@ -1210,14 +1202,6 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
   vm.createContext(context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(persistedDeckStateHelperSource, context);
-  vm.runInContext(
-    extractFunctionSource(
-      fileContent,
-      'function applyCurrentStudioPersistedPlaybackState(playbackState = null) {',
-      '\n\n    function setCurrentPresentationCanonicalDeck('
-    ),
-    context
-  );
   vm.runInContext(restoreFrameFromHistoryEntrySource, context);
 
   context.restoreFrameFromHistoryEntry({
