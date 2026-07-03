@@ -5817,6 +5817,48 @@
             : '');
     }
 
+    function resolveEditorMetadataPersistenceOptions(options = {}) {
+      const activePresentationMetadata = Object.prototype.hasOwnProperty.call(options, 'currentPresentationMetadata')
+        ? options.currentPresentationMetadata
+        : (typeof currentPresentationMetadata !== 'undefined'
+            ? currentPresentationMetadata
+            : null);
+      const resolveMergedPresentationPersistenceOptions = typeof options.resolveMergedPresentationPersistenceOptions === 'function'
+        ? options.resolveMergedPresentationPersistenceOptions
+        : (
+            typeof SlideNextDeckLoader !== 'undefined'
+            && SlideNextDeckLoader
+            && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
+          )
+          ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
+          : null;
+      if (resolveMergedPresentationPersistenceOptions) {
+        return resolveMergedPresentationPersistenceOptions(activePresentationMetadata || {}, options.persistenceOptions);
+      }
+      return (
+        typeof options.resolvePresentationPersistenceOptions === 'function'
+          ? options.resolvePresentationPersistenceOptions
+          : (
+              typeof SlideNextDeckLoader !== 'undefined'
+              && SlideNextDeckLoader
+              && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
+            )
+            ? SlideNextDeckLoader.resolvePresentationPersistenceOptions
+            : null
+      )
+        ? (
+            typeof options.resolvePresentationPersistenceOptions === 'function'
+              ? options.resolvePresentationPersistenceOptions
+              : SlideNextDeckLoader.resolvePresentationPersistenceOptions
+          )(activePresentationMetadata || {})
+        : activePresentationMetadata
+          && activePresentationMetadata.persistence
+          && typeof activePresentationMetadata.persistence === 'object'
+          && !Array.isArray(activePresentationMetadata.persistence)
+          ? { ...activePresentationMetadata.persistence }
+          : {};
+    }
+
     function buildPersistableDeckHtml(doc = getIframeDoc()) {
       const buildOptions = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
         ? arguments[1]
@@ -5852,33 +5894,35 @@
             }
             return providedCanonicalDeck || (buildCanonicalDeck ? buildCanonicalDeck() : null);
           };
-      const resolveMetadataPersistenceOptions = () => {
-        const activePresentationMetadata = typeof currentPresentationMetadata !== 'undefined'
-          ? currentPresentationMetadata
-          : null;
-        const resolveMergedPresentationPersistenceOptions = (
-          typeof SlideNextDeckLoader !== 'undefined'
-          && SlideNextDeckLoader
-          && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
-        )
-          ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
-          : null;
-        if (resolveMergedPresentationPersistenceOptions) {
-          return resolveMergedPresentationPersistenceOptions(activePresentationMetadata || {});
-        }
-        return (
-          typeof SlideNextDeckLoader !== 'undefined'
-          && SlideNextDeckLoader
-          && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
-        )
-          ? SlideNextDeckLoader.resolvePresentationPersistenceOptions(activePresentationMetadata || {})
-          : activePresentationMetadata
-            && activePresentationMetadata.persistence
-            && typeof activePresentationMetadata.persistence === 'object'
-            && !Array.isArray(activePresentationMetadata.persistence)
-            ? { ...activePresentationMetadata.persistence }
-            : {};
-      };
+      const resolveMetadataPersistenceOptions = () => typeof resolveEditorMetadataPersistenceOptions === 'function'
+        ? resolveEditorMetadataPersistenceOptions()
+        : (() => {
+            const activePresentationMetadata = typeof currentPresentationMetadata !== 'undefined'
+              ? currentPresentationMetadata
+              : null;
+            const resolveMergedPresentationPersistenceOptions = (
+              typeof SlideNextDeckLoader !== 'undefined'
+              && SlideNextDeckLoader
+              && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
+            )
+              ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
+              : null;
+            if (resolveMergedPresentationPersistenceOptions) {
+              return resolveMergedPresentationPersistenceOptions(activePresentationMetadata || {});
+            }
+            return (
+              typeof SlideNextDeckLoader !== 'undefined'
+              && SlideNextDeckLoader
+              && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
+            )
+              ? SlideNextDeckLoader.resolvePresentationPersistenceOptions(activePresentationMetadata || {})
+              : activePresentationMetadata
+                && activePresentationMetadata.persistence
+                && typeof activePresentationMetadata.persistence === 'object'
+                && !Array.isArray(activePresentationMetadata.persistence)
+                ? { ...activePresentationMetadata.persistence }
+                : {};
+          })();
       const sanitizeReusablePersistedHtml = (persistedHtml, playbackState = null) => {
         if (!persistedHtml
           || typeof DOMParser !== 'function'

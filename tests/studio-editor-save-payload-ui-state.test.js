@@ -704,6 +704,54 @@ test('resolveEditorReusablePersistedHtml delegates persisted html reuse checks t
   assert.equal(delegatedArgs.options.canonicalDeck, canonicalDeck);
 });
 
+test('resolveEditorMetadataPersistenceOptions prefers the shared merged persistence resolver when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+
+  const currentPresentationMetadata = {
+    id: 'computer-vision-presentation',
+    persistence: {
+      emptyContainerIds: ['pixelMatrix']
+    }
+  };
+  const calls = [];
+  const context = {
+    SlideNextDeckLoader: {
+      resolveMergedPresentationPersistenceOptions(metadata, explicitOptions) {
+        calls.push(['resolveMergedPresentationPersistenceOptions', metadata, explicitOptions]);
+        return {
+          emptyContainerIds: ['pixelMatrix'],
+          transientClassNames: ['revealed']
+        };
+      },
+      resolvePresentationPersistenceOptions() {
+        throw new Error('resolvePresentationPersistenceOptions should not run when merged resolver is available');
+      }
+    },
+    currentPresentationMetadata
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveEditorMetadataPersistenceOptions())),
+    {
+      emptyContainerIds: ['pixelMatrix'],
+      transientClassNames: ['revealed']
+    }
+  );
+  assert.deepEqual(calls, [[
+    'resolveMergedPresentationPersistenceOptions',
+    currentPresentationMetadata,
+    undefined
+  ]]);
+});
+
 test('buildPersistableDeckHtml reuses the local reusable persisted html resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
@@ -1110,7 +1158,7 @@ test('buildPersistableDeckHtml forwards metadata-derived persistence cleanup opt
   assert.equal(calls[2][2].persistedDeckPlaybackState, livePlaybackState);
 });
 
-test('buildPersistableDeckHtml prefers the shared merged persistence resolver when persisting live iframe html', () => {
+test('buildPersistableDeckHtml reuses the local metadata persistence resolver when persisting live iframe html', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
     fileContent,
@@ -1139,19 +1187,12 @@ test('buildPersistableDeckHtml prefers the shared merged persistence resolver wh
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
-    SlideNextDeckLoader: {
-      resolveMergedPresentationPersistenceOptions(metadata, explicitOptions) {
-        calls.push(['resolveMergedPresentationPersistenceOptions', metadata, explicitOptions]);
-        assert.equal(metadata, currentPresentationMetadata);
-        assert.equal(explicitOptions, undefined);
-        return {
-          emptyContainerIds: ['pixelMatrix'],
-          transientClassNames: ['revealed']
-        };
-      },
-      resolvePresentationPersistenceOptions() {
-        throw new Error('resolvePresentationPersistenceOptions should not run when merged resolver is available');
-      }
+    __resolveEditorMetadataPersistenceOptions() {
+      calls.push(['resolveEditorMetadataPersistenceOptions']);
+      return {
+        emptyContainerIds: ['pixelMatrix'],
+        transientClassNames: ['revealed']
+      };
     },
     SlideNextDeckPersistence: {
       buildPersistableDeckHtml(nextDoc, options) {
@@ -1173,11 +1214,12 @@ test('buildPersistableDeckHtml prefers the shared merged persistence resolver wh
   vm.createContext(context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);
+  vm.runInContext('resolveEditorMetadataPersistenceOptions = __resolveEditorMetadataPersistenceOptions;', context);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-live</html>');
   assert.deepEqual(calls.map(([name]) => name), [
     'capturePersistedDeckPlaybackState',
-    'resolveMergedPresentationPersistenceOptions',
+    'resolveEditorMetadataPersistenceOptions',
     'buildPersistableDeckHtml'
   ]);
   assert.equal(calls[2][1], iframeDoc);
