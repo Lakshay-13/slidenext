@@ -150,6 +150,56 @@ test('openPresentationModalWithContent applies html launches through the shared 
   assert.equal(bodyEl.style.overflow, 'hidden');
 });
 
+test('launchStudioPresentation prefers preview html over the presentation url when both are available', () => {
+  const iframeEl = createIframe();
+  const modalEl = {
+    classList: createClassList(['hidden', 'opacity-0', 'pointer-events-none'])
+  };
+  const bodyEl = {
+    style: {
+      overflow: ''
+    }
+  };
+
+  const result = preview.launchStudioPresentation({
+    modalEl,
+    iframeEl,
+    bodyEl,
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    previewHtml: '<html>preview</html>',
+    startSlideIdx: 2
+  });
+
+  assert.equal(result, 'html');
+  assert.equal(iframeEl.srcdoc, '<html>preview</html>');
+  assert.equal(iframeEl.src, '');
+});
+
+test('launchStudioPresentation falls back to the presentation url when no preview html is available', () => {
+  const iframeEl = createIframe();
+  const modalEl = {
+    classList: createClassList(['hidden', 'opacity-0', 'pointer-events-none'])
+  };
+  const bodyEl = {
+    style: {
+      overflow: ''
+    }
+  };
+
+  const result = preview.launchStudioPresentation({
+    modalEl,
+    iframeEl,
+    bodyEl,
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    previewHtml: '',
+    startSlideIdx: 2
+  });
+
+  assert.equal(result, 'url');
+  assert.equal(iframeEl.src, '/presentations/onboarding-presentation/index.html');
+  assert.equal(iframeEl.srcdoc, '');
+});
+
 test('resetPresentationModal clears preview state immediately', () => {
   const iframeEl = createIframe();
   iframeEl.onload = () => {};

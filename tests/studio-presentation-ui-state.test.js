@@ -143,6 +143,57 @@ test('launchPreview does not open preview flows when the present button is disab
   assert.equal(launchPresentationCalls, 0);
 });
 
+test('launchPreview delegates the launch-mode decision to the shared preview helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const launchPreviewSource = extractFunctionSource(
+    fileContent,
+    'function launchPreview() {',
+    '\n  </script>'
+  );
+
+  const elements = {
+    launchPreviewBtn: { disabled: false },
+    presentationModal: { id: 'presentationModal' },
+    presentationFrame: { id: 'presentationFrame' }
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioPreview: {
+      launchStudioPresentation(options = {}) {
+        calls.push(options);
+        return 'html';
+      }
+    },
+    buildEditorPreviewHtml() {
+      return '<html>preview</html>';
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    document: {
+      body: { style: {} },
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    },
+    getStudioActiveSlideIndex() {
+      return 2;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(launchPreviewSource, context);
+
+  context.launchPreview();
+
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    modalEl: { id: 'presentationModal' },
+    iframeEl: { id: 'presentationFrame' },
+    bodyEl: { style: {} },
+    startSlideIdx: 2,
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    previewHtml: '<html>preview</html>'
+  }]);
+});
+
 test('buildEditorPreviewHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorPreviewHtmlSource = extractFunctionSource(

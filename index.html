@@ -6667,12 +6667,14 @@
       const previewBtn = document.getElementById('launchPreviewBtn');
       if (previewBtn && previewBtn.disabled) return;
       if (!currentPresentationUrl) return;
-      const previewHtml = buildEditorPreviewHtml();
-      if (previewHtml) {
-        launchPresentationHtml(previewHtml, getStudioActiveSlideIndex());
-        return;
-      }
-      launchPresentation(currentPresentationUrl, getStudioActiveSlideIndex());
+      SlideNextStudioPreview.launchStudioPresentation({
+        modalEl: document.getElementById('presentationModal'),
+        iframeEl: document.getElementById('presentationFrame'),
+        bodyEl: document.body,
+        startSlideIdx: getStudioActiveSlideIndex(),
+        presentationUrl: currentPresentationUrl,
+        previewHtml: buildEditorPreviewHtml()
+      });
     }
   </script>
 </body>

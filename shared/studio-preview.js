@@ -138,6 +138,32 @@
     });
   }
 
+  function launchStudioPresentation(options = {}) {
+    const previewHtml = typeof options.previewHtml === 'string'
+      ? options.previewHtml
+      : '';
+    if (previewHtml) {
+      launchPresentationHtml({
+        ...options,
+        html: previewHtml
+      });
+      return 'html';
+    }
+
+    const presentationUrl = typeof options.presentationUrl === 'string'
+      ? options.presentationUrl
+      : '';
+    if (!presentationUrl) {
+      return '';
+    }
+
+    launchPresentationUrl({
+      ...options,
+      url: presentationUrl
+    });
+    return 'url';
+  }
+
   function closePresentationModal(options = {}) {
     const {
       modalEl,
@@ -279,6 +305,7 @@
     openPresentationModalWithContent,
     launchPresentationUrl,
     launchPresentationHtml,
+    launchStudioPresentation,
     closePresentationModal,
     resetPresentationModal,
     openSourceViewModal,
