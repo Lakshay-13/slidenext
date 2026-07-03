@@ -5702,7 +5702,6 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
         ? options.canonicalDeck
         : null;
-      const resolveSaveCanonicalDeck = createEditorSaveCanonicalDeckResolver(doc);
       const capturedDeckState = typeof cleanHtml === 'string' || typeof captureEditorPersistableDeckState !== 'function'
         ? null
         : captureEditorPersistableDeckState(doc, {
@@ -5710,7 +5709,7 @@
           });
       const resolvedCanonicalDeck = capturedDeckState && capturedDeckState.canonicalDeck
         ? capturedDeckState.canonicalDeck
-        : resolveSaveCanonicalDeck(providedCanonicalDeck);
+        : resolveEditorSaveCanonicalDeck(doc, providedCanonicalDeck);
       const resolvedCleanHtml = typeof cleanHtml === 'string'
         ? cleanHtml
         : capturedDeckState && typeof capturedDeckState.cleanHtml === 'string'

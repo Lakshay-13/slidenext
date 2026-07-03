@@ -414,14 +414,11 @@ test('buildEditorSaveRequestBody reuses the local save canonical deck helper whe
   const calls = [];
   const context = {
     SlideNextStudioEditorPersistence: editorPersistence,
-    __createEditorSaveCanonicalDeckResolver(nextDoc) {
-      calls.push(['createEditorSaveCanonicalDeckResolver', nextDoc]);
+    __resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
       assert.equal(nextDoc, doc);
-      return (nextCanonicalDeck) => {
-        calls.push(['resolveSaveCanonicalDeck', nextCanonicalDeck]);
-        assert.equal(nextCanonicalDeck, null);
-        return canonicalDeck;
-      };
+      assert.equal(nextCanonicalDeck, null);
+      return canonicalDeck;
     },
     captureEditorPersistableDeckState(nextDoc, captureOptions = {}) {
       calls.push(['captureEditorPersistableDeckState', nextDoc, captureOptions]);
@@ -446,7 +443,7 @@ test('buildEditorSaveRequestBody reuses the local save canonical deck helper whe
   vm.createContext(context);
   loadBuildEditorSaveRequestBody(fileContent, context, buildEditorSaveRequestBodySource);
   vm.runInContext(
-    'createEditorSaveCanonicalDeckResolver = __createEditorSaveCanonicalDeckResolver;',
+    'resolveEditorSaveCanonicalDeck = __resolveEditorSaveCanonicalDeck;',
     context
   );
 
@@ -460,9 +457,8 @@ test('buildEditorSaveRequestBody reuses the local save canonical deck helper whe
     }
   );
   assert.deepEqual(calls.map(([name]) => name), [
-    'createEditorSaveCanonicalDeckResolver',
     'captureEditorPersistableDeckState',
-    'resolveSaveCanonicalDeck'
+    'resolveEditorSaveCanonicalDeck'
   ]);
 });
 
