@@ -5185,18 +5185,6 @@
       applyCurrentStudioRestoredHistoryState(historyEntry, restoredPlaybackState);
     }
 
-    function createEditorPersistableSourceViewOptions(doc = getIframeDoc(), canonicalDeck = null, persistedHtml = '') {
-      return createEditorDeckViewBuildOptions(doc, {
-        buildCanonicalDeck: () => canonicalDeck,
-        buildFallbackHtml: () => persistedHtml,
-        buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
-          sourceDoc,
-          nextCanonicalDeck,
-          options
-        )
-      });
-    }
-
     function renderEditorPersistableSourceDeckHtml(doc = getIframeDoc(), sourceViewOptions = {}, persistedHtml = '', options = {}) {
       const buildFallbackHtml = typeof options.buildFallbackHtml === 'function'
         ? options.buildFallbackHtml
@@ -5448,7 +5436,15 @@
         if (reusablePersistedHtml) {
           return sanitizeReusablePersistedHtml(reusablePersistedHtml, persistedDeckState.playbackState);
         }
-        const sourceViewOptions = createEditorPersistableSourceViewOptions(doc, canonicalDeck, persistedHtml);
+        const sourceViewOptions = createEditorDeckViewBuildOptions(doc, {
+          buildCanonicalDeck: () => canonicalDeck,
+          buildFallbackHtml: () => persistedHtml,
+          buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
+            sourceDoc,
+            nextCanonicalDeck,
+            options
+          )
+        });
         return renderEditorPersistableSourceDeckHtml(doc, sourceViewOptions, persistedHtml);
       }
       const livePlaybackState = doc
