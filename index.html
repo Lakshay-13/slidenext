@@ -5776,6 +5776,65 @@
           };
     }
 
+    function renderEditorPersistableSourceDeckHtml(doc = getIframeDoc(), sourceViewOptions = {}, persistedHtml = '', options = {}) {
+      const buildFallbackHtml = typeof options.buildFallbackHtml === 'function'
+        ? options.buildFallbackHtml
+        : () => persistedHtml;
+      const renderSourceDeckHtml = typeof options.renderEditorSourceDeckHtml === 'function'
+        ? options.renderEditorSourceDeckHtml
+        : (typeof renderEditorSourceDeckHtml === 'function'
+            ? renderEditorSourceDeckHtml
+            : null);
+      if (renderSourceDeckHtml) {
+        return renderSourceDeckHtml(doc, sourceViewOptions, {
+          buildFallbackHtml,
+          buildStudioSourceHtml: typeof options.buildStudioSourceHtml === 'function'
+            ? options.buildStudioSourceHtml
+            : undefined,
+          buildDeckSourceHtml: typeof options.buildDeckSourceHtml === 'function'
+            ? options.buildDeckSourceHtml
+            : undefined
+        });
+      }
+
+      if (typeof buildEditorSourceDeckHtml === 'function') {
+        return buildEditorSourceDeckHtml(doc, {
+          buildViewOptions: () => sourceViewOptions
+        });
+      }
+
+      const buildStudioSourceHtml = typeof options.buildStudioSourceHtml === 'function'
+        ? options.buildStudioSourceHtml
+        : (
+            typeof SlideNextStudioDeckView !== 'undefined'
+            && SlideNextStudioDeckView
+            && typeof SlideNextStudioDeckView.buildStudioSourceHtml === 'function'
+          )
+          ? SlideNextStudioDeckView.buildStudioSourceHtml
+          : null;
+      if (buildStudioSourceHtml) {
+        return buildStudioSourceHtml(doc, sourceViewOptions);
+      }
+
+      const buildDeckSourceHtml = typeof options.buildDeckSourceHtml === 'function'
+        ? options.buildDeckSourceHtml
+        : (
+            typeof SlideNextDeckHtml !== 'undefined'
+            && SlideNextDeckHtml
+            && typeof SlideNextDeckHtml.buildDeckSourceHtml === 'function'
+          )
+          ? SlideNextDeckHtml.buildDeckSourceHtml
+          : null;
+      const canonicalDeck = typeof sourceViewOptions.buildCanonicalDeck === 'function'
+        ? sourceViewOptions.buildCanonicalDeck(doc)
+        : null;
+      if (buildDeckSourceHtml && canonicalDeck && Array.isArray(canonicalDeck.slides)) {
+        return buildDeckSourceHtml(canonicalDeck, sourceViewOptions.deckHtmlOptions || {});
+      }
+
+      return buildFallbackHtml(doc);
+    }
+
     function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {
       const nextPersistedDeckState = persistedDeckState && typeof persistedDeckState === 'object'
         ? persistedDeckState
@@ -6129,37 +6188,45 @@
                   renderOptions: buildEditorDeckRenderOptions(doc, canonicalDeck)
                 }
               };
-        if (typeof renderEditorSourceDeckHtml === 'function') {
-          return renderEditorSourceDeckHtml(doc, sourceViewOptions, {
-            buildFallbackHtml: () => persistedHtml
-          });
-        }
-        if (typeof buildEditorSourceDeckHtml === 'function') {
-          return buildEditorSourceDeckHtml(doc, {
-            buildViewOptions: () => sourceViewOptions
-          });
-        }
-        const buildStudioSourceHtml = (
-          typeof SlideNextStudioDeckView !== 'undefined'
-          && SlideNextStudioDeckView
-          && typeof SlideNextStudioDeckView.buildStudioSourceHtml === 'function'
-        )
-          ? SlideNextStudioDeckView.buildStudioSourceHtml
-          : null;
-        if (buildStudioSourceHtml) {
-          return buildStudioSourceHtml(doc, sourceViewOptions);
-        }
-        const buildDeckSourceHtml = (
-          typeof SlideNextDeckHtml !== 'undefined'
-          && SlideNextDeckHtml
-          && typeof SlideNextDeckHtml.buildDeckSourceHtml === 'function'
-        )
-          ? SlideNextDeckHtml.buildDeckSourceHtml
-          : null;
-        if (buildDeckSourceHtml && canonicalDeck && Array.isArray(canonicalDeck.slides)) {
-          return buildDeckSourceHtml(canonicalDeck, sourceViewOptions.deckHtmlOptions || {});
-        }
-        return persistedHtml;
+        const renderPersistableSourceDeckHtml = typeof renderEditorPersistableSourceDeckHtml === 'function'
+          ? renderEditorPersistableSourceDeckHtml
+          : (nextDoc, nextSourceViewOptions, nextPersistedHtml = '') => {
+              if (typeof renderEditorSourceDeckHtml === 'function') {
+                return renderEditorSourceDeckHtml(nextDoc, nextSourceViewOptions, {
+                  buildFallbackHtml: () => nextPersistedHtml
+                });
+              }
+              if (typeof buildEditorSourceDeckHtml === 'function') {
+                return buildEditorSourceDeckHtml(nextDoc, {
+                  buildViewOptions: () => nextSourceViewOptions
+                });
+              }
+              const buildStudioSourceHtml = (
+                typeof SlideNextStudioDeckView !== 'undefined'
+                && SlideNextStudioDeckView
+                && typeof SlideNextStudioDeckView.buildStudioSourceHtml === 'function'
+              )
+                ? SlideNextStudioDeckView.buildStudioSourceHtml
+                : null;
+              if (buildStudioSourceHtml) {
+                return buildStudioSourceHtml(nextDoc, nextSourceViewOptions);
+              }
+              const buildDeckSourceHtml = (
+                typeof SlideNextDeckHtml !== 'undefined'
+                && SlideNextDeckHtml
+                && typeof SlideNextDeckHtml.buildDeckSourceHtml === 'function'
+              )
+                ? SlideNextDeckHtml.buildDeckSourceHtml
+                : null;
+              const nextCanonicalDeck = typeof nextSourceViewOptions.buildCanonicalDeck === 'function'
+                ? nextSourceViewOptions.buildCanonicalDeck(nextDoc)
+                : null;
+              if (buildDeckSourceHtml && nextCanonicalDeck && Array.isArray(nextCanonicalDeck.slides)) {
+                return buildDeckSourceHtml(nextCanonicalDeck, nextSourceViewOptions.deckHtmlOptions || {});
+              }
+              return nextPersistedHtml;
+            };
+        return renderPersistableSourceDeckHtml(doc, sourceViewOptions, persistedHtml);
       }
       const livePlaybackState = doc
         ? null

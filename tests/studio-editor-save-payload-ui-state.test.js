@@ -2241,6 +2241,48 @@ test('createEditorPersistableSourceViewOptions reuses the local deck view build 
   assert.deepEqual(renderOptionCalls, [[iframeDoc, canonicalDeck, { activeSlideId: 'slide-2' }]]);
 });
 
+test('renderEditorPersistableSourceDeckHtml reuses renderEditorSourceDeckHtml when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const renderEditorPersistableSourceDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function renderEditorPersistableSourceDeckHtml(doc = getIframeDoc(), sourceViewOptions = {}, persistedHtml = \'\', options = {}) {',
+    '\n\n    function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {'
+  );
+
+  const sourceViewOptions = {
+    buildCanonicalDeck() {
+      return {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: []
+      };
+    }
+  };
+  let delegatedArgs = null;
+  const context = {
+    __renderEditorSourceDeckHtml(nextDoc, nextSourceViewOptions, options) {
+      delegatedArgs = { nextDoc, nextSourceViewOptions, options };
+      return '<html>canonical-source</html>';
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(renderEditorPersistableSourceDeckHtmlSource, context);
+  vm.runInContext('renderEditorSourceDeckHtml = __renderEditorSourceDeckHtml;', context);
+
+  assert.equal(
+    context.renderEditorPersistableSourceDeckHtml(null, sourceViewOptions, '<html>persisted-baseline</html>'),
+    '<html>canonical-source</html>'
+  );
+  assert.equal(delegatedArgs.nextDoc, null);
+  assert.equal(delegatedArgs.nextSourceViewOptions, sourceViewOptions);
+  assert.equal(typeof delegatedArgs.options.buildFallbackHtml, 'function');
+  assert.equal(delegatedArgs.options.buildFallbackHtml(), '<html>persisted-baseline</html>');
+});
+
 test('buildPersistableDeckHtml reuses createEditorPersistableSourceViewOptions and renderEditorSourceDeckHtml when rendering canonical source without a persisted baseline', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
@@ -2328,6 +2370,92 @@ test('buildPersistableDeckHtml reuses createEditorPersistableSourceViewOptions a
   assert.equal(calls[1][0], null);
   assert.equal(typeof calls[1][1].buildFallbackHtml, 'function');
   assert.equal(calls[1][1].buildFallbackHtml(), '');
+});
+
+test('buildPersistableDeckHtml reuses the local persistable source deck html renderer when rendering canonical source without a persisted baseline', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+  const calls = [];
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml() {
+        throw new Error('live deck sanitizer should not run without a live frame');
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence
+    },
+    createEditorPersistableSourceViewOptions(nextDoc, nextCanonicalDeck, persistedHtml) {
+      calls.push(['createEditorPersistableSourceViewOptions', nextDoc, nextCanonicalDeck, persistedHtml]);
+      return {
+        buildCanonicalDeck() {
+          return nextCanonicalDeck;
+        }
+      };
+    },
+    __renderEditorPersistableSourceDeckHtml(nextDoc, sourceViewOptions, persistedHtml) {
+      calls.push(['renderEditorPersistableSourceDeckHtml', nextDoc, sourceViewOptions, persistedHtml]);
+      assert.equal(sourceViewOptions.buildCanonicalDeck(), canonicalDeck);
+      return '<html>canonical-source</html>';
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, null);
+      return canonicalDeck;
+    },
+    currentSlideIndex: 0,
+    getPersistedActiveSlideId() {
+      return 'slide-2';
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '',
+    lastPersistedCanonicalDeck: null,
+    persistedDeckPlaybackState: {
+      activeSlideIds: ['slide-2']
+    }
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  vm.runInContext('renderEditorPersistableSourceDeckHtml = __renderEditorPersistableSourceDeckHtml;', context);
+
+  assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
+  assert.deepEqual(calls[0], ['createEditorPersistableSourceViewOptions', null, canonicalDeck, '']);
+  assert.equal(calls[1][0], 'renderEditorPersistableSourceDeckHtml');
+  assert.equal(calls[1][1], null);
+  assert.equal(calls[1][3], '');
 });
 
 test('buildPersistableDeckHtml prefers rendered canonical html when the current canonical deck differs from the persisted baseline', () => {
