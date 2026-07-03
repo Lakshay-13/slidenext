@@ -101,7 +101,7 @@ function loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {',
-    '\n\n    function applyCurrentStudioCapturedDeckState('
+    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }

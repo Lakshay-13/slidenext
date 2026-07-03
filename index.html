@@ -2152,10 +2152,17 @@
         observeDeckActiveSlideState,
         captureInitialHistoryState: () => {
           saveHistoryState(false);
-          applyCurrentStudioCapturedDeckState(
-            captureEditorPersistableDeckState(iframeDoc),
-            currentPresentationUrl,
-            studioEditorSessionToken
+          applyCurrentStudioPersistenceSuccess(
+            SlideNextStudioEditorPersistence.createStudioPersistedDeckStateActionContext(
+              captureEditorPersistableDeckState(iframeDoc),
+              currentPresentationUrl,
+              {
+                sessionToken: studioEditorSessionToken
+              }
+            ),
+            {
+              presentationUrl: currentPresentationUrl
+            }
           );
         }
       });
@@ -5625,25 +5632,6 @@
           refreshVersionEntries: loadVersions,
           onSuccess: options.onSuccess
         })
-      );
-    }
-
-    function applyCurrentStudioCapturedDeckState(
-      persistedDeckState = {},
-      presentationUrl = currentPresentationUrl,
-      sessionToken = studioEditorSessionToken
-    ) {
-      return applyCurrentStudioPersistenceSuccess(
-        SlideNextStudioEditorPersistence.createStudioPersistedDeckStateActionContext(
-          persistedDeckState,
-          presentationUrl,
-          {
-            sessionToken
-          }
-        ),
-        {
-          presentationUrl
-        }
       );
     }
 

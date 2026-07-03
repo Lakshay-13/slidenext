@@ -53,15 +53,6 @@ function loadResolveEditorCapturedPersistableDeckState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadApplyCurrentStudioCapturedDeckState(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyCurrentStudioCapturedDeckState(',
-    '\n\n    function resolveCurrentStudioVersionCheckpointPersistenceState('
-  );
-  vm.runInContext(helperSource, context);
-}
-
 test('captureEditorPersistableDeckState returns persisted html, canonical deck, and playback state from one capture', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
@@ -712,17 +703,18 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
   const playbackState = {
     activeSlideIds: ['slide-1']
   };
-  let capturedPersistedDeckState = null;
+  let capturedActionContextArgs = null;
+  let delegatedArgs = null;
   const calls = [];
   let buildEditorCanonicalDeckCalls = 0;
 
   const context = {
-    applyCurrentStudioCapturedDeckState(nextPersistedDeckState, presentationUrl, sessionToken) {
-      capturedPersistedDeckState = {
-        nextPersistedDeckState,
-        presentationUrl,
-        sessionToken
+    applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
+      delegatedArgs = {
+        persistenceContext,
+        options
       };
+      return 'applied';
     },
     getIframeDoc() {
       return iframeDoc;
@@ -788,6 +780,23 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
       return canonicalDeck;
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      createStudioPersistedDeckStateActionContext(nextPersistedDeckState, presentationUrl, options = {}) {
+        capturedActionContextArgs = {
+          nextPersistedDeckState,
+          presentationUrl,
+          options
+        };
+        return {
+          presentationUrl,
+          cleanHtml: nextPersistedDeckState.cleanHtml,
+          canonicalDeck: nextPersistedDeckState.canonicalDeck,
+          playbackState: nextPersistedDeckState.playbackState,
+          sessionToken: options.sessionToken
+        };
+      }
+    },
     studioEditorSessionToken: 7,
     persistedDeckPlaybackState: null,
     lastPersistedDeckHtml: '',
@@ -809,78 +818,30 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
     'saveHistoryState',
     'buildPersistableDeckHtml'
   ]);
-  assert.deepEqual(JSON.parse(JSON.stringify(capturedPersistedDeckState)), {
+  assert.deepEqual(JSON.parse(JSON.stringify(capturedActionContextArgs)), {
     nextPersistedDeckState: {
       playbackState,
       cleanHtml: '<html>persisted-live</html>',
       canonicalDeck
     },
     presentationUrl: '/presentations/onboarding-presentation/index.html',
-    sessionToken: 7
-  });
-  assert.equal(buildEditorCanonicalDeckCalls, 0);
-});
-
-test('applyCurrentStudioCapturedDeckState delegates captured bootstrap state through shared persistence helpers', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const persistedDeckState = {
-    cleanHtml: '<html>persisted-live</html>',
-    canonicalDeck: {
-      kind: 'slidenext.deck',
-      schemaVersion: 1,
-      slides: []
-    },
-    playbackState: {
-      activeSlideIds: ['slide-1']
+    options: {
+      sessionToken: 7
     }
-  };
-  let capturedActionContextArgs = null;
-  let delegatedArgs = null;
-  const context = {
-    SlideNextStudioEditorPersistence: {
-      createStudioPersistedDeckStateActionContext(nextPersistedDeckState, presentationUrl, options = {}) {
-        capturedActionContextArgs = {
-          nextPersistedDeckState,
-          presentationUrl,
-          options
-        };
-        return {
-          presentationUrl,
-          cleanHtml: nextPersistedDeckState.cleanHtml,
-          sessionToken: options.sessionToken
-        };
-      }
-    },
-    applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
-      delegatedArgs = {
-        persistenceContext,
-        options
-      };
-      return 'applied';
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 11
-  };
-
-  vm.createContext(context);
-  loadApplyCurrentStudioCapturedDeckState(fileContent, context);
-
-  const result = context.applyCurrentStudioCapturedDeckState(persistedDeckState);
-
-  assert.equal(result, 'applied');
-  assert.equal(capturedActionContextArgs.nextPersistedDeckState, persistedDeckState);
-  assert.equal(capturedActionContextArgs.presentationUrl, '/presentations/onboarding-presentation/index.html');
-  assert.equal(capturedActionContextArgs.options.sessionToken, 11);
+  });
   assert.deepEqual(JSON.parse(JSON.stringify(delegatedArgs)), {
     persistenceContext: {
       presentationUrl: '/presentations/onboarding-presentation/index.html',
       cleanHtml: '<html>persisted-live</html>',
-      sessionToken: 11
+      canonicalDeck,
+      playbackState,
+      sessionToken: 7
     },
     options: {
       presentationUrl: '/presentations/onboarding-presentation/index.html'
     }
   });
+  assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
 test('syncIframeTheme uses the shared iframe accessor and injects the light theme override style', () => {
