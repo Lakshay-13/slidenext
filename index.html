@@ -5645,7 +5645,7 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(captureOptions, 'canonicalDeck')
         ? captureOptions.canonicalDeck
         : null;
-      const resolveCapturedCanonicalDeck = createEditorCapturedCanonicalDeckResolver(doc, providedCanonicalDeck);
+      const resolveSaveCanonicalDeck = createEditorSaveCanonicalDeckResolver(doc);
       const capturedBuildState = captureEditorPersistableDeckBuildState(doc, {
         canonicalDeck: providedCanonicalDeck
       });
@@ -5661,7 +5661,7 @@
       return resolveEditorCapturedPersistableDeckState(cleanHtml, {
         canonicalDeck: resolvedCanonicalDeck,
         playbackState: resolvedPlaybackState,
-        buildCanonicalDeck: resolveCapturedCanonicalDeck,
+        buildCanonicalDeck: () => resolveSaveCanonicalDeck(providedCanonicalDeck),
         resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
       });
     }

@@ -18,6 +18,8 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 function loadCaptureEditorPersistableDeckState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
   loadCaptureEditorPersistableDeckBuildState(fileContent, context);
+  loadResolveEditorSaveCanonicalDeck(fileContent, context);
+  loadCreateEditorSaveCanonicalDeckResolver(fileContent, context);
   loadResolveEditorCapturedCanonicalDeck(fileContent, context);
   loadCreateEditorCapturedCanonicalDeckResolver(fileContent, context);
   loadResolveEditorCapturedPersistableDeckState(fileContent, context);
@@ -55,6 +57,30 @@ function loadResolveEditorCapturedCanonicalDeck(fileContent, context) {
     fileContent,
     'function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadResolveEditorSaveCanonicalDeck(fileContent, context) {
+  if (typeof context.resolveEditorSaveCanonicalDeck === 'function') {
+    return;
+  }
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadCreateEditorSaveCanonicalDeckResolver(fileContent, context) {
+  if (typeof context.createEditorSaveCanonicalDeckResolver === 'function') {
+    return;
+  }
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {',
+    '\n\n    function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -539,12 +565,12 @@ test('captureEditorPersistableDeckState reuses the local captured canonical deck
   const calls = [];
 
   const context = {
-    __createEditorCapturedCanonicalDeckResolver(nextDoc, nextCanonicalDeck) {
-      calls.push(['createEditorCapturedCanonicalDeckResolver', nextDoc, nextCanonicalDeck]);
+    __createEditorSaveCanonicalDeckResolver(nextDoc) {
+      calls.push(['createEditorSaveCanonicalDeckResolver', nextDoc]);
       assert.equal(nextDoc, iframeDoc);
-      assert.equal(nextCanonicalDeck, null);
-      return () => {
-        calls.push(['resolveCapturedCanonicalDeck']);
+      return (nextCanonicalDeck) => {
+        calls.push(['resolveSaveCanonicalDeck', nextCanonicalDeck]);
+        assert.equal(nextCanonicalDeck, null);
         return canonicalDeck;
       };
     },
@@ -554,7 +580,7 @@ test('captureEditorPersistableDeckState reuses the local captured canonical deck
       return '<html>persisted</html>';
     },
     buildEditorCanonicalDeck() {
-      throw new Error('buildEditorCanonicalDeck should not run when resolveEditorCapturedCanonicalDeck is available');
+      throw new Error('buildEditorCanonicalDeck should not run when createEditorSaveCanonicalDeckResolver is available');
     },
     capturePersistedDeckPlaybackState(doc, nextCanonicalDeck) {
       calls.push(['capturePersistedDeckPlaybackState', doc, nextCanonicalDeck]);
@@ -570,7 +596,7 @@ test('captureEditorPersistableDeckState reuses the local captured canonical deck
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(
-    'createEditorCapturedCanonicalDeckResolver = __createEditorCapturedCanonicalDeckResolver;',
+    'createEditorSaveCanonicalDeckResolver = __createEditorSaveCanonicalDeckResolver;',
     context
   );
 
@@ -581,8 +607,8 @@ test('captureEditorPersistableDeckState reuses the local captured canonical deck
     canonicalDeck
   });
   assert.deepEqual(calls.map(([name]) => name), [
-    'createEditorCapturedCanonicalDeckResolver',
-    'resolveCapturedCanonicalDeck',
+    'createEditorSaveCanonicalDeckResolver',
+    'resolveSaveCanonicalDeck',
     'capturePersistedDeckPlaybackState'
   ]);
 });

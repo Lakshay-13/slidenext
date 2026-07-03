@@ -25,6 +25,22 @@ function loadCaptureEditorPersistableDeckState(fileContent, context) {
     '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
   );
   vm.runInContext(captureEditorPersistableDeckBuildStateSource, context);
+  if (typeof context.resolveEditorSaveCanonicalDeck !== 'function') {
+    const resolveEditorSaveCanonicalDeckSource = extractFunctionSource(
+      fileContent,
+      'function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
+      '\n\n    function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {'
+    );
+    vm.runInContext(resolveEditorSaveCanonicalDeckSource, context);
+  }
+  if (typeof context.createEditorSaveCanonicalDeckResolver !== 'function') {
+    const createEditorSaveCanonicalDeckResolverSource = extractFunctionSource(
+      fileContent,
+      'function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {',
+      '\n\n    function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {'
+    );
+    vm.runInContext(createEditorSaveCanonicalDeckResolverSource, context);
+  }
   if (typeof context.resolveEditorCapturedCanonicalDeck !== 'function') {
     const resolveEditorCapturedCanonicalDeckSource = extractFunctionSource(
       fileContent,
