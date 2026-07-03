@@ -841,6 +841,9 @@ test('resolveEditorDeckCanonicalOverride reuses the provided canonical deck when
         slides: [{ id: 'slide-fallback', nodes: [] }]
       };
     },
+    getEditorCanonicalDeckValidator() {
+      return null;
+    },
     getIframeDoc() {
       return iframeDoc;
     }

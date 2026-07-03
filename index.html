@@ -3379,15 +3379,7 @@
       const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : null;
-      const canonicalDeckValidator = typeof getEditorCanonicalDeckValidator === 'function'
-        ? getEditorCanonicalDeckValidator()
-        : (
-            typeof SlideNextCanonicalDeck !== 'undefined'
-            && SlideNextCanonicalDeck
-            && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-          )
-          ? SlideNextCanonicalDeck.isCanonicalDeck
-          : null;
+      const canonicalDeckValidator = getEditorCanonicalDeckValidator();
       return SlideNextStudioEditorPersistence.resolveStudioCanonicalDeckOverride({
         canonicalDeck,
         buildCanonicalDeck,
