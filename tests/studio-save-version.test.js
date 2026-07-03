@@ -132,6 +132,15 @@ function loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context) 
   vm.runInContext(helperSource, context);
 }
 
+function loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function resolveCurrentStudioVersionCheckpointPersistenceState('
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('setStudioSaveButtonState renders the version button loading and idle states', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setStudioSaveButtonStateSource = extractFunctionSource(
@@ -163,6 +172,64 @@ test('setStudioSaveButtonState renders the version button loading and idle state
   context.setStudioSaveButtonState('idle');
   assert.equal(saveBtnEl.disabled, false);
   assert.match(saveBtnEl.innerHTML, /Save Version/);
+});
+
+test('resolveCurrentStudioPersistenceStateFromCapture captures the current deck state before delegating to a persistence resolver', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const capturedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: []
+    },
+    playbackState: {
+      activeSlideIds: ['slide-1'],
+      slideCounterText: '1 / 1'
+    }
+  };
+  let delegatedArgs = null;
+  const context = {
+    captureEditorPersistableDeckState(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return capturedDeckState;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
+
+  const result = context.resolveCurrentStudioPersistenceStateFromCapture(iframeDoc, {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    persistenceOptions: {
+      sessionToken: 12
+    },
+    resolvePersistenceStateFromCapture(doc, nextCapturedDeckState, presentationUrl, options = {}) {
+      delegatedArgs = {
+        doc,
+        nextCapturedDeckState,
+        presentationUrl,
+        options
+      };
+      return {
+        persistenceContext: {
+          presentationUrl
+        }
+      };
+    }
+  });
+
+  assert.equal(result.persistenceContext.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(delegatedArgs.nextCapturedDeckState, capturedDeckState);
+  assert.equal(delegatedArgs.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.deepEqual(JSON.parse(JSON.stringify(delegatedArgs.options)), {
+    sessionToken: 12
+  });
 });
 
 test('resolveCurrentStudioVersionCheckpointPersistenceState delegates checkpoint capture through the shared persistence helper', () => {
@@ -220,6 +287,49 @@ test('resolveCurrentStudioVersionCheckpointPersistenceState delegates checkpoint
   assert.equal(delegatedArgs.nextCapturedDeckState, capturedDeckState);
   assert.equal(delegatedArgs.presentationUrl, '/presentations/onboarding-presentation/index.html');
   assert.deepEqual(JSON.parse(JSON.stringify(delegatedArgs.options)), {
+    sessionToken: 12
+  });
+});
+
+test('resolveCurrentStudioVersionCheckpointPersistenceState reuses the local capture delegation helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  let delegatedArgs = null;
+  const context = {
+    __resolveCurrentStudioPersistenceStateFromCapture(nextDoc, options = {}) {
+      delegatedArgs = {
+        nextDoc,
+        options
+      };
+      return {
+        cleanHtml: '<html>persisted</html>'
+      };
+    },
+    SlideNextStudioEditorPersistence: {
+      resolveStudioVersionCheckpointPersistenceStateFromCapture() {
+        throw new Error('shared resolver should be called through the local capture delegation helper');
+      }
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    studioEditorSessionToken: 12
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
+  vm.runInContext('resolveCurrentStudioPersistenceStateFromCapture = __resolveCurrentStudioPersistenceStateFromCapture;', context);
+
+  const result = context.resolveCurrentStudioVersionCheckpointPersistenceState();
+  assert.equal(result.cleanHtml, '<html>persisted</html>');
+  assert.equal(delegatedArgs.nextDoc, iframeDoc);
+  assert.equal(delegatedArgs.options.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(
+    delegatedArgs.options.resolvePersistenceStateFromCapture,
+    context.SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture
+  );
+  assert.deepEqual(JSON.parse(JSON.stringify(delegatedArgs.options.persistenceOptions)), {
     sessionToken: 12
   });
 });
@@ -287,6 +397,59 @@ test('resolveCurrentStudioAutoSavePersistenceState delegates autosave capture th
   assert.equal(delegatedArgs.options.isPersistedState, context.isCurrentDeckStatePersisted);
   assert.equal(delegatedArgs.options.buildSaveRequestBody, context.buildEditorSaveRequestBody);
   assert.equal(delegatedArgs.options.sessionToken, 13);
+});
+
+test('resolveCurrentStudioAutoSavePersistenceState reuses the local capture delegation helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  let delegatedArgs = null;
+  const context = {
+    __resolveCurrentStudioPersistenceStateFromCapture(nextDoc, options = {}) {
+      delegatedArgs = {
+        nextDoc,
+        options
+      };
+      return {
+        persistencePlan: {
+          persistenceContext: {
+            presentationUrl: options.presentationUrl
+          }
+        }
+      };
+    },
+    SlideNextStudioEditorPersistence: {
+      resolveStudioAutoSavePersistenceStateFromCapture() {
+        throw new Error('shared autosave resolver should be called through the local capture delegation helper');
+      }
+    },
+    buildEditorSaveRequestBody() {
+      return {};
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    isCurrentDeckStatePersisted() {
+      return false;
+    },
+    studioEditorSessionToken: 13
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context);
+  vm.runInContext('resolveCurrentStudioPersistenceStateFromCapture = __resolveCurrentStudioPersistenceStateFromCapture;', context);
+
+  const result = context.resolveCurrentStudioAutoSavePersistenceState();
+  assert.equal(result.persistencePlan.persistenceContext.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(delegatedArgs.nextDoc, iframeDoc);
+  assert.equal(delegatedArgs.options.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(
+    delegatedArgs.options.resolvePersistenceStateFromCapture,
+    context.SlideNextStudioEditorPersistence.resolveStudioAutoSavePersistenceStateFromCapture
+  );
+  assert.equal(delegatedArgs.options.persistenceOptions.isPersistedState, context.isCurrentDeckStatePersisted);
+  assert.equal(delegatedArgs.options.persistenceOptions.buildSaveRequestBody, context.buildEditorSaveRequestBody);
+  assert.equal(delegatedArgs.options.persistenceOptions.sessionToken, 13);
 });
 
 test('applyCurrentStudioPersistenceSuccess delegates through the shared persistence helper with current handler options', () => {

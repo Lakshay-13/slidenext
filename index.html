@@ -6670,19 +6670,58 @@
       );
     }
 
+    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {
+      const nextOptions = options && typeof options === 'object'
+        ? options
+        : {};
+      const resolvePersistenceStateFromCapture = typeof nextOptions.resolvePersistenceStateFromCapture === 'function'
+        ? nextOptions.resolvePersistenceStateFromCapture
+        : null;
+      if (!resolvePersistenceStateFromCapture) {
+        return null;
+      }
+      const presentationUrl = typeof nextOptions.presentationUrl === 'string' && nextOptions.presentationUrl
+        ? nextOptions.presentationUrl
+        : currentPresentationUrl;
+      const persistenceOptions = nextOptions.persistenceOptions && typeof nextOptions.persistenceOptions === 'object' && !Array.isArray(nextOptions.persistenceOptions)
+        ? { ...nextOptions.persistenceOptions }
+        : {};
+      const capturePersistableDeckState = typeof nextOptions.capturePersistableDeckState === 'function'
+        ? nextOptions.capturePersistableDeckState
+        : captureEditorPersistableDeckState;
+      return resolvePersistenceStateFromCapture(
+        doc,
+        capturePersistableDeckState(doc),
+        presentationUrl,
+        persistenceOptions
+      );
+    }
+
     function resolveCurrentStudioVersionCheckpointPersistenceState(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken,
       doc = getIframeDoc()
     ) {
-      return SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture(
-        doc,
-        captureEditorPersistableDeckState(doc),
+      const resolvePersistenceStateFromCapture = typeof resolveCurrentStudioPersistenceStateFromCapture === 'function'
+        ? resolveCurrentStudioPersistenceStateFromCapture
+        : (nextDoc, options = {}) => {
+            const nextOptions = options && typeof options === 'object'
+              ? options
+              : {};
+            return nextOptions.resolvePersistenceStateFromCapture(
+              nextDoc,
+              captureEditorPersistableDeckState(nextDoc),
+              nextOptions.presentationUrl,
+              nextOptions.persistenceOptions || {}
+            );
+          };
+      return resolvePersistenceStateFromCapture(doc, {
         presentationUrl,
-        {
+        resolvePersistenceStateFromCapture: SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture,
+        persistenceOptions: {
           sessionToken
         }
-      );
+      });
     }
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
@@ -6717,16 +6756,28 @@
       sessionToken = studioEditorSessionToken,
       doc = getIframeDoc()
     ) {
-      return SlideNextStudioEditorPersistence.resolveStudioAutoSavePersistenceStateFromCapture(
-        doc,
-        captureEditorPersistableDeckState(doc),
+      const resolvePersistenceStateFromCapture = typeof resolveCurrentStudioPersistenceStateFromCapture === 'function'
+        ? resolveCurrentStudioPersistenceStateFromCapture
+        : (nextDoc, options = {}) => {
+            const nextOptions = options && typeof options === 'object'
+              ? options
+              : {};
+            return nextOptions.resolvePersistenceStateFromCapture(
+              nextDoc,
+              captureEditorPersistableDeckState(nextDoc),
+              nextOptions.presentationUrl,
+              nextOptions.persistenceOptions || {}
+            );
+          };
+      return resolvePersistenceStateFromCapture(doc, {
         presentationUrl,
-        {
+        resolvePersistenceStateFromCapture: SlideNextStudioEditorPersistence.resolveStudioAutoSavePersistenceStateFromCapture,
+        persistenceOptions: {
           isPersistedState: isCurrentDeckStatePersisted,
           buildSaveRequestBody: buildEditorSaveRequestBody,
           sessionToken
         }
-      );
+      });
     }
 
     // 6. AutoSave debouncing pipeline
