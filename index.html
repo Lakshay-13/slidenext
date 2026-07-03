@@ -6819,6 +6819,26 @@
       };
     }
 
+    async function executeCurrentStudioVersionCheckpointSaveWithSuccess(
+      versionLabel,
+      versionCheckpointPersistenceState,
+      presentationUrl = currentPresentationUrl,
+      options = {}
+    ) {
+      const versionCheckpointSaveResult = await executeCurrentStudioVersionCheckpointSave(
+        versionLabel,
+        versionCheckpointPersistenceState,
+        presentationUrl
+      );
+      if (versionCheckpointSaveResult && versionCheckpointSaveResult.data && versionCheckpointSaveResult.data.success) {
+        applyCurrentStudioVersionCheckpointSaveSuccess(
+          versionCheckpointSaveResult.versionCheckpointPersistenceState || versionCheckpointPersistenceState,
+          options
+        );
+      }
+      return versionCheckpointSaveResult;
+    }
+
     function isCurrentStudioVersionCheckpointSavePersisted(
       versionLabel,
       versionCheckpointPersistenceState,
@@ -7571,22 +7591,18 @@
       setStudioSaveButtonState('saving-version');
       
       try {
-        const { data } = await executeCurrentStudioVersionCheckpointSave(
+        const { data } = await executeCurrentStudioVersionCheckpointSaveWithSuccess(
           versionName,
           versionCheckpointPersistenceState,
           scheduledPresentationUrl,
-        );
-        if (data.success) {
-          applyCurrentStudioVersionCheckpointSaveSuccess(
-            versionCheckpointPersistenceState,
-            {
-              onSuccess: () => {
-                alert('Successfully saved named version backup checkpoint!');
-                setStudioAutoSaveStatus('saved');
-              }
+          {
+            onSuccess: () => {
+              alert('Successfully saved named version backup checkpoint!');
+              setStudioAutoSaveStatus('saved');
             }
-          );
-        } else {
+          }
+        );
+        if (!data.success) {
           applyCurrentStudioPersistenceFailure(
             versionCheckpointPersistenceState.persistenceContext,
             {
@@ -7655,21 +7671,16 @@
       }
       
       try {
-        const { data } = await executeCurrentStudioVersionCheckpointSave(
+        await executeCurrentStudioVersionCheckpointSaveWithSuccess(
           label,
           versionCheckpointPersistenceState,
           presentationUrl,
-        );
-        if (data.success) {
-          applyCurrentStudioVersionCheckpointSaveSuccess(
-            versionCheckpointPersistenceState,
-            {
-              onSuccess: () => {
-                console.log(`Auto-created version checkpoint: ${label}`);
-              }
+          {
+            onSuccess: () => {
+              console.log(`Auto-created version checkpoint: ${label}`);
             }
-          );
-        }
+          }
+        );
       } catch (err) {
         console.error('Failed to auto-create version backup:', err);
       }
