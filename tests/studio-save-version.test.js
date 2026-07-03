@@ -2385,7 +2385,7 @@ test('executeSaveAutoVersion reuses the local version checkpoint success helper 
   assert.deepEqual(logCalls, ['Auto-created version checkpoint: Auto: Edited Text']);
 });
 
-test('executeCurrentStudioAutoSavePersistenceRequestWithHandlers reuses the shared autosave helper when available', async () => {
+test('executeCurrentStudioAutoSavePersistenceRequestWithHandlers delegates through the shared autosave helper', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const autoSavePersistenceState = {
     persistencePlan: {

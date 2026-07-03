@@ -6952,68 +6952,25 @@
       autoSavePersistenceState = null,
       options = {}
     ) {
-      const executeAutoSavePersistenceRequestWithHandlers = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.executeStudioAutoSavePersistenceRequestWithHandlers === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.executeStudioAutoSavePersistenceRequestWithHandlers
-        : null;
-      if (executeAutoSavePersistenceRequestWithHandlers) {
-        return executeAutoSavePersistenceRequestWithHandlers(
-          autoSavePersistenceState,
-          {
-            fetchImpl: fetch,
-            applyPersistenceSuccess: applyCurrentStudioPersistenceSuccess,
-            applyPersistenceFailure: applyCurrentStudioPersistenceFailure,
-            successOptions: {
-              presentationUrl: autoSavePersistenceState
-                && autoSavePersistenceState.persistencePlan
-                && autoSavePersistenceState.persistencePlan.persistenceContext
-                ? autoSavePersistenceState.persistencePlan.persistenceContext.presentationUrl
-                : currentPresentationUrl,
-              onSuccess: options.onSuccess
-            },
-            failureOptions: {
-              onFailure: options.onFailure
-            }
-          }
-        );
-      }
-
-      if (!autoSavePersistenceState || !autoSavePersistenceState.persistencePlan) {
-        return null;
-      }
-
-      const { persistencePlan } = autoSavePersistenceState;
-      const data = await SlideNextStudioEditorPersistence.executeStudioAutoSavePersistenceRequest(
-        persistencePlan,
+      return SlideNextStudioEditorPersistence.executeStudioAutoSavePersistenceRequestWithHandlers(
+        autoSavePersistenceState,
         {
-          fetchImpl: fetch
-        }
-      );
-
-      if (data.success) {
-        applyCurrentStudioPersistenceSuccess(
-          persistencePlan.persistenceContext,
-          {
-            presentationUrl: persistencePlan.persistenceContext.presentationUrl,
+          fetchImpl: fetch,
+          applyPersistenceSuccess: applyCurrentStudioPersistenceSuccess,
+          applyPersistenceFailure: applyCurrentStudioPersistenceFailure,
+          successOptions: {
+            presentationUrl: autoSavePersistenceState
+              && autoSavePersistenceState.persistencePlan
+              && autoSavePersistenceState.persistencePlan.persistenceContext
+              ? autoSavePersistenceState.persistencePlan.persistenceContext.presentationUrl
+              : currentPresentationUrl,
             onSuccess: options.onSuccess
-          }
-        );
-      } else {
-        applyCurrentStudioPersistenceFailure(
-          persistencePlan.persistenceContext,
-          {
+          },
+          failureOptions: {
             onFailure: options.onFailure
           }
-        );
-      }
-
-      return {
-        data,
-        autoSavePersistenceState
-      };
+        }
+      );
     }
 
     // 6. AutoSave debouncing pipeline
