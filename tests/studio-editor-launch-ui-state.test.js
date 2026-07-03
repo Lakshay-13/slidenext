@@ -21,7 +21,7 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioSessionStateOptions(options = {}) {',
-    '\n\n    function createCurrentStudioFrameLoadHandler('
+    '\n\n    function updateCurrentPresentationSessionState(nextState = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -81,18 +81,21 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   };
 
   const loadVersionsCalls = [];
-  let capturedFrameLoadHandlerArgs = null;
+  let capturedFrameLoadHandlerOptions = null;
   const context = {
+    SlideNextStudioEditorSession: {
+      ...editorSession,
+      createStudioFrameLoadHandler(options) {
+        capturedFrameLoadHandlerOptions = options;
+        return function onloadHandler() {};
+      }
+    },
     applyCurrentPresentationMetadata(metadata) {
       context.currentPresentationMetadata = metadata;
     },
     applyEditorSelectionState() {},
     buildCurrentPresentationMetadataSeed(url, title) {
       return { url, title };
-    },
-    createCurrentStudioFrameLoadHandler(presentationUrl, sessionToken, options) {
-      capturedFrameLoadHandlerArgs = { presentationUrl, sessionToken, options };
-      return function onloadHandler() {};
     },
     currentCategory: '',
     currentPresentationMetadata: null,
@@ -164,6 +167,7 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
@@ -174,9 +178,13 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   assert.equal(elements.studioTitleLabel.textContent, 'Project Onboarding');
   assert.equal(elements.studioFrame.src, '/presentations/onboarding-presentation/index.html');
   assert.equal(elements.studioEditor.classList.contains('active'), true);
-  assert.equal(capturedFrameLoadHandlerArgs.presentationUrl, '/presentations/onboarding-presentation/index.html');
-  assert.equal(capturedFrameLoadHandlerArgs.sessionToken, 1);
-  assert.equal(typeof capturedFrameLoadHandlerArgs.options.isEditorActive, 'function');
+  assert.equal(capturedFrameLoadHandlerOptions.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedFrameLoadHandlerOptions.sessionToken, 1);
+  assert.equal(typeof capturedFrameLoadHandlerOptions.getCurrentPresentationUrl, 'function');
+  assert.equal(typeof capturedFrameLoadHandlerOptions.getCurrentSessionToken, 'function');
+  assert.equal(capturedFrameLoadHandlerOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedFrameLoadHandlerOptions.getCurrentSessionToken(), 1);
+  assert.equal(typeof capturedFrameLoadHandlerOptions.isEditorActive, 'function');
   assert.deepEqual(JSON.parse(JSON.stringify(context.undoStack)), []);
   assert.deepEqual(JSON.parse(JSON.stringify(context.redoStack)), []);
   assert.deepEqual(loadVersionsCalls, [[
@@ -215,6 +223,13 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorSession: {
+      ...editorSession,
+      createStudioFrameLoadHandler(options) {
+        calls.push(['createStudioFrameLoadHandler', options]);
+        return function onloadHandler() {};
+      }
+    },
     applyCurrentPresentationMetadata(metadata) {
       context.currentPresentationMetadata = metadata;
     },
@@ -224,10 +239,6 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
     buildCurrentPresentationMetadataSeed(url, title) {
       calls.push(['buildCurrentPresentationMetadataSeed', url, title]);
       return { url, title };
-    },
-    createCurrentStudioFrameLoadHandler(presentationUrl, sessionToken, options) {
-      calls.push(['createCurrentStudioFrameLoadHandler', presentationUrl, sessionToken, options]);
-      return function onloadHandler() {};
     },
     currentCategory: '',
     currentPresentationMetadata: null,
@@ -321,6 +332,7 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
@@ -334,6 +346,7 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
   assert.equal(context.currentTitle, 'Project Onboarding');
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'studioCategoryLabel'));
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'studioTitleLabel'));
+  assert.ok(calls.some(([name]) => name === 'createStudioFrameLoadHandler'));
   assert.ok(calls.some(([name, nextState, options]) => (
     name === 'applyCurrentStudioPersistedDeckState'
     && JSON.stringify(nextState) === JSON.stringify({
@@ -391,60 +404,6 @@ test('createCurrentStudioSessionStateOptions exposes live session getters and fo
   assert.equal(capturedOptions.getCurrentSessionToken(), 5);
 });
 
-test('createCurrentStudioFrameLoadHandler passes live session getters when delegating to the editor session helper', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const createCurrentStudioFrameLoadHandlerSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioFrameLoadHandler(',
-    '\n\n    function updateCurrentPresentationSessionState(nextState = {}) {'
-  );
-
-  let capturedOptions = null;
-  const context = {
-    SlideNextStudioEditorSession: {
-      ...editorSession,
-      createStudioFrameLoadHandler(options) {
-        capturedOptions = options;
-        return function onloadHandler() {};
-      }
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 6
-  };
-
-  vm.createContext(context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  vm.runInContext(createCurrentStudioFrameLoadHandlerSource, context);
-
-  const handler = context.createCurrentStudioFrameLoadHandler(
-    '/presentations/onboarding-presentation/index.html',
-    6,
-    {
-      isEditorActive() {
-        return true;
-      },
-      handleLoad() {},
-      afterLoad() {}
-    }
-  );
-
-  assert.equal(typeof handler, 'function');
-  assert.equal(capturedOptions.presentationUrl, '/presentations/onboarding-presentation/index.html');
-  assert.equal(capturedOptions.sessionToken, 6);
-  assert.equal(typeof capturedOptions.getCurrentPresentationUrl, 'function');
-  assert.equal(typeof capturedOptions.getCurrentSessionToken, 'function');
-  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
-  assert.equal(capturedOptions.getCurrentSessionToken(), 6);
-  assert.equal(typeof capturedOptions.isEditorActive, 'function');
-  assert.equal(typeof capturedOptions.handleLoad, 'function');
-  assert.equal(typeof capturedOptions.afterLoad, 'function');
-
-  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
-  context.studioEditorSessionToken = 8;
-  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
-  assert.equal(capturedOptions.getCurrentSessionToken(), 8);
-});
-
 test('launchStudioEditor after-load zoom guard passes live session getters to the editor session helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const launchStudioEditorSource = extractFunctionSource(
@@ -482,6 +441,10 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
   const context = {
     SlideNextStudioEditorSession: {
       ...editorSession,
+      createStudioFrameLoadHandler(options) {
+        capturedFrameLoadHandlerArgs = { options };
+        return function onloadHandler() {};
+      },
       shouldHandleStudioFrameLoad(presentationUrl, options) {
         capturedGuardArguments = { presentationUrl, options };
         return true;
@@ -509,10 +472,6 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
       return { url, title };
     },
     clearTimeout() {},
-    createCurrentStudioFrameLoadHandler(presentationUrl, sessionToken, options) {
-      capturedFrameLoadHandlerArgs = { presentationUrl, sessionToken, options };
-      return function onloadHandler() {};
-    },
     currentCategory: '',
     currentPresentationMetadata: null,
     currentPresentationUrl: '',
@@ -578,6 +537,8 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
   vm.runInContext(launchStudioEditorSource, context);
 
   context.launchStudioEditor('/presentations/onboarding-presentation/index.html', 'Project Onboarding', 'General');
+  assert.equal(capturedFrameLoadHandlerArgs.options.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedFrameLoadHandlerArgs.options.sessionToken, 1);
   assert.equal(typeof capturedFrameLoadHandlerArgs.options.afterLoad, 'function');
 
   capturedFrameLoadHandlerArgs.options.afterLoad();

@@ -1933,25 +1933,6 @@
       });
     }
 
-    function createCurrentStudioFrameLoadHandler(
-      presentationUrl = currentPresentationUrl,
-      sessionToken = studioEditorSessionToken,
-      options = {}
-    ) {
-      return SlideNextStudioEditorSession.createStudioFrameLoadHandler({
-        presentationUrl,
-        ...SlideNextStudioEditorSession.createStudioFrameLoadStateOptions({
-          ...createCurrentStudioSessionStateOptions({
-            sessionToken
-          }),
-          sessionToken,
-          isEditorActive: options.isEditorActive,
-          handleLoad: options.handleLoad,
-          afterLoad: options.afterLoad
-        })
-      });
-    }
-
     function updateCurrentPresentationSessionState(nextState = {}) {
       const sessionStateUpdate = SlideNextStudioEditorSession.createStudioPresentationSessionStateUpdate(nextState);
       if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationUrl')) {
@@ -2022,28 +2003,35 @@
       updateDeckReadyToolbarActionState();
       
       // Configure load triggers BEFORE setting src
-      iframe.onload = createCurrentStudioFrameLoadHandler(url, editorSessionToken, {
-        isEditorActive,
-        handleLoad: () => {
-          initStudioFrame();
-        },
-        afterLoad: () => {
-          const savedZoom = localStorage.getItem('presentationZoom') || 'fit';
-          setTimeout(() => {
-            if (!SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(url, {
-              ...SlideNextStudioEditorSession.createStudioFrameLoadStateOptions({
-                ...createCurrentStudioSessionStateOptions({
-                  sessionToken: editorSessionToken
-                }),
-                sessionToken: editorSessionToken,
-                isEditorActive
-              })
-            })) {
-              return;
-            }
-            applyZoom(savedZoom);
-          }, 150);
-        }
+      iframe.onload = SlideNextStudioEditorSession.createStudioFrameLoadHandler({
+        presentationUrl: url,
+        ...SlideNextStudioEditorSession.createStudioFrameLoadStateOptions({
+          ...createCurrentStudioSessionStateOptions({
+            sessionToken: editorSessionToken
+          }),
+          sessionToken: editorSessionToken,
+          isEditorActive,
+          handleLoad: () => {
+            initStudioFrame();
+          },
+          afterLoad: () => {
+            const savedZoom = localStorage.getItem('presentationZoom') || 'fit';
+            setTimeout(() => {
+              if (!SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(url, {
+                ...SlideNextStudioEditorSession.createStudioFrameLoadStateOptions({
+                  ...createCurrentStudioSessionStateOptions({
+                    sessionToken: editorSessionToken
+                  }),
+                  sessionToken: editorSessionToken,
+                  isEditorActive
+                })
+              })) {
+                return;
+              }
+              applyZoom(savedZoom);
+            }, 150);
+          }
+        })
       });
       
       editor.classList.remove('hidden');
