@@ -1770,13 +1770,29 @@
       const buildDeckPreviewHtml = resolveDeckHtmlMethod('buildDeckPreviewHtml');
       const injectBaseHrefIntoHtml = resolveDeckHtmlMethod('injectBaseHrefIntoHtml');
       const buildPresentationBaseHref = resolveDeckHtmlMethod('buildPresentationBaseHref');
+      const presentationUrl = currentPresentationUrl || '';
 
-      return buildEditorDeckViewHtml(doc, createEditorPreviewDeckViewHtmlOptions({
-        buildStudioPreviewHtml,
-        buildDeckPreviewHtml,
-        injectBaseHrefIntoHtml,
-        buildPresentationBaseHref,
-        presentationUrl: currentPresentationUrl || ''
+      return buildEditorDeckViewHtml(doc, createEditorDeckViewHtmlOptions({
+        buildSharedHtml: buildStudioPreviewHtml,
+        extendViewOptions: (deckViewOptions) => ({
+          ...deckViewOptions,
+          presentationUrl
+        }),
+        buildCanonicalHtml: buildDeckPreviewHtml,
+        mapCanonicalHtmlArgs: (canonicalDeck, deckHtmlOptions) => [
+          canonicalDeck,
+          presentationUrl,
+          deckHtmlOptions
+        ],
+        transformFallbackHtml(fallbackHtml, deckHtmlOptions = {}) {
+          if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
+            return fallbackHtml;
+          }
+          return injectBaseHrefIntoHtml(
+            fallbackHtml,
+            buildPresentationBaseHref(presentationUrl, deckHtmlOptions)
+          );
+        }
       }));
     }
 
@@ -1817,47 +1833,6 @@
           : null,
         transformFallbackHtml
       };
-    }
-
-    function createEditorPreviewDeckViewHtmlOptions(options = {}) {
-      const presentationUrl = typeof options.presentationUrl === 'string'
-        ? options.presentationUrl
-        : '';
-      const buildStudioPreviewHtml = typeof options.buildStudioPreviewHtml === 'function'
-        ? options.buildStudioPreviewHtml
-        : null;
-      const buildDeckPreviewHtml = typeof options.buildDeckPreviewHtml === 'function'
-        ? options.buildDeckPreviewHtml
-        : null;
-      const injectBaseHrefIntoHtml = typeof options.injectBaseHrefIntoHtml === 'function'
-        ? options.injectBaseHrefIntoHtml
-        : null;
-      const buildPresentationBaseHref = typeof options.buildPresentationBaseHref === 'function'
-        ? options.buildPresentationBaseHref
-        : null;
-
-      return createEditorDeckViewHtmlOptions({
-        buildSharedHtml: buildStudioPreviewHtml,
-        extendViewOptions: (deckViewOptions) => ({
-          ...deckViewOptions,
-          presentationUrl
-        }),
-        buildCanonicalHtml: buildDeckPreviewHtml,
-        mapCanonicalHtmlArgs: (canonicalDeck, deckHtmlOptions) => [
-          canonicalDeck,
-          presentationUrl,
-          deckHtmlOptions
-        ],
-        transformFallbackHtml(fallbackHtml, deckHtmlOptions = {}) {
-          if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
-            return fallbackHtml;
-          }
-          return injectBaseHrefIntoHtml(
-            fallbackHtml,
-            buildPresentationBaseHref(presentationUrl, deckHtmlOptions)
-          );
-        }
-      });
     }
 
     function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {

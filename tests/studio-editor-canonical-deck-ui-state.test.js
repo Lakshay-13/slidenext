@@ -2190,7 +2190,7 @@ test('createEditorDeckViewHtmlOptions maps canonical html arguments when local h
   const createEditorDeckViewHtmlOptionsSource = extractFunctionSource(
     fileContent,
     'function createEditorDeckViewHtmlOptions(options = {}) {',
-    '\n\n    function createEditorPreviewDeckViewHtmlOptions(options = {}) {'
+    '\n\n    function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {'
   );
 
   const canonicalDeck = {
@@ -2233,7 +2233,7 @@ test('createEditorDeckViewHtmlOptions extends fallback deck view build options w
   const createEditorDeckViewHtmlOptionsSource = extractFunctionSource(
     fileContent,
     'function createEditorDeckViewHtmlOptions(options = {}) {',
-    '\n\n    function createEditorPreviewDeckViewHtmlOptions(options = {}) {'
+    '\n\n    function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -2278,14 +2278,15 @@ test('createEditorDeckViewHtmlOptions extends fallback deck view build options w
   ]);
 });
 
-test('createEditorPreviewDeckViewHtmlOptions injects preview base href into fallback html when local helpers are available', () => {
+test('buildEditorPreviewHtml forwards preview deck view builders when local helpers are available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const createEditorPreviewDeckViewHtmlOptionsSource = extractFunctionSource(
+  const buildEditorPreviewHtmlSource = extractFunctionSource(
     fileContent,
-    'function createEditorPreviewDeckViewHtmlOptions(options = {}) {',
+    'function buildEditorPreviewHtml(doc = getIframeDoc()) {',
     '\n\n    function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {'
   );
 
+  const iframeDoc = { label: 'iframe-doc' };
   const previewDeckViewHtmlOptions = {
     buildSharedHtml() {},
     buildViewOptions() {},
@@ -2304,34 +2305,60 @@ test('createEditorPreviewDeckViewHtmlOptions injects preview base href into fall
   };
   const calls = [];
   let delegatedArgs = null;
+  let delegatedBuildEditorDeckViewHtmlArgs = null;
   const buildStudioPreviewHtml = function buildStudioPreviewHtml() {};
   const buildDeckPreviewHtml = function buildDeckPreviewHtml() {};
   const context = {
+    __buildEditorDeckViewHtml(doc, options) {
+      delegatedBuildEditorDeckViewHtmlArgs = { doc, options };
+      return '<html>preview-from-build-editor-deck-view-html</html>';
+    },
     __createEditorDeckViewHtmlOptions(options) {
       delegatedArgs = options;
       return previewDeckViewHtmlOptions;
+    },
+    __resolveDeckHtmlMethod(methodName) {
+      if (methodName === 'buildDeckPreviewHtml') {
+        return buildDeckPreviewHtml;
+      }
+      if (methodName === 'injectBaseHrefIntoHtml') {
+        return function injectBaseHrefIntoHtml(fallbackHtml, baseHref) {
+          calls.push(['injectBaseHrefIntoHtml', fallbackHtml, baseHref]);
+          return `<html data-base="${baseHref}">${fallbackHtml}</html>`;
+        };
+      }
+      if (methodName === 'buildPresentationBaseHref') {
+        return function buildPresentationBaseHref(presentationUrl, nextDeckHtmlOptions) {
+          calls.push(['buildPresentationBaseHref', presentationUrl, nextDeckHtmlOptions]);
+          return `${presentationUrl}#preview`;
+        };
+      }
+      return null;
+    },
+    __resolveStudioDeckViewMethod(methodName) {
+      if (methodName === 'buildStudioPreviewHtml') {
+        return buildStudioPreviewHtml;
+      }
+      return null;
+    },
+    currentPresentationUrl: '/presentations/demo/index.html',
+    getIframeDoc() {
+      return iframeDoc;
     }
   };
 
   vm.createContext(context);
-  vm.runInContext(createEditorPreviewDeckViewHtmlOptionsSource, context);
+  vm.runInContext(buildEditorPreviewHtmlSource, context);
+  vm.runInContext('buildEditorDeckViewHtml = __buildEditorDeckViewHtml;', context);
   vm.runInContext('createEditorDeckViewHtmlOptions = __createEditorDeckViewHtmlOptions;', context);
+  vm.runInContext('resolveDeckHtmlMethod = __resolveDeckHtmlMethod;', context);
+  vm.runInContext('resolveStudioDeckViewMethod = __resolveStudioDeckViewMethod;', context);
 
-  const result = context.createEditorPreviewDeckViewHtmlOptions({
-    buildStudioPreviewHtml,
-    buildDeckPreviewHtml,
-    injectBaseHrefIntoHtml(fallbackHtml, baseHref) {
-      calls.push(['injectBaseHrefIntoHtml', fallbackHtml, baseHref]);
-      return `<html data-base="${baseHref}">${fallbackHtml}</html>`;
-    },
-    buildPresentationBaseHref(presentationUrl, nextDeckHtmlOptions) {
-      calls.push(['buildPresentationBaseHref', presentationUrl, nextDeckHtmlOptions]);
-      return `${presentationUrl}#preview`;
-    },
-    presentationUrl: '/presentations/demo/index.html'
-  });
+  const result = context.buildEditorPreviewHtml(iframeDoc);
 
-  assert.equal(result, previewDeckViewHtmlOptions);
+  assert.equal(result, '<html>preview-from-build-editor-deck-view-html</html>');
+  assert.equal(delegatedBuildEditorDeckViewHtmlArgs.doc, iframeDoc);
+  assert.equal(delegatedBuildEditorDeckViewHtmlArgs.options, previewDeckViewHtmlOptions);
   assert.equal(delegatedArgs.buildSharedHtml, buildStudioPreviewHtml);
   assert.equal(delegatedArgs.buildCanonicalHtml, buildDeckPreviewHtml);
   assert.deepEqual(
@@ -2340,7 +2367,7 @@ test('createEditorPreviewDeckViewHtmlOptions injects preview base href into fall
     )),
     {
       activeSlideId: 'slide-1',
-      presentationUrl: '/presentations/demo/index.html'
+      presentationUrl: context.currentPresentationUrl
     }
   );
   assert.deepEqual(
@@ -2349,7 +2376,7 @@ test('createEditorPreviewDeckViewHtmlOptions injects preview base href into fall
     )),
     [
       canonicalDeck,
-      '/presentations/demo/index.html',
+      context.currentPresentationUrl,
       deckHtmlOptions
     ]
   );
