@@ -2027,23 +2027,39 @@
       const buildStudioSourceHtml = resolveStudioDeckViewMethod('buildStudioSourceHtml');
       const buildDeckSourceHtml = resolveDeckHtmlMethod('buildDeckSourceHtml');
 
-      return buildEditorDeckViewHtml(doc, {
+      return buildEditorDeckViewHtml(doc, createEditorSourceDeckViewHtmlOptions({
         buildSharedHtml: buildStudioSourceHtml,
+        buildViewOptions: options.buildViewOptions,
+        buildDeckSourceHtml
+      }));
+    }
+
+    function createEditorSourceDeckViewHtmlOptions(options = {}) {
+      const buildSharedHtml = typeof options.buildSharedHtml === 'function'
+        ? options.buildSharedHtml
+        : null;
+      const buildViewOptions = typeof options.buildViewOptions === 'function'
+        ? options.buildViewOptions
+        : null;
+      const buildDeckSourceHtml = typeof options.buildDeckSourceHtml === 'function'
+        ? options.buildDeckSourceHtml
+        : null;
+
+      return {
+        buildSharedHtml,
         buildViewOptions: typeof createEditorDeckViewBuildViewOptionsResolver === 'function'
           ? createEditorDeckViewBuildViewOptionsResolver({
-              buildViewOptions: options.buildViewOptions
+              buildViewOptions
             })
-          : typeof options.buildViewOptions === 'function'
-            ? options.buildViewOptions
-            : (sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc),
+          : buildViewOptions || ((sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc)),
         buildCanonicalHtml: typeof createEditorDeckViewCanonicalHtmlResolver === 'function'
           ? createEditorDeckViewCanonicalHtmlResolver({
               buildCanonicalHtml: buildDeckSourceHtml
             })
           : buildDeckSourceHtml
             ? (canonicalDeck, deckHtmlOptions) => buildDeckSourceHtml(canonicalDeck, deckHtmlOptions)
-          : null
-      });
+            : null
+      };
     }
 
     function buildEditorSourceHtml(doc = getIframeDoc()) {
