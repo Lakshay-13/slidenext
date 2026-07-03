@@ -5311,15 +5311,6 @@
       };
     }
 
-    function reportEditorPersistableDeckBuildState(buildOptions = {}, canonicalDeck = null, playbackState = null) {
-      if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
-        buildOptions.onCanonicalDeckResolved(canonicalDeck);
-      }
-      if (typeof buildOptions.onPlaybackStateResolved === 'function') {
-        buildOptions.onPlaybackStateResolved(playbackState);
-      }
-    }
-
     function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {
       const nextPersistedHtml = typeof persistedHtml === 'string'
         ? persistedHtml
@@ -5394,7 +5385,12 @@
           ? persistedDeckStateWithContent.cleanHtml
           : '';
         const canonicalDeck = resolveCanonicalDeckOverride(true);
-        reportEditorPersistableDeckBuildState(buildOptions, canonicalDeck, persistedDeckState.playbackState);
+        if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
+          buildOptions.onCanonicalDeckResolved(canonicalDeck);
+        }
+        if (typeof buildOptions.onPlaybackStateResolved === 'function') {
+          buildOptions.onPlaybackStateResolved(persistedDeckState.playbackState);
+        }
         const reusablePersistedHtml = resolveEditorReusablePersistedHtml(
           persistedDeckStateWithContent || persistedDeckState,
           {
@@ -5427,7 +5423,12 @@
       const resolvedPlaybackState = doc
         ? capturePersistedDeckPlaybackState(doc, canonicalDeck)
         : livePlaybackState;
-      reportEditorPersistableDeckBuildState(buildOptions, canonicalDeck, resolvedPlaybackState);
+      if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
+        buildOptions.onCanonicalDeckResolved(canonicalDeck);
+      }
+      if (typeof buildOptions.onPlaybackStateResolved === 'function') {
+        buildOptions.onPlaybackStateResolved(resolvedPlaybackState);
+      }
       const persistableDeckSanitizerOptions = buildEditorPersistableDeckSanitizerOptions(resolvedPlaybackState, {
         resolveMetadataPersistenceOptions
       });

@@ -45,14 +45,6 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
     );
     vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
   }
-  if (typeof context.reportEditorPersistableDeckBuildState !== 'function') {
-    const reportEditorPersistableDeckBuildStateSource = extractFunctionSource(
-      fileContent,
-      'function reportEditorPersistableDeckBuildState(buildOptions = {}, canonicalDeck = null, playbackState = null) {',
-      '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
-    );
-    vm.runInContext(reportEditorPersistableDeckBuildStateSource, context);
-  }
   if (typeof context.sanitizeEditorReusablePersistedHtml !== 'function') {
     const sanitizeEditorReusablePersistedHtmlSource = extractFunctionSource(
       fileContent,
@@ -921,42 +913,6 @@ test('resolveEditorMetadataPersistenceOptions merges explicit persistence option
   );
 });
 
-test('reportEditorPersistableDeckBuildState reports canonical deck and playback state through build callbacks', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const reportEditorPersistableDeckBuildStateSource = extractFunctionSource(
-    fileContent,
-    'function reportEditorPersistableDeckBuildState(buildOptions = {}, canonicalDeck = null, playbackState = null) {',
-    '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
-  );
-
-  const canonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: []
-  };
-  const playbackState = {
-    activeSlideIds: ['slide-2']
-  };
-  let reportedCanonicalDeck = null;
-  let reportedPlaybackState = null;
-  const context = {};
-
-  vm.createContext(context);
-  vm.runInContext(reportEditorPersistableDeckBuildStateSource, context);
-
-  context.reportEditorPersistableDeckBuildState({
-    onCanonicalDeckResolved(deck) {
-      reportedCanonicalDeck = deck;
-    },
-    onPlaybackStateResolved(nextPlaybackState) {
-      reportedPlaybackState = nextPlaybackState;
-    }
-  }, canonicalDeck, playbackState);
-
-  assert.equal(reportedCanonicalDeck, canonicalDeck);
-  assert.equal(reportedPlaybackState, playbackState);
-});
-
 test('buildEditorPersistableDeckSanitizerOptions composes metadata cleanup, chrome filters, and playback state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
@@ -1186,7 +1142,7 @@ test('buildPersistableDeckHtml reuses the local reusable persisted html resolver
   assert.equal(delegatedArgs.options.persistedCanonicalDeck, canonicalDeck);
 });
 
-test('buildPersistableDeckHtml reuses the local persistable build-state reporter when the editor frame is unavailable', () => {
+test('buildPersistableDeckHtml reports canonical deck and playback state when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
     fileContent,
@@ -1204,7 +1160,6 @@ test('buildPersistableDeckHtml reuses the local persistable build-state reporter
     '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
   );
 
-  const calls = [];
   const canonicalDeck = {
     kind: 'slidenext.deck',
     schemaVersion: 1,
@@ -1213,6 +1168,8 @@ test('buildPersistableDeckHtml reuses the local persistable build-state reporter
   const playbackState = {
     activeSlideIds: ['slide-2']
   };
+  let reportedCanonicalDeck = null;
+  let reportedPlaybackState = null;
   const context = {
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
@@ -1224,9 +1181,6 @@ test('buildPersistableDeckHtml reuses the local persistable build-state reporter
     },
     SlideNextStudioEditorPersistence: {
       ...editorPersistence
-    },
-    __reportEditorPersistableDeckBuildState(buildOptions, nextCanonicalDeck, nextPlaybackState) {
-      calls.push(['reportEditorPersistableDeckBuildState', buildOptions, nextCanonicalDeck, nextPlaybackState]);
     },
     __resolveEditorReusablePersistedHtml(persistedDeckState) {
       return persistedDeckState.cleanHtml;
@@ -1248,13 +1202,21 @@ test('buildPersistableDeckHtml reuses the local persistable build-state reporter
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
-  vm.runInContext('reportEditorPersistableDeckBuildState = __reportEditorPersistableDeckBuildState;', context);
   vm.runInContext('resolveEditorReusablePersistedHtml = __resolveEditorReusablePersistedHtml;', context);
 
-  assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-baseline</html>');
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0][2], canonicalDeck);
-  assert.equal(calls[0][3], playbackState);
+  assert.equal(
+    context.buildPersistableDeckHtml(null, {
+      onCanonicalDeckResolved(deck) {
+        reportedCanonicalDeck = deck;
+      },
+      onPlaybackStateResolved(nextPlaybackState) {
+        reportedPlaybackState = nextPlaybackState;
+      }
+    }),
+    '<html>persisted-baseline</html>'
+  );
+  assert.equal(reportedCanonicalDeck, canonicalDeck);
+  assert.equal(reportedPlaybackState, playbackState);
 });
 
 test('buildPersistableDeckHtml reuses the local persisted deck state-with-content resolver when available', () => {
@@ -2402,7 +2364,7 @@ test('buildPersistableDeckHtml reports the resolved live canonical deck when req
   assert.equal(buildEditorCanonicalDeckCalls, 1);
 });
 
-test('buildPersistableDeckHtml reuses the local persistable build-state reporter for live iframe persistence', () => {
+test('buildPersistableDeckHtml reports canonical deck and playback state for live iframe persistence', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
     fileContent,
@@ -2424,14 +2386,12 @@ test('buildPersistableDeckHtml reuses the local persistable build-state reporter
   const playbackState = {
     activeSlideIds: ['slide-3']
   };
-  const calls = [];
+  let reportedCanonicalDeck = null;
+  let reportedPlaybackState = null;
   const context = {
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
-    __reportEditorPersistableDeckBuildState(buildOptions, nextCanonicalDeck, nextPlaybackState) {
-      calls.push(['reportEditorPersistableDeckBuildState', buildOptions, nextCanonicalDeck, nextPlaybackState]);
-    },
     SlideNextDeckPersistence: {
       buildPersistableDeckHtml(nextDoc) {
         assert.equal(nextDoc, iframeDoc);
@@ -2455,18 +2415,20 @@ test('buildPersistableDeckHtml reuses the local persistable build-state reporter
   vm.createContext(context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
-  vm.runInContext('reportEditorPersistableDeckBuildState = __reportEditorPersistableDeckBuildState;', context);
 
   assert.equal(
     context.buildPersistableDeckHtml(iframeDoc, {
-      onCanonicalDeckResolved() {},
-      onPlaybackStateResolved() {}
+      onCanonicalDeckResolved(deck) {
+        reportedCanonicalDeck = deck;
+      },
+      onPlaybackStateResolved(nextPlaybackState) {
+        reportedPlaybackState = nextPlaybackState;
+      }
     }),
     '<html>persisted-live</html>'
   );
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0][2], canonicalDeck);
-  assert.equal(calls[0][3], playbackState);
+  assert.equal(reportedCanonicalDeck, canonicalDeck);
+  assert.equal(reportedPlaybackState, playbackState);
 });
 
 test('buildPersistableDeckHtml renders canonical deck html when the editor frame and persisted baseline are unavailable', () => {
