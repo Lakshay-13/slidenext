@@ -1315,20 +1315,12 @@ test('resolveEditorCapturedCanonicalDeck delegates capture canonical resolution 
   };
   let delegatedArgs = null;
   const context = {
-    resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+    resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
       delegatedArgs = {
-        canonicalDeck: nextCanonicalDeck,
-        buildCanonicalDeck: options.buildCanonicalDeck
+        doc: nextDoc,
+        canonicalDeck: nextCanonicalDeck
       };
       return canonicalDeck;
-    },
-    buildEditorCanonicalDeck(nextDoc) {
-      assert.equal(nextDoc, iframeDoc);
-      return {
-        kind: 'slidenext.deck',
-        schemaVersion: 1,
-        slides: [{ id: 'slide-fallback', nodes: [] }]
-      };
     },
     getIframeDoc() {
       return iframeDoc;
@@ -1339,8 +1331,8 @@ test('resolveEditorCapturedCanonicalDeck delegates capture canonical resolution 
   vm.runInContext(helperSource, context);
 
   assert.equal(context.resolveEditorCapturedCanonicalDeck(iframeDoc, canonicalDeck), canonicalDeck);
+  assert.equal(delegatedArgs.doc, iframeDoc);
   assert.equal(delegatedArgs.canonicalDeck, canonicalDeck);
-  assert.equal(typeof delegatedArgs.buildCanonicalDeck, 'function');
 });
 
 test('resolveEditorCapturedCanonicalDeck falls back to the live editor canonical deck when the override helper is unavailable', () => {
@@ -1357,13 +1349,10 @@ test('resolveEditorCapturedCanonicalDeck falls back to the live editor canonical
     schemaVersion: 1,
     slides: []
   };
-  let buildEditorCanonicalDeckCalls = 0;
+  const calls = [];
   const context = {
-    resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
-      return options.buildCanonicalDeck();
-    },
-    buildEditorCanonicalDeck(nextDoc) {
-      buildEditorCanonicalDeckCalls += 1;
+    resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
       assert.equal(nextDoc, iframeDoc);
       return canonicalDeck;
     },
@@ -1376,7 +1365,9 @@ test('resolveEditorCapturedCanonicalDeck falls back to the live editor canonical
   vm.runInContext(helperSource, context);
 
   assert.equal(context.resolveEditorCapturedCanonicalDeck(iframeDoc, null), canonicalDeck);
-  assert.equal(buildEditorCanonicalDeckCalls, 1);
+  assert.deepEqual(calls, [
+    ['resolveEditorSaveCanonicalDeck', iframeDoc, null]
+  ]);
 });
 
 test('createEditorCapturedCanonicalDeckResolver reuses the local captured canonical deck helper when available', () => {
