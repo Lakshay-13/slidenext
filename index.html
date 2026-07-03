@@ -6281,6 +6281,40 @@
       });
     }
 
+    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {
+      const nextBuildOptions = buildOptions && typeof buildOptions === 'object'
+        ? buildOptions
+        : {};
+      const onCanonicalDeckResolved = typeof nextBuildOptions.onCanonicalDeckResolved === 'function'
+        ? nextBuildOptions.onCanonicalDeckResolved
+        : null;
+      const onPlaybackStateResolved = typeof nextBuildOptions.onPlaybackStateResolved === 'function'
+        ? nextBuildOptions.onPlaybackStateResolved
+        : null;
+      let resolvedCanonicalDeck = null;
+      let resolvedPlaybackState;
+      const cleanHtml = buildPersistableDeckHtml(doc, {
+        ...nextBuildOptions,
+        onCanonicalDeckResolved(canonicalDeck) {
+          resolvedCanonicalDeck = canonicalDeck;
+          if (onCanonicalDeckResolved) {
+            onCanonicalDeckResolved(canonicalDeck);
+          }
+        },
+        onPlaybackStateResolved(playbackState) {
+          resolvedPlaybackState = playbackState;
+          if (onPlaybackStateResolved) {
+            onPlaybackStateResolved(playbackState);
+          }
+        }
+      });
+      return {
+        cleanHtml,
+        canonicalDeck: resolvedCanonicalDeck,
+        playbackState: resolvedPlaybackState
+      };
+    }
+
     function captureEditorPersistableDeckState(doc = getIframeDoc()) {
       const captureOptions = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
         ? arguments[1]
@@ -6297,17 +6331,38 @@
                 buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
               })
             : buildEditorCanonicalDeck(doc);
-      let resolvedCanonicalDeck = null;
-      let resolvedPlaybackState;
-      const cleanHtml = buildPersistableDeckHtml(doc, {
-        canonicalDeck: providedCanonicalDeck,
-        onCanonicalDeckResolved(canonicalDeck) {
-          resolvedCanonicalDeck = canonicalDeck;
-        },
-        onPlaybackStateResolved(playbackState) {
-          resolvedPlaybackState = playbackState;
-        }
+      const capturePersistableDeckBuildState = typeof captureEditorPersistableDeckBuildState === 'function'
+        ? captureEditorPersistableDeckBuildState
+        : (nextDoc, buildOptions = {}) => {
+            let resolvedCanonicalDeck = null;
+            let resolvedPlaybackState;
+            const cleanHtml = buildPersistableDeckHtml(nextDoc, {
+              ...buildOptions,
+              onCanonicalDeckResolved(canonicalDeck) {
+                resolvedCanonicalDeck = canonicalDeck;
+              },
+              onPlaybackStateResolved(playbackState) {
+                resolvedPlaybackState = playbackState;
+              }
+            });
+            return {
+              cleanHtml,
+              canonicalDeck: resolvedCanonicalDeck,
+              playbackState: resolvedPlaybackState
+            };
+          };
+      const capturedBuildState = capturePersistableDeckBuildState(doc, {
+        canonicalDeck: providedCanonicalDeck
       });
+      const cleanHtml = typeof capturedBuildState.cleanHtml === 'string'
+        ? capturedBuildState.cleanHtml
+        : '';
+      const resolvedCanonicalDeck = Object.prototype.hasOwnProperty.call(capturedBuildState, 'canonicalDeck')
+        ? capturedBuildState.canonicalDeck
+        : null;
+      const resolvedPlaybackState = Object.prototype.hasOwnProperty.call(capturedBuildState, 'playbackState')
+        ? capturedBuildState.playbackState
+        : undefined;
       const resolveStudioCapturedPersistableDeckState = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence

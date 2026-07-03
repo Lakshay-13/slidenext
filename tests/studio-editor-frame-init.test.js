@@ -23,6 +23,15 @@ function loadCaptureEditorPersistableDeckState(fileContent, context) {
   vm.runInContext(captureEditorPersistableDeckStateSource, context);
 }
 
+function loadCaptureEditorPersistableDeckBuildState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {',
+    '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadApplyCurrentStudioCapturedDeckState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -81,6 +90,54 @@ test('captureEditorPersistableDeckState returns persisted html, canonical deck, 
   });
   assert.equal(buildEditorCanonicalDeckCalls, 0);
   assert.equal(capturePersistedDeckPlaybackStateCalls, 0);
+});
+
+test('captureEditorPersistableDeckBuildState captures and forwards canonical deck and playback callbacks', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 2'
+  };
+  let reportedCanonicalDeck = null;
+  let reportedPlaybackState = null;
+
+  const context = {
+    buildPersistableDeckHtml(doc, options = {}) {
+      assert.equal(doc, iframeDoc);
+      options.onCanonicalDeckResolved(canonicalDeck);
+      options.onPlaybackStateResolved(playbackState);
+      return '<html>persisted</html>';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckBuildState(fileContent, context);
+
+  const capturedBuildState = JSON.parse(JSON.stringify(context.captureEditorPersistableDeckBuildState(iframeDoc, {
+    onCanonicalDeckResolved(deck) {
+      reportedCanonicalDeck = deck;
+    },
+    onPlaybackStateResolved(nextPlaybackState) {
+      reportedPlaybackState = nextPlaybackState;
+    }
+  })));
+
+  assert.deepEqual(capturedBuildState, {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck,
+    playbackState
+  });
+  assert.equal(reportedCanonicalDeck, canonicalDeck);
+  assert.equal(reportedPlaybackState, playbackState);
 });
 
 test('captureEditorPersistableDeckState reuses a resolved canonical deck when playback fallback runs after html capture', () => {
@@ -202,6 +259,54 @@ test('captureEditorPersistableDeckState delegates final capture-state resolution
   assert.equal(delegatedArgs.cleanHtml, '<html>persisted</html>');
   assert.equal(typeof delegatedArgs.options.buildCanonicalDeck, 'function');
   assert.equal(typeof delegatedArgs.options.resolvePlaybackState, 'function');
+});
+
+test('captureEditorPersistableDeckState reuses the local persistable build-state capture helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 2'
+  };
+  const calls = [];
+  const context = {
+    __captureEditorPersistableDeckBuildState(doc, buildOptions = {}) {
+      calls.push(['captureEditorPersistableDeckBuildState', doc, buildOptions]);
+      return {
+        cleanHtml: '<html>persisted</html>',
+        canonicalDeck,
+        playbackState
+      };
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('buildEditorCanonicalDeck should not run when helper provides canonical deck');
+    },
+    capturePersistedDeckPlaybackState() {
+      throw new Error('capturePersistedDeckPlaybackState should not run when helper provides playback state');
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
+  vm.runInContext('captureEditorPersistableDeckBuildState = __captureEditorPersistableDeckBuildState;', context);
+
+  const persistedDeckState = JSON.parse(JSON.stringify(context.captureEditorPersistableDeckState()));
+  assert.deepEqual(persistedDeckState, {
+    cleanHtml: '<html>persisted</html>',
+    playbackState,
+    canonicalDeck
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][1], iframeDoc);
+  assert.equal(calls[0][2].canonicalDeck, null);
 });
 
 test('captureEditorPersistableDeckState honors a provided canonical deck override when html capture does not report one', () => {
