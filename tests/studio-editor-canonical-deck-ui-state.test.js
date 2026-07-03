@@ -1533,6 +1533,26 @@ test('resolveEditorLiveActiveSlide prefers the shared editor DOM active slide he
   assert.equal(context.resolveEditorLiveActiveSlide(iframeDoc), activeSlide);
 });
 
+test('resolveEditorLiveActiveSlide returns null when the iframe doc is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorLiveActiveSlideSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorLiveActiveSlide(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorDeckRenderOptions(doc = getIframeDoc(), canonicalDeck = null, options = {}) {'
+  );
+
+  const context = {
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorLiveActiveSlideSource, context);
+
+  assert.equal(context.resolveEditorLiveActiveSlide(), null);
+});
+
 test('getPersistedActiveSlideId delegates to the shared deck persistence helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getPersistedActiveSlideIdSource = extractFunctionSource(
