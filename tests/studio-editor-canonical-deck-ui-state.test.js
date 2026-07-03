@@ -2226,6 +2226,18 @@ test('createEditorCanonicalDeckResolver reuses the local canonical deck resolver
   };
   const calls = [];
   const context = {
+    __createEditorCanonicalDeckViewStateOptions() {
+      calls.push(['createEditorCanonicalDeckViewStateOptions']);
+      return {
+        buildCanonicalDeck(sourceDoc) {
+          calls.push(['buildCanonicalDeck', sourceDoc]);
+          return canonicalDeck;
+        },
+        resolveLiveActiveSlideId() {
+          return '';
+        }
+      };
+    },
     __createEditorCanonicalDeckResolverWithBuilder(nextDoc, buildCanonicalDeck) {
       calls.push(['createEditorCanonicalDeckResolverWithBuilder', nextDoc, typeof buildCanonicalDeck]);
       return (sourceDoc = nextDoc) => {
@@ -2240,12 +2252,14 @@ test('createEditorCanonicalDeckResolver reuses the local canonical deck resolver
 
   vm.createContext(context);
   vm.runInContext(createEditorCanonicalDeckResolverSource, context);
+  vm.runInContext('createEditorCanonicalDeckViewStateOptions = __createEditorCanonicalDeckViewStateOptions;', context);
   vm.runInContext('createEditorCanonicalDeckResolverWithBuilder = __createEditorCanonicalDeckResolverWithBuilder;', context);
 
   const resolveCanonicalDeck = context.createEditorCanonicalDeckResolver(iframeDoc);
 
   assert.equal(resolveCanonicalDeck(iframeDoc), canonicalDeck);
   assert.deepEqual(calls, [
+    ['createEditorCanonicalDeckViewStateOptions'],
     ['createEditorCanonicalDeckResolverWithBuilder', iframeDoc, 'function'],
     ['resolveCanonicalDeck', iframeDoc]
   ]);

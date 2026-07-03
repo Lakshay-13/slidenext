@@ -1547,6 +1547,9 @@
     }
 
     function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {
+      const {
+        buildCanonicalDeck
+      } = createEditorCanonicalDeckViewStateOptions();
       const createSharedCanonicalDeckResolver = (
         typeof SlideNextStudioDeckView !== 'undefined'
         && SlideNextStudioDeckView
@@ -1562,13 +1565,13 @@
         : null;
       if (createSharedCanonicalDeckResolver) {
         return createSharedCanonicalDeckResolver(doc, {
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)
+          buildCanonicalDeck
         });
       }
 
       return createEditorCanonicalDeckResolverWithBuilder(
         doc,
-        (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)
+        buildCanonicalDeck
       );
     }
 
