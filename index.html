@@ -1621,17 +1621,17 @@
         && typeof SlideNextStudioDeckView.resolveStudioCanonicalDeckViewState === 'function'
         ? SlideNextStudioDeckView.resolveStudioCanonicalDeckViewState
         : null;
-      const resolveCanonicalDeck = createEditorCanonicalDeckResolver(doc);
       const resolveLiveActiveSlideId = typeof options.resolveLiveActiveSlideId === 'function'
         ? options.resolveLiveActiveSlideId
         : (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc);
       if (resolveStudioCanonicalDeckViewState) {
         return resolveStudioCanonicalDeckViewState(doc, {
-          resolveCanonicalDeck,
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           resolveLiveActiveSlideId
         });
       }
 
+      const resolveCanonicalDeck = createEditorCanonicalDeckResolver(doc);
       const liveActiveSlideId = resolveLiveActiveSlideId(doc);
       const resolvedCanonicalDeck = !doc
         ? resolveCanonicalDeck(doc)

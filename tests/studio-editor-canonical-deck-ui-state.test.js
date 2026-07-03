@@ -778,15 +778,10 @@ test('resolveEditorCanonicalDeckViewState delegates resolver orchestration to th
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
     SlideNextStudioDeckView: {
-      createStudioCanonicalDeckResolver(doc, options) {
-        return function resolveCanonicalDeck(nextDoc = doc) {
-          return options.buildCanonicalDeck(nextDoc);
-        };
-      },
       resolveStudioCanonicalDeckViewState(doc, options) {
         delegatedArgs = { doc, options };
         return {
-          resolveCanonicalDeck: options.resolveCanonicalDeck,
+          buildCanonicalDeck: options.buildCanonicalDeck,
           liveActiveSlideId: 'slide-live',
           resolvedCanonicalDeck: null
         };
@@ -813,9 +808,9 @@ test('resolveEditorCanonicalDeckViewState delegates resolver orchestration to th
   assert.equal(result.liveActiveSlideId, 'slide-live');
   assert.equal(result.resolvedCanonicalDeck, null);
   assert.equal(delegatedArgs.doc, iframeDoc);
-  assert.equal(typeof delegatedArgs.options.resolveCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.options.buildCanonicalDeck, 'function');
   assert.equal(typeof delegatedArgs.options.resolveLiveActiveSlideId, 'function');
-  assert.deepEqual(delegatedArgs.options.resolveCanonicalDeck(iframeDoc), {
+  assert.deepEqual(delegatedArgs.options.buildCanonicalDeck(iframeDoc), {
     kind: 'slidenext.deck',
     schemaVersion: 1,
     slides: []
