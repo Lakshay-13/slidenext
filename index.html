@@ -5735,40 +5735,6 @@
       );
     }
 
-    async function executeCurrentStudioAutoSavePersistenceRequestWithHandlers(
-      autoSavePersistenceState = null,
-      options = {}
-    ) {
-      const persistenceContext = autoSavePersistenceState
-        && autoSavePersistenceState.persistencePlan
-        && autoSavePersistenceState.persistencePlan.persistenceContext
-        ? autoSavePersistenceState.persistencePlan.persistenceContext
-        : null;
-      const onSuccess = typeof options.onSuccess === 'function'
-        ? options.onSuccess
-        : null;
-      const onFailure = typeof options.onFailure === 'function'
-        ? options.onFailure
-        : null;
-      return SlideNextStudioEditorPersistence.executeStudioAutoSavePersistenceRequestWithHandlers(
-        autoSavePersistenceState,
-        {
-          fetchImpl: fetch,
-          applyPersistenceSuccess: applyCurrentStudioPersistenceSuccess,
-          applyPersistenceFailure: applyCurrentStudioPersistenceFailure,
-          successOptions: {
-            presentationUrl: persistenceContext
-              ? persistenceContext.presentationUrl
-              : currentPresentationUrl,
-            onSuccess
-          },
-          failureOptions: {
-            onFailure
-          }
-        }
-      );
-    }
-
     // 6. AutoSave debouncing pipeline
     let autoSaveDebounceTimer = null;
     function triggerAutoSave() {
@@ -5806,14 +5772,24 @@
         }
         
         try {
-          await executeCurrentStudioAutoSavePersistenceRequestWithHandlers(
+          await SlideNextStudioEditorPersistence.executeStudioAutoSavePersistenceRequestWithHandlers(
             autoSavePersistenceState,
             {
-              onSuccess: () => {
-                setStudioAutoSaveStatus('saved');
+              fetchImpl: fetch,
+              applyPersistenceSuccess: applyCurrentStudioPersistenceSuccess,
+              applyPersistenceFailure: applyCurrentStudioPersistenceFailure,
+              successOptions: {
+                presentationUrl: persistencePlan.persistenceContext
+                  ? persistencePlan.persistenceContext.presentationUrl
+                  : scheduledPresentationUrl,
+                onSuccess: () => {
+                  setStudioAutoSaveStatus('saved');
+                }
               },
-              onFailure: () => {
-                setStudioAutoSaveStatus('autosave-failed');
+              failureOptions: {
+                onFailure: () => {
+                  setStudioAutoSaveStatus('autosave-failed');
+                }
               }
             }
           );
