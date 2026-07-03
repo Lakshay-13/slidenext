@@ -172,6 +172,10 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
       return context.lastPersistedDeckHtml;
     },
     currentSlideIndex: 1,
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, null);
+      return null;
+    },
     getPersistedActiveSlideId() {
       return 'slide-1';
     },
@@ -235,6 +239,10 @@ test('buildEditorSourceHtml falls back to the shared deck html source builder wh
       throw new Error('buildPersistableDeckHtml should not run when source html renders from the canonical deck');
     },
     currentSlideIndex: 1,
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, null);
+      return null;
+    },
     getPersistedActiveSlideId() {
       return 'slide-1';
     },
@@ -286,6 +294,10 @@ test('buildEditorSourceHtml reuses the shared deck-view html builder when the so
       return canonicalDeck;
     },
     currentSlideIndex: 1,
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, null);
+      return null;
+    },
     getPersistedActiveSlideId() {
       return 'slide-1';
     },
@@ -481,6 +493,10 @@ test('buildEditorSourceHtml prefers the live active slide when the editor frame 
     buildPersistableDeckHtml() {
       throw new Error('buildPersistableDeckHtml should not run when source html renders from the canonical deck');
     },
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return nextDoc.querySelector('.slide-active');
+    },
     getActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return 'slide-2';
@@ -545,6 +561,10 @@ test('buildEditorSourceHtml reuses the resolved live canonical deck when source 
       assert.equal(options.canonicalDeck, canonicalDeck);
       return '<html>persisted-source</html>';
     },
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return nextDoc.querySelector('.slide-active');
+    },
     getActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return 'slide-1';
@@ -607,6 +627,10 @@ test('buildEditorSourceHtml falls back to the current session slide when live ac
       throw new Error('buildPersistableDeckHtml should not run when source html resolves through the canonical deck');
     },
     currentSlideIndex: 1,
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return nextDoc.querySelector('.slide-active');
+    },
     getActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return '';
