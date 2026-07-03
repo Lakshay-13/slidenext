@@ -1058,12 +1058,9 @@ test('resolveEditorFallbackCanonicalDeck reuses the local deck canonical overrid
     return deck === rebuiltCanonicalDeck;
   };
   const context = {
-    resolveEditorDeckCanonicalOverrideResolver(nextDoc) {
-      calls.push(['resolveEditorDeckCanonicalOverrideResolver', nextDoc]);
-      return (nextCanonicalDeck, sourceDoc) => {
-        calls.push(['resolveCanonicalDeckOverride', nextCanonicalDeck, sourceDoc]);
-        return malformedCanonicalDeck;
-      };
+    resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorDeckCanonicalOverride', nextDoc, nextCanonicalDeck]);
+      return malformedCanonicalDeck;
     },
     buildEditorCanonicalDeck(nextDoc) {
       calls.push(['buildEditorCanonicalDeck', nextDoc]);
@@ -1085,8 +1082,7 @@ test('resolveEditorFallbackCanonicalDeck reuses the local deck canonical overrid
 
   assert.equal(result, rebuiltCanonicalDeck);
   assert.deepEqual(calls, [
-    ['resolveEditorDeckCanonicalOverrideResolver', iframeDoc],
-    ['resolveCanonicalDeckOverride', malformedCanonicalDeck, iframeDoc],
+    ['resolveEditorDeckCanonicalOverride', iframeDoc, malformedCanonicalDeck],
     ['getEditorCanonicalDeckValidator'],
     ['isCanonicalDeck', malformedCanonicalDeck],
     ['buildEditorCanonicalDeck', iframeDoc]
@@ -1140,10 +1136,6 @@ test('resolveEditorFallbackCanonicalDeck rebuilds malformed canonical deck input
 
   vm.createContext(context);
   vm.runInContext(helperSource, context);
-  vm.runInContext(
-    'resolveEditorDeckCanonicalOverrideResolver = (nextDoc) => (nextCanonicalDeck, sourceDoc = nextDoc) => resolveEditorDeckCanonicalOverride(sourceDoc, nextCanonicalDeck);',
-    context
-  );
 
   const result = context.resolveEditorFallbackCanonicalDeck(iframeDoc, malformedCanonicalDeck);
 

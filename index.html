@@ -3420,8 +3420,7 @@
     }
 
     function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
-      const resolveCanonicalDeckOverride = resolveEditorDeckCanonicalOverrideResolver(doc);
-      const nextCanonicalDeck = resolveCanonicalDeckOverride(canonicalDeck, doc);
+      const nextCanonicalDeck = resolveEditorDeckCanonicalOverride(doc, canonicalDeck);
       const canonicalDeckValidator = getEditorCanonicalDeckValidator();
       const hasValidCanonicalDeck = canonicalDeckValidator
         ? canonicalDeckValidator(nextCanonicalDeck)
