@@ -5718,29 +5718,23 @@
       const nextOptions = options && typeof options === 'object'
         ? options
         : {};
-      const resolvePersistenceStateFromCapture = typeof nextOptions.resolvePersistenceStateFromCapture === 'function'
-        ? nextOptions.resolvePersistenceStateFromCapture
-        : null;
-      if (!resolvePersistenceStateFromCapture) {
+      if (typeof nextOptions.resolvePersistenceStateFromCapture !== 'function') {
         return null;
       }
-      const presentationUrl = typeof nextOptions.presentationUrl === 'string' && nextOptions.presentationUrl
-        ? nextOptions.presentationUrl
-        : currentPresentationUrl;
-      const persistenceOptions = nextOptions.persistenceOptions && typeof nextOptions.persistenceOptions === 'object' && !Array.isArray(nextOptions.persistenceOptions)
-        ? { ...nextOptions.persistenceOptions }
-        : {};
-      const capturePersistableDeckState = typeof nextOptions.capturePersistableDeckState === 'function'
-        ? nextOptions.capturePersistableDeckState
-        : captureEditorPersistableDeckState;
       return SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture(
         doc,
-        presentationUrl,
+        typeof nextOptions.presentationUrl === 'string' && nextOptions.presentationUrl
+          ? nextOptions.presentationUrl
+          : currentPresentationUrl,
         {
-          capturePersistableDeckState,
-          persistenceOptions
+          capturePersistableDeckState: typeof nextOptions.capturePersistableDeckState === 'function'
+            ? nextOptions.capturePersistableDeckState
+            : captureEditorPersistableDeckState,
+          persistenceOptions: nextOptions.persistenceOptions && typeof nextOptions.persistenceOptions === 'object' && !Array.isArray(nextOptions.persistenceOptions)
+            ? { ...nextOptions.persistenceOptions }
+            : {}
         },
-        resolvePersistenceStateFromCapture
+        nextOptions.resolvePersistenceStateFromCapture
       );
     }
 
