@@ -5362,21 +5362,15 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(buildOptions, 'canonicalDeck')
         ? buildOptions.canonicalDeck
         : null;
-      const resolveCanonicalDeckOverride = (shouldBuildFallbackCanonicalDeck = false) => resolveEditorCanonicalDeckOverride(
-        providedCanonicalDeck,
-        {
-          buildCanonicalDeck: shouldBuildFallbackCanonicalDeck
-            ? () => buildEditorCanonicalDeck(doc)
-            : null
-        }
-      );
       if (!doc) {
         const persistedDeckState = getCurrentEditorPersistedDeckState();
         const persistedDeckStateWithContent = resolveEditorPersistedDeckStateWithContent(persistedDeckState);
         const persistedHtml = persistedDeckStateWithContent
           ? persistedDeckStateWithContent.cleanHtml
           : '';
-        const canonicalDeck = resolveCanonicalDeckOverride(true);
+        const canonicalDeck = resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
+          buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+        });
         if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
           buildOptions.onCanonicalDeckResolved(canonicalDeck);
         }
@@ -5411,7 +5405,8 @@
         });
       }
       const shouldReportCanonicalDeck = typeof buildOptions.onCanonicalDeckResolved === 'function';
-      const canonicalDeck = resolveCanonicalDeckOverride() || (shouldReportCanonicalDeck ? buildEditorCanonicalDeck(doc) : null);
+      const canonicalDeck = resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
+        || (shouldReportCanonicalDeck ? buildEditorCanonicalDeck(doc) : null);
       const resolvedPlaybackState = capturePersistedDeckPlaybackState(doc, canonicalDeck);
       if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
         buildOptions.onCanonicalDeckResolved(canonicalDeck);
