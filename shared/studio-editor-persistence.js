@@ -859,6 +859,27 @@
     return currentSessionToken !== requestedSessionToken;
   }
 
+  function clearStudioPersistenceTimers(options = {}) {
+    const clearTimer = typeof options.clearTimer === 'function'
+      ? options.clearTimer
+      : (typeof clearTimeout === 'function' ? clearTimeout : () => {});
+    const autoVersionTimers = options.autoVersionTimers && typeof options.autoVersionTimers === 'object'
+      ? options.autoVersionTimers
+      : {};
+
+    if (typeof options.autoSaveDebounceTimer !== 'undefined' && options.autoSaveDebounceTimer !== null) {
+      clearTimer(options.autoSaveDebounceTimer);
+    }
+    Object.values(autoVersionTimers).forEach((timerId) => {
+      clearTimer(timerId);
+    });
+
+    return {
+      autoSaveDebounceTimer: null,
+      autoVersionTimers: {}
+    };
+  }
+
   function isStudioPersistenceActionCurrent(context = {}, options = {}) {
     const requestedPresentationUrl = normalizeString(context.presentationUrl);
     if (!requestedPresentationUrl) {
@@ -1002,6 +1023,7 @@
     resolveStudioPersistedHtmlReuse,
     isStudioPersistedState,
     isStudioPersistenceTaskStale,
+    clearStudioPersistenceTimers,
     isStudioPersistenceActionCurrent,
     runStudioPersistenceActionIfCurrent,
     createStudioPersistenceHandlerOptions,

@@ -2024,6 +2024,42 @@ test('isStudioPersistenceTaskStale rejects missing or stale deck/session combina
   );
 });
 
+test('clearStudioPersistenceTimers clears debounce and version timers and resets timer state', () => {
+  const clearedTimerIds = [];
+  const nextTimerState = editorPersistence.clearStudioPersistenceTimers({
+    autoSaveDebounceTimer: 11,
+    autoVersionTimers: {
+      fast: 21,
+      slow: 22
+    },
+    clearTimer(timerId) {
+      clearedTimerIds.push(timerId);
+    }
+  });
+
+  assert.deepEqual(clearedTimerIds, [11, 21, 22]);
+  assert.deepEqual(nextTimerState, {
+    autoSaveDebounceTimer: null,
+    autoVersionTimers: {}
+  });
+
+  const fallbackClears = [];
+  assert.deepEqual(
+    editorPersistence.clearStudioPersistenceTimers({
+      autoSaveDebounceTimer: null,
+      autoVersionTimers: null,
+      clearTimer(timerId) {
+        fallbackClears.push(timerId);
+      }
+    }),
+    {
+      autoSaveDebounceTimer: null,
+      autoVersionTimers: {}
+    }
+  );
+  assert.deepEqual(fallbackClears, []);
+});
+
 test('createStudioPersistenceHandlerOptions preserves the supplied session readers and persistence hooks', () => {
   const getCurrentPresentationUrl = () => '/presentations/onboarding-presentation/index.html';
   const getCurrentSessionToken = () => 3;

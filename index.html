@@ -5592,12 +5592,13 @@
     }
 
     function resetEditorPersistenceTimers() {
-      clearTimeout(autoSaveDebounceTimer);
-      autoSaveDebounceTimer = null;
-      Object.values(autoVersionTimers).forEach((timerId) => {
-        clearTimeout(timerId);
+      const clearedTimerState = SlideNextStudioEditorPersistence.clearStudioPersistenceTimers({
+        autoSaveDebounceTimer,
+        autoVersionTimers,
+        clearTimer: clearTimeout
       });
-      autoVersionTimers = {};
+      autoSaveDebounceTimer = clearedTimerState.autoSaveDebounceTimer;
+      autoVersionTimers = clearedTimerState.autoVersionTimers;
     }
 
     function createCurrentStudioPersistenceHandlerOptions(options = {}) {
