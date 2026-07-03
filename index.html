@@ -1726,26 +1726,14 @@
     }
 
     function resetStudioSourceViewUiState() {
-      SlideNextStudioPreview.resetSourceViewModal({
-        modalEl: document.getElementById('sourceViewModal'),
-        contentEl: document.getElementById('sourceViewModalContent'),
-        textareaEl: document.getElementById('sourceViewContent')
+      SlideNextStudioPreview.resetStudioSourceViewUiState({
+        document
       });
     }
 
     function resetStudioPresentationUiState() {
-      const modalEl = document.getElementById('presentationModal');
-      if (document.fullscreenElement === modalEl && typeof document.exitFullscreen === 'function') {
-        const fullscreenExitResult = document.exitFullscreen();
-        if (fullscreenExitResult && typeof fullscreenExitResult.catch === 'function') {
-          fullscreenExitResult.catch(() => {});
-        }
-      }
-      SlideNextStudioPreview.resetPresentationModal({
-        modalEl,
-        iframeEl: document.getElementById('presentationFrame'),
-        bodyEl: document.body,
-        fullscreenIconEl: document.getElementById('fsIcon')
+      SlideNextStudioPreview.resetStudioPresentationUiState({
+        document
       });
     }
 

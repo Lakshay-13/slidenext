@@ -10,6 +10,23 @@
     root.SlideNextStudioPreview = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root, modalVisibility) {
+  function resolvePreviewDocument(options = {}) {
+    if (options.document && typeof options.document.getElementById === 'function') {
+      return options.document;
+    }
+    if (root && root.document && typeof root.document.getElementById === 'function') {
+      return root.document;
+    }
+    return null;
+  }
+
+  function resolvePreviewDocumentElement(documentRef, id) {
+    if (!documentRef || typeof documentRef.getElementById !== 'function') {
+      return null;
+    }
+    return documentRef.getElementById(id);
+  }
+
   function runAnimationFrame(callback) {
     if (root && typeof root.requestAnimationFrame === 'function') {
       root.requestAnimationFrame(callback);
@@ -211,6 +228,27 @@
     }
   }
 
+  function resetStudioPresentationUiState(options = {}) {
+    const documentRef = resolvePreviewDocument(options);
+    const modalEl = options.modalEl || resolvePreviewDocumentElement(documentRef, 'presentationModal');
+    if (
+      documentRef
+      && documentRef.fullscreenElement === modalEl
+      && typeof documentRef.exitFullscreen === 'function'
+    ) {
+      const fullscreenExitResult = documentRef.exitFullscreen();
+      if (fullscreenExitResult && typeof fullscreenExitResult.catch === 'function') {
+        fullscreenExitResult.catch(() => {});
+      }
+    }
+    resetPresentationModal({
+      modalEl,
+      iframeEl: options.iframeEl || resolvePreviewDocumentElement(documentRef, 'presentationFrame'),
+      bodyEl: options.bodyEl || (documentRef && documentRef.body ? documentRef.body : null),
+      fullscreenIconEl: options.fullscreenIconEl || resolvePreviewDocumentElement(documentRef, 'fsIcon')
+    });
+  }
+
   function openSourceViewModal(options = {}) {
     const {
       modalEl,
@@ -296,6 +334,15 @@
     }
   }
 
+  function resetStudioSourceViewUiState(options = {}) {
+    const documentRef = resolvePreviewDocument(options);
+    resetSourceViewModal({
+      modalEl: options.modalEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModal'),
+      contentEl: options.contentEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModalContent'),
+      textareaEl: options.textareaEl || resolvePreviewDocumentElement(documentRef, 'sourceViewContent')
+    });
+  }
+
   return {
     getNextPresentationFrameLoadToken,
     isPresentationFrameLoadCurrent,
@@ -308,8 +355,10 @@
     launchStudioPresentation,
     closePresentationModal,
     resetPresentationModal,
+    resetStudioPresentationUiState,
     openSourceViewModal,
     closeSourceViewModal,
-    resetSourceViewModal
+    resetSourceViewModal,
+    resetStudioSourceViewUiState
   };
 });

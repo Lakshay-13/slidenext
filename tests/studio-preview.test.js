@@ -235,6 +235,62 @@ test('resetPresentationModal clears preview state immediately', () => {
   assert.equal(fullscreenIconEl.textContent, 'fullscreen');
 });
 
+test('resetStudioPresentationUiState resolves preview chrome from the document and exits fullscreen', () => {
+  const iframeEl = createIframe();
+  iframeEl.onload = () => {};
+  iframeEl.src = '/presentations/stale/index.html';
+  iframeEl.srcdoc = '<html>stale preview</html>';
+  preview.getNextPresentationFrameLoadToken(iframeEl);
+  const modalEl = { classList: createClassList(['active', 'opacity-100']) };
+  const bodyEl = {
+    style: {
+      overflow: 'hidden'
+    }
+  };
+  const fullscreenIconEl = {
+    textContent: 'fullscreen_exit'
+  };
+  let exitFullscreenCalls = 0;
+  const documentStub = {
+    body: bodyEl,
+    fullscreenElement: modalEl,
+    getElementById(id) {
+      switch (id) {
+        case 'presentationModal':
+          return modalEl;
+        case 'presentationFrame':
+          return iframeEl;
+        case 'fsIcon':
+          return fullscreenIconEl;
+        default:
+          return null;
+      }
+    },
+    exitFullscreen() {
+      exitFullscreenCalls += 1;
+      this.fullscreenElement = null;
+      return Promise.resolve();
+    }
+  };
+
+  preview.resetStudioPresentationUiState({
+    document: documentStub
+  });
+
+  assert.equal(exitFullscreenCalls, 1);
+  assert.equal(documentStub.fullscreenElement, null);
+  assert.equal(iframeEl.onload, null);
+  assert.equal(iframeEl.src, '');
+  assert.equal(iframeEl.srcdoc, '');
+  assert.equal(modalEl.classList.contains('active'), false);
+  assert.equal(modalEl.classList.contains('hidden'), true);
+  assert.equal(modalEl.classList.contains('opacity-0'), true);
+  assert.equal(modalEl.classList.contains('pointer-events-none'), true);
+  assert.equal(modalEl.classList.contains('opacity-100'), false);
+  assert.equal(bodyEl.style.overflow, '');
+  assert.equal(fullscreenIconEl.textContent, 'fullscreen');
+});
+
 test('resetSourceViewModal clears source modal state immediately', () => {
   const modalEl = { classList: createClassList(['opacity-100']) };
   const contentEl = { classList: createClassList(['scale-100']) };
@@ -248,6 +304,43 @@ test('resetSourceViewModal clears source modal state immediately', () => {
     modalEl,
     contentEl,
     textareaEl
+  });
+
+  assert.equal(textareaEl.value, '');
+  assert.equal(textareaEl.scrollTop, 0);
+  assert.equal(modalEl.classList.contains('hidden'), true);
+  assert.equal(modalEl.classList.contains('opacity-0'), true);
+  assert.equal(modalEl.classList.contains('opacity-100'), false);
+  assert.equal(contentEl.classList.contains('scale-95'), true);
+  assert.equal(contentEl.classList.contains('scale-100'), false);
+  assert.equal(modalEl.__slideNextModalVisibilityToken, tokenBefore + 1);
+});
+
+test('resetStudioSourceViewUiState resolves source modal chrome from the document', () => {
+  const modalEl = { classList: createClassList(['opacity-100']) };
+  const contentEl = { classList: createClassList(['scale-100']) };
+  const textareaEl = {
+    value: '<html>stale</html>',
+    scrollTop: 40
+  };
+  const tokenBefore = 0;
+  const documentStub = {
+    getElementById(id) {
+      switch (id) {
+        case 'sourceViewModal':
+          return modalEl;
+        case 'sourceViewModalContent':
+          return contentEl;
+        case 'sourceViewContent':
+          return textareaEl;
+        default:
+          return null;
+      }
+    }
+  };
+
+  preview.resetStudioSourceViewUiState({
+    document: documentStub
   });
 
   assert.equal(textareaEl.value, '');
