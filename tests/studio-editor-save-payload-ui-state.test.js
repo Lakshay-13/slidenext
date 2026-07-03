@@ -98,14 +98,6 @@ function loadBuildEditorSaveRequestBody(fileContent, context, helperSource) {
     );
     vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
   }
-  if (typeof context.resolveEditorSaveCanonicalDeck !== 'function') {
-    const resolveEditorSaveCanonicalDeckSource = extractFunctionSource(
-      fileContent,
-      'function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
-      '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
-    );
-    vm.runInContext(resolveEditorSaveCanonicalDeckSource, context);
-  }
   vm.runInContext(helperSource, context);
 }
 
@@ -381,7 +373,7 @@ test('buildEditorSaveRequestBody reuses the captured persistable deck state when
   assert.deepEqual(calls.map(([name]) => name), ['captureEditorPersistableDeckState']);
 });
 
-test('buildEditorSaveRequestBody reuses the local save canonical deck helper when capture state omits a canonical deck', () => {
+test('buildEditorSaveRequestBody reuses the local canonical override helper when capture state omits a canonical deck', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(
     fileContent,
@@ -398,10 +390,10 @@ test('buildEditorSaveRequestBody reuses the local save canonical deck helper whe
   const calls = [];
   const context = {
     SlideNextStudioEditorPersistence: editorPersistence,
-    __resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
-      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
-      assert.equal(nextDoc, doc);
+    __resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+      calls.push(['resolveEditorCanonicalDeckOverride', nextCanonicalDeck, options.buildCanonicalDeck]);
       assert.equal(nextCanonicalDeck, null);
+      assert.equal(typeof options.buildCanonicalDeck, 'function');
       return canonicalDeck;
     },
     captureEditorPersistableDeckState(nextDoc, captureOptions = {}) {
@@ -416,7 +408,7 @@ test('buildEditorSaveRequestBody reuses the local save canonical deck helper whe
       throw new Error('buildPersistableDeckHtml should not run when captureEditorPersistableDeckState provides html');
     },
     buildEditorCanonicalDeck() {
-      throw new Error('buildEditorCanonicalDeck should not run when resolveEditorSaveCanonicalDeck is available');
+      throw new Error('buildEditorCanonicalDeck should not run when resolveEditorCanonicalDeckOverride is available');
     },
     currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
     getIframeDoc() {
@@ -427,7 +419,7 @@ test('buildEditorSaveRequestBody reuses the local save canonical deck helper whe
   vm.createContext(context);
   loadBuildEditorSaveRequestBody(fileContent, context, buildEditorSaveRequestBodySource);
   vm.runInContext(
-    'resolveEditorSaveCanonicalDeck = __resolveEditorSaveCanonicalDeck;',
+    'resolveEditorCanonicalDeckOverride = __resolveEditorCanonicalDeckOverride;',
     context
   );
 
@@ -440,10 +432,11 @@ test('buildEditorSaveRequestBody reuses the local save canonical deck helper whe
       canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeck)
     }
   );
-  assert.deepEqual(calls.map(([name]) => name), [
-    'captureEditorPersistableDeckState',
-    'resolveEditorSaveCanonicalDeck'
-  ]);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0][0], 'captureEditorPersistableDeckState');
+  assert.equal(calls[1][0], 'resolveEditorCanonicalDeckOverride');
+  assert.equal(calls[1][1], null);
+  assert.equal(typeof calls[1][2], 'function');
 });
 
 test('resolveEditorPersistedDeckStateWithContent reuses getCurrentEditorPersistedDeckState.resolveWithContent when available', () => {

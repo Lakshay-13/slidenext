@@ -5697,7 +5697,9 @@
           });
       const resolvedCanonicalDeck = capturedDeckState && capturedDeckState.canonicalDeck
         ? capturedDeckState.canonicalDeck
-        : resolveEditorSaveCanonicalDeck(doc, providedCanonicalDeck);
+        : resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+          });
       const resolvedCleanHtml = typeof cleanHtml === 'string'
         ? cleanHtml
         : capturedDeckState && typeof capturedDeckState.cleanHtml === 'string'
