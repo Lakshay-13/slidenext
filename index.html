@@ -1653,7 +1653,8 @@
         : null;
       if (createStudioDeckViewBuildOptions) {
         return createStudioDeckViewBuildOptions(doc, {
-          resolveCanonicalDeckViewState: (sourceDoc) => resolveEditorCanonicalDeckViewState(sourceDoc),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          resolveLiveActiveSlideId: (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc),
           buildFallbackHtml: (sourceDoc, canonicalDeck) => buildPersistableDeckHtml(sourceDoc, {
             canonicalDeck
           }),

@@ -835,18 +835,6 @@ test('createEditorDeckViewBuildOptions delegates build-option composition to the
   };
   const context = {
     SlideNextStudioDeckView: {
-      createStudioCanonicalDeckResolver(doc, options) {
-        return function resolveCanonicalDeck(nextDoc = doc) {
-          return options.buildCanonicalDeck(nextDoc);
-        };
-      },
-      resolveStudioCanonicalDeckViewState(doc, options) {
-        return {
-          resolveCanonicalDeck: options.resolveCanonicalDeck,
-          liveActiveSlideId: 'slide-live',
-          resolvedCanonicalDeck: null
-        };
-      },
       createStudioDeckViewBuildOptions(doc, options) {
         delegatedArgs = { doc, options };
         return {
@@ -870,7 +858,7 @@ test('createEditorDeckViewBuildOptions delegates build-option composition to the
       return iframeDoc;
     },
     resolveEditorLiveActiveSlideId() {
-      return '';
+      return 'slide-live';
     }
   };
 
@@ -883,9 +871,12 @@ test('createEditorDeckViewBuildOptions delegates build-option composition to the
   assert.equal(result.buildFallbackHtml(), '<html>fallback</html>');
   assert.equal(result.deckHtmlOptions.renderOptions.activeSlideId, 'slide-live');
   assert.equal(delegatedArgs.doc, iframeDoc);
-  assert.equal(typeof delegatedArgs.options.resolveCanonicalDeckViewState, 'function');
+  assert.equal(typeof delegatedArgs.options.buildCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.options.resolveLiveActiveSlideId, 'function');
   assert.equal(typeof delegatedArgs.options.buildFallbackHtml, 'function');
   assert.equal(typeof delegatedArgs.options.buildRenderOptions, 'function');
+  assert.equal(delegatedArgs.options.resolveLiveActiveSlideId(iframeDoc), 'slide-live');
+  assert.equal(delegatedArgs.options.buildCanonicalDeck(iframeDoc), canonicalDeck);
 });
 
 test('buildEditorDeckRenderOptions delegates render-option composition to the shared deck view helper when available', () => {
