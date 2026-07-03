@@ -53,6 +53,14 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
     );
     vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
   }
+  if (typeof context.reportEditorPersistableDeckBuildState !== 'function') {
+    const reportEditorPersistableDeckBuildStateSource = extractFunctionSource(
+      fileContent,
+      'function reportEditorPersistableDeckBuildState(buildOptions = {}, canonicalDeck = null, playbackState = null) {',
+      '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
+    );
+    vm.runInContext(reportEditorPersistableDeckBuildStateSource, context);
+  }
   if (typeof context.sanitizeEditorReusablePersistedHtml !== 'function') {
     const sanitizeEditorReusablePersistedHtmlSource = extractFunctionSource(
       fileContent,

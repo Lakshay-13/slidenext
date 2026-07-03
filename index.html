@@ -5721,16 +5721,6 @@
           resolveMetadataPersistenceOptions
         }
       );
-      const reportPersistableDeckBuildState = typeof reportEditorPersistableDeckBuildState === 'function'
-        ? reportEditorPersistableDeckBuildState
-        : (nextBuildOptions = {}, canonicalDeck = null, playbackState = null) => {
-            if (typeof nextBuildOptions.onCanonicalDeckResolved === 'function') {
-              nextBuildOptions.onCanonicalDeckResolved(canonicalDeck);
-            }
-            if (typeof nextBuildOptions.onPlaybackStateResolved === 'function') {
-              nextBuildOptions.onPlaybackStateResolved(playbackState);
-            }
-          };
       if (!doc) {
         const persistedDeckState = getCurrentEditorPersistedDeckState();
         const persistedDeckStateWithContent = resolveEditorPersistedDeckStateWithContent(persistedDeckState);
@@ -5738,7 +5728,7 @@
           ? persistedDeckStateWithContent.cleanHtml
           : '';
         const canonicalDeck = resolveCanonicalDeckOverride(true);
-        reportPersistableDeckBuildState(buildOptions, canonicalDeck, persistedDeckState.playbackState);
+        reportEditorPersistableDeckBuildState(buildOptions, canonicalDeck, persistedDeckState.playbackState);
         const reusablePersistedHtml = resolveEditorReusablePersistedHtml(
           persistedDeckStateWithContent || persistedDeckState,
           {
@@ -5779,7 +5769,7 @@
       const resolvedPlaybackState = doc
         ? capturePersistedDeckPlaybackState(doc, canonicalDeck)
         : livePlaybackState;
-      reportPersistableDeckBuildState(buildOptions, canonicalDeck, resolvedPlaybackState);
+      reportEditorPersistableDeckBuildState(buildOptions, canonicalDeck, resolvedPlaybackState);
       const persistableDeckSanitizerOptions = buildEditorPersistableDeckSanitizerOptions(resolvedPlaybackState, {
         resolveMetadataPersistenceOptions
       });
