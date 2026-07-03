@@ -158,6 +158,9 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
         return options.buildFallbackHtml(null);
       }
     },
+    resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
+    },
     buildEditorCanonicalDeck(nextDoc) {
       buildEditorCanonicalDeckCalls += 1;
       assert.equal(nextDoc, null);
@@ -221,6 +224,9 @@ test('buildEditorSourceHtml falls back to the shared deck html source builder wh
         return '<html>source-from-deck-html</html>';
       }
     },
+    resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
+    },
     buildEditorCanonicalDeck(nextDoc) {
       assert.equal(nextDoc, null);
       return canonicalDeck;
@@ -271,6 +277,9 @@ test('buildEditorSourceHtml reuses the shared deck-view html builder when the so
         calls.push({ doc, options });
         return '<html>source-from-deck-view-html</html>';
       }
+    },
+    resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
     },
     buildEditorCanonicalDeck(nextDoc) {
       assert.equal(nextDoc, null);
@@ -523,6 +532,9 @@ test('buildEditorSourceHtml reuses the resolved live canonical deck when source 
         return options.buildFallbackHtml(doc);
       }
     },
+    resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
+    },
     buildEditorCanonicalDeck(nextDoc) {
       buildEditorCanonicalDeckCalls += 1;
       assert.equal(nextDoc, iframeDoc);
@@ -582,6 +594,9 @@ test('buildEditorSourceHtml falls back to the current session slide when live ac
         assert.equal(options.buildCanonicalDeck(doc), canonicalDeck);
         return options.deckHtmlOptions.renderOptions.activeSlideId;
       }
+    },
+    resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
     },
     buildEditorCanonicalDeck(nextDoc) {
       buildEditorCanonicalDeckCalls += 1;

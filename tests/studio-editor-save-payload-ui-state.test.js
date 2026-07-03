@@ -2245,6 +2245,9 @@ test('capturePersistedDeckPlaybackState delegates fallback active slide resoluti
         };
       }
     },
+    resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
+    },
     buildEditorCanonicalDeck(nextDoc) {
       buildEditorCanonicalDeckCalls += 1;
       assert.equal(nextDoc, iframeDoc);
@@ -2324,6 +2327,9 @@ test('capturePersistedDeckPlaybackState falls back to the current session slide 
           slideCounterText: '2 / 5'
         };
       }
+    },
+    resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
     },
     buildEditorCanonicalDeck(nextDoc) {
       buildEditorCanonicalDeckCalls += 1;
