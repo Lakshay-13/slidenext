@@ -387,6 +387,10 @@ test('applySelectedElementStyle falls back to style-action refresh when inspecto
       calls.push(['isElementLocked']);
       return false;
     },
+    syncInspectorForSelection() {
+      calls.push(['syncInspectorForSelection']);
+      context.updateStyleActionState(doc);
+    },
     updateStyleActionState(currentDoc) {
       calls.push(['updateStyleActionState', currentDoc]);
     }
@@ -400,6 +404,7 @@ test('applySelectedElementStyle falls back to style-action refresh when inspecto
   assert.deepEqual(calls, [
     ['getIframeDoc'],
     ['buildStudioStyleMutationPlan'],
+    ['syncInspectorForSelection'],
     ['updateStyleActionState', doc]
   ]);
 });

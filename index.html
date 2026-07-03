@@ -4371,20 +4371,12 @@
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!styleMutationPlan.canApply) {
-        if (typeof syncInspectorForSelection === 'function') {
-          syncInspectorForSelection();
-        } else {
-          updateStyleActionState(doc);
-        }
+        syncInspectorForSelection();
         return false;
       }
       const styleMutationResult = SlideNextStudioEditorStyle.applyStudioStyleMutation(styleMutationPlan.selection, prop, val);
       if (!styleMutationResult.didApply) {
-        if (typeof syncInspectorForSelection === 'function') {
-          syncInspectorForSelection();
-        } else {
-          updateStyleActionState(doc);
-        }
+        syncInspectorForSelection();
         return false;
       }
 
