@@ -5375,51 +5375,16 @@
         : () => persistedHtml;
       const renderSourceDeckHtml = typeof options.renderEditorSourceDeckHtml === 'function'
         ? options.renderEditorSourceDeckHtml
-        : (typeof renderEditorSourceDeckHtml === 'function'
-            ? renderEditorSourceDeckHtml
-            : null);
-      if (renderSourceDeckHtml) {
-        return renderSourceDeckHtml(doc, sourceViewOptions, {
-          buildFallbackHtml,
-          buildStudioSourceHtml: typeof options.buildStudioSourceHtml === 'function'
-            ? options.buildStudioSourceHtml
-            : undefined,
-          buildDeckSourceHtml: typeof options.buildDeckSourceHtml === 'function'
-            ? options.buildDeckSourceHtml
-            : undefined
-        });
-      }
-
-      const buildStudioSourceHtml = typeof options.buildStudioSourceHtml === 'function'
-        ? options.buildStudioSourceHtml
-        : (
-            typeof SlideNextStudioDeckView !== 'undefined'
-            && SlideNextStudioDeckView
-            && typeof SlideNextStudioDeckView.buildStudioSourceHtml === 'function'
-          )
-          ? SlideNextStudioDeckView.buildStudioSourceHtml
-          : null;
-      if (buildStudioSourceHtml) {
-        return buildStudioSourceHtml(doc, sourceViewOptions);
-      }
-
-      const buildDeckSourceHtml = typeof options.buildDeckSourceHtml === 'function'
-        ? options.buildDeckSourceHtml
-        : (
-            typeof SlideNextDeckHtml !== 'undefined'
-            && SlideNextDeckHtml
-            && typeof SlideNextDeckHtml.buildDeckSourceHtml === 'function'
-          )
-          ? SlideNextDeckHtml.buildDeckSourceHtml
-          : null;
-      const canonicalDeck = typeof sourceViewOptions.buildCanonicalDeck === 'function'
-        ? sourceViewOptions.buildCanonicalDeck(doc)
-        : null;
-      if (buildDeckSourceHtml && canonicalDeck && Array.isArray(canonicalDeck.slides)) {
-        return buildDeckSourceHtml(canonicalDeck, sourceViewOptions.deckHtmlOptions || {});
-      }
-
-      return buildFallbackHtml(doc);
+        : renderEditorSourceDeckHtml;
+      return renderSourceDeckHtml(doc, sourceViewOptions, {
+        buildFallbackHtml,
+        buildStudioSourceHtml: typeof options.buildStudioSourceHtml === 'function'
+          ? options.buildStudioSourceHtml
+          : undefined,
+        buildDeckSourceHtml: typeof options.buildDeckSourceHtml === 'function'
+          ? options.buildDeckSourceHtml
+          : undefined
+      });
     }
 
     function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {

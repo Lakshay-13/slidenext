@@ -2089,6 +2089,10 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when playback-st
       return canonicalDeck;
     },
     currentSlideIndex: 1,
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return null;
+    },
     getActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return '';
@@ -2254,6 +2258,10 @@ test('capturePersistedDeckPlaybackState delegates fallback active slide resoluti
       return canonicalDeck;
     },
     currentSlideIndex: 1,
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return null;
+    },
     getActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return '';
@@ -2337,6 +2345,10 @@ test('capturePersistedDeckPlaybackState falls back to the current session slide 
       return canonicalDeck;
     },
     currentSlideIndex: 1,
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return null;
+    },
     getActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return '';
@@ -2547,6 +2559,13 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
         return '<html>canonical-source</html>';
       }
     },
+    renderEditorSourceDeckHtml(nextDoc, sourceViewOptions, options = {}) {
+      calls.push(['renderEditorSourceDeckHtml', nextDoc, sourceViewOptions, options]);
+      assert.equal(sourceViewOptions.buildCanonicalDeck(), canonicalDeck);
+      assert.equal(typeof options.buildFallbackHtml, 'function');
+      assert.equal(options.buildFallbackHtml(), '');
+      return context.SlideNextStudioDeckView.buildStudioSourceHtml(nextDoc, sourceViewOptions);
+    },
     createEditorPersistableSourceViewOptions(nextDoc, nextCanonicalDeck, persistedHtml) {
       assert.equal(nextDoc, null);
       assert.equal(nextCanonicalDeck, canonicalDeck);
@@ -2596,17 +2615,21 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
   assert.equal(sharedBuildCalls, 0);
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0][0], null);
-  assert.equal(typeof calls[0][1].buildCanonicalDeck, 'function');
-  assert.equal(calls[0][1].buildCanonicalDeck(null), canonicalDeck);
-  assert.equal(calls[0][1].buildFallbackHtml(), '');
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.activeSlideId, 'slide-1');
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSourceHtml, false);
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferHeadSourceHtml, false);
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferNodeSourceHtml, false);
+  assert.equal(calls.length, 2);
+  assert.deepEqual(calls[0].slice(0, 2), ['renderEditorSourceDeckHtml', null]);
+  assert.equal(typeof calls[0][2].buildCanonicalDeck, 'function');
+  assert.equal(calls[0][2].buildCanonicalDeck(null), canonicalDeck);
+  assert.equal(calls[0][2].buildFallbackHtml(), '');
+  assert.equal(calls[0][2].deckHtmlOptions.renderOptions.activeSlideId, 'slide-1');
+  assert.equal(calls[0][2].deckHtmlOptions.renderOptions.preferSourceHtml, false);
+  assert.equal(calls[0][2].deckHtmlOptions.renderOptions.preferHeadSourceHtml, false);
+  assert.equal(calls[0][2].deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
+  assert.equal(calls[0][2].deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
+  assert.equal(calls[0][2].deckHtmlOptions.renderOptions.preferNodeSourceHtml, false);
+  assert.equal(calls[1][0], null);
+  assert.equal(typeof calls[1][1].buildCanonicalDeck, 'function');
+  assert.equal(calls[1][1].buildCanonicalDeck(null), canonicalDeck);
+  assert.equal(calls[1][1].buildFallbackHtml(), '');
 });
 
 test('createEditorPersistableSourceViewOptions reuses the local deck view build options helper when available', () => {
@@ -2935,6 +2958,13 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
         return '<html>canonical-source</html>';
       }
     },
+    renderEditorSourceDeckHtml(nextDoc, sourceViewOptions, options = {}) {
+      calls.push(['renderEditorSourceDeckHtml', nextDoc, sourceViewOptions, options]);
+      assert.equal(sourceViewOptions.buildCanonicalDeck(), currentCanonicalDeck);
+      assert.equal(typeof options.buildFallbackHtml, 'function');
+      assert.equal(options.buildFallbackHtml(), '<html>persisted-baseline</html>');
+      return context.SlideNextStudioDeckView.buildStudioSourceHtml(nextDoc, sourceViewOptions);
+    },
     createEditorPersistableSourceViewOptions(nextDoc, nextCanonicalDeck, persistedHtml) {
       assert.equal(nextDoc, null);
       assert.equal(nextCanonicalDeck, currentCanonicalDeck);
@@ -2984,14 +3014,16 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
   assert.equal(sharedBuildCalls, 0);
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0][0], null);
-  assert.equal(calls[0][1].buildCanonicalDeck(), currentCanonicalDeck);
-  assert.equal(calls[0][1].buildFallbackHtml(), '<html>persisted-baseline</html>');
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.activeSlideId, 'slide-next');
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSourceHtml, false);
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferHeadSourceHtml, false);
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
-  assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferNodeSourceHtml, false);
+  assert.equal(calls.length, 2);
+  assert.deepEqual(calls[0].slice(0, 2), ['renderEditorSourceDeckHtml', null]);
+  assert.equal(calls[0][2].buildCanonicalDeck(), currentCanonicalDeck);
+  assert.equal(calls[0][2].buildFallbackHtml(), '<html>persisted-baseline</html>');
+  assert.equal(calls[0][2].deckHtmlOptions.renderOptions.activeSlideId, 'slide-next');
+  assert.equal(calls[0][2].deckHtmlOptions.renderOptions.preferSourceHtml, false);
+  assert.equal(calls[0][2].deckHtmlOptions.renderOptions.preferHeadSourceHtml, false);
+  assert.equal(calls[0][2].deckHtmlOptions.renderOptions.preferBodySourceHtml, false);
+  assert.equal(calls[0][2].deckHtmlOptions.renderOptions.preferSlideSourceHtml, false);
+  assert.equal(calls[0][2].deckHtmlOptions.renderOptions.preferNodeSourceHtml, false);
+  assert.equal(calls[1][0], null);
+  assert.equal(calls[1][1].buildCanonicalDeck(), currentCanonicalDeck);
 });
