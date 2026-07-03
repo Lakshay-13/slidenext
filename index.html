@@ -1648,17 +1648,32 @@
         && typeof SlideNextStudioDeckView.resolveStudioCanonicalDeckViewState === 'function'
         ? SlideNextStudioDeckView.resolveStudioCanonicalDeckViewState
         : null;
+      const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : (sourceDoc) => buildEditorCanonicalDeck(sourceDoc);
       const resolveLiveActiveSlideId = typeof options.resolveLiveActiveSlideId === 'function'
         ? options.resolveLiveActiveSlideId
         : (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc);
       if (resolveStudioCanonicalDeckViewState) {
         return resolveStudioCanonicalDeckViewState(doc, {
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          buildCanonicalDeck,
           resolveLiveActiveSlideId
         });
       }
 
-      const resolveCanonicalDeck = createEditorCanonicalDeckResolver(doc);
+      const resolveCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+        ? (() => {
+            let didResolveCanonicalDeck = false;
+            let resolvedCanonicalDeck = null;
+            return function resolveCanonicalDeckOverride(sourceDoc = doc) {
+              if (!didResolveCanonicalDeck) {
+                resolvedCanonicalDeck = buildCanonicalDeck(sourceDoc);
+                didResolveCanonicalDeck = true;
+              }
+              return resolvedCanonicalDeck;
+            };
+          })()
+        : createEditorCanonicalDeckResolver(doc);
       const liveActiveSlideId = resolveLiveActiveSlideId(doc);
       const resolvedCanonicalDeck = !doc
         ? resolveCanonicalDeck(doc)
@@ -1671,6 +1686,27 @@
     }
 
     function createEditorDeckViewBuildOptions(doc = getIframeDoc()) {
+      const buildOptions = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
+        ? arguments[1]
+        : {};
+      const buildCanonicalDeck = typeof buildOptions.buildCanonicalDeck === 'function'
+        ? buildOptions.buildCanonicalDeck
+        : (sourceDoc) => buildEditorCanonicalDeck(sourceDoc);
+      const resolveLiveActiveSlideId = typeof buildOptions.resolveLiveActiveSlideId === 'function'
+        ? buildOptions.resolveLiveActiveSlideId
+        : (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc);
+      const buildFallbackHtml = typeof buildOptions.buildFallbackHtml === 'function'
+        ? buildOptions.buildFallbackHtml
+        : (sourceDoc, canonicalDeck) => buildPersistableDeckHtml(sourceDoc, {
+            canonicalDeck
+          });
+      const buildRenderOptions = typeof buildOptions.buildRenderOptions === 'function'
+        ? buildOptions.buildRenderOptions
+        : (sourceDoc, canonicalDeck, options = {}) => buildEditorDeckRenderOptions(
+            sourceDoc,
+            canonicalDeck,
+            options
+          );
       const createStudioDeckViewBuildOptions = (
         typeof SlideNextStudioDeckView !== 'undefined'
         && SlideNextStudioDeckView
@@ -1680,16 +1716,10 @@
         : null;
       if (createStudioDeckViewBuildOptions) {
         return createStudioDeckViewBuildOptions(doc, {
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
-          resolveLiveActiveSlideId: (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc),
-          buildFallbackHtml: (sourceDoc, canonicalDeck) => buildPersistableDeckHtml(sourceDoc, {
-            canonicalDeck
-          }),
-          buildRenderOptions: (sourceDoc, canonicalDeck, options = {}) => buildEditorDeckRenderOptions(
-            sourceDoc,
-            canonicalDeck,
-            options
-          )
+          buildCanonicalDeck,
+          resolveLiveActiveSlideId,
+          buildFallbackHtml,
+          buildRenderOptions
         });
       }
 
@@ -1697,14 +1727,18 @@
         resolveCanonicalDeck,
         liveActiveSlideId,
         resolvedCanonicalDeck
-      } = resolveEditorCanonicalDeckViewState(doc);
+      } = resolveEditorCanonicalDeckViewState(doc, {
+        buildCanonicalDeck,
+        resolveLiveActiveSlideId
+      });
       return {
         buildCanonicalDeck: resolveCanonicalDeck,
-        buildFallbackHtml: (sourceDoc) => buildPersistableDeckHtml(sourceDoc, {
-          canonicalDeck: doc ? resolveCanonicalDeck(sourceDoc) : resolvedCanonicalDeck
-        }),
+        buildFallbackHtml: (sourceDoc) => buildFallbackHtml(
+          sourceDoc,
+          doc ? resolveCanonicalDeck(sourceDoc) : resolvedCanonicalDeck
+        ),
         deckHtmlOptions: {
-          renderOptions: buildEditorDeckRenderOptions(doc, resolvedCanonicalDeck, {
+          renderOptions: buildRenderOptions(doc, resolvedCanonicalDeck, {
             activeSlideId: liveActiveSlideId
           })
         }
@@ -5388,13 +5422,23 @@
         if (reusablePersistedHtml) {
           return sanitizeReusablePersistedHtml(reusablePersistedHtml, persistedDeckState.playbackState);
         }
-        const sourceViewOptions = {
-          buildCanonicalDeck: () => canonicalDeck,
-          buildFallbackHtml: () => persistedHtml,
-          deckHtmlOptions: {
-            renderOptions: buildEditorDeckRenderOptions(doc, canonicalDeck)
-          }
-        };
+        const sourceViewOptions = typeof createEditorDeckViewBuildOptions === 'function'
+          ? createEditorDeckViewBuildOptions(doc, {
+              buildCanonicalDeck: () => canonicalDeck,
+              buildFallbackHtml: () => persistedHtml,
+              buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
+                sourceDoc,
+                nextCanonicalDeck,
+                options
+              )
+            })
+          : {
+              buildCanonicalDeck: () => canonicalDeck,
+              buildFallbackHtml: () => persistedHtml,
+              deckHtmlOptions: {
+                renderOptions: buildEditorDeckRenderOptions(doc, canonicalDeck)
+              }
+            };
         if (typeof buildEditorSourceDeckHtml === 'function') {
           return buildEditorSourceDeckHtml(doc, {
             buildViewOptions: () => sourceViewOptions

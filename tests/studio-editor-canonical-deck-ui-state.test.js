@@ -1203,6 +1203,93 @@ test('createEditorDeckViewBuildOptions delegates build-option composition to the
   assert.equal(delegatedArgs.options.buildCanonicalDeck(iframeDoc), canonicalDeck);
 });
 
+test('createEditorDeckViewBuildOptions forwards custom build overrides to the shared deck view helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
+    fileContent,
+    'function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioDeckView: {
+      createStudioDeckViewBuildOptions(doc, options) {
+        delegatedArgs = { doc, options };
+        return {
+          buildCanonicalDeck: () => options.buildCanonicalDeck(doc),
+          buildFallbackHtml: () => options.buildFallbackHtml(doc, canonicalDeck),
+          deckHtmlOptions: {
+            renderOptions: options.buildRenderOptions(doc, canonicalDeck, {
+              activeSlideId: 'slide-explicit'
+            })
+          }
+        };
+      }
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('default canonical deck builder should not run');
+    },
+    buildPersistableDeckHtml() {
+      throw new Error('default persisted html fallback should not run');
+    },
+    buildEditorDeckRenderOptions() {
+      throw new Error('default render option builder should not run');
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    resolveEditorLiveActiveSlideId() {
+      throw new Error('default active slide resolver should not run');
+    }
+  };
+
+  const customBuildCanonicalDeck = () => canonicalDeck;
+  const customResolveLiveActiveSlideId = () => 'slide-custom';
+  const customBuildFallbackHtml = () => '<html>override-fallback</html>';
+  const customBuildRenderOptions = (nextDoc, nextCanonicalDeck, options = {}) => ({
+    activeSlideId: options.activeSlideId || 'slide-custom'
+  });
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorCanonicalDeckViewStateSource, context);
+
+  const result = context.createEditorDeckViewBuildOptions(iframeDoc, {
+    buildCanonicalDeck: customBuildCanonicalDeck,
+    resolveLiveActiveSlideId: customResolveLiveActiveSlideId,
+    buildFallbackHtml: customBuildFallbackHtml,
+    buildRenderOptions: customBuildRenderOptions
+  });
+
+  assert.equal(result.buildCanonicalDeck(), canonicalDeck);
+  assert.equal(result.buildFallbackHtml(), '<html>override-fallback</html>');
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(result.deckHtmlOptions.renderOptions)),
+    { activeSlideId: 'slide-explicit' }
+  );
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(delegatedArgs.options.buildCanonicalDeck(iframeDoc), canonicalDeck);
+  assert.equal(delegatedArgs.options.resolveLiveActiveSlideId(iframeDoc), 'slide-custom');
+  assert.equal(
+    delegatedArgs.options.buildFallbackHtml(iframeDoc, canonicalDeck),
+    '<html>override-fallback</html>'
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(
+      delegatedArgs.options.buildRenderOptions(iframeDoc, canonicalDeck, {
+        activeSlideId: 'slide-explicit'
+      })
+    )),
+    { activeSlideId: 'slide-explicit' }
+  );
+});
+
 test('buildEditorDeckRenderOptions delegates render-option composition to the shared deck view helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorDeckRenderOptionsSource = extractFunctionSource(
