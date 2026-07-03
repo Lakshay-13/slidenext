@@ -81,6 +81,65 @@ test('createStudioVersionActionHandlerOptions preserves the supplied session rea
   assert.equal(options.refreshVersionEntries, hooks.refreshVersionEntries);
 });
 
+test('createStudioRestoreVersionRequest builds the restore endpoint payload from the active version context', () => {
+  const restoreContext = versionActions.createStudioVersionActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    'General'
+  );
+
+  assert.deepEqual(
+    versionActions.createStudioRestoreVersionRequest(
+      'index_20260101_120000_Auto.html',
+      restoreContext
+    ),
+    {
+      url: '/api/restore',
+      init: {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          htmlPath: '/presentations/onboarding-presentation/index.html',
+          versionFilename: 'index_20260101_120000_Auto.html'
+        })
+      }
+    }
+  );
+});
+
+test('executeStudioRestoreVersionRequest posts the restore request and returns the parsed response payload', async () => {
+  const restoreContext = versionActions.createStudioVersionActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    'General'
+  );
+  const fetchCalls = [];
+
+  const result = await versionActions.executeStudioRestoreVersionRequest(
+    'index_20260101_120000_Auto.html',
+    restoreContext,
+    {
+      fetchImpl: async (url, init) => {
+        fetchCalls.push([url, JSON.parse(init.body)]);
+        return {
+          async json() {
+            return { success: true };
+          }
+        };
+      }
+    }
+  );
+
+  assert.deepEqual(fetchCalls, [[
+    '/api/restore',
+    {
+      htmlPath: '/presentations/onboarding-presentation/index.html',
+      versionFilename: 'index_20260101_120000_Auto.html'
+    }
+  ]]);
+  assert.deepEqual(result, { success: true });
+});
+
 test('handleStudioRestoreVersionSuccess applies restore hooks for the active deck only', () => {
   const restoreContext = versionActions.createStudioVersionActionContext(
     '/presentations/onboarding-presentation/index.html',

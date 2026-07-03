@@ -671,6 +671,79 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
   assert.ok(!calls.some(([name]) => name === 'handleCurrentStudioVersionActionFailure'));
 });
 
+test('restoreVersion reuses the shared restore request helper when available', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const restoreVersionSource = extractFunctionSource(
+    fileContent,
+    'async function restoreVersion(filename) {',
+    '\n\n    function promptRenameVersion(filename, currentLabel) {'
+  );
+
+  let helperArgs = null;
+  const calls = [];
+  const context = {
+    SlideNextStudioVersionActions: {
+      executeStudioRestoreVersionRequest: async (...args) => {
+        helperArgs = args;
+        return { success: true };
+      }
+    },
+    alert(message) {
+      calls.push(['alert', message]);
+    },
+    confirm() {
+      return true;
+    },
+    createCurrentStudioVersionActionContext() {
+      return {
+        presentationUrl: '/presentations/onboarding-presentation/index.html',
+        presentationTitle: 'Project Onboarding',
+        presentationCategory: 'General'
+      };
+    },
+    fetch() {
+      throw new Error('restoreVersion should pass fetch to the shared restore helper instead of calling it directly');
+    },
+    document: {
+      getElementById(id) {
+        if (id === 'versionsDropdown') {
+          return {
+            classList: {
+              add() {}
+            }
+          };
+        }
+        return null;
+      }
+    },
+    handleCurrentStudioVersionActionFailure() {
+      throw new Error('restoreVersion should not use the failure handler for a successful shared helper result');
+    },
+    handleCurrentStudioVersionRestoreSuccess(restoreContext, options) {
+      calls.push(['handleCurrentStudioVersionRestoreSuccess', restoreContext, options]);
+      options.hideVersionsDropdown();
+      options.onSuccess();
+      return true;
+    },
+    launchStudioEditor() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(restoreVersionSource, context);
+
+  await context.restoreVersion('index_20260101_120000_Auto.html');
+
+  assert.equal(helperArgs[0], 'index_20260101_120000_Auto.html');
+  assert.deepEqual(helperArgs[1], {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    presentationTitle: 'Project Onboarding',
+    presentationCategory: 'General'
+  });
+  assert.equal(helperArgs[2].fetchImpl, context.fetch);
+  assert.ok(calls.some(([name]) => name === 'handleCurrentStudioVersionRestoreSuccess'));
+  assert.ok(calls.some(([name, message]) => name === 'alert' && /Rollback successfully restored!/.test(message)));
+});
+
 test('loadCurrentStudioVersionHistory reuses current session readers when delegating to the version history loader', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const loadCurrentStudioVersionHistorySource = extractFunctionSource(

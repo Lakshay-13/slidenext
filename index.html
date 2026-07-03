@@ -7984,16 +7984,32 @@
       const restoreContext = createCurrentStudioVersionActionContext();
       
       try {
-        const response = await fetch('/api/restore', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            htmlPath: restoreContext.presentationUrl,
-            versionFilename: filename
-          })
-        });
-        
-        const data = await response.json();
+        const executeRestoreVersionRequest = (
+          typeof SlideNextStudioVersionActions !== 'undefined'
+          && SlideNextStudioVersionActions
+          && typeof SlideNextStudioVersionActions.executeStudioRestoreVersionRequest === 'function'
+        )
+          ? SlideNextStudioVersionActions.executeStudioRestoreVersionRequest
+          : null;
+        const data = executeRestoreVersionRequest
+          ? await executeRestoreVersionRequest(
+              filename,
+              restoreContext,
+              {
+                fetchImpl: fetch
+              }
+            )
+          : await (async () => {
+              const response = await fetch('/api/restore', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  htmlPath: restoreContext.presentationUrl,
+                  versionFilename: filename
+                })
+              });
+              return response.json();
+            })();
         if (data.success) {
           handleCurrentStudioVersionRestoreSuccess(restoreContext, {
             onSuccess: () => {

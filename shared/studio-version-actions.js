@@ -87,6 +87,35 @@
     };
   }
 
+  function createStudioRestoreVersionRequest(versionFilename = '', context = {}) {
+    return {
+      url: '/api/restore',
+      init: {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          htmlPath: normalizeString(context.presentationUrl),
+          versionFilename: normalizeString(versionFilename)
+        })
+      }
+    };
+  }
+
+  async function executeStudioRestoreVersionRequest(versionFilename = '', context = {}, options = {}) {
+    const fetchImpl = typeof options.fetchImpl === 'function'
+      ? options.fetchImpl
+      : root && typeof root.fetch === 'function'
+        ? root.fetch.bind(root)
+        : null;
+    if (!fetchImpl) {
+      throw new TypeError('A fetch implementation is required to execute studio restore version requests.');
+    }
+
+    const request = createStudioRestoreVersionRequest(versionFilename, context);
+    const response = await fetchImpl(request.url, request.init);
+    return response.json();
+  }
+
   function handleStudioRestoreVersionSuccess(context = {}, options = {}) {
     if (!isStudioVersionActionSessionCurrent(context, options)) {
       return false;
@@ -144,6 +173,8 @@
     isStudioVersionActionSessionCurrent,
     shouldDebounceStudioAutoVersion,
     createStudioVersionActionHandlerOptions,
+    createStudioRestoreVersionRequest,
+    executeStudioRestoreVersionRequest,
     handleStudioRestoreVersionSuccess,
     handleStudioVersionListMutationSuccess,
     handleStudioVersionActionFailure
