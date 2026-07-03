@@ -655,6 +655,51 @@ test('executeCurrentStudioVersionCheckpointSave reuses the shared version checkp
   });
 });
 
+test('isCurrentStudioVersionCheckpointSavePersisted reuses the shared persisted-state helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const versionCheckpointPersistenceState = {
+    cleanHtml: '<html>persisted</html>',
+    requestOptions: {
+      sessionToken: 12
+    },
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+  let helperArgs = null;
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      isStudioVersionCheckpointSavePersisted(...args) {
+        helperArgs = args;
+        return true;
+      }
+    },
+    buildEditorSaveRequestBody() {
+      throw new Error('shared persisted-state helper should receive the buildSaveRequestBody callback instead');
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    isCurrentDeckStatePersisted() {
+      throw new Error('shared persisted-state helper should receive the isPersistedState callback instead');
+    },
+    saveVersionCheckpoint: async () => ({ success: true })
+  };
+
+  vm.createContext(context);
+  loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
+
+  const result = context.isCurrentStudioVersionCheckpointSavePersisted(
+    'Checkpoint Baseline',
+    versionCheckpointPersistenceState
+  );
+
+  assert.equal(result, true);
+  assert.equal(helperArgs[0], 'Checkpoint Baseline');
+  assert.equal(helperArgs[1], versionCheckpointPersistenceState);
+  assert.equal(helperArgs[2], '/presentations/onboarding-presentation/index.html');
+  assert.equal(helperArgs[3].isPersistedState, context.isCurrentDeckStatePersisted);
+  assert.equal(helperArgs[3].buildSaveRequestBody, context.buildEditorSaveRequestBody);
+});
+
 test('applyCurrentStudioPersistenceSuccess delegates through the shared persistence helper with current handler options', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const persistenceContext = { presentationUrl: '/presentations/onboarding-presentation/index.html' };
@@ -1302,6 +1347,7 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
+  loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -1478,6 +1524,7 @@ test('executeSaveAutoVersion skips redundant auto version saves when the capture
   loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
+  loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   const result = await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -1651,7 +1698,7 @@ test('executeSaveAutoVersion reuses the local version checkpoint save helper whe
       }
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    executeCurrentStudioVersionCheckpointSave: async (...args) => {
+    __executeCurrentStudioVersionCheckpointSave: async (...args) => {
       helperArgs = args;
       return {
         data: {
@@ -1676,6 +1723,8 @@ test('executeSaveAutoVersion reuses the local version checkpoint save helper whe
   };
 
   vm.createContext(context);
+  loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
+  vm.runInContext('executeCurrentStudioVersionCheckpointSave = __executeCurrentStudioVersionCheckpointSave;', context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');

@@ -6809,6 +6809,56 @@
       };
     }
 
+    function isCurrentStudioVersionCheckpointSavePersisted(
+      versionLabel,
+      versionCheckpointPersistenceState,
+      presentationUrl = currentPresentationUrl
+    ) {
+      if (!versionCheckpointPersistenceState) {
+        return false;
+      }
+
+      const isVersionCheckpointSavePersisted = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.isStudioVersionCheckpointSavePersisted === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.isStudioVersionCheckpointSavePersisted
+        : null;
+      if (isVersionCheckpointSavePersisted) {
+        return isVersionCheckpointSavePersisted(
+          versionLabel,
+          versionCheckpointPersistenceState,
+          presentationUrl,
+          {
+            isPersistedState: typeof isCurrentDeckStatePersisted === 'function'
+              ? isCurrentDeckStatePersisted
+              : null,
+            buildSaveRequestBody: typeof buildEditorSaveRequestBody === 'function'
+              ? buildEditorSaveRequestBody
+              : null
+          }
+        );
+      }
+
+      const saveRequestBody = typeof buildEditorSaveRequestBody === 'function'
+        ? buildEditorSaveRequestBody(
+            versionCheckpointPersistenceState.requestOptions.doc,
+            versionCheckpointPersistenceState.cleanHtml,
+            {
+              presentationUrl,
+              versionLabel,
+              canonicalDeck: versionCheckpointPersistenceState.requestOptions.canonicalDeck
+            }
+          )
+        : null;
+      return !!(
+        saveRequestBody
+        && typeof isCurrentDeckStatePersisted === 'function'
+        && isCurrentDeckStatePersisted(saveRequestBody, versionCheckpointPersistenceState.cleanHtml)
+      );
+    }
+
     function resolveCurrentStudioAutoSavePersistenceState(
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken,
@@ -7590,22 +7640,7 @@
       );
       if (!versionCheckpointPersistenceState) return;
 
-      const saveRequestBody = typeof buildEditorSaveRequestBody === 'function'
-        ? buildEditorSaveRequestBody(
-            versionCheckpointPersistenceState.requestOptions.doc,
-            versionCheckpointPersistenceState.cleanHtml,
-            {
-              presentationUrl,
-              versionLabel: label,
-              canonicalDeck: versionCheckpointPersistenceState.requestOptions.canonicalDeck
-            }
-          )
-        : null;
-      if (
-        saveRequestBody
-        && typeof isCurrentDeckStatePersisted === 'function'
-        && isCurrentDeckStatePersisted(saveRequestBody, versionCheckpointPersistenceState.cleanHtml)
-      ) {
+      if (isCurrentStudioVersionCheckpointSavePersisted(label, versionCheckpointPersistenceState, presentationUrl)) {
         return false;
       }
       

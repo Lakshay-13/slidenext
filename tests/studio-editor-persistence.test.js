@@ -1421,6 +1421,78 @@ test('executeStudioVersionCheckpointSave delegates checkpoint saves through a pr
   });
 });
 
+test('isStudioVersionCheckpointSavePersisted reuses the checkpoint persistence plan wiring', () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+  let buildSaveRequestBodyArgs = null;
+  let isPersistedStateArgs = null;
+
+  const result = editorPersistence.isStudioVersionCheckpointSavePersisted(
+    'Checkpoint Baseline',
+    {
+      cleanHtml: '<html>persisted</html>',
+      requestOptions: {
+        doc: { label: 'iframe-doc' },
+        canonicalDeck,
+        sessionToken: 4
+      }
+    },
+    '/presentations/onboarding-presentation/index.html',
+    {
+      buildSaveRequestBody(doc, cleanHtml, options = {}) {
+        buildSaveRequestBodyArgs = {
+          doc,
+          cleanHtml,
+          options
+        };
+        return editorPersistence.buildStudioSaveRequestBody(
+          options.presentationUrl,
+          cleanHtml,
+          {
+            versionLabel: options.versionLabel,
+            canonicalDeck: options.canonicalDeck
+          }
+        );
+      },
+      isPersistedState(saveRequestBody, cleanHtml) {
+        isPersistedStateArgs = {
+          saveRequestBody,
+          cleanHtml
+        };
+        return true;
+      }
+    }
+  );
+
+  assert.equal(result, true);
+  assert.equal(buildSaveRequestBodyArgs.doc.label, 'iframe-doc');
+  assert.equal(buildSaveRequestBodyArgs.cleanHtml, '<html>persisted</html>');
+  assert.deepEqual(buildSaveRequestBodyArgs.options, {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    versionLabel: 'Checkpoint Baseline',
+    canonicalDeck
+  });
+  assert.deepEqual(isPersistedStateArgs, {
+    saveRequestBody: {
+      htmlPath: '/presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>persisted</html>',
+      isAutoSave: false,
+      versionLabel: 'Checkpoint Baseline',
+      canonicalDeck
+    },
+    cleanHtml: '<html>persisted</html>'
+  });
+});
+
 test('createStudioVersionCheckpointRequestOptions preserves the captured deck state and session token', () => {
   assert.deepEqual(
     editorPersistence.createStudioVersionCheckpointRequestOptions(
