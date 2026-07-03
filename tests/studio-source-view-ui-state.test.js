@@ -307,6 +307,7 @@ test('buildEditorSourceDeckHtml reuses the local deck view build-view-options re
   const iframeDoc = { label: 'iframe-doc' };
   const calls = [];
   const customBuildViewOptionsCalls = [];
+  const canonicalHtmlCalls = [];
   const customDeckViewOptions = {
     buildCanonicalDeck() {
       return null;
@@ -322,6 +323,12 @@ test('buildEditorSourceDeckHtml reuses the local deck view build-view-options re
       buildStudioDeckViewHtml(doc, options) {
         calls.push({ doc, options });
         return '<html>source-from-shared-deck-view-helper</html>';
+      }
+    },
+    SlideNextDeckHtml: {
+      buildDeckSourceHtml(nextCanonicalDeck, nextDeckHtmlOptions) {
+        canonicalHtmlCalls.push([nextCanonicalDeck, nextDeckHtmlOptions]);
+        return '<html>source-from-canonical-html</html>';
       }
     },
     createEditorDeckViewBuildOptions() {
@@ -350,6 +357,22 @@ test('buildEditorSourceDeckHtml reuses the local deck view build-view-options re
   assert.equal(customBuildViewOptionsCalls.length, 1);
   assert.equal(customBuildViewOptionsCalls[0], iframeDoc);
   assert.equal(deckViewOptions, customDeckViewOptions);
+  assert.equal(typeof calls[0].options.buildCanonicalHtml, 'function');
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const deckHtmlOptions = {
+    renderOptions: {
+      activeSlideId: 'slide-1'
+    }
+  };
+  assert.equal(
+    calls[0].options.buildCanonicalHtml(canonicalDeck, deckHtmlOptions),
+    '<html>source-from-canonical-html</html>'
+  );
+  assert.deepEqual(canonicalHtmlCalls, [[canonicalDeck, deckHtmlOptions]]);
 });
 
 test('buildEditorSourceHtml prefers the live active slide when the editor frame is available', () => {

@@ -416,6 +416,53 @@ test('createEditorDeckViewBuildViewOptionsResolver decorates resolved deck view 
   assert.equal(calls[1][2], iframeDoc);
 });
 
+test('createEditorDeckViewCanonicalHtmlResolver remaps canonical html arguments when requested', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createEditorDeckViewCanonicalHtmlResolverSource = extractFunctionSource(
+    fileContent,
+    'function createEditorDeckViewCanonicalHtmlResolver(options = {}) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const deckHtmlOptions = {
+    renderOptions: {
+      activeSlideId: 'slide-1'
+    }
+  };
+  const calls = [];
+  const context = {};
+
+  vm.createContext(context);
+  vm.runInContext(createEditorDeckViewCanonicalHtmlResolverSource, context);
+
+  const resolveCanonicalHtml = context.createEditorDeckViewCanonicalHtmlResolver({
+    buildCanonicalHtml(nextCanonicalDeck, presentationUrl, nextDeckHtmlOptions) {
+      calls.push([nextCanonicalDeck, presentationUrl, nextDeckHtmlOptions]);
+      return '<html>preview-from-canonical-html</html>';
+    },
+    mapCanonicalHtmlArgs(nextCanonicalDeck, nextDeckHtmlOptions) {
+      return [
+        nextCanonicalDeck,
+        '/presentations/onboarding-presentation/index.html',
+        nextDeckHtmlOptions
+      ];
+    }
+  });
+  const result = resolveCanonicalHtml(canonicalDeck, deckHtmlOptions);
+
+  assert.equal(result, '<html>preview-from-canonical-html</html>');
+  assert.deepEqual(calls, [[
+    canonicalDeck,
+    '/presentations/onboarding-presentation/index.html',
+    deckHtmlOptions
+  ]]);
+});
+
 test('buildEditorPreviewHtml reuses the shared deck-view html builder when the preview helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorPreviewHtmlSource = extractFunctionSource(
@@ -476,6 +523,7 @@ test('buildEditorPreviewHtml reuses the shared deck-view helper for editor deck-
 
   const iframeDoc = { label: 'iframe-doc' };
   const calls = [];
+  const canonicalHtmlCalls = [];
   let createEditorDeckViewBuildOptionsCalls = 0;
   const baseDeckViewOptions = {
     buildCanonicalDeck() {
@@ -495,6 +543,12 @@ test('buildEditorPreviewHtml reuses the shared deck-view helper for editor deck-
       buildStudioDeckViewHtml(doc, options) {
         calls.push({ doc, options });
         return '<html>preview-from-shared-deck-view-helper</html>';
+      }
+    },
+    SlideNextDeckHtml: {
+      buildDeckPreviewHtml(nextCanonicalDeck, presentationUrl, nextDeckHtmlOptions) {
+        canonicalHtmlCalls.push([nextCanonicalDeck, presentationUrl, nextDeckHtmlOptions]);
+        return '<html>preview-from-canonical-html</html>';
       }
     },
     __createEditorDeckViewBuildOptions(nextDoc) {
@@ -529,6 +583,26 @@ test('buildEditorPreviewHtml reuses the shared deck-view helper for editor deck-
   assert.equal(deckViewOptions.buildFallbackHtml, baseDeckViewOptions.buildFallbackHtml);
   assert.equal(deckViewOptions.deckHtmlOptions, baseDeckViewOptions.deckHtmlOptions);
   assert.equal(deckViewOptions.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(typeof calls[0].options.buildCanonicalHtml, 'function');
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const deckHtmlOptions = {
+    renderOptions: {
+      activeSlideId: 'slide-1'
+    }
+  };
+  assert.equal(
+    calls[0].options.buildCanonicalHtml(canonicalDeck, deckHtmlOptions),
+    '<html>preview-from-canonical-html</html>'
+  );
+  assert.deepEqual(canonicalHtmlCalls, [[
+    canonicalDeck,
+    '/presentations/onboarding-presentation/index.html',
+    deckHtmlOptions
+  ]]);
 });
 
 test('buildEditorPreviewHtml prefers the live active slide when the editor frame is available', () => {
