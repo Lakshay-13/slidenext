@@ -26,6 +26,15 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadBuildCurrentPresentationMetadataSeed(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function buildCurrentPresentationMetadataSeed(presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {',
+    '\n\n    async function loadCurrentPresentationMetadata('
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
@@ -716,6 +725,105 @@ test('loadCurrentPresentationMetadata reuses current session readers when delega
   assert.equal(capturedOptions.getCurrentPresentationUrl, currentStudioSessionStateReaders.getCurrentPresentationUrl);
   assert.equal(capturedOptions.getCurrentSessionToken, currentStudioSessionStateReaders.getCurrentSessionToken);
   assert.deepEqual(context.currentPresentationMetadata, metadata);
+});
+
+test('buildCurrentPresentationMetadataSeed falls back to the shared deck loader when the deck context helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckContext: {},
+    SlideNextDeckLoader: {
+      buildPresentationMetadataSeed(presentationUrl, presentationTitle) {
+        calls.push([presentationUrl, presentationTitle]);
+        return {
+          id: 'onboarding-presentation',
+          title: presentationTitle,
+          sourcePath: presentationUrl
+        };
+      }
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding'
+  };
+
+  vm.createContext(context);
+  loadBuildCurrentPresentationMetadataSeed(fileContent, context);
+
+  const metadata = context.buildCurrentPresentationMetadataSeed();
+
+  assert.deepEqual(metadata, {
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: '/presentations/onboarding-presentation/index.html'
+  });
+  assert.deepEqual(calls, [[
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding'
+  ]]);
+});
+
+test('loadCurrentPresentationMetadata falls back to the shared deck loader when the deck context loader is unavailable', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const loadCurrentPresentationMetadataSource = extractFunctionSource(
+    fileContent,
+    'async function loadCurrentPresentationMetadata(',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+
+  let loaderCall = null;
+  const context = {
+    SlideNextStudioEditorSession: editorSession,
+    SlideNextStudioDeckContext: {
+      resolveStoredStudioCanonicalDeck() {
+        return null;
+      }
+    },
+    SlideNextDeckLoader: {
+      async loadPresentationMetadata(presentationUrl, presentationTitle, options) {
+        loaderCall = { presentationUrl, presentationTitle, options };
+        return {
+          id: 'onboarding-presentation',
+          title: presentationTitle,
+          sourcePath: presentationUrl,
+          subtitle: 'Getting Started'
+        };
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    currentPresentationMetadata: null,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    studioEditorSessionToken: 12,
+    updateEditorPersistedDeckState() {}
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  vm.runInContext(loadCurrentPresentationMetadataSource, context);
+
+  const metadata = await context.loadCurrentPresentationMetadata(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    12
+  );
+
+  assert.deepEqual(metadata, {
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: '/presentations/onboarding-presentation/index.html',
+    subtitle: 'Getting Started'
+  });
+  assert.deepEqual(context.currentPresentationMetadata, metadata);
+  assert.equal(loaderCall.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(loaderCall.presentationTitle, 'Project Onboarding');
+  assert.equal(loaderCall.options.fetchImpl, undefined);
+  assert.equal(loaderCall.options.requestInit, undefined);
+  assert.equal(typeof loaderCall.options.onError, 'function');
 });
 
 test('applyCurrentPresentationMetadata refreshes the persisted canonical baseline only when requested', () => {

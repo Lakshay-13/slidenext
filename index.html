@@ -2872,7 +2872,21 @@
     }
 
     function buildCurrentPresentationMetadataSeed(presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
-      return SlideNextStudioDeckContext.buildStudioPresentationMetadataSeed(presentationUrl, presentationTitle);
+      const buildStudioPresentationMetadataSeed = SlideNextStudioDeckContext
+        && typeof SlideNextStudioDeckContext.buildStudioPresentationMetadataSeed === 'function'
+        ? SlideNextStudioDeckContext.buildStudioPresentationMetadataSeed
+        : (
+            typeof SlideNextDeckLoader !== 'undefined'
+            && SlideNextDeckLoader
+            && typeof SlideNextDeckLoader.buildPresentationMetadataSeed === 'function'
+          )
+          ? SlideNextDeckLoader.buildPresentationMetadataSeed
+          : (nextPresentationUrl = '', nextPresentationTitle = '') => ({
+              id: '',
+              title: nextPresentationTitle || '',
+              sourcePath: nextPresentationUrl || ''
+            });
+      return buildStudioPresentationMetadataSeed(presentationUrl, presentationTitle);
     }
 
     async function loadCurrentPresentationMetadata(
@@ -2880,10 +2894,49 @@
       presentationTitle = currentTitle,
       sessionToken = studioEditorSessionToken
     ) {
-      return SlideNextStudioDeckContext.loadStudioPresentationMetadata(
+      const loadStudioPresentationMetadata = SlideNextStudioDeckContext
+        && typeof SlideNextStudioDeckContext.loadStudioPresentationMetadata === 'function'
+        ? SlideNextStudioDeckContext.loadStudioPresentationMetadata
+        : async (nextPresentationUrl, nextPresentationTitle, options = {}) => {
+            const loadPresentationMetadata = (
+              typeof SlideNextDeckLoader !== 'undefined'
+              && SlideNextDeckLoader
+              && typeof SlideNextDeckLoader.loadPresentationMetadata === 'function'
+            )
+              ? SlideNextDeckLoader.loadPresentationMetadata
+              : async () => buildCurrentPresentationMetadataSeed(nextPresentationUrl, nextPresentationTitle);
+            const getCurrentPresentationUrl = typeof options.getCurrentPresentationUrl === 'function'
+              ? options.getCurrentPresentationUrl
+              : () => options.currentPresentationUrl;
+            const requestedSessionToken = Number.isInteger(options.sessionToken)
+              ? options.sessionToken
+              : null;
+            const metadata = await loadPresentationMetadata(nextPresentationUrl, nextPresentationTitle, {
+              fetchImpl: options.fetchImpl,
+              requestInit: options.requestInit,
+              onError: options.onError
+            });
+            const getCurrentSessionToken = typeof options.getCurrentSessionToken === 'function'
+              ? options.getCurrentSessionToken
+              : () => options.currentSessionToken;
+            const currentSessionToken = Number.isInteger(getCurrentSessionToken())
+              ? getCurrentSessionToken()
+              : null;
+            if (typeof options.setCurrentPresentationMetadata === 'function'
+              && getCurrentPresentationUrl() === nextPresentationUrl
+              && (requestedSessionToken === null || currentSessionToken === requestedSessionToken)) {
+              options.setCurrentPresentationMetadata(metadata);
+            }
+            return metadata;
+          };
+      const createStudioPresentationMetadataLoadOptions = SlideNextStudioDeckContext
+        && typeof SlideNextStudioDeckContext.createStudioPresentationMetadataLoadOptions === 'function'
+        ? SlideNextStudioDeckContext.createStudioPresentationMetadataLoadOptions
+        : (options = {}) => options;
+      return loadStudioPresentationMetadata(
         presentationUrl,
         presentationTitle,
-        SlideNextStudioDeckContext.createStudioPresentationMetadataLoadOptions({
+        createStudioPresentationMetadataLoadOptions({
           ...createCurrentStudioSessionStateOptions({
             sessionToken
           }),
