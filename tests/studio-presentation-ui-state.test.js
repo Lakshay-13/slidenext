@@ -97,6 +97,47 @@ test('resetStudioPresentationUiState clears stale preview chrome and exits fulls
   assert.equal(elements.fsIcon.textContent, 'fullscreen');
 });
 
+test('launchPresentation delegates url preview chrome resolution to the shared preview helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const launchPresentationSource = extractFunctionSource(
+    fileContent,
+    'function launchPresentation(url, startSlideIdx) {',
+    '\n\n    function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+
+  const elements = {
+    presentationModal: { id: 'presentationModal' },
+    presentationFrame: { id: 'presentationFrame' }
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioPreview: {
+      launchPresentationUrl(options = {}) {
+        calls.push(options);
+      }
+    },
+    document: {
+      body: { style: {} },
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(launchPresentationSource, context);
+
+  context.launchPresentation('/presentations/onboarding-presentation/index.html', 3);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    document: {
+      body: { style: {} }
+    },
+    startSlideIdx: 3,
+    url: '/presentations/onboarding-presentation/index.html'
+  }]);
+});
+
 test('launchPreview does not open preview flows when the present button is disabled', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const launchPreviewSource = extractFunctionSource(

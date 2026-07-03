@@ -1438,9 +1438,7 @@
 
     function launchPresentation(url, startSlideIdx) {
       SlideNextStudioPreview.launchPresentationUrl({
-        modalEl: document.getElementById('presentationModal'),
-        iframeEl: document.getElementById('presentationFrame'),
-        bodyEl: document.body,
+        document,
         startSlideIdx,
         url
       });
