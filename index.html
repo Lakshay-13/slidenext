@@ -5620,14 +5620,6 @@
       });
     }
 
-    function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {
-      return SlideNextStudioEditorPersistence.createStudioVersionPersistenceHandlerOptions({
-        ...createCurrentStudioSessionStateOptions(),
-        refreshVersionEntries: loadVersions,
-        onSuccess: options.onSuccess
-      });
-    }
-
     function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
       return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
         persistenceContext,
@@ -5645,7 +5637,11 @@
     function applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
       return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
         persistenceContext,
-        createCurrentStudioVersionPersistenceHandlerOptions(options)
+        SlideNextStudioEditorPersistence.createStudioVersionPersistenceHandlerOptions({
+          ...createCurrentStudioSessionStateOptions(),
+          refreshVersionEntries: loadVersions,
+          onSuccess: options.onSuccess
+        })
       );
     }
 

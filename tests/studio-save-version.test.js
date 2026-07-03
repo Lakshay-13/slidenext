@@ -72,7 +72,7 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {'
+    '\n\n    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -83,12 +83,6 @@ function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
 
 function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioPersistenceSuccess(fileContent, context) {
@@ -1143,10 +1137,18 @@ test('applyCurrentStudioVersionPersistenceSuccess delegates through the shared v
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const persistenceContext = { presentationUrl: '/presentations/onboarding-presentation/index.html' };
   const onSuccess = () => {};
+  const loadVersions = () => {};
   let capturedHandlerOptionsArgs = null;
   let delegatedArgs = null;
   const context = {
     SlideNextStudioEditorPersistence: {
+      createStudioVersionPersistenceHandlerOptions(options = {}) {
+        capturedHandlerOptionsArgs = options;
+        return {
+          marker: 'version-handler-options',
+          ...options
+        };
+      },
       handleStudioVersionPersistenceSuccess(nextPersistenceContext, handlerOptions) {
         delegatedArgs = {
           nextPersistenceContext,
@@ -1155,13 +1157,12 @@ test('applyCurrentStudioVersionPersistenceSuccess delegates through the shared v
         return 'version-applied';
       }
     },
-    createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {
-      capturedHandlerOptionsArgs = options;
+    createCurrentStudioSessionStateOptions() {
       return {
-        marker: 'version-handler-options',
-        ...options
+        marker: 'session-options'
       };
-    }
+    },
+    loadVersions
   };
 
   vm.createContext(context);
@@ -1173,8 +1174,10 @@ test('applyCurrentStudioVersionPersistenceSuccess delegates through the shared v
 
   assert.equal(result, 'version-applied');
   assert.equal(capturedHandlerOptionsArgs.onSuccess, onSuccess);
+  assert.equal(capturedHandlerOptionsArgs.refreshVersionEntries, loadVersions);
+  assert.equal(capturedHandlerOptionsArgs.marker, 'session-options');
   assert.equal(delegatedArgs.nextPersistenceContext, persistenceContext);
-  assert.equal(delegatedArgs.handlerOptions.marker, 'version-handler-options');
+  assert.equal(delegatedArgs.handlerOptions.marker, 'session-options');
   assert.equal(delegatedArgs.handlerOptions.onSuccess, onSuccess);
 });
 

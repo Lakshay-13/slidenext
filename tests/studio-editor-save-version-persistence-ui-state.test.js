@@ -44,7 +44,7 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {'
+    '\n\n    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
