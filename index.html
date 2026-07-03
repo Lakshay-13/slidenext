@@ -1453,19 +1453,22 @@
         ? SlideNextStudioDeckView.resolveStudioFallbackActiveSlideId
         : null;
       if (resolveStudioFallbackActiveSlideId) {
+        const resolveCanonicalDeckOverride = typeof createEditorDeckCanonicalOverrideResolver === 'function'
+          ? createEditorDeckCanonicalOverrideResolver(doc)
+          : (nextCanonicalDeck, nextDoc = doc) => (
+              typeof resolveEditorDeckCanonicalOverride === 'function'
+                ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
+                : typeof resolveEditorCanonicalDeckOverride === 'function'
+                  ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+                      buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+                    })
+                  : nextCanonicalDeck
+            );
         return resolveStudioFallbackActiveSlideId(doc, canonicalDeck, {
           currentSlideIndex,
           getPersistedActiveSlideId,
           resolveCanonicalDeck: (nextDoc) => buildEditorCanonicalDeck(nextDoc),
-          resolveCanonicalDeckOverride: (nextCanonicalDeck, nextDoc) => (
-            typeof resolveEditorDeckCanonicalOverride === 'function'
-              ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
-              : typeof resolveEditorCanonicalDeckOverride === 'function'
-                ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
-                    buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
-                  })
-                : nextCanonicalDeck
-          ),
+          resolveCanonicalDeckOverride,
           resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
           isCanonicalDeck: (
             typeof SlideNextCanonicalDeck !== 'undefined'
@@ -1577,20 +1580,23 @@
         ? SlideNextStudioDeckView.createStudioDeckRenderOptions
         : null;
       if (createStudioDeckRenderOptions) {
+        const resolveCanonicalDeckOverride = typeof createEditorDeckCanonicalOverrideResolver === 'function'
+          ? createEditorDeckCanonicalOverrideResolver(doc)
+          : (nextCanonicalDeck, nextDoc = doc) => (
+              typeof resolveEditorDeckCanonicalOverride === 'function'
+                ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
+                : typeof resolveEditorCanonicalDeckOverride === 'function'
+                  ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+                      buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+                    })
+                  : nextCanonicalDeck
+            );
         return createStudioDeckRenderOptions(doc, canonicalDeck, {
           activeSlideId: options.activeSlideId,
           currentSlideIndex,
           getPersistedActiveSlideId,
           resolveCanonicalDeck: (nextDoc) => buildEditorCanonicalDeck(nextDoc),
-          resolveCanonicalDeckOverride: (nextCanonicalDeck, nextDoc) => (
-            typeof resolveEditorDeckCanonicalOverride === 'function'
-              ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
-              : typeof resolveEditorCanonicalDeckOverride === 'function'
-                ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
-                    buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
-                  })
-                : nextCanonicalDeck
-          ),
+          resolveCanonicalDeckOverride,
           resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
           isCanonicalDeck: (
             typeof SlideNextCanonicalDeck !== 'undefined'
@@ -3435,6 +3441,20 @@
       return canonicalDeck || (buildCanonicalDeck ? buildCanonicalDeck() : null);
     }
 
+    function createEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {
+      return function resolveCanonicalDeckOverride(canonicalDeck = null, nextDoc = doc) {
+        if (typeof resolveEditorDeckCanonicalOverride === 'function') {
+          return resolveEditorDeckCanonicalOverride(nextDoc, canonicalDeck);
+        }
+        if (typeof resolveEditorCanonicalDeckOverride === 'function') {
+          return resolveEditorCanonicalDeckOverride(canonicalDeck, {
+            buildCanonicalDeck: canonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+          });
+        }
+        return canonicalDeck;
+      };
+    }
+
     function resolveEditorDeckCanonicalOverride(doc = getIframeDoc(), canonicalDeck = null) {
       if (typeof resolveEditorCanonicalDeckOverride === 'function') {
         return resolveEditorCanonicalDeckOverride(canonicalDeck, {
@@ -3445,13 +3465,18 @@
     }
 
     function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
-      const nextCanonicalDeck = typeof resolveEditorDeckCanonicalOverride === 'function'
-        ? resolveEditorDeckCanonicalOverride(doc, canonicalDeck)
-        : typeof resolveEditorCanonicalDeckOverride === 'function'
-          ? resolveEditorCanonicalDeckOverride(canonicalDeck, {
-              buildCanonicalDeck: canonicalDeck ? () => buildEditorCanonicalDeck(doc) : null
-            })
-          : canonicalDeck;
+      const resolveCanonicalDeckOverride = typeof createEditorDeckCanonicalOverrideResolver === 'function'
+        ? createEditorDeckCanonicalOverrideResolver(doc)
+        : (nextCanonicalDeck, nextDoc = doc) => (
+            typeof resolveEditorDeckCanonicalOverride === 'function'
+              ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
+              : typeof resolveEditorCanonicalDeckOverride === 'function'
+                ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+                    buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+                  })
+                : nextCanonicalDeck
+          );
+      const nextCanonicalDeck = resolveCanonicalDeckOverride(canonicalDeck, doc);
       const canonicalDeckValidator = (
         typeof SlideNextCanonicalDeck !== 'undefined'
         && SlideNextCanonicalDeck
