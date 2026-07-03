@@ -201,6 +201,29 @@ test('createStudioDeckSnapshotBuildOptions can derive canonical view state from 
   assert.equal(fallbackCalls, 0);
 });
 
+test('createStudioDeckSnapshotBuildOptions can derive the live active slide from a query selector', () => {
+  const activeSlide = { id: 'active-slide-el' };
+  const doc = {
+    label: 'doc',
+    querySelector(selector) {
+      assert.equal(selector, '.slide-active');
+      return activeSlide;
+    }
+  };
+
+  const result = deckSnapshot.createStudioDeckSnapshotBuildOptions(doc, {
+    buildCanonicalDeck() {
+      return null;
+    },
+    resolveLiveActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, doc);
+      return 'slide-1';
+    }
+  });
+
+  assert.equal(result.getActiveSlide(), activeSlide);
+});
+
 test('createStudioDeckSnapshotBuildOptions reuses the resolved canonical deck when the editor frame is unavailable', () => {
   const canonicalDeck = {
     slides: [

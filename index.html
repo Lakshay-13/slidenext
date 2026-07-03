@@ -3111,7 +3111,11 @@
               sourceDoc,
               canonicalDeck
             ),
-            resolveLiveActiveSlide: (sourceDoc) => resolveEditorLiveActiveSlide(sourceDoc)
+            querySelector: (sourceDoc, selector) => (
+              sourceDoc && typeof sourceDoc.querySelector === 'function'
+                ? sourceDoc.querySelector(selector)
+                : null
+            )
           })
         : (() => {
             const {

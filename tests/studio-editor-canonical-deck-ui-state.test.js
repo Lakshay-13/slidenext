@@ -974,7 +974,6 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
   );
 
   const calls = [];
-  const iframeDoc = { label: 'iframe-doc' };
   const canonicalDeck = {
     kind: 'slidenext.deck',
     schemaVersion: 1,
@@ -984,6 +983,13 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
     ]
   };
   const activeSlide = { id: 'active-slide-el' };
+  const iframeDoc = {
+    label: 'iframe-doc',
+    querySelector(selector) {
+      assert.equal(selector, '.slide-active');
+      return activeSlide;
+    }
+  };
   let delegatedArgs = null;
   const context = {
     SlideNextStudioDeckSnapshot: {
@@ -994,7 +1000,7 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
           canonicalDeck: options.buildCanonicalDeck(nextDoc),
           liveActiveSlideId: options.resolveLiveActiveSlideId(nextDoc),
           fallbackActiveSlideId: options.resolveFallbackActiveSlideId(nextDoc, canonicalDeck),
-          liveActiveSlide: options.resolveLiveActiveSlide(nextDoc)
+          liveActiveSlide: options.querySelector(nextDoc, '.slide-active')
         };
         return {
           buildCanonicalDeck: () => canonicalDeck,
@@ -1068,6 +1074,7 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
   assert.equal(delegatedArgs.canonicalDeck, canonicalDeck);
   assert.equal(delegatedArgs.fallbackActiveSlideId, 'slide-fallback');
   assert.equal(delegatedArgs.liveActiveSlide, activeSlide);
+  assert.equal(typeof delegatedArgs.options.querySelector, 'function');
   assert.equal(calls.length, 1);
   assert.equal(calls[0].nextDoc, iframeDoc);
   assert.equal(calls[0].options.fallbackActiveSlideId, 'slide-shared');

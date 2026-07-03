@@ -71,14 +71,21 @@
             resolveCanonicalDeck,
             liveActiveSlideId,
             resolvedCanonicalDeck
-          };
         };
+      };
     const resolveFallbackActiveSlideId = typeof options.resolveFallbackActiveSlideId === 'function'
       ? options.resolveFallbackActiveSlideId
       : () => '';
     const resolveLiveActiveSlide = typeof options.resolveLiveActiveSlide === 'function'
       ? options.resolveLiveActiveSlide
-      : () => null;
+      : (nextDoc) => {
+          const querySelector = typeof options.querySelector === 'function'
+            ? options.querySelector
+            : (sourceDoc, selector) => sourceDoc && typeof sourceDoc.querySelector === 'function'
+                ? sourceDoc.querySelector(selector)
+                : null;
+          return querySelector(nextDoc, '.slide-active') || null;
+        };
     const canonicalDeckViewState = resolveCanonicalDeckViewState(doc);
     const resolveCanonicalDeck = canonicalDeckViewState && typeof canonicalDeckViewState.resolveCanonicalDeck === 'function'
       ? canonicalDeckViewState.resolveCanonicalDeck
