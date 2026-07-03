@@ -1895,18 +1895,7 @@ test('resolveEditorLiveActiveSlideId delegates to the shared deck view helper wh
 
   assert.equal(result, 'slide-shared');
   assert.equal(delegatedArgs.doc, iframeDoc);
-  assert.equal(typeof delegatedArgs.options.querySelector, 'function');
   assert.equal(typeof delegatedArgs.options.getActiveSlideId, 'function');
-  assert.deepEqual(
-    delegatedArgs.options.querySelector({
-      querySelector(selector) {
-        assert.equal(selector, '.slide-active');
-        return { label: 'slide-active' };
-      }
-    }, '.slide-active'),
-    { label: 'slide-active' }
-  );
-  assert.equal(delegatedArgs.options.querySelector(null, '.slide-active'), null);
   assert.equal(delegatedArgs.options.getActiveSlideId(iframeDoc), 'slide-live');
 });
 

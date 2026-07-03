@@ -1506,11 +1506,6 @@
         : null;
       if (resolveStudioLiveActiveSlideId) {
         return resolveStudioLiveActiveSlideId(doc, {
-          querySelector: (nextDoc, selector) => (
-            nextDoc && typeof nextDoc.querySelector === 'function'
-              ? nextDoc.querySelector(selector)
-              : null
-          ),
           getActiveSlideId: (nextDoc) => getActiveSlideId(nextDoc)
         });
       }
