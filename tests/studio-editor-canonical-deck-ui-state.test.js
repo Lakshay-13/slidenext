@@ -1478,6 +1478,10 @@ test('resolveEditorFallbackActiveSlideId rebuilds a malformed canonical deck inp
     getIframeDoc() {
       return iframeDoc;
     },
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return null;
+    },
     getPersistedActiveSlideId() {
       calls.push(['getPersistedActiveSlideId']);
       return 'slide-persisted';
@@ -1738,6 +1742,10 @@ test('resolveEditorFallbackActiveSlideId reuses the local fallback canonical dec
     getIframeDoc() {
       return iframeDoc;
     },
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return null;
+    },
     getPersistedActiveSlideId() {
       calls.push(['getPersistedActiveSlideId']);
       return 'slide-persisted';
@@ -1818,6 +1826,10 @@ test('resolveEditorFallbackActiveSlideId delegates canonical override resolution
     currentSlideIndex: 1,
     getIframeDoc() {
       return iframeDoc;
+    },
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return null;
     },
     getPersistedActiveSlideId() {
       calls.push(['getPersistedActiveSlideId']);
@@ -2812,6 +2824,10 @@ test('buildEditorDeckSnapshot prefers the current session active slide fallback 
     buildEditorDeckSnapshotFromDom() {},
     buildEditorLayerSnapshot() {},
     currentSlideIndex: 1,
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return activeSlide;
+    },
     getActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return 'slide-2';
@@ -2916,6 +2932,10 @@ test('buildEditorDeckSnapshot falls back to the current session slide when live 
     buildEditorDeckSnapshotFromDom() {},
     buildEditorLayerSnapshot() {},
     currentSlideIndex: 1,
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return null;
+    },
     getActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return '';

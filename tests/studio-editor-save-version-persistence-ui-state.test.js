@@ -632,6 +632,9 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
     setCurrentPresentationCanonicalDeck() {},
     studioEditorSessionToken: 8,
     updateEditorPersistedDeckState() {},
+    resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
+    },
     resolveEditorLiveActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return '';
