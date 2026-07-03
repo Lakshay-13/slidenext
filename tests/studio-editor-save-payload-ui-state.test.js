@@ -27,6 +27,27 @@ function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  if (typeof context.resolveEditorCanonicalDeckOverride !== 'function') {
+    const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
+      fileContent,
+      'function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {',
+      '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
+    );
+    vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
+  }
+  if (typeof context.createEditorPersistableCanonicalDeckOverrideResolver !== 'function') {
+    const createEditorPersistableCanonicalDeckOverrideResolverSource = extractFunctionSource(
+      fileContent,
+      'function createEditorPersistableCanonicalDeckOverrideResolver(doc = getIframeDoc(), canonicalDeck = null) {',
+      '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
+    );
+    vm.runInContext(createEditorPersistableCanonicalDeckOverrideResolverSource, context);
+  }
+  vm.runInContext(helperSource, context);
+}
+
 test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requests', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(
@@ -458,7 +479,7 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-baseline</html>');
   assert.equal(sharedBuildCalls, 0);
@@ -494,7 +515,7 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
-    createEditorPersistableCanonicalDeckOverrideResolver(nextDoc, nextCanonicalDeck) {
+    __createEditorPersistableCanonicalDeckOverrideResolver(nextDoc, nextCanonicalDeck) {
       calls.push(['createEditorPersistableCanonicalDeckOverrideResolver', nextDoc, nextCanonicalDeck]);
       assert.equal(nextDoc, null);
       assert.equal(nextCanonicalDeck, canonicalDeck);
@@ -532,7 +553,11 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
+  vm.runInContext(
+    'createEditorPersistableCanonicalDeckOverrideResolver = __createEditorPersistableCanonicalDeckOverrideResolver;',
+    context
+  );
 
   assert.equal(
     context.buildPersistableDeckHtml(null, {
@@ -612,7 +637,7 @@ test('buildPersistableDeckHtml falls back to the editor canonical deck when a pr
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(
     context.buildPersistableDeckHtml(null, {
@@ -679,7 +704,7 @@ test('buildPersistableDeckHtml reports the resolved canonical deck when the edit
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(
     context.buildPersistableDeckHtml(null, {
@@ -1106,7 +1131,7 @@ test('buildPersistableDeckHtml reuses the local reusable persisted html resolver
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
   vm.runInContext('resolveEditorReusablePersistedHtml = __resolveEditorReusablePersistedHtml;', context);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-baseline</html>');
@@ -1179,7 +1204,7 @@ test('buildPersistableDeckHtml reuses the local persistable build-state reporter
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
   vm.runInContext('reportEditorPersistableDeckBuildState = __reportEditorPersistableDeckBuildState;', context);
   vm.runInContext('resolveEditorReusablePersistedHtml = __resolveEditorReusablePersistedHtml;', context);
 
@@ -1250,7 +1275,7 @@ test('buildPersistableDeckHtml reuses the local persisted deck state-with-conten
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
   vm.runInContext('resolveEditorPersistedDeckStateWithContent = __resolveEditorPersistedDeckStateWithContent;', context);
   vm.runInContext('resolveEditorReusablePersistedHtml = __resolveEditorReusablePersistedHtml;', context);
 
@@ -1341,7 +1366,7 @@ test('buildPersistableDeckHtml reuses the local reusable persisted html sanitize
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
   vm.runInContext('resolveEditorMetadataPersistenceOptions = __resolveEditorMetadataPersistenceOptions;', context);
   vm.runInContext('resolveEditorReusablePersistedHtml = __resolveEditorReusablePersistedHtml;', context);
   vm.runInContext('sanitizeEditorReusablePersistedHtml = __sanitizeEditorReusablePersistedHtml;', context);
@@ -1415,7 +1440,7 @@ test('buildPersistableDeckHtml reuses the local persistable deck sanitizer optio
   };
 
   vm.createContext(context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
   vm.runInContext('buildEditorPersistableDeckSanitizerOptions = __buildEditorPersistableDeckSanitizerOptions;', context);
   vm.runInContext('resolveEditorMetadataPersistenceOptions = __resolveEditorMetadataPersistenceOptions;', context);
 
@@ -1509,7 +1534,7 @@ test('buildPersistableDeckHtml prefers the shared persisted-content resolver bef
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-baseline</html>');
   assert.deepEqual(calls.map(([name]) => name), [
@@ -1606,7 +1631,7 @@ test('buildPersistableDeckHtml sanitizes reusable persisted html when a DOM pars
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>sanitized-baseline</html>');
   assert.deepEqual(parserCalls, [['<html>persisted-baseline</html>', 'text/html']]);
@@ -1670,7 +1695,7 @@ test('buildPersistableDeckHtml captures the live playback state before persistin
 
   vm.createContext(context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-live</html>');
   assert.deepEqual(calls.map(([name]) => name), [
@@ -1760,7 +1785,7 @@ test('buildPersistableDeckHtml forwards metadata-derived persistence cleanup opt
 
   vm.createContext(context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-live</html>');
   assert.deepEqual(calls.map(([name]) => name), [
@@ -1840,7 +1865,7 @@ test('buildPersistableDeckHtml reuses the local metadata persistence resolver wh
 
   vm.createContext(context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
   vm.runInContext('resolveEditorMetadataPersistenceOptions = __resolveEditorMetadataPersistenceOptions;', context);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-live</html>');
@@ -1902,7 +1927,7 @@ test('buildPersistableDeckHtml does not reuse stale persisted playback state whe
 
   vm.createContext(context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-live</html>');
   assert.deepEqual(calls.map(([name]) => name), [
@@ -2007,7 +2032,7 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when playback-st
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(capturePersistedDeckPlaybackStateSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(
     context.buildPersistableDeckHtml(iframeDoc, {
@@ -2302,7 +2327,7 @@ test('buildPersistableDeckHtml reports the resolved live canonical deck when req
 
   vm.createContext(context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(
     context.buildPersistableDeckHtml(iframeDoc, {
@@ -2368,7 +2393,7 @@ test('buildPersistableDeckHtml reuses the local persistable build-state reporter
 
   vm.createContext(context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
   vm.runInContext('reportEditorPersistableDeckBuildState = __reportEditorPersistableDeckBuildState;', context);
 
   assert.equal(
@@ -2457,7 +2482,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
   assert.equal(sharedBuildCalls, 0);
@@ -2647,7 +2672,7 @@ test('buildPersistableDeckHtml reuses createEditorPersistableSourceViewOptions a
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
   assert.equal(calls.length, 2);
@@ -2733,7 +2758,7 @@ test('buildPersistableDeckHtml reuses the local persistable source deck html ren
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
   vm.runInContext('renderEditorPersistableSourceDeckHtml = __renderEditorPersistableSourceDeckHtml;', context);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
@@ -2822,7 +2847,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
   assert.equal(sharedBuildCalls, 0);
