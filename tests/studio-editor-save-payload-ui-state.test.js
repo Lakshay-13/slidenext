@@ -2547,6 +2547,29 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
         return '<html>canonical-source</html>';
       }
     },
+    createEditorPersistableSourceViewOptions(nextDoc, nextCanonicalDeck, persistedHtml) {
+      assert.equal(nextDoc, null);
+      assert.equal(nextCanonicalDeck, canonicalDeck);
+      assert.equal(persistedHtml, '');
+      return {
+        buildCanonicalDeck() {
+          return canonicalDeck;
+        },
+        buildFallbackHtml() {
+          return persistedHtml;
+        },
+        deckHtmlOptions: {
+          renderOptions: {
+            activeSlideId: 'slide-1',
+            preferSourceHtml: false,
+            preferHeadSourceHtml: false,
+            preferBodySourceHtml: false,
+            preferSlideSourceHtml: false,
+            preferNodeSourceHtml: false
+          }
+        }
+      };
+    },
     buildEditorCanonicalDeck(nextDoc) {
       assert.equal(nextDoc, null);
       return canonicalDeck;
@@ -2911,6 +2934,29 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
         calls.push([nextDoc, options]);
         return '<html>canonical-source</html>';
       }
+    },
+    createEditorPersistableSourceViewOptions(nextDoc, nextCanonicalDeck, persistedHtml) {
+      assert.equal(nextDoc, null);
+      assert.equal(nextCanonicalDeck, currentCanonicalDeck);
+      assert.equal(persistedHtml, '<html>persisted-baseline</html>');
+      return {
+        buildCanonicalDeck() {
+          return currentCanonicalDeck;
+        },
+        buildFallbackHtml() {
+          return persistedHtml;
+        },
+        deckHtmlOptions: {
+          renderOptions: {
+            activeSlideId: 'slide-next',
+            preferSourceHtml: false,
+            preferHeadSourceHtml: false,
+            preferBodySourceHtml: false,
+            preferSlideSourceHtml: false,
+            preferNodeSourceHtml: false
+          }
+        }
+      };
     },
     buildEditorCanonicalDeck(nextDoc) {
       assert.equal(nextDoc, null);

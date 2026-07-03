@@ -5648,25 +5648,7 @@
         if (reusablePersistedHtml) {
           return sanitizeReusablePersistedHtml(reusablePersistedHtml, persistedDeckState.playbackState);
         }
-        const sourceViewOptions = typeof createEditorPersistableSourceViewOptions === 'function'
-          ? createEditorPersistableSourceViewOptions(doc, canonicalDeck, persistedHtml)
-          : typeof createEditorDeckViewBuildOptions === 'function'
-            ? createEditorDeckViewBuildOptions(doc, {
-                buildCanonicalDeck: () => canonicalDeck,
-                buildFallbackHtml: () => persistedHtml,
-                buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
-                  sourceDoc,
-                  nextCanonicalDeck,
-                  options
-                )
-              })
-            : {
-                buildCanonicalDeck: () => canonicalDeck,
-                buildFallbackHtml: () => persistedHtml,
-                deckHtmlOptions: {
-                  renderOptions: buildEditorDeckRenderOptions(doc, canonicalDeck)
-                }
-              };
+        const sourceViewOptions = createEditorPersistableSourceViewOptions(doc, canonicalDeck, persistedHtml);
         return renderEditorPersistableSourceDeckHtml(doc, sourceViewOptions, persistedHtml);
       }
       const livePlaybackState = doc
