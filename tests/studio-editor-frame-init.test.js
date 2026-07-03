@@ -270,6 +270,63 @@ test('captureEditorPersistableDeckState honors a provided canonical deck overrid
   assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
+test('captureEditorPersistableDeckState reuses the local captured canonical deck helper when html capture does not report one', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] }
+    ]
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 1'
+  };
+  const calls = [];
+
+  const context = {
+    resolveEditorCapturedCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorCapturedCanonicalDeck', nextDoc, nextCanonicalDeck]);
+      assert.equal(nextDoc, iframeDoc);
+      assert.equal(nextCanonicalDeck, null);
+      return canonicalDeck;
+    },
+    buildPersistableDeckHtml(doc, options = {}) {
+      assert.equal(doc, iframeDoc);
+      assert.equal(options.canonicalDeck, null);
+      return '<html>persisted</html>';
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('buildEditorCanonicalDeck should not run when resolveEditorCapturedCanonicalDeck is available');
+    },
+    capturePersistedDeckPlaybackState(doc, nextCanonicalDeck) {
+      calls.push(['capturePersistedDeckPlaybackState', doc, nextCanonicalDeck]);
+      assert.equal(doc, iframeDoc);
+      assert.equal(nextCanonicalDeck, canonicalDeck);
+      return playbackState;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
+
+  const persistedDeckState = JSON.parse(JSON.stringify(context.captureEditorPersistableDeckState()));
+  assert.deepEqual(persistedDeckState, {
+    cleanHtml: '<html>persisted</html>',
+    playbackState,
+    canonicalDeck
+  });
+  assert.deepEqual(calls.map(([name]) => name), [
+    'resolveEditorCapturedCanonicalDeck',
+    'capturePersistedDeckPlaybackState'
+  ]);
+});
+
 test('initStudioFrame refreshes inspector state after bootstrapping the iframe', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const initStudioFrameSource = extractFunctionSource(
