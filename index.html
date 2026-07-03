@@ -5055,11 +5055,10 @@
         }) || null;
       }
       if (Object.prototype.hasOwnProperty.call(nextState, 'playbackState')) {
-        const normalizePersistedPlaybackState = SlideNextDeckPersistence
+        persistedDeckPlaybackState = SlideNextDeckPersistence
           && typeof SlideNextDeckPersistence.normalizePersistedDeckPlaybackState === 'function'
-          ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState
-          : (playbackState) => playbackState || null;
-        persistedDeckPlaybackState = normalizePersistedPlaybackState(nextState.playbackState);
+          ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(nextState.playbackState)
+          : (nextState.playbackState || null);
       }
     }
 
