@@ -35,6 +35,57 @@ function loadResolveEditorCanonicalDeckViewState(fileContent, context) {
   vm.runInContext(resolveEditorCanonicalDeckViewStateSource, context);
 }
 
+function loadCreateEditorDeckViewSharedOptions(fileContent, context) {
+  if (typeof context.resolveEditorCanonicalDeckOverride !== 'function') {
+    const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
+      fileContent,
+      'function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {',
+      '\n\n    function getEditorCanonicalDeckValidator() {'
+    );
+    vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
+  }
+  if (typeof context.getEditorCanonicalDeckValidator !== 'function') {
+    const getEditorCanonicalDeckValidatorSource = extractFunctionSource(
+      fileContent,
+      'function getEditorCanonicalDeckValidator() {',
+      '\n\n    function createEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {'
+    );
+    vm.runInContext(getEditorCanonicalDeckValidatorSource, context);
+  }
+  if (typeof context.resolveEditorDeckCanonicalOverride !== 'function') {
+    const resolveEditorDeckCanonicalOverrideSource = extractFunctionSource(
+      fileContent,
+      'function resolveEditorDeckCanonicalOverride(doc = getIframeDoc(), canonicalDeck = null) {',
+      '\n\n    function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {'
+    );
+    vm.runInContext(resolveEditorDeckCanonicalOverrideSource, context);
+  }
+  if (typeof context.createEditorDeckCanonicalOverrideResolver !== 'function') {
+    const createEditorDeckCanonicalOverrideResolverSource = extractFunctionSource(
+      fileContent,
+      'function createEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {',
+      '\n\n    function resolveEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {'
+    );
+    vm.runInContext(createEditorDeckCanonicalOverrideResolverSource, context);
+  }
+  if (typeof context.resolveEditorDeckCanonicalOverrideResolver !== 'function') {
+    const resolveEditorDeckCanonicalOverrideResolverSource = extractFunctionSource(
+      fileContent,
+      'function resolveEditorDeckCanonicalOverrideResolver(doc = getIframeDoc()) {',
+      '\n\n    function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {'
+    );
+    vm.runInContext(resolveEditorDeckCanonicalOverrideResolverSource, context);
+  }
+  if (typeof context.createEditorDeckViewSharedOptions !== 'function') {
+    const createEditorDeckViewSharedOptionsSource = extractFunctionSource(
+      fileContent,
+      'function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {',
+      '\n\n    function resolveEditorDeckCanonicalOverride(doc = getIframeDoc(), canonicalDeck = null) {'
+    );
+    vm.runInContext(createEditorDeckViewSharedOptionsSource, context);
+  }
+}
+
 test('resolveEditorStoredCanonicalBaseline prefers the current metadata canonical deck over the persisted baseline', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const currentMetadataCanonicalDeck = {
@@ -1502,6 +1553,7 @@ test('resolveEditorFallbackActiveSlideId forwards canonical override resolution 
 
   vm.createContext(context);
   vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
+  loadCreateEditorDeckViewSharedOptions(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
 
   const result = context.resolveEditorFallbackActiveSlideId(iframeDoc, malformedCanonicalDeck);

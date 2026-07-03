@@ -1453,36 +1453,7 @@
         ? SlideNextStudioDeckView.resolveStudioFallbackActiveSlideId
         : null;
       if (resolveStudioFallbackActiveSlideId) {
-        const deckViewSharedOptions = typeof createEditorDeckViewSharedOptions === 'function'
-          ? createEditorDeckViewSharedOptions(doc)
-          : {
-              currentSlideIndex,
-              getPersistedActiveSlideId,
-              resolveCanonicalDeck: (nextDoc) => buildEditorCanonicalDeck(nextDoc),
-              resolveCanonicalDeckOverride: typeof resolveEditorDeckCanonicalOverrideResolver === 'function'
-                ? resolveEditorDeckCanonicalOverrideResolver(doc)
-                : (nextCanonicalDeck, nextDoc = doc) => (
-                    typeof createEditorDeckCanonicalOverrideResolver === 'function'
-                      ? createEditorDeckCanonicalOverrideResolver(nextDoc)(nextCanonicalDeck, nextDoc)
-                      : typeof resolveEditorDeckCanonicalOverride === 'function'
-                        ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
-                        : typeof resolveEditorCanonicalDeckOverride === 'function'
-                          ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
-                              buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
-                            })
-                          : nextCanonicalDeck
-                  ),
-              resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
-              isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
-                ? getEditorCanonicalDeckValidator()
-                : (
-                    typeof SlideNextCanonicalDeck !== 'undefined'
-                    && SlideNextCanonicalDeck
-                    && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-                  )
-                  ? SlideNextCanonicalDeck.isCanonicalDeck
-                  : null
-            };
+        const deckViewSharedOptions = createEditorDeckViewSharedOptions(doc);
         return resolveStudioFallbackActiveSlideId(doc, canonicalDeck, deckViewSharedOptions);
       }
 
@@ -1588,36 +1559,7 @@
         ? SlideNextStudioDeckView.createStudioDeckRenderOptions
         : null;
       if (createStudioDeckRenderOptions) {
-        const deckViewSharedOptions = typeof createEditorDeckViewSharedOptions === 'function'
-          ? createEditorDeckViewSharedOptions(doc)
-          : {
-              currentSlideIndex,
-              getPersistedActiveSlideId,
-              resolveCanonicalDeck: (nextDoc) => buildEditorCanonicalDeck(nextDoc),
-              resolveCanonicalDeckOverride: typeof resolveEditorDeckCanonicalOverrideResolver === 'function'
-                ? resolveEditorDeckCanonicalOverrideResolver(doc)
-                : (nextCanonicalDeck, nextDoc = doc) => (
-                    typeof createEditorDeckCanonicalOverrideResolver === 'function'
-                      ? createEditorDeckCanonicalOverrideResolver(nextDoc)(nextCanonicalDeck, nextDoc)
-                      : typeof resolveEditorDeckCanonicalOverride === 'function'
-                        ? resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck)
-                        : typeof resolveEditorCanonicalDeckOverride === 'function'
-                          ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
-                              buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
-                            })
-                          : nextCanonicalDeck
-                  ),
-              resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
-              isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
-                ? getEditorCanonicalDeckValidator()
-                : (
-                    typeof SlideNextCanonicalDeck !== 'undefined'
-                    && SlideNextCanonicalDeck
-                    && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-                  )
-                  ? SlideNextCanonicalDeck.isCanonicalDeck
-                  : null
-            };
+        const deckViewSharedOptions = createEditorDeckViewSharedOptions(doc);
         return createStudioDeckRenderOptions(doc, canonicalDeck, {
           activeSlideId: options.activeSlideId,
           ...deckViewSharedOptions
