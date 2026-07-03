@@ -68,7 +68,7 @@ function loadCreateEditorCanonicalDeckResolverWithBuilder(fileContent, context) 
   }
   const helperSource = extractFunctionSource(
     fileContent,
-    'function createEditorCanonicalDeckResolverWithBuilder(doc = getIframeDoc(), buildCanonicalDeck = null) {',
+    'function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {',
     '\n\n    function createEditorCanonicalDeckViewStateOptions(options = {}) {'
   );
   vm.runInContext(helperSource, context);
@@ -2029,7 +2029,7 @@ test('createEditorCanonicalDeckResolverWithBuilder caches the first canonical de
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
-    'function createEditorCanonicalDeckResolverWithBuilder(doc = getIframeDoc(), buildCanonicalDeck = null) {',
+    'function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {',
     '\n\n    function createEditorCanonicalDeckViewStateOptions(options = {}) {'
   );
 

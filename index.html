@@ -1577,10 +1577,11 @@
       );
     }
 
-    function createEditorCanonicalDeckResolverWithBuilder(doc = getIframeDoc(), buildCanonicalDeck = null) {
-      const resolveCanonicalDeckBuilder = typeof buildCanonicalDeck === 'function'
-        ? buildCanonicalDeck
-        : (sourceDoc) => buildEditorCanonicalDeck(sourceDoc);
+    function createEditorCanonicalDeckResolverWithBuilder(
+      doc = getIframeDoc(),
+      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)
+    ) {
+      const resolveCanonicalDeckBuilder = buildCanonicalDeck;
       let didResolveCanonicalDeck = false;
       let resolvedCanonicalDeck = null;
       return function resolveCanonicalDeck(sourceDoc = doc) {
