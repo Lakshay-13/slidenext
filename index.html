@@ -5693,32 +5693,6 @@
       return versionCheckpointResult ? versionCheckpointResult.data : null;
     }
 
-    async function executeCurrentStudioVersionCheckpointSaveWithSuccess(
-      versionLabel,
-      versionCheckpointPersistenceState,
-      presentationUrl = currentPresentationUrl,
-      options = {}
-    ) {
-      return SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSaveWithSuccess(
-        versionLabel,
-        versionCheckpointPersistenceState,
-        presentationUrl,
-        {
-          saveVersionCheckpoint,
-          applyVersionCheckpointSaveSuccess: (nextVersionCheckpointPersistenceState, successOptions = {}) => {
-            if (!nextVersionCheckpointPersistenceState || !nextVersionCheckpointPersistenceState.persistenceContext) {
-              return false;
-            }
-            return applyCurrentStudioVersionPersistenceSuccess(
-              nextVersionCheckpointPersistenceState.persistenceContext,
-              successOptions
-            );
-          },
-          successOptions: options
-        }
-      );
-    }
-
     async function executeCurrentStudioVersionCheckpointSaveWithFailure(
       versionLabel,
       versionCheckpointPersistenceState,
