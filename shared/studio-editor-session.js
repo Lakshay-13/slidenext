@@ -19,6 +19,17 @@
     };
   }
 
+  function createStudioSessionStateReaders(options = {}) {
+    return {
+      getCurrentPresentationUrl: typeof options.getCurrentPresentationUrl === 'function'
+        ? options.getCurrentPresentationUrl
+        : () => normalizeString(options.currentPresentationUrl),
+      getCurrentSessionToken: typeof options.getCurrentSessionToken === 'function'
+        ? options.getCurrentSessionToken
+        : () => (Number.isInteger(options.currentSessionToken) ? options.currentSessionToken : null)
+    };
+  }
+
   function createStudioSessionSnapshot(options = {}) {
     return {
       presentationUrl: normalizeString(options.presentationUrl),
@@ -112,6 +123,7 @@
 
   return {
     createStudioSessionStateOptions,
+    createStudioSessionStateReaders,
     createStudioSessionSnapshot,
     createStudioPresentationSessionStateUpdate,
     isCurrentStudioEditorSession,

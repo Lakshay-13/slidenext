@@ -5585,10 +5585,10 @@
     }
 
     function createCurrentStudioSessionStateReaders() {
-      return {
+      return SlideNextStudioEditorSession.createStudioSessionStateReaders({
         getCurrentPresentationUrl: () => currentPresentationUrl,
         getCurrentSessionToken: () => studioEditorSessionToken
-      };
+      });
     }
 
     function resetEditorPersistenceTimers() {

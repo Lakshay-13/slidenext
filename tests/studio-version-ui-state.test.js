@@ -1304,7 +1304,17 @@ test('createCurrentStudioSessionStateReaders exposes live presentation and sessi
     '\n\n    function resetEditorPersistenceTimers() {'
   );
 
+  const calls = [];
   const context = {
+    SlideNextStudioEditorSession: {
+      createStudioSessionStateReaders(options) {
+        calls.push(options);
+        return {
+          getCurrentPresentationUrl: options.getCurrentPresentationUrl,
+          getCurrentSessionToken: options.getCurrentSessionToken
+        };
+      }
+    },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     studioEditorSessionToken: 4
   };
@@ -1313,6 +1323,7 @@ test('createCurrentStudioSessionStateReaders exposes live presentation and sessi
   vm.runInContext(createCurrentStudioSessionStateReadersSource, context);
 
   const readers = context.createCurrentStudioSessionStateReaders();
+  assert.equal(calls.length, 1);
   assert.equal(readers.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
   assert.equal(readers.getCurrentSessionToken(), 4);
 

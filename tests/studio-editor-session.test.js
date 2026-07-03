@@ -26,6 +26,30 @@ test('createStudioSessionStateOptions preserves the supplied session readers and
   assert.equal(normalizedOptions.sessionToken, null);
 });
 
+test('createStudioSessionStateReaders exposes supplied live readers and normalizes fallback state', () => {
+  let currentPresentationUrl = '/presentations/onboarding-presentation/index.html';
+  let currentSessionToken = 4;
+  const readers = editorSession.createStudioSessionStateReaders({
+    getCurrentPresentationUrl: () => currentPresentationUrl,
+    getCurrentSessionToken: () => currentSessionToken
+  });
+
+  assert.equal(readers.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(readers.getCurrentSessionToken(), 4);
+
+  currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  currentSessionToken = 5;
+  assert.equal(readers.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(readers.getCurrentSessionToken(), 5);
+
+  const fallbackReaders = editorSession.createStudioSessionStateReaders({
+    currentPresentationUrl: null,
+    currentSessionToken: 'invalid'
+  });
+  assert.equal(fallbackReaders.getCurrentPresentationUrl(), '');
+  assert.equal(fallbackReaders.getCurrentSessionToken(), null);
+});
+
 test('createStudioSessionSnapshot preserves the supplied presentation identity and normalized session token', () => {
   const snapshot = editorSession.createStudioSessionSnapshot({
     presentationUrl: '/presentations/onboarding-presentation/index.html',
