@@ -292,6 +292,57 @@ test('resolveStudioFallbackActiveSlideId rebuilds malformed canonical decks befo
   ]);
 });
 
+test('resolveStudioFallbackActiveSlideId honors canonical deck overrides before resolving the fallback slide', () => {
+  const rebuiltCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  const malformedCanonicalDeck = {
+    slides: 'not-an-array'
+  };
+  const calls = [];
+
+  const result = deckView.resolveStudioFallbackActiveSlideId(
+    { label: 'iframe-doc' },
+    malformedCanonicalDeck,
+    {
+      currentSlideIndex: 1,
+      getPersistedActiveSlideId() {
+        calls.push('getPersistedActiveSlideId');
+        return 'slide-persisted';
+      },
+      resolveCanonicalDeck() {
+        calls.push('resolveCanonicalDeck');
+        throw new Error('resolveCanonicalDeck should not run when the override resolves a valid deck');
+      },
+      resolveCanonicalDeckOverride(nextCanonicalDeck, doc) {
+        calls.push(['resolveCanonicalDeckOverride', nextCanonicalDeck, doc]);
+        return rebuiltCanonicalDeck;
+      },
+      resolveLiveActiveSlideId(doc) {
+        calls.push(['resolveLiveActiveSlideId', doc]);
+        return '';
+      },
+      isCanonicalDeck(deck) {
+        calls.push(['isCanonicalDeck', deck]);
+        return deck === rebuiltCanonicalDeck;
+      }
+    }
+  );
+
+  assert.equal(result, 'slide-2');
+  assert.deepEqual(calls, [
+    'getPersistedActiveSlideId',
+    ['resolveCanonicalDeckOverride', malformedCanonicalDeck, { label: 'iframe-doc' }],
+    ['isCanonicalDeck', rebuiltCanonicalDeck],
+    ['resolveLiveActiveSlideId', { label: 'iframe-doc' }]
+  ]);
+});
+
 test('buildStudioDeckHtml prefers the canonical builder when the canonical deck is valid', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',

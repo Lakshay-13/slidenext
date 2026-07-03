@@ -154,14 +154,18 @@
     const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
       ? options.resolveCanonicalDeck
       : () => null;
+    const resolveCanonicalDeckOverride = typeof options.resolveCanonicalDeckOverride === 'function'
+      ? options.resolveCanonicalDeckOverride
+      : (nextCanonicalDeck) => nextCanonicalDeck;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : isCanonicalDeckLike;
 
-    const hasValidCanonicalDeck = !!canonicalDeck && isCanonicalDeck(canonicalDeck);
+    const overriddenCanonicalDeck = resolveCanonicalDeckOverride(canonicalDeck, doc);
+    const hasValidCanonicalDeck = !!overriddenCanonicalDeck && isCanonicalDeck(overriddenCanonicalDeck);
     const nextCanonicalDeck = hasValidCanonicalDeck
-      ? canonicalDeck
-      : (canonicalDeck ? resolveCanonicalDeck(doc) : null);
+      ? overriddenCanonicalDeck
+      : (overriddenCanonicalDeck ? resolveCanonicalDeck(doc) : null);
     if (doc) {
       const liveActiveSlideId = resolveLiveActiveSlideId(doc);
       if (typeof liveActiveSlideId === 'string' && liveActiveSlideId.trim()) {

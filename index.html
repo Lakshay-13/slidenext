@@ -1459,6 +1459,13 @@
           currentSlideIndex,
           getPersistedActiveSlideId,
           resolveCanonicalDeck: (nextDoc) => buildEditorCanonicalDeck(nextDoc),
+          resolveCanonicalDeckOverride: (nextCanonicalDeck, nextDoc) => (
+            typeof resolveEditorCanonicalDeckOverride === 'function'
+              ? resolveEditorCanonicalDeckOverride(nextCanonicalDeck, {
+                  buildCanonicalDeck: nextCanonicalDeck ? () => buildEditorCanonicalDeck(nextDoc) : null
+                })
+              : nextCanonicalDeck
+          ),
           resolveLiveActiveSlideId: (nextDoc) => resolveEditorLiveActiveSlideId(nextDoc),
           isCanonicalDeck: (
             typeof SlideNextCanonicalDeck !== 'undefined'
