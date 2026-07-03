@@ -463,6 +463,62 @@ test('createEditorDeckViewCanonicalHtmlResolver remaps canonical html arguments 
   ]]);
 });
 
+test('createEditorDeckViewHtmlOptions bundles shared deck view html resolvers when local helpers are available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createEditorDeckViewHtmlOptionsSource = extractFunctionSource(
+    fileContent,
+    'function createEditorDeckViewHtmlOptions(options = {}) {',
+    '\n\n    function createEditorPreviewFallbackHtmlTransformer(options = {}) {'
+  );
+
+  const buildViewOptionsResolver = function buildViewOptionsResolver() {};
+  const canonicalHtmlResolver = function canonicalHtmlResolver() {};
+  let buildViewOptionsResolverArgs = null;
+  let canonicalHtmlResolverArgs = null;
+  const buildSharedHtml = function buildSharedHtml() {};
+  const buildViewOptions = function buildViewOptions() {};
+  const extendViewOptions = function extendViewOptions() {};
+  const buildCanonicalHtml = function buildCanonicalHtml() {};
+  const mapCanonicalHtmlArgs = function mapCanonicalHtmlArgs() {};
+  const transformFallbackHtml = function transformFallbackHtml() {};
+  const context = {
+    __createEditorDeckViewBuildViewOptionsResolver(options) {
+      buildViewOptionsResolverArgs = options;
+      return buildViewOptionsResolver;
+    },
+    __createEditorDeckViewCanonicalHtmlResolver(options) {
+      canonicalHtmlResolverArgs = options;
+      return canonicalHtmlResolver;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createEditorDeckViewHtmlOptionsSource, context);
+  vm.runInContext(
+    'createEditorDeckViewBuildViewOptionsResolver = __createEditorDeckViewBuildViewOptionsResolver;'
+      + 'createEditorDeckViewCanonicalHtmlResolver = __createEditorDeckViewCanonicalHtmlResolver;',
+    context
+  );
+
+  const result = context.createEditorDeckViewHtmlOptions({
+    buildSharedHtml,
+    buildViewOptions,
+    extendViewOptions,
+    buildCanonicalHtml,
+    mapCanonicalHtmlArgs,
+    transformFallbackHtml
+  });
+
+  assert.equal(result.buildSharedHtml, buildSharedHtml);
+  assert.equal(result.buildViewOptions, buildViewOptionsResolver);
+  assert.equal(result.buildCanonicalHtml, canonicalHtmlResolver);
+  assert.equal(result.transformFallbackHtml, transformFallbackHtml);
+  assert.equal(buildViewOptionsResolverArgs.buildViewOptions, buildViewOptions);
+  assert.equal(buildViewOptionsResolverArgs.extendViewOptions, extendViewOptions);
+  assert.equal(canonicalHtmlResolverArgs.buildCanonicalHtml, buildCanonicalHtml);
+  assert.equal(canonicalHtmlResolverArgs.mapCanonicalHtmlArgs, mapCanonicalHtmlArgs);
+});
+
 test('createEditorPreviewFallbackHtmlTransformer injects a preview base href when preview deck html helpers are available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createEditorPreviewFallbackHtmlTransformerSource = extractFunctionSource(
@@ -515,24 +571,23 @@ test('createEditorPreviewDeckViewHtmlOptions bundles preview deck view resolvers
     '\n\n    function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {'
   );
 
-  const buildViewOptionsResolver = function buildViewOptionsResolver() {};
-  const canonicalHtmlResolver = function canonicalHtmlResolver() {};
   const previewFallbackHtmlTransformer = function previewFallbackHtmlTransformer() {};
-  let buildViewOptionsResolverArgs = null;
-  let canonicalHtmlResolverArgs = null;
+  const deckViewHtmlOptions = {
+    buildSharedHtml() {},
+    buildViewOptions() {},
+    buildCanonicalHtml() {},
+    transformFallbackHtml() {}
+  };
+  let delegatedArgs = null;
   let previewFallbackHtmlTransformerArgs = null;
   const buildStudioPreviewHtml = function buildStudioPreviewHtml() {};
   const buildDeckPreviewHtml = function buildDeckPreviewHtml() {};
   const injectBaseHrefIntoHtml = function injectBaseHrefIntoHtml() {};
   const buildPresentationBaseHref = function buildPresentationBaseHref() {};
   const context = {
-    __createEditorDeckViewBuildViewOptionsResolver(options) {
-      buildViewOptionsResolverArgs = options;
-      return buildViewOptionsResolver;
-    },
-    __createEditorDeckViewCanonicalHtmlResolver(options) {
-      canonicalHtmlResolverArgs = options;
-      return canonicalHtmlResolver;
+    __createEditorDeckViewHtmlOptions(options) {
+      delegatedArgs = options;
+      return deckViewHtmlOptions;
     },
     __createEditorPreviewFallbackHtmlTransformer(options) {
       previewFallbackHtmlTransformerArgs = options;
@@ -543,8 +598,7 @@ test('createEditorPreviewDeckViewHtmlOptions bundles preview deck view resolvers
   vm.createContext(context);
   vm.runInContext(createEditorPreviewDeckViewHtmlOptionsSource, context);
   vm.runInContext(
-    'createEditorDeckViewBuildViewOptionsResolver = __createEditorDeckViewBuildViewOptionsResolver;'
-      + 'createEditorDeckViewCanonicalHtmlResolver = __createEditorDeckViewCanonicalHtmlResolver;'
+    'createEditorDeckViewHtmlOptions = __createEditorDeckViewHtmlOptions;'
       + 'createEditorPreviewFallbackHtmlTransformer = __createEditorPreviewFallbackHtmlTransformer;',
     context
   );
@@ -557,17 +611,16 @@ test('createEditorPreviewDeckViewHtmlOptions bundles preview deck view resolvers
     presentationUrl: '/presentations/onboarding-presentation/index.html'
   });
 
-  assert.equal(result.buildSharedHtml, buildStudioPreviewHtml);
-  assert.equal(result.buildViewOptions, buildViewOptionsResolver);
-  assert.equal(result.buildCanonicalHtml, canonicalHtmlResolver);
-  assert.equal(result.transformFallbackHtml, previewFallbackHtmlTransformer);
-  assert.equal(typeof buildViewOptionsResolverArgs.extendViewOptions, 'function');
-  assert.equal(buildViewOptionsResolverArgs.extendViewOptions({ buildCanonicalDeck() {} }).presentationUrl, '/presentations/onboarding-presentation/index.html');
-  assert.equal(canonicalHtmlResolverArgs.buildCanonicalHtml, buildDeckPreviewHtml);
-  const canonicalHtmlArgs = canonicalHtmlResolverArgs.mapCanonicalHtmlArgs('deck', { renderOptions: {} });
+  assert.equal(result, deckViewHtmlOptions);
+  assert.equal(delegatedArgs.buildSharedHtml, buildStudioPreviewHtml);
+  assert.equal(typeof delegatedArgs.extendViewOptions, 'function');
+  assert.equal(delegatedArgs.extendViewOptions({ buildCanonicalDeck() {} }).presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(delegatedArgs.buildCanonicalHtml, buildDeckPreviewHtml);
+  const canonicalHtmlArgs = delegatedArgs.mapCanonicalHtmlArgs('deck', { renderOptions: {} });
   assert.equal(canonicalHtmlArgs[0], 'deck');
   assert.equal(canonicalHtmlArgs[1], '/presentations/onboarding-presentation/index.html');
   assert.deepEqual(canonicalHtmlArgs[2], { renderOptions: {} });
+  assert.equal(delegatedArgs.transformFallbackHtml, previewFallbackHtmlTransformer);
   assert.equal(previewFallbackHtmlTransformerArgs.injectBaseHrefIntoHtml, injectBaseHrefIntoHtml);
   assert.equal(previewFallbackHtmlTransformerArgs.buildPresentationBaseHref, buildPresentationBaseHref);
   assert.equal(previewFallbackHtmlTransformerArgs.presentationUrl, '/presentations/onboarding-presentation/index.html');

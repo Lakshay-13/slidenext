@@ -304,31 +304,25 @@ test('createEditorSourceDeckViewHtmlOptions bundles source deck view resolvers w
     '\n\n    function buildEditorSourceHtml(doc = getIframeDoc()) {'
   );
 
-  const buildViewOptionsResolver = function buildViewOptionsResolver() {};
-  const canonicalHtmlResolver = function canonicalHtmlResolver() {};
-  let buildViewOptionsResolverArgs = null;
-  let canonicalHtmlResolverArgs = null;
+  const deckViewHtmlOptions = {
+    buildSharedHtml() {},
+    buildViewOptions() {},
+    buildCanonicalHtml() {}
+  };
+  let delegatedArgs = null;
   const buildStudioSourceHtml = function buildStudioSourceHtml() {};
   const buildDeckSourceHtml = function buildDeckSourceHtml() {};
   const customBuildViewOptions = function customBuildViewOptions() {};
   const context = {
-    __createEditorDeckViewBuildViewOptionsResolver(options) {
-      buildViewOptionsResolverArgs = options;
-      return buildViewOptionsResolver;
-    },
-    __createEditorDeckViewCanonicalHtmlResolver(options) {
-      canonicalHtmlResolverArgs = options;
-      return canonicalHtmlResolver;
+    __createEditorDeckViewHtmlOptions(options) {
+      delegatedArgs = options;
+      return deckViewHtmlOptions;
     }
   };
 
   vm.createContext(context);
   vm.runInContext(createEditorSourceDeckViewHtmlOptionsSource, context);
-  vm.runInContext(
-    'createEditorDeckViewBuildViewOptionsResolver = __createEditorDeckViewBuildViewOptionsResolver;'
-      + 'createEditorDeckViewCanonicalHtmlResolver = __createEditorDeckViewCanonicalHtmlResolver;',
-    context
-  );
+  vm.runInContext('createEditorDeckViewHtmlOptions = __createEditorDeckViewHtmlOptions;', context);
 
   const result = context.createEditorSourceDeckViewHtmlOptions({
     buildSharedHtml: buildStudioSourceHtml,
@@ -336,11 +330,10 @@ test('createEditorSourceDeckViewHtmlOptions bundles source deck view resolvers w
     buildDeckSourceHtml
   });
 
-  assert.equal(result.buildSharedHtml, buildStudioSourceHtml);
-  assert.equal(result.buildViewOptions, buildViewOptionsResolver);
-  assert.equal(result.buildCanonicalHtml, canonicalHtmlResolver);
-  assert.equal(buildViewOptionsResolverArgs.buildViewOptions, customBuildViewOptions);
-  assert.equal(canonicalHtmlResolverArgs.buildCanonicalHtml, buildDeckSourceHtml);
+  assert.equal(result, deckViewHtmlOptions);
+  assert.equal(delegatedArgs.buildSharedHtml, buildStudioSourceHtml);
+  assert.equal(delegatedArgs.buildViewOptions, customBuildViewOptions);
+  assert.equal(delegatedArgs.buildCanonicalHtml, buildDeckSourceHtml);
 });
 
 test('buildEditorSourceDeckHtml reuses the local source deck view options helper when available', () => {

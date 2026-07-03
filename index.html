@@ -1942,6 +1942,56 @@
       }));
     }
 
+    function createEditorDeckViewHtmlOptions(options = {}) {
+      const buildSharedHtml = typeof options.buildSharedHtml === 'function'
+        ? options.buildSharedHtml
+        : null;
+      const buildViewOptions = typeof options.buildViewOptions === 'function'
+        ? options.buildViewOptions
+        : null;
+      const extendViewOptions = typeof options.extendViewOptions === 'function'
+        ? options.extendViewOptions
+        : null;
+      const buildCanonicalHtml = typeof options.buildCanonicalHtml === 'function'
+        ? options.buildCanonicalHtml
+        : null;
+      const mapCanonicalHtmlArgs = typeof options.mapCanonicalHtmlArgs === 'function'
+        ? options.mapCanonicalHtmlArgs
+        : null;
+      const transformFallbackHtml = typeof options.transformFallbackHtml === 'function'
+        ? options.transformFallbackHtml
+        : null;
+
+      return {
+        buildSharedHtml,
+        buildViewOptions: typeof createEditorDeckViewBuildViewOptionsResolver === 'function'
+          ? createEditorDeckViewBuildViewOptionsResolver({
+              buildViewOptions,
+              extendViewOptions
+            })
+          : buildViewOptions
+            ? extendViewOptions
+              ? (sourceDoc) => extendViewOptions(buildViewOptions(sourceDoc), sourceDoc)
+              : buildViewOptions
+            : extendViewOptions
+              ? (sourceDoc) => extendViewOptions(createEditorDeckViewBuildOptions(sourceDoc), sourceDoc)
+              : (sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc),
+        buildCanonicalHtml: typeof createEditorDeckViewCanonicalHtmlResolver === 'function'
+          ? createEditorDeckViewCanonicalHtmlResolver({
+              buildCanonicalHtml,
+              mapCanonicalHtmlArgs
+            })
+          : buildCanonicalHtml
+            ? (canonicalDeck, deckHtmlOptions) => buildCanonicalHtml(...(
+                typeof mapCanonicalHtmlArgs === 'function'
+                  ? mapCanonicalHtmlArgs(canonicalDeck, deckHtmlOptions)
+                  : [canonicalDeck, deckHtmlOptions]
+              ))
+            : null,
+        transformFallbackHtml
+      };
+    }
+
     function createEditorPreviewFallbackHtmlTransformer(options = {}) {
       const injectBaseHrefIntoHtml = typeof options.injectBaseHrefIntoHtml === 'function'
         ? options.injectBaseHrefIntoHtml
@@ -1980,31 +2030,18 @@
         ? options.buildPresentationBaseHref
         : null;
 
-      return {
+      return createEditorDeckViewHtmlOptions({
         buildSharedHtml: buildStudioPreviewHtml,
-        buildViewOptions: typeof createEditorDeckViewBuildViewOptionsResolver === 'function'
-          ? createEditorDeckViewBuildViewOptionsResolver({
-              extendViewOptions: (deckViewOptions) => ({
-                ...deckViewOptions,
-                presentationUrl
-              })
-            })
-          : (sourceDoc) => ({
-              ...createEditorDeckViewBuildOptions(sourceDoc),
-              presentationUrl
-            }),
-        buildCanonicalHtml: typeof createEditorDeckViewCanonicalHtmlResolver === 'function'
-          ? createEditorDeckViewCanonicalHtmlResolver({
-              buildCanonicalHtml: buildDeckPreviewHtml,
-              mapCanonicalHtmlArgs: (canonicalDeck, deckHtmlOptions) => [
-                canonicalDeck,
-                presentationUrl,
-                deckHtmlOptions
-              ]
-            })
-          : buildDeckPreviewHtml
-            ? (canonicalDeck, deckHtmlOptions) => buildDeckPreviewHtml(canonicalDeck, presentationUrl, deckHtmlOptions)
-            : null,
+        extendViewOptions: (deckViewOptions) => ({
+          ...deckViewOptions,
+          presentationUrl
+        }),
+        buildCanonicalHtml: buildDeckPreviewHtml,
+        mapCanonicalHtmlArgs: (canonicalDeck, deckHtmlOptions) => [
+          canonicalDeck,
+          presentationUrl,
+          deckHtmlOptions
+        ],
         transformFallbackHtml: typeof createEditorPreviewFallbackHtmlTransformer === 'function'
           ? createEditorPreviewFallbackHtmlTransformer({
               injectBaseHrefIntoHtml,
@@ -2020,7 +2057,7 @@
                 buildPresentationBaseHref(presentationUrl, deckHtmlOptions)
               );
             }
-      };
+      });
     }
 
     function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {
@@ -2045,21 +2082,11 @@
         ? options.buildDeckSourceHtml
         : null;
 
-      return {
+      return createEditorDeckViewHtmlOptions({
         buildSharedHtml,
-        buildViewOptions: typeof createEditorDeckViewBuildViewOptionsResolver === 'function'
-          ? createEditorDeckViewBuildViewOptionsResolver({
-              buildViewOptions
-            })
-          : buildViewOptions || ((sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc)),
-        buildCanonicalHtml: typeof createEditorDeckViewCanonicalHtmlResolver === 'function'
-          ? createEditorDeckViewCanonicalHtmlResolver({
-              buildCanonicalHtml: buildDeckSourceHtml
-            })
-          : buildDeckSourceHtml
-            ? (canonicalDeck, deckHtmlOptions) => buildDeckSourceHtml(canonicalDeck, deckHtmlOptions)
-            : null
-      };
+        buildViewOptions,
+        buildCanonicalHtml: buildDeckSourceHtml
+      });
     }
 
     function buildEditorSourceHtml(doc = getIframeDoc()) {
