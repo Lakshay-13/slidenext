@@ -1229,7 +1229,7 @@ test('createEditorSaveCanonicalDeckResolver reuses the local save canonical deck
   ]);
 });
 
-test('createEditorPersistableCanonicalDeckOverrideResolver reuses the local canonical override helper when available', () => {
+test('createEditorPersistableCanonicalDeckOverrideResolver reuses the local save canonical deck helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
@@ -1245,12 +1245,9 @@ test('createEditorPersistableCanonicalDeckOverrideResolver reuses the local cano
   };
   const calls = [];
   const context = {
-    createEditorSaveCanonicalDeckResolver(nextDoc) {
-      calls.push(['createEditorSaveCanonicalDeckResolver', nextDoc]);
-      return (nextCanonicalDeck) => {
-        calls.push(['resolveSaveCanonicalDeck', nextCanonicalDeck]);
-        return canonicalDeck;
-      };
+    resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
+      return canonicalDeck;
     },
     resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
       calls.push(['resolveEditorCanonicalDeckOverride', nextCanonicalDeck, options.buildCanonicalDeck]);
@@ -1268,8 +1265,7 @@ test('createEditorPersistableCanonicalDeckOverrideResolver reuses the local cano
 
   assert.equal(resolveCanonicalDeckOverride(true), canonicalDeck);
   assert.deepEqual(calls, [
-    ['createEditorSaveCanonicalDeckResolver', iframeDoc],
-    ['resolveSaveCanonicalDeck', canonicalDeck]
+    ['resolveEditorSaveCanonicalDeck', iframeDoc, canonicalDeck]
   ]);
 });
 

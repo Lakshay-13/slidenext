@@ -3439,10 +3439,9 @@
     }
 
     function createEditorPersistableCanonicalDeckOverrideResolver(doc = getIframeDoc(), canonicalDeck = null) {
-      const resolveSaveCanonicalDeck = createEditorSaveCanonicalDeckResolver(doc);
       return function resolveCanonicalDeckOverride(shouldBuildFallbackCanonicalDeck = false) {
         if (shouldBuildFallbackCanonicalDeck) {
-          return resolveSaveCanonicalDeck(canonicalDeck);
+          return resolveEditorSaveCanonicalDeck(doc, canonicalDeck);
         }
         return resolveEditorCanonicalDeckOverride(canonicalDeck, {
           buildCanonicalDeck: null
