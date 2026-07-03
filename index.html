@@ -5714,37 +5714,13 @@
         : null;
       const resolveCanonicalDeckOverride = createEditorPersistableCanonicalDeckOverrideResolver(doc, providedCanonicalDeck);
       const resolveMetadataPersistenceOptions = () => resolveEditorMetadataPersistenceOptions();
-      const sanitizeReusablePersistedHtml = typeof sanitizeEditorReusablePersistedHtml === 'function'
-        ? (persistedHtml, playbackState = null) => sanitizeEditorReusablePersistedHtml(persistedHtml, {
-            playbackState,
-            resolveMetadataPersistenceOptions
-          })
-        : (persistedHtml, playbackState = null) => {
-            if (!persistedHtml
-              || typeof DOMParser !== 'function'
-              || !SlideNextDeckPersistence
-              || typeof SlideNextDeckPersistence.buildPersistableDeckHtml !== 'function') {
-              return persistedHtml;
-            }
-
-            try {
-              const parsedDoc = new DOMParser().parseFromString(persistedHtml, 'text/html');
-              if (!parsedDoc || !parsedDoc.documentElement) {
-                return persistedHtml;
-              }
-              const deckSanitizerOptions = getEditorDeckSanitizerOptions();
-              return SlideNextDeckPersistence.buildPersistableDeckHtml(parsedDoc, {
-                ...resolveMetadataPersistenceOptions(),
-                editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,
-                editorTransientClasses: deckSanitizerOptions.transientClassNames,
-                editorElementIdAttr: deckSanitizerOptions.editorElementIdAttr,
-                editorSlideIdAttr: deckSanitizerOptions.editorSlideIdAttr,
-                persistedDeckPlaybackState: playbackState
-              });
-            } catch (err) {
-              return persistedHtml;
-            }
-          };
+      const sanitizeReusablePersistedHtml = (persistedHtml, playbackState = null) => sanitizeEditorReusablePersistedHtml(
+        persistedHtml,
+        {
+          playbackState,
+          resolveMetadataPersistenceOptions
+        }
+      );
       const reportPersistableDeckBuildState = typeof reportEditorPersistableDeckBuildState === 'function'
         ? reportEditorPersistableDeckBuildState
         : (nextBuildOptions = {}, canonicalDeck = null, playbackState = null) => {

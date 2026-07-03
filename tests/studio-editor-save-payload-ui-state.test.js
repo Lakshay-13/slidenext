@@ -53,6 +53,14 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
     );
     vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
   }
+  if (typeof context.sanitizeEditorReusablePersistedHtml !== 'function') {
+    const sanitizeEditorReusablePersistedHtmlSource = extractFunctionSource(
+      fileContent,
+      'function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {',
+      '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+    );
+    vm.runInContext(sanitizeEditorReusablePersistedHtmlSource, context);
+  }
   if (typeof context.resolveEditorCanonicalDeckOverride !== 'function') {
     const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
       fileContent,
