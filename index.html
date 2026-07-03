@@ -5659,20 +5659,6 @@
       );
     }
 
-    function resolveCurrentStudioVersionCheckpointPersistenceState(
-      presentationUrl = currentPresentationUrl,
-      sessionToken = studioEditorSessionToken,
-      doc = getIframeDoc()
-    ) {
-      return resolveCurrentStudioPersistenceStateFromCapture(doc, {
-        presentationUrl,
-        resolvePersistenceStateFromCapture: SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture,
-        persistenceOptions: {
-          sessionToken
-        }
-      });
-    }
-
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
       const versionCheckpointResult = await SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess(
         versionLabel,
@@ -6390,11 +6376,13 @@
       const scheduledPresentationUrl = currentPresentationUrl;
       const scheduledSessionToken = studioEditorSessionToken;
       const iframeDoc = getIframeDoc();
-      const versionCheckpointPersistenceState = resolveCurrentStudioVersionCheckpointPersistenceState(
-        scheduledPresentationUrl,
-        scheduledSessionToken,
-        iframeDoc
-      );
+      const versionCheckpointPersistenceState = resolveCurrentStudioPersistenceStateFromCapture(iframeDoc, {
+        presentationUrl: scheduledPresentationUrl,
+        resolvePersistenceStateFromCapture: SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture,
+        persistenceOptions: {
+          sessionToken: scheduledSessionToken
+        }
+      });
       if (!versionCheckpointPersistenceState) {
         alert('Save version failed: editor content is unavailable.');
         return;
@@ -6470,11 +6458,13 @@
         sessionToken
       })) return;
       const iframeDoc = getIframeDoc();
-      const versionCheckpointPersistenceState = resolveCurrentStudioVersionCheckpointPersistenceState(
+      const versionCheckpointPersistenceState = resolveCurrentStudioPersistenceStateFromCapture(iframeDoc, {
         presentationUrl,
-        sessionToken,
-        iframeDoc
-      );
+        resolvePersistenceStateFromCapture: SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture,
+        persistenceOptions: {
+          sessionToken
+        }
+      });
       if (!versionCheckpointPersistenceState) return;
 
       if (SlideNextStudioEditorPersistence.isStudioVersionCheckpointSavePersisted(
