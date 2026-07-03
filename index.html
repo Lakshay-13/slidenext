@@ -5487,23 +5487,15 @@
     }
 
     function createEditorPersistableSourceViewOptions(doc = getIframeDoc(), canonicalDeck = null, persistedHtml = '') {
-      return typeof createEditorDeckViewBuildOptions === 'function'
-        ? createEditorDeckViewBuildOptions(doc, {
-            buildCanonicalDeck: () => canonicalDeck,
-            buildFallbackHtml: () => persistedHtml,
-            buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
-              sourceDoc,
-              nextCanonicalDeck,
-              options
-            )
-          })
-        : {
-            buildCanonicalDeck: () => canonicalDeck,
-            buildFallbackHtml: () => persistedHtml,
-            deckHtmlOptions: {
-              renderOptions: buildEditorDeckRenderOptions(doc, canonicalDeck)
-            }
-          };
+      return createEditorDeckViewBuildOptions(doc, {
+        buildCanonicalDeck: () => canonicalDeck,
+        buildFallbackHtml: () => persistedHtml,
+        buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
+          sourceDoc,
+          nextCanonicalDeck,
+          options
+        )
+      });
     }
 
     function renderEditorPersistableSourceDeckHtml(doc = getIframeDoc(), sourceViewOptions = {}, persistedHtml = '', options = {}) {
