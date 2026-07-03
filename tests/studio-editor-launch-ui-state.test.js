@@ -396,7 +396,7 @@ test('createCurrentStudioFrameLoadHandler passes live session getters when deleg
   const createCurrentStudioFrameLoadHandlerSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioFrameLoadHandler(',
-    '\n\n    function shouldHandleCurrentStudioFrameLoad('
+    '\n\n    function updateCurrentPresentationSessionState(nextState = {}) {'
   );
 
   let capturedOptions = null;
@@ -445,54 +445,156 @@ test('createCurrentStudioFrameLoadHandler passes live session getters when deleg
   assert.equal(capturedOptions.getCurrentSessionToken(), 8);
 });
 
-test('shouldHandleCurrentStudioFrameLoad passes live session getters when delegating to the editor session helper', () => {
+test('launchStudioEditor after-load zoom guard passes live session getters to the editor session helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const shouldHandleCurrentStudioFrameLoadSource = extractFunctionSource(
+  const launchStudioEditorSource = extractFunctionSource(
     fileContent,
-    'function shouldHandleCurrentStudioFrameLoad(',
-    '\n\n    function updateCurrentPresentationSessionState(nextState = {}) {'
+    'function launchStudioEditor(url, title, category) {',
+    '\n\n    function closeStudioEditor() {'
+  );
+  const setStudioAutoSaveStatusSource = extractFunctionSource(
+    fileContent,
+    'function setStudioAutoSaveStatus(state) {',
+    '\n\n    function resetStudioSaveButtonState() {'
   );
 
-  let capturedArguments = null;
+  const elements = {
+    studioEditor: {
+      classList: createClassList(['hidden']),
+      style: {},
+      offsetWidth: 0
+    },
+    studioFrame: {
+      onload: null,
+      src: '',
+      contentDocument: null,
+      contentWindow: {}
+    },
+    studioCategoryLabel: { textContent: '' },
+    studioTitleLabel: { textContent: '' },
+    autoSaveStatus: { innerHTML: 'Saved to disk' }
+  };
+
+  let capturedFrameLoadHandlerArgs = null;
+  let capturedGuardArguments = null;
+  let scheduledCallback = null;
+  const zoomCalls = [];
   const context = {
     SlideNextStudioEditorSession: {
       ...editorSession,
       shouldHandleStudioFrameLoad(presentationUrl, options) {
-        capturedArguments = { presentationUrl, options };
+        capturedGuardArguments = { presentationUrl, options };
         return true;
       }
     },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 7
+    SlideNextStudioEditorPersistence: {
+      clearStudioPersistenceTimers() {
+        return {
+          autoSaveDebounceTimer: null,
+          autoVersionTimers: {}
+        };
+      }
+    },
+    applyCurrentPresentationMetadata(metadata) {
+      context.currentPresentationMetadata = metadata;
+    },
+    applyCurrentStudioPersistedDeckState() {},
+    applyEditorSelectionState() {},
+    applyZoom(value) {
+      zoomCalls.push(value);
+    },
+    autoSaveDebounceTimer: null,
+    autoVersionTimers: {},
+    buildCurrentPresentationMetadataSeed(url, title) {
+      return { url, title };
+    },
+    clearTimeout() {},
+    createCurrentStudioFrameLoadHandler(presentationUrl, sessionToken, options) {
+      capturedFrameLoadHandlerArgs = { presentationUrl, sessionToken, options };
+      return function onloadHandler() {};
+    },
+    currentCategory: '',
+    currentPresentationMetadata: null,
+    currentPresentationUrl: '',
+    currentSlideIndex: 0,
+    currentTitle: '',
+    document: {
+      body: {
+        style: {}
+      },
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    },
+    getStudioFrame() {
+      return elements.studioFrame;
+    },
+    loadCurrentPresentationMetadata() {
+      return Promise.resolve();
+    },
+    loadVersions() {},
+    localStorage: {
+      getItem(key) {
+        assert.equal(key, 'presentationZoom');
+        return '80';
+      }
+    },
+    redoStack: ['redo-entry'],
+    resetStudioDeckUiState() {},
+    resetStudioPresentationUiState() {},
+    resetStudioSaveButtonState() {},
+    resetStudioSourceViewUiState() {},
+    resetStudioVersionUiState() {},
+    setTimeout(callback, delay) {
+      scheduledCallback = { callback, delay };
+      return 1;
+    },
+    studioEditorSessionToken: 0,
+    undoStack: ['undo-entry'],
+    updateCurrentPresentationSessionState(nextState) {
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationUrl')) {
+        context.currentPresentationUrl = nextState.presentationUrl;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationTitle')) {
+        context.currentTitle = nextState.presentationTitle;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationCategory')) {
+        context.currentCategory = nextState.presentationCategory;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'slideIndex')) {
+        context.currentSlideIndex = nextState.slideIndex;
+      }
+      if (Object.prototype.hasOwnProperty.call(nextState, 'presentationMetadata')) {
+        context.applyCurrentPresentationMetadata(nextState.presentationMetadata);
+      }
+    },
+    updateDeckReadyToolbarActionState() {},
+    updateHistoryButtons() {}
   };
 
   vm.createContext(context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  vm.runInContext(shouldHandleCurrentStudioFrameLoadSource, context);
+  vm.runInContext(setStudioAutoSaveStatusSource, context);
+  vm.runInContext(launchStudioEditorSource, context);
 
-  const result = context.shouldHandleCurrentStudioFrameLoad(
-    '/presentations/onboarding-presentation/index.html',
-    7,
-    {
-      isEditorActive() {
-        return true;
-      }
-    }
-  );
+  context.launchStudioEditor('/presentations/onboarding-presentation/index.html', 'Project Onboarding', 'General');
+  assert.equal(typeof capturedFrameLoadHandlerArgs.options.afterLoad, 'function');
 
-  assert.equal(result, true);
-  assert.equal(capturedArguments.presentationUrl, '/presentations/onboarding-presentation/index.html');
-  assert.equal(capturedArguments.options.sessionToken, 7);
-  assert.equal(typeof capturedArguments.options.getCurrentPresentationUrl, 'function');
-  assert.equal(typeof capturedArguments.options.getCurrentSessionToken, 'function');
-  assert.equal(capturedArguments.options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
-  assert.equal(capturedArguments.options.getCurrentSessionToken(), 7);
-  assert.equal(typeof capturedArguments.options.isEditorActive, 'function');
+  capturedFrameLoadHandlerArgs.options.afterLoad();
+  assert.equal(scheduledCallback.delay, 150);
 
   context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
-  context.studioEditorSessionToken = 9;
-  assert.equal(capturedArguments.options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
-  assert.equal(capturedArguments.options.getCurrentSessionToken(), 9);
+  context.studioEditorSessionToken = 5;
+  scheduledCallback.callback();
+
+  assert.equal(capturedGuardArguments.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedGuardArguments.options.sessionToken, 1);
+  assert.equal(typeof capturedGuardArguments.options.getCurrentPresentationUrl, 'function');
+  assert.equal(typeof capturedGuardArguments.options.getCurrentSessionToken, 'function');
+  assert.equal(capturedGuardArguments.options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(capturedGuardArguments.options.getCurrentSessionToken(), 5);
+  assert.equal(typeof capturedGuardArguments.options.isEditorActive, 'function');
+  assert.deepEqual(zoomCalls, ['80']);
 });
 
 test('updateCurrentPresentationSessionState updates only the provided session fields and delegates metadata commits', () => {
