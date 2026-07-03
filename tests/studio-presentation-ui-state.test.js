@@ -358,6 +358,56 @@ test('buildEditorPreviewHtml falls back to the shared deck html preview builder 
   assert.equal(calls[0].options.renderOptions.activeSlideId, 'slide-2');
 });
 
+test('buildEditorPreviewHtml reuses the shared deck-view html builder when the preview helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorPreviewHtmlSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorSourceHtml(doc = getIframeDoc()) {'
+  );
+
+  const calls = [];
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  const context = {
+    SlideNextStudioDeckView: {
+      buildStudioDeckHtml(doc, options) {
+        calls.push({ doc, options });
+        return '<html>preview-from-deck-view-html</html>';
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, null);
+      return canonicalDeck;
+    },
+    currentSlideIndex: 1,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    getPersistedActiveSlideId() {
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorPreviewHtmlSource, context);
+
+  const result = context.buildEditorPreviewHtml();
+
+  assert.equal(result, '<html>preview-from-deck-view-html</html>');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].doc, null);
+  assert.equal(typeof calls[0].options.buildFallbackHtml, 'function');
+  assert.equal(typeof calls[0].options.transformFallbackHtml, 'function');
+});
+
 test('buildEditorPreviewHtml prefers the live active slide when the editor frame is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorPreviewHtmlSource = extractFunctionSource(

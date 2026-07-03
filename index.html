@@ -1712,6 +1712,17 @@
     }
 
     function buildEditorDeckHtml(doc = getIframeDoc(), options = {}) {
+      const buildStudioDeckHtml = (
+        typeof SlideNextStudioDeckView !== 'undefined'
+        && SlideNextStudioDeckView
+        && typeof SlideNextStudioDeckView.buildStudioDeckHtml === 'function'
+      )
+        ? SlideNextStudioDeckView.buildStudioDeckHtml
+        : null;
+      if (buildStudioDeckHtml) {
+        return buildStudioDeckHtml(doc, options);
+      }
+
       const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : () => null;
