@@ -6768,41 +6768,20 @@
       presentationUrl = currentPresentationUrl,
       options = {}
     ) {
-      const executeVersionCheckpointSaveWithSuccess = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSaveWithSuccess === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSaveWithSuccess
-        : null;
-      if (executeVersionCheckpointSaveWithSuccess) {
-        return executeVersionCheckpointSaveWithSuccess(
-          versionLabel,
-          versionCheckpointPersistenceState,
-          presentationUrl,
-          {
-            saveVersionCheckpoint: typeof saveVersionCheckpoint === 'function'
-              ? saveVersionCheckpoint
-              : null,
-            applyVersionCheckpointSaveSuccess: typeof applyCurrentStudioVersionCheckpointSaveSuccess === 'function'
-              ? applyCurrentStudioVersionCheckpointSaveSuccess
-              : null,
-            successOptions: options
-          }
-        );
-      }
-      const versionCheckpointSaveResult = await executeCurrentStudioVersionCheckpointSave(
+      return SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSaveWithSuccess(
         versionLabel,
         versionCheckpointPersistenceState,
-        presentationUrl
+        presentationUrl,
+        {
+          saveVersionCheckpoint: typeof saveVersionCheckpoint === 'function'
+            ? saveVersionCheckpoint
+            : null,
+          applyVersionCheckpointSaveSuccess: typeof applyCurrentStudioVersionCheckpointSaveSuccess === 'function'
+            ? applyCurrentStudioVersionCheckpointSaveSuccess
+            : null,
+          successOptions: options
+        }
       );
-      if (versionCheckpointSaveResult && versionCheckpointSaveResult.data && versionCheckpointSaveResult.data.success) {
-        applyCurrentStudioVersionCheckpointSaveSuccess(
-          versionCheckpointSaveResult.versionCheckpointPersistenceState || versionCheckpointPersistenceState,
-          options
-        );
-      }
-      return versionCheckpointSaveResult;
     }
 
     async function executeCurrentStudioVersionCheckpointSaveWithFailure(

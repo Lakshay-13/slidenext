@@ -706,7 +706,7 @@ test('executeCurrentStudioVersionCheckpointSave reuses the shared version checkp
   });
 });
 
-test('executeCurrentStudioVersionCheckpointSaveWithSuccess reuses the local save and success helpers when the save succeeds', async () => {
+test('executeCurrentStudioVersionCheckpointSaveWithSuccess delegates through the shared helper and supplied callbacks', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const versionCheckpointPersistenceState = {
     cleanHtml: '<html>persisted</html>',
@@ -721,16 +721,14 @@ test('executeCurrentStudioVersionCheckpointSaveWithSuccess reuses the local save
   let successArgs = null;
   const onSuccess = () => {};
   const context = {
-    __executeCurrentStudioVersionCheckpointSave: async (...args) => {
+    SlideNextStudioEditorPersistence: editorPersistence,
+    saveVersionCheckpoint: async (...args) => {
       saveArgs = args;
       return {
-        data: {
-          success: true
-        },
-        versionCheckpointPersistenceState
+        success: true
       };
     },
-    __applyCurrentStudioVersionCheckpointSaveSuccess(nextVersionCheckpointPersistenceState, options = {}) {
+    applyCurrentStudioVersionCheckpointSaveSuccess(nextVersionCheckpointPersistenceState, options = {}) {
       successArgs = {
         nextVersionCheckpointPersistenceState,
         options
@@ -741,8 +739,6 @@ test('executeCurrentStudioVersionCheckpointSaveWithSuccess reuses the local save
 
   vm.createContext(context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithSuccess(fileContent, context);
-  vm.runInContext('executeCurrentStudioVersionCheckpointSave = __executeCurrentStudioVersionCheckpointSave;', context);
-  vm.runInContext('applyCurrentStudioVersionCheckpointSaveSuccess = __applyCurrentStudioVersionCheckpointSaveSuccess;', context);
 
   const result = await context.executeCurrentStudioVersionCheckpointSaveWithSuccess(
     'Checkpoint Baseline',
@@ -755,8 +751,11 @@ test('executeCurrentStudioVersionCheckpointSaveWithSuccess reuses the local save
 
   assert.deepEqual(saveArgs, [
     'Checkpoint Baseline',
-    versionCheckpointPersistenceState,
-    '/presentations/onboarding-presentation/index.html'
+    '<html>persisted</html>',
+    '/presentations/onboarding-presentation/index.html',
+    {
+      sessionToken: 12
+    }
   ]);
   assert.equal(successArgs.nextVersionCheckpointPersistenceState, versionCheckpointPersistenceState);
   assert.equal(successArgs.options.onSuccess, onSuccess);
@@ -2056,7 +2055,7 @@ test('submitSaveVersion reuses the local version checkpoint failure-aware helper
   assert.equal(statusEl.innerHTML, 'saved');
 });
 
-test('submitSaveVersion reuses the local version checkpoint success helper when the failure-aware helper delegates to it', async () => {
+test('submitSaveVersion reuses the shared version checkpoint success helper when the failure-aware helper delegates to it', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const submitSaveVersionSource = extractFunctionSource(
     fileContent,
@@ -2101,12 +2100,6 @@ test('submitSaveVersion reuses the local version checkpoint success helper when 
       }
       return 'applied';
     },
-    __executeCurrentStudioVersionCheckpointSave: async () => ({
-      data: {
-        success: true
-      },
-      versionCheckpointPersistenceState
-    }),
     closeSaveVersionModal() {
       closeModalCalls += 1;
     },
@@ -2147,7 +2140,11 @@ test('submitSaveVersion reuses the local version checkpoint success helper when 
         saveBtnEl.innerHTML = '<span>Creating version...</span>';
       }
     },
+    saveVersionCheckpoint: async () => ({
+      success: true
+    }),
     SlideNextStudioEditorPersistence: {
+      executeStudioVersionCheckpointSaveWithSuccess: editorPersistence.executeStudioVersionCheckpointSaveWithSuccess,
       runStudioPersistenceActionIfCurrent(persistenceContext, sessionOptions, action) {
         action();
       }
@@ -2159,7 +2156,6 @@ test('submitSaveVersion reuses the local version checkpoint success helper when 
   loadExecuteCurrentStudioVersionCheckpointSaveWithSuccess(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext('applyCurrentStudioVersionCheckpointSaveSuccess = __applyCurrentStudioVersionCheckpointSaveSuccess;', context);
-  vm.runInContext('executeCurrentStudioVersionCheckpointSave = __executeCurrentStudioVersionCheckpointSave;', context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -2311,7 +2307,7 @@ test('executeSaveAutoVersion reports unsuccessful checkpoint responses through t
   assert.deepEqual(errorCalls, ['Failed to auto-create version backup: disk full']);
 });
 
-test('executeSaveAutoVersion reuses the local version checkpoint success helper when the failure-aware helper delegates to it', async () => {
+test('executeSaveAutoVersion reuses the shared version checkpoint success helper when the failure-aware helper delegates to it', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const executeSaveAutoVersionSource = extractFunctionSource(
     fileContent,
@@ -2341,12 +2337,6 @@ test('executeSaveAutoVersion reuses the local version checkpoint success helper 
       }
       return 'applied';
     },
-    __executeCurrentStudioVersionCheckpointSave: async () => ({
-      data: {
-        success: true
-      },
-      versionCheckpointPersistenceState
-    }),
     console: {
       error() {
         throw new Error('executeSaveAutoVersion should not report errors for a successful helper result');
@@ -2368,6 +2358,12 @@ test('executeSaveAutoVersion reuses the local version checkpoint success helper 
     resolveCurrentStudioVersionCheckpointPersistenceState() {
       return versionCheckpointPersistenceState;
     },
+    saveVersionCheckpoint: async () => ({
+      success: true
+    }),
+    SlideNextStudioEditorPersistence: {
+      executeStudioVersionCheckpointSaveWithSuccess: editorPersistence.executeStudioVersionCheckpointSaveWithSuccess
+    },
     studioEditorSessionToken: 4
   };
 
@@ -2375,7 +2371,6 @@ test('executeSaveAutoVersion reuses the local version checkpoint success helper 
   loadExecuteCurrentStudioVersionCheckpointSaveWithSuccess(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext('applyCurrentStudioVersionCheckpointSaveSuccess = __applyCurrentStudioVersionCheckpointSaveSuccess;', context);
-  vm.runInContext('executeCurrentStudioVersionCheckpointSave = __executeCurrentStudioVersionCheckpointSave;', context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
