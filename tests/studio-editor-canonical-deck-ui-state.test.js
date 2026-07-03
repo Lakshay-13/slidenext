@@ -1424,13 +1424,14 @@ test('createEditorPersistableCanonicalDeckOverrideResolver reuses the local cano
     schemaVersion: 1,
     slides: [{ id: 'slide-1', nodes: [] }]
   };
-  let delegatedArgs = null;
+  const calls = [];
   const context = {
+    resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
+      return canonicalDeck;
+    },
     resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
-      delegatedArgs = {
-        canonicalDeck: nextCanonicalDeck,
-        buildCanonicalDeck: options.buildCanonicalDeck
-      };
+      calls.push(['resolveEditorCanonicalDeckOverride', nextCanonicalDeck, options.buildCanonicalDeck]);
       return canonicalDeck;
     },
     getIframeDoc() {
@@ -1444,8 +1445,9 @@ test('createEditorPersistableCanonicalDeckOverrideResolver reuses the local cano
   const resolveCanonicalDeckOverride = context.createEditorPersistableCanonicalDeckOverrideResolver(iframeDoc, canonicalDeck);
 
   assert.equal(resolveCanonicalDeckOverride(true), canonicalDeck);
-  assert.equal(delegatedArgs.canonicalDeck, canonicalDeck);
-  assert.equal(typeof delegatedArgs.buildCanonicalDeck, 'function');
+  assert.deepEqual(calls, [
+    ['resolveEditorSaveCanonicalDeck', iframeDoc, canonicalDeck]
+  ]);
 });
 
 test('resolveEditorFallbackActiveSlideId rebuilds a malformed canonical deck input before choosing the fallback slide', () => {
