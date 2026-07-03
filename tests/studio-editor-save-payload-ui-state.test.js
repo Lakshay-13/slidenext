@@ -657,7 +657,54 @@ test('buildPersistableDeckHtml reports the resolved canonical deck when the edit
   assert.equal(reportedCanonicalDeck, canonicalDeck);
 });
 
-test('buildPersistableDeckHtml delegates persisted html reuse checks to the shared editor persistence helper when available', () => {
+test('resolveEditorReusablePersistedHtml delegates persisted html reuse checks to the shared editor persistence helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorReusablePersistedHtmlSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+
+  let delegatedArgs = null;
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted-baseline</html>',
+    canonicalDeck,
+    playbackState: null
+  };
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      resolveStudioPersistedHtmlReuse(nextPersistedDeckState, options = {}) {
+        delegatedArgs = { persistedDeckState: nextPersistedDeckState, options };
+        return nextPersistedDeckState.cleanHtml;
+      },
+      isStudioPersistedCanonicalDeck() {
+        throw new Error('fallback canonical comparison should not run when persisted html reuse is delegated');
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorReusablePersistedHtmlSource, context);
+
+  assert.equal(
+    context.resolveEditorReusablePersistedHtml(persistedDeckState, {
+      canonicalDeck,
+      persistedHtml: '<html>persisted-baseline</html>',
+      persistedCanonicalDeck: canonicalDeck
+    }),
+    '<html>persisted-baseline</html>'
+  );
+  assert.equal(delegatedArgs.persistedDeckState, persistedDeckState);
+  assert.equal(delegatedArgs.options.canonicalDeck, canonicalDeck);
+});
+
+test('buildPersistableDeckHtml reuses the local reusable persisted html resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
     fileContent,
@@ -693,14 +740,11 @@ test('buildPersistableDeckHtml delegates persisted html reuse checks to the shar
       }
     },
     SlideNextStudioEditorPersistence: {
-      ...editorPersistence,
-      resolveStudioPersistedHtmlReuse(persistedDeckState, options = {}) {
-        delegatedArgs = { persistedDeckState, options };
-        return persistedDeckState.cleanHtml;
-      },
-      isStudioPersistedCanonicalDeck() {
-        throw new Error('fallback canonical comparison should not run when persisted html reuse is delegated');
-      }
+      ...editorPersistence
+    },
+    __resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {
+      delegatedArgs = { persistedDeckState, options };
+      return persistedDeckState.cleanHtml;
     },
     buildEditorCanonicalDeck(nextDoc) {
       assert.equal(nextDoc, null);
@@ -719,12 +763,15 @@ test('buildPersistableDeckHtml delegates persisted html reuse checks to the shar
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(buildPersistableDeckHtmlSource, context);
+  vm.runInContext('resolveEditorReusablePersistedHtml = __resolveEditorReusablePersistedHtml;', context);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>persisted-baseline</html>');
   assert.equal(sharedBuildCalls, 0);
   assert.equal(delegatedArgs.persistedDeckState.cleanHtml, '<html>persisted-baseline</html>');
   assert.equal(delegatedArgs.persistedDeckState.canonicalDeck, canonicalDeck);
   assert.equal(delegatedArgs.options.canonicalDeck, canonicalDeck);
+  assert.equal(delegatedArgs.options.persistedHtml, '<html>persisted-baseline</html>');
+  assert.equal(delegatedArgs.options.persistedCanonicalDeck, canonicalDeck);
 });
 
 test('buildPersistableDeckHtml prefers the shared persisted-content resolver before checking html reuse', () => {
