@@ -1612,6 +1612,84 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
   assert.equal(calls[0][1].deckHtmlOptions.renderOptions.preferNodeSourceHtml, false);
 });
 
+test('buildPersistableDeckHtml reuses the shared deck-view html builder when rendering canonical source without a persisted baseline', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+  const calls = [];
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml() {
+        throw new Error('live deck sanitizer should not run without a live frame');
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence
+    },
+    SlideNextStudioDeckView: {
+      buildStudioDeckHtml(nextDoc, options) {
+        calls.push([nextDoc, options]);
+        return '<html>canonical-source</html>';
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, null);
+      return canonicalDeck;
+    },
+    currentSlideIndex: 0,
+    getPersistedActiveSlideId() {
+      return 'slide-2';
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '',
+    lastPersistedCanonicalDeck: null,
+    persistedDeckPlaybackState: {
+      activeSlideIds: ['slide-2']
+    }
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+
+  assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], null);
+  assert.equal(typeof calls[0][1].buildFallbackHtml, 'function');
+  assert.equal(calls[0][1].buildCanonicalHtml, null);
+});
+
 test('buildPersistableDeckHtml prefers rendered canonical html when the current canonical deck differs from the persisted baseline', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
