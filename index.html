@@ -3424,12 +3424,6 @@
         : (nextCanonicalDeck ? buildEditorCanonicalDeck(doc) : null);
     }
 
-    function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
-      return resolveEditorCanonicalDeckOverride(canonicalDeck, {
-        buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
-      });
-    }
-
     function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {
       const resolvePersistedDeckActiveSlideId = (
         typeof SlideNextDeckPersistence !== 'undefined'
