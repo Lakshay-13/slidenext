@@ -468,7 +468,7 @@ test('createEditorPreviewFallbackHtmlTransformer injects a preview base href whe
   const createEditorPreviewFallbackHtmlTransformerSource = extractFunctionSource(
     fileContent,
     'function createEditorPreviewFallbackHtmlTransformer(options = {}) {',
-    '\n\n    function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {'
+    '\n\n    function createEditorPreviewDeckViewHtmlOptions(options = {}) {'
   );
 
   const calls = [];
@@ -505,6 +505,72 @@ test('createEditorPreviewFallbackHtmlTransformer injects a preview base href whe
       '/presentations/onboarding-presentation/index.html#preview'
     ]
   ]);
+});
+
+test('createEditorPreviewDeckViewHtmlOptions bundles preview deck view resolvers when local helpers are available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createEditorPreviewDeckViewHtmlOptionsSource = extractFunctionSource(
+    fileContent,
+    'function createEditorPreviewDeckViewHtmlOptions(options = {}) {',
+    '\n\n    function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {'
+  );
+
+  const buildViewOptionsResolver = function buildViewOptionsResolver() {};
+  const canonicalHtmlResolver = function canonicalHtmlResolver() {};
+  const previewFallbackHtmlTransformer = function previewFallbackHtmlTransformer() {};
+  let buildViewOptionsResolverArgs = null;
+  let canonicalHtmlResolverArgs = null;
+  let previewFallbackHtmlTransformerArgs = null;
+  const buildStudioPreviewHtml = function buildStudioPreviewHtml() {};
+  const buildDeckPreviewHtml = function buildDeckPreviewHtml() {};
+  const injectBaseHrefIntoHtml = function injectBaseHrefIntoHtml() {};
+  const buildPresentationBaseHref = function buildPresentationBaseHref() {};
+  const context = {
+    __createEditorDeckViewBuildViewOptionsResolver(options) {
+      buildViewOptionsResolverArgs = options;
+      return buildViewOptionsResolver;
+    },
+    __createEditorDeckViewCanonicalHtmlResolver(options) {
+      canonicalHtmlResolverArgs = options;
+      return canonicalHtmlResolver;
+    },
+    __createEditorPreviewFallbackHtmlTransformer(options) {
+      previewFallbackHtmlTransformerArgs = options;
+      return previewFallbackHtmlTransformer;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createEditorPreviewDeckViewHtmlOptionsSource, context);
+  vm.runInContext(
+    'createEditorDeckViewBuildViewOptionsResolver = __createEditorDeckViewBuildViewOptionsResolver;'
+      + 'createEditorDeckViewCanonicalHtmlResolver = __createEditorDeckViewCanonicalHtmlResolver;'
+      + 'createEditorPreviewFallbackHtmlTransformer = __createEditorPreviewFallbackHtmlTransformer;',
+    context
+  );
+
+  const result = context.createEditorPreviewDeckViewHtmlOptions({
+    buildStudioPreviewHtml,
+    buildDeckPreviewHtml,
+    injectBaseHrefIntoHtml,
+    buildPresentationBaseHref,
+    presentationUrl: '/presentations/onboarding-presentation/index.html'
+  });
+
+  assert.equal(result.buildSharedHtml, buildStudioPreviewHtml);
+  assert.equal(result.buildViewOptions, buildViewOptionsResolver);
+  assert.equal(result.buildCanonicalHtml, canonicalHtmlResolver);
+  assert.equal(result.transformFallbackHtml, previewFallbackHtmlTransformer);
+  assert.equal(typeof buildViewOptionsResolverArgs.extendViewOptions, 'function');
+  assert.equal(buildViewOptionsResolverArgs.extendViewOptions({ buildCanonicalDeck() {} }).presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(canonicalHtmlResolverArgs.buildCanonicalHtml, buildDeckPreviewHtml);
+  const canonicalHtmlArgs = canonicalHtmlResolverArgs.mapCanonicalHtmlArgs('deck', { renderOptions: {} });
+  assert.equal(canonicalHtmlArgs[0], 'deck');
+  assert.equal(canonicalHtmlArgs[1], '/presentations/onboarding-presentation/index.html');
+  assert.deepEqual(canonicalHtmlArgs[2], { renderOptions: {} });
+  assert.equal(previewFallbackHtmlTransformerArgs.injectBaseHrefIntoHtml, injectBaseHrefIntoHtml);
+  assert.equal(previewFallbackHtmlTransformerArgs.buildPresentationBaseHref, buildPresentationBaseHref);
+  assert.equal(previewFallbackHtmlTransformerArgs.presentationUrl, '/presentations/onboarding-presentation/index.html');
 });
 
 test('buildEditorPreviewHtml reuses the shared deck-view html builder when the preview helper is unavailable', () => {

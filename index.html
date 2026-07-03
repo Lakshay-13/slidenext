@@ -1933,47 +1933,13 @@
       const injectBaseHrefIntoHtml = resolveDeckHtmlMethod('injectBaseHrefIntoHtml');
       const buildPresentationBaseHref = resolveDeckHtmlMethod('buildPresentationBaseHref');
 
-      return buildEditorDeckViewHtml(doc, {
-        buildSharedHtml: buildStudioPreviewHtml,
-        buildViewOptions: typeof createEditorDeckViewBuildViewOptionsResolver === 'function'
-          ? createEditorDeckViewBuildViewOptionsResolver({
-              extendViewOptions: (deckViewOptions) => ({
-                ...deckViewOptions,
-                presentationUrl: currentPresentationUrl
-              })
-            })
-          : (sourceDoc) => ({
-              ...createEditorDeckViewBuildOptions(sourceDoc),
-              presentationUrl: currentPresentationUrl
-            }),
-        buildCanonicalHtml: typeof createEditorDeckViewCanonicalHtmlResolver === 'function'
-          ? createEditorDeckViewCanonicalHtmlResolver({
-              buildCanonicalHtml: buildDeckPreviewHtml,
-              mapCanonicalHtmlArgs: (canonicalDeck, deckHtmlOptions) => [
-                canonicalDeck,
-                currentPresentationUrl || '',
-                deckHtmlOptions
-              ]
-            })
-          : buildDeckPreviewHtml
-            ? (canonicalDeck, deckHtmlOptions) => buildDeckPreviewHtml(canonicalDeck, currentPresentationUrl || '', deckHtmlOptions)
-          : null,
-        transformFallbackHtml: typeof createEditorPreviewFallbackHtmlTransformer === 'function'
-          ? createEditorPreviewFallbackHtmlTransformer({
-              injectBaseHrefIntoHtml,
-              buildPresentationBaseHref,
-              presentationUrl: currentPresentationUrl || ''
-            })
-          : (fallbackHtml, deckHtmlOptions) => {
-              if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
-                return fallbackHtml;
-              }
-              return injectBaseHrefIntoHtml(
-                fallbackHtml,
-                buildPresentationBaseHref(currentPresentationUrl || '', deckHtmlOptions)
-              );
-            }
-      });
+      return buildEditorDeckViewHtml(doc, createEditorPreviewDeckViewHtmlOptions({
+        buildStudioPreviewHtml,
+        buildDeckPreviewHtml,
+        injectBaseHrefIntoHtml,
+        buildPresentationBaseHref,
+        presentationUrl: currentPresentationUrl || ''
+      }));
     }
 
     function createEditorPreviewFallbackHtmlTransformer(options = {}) {
@@ -1994,6 +1960,66 @@
           fallbackHtml,
           buildPresentationBaseHref(presentationUrl, deckHtmlOptions)
         );
+      };
+    }
+
+    function createEditorPreviewDeckViewHtmlOptions(options = {}) {
+      const presentationUrl = typeof options.presentationUrl === 'string'
+        ? options.presentationUrl
+        : '';
+      const buildStudioPreviewHtml = typeof options.buildStudioPreviewHtml === 'function'
+        ? options.buildStudioPreviewHtml
+        : null;
+      const buildDeckPreviewHtml = typeof options.buildDeckPreviewHtml === 'function'
+        ? options.buildDeckPreviewHtml
+        : null;
+      const injectBaseHrefIntoHtml = typeof options.injectBaseHrefIntoHtml === 'function'
+        ? options.injectBaseHrefIntoHtml
+        : null;
+      const buildPresentationBaseHref = typeof options.buildPresentationBaseHref === 'function'
+        ? options.buildPresentationBaseHref
+        : null;
+
+      return {
+        buildSharedHtml: buildStudioPreviewHtml,
+        buildViewOptions: typeof createEditorDeckViewBuildViewOptionsResolver === 'function'
+          ? createEditorDeckViewBuildViewOptionsResolver({
+              extendViewOptions: (deckViewOptions) => ({
+                ...deckViewOptions,
+                presentationUrl
+              })
+            })
+          : (sourceDoc) => ({
+              ...createEditorDeckViewBuildOptions(sourceDoc),
+              presentationUrl
+            }),
+        buildCanonicalHtml: typeof createEditorDeckViewCanonicalHtmlResolver === 'function'
+          ? createEditorDeckViewCanonicalHtmlResolver({
+              buildCanonicalHtml: buildDeckPreviewHtml,
+              mapCanonicalHtmlArgs: (canonicalDeck, deckHtmlOptions) => [
+                canonicalDeck,
+                presentationUrl,
+                deckHtmlOptions
+              ]
+            })
+          : buildDeckPreviewHtml
+            ? (canonicalDeck, deckHtmlOptions) => buildDeckPreviewHtml(canonicalDeck, presentationUrl, deckHtmlOptions)
+            : null,
+        transformFallbackHtml: typeof createEditorPreviewFallbackHtmlTransformer === 'function'
+          ? createEditorPreviewFallbackHtmlTransformer({
+              injectBaseHrefIntoHtml,
+              buildPresentationBaseHref,
+              presentationUrl
+            })
+          : (fallbackHtml, deckHtmlOptions) => {
+              if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
+                return fallbackHtml;
+              }
+              return injectBaseHrefIntoHtml(
+                fallbackHtml,
+                buildPresentationBaseHref(presentationUrl, deckHtmlOptions)
+              );
+            }
       };
     }
 
