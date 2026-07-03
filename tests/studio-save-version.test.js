@@ -86,7 +86,15 @@ function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
 }
 
 function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  if (typeof context.createCurrentStudioSessionStateOptions !== 'function') {
+    loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  }
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {',
+    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioPersistenceSuccess(fileContent, context) {
@@ -110,6 +118,7 @@ function loadApplyCurrentStudioPersistenceFailure(fileContent, context) {
 }
 
 function loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context) {
+  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'async function executeCurrentStudioVersionCheckpointSaveWithFailure(',
@@ -122,7 +131,7 @@ function loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, contex
   const helperSource = extractFunctionSource(
     fileContent,
     'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
-    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
+    '\n\n    function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
