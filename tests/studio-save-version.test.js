@@ -120,16 +120,6 @@ function loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, 
   vm.runInContext(helperSource, context);
 }
 
-function loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context) {
-  loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function resolveCurrentStudioAutoSavePersistenceState(',
-    '\n\n    async function executeCurrentStudioAutoSavePersistenceRequestWithHandlers('
-  );
-  vm.runInContext(helperSource, context);
-}
-
 function loadExecuteCurrentStudioAutoSavePersistenceRequestWithHandlers(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -152,7 +142,7 @@ function loadIsCurrentStudioVersionCheckpointSavePersisted(fileContent, context)
   const helperSource = extractFunctionSource(
     fileContent,
     'function isCurrentStudioVersionCheckpointSavePersisted(',
-    '\n\n    function resolveCurrentStudioAutoSavePersistenceState('
+    '\n\n    async function executeCurrentStudioAutoSavePersistenceRequestWithHandlers('
   );
   vm.runInContext(helperSource, context);
 }
@@ -440,125 +430,6 @@ test('resolveCurrentStudioVersionCheckpointPersistenceState delegates through th
   assert.deepEqual(JSON.parse(JSON.stringify(delegatedArgs.options.persistenceOptions)), {
     sessionToken: 12
   });
-});
-
-test('resolveCurrentStudioAutoSavePersistenceState delegates autosave capture through the shared persistence helper', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const iframeDoc = { label: 'iframe-doc' };
-  const capturedDeckState = {
-    cleanHtml: '<html>persisted</html>',
-    canonicalDeck: {
-      kind: 'slidenext.deck',
-      schemaVersion: 1,
-      slides: []
-    },
-    playbackState: {
-      activeSlideIds: ['slide-1'],
-      slideCounterText: '1 / 1'
-    }
-  };
-  let delegatedArgs = null;
-  const context = {
-    SlideNextStudioEditorPersistence: {
-      resolveStudioPersistenceStateFromDocumentCapture: editorPersistence.resolveStudioPersistenceStateFromDocumentCapture,
-      resolveStudioAutoSavePersistenceStateFromCapture(doc, nextCapturedDeckState, presentationUrl, options = {}) {
-        delegatedArgs = {
-          doc,
-          nextCapturedDeckState,
-          presentationUrl,
-          options
-        };
-        return {
-          persistencePlan: {
-            persistenceContext: {
-              presentationUrl
-            }
-          }
-        };
-      }
-    },
-    buildEditorSaveRequestBody() {
-      return {};
-    },
-    captureEditorPersistableDeckState(nextDoc) {
-      assert.equal(nextDoc, iframeDoc);
-      return capturedDeckState;
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    getIframeDoc() {
-      return iframeDoc;
-    },
-    isCurrentDeckStatePersisted() {
-      return false;
-    },
-    studioEditorSessionToken: 13
-  };
-
-  vm.createContext(context);
-  loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context);
-
-  const result = context.resolveCurrentStudioAutoSavePersistenceState();
-
-  assert.equal(result.persistencePlan.persistenceContext.presentationUrl, '/presentations/onboarding-presentation/index.html');
-  assert.equal(delegatedArgs.doc, iframeDoc);
-  assert.equal(delegatedArgs.nextCapturedDeckState, capturedDeckState);
-  assert.equal(delegatedArgs.presentationUrl, '/presentations/onboarding-presentation/index.html');
-  assert.equal(delegatedArgs.options.isPersistedState, context.isCurrentDeckStatePersisted);
-  assert.equal(delegatedArgs.options.buildSaveRequestBody, context.buildEditorSaveRequestBody);
-  assert.equal(delegatedArgs.options.sessionToken, 13);
-});
-
-test('resolveCurrentStudioAutoSavePersistenceState delegates through the local capture helper', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const iframeDoc = { label: 'iframe-doc' };
-  let delegatedArgs = null;
-  const context = {
-    __resolveCurrentStudioPersistenceStateFromCapture(nextDoc, options = {}) {
-      delegatedArgs = {
-        nextDoc,
-        options
-      };
-      return {
-        persistencePlan: {
-          persistenceContext: {
-            presentationUrl: options.presentationUrl
-          }
-        }
-      };
-    },
-    SlideNextStudioEditorPersistence: {
-      resolveStudioAutoSavePersistenceStateFromCapture() {
-        throw new Error('shared autosave resolver should be called through the local capture delegation helper');
-      }
-    },
-    buildEditorSaveRequestBody() {
-      return {};
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    getIframeDoc() {
-      return iframeDoc;
-    },
-    isCurrentDeckStatePersisted() {
-      return false;
-    },
-    studioEditorSessionToken: 13
-  };
-
-  vm.createContext(context);
-  loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context);
-  vm.runInContext('resolveCurrentStudioPersistenceStateFromCapture = __resolveCurrentStudioPersistenceStateFromCapture;', context);
-
-  const result = context.resolveCurrentStudioAutoSavePersistenceState();
-  assert.equal(result.persistencePlan.persistenceContext.presentationUrl, '/presentations/onboarding-presentation/index.html');
-  assert.equal(delegatedArgs.nextDoc, iframeDoc);
-  assert.equal(delegatedArgs.options.presentationUrl, '/presentations/onboarding-presentation/index.html');
-  assert.equal(
-    delegatedArgs.options.resolvePersistenceStateFromCapture,
-    context.SlideNextStudioEditorPersistence.resolveStudioAutoSavePersistenceStateFromCapture
-  );
-  assert.equal(delegatedArgs.options.persistenceOptions.isPersistedState, context.isCurrentDeckStatePersisted);
-  assert.equal(delegatedArgs.options.persistenceOptions.buildSaveRequestBody, context.buildEditorSaveRequestBody);
-  assert.equal(delegatedArgs.options.persistenceOptions.sessionToken, 13);
 });
 
 test('executeCurrentStudioVersionCheckpointSaveWithFailure delegates through the shared helper and applies the failure callback', async () => {
@@ -2280,7 +2151,7 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
-  loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context);
+  loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioAutoSavePersistenceRequestWithHandlers(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
@@ -2409,7 +2280,7 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
-  loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context);
+  loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioAutoSavePersistenceRequestWithHandlers(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
@@ -2550,7 +2421,7 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
-  loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context);
+  loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioAutoSavePersistenceRequestWithHandlers(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
@@ -2679,7 +2550,7 @@ test('triggerAutoSave clears the persisted playback baseline after a successful 
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
-  loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context);
+  loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioAutoSavePersistenceRequestWithHandlers(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 

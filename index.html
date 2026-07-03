@@ -5754,22 +5754,6 @@
       );
     }
 
-    function resolveCurrentStudioAutoSavePersistenceState(
-      presentationUrl = currentPresentationUrl,
-      sessionToken = studioEditorSessionToken,
-      doc = getIframeDoc()
-    ) {
-      return resolveCurrentStudioPersistenceStateFromCapture(doc, {
-        presentationUrl,
-        resolvePersistenceStateFromCapture: SlideNextStudioEditorPersistence.resolveStudioAutoSavePersistenceStateFromCapture,
-        persistenceOptions: {
-          isPersistedState: isCurrentDeckStatePersisted,
-          buildSaveRequestBody: buildEditorSaveRequestBody,
-          sessionToken
-        }
-      });
-    }
-
     async function executeCurrentStudioAutoSavePersistenceRequestWithHandlers(
       autoSavePersistenceState = null,
       options = {}
@@ -5820,11 +5804,15 @@
           sessionToken: scheduledSessionToken
         })) return;
         const iframeDoc = getIframeDoc();
-        const autoSavePersistenceState = resolveCurrentStudioAutoSavePersistenceState(
-          scheduledPresentationUrl,
-          scheduledSessionToken,
-          iframeDoc
-        );
+        const autoSavePersistenceState = resolveCurrentStudioPersistenceStateFromCapture(iframeDoc, {
+          presentationUrl: scheduledPresentationUrl,
+          resolvePersistenceStateFromCapture: SlideNextStudioEditorPersistence.resolveStudioAutoSavePersistenceStateFromCapture,
+          persistenceOptions: {
+            isPersistedState: isCurrentDeckStatePersisted,
+            buildSaveRequestBody: buildEditorSaveRequestBody,
+            sessionToken: scheduledSessionToken
+          }
+        });
         if (!autoSavePersistenceState) {
           setStudioAutoSaveStatus('saved');
           return;
