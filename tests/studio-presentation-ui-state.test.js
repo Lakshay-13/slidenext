@@ -463,6 +463,50 @@ test('createEditorDeckViewCanonicalHtmlResolver remaps canonical html arguments 
   ]]);
 });
 
+test('createEditorPreviewFallbackHtmlTransformer injects a preview base href when preview deck html helpers are available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createEditorPreviewFallbackHtmlTransformerSource = extractFunctionSource(
+    fileContent,
+    'function createEditorPreviewFallbackHtmlTransformer(options = {}) {',
+    '\n\n    function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {'
+  );
+
+  const calls = [];
+  const deckHtmlOptions = {
+    currentLocationHref: 'http://localhost:3000/'
+  };
+  const context = {};
+
+  vm.createContext(context);
+  vm.runInContext(createEditorPreviewFallbackHtmlTransformerSource, context);
+
+  const transformFallbackHtml = context.createEditorPreviewFallbackHtmlTransformer({
+    injectBaseHrefIntoHtml(fallbackHtml, baseHref) {
+      calls.push(['injectBaseHrefIntoHtml', fallbackHtml, baseHref]);
+      return `<html data-base-href="${baseHref}">${fallbackHtml}</html>`;
+    },
+    buildPresentationBaseHref(presentationUrl, nextDeckHtmlOptions) {
+      calls.push(['buildPresentationBaseHref', presentationUrl, nextDeckHtmlOptions]);
+      return `${presentationUrl}#preview`;
+    },
+    presentationUrl: '/presentations/onboarding-presentation/index.html'
+  });
+  const result = transformFallbackHtml('<html>fallback</html>', deckHtmlOptions);
+
+  assert.equal(
+    result,
+    '<html data-base-href="/presentations/onboarding-presentation/index.html#preview"><html>fallback</html></html>'
+  );
+  assert.deepEqual(calls, [
+    ['buildPresentationBaseHref', '/presentations/onboarding-presentation/index.html', deckHtmlOptions],
+    [
+      'injectBaseHrefIntoHtml',
+      '<html>fallback</html>',
+      '/presentations/onboarding-presentation/index.html#preview'
+    ]
+  ]);
+});
+
 test('buildEditorPreviewHtml reuses the shared deck-view html builder when the preview helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorPreviewHtmlSource = extractFunctionSource(
@@ -524,6 +568,7 @@ test('buildEditorPreviewHtml reuses the shared deck-view helper for editor deck-
   const iframeDoc = { label: 'iframe-doc' };
   const calls = [];
   const canonicalHtmlCalls = [];
+  const fallbackHtmlCalls = [];
   let createEditorDeckViewBuildOptionsCalls = 0;
   const baseDeckViewOptions = {
     buildCanonicalDeck() {
@@ -549,6 +594,14 @@ test('buildEditorPreviewHtml reuses the shared deck-view helper for editor deck-
       buildDeckPreviewHtml(nextCanonicalDeck, presentationUrl, nextDeckHtmlOptions) {
         canonicalHtmlCalls.push([nextCanonicalDeck, presentationUrl, nextDeckHtmlOptions]);
         return '<html>preview-from-canonical-html</html>';
+      },
+      injectBaseHrefIntoHtml(fallbackHtml, baseHref) {
+        fallbackHtmlCalls.push(['injectBaseHrefIntoHtml', fallbackHtml, baseHref]);
+        return `<html data-base-href="${baseHref}">${fallbackHtml}</html>`;
+      },
+      buildPresentationBaseHref(presentationUrl, nextDeckHtmlOptions) {
+        fallbackHtmlCalls.push(['buildPresentationBaseHref', presentationUrl, nextDeckHtmlOptions]);
+        return `${presentationUrl}#preview`;
       }
     },
     __createEditorDeckViewBuildOptions(nextDoc) {
@@ -592,7 +645,8 @@ test('buildEditorPreviewHtml reuses the shared deck-view helper for editor deck-
   const deckHtmlOptions = {
     renderOptions: {
       activeSlideId: 'slide-1'
-    }
+    },
+    currentLocationHref: 'http://localhost:3000/'
   };
   assert.equal(
     calls[0].options.buildCanonicalHtml(canonicalDeck, deckHtmlOptions),
@@ -603,6 +657,18 @@ test('buildEditorPreviewHtml reuses the shared deck-view helper for editor deck-
     '/presentations/onboarding-presentation/index.html',
     deckHtmlOptions
   ]]);
+  assert.equal(
+    calls[0].options.transformFallbackHtml('<html>fallback</html>', deckHtmlOptions),
+    '<html data-base-href="/presentations/onboarding-presentation/index.html#preview"><html>fallback</html></html>'
+  );
+  assert.deepEqual(fallbackHtmlCalls, [
+    ['buildPresentationBaseHref', '/presentations/onboarding-presentation/index.html', deckHtmlOptions],
+    [
+      'injectBaseHrefIntoHtml',
+      '<html>fallback</html>',
+      '/presentations/onboarding-presentation/index.html#preview'
+    ]
+  ]);
 });
 
 test('buildEditorPreviewHtml prefers the live active slide when the editor frame is available', () => {

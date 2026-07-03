@@ -1958,16 +1958,43 @@
           : buildDeckPreviewHtml
             ? (canonicalDeck, deckHtmlOptions) => buildDeckPreviewHtml(canonicalDeck, currentPresentationUrl || '', deckHtmlOptions)
           : null,
-        transformFallbackHtml: (fallbackHtml, deckHtmlOptions) => {
-          if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
-            return fallbackHtml;
-          }
-          return injectBaseHrefIntoHtml(
-            fallbackHtml,
-            buildPresentationBaseHref(currentPresentationUrl || '', deckHtmlOptions)
-          );
-        }
+        transformFallbackHtml: typeof createEditorPreviewFallbackHtmlTransformer === 'function'
+          ? createEditorPreviewFallbackHtmlTransformer({
+              injectBaseHrefIntoHtml,
+              buildPresentationBaseHref,
+              presentationUrl: currentPresentationUrl || ''
+            })
+          : (fallbackHtml, deckHtmlOptions) => {
+              if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
+                return fallbackHtml;
+              }
+              return injectBaseHrefIntoHtml(
+                fallbackHtml,
+                buildPresentationBaseHref(currentPresentationUrl || '', deckHtmlOptions)
+              );
+            }
       });
+    }
+
+    function createEditorPreviewFallbackHtmlTransformer(options = {}) {
+      const injectBaseHrefIntoHtml = typeof options.injectBaseHrefIntoHtml === 'function'
+        ? options.injectBaseHrefIntoHtml
+        : null;
+      const buildPresentationBaseHref = typeof options.buildPresentationBaseHref === 'function'
+        ? options.buildPresentationBaseHref
+        : null;
+      const presentationUrl = typeof options.presentationUrl === 'string'
+        ? options.presentationUrl
+        : '';
+      return function transformFallbackHtml(fallbackHtml, deckHtmlOptions = {}) {
+        if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
+          return fallbackHtml;
+        }
+        return injectBaseHrefIntoHtml(
+          fallbackHtml,
+          buildPresentationBaseHref(presentationUrl, deckHtmlOptions)
+        );
+      };
     }
 
     function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {
