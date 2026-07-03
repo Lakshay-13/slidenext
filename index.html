@@ -5735,25 +5735,6 @@
       );
     }
 
-    function isCurrentStudioVersionCheckpointSavePersisted(
-      versionLabel,
-      versionCheckpointPersistenceState,
-      presentationUrl = currentPresentationUrl
-    ) {
-      if (!versionCheckpointPersistenceState) {
-        return false;
-      }
-      return SlideNextStudioEditorPersistence.isStudioVersionCheckpointSavePersisted(
-        versionLabel,
-        versionCheckpointPersistenceState,
-        presentationUrl,
-        {
-          isPersistedState: isCurrentDeckStatePersisted,
-          buildSaveRequestBody: buildEditorSaveRequestBody
-        }
-      );
-    }
-
     async function executeCurrentStudioAutoSavePersistenceRequestWithHandlers(
       autoSavePersistenceState = null,
       options = {}
@@ -6520,7 +6501,15 @@
       );
       if (!versionCheckpointPersistenceState) return;
 
-      if (isCurrentStudioVersionCheckpointSavePersisted(label, versionCheckpointPersistenceState, presentationUrl)) {
+      if (SlideNextStudioEditorPersistence.isStudioVersionCheckpointSavePersisted(
+        label,
+        versionCheckpointPersistenceState,
+        presentationUrl,
+        {
+          isPersistedState: isCurrentDeckStatePersisted,
+          buildSaveRequestBody: buildEditorSaveRequestBody
+        }
+      )) {
         return false;
       }
       

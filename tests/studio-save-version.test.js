@@ -133,15 +133,6 @@ function loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, c
   const helperSource = extractFunctionSource(
     fileContent,
     'async function executeCurrentStudioVersionCheckpointSaveWithFailure(',
-    '\n\n    function isCurrentStudioVersionCheckpointSavePersisted('
-  );
-  vm.runInContext(helperSource, context);
-}
-
-function loadIsCurrentStudioVersionCheckpointSavePersisted(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function isCurrentStudioVersionCheckpointSavePersisted(',
     '\n\n    async function executeCurrentStudioAutoSavePersistenceRequestWithHandlers('
   );
   vm.runInContext(helperSource, context);
@@ -601,51 +592,6 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure reuses the shared fai
       }
     }
   });
-});
-
-test('isCurrentStudioVersionCheckpointSavePersisted delegates through the shared persisted-state helper', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const versionCheckpointPersistenceState = {
-    cleanHtml: '<html>persisted</html>',
-    requestOptions: {
-      sessionToken: 12
-    },
-    persistenceContext: {
-      presentationUrl: '/presentations/onboarding-presentation/index.html'
-    }
-  };
-  let helperArgs = null;
-  const context = {
-    SlideNextStudioEditorPersistence: {
-      isStudioVersionCheckpointSavePersisted(...args) {
-        helperArgs = args;
-        return true;
-      }
-    },
-    buildEditorSaveRequestBody() {
-      throw new Error('shared persisted-state helper should receive the buildSaveRequestBody callback instead');
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    isCurrentDeckStatePersisted() {
-      throw new Error('shared persisted-state helper should receive the isPersistedState callback instead');
-    },
-    saveVersionCheckpoint: async () => ({ success: true })
-  };
-
-  vm.createContext(context);
-  loadIsCurrentStudioVersionCheckpointSavePersisted(fileContent, context);
-
-  const result = context.isCurrentStudioVersionCheckpointSavePersisted(
-    'Checkpoint Baseline',
-    versionCheckpointPersistenceState
-  );
-
-  assert.equal(result, true);
-  assert.equal(helperArgs[0], 'Checkpoint Baseline');
-  assert.equal(helperArgs[1], versionCheckpointPersistenceState);
-  assert.equal(helperArgs[2], '/presentations/onboarding-presentation/index.html');
-  assert.equal(helperArgs[3].isPersistedState, context.isCurrentDeckStatePersisted);
-  assert.equal(helperArgs[3].buildSaveRequestBody, context.buildEditorSaveRequestBody);
 });
 
 test('applyCurrentStudioPersistenceSuccess delegates through the shared persistence helper with current handler options', () => {
@@ -1334,7 +1280,6 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
   loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
-  loadIsCurrentStudioVersionCheckpointSavePersisted(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -1433,7 +1378,6 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
-  loadIsCurrentStudioVersionCheckpointSavePersisted(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -1540,7 +1484,6 @@ test('executeSaveAutoVersion skips redundant auto version saves when the capture
   loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
   loadApplyCurrentStudioVersionCheckpointSaveSuccess(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
-  loadIsCurrentStudioVersionCheckpointSavePersisted(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   const result = await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -1803,6 +1746,9 @@ test('executeSaveAutoVersion reuses the local version checkpoint failure-aware h
     }
   };
   const context = {
+    buildEditorSaveRequestBody() {
+      return {};
+    },
     console: {
       error() {
         throw new Error('executeSaveAutoVersion should not report errors for a successful helper result');
@@ -1828,6 +1774,9 @@ test('executeSaveAutoVersion reuses the local version checkpoint failure-aware h
     getIframeDoc() {
       return { label: 'iframe-doc' };
     },
+    isCurrentDeckStatePersisted() {
+      return false;
+    },
     resolveCurrentStudioVersionCheckpointPersistenceState() {
       return versionCheckpointPersistenceState;
     },
@@ -1837,6 +1786,9 @@ test('executeSaveAutoVersion reuses the local version checkpoint failure-aware h
     SlideNextStudioEditorPersistence: {
       isStudioPersistenceTaskStale() {
         return false;
+      },
+      isStudioVersionCheckpointSavePersisted() {
+        return false;
       }
     },
     studioEditorSessionToken: 4
@@ -1844,7 +1796,6 @@ test('executeSaveAutoVersion reuses the local version checkpoint failure-aware h
 
   vm.createContext(context);
   vm.runInContext('executeCurrentStudioVersionCheckpointSaveWithFailure = __executeCurrentStudioVersionCheckpointSaveWithFailure;', context);
-  vm.runInContext('isCurrentStudioVersionCheckpointSavePersisted = () => false;', context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -1876,6 +1827,9 @@ test('executeSaveAutoVersion reports unsuccessful checkpoint responses through t
     }
   };
   const context = {
+    buildEditorSaveRequestBody() {
+      return {};
+    },
     console: {
       error(message) {
         errorCalls.push(message);
@@ -1901,7 +1855,7 @@ test('executeSaveAutoVersion reports unsuccessful checkpoint responses through t
     getIframeDoc() {
       return { label: 'iframe-doc' };
     },
-    isCurrentStudioVersionCheckpointSavePersisted() {
+    isCurrentDeckStatePersisted() {
       return false;
     },
     resolveCurrentStudioVersionCheckpointPersistenceState() {
@@ -1909,6 +1863,9 @@ test('executeSaveAutoVersion reports unsuccessful checkpoint responses through t
     },
     SlideNextStudioEditorPersistence: {
       isStudioPersistenceTaskStale() {
+        return false;
+      },
+      isStudioVersionCheckpointSavePersisted() {
         return false;
       }
     },
@@ -1965,11 +1922,14 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
         logCalls.push(message);
       }
     },
+    buildEditorSaveRequestBody() {
+      return {};
+    },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     getIframeDoc() {
       return { label: 'iframe-doc' };
     },
-    isCurrentStudioVersionCheckpointSavePersisted() {
+    isCurrentDeckStatePersisted() {
       return false;
     },
     resolveCurrentStudioVersionCheckpointPersistenceState() {
@@ -1980,6 +1940,9 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
     }),
     SlideNextStudioEditorPersistence: {
       isStudioPersistenceTaskStale() {
+        return false;
+      },
+      isStudioVersionCheckpointSavePersisted() {
         return false;
       },
       executeStudioVersionCheckpointSaveWithFailure: editorPersistence.executeStudioVersionCheckpointSaveWithFailure,
