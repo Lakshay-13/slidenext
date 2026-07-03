@@ -1386,9 +1386,12 @@ test('createEditorCapturedCanonicalDeckResolver reuses the local captured canoni
   };
   const calls = [];
   const context = {
-    resolveEditorCapturedCanonicalDeck(nextDoc, nextCanonicalDeck) {
-      calls.push(['resolveEditorCapturedCanonicalDeck', nextDoc, nextCanonicalDeck]);
-      return canonicalDeck;
+    createEditorSaveCanonicalDeckResolver(nextDoc) {
+      calls.push(['createEditorSaveCanonicalDeckResolver', nextDoc]);
+      return (nextCanonicalDeck) => {
+        calls.push(['resolveSaveCanonicalDeck', nextCanonicalDeck]);
+        return canonicalDeck;
+      };
     },
     getIframeDoc() {
       return iframeDoc;
@@ -1402,7 +1405,8 @@ test('createEditorCapturedCanonicalDeckResolver reuses the local captured canoni
 
   assert.equal(resolveCapturedCanonicalDeck(), canonicalDeck);
   assert.deepEqual(calls, [
-    ['resolveEditorCapturedCanonicalDeck', iframeDoc, canonicalDeck]
+    ['createEditorSaveCanonicalDeckResolver', iframeDoc],
+    ['resolveSaveCanonicalDeck', canonicalDeck]
   ]);
 });
 

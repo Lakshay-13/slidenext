@@ -3450,8 +3450,9 @@
     }
 
     function createEditorCapturedCanonicalDeckResolver(doc = getIframeDoc(), canonicalDeck = null) {
+      const resolveSaveCanonicalDeck = createEditorSaveCanonicalDeckResolver(doc);
       return function resolveCapturedCanonicalDeck() {
-        return resolveEditorCapturedCanonicalDeck(doc, canonicalDeck);
+        return resolveSaveCanonicalDeck(canonicalDeck);
       };
     }
 
