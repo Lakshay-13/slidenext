@@ -317,47 +317,7 @@ test('buildEditorSourceHtml reuses the shared deck-view html builder when the so
   assert.equal(typeof calls[0].options.buildFallbackHtml, 'function');
 });
 
-test('createEditorSourceDeckViewHtmlOptions bundles source deck view resolvers when local helpers are available', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const createEditorSourceDeckViewHtmlOptionsSource = extractFunctionSource(
-    fileContent,
-    'function createEditorSourceDeckViewHtmlOptions(options = {}) {',
-    '\n\n    function buildEditorSourceHtml(doc = getIframeDoc()) {'
-  );
-
-  const deckViewHtmlOptions = {
-    buildSharedHtml() {},
-    buildViewOptions() {},
-    buildCanonicalHtml() {}
-  };
-  let delegatedArgs = null;
-  const buildStudioSourceHtml = function buildStudioSourceHtml() {};
-  const buildDeckSourceHtml = function buildDeckSourceHtml() {};
-  const customBuildViewOptions = function customBuildViewOptions() {};
-  const context = {
-    __createEditorDeckViewHtmlOptions(options) {
-      delegatedArgs = options;
-      return deckViewHtmlOptions;
-    }
-  };
-
-  vm.createContext(context);
-  vm.runInContext(createEditorSourceDeckViewHtmlOptionsSource, context);
-  vm.runInContext('createEditorDeckViewHtmlOptions = __createEditorDeckViewHtmlOptions;', context);
-
-  const result = context.createEditorSourceDeckViewHtmlOptions({
-    buildSharedHtml: buildStudioSourceHtml,
-    buildViewOptions: customBuildViewOptions,
-    buildDeckSourceHtml
-  });
-
-  assert.equal(result, deckViewHtmlOptions);
-  assert.equal(delegatedArgs.buildSharedHtml, buildStudioSourceHtml);
-  assert.equal(delegatedArgs.buildViewOptions, customBuildViewOptions);
-  assert.equal(delegatedArgs.buildCanonicalHtml, buildDeckSourceHtml);
-});
-
-test('buildEditorSourceDeckHtml reuses the local source deck view options helper when available', () => {
+test('buildEditorSourceDeckHtml forwards source deck view builders when local helpers are available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(
     fileContent,
@@ -366,29 +326,33 @@ test('buildEditorSourceDeckHtml reuses the local source deck view options helper
   );
 
   const iframeDoc = { label: 'iframe-doc' };
-  const calls = [];
-  const sourceDeckViewHtmlOptions = {
-    buildSharedHtml() {},
-    buildViewOptions() {},
-    buildCanonicalHtml() {}
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
   };
+  const deckHtmlOptions = {
+    renderOptions: {
+      activeSlideId: 'slide-live'
+    }
+  };
+  const calls = [];
   let delegatedArgs = null;
   const buildStudioSourceHtml = function buildStudioSourceHtml() {};
-  const buildDeckSourceHtml = function buildDeckSourceHtml() {};
+  const buildDeckSourceHtml = function buildDeckSourceHtml(...args) {
+    calls.push(['buildDeckSourceHtml', args]);
+    return '<html>source-from-canonical-deck</html>';
+  };
   const context = {
     SlideNextStudioDeckView: {
-      buildStudioSourceHtml,
-      buildStudioDeckViewHtml(doc, options) {
-        calls.push({ doc, options });
-        return '<html>source-from-shared-deck-view-helper</html>';
-      }
+      buildStudioSourceHtml
     },
     SlideNextDeckHtml: {
       buildDeckSourceHtml
     },
-    __createEditorSourceDeckViewHtmlOptions(options) {
-      delegatedArgs = options;
-      return sourceDeckViewHtmlOptions;
+    __buildEditorDeckViewHtml(doc, options) {
+      delegatedArgs = { doc, options };
+      return '<html>source-from-shared-deck-view-helper</html>';
     },
     getIframeDoc() {
       return iframeDoc;
@@ -397,20 +361,29 @@ test('buildEditorSourceDeckHtml reuses the local source deck view options helper
 
   vm.createContext(context);
   vm.runInContext(buildEditorSourceHtmlSource, context);
-  vm.runInContext('createEditorSourceDeckViewHtmlOptions = __createEditorSourceDeckViewHtmlOptions;', context);
+  vm.runInContext('buildEditorDeckViewHtml = __buildEditorDeckViewHtml;', context);
 
-  const customBuildViewOptions = function customBuildViewOptions() {};
+  const customBuildViewOptions = function customBuildViewOptions(nextDoc) {
+    calls.push(['buildViewOptions', nextDoc]);
+    return {
+      activeSlideId: 'slide-custom'
+    };
+  };
   const result = context.buildEditorSourceDeckHtml(iframeDoc, {
     buildViewOptions: customBuildViewOptions
   });
 
   assert.equal(result, '<html>source-from-shared-deck-view-helper</html>');
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].doc, iframeDoc);
-  assert.equal(calls[0].options, sourceDeckViewHtmlOptions);
-  assert.equal(delegatedArgs.buildSharedHtml, buildStudioSourceHtml);
-  assert.equal(delegatedArgs.buildViewOptions, customBuildViewOptions);
-  assert.equal(delegatedArgs.buildDeckSourceHtml, buildDeckSourceHtml);
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(delegatedArgs.options.buildSharedHtml, buildStudioSourceHtml);
+  assert.equal(delegatedArgs.options.buildCanonicalHtml(canonicalDeck, deckHtmlOptions), '<html>source-from-canonical-deck</html>');
+  assert.deepEqual(delegatedArgs.options.buildViewOptions(iframeDoc), {
+    activeSlideId: 'slide-custom'
+  });
+  assert.deepEqual(calls, [
+    ['buildDeckSourceHtml', [canonicalDeck, deckHtmlOptions]],
+    ['buildViewOptions', iframeDoc]
+  ]);
 });
 
 test('renderEditorSourceDeckHtml reuses buildEditorSourceDeckHtml when available', () => {

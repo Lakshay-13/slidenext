@@ -1881,29 +1881,11 @@
       const buildStudioSourceHtml = resolveStudioDeckViewMethod('buildStudioSourceHtml');
       const buildDeckSourceHtml = resolveDeckHtmlMethod('buildDeckSourceHtml');
 
-      return buildEditorDeckViewHtml(doc, createEditorSourceDeckViewHtmlOptions({
+      return buildEditorDeckViewHtml(doc, createEditorDeckViewHtmlOptions({
         buildSharedHtml: buildStudioSourceHtml,
         buildViewOptions: options.buildViewOptions,
-        buildDeckSourceHtml
-      }));
-    }
-
-    function createEditorSourceDeckViewHtmlOptions(options = {}) {
-      const buildSharedHtml = typeof options.buildSharedHtml === 'function'
-        ? options.buildSharedHtml
-        : null;
-      const buildViewOptions = typeof options.buildViewOptions === 'function'
-        ? options.buildViewOptions
-        : null;
-      const buildDeckSourceHtml = typeof options.buildDeckSourceHtml === 'function'
-        ? options.buildDeckSourceHtml
-        : null;
-
-      return createEditorDeckViewHtmlOptions({
-        buildSharedHtml,
-        buildViewOptions,
         buildCanonicalHtml: buildDeckSourceHtml
-      });
+      }));
     }
 
     function renderEditorSourceDeckHtml(doc = getIframeDoc(), sourceViewOptions = {}, options = {}) {
