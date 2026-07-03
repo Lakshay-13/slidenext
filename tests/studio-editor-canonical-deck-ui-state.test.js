@@ -900,6 +900,11 @@ test('buildEditorDeckRenderOptions delegates render-option composition to the sh
   };
   let delegatedArgs = null;
   const context = {
+    SlideNextCanonicalDeck: {
+      isCanonicalDeck(deck) {
+        return deck === canonicalDeck;
+      }
+    },
     SlideNextStudioDeckView: {
       createStudioDeckRenderOptions(doc, nextCanonicalDeck, options) {
         delegatedArgs = { doc, nextCanonicalDeck, options };
@@ -913,11 +918,21 @@ test('buildEditorDeckRenderOptions delegates render-option composition to the sh
         };
       }
     },
+    currentSlideIndex: 0,
     getIframeDoc() {
       return iframeDoc;
     },
-    resolveEditorFallbackActiveSlideId(nextDoc, nextCanonicalDeck) {
-      return `${nextDoc.label}:${nextCanonicalDeck.kind}`;
+    getPersistedActiveSlideId() {
+      return 'slide-persisted';
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      return nextDoc === iframeDoc ? canonicalDeck : null;
+    },
+    resolveEditorCanonicalDeckOverride(nextCanonicalDeck) {
+      return nextCanonicalDeck;
+    },
+    resolveEditorLiveActiveSlideId(nextDoc) {
+      return `${nextDoc.label}:${canonicalDeck.kind}`;
     }
   };
 
@@ -939,11 +954,15 @@ test('buildEditorDeckRenderOptions delegates render-option composition to the sh
   assert.equal(delegatedArgs.doc, iframeDoc);
   assert.equal(delegatedArgs.nextCanonicalDeck, canonicalDeck);
   assert.equal(delegatedArgs.options.activeSlideId, 'slide-explicit');
-  assert.equal(typeof delegatedArgs.options.resolveFallbackActiveSlideId, 'function');
-  assert.equal(
-    delegatedArgs.options.resolveFallbackActiveSlideId(iframeDoc, canonicalDeck),
-    'iframe-doc:slidenext.deck'
-  );
+  assert.equal(delegatedArgs.options.currentSlideIndex, 0);
+  assert.equal(delegatedArgs.options.getPersistedActiveSlideId, context.getPersistedActiveSlideId);
+  assert.equal(typeof delegatedArgs.options.resolveCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.options.resolveCanonicalDeckOverride, 'function');
+  assert.equal(typeof delegatedArgs.options.resolveLiveActiveSlideId, 'function');
+  assert.equal(delegatedArgs.options.isCanonicalDeck, context.SlideNextCanonicalDeck.isCanonicalDeck);
+  assert.equal(delegatedArgs.options.resolveCanonicalDeck(iframeDoc), canonicalDeck);
+  assert.equal(delegatedArgs.options.resolveCanonicalDeckOverride(canonicalDeck, iframeDoc), canonicalDeck);
+  assert.equal(delegatedArgs.options.resolveLiveActiveSlideId(iframeDoc), 'iframe-doc:slidenext.deck');
 });
 
 test('buildEditorDeckSnapshot delegates snapshot build-option composition to the shared snapshot helper when available', () => {

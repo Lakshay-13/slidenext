@@ -107,7 +107,11 @@
       : '';
     const resolveFallbackActiveSlideId = typeof options.resolveFallbackActiveSlideId === 'function'
       ? options.resolveFallbackActiveSlideId
-      : () => '';
+      : (nextDoc, nextCanonicalDeck) => resolveStudioFallbackActiveSlideId(
+          nextDoc,
+          nextCanonicalDeck,
+          options
+        );
 
     return {
       activeSlideId: explicitActiveSlideId || resolveFallbackActiveSlideId(doc, canonicalDeck),

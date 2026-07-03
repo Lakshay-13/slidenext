@@ -161,6 +161,52 @@ test('createStudioDeckRenderOptions prefers an explicit active slide id and othe
   assert.deepEqual(calls, [[doc, canonicalDeck]]);
 });
 
+test('createStudioDeckRenderOptions falls back through shared active slide resolution when no resolver is provided', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  const calls = [];
+
+  const renderOptions = deckView.createStudioDeckRenderOptions(
+    { label: 'iframe-doc' },
+    canonicalDeck,
+    {
+      currentSlideIndex: 1,
+      getPersistedActiveSlideId() {
+        calls.push('getPersistedActiveSlideId');
+        return 'slide-persisted';
+      },
+      resolveLiveActiveSlideId(doc) {
+        calls.push(['resolveLiveActiveSlideId', doc]);
+        return '';
+      },
+      isCanonicalDeck(deck) {
+        calls.push(['isCanonicalDeck', deck]);
+        return deck === canonicalDeck;
+      }
+    }
+  );
+
+  assert.deepEqual(renderOptions, {
+    activeSlideId: 'slide-2',
+    preferSourceHtml: false,
+    preferHeadSourceHtml: false,
+    preferBodySourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+  assert.deepEqual(calls, [
+    'getPersistedActiveSlideId',
+    ['isCanonicalDeck', canonicalDeck],
+    ['resolveLiveActiveSlideId', { label: 'iframe-doc' }]
+  ]);
+});
+
 test('resolveStudioLiveActiveSlide returns the active slide node when present and null otherwise', () => {
   const activeSlide = { label: 'slide-active' };
   const doc = {
