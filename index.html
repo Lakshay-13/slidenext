@@ -5645,33 +5645,17 @@
         const resolveMetadataPersistenceOptions = typeof options.resolveMetadataPersistenceOptions === 'function'
           ? options.resolveMetadataPersistenceOptions
           : () => ({});
-        const persistableDeckSanitizerOptions = typeof buildEditorPersistableDeckSanitizerOptions === 'function'
-          ? buildEditorPersistableDeckSanitizerOptions(
-              Object.prototype.hasOwnProperty.call(options, 'playbackState')
-                ? options.playbackState
-                : null,
-              {
-                resolveMetadataPersistenceOptions,
-                getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
-                  ? options.getDeckSanitizerOptions
-                  : undefined
-              }
-            )
-          : (() => {
-              const deckSanitizerOptions = typeof options.getDeckSanitizerOptions === 'function'
-                ? options.getDeckSanitizerOptions()
-                : getEditorDeckSanitizerOptions();
-              return {
-                ...resolveMetadataPersistenceOptions(),
-                editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,
-                editorTransientClasses: deckSanitizerOptions.transientClassNames,
-                editorElementIdAttr: deckSanitizerOptions.editorElementIdAttr,
-                editorSlideIdAttr: deckSanitizerOptions.editorSlideIdAttr,
-                persistedDeckPlaybackState: Object.prototype.hasOwnProperty.call(options, 'playbackState')
-                  ? options.playbackState
-                  : null
-              };
-            })();
+        const persistableDeckSanitizerOptions = buildEditorPersistableDeckSanitizerOptions(
+          Object.prototype.hasOwnProperty.call(options, 'playbackState')
+            ? options.playbackState
+            : null,
+          {
+            resolveMetadataPersistenceOptions,
+            getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
+              ? options.getDeckSanitizerOptions
+              : undefined
+          }
+        );
         return buildPersistableDeckHtml(parsedDoc, {
           ...persistableDeckSanitizerOptions
         });
