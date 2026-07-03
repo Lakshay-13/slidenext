@@ -739,6 +739,61 @@ test('resolveEditorDeckCanonicalOverride reuses the provided canonical deck when
   assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
+test('resolveEditorFallbackCanonicalDeck rebuilds malformed canonical deck input through the local deck override helper path', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const rebuiltCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] }
+    ]
+  };
+  const malformedCanonicalDeck = {
+    metadata: {
+      title: 'Broken Deck'
+    }
+  };
+  const calls = [];
+  const context = {
+    SlideNextCanonicalDeck: {
+      isCanonicalDeck(deck) {
+        calls.push(['isCanonicalDeck', deck]);
+        return deck === rebuiltCanonicalDeck;
+      }
+    },
+    resolveEditorDeckCanonicalOverride(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorDeckCanonicalOverride', nextDoc, nextCanonicalDeck]);
+      return malformedCanonicalDeck;
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      calls.push(['buildEditorCanonicalDeck', nextDoc]);
+      return rebuiltCanonicalDeck;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  const result = context.resolveEditorFallbackCanonicalDeck(iframeDoc, malformedCanonicalDeck);
+
+  assert.equal(result, rebuiltCanonicalDeck);
+  assert.deepEqual(calls, [
+    ['resolveEditorDeckCanonicalOverride', iframeDoc, malformedCanonicalDeck],
+    ['isCanonicalDeck', malformedCanonicalDeck],
+    ['buildEditorCanonicalDeck', iframeDoc]
+  ]);
+});
+
 test('resolveEditorSaveCanonicalDeck delegates save canonical resolution through resolveEditorCanonicalDeckOverride when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
@@ -1158,6 +1213,55 @@ test('resolveEditorFallbackActiveSlideId reuses the local deck canonical overrid
   assert.equal(typeof delegatedArgs.options.resolveCanonicalDeckOverride, 'function');
   assert.deepEqual(calls, [
     ['resolveEditorDeckCanonicalOverride', iframeDoc, canonicalDeck]
+  ]);
+});
+
+test('resolveEditorFallbackActiveSlideId reuses the local fallback canonical deck helper when the shared deck view helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] },
+      { id: 'slide-2', nodes: [] }
+    ]
+  };
+  const calls = [];
+  const context = {
+    currentSlideIndex: 1,
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getPersistedActiveSlideId() {
+      calls.push(['getPersistedActiveSlideId']);
+      return 'slide-persisted';
+    },
+    resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorFallbackCanonicalDeck', nextDoc, nextCanonicalDeck]);
+      return canonicalDeck;
+    },
+    resolveEditorLiveActiveSlideId(nextDoc) {
+      calls.push(['resolveEditorLiveActiveSlideId', nextDoc]);
+      return '';
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+
+  const result = context.resolveEditorFallbackActiveSlideId(iframeDoc, canonicalDeck);
+
+  assert.equal(result, 'slide-2');
+  assert.deepEqual(calls, [
+    ['getPersistedActiveSlideId'],
+    ['resolveEditorFallbackCanonicalDeck', iframeDoc, canonicalDeck]
   ]);
 });
 
