@@ -3059,10 +3059,10 @@
 
       const storedCanonicalDeck = resolveEditorStoredCanonicalDeck(currentPresentationMetadata);
       if (storedCanonicalDeck) {
-        applyCurrentStudioPersistedCanonicalDeck(
-          storedCanonicalDeck,
-          typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '',
+        applyCurrentStudioPersistedDeckState(
+          { canonicalDeck: storedCanonicalDeck },
           {
+            presentationUrl: typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '',
             syncPresentationMetadata: false
           }
         );
@@ -3148,21 +3148,6 @@
         : (typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '');
       setCurrentPresentationCanonicalDeck(nextState.canonicalDeck, presentationUrl);
       return nextState;
-    }
-
-    function applyCurrentStudioPersistedCanonicalDeck(
-      canonicalDeck,
-      presentationUrl = typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '',
-      options = {}
-    ) {
-      applyCurrentStudioPersistedDeckState(
-        { canonicalDeck },
-        {
-          ...options,
-          presentationUrl
-        }
-      );
-      return canonicalDeck;
     }
 
     function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
@@ -5625,7 +5610,10 @@
           applyCurrentStudioPersistedDeckState({ cleanHtml: nextHtml });
         },
         setPersistedCanonicalDeck: (nextCanonicalDeck) => {
-          applyCurrentStudioPersistedCanonicalDeck(nextCanonicalDeck, persistencePresentationUrl);
+          applyCurrentStudioPersistedDeckState(
+            { canonicalDeck: nextCanonicalDeck },
+            { presentationUrl: persistencePresentationUrl }
+          );
         },
         setPersistedPlaybackState: (nextPlaybackState) => {
           applyCurrentStudioPersistedDeckState({ playbackState: nextPlaybackState });

@@ -40,18 +40,13 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
-    '\n\n    function applyCurrentStudioPersistedCanonicalDeck('
+    '\n\n    function setCurrentPresentationCanonicalDeck('
   );
   vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyCurrentStudioPersistedCanonicalDeck(',
-    '\n\n    function setCurrentPresentationCanonicalDeck('
-  );
-  vm.runInContext(helperSource, context);
+  loadApplyCurrentStudioPersistedDeckState(fileContent, context);
 }
 
 test('getCurrentEditorPersistedDeckState returns the current persisted html, canonical deck, and playback baselines', () => {
@@ -266,56 +261,5 @@ test('applyCurrentStudioPersistedDeckState updates persisted baselines together 
     activeSlideIds: ['slide-3'],
     slideCounterText: ''
   });
-  assert.deepEqual(metadataSyncCalls, [[rawCanonicalDeck, '/presentations/onboarding-presentation/index.html']]);
-});
-
-test('applyCurrentStudioPersistedCanonicalDeck updates the canonical baseline and can skip presentation metadata sync', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateEditorPersistedDeckStateSource = extractFunctionSource(
-    fileContent,
-    'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function captureState() {'
-  );
-
-  const rawCanonicalDeck = {
-    metadata: {
-      id: 'onboarding-presentation'
-    },
-    slides: []
-  };
-  const normalizedCanonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: []
-  };
-  const metadataSyncCalls = [];
-  const context = {
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    lastPersistedCanonicalDeck: null,
-    persistedDeckPlaybackState: null,
-    SlideNextDeckPersistence: deckPersistence,
-    SlideNextStudioDeckContext: {
-      resolveStoredStudioCanonicalDeck(metadata) {
-        return metadata && metadata.canonicalDeck ? normalizedCanonicalDeck : null;
-      }
-    },
-    setCurrentPresentationCanonicalDeck(nextCanonicalDeck, presentationUrl) {
-      metadataSyncCalls.push([nextCanonicalDeck, presentationUrl]);
-    },
-    Object
-  };
-
-  vm.createContext(context);
-  loadResolveEditorStoredCanonicalDeck(fileContent, context);
-  vm.runInContext(updateEditorPersistedDeckStateSource, context);
-  loadApplyCurrentStudioPersistedDeckState(fileContent, context);
-  loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
-
-  context.applyCurrentStudioPersistedCanonicalDeck(rawCanonicalDeck);
-  context.applyCurrentStudioPersistedCanonicalDeck(rawCanonicalDeck, '/presentations/custom/index.html', {
-    syncPresentationMetadata: false
-  });
-
-  assert.deepEqual(context.lastPersistedCanonicalDeck, normalizedCanonicalDeck);
   assert.deepEqual(metadataSyncCalls, [[rawCanonicalDeck, '/presentations/onboarding-presentation/index.html']]);
 });

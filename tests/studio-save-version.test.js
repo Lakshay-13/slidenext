@@ -61,7 +61,7 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
-    '\n\n    function applyCurrentStudioPersistedCanonicalDeck('
+    '\n\n    function setCurrentPresentationCanonicalDeck('
   );
   vm.runInContext(helperSource, context);
 }
@@ -79,12 +79,6 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
 
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyCurrentStudioPersistedCanonicalDeck(',
-    '\n\n    function setCurrentPresentationCanonicalDeck('
-  );
-  vm.runInContext(helperSource, context);
 }
 
 function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context) {

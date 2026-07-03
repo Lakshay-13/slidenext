@@ -926,7 +926,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   const persistedDeckStateHelperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
-    '\n\n    function applyCurrentStudioPersistedCanonicalDeck('
+    '\n\n    function setCurrentPresentationCanonicalDeck('
   );
   const restoreFrameFromHistoryEntrySource = extractFunctionSource(
     fileContent,
@@ -1130,7 +1130,7 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
   const persistedDeckStateHelperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
-    '\n\n    function applyCurrentStudioPersistedCanonicalDeck('
+    '\n\n    function setCurrentPresentationCanonicalDeck('
   );
   const restoreFrameFromHistoryEntrySource = extractFunctionSource(
     fileContent,
