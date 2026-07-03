@@ -1765,18 +1765,6 @@
       });
     }
 
-    function createEditorDeckViewBuildViewOptionsResolver(options = {}) {
-      const buildViewOptions = typeof options.buildViewOptions === 'function'
-        ? options.buildViewOptions
-        : (sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc);
-      const extendViewOptions = typeof options.extendViewOptions === 'function'
-        ? options.extendViewOptions
-        : (deckViewOptions) => deckViewOptions;
-      return function resolveViewOptions(sourceDoc = getIframeDoc()) {
-        return extendViewOptions(buildViewOptions(sourceDoc), sourceDoc);
-      };
-    }
-
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
       const buildStudioPreviewHtml = resolveStudioDeckViewMethod('buildStudioPreviewHtml');
       const buildDeckPreviewHtml = resolveDeckHtmlMethod('buildDeckPreviewHtml');
@@ -1814,10 +1802,12 @@
 
       return {
         buildSharedHtml,
-        buildViewOptions: createEditorDeckViewBuildViewOptionsResolver({
-          buildViewOptions,
-          extendViewOptions
-        }),
+        buildViewOptions(sourceDoc = getIframeDoc()) {
+          const deckViewOptions = (buildViewOptions || createEditorDeckViewBuildOptions)(sourceDoc);
+          return extendViewOptions
+            ? extendViewOptions(deckViewOptions, sourceDoc)
+            : deckViewOptions;
+        },
         buildCanonicalHtml: buildCanonicalHtml
           ? (canonicalDeck, deckHtmlOptions) => buildCanonicalHtml(
               ...(mapCanonicalHtmlArgs

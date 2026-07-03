@@ -2203,28 +2203,15 @@ test('createEditorDeckViewHtmlOptions maps canonical html arguments when local h
       activeSlideId: 'slide-live'
     }
   };
-  let delegatedBuildViewOptionsArgs = null;
   const canonicalHtmlCalls = [];
   const customBuildCanonicalHtml = (...args) => {
     canonicalHtmlCalls.push(args);
     return '<html>canonical</html>';
   };
-  const context = {
-    __createEditorDeckViewBuildViewOptionsResolver(options) {
-      delegatedBuildViewOptionsArgs = options;
-      return function buildViewOptions() {
-        return {
-          buildCanonicalDeck() {
-            return canonicalDeck;
-          }
-        };
-      };
-    }
-  };
+  const context = {};
 
   vm.createContext(context);
   vm.runInContext(createEditorDeckViewHtmlOptionsSource, context);
-  vm.runInContext('createEditorDeckViewBuildViewOptionsResolver = __createEditorDeckViewBuildViewOptionsResolver;', context);
 
   const result = context.createEditorDeckViewHtmlOptions({
     buildCanonicalHtml: customBuildCanonicalHtml,
@@ -2239,8 +2226,56 @@ test('createEditorDeckViewHtmlOptions maps canonical html arguments when local h
   assert.deepEqual(canonicalHtmlCalls, [
     [deckHtmlOptions, canonicalDeck, 'mapped']
   ]);
-  assert.equal(delegatedBuildViewOptionsArgs.buildViewOptions, null);
-  assert.equal(delegatedBuildViewOptionsArgs.extendViewOptions, null);
+});
+
+test('createEditorDeckViewHtmlOptions extends fallback deck view build options when local helpers are available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createEditorDeckViewHtmlOptionsSource = extractFunctionSource(
+    fileContent,
+    'function createEditorDeckViewHtmlOptions(options = {}) {',
+    '\n\n    function createEditorPreviewFallbackHtmlTransformer(options = {}) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const baseDeckViewOptions = {
+    buildCanonicalDeck() {
+      return {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: []
+      };
+    }
+  };
+  const calls = [];
+  const context = {
+    createEditorDeckViewBuildOptions(sourceDoc) {
+      calls.push(['createEditorDeckViewBuildOptions', sourceDoc]);
+      return baseDeckViewOptions;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createEditorDeckViewHtmlOptionsSource, context);
+
+  const result = context.createEditorDeckViewHtmlOptions({
+    extendViewOptions(deckViewOptions, sourceDoc) {
+      calls.push(['extendViewOptions', deckViewOptions, sourceDoc]);
+      return {
+        ...deckViewOptions,
+        activeSlideId: 'slide-live'
+      };
+    }
+  });
+
+  assert.equal(typeof result.buildViewOptions, 'function');
+  assert.deepEqual(result.buildViewOptions(iframeDoc), {
+    ...baseDeckViewOptions,
+    activeSlideId: 'slide-live'
+  });
+  assert.deepEqual(calls, [
+    ['createEditorDeckViewBuildOptions', iframeDoc],
+    ['extendViewOptions', baseDeckViewOptions, iframeDoc]
+  ]);
 });
 
 test('createEditorCanonicalDeckViewStateOptions reuses provided canonical and live-active resolvers when available', () => {
