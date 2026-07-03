@@ -818,6 +818,80 @@ test('resolveEditorMetadataPersistenceOptions merges explicit persistence option
   );
 });
 
+test('sanitizeEditorReusablePersistedHtml delegates reusable persisted html cleanup to the shared persistence builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const sanitizeEditorReusablePersistedHtmlSource = extractFunctionSource(
+    fileContent,
+    'function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+
+  const playbackState = {
+    activeSlideIds: ['slide-2']
+  };
+  const parsedDoc = {
+    documentElement: {
+      nodeName: 'HTML'
+    }
+  };
+  const calls = [];
+  const context = {
+    DOMParser: class DOMParser {
+      parseFromString(html, type) {
+        calls.push(['parseFromString', html, type]);
+        return parsedDoc;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(sanitizeEditorReusablePersistedHtmlSource, context);
+
+  assert.equal(
+    context.sanitizeEditorReusablePersistedHtml('<html>persisted-baseline</html>', {
+      playbackState,
+      resolveMetadataPersistenceOptions() {
+        calls.push(['resolveMetadataPersistenceOptions']);
+        return {
+          emptyContainerIds: ['pixelMatrix']
+        };
+      },
+      getDeckSanitizerOptions() {
+        calls.push(['getDeckSanitizerOptions']);
+        return {
+          chromeNodeIds: ['editorSelectionOverlay'],
+          transientClassNames: ['revealed'],
+          editorElementIdAttr: 'data-editor-id',
+          editorSlideIdAttr: 'data-slide-id'
+        };
+      },
+      buildPersistableDeckHtml(nextDoc, options) {
+        calls.push(['buildPersistableDeckHtml', nextDoc, options]);
+        return '<html>sanitized</html>';
+      }
+    }),
+    '<html>sanitized</html>'
+  );
+  assert.deepEqual(calls[0], ['parseFromString', '<html>persisted-baseline</html>', 'text/html']);
+  assert.deepEqual(calls[1], ['getDeckSanitizerOptions']);
+  assert.deepEqual(calls[2], ['resolveMetadataPersistenceOptions']);
+  assert.equal(calls[3][0], 'buildPersistableDeckHtml');
+  assert.equal(calls[3][1], parsedDoc);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[3][2])),
+    {
+      emptyContainerIds: ['pixelMatrix'],
+      editorChromeNodeIds: ['editorSelectionOverlay'],
+      editorTransientClasses: ['revealed'],
+      editorElementIdAttr: 'data-editor-id',
+      editorSlideIdAttr: 'data-slide-id',
+      persistedDeckPlaybackState: {
+        activeSlideIds: ['slide-2']
+      }
+    }
+  );
+});
+
 test('buildPersistableDeckHtml reuses the local reusable persisted html resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
@@ -886,6 +960,103 @@ test('buildPersistableDeckHtml reuses the local reusable persisted html resolver
   assert.equal(delegatedArgs.options.canonicalDeck, canonicalDeck);
   assert.equal(delegatedArgs.options.persistedHtml, '<html>persisted-baseline</html>');
   assert.equal(delegatedArgs.options.persistedCanonicalDeck, canonicalDeck);
+});
+
+test('buildPersistableDeckHtml reuses the local reusable persisted html sanitizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+
+  let delegatedArgs = null;
+  let sharedBuildCalls = 0;
+  const calls = [];
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-2']
+  };
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    __resolveEditorMetadataPersistenceOptions() {
+      calls.push(['resolveEditorMetadataPersistenceOptions']);
+      return {
+        emptyContainerIds: ['pixelMatrix']
+      };
+    },
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml() {
+        sharedBuildCalls += 1;
+        return '<html>rebuilt</html>';
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence
+    },
+    __resolveEditorReusablePersistedHtml(persistedDeckState) {
+      calls.push(['resolveEditorReusablePersistedHtml', persistedDeckState]);
+      return persistedDeckState.cleanHtml;
+    },
+    __sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {
+      delegatedArgs = {
+        persistedHtml,
+        options,
+        metadataPersistenceOptions: options.resolveMetadataPersistenceOptions()
+      };
+      return '<html>sanitized-persisted</html>';
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, null);
+      return canonicalDeck;
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '<html>persisted-baseline</html>',
+    lastPersistedCanonicalDeck: canonicalDeck,
+    persistedDeckPlaybackState: playbackState
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  vm.runInContext('resolveEditorMetadataPersistenceOptions = __resolveEditorMetadataPersistenceOptions;', context);
+  vm.runInContext('resolveEditorReusablePersistedHtml = __resolveEditorReusablePersistedHtml;', context);
+  vm.runInContext('sanitizeEditorReusablePersistedHtml = __sanitizeEditorReusablePersistedHtml;', context);
+
+  assert.equal(context.buildPersistableDeckHtml(), '<html>sanitized-persisted</html>');
+  assert.equal(sharedBuildCalls, 0);
+  assert.deepEqual(calls.map(([name]) => name), [
+    'resolveEditorReusablePersistedHtml',
+    'resolveEditorMetadataPersistenceOptions'
+  ]);
+  assert.equal(delegatedArgs.persistedHtml, '<html>persisted-baseline</html>');
+  assert.equal(delegatedArgs.options.playbackState, playbackState);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(delegatedArgs.metadataPersistenceOptions)),
+    {
+      emptyContainerIds: ['pixelMatrix']
+    }
+  );
 });
 
 test('buildPersistableDeckHtml prefers the shared persisted-content resolver before checking html reuse', () => {
