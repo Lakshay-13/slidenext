@@ -5493,23 +5493,23 @@
       const capturedBuildState = captureEditorPersistableDeckBuildState(doc, {
         canonicalDeck: providedCanonicalDeck
       });
-      const cleanHtml = typeof capturedBuildState.cleanHtml === 'string'
-        ? capturedBuildState.cleanHtml
-        : '';
-      const resolvedCanonicalDeck = Object.prototype.hasOwnProperty.call(capturedBuildState, 'canonicalDeck')
-        ? capturedBuildState.canonicalDeck
-        : null;
-      const resolvedPlaybackState = Object.prototype.hasOwnProperty.call(capturedBuildState, 'playbackState')
-        ? capturedBuildState.playbackState
-        : undefined;
-      return resolveEditorCapturedPersistableDeckState(cleanHtml, {
-        canonicalDeck: resolvedCanonicalDeck,
-        playbackState: resolvedPlaybackState,
-        buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-          buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
-        }),
-        resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
-      });
+      return resolveEditorCapturedPersistableDeckState(
+        typeof capturedBuildState.cleanHtml === 'string'
+          ? capturedBuildState.cleanHtml
+          : '',
+        {
+          canonicalDeck: Object.prototype.hasOwnProperty.call(capturedBuildState, 'canonicalDeck')
+            ? capturedBuildState.canonicalDeck
+            : null,
+          playbackState: Object.prototype.hasOwnProperty.call(capturedBuildState, 'playbackState')
+            ? capturedBuildState.playbackState
+            : undefined,
+          buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+          }),
+          resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
+        }
+      );
     }
 
     function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {
