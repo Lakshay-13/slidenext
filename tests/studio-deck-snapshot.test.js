@@ -160,6 +160,47 @@ test('createStudioDeckSnapshotBuildOptions resolves live snapshot state from the
   assert.equal(fallbackCalls, 0);
 });
 
+test('createStudioDeckSnapshotBuildOptions can derive canonical view state from lower-level builders', () => {
+  const doc = { label: 'doc' };
+  const canonicalDeck = {
+    slides: [
+      { id: 'slide-1', title: 'Intro', nodes: [{ id: 'node-1' }] },
+      { id: 'slide-2', title: 'Agenda', nodes: [{ id: 'node-2' }] }
+    ]
+  };
+  const activeSlide = { id: 'active-slide-el' };
+  let buildCanonicalDeckCalls = 0;
+  let fallbackCalls = 0;
+
+  const result = deckSnapshot.createStudioDeckSnapshotBuildOptions(doc, {
+    buildCanonicalDeck(nextDoc) {
+      buildCanonicalDeckCalls += 1;
+      assert.equal(nextDoc, doc);
+      return canonicalDeck;
+    },
+    resolveLiveActiveSlideId(nextDoc) {
+      assert.equal(nextDoc, doc);
+      return 'slide-2';
+    },
+    resolveFallbackActiveSlideId() {
+      fallbackCalls += 1;
+      return 'slide-fallback';
+    },
+    resolveLiveActiveSlide(nextDoc) {
+      assert.equal(nextDoc, doc);
+      return activeSlide;
+    }
+  });
+
+  assert.equal(result.fallbackActiveSlideId, 'slide-2');
+  assert.equal(result.getActiveSlide(), activeSlide);
+  assert.deepEqual(result.buildCanonicalDeck(doc), canonicalDeck);
+  assert.equal(result.liveActiveSlideId, 'slide-2');
+  assert.equal(result.resolvedCanonicalDeck, null);
+  assert.equal(buildCanonicalDeckCalls, 1);
+  assert.equal(fallbackCalls, 0);
+});
+
 test('createStudioDeckSnapshotBuildOptions reuses the resolved canonical deck when the editor frame is unavailable', () => {
   const canonicalDeck = {
     slides: [

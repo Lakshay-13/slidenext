@@ -991,7 +991,8 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
         delegatedArgs = {
           nextDoc,
           options,
-          canonicalDeckViewState: options.resolveCanonicalDeckViewState(nextDoc),
+          canonicalDeck: options.buildCanonicalDeck(nextDoc),
+          liveActiveSlideId: options.resolveLiveActiveSlideId(nextDoc),
           fallbackActiveSlideId: options.resolveFallbackActiveSlideId(nextDoc, canonicalDeck),
           liveActiveSlide: options.resolveLiveActiveSlide(nextDoc)
         };
@@ -1014,6 +1015,10 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
           slides: []
         };
       }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return canonicalDeck;
     },
     buildEditorDeckSnapshotFromDom() {},
     buildEditorLayerSnapshot() {},
@@ -1055,7 +1060,8 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
   const result = context.buildEditorDeckSnapshot();
 
   assert.equal(delegatedArgs.nextDoc, iframeDoc);
-  assert.equal(delegatedArgs.canonicalDeckViewState.liveActiveSlideId, 'slide-live');
+  assert.equal(delegatedArgs.liveActiveSlideId, 'slide-live');
+  assert.equal(delegatedArgs.canonicalDeck, canonicalDeck);
   assert.equal(delegatedArgs.fallbackActiveSlideId, 'slide-fallback');
   assert.equal(delegatedArgs.liveActiveSlide, activeSlide);
   assert.equal(calls.length, 1);

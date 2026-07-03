@@ -14,6 +14,22 @@
     return !!deck && Array.isArray(deck.slides);
   }
 
+  function createStudioDeckSnapshotCanonicalDeckResolver(doc, options = {}) {
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : () => null;
+    let didResolveCanonicalDeck = false;
+    let resolvedCanonicalDeck = null;
+
+    return function resolveCanonicalDeck(sourceDoc = doc) {
+      if (!didResolveCanonicalDeck) {
+        resolvedCanonicalDeck = buildCanonicalDeck(sourceDoc);
+        didResolveCanonicalDeck = true;
+      }
+      return resolvedCanonicalDeck;
+    };
+  }
+
   function buildStudioDeckSnapshotFromDom(doc, options = {}) {
     if (!deckModel || typeof deckModel.buildDeckSnapshot !== 'function') {
       return {
@@ -37,7 +53,26 @@
   function createStudioDeckSnapshotBuildOptions(doc, options = {}) {
     const resolveCanonicalDeckViewState = typeof options.resolveCanonicalDeckViewState === 'function'
       ? options.resolveCanonicalDeckViewState
-      : () => null;
+      : (nextDoc) => {
+          const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
+            ? options.resolveCanonicalDeck
+            : createStudioDeckSnapshotCanonicalDeckResolver(nextDoc, {
+                buildCanonicalDeck: options.buildCanonicalDeck
+              });
+          const resolveLiveActiveSlideId = typeof options.resolveLiveActiveSlideId === 'function'
+            ? options.resolveLiveActiveSlideId
+            : () => '';
+          const liveActiveSlideId = resolveLiveActiveSlideId(nextDoc);
+          const resolvedCanonicalDeck = !nextDoc
+            ? resolveCanonicalDeck(nextDoc)
+            : (liveActiveSlideId ? null : resolveCanonicalDeck(nextDoc));
+
+          return {
+            resolveCanonicalDeck,
+            liveActiveSlideId,
+            resolvedCanonicalDeck
+          };
+        };
     const resolveFallbackActiveSlideId = typeof options.resolveFallbackActiveSlideId === 'function'
       ? options.resolveFallbackActiveSlideId
       : () => '';
@@ -134,6 +169,7 @@
 
   return {
     isCanonicalDeckLike,
+    createStudioDeckSnapshotCanonicalDeckResolver,
     buildStudioDeckSnapshotFromDom,
     createStudioDeckSnapshotBuildOptions,
     buildStudioDeckSnapshot,

@@ -3105,12 +3105,11 @@
         : null;
       const snapshotBuildOptions = createStudioDeckSnapshotBuildOptions
         ? createStudioDeckSnapshotBuildOptions(doc, {
-            resolveCanonicalDeckViewState: (sourceDoc) => resolveEditorCanonicalDeckViewState(sourceDoc, {
-              resolveLiveActiveSlideId: (nextDoc) => {
-                const activeSlide = resolveEditorLiveActiveSlide(nextDoc);
-                return activeSlide ? (getEditorSlideId(activeSlide, nextDoc) || '') : '';
-              }
-            }),
+            buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+            resolveLiveActiveSlideId: (nextDoc) => {
+              const activeSlide = resolveEditorLiveActiveSlide(nextDoc);
+              return activeSlide ? (getEditorSlideId(activeSlide, nextDoc) || '') : '';
+            },
             resolveFallbackActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
               sourceDoc,
               canonicalDeck
