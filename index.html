@@ -5495,11 +5495,14 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(buildOptions, 'canonicalDeck')
         ? buildOptions.canonicalDeck
         : null;
-      const resolveCanonicalDeckOverride = (shouldBuildFallbackCanonicalDeck = false) => shouldBuildFallbackCanonicalDeck
-        ? resolveEditorSaveCanonicalDeck(doc, providedCanonicalDeck)
-        : resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-            buildCanonicalDeck: null
-          });
+      const resolveCanonicalDeckOverride = (shouldBuildFallbackCanonicalDeck = false) => resolveEditorCanonicalDeckOverride(
+        providedCanonicalDeck,
+        {
+          buildCanonicalDeck: shouldBuildFallbackCanonicalDeck
+            ? () => buildEditorCanonicalDeck(doc)
+            : null
+        }
+      );
       const resolveMetadataPersistenceOptions = () => resolveEditorMetadataPersistenceOptions();
       const sanitizeReusablePersistedHtml = (persistedHtml, playbackState = null) => sanitizeEditorReusablePersistedHtml(
         persistedHtml,

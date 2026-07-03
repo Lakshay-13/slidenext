@@ -85,14 +85,6 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
     );
     vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
   }
-  if (typeof context.resolveEditorSaveCanonicalDeck !== 'function') {
-    const resolveEditorSaveCanonicalDeckSource = extractFunctionSource(
-      fileContent,
-      'function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
-      '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
-    );
-    vm.runInContext(resolveEditorSaveCanonicalDeckSource, context);
-  }
   vm.runInContext(helperSource, context);
 }
 
@@ -584,10 +576,10 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
-    __resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
-      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
-      assert.equal(nextDoc, null);
+    __resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+      calls.push(['resolveEditorCanonicalDeckOverride', nextCanonicalDeck, options.buildCanonicalDeck]);
       assert.equal(nextCanonicalDeck, canonicalDeck);
+      assert.equal(typeof options.buildCanonicalDeck, 'function');
       return canonicalDeck;
     },
     SlideNextDeckPersistence: {
@@ -621,7 +613,7 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
   vm.runInContext(
-    'resolveEditorSaveCanonicalDeck = __resolveEditorSaveCanonicalDeck;',
+    'resolveEditorCanonicalDeckOverride = __resolveEditorCanonicalDeckOverride;',
     context
   );
 
@@ -632,9 +624,10 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
     '<html>persisted-baseline</html>'
   );
   assert.equal(buildEditorCanonicalDeckCalls, 0);
-  assert.deepEqual(calls, [
-    ['resolveEditorSaveCanonicalDeck', null, canonicalDeck]
-  ]);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'resolveEditorCanonicalDeckOverride');
+  assert.equal(calls[0][1], canonicalDeck);
+  assert.equal(typeof calls[0][2], 'function');
 });
 
 test('buildPersistableDeckHtml falls back to the editor canonical deck when a provided override is malformed', () => {
