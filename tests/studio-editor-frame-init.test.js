@@ -522,7 +522,7 @@ test('captureEditorPersistableDeckState honors a provided canonical deck overrid
   assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
-test('captureEditorPersistableDeckState reuses the local captured canonical deck helper when html capture does not report one', () => {
+test('captureEditorPersistableDeckState reuses the local save canonical deck helper when html capture does not report one', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
   const canonicalDeck = {
@@ -539,14 +539,11 @@ test('captureEditorPersistableDeckState reuses the local captured canonical deck
   const calls = [];
 
   const context = {
-    __createEditorSaveCanonicalDeckResolver(nextDoc) {
-      calls.push(['createEditorSaveCanonicalDeckResolver', nextDoc]);
+    __resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
       assert.equal(nextDoc, iframeDoc);
-      return (nextCanonicalDeck) => {
-        calls.push(['resolveSaveCanonicalDeck', nextCanonicalDeck]);
-        assert.equal(nextCanonicalDeck, null);
-        return canonicalDeck;
-      };
+      assert.equal(nextCanonicalDeck, null);
+      return canonicalDeck;
     },
     buildPersistableDeckHtml(doc, options = {}) {
       assert.equal(doc, iframeDoc);
@@ -554,7 +551,7 @@ test('captureEditorPersistableDeckState reuses the local captured canonical deck
       return '<html>persisted</html>';
     },
     buildEditorCanonicalDeck() {
-      throw new Error('buildEditorCanonicalDeck should not run when createEditorSaveCanonicalDeckResolver is available');
+      throw new Error('buildEditorCanonicalDeck should not run when resolveEditorSaveCanonicalDeck is available');
     },
     capturePersistedDeckPlaybackState(doc, nextCanonicalDeck) {
       calls.push(['capturePersistedDeckPlaybackState', doc, nextCanonicalDeck]);
@@ -570,7 +567,7 @@ test('captureEditorPersistableDeckState reuses the local captured canonical deck
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(
-    'createEditorSaveCanonicalDeckResolver = __createEditorSaveCanonicalDeckResolver;',
+    'resolveEditorSaveCanonicalDeck = __resolveEditorSaveCanonicalDeck;',
     context
   );
 
@@ -581,8 +578,7 @@ test('captureEditorPersistableDeckState reuses the local captured canonical deck
     canonicalDeck
   });
   assert.deepEqual(calls.map(([name]) => name), [
-    'createEditorSaveCanonicalDeckResolver',
-    'resolveSaveCanonicalDeck',
+    'resolveEditorSaveCanonicalDeck',
     'capturePersistedDeckPlaybackState'
   ]);
 });
