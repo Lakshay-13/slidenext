@@ -5739,41 +5739,14 @@
           : '';
         const canonicalDeck = resolveCanonicalDeckOverride(true);
         reportPersistableDeckBuildState(buildOptions, canonicalDeck, persistedDeckState.playbackState);
-        const reusablePersistedHtml = typeof resolveEditorReusablePersistedHtml === 'function'
-          ? resolveEditorReusablePersistedHtml(persistedDeckStateWithContent || persistedDeckState, {
-              canonicalDeck,
-              persistedHtml,
-              persistedCanonicalDeck: persistedDeckState.canonicalDeck
-            })
-          : (() => {
-              const resolveStudioPersistedHtmlReuse = SlideNextStudioEditorPersistence
-                && typeof SlideNextStudioEditorPersistence.resolveStudioPersistedHtmlReuse === 'function'
-                ? SlideNextStudioEditorPersistence.resolveStudioPersistedHtmlReuse
-                : null;
-              const isPersistedCanonicalDeck = SlideNextStudioEditorPersistence
-                && typeof SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck === 'function'
-                ? SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck
-                : (nextCanonicalDeck, persistedCanonicalDeck) => {
-                    if (!nextCanonicalDeck) {
-                      return true;
-                    }
-                    if (!persistedCanonicalDeck) {
-                      return false;
-                    }
-                    try {
-                      return JSON.stringify(nextCanonicalDeck) === JSON.stringify(persistedCanonicalDeck);
-                    } catch (err) {
-                      return false;
-                    }
-                  };
-              return resolveStudioPersistedHtmlReuse
-                ? resolveStudioPersistedHtmlReuse(persistedDeckStateWithContent || persistedDeckState, {
-                    canonicalDeck
-                  })
-                : (persistedHtml.trim() && isPersistedCanonicalDeck(canonicalDeck, persistedDeckState.canonicalDeck)
-                    ? persistedHtml
-                    : '');
-            })();
+        const reusablePersistedHtml = resolveEditorReusablePersistedHtml(
+          persistedDeckStateWithContent || persistedDeckState,
+          {
+            canonicalDeck,
+            persistedHtml,
+            persistedCanonicalDeck: persistedDeckState.canonicalDeck
+          }
+        );
         if (reusablePersistedHtml) {
           return sanitizeReusablePersistedHtml(reusablePersistedHtml, persistedDeckState.playbackState);
         }
