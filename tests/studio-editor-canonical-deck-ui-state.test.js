@@ -35,6 +35,18 @@ function loadResolveEditorCanonicalDeckViewState(fileContent, context) {
   vm.runInContext(resolveEditorCanonicalDeckViewStateSource, context);
 }
 
+function loadCreateEditorCanonicalDeckResolverWithBuilder(fileContent, context) {
+  if (typeof context.createEditorCanonicalDeckResolverWithBuilder === 'function') {
+    return;
+  }
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createEditorCanonicalDeckResolverWithBuilder(doc = getIframeDoc(), buildCanonicalDeck = null) {',
+    '\n\n    function createEditorCanonicalDeckViewStateOptions(options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateEditorDeckViewSharedOptions(fileContent, context) {
   if (typeof context.resolveEditorCanonicalDeckOverride !== 'function') {
     const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
@@ -2004,6 +2016,7 @@ test('resolveEditorCanonicalDeckViewState reuses the local deck view state optio
   };
 
   vm.createContext(context);
+  loadCreateEditorCanonicalDeckResolverWithBuilder(fileContent, context);
   vm.runInContext(resolveEditorCanonicalDeckViewStateSource, context);
 
   const result = context.resolveEditorCanonicalDeckViewState(iframeDoc, {
