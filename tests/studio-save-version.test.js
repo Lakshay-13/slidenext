@@ -844,7 +844,7 @@ test('executeCurrentStudioVersionCheckpointSaveWithSuccess reuses the shared com
   });
 });
 
-test('executeCurrentStudioVersionCheckpointSaveWithFailure applies the failure helper when a checkpoint save response is unsuccessful', async () => {
+test('executeCurrentStudioVersionCheckpointSaveWithFailure delegates through the shared helper and applies the failure callback', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const versionCheckpointPersistenceState = {
     cleanHtml: '<html>persisted</html>',
@@ -856,14 +856,9 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure applies the failure h
     }
   };
   let failureHelperArgs = null;
+  let saveArgs = null;
   const context = {
-    __executeCurrentStudioVersionCheckpointSaveWithSuccess: async () => ({
-      data: {
-        success: false,
-        error: 'disk full'
-      },
-      versionCheckpointPersistenceState
-    }),
+    SlideNextStudioEditorPersistence: editorPersistence,
     applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
       failureHelperArgs = {
         persistenceContext,
@@ -874,12 +869,21 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure applies the failure h
       }
       return 'failed';
     },
+    saveVersionCheckpoint: async (...args) => {
+      saveArgs = args;
+      return {
+        success: false,
+        error: 'disk full'
+      };
+    },
+    applyCurrentStudioVersionCheckpointSaveSuccess() {
+      throw new Error('executeCurrentStudioVersionCheckpointSaveWithFailure should not report success for an unsuccessful result');
+    },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html'
   };
 
   vm.createContext(context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
-  vm.runInContext('executeCurrentStudioVersionCheckpointSaveWithSuccess = __executeCurrentStudioVersionCheckpointSaveWithSuccess;', context);
 
   const failureCalls = [];
   const result = await context.executeCurrentStudioVersionCheckpointSaveWithFailure(
@@ -893,6 +897,14 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure applies the failure h
     }
   );
 
+  assert.deepEqual(saveArgs, [
+    'Checkpoint Baseline',
+    '<html>persisted</html>',
+    '/presentations/onboarding-presentation/index.html',
+    {
+      sessionToken: 12
+    }
+  ]);
   assert.equal(failureHelperArgs.persistenceContext, versionCheckpointPersistenceState.persistenceContext);
   assert.equal(typeof failureHelperArgs.options.onFailure, 'function');
   assert.deepEqual(failureCalls, [{
@@ -2144,6 +2156,7 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
       success: true
     }),
     SlideNextStudioEditorPersistence: {
+      executeStudioVersionCheckpointSaveWithFailure: editorPersistence.executeStudioVersionCheckpointSaveWithFailure,
       executeStudioVersionCheckpointSaveWithSuccess: editorPersistence.executeStudioVersionCheckpointSaveWithSuccess,
       runStudioPersistenceActionIfCurrent(persistenceContext, sessionOptions, action) {
         action();
@@ -2362,6 +2375,7 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
       success: true
     }),
     SlideNextStudioEditorPersistence: {
+      executeStudioVersionCheckpointSaveWithFailure: editorPersistence.executeStudioVersionCheckpointSaveWithFailure,
       executeStudioVersionCheckpointSaveWithSuccess: editorPersistence.executeStudioVersionCheckpointSaveWithSuccess
     },
     studioEditorSessionToken: 4

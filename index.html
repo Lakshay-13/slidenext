@@ -6790,68 +6790,32 @@
       presentationUrl = currentPresentationUrl,
       options = {}
     ) {
-      const executeVersionCheckpointSaveWithFailure = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSaveWithFailure === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSaveWithFailure
-        : null;
-      if (executeVersionCheckpointSaveWithFailure) {
-        return executeVersionCheckpointSaveWithFailure(
-          versionLabel,
-          versionCheckpointPersistenceState,
-          presentationUrl,
-          {
-            saveVersionCheckpoint: typeof saveVersionCheckpoint === 'function'
-              ? saveVersionCheckpoint
-              : null,
-            applyVersionCheckpointSaveSuccess: typeof applyCurrentStudioVersionCheckpointSaveSuccess === 'function'
-              ? applyCurrentStudioVersionCheckpointSaveSuccess
-              : null,
-            successOptions: {
-              onSuccess: options.onSuccess
-            },
-            applyPersistenceFailure: typeof applyCurrentStudioPersistenceFailure === 'function'
-              ? applyCurrentStudioPersistenceFailure
-              : null,
-            buildFailureOptions: (data) => ({
-              onFailure: () => {
-                if (typeof options.onFailure === 'function') {
-                  options.onFailure(data);
-                }
-              }
-            })
-          }
-        );
-      }
-      const versionCheckpointSaveResult = await executeCurrentStudioVersionCheckpointSaveWithSuccess(
+      return SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSaveWithFailure(
         versionLabel,
         versionCheckpointPersistenceState,
         presentationUrl,
         {
-          onSuccess: options.onSuccess
-        }
-      );
-      if (
-        versionCheckpointSaveResult
-        && versionCheckpointSaveResult.data
-        && !versionCheckpointSaveResult.data.success
-      ) {
-        applyCurrentStudioPersistenceFailure(
-          versionCheckpointSaveResult.versionCheckpointPersistenceState
-            ? versionCheckpointSaveResult.versionCheckpointPersistenceState.persistenceContext
-            : versionCheckpointPersistenceState.persistenceContext,
-          {
+          saveVersionCheckpoint: typeof saveVersionCheckpoint === 'function'
+            ? saveVersionCheckpoint
+            : null,
+          applyVersionCheckpointSaveSuccess: typeof applyCurrentStudioVersionCheckpointSaveSuccess === 'function'
+            ? applyCurrentStudioVersionCheckpointSaveSuccess
+            : null,
+          successOptions: {
+            onSuccess: options.onSuccess
+          },
+          applyPersistenceFailure: typeof applyCurrentStudioPersistenceFailure === 'function'
+            ? applyCurrentStudioPersistenceFailure
+            : null,
+          buildFailureOptions: (data) => ({
             onFailure: () => {
               if (typeof options.onFailure === 'function') {
-                options.onFailure(versionCheckpointSaveResult.data);
+                options.onFailure(data);
               }
             }
-          }
-        );
-      }
-      return versionCheckpointSaveResult;
+          })
+        }
+      );
     }
 
     function isCurrentStudioVersionCheckpointSavePersisted(
