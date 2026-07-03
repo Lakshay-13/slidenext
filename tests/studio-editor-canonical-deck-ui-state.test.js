@@ -1098,10 +1098,11 @@ test('resolveEditorSaveCanonicalDeck reuses a valid provided canonical deck when
   };
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
-    SlideNextCanonicalDeck: {
-      isCanonicalDeck(deck) {
-        return deck === canonicalDeck;
+    resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+      if (nextCanonicalDeck) {
+        return nextCanonicalDeck;
       }
+      return options.buildCanonicalDeck();
     },
     buildEditorCanonicalDeck(nextDoc) {
       buildEditorCanonicalDeckCalls += 1;
