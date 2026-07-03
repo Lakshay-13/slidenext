@@ -1256,7 +1256,7 @@ test('createCurrentStudioSessionStateReaders exposes live presentation and sessi
   const createCurrentStudioSessionStateReadersSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioSessionStateReaders() {',
-    '\n\n    function resetEditorPersistenceTimers() {'
+    '\n\n    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
   );
 
   const calls = [];

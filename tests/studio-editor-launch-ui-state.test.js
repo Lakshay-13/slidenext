@@ -138,13 +138,23 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
         return null;
       }
     },
+    SlideNextStudioEditorPersistence: {
+      clearStudioPersistenceTimers() {
+        return {
+          autoSaveDebounceTimer: null,
+          autoVersionTimers: {}
+        };
+      }
+    },
+    autoSaveDebounceTimer: null,
+    autoVersionTimers: {},
     applyCurrentStudioPersistedDeckState() {},
-    resetEditorPersistenceTimers() {},
     resetStudioDeckUiState() {},
     resetStudioPresentationUiState() {},
     resetStudioSaveButtonState() {},
     resetStudioSourceViewUiState() {},
     resetStudioVersionUiState() {},
+    clearTimeout() {},
     setTimeout,
     redoStack: ['redo-entry'],
     studioEditorSessionToken: 0,
@@ -268,11 +278,19 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
         return null;
       }
     },
+    SlideNextStudioEditorPersistence: {
+      clearStudioPersistenceTimers() {
+        calls.push(['clearStudioPersistenceTimers']);
+        return {
+          autoSaveDebounceTimer: null,
+          autoVersionTimers: {}
+        };
+      }
+    },
+    autoSaveDebounceTimer: null,
+    autoVersionTimers: {},
     applyCurrentStudioPersistedDeckState(nextState, options) {
       calls.push(['applyCurrentStudioPersistedDeckState', nextState, options]);
-    },
-    resetEditorPersistenceTimers() {
-      calls.push(['resetEditorPersistenceTimers']);
     },
     resetStudioDeckUiState() {
       calls.push(['resetStudioDeckUiState']);
@@ -289,6 +307,7 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
     resetStudioVersionUiState() {
       calls.push(['resetStudioVersionUiState']);
     },
+    clearTimeout() {},
     setTimeout,
     redoStack: ['redo-entry'],
     studioEditorSessionToken: 0,
@@ -636,15 +655,25 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
     loadPresentations() {
       loadPresentationsCalls += 1;
     },
+    SlideNextStudioEditorPersistence: {
+      clearStudioPersistenceTimers() {
+        return {
+          autoSaveDebounceTimer: null,
+          autoVersionTimers: {}
+        };
+      }
+    },
+    autoSaveDebounceTimer: null,
+    autoVersionTimers: {},
     applyCurrentStudioPersistedDeckState(nextState, options) {
       calls.push(['applyCurrentStudioPersistedDeckState', nextState, options]);
     },
-    resetEditorPersistenceTimers() {},
     resetStudioDeckUiState() {},
     resetStudioPresentationUiState() {},
     resetStudioSaveButtonState() {},
     resetStudioSourceViewUiState() {},
     resetStudioVersionUiState() {},
+    clearTimeout() {},
     redoStack: ['redo-entry'],
     setTimeout(callback) {
       callback();

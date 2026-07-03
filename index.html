@@ -1995,7 +1995,13 @@
         slideIndex: 0,
         presentationMetadata: buildCurrentPresentationMetadataSeed(url, title)
       });
-      resetEditorPersistenceTimers();
+      const clearedTimerState = SlideNextStudioEditorPersistence.clearStudioPersistenceTimers({
+        autoSaveDebounceTimer,
+        autoVersionTimers,
+        clearTimer: clearTimeout
+      });
+      autoSaveDebounceTimer = clearedTimerState.autoSaveDebounceTimer;
+      autoVersionTimers = clearedTimerState.autoVersionTimers;
       applyCurrentStudioPersistedDeckState({
         cleanHtml: '',
         canonicalDeck: null,
@@ -2073,7 +2079,13 @@
         slideIndex: 0,
         presentationMetadata: null
       });
-      resetEditorPersistenceTimers();
+      const clearedTimerState = SlideNextStudioEditorPersistence.clearStudioPersistenceTimers({
+        autoSaveDebounceTimer,
+        autoVersionTimers,
+        clearTimer: clearTimeout
+      });
+      autoSaveDebounceTimer = clearedTimerState.autoSaveDebounceTimer;
+      autoVersionTimers = clearedTimerState.autoVersionTimers;
       applyCurrentStudioPersistedDeckState({
         cleanHtml: '',
         canonicalDeck: null,
@@ -5577,16 +5589,6 @@
         getCurrentPresentationUrl: () => currentPresentationUrl,
         getCurrentSessionToken: () => studioEditorSessionToken
       });
-    }
-
-    function resetEditorPersistenceTimers() {
-      const clearedTimerState = SlideNextStudioEditorPersistence.clearStudioPersistenceTimers({
-        autoSaveDebounceTimer,
-        autoVersionTimers,
-        clearTimer: clearTimeout
-      });
-      autoSaveDebounceTimer = clearedTimerState.autoSaveDebounceTimer;
-      autoVersionTimers = clearedTimerState.autoVersionTimers;
     }
 
     function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
