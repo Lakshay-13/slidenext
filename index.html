@@ -3858,32 +3858,11 @@
 
     function createEditorPersistableCanonicalDeckOverrideResolver(doc = getIframeDoc(), canonicalDeck = null) {
       return function resolveCanonicalDeckOverride(shouldBuildFallbackCanonicalDeck = false) {
-        if (typeof resolveEditorCanonicalDeckOverride === 'function') {
-          return resolveEditorCanonicalDeckOverride(canonicalDeck, {
-            buildCanonicalDeck: shouldBuildFallbackCanonicalDeck
-              ? () => buildEditorCanonicalDeck(doc)
-              : null
-          });
-        }
-        const canonicalDeckValidator = typeof getEditorCanonicalDeckValidator === 'function'
-          ? getEditorCanonicalDeckValidator()
-          : (
-              typeof SlideNextCanonicalDeck !== 'undefined'
-              && SlideNextCanonicalDeck
-              && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-            )
-            ? SlideNextCanonicalDeck.isCanonicalDeck
-            : null;
-        const buildCanonicalDeck = shouldBuildFallbackCanonicalDeck
-          ? () => buildEditorCanonicalDeck(doc)
-          : null;
-        if (!canonicalDeckValidator) {
-          return canonicalDeck || (buildCanonicalDeck ? buildCanonicalDeck() : null);
-        }
-        if (canonicalDeck && canonicalDeckValidator && !canonicalDeckValidator(canonicalDeck)) {
-          return buildCanonicalDeck ? buildCanonicalDeck() : null;
-        }
-        return canonicalDeck || (buildCanonicalDeck ? buildCanonicalDeck() : null);
+        return resolveEditorCanonicalDeckOverride(canonicalDeck, {
+          buildCanonicalDeck: shouldBuildFallbackCanonicalDeck
+            ? () => buildEditorCanonicalDeck(doc)
+            : null
+        });
       };
     }
 
