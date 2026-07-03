@@ -1668,6 +1668,17 @@
       };
     }
 
+    function createEditorCanonicalDeckViewStateOptions(options = {}) {
+      return {
+        buildCanonicalDeck: typeof options.buildCanonicalDeck === 'function'
+          ? options.buildCanonicalDeck
+          : (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+        resolveLiveActiveSlideId: typeof options.resolveLiveActiveSlideId === 'function'
+          ? options.resolveLiveActiveSlideId
+          : (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc)
+      };
+    }
+
     function resolveEditorCanonicalDeckViewState(doc = getIframeDoc(), options = {}) {
       const resolveStudioCanonicalDeckViewState = (
         typeof SlideNextStudioDeckView !== 'undefined'
@@ -1676,12 +1687,20 @@
         && typeof SlideNextStudioDeckView.resolveStudioCanonicalDeckViewState === 'function'
         ? SlideNextStudioDeckView.resolveStudioCanonicalDeckViewState
         : null;
-      const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-        ? options.buildCanonicalDeck
-        : (sourceDoc) => buildEditorCanonicalDeck(sourceDoc);
-      const resolveLiveActiveSlideId = typeof options.resolveLiveActiveSlideId === 'function'
-        ? options.resolveLiveActiveSlideId
-        : (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc);
+      const deckViewStateOptions = typeof createEditorCanonicalDeckViewStateOptions === 'function'
+        ? createEditorCanonicalDeckViewStateOptions(options)
+        : {
+            buildCanonicalDeck: typeof options.buildCanonicalDeck === 'function'
+              ? options.buildCanonicalDeck
+              : (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+            resolveLiveActiveSlideId: typeof options.resolveLiveActiveSlideId === 'function'
+              ? options.resolveLiveActiveSlideId
+              : (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc)
+          };
+      const {
+        buildCanonicalDeck,
+        resolveLiveActiveSlideId
+      } = deckViewStateOptions;
       if (resolveStudioCanonicalDeckViewState) {
         return resolveStudioCanonicalDeckViewState(doc, {
           buildCanonicalDeck,
@@ -1720,12 +1739,20 @@
       const activeSlideId = typeof buildOptions.activeSlideId === 'string' && buildOptions.activeSlideId.trim()
         ? buildOptions.activeSlideId
         : '';
-      const buildCanonicalDeck = typeof buildOptions.buildCanonicalDeck === 'function'
-        ? buildOptions.buildCanonicalDeck
-        : (sourceDoc) => buildEditorCanonicalDeck(sourceDoc);
-      const resolveLiveActiveSlideId = typeof buildOptions.resolveLiveActiveSlideId === 'function'
-        ? buildOptions.resolveLiveActiveSlideId
-        : (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc);
+      const deckViewStateOptions = typeof createEditorCanonicalDeckViewStateOptions === 'function'
+        ? createEditorCanonicalDeckViewStateOptions(buildOptions)
+        : {
+            buildCanonicalDeck: typeof buildOptions.buildCanonicalDeck === 'function'
+              ? buildOptions.buildCanonicalDeck
+              : (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+            resolveLiveActiveSlideId: typeof buildOptions.resolveLiveActiveSlideId === 'function'
+              ? buildOptions.resolveLiveActiveSlideId
+              : (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc)
+          };
+      const {
+        buildCanonicalDeck,
+        resolveLiveActiveSlideId
+      } = deckViewStateOptions;
       const buildFallbackHtml = typeof buildOptions.buildFallbackHtml === 'function'
         ? buildOptions.buildFallbackHtml
         : (sourceDoc, canonicalDeck) => buildPersistableDeckHtml(sourceDoc, {
