@@ -424,6 +424,48 @@
     );
   }
 
+  async function executeStudioAutoSavePersistenceRequestWithHandlers(
+    autoSavePersistenceState = null,
+    options = {}
+  ) {
+    if (!autoSavePersistenceState || !autoSavePersistenceState.persistencePlan) {
+      return null;
+    }
+
+    const { persistencePlan } = autoSavePersistenceState;
+    const data = await executeStudioAutoSavePersistenceRequest(
+      persistencePlan,
+      {
+        fetchImpl: options.fetchImpl
+      }
+    );
+    const applyPersistenceSuccess = typeof options.applyPersistenceSuccess === 'function'
+      ? options.applyPersistenceSuccess
+      : null;
+    const applyPersistenceFailure = typeof options.applyPersistenceFailure === 'function'
+      ? options.applyPersistenceFailure
+      : null;
+
+    if (data && data.success) {
+      if (applyPersistenceSuccess) {
+        applyPersistenceSuccess(
+          persistencePlan.persistenceContext,
+          asPlainObject(options.successOptions)
+        );
+      }
+    } else if (applyPersistenceFailure) {
+      applyPersistenceFailure(
+        persistencePlan.persistenceContext,
+        asPlainObject(options.failureOptions)
+      );
+    }
+
+    return {
+      data,
+      autoSavePersistenceState
+    };
+  }
+
   async function executeStudioPersistenceRequest(request = {}, options = {}) {
     const fetchImpl = typeof options.fetchImpl === 'function'
       ? options.fetchImpl
@@ -862,6 +904,7 @@
     resolveStudioAutoSavePersistenceStateFromCapture,
     createStudioAutoSaveRequest,
     executeStudioAutoSavePersistenceRequest,
+    executeStudioAutoSavePersistenceRequestWithHandlers,
     executeStudioPersistenceRequest,
     buildStudioVersionCheckpointPersistencePlan,
     createStudioVersionCheckpointRequest,

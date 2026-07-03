@@ -6941,6 +6941,74 @@
       });
     }
 
+    async function executeCurrentStudioAutoSavePersistenceRequestWithHandlers(
+      autoSavePersistenceState = null,
+      options = {}
+    ) {
+      const executeAutoSavePersistenceRequestWithHandlers = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.executeStudioAutoSavePersistenceRequestWithHandlers === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.executeStudioAutoSavePersistenceRequestWithHandlers
+        : null;
+      if (executeAutoSavePersistenceRequestWithHandlers) {
+        return executeAutoSavePersistenceRequestWithHandlers(
+          autoSavePersistenceState,
+          {
+            fetchImpl: fetch,
+            applyPersistenceSuccess: applyCurrentStudioPersistenceSuccess,
+            applyPersistenceFailure: applyCurrentStudioPersistenceFailure,
+            successOptions: {
+              presentationUrl: autoSavePersistenceState
+                && autoSavePersistenceState.persistencePlan
+                && autoSavePersistenceState.persistencePlan.persistenceContext
+                ? autoSavePersistenceState.persistencePlan.persistenceContext.presentationUrl
+                : currentPresentationUrl,
+              onSuccess: options.onSuccess
+            },
+            failureOptions: {
+              onFailure: options.onFailure
+            }
+          }
+        );
+      }
+
+      if (!autoSavePersistenceState || !autoSavePersistenceState.persistencePlan) {
+        return null;
+      }
+
+      const { persistencePlan } = autoSavePersistenceState;
+      const data = await SlideNextStudioEditorPersistence.executeStudioAutoSavePersistenceRequest(
+        persistencePlan,
+        {
+          fetchImpl: fetch
+        }
+      );
+
+      if (data.success) {
+        applyCurrentStudioPersistenceSuccess(
+          persistencePlan.persistenceContext,
+          {
+            presentationUrl: persistencePlan.persistenceContext.presentationUrl,
+            onSuccess: options.onSuccess
+          }
+        );
+      } else {
+        applyCurrentStudioPersistenceFailure(
+          persistencePlan.persistenceContext,
+          {
+            onFailure: options.onFailure
+          }
+        );
+      }
+
+      return {
+        data,
+        autoSavePersistenceState
+      };
+    }
+
     // 6. AutoSave debouncing pipeline
     let autoSaveDebounceTimer = null;
     function triggerAutoSave() {
@@ -6970,32 +7038,17 @@
         }
         
         try {
-          const data = await SlideNextStudioEditorPersistence.executeStudioAutoSavePersistenceRequest(
-            persistencePlan,
+          await executeCurrentStudioAutoSavePersistenceRequestWithHandlers(
+            autoSavePersistenceState,
             {
-              fetchImpl: fetch
+              onSuccess: () => {
+                setStudioAutoSaveStatus('saved');
+              },
+              onFailure: () => {
+                setStudioAutoSaveStatus('autosave-failed');
+              }
             }
           );
-          if (data.success) {
-            applyCurrentStudioPersistenceSuccess(
-              persistencePlan.persistenceContext,
-              {
-                presentationUrl: persistencePlan.persistenceContext.presentationUrl,
-                onSuccess: () => {
-                  setStudioAutoSaveStatus('saved');
-                }
-              }
-            );
-          } else {
-            applyCurrentStudioPersistenceFailure(
-              persistencePlan.persistenceContext,
-              {
-                onFailure: () => {
-                  setStudioAutoSaveStatus('autosave-failed');
-                }
-              }
-            );
-          }
         } catch (err) {
           console.error('AutoSave Error:', err);
           applyCurrentStudioPersistenceFailure(

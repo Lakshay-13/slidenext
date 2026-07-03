@@ -136,6 +136,15 @@ function loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context) 
   const helperSource = extractFunctionSource(
     fileContent,
     'function resolveCurrentStudioAutoSavePersistenceState(',
+    '\n\n    async function executeCurrentStudioAutoSavePersistenceRequestWithHandlers('
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadExecuteCurrentStudioAutoSavePersistenceRequestWithHandlers(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'async function executeCurrentStudioAutoSavePersistenceRequestWithHandlers(',
     '\n\n    // 6. AutoSave debouncing pipeline'
   );
   vm.runInContext(helperSource, context);
@@ -2128,6 +2137,74 @@ test('executeSaveAutoVersion reuses the local version checkpoint success helper 
   assert.deepEqual(logCalls, ['Auto-created version checkpoint: Auto: Edited Text']);
 });
 
+test('executeCurrentStudioAutoSavePersistenceRequestWithHandlers reuses the shared autosave helper when available', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const autoSavePersistenceState = {
+    persistencePlan: {
+      persistenceContext: {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      }
+    }
+  };
+  let helperArgs = null;
+  const context = {
+    applyCurrentStudioPersistenceFailure() {
+      throw new Error('executeCurrentStudioAutoSavePersistenceRequestWithHandlers should pass the failure helper to the shared helper');
+    },
+    applyCurrentStudioPersistenceSuccess() {
+      throw new Error('executeCurrentStudioAutoSavePersistenceRequestWithHandlers should pass the success helper to the shared helper');
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    fetch() {
+      throw new Error('executeCurrentStudioAutoSavePersistenceRequestWithHandlers should pass fetch to the shared helper');
+    },
+    SlideNextStudioEditorPersistence: {
+      executeStudioAutoSavePersistenceRequestWithHandlers: async (...args) => {
+        helperArgs = args;
+        return {
+          data: {
+            success: true
+          },
+          autoSavePersistenceState
+        };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadExecuteCurrentStudioAutoSavePersistenceRequestWithHandlers(fileContent, context);
+
+  const result = await context.executeCurrentStudioAutoSavePersistenceRequestWithHandlers(
+    autoSavePersistenceState,
+    {
+      onSuccess() {},
+      onFailure() {}
+    }
+  );
+
+  assert.equal(helperArgs[0], autoSavePersistenceState);
+  assert.equal(helperArgs[1].fetchImpl, context.fetch);
+  assert.equal(helperArgs[1].applyPersistenceSuccess, context.applyCurrentStudioPersistenceSuccess);
+  assert.equal(helperArgs[1].applyPersistenceFailure, context.applyCurrentStudioPersistenceFailure);
+  assert.deepEqual(JSON.parse(JSON.stringify(helperArgs[1].successOptions)), {
+    presentationUrl: '/presentations/onboarding-presentation/index.html'
+  });
+  assert.equal(typeof helperArgs[1].successOptions.onSuccess, 'function');
+  assert.equal(typeof helperArgs[1].failureOptions.onFailure, 'function');
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    data: {
+      success: true
+    },
+    autoSavePersistenceState: {
+      persistencePlan: {
+        persistenceContext: {
+          presentationUrl: '/presentations/onboarding-presentation/index.html'
+        }
+      }
+    }
+  });
+});
+
 test('triggerAutoSave skips persistence when the shared iframe accessor has no live document and no fallback html', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const triggerAutoSaveSource = extractFunctionSource(
@@ -2209,6 +2286,7 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
   loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context);
+  loadExecuteCurrentStudioAutoSavePersistenceRequestWithHandlers(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
   context.triggerAutoSave();
@@ -2249,11 +2327,10 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
   const context = {
     SlideNextStudioEditorPersistence: {
       ...editorPersistence,
-      async executeStudioAutoSavePersistenceRequest(persistencePlan, options = {}) {
-        capturedAutoSaveExecutionArgs = [persistencePlan, options];
-        return editorPersistence.executeStudioAutoSavePersistenceRequest(
-          persistencePlan,
-          options
+      async executeStudioAutoSavePersistenceRequestWithHandlers(...args) {
+        capturedAutoSaveExecutionArgs = args;
+        return editorPersistence.executeStudioAutoSavePersistenceRequestWithHandlers(
+          ...args
         );
       }
     },
@@ -2338,6 +2415,7 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
   loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context);
+  loadExecuteCurrentStudioAutoSavePersistenceRequestWithHandlers(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
   context.triggerAutoSave();
@@ -2355,7 +2433,7 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
       canonicalDeck
     }
   ]]);
-  assert.equal(capturedAutoSaveExecutionArgs[0].hasPersistedCurrentState, false);
+  assert.equal(capturedAutoSaveExecutionArgs[0].persistencePlan.hasPersistedCurrentState, false);
   assert.equal(capturedAutoSaveExecutionArgs[1].fetchImpl, context.fetch);
   assert.equal(persistedStateUpdates.length, 2);
   assert.equal(persistedStateUpdates[0].cleanHtml, '<html>canonical-source</html>');
@@ -2475,6 +2553,7 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
   loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context);
+  loadExecuteCurrentStudioAutoSavePersistenceRequestWithHandlers(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
   context.triggerAutoSave();
@@ -2600,6 +2679,7 @@ test('triggerAutoSave clears the persisted playback baseline after a successful 
   loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioAutoSavePersistenceState(fileContent, context);
+  loadExecuteCurrentStudioAutoSavePersistenceRequestWithHandlers(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
   context.triggerAutoSave();

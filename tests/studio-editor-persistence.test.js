@@ -1135,6 +1135,121 @@ test('executeStudioAutoSavePersistenceRequest reuses the autosave request and re
   assert.deepEqual(result, { success: true });
 });
 
+test('executeStudioAutoSavePersistenceRequestWithHandlers applies success callbacks after a successful autosave request', async () => {
+  const autoSavePersistenceState = {
+    persistencePlan: {
+      hasPersistedCurrentState: false,
+      saveRequestBody: {
+        htmlPath: '/presentations/onboarding-presentation/index.html',
+        htmlContent: '<html>live-save</html>',
+        isAutoSave: true
+      },
+      persistenceContext: {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      }
+    }
+  };
+  const fetchCalls = [];
+  let successArgs = null;
+  let failureCalls = 0;
+
+  const result = await editorPersistence.executeStudioAutoSavePersistenceRequestWithHandlers(
+    autoSavePersistenceState,
+    {
+      fetchImpl: async (url, init) => {
+        fetchCalls.push([url, JSON.parse(init.body)]);
+        return {
+          async json() {
+            return { success: true };
+          }
+        };
+      },
+      applyPersistenceSuccess(persistenceContext, options = {}) {
+        successArgs = {
+          persistenceContext,
+          options
+        };
+      },
+      applyPersistenceFailure() {
+        failureCalls += 1;
+      },
+      successOptions: {
+        marker: 'autosave-success'
+      }
+    }
+  );
+
+  assert.deepEqual(fetchCalls, [[
+    '/api/save',
+    autoSavePersistenceState.persistencePlan.saveRequestBody
+  ]]);
+  assert.equal(successArgs.persistenceContext, autoSavePersistenceState.persistencePlan.persistenceContext);
+  assert.deepEqual(successArgs.options, {
+    marker: 'autosave-success'
+  });
+  assert.equal(failureCalls, 0);
+  assert.deepEqual(result, {
+    data: {
+      success: true
+    },
+    autoSavePersistenceState
+  });
+});
+
+test('executeStudioAutoSavePersistenceRequestWithHandlers applies failure callbacks after an unsuccessful autosave response', async () => {
+  const autoSavePersistenceState = {
+    persistencePlan: {
+      hasPersistedCurrentState: false,
+      saveRequestBody: {
+        htmlPath: '/presentations/onboarding-presentation/index.html',
+        htmlContent: '<html>live-save</html>',
+        isAutoSave: true
+      },
+      persistenceContext: {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      }
+    }
+  };
+  let successCalls = 0;
+  let failureArgs = null;
+
+  const result = await editorPersistence.executeStudioAutoSavePersistenceRequestWithHandlers(
+    autoSavePersistenceState,
+    {
+      fetchImpl: async () => ({
+        async json() {
+          return { success: false, error: 'write failed' };
+        }
+      }),
+      applyPersistenceSuccess() {
+        successCalls += 1;
+      },
+      applyPersistenceFailure(persistenceContext, options = {}) {
+        failureArgs = {
+          persistenceContext,
+          options
+        };
+      },
+      failureOptions: {
+        marker: 'autosave-failure'
+      }
+    }
+  );
+
+  assert.equal(successCalls, 0);
+  assert.equal(failureArgs.persistenceContext, autoSavePersistenceState.persistencePlan.persistenceContext);
+  assert.deepEqual(failureArgs.options, {
+    marker: 'autosave-failure'
+  });
+  assert.deepEqual(result, {
+    data: {
+      success: false,
+      error: 'write failed'
+    },
+    autoSavePersistenceState
+  });
+});
+
 test('executeStudioPersistenceRequest posts JSON request bodies and returns parsed responses', async () => {
   const fetchCalls = [];
 
