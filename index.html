@@ -1819,27 +1819,6 @@
       };
     }
 
-    function createEditorPreviewFallbackHtmlTransformer(options = {}) {
-      const injectBaseHrefIntoHtml = typeof options.injectBaseHrefIntoHtml === 'function'
-        ? options.injectBaseHrefIntoHtml
-        : null;
-      const buildPresentationBaseHref = typeof options.buildPresentationBaseHref === 'function'
-        ? options.buildPresentationBaseHref
-        : null;
-      const presentationUrl = typeof options.presentationUrl === 'string'
-        ? options.presentationUrl
-        : '';
-      return function transformFallbackHtml(fallbackHtml, deckHtmlOptions = {}) {
-        if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
-          return fallbackHtml;
-        }
-        return injectBaseHrefIntoHtml(
-          fallbackHtml,
-          buildPresentationBaseHref(presentationUrl, deckHtmlOptions)
-        );
-      };
-    }
-
     function createEditorPreviewDeckViewHtmlOptions(options = {}) {
       const presentationUrl = typeof options.presentationUrl === 'string'
         ? options.presentationUrl
@@ -1869,11 +1848,15 @@
           presentationUrl,
           deckHtmlOptions
         ],
-        transformFallbackHtml: createEditorPreviewFallbackHtmlTransformer({
-          injectBaseHrefIntoHtml,
-          buildPresentationBaseHref,
-          presentationUrl
-        })
+        transformFallbackHtml(fallbackHtml, deckHtmlOptions = {}) {
+          if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
+            return fallbackHtml;
+          }
+          return injectBaseHrefIntoHtml(
+            fallbackHtml,
+            buildPresentationBaseHref(presentationUrl, deckHtmlOptions)
+          );
+        }
       });
     }
 

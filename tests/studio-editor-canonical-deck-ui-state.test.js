@@ -2190,7 +2190,7 @@ test('createEditorDeckViewHtmlOptions maps canonical html arguments when local h
   const createEditorDeckViewHtmlOptionsSource = extractFunctionSource(
     fileContent,
     'function createEditorDeckViewHtmlOptions(options = {}) {',
-    '\n\n    function createEditorPreviewFallbackHtmlTransformer(options = {}) {'
+    '\n\n    function createEditorPreviewDeckViewHtmlOptions(options = {}) {'
   );
 
   const canonicalDeck = {
@@ -2233,7 +2233,7 @@ test('createEditorDeckViewHtmlOptions extends fallback deck view build options w
   const createEditorDeckViewHtmlOptionsSource = extractFunctionSource(
     fileContent,
     'function createEditorDeckViewHtmlOptions(options = {}) {',
-    '\n\n    function createEditorPreviewFallbackHtmlTransformer(options = {}) {'
+    '\n\n    function createEditorPreviewDeckViewHtmlOptions(options = {}) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -2275,6 +2275,91 @@ test('createEditorDeckViewHtmlOptions extends fallback deck view build options w
   assert.deepEqual(calls, [
     ['createEditorDeckViewBuildOptions', iframeDoc],
     ['extendViewOptions', baseDeckViewOptions, iframeDoc]
+  ]);
+});
+
+test('createEditorPreviewDeckViewHtmlOptions injects preview base href into fallback html when local helpers are available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createEditorPreviewDeckViewHtmlOptionsSource = extractFunctionSource(
+    fileContent,
+    'function createEditorPreviewDeckViewHtmlOptions(options = {}) {',
+    '\n\n    function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {'
+  );
+
+  const previewDeckViewHtmlOptions = {
+    buildSharedHtml() {},
+    buildViewOptions() {},
+    buildCanonicalHtml() {},
+    transformFallbackHtml() {}
+  };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const deckHtmlOptions = {
+    renderOptions: {
+      activeSlideId: 'slide-live'
+    }
+  };
+  const calls = [];
+  let delegatedArgs = null;
+  const buildStudioPreviewHtml = function buildStudioPreviewHtml() {};
+  const buildDeckPreviewHtml = function buildDeckPreviewHtml() {};
+  const context = {
+    __createEditorDeckViewHtmlOptions(options) {
+      delegatedArgs = options;
+      return previewDeckViewHtmlOptions;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createEditorPreviewDeckViewHtmlOptionsSource, context);
+  vm.runInContext('createEditorDeckViewHtmlOptions = __createEditorDeckViewHtmlOptions;', context);
+
+  const result = context.createEditorPreviewDeckViewHtmlOptions({
+    buildStudioPreviewHtml,
+    buildDeckPreviewHtml,
+    injectBaseHrefIntoHtml(fallbackHtml, baseHref) {
+      calls.push(['injectBaseHrefIntoHtml', fallbackHtml, baseHref]);
+      return `<html data-base="${baseHref}">${fallbackHtml}</html>`;
+    },
+    buildPresentationBaseHref(presentationUrl, nextDeckHtmlOptions) {
+      calls.push(['buildPresentationBaseHref', presentationUrl, nextDeckHtmlOptions]);
+      return `${presentationUrl}#preview`;
+    },
+    presentationUrl: '/presentations/demo/index.html'
+  });
+
+  assert.equal(result, previewDeckViewHtmlOptions);
+  assert.equal(delegatedArgs.buildSharedHtml, buildStudioPreviewHtml);
+  assert.equal(delegatedArgs.buildCanonicalHtml, buildDeckPreviewHtml);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(
+      delegatedArgs.extendViewOptions({ activeSlideId: 'slide-1' })
+    )),
+    {
+      activeSlideId: 'slide-1',
+      presentationUrl: '/presentations/demo/index.html'
+    }
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(
+      delegatedArgs.mapCanonicalHtmlArgs(canonicalDeck, deckHtmlOptions)
+    )),
+    [
+      canonicalDeck,
+      '/presentations/demo/index.html',
+      deckHtmlOptions
+    ]
+  );
+  assert.equal(
+    delegatedArgs.transformFallbackHtml('<html>fallback</html>', deckHtmlOptions),
+    '<html data-base="/presentations/demo/index.html#preview"><html>fallback</html></html>'
+  );
+  assert.deepEqual(calls, [
+    ['buildPresentationBaseHref', '/presentations/demo/index.html', deckHtmlOptions],
+    ['injectBaseHrefIntoHtml', '<html>fallback</html>', '/presentations/demo/index.html#preview']
   ]);
 });
 
