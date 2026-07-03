@@ -18,6 +18,9 @@ function ensureSyncStudioChromeActionStateHelpers(context) {
   if (typeof context.updateInsertionActionState !== 'function') {
     context.updateInsertionActionState = () => {};
   }
+  if (typeof context.updateZoomActionState !== 'function') {
+    context.updateZoomActionState = () => {};
+  }
 }
 
 test('setActiveSlide reads the live frame through the shared iframe accessor and forwards the requested options', () => {
