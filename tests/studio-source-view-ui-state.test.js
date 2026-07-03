@@ -296,6 +296,62 @@ test('buildEditorSourceHtml reuses the shared deck-view html builder when the so
   assert.equal(typeof calls[0].options.buildFallbackHtml, 'function');
 });
 
+test('buildEditorSourceDeckHtml reuses the local deck view build-view-options resolver when the shared helper is available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSourceHtmlSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function launchPresentationHtml(html, startSlideIdx) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const calls = [];
+  const customBuildViewOptionsCalls = [];
+  const customDeckViewOptions = {
+    buildCanonicalDeck() {
+      return null;
+    },
+    deckHtmlOptions: {
+      renderOptions: {
+        activeSlideId: 'slide-1'
+      }
+    }
+  };
+  const context = {
+    SlideNextStudioDeckView: {
+      buildStudioDeckViewHtml(doc, options) {
+        calls.push({ doc, options });
+        return '<html>source-from-shared-deck-view-helper</html>';
+      }
+    },
+    createEditorDeckViewBuildOptions() {
+      throw new Error('createEditorDeckViewBuildOptions should not run when a custom source resolver is provided');
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorSourceHtmlSource, context);
+
+  const result = context.buildEditorSourceDeckHtml(iframeDoc, {
+    buildViewOptions(sourceDoc) {
+      customBuildViewOptionsCalls.push(sourceDoc);
+      return customDeckViewOptions;
+    }
+  });
+
+  assert.equal(result, '<html>source-from-shared-deck-view-helper</html>');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].doc, iframeDoc);
+  assert.equal(typeof calls[0].options.buildViewOptions, 'function');
+  const deckViewOptions = calls[0].options.buildViewOptions(iframeDoc);
+  assert.equal(customBuildViewOptionsCalls.length, 1);
+  assert.equal(customBuildViewOptionsCalls[0], iframeDoc);
+  assert.equal(deckViewOptions, customDeckViewOptions);
+});
+
 test('buildEditorSourceHtml prefers the live active slide when the editor frame is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(

@@ -1895,6 +1895,18 @@
       });
     }
 
+    function createEditorDeckViewBuildViewOptionsResolver(options = {}) {
+      const buildViewOptions = typeof options.buildViewOptions === 'function'
+        ? options.buildViewOptions
+        : (sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc);
+      const extendViewOptions = typeof options.extendViewOptions === 'function'
+        ? options.extendViewOptions
+        : (deckViewOptions) => deckViewOptions;
+      return function resolveViewOptions(sourceDoc = getIframeDoc()) {
+        return extendViewOptions(buildViewOptions(sourceDoc), sourceDoc);
+      };
+    }
+
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
       const buildStudioPreviewHtml = (
         typeof SlideNextStudioDeckView !== 'undefined'
@@ -1927,10 +1939,17 @@
 
       return buildEditorDeckViewHtml(doc, {
         buildSharedHtml: buildStudioPreviewHtml,
-        buildViewOptions: (sourceDoc) => ({
-          ...createEditorDeckViewBuildOptions(sourceDoc),
-          presentationUrl: currentPresentationUrl
-        }),
+        buildViewOptions: typeof createEditorDeckViewBuildViewOptionsResolver === 'function'
+          ? createEditorDeckViewBuildViewOptionsResolver({
+              extendViewOptions: (deckViewOptions) => ({
+                ...deckViewOptions,
+                presentationUrl: currentPresentationUrl
+              })
+            })
+          : (sourceDoc) => ({
+              ...createEditorDeckViewBuildOptions(sourceDoc),
+              presentationUrl: currentPresentationUrl
+            }),
         buildCanonicalHtml: buildDeckPreviewHtml
           ? (canonicalDeck, deckHtmlOptions) => buildDeckPreviewHtml(canonicalDeck, currentPresentationUrl || '', deckHtmlOptions)
           : null,
@@ -1964,9 +1983,13 @@
 
       return buildEditorDeckViewHtml(doc, {
         buildSharedHtml: buildStudioSourceHtml,
-        buildViewOptions: typeof options.buildViewOptions === 'function'
-          ? options.buildViewOptions
-          : (sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc),
+        buildViewOptions: typeof createEditorDeckViewBuildViewOptionsResolver === 'function'
+          ? createEditorDeckViewBuildViewOptionsResolver({
+              buildViewOptions: options.buildViewOptions
+            })
+          : typeof options.buildViewOptions === 'function'
+            ? options.buildViewOptions
+            : (sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc),
         buildCanonicalHtml: buildDeckSourceHtml
           ? (canonicalDeck, deckHtmlOptions) => buildDeckSourceHtml(canonicalDeck, deckHtmlOptions)
           : null

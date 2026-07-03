@@ -358,6 +358,64 @@ test('buildEditorPreviewHtml falls back to the shared deck html preview builder 
   assert.equal(calls[0].options.renderOptions.activeSlideId, 'slide-2');
 });
 
+test('createEditorDeckViewBuildViewOptionsResolver decorates resolved deck view options when requested', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createEditorDeckViewBuildViewOptionsResolverSource = extractFunctionSource(
+    fileContent,
+    'function createEditorDeckViewBuildViewOptionsResolver(options = {}) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const baseDeckViewOptions = {
+    buildCanonicalDeck() {
+      return {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: []
+      };
+    },
+    deckHtmlOptions: {
+      renderOptions: {
+        activeSlideId: 'slide-1'
+      }
+    }
+  };
+  const calls = [];
+  const context = {
+    createEditorDeckViewBuildOptions(sourceDoc) {
+      calls.push(['createEditorDeckViewBuildOptions', sourceDoc]);
+      return baseDeckViewOptions;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createEditorDeckViewBuildViewOptionsResolverSource, context);
+
+  const resolveViewOptions = context.createEditorDeckViewBuildViewOptionsResolver({
+    extendViewOptions(deckViewOptions, sourceDoc) {
+      calls.push(['extendViewOptions', deckViewOptions, sourceDoc]);
+      return {
+        ...deckViewOptions,
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      };
+    }
+  });
+  const result = resolveViewOptions();
+
+  assert.equal(result.buildCanonicalDeck, baseDeckViewOptions.buildCanonicalDeck);
+  assert.equal(result.deckHtmlOptions, baseDeckViewOptions.deckHtmlOptions);
+  assert.equal(result.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(calls.length, 2);
+  assert.deepEqual(calls[0], ['createEditorDeckViewBuildOptions', iframeDoc]);
+  assert.equal(calls[1][0], 'extendViewOptions');
+  assert.equal(calls[1][1], baseDeckViewOptions);
+  assert.equal(calls[1][2], iframeDoc);
+});
+
 test('buildEditorPreviewHtml reuses the shared deck-view html builder when the preview helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorPreviewHtmlSource = extractFunctionSource(
@@ -416,7 +474,22 @@ test('buildEditorPreviewHtml reuses the shared deck-view helper for editor deck-
     '\n\n    function buildEditorSourceHtml(doc = getIframeDoc()) {'
   );
 
+  const iframeDoc = { label: 'iframe-doc' };
   const calls = [];
+  let createEditorDeckViewBuildOptionsCalls = 0;
+  const baseDeckViewOptions = {
+    buildCanonicalDeck() {
+      return null;
+    },
+    buildFallbackHtml() {
+      return '<html>fallback</html>';
+    },
+    deckHtmlOptions: {
+      renderOptions: {
+        activeSlideId: 'slide-1'
+      }
+    }
+  };
   const context = {
     SlideNextStudioDeckView: {
       buildStudioDeckViewHtml(doc, options) {
@@ -424,26 +497,38 @@ test('buildEditorPreviewHtml reuses the shared deck-view helper for editor deck-
         return '<html>preview-from-shared-deck-view-helper</html>';
       }
     },
+    __createEditorDeckViewBuildOptions(nextDoc) {
+      createEditorDeckViewBuildOptionsCalls += 1;
+      assert.equal(nextDoc, iframeDoc);
+      return baseDeckViewOptions;
+    },
     currentSlideIndex: 1,
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     getPersistedActiveSlideId() {
       return 'slide-1';
     },
     getIframeDoc() {
-      return null;
+      return iframeDoc;
     }
   };
 
   vm.createContext(context);
   vm.runInContext(buildEditorPreviewHtmlSource, context);
+  vm.runInContext('createEditorDeckViewBuildOptions = __createEditorDeckViewBuildOptions;', context);
 
   const result = context.buildEditorPreviewHtml();
 
   assert.equal(result, '<html>preview-from-shared-deck-view-helper</html>');
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].doc, null);
+  assert.equal(calls[0].doc, iframeDoc);
   assert.equal(typeof calls[0].options.buildViewOptions, 'function');
   assert.equal(typeof calls[0].options.transformFallbackHtml, 'function');
+  const deckViewOptions = calls[0].options.buildViewOptions(iframeDoc);
+  assert.equal(createEditorDeckViewBuildOptionsCalls, 1);
+  assert.equal(deckViewOptions.buildCanonicalDeck, baseDeckViewOptions.buildCanonicalDeck);
+  assert.equal(deckViewOptions.buildFallbackHtml, baseDeckViewOptions.buildFallbackHtml);
+  assert.equal(deckViewOptions.deckHtmlOptions, baseDeckViewOptions.deckHtmlOptions);
+  assert.equal(deckViewOptions.presentationUrl, '/presentations/onboarding-presentation/index.html');
 });
 
 test('buildEditorPreviewHtml prefers the live active slide when the editor frame is available', () => {
