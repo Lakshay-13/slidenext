@@ -1828,14 +1828,28 @@
       };
     }
 
-    function buildEditorDeckHtml(doc = getIframeDoc(), options = {}) {
-      const buildStudioDeckHtml = (
+    function resolveStudioDeckViewMethod(methodName) {
+      return (
         typeof SlideNextStudioDeckView !== 'undefined'
         && SlideNextStudioDeckView
-        && typeof SlideNextStudioDeckView.buildStudioDeckHtml === 'function'
+        && typeof SlideNextStudioDeckView[methodName] === 'function'
       )
-        ? SlideNextStudioDeckView.buildStudioDeckHtml
+        ? SlideNextStudioDeckView[methodName]
         : null;
+    }
+
+    function resolveDeckHtmlMethod(methodName) {
+      return (
+        typeof SlideNextDeckHtml !== 'undefined'
+        && SlideNextDeckHtml
+        && typeof SlideNextDeckHtml[methodName] === 'function'
+      )
+        ? SlideNextDeckHtml[methodName]
+        : null;
+    }
+
+    function buildEditorDeckHtml(doc = getIframeDoc(), options = {}) {
+      const buildStudioDeckHtml = resolveStudioDeckViewMethod('buildStudioDeckHtml');
       if (buildStudioDeckHtml) {
         return buildStudioDeckHtml(doc, options);
       }
@@ -1865,13 +1879,7 @@
     }
 
     function buildEditorDeckViewHtml(doc = getIframeDoc(), options = {}) {
-      const buildStudioDeckViewHtml = (
-        typeof SlideNextStudioDeckView !== 'undefined'
-        && SlideNextStudioDeckView
-        && typeof SlideNextStudioDeckView.buildStudioDeckViewHtml === 'function'
-      )
-        ? SlideNextStudioDeckView.buildStudioDeckViewHtml
-        : null;
+      const buildStudioDeckViewHtml = resolveStudioDeckViewMethod('buildStudioDeckViewHtml');
       if (buildStudioDeckViewHtml) {
         return buildStudioDeckViewHtml(doc, options);
       }
@@ -1908,34 +1916,10 @@
     }
 
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
-      const buildStudioPreviewHtml = (
-        typeof SlideNextStudioDeckView !== 'undefined'
-        && SlideNextStudioDeckView
-        && typeof SlideNextStudioDeckView.buildStudioPreviewHtml === 'function'
-      )
-        ? SlideNextStudioDeckView.buildStudioPreviewHtml
-        : null;
-      const buildDeckPreviewHtml = (
-        typeof SlideNextDeckHtml !== 'undefined'
-        && SlideNextDeckHtml
-        && typeof SlideNextDeckHtml.buildDeckPreviewHtml === 'function'
-      )
-        ? SlideNextDeckHtml.buildDeckPreviewHtml
-        : null;
-      const injectBaseHrefIntoHtml = (
-        typeof SlideNextDeckHtml !== 'undefined'
-        && SlideNextDeckHtml
-        && typeof SlideNextDeckHtml.injectBaseHrefIntoHtml === 'function'
-      )
-        ? SlideNextDeckHtml.injectBaseHrefIntoHtml
-        : null;
-      const buildPresentationBaseHref = (
-        typeof SlideNextDeckHtml !== 'undefined'
-        && SlideNextDeckHtml
-        && typeof SlideNextDeckHtml.buildPresentationBaseHref === 'function'
-      )
-        ? SlideNextDeckHtml.buildPresentationBaseHref
-        : null;
+      const buildStudioPreviewHtml = resolveStudioDeckViewMethod('buildStudioPreviewHtml');
+      const buildDeckPreviewHtml = resolveDeckHtmlMethod('buildDeckPreviewHtml');
+      const injectBaseHrefIntoHtml = resolveDeckHtmlMethod('injectBaseHrefIntoHtml');
+      const buildPresentationBaseHref = resolveDeckHtmlMethod('buildPresentationBaseHref');
 
       return buildEditorDeckViewHtml(doc, {
         buildSharedHtml: buildStudioPreviewHtml,
@@ -1966,20 +1950,8 @@
     }
 
     function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {
-      const buildStudioSourceHtml = (
-        typeof SlideNextStudioDeckView !== 'undefined'
-        && SlideNextStudioDeckView
-        && typeof SlideNextStudioDeckView.buildStudioSourceHtml === 'function'
-      )
-        ? SlideNextStudioDeckView.buildStudioSourceHtml
-        : null;
-      const buildDeckSourceHtml = (
-        typeof SlideNextDeckHtml !== 'undefined'
-        && SlideNextDeckHtml
-        && typeof SlideNextDeckHtml.buildDeckSourceHtml === 'function'
-      )
-        ? SlideNextDeckHtml.buildDeckSourceHtml
-        : null;
+      const buildStudioSourceHtml = resolveStudioDeckViewMethod('buildStudioSourceHtml');
+      const buildDeckSourceHtml = resolveDeckHtmlMethod('buildDeckSourceHtml');
 
       return buildEditorDeckViewHtml(doc, {
         buildSharedHtml: buildStudioSourceHtml,
