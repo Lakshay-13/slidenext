@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const presentationMetadata = require('../shared/presentation-metadata.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorSession = require('../shared/studio-editor-session.js');
 
@@ -88,6 +89,67 @@ test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata up
 
   const context = {
     SlideNextStudioDeckContext: require('../shared/studio-deck-context.js'),
+    applyCurrentPresentationMetadata(metadata) {
+      context.currentPresentationMetadata = metadata;
+      return metadata;
+    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    currentPresentationMetadata: null,
+    buildCurrentPresentationMetadataSeed(presentationUrl, presentationTitle) {
+      return {
+        id: 'onboarding-presentation',
+        title: presentationTitle,
+        sourcePath: presentationUrl
+      };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setCurrentPresentationCanonicalDeckSource, context);
+
+  context.setCurrentPresentationCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+
+  assert.deepEqual(context.currentPresentationMetadata, {
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: 'presentations/onboarding-presentation/index.html',
+    canonicalDeck: canonicalDeckModel.createCanonicalDeck({
+      metadata: {
+        title: 'Project Onboarding'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    })
+  });
+});
+
+test('setCurrentPresentationCanonicalDeck falls back to the shared presentation metadata helpers when the deck context updater is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {',
+    '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
+  );
+
+  const context = {
+    SlideNextStudioDeckContext: {},
+    SlideNextPresentationMetadata: presentationMetadata,
+    SlideNextCanonicalDeck: canonicalDeckModel,
     applyCurrentPresentationMetadata(metadata) {
       context.currentPresentationMetadata = metadata;
       return metadata;
