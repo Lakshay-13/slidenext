@@ -701,13 +701,9 @@ test('resolveEditorLiveActiveSlideId delegates to the shared deck view helper wh
   );
 
   const iframeDoc = { label: 'iframe-doc' };
-  const activeSlide = { label: 'slide-active' };
   let delegatedArgs = null;
   const context = {
     SlideNextStudioDeckView: {
-      resolveStudioLiveActiveSlide(doc) {
-        return doc === iframeDoc ? activeSlide : null;
-      },
       resolveStudioLiveActiveSlideId(doc, options) {
         delegatedArgs = { doc, options };
         return 'slide-shared';
@@ -728,10 +724,19 @@ test('resolveEditorLiveActiveSlideId delegates to the shared deck view helper wh
 
   assert.equal(result, 'slide-shared');
   assert.equal(delegatedArgs.doc, iframeDoc);
-  assert.equal(typeof delegatedArgs.options.resolveLiveActiveSlide, 'function');
+  assert.equal(typeof delegatedArgs.options.querySelector, 'function');
   assert.equal(typeof delegatedArgs.options.getActiveSlideId, 'function');
-  assert.equal(delegatedArgs.options.resolveLiveActiveSlide(iframeDoc), activeSlide);
-  assert.equal(delegatedArgs.options.getActiveSlideId(iframeDoc, activeSlide), 'slide-live');
+  assert.deepEqual(
+    delegatedArgs.options.querySelector({
+      querySelector(selector) {
+        assert.equal(selector, '.slide-active');
+        return { label: 'slide-active' };
+      }
+    }, '.slide-active'),
+    { label: 'slide-active' }
+  );
+  assert.equal(delegatedArgs.options.querySelector(null, '.slide-active'), null);
+  assert.equal(delegatedArgs.options.getActiveSlideId(iframeDoc), 'slide-live');
 });
 
 test('getPersistedActiveSlideId delegates to the shared deck persistence helper when available', () => {
