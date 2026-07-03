@@ -795,6 +795,11 @@ test('resolveEditorDeckCanonicalOverride delegates deck-view canonical override 
 
 test('resolveEditorDeckCanonicalOverride reuses the provided canonical deck when the shared override helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {',
+    '\n\n    function getEditorCanonicalDeckValidator() {'
+  );
   const helperSource = extractFunctionSource(
     fileContent,
     'function resolveEditorDeckCanonicalOverride(doc = getIframeDoc(), canonicalDeck = null) {',
@@ -807,10 +812,16 @@ test('resolveEditorDeckCanonicalOverride reuses the provided canonical deck when
     schemaVersion: 1,
     slides: []
   };
-  let buildEditorCanonicalDeckCalls = 0;
+  const calls = [];
   const context = {
+    SlideNextStudioEditorPersistence: {
+      resolveStudioCanonicalDeckOverride(options) {
+        calls.push(['resolveStudioCanonicalDeckOverride', options.canonicalDeck]);
+        return options.canonicalDeck;
+      }
+    },
     buildEditorCanonicalDeck() {
-      buildEditorCanonicalDeckCalls += 1;
+      calls.push(['buildEditorCanonicalDeck']);
       return {
         kind: 'slidenext.deck',
         schemaVersion: 1,
@@ -823,10 +834,13 @@ test('resolveEditorDeckCanonicalOverride reuses the provided canonical deck when
   };
 
   vm.createContext(context);
+  vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
   vm.runInContext(helperSource, context);
 
   assert.equal(context.resolveEditorDeckCanonicalOverride(iframeDoc, canonicalDeck), canonicalDeck);
-  assert.equal(buildEditorCanonicalDeckCalls, 0);
+  assert.deepEqual(calls, [
+    ['resolveStudioCanonicalDeckOverride', canonicalDeck]
+  ]);
 });
 
 test('getEditorCanonicalDeckValidator returns the shared canonical deck validator when available', () => {
