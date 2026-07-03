@@ -600,6 +600,89 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
   assert.ok(!calls.some(([name]) => name === 'handleCurrentStudioVersionActionFailure'));
 });
 
+test('submitRenameVersion reuses the shared rename request helper when available', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const submitRenameVersionSource = extractFunctionSource(
+    fileContent,
+    'async function submitRenameVersion() {',
+    '\n\n    async function deleteVersion(filename) {'
+  );
+
+  let helperArgs = null;
+  const calls = [];
+  const context = {
+    SlideNextStudioModalVisibility: {
+      getCurrentStudioModalVisibilityToken() {
+        return 7;
+      },
+      isStudioModalVisibilityCurrent() {
+        return true;
+      }
+    },
+    SlideNextStudioVersionActions: {
+      executeStudioRenameVersionRequest: async (...args) => {
+        helperArgs = args;
+        return { success: true };
+      }
+    },
+    closeRenameVersionModal() {
+      calls.push(['closeRenameVersionModal']);
+    },
+    createCurrentStudioVersionActionContext() {
+      return {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      };
+    },
+    document: {
+      getElementById(id) {
+        if (id === 'newVersionNameInput') {
+          return {
+            value: 'Draft Name'
+          };
+        }
+        if (id === 'confirmRenameVersionBtn') {
+          return {
+            disabled: false,
+            textContent: 'Rename'
+          };
+        }
+        return null;
+      }
+    },
+    fetch() {
+      throw new Error('submitRenameVersion should pass fetch to the shared rename helper instead of calling it directly');
+    },
+    handleCurrentStudioVersionActionFailure() {
+      throw new Error('submitRenameVersion should not use the failure handler for a successful shared helper result');
+    },
+    handleCurrentStudioVersionListMutationSuccess(renameContext, options) {
+      calls.push(['handleCurrentStudioVersionListMutationSuccess', renameContext, options.shouldRefreshVersionEntries]);
+      if (options.onSuccess) {
+        options.onSuccess();
+      }
+      return true;
+    },
+    renamingFilename: 'index_20260101_120000_Auto.html',
+    renamingVersionContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(submitRenameVersionSource, context);
+
+  await context.submitRenameVersion();
+
+  assert.equal(helperArgs[0], 'index_20260101_120000_Auto.html');
+  assert.equal(helperArgs[1], 'Draft Name');
+  assert.deepEqual(helperArgs[2], {
+    presentationUrl: '/presentations/onboarding-presentation/index.html'
+  });
+  assert.equal(helperArgs[3].fetchImpl, context.fetch);
+  assert.ok(calls.some(([name]) => name === 'handleCurrentStudioVersionListMutationSuccess'));
+  assert.ok(calls.some(([name]) => name === 'closeRenameVersionModal'));
+});
+
 test('restoreVersion tolerates a missing versions dropdown after a successful restore', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const restoreVersionSource = extractFunctionSource(

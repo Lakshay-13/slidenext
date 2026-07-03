@@ -8119,17 +8119,34 @@
       }
       
       try {
-        const response = await fetch('/api/versions/rename', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            htmlPath: renameContext.presentationUrl,
-            versionFilename,
-            newLabel
-          })
-        });
-        
-        const data = await response.json();
+        const executeRenameVersionRequest = (
+          typeof SlideNextStudioVersionActions !== 'undefined'
+          && SlideNextStudioVersionActions
+          && typeof SlideNextStudioVersionActions.executeStudioRenameVersionRequest === 'function'
+        )
+          ? SlideNextStudioVersionActions.executeStudioRenameVersionRequest
+          : null;
+        const data = executeRenameVersionRequest
+          ? await executeRenameVersionRequest(
+              versionFilename,
+              newLabel,
+              renameContext,
+              {
+                fetchImpl: fetch
+              }
+            )
+          : await (async () => {
+              const response = await fetch('/api/versions/rename', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  htmlPath: renameContext.presentationUrl,
+                  versionFilename,
+                  newLabel
+                })
+              });
+              return response.json();
+            })();
         if (data.success) {
           handleCurrentStudioVersionListMutationSuccess(renameContext, {
             isCurrentSession: () => !modal || SlideNextStudioModalVisibility.isStudioModalVisibilityCurrent(modal, renameSessionToken),

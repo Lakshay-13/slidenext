@@ -140,6 +140,69 @@ test('executeStudioRestoreVersionRequest posts the restore request and returns t
   assert.deepEqual(result, { success: true });
 });
 
+test('createStudioRenameVersionRequest builds the rename endpoint payload from the active version context', () => {
+  const renameContext = versionActions.createStudioVersionActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    'General'
+  );
+
+  assert.deepEqual(
+    versionActions.createStudioRenameVersionRequest(
+      'index_20260101_120000_Auto.html',
+      'Draft Name',
+      renameContext
+    ),
+    {
+      url: '/api/versions/rename',
+      init: {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          htmlPath: '/presentations/onboarding-presentation/index.html',
+          versionFilename: 'index_20260101_120000_Auto.html',
+          newLabel: 'Draft Name'
+        })
+      }
+    }
+  );
+});
+
+test('executeStudioRenameVersionRequest posts the rename request and returns the parsed response payload', async () => {
+  const renameContext = versionActions.createStudioVersionActionContext(
+    '/presentations/onboarding-presentation/index.html',
+    'Project Onboarding',
+    'General'
+  );
+  const fetchCalls = [];
+
+  const result = await versionActions.executeStudioRenameVersionRequest(
+    'index_20260101_120000_Auto.html',
+    'Draft Name',
+    renameContext,
+    {
+      fetchImpl: async (url, init) => {
+        fetchCalls.push([url, JSON.parse(init.body)]);
+        return {
+          async json() {
+            return { success: true };
+          }
+        };
+      }
+    }
+  );
+
+  assert.deepEqual(fetchCalls, [[
+    '/api/versions/rename',
+    {
+      htmlPath: '/presentations/onboarding-presentation/index.html',
+      versionFilename: 'index_20260101_120000_Auto.html',
+      newLabel: 'Draft Name'
+    }
+  ]]);
+  assert.deepEqual(result, { success: true });
+});
+
 test('handleStudioRestoreVersionSuccess applies restore hooks for the active deck only', () => {
   const restoreContext = versionActions.createStudioVersionActionContext(
     '/presentations/onboarding-presentation/index.html',

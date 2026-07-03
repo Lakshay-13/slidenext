@@ -116,6 +116,36 @@
     return response.json();
   }
 
+  function createStudioRenameVersionRequest(versionFilename = '', newLabel = '', context = {}) {
+    return {
+      url: '/api/versions/rename',
+      init: {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          htmlPath: normalizeString(context.presentationUrl),
+          versionFilename: normalizeString(versionFilename),
+          newLabel: normalizeString(newLabel)
+        })
+      }
+    };
+  }
+
+  async function executeStudioRenameVersionRequest(versionFilename = '', newLabel = '', context = {}, options = {}) {
+    const fetchImpl = typeof options.fetchImpl === 'function'
+      ? options.fetchImpl
+      : root && typeof root.fetch === 'function'
+        ? root.fetch.bind(root)
+        : null;
+    if (!fetchImpl) {
+      throw new TypeError('A fetch implementation is required to execute studio rename version requests.');
+    }
+
+    const request = createStudioRenameVersionRequest(versionFilename, newLabel, context);
+    const response = await fetchImpl(request.url, request.init);
+    return response.json();
+  }
+
   function handleStudioRestoreVersionSuccess(context = {}, options = {}) {
     if (!isStudioVersionActionSessionCurrent(context, options)) {
       return false;
@@ -175,6 +205,8 @@
     createStudioVersionActionHandlerOptions,
     createStudioRestoreVersionRequest,
     executeStudioRestoreVersionRequest,
+    createStudioRenameVersionRequest,
+    executeStudioRenameVersionRequest,
     handleStudioRestoreVersionSuccess,
     handleStudioVersionListMutationSuccess,
     handleStudioVersionActionFailure
