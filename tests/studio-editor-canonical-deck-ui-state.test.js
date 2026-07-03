@@ -26,6 +26,23 @@ function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
   vm.runInContext(resolveEditorStoredCanonicalDeckSource, context);
 }
 
+function loadResolveEditorStoredCanonicalBaseline(fileContent, context) {
+  if (typeof context.resolveEditorStoredCanonicalDeck !== 'function') {
+    const resolveEditorStoredCanonicalDeckSource = extractFunctionSource(
+      fileContent,
+      'function resolveEditorStoredCanonicalDeck(metadata) {',
+      '\n\n    function resolveEditorStoredCanonicalBaseline(options = {}) {'
+    );
+    vm.runInContext(resolveEditorStoredCanonicalDeckSource, context);
+  }
+  const resolveEditorStoredCanonicalBaselineSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorStoredCanonicalBaseline(options = {}) {',
+    '\n\n    function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {'
+  );
+  vm.runInContext(resolveEditorStoredCanonicalBaselineSource, context);
+}
+
 function loadResolveEditorCanonicalDeckViewState(fileContent, context) {
   const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
     fileContent,
@@ -33,6 +50,16 @@ function loadResolveEditorCanonicalDeckViewState(fileContent, context) {
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
   );
   vm.runInContext(resolveEditorCanonicalDeckViewStateSource, context);
+}
+
+function loadBuildEditorCanonicalDeck(fileContent, context, helperSource) {
+  if (typeof context.resolveEditorStoredCanonicalDeck !== 'function') {
+    loadResolveEditorStoredCanonicalDeck(fileContent, context);
+  }
+  if (typeof context.resolveEditorStoredCanonicalBaseline !== 'function') {
+    loadResolveEditorStoredCanonicalBaseline(fileContent, context);
+  }
+  vm.runInContext(helperSource, context);
 }
 
 function loadCreateEditorCanonicalDeckResolverWithBuilder(fileContent, context) {
@@ -261,7 +288,7 @@ test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical dec
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorCanonicalDeckSource, context);
+  loadBuildEditorCanonicalDeck(fileContent, context, buildEditorCanonicalDeckSource);
 
   context.buildEditorCanonicalDeck();
 
@@ -327,7 +354,7 @@ test('buildEditorCanonicalDeck falls back to the shared deck loader when the dec
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorCanonicalDeckSource, context);
+  loadBuildEditorCanonicalDeck(fileContent, context, buildEditorCanonicalDeckSource);
 
   const result = context.buildEditorCanonicalDeck();
 
@@ -400,7 +427,7 @@ test('buildEditorCanonicalDeck reuses the local stored canonical resolver when t
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorCanonicalDeckSource, context);
+  loadBuildEditorCanonicalDeck(fileContent, context, buildEditorCanonicalDeckSource);
 
   const result = context.buildEditorCanonicalDeck();
 
@@ -463,7 +490,7 @@ test('buildEditorCanonicalDeck prefers the local stored canonical baseline helpe
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorCanonicalDeckSource, context);
+  loadBuildEditorCanonicalDeck(fileContent, context, buildEditorCanonicalDeckSource);
 
   const result = context.buildEditorCanonicalDeck();
 
@@ -529,7 +556,7 @@ test('buildEditorCanonicalDeck reuses the in-memory persisted canonical baseline
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorCanonicalDeckSource, context);
+  loadBuildEditorCanonicalDeck(fileContent, context, buildEditorCanonicalDeckSource);
 
   const result = context.buildEditorCanonicalDeck();
 
@@ -583,7 +610,7 @@ test('buildEditorCanonicalDeck falls back to the stored canonical baseline when 
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorCanonicalDeckSource, context);
+  loadBuildEditorCanonicalDeck(fileContent, context, buildEditorCanonicalDeckSource);
 
   const result = context.buildEditorCanonicalDeck();
 
@@ -650,7 +677,7 @@ test('buildEditorCanonicalDeck prefers the current metadata canonical deck over 
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorCanonicalDeckSource, context);
+  loadBuildEditorCanonicalDeck(fileContent, context, buildEditorCanonicalDeckSource);
 
   const result = context.buildEditorCanonicalDeck();
 

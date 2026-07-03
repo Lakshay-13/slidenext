@@ -3390,13 +3390,6 @@
         });
       }
 
-      const createCanonicalDeck = (
-        typeof SlideNextCanonicalDeck !== 'undefined'
-        && SlideNextCanonicalDeck
-        && typeof SlideNextCanonicalDeck.createCanonicalDeck === 'function'
-      )
-        ? SlideNextCanonicalDeck.createCanonicalDeck
-        : null;
       const isCanonicalDeck = (
         typeof SlideNextCanonicalDeck !== 'undefined'
         && SlideNextCanonicalDeck
@@ -3404,28 +3397,10 @@
       )
         ? SlideNextCanonicalDeck.isCanonicalDeck
         : null;
-      const resolvePresentationCanonicalDeck = (
-        typeof SlideNextPresentationMetadata !== 'undefined'
-        && SlideNextPresentationMetadata
-        && typeof SlideNextPresentationMetadata.resolvePresentationCanonicalDeck === 'function'
-      )
-        ? SlideNextPresentationMetadata.resolvePresentationCanonicalDeck
-        : null;
-      const resolveStoredCanonicalDeck = typeof resolveEditorStoredCanonicalDeck === 'function'
-        ? resolveEditorStoredCanonicalDeck
-        : typeof resolvePresentationCanonicalDeck === 'function'
-          ? (metadata) => resolvePresentationCanonicalDeck(metadata, {
-              createCanonicalDeck,
-              isCanonicalDeck
-            })
-          : (metadata) => metadata && metadata.canonicalDeck ? metadata.canonicalDeck : null;
-      const storedCanonicalDeck = typeof resolveEditorStoredCanonicalBaseline === 'function'
-        ? resolveEditorStoredCanonicalBaseline({
-            currentPresentationMetadata,
-            persistedCanonicalDeck: lastPersistedCanonicalDeck
-          })
-        : resolveStoredCanonicalDeck(currentPresentationMetadata)
-          || resolveStoredCanonicalDeck({ canonicalDeck: lastPersistedCanonicalDeck });
+      const storedCanonicalDeck = resolveEditorStoredCanonicalBaseline({
+        currentPresentationMetadata,
+        persistedCanonicalDeck: lastPersistedCanonicalDeck
+      });
       if (!doc && storedCanonicalDeck) {
         return storedCanonicalDeck;
       }
