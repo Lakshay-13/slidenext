@@ -6049,12 +6049,8 @@
         versionCheckpointPersistenceState,
         presentationUrl,
         {
-          saveVersionCheckpoint: typeof saveVersionCheckpoint === 'function'
-            ? saveVersionCheckpoint
-            : null,
-          applyVersionCheckpointSaveSuccess: typeof applyCurrentStudioVersionCheckpointSaveSuccess === 'function'
-            ? applyCurrentStudioVersionCheckpointSaveSuccess
-            : null,
+          saveVersionCheckpoint,
+          applyVersionCheckpointSaveSuccess: applyCurrentStudioVersionCheckpointSaveSuccess,
           successOptions: options
         }
       );
