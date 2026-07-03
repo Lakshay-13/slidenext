@@ -85,13 +85,13 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
     );
     vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
   }
-  if (typeof context.createEditorPersistableCanonicalDeckOverrideResolver !== 'function') {
-    const createEditorPersistableCanonicalDeckOverrideResolverSource = extractFunctionSource(
+  if (typeof context.resolveEditorSaveCanonicalDeck !== 'function') {
+    const resolveEditorSaveCanonicalDeckSource = extractFunctionSource(
       fileContent,
-      'function createEditorPersistableCanonicalDeckOverrideResolver(doc = getIframeDoc(), canonicalDeck = null) {',
-      '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
+      'function resolveEditorSaveCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
+      '\n\n    function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {'
     );
-    vm.runInContext(createEditorPersistableCanonicalDeckOverrideResolverSource, context);
+    vm.runInContext(resolveEditorSaveCanonicalDeckSource, context);
   }
   vm.runInContext(helperSource, context);
 }
@@ -592,14 +592,11 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
-    __createEditorPersistableCanonicalDeckOverrideResolver(nextDoc, nextCanonicalDeck) {
-      calls.push(['createEditorPersistableCanonicalDeckOverrideResolver', nextDoc, nextCanonicalDeck]);
+    __resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
       assert.equal(nextDoc, null);
       assert.equal(nextCanonicalDeck, canonicalDeck);
-      return (shouldBuildFallbackCanonicalDeck = false) => {
-        calls.push(['resolveCanonicalDeckOverride', shouldBuildFallbackCanonicalDeck]);
-        return canonicalDeck;
-      };
+      return canonicalDeck;
     },
     SlideNextDeckPersistence: {
       buildPersistableDeckHtml() {
@@ -632,7 +629,7 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
   vm.runInContext(
-    'createEditorPersistableCanonicalDeckOverrideResolver = __createEditorPersistableCanonicalDeckOverrideResolver;',
+    'resolveEditorSaveCanonicalDeck = __resolveEditorSaveCanonicalDeck;',
     context
   );
 
@@ -644,8 +641,7 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
   );
   assert.equal(buildEditorCanonicalDeckCalls, 0);
   assert.deepEqual(calls, [
-    ['createEditorPersistableCanonicalDeckOverrideResolver', null, canonicalDeck],
-    ['resolveCanonicalDeckOverride', true]
+    ['resolveEditorSaveCanonicalDeck', null, canonicalDeck]
   ]);
 });
 
