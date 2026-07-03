@@ -18,6 +18,8 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 function loadCaptureEditorPersistableDeckState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
   loadCaptureEditorPersistableDeckBuildState(fileContent, context);
+  loadResolveEditorCapturedCanonicalDeck(fileContent, context);
+  loadCreateEditorCapturedCanonicalDeckResolver(fileContent, context);
   loadResolveEditorCapturedPersistableDeckState(fileContent, context);
   const captureEditorPersistableDeckStateSource = extractFunctionSource(
     fileContent,
@@ -41,6 +43,30 @@ function loadResolveEditorCapturedPersistableDeckState(fileContent, context) {
     fileContent,
     'function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {',
     '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadResolveEditorCapturedCanonicalDeck(fileContent, context) {
+  if (typeof context.resolveEditorCapturedCanonicalDeck === 'function') {
+    return;
+  }
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadCreateEditorCapturedCanonicalDeckResolver(fileContent, context) {
+  if (typeof context.createEditorCapturedCanonicalDeckResolver === 'function') {
+    return;
+  }
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createEditorCapturedCanonicalDeckResolver(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -268,6 +294,9 @@ test('captureEditorPersistableDeckState delegates final capture-state resolution
   let delegatedArgs = null;
 
   const context = {
+    resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+      return nextCanonicalDeck || options.buildCanonicalDeck();
+    },
     SlideNextStudioEditorPersistence: {
       resolveStudioCapturedPersistableDeckState(cleanHtml, options = {}) {
         delegatedArgs = {
@@ -510,7 +539,7 @@ test('captureEditorPersistableDeckState reuses the local captured canonical deck
   const calls = [];
 
   const context = {
-    createEditorCapturedCanonicalDeckResolver(nextDoc, nextCanonicalDeck) {
+    __createEditorCapturedCanonicalDeckResolver(nextDoc, nextCanonicalDeck) {
       calls.push(['createEditorCapturedCanonicalDeckResolver', nextDoc, nextCanonicalDeck]);
       assert.equal(nextDoc, iframeDoc);
       assert.equal(nextCanonicalDeck, null);
@@ -540,6 +569,10 @@ test('captureEditorPersistableDeckState reuses the local captured canonical deck
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  vm.runInContext(
+    'createEditorCapturedCanonicalDeckResolver = __createEditorCapturedCanonicalDeckResolver;',
+    context
+  );
 
   const persistedDeckState = JSON.parse(JSON.stringify(context.captureEditorPersistableDeckState()));
   assert.deepEqual(persistedDeckState, {

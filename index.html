@@ -6193,15 +6193,7 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(captureOptions, 'canonicalDeck')
         ? captureOptions.canonicalDeck
         : null;
-      const resolveCapturedCanonicalDeck = typeof createEditorCapturedCanonicalDeckResolver === 'function'
-        ? createEditorCapturedCanonicalDeckResolver(doc, providedCanonicalDeck)
-        : () => typeof resolveEditorCapturedCanonicalDeck === 'function'
-          ? resolveEditorCapturedCanonicalDeck(doc, providedCanonicalDeck)
-          : typeof resolveEditorCanonicalDeckOverride === 'function'
-            ? resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-                buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
-              })
-            : buildEditorCanonicalDeck(doc);
+      const resolveCapturedCanonicalDeck = createEditorCapturedCanonicalDeckResolver(doc, providedCanonicalDeck);
       const capturedBuildState = captureEditorPersistableDeckBuildState(doc, {
         canonicalDeck: providedCanonicalDeck
       });
