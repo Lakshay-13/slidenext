@@ -118,7 +118,7 @@ function loadBuildEditorSaveRequestBody(fileContent, context, helperSource) {
     const createEditorSaveCanonicalDeckResolverSource = extractFunctionSource(
       fileContent,
       'function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {',
-      '\n\n    function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {'
+      '\n\n    function createEditorPersistableCanonicalDeckOverrideResolver(doc = getIframeDoc(), canonicalDeck = null) {'
     );
     vm.runInContext(createEditorSaveCanonicalDeckResolverSource, context);
   }

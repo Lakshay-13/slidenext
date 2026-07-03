@@ -1254,7 +1254,7 @@ test('createEditorSaveCanonicalDeckResolver reuses the local save canonical deck
   const helperSource = extractFunctionSource(
     fileContent,
     'function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {',
-    '\n\n    function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {'
+    '\n\n    function createEditorPersistableCanonicalDeckOverrideResolver(doc = getIframeDoc(), canonicalDeck = null) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -1282,117 +1282,6 @@ test('createEditorSaveCanonicalDeckResolver reuses the local save canonical deck
   assert.equal(resolveSaveCanonicalDeck(canonicalDeck), canonicalDeck);
   assert.deepEqual(calls, [
     ['resolveEditorSaveCanonicalDeck', iframeDoc, canonicalDeck]
-  ]);
-});
-
-test('resolveEditorCapturedCanonicalDeck delegates capture canonical resolution through resolveEditorCanonicalDeckOverride when available', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
-    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
-  );
-
-  const iframeDoc = { label: 'iframe-doc' };
-  const canonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: []
-  };
-  let delegatedArgs = null;
-  const context = {
-    resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
-      delegatedArgs = {
-        doc: nextDoc,
-        canonicalDeck: nextCanonicalDeck
-      };
-      return canonicalDeck;
-    },
-    getIframeDoc() {
-      return iframeDoc;
-    }
-  };
-
-  vm.createContext(context);
-  vm.runInContext(helperSource, context);
-
-  assert.equal(context.resolveEditorCapturedCanonicalDeck(iframeDoc, canonicalDeck), canonicalDeck);
-  assert.equal(delegatedArgs.doc, iframeDoc);
-  assert.equal(delegatedArgs.canonicalDeck, canonicalDeck);
-});
-
-test('resolveEditorCapturedCanonicalDeck falls back to the live editor canonical deck when the override helper is unavailable', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
-    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
-  );
-
-  const iframeDoc = { label: 'iframe-doc' };
-  const canonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: []
-  };
-  const calls = [];
-  const context = {
-    resolveEditorSaveCanonicalDeck(nextDoc, nextCanonicalDeck) {
-      calls.push(['resolveEditorSaveCanonicalDeck', nextDoc, nextCanonicalDeck]);
-      assert.equal(nextDoc, iframeDoc);
-      return canonicalDeck;
-    },
-    getIframeDoc() {
-      return iframeDoc;
-    }
-  };
-
-  vm.createContext(context);
-  vm.runInContext(helperSource, context);
-
-  assert.equal(context.resolveEditorCapturedCanonicalDeck(iframeDoc, null), canonicalDeck);
-  assert.deepEqual(calls, [
-    ['resolveEditorSaveCanonicalDeck', iframeDoc, null]
-  ]);
-});
-
-test('createEditorCapturedCanonicalDeckResolver reuses the local captured canonical deck helper when available', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createEditorCapturedCanonicalDeckResolver(doc = getIframeDoc(), canonicalDeck = null) {',
-    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
-  );
-
-  const iframeDoc = { label: 'iframe-doc' };
-  const canonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: [{ id: 'slide-1', nodes: [] }]
-  };
-  const calls = [];
-  const context = {
-    createEditorSaveCanonicalDeckResolver(nextDoc) {
-      calls.push(['createEditorSaveCanonicalDeckResolver', nextDoc]);
-      return (nextCanonicalDeck) => {
-        calls.push(['resolveSaveCanonicalDeck', nextCanonicalDeck]);
-        return canonicalDeck;
-      };
-    },
-    getIframeDoc() {
-      return iframeDoc;
-    }
-  };
-
-  vm.createContext(context);
-  vm.runInContext(helperSource, context);
-
-  const resolveCapturedCanonicalDeck = context.createEditorCapturedCanonicalDeckResolver(iframeDoc, canonicalDeck);
-
-  assert.equal(resolveCapturedCanonicalDeck(), canonicalDeck);
-  assert.deepEqual(calls, [
-    ['createEditorSaveCanonicalDeckResolver', iframeDoc],
-    ['resolveSaveCanonicalDeck', canonicalDeck]
   ]);
 });
 

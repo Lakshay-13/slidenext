@@ -37,25 +37,9 @@ function loadCaptureEditorPersistableDeckState(fileContent, context) {
     const createEditorSaveCanonicalDeckResolverSource = extractFunctionSource(
       fileContent,
       'function createEditorSaveCanonicalDeckResolver(doc = getIframeDoc()) {',
-      '\n\n    function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {'
+      '\n\n    function createEditorPersistableCanonicalDeckOverrideResolver(doc = getIframeDoc(), canonicalDeck = null) {'
     );
     vm.runInContext(createEditorSaveCanonicalDeckResolverSource, context);
-  }
-  if (typeof context.resolveEditorCapturedCanonicalDeck !== 'function') {
-    const resolveEditorCapturedCanonicalDeckSource = extractFunctionSource(
-      fileContent,
-      'function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
-      '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
-    );
-    vm.runInContext(resolveEditorCapturedCanonicalDeckSource, context);
-  }
-  if (typeof context.createEditorCapturedCanonicalDeckResolver !== 'function') {
-    const createEditorCapturedCanonicalDeckResolverSource = extractFunctionSource(
-      fileContent,
-      'function createEditorCapturedCanonicalDeckResolver(doc = getIframeDoc(), canonicalDeck = null) {',
-      '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
-    );
-    vm.runInContext(createEditorCapturedCanonicalDeckResolverSource, context);
   }
   const resolveEditorCapturedPersistableDeckStateSource = extractFunctionSource(
     fileContent,

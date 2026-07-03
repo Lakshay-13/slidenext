@@ -3443,17 +3443,6 @@
       };
     }
 
-    function resolveEditorCapturedCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
-      return resolveEditorSaveCanonicalDeck(doc, canonicalDeck);
-    }
-
-    function createEditorCapturedCanonicalDeckResolver(doc = getIframeDoc(), canonicalDeck = null) {
-      const resolveSaveCanonicalDeck = createEditorSaveCanonicalDeckResolver(doc);
-      return function resolveCapturedCanonicalDeck() {
-        return resolveSaveCanonicalDeck(canonicalDeck);
-      };
-    }
-
     function createEditorPersistableCanonicalDeckOverrideResolver(doc = getIframeDoc(), canonicalDeck = null) {
       const resolveSaveCanonicalDeck = createEditorSaveCanonicalDeckResolver(doc);
       return function resolveCanonicalDeckOverride(shouldBuildFallbackCanonicalDeck = false) {
