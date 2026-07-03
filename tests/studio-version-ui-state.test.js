@@ -45,6 +45,7 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
 
 function loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {',
@@ -55,6 +56,7 @@ function loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context)
 
 function loadHandleCurrentStudioVersionActionFailure(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionActionFailure(versionActionContext, options = {}) {',
@@ -65,10 +67,22 @@ function loadHandleCurrentStudioVersionActionFailure(fileContent, context) {
 
 function loadHandleCurrentStudioVersionRestoreSuccess(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionRestoreSuccess(versionActionContext, options = {}) {',
     '\n\n    // Rollback backup version'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context) {
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  context.SlideNextStudioVersionActions ??= versionActions;
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionActionHandlerOptions(options = {}) {',
+    '\n\n    function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -992,6 +1006,50 @@ test('createCurrentStudioVersionActionContext captures the active editor deck id
   assert.equal(calls[0][1], 'Project Onboarding');
   assert.equal(calls[0][2], 'General');
   assert.equal(calls[0][3].sessionToken, 21);
+});
+
+test('createCurrentStudioVersionActionHandlerOptions reuses current session readers and supplied hooks', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    SlideNextStudioEditorSession: editorSession,
+    SlideNextStudioVersionActions: versionActions,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    studioEditorSessionToken: 31
+  };
+  const isCurrentSession = () => true;
+  const onSuccess = () => {};
+  const onFailure = () => {};
+  const hideVersionsDropdown = () => {};
+  const relaunchEditor = () => {};
+  const refreshVersionEntries = () => {};
+
+  vm.createContext(context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
+
+  const options = context.createCurrentStudioVersionActionHandlerOptions({
+    isCurrentSession,
+    onSuccess,
+    onFailure,
+    hideVersionsDropdown,
+    relaunchEditor,
+    refreshVersionEntries
+  });
+
+  assert.equal(options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(options.getCurrentSessionToken(), 31);
+  assert.equal(options.isCurrentSession, isCurrentSession);
+  assert.equal(options.onSuccess, onSuccess);
+  assert.equal(options.onFailure, onFailure);
+  assert.equal(options.hideVersionsDropdown, hideVersionsDropdown);
+  assert.equal(options.relaunchEditor, relaunchEditor);
+  assert.equal(options.refreshVersionEntries, refreshVersionEntries);
 });
 
 test('handleCurrentStudioVersionListMutationSuccess reuses current session readers and refreshes version entries by default', () => {
