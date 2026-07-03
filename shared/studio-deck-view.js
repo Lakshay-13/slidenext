@@ -80,6 +80,9 @@
     const deckHtmlOptions = options.deckHtmlOptions && typeof options.deckHtmlOptions === 'object'
       ? { ...options.deckHtmlOptions }
       : {};
+    const explicitActiveSlideId = typeof options.activeSlideId === 'string' && options.activeSlideId.trim()
+      ? options.activeSlideId
+      : '';
 
     return {
       buildCanonicalDeck: resolveCanonicalDeck,
@@ -94,7 +97,7 @@
             ? deckHtmlOptions.renderOptions
             : {}),
           ...buildRenderOptions(doc, resolvedCanonicalDeck, {
-            activeSlideId: liveActiveSlideId
+            activeSlideId: explicitActiveSlideId || liveActiveSlideId
           })
         }
       }

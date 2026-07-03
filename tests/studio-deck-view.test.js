@@ -116,6 +116,50 @@ test('createStudioDeckViewBuildOptions reuses shared canonical view state for fa
   });
 });
 
+test('createStudioDeckViewBuildOptions prefers an explicit active slide override for render options', () => {
+  const doc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] }
+    ]
+  };
+  let renderArgs = null;
+
+  const buildOptions = deckView.createStudioDeckViewBuildOptions(doc, {
+    activeSlideId: 'slide-explicit',
+    resolveCanonicalDeckViewState() {
+      return {
+        resolveCanonicalDeck() {
+          return canonicalDeck;
+        },
+        liveActiveSlideId: 'slide-live',
+        resolvedCanonicalDeck: null
+      };
+    },
+    buildRenderOptions(sourceDoc, nextCanonicalDeck, options = {}) {
+      renderArgs = { sourceDoc, nextCanonicalDeck, options };
+      return {
+        activeSlideId: options.activeSlideId,
+        preferSourceHtml: false
+      };
+    }
+  });
+
+  assert.deepEqual(renderArgs, {
+    sourceDoc: doc,
+    nextCanonicalDeck: null,
+    options: {
+      activeSlideId: 'slide-explicit'
+    }
+  });
+  assert.deepEqual(buildOptions.deckHtmlOptions.renderOptions, {
+    activeSlideId: 'slide-explicit',
+    preferSourceHtml: false
+  });
+});
+
 test('createStudioDeckRenderOptions prefers an explicit active slide id and otherwise falls back through the resolver', () => {
   const doc = { label: 'iframe-doc' };
   const canonicalDeck = {

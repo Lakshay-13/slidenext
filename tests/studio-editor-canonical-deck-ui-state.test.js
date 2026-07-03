@@ -1227,7 +1227,7 @@ test('createEditorDeckViewBuildOptions forwards custom build overrides to the sh
           buildFallbackHtml: () => options.buildFallbackHtml(doc, canonicalDeck),
           deckHtmlOptions: {
             renderOptions: options.buildRenderOptions(doc, canonicalDeck, {
-              activeSlideId: 'slide-explicit'
+              activeSlideId: options.activeSlideId || 'slide-explicit'
             })
           }
         };
@@ -1261,6 +1261,7 @@ test('createEditorDeckViewBuildOptions forwards custom build overrides to the sh
   vm.runInContext(resolveEditorCanonicalDeckViewStateSource, context);
 
   const result = context.createEditorDeckViewBuildOptions(iframeDoc, {
+    activeSlideId: 'slide-override',
     buildCanonicalDeck: customBuildCanonicalDeck,
     resolveLiveActiveSlideId: customResolveLiveActiveSlideId,
     buildFallbackHtml: customBuildFallbackHtml,
@@ -1271,9 +1272,10 @@ test('createEditorDeckViewBuildOptions forwards custom build overrides to the sh
   assert.equal(result.buildFallbackHtml(), '<html>override-fallback</html>');
   assert.deepEqual(
     JSON.parse(JSON.stringify(result.deckHtmlOptions.renderOptions)),
-    { activeSlideId: 'slide-explicit' }
+    { activeSlideId: 'slide-override' }
   );
   assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(delegatedArgs.options.activeSlideId, 'slide-override');
   assert.equal(delegatedArgs.options.buildCanonicalDeck(iframeDoc), canonicalDeck);
   assert.equal(delegatedArgs.options.resolveLiveActiveSlideId(iframeDoc), 'slide-custom');
   assert.equal(
@@ -1283,10 +1285,10 @@ test('createEditorDeckViewBuildOptions forwards custom build overrides to the sh
   assert.deepEqual(
     JSON.parse(JSON.stringify(
       delegatedArgs.options.buildRenderOptions(iframeDoc, canonicalDeck, {
-        activeSlideId: 'slide-explicit'
+        activeSlideId: delegatedArgs.options.activeSlideId
       })
     )),
-    { activeSlideId: 'slide-explicit' }
+    { activeSlideId: 'slide-override' }
   );
 });
 

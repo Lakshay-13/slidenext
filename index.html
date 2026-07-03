@@ -1689,6 +1689,9 @@
       const buildOptions = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
         ? arguments[1]
         : {};
+      const activeSlideId = typeof buildOptions.activeSlideId === 'string' && buildOptions.activeSlideId.trim()
+        ? buildOptions.activeSlideId
+        : '';
       const buildCanonicalDeck = typeof buildOptions.buildCanonicalDeck === 'function'
         ? buildOptions.buildCanonicalDeck
         : (sourceDoc) => buildEditorCanonicalDeck(sourceDoc);
@@ -1716,6 +1719,7 @@
         : null;
       if (createStudioDeckViewBuildOptions) {
         return createStudioDeckViewBuildOptions(doc, {
+          activeSlideId,
           buildCanonicalDeck,
           resolveLiveActiveSlideId,
           buildFallbackHtml,
@@ -1739,7 +1743,7 @@
         ),
         deckHtmlOptions: {
           renderOptions: buildRenderOptions(doc, resolvedCanonicalDeck, {
-            activeSlideId: liveActiveSlideId
+            activeSlideId: activeSlideId || liveActiveSlideId
           })
         }
       };
@@ -5259,22 +5263,25 @@
       applyEditorSelectionState({});
       
       SlideNextStudioHistory.restoreStudioHistoryEntry(historyEntry, {
-        restoreFrameSetup: (nextHistoryEntry) => SlideNextStudioHistory.restoreStudioHistoryFrameSetup(nextHistoryEntry, {
-          doc: iframeDoc,
-          deckHtmlOptions: {
-            renderOptions: buildEditorDeckRenderOptions(null, nextHistoryEntry.canonicalDeck, {
-              activeSlideId: nextHistoryEntry.activeSlideId
-            })
-          },
-          replaceFrameHtml: (doc, html) => {
-            doc.documentElement.innerHTML = html;
-          },
-          syncIframeTheme,
-          makeElementsHoverable,
-          setupIframeDragging,
-          bindDeckNavigationSync,
-          generateThumbnails
-        }),
+        restoreFrameSetup: (nextHistoryEntry) => {
+          const historyRestoreDeckViewOptions = createEditorDeckViewBuildOptions(null, {
+            activeSlideId: nextHistoryEntry.activeSlideId,
+            buildCanonicalDeck: () => nextHistoryEntry.canonicalDeck,
+            buildFallbackHtml: () => ''
+          });
+          return SlideNextStudioHistory.restoreStudioHistoryFrameSetup(nextHistoryEntry, {
+            doc: iframeDoc,
+            deckHtmlOptions: historyRestoreDeckViewOptions.deckHtmlOptions,
+            replaceFrameHtml: (doc, html) => {
+              doc.documentElement.innerHTML = html;
+            },
+            syncIframeTheme,
+            makeElementsHoverable,
+            setupIframeDragging,
+            bindDeckNavigationSync,
+            generateThumbnails
+          });
+        },
         restoreActiveSlide: (nextHistoryEntry) => SlideNextStudioHistory.restoreStudioHistoryActiveSlide(nextHistoryEntry, {
           fallbackIndex,
           restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc),

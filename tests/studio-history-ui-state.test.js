@@ -920,6 +920,21 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
       callLog.push(['capturePersistedDeckPlaybackState', doc, nextCanonicalDeck]);
       return restoredPlaybackState;
     },
+    __createEditorDeckViewBuildOptions(nextDoc, options = {}) {
+      callLog.push(['createEditorDeckViewBuildOptions', nextDoc, options]);
+      return {
+        deckHtmlOptions: {
+          renderOptions: {
+            activeSlideId: options.activeSlideId || 'slide-fallback',
+            preferSourceHtml: false,
+            preferHeadSourceHtml: false,
+            preferBodySourceHtml: false,
+            preferSlideSourceHtml: false,
+            preferNodeSourceHtml: false
+          }
+        }
+      };
+    },
     currentSlideIndex: 2,
     generateThumbnails() {
       callLog.push(['generateThumbnails']);
@@ -1002,6 +1017,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
 
   vm.createContext(context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext('createEditorDeckViewBuildOptions = __createEditorDeckViewBuildOptions;', context);
   vm.runInContext(persistedDeckStateHelperSource, context);
   vm.runInContext(
     extractFunctionSource(
@@ -1036,10 +1052,14 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   assert.equal(Object.keys(callLog[2][1]).length, 0);
   assert.equal(callLog[3][0], 'restoreStudioHistoryEntry');
   assert.equal(callLog[3][1].normalized, true);
-  assert.equal(callLog[4][0], 'getPersistedActiveSlideId');
+  assert.equal(callLog[4][0], 'createEditorDeckViewBuildOptions');
+  assert.equal(callLog[4][1], null);
+  assert.equal(callLog[4][2].activeSlideId, undefined);
+  assert.equal(callLog[4][2].buildCanonicalDeck(), canonicalDeck);
+  assert.equal(callLog[4][2].buildFallbackHtml(), '');
   assert.equal(callLog[5][0], 'restoreStudioHistoryFrameSetup');
   assert.equal(callLog[5][2], iframeDoc);
-  assert.equal(callLog[5][3].renderOptions.activeSlideId, 'slide-3');
+  assert.equal(callLog[5][3].renderOptions.activeSlideId, 'slide-fallback');
   assert.equal(callLog[5][3].renderOptions.preferSourceHtml, false);
   assert.equal(callLog[5][3].renderOptions.preferHeadSourceHtml, false);
   assert.equal(callLog[5][3].renderOptions.preferBodySourceHtml, false);
