@@ -1092,6 +1092,42 @@ test('resolveEditorCapturedCanonicalDeck falls back to the live editor canonical
   assert.equal(buildEditorCanonicalDeckCalls, 1);
 });
 
+test('createEditorCapturedCanonicalDeckResolver reuses the local captured canonical deck helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createEditorCapturedCanonicalDeckResolver(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const calls = [];
+  const context = {
+    resolveEditorCapturedCanonicalDeck(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveEditorCapturedCanonicalDeck', nextDoc, nextCanonicalDeck]);
+      return canonicalDeck;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  const resolveCapturedCanonicalDeck = context.createEditorCapturedCanonicalDeckResolver(iframeDoc, canonicalDeck);
+
+  assert.equal(resolveCapturedCanonicalDeck(), canonicalDeck);
+  assert.deepEqual(calls, [
+    ['resolveEditorCapturedCanonicalDeck', iframeDoc, canonicalDeck]
+  ]);
+});
+
 test('resolveEditorFallbackActiveSlideId rebuilds a malformed canonical deck input before choosing the fallback slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(

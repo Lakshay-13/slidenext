@@ -3550,6 +3550,20 @@
       return buildEditorCanonicalDeck(doc);
     }
 
+    function createEditorCapturedCanonicalDeckResolver(doc = getIframeDoc(), canonicalDeck = null) {
+      return function resolveCapturedCanonicalDeck() {
+        if (typeof resolveEditorCapturedCanonicalDeck === 'function') {
+          return resolveEditorCapturedCanonicalDeck(doc, canonicalDeck);
+        }
+        if (typeof resolveEditorCanonicalDeckOverride === 'function') {
+          return resolveEditorCanonicalDeckOverride(canonicalDeck, {
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+          });
+        }
+        return buildEditorCanonicalDeck(doc);
+      };
+    }
+
     function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {
       const resolvePersistedDeckActiveSlideId = (
         typeof SlideNextDeckPersistence !== 'undefined'
@@ -5627,13 +5641,15 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(captureOptions, 'canonicalDeck')
         ? captureOptions.canonicalDeck
         : null;
-      const resolveCapturedCanonicalDeck = () => typeof resolveEditorCapturedCanonicalDeck === 'function'
-        ? resolveEditorCapturedCanonicalDeck(doc, providedCanonicalDeck)
-        : typeof resolveEditorCanonicalDeckOverride === 'function'
-          ? resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-              buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
-            })
-          : buildEditorCanonicalDeck(doc);
+      const resolveCapturedCanonicalDeck = typeof createEditorCapturedCanonicalDeckResolver === 'function'
+        ? createEditorCapturedCanonicalDeckResolver(doc, providedCanonicalDeck)
+        : () => typeof resolveEditorCapturedCanonicalDeck === 'function'
+          ? resolveEditorCapturedCanonicalDeck(doc, providedCanonicalDeck)
+          : typeof resolveEditorCanonicalDeckOverride === 'function'
+            ? resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
+                buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+              })
+            : buildEditorCanonicalDeck(doc);
       let resolvedCanonicalDeck = null;
       let resolvedPlaybackState;
       const cleanHtml = buildPersistableDeckHtml(doc, {

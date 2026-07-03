@@ -287,11 +287,14 @@ test('captureEditorPersistableDeckState reuses the local captured canonical deck
   const calls = [];
 
   const context = {
-    resolveEditorCapturedCanonicalDeck(nextDoc, nextCanonicalDeck) {
-      calls.push(['resolveEditorCapturedCanonicalDeck', nextDoc, nextCanonicalDeck]);
+    createEditorCapturedCanonicalDeckResolver(nextDoc, nextCanonicalDeck) {
+      calls.push(['createEditorCapturedCanonicalDeckResolver', nextDoc, nextCanonicalDeck]);
       assert.equal(nextDoc, iframeDoc);
       assert.equal(nextCanonicalDeck, null);
-      return canonicalDeck;
+      return () => {
+        calls.push(['resolveCapturedCanonicalDeck']);
+        return canonicalDeck;
+      };
     },
     buildPersistableDeckHtml(doc, options = {}) {
       assert.equal(doc, iframeDoc);
@@ -322,7 +325,8 @@ test('captureEditorPersistableDeckState reuses the local captured canonical deck
     canonicalDeck
   });
   assert.deepEqual(calls.map(([name]) => name), [
-    'resolveEditorCapturedCanonicalDeck',
+    'createEditorCapturedCanonicalDeckResolver',
+    'resolveCapturedCanonicalDeck',
     'capturePersistedDeckPlaybackState'
   ]);
 });
