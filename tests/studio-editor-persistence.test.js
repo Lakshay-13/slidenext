@@ -120,6 +120,58 @@ test('resolveStudioCapturedPersistableDeckState rebuilds canonical and playback 
   assert.equal(resolvePlaybackStateCalls, 1);
 });
 
+test('resolveStudioPersistenceStateFromDocumentCapture captures deck state before delegating to a persistence resolver', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const capturedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: []
+    },
+    playbackState: {
+      activeSlideIds: ['slide-1'],
+      slideCounterText: '1 / 1'
+    }
+  };
+  let delegatedArgs = null;
+
+  const result = editorPersistence.resolveStudioPersistenceStateFromDocumentCapture(
+    iframeDoc,
+    '/presentations/onboarding-presentation/index.html',
+    {
+      capturePersistableDeckState(nextDoc) {
+        assert.equal(nextDoc, iframeDoc);
+        return capturedDeckState;
+      },
+      persistenceOptions: {
+        sessionToken: 12
+      }
+    },
+    (doc, nextCapturedDeckState, presentationUrl, options = {}) => {
+      delegatedArgs = {
+        doc,
+        nextCapturedDeckState,
+        presentationUrl,
+        options
+      };
+      return {
+        persistenceContext: {
+          presentationUrl
+        }
+      };
+    }
+  );
+
+  assert.equal(result.persistenceContext.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(delegatedArgs.nextCapturedDeckState, capturedDeckState);
+  assert.equal(delegatedArgs.presentationUrl, '/presentations/onboarding-presentation/index.html');
+  assert.deepEqual(delegatedArgs.options, {
+    sessionToken: 12
+  });
+});
+
 test('createStudioPersistenceActionContext normalizes persistence state', () => {
   assert.deepEqual(
     editorPersistence.createStudioPersistenceActionContext(

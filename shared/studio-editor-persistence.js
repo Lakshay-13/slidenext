@@ -358,6 +358,27 @@
     );
   }
 
+  function resolveStudioPersistenceStateFromDocumentCapture(
+    doc = null,
+    presentationUrl = '',
+    options = {},
+    resolvePersistenceStateFromCapture = null
+  ) {
+    const capturePersistableDeckState = typeof options.capturePersistableDeckState === 'function'
+      ? options.capturePersistableDeckState
+      : null;
+    if (!capturePersistableDeckState || typeof resolvePersistenceStateFromCapture !== 'function') {
+      return null;
+    }
+
+    return resolvePersistenceStateFromCapture(
+      doc,
+      capturePersistableDeckState(doc),
+      presentationUrl,
+      asPlainObject(options.persistenceOptions)
+    );
+  }
+
   function resolveStudioAutoSavePersistenceState(
     persistedDeckState = {},
     presentationUrl = '',
@@ -753,6 +774,7 @@
     createStudioVersionPersistenceActionContext,
     buildStudioSaveRequestBody,
     buildStudioPersistenceRequestPlan,
+    resolveStudioPersistenceStateFromDocumentCapture,
     buildStudioAutoSavePersistencePlan,
     createStudioAutoSavePersistenceState,
     resolveStudioAutoSavePersistenceState,
