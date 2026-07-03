@@ -1868,18 +1868,10 @@
           buildViewOptions,
           extendViewOptions
         }),
-        buildCanonicalHtml: typeof createEditorDeckViewCanonicalHtmlResolver === 'function'
-          ? createEditorDeckViewCanonicalHtmlResolver({
-              buildCanonicalHtml,
-              mapCanonicalHtmlArgs
-            })
-          : buildCanonicalHtml
-            ? (canonicalDeck, deckHtmlOptions) => buildCanonicalHtml(...(
-                typeof mapCanonicalHtmlArgs === 'function'
-                  ? mapCanonicalHtmlArgs(canonicalDeck, deckHtmlOptions)
-                  : [canonicalDeck, deckHtmlOptions]
-              ))
-            : null,
+        buildCanonicalHtml: createEditorDeckViewCanonicalHtmlResolver({
+          buildCanonicalHtml,
+          mapCanonicalHtmlArgs
+        }),
         transformFallbackHtml
       };
     }
