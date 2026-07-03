@@ -5396,12 +5396,6 @@
         });
       }
 
-      if (typeof buildEditorSourceDeckHtml === 'function') {
-        return buildEditorSourceDeckHtml(doc, {
-          buildViewOptions: () => sourceViewOptions
-        });
-      }
-
       const buildStudioSourceHtml = typeof options.buildStudioSourceHtml === 'function'
         ? options.buildStudioSourceHtml
         : (
