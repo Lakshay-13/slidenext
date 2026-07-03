@@ -592,7 +592,7 @@ test('resolveCurrentStudioAutoSavePersistenceState delegates through the local c
   assert.equal(delegatedArgs.options.persistenceOptions.sessionToken, 13);
 });
 
-test('executeCurrentStudioVersionCheckpointSave saves the resolved checkpoint state and returns the result bundle', async () => {
+test('executeCurrentStudioVersionCheckpointSave delegates through the shared version checkpoint save helper', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const versionCheckpointPersistenceState = {
     cleanHtml: '<html>persisted</html>',
@@ -606,6 +606,7 @@ test('executeCurrentStudioVersionCheckpointSave saves the resolved checkpoint st
   let saveArgs = null;
   const context = {
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    SlideNextStudioEditorPersistence: editorPersistence,
     saveVersionCheckpoint: async (...args) => {
       saveArgs = args;
       return {
@@ -616,7 +617,6 @@ test('executeCurrentStudioVersionCheckpointSave saves the resolved checkpoint st
 
   vm.createContext(context);
   loadExecuteCurrentStudioVersionCheckpointSave(fileContent, context);
-  loadExecuteCurrentStudioVersionCheckpointSaveWithSuccess(fileContent, context);
 
   const result = await context.executeCurrentStudioVersionCheckpointSave(
     'Checkpoint Baseline',

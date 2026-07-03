@@ -6786,36 +6786,14 @@
       if (!versionCheckpointPersistenceState) {
         return null;
       }
-
-      const executeVersionCheckpointSave = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSave === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSave
-        : null;
-      if (executeVersionCheckpointSave) {
-        return executeVersionCheckpointSave(
-          versionLabel,
-          versionCheckpointPersistenceState,
-          presentationUrl,
-          {
-            saveVersionCheckpoint
-          }
-        );
-      }
-
-      const data = await saveVersionCheckpoint(
+      return SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSave(
         versionLabel,
-        versionCheckpointPersistenceState.cleanHtml,
+        versionCheckpointPersistenceState,
         presentationUrl,
-        versionCheckpointPersistenceState.requestOptions
+        {
+          saveVersionCheckpoint
+        }
       );
-
-      return {
-        data,
-        versionCheckpointPersistenceState
-      };
     }
 
     async function executeCurrentStudioVersionCheckpointSaveWithSuccess(
