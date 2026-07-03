@@ -1458,29 +1458,7 @@
       }
 
       const persistedActiveSlideId = getPersistedActiveSlideId();
-      const nextCanonicalDeck = typeof resolveEditorFallbackCanonicalDeck === 'function'
-        ? resolveEditorFallbackCanonicalDeck(doc, canonicalDeck)
-        : typeof resolveEditorCanonicalDeckOverride === 'function'
-          ? resolveEditorCanonicalDeckOverride(canonicalDeck, {
-              buildCanonicalDeck: canonicalDeck ? () => buildEditorCanonicalDeck(doc) : null
-            })
-          : (() => {
-              const canonicalDeckValidator = typeof getEditorCanonicalDeckValidator === 'function'
-                ? getEditorCanonicalDeckValidator()
-                : (
-                    typeof SlideNextCanonicalDeck !== 'undefined'
-                    && SlideNextCanonicalDeck
-                    && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-                  )
-                  ? SlideNextCanonicalDeck.isCanonicalDeck
-                  : null;
-              const hasValidCanonicalDeck = canonicalDeckValidator
-                ? canonicalDeckValidator(canonicalDeck)
-                : !!(canonicalDeck && Array.isArray(canonicalDeck.slides));
-              return hasValidCanonicalDeck
-                ? canonicalDeck
-                : (canonicalDeck ? buildEditorCanonicalDeck(doc) : null);
-            })();
+      const nextCanonicalDeck = resolveEditorFallbackCanonicalDeck(doc, canonicalDeck);
       if (doc) {
         const liveActiveSlideId = resolveEditorLiveActiveSlideId(doc);
         if (typeof liveActiveSlideId === 'string' && liveActiveSlideId.trim()) {
