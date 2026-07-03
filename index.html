@@ -5693,24 +5693,6 @@
       return versionCheckpointResult ? versionCheckpointResult.data : null;
     }
 
-    async function executeCurrentStudioVersionCheckpointSave(
-      versionLabel,
-      versionCheckpointPersistenceState,
-      presentationUrl = currentPresentationUrl
-    ) {
-      if (!versionCheckpointPersistenceState) {
-        return null;
-      }
-      return SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSave(
-        versionLabel,
-        versionCheckpointPersistenceState,
-        presentationUrl,
-        {
-          saveVersionCheckpoint
-        }
-      );
-    }
-
     async function executeCurrentStudioVersionCheckpointSaveWithSuccess(
       versionLabel,
       versionCheckpointPersistenceState,
