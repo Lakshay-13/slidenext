@@ -2185,6 +2185,64 @@ test('buildEditorDeckRenderOptions reuses the local deck view shared options hel
   ]);
 });
 
+test('createEditorDeckViewHtmlOptions maps canonical html arguments when local helpers are available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createEditorDeckViewHtmlOptionsSource = extractFunctionSource(
+    fileContent,
+    'function createEditorDeckViewHtmlOptions(options = {}) {',
+    '\n\n    function createEditorPreviewFallbackHtmlTransformer(options = {}) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const deckHtmlOptions = {
+    renderOptions: {
+      activeSlideId: 'slide-live'
+    }
+  };
+  let delegatedBuildViewOptionsArgs = null;
+  const canonicalHtmlCalls = [];
+  const customBuildCanonicalHtml = (...args) => {
+    canonicalHtmlCalls.push(args);
+    return '<html>canonical</html>';
+  };
+  const context = {
+    __createEditorDeckViewBuildViewOptionsResolver(options) {
+      delegatedBuildViewOptionsArgs = options;
+      return function buildViewOptions() {
+        return {
+          buildCanonicalDeck() {
+            return canonicalDeck;
+          }
+        };
+      };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createEditorDeckViewHtmlOptionsSource, context);
+  vm.runInContext('createEditorDeckViewBuildViewOptionsResolver = __createEditorDeckViewBuildViewOptionsResolver;', context);
+
+  const result = context.createEditorDeckViewHtmlOptions({
+    buildCanonicalHtml: customBuildCanonicalHtml,
+    mapCanonicalHtmlArgs(nextCanonicalDeck, nextDeckHtmlOptions) {
+      return [nextDeckHtmlOptions, nextCanonicalDeck, 'mapped'];
+    }
+  });
+
+  assert.equal(typeof result.buildViewOptions, 'function');
+  assert.equal(typeof result.buildCanonicalHtml, 'function');
+  assert.equal(result.buildCanonicalHtml(canonicalDeck, deckHtmlOptions), '<html>canonical</html>');
+  assert.deepEqual(canonicalHtmlCalls, [
+    [deckHtmlOptions, canonicalDeck, 'mapped']
+  ]);
+  assert.equal(delegatedBuildViewOptionsArgs.buildViewOptions, null);
+  assert.equal(delegatedBuildViewOptionsArgs.extendViewOptions, null);
+});
+
 test('createEditorCanonicalDeckViewStateOptions reuses provided canonical and live-active resolvers when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(

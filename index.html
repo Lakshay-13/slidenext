@@ -1777,18 +1777,6 @@
       };
     }
 
-    function createEditorDeckViewCanonicalHtmlResolver(options = {}) {
-      const buildCanonicalHtml = typeof options.buildCanonicalHtml === 'function'
-        ? options.buildCanonicalHtml
-        : null;
-      const mapCanonicalHtmlArgs = typeof options.mapCanonicalHtmlArgs === 'function'
-        ? options.mapCanonicalHtmlArgs
-        : (canonicalDeck, deckHtmlOptions) => [canonicalDeck, deckHtmlOptions];
-      return buildCanonicalHtml
-        ? (canonicalDeck, deckHtmlOptions) => buildCanonicalHtml(...mapCanonicalHtmlArgs(canonicalDeck, deckHtmlOptions))
-        : null;
-    }
-
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
       const buildStudioPreviewHtml = resolveStudioDeckViewMethod('buildStudioPreviewHtml');
       const buildDeckPreviewHtml = resolveDeckHtmlMethod('buildDeckPreviewHtml');
@@ -1830,10 +1818,13 @@
           buildViewOptions,
           extendViewOptions
         }),
-        buildCanonicalHtml: createEditorDeckViewCanonicalHtmlResolver({
-          buildCanonicalHtml,
-          mapCanonicalHtmlArgs
-        }),
+        buildCanonicalHtml: buildCanonicalHtml
+          ? (canonicalDeck, deckHtmlOptions) => buildCanonicalHtml(
+              ...(mapCanonicalHtmlArgs
+                ? mapCanonicalHtmlArgs(canonicalDeck, deckHtmlOptions)
+                : [canonicalDeck, deckHtmlOptions])
+            )
+          : null,
         transformFallbackHtml
       };
     }
