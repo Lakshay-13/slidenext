@@ -539,7 +539,7 @@ test('resolveCurrentStudioAutoSavePersistenceState delegates autosave capture th
   assert.equal(delegatedArgs.options.sessionToken, 13);
 });
 
-test('resolveCurrentStudioAutoSavePersistenceState reuses the local capture delegation helper when available', () => {
+test('resolveCurrentStudioAutoSavePersistenceState delegates through the local capture helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
   let delegatedArgs = null;
