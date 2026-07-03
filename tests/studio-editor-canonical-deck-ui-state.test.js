@@ -4,6 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const canonicalDeckModel = require('../shared/canonical-deck.js');
+const presentationMetadata = require('../shared/presentation-metadata.js');
+
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
@@ -76,6 +79,44 @@ test('resolveEditorStoredCanonicalBaseline prefers the current metadata canonica
 
   assert.equal(result, currentMetadataCanonicalDeck);
   assert.deepEqual(calls, [context.currentPresentationMetadata]);
+});
+
+test('resolveEditorStoredCanonicalDeck falls back to the shared presentation metadata normalizer when the deck context helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const rawStoredCanonicalDeck = {
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      { id: 'slide-1', nodes: [] }
+    ]
+  };
+  const context = {
+    SlideNextStudioDeckContext: {},
+    SlideNextPresentationMetadata: presentationMetadata,
+    SlideNextCanonicalDeck: canonicalDeckModel
+  };
+
+  vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
+
+  const result = context.resolveEditorStoredCanonicalDeck({
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: '/presentations/onboarding-presentation/index.html',
+    canonicalDeck: rawStoredCanonicalDeck
+  });
+
+  assert.deepEqual(result, canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      id: 'onboarding-presentation',
+      title: 'Project Onboarding',
+      sourcePath: '/presentations/onboarding-presentation/index.html'
+    },
+    slides: [
+      { id: 'slide-1', nodes: [] }
+    ]
+  }));
 });
 
 test('resolveEditorStoredCanonicalBaseline delegates precedence to the shared deck context when available', () => {
