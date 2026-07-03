@@ -408,6 +408,44 @@ test('buildEditorPreviewHtml reuses the shared deck-view html builder when the p
   assert.equal(typeof calls[0].options.transformFallbackHtml, 'function');
 });
 
+test('buildEditorPreviewHtml reuses the shared deck-view helper for editor deck-view html orchestration when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorPreviewHtmlSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorSourceHtml(doc = getIframeDoc()) {'
+  );
+
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      buildStudioDeckViewHtml(doc, options) {
+        calls.push({ doc, options });
+        return '<html>preview-from-shared-deck-view-helper</html>';
+      }
+    },
+    currentSlideIndex: 1,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    getPersistedActiveSlideId() {
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorPreviewHtmlSource, context);
+
+  const result = context.buildEditorPreviewHtml();
+
+  assert.equal(result, '<html>preview-from-shared-deck-view-helper</html>');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].doc, null);
+  assert.equal(typeof calls[0].options.buildViewOptions, 'function');
+  assert.equal(typeof calls[0].options.transformFallbackHtml, 'function');
+});
+
 test('buildEditorPreviewHtml prefers the live active slide when the editor frame is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorPreviewHtmlSource = extractFunctionSource(

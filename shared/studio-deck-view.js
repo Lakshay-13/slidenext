@@ -209,6 +209,28 @@
       : fallbackHtml;
   }
 
+  function buildStudioDeckViewHtml(doc, options = {}) {
+    const buildSharedHtml = typeof options.buildSharedHtml === 'function'
+      ? options.buildSharedHtml
+      : null;
+    const deckViewOptions = typeof options.buildViewOptions === 'function'
+      ? options.buildViewOptions(doc)
+      : {};
+    if (buildSharedHtml) {
+      return buildSharedHtml(doc, deckViewOptions);
+    }
+
+    return buildStudioDeckHtml(doc, {
+      ...deckViewOptions,
+      buildCanonicalHtml: typeof options.buildCanonicalHtml === 'function'
+        ? (canonicalDeck, nextDocOrOptions) => options.buildCanonicalHtml(canonicalDeck, nextDocOrOptions)
+        : null,
+      transformFallbackHtml: options.transformFallbackHtml
+        ? (fallbackHtml, nextDocOrOptions) => options.transformFallbackHtml(fallbackHtml, nextDocOrOptions)
+        : null
+    });
+  }
+
   function teardownStudioDeckActiveSlideSync(state = {}, options = {}) {
     const disconnectObserver = typeof options.disconnectObserver === 'function'
       ? options.disconnectObserver
@@ -722,6 +744,7 @@
     resolveStudioLiveActiveSlideId,
     resolveStudioFallbackActiveSlideId,
     buildStudioDeckHtml,
+    buildStudioDeckViewHtml,
     buildStudioPreviewHtml,
     buildStudioSourceHtml
   };

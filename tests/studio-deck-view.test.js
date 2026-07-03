@@ -458,6 +458,78 @@ test('buildStudioDeckHtml falls back and can transform fallback html when the ca
   ]);
 });
 
+test('buildStudioDeckViewHtml prefers the provided shared html builder when available', () => {
+  const calls = [];
+
+  assert.equal(
+    deckView.buildStudioDeckViewHtml(
+      { label: 'doc' },
+      {
+        buildViewOptions(doc) {
+          calls.push(['buildViewOptions', doc]);
+          return {
+            buildFallbackHtml() {
+              throw new Error('buildFallbackHtml should not run when the shared html builder is available');
+            }
+          };
+        },
+        buildSharedHtml(doc, options) {
+          calls.push(['buildSharedHtml', doc, options]);
+          return '<html>shared</html>';
+        }
+      }
+    ),
+    '<html>shared</html>'
+  );
+
+  assert.equal(calls.length, 2);
+  assert.deepEqual(calls[0], ['buildViewOptions', { label: 'doc' }]);
+  assert.equal(calls[1][0], 'buildSharedHtml');
+  assert.deepEqual(calls[1][1], { label: 'doc' });
+  assert.equal(typeof calls[1][2].buildFallbackHtml, 'function');
+});
+
+test('buildStudioDeckViewHtml falls back to deck html orchestration when no shared html builder is provided', () => {
+  const calls = [];
+
+  assert.equal(
+    deckView.buildStudioDeckViewHtml(
+      { label: 'doc' },
+      {
+        buildViewOptions(doc) {
+          calls.push(['buildViewOptions', doc]);
+          return {
+            buildCanonicalDeck(nextDoc) {
+              calls.push(['buildCanonicalDeck', nextDoc]);
+              return {
+                metadata: {
+                  title: 'Broken Deck'
+                }
+              };
+            },
+            buildFallbackHtml(nextDoc) {
+              calls.push(['buildFallbackHtml', nextDoc]);
+              return '<html>fallback</html>';
+            }
+          };
+        },
+        transformFallbackHtml(fallbackHtml, nextDocOrOptions) {
+          calls.push(['transformFallbackHtml', fallbackHtml, nextDocOrOptions]);
+          return `${fallbackHtml}:transformed`;
+        }
+      }
+    ),
+    '<html>fallback</html>:transformed'
+  );
+
+  assert.deepEqual(calls, [
+    ['buildViewOptions', { label: 'doc' }],
+    ['buildCanonicalDeck', { label: 'doc' }],
+    ['buildFallbackHtml', { label: 'doc' }],
+    ['transformFallbackHtml', '<html>fallback</html>', { label: 'doc' }]
+  ]);
+});
+
 test('buildStudioPreviewHtml falls back when the canonical deck is malformed', () => {
   const result = deckView.buildStudioPreviewHtml(
     { label: 'doc' },
