@@ -1529,6 +1529,9 @@
       if (resolveStudioLiveActiveSlide) {
         return resolveStudioLiveActiveSlide(doc);
       }
+      if (typeof getActiveSlide === 'function') {
+        return getActiveSlide(doc);
+      }
       if (!doc || typeof doc.querySelector !== 'function') {
         return null;
       }
