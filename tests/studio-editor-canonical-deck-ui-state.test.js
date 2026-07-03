@@ -854,6 +854,49 @@ test('resolveEditorCanonicalDeckViewState delegates resolver orchestration to th
   assert.equal(buildEditorCanonicalDeckCalls, 1);
 });
 
+test('createEditorCanonicalDeckResolver delegates fallback resolver creation to the shared snapshot helper when deck view helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createEditorCanonicalDeckResolverSource = extractFunctionSource(
+    fileContent,
+    'function createEditorCanonicalDeckResolver(doc = getIframeDoc()) {',
+    '\n\n    function resolveEditorCanonicalDeckViewState(doc = getIframeDoc(), options = {}) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  let delegatedArgs = null;
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const context = {
+    SlideNextStudioDeckSnapshot: {
+      createStudioDeckSnapshotCanonicalDeckResolver(doc, options) {
+        delegatedArgs = { doc, options };
+        return function resolveCanonicalDeck(nextDoc = doc) {
+          return options.buildCanonicalDeck(nextDoc);
+        };
+      }
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return canonicalDeck;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createEditorCanonicalDeckResolverSource, context);
+
+  const resolveCanonicalDeck = context.createEditorCanonicalDeckResolver(iframeDoc);
+
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(typeof delegatedArgs.options.buildCanonicalDeck, 'function');
+  assert.equal(resolveCanonicalDeck(iframeDoc), canonicalDeck);
+});
+
 test('createEditorDeckViewBuildOptions delegates build-option composition to the shared deck view helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
