@@ -37,14 +37,6 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
     );
     vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
   }
-  if (typeof context.renderEditorPersistableSourceDeckHtml !== 'function') {
-    const renderEditorPersistableSourceDeckHtmlSource = extractFunctionSource(
-      fileContent,
-      'function renderEditorPersistableSourceDeckHtml(doc = getIframeDoc(), sourceViewOptions = {}, persistedHtml = \'\', options = {}) {',
-      '\n\n    function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {'
-    );
-    vm.runInContext(renderEditorPersistableSourceDeckHtmlSource, context);
-  }
   if (typeof context.buildEditorPersistableDeckSanitizerOptions !== 'function') {
     const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
       fileContent,
@@ -2646,9 +2638,10 @@ test('buildPersistableDeckHtml reuses the local deck view build options helper w
       delegatedArgs = { nextDoc, options };
       return sourceViewOptions;
     },
-    __renderEditorPersistableSourceDeckHtml(nextDoc, nextSourceViewOptions) {
+    __buildEditorSourceDeckHtml(nextDoc, options) {
       assert.equal(nextDoc, null);
-      assert.equal(nextSourceViewOptions, sourceViewOptions);
+      assert.equal(typeof options.buildViewOptions, 'function');
+      assert.equal(options.buildViewOptions(nextDoc), sourceViewOptions);
       return '<html>canonical-source</html>';
     },
     buildEditorCanonicalDeck(nextDoc) {
@@ -2675,7 +2668,7 @@ test('buildPersistableDeckHtml reuses the local deck view build options helper w
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
   vm.runInContext('createEditorDeckViewBuildOptions = __createEditorDeckViewBuildOptions;', context);
-  vm.runInContext('renderEditorPersistableSourceDeckHtml = __renderEditorPersistableSourceDeckHtml;', context);
+  vm.runInContext('buildEditorSourceDeckHtml = __buildEditorSourceDeckHtml;', context);
 
   const result = context.buildPersistableDeckHtml();
 
@@ -2696,54 +2689,6 @@ test('buildPersistableDeckHtml reuses the local deck view build options helper w
       preferNodeSourceHtml: false
     }
   );
-});
-
-test('renderEditorPersistableSourceDeckHtml reuses buildEditorSourceDeckHtml when the default renderer is used', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const renderEditorPersistableSourceDeckHtmlSource = extractFunctionSource(
-    fileContent,
-    'function renderEditorPersistableSourceDeckHtml(doc = getIframeDoc(), sourceViewOptions = {}, persistedHtml = \'\', options = {}) {',
-    '\n\n    function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {'
-  );
-
-  const sourceViewOptions = {
-    buildCanonicalDeck() {
-      return {
-        kind: 'slidenext.deck',
-        schemaVersion: 1,
-        slides: []
-      };
-    }
-  };
-  let delegatedArgs = null;
-  const context = {
-    __buildEditorSourceDeckHtml(nextDoc, options = {}) {
-      delegatedArgs = { nextDoc, options };
-      return '<html>canonical-source</html>';
-    },
-    getIframeDoc() {
-      return null;
-    }
-  };
-
-  vm.createContext(context);
-  vm.runInContext(renderEditorPersistableSourceDeckHtmlSource, context);
-  vm.runInContext('buildEditorSourceDeckHtml = __buildEditorSourceDeckHtml;', context);
-
-  assert.equal(
-    context.renderEditorPersistableSourceDeckHtml(null, sourceViewOptions, '<html>persisted-baseline</html>'),
-    '<html>canonical-source</html>'
-  );
-  assert.equal(delegatedArgs.nextDoc, null);
-  assert.equal(typeof delegatedArgs.options.buildViewOptions, 'function');
-  const delegatedSourceViewOptions = delegatedArgs.options.buildViewOptions(null);
-  assert.equal(typeof delegatedSourceViewOptions.buildCanonicalDeck, 'function');
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(delegatedSourceViewOptions.buildCanonicalDeck())),
-    sourceViewOptions.buildCanonicalDeck()
-  );
-  assert.equal(typeof delegatedSourceViewOptions.buildFallbackHtml, 'function');
-  assert.equal(delegatedSourceViewOptions.buildFallbackHtml(), '<html>persisted-baseline</html>');
 });
 
 test('buildPersistableDeckHtml reuses buildEditorSourceDeckHtml when rendering canonical source without a persisted baseline', () => {
@@ -2884,8 +2829,9 @@ test('buildPersistableDeckHtml reuses the local persistable source deck html ren
         buildCanonicalDeck: options.buildCanonicalDeck
       };
     },
-    __renderEditorPersistableSourceDeckHtml(nextDoc, sourceViewOptions, persistedHtml) {
-      calls.push(['renderEditorPersistableSourceDeckHtml', nextDoc, sourceViewOptions, persistedHtml]);
+    __buildEditorSourceDeckHtml(nextDoc, options = {}) {
+      calls.push(['buildEditorSourceDeckHtml', nextDoc, options]);
+      const sourceViewOptions = options.buildViewOptions(nextDoc);
       assert.equal(sourceViewOptions.buildCanonicalDeck(), canonicalDeck);
       return '<html>canonical-source</html>';
     },
@@ -2912,12 +2858,13 @@ test('buildPersistableDeckHtml reuses the local persistable source deck html ren
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
-  vm.runInContext('renderEditorPersistableSourceDeckHtml = __renderEditorPersistableSourceDeckHtml;', context);
+  vm.runInContext('buildEditorSourceDeckHtml = __buildEditorSourceDeckHtml;', context);
 
   assert.equal(context.buildPersistableDeckHtml(), '<html>canonical-source</html>');
-  assert.equal(calls[0][0], 'renderEditorPersistableSourceDeckHtml');
+  assert.equal(calls[0][0], 'buildEditorSourceDeckHtml');
   assert.equal(calls[0][1], null);
-  assert.equal(calls[0][3], '');
+  const delegatedSourceViewOptions = calls[0][2].buildViewOptions(null);
+  assert.equal(delegatedSourceViewOptions.buildFallbackHtml(), '');
 });
 
 test('buildPersistableDeckHtml prefers rendered canonical html when the current canonical deck differs from the persisted baseline', () => {

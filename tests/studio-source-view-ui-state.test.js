@@ -448,64 +448,6 @@ test('buildEditorSourceDeckHtml prefers provided source deck html builder overri
   );
 });
 
-test('renderEditorPersistableSourceDeckHtml reuses buildEditorSourceDeckHtml when a custom renderer is unavailable', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const renderEditorPersistableSourceDeckHtmlSource = extractFunctionSource(
-    fileContent,
-    'function renderEditorPersistableSourceDeckHtml(doc = getIframeDoc(), sourceViewOptions = {}, persistedHtml = \'\', options = {}) {',
-    '\n\n    function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {'
-  );
-
-  const iframeDoc = { label: 'iframe-doc' };
-  const canonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: []
-  };
-  const sourceViewOptions = {
-    buildCanonicalDeck() {
-      return canonicalDeck;
-    }
-  };
-  const calls = [];
-  const customBuildStudioSourceHtml = function customBuildStudioSourceHtml() {};
-  const customBuildDeckSourceHtml = function customBuildDeckSourceHtml() {};
-  const context = {
-    __buildEditorSourceDeckHtml(nextDoc, options) {
-      calls.push([nextDoc, options]);
-      return '<html>persistable-source</html>';
-    },
-    getIframeDoc() {
-      return iframeDoc;
-    }
-  };
-
-  vm.createContext(context);
-  vm.runInContext(renderEditorPersistableSourceDeckHtmlSource, context);
-  vm.runInContext('buildEditorSourceDeckHtml = __buildEditorSourceDeckHtml;', context);
-
-  const result = context.renderEditorPersistableSourceDeckHtml(iframeDoc, sourceViewOptions, '<html>persisted</html>', {
-    buildStudioSourceHtml: customBuildStudioSourceHtml,
-    buildDeckSourceHtml: customBuildDeckSourceHtml
-  });
-
-  assert.equal(result, '<html>persistable-source</html>');
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0][0], iframeDoc);
-  assert.equal(calls[0][1].buildStudioSourceHtml, customBuildStudioSourceHtml);
-  assert.equal(calls[0][1].buildDeckSourceHtml, customBuildDeckSourceHtml);
-  assert.equal(typeof calls[0][1].buildViewOptions, 'function');
-  const delegatedSourceViewOptions = calls[0][1].buildViewOptions();
-  assert.equal(typeof delegatedSourceViewOptions.buildFallbackHtml, 'function');
-  assert.equal(delegatedSourceViewOptions.buildFallbackHtml(), '<html>persisted</html>');
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(
-      delegatedSourceViewOptions.buildCanonicalDeck()
-    )),
-    canonicalDeck
-  );
-});
-
 test('buildEditorSourceHtml prefers the live active slide when the editor frame is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(
