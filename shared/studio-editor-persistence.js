@@ -307,6 +307,51 @@
     };
   }
 
+  function createStudioPersistedDeckPlaybackStateCapturer(options = {}) {
+    const capturePlaybackState = typeof options.capturePlaybackState === 'function'
+      ? options.capturePlaybackState
+      : captureStudioPersistedDeckPlaybackState;
+    const capturePersistedDeckPlaybackStateWithFallback = typeof options.capturePersistedDeckPlaybackStateWithFallback === 'function'
+      ? options.capturePersistedDeckPlaybackStateWithFallback
+      : null;
+    const capturePersistedDeckPlaybackState = typeof options.capturePersistedDeckPlaybackState === 'function'
+      ? options.capturePersistedDeckPlaybackState
+      : null;
+    const ensurePersistedDeckPlaybackStateActiveSlideId = typeof options.ensurePersistedDeckPlaybackStateActiveSlideId === 'function'
+      ? options.ensurePersistedDeckPlaybackStateActiveSlideId
+      : null;
+    const getSlides = typeof options.getSlides === 'function'
+      ? options.getSlides
+      : null;
+    const slideIdAttr = normalizeString(options.slideIdAttr);
+    const resolveFallbackActiveSlideId = typeof options.resolveFallbackActiveSlideId === 'function'
+      ? options.resolveFallbackActiveSlideId
+      : null;
+
+    return function capturePersistedDeckPlaybackStateWithDefaults(doc = null, nextOptions = {}) {
+      return capturePlaybackState(doc, {
+        capturePersistedDeckPlaybackStateWithFallback: typeof nextOptions.capturePersistedDeckPlaybackStateWithFallback === 'function'
+          ? nextOptions.capturePersistedDeckPlaybackStateWithFallback
+          : capturePersistedDeckPlaybackStateWithFallback,
+        capturePersistedDeckPlaybackState: typeof nextOptions.capturePersistedDeckPlaybackState === 'function'
+          ? nextOptions.capturePersistedDeckPlaybackState
+          : capturePersistedDeckPlaybackState,
+        ensurePersistedDeckPlaybackStateActiveSlideId: typeof nextOptions.ensurePersistedDeckPlaybackStateActiveSlideId === 'function'
+          ? nextOptions.ensurePersistedDeckPlaybackStateActiveSlideId
+          : ensurePersistedDeckPlaybackStateActiveSlideId,
+        getSlides: typeof nextOptions.getSlides === 'function'
+          ? nextOptions.getSlides
+          : getSlides,
+        slideIdAttr: typeof nextOptions.slideIdAttr === 'string'
+          ? nextOptions.slideIdAttr
+          : slideIdAttr,
+        resolveFallbackActiveSlideId: typeof nextOptions.resolveFallbackActiveSlideId === 'function'
+          ? nextOptions.resolveFallbackActiveSlideId
+          : resolveFallbackActiveSlideId
+      });
+    };
+  }
+
   function resolveStudioPersistableDeckStateWithContent(persistedDeckState = {}) {
     const nextPersistedDeckState = asPlainObject(persistedDeckState);
     return normalizeString(nextPersistedDeckState.cleanHtml) ? nextPersistedDeckState : null;
@@ -1812,6 +1857,7 @@
     syncStudioPresentationMetadataPersistedCanonicalDeck,
     updateStudioPersistedDeckState,
     captureStudioPersistedDeckPlaybackState,
+    createStudioPersistedDeckPlaybackStateCapturer,
     resolveStudioPersistableDeckStateWithContent,
     resolveStudioCapturedPersistableDeckState,
     createStudioCapturedPersistableDeckStateResolver,

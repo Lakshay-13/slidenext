@@ -567,6 +567,53 @@ test('captureStudioPersistedDeckPlaybackState reuses deck persistence helpers be
   assert.deepEqual(fallbackCalls[1], ['resolveFallbackActiveSlideId']);
 });
 
+test('createStudioPersistedDeckPlaybackStateCapturer reuses call-time overrides before builder defaults', () => {
+  const doc = { label: 'iframe-doc' };
+  const calls = [];
+  const capturePersistedDeckPlaybackState = editorPersistence.createStudioPersistedDeckPlaybackStateCapturer({
+    slideIdAttr: 'data-slide-id',
+    getSlides() {
+      calls.push(['defaultGetSlides']);
+      return [];
+    },
+    resolveFallbackActiveSlideId() {
+      calls.push(['defaultResolveFallbackActiveSlideId']);
+      return 'slide-default';
+    },
+    capturePersistedDeckPlaybackState() {
+      calls.push(['defaultCapturePersistedDeckPlaybackState']);
+      return null;
+    }
+  });
+
+  assert.deepEqual(
+    capturePersistedDeckPlaybackState(doc, {
+      capturePersistedDeckPlaybackStateWithFallback(nextDoc, options = {}) {
+        calls.push(['overrideCapturePersistedDeckPlaybackStateWithFallback', nextDoc, options]);
+        return {
+          activeSlideIds: [options.resolveFallbackActiveSlideId()],
+          slideCounterText: '1 / 1'
+        };
+      },
+      resolveFallbackActiveSlideId() {
+        calls.push(['overrideResolveFallbackActiveSlideId']);
+        return 'slide-1';
+      }
+    }),
+    {
+      activeSlideIds: ['slide-1'],
+      slideCounterText: '1 / 1'
+    }
+  );
+
+  assert.equal(calls[0][0], 'overrideCapturePersistedDeckPlaybackStateWithFallback');
+  assert.equal(calls[0][1], doc);
+  assert.equal(calls[0][2].slideIdAttr, 'data-slide-id');
+  assert.equal(typeof calls[0][2].getSlides, 'function');
+  assert.equal(typeof calls[0][2].resolveFallbackActiveSlideId, 'function');
+  assert.deepEqual(calls[1], ['overrideResolveFallbackActiveSlideId']);
+});
+
 test('resolveStudioPersistableDeckStateWithContent requires non-empty persisted html', () => {
   const persistedDeckState = {
     doc: { label: 'iframe-doc' },

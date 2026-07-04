@@ -6498,6 +6498,54 @@
     }
 
     function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {
+      const createStudioPersistedDeckPlaybackStateCapturer = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckPlaybackStateCapturer === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistedDeckPlaybackStateCapturer
+        : null;
+      if (createStudioPersistedDeckPlaybackStateCapturer) {
+        return createStudioPersistedDeckPlaybackStateCapturer({
+          capturePlaybackState: (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+            && typeof SlideNextStudioEditorPersistence.captureStudioPersistedDeckPlaybackState === 'function'
+          )
+            ? SlideNextStudioEditorPersistence.captureStudioPersistedDeckPlaybackState
+            : null,
+          capturePersistedDeckPlaybackStateWithFallback: (
+            typeof SlideNextDeckPersistence !== 'undefined'
+            && SlideNextDeckPersistence
+            && typeof SlideNextDeckPersistence.capturePersistedDeckPlaybackStateWithFallback === 'function'
+          )
+            ? SlideNextDeckPersistence.capturePersistedDeckPlaybackStateWithFallback
+            : null,
+          capturePersistedDeckPlaybackState: (
+            typeof SlideNextDeckPersistence !== 'undefined'
+            && SlideNextDeckPersistence
+            && typeof SlideNextDeckPersistence.capturePersistedDeckPlaybackState === 'function'
+          )
+            ? SlideNextDeckPersistence.capturePersistedDeckPlaybackState
+            : null,
+          ensurePersistedDeckPlaybackStateActiveSlideId: (
+            typeof SlideNextDeckPersistence !== 'undefined'
+            && SlideNextDeckPersistence
+            && typeof SlideNextDeckPersistence.ensurePersistedDeckPlaybackStateActiveSlideId === 'function'
+          )
+            ? SlideNextDeckPersistence.ensurePersistedDeckPlaybackStateActiveSlideId
+            : null,
+          getSlides,
+          slideIdAttr: EDITOR_SLIDE_ID_ATTR,
+          resolveFallbackActiveSlideId: doc
+            ? () => resolveEditorFallbackActiveSlideId(
+                doc,
+                canonicalDeck || buildEditorCanonicalDeck(doc)
+              )
+            : null
+        })(doc);
+      }
+
       const captureStudioPersistedDeckPlaybackState = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence
