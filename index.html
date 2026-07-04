@@ -4947,8 +4947,9 @@
     }
 
     function zoomIn() {
+      if (!resolveCurrentStudioZoomActionState().canUseZoomControls) return false;
       const select = document.getElementById('zoomSelect');
-      if (!select || select.disabled) return false;
+      if (!select) return false;
       const zoomOptions = [0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5];
       let nextVal;
       
@@ -4964,8 +4965,9 @@
     }
 
     function zoomOut() {
+      if (!resolveCurrentStudioZoomActionState().canUseZoomControls) return false;
       const select = document.getElementById('zoomSelect');
-      if (!select || select.disabled) return false;
+      if (!select) return false;
       const zoomOptions = [0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5];
       let nextVal;
       
@@ -4981,8 +4983,7 @@
     }
 
     function zoomSelectChange(val) {
-      const select = document.getElementById('zoomSelect');
-      if (select && select.disabled) return false;
+      if (!resolveCurrentStudioZoomActionState().canUseZoomControls) return false;
       applyZoom(val);
       return true;
     }
@@ -6270,8 +6271,15 @@
       });
     }
 
-    function updateZoomActionState(doc = getIframeDoc()) {
+    function resolveCurrentStudioZoomActionState(doc = getIframeDoc()) {
       const hasActiveSlide = !!getActiveSlide(doc);
+      return {
+        canUseZoomControls: hasActiveSlide
+      };
+    }
+
+    function updateZoomActionState(doc = getIframeDoc()) {
+      const actionState = resolveCurrentStudioZoomActionState(doc);
 
       [
         'zoomOutBtn',
@@ -6280,7 +6288,7 @@
       ].forEach((id) => {
         const control = document.getElementById(id);
         if (control) {
-          control.disabled = !hasActiveSlide;
+          control.disabled = !actionState.canUseZoomControls;
         }
       });
     }

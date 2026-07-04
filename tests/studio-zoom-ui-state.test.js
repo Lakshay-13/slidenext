@@ -80,6 +80,46 @@ function createZoomControls() {
   };
 }
 
+function loadResolveCurrentStudioZoomActionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveCurrentStudioZoomActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateZoomActionState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+test('resolveCurrentStudioZoomActionState reports zoom readiness from the live active slide state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioZoomActionState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveCurrentStudioZoomActionState(null))),
+    {
+      canUseZoomControls: false
+    }
+  );
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveCurrentStudioZoomActionState({
+      activeSlide: { id: 'slide-1' }
+    }))),
+    {
+      canUseZoomControls: true
+    }
+  );
+});
+
 test('updateZoomActionState enables zoom controls only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateZoomActionStateSource = extractFunctionSource(
@@ -107,6 +147,7 @@ test('updateZoomActionState enables zoom controls only when the iframe has a liv
   };
 
   vm.createContext(context);
+  loadResolveCurrentStudioZoomActionState(fileContent, context);
   vm.runInContext(updateZoomActionStateSource, context);
 
   context.updateZoomActionState();
@@ -123,7 +164,7 @@ test('updateZoomActionState enables zoom controls only when the iframe has a liv
   );
 });
 
-test('zoom helpers no-op safely when the zoom control is unavailable or disabled', () => {
+test('zoom helpers no-op safely when zoom readiness is disabled and still tolerate a missing zoom select', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const zoomInSource = extractFunctionSource(
     fileContent,
@@ -143,6 +184,7 @@ test('zoom helpers no-op safely when the zoom control is unavailable or disabled
 
   let zoomSelect = null;
   let applyZoomCalls = 0;
+  let canUseZoomControls = false;
   const context = {
     document: {
       getElementById(id) {
@@ -152,6 +194,11 @@ test('zoom helpers no-op safely when the zoom control is unavailable or disabled
     },
     applyZoom() {
       applyZoomCalls += 1;
+    },
+    resolveCurrentStudioZoomActionState() {
+      return {
+        canUseZoomControls
+      };
     },
     zoomFactor: 1
   };
@@ -163,11 +210,14 @@ test('zoom helpers no-op safely when the zoom control is unavailable or disabled
 
   assert.equal(context.zoomIn(), false);
   assert.equal(context.zoomOut(), false);
+  assert.equal(context.zoomSelectChange('1.2'), false);
+
+  canUseZoomControls = true;
   assert.equal(context.zoomSelectChange('1.2'), true);
 
   zoomSelect = { disabled: true, value: '1.0' };
-  assert.equal(context.zoomIn(), false);
-  assert.equal(context.zoomOut(), false);
-  assert.equal(context.zoomSelectChange('1.2'), false);
-  assert.equal(applyZoomCalls, 1);
+  assert.equal(context.zoomIn(), true);
+  assert.equal(context.zoomOut(), true);
+  assert.equal(context.zoomSelectChange('1.2'), true);
+  assert.equal(applyZoomCalls, 4);
 });
