@@ -447,6 +447,8 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
 
   let capturedFrameLoadHandlerArgs = null;
   let capturedGuardArguments = null;
+  let readerCallCount = 0;
+  const capturedReaders = [];
   let scheduledCallback = null;
   const zoomCalls = [];
   const context = {
@@ -488,6 +490,15 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
     currentPresentationUrl: '',
     currentSlideIndex: 0,
     currentTitle: '',
+    createCurrentStudioSessionStateReaders() {
+      readerCallCount += 1;
+      const readers = {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+      capturedReaders.push(readers);
+      return readers;
+    },
     document: {
       body: {
         style: {}
@@ -543,13 +554,15 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
   context.launchStudioEditor('/presentations/onboarding-presentation/index.html', 'Project Onboarding', 'General');
   assert.equal(capturedFrameLoadHandlerArgs.options.presentationUrl, '/presentations/onboarding-presentation/index.html');
   assert.equal(capturedFrameLoadHandlerArgs.options.sessionToken, 1);
+  assert.equal(readerCallCount, 1);
+  assert.equal(capturedFrameLoadHandlerArgs.options.getCurrentPresentationUrl, capturedReaders[0].getCurrentPresentationUrl);
+  assert.equal(capturedFrameLoadHandlerArgs.options.getCurrentSessionToken, capturedReaders[0].getCurrentSessionToken);
   assert.equal(typeof capturedFrameLoadHandlerArgs.options.afterLoad, 'function');
 
   capturedFrameLoadHandlerArgs.options.afterLoad();
@@ -559,8 +572,11 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
   context.studioEditorSessionToken = 5;
   scheduledCallback.callback();
 
+  assert.equal(readerCallCount, 2);
   assert.equal(capturedGuardArguments.presentationUrl, '/presentations/onboarding-presentation/index.html');
   assert.equal(capturedGuardArguments.options.sessionToken, 1);
+  assert.equal(capturedGuardArguments.options.getCurrentPresentationUrl, capturedReaders[1].getCurrentPresentationUrl);
+  assert.equal(capturedGuardArguments.options.getCurrentSessionToken, capturedReaders[1].getCurrentSessionToken);
   assert.equal(typeof capturedGuardArguments.options.getCurrentPresentationUrl, 'function');
   assert.equal(typeof capturedGuardArguments.options.getCurrentSessionToken, 'function');
   assert.equal(capturedGuardArguments.options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');

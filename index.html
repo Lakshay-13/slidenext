@@ -2012,9 +2012,7 @@
       iframe.onload = SlideNextStudioEditorSession.createStudioFrameLoadHandler({
         presentationUrl: url,
         ...SlideNextStudioEditorSession.createStudioFrameLoadStateOptions({
-          ...createCurrentStudioSessionStateOptions({
-            sessionToken: editorSessionToken
-          }),
+          ...createCurrentStudioSessionStateReaders(),
           sessionToken: editorSessionToken,
           isEditorActive,
           handleLoad: () => {
@@ -2025,9 +2023,7 @@
             setTimeout(() => {
               if (!SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(url, {
                 ...SlideNextStudioEditorSession.createStudioFrameLoadStateOptions({
-                  ...createCurrentStudioSessionStateOptions({
-                    sessionToken: editorSessionToken
-                  }),
+                  ...createCurrentStudioSessionStateReaders(),
                   sessionToken: editorSessionToken,
                   isEditorActive
                 })
