@@ -43,6 +43,15 @@ function loadCreateCurrentStudioSessionStateReaders(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadCreateCurrentStudioSessionReaderOptions(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioSessionReaderOptions(options = {}) {',
+    '\n\n    function captureCurrentStudioSessionState() {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('createCurrentStudioVersionActionContext captures the active presentation version context', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
@@ -127,6 +136,7 @@ test('createCurrentStudioVersionActionHandlerOptions merges live session readers
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioSessionReaderOptions(fileContent, context);
   vm.runInContext(helperSource, context);
 
   const handlerOptions = context.createCurrentStudioVersionActionHandlerOptions({ onSuccess });
@@ -1174,6 +1184,7 @@ test('createCurrentStudioVersionHistoryLoadOptions merges live session readers w
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioSessionReaderOptions(fileContent, context);
   vm.runInContext(helperSource, context);
 
   const loadOptions = context.createCurrentStudioVersionHistoryLoadOptions(
@@ -1262,6 +1273,7 @@ test('loadVersions reuses the shared session reader helper when delegating to th
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioSessionReaderOptions(fileContent, context);
   vm.runInContext(helperSource, context);
   vm.runInContext(loadVersionsSource, context);
 

@@ -26,6 +26,15 @@ function loadCreateCurrentStudioSessionStateReaders(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadCreateCurrentStudioSessionReaderOptions(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioSessionReaderOptions(options = {}) {',
+    '\n\n    function captureCurrentStudioSessionState() {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadBuildCurrentPresentationMetadataSeed(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -437,6 +446,7 @@ test('createCurrentStudioPresentationMetadataLoadOptions merges live session rea
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioSessionReaderOptions(fileContent, context);
   vm.runInContext(helperSource, context);
 
   const options = context.createCurrentStudioPresentationMetadataLoadOptions(12);
@@ -917,6 +927,7 @@ test('loadCurrentPresentationMetadata passes live session getters when delegatin
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioSessionReaderOptions(fileContent, context);
   vm.runInContext(helperSource, context);
   vm.runInContext(loadCurrentPresentationMetadataSource, context);
 
@@ -1029,6 +1040,7 @@ test('loadCurrentPresentationMetadata falls back to the shared deck loader when 
 
   vm.createContext(context);
   loadCreateCurrentStudioSessionStateReaders(fileContent, context);
+  loadCreateCurrentStudioSessionReaderOptions(fileContent, context);
   vm.runInContext(helperSource, context);
   vm.runInContext(loadCurrentPresentationMetadataSource, context);
 
@@ -1237,6 +1249,7 @@ test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline
 
   vm.createContext(context);
   loadCreateCurrentStudioSessionStateReaders(fileContent, context);
+  loadCreateCurrentStudioSessionReaderOptions(fileContent, context);
   vm.runInContext(helperSource, context);
   vm.runInContext(loadCurrentPresentationMetadataSource, context);
 

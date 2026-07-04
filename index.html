@@ -1932,6 +1932,13 @@
       });
     }
 
+    function createCurrentStudioSessionReaderOptions(options = {}) {
+      return {
+        ...createCurrentStudioSessionStateReaders(),
+        ...options
+      };
+    }
+
     function captureCurrentStudioSessionState() {
       return {
         presentationUrl: currentPresentationUrl,
@@ -2989,8 +2996,7 @@
     }
 
     function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = studioEditorSessionToken) {
-      return {
-        ...createCurrentStudioSessionStateReaders(),
+      return createCurrentStudioSessionReaderOptions({
         sessionToken,
         setCurrentPresentationMetadata: (metadata) => {
           applyCurrentPresentationMetadata(metadata, { syncPersistedCanonicalDeck: true });
@@ -2998,7 +3004,7 @@
         onError: (err, metadataUrl) => {
           console.warn(`Failed to load presentation metadata from ${metadataUrl}:`, err);
         }
-      };
+      });
     }
 
     async function loadCurrentPresentationMetadata(
@@ -5573,8 +5579,7 @@
       const persistencePresentationUrl = typeof options.presentationUrl === 'string' && options.presentationUrl
         ? options.presentationUrl
         : currentPresentationUrl;
-      return {
-        ...createCurrentStudioSessionStateReaders(),
+      return createCurrentStudioSessionReaderOptions({
         setPersistedHtml: (nextHtml) => {
           applyCurrentStudioPersistedDeckState({ cleanHtml: nextHtml });
         },
@@ -5589,7 +5594,7 @@
         },
         onSuccess: options.onSuccess,
         onFailure: options.onFailure
-      };
+      });
     }
 
     function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
@@ -5609,11 +5614,10 @@
     function applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
       return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
         persistenceContext,
-        {
-          ...createCurrentStudioSessionStateReaders(),
+        createCurrentStudioSessionReaderOptions({
           refreshVersionEntries: loadVersions,
           ...options
-        }
+        })
       );
     }
 
@@ -6556,13 +6560,12 @@
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken
     ) {
-      return {
-        ...createCurrentStudioSessionStateReaders(),
+      return createCurrentStudioSessionReaderOptions({
         sessionToken,
         commitVersionEntries: (versions) => {
           renderVersionsList(presentationUrl, versions);
         }
-      };
+      });
     }
 
     async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
@@ -6590,10 +6593,7 @@
     }
 
     function createCurrentStudioVersionActionHandlerOptions(options = {}) {
-      return {
-        ...createCurrentStudioSessionStateReaders(),
-        ...options
-      };
+      return createCurrentStudioSessionReaderOptions(options);
     }
 
     async function restoreVersion(filename) {

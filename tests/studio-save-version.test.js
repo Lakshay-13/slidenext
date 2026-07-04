@@ -66,6 +66,15 @@ function loadCaptureCurrentStudioSessionState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadCreateCurrentStudioSessionReaderOptions(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioSessionReaderOptions(options = {}) {',
+    '\n\n    function captureCurrentStudioSessionState() {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -78,6 +87,9 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
 function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
   if (typeof context.createCurrentStudioSessionStateReaders !== 'function') {
     loadCreateCurrentStudioSessionStateReaders(fileContent, context);
+  }
+  if (typeof context.createCurrentStudioSessionReaderOptions !== 'function') {
+    loadCreateCurrentStudioSessionReaderOptions(fileContent, context);
   }
   if (typeof context.applyCurrentStudioPersistedDeckState !== 'function') {
     loadApplyCurrentStudioPersistedDeckState(fileContent, context);
