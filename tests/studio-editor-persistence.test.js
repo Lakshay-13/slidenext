@@ -3839,6 +3839,52 @@ test('isStudioPersistenceTaskStale rejects missing or stale deck/session combina
   );
 });
 
+test('createStudioPersistenceTaskStaleChecker reuses current session defaults and call-time overrides', () => {
+  const calls = [];
+  const isPersistenceTaskStale = editorPersistence.createStudioPersistenceTaskStaleChecker({
+    getPresentationUrl() {
+      calls.push(['getPresentationUrl']);
+      return '/presentations/onboarding-presentation/index.html';
+    },
+    getSessionToken() {
+      calls.push(['getSessionToken']);
+      return 12;
+    }
+  });
+
+  assert.equal(
+    isPersistenceTaskStale(
+      '/presentations/onboarding-presentation/index.html',
+      15,
+      {
+        getCurrentPresentationUrl() {
+          calls.push(['overrideGetCurrentPresentationUrl']);
+          return '/presentations/onboarding-presentation/index.html';
+        },
+        getCurrentSessionToken() {
+          calls.push(['overrideGetCurrentSessionToken']);
+          return 12;
+        },
+        isPersistenceTaskStale(presentationUrl, options = {}) {
+          calls.push(['isPersistenceTaskStale', presentationUrl, options]);
+          return options.currentSessionToken !== options.sessionToken;
+        }
+      }
+    ),
+    true
+  );
+
+  assert.deepEqual(calls, [
+    ['overrideGetCurrentPresentationUrl'],
+    ['overrideGetCurrentSessionToken'],
+    ['isPersistenceTaskStale', '/presentations/onboarding-presentation/index.html', {
+      currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+      currentSessionToken: 12,
+      sessionToken: 15
+    }]
+  ]);
+});
+
 test('clearStudioPersistenceTimers clears debounce and version timers and resets timer state', () => {
   const clearedTimerIds = [];
   const nextTimerState = editorPersistence.clearStudioPersistenceTimers({

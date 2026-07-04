@@ -677,6 +677,54 @@ test('resolveCurrentStudioPersistenceStateFromCapture reuses the shared capture-
   assert.equal(delegatedArgs.resolvePersistenceStateFromDocumentCapture, context.SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture);
 });
 
+test('isCurrentStudioPersistenceTaskStale reuses the shared stale-task checker when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const isCurrentStudioPersistenceTaskStaleSource = extractFunctionSource(
+    fileContent,
+    'function isCurrentStudioPersistenceTaskStale(',
+    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
+  );
+
+  let delegatedArgs = null;
+  const context = {
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 12,
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      createStudioPersistenceTaskStaleChecker(options = {}) {
+        delegatedArgs = options;
+        return (presentationUrl, sessionToken) => ({
+          presentationUrl,
+          sessionToken,
+          currentPresentationUrl: options.getPresentationUrl(),
+          currentSessionToken: options.getSessionToken(),
+          isPersistenceTaskStale: typeof options.isPersistenceTaskStale
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(isCurrentStudioPersistenceTaskStaleSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.isCurrentStudioPersistenceTaskStale(
+      'presentations/custom/index.html',
+      15
+    ))),
+    {
+      presentationUrl: 'presentations/custom/index.html',
+      sessionToken: 15,
+      currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+      currentSessionToken: 12,
+      isPersistenceTaskStale: 'function'
+    }
+  );
+  assert.equal(delegatedArgs.getPresentationUrl(), 'presentations/onboarding-presentation/index.html');
+  assert.equal(delegatedArgs.getSessionToken(), 12);
+  assert.equal(delegatedArgs.isPersistenceTaskStale, context.SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale);
+});
+
 test('buildEditorSaveRequestBody reuses the local canonical override helper when capture state omits a canonical deck', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(

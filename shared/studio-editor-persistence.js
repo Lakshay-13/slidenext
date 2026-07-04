@@ -1869,6 +1869,38 @@
     return currentSessionToken !== requestedSessionToken;
   }
 
+  function createStudioPersistenceTaskStaleChecker(options = {}) {
+    const getPresentationUrl = typeof options.getPresentationUrl === 'function'
+      ? options.getPresentationUrl
+      : () => normalizeString(options.presentationUrl);
+    const getSessionToken = typeof options.getSessionToken === 'function'
+      ? options.getSessionToken
+      : () => normalizeSessionToken(options.sessionToken);
+    const defaultIsPersistenceTaskStale = typeof options.isPersistenceTaskStale === 'function'
+      ? options.isPersistenceTaskStale
+      : isStudioPersistenceTaskStale;
+
+    return function isPersistenceTaskStale(
+      presentationUrl = getPresentationUrl(),
+      sessionToken = getSessionToken(),
+      nextOptions = {}
+    ) {
+      const isPersistenceTaskStale = typeof nextOptions.isPersistenceTaskStale === 'function'
+        ? nextOptions.isPersistenceTaskStale
+        : defaultIsPersistenceTaskStale;
+
+      return isPersistenceTaskStale(presentationUrl, {
+        currentPresentationUrl: typeof nextOptions.getCurrentPresentationUrl === 'function'
+          ? nextOptions.getCurrentPresentationUrl()
+          : getPresentationUrl(),
+        currentSessionToken: typeof nextOptions.getCurrentSessionToken === 'function'
+          ? nextOptions.getCurrentSessionToken()
+          : getSessionToken(),
+        sessionToken
+      });
+    };
+  }
+
   function clearStudioPersistenceTimers(options = {}) {
     const clearTimer = typeof options.clearTimer === 'function'
       ? options.clearTimer
@@ -2047,6 +2079,7 @@
     isStudioPersistedSaveRequest,
     createStudioPersistedSaveRequestChecker,
     isStudioPersistenceTaskStale,
+    createStudioPersistenceTaskStaleChecker,
     clearStudioPersistenceTimers,
     isStudioPersistenceActionCurrent,
     runStudioPersistenceActionIfCurrent,

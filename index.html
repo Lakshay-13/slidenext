@@ -6867,6 +6867,27 @@
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken
     ) {
+      const createStudioPersistenceTaskStaleChecker = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistenceTaskStaleChecker === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistenceTaskStaleChecker
+        : null;
+      if (createStudioPersistenceTaskStaleChecker) {
+        return createStudioPersistenceTaskStaleChecker({
+          getPresentationUrl: () => currentPresentationUrl,
+          getSessionToken: () => studioEditorSessionToken,
+          isPersistenceTaskStale: (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+            && typeof SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale === 'function'
+          )
+            ? SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale
+            : null
+        })(presentationUrl, sessionToken);
+      }
+
       return SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale(presentationUrl, {
         currentPresentationUrl,
         currentSessionToken: studioEditorSessionToken,
