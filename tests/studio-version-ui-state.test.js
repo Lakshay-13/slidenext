@@ -79,6 +79,15 @@ function loadApplyCurrentStudioRestoreVersionSuccess(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadHideCurrentStudioVersionsDropdown(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function hideCurrentStudioVersionsDropdown() {',
+    '\n\n    function resetStudioVersionUiState(options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateCurrentStudioVersionRequestOptions(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -87,6 +96,48 @@ function loadCreateCurrentStudioVersionRequestOptions(fileContent, context) {
   );
   vm.runInContext(helperSource, context);
 }
+
+test('hideCurrentStudioVersionsDropdown hides the menu when present', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const versionsDropdown = {
+    classList: createClassList()
+  };
+  const context = {
+    document: {
+      getElementById(id) {
+        if (id === 'versionsDropdown') {
+          return versionsDropdown;
+        }
+        return null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadHideCurrentStudioVersionsDropdown(fileContent, context);
+
+  context.hideCurrentStudioVersionsDropdown();
+
+  assert.equal(versionsDropdown.classList.contains('hidden'), true);
+});
+
+test('hideCurrentStudioVersionsDropdown tolerates a missing menu', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    document: {
+      getElementById() {
+        return null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadHideCurrentStudioVersionsDropdown(fileContent, context);
+
+  assert.doesNotThrow(() => {
+    context.hideCurrentStudioVersionsDropdown();
+  });
+});
 
 test('createCurrentStudioVersionActionContext captures the active presentation version context', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
@@ -363,6 +414,7 @@ test('resetStudioVersionUiState hides open version chrome and clears modal state
   };
 
   vm.createContext(context);
+  loadHideCurrentStudioVersionsDropdown(fileContent, context);
   vm.runInContext(resetStudioVersionUiStateSource, context);
 
   const saveModalTokenBefore = modalVisibility.getCurrentStudioModalVisibilityToken(elements.saveVersionModal);
@@ -1189,6 +1241,7 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   loadApplyCurrentStudioRestoreVersionSuccess(fileContent, context);
+  loadHideCurrentStudioVersionsDropdown(fileContent, context);
   loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
   vm.runInContext(restoreVersionSource, context);
 
@@ -1300,6 +1353,7 @@ test('restoreVersion reuses the shared restore request helper when available', a
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   loadApplyCurrentStudioRestoreVersionSuccess(fileContent, context);
+  loadHideCurrentStudioVersionsDropdown(fileContent, context);
   loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
   vm.runInContext(restoreVersionSource, context);
 

@@ -5845,12 +5845,16 @@
       });
     }
 
-    function resetStudioVersionUiState(options = {}) {
-      const isLoading = !!options.isLoading;
+    function hideCurrentStudioVersionsDropdown() {
       const versionsDropdown = document.getElementById('versionsDropdown');
       if (versionsDropdown) {
         versionsDropdown.classList.add('hidden');
       }
+    }
+
+    function resetStudioVersionUiState(options = {}) {
+      const isLoading = !!options.isLoading;
+      hideCurrentStudioVersionsDropdown();
       const versionsList = document.getElementById('versionsList');
       if (versionsList) {
         versionsList.innerHTML = `<span class="text-zinc-500 text-center py-2 text-[11px]">${isLoading ? 'Loading versions...' : 'No versions saved yet'}</span>`;
@@ -6641,12 +6645,7 @@
             onSuccess: () => {
               alert('Rollback successfully restored!');
             },
-            hideVersionsDropdown: () => {
-              const versionsDropdown = document.getElementById('versionsDropdown');
-              if (versionsDropdown) {
-                versionsDropdown.classList.add('hidden');
-              }
-            },
+            hideVersionsDropdown: hideCurrentStudioVersionsDropdown,
             relaunchEditor: (presentationUrl, presentationTitle, presentationCategory) => {
               launchStudioEditor(presentationUrl, presentationTitle, presentationCategory);
             }
