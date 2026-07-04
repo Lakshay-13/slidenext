@@ -88,6 +88,15 @@ function loadHideCurrentStudioVersionsDropdown(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadHideCurrentStudioVersionModal(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function hideCurrentStudioVersionModal(modal, content) {',
+    '\n\n    function hideCurrentStudioVersionsDropdown() {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateCurrentStudioVersionRequestOptions(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -137,6 +146,57 @@ test('hideCurrentStudioVersionsDropdown tolerates a missing menu', () => {
   assert.doesNotThrow(() => {
     context.hideCurrentStudioVersionsDropdown();
   });
+});
+
+test('hideCurrentStudioVersionModal hides the modal chrome when present', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const modal = {
+    classList: createClassList(['opacity-100'])
+  };
+  const content = {
+    classList: createClassList(['scale-100'])
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioModalVisibility: {
+      scheduleStudioModalHide(nextModal, options) {
+        calls.push(['scheduleStudioModalHide', nextModal, options.hideDelayMs]);
+        options.onHide();
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadHideCurrentStudioVersionModal(fileContent, context);
+
+  context.hideCurrentStudioVersionModal(modal, content);
+
+  assert.equal(modal.classList.contains('opacity-100'), false);
+  assert.equal(modal.classList.contains('opacity-0'), true);
+  assert.equal(modal.classList.contains('hidden'), true);
+  assert.equal(content.classList.contains('scale-100'), false);
+  assert.equal(content.classList.contains('scale-95'), true);
+  assert.deepEqual(calls, [['scheduleStudioModalHide', modal, 200]]);
+});
+
+test('hideCurrentStudioVersionModal tolerates missing chrome nodes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    SlideNextStudioModalVisibility: {
+      scheduleStudioModalHide() {
+        calls.push('scheduleStudioModalHide');
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadHideCurrentStudioVersionModal(fileContent, context);
+
+  assert.doesNotThrow(() => {
+    context.hideCurrentStudioVersionModal(null, null);
+  });
+  assert.deepEqual(calls, []);
 });
 
 test('createCurrentStudioVersionActionContext captures the active presentation version context', () => {
@@ -743,6 +803,7 @@ test('closeRenameVersionModal tolerates missing rename modal nodes', () => {
   };
 
   vm.createContext(context);
+  loadHideCurrentStudioVersionModal(fileContent, context);
   vm.runInContext(closeRenameVersionModalSource, context);
 
   assert.doesNotThrow(() => context.closeRenameVersionModal());

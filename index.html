@@ -5831,18 +5831,26 @@
     function closeSaveVersionModal() {
       const modal = document.getElementById('saveVersionModal');
       const content = document.getElementById('saveVersionModalContent');
-      
-      modal.classList.remove('opacity-100');
-      modal.classList.add('opacity-0');
-      content.classList.remove('scale-100');
-      content.classList.add('scale-95');
-      
-      SlideNextStudioModalVisibility.scheduleStudioModalHide(modal, {
-        hideDelayMs: 200,
-        onHide: () => {
-          modal.classList.add('hidden');
-        }
-      });
+      hideCurrentStudioVersionModal(modal, content);
+    }
+
+    function hideCurrentStudioVersionModal(modal, content) {
+      if (modal) {
+        modal.classList.remove('opacity-100');
+        modal.classList.add('opacity-0');
+      }
+      if (content) {
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+      }
+      if (modal) {
+        SlideNextStudioModalVisibility.scheduleStudioModalHide(modal, {
+          hideDelayMs: 200,
+          onHide: () => {
+            modal.classList.add('hidden');
+          }
+        });
+      }
     }
 
     function hideCurrentStudioVersionsDropdown() {
@@ -6707,22 +6715,7 @@
       const content = document.getElementById('renameVersionModalContent');
       renamingFilename = '';
       renamingVersionContext = null;
-      
-      if (modal) {
-        modal.classList.remove('opacity-100');
-      }
-      if (content) {
-        content.classList.remove('scale-100');
-        content.classList.add('scale-95');
-      }
-      if (modal) {
-        SlideNextStudioModalVisibility.scheduleStudioModalHide(modal, {
-          hideDelayMs: 200,
-          onHide: () => {
-            modal.classList.add('hidden');
-          }
-        });
-      }
+      hideCurrentStudioVersionModal(modal, content);
     }
     
     async function submitRenameVersion() {
