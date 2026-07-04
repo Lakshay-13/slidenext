@@ -1465,6 +1465,42 @@
     );
   }
 
+  function createStudioMetadataPersistenceOptionsResolver(options = {}) {
+    const getCurrentPresentationMetadata = typeof options.getCurrentPresentationMetadata === 'function'
+      ? options.getCurrentPresentationMetadata
+      : () => options.currentPresentationMetadata;
+    const resolveMergedPresentationPersistenceOptions = typeof options.resolveMergedPresentationPersistenceOptions === 'function'
+      ? options.resolveMergedPresentationPersistenceOptions
+      : null;
+    const resolvePresentationPersistenceOptions = typeof options.resolvePresentationPersistenceOptions === 'function'
+      ? options.resolvePresentationPersistenceOptions
+      : null;
+    const mergePresentationPersistenceOptions = typeof options.mergePresentationPersistenceOptions === 'function'
+      ? options.mergePresentationPersistenceOptions
+      : null;
+    const resolveMetadataPersistenceOptions = typeof options.resolveMetadataPersistenceOptions === 'function'
+      ? options.resolveMetadataPersistenceOptions
+      : resolveStudioMetadataPersistenceOptions;
+
+    return function resolveMetadataOptions(nextOptions = {}) {
+      return resolveMetadataPersistenceOptions({
+        currentPresentationMetadata: Object.prototype.hasOwnProperty.call(nextOptions, 'currentPresentationMetadata')
+          ? nextOptions.currentPresentationMetadata
+          : getCurrentPresentationMetadata(),
+        persistenceOptions: nextOptions.persistenceOptions,
+        resolveMergedPresentationPersistenceOptions: typeof nextOptions.resolveMergedPresentationPersistenceOptions === 'function'
+          ? nextOptions.resolveMergedPresentationPersistenceOptions
+          : resolveMergedPresentationPersistenceOptions,
+        resolvePresentationPersistenceOptions: typeof nextOptions.resolvePresentationPersistenceOptions === 'function'
+          ? nextOptions.resolvePresentationPersistenceOptions
+          : resolvePresentationPersistenceOptions,
+        mergePresentationPersistenceOptions: typeof nextOptions.mergePresentationPersistenceOptions === 'function'
+          ? nextOptions.mergePresentationPersistenceOptions
+          : mergePresentationPersistenceOptions
+      });
+    };
+  }
+
   function isStudioPersistedState(cleanHtml = '', canonicalDeck = null, options = {}) {
     if (!isStudioPersistedHtml(cleanHtml, options.persistedHtml)) {
       return false;
@@ -1685,6 +1721,7 @@
     resolveStudioPersistedHtmlReuse,
     resolveStudioReusablePersistedHtml,
     resolveStudioMetadataPersistenceOptions,
+    createStudioMetadataPersistenceOptionsResolver,
     isStudioPersistedState,
     isStudioPersistedDeckHtml,
     isStudioPersistedSaveRequest,

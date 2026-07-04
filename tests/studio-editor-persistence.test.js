@@ -1871,6 +1871,48 @@ test('resolveStudioMetadataPersistenceOptions prefers a merged resolver and othe
   );
 });
 
+test('createStudioMetadataPersistenceOptionsResolver composes metadata resolution defaults and call-time overrides', () => {
+  const currentPresentationMetadata = {
+    id: 'computer-vision-presentation',
+    persistence: {
+      emptyContainerIds: ['pixelMatrix']
+    }
+  };
+  const calls = [];
+  const resolveMetadataPersistenceOptions = editorPersistence.createStudioMetadataPersistenceOptionsResolver({
+    getCurrentPresentationMetadata() {
+      calls.push(['getCurrentPresentationMetadata']);
+      return currentPresentationMetadata;
+    },
+    resolveMergedPresentationPersistenceOptions(metadata, explicitOptions) {
+      calls.push(['resolveMergedPresentationPersistenceOptions', metadata, explicitOptions]);
+      return {
+        emptyContainerIds: ['pixelMatrix'],
+        transientClassNames: explicitOptions.transientClassNames || []
+      };
+    }
+  });
+
+  assert.deepEqual(
+    resolveMetadataPersistenceOptions({
+      persistenceOptions: {
+        transientClassNames: ['revealed']
+      }
+    }),
+    {
+      emptyContainerIds: ['pixelMatrix'],
+      transientClassNames: ['revealed']
+    }
+  );
+
+  assert.deepEqual(calls, [
+    ['getCurrentPresentationMetadata'],
+    ['resolveMergedPresentationPersistenceOptions', currentPresentationMetadata, {
+      transientClassNames: ['revealed']
+    }]
+  ]);
+});
+
 test('isStudioPersistedState requires both html and canonical deck sidecars to match when a canonical deck is present', () => {
   const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
     metadata: {

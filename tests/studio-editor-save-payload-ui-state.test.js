@@ -966,6 +966,59 @@ test('resolveEditorMetadataPersistenceOptions delegates through the shared metad
   assert.equal(typeof delegatedArgs.resolveMergedPresentationPersistenceOptions, 'function');
 });
 
+test('resolveEditorMetadataPersistenceOptions reuses the shared metadata persistence resolver builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+
+  const currentPresentationMetadata = {
+    id: 'computer-vision-presentation',
+    persistence: {
+      emptyContainerIds: ['pixelMatrix']
+    }
+  };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      createStudioMetadataPersistenceOptionsResolver(options = {}) {
+        delegatedArgs = options;
+        return (nextOptions = {}) => ({
+          currentPresentationMetadata: Object.prototype.hasOwnProperty.call(nextOptions, 'currentPresentationMetadata')
+            ? nextOptions.currentPresentationMetadata
+            : options.getCurrentPresentationMetadata(),
+          persistenceOptions: nextOptions.persistenceOptions || {}
+        });
+      }
+    },
+    currentPresentationMetadata
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveEditorMetadataPersistenceOptions({
+      persistenceOptions: {
+        transientClassNames: ['revealed']
+      }
+    }))),
+    {
+      currentPresentationMetadata,
+      persistenceOptions: {
+        transientClassNames: ['revealed']
+      }
+    }
+  );
+  assert.equal(typeof delegatedArgs.getCurrentPresentationMetadata, 'function');
+  assert.equal(delegatedArgs.getCurrentPresentationMetadata(), currentPresentationMetadata);
+  assert.equal(delegatedArgs.resolveMergedPresentationPersistenceOptions, null);
+  assert.equal(delegatedArgs.resolvePresentationPersistenceOptions, null);
+  assert.equal(delegatedArgs.mergePresentationPersistenceOptions, null);
+});
+
 test('resolveEditorMetadataPersistenceOptions prefers the shared merged persistence resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
