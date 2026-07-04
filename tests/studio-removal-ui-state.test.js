@@ -139,6 +139,67 @@ test('updateRemovalActionState enables the delete control only when the iframe h
   assert.equal(removeSelectionBtn.disabled, false);
 });
 
+test('updateRemovalActionState reuses the shared removal toolbar helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateRemovalActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateRemovalActionState(doc = getIframeDoc()) {',
+    '\n\n    function finalizeRemovalActionResult(result, doc = getIframeDoc()) {'
+  );
+
+  const calls = [];
+  const removeSelectionBtn = { disabled: true };
+  const context = {
+    selectedElements: [{ id: 'selected' }],
+    isElementLocked() {
+      return false;
+    },
+    SlideNextStudioEditorRemoval: {
+      buildStudioRemovalActionState() {
+        throw new Error('buildStudioRemovalActionState should not be used when shared toolbar helper exists');
+      },
+      buildStudioRemovalToolbarState(elements, options = {}) {
+        calls.push({
+          elements,
+          hasCanMutateDeck: typeof options.canMutateDeck === 'function',
+          canMutateDeck: options.canMutateDeck()
+        });
+        return {
+          buttonStates: {
+            removeSelectionBtn: true
+          }
+        };
+      }
+    },
+    document: {
+      getElementById(id) {
+        return id === 'removeSelectionBtn' ? removeSelectionBtn : null;
+      }
+    },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildRemovalSelectionActionState(fileContent, context);
+  vm.runInContext(updateRemovalActionStateSource, context);
+
+  context.updateRemovalActionState({
+    activeSlide: {}
+  });
+
+  assert.equal(removeSelectionBtn.disabled, false);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    elements: [{ id: 'selected' }],
+    hasCanMutateDeck: true,
+    canMutateDeck: true
+  }]);
+});
+
 test('finalizeRemovalActionResult refreshes removal controls and preserves the action result', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const doc = { label: 'iframe-doc' };

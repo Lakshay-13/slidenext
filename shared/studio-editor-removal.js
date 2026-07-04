@@ -34,8 +34,20 @@
     };
   }
 
+  function buildStudioRemovalToolbarState(elements = [], options = {}) {
+    const actionState = buildStudioRemovalActionState(elements, options);
+
+    return {
+      ...actionState,
+      buttonStates: {
+        removeSelectionBtn: actionState.canRemove
+      }
+    };
+  }
+
   return {
     getStudioRemovableSelection,
-    buildStudioRemovalActionState
+    buildStudioRemovalActionState,
+    buildStudioRemovalToolbarState
   };
 });

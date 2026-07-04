@@ -55,3 +55,18 @@ test('buildStudioRemovalActionState derives delete availability from live unlock
     canRemove: false
   });
 });
+
+test('buildStudioRemovalToolbarState derives delete button state from the removal action state', () => {
+  assert.deepEqual(removal.buildStudioRemovalToolbarState([
+    { id: 1, isConnected: true, locked: false }
+  ], {
+    isLocked: (element) => !!element.locked
+  }), {
+    selection: [{ id: 1, isConnected: true, locked: false }],
+    hasSelection: true,
+    canRemove: true,
+    buttonStates: {
+      removeSelectionBtn: true
+    }
+  });
+});
