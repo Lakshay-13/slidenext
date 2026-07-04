@@ -115,6 +115,15 @@ function loadCreateCurrentStudioVersionRequestOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadResetCurrentStudioRenameVersionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resetCurrentStudioRenameVersionState() {',
+    '\n    \n    async function submitRenameVersion() {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('hideCurrentStudioVersionsDropdown hides the menu when present', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const versionsDropdown = {
@@ -301,6 +310,24 @@ test('showCurrentStudioVersionModal defers chrome changes when delay is requeste
   assert.equal(content.classList.contains('scale-95'), false);
   assert.equal(content.classList.contains('scale-100'), true);
   assert.equal(shownCalls, 1);
+});
+
+test('resetCurrentStudioRenameVersionState clears pending rename context', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    renamingFilename: 'draft.html',
+    renamingVersionContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+
+  vm.createContext(context);
+  loadResetCurrentStudioRenameVersionState(fileContent, context);
+
+  context.resetCurrentStudioRenameVersionState();
+
+  assert.equal(context.renamingFilename, '');
+  assert.equal(context.renamingVersionContext, null);
 });
 
 test('createCurrentStudioVersionActionContext captures the active presentation version context', () => {
@@ -579,6 +606,7 @@ test('resetStudioVersionUiState hides open version chrome and clears modal state
 
   vm.createContext(context);
   loadHideCurrentStudioVersionsDropdown(fileContent, context);
+  loadResetCurrentStudioRenameVersionState(fileContent, context);
   vm.runInContext(resetStudioVersionUiStateSource, context);
 
   const saveModalTokenBefore = modalVisibility.getCurrentStudioModalVisibilityToken(elements.saveVersionModal);

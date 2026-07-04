@@ -5919,8 +5919,7 @@
       const renameVersionModalContent = document.getElementById('renameVersionModalContent');
       const renameVersionInput = document.getElementById('newVersionNameInput');
       const confirmRenameVersionBtn = document.getElementById('confirmRenameVersionBtn');
-      renamingFilename = '';
-      renamingVersionContext = null;
+      resetCurrentStudioRenameVersionState();
       if (renameVersionInput) {
         renameVersionInput.value = '';
       }
@@ -6734,9 +6733,13 @@
     function closeRenameVersionModal() {
       const modal = document.getElementById('renameVersionModal');
       const content = document.getElementById('renameVersionModalContent');
+      resetCurrentStudioRenameVersionState();
+      hideCurrentStudioVersionModal(modal, content);
+    }
+
+    function resetCurrentStudioRenameVersionState() {
       renamingFilename = '';
       renamingVersionContext = null;
-      hideCurrentStudioVersionModal(modal, content);
     }
     
     async function submitRenameVersion() {
