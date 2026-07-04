@@ -4016,6 +4016,62 @@ test('runStudioPersistenceActionIfCurrent invokes callbacks only for the active 
   assert.deepEqual(calls, ['/presentations/onboarding-presentation/index.html']);
 });
 
+test('createStudioPersistenceActionCurrentRunner reuses current session readers and call-time overrides', () => {
+  const calls = [];
+  const runPersistenceActionIfCurrent = editorPersistence.createStudioPersistenceActionCurrentRunner({
+    readCurrentSessionState() {
+      calls.push(['readCurrentSessionState']);
+      return {
+        getCurrentPresentationUrl: () => '/presentations/default/index.html',
+        getCurrentSessionToken: () => 3
+      };
+    }
+  });
+
+  assert.equal(
+    runPersistenceActionIfCurrent(
+      {
+        presentationUrl: '/presentations/onboarding-presentation/index.html',
+        sessionToken: 15
+      },
+      'callback-sentinel',
+      {
+        readCurrentSessionState() {
+          calls.push(['overrideReadCurrentSessionState']);
+          return {
+            getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+            getCurrentSessionToken: () => 12
+          };
+        },
+        runPersistenceActionIfCurrent(context, options = {}, callback) {
+          calls.push([
+            'runPersistenceActionIfCurrent',
+            context,
+            {
+              currentPresentationUrl: options.getCurrentPresentationUrl(),
+              currentSessionToken: options.getCurrentSessionToken()
+            },
+            callback
+          ]);
+          return options.getCurrentSessionToken() === 12;
+        }
+      }
+    ),
+    true
+  );
+
+  assert.deepEqual(calls, [
+    ['overrideReadCurrentSessionState'],
+    ['runPersistenceActionIfCurrent', {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      sessionToken: 15
+    }, {
+      currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+      currentSessionToken: 12
+    }, 'callback-sentinel']
+  ]);
+});
+
 test('runStudioPersistenceActionIfCurrent skips stale same-url editor sessions', () => {
   const context = editorPersistence.createStudioPersistenceActionContext(
     '/presentations/onboarding-presentation/index.html',

@@ -1960,6 +1960,33 @@
     return true;
   }
 
+  function createStudioPersistenceActionCurrentRunner(options = {}) {
+    const readCurrentSessionState = typeof options.readCurrentSessionState === 'function'
+      ? options.readCurrentSessionState
+      : () => ({
+        getCurrentPresentationUrl: typeof options.getCurrentPresentationUrl === 'function'
+          ? options.getCurrentPresentationUrl
+          : () => normalizeString(options.currentPresentationUrl),
+        getCurrentSessionToken: typeof options.getCurrentSessionToken === 'function'
+          ? options.getCurrentSessionToken
+          : () => normalizeSessionToken(options.currentSessionToken)
+      });
+    const defaultRunPersistenceActionIfCurrent = typeof options.runPersistenceActionIfCurrent === 'function'
+      ? options.runPersistenceActionIfCurrent
+      : runStudioPersistenceActionIfCurrent;
+
+    return function runPersistenceActionIfCurrent(context = {}, callback = null, nextOptions = {}) {
+      const runPersistenceActionIfCurrent = typeof nextOptions.runPersistenceActionIfCurrent === 'function'
+        ? nextOptions.runPersistenceActionIfCurrent
+        : defaultRunPersistenceActionIfCurrent;
+      const currentSessionState = typeof nextOptions.readCurrentSessionState === 'function'
+        ? nextOptions.readCurrentSessionState()
+        : readCurrentSessionState();
+
+      return runPersistenceActionIfCurrent(context, currentSessionState, callback);
+    };
+  }
+
   function handleStudioPersistenceSuccess(context = {}, options = {}) {
     return runStudioPersistenceActionIfCurrent(context, options, (nextContext) => {
       if (nextContext.shouldUpdatePersistedHtml !== false && typeof options.setPersistedHtml === 'function') {
@@ -2083,6 +2110,7 @@
     clearStudioPersistenceTimers,
     isStudioPersistenceActionCurrent,
     runStudioPersistenceActionIfCurrent,
+    createStudioPersistenceActionCurrentRunner,
     handleStudioPersistenceSuccess,
     handleStudioVersionPersistenceSuccess,
     handleStudioPersistenceFailure
