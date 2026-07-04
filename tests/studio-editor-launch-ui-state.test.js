@@ -559,11 +559,11 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
   context.studioEditorSessionToken = 5;
   scheduledCallback.callback();
 
-  assert.equal(readerCallCount, 2);
+  assert.equal(readerCallCount, 1);
   assert.equal(capturedGuardArguments.presentationUrl, '/presentations/onboarding-presentation/index.html');
   assert.equal(capturedGuardArguments.options.sessionToken, 1);
-  assert.equal(capturedGuardArguments.options.getCurrentPresentationUrl, capturedReaders[1].getCurrentPresentationUrl);
-  assert.equal(capturedGuardArguments.options.getCurrentSessionToken, capturedReaders[1].getCurrentSessionToken);
+  assert.equal(capturedGuardArguments.options.getCurrentPresentationUrl, capturedReaders[0].getCurrentPresentationUrl);
+  assert.equal(capturedGuardArguments.options.getCurrentSessionToken, capturedReaders[0].getCurrentSessionToken);
   assert.equal(typeof capturedGuardArguments.options.getCurrentPresentationUrl, 'function');
   assert.equal(typeof capturedGuardArguments.options.getCurrentSessionToken, 'function');
   assert.equal(capturedGuardArguments.options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');

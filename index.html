@@ -1983,6 +1983,7 @@
       const editor = document.getElementById('studioEditor');
       const iframe = getStudioFrame();
       const isEditorActive = () => editor.classList.contains('active');
+      const frameLoadSessionStateReaders = createCurrentStudioSessionStateReaders();
       
       const studioCategoryLabel = document.getElementById('studioCategoryLabel');
       if (studioCategoryLabel) {
@@ -2004,7 +2005,7 @@
       // Configure load triggers BEFORE setting src
       iframe.onload = SlideNextStudioEditorSession.createStudioFrameLoadHandler({
         presentationUrl: url,
-        ...createCurrentStudioSessionStateReaders(),
+        ...frameLoadSessionStateReaders,
         sessionToken: editorSessionToken,
         isEditorActive,
         handleLoad: () => {
@@ -2014,7 +2015,7 @@
           const savedZoom = localStorage.getItem('presentationZoom') || 'fit';
           setTimeout(() => {
             if (!SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(url, {
-              ...createCurrentStudioSessionStateReaders(),
+              ...frameLoadSessionStateReaders,
               sessionToken: editorSessionToken,
               isEditorActive
             })) {
