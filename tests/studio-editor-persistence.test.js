@@ -4042,6 +4042,51 @@ test('createStudioPersistenceSuccessHandler reuses handler-option defaults and c
   ]);
 });
 
+test('createStudioVersionPersistenceSuccessHandler reuses handler-option defaults and call-time overrides', () => {
+  const calls = [];
+  let overrideOptionsRef = null;
+  const handleVersionPersistenceSuccess = editorPersistence.createStudioVersionPersistenceSuccessHandler({
+    createHandlerOptions(nextOptions = {}) {
+      calls.push(['createHandlerOptions', nextOptions]);
+      return { onSuccess: nextOptions.onSuccess };
+    }
+  });
+
+  assert.equal(
+    handleVersionPersistenceSuccess(
+      {
+        presentationUrl: '/presentations/onboarding-presentation/index.html',
+        sessionToken: 15
+      },
+      {
+        onSuccess: 'callback-sentinel',
+        createHandlerOptions(nextOptions = {}) {
+          overrideOptionsRef = nextOptions;
+          calls.push(['overrideCreateHandlerOptions']);
+          return { onSuccess: nextOptions.onSuccess, override: true };
+        },
+        handleVersionPersistenceSuccess(context, options = {}) {
+          calls.push(['handleVersionPersistenceSuccess', context, options]);
+          return options.override === true;
+        }
+      }
+    ),
+    true
+  );
+
+  assert.equal(overrideOptionsRef.onSuccess, 'callback-sentinel');
+  assert.deepEqual(calls, [
+    ['overrideCreateHandlerOptions'],
+    ['handleVersionPersistenceSuccess', {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      sessionToken: 15
+    }, {
+      onSuccess: 'callback-sentinel',
+      override: true
+    }]
+  ]);
+});
+
 test('runStudioPersistenceActionIfCurrent invokes callbacks only for the active deck session', () => {
   const context = editorPersistence.createStudioPersistenceActionContext(
     '/presentations/onboarding-presentation/index.html',

@@ -6886,6 +6886,29 @@
     }
 
     function applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
+      const createStudioVersionPersistenceSuccessHandler = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioVersionPersistenceSuccessHandler === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioVersionPersistenceSuccessHandler
+        : null;
+      if (createStudioVersionPersistenceSuccessHandler) {
+        return createStudioVersionPersistenceSuccessHandler({
+          createHandlerOptions: (nextOptions = {}) => createCurrentStudioSessionReaderOptions({
+            refreshVersionEntries: loadVersions,
+            ...nextOptions
+          }),
+          handleVersionPersistenceSuccess: (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+            && typeof SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess === 'function'
+          )
+            ? SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess
+            : null
+        })(persistenceContext, options);
+      }
+
       return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
         persistenceContext,
         createCurrentStudioSessionReaderOptions({
