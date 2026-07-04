@@ -927,7 +927,7 @@ test('restoreVersion reuses the shared restore request helper when available', a
   assert.ok(calls.some(([name, message]) => name === 'alert' && /Rollback successfully restored!/.test(message)));
 });
 
-test('loadVersions passes live session getters when delegating to the version history loader', async () => {
+test('loadVersions reuses the shared session reader helper when delegating to the version history loader', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const loadVersionsSource = extractFunctionSource(
     fileContent,
@@ -936,6 +936,8 @@ test('loadVersions passes live session getters when delegating to the version hi
   );
 
   let capturedOptions = null;
+  let readerCallCount = 0;
+  let capturedReaders = null;
   const errorCalls = [];
   const context = {
     SlideNextStudioVersionHistory: {
@@ -954,6 +956,14 @@ test('loadVersions passes live session getters when delegating to the version hi
         return versions;
       }
     },
+    createCurrentStudioSessionStateReaders() {
+      readerCallCount += 1;
+      capturedReaders = {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+      return capturedReaders;
+    },
     console: {
       error(...args) {
         errorCalls.push(args);
@@ -968,7 +978,6 @@ test('loadVersions passes live session getters when delegating to the version hi
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(loadVersionsSource, context);
 
   await context.loadVersions(
@@ -976,7 +985,10 @@ test('loadVersions passes live session getters when delegating to the version hi
     18
   );
 
+  assert.equal(readerCallCount, 1);
   assert.equal(capturedOptions.sessionToken, 18);
+  assert.equal(capturedOptions.getCurrentPresentationUrl, capturedReaders.getCurrentPresentationUrl);
+  assert.equal(capturedOptions.getCurrentSessionToken, capturedReaders.getCurrentSessionToken);
   assert.equal(typeof capturedOptions.getCurrentPresentationUrl, 'function');
   assert.equal(typeof capturedOptions.getCurrentSessionToken, 'function');
   assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');

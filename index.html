@@ -6540,9 +6540,7 @@
       if (!presentationUrl) return;
       try {
         const loadOptions = SlideNextStudioVersionHistory.createStudioVersionHistoryLoadOptions({
-          ...createCurrentStudioSessionStateOptions({
-            sessionToken
-          }),
+          ...createCurrentStudioSessionStateReaders(),
           sessionToken,
           commitVersionEntries: (versions) => {
             renderVersionsList(presentationUrl, versions);
