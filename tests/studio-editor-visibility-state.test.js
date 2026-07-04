@@ -56,6 +56,32 @@ test('buildStudioVisibilityActionState derives visibility button state from live
   });
 });
 
+test('buildStudioVisibilityToolbarState derives visibility control chrome from the live selection state', () => {
+  assert.deepEqual(visibilityState.buildStudioVisibilityToolbarState([
+    { id: 1, isConnected: true, hidden: false }
+  ], {
+    isHidden: (element) => !!element.hidden
+  }), {
+    hasSelection: true,
+    canToggle: true,
+    allHidden: false,
+    iconText: 'visibility_off',
+    labelText: 'Hide Selected'
+  });
+
+  assert.deepEqual(visibilityState.buildStudioVisibilityToolbarState([
+    { id: 1, isConnected: true, hidden: true }
+  ], {
+    isHidden: (element) => !!element.hidden
+  }), {
+    hasSelection: true,
+    canToggle: true,
+    allHidden: true,
+    iconText: 'visibility',
+    labelText: 'Show Selected'
+  });
+});
+
 test('buildStudioVisibilityMutationPlan derives the next visibility toggle from the live selection only', () => {
   const visible = { id: 1, isConnected: true, hidden: false };
   const hidden = { id: 2, isConnected: true, hidden: true };

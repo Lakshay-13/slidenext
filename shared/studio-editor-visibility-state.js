@@ -34,6 +34,16 @@
     };
   }
 
+  function buildStudioVisibilityToolbarState(elements = [], options = {}) {
+    const actionState = buildStudioVisibilityActionState(elements, options);
+
+    return {
+      ...actionState,
+      iconText: actionState.allHidden ? 'visibility' : 'visibility_off',
+      labelText: actionState.allHidden ? 'Show Selected' : 'Hide Selected'
+    };
+  }
+
   function buildStudioVisibilityMutationPlan(elements = [], options = {}) {
     const selection = getStudioVisibilitySelection(elements, options);
     const isHidden = typeof options.isHidden === 'function'
@@ -64,6 +74,7 @@
   return {
     getStudioVisibilitySelection,
     buildStudioVisibilityActionState,
+    buildStudioVisibilityToolbarState,
     buildStudioVisibilityMutationPlan
   };
 });

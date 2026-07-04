@@ -98,6 +98,73 @@ test('updateVisibilityActionState enables the visibility control only when the i
   assert.equal(toggleVisibilitySelectionLabel.textContent, 'Show Selected');
 });
 
+test('updateVisibilityActionState reuses the shared visibility toolbar helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateVisibilityActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateVisibilityActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateMotionActionState(doc = getIframeDoc()) {'
+  );
+
+  const calls = [];
+  const toggleVisibilitySelectionBtn = { disabled: true };
+  const toggleVisibilitySelectionIcon = { textContent: '' };
+  const toggleVisibilitySelectionLabel = { textContent: '' };
+  const context = {
+    selectedElements: [{ id: 'selected' }],
+    isElementHidden() {
+      return false;
+    },
+    SlideNextStudioEditorVisibilityState: {
+      buildStudioVisibilityActionState() {
+        throw new Error('buildStudioVisibilityActionState should not be used when shared toolbar helper exists');
+      },
+      buildStudioVisibilityToolbarState(elements, options = {}) {
+        calls.push({
+          elements,
+          hasCanMutateDeck: typeof options.canMutateDeck === 'function',
+          canToggle: options.canMutateDeck()
+        });
+        return {
+          canToggle: true,
+          iconText: 'visibility',
+          labelText: 'Show Selected'
+        };
+      }
+    },
+    document: {
+      getElementById(id) {
+        if (id === 'toggleVisibilitySelectionBtn') return toggleVisibilitySelectionBtn;
+        if (id === 'toggleVisibilitySelectionIcon') return toggleVisibilitySelectionIcon;
+        if (id === 'toggleVisibilitySelectionLabel') return toggleVisibilitySelectionLabel;
+        return null;
+      }
+    },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateVisibilityActionStateSource, context);
+
+  context.updateVisibilityActionState({
+    activeSlide: {}
+  });
+
+  assert.equal(toggleVisibilitySelectionBtn.disabled, false);
+  assert.equal(toggleVisibilitySelectionIcon.textContent, 'visibility');
+  assert.equal(toggleVisibilitySelectionLabel.textContent, 'Show Selected');
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    elements: [{ id: 'selected' }],
+    hasCanMutateDeck: true,
+    canToggle: true
+  }]);
+});
+
 test('toggleSelectedElementsVisibility returns false and skips persistence when planned targets disconnect before apply', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const toggleSelectedElementsVisibilitySource = extractFunctionSource(
