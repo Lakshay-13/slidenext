@@ -494,6 +494,57 @@
     };
   }
 
+  function sanitizeStudioReusablePersistedHtml(persistedHtml, options = {}) {
+    const nextPersistedHtml = normalizeString(persistedHtml);
+    const buildPersistableDeckHtml = typeof options.buildPersistableDeckHtml === 'function'
+      ? options.buildPersistableDeckHtml
+      : null;
+    if (!nextPersistedHtml || !buildPersistableDeckHtml) {
+      return nextPersistedHtml;
+    }
+
+    const parseHtml = typeof options.parseHtml === 'function'
+      ? options.parseHtml
+      : (() => {
+          const DOMParserConstructor = typeof options.DOMParser === 'function'
+            ? options.DOMParser
+            : typeof DOMParser === 'function'
+              ? DOMParser
+              : null;
+          if (!DOMParserConstructor) {
+            return null;
+          }
+          return new DOMParserConstructor().parseFromString(nextPersistedHtml, 'text/html');
+        });
+    if (!parseHtml) {
+      return nextPersistedHtml;
+    }
+
+    try {
+      const parsedDoc = parseHtml(nextPersistedHtml);
+      if (!parsedDoc || !parsedDoc.documentElement) {
+        return nextPersistedHtml;
+      }
+      const buildPersistableDeckSanitizerOptions = typeof options.buildPersistableDeckSanitizerOptions === 'function'
+        ? options.buildPersistableDeckSanitizerOptions
+        : (playbackState, buildOptions = {}) => buildStudioPersistableDeckSanitizerOptions(playbackState, buildOptions);
+      const persistableDeckSanitizerOptions = buildPersistableDeckSanitizerOptions(
+        Object.prototype.hasOwnProperty.call(options, 'playbackState')
+          ? options.playbackState
+          : null,
+        {
+          resolveMetadataPersistenceOptions: options.resolveMetadataPersistenceOptions,
+          getDeckSanitizerOptions: options.getDeckSanitizerOptions
+        }
+      );
+      return buildPersistableDeckHtml(parsedDoc, {
+        ...persistableDeckSanitizerOptions
+      });
+    } catch (err) {
+      return nextPersistedHtml;
+    }
+  }
+
   function buildStudioSaveRequestBody(presentationUrl = '', cleanHtml = '', options = {}) {
     const body = {
       htmlPath: normalizeString(presentationUrl),
@@ -1290,6 +1341,7 @@
     createStudioVersionPersistenceActionContext,
     resolveStudioSaveRequestDeckState,
     buildStudioPersistableDeckSanitizerOptions,
+    sanitizeStudioReusablePersistedHtml,
     buildStudioSaveRequestBody,
     buildStudioPersistenceRequestPlan,
     resolveStudioPersistenceStateFromDocumentCapture,

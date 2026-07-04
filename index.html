@@ -5625,6 +5625,33 @@
           )
           ? SlideNextDeckPersistence.buildPersistableDeckHtml
           : null;
+      const sanitizeStudioReusablePersistedHtml = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.sanitizeStudioReusablePersistedHtml === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.sanitizeStudioReusablePersistedHtml
+        : null;
+      if (sanitizeStudioReusablePersistedHtml) {
+        return sanitizeStudioReusablePersistedHtml(nextPersistedHtml, {
+          playbackState: Object.prototype.hasOwnProperty.call(options, 'playbackState')
+            ? options.playbackState
+            : null,
+          resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
+            ? options.resolveMetadataPersistenceOptions
+            : () => ({}),
+          getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
+            ? options.getDeckSanitizerOptions
+            : typeof getEditorDeckSanitizerOptions === 'function'
+              ? getEditorDeckSanitizerOptions
+              : () => ({}),
+          buildPersistableDeckHtml,
+          DOMParser: typeof DOMParser === 'function'
+            ? DOMParser
+            : null
+        });
+      }
+
       if (!nextPersistedHtml || typeof DOMParser !== 'function' || !buildPersistableDeckHtml) {
         return nextPersistedHtml;
       }

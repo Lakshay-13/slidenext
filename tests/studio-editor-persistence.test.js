@@ -813,6 +813,69 @@ test('buildStudioPersistableDeckSanitizerOptions composes metadata cleanup, edit
   ]);
 });
 
+test('sanitizeStudioReusablePersistedHtml sanitizes reusable persisted html through the shared deck builder wrapper', () => {
+  const playbackState = {
+    activeSlideIds: ['slide-2']
+  };
+  const parsedDoc = {
+    documentElement: {
+      nodeName: 'HTML'
+    }
+  };
+  const calls = [];
+
+  assert.equal(
+    editorPersistence.sanitizeStudioReusablePersistedHtml('<html>persisted-baseline</html>', {
+      playbackState,
+      DOMParser: class DOMParser {
+        parseFromString(html, type) {
+          calls.push(['parseFromString', html, type]);
+          return parsedDoc;
+        }
+      },
+      resolveMetadataPersistenceOptions() {
+        calls.push(['resolveMetadataPersistenceOptions']);
+        return {
+          emptyContainerIds: ['pixelMatrix']
+        };
+      },
+      getDeckSanitizerOptions() {
+        calls.push(['getDeckSanitizerOptions']);
+        return {
+          chromeNodeIds: ['editorSelectionOverlay'],
+          transientClassNames: ['revealed'],
+          editorElementIdAttr: 'data-editor-id',
+          editorSlideIdAttr: 'data-slide-id'
+        };
+      },
+      buildPersistableDeckHtml(nextDoc, options = {}) {
+        calls.push(['buildPersistableDeckHtml', nextDoc, options]);
+        return '<html>sanitized</html>';
+      }
+    }),
+    '<html>sanitized</html>'
+  );
+
+  assert.deepEqual(calls[0], ['parseFromString', '<html>persisted-baseline</html>', 'text/html']);
+  assert.deepEqual(calls[1], ['getDeckSanitizerOptions']);
+  assert.deepEqual(calls[2], ['resolveMetadataPersistenceOptions']);
+  assert.equal(calls[3][0], 'buildPersistableDeckHtml');
+  assert.equal(calls[3][1], parsedDoc);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[3][2])),
+    {
+      emptyContainerIds: ['pixelMatrix'],
+      editorChromeNodeIds: ['editorSelectionOverlay'],
+      editorTransientClasses: ['revealed'],
+      editorElementIdAttr: 'data-editor-id',
+      editorSlideIdAttr: 'data-slide-id',
+      persistedDeckPlaybackState: {
+        activeSlideIds: ['slide-2']
+      }
+    }
+  );
+});
+
 test('buildStudioSaveRequestBody includes canonical deck sidecars only when they are valid', () => {
   const canonicalDeck = {
     metadata: {
