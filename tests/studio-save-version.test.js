@@ -1483,6 +1483,120 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
   assert.equal(statusEl.innerHTML, 'saved');
 });
 
+test('submitSaveVersion reports network save errors through the shared persistence failure helper', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const submitSaveVersionSource = extractFunctionSource(
+    fileContent,
+    'async function submitSaveVersion() {',
+    '\n\n    // Automatically save a labeled checkpoint version in the background'
+  );
+
+  const alerts = [];
+  let closeModalCalls = 0;
+  let failureHelperArgs = null;
+  const inputEl = { value: 'Checkpoint Baseline' };
+  const saveBtnEl = {
+    disabled: false,
+    innerHTML: '<span>Save Version</span>'
+  };
+  const statusEl = {
+    innerHTML: 'Saved to disk'
+  };
+  const versionCheckpointPersistenceState = {
+    cleanHtml: '<html>persisted-baseline</html>',
+    requestOptions: {
+      sessionToken: 4
+    },
+    persistenceContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }
+  };
+  const context = {
+    alert(message) {
+      alerts.push(message);
+    },
+    closeSaveVersionModal() {
+      closeModalCalls += 1;
+    },
+    createCurrentStudioPersistenceHandlerOptions(options = {}) {
+      return {
+        marker: 'persistence-handler-options',
+        ...options
+      };
+    },
+    createCurrentStudioSessionStateOptions() {
+      return {};
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    document: {
+      getElementById(id) {
+        switch (id) {
+          case 'versionCheckpointName':
+            return inputEl;
+          case 'studioSaveBtn':
+            return saveBtnEl;
+          case 'autoSaveStatus':
+            return statusEl;
+          default:
+            throw new Error(`Unexpected element lookup: ${id}`);
+        }
+      }
+    },
+    executeCurrentStudioVersionCheckpointSaveWithFailure: async () => {
+      throw new Error('socket down');
+    },
+    getIframeDoc() {
+      return { label: 'iframe-doc' };
+    },
+    resetStudioSaveButtonState() {
+      saveBtnEl.disabled = false;
+      saveBtnEl.innerHTML = '<span>Save Version</span>';
+    },
+    resolveCurrentStudioPersistenceStateFromCapture() {
+      return versionCheckpointPersistenceState;
+    },
+    setStudioAutoSaveStatus(state) {
+      statusEl.innerHTML = state;
+    },
+    setStudioSaveButtonState(state) {
+      if (state === 'saving-version') {
+        saveBtnEl.disabled = true;
+        saveBtnEl.innerHTML = '<span>Creating version...</span>';
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      handleStudioPersistenceFailure(persistenceContext, options = {}) {
+        failureHelperArgs = {
+          persistenceContext,
+          options
+        };
+        if (typeof options.onFailure === 'function') {
+          options.onFailure();
+        }
+        return 'handled';
+      },
+      runStudioPersistenceActionIfCurrent(persistenceContext, sessionOptions, action) {
+        action();
+      }
+    },
+    studioEditorSessionToken: 4
+  };
+
+  vm.createContext(context);
+  vm.runInContext(submitSaveVersionSource, context);
+
+  await context.submitSaveVersion();
+
+  assert.equal(failureHelperArgs.persistenceContext, versionCheckpointPersistenceState.persistenceContext);
+  assert.equal(failureHelperArgs.options.marker, 'persistence-handler-options');
+  assert.equal(typeof failureHelperArgs.options.onFailure, 'function');
+  assert.deepEqual(alerts, ['Network error saving version: socket down']);
+  assert.equal(closeModalCalls, 1);
+  assert.equal(saveBtnEl.disabled, false);
+  assert.equal(saveBtnEl.innerHTML, '<span>Save Version</span>');
+  assert.equal(statusEl.innerHTML, 'network-error');
+});
+
 test('executeSaveAutoVersion reuses the local version checkpoint failure-aware helper when available', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const executeSaveAutoVersionSource = extractFunctionSource(

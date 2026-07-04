@@ -6400,14 +6400,14 @@
           }
         );
       } catch (err) {
-        applyCurrentStudioPersistenceFailure(
+        SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
           versionCheckpointPersistenceState.persistenceContext,
-          {
+          createCurrentStudioPersistenceHandlerOptions({
             onFailure: () => {
               alert(`Network error saving version: ${err.message}`);
               setStudioAutoSaveStatus('network-error');
             }
-          }
+          })
         );
       } finally {
         SlideNextStudioEditorPersistence.runStudioPersistenceActionIfCurrent(
