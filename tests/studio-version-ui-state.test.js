@@ -33,11 +33,11 @@ function createClassList(initialValues = []) {
   };
 }
 
-function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
+function loadCreateCurrentStudioSessionStateReaders(fileContent, context) {
   context.SlideNextStudioEditorSession ??= editorSession;
   const helperSource = extractFunctionSource(
     fileContent,
-    'function createCurrentStudioSessionStateOptions(options = {}) {',
+    'function createCurrentStudioSessionStateReaders() {',
     '\n\n    function updateCurrentPresentationSessionState(nextState = {}) {'
   );
   vm.runInContext(helperSource, context);
@@ -1083,15 +1083,15 @@ test('loadVersions reuses the shared session reader helper when delegating to th
   assert.equal(capturedOptions.getCurrentSessionToken(), 19);
 });
 
-test('createCurrentStudioSessionStateOptions exposes live presentation and session getters', () => {
+test('createCurrentStudioSessionStateReaders exposes live presentation and session getters', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let capturedOptions = null;
   const context = {
     SlideNextStudioEditorSession: {
       ...editorSession,
-      createStudioSessionStateOptions(options) {
+      createStudioSessionStateReaders(options) {
         capturedOptions = options;
-        return editorSession.createStudioSessionStateOptions(options);
+        return editorSession.createStudioSessionStateReaders(options);
       }
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
@@ -1099,11 +1099,9 @@ test('createCurrentStudioSessionStateOptions exposes live presentation and sessi
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateReaders(fileContent, context);
 
-  const options = context.createCurrentStudioSessionStateOptions({ sessionToken: 4 });
-  assert.equal(options.sessionToken, 4);
-  assert.equal(capturedOptions.sessionToken, 4);
+  const options = context.createCurrentStudioSessionStateReaders();
   assert.equal(options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
   assert.equal(options.getCurrentSessionToken(), 4);
   assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');

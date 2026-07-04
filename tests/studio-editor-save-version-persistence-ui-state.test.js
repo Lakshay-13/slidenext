@@ -19,11 +19,11 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
-function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
+function loadCreateCurrentStudioSessionStateReaders(fileContent, context) {
   context.SlideNextStudioEditorSession ??= editorSession;
   const helperSource = extractFunctionSource(
     fileContent,
-    'function createCurrentStudioSessionStateOptions(options = {}) {',
+    'function createCurrentStudioSessionStateReaders() {',
     '\n\n    function updateCurrentPresentationSessionState(nextState = {}) {'
   );
   vm.runInContext(helperSource, context);
@@ -39,7 +39,7 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
 }
 
 function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,

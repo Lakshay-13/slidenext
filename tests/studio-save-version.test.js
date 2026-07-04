@@ -47,11 +47,11 @@ function loadCaptureEditorPersistableDeckState(fileContent, context) {
   vm.runInContext(captureEditorPersistableDeckStateSource, context);
 }
 
-function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
+function loadCreateCurrentStudioSessionStateReaders(fileContent, context) {
   context.SlideNextStudioEditorSession ??= editorSession;
   const helperSource = extractFunctionSource(
     fileContent,
-    'function createCurrentStudioSessionStateOptions(options = {}) {',
+    'function createCurrentStudioSessionStateReaders() {',
     '\n\n    function updateCurrentPresentationSessionState(nextState = {}) {'
   );
   vm.runInContext(helperSource, context);
@@ -67,8 +67,8 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
 }
 
 function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
-  if (typeof context.createCurrentStudioSessionStateOptions !== 'function') {
-    loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  if (typeof context.createCurrentStudioSessionStateReaders !== 'function') {
+    loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   }
   if (typeof context.applyCurrentStudioPersistedDeckState !== 'function') {
     loadApplyCurrentStudioPersistedDeckState(fileContent, context);
@@ -323,9 +323,6 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure delegates through the
         getCurrentSessionToken: () => null
       };
     },
-    createCurrentStudioSessionStateOptions() {
-      return {};
-    },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html'
   };
 
@@ -397,9 +394,6 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure reuses the shared fai
         getCurrentPresentationUrl: () => context.currentPresentationUrl,
         getCurrentSessionToken: () => null
       };
-    },
-    createCurrentStudioSessionStateOptions() {
-      return {};
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     saveVersionCheckpoint() {
@@ -988,7 +982,7 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
@@ -1083,7 +1077,7 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
@@ -1187,7 +1181,7 @@ test('executeSaveAutoVersion skips redundant auto version saves when the capture
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
@@ -1243,9 +1237,6 @@ test('submitSaveVersion reuses the local version checkpoint failure-aware helper
         getCurrentPresentationUrl: () => context.currentPresentationUrl,
         getCurrentSessionToken: () => context.studioEditorSessionToken
       };
-    },
-    createCurrentStudioSessionStateOptions() {
-      return {};
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     document: {
@@ -1371,9 +1362,6 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
       };
       capturedReaders.push(readers);
       return readers;
-    },
-    createCurrentStudioSessionStateOptions() {
-      return {};
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     document: {
@@ -1515,9 +1503,6 @@ test('submitSaveVersion reports network save errors through the shared persisten
         getCurrentPresentationUrl: () => context.currentPresentationUrl,
         getCurrentSessionToken: () => context.studioEditorSessionToken
       };
-    },
-    createCurrentStudioSessionStateOptions() {
-      return {};
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     document: {
@@ -1783,9 +1768,6 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
         getCurrentPresentationUrl: () => context.currentPresentationUrl,
         getCurrentSessionToken: () => context.studioEditorSessionToken
       };
-    },
-    createCurrentStudioSessionStateOptions() {
-      return {};
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     getIframeDoc() {

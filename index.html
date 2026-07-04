@@ -1925,13 +1925,6 @@
       return document.getElementById('studioFrame');
     }
 
-    function createCurrentStudioSessionStateOptions(options = {}) {
-      return SlideNextStudioEditorSession.createStudioSessionStateOptions({
-        sessionToken: options.sessionToken,
-        ...createCurrentStudioSessionStateReaders()
-      });
-    }
-
     function createCurrentStudioSessionStateReaders() {
       return SlideNextStudioEditorSession.createStudioSessionStateReaders({
         getCurrentPresentationUrl: () => currentPresentationUrl,

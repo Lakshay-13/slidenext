@@ -17,10 +17,10 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
-function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
+function loadCreateCurrentStudioSessionStateReaders(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function createCurrentStudioSessionStateOptions(options = {}) {',
+    'function createCurrentStudioSessionStateReaders() {',
     '\n\n    function updateCurrentPresentationSessionState(nextState = {}) {'
   );
   vm.runInContext(helperSource, context);
@@ -167,7 +167,7 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
@@ -332,7 +332,7 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
@@ -365,9 +365,8 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
   assert.ok(calls.some(([name]) => name === 'loadVersions'));
 });
 
-test('createCurrentStudioSessionStateOptions exposes live session getters and forwards the session token', () => {
+test('createCurrentStudioSessionStateReaders exposes live session getters through the shared reader helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  let capturedOptions = null;
   let capturedReaderOptions = null;
   const context = {
     SlideNextStudioEditorSession: {
@@ -375,10 +374,6 @@ test('createCurrentStudioSessionStateOptions exposes live session getters and fo
       createStudioSessionStateReaders(options) {
         capturedReaderOptions = options;
         return editorSession.createStudioSessionStateReaders(options);
-      },
-      createStudioSessionStateOptions(options) {
-        capturedOptions = options;
-        return editorSession.createStudioSessionStateOptions(options);
       }
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
@@ -386,33 +381,25 @@ test('createCurrentStudioSessionStateOptions exposes live session getters and fo
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateReaders(fileContent, context);
 
-  const options = context.createCurrentStudioSessionStateOptions({ sessionToken: 4 });
+  const readers = context.createCurrentStudioSessionStateReaders();
 
-  assert.equal(options.sessionToken, 4);
-  assert.equal(capturedOptions.sessionToken, 4);
   assert.equal(typeof capturedReaderOptions.getCurrentPresentationUrl, 'function');
   assert.equal(typeof capturedReaderOptions.getCurrentSessionToken, 'function');
-  assert.equal(typeof options.getCurrentPresentationUrl, 'function');
-  assert.equal(typeof options.getCurrentSessionToken, 'function');
-  assert.equal(typeof capturedOptions.getCurrentPresentationUrl, 'function');
-  assert.equal(typeof capturedOptions.getCurrentSessionToken, 'function');
+  assert.equal(typeof readers.getCurrentPresentationUrl, 'function');
+  assert.equal(typeof readers.getCurrentSessionToken, 'function');
   assert.equal(capturedReaderOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
   assert.equal(capturedReaderOptions.getCurrentSessionToken(), 4);
-  assert.equal(options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
-  assert.equal(options.getCurrentSessionToken(), 4);
-  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
-  assert.equal(capturedOptions.getCurrentSessionToken(), 4);
+  assert.equal(readers.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(readers.getCurrentSessionToken(), 4);
 
   context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
   context.studioEditorSessionToken = 5;
   assert.equal(capturedReaderOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
   assert.equal(capturedReaderOptions.getCurrentSessionToken(), 5);
-  assert.equal(options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
-  assert.equal(options.getCurrentSessionToken(), 5);
-  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
-  assert.equal(capturedOptions.getCurrentSessionToken(), 5);
+  assert.equal(readers.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(readers.getCurrentSessionToken(), 5);
 });
 
 test('launchStudioEditor after-load zoom guard passes live session getters to the editor session helper', () => {
@@ -961,7 +948,7 @@ test('loadCurrentPresentationMetadata falls back to the shared deck loader when 
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   vm.runInContext(loadCurrentPresentationMetadataSource, context);
 
   const metadata = await context.loadCurrentPresentationMetadata(
@@ -1163,7 +1150,7 @@ test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   vm.runInContext(loadCurrentPresentationMetadataSource, context);
 
   const metadata = await context.loadCurrentPresentationMetadata(
