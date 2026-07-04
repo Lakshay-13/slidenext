@@ -1269,7 +1269,48 @@
       ? resolvePersistedHtmlReuse(nextPersistedDeckState, { canonicalDeck })
       : (persistedHtml.trim() && isPersistedCanonicalDeck(canonicalDeck, persistedCanonicalDeck, options)
           ? persistedHtml
-          : '');
+      : '');
+  }
+
+  function resolveStudioMetadataPersistenceOptions(options = {}) {
+    const activePresentationMetadata = Object.prototype.hasOwnProperty.call(options, 'currentPresentationMetadata')
+      ? options.currentPresentationMetadata
+      : null;
+    const explicitPersistenceOptions = options.persistenceOptions
+      && typeof options.persistenceOptions === 'object'
+      && !Array.isArray(options.persistenceOptions)
+      ? { ...options.persistenceOptions }
+      : {};
+    const resolveMergedPresentationPersistenceOptions = typeof options.resolveMergedPresentationPersistenceOptions === 'function'
+      ? options.resolveMergedPresentationPersistenceOptions
+      : null;
+    if (resolveMergedPresentationPersistenceOptions) {
+      return resolveMergedPresentationPersistenceOptions(activePresentationMetadata || {}, explicitPersistenceOptions);
+    }
+
+    const resolvePresentationPersistenceOptions = typeof options.resolvePresentationPersistenceOptions === 'function'
+      ? options.resolvePresentationPersistenceOptions
+      : null;
+    const metadataPersistenceOptions = resolvePresentationPersistenceOptions
+      ? resolvePresentationPersistenceOptions(activePresentationMetadata || {})
+      : activePresentationMetadata
+        && activePresentationMetadata.persistence
+        && typeof activePresentationMetadata.persistence === 'object'
+        && !Array.isArray(activePresentationMetadata.persistence)
+        ? { ...activePresentationMetadata.persistence }
+        : {};
+    const mergePresentationPersistenceOptions = typeof options.mergePresentationPersistenceOptions === 'function'
+      ? options.mergePresentationPersistenceOptions
+      : (...optionSets) => optionSets.reduce((mergedOptions, optionSet) => ({
+          ...mergedOptions,
+          ...(optionSet && typeof optionSet === 'object' && !Array.isArray(optionSet)
+            ? optionSet
+            : {})
+        }), {});
+    return mergePresentationPersistenceOptions(
+      metadataPersistenceOptions,
+      explicitPersistenceOptions
+    );
   }
 
   function isStudioPersistedState(cleanHtml = '', canonicalDeck = null, options = {}) {
@@ -1484,6 +1525,7 @@
     isStudioPersistedCanonicalDeck,
     resolveStudioPersistedHtmlReuse,
     resolveStudioReusablePersistedHtml,
+    resolveStudioMetadataPersistenceOptions,
     isStudioPersistedState,
     isStudioPersistedDeckHtml,
     isStudioPersistedSaveRequest,

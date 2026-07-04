@@ -5469,7 +5469,10 @@
     function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {
       const resolveStudioReusablePersistedHtml = typeof options.resolveStudioReusablePersistedHtml === 'function'
         ? options.resolveStudioReusablePersistedHtml
-        : SlideNextStudioEditorPersistence
+        : (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+          )
           && typeof SlideNextStudioEditorPersistence.resolveStudioReusablePersistedHtml === 'function'
           ? SlideNextStudioEditorPersistence.resolveStudioReusablePersistedHtml
           : null;
@@ -5486,13 +5489,19 @@
             : undefined,
           resolvePersistedHtmlReuse: typeof options.resolveStudioPersistedHtmlReuse === 'function'
             ? options.resolveStudioPersistedHtmlReuse
-            : SlideNextStudioEditorPersistence
+            : (
+                typeof SlideNextStudioEditorPersistence !== 'undefined'
+                && SlideNextStudioEditorPersistence
+              )
               && typeof SlideNextStudioEditorPersistence.resolveStudioPersistedHtmlReuse === 'function'
               ? SlideNextStudioEditorPersistence.resolveStudioPersistedHtmlReuse
               : null,
           isPersistedCanonicalDeck: typeof options.isPersistedCanonicalDeck === 'function'
             ? options.isPersistedCanonicalDeck
-            : SlideNextStudioEditorPersistence
+            : (
+                typeof SlideNextStudioEditorPersistence !== 'undefined'
+                && SlideNextStudioEditorPersistence
+              )
               && typeof SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck === 'function'
               ? SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck
               : null
@@ -5545,6 +5554,53 @@
     }
 
     function resolveEditorMetadataPersistenceOptions(options = {}) {
+      const resolveStudioMetadataPersistenceOptions = typeof options.resolveStudioMetadataPersistenceOptions === 'function'
+        ? options.resolveStudioMetadataPersistenceOptions
+        : (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+          )
+          && typeof SlideNextStudioEditorPersistence.resolveStudioMetadataPersistenceOptions === 'function'
+          ? SlideNextStudioEditorPersistence.resolveStudioMetadataPersistenceOptions
+          : null;
+      if (resolveStudioMetadataPersistenceOptions) {
+        return resolveStudioMetadataPersistenceOptions({
+          currentPresentationMetadata: Object.prototype.hasOwnProperty.call(options, 'currentPresentationMetadata')
+            ? options.currentPresentationMetadata
+            : (typeof currentPresentationMetadata !== 'undefined'
+                ? currentPresentationMetadata
+                : null),
+          persistenceOptions: options.persistenceOptions,
+          resolveMergedPresentationPersistenceOptions: typeof options.resolveMergedPresentationPersistenceOptions === 'function'
+            ? options.resolveMergedPresentationPersistenceOptions
+            : (
+                typeof SlideNextDeckLoader !== 'undefined'
+                && SlideNextDeckLoader
+                && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
+              )
+              ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
+              : null,
+          resolvePresentationPersistenceOptions: typeof options.resolvePresentationPersistenceOptions === 'function'
+            ? options.resolvePresentationPersistenceOptions
+            : (
+                typeof SlideNextDeckLoader !== 'undefined'
+                && SlideNextDeckLoader
+                && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
+              )
+              ? SlideNextDeckLoader.resolvePresentationPersistenceOptions
+              : null,
+          mergePresentationPersistenceOptions: typeof options.mergePresentationPersistenceOptions === 'function'
+            ? options.mergePresentationPersistenceOptions
+            : (
+                typeof SlideNextPresentationMetadata !== 'undefined'
+                && SlideNextPresentationMetadata
+                && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
+              )
+              ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
+              : null
+        });
+      }
+
       const activePresentationMetadata = Object.prototype.hasOwnProperty.call(options, 'currentPresentationMetadata')
         ? options.currentPresentationMetadata
         : (typeof currentPresentationMetadata !== 'undefined'

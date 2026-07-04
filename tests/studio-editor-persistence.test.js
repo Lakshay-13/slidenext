@@ -1492,6 +1492,75 @@ test('resolveStudioReusablePersistedHtml prefers a provided reuse resolver and o
   );
 });
 
+test('resolveStudioMetadataPersistenceOptions prefers a merged resolver and otherwise merges metadata and explicit persistence options', () => {
+  const currentPresentationMetadata = {
+    id: 'computer-vision-presentation',
+    persistence: {
+      emptyContainerIds: ['pixelMatrix']
+    }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioMetadataPersistenceOptions({
+      currentPresentationMetadata,
+      resolveMergedPresentationPersistenceOptions(metadata, explicitOptions) {
+        calls.push(['resolveMergedPresentationPersistenceOptions', metadata, explicitOptions]);
+        return {
+          emptyContainerIds: ['pixelMatrix'],
+          transientClassNames: ['revealed']
+        };
+      }
+    }),
+    {
+      emptyContainerIds: ['pixelMatrix'],
+      transientClassNames: ['revealed']
+    }
+  );
+  assert.deepEqual(calls, [[
+    'resolveMergedPresentationPersistenceOptions',
+    currentPresentationMetadata,
+    {}
+  ]]);
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioMetadataPersistenceOptions({
+      currentPresentationMetadata,
+      persistenceOptions: {
+        transientClassNames: ['revealed']
+      },
+      resolvePresentationPersistenceOptions(metadata) {
+        calls.push(['resolvePresentationPersistenceOptions', metadata]);
+        return {
+          emptyContainerIds: ['pixelMatrix']
+        };
+      },
+      mergePresentationPersistenceOptions(...optionSets) {
+        calls.push(['mergePresentationPersistenceOptions', optionSets]);
+        return optionSets.reduce((merged, optionSet) => ({
+          ...merged,
+          ...(optionSet || {})
+        }), {});
+      }
+    }),
+    {
+      emptyContainerIds: ['pixelMatrix'],
+      transientClassNames: ['revealed']
+    }
+  );
+  assert.deepEqual(calls[1], ['resolvePresentationPersistenceOptions', currentPresentationMetadata]);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[2])),
+    [
+      'mergePresentationPersistenceOptions',
+      [
+        { emptyContainerIds: ['pixelMatrix'] },
+        { transientClassNames: ['revealed'] }
+      ]
+    ]
+  );
+});
+
 test('isStudioPersistedState requires both html and canonical deck sidecars to match when a canonical deck is present', () => {
   const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
     metadata: {
