@@ -5927,10 +5927,7 @@
       if (renameVersionInput) {
         renameVersionInput.value = '';
       }
-      if (confirmRenameVersionBtn) {
-        confirmRenameVersionBtn.disabled = false;
-        confirmRenameVersionBtn.textContent = 'Rename';
-      }
+      resetCurrentStudioRenameVersionButtonState(confirmRenameVersionBtn);
       hideCurrentStudioVersionModalImmediately(renameVersionModal, renameVersionModalContent);
     }
 
@@ -6709,10 +6706,7 @@
       const modal = document.getElementById('renameVersionModal');
       const content = document.getElementById('renameVersionModalContent');
       const btn = document.getElementById('confirmRenameVersionBtn');
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = 'Rename';
-      }
+      resetCurrentStudioRenameVersionButtonState(btn);
       
       showCurrentStudioVersionModal(modal, content, {
         delayMs: 10,
@@ -6735,6 +6729,14 @@
     function resetCurrentStudioRenameVersionState() {
       renamingFilename = '';
       renamingVersionContext = null;
+    }
+
+    function resetCurrentStudioRenameVersionButtonState(button = document.getElementById('confirmRenameVersionBtn')) {
+      if (!button) {
+        return;
+      }
+      button.disabled = false;
+      button.textContent = 'Rename';
     }
     
     async function submitRenameVersion() {
@@ -6793,10 +6795,7 @@
         applyCurrentStudioVersionListMutationSuccess(renameContext, {
           isCurrentSession: isCurrentRenameSession,
           onSuccess: () => {
-            if (btn) {
-              btn.disabled = false;
-              btn.textContent = 'Rename';
-            }
+            resetCurrentStudioRenameVersionButtonState(btn);
           }
         });
       }
