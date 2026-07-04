@@ -56,6 +56,20 @@
     };
   }
 
+  function buildStudioLayerOrderToolbarState(targetElements = [], options = {}) {
+    const actionState = buildStudioLayerOrderActionState(targetElements, options);
+
+    return {
+      ...actionState,
+      buttonStates: {
+        arrangeLayerFrontBtn: actionState.canBringToFront,
+        arrangeLayerBackBtn: actionState.canSendToBack,
+        arrangeLayerForwardBtn: actionState.canBringForward,
+        arrangeLayerBackwardBtn: actionState.canSendBackward
+      }
+    };
+  }
+
   function buildStudioLayerOrderMutationPlan(targetElements = [], action, options = {}) {
     const orderedElements = Array.isArray(options.orderedElements) ? options.orderedElements : [];
     const actionState = buildStudioLayerOrderActionState(targetElements, {
@@ -140,6 +154,7 @@
   return {
     getStudioLayerOrderSelection,
     buildStudioLayerOrderActionState,
+    buildStudioLayerOrderToolbarState,
     buildStudioLayerOrderMutationPlan,
     buildStudioReorderedLayerOrder
   };

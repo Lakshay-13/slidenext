@@ -4138,12 +4138,25 @@
     function updateLayerOrderActionState(doc = getIframeDoc()) {
       const slide = getActiveSlide(doc);
       const canMutateDeck = () => !!slide;
-      const layerOrderActionState = buildLayerOrderSelectionActionState(selectedElements, {
-        slide,
-        orderedElements: slide ? getNormalizedSlideLayerOrder(slide) : [],
-        canMutateDeck
-      });
-      const buttonStates = {
+      const orderedElements = slide ? getNormalizedSlideLayerOrder(slide) : [];
+      const buildStudioLayerOrderToolbarState = (
+        SlideNextStudioEditorLayerOrder
+        && typeof SlideNextStudioEditorLayerOrder.buildStudioLayerOrderToolbarState === 'function'
+      )
+        ? SlideNextStudioEditorLayerOrder.buildStudioLayerOrderToolbarState
+        : null;
+      const layerOrderActionState = buildStudioLayerOrderToolbarState
+        ? buildStudioLayerOrderToolbarState(selectedElements, {
+          orderedElements,
+          isLocked: isElementLocked,
+          canMutateDeck
+        })
+        : buildLayerOrderSelectionActionState(selectedElements, {
+          slide,
+          orderedElements,
+          canMutateDeck
+        });
+      const buttonStates = layerOrderActionState.buttonStates || {
         arrangeLayerFrontBtn: layerOrderActionState.canBringToFront,
         arrangeLayerBackBtn: layerOrderActionState.canSendToBack,
         arrangeLayerForwardBtn: layerOrderActionState.canBringForward,

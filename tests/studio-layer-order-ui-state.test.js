@@ -274,6 +274,88 @@ test('updateLayerOrderActionState enables layer order controls only when the ifr
   });
 });
 
+test('updateLayerOrderActionState reuses the shared layer-order toolbar helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateLayerOrderActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateLayerOrderActionState(doc = getIframeDoc()) {',
+    '\n\n    function toggleSelectedElementsLockState() {'
+  );
+
+  const controls = createControls();
+  const activeSlide = { id: 'slide-1' };
+  const calls = [];
+  const context = {
+    selectedElements: [{ id: 'selected', isConnected: true }],
+    SlideNextStudioEditorLayerOrder: {
+      buildStudioLayerOrderActionState() {
+        throw new Error('buildStudioLayerOrderActionState should not be used when shared toolbar helper exists');
+      },
+      buildStudioLayerOrderToolbarState(elements, options = {}) {
+        calls.push({
+          elements,
+          orderedElements: options.orderedElements,
+          hasCanMutateDeck: typeof options.canMutateDeck === 'function',
+          canMutateDeck: options.canMutateDeck()
+        });
+        return {
+          buttonStates: {
+            arrangeLayerFrontBtn: true,
+            arrangeLayerBackBtn: false,
+            arrangeLayerForwardBtn: true,
+            arrangeLayerBackwardBtn: false
+          }
+        };
+      }
+    },
+    SlideNextStudioEditorStyle: {
+      buildStudioStyleMutationPlan(elements, prop, value, options = {}) {
+        return {
+          canApply: typeof options.canMutateDeck === 'function' ? options.canMutateDeck() : true
+        };
+      }
+    },
+    document: {
+      getElementById(id) {
+        return controls[id] || null;
+      }
+    },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getNormalizedSlideLayerOrder(slide) {
+      return slide === activeSlide ? [{ id: 'selected' }] : [];
+    },
+    getIframeDoc() {
+      return null;
+    },
+    isElementLocked() {
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildLayerOrderSelectionActionState(fileContent, context);
+  vm.runInContext(updateLayerOrderActionStateSource, context);
+
+  context.updateLayerOrderActionState({
+    activeSlide
+  });
+  assert.deepEqual(getDisabledStates(controls), {
+    arrangeLayerFrontBtn: false,
+    arrangeLayerBackBtn: true,
+    arrangeLayerForwardBtn: false,
+    arrangeLayerBackwardBtn: true,
+    elZIndex: false
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    elements: [{ id: 'selected', isConnected: true }],
+    orderedElements: [{ id: 'selected' }],
+    hasCanMutateDeck: true,
+    canMutateDeck: true
+  }]);
+});
+
 test('arrangeElementLayer returns false when there is no live reorder target or no layer change', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const arrangeElementLayerSource = extractFunctionSource(

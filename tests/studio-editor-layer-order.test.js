@@ -81,6 +81,32 @@ test('buildStudioLayerOrderActionState disables locked, deck-not-ready, and no-o
   });
 });
 
+test('buildStudioLayerOrderToolbarState derives layer arrangement button states from the action state', () => {
+  const first = { id: 'first', isConnected: true, locked: false };
+  const second = { id: 'second', isConnected: true, locked: false };
+  const orderedElements = [first, second];
+
+  assert.deepEqual(layerOrder.buildStudioLayerOrderToolbarState([first], {
+    orderedElements,
+    isLocked: (element) => !!element.locked
+  }), {
+    selection: [first],
+    hasSelection: true,
+    hasLockedSelection: false,
+    canReorder: true,
+    canBringToFront: true,
+    canSendToBack: false,
+    canBringForward: true,
+    canSendBackward: false,
+    buttonStates: {
+      arrangeLayerFrontBtn: true,
+      arrangeLayerBackBtn: false,
+      arrangeLayerForwardBtn: true,
+      arrangeLayerBackwardBtn: false
+    }
+  });
+});
+
 test('buildStudioLayerOrderMutationPlan reuses the action-state readiness and lock guards before reordering layers', () => {
   const first = { id: 'first', isConnected: true, locked: false };
   const second = { id: 'second', isConnected: true, locked: false };
