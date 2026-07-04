@@ -6596,6 +6596,13 @@
       return createCurrentStudioSessionReaderOptions(options);
     }
 
+    function applyCurrentStudioVersionActionFailure(versionContext, options = {}) {
+      return SlideNextStudioVersionActions.handleStudioVersionActionFailure(
+        versionContext,
+        createCurrentStudioVersionActionHandlerOptions(options)
+      );
+    }
+
     async function restoreVersion(filename) {
       if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
         return;
@@ -6629,24 +6636,18 @@
             })
           );
         } else {
-          SlideNextStudioVersionActions.handleStudioVersionActionFailure(
-            restoreContext,
-            createCurrentStudioVersionActionHandlerOptions({
-              onFailure: () => {
-                alert(`Restore failed: ${data.error}`);
-              }
-            })
-          );
+          applyCurrentStudioVersionActionFailure(restoreContext, {
+            onFailure: () => {
+              alert(`Restore failed: ${data.error}`);
+            }
+          });
         }
       } catch (err) {
-        SlideNextStudioVersionActions.handleStudioVersionActionFailure(
-          restoreContext,
-          createCurrentStudioVersionActionHandlerOptions({
-            onFailure: () => {
-              alert(`Network error restoring version: ${err.message}`);
-            }
-          })
-        );
+        applyCurrentStudioVersionActionFailure(restoreContext, {
+          onFailure: () => {
+            alert(`Network error restoring version: ${err.message}`);
+          }
+        });
       }
     }
 
@@ -6752,26 +6753,20 @@
             })
           );
         } else {
-          SlideNextStudioVersionActions.handleStudioVersionActionFailure(
-            renameContext,
-            createCurrentStudioVersionActionHandlerOptions({
-              isCurrentSession: isCurrentRenameSession,
-              onFailure: () => {
-                alert(`Rename failed: ${data.error}`);
-              }
-            })
-          );
-        }
-      } catch (err) {
-        SlideNextStudioVersionActions.handleStudioVersionActionFailure(
-          renameContext,
-          createCurrentStudioVersionActionHandlerOptions({
+          applyCurrentStudioVersionActionFailure(renameContext, {
             isCurrentSession: isCurrentRenameSession,
             onFailure: () => {
-              alert(`Error renaming version: ${err.message}`);
+              alert(`Rename failed: ${data.error}`);
             }
-          })
-        );
+          });
+        }
+      } catch (err) {
+        applyCurrentStudioVersionActionFailure(renameContext, {
+          isCurrentSession: isCurrentRenameSession,
+          onFailure: () => {
+            alert(`Error renaming version: ${err.message}`);
+          }
+        });
       } finally {
         SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
           renameContext,
@@ -6810,24 +6805,18 @@
             })
           );
         } else {
-          SlideNextStudioVersionActions.handleStudioVersionActionFailure(
-            deleteContext,
-            createCurrentStudioVersionActionHandlerOptions({
-              onFailure: () => {
-                alert(`Delete failed: ${data.error}`);
-              }
-            })
-          );
+          applyCurrentStudioVersionActionFailure(deleteContext, {
+            onFailure: () => {
+              alert(`Delete failed: ${data.error}`);
+            }
+          });
         }
       } catch (err) {
-        SlideNextStudioVersionActions.handleStudioVersionActionFailure(
-          deleteContext,
-          createCurrentStudioVersionActionHandlerOptions({
-            onFailure: () => {
-              alert(`Error deleting version: ${err.message}`);
-            }
-          })
-        );
+        applyCurrentStudioVersionActionFailure(deleteContext, {
+          onFailure: () => {
+            alert(`Error deleting version: ${err.message}`);
+          }
+        });
       }
     }
 

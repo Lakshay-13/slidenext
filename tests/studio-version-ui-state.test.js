@@ -52,6 +52,15 @@ function loadCreateCurrentStudioSessionReaderOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadApplyCurrentStudioVersionActionFailure(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioVersionActionFailure(versionContext, options = {}) {',
+    '\n\n    async function restoreVersion(filename) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('createCurrentStudioVersionActionContext captures the active presentation version context', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
@@ -151,6 +160,39 @@ test('createCurrentStudioVersionActionHandlerOptions merges live session readers
   context.studioEditorSessionToken = 22;
   assert.equal(handlerOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
   assert.equal(handlerOptions.getCurrentSessionToken(), 22);
+});
+
+test('applyCurrentStudioVersionActionFailure delegates through the shared handler options helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let failureArgs = null;
+  const onFailure = () => {};
+  const versionContext = {
+    presentationUrl: '/presentations/onboarding-presentation/index.html'
+  };
+  const context = {
+    SlideNextStudioVersionActions: {
+      handleStudioVersionActionFailure(nextVersionContext, options) {
+        failureArgs = [nextVersionContext, options];
+        return 'handled';
+      }
+    },
+    createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return {
+        marker: 'version-handler-options',
+        ...options
+      };
+    }
+  };
+
+  vm.createContext(context);
+  loadApplyCurrentStudioVersionActionFailure(fileContent, context);
+
+  const result = context.applyCurrentStudioVersionActionFailure(versionContext, { onFailure });
+
+  assert.equal(result, 'handled');
+  assert.equal(failureArgs[0], versionContext);
+  assert.equal(failureArgs[1].marker, 'version-handler-options');
+  assert.equal(failureArgs[1].onFailure, onFailure);
 });
 
 test('resetStudioVersionUiState hides open version chrome and clears modal state', () => {
@@ -591,6 +633,7 @@ test('submitRenameVersion no-ops when the rename input is missing', async () => 
   };
 
   vm.createContext(context);
+  loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   vm.runInContext(submitRenameVersionSource, context);
 
   await assert.doesNotReject(async () => {
@@ -686,6 +729,7 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
   };
 
   vm.createContext(context);
+  loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   vm.runInContext(submitRenameVersionSource, context);
 
   await assert.doesNotReject(async () => {
@@ -794,6 +838,7 @@ test('submitRenameVersion reuses the shared rename request helper when available
   };
 
   vm.createContext(context);
+  loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   vm.runInContext(submitRenameVersionSource, context);
 
   await context.submitRenameVersion();
@@ -903,6 +948,7 @@ test('deleteVersion reuses the shared delete request helper when available', asy
   };
 
   vm.createContext(context);
+  loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   vm.runInContext(deleteVersionSource, context);
 
   await context.deleteVersion('index_20260101_120000_Auto.html');
@@ -1018,6 +1064,7 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
   };
 
   vm.createContext(context);
+  loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   vm.runInContext(restoreVersionSource, context);
 
   await assert.doesNotReject(async () => {
@@ -1126,6 +1173,7 @@ test('restoreVersion reuses the shared restore request helper when available', a
   };
 
   vm.createContext(context);
+  loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   vm.runInContext(restoreVersionSource, context);
 
   await context.restoreVersion('index_20260101_120000_Auto.html');
