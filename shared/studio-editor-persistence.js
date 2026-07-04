@@ -953,6 +953,53 @@
     return body;
   }
 
+  function createStudioSaveRequestBodyBuilder(options = {}) {
+    const getPresentationUrl = typeof options.getPresentationUrl === 'function'
+      ? options.getPresentationUrl
+      : () => normalizeString(options.presentationUrl);
+    const resolveSaveRequestDeckState = typeof options.resolveSaveRequestDeckState === 'function'
+      ? options.resolveSaveRequestDeckState
+      : resolveStudioSaveRequestDeckState;
+    const buildSaveRequestBody = typeof options.buildSaveRequestBody === 'function'
+      ? options.buildSaveRequestBody
+      : buildStudioSaveRequestBody;
+    const capturePersistableDeckState = typeof options.capturePersistableDeckState === 'function'
+      ? options.capturePersistableDeckState
+      : null;
+    const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
+      ? options.resolveCanonicalDeck
+      : (canonicalDeck) => canonicalDeck || null;
+    const buildPersistableDeckHtml = typeof options.buildPersistableDeckHtml === 'function'
+      ? options.buildPersistableDeckHtml
+      : () => '';
+
+    return function buildSaveRequestBodyWithDefaults(doc = null, cleanHtml = null, nextOptions = {}) {
+      const presentationUrl = Object.prototype.hasOwnProperty.call(nextOptions, 'presentationUrl')
+        ? nextOptions.presentationUrl
+        : getPresentationUrl();
+      const canonicalDeck = Object.prototype.hasOwnProperty.call(nextOptions, 'canonicalDeck')
+        ? nextOptions.canonicalDeck
+        : null;
+      const resolvedDeckState = resolveSaveRequestDeckState(doc, cleanHtml, {
+        canonicalDeck,
+        capturePersistableDeckState: typeof nextOptions.capturePersistableDeckState === 'function'
+          ? nextOptions.capturePersistableDeckState
+          : capturePersistableDeckState,
+        resolveCanonicalDeck: typeof nextOptions.resolveCanonicalDeck === 'function'
+          ? nextOptions.resolveCanonicalDeck
+          : resolveCanonicalDeck,
+        buildPersistableDeckHtml: typeof nextOptions.buildPersistableDeckHtml === 'function'
+          ? nextOptions.buildPersistableDeckHtml
+          : buildPersistableDeckHtml
+      });
+      return buildSaveRequestBody(presentationUrl, resolvedDeckState.cleanHtml, {
+        isAutoSave: !!nextOptions.isAutoSave,
+        versionLabel: nextOptions.versionLabel,
+        canonicalDeck: resolvedDeckState.canonicalDeck
+      });
+    };
+  }
+
   function buildStudioPersistenceRequestPlan(presentationUrl = '', cleanHtml = '', options = {}) {
     const isPersistedState = typeof options.isPersistedState === 'function'
       ? options.isPersistedState
@@ -1880,6 +1927,7 @@
     buildStudioPersistableDeckHtmlWithoutDocument,
     buildStudioPersistableDeckHtmlFromDocument,
     buildStudioSaveRequestBody,
+    createStudioSaveRequestBodyBuilder,
     buildStudioPersistenceRequestPlan,
     resolveStudioPersistenceStateFromDocumentCapture,
     buildStudioAutoSavePersistencePlan,

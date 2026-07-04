@@ -1614,6 +1614,70 @@ test('buildStudioSaveRequestBody includes canonical deck sidecars only when they
   );
 });
 
+test('createStudioSaveRequestBodyBuilder reuses call-time overrides before builder defaults', () => {
+  const doc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+  const calls = [];
+  const buildSaveRequestBody = editorPersistence.createStudioSaveRequestBodyBuilder({
+    getPresentationUrl() {
+      calls.push(['getPresentationUrl']);
+      return '/presentations/onboarding-presentation/index.html';
+    },
+    buildSaveRequestBody(presentationUrl, cleanHtml, options = {}) {
+      calls.push(['buildSaveRequestBody', presentationUrl, cleanHtml, options]);
+      return { presentationUrl, cleanHtml, options };
+    }
+  });
+
+  assert.deepEqual(
+    buildSaveRequestBody(doc, null, {
+      capturePersistableDeckState(nextDoc, captureOptions = {}) {
+        calls.push(['capturePersistableDeckState', nextDoc, captureOptions]);
+        return {
+          cleanHtml: '<html>captured</html>'
+        };
+      },
+      resolveCanonicalDeck(nextCanonicalDeck, nextDoc, capturedDeckState) {
+        calls.push(['resolveCanonicalDeck', nextCanonicalDeck, nextDoc, capturedDeckState]);
+        return canonicalDeck;
+      },
+      versionLabel: 'Auto: Updated Deck'
+    }),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      cleanHtml: '<html>captured</html>',
+      options: {
+        isAutoSave: false,
+        versionLabel: 'Auto: Updated Deck',
+        canonicalDeck
+      }
+    }
+  );
+
+  assert.deepEqual(calls, [
+    ['getPresentationUrl'],
+    ['capturePersistableDeckState', doc, { canonicalDeck: null }],
+    ['resolveCanonicalDeck', null, doc, {
+      cleanHtml: '<html>captured</html>'
+    }],
+    ['buildSaveRequestBody', '/presentations/onboarding-presentation/index.html', '<html>captured</html>', {
+      isAutoSave: false,
+      versionLabel: 'Auto: Updated Deck',
+      canonicalDeck
+    }]
+  ]);
+});
+
 test('resolveStudioSaveRequestCanonicalDeck falls back to the provided canonical deck builder when an override is malformed', () => {
   const fallbackCanonicalDeck = {
     metadata: {

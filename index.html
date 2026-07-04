@@ -6657,6 +6657,43 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
         ? options.canonicalDeck
         : null;
+      const createStudioSaveRequestBodyBuilder = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioSaveRequestBodyBuilder === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioSaveRequestBodyBuilder
+        : null;
+      if (createStudioSaveRequestBodyBuilder) {
+        return createStudioSaveRequestBodyBuilder({
+          getPresentationUrl: () => currentPresentationUrl,
+          resolveSaveRequestDeckState: (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+            && typeof SlideNextStudioEditorPersistence.resolveStudioSaveRequestDeckState === 'function'
+          )
+            ? SlideNextStudioEditorPersistence.resolveStudioSaveRequestDeckState
+            : null,
+          buildSaveRequestBody: (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+            && typeof SlideNextStudioEditorPersistence.buildStudioSaveRequestBody === 'function'
+          )
+            ? SlideNextStudioEditorPersistence.buildStudioSaveRequestBody
+            : null,
+          capturePersistableDeckState: typeof captureEditorPersistableDeckState === 'function'
+            ? captureEditorPersistableDeckState
+            : null,
+          resolveCanonicalDeck: (nextCanonicalDeck, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
+            nextCanonicalDeck,
+            {
+              buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
+            }
+          ),
+          buildPersistableDeckHtml
+        })(doc, cleanHtml, options);
+      }
+
       const resolveStudioSaveRequestDeckState = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence
