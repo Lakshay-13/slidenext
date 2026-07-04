@@ -65,6 +65,15 @@ function loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context) 
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioVersionListMutationSuccess(versionContext, options = {}) {',
+    '\n\n    function applyCurrentStudioRestoreVersionSuccess(versionContext, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadApplyCurrentStudioRestoreVersionSuccess(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioRestoreVersionSuccess(versionContext, options = {}) {',
     '\n\n    async function restoreVersion(filename) {'
   );
   vm.runInContext(helperSource, context);
@@ -230,6 +239,39 @@ test('applyCurrentStudioVersionListMutationSuccess delegates through the shared 
   loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
 
   const result = context.applyCurrentStudioVersionListMutationSuccess(versionContext, { onSuccess });
+
+  assert.equal(result, 'handled');
+  assert.equal(successArgs[0], versionContext);
+  assert.equal(successArgs[1].marker, 'version-handler-options');
+  assert.equal(successArgs[1].onSuccess, onSuccess);
+});
+
+test('applyCurrentStudioRestoreVersionSuccess delegates through the shared handler options helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let successArgs = null;
+  const onSuccess = () => {};
+  const versionContext = {
+    presentationUrl: '/presentations/onboarding-presentation/index.html'
+  };
+  const context = {
+    SlideNextStudioVersionActions: {
+      handleStudioRestoreVersionSuccess(nextVersionContext, options) {
+        successArgs = [nextVersionContext, options];
+        return 'handled';
+      }
+    },
+    createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return {
+        marker: 'version-handler-options',
+        ...options
+      };
+    }
+  };
+
+  vm.createContext(context);
+  loadApplyCurrentStudioRestoreVersionSuccess(fileContent, context);
+
+  const result = context.applyCurrentStudioRestoreVersionSuccess(versionContext, { onSuccess });
 
   assert.equal(result, 'handled');
   assert.equal(successArgs[0], versionContext);
@@ -1111,6 +1153,7 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
 
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
+  loadApplyCurrentStudioRestoreVersionSuccess(fileContent, context);
   vm.runInContext(restoreVersionSource, context);
 
   await assert.doesNotReject(async () => {
@@ -1220,6 +1263,7 @@ test('restoreVersion reuses the shared restore request helper when available', a
 
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
+  loadApplyCurrentStudioRestoreVersionSuccess(fileContent, context);
   vm.runInContext(restoreVersionSource, context);
 
   await context.restoreVersion('index_20260101_120000_Auto.html');
