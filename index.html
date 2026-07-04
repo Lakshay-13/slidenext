@@ -5561,7 +5561,7 @@
       const persistencePresentationUrl = typeof options.presentationUrl === 'string' && options.presentationUrl
         ? options.presentationUrl
         : currentPresentationUrl;
-      return SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
+      return {
         ...createCurrentStudioSessionStateReaders(),
         setPersistedHtml: (nextHtml) => {
           applyCurrentStudioPersistedDeckState({ cleanHtml: nextHtml });
@@ -5577,7 +5577,7 @@
         },
         onSuccess: options.onSuccess,
         onFailure: options.onFailure
-      });
+      };
     }
 
     function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {

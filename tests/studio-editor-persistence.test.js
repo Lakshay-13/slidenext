@@ -2137,32 +2137,6 @@ test('clearStudioPersistenceTimers clears debounce and version timers and resets
   assert.deepEqual(fallbackClears, []);
 });
 
-test('createStudioPersistenceHandlerOptions preserves the supplied session readers and persistence hooks', () => {
-  const getCurrentPresentationUrl = () => '/presentations/onboarding-presentation/index.html';
-  const getCurrentSessionToken = () => 3;
-  const hooks = {
-    setPersistedHtml() {},
-    setPersistedCanonicalDeck() {},
-    setPersistedPlaybackState() {},
-    onSuccess() {},
-    onFailure() {}
-  };
-
-  const options = editorPersistence.createStudioPersistenceHandlerOptions({
-    getCurrentPresentationUrl,
-    getCurrentSessionToken,
-    ...hooks
-  });
-
-  assert.equal(options.getCurrentPresentationUrl, getCurrentPresentationUrl);
-  assert.equal(options.getCurrentSessionToken, getCurrentSessionToken);
-  assert.equal(options.setPersistedHtml, hooks.setPersistedHtml);
-  assert.equal(options.setPersistedCanonicalDeck, hooks.setPersistedCanonicalDeck);
-  assert.equal(options.setPersistedPlaybackState, hooks.setPersistedPlaybackState);
-  assert.equal(options.onSuccess, hooks.onSuccess);
-  assert.equal(options.onFailure, hooks.onFailure);
-});
-
 test('resolveStudioPersistenceCanonicalDeck normalizes valid deck-like payloads and rejects malformed ones', () => {
   assert.deepEqual(
     editorPersistence.resolveStudioPersistenceCanonicalDeck({

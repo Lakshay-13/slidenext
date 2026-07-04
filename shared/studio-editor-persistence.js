@@ -943,18 +943,6 @@
     return true;
   }
 
-  function createStudioPersistenceHandlerOptions(options = {}) {
-    return {
-      getCurrentPresentationUrl: options.getCurrentPresentationUrl,
-      getCurrentSessionToken: options.getCurrentSessionToken,
-      setPersistedHtml: options.setPersistedHtml,
-      setPersistedCanonicalDeck: options.setPersistedCanonicalDeck,
-      setPersistedPlaybackState: options.setPersistedPlaybackState,
-      onSuccess: options.onSuccess,
-      onFailure: options.onFailure
-    };
-  }
-
   function handleStudioPersistenceSuccess(context = {}, options = {}) {
     return runStudioPersistenceActionIfCurrent(context, options, (nextContext) => {
       if (nextContext.shouldUpdatePersistedHtml !== false && typeof options.setPersistedHtml === 'function') {
@@ -1044,7 +1032,6 @@
     clearStudioPersistenceTimers,
     isStudioPersistenceActionCurrent,
     runStudioPersistenceActionIfCurrent,
-    createStudioPersistenceHandlerOptions,
     handleStudioPersistenceSuccess,
     handleStudioVersionPersistenceSuccess,
     handleStudioPersistenceFailure

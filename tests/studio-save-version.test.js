@@ -293,9 +293,6 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure delegates through the
   const context = {
     SlideNextStudioEditorPersistence: {
       ...editorPersistence,
-      createStudioPersistenceHandlerOptions(options = {}) {
-        return options;
-      },
       handleStudioPersistenceFailure(persistenceContext, options = {}) {
         failureHelperArgs = {
           persistenceContext,
