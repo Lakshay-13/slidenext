@@ -225,6 +225,81 @@ test('updateStyleActionState disables style controls whenever the current select
   });
 });
 
+test('updateStyleActionState reuses the shared style toolbar helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateStyleActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateStyleActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateLayerOrderActionState(doc = getIframeDoc()) {'
+  );
+
+  const controls = createControlMap();
+  const calls = [];
+  const context = {
+    selectedElements: [{ isConnected: true, locked: false }],
+    SlideNextStudioEditorStyle: {
+      buildStudioStyleMutationPlan() {
+        throw new Error('buildStudioStyleMutationPlan should not be used when shared toolbar helper exists');
+      },
+      buildStudioStyleToolbarState(elements, controlConfigs, options = {}) {
+        calls.push({
+          elements,
+          controlConfigs,
+          hasCanMutateDeck: typeof options.canMutateDeck === 'function',
+          canMutateDeck: options.canMutateDeck()
+        });
+        return {
+          controlStates: Object.fromEntries(controlConfigs.map(([id]) => [id, true]))
+        };
+      }
+    },
+    document: {
+      getElementById(id) {
+        return controls[id] || null;
+      }
+    },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return null;
+    },
+    isElementLocked(element) {
+      return !!element.locked;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateStyleActionStateSource, context);
+
+  context.updateStyleActionState({
+    activeSlide: {}
+  });
+
+  assert.deepEqual(getDisabledStates(controls), {
+    elTextContent: false,
+    elImageSrc: false,
+    elFontSize: false,
+    elFontFamily: false,
+    elFontWeight: false,
+    alignLeftBtn: false,
+    alignCenterBtn: false,
+    alignRightBtn: false,
+    alignJustifyBtn: false,
+    elTextColor: false,
+    elOpacity: false,
+    elBorderStyle: false,
+    elBorderWidth: false,
+    elBorderRadius: false,
+    elBorderColor: false
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].elements.length, 1);
+  assert.equal(calls[0].controlConfigs.length, 15);
+  assert.equal(calls[0].hasCanMutateDeck, true);
+  assert.equal(calls[0].canMutateDeck, true);
+});
+
 test('applySelectedElementStyle returns false and refreshes style controls when style edits are unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(

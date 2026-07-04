@@ -4106,7 +4106,7 @@
     }
 
     function updateStyleActionState(doc = getIframeDoc()) {
-      [
+      const controlConfigs = [
         ['elTextContent', 'text', ''],
         ['elImageSrc', 'src', ''],
         ['elFontSize', 'size', '16'],
@@ -4122,7 +4122,28 @@
         ['elBorderWidth', 'borderWidth', '0'],
         ['elBorderRadius', 'borderRadius', '0'],
         ['elBorderColor', 'borderColor', '#ffffff']
-      ].forEach(([id, prop, value]) => {
+      ];
+      const buildStudioStyleToolbarState = (
+        SlideNextStudioEditorStyle
+        && typeof SlideNextStudioEditorStyle.buildStudioStyleToolbarState === 'function'
+      )
+        ? SlideNextStudioEditorStyle.buildStudioStyleToolbarState
+        : null;
+      if (buildStudioStyleToolbarState) {
+        const toolbarState = buildStudioStyleToolbarState(selectedElements, controlConfigs, {
+          isLocked: isElementLocked,
+          canMutateDeck: () => !!getActiveSlide(doc)
+        });
+        Object.entries(toolbarState.controlStates || {}).forEach(([id, canRun]) => {
+          const control = document.getElementById(id);
+          if (control) {
+            control.disabled = !canRun;
+          }
+        });
+        return;
+      }
+
+      controlConfigs.forEach(([id, prop, value]) => {
         const control = document.getElementById(id);
         if (!control) return;
         const styleMutationPlan = SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(selectedElements, prop, value, {

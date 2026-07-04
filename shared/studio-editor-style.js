@@ -47,6 +47,27 @@
     };
   }
 
+  function buildStudioStyleToolbarState(elements = [], controlConfigs = [], options = {}) {
+    const configs = Array.isArray(controlConfigs) ? controlConfigs : [];
+    const controlStates = {};
+
+    configs.forEach((config) => {
+      const id = Array.isArray(config) ? config[0] : config && config.id;
+      const prop = Array.isArray(config) ? config[1] : config && config.prop;
+      const value = Array.isArray(config) ? config[2] : config && config.value;
+      if (!id || !prop) {
+        return;
+      }
+
+      const mutationPlan = buildStudioStyleMutationPlan(elements, prop, value, options);
+      controlStates[id] = mutationPlan.canApply;
+    });
+
+    return {
+      controlStates
+    };
+  }
+
   function normalizeStudioStyleMutationValue(prop, value) {
     if (prop === 'opacity') {
       const displayValue = `${Math.max(10, Math.min(100, parseInt(value, 10) || 100))}`;
@@ -309,6 +330,7 @@
     STUDIO_STYLE_VERSION_LABELS,
     getStudioStyleSelection,
     buildStudioStyleMutationPlan,
+    buildStudioStyleToolbarState,
     normalizeStudioStyleMutationValue,
     applyStudioStyleMutation,
     getStudioEditorStyleText,

@@ -50,6 +50,29 @@ test('buildStudioStyleMutationPlan filters stale selections, blocks locked selec
   });
 });
 
+test('buildStudioStyleToolbarState derives inspector control enablement from shared style mutation plans', () => {
+  const live = { isConnected: true, locked: false };
+
+  assert.deepEqual(
+    styleState.buildStudioStyleToolbarState(
+      [live],
+      [
+        ['elFontWeight', 'weight', '400'],
+        ['alignCenterBtn', 'align', 'center']
+      ],
+      {
+        isLocked: (element) => !!element.locked
+      }
+    ),
+    {
+      controlStates: {
+        elFontWeight: true,
+        alignCenterBtn: true
+      }
+    }
+  );
+});
+
 test('applyStudioStyleMutation applies shared style properties across the live selection', () => {
   const first = createElement('div');
   const second = createElement('p');
