@@ -196,6 +196,39 @@ test('createStudioPersistedDeckStateContentResolver reads persisted state and re
   ]);
 });
 
+test('createStudioPersistedActiveSlideIdReader resolves persisted active slide ids through the shared helper or local fallback', () => {
+  const playbackState = {
+    activeSlideIds: ['slide-2'],
+    slideCounterText: '2 / 4'
+  };
+  const calls = [];
+  const getPersistedActiveSlideId = editorPersistence.createStudioPersistedActiveSlideIdReader({
+    getPlaybackState() {
+      calls.push(['getPlaybackState']);
+      return playbackState;
+    },
+    resolvePersistedDeckActiveSlideId(nextPlaybackState) {
+      calls.push(['resolvePersistedDeckActiveSlideId', nextPlaybackState]);
+      return 'slide-shared';
+    }
+  });
+
+  assert.equal(getPersistedActiveSlideId(), 'slide-shared');
+  assert.deepEqual(calls, [
+    ['getPlaybackState'],
+    ['resolvePersistedDeckActiveSlideId', playbackState]
+  ]);
+
+  const fallbackReader = editorPersistence.createStudioPersistedActiveSlideIdReader({
+    playbackState: {
+      activeSlideId: 'slide-legacy'
+    }
+  });
+  assert.equal(fallbackReader(), 'slide-legacy');
+  assert.equal(fallbackReader({ activeSlideIds: ['slide-live'] }), 'slide-live');
+  assert.equal(fallbackReader(null), '');
+});
+
 test('resolveStudioPersistedDeckStateSnapshotWithContent reuses an explicit snapshot and otherwise composes it from persisted baselines', () => {
   const persistedDeckState = {
     cleanHtml: '<html>persisted</html>',

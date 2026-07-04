@@ -1736,6 +1736,45 @@ test('getPersistedActiveSlideId delegates to the shared deck persistence helper 
   assert.equal(delegatedPlaybackState, context.persistedDeckPlaybackState);
 });
 
+test('getPersistedActiveSlideId reuses the shared editor persistence helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getPersistedActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {',
+    '\n\n    function getCurrentEditorPersistedDeckState() {'
+  );
+
+  let delegatedArgs = null;
+  const context = {
+    SlideNextDeckPersistence: {
+      resolvePersistedDeckActiveSlideId() {
+        throw new Error('resolvePersistedDeckActiveSlideId should be delegated through the shared editor helper');
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistedActiveSlideIdReader(options = {}) {
+        delegatedArgs = options;
+        return (playbackState) => playbackState && playbackState.activeSlideIds
+          ? playbackState.activeSlideIds[0]
+          : '';
+      }
+    },
+    persistedDeckPlaybackState: {
+      activeSlideIds: ['slide-2'],
+      slideCounterText: '2 / 4'
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getPersistedActiveSlideIdSource, context);
+
+  const result = context.getPersistedActiveSlideId();
+
+  assert.equal(result, 'slide-2');
+  assert.equal(typeof delegatedArgs.getPlaybackState, 'function');
+  assert.equal(delegatedArgs.resolvePersistedDeckActiveSlideId, context.SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId);
+});
+
 test('resolveEditorCanonicalDeckViewState delegates resolver orchestration to the shared deck view helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
