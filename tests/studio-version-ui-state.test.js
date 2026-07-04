@@ -43,17 +43,6 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {',
-    '\n\n    // Rollback backup version'
-  );
-  vm.runInContext(helperSource, context);
-}
-
 function loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context) {
   if (typeof context.createCurrentStudioSessionStateOptions !== 'function') {
     loadCreateCurrentStudioSessionStateOptions(fileContent, context);
@@ -62,7 +51,7 @@ function loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioVersionActionHandlerOptions(options = {}) {',
-    '\n\n    function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {'
+    '\n\n    // Rollback backup version'
   );
   vm.runInContext(helperSource, context);
 }
@@ -547,10 +536,24 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
       async executeStudioRenameVersionRequest(...args) {
         calls.push(['executeStudioRenameVersionRequest', ...args]);
         return { success: true };
+      },
+      handleStudioVersionListMutationSuccess(renameContext, options) {
+        calls.push(['handleStudioVersionListMutationSuccess', renameContext, options.refreshVersionEntries]);
+        if (options.isCurrentSession) {
+          calls.push(['isCurrentSession', options.isCurrentSession()]);
+        }
+        if (options.onSuccess) {
+          options.onSuccess();
+        }
+        return true;
       }
     },
     closeRenameVersionModal() {
       calls.push(['closeRenameVersionModal']);
+    },
+    createCurrentStudioVersionActionHandlerOptions(options) {
+      calls.push(['createCurrentStudioVersionActionHandlerOptions', options.refreshVersionEntries]);
+      return options;
     },
     createCurrentStudioVersionActionContext() {
       calls.push(['createCurrentStudioVersionActionContext']);
@@ -572,18 +575,8 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
     fetch() {
       calls.push(['fetch']);
     },
-    handleCurrentStudioVersionActionFailure() {
-      calls.push(['handleCurrentStudioVersionActionFailure']);
-    },
-    handleCurrentStudioVersionListMutationSuccess(renameContext, options) {
-      calls.push(['handleCurrentStudioVersionListMutationSuccess', renameContext, options.shouldRefreshVersionEntries]);
-      if (options.isCurrentSession) {
-        calls.push(['isCurrentSession', options.isCurrentSession()]);
-      }
-      if (options.onSuccess) {
-        options.onSuccess();
-      }
-      return true;
+    loadVersions() {
+      calls.push(['loadVersions']);
     },
     renamingFilename: 'index_20260101_120000_Auto.html',
     renamingVersionContext: {
@@ -603,9 +596,8 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
   assert.ok(calls.some(([name]) => name === 'executeStudioRenameVersionRequest'));
   assert.ok(calls.some(([name, , , , options]) => name === 'executeStudioRenameVersionRequest' && options.fetchImpl === context.fetch));
   assert.ok(calls.some(([name]) => name === 'closeRenameVersionModal'));
-  assert.ok(calls.filter(([name]) => name === 'handleCurrentStudioVersionListMutationSuccess').length === 2);
+  assert.ok(calls.filter(([name]) => name === 'handleStudioVersionListMutationSuccess').length === 2);
   assert.ok(calls.some(([name, result]) => name === 'isCurrentSession' && result === true));
-  assert.ok(!calls.some(([name]) => name === 'handleCurrentStudioVersionActionFailure'));
 });
 
 test('submitRenameVersion reuses the shared rename request helper when available', async () => {
@@ -634,10 +626,20 @@ test('submitRenameVersion reuses the shared rename request helper when available
       executeStudioRenameVersionRequest: async (...args) => {
         helperArgs = args;
         return { success: true };
+      },
+      handleStudioVersionListMutationSuccess(renameContext, options) {
+        calls.push(['handleStudioVersionListMutationSuccess', renameContext, options.refreshVersionEntries]);
+        if (options.onSuccess) {
+          options.onSuccess();
+        }
+        return true;
       }
     },
     closeRenameVersionModal() {
       calls.push(['closeRenameVersionModal']);
+    },
+    createCurrentStudioVersionActionHandlerOptions(options) {
+      return options;
     },
     createCurrentStudioVersionActionContext() {
       return {
@@ -663,15 +665,8 @@ test('submitRenameVersion reuses the shared rename request helper when available
     fetch() {
       throw new Error('submitRenameVersion should pass fetch to the shared rename helper instead of calling it directly');
     },
-    handleCurrentStudioVersionActionFailure() {
-      throw new Error('submitRenameVersion should not use the failure handler for a successful shared helper result');
-    },
-    handleCurrentStudioVersionListMutationSuccess(renameContext, options) {
-      calls.push(['handleCurrentStudioVersionListMutationSuccess', renameContext, options.shouldRefreshVersionEntries]);
-      if (options.onSuccess) {
-        options.onSuccess();
-      }
-      return true;
+    loadVersions() {
+      calls.push(['loadVersions']);
     },
     renamingFilename: 'index_20260101_120000_Auto.html',
     renamingVersionContext: {
@@ -690,7 +685,7 @@ test('submitRenameVersion reuses the shared rename request helper when available
     presentationUrl: '/presentations/onboarding-presentation/index.html'
   });
   assert.equal(helperArgs[3].fetchImpl, context.fetch);
-  assert.ok(calls.some(([name]) => name === 'handleCurrentStudioVersionListMutationSuccess'));
+  assert.ok(calls.some(([name]) => name === 'handleStudioVersionListMutationSuccess'));
   assert.ok(calls.some(([name]) => name === 'closeRenameVersionModal'));
 });
 
@@ -719,6 +714,10 @@ test('deleteVersion reuses the shared delete request helper when available', asy
       executeStudioDeleteVersionRequest: async (...args) => {
         helperArgs = args;
         return { success: true };
+      },
+      handleStudioVersionListMutationSuccess(deleteContext, options) {
+        calls.push(['handleStudioVersionListMutationSuccess', deleteContext, options.refreshVersionEntries]);
+        return true;
       }
     },
     alert() {
@@ -730,15 +729,14 @@ test('deleteVersion reuses the shared delete request helper when available', asy
     currentCategory: 'General',
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
+    createCurrentStudioVersionActionHandlerOptions(options) {
+      return options;
+    },
     fetch() {
       throw new Error('deleteVersion should pass fetch to the shared delete helper instead of calling it directly');
     },
-    handleCurrentStudioVersionActionFailure() {
-      throw new Error('deleteVersion should not use the failure handler for a successful shared helper result');
-    },
-    handleCurrentStudioVersionListMutationSuccess(deleteContext) {
-      calls.push(['handleCurrentStudioVersionListMutationSuccess', deleteContext]);
-      return true;
+    loadVersions() {
+      calls.push(['loadVersions']);
     },
     studioEditorSessionToken: 17
   };
@@ -760,7 +758,7 @@ test('deleteVersion reuses the shared delete request helper when available', asy
     sessionToken: 17
   });
   assert.equal(helperArgs[2].fetchImpl, context.fetch);
-  assert.ok(calls.some(([name]) => name === 'handleCurrentStudioVersionListMutationSuccess'));
+  assert.ok(calls.some(([name]) => name === 'handleStudioVersionListMutationSuccess'));
 });
 
 test('restoreVersion tolerates a missing versions dropdown after a successful restore', async () => {
@@ -1000,16 +998,11 @@ test('loadVersions passes live session getters when delegating to the version hi
   assert.equal(capturedOptions.getCurrentSessionToken(), 19);
 });
 
-test('handleCurrentStudioVersionListMutationSuccess delegates through the shared action handler options builder', () => {
+test('createCurrentStudioVersionActionHandlerOptions delegates through the shared action handler options builder', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const versionActionContext = {
-    presentationUrl: '/presentations/onboarding-presentation/index.html',
-    sessionToken: 31
-  };
   const isCurrentSession = () => true;
   const onSuccess = () => {};
   let capturedBuilderOptions = null;
-  let delegatedArgs = null;
   const context = {
     SlideNextStudioEditorSession: editorSession,
     SlideNextStudioVersionActions: {
@@ -1035,16 +1028,15 @@ test('handleCurrentStudioVersionListMutationSuccess delegates through the shared
   };
 
   vm.createContext(context);
-  loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context);
+  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
 
-  const result = context.handleCurrentStudioVersionListMutationSuccess(versionActionContext, {
+  const result = context.createCurrentStudioVersionActionHandlerOptions({
     isCurrentSession,
-    onSuccess
+    onSuccess,
+    refreshVersionEntries: context.loadVersions
   });
 
-  assert.equal(result, 'handled');
-  assert.equal(delegatedArgs.nextVersionActionContext, versionActionContext);
-  assert.equal(delegatedArgs.handlerOptions.marker, 'version-action-handler-options');
+  assert.equal(result.marker, 'version-action-handler-options');
   assert.equal(typeof capturedBuilderOptions.getCurrentPresentationUrl, 'function');
   assert.equal(typeof capturedBuilderOptions.getCurrentSessionToken, 'function');
   assert.equal(capturedBuilderOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
@@ -1052,106 +1044,9 @@ test('handleCurrentStudioVersionListMutationSuccess delegates through the shared
   assert.equal(capturedBuilderOptions.isCurrentSession, isCurrentSession);
   assert.equal(capturedBuilderOptions.onSuccess, onSuccess);
   assert.equal(capturedBuilderOptions.refreshVersionEntries, context.loadVersions);
-  assert.equal(delegatedArgs.handlerOptions.isCurrentSession, isCurrentSession);
-  assert.equal(delegatedArgs.handlerOptions.onSuccess, onSuccess);
-  assert.equal(delegatedArgs.handlerOptions.refreshVersionEntries, context.loadVersions);
-});
-
-test('handleCurrentStudioVersionListMutationSuccess reuses current session readers and refreshes version entries by default', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const calls = [];
-  const context = {
-    SlideNextStudioVersionActions: {
-      ...versionActions,
-      handleStudioVersionListMutationSuccess(versionActionContext, options) {
-        calls.push(['handleStudioVersionListMutationSuccess', versionActionContext, options]);
-        return true;
-      }
-    },
-    createCurrentStudioSessionStateReaders() {
-      return {
-        getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
-        getCurrentSessionToken: () => 9
-      };
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    loadVersions(presentationUrl, sessionToken) {
-      calls.push(['loadVersions', presentationUrl, sessionToken]);
-    },
-    studioEditorSessionToken: 9
-  };
-
-  vm.createContext(context);
-  loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context);
-
-  const versionActionContext = {
-    presentationUrl: '/presentations/onboarding-presentation/index.html',
-    sessionToken: 9
-  };
-  const result = context.handleCurrentStudioVersionListMutationSuccess(versionActionContext, {
-    onSuccess() {
-      calls.push(['onSuccess']);
-    }
-  });
-
-  assert.equal(result, true);
-  assert.equal(calls[0][0], 'handleStudioVersionListMutationSuccess');
-  assert.equal(calls[0][1], versionActionContext);
-  assert.equal(typeof calls[0][2].getCurrentPresentationUrl, 'function');
-  assert.equal(typeof calls[0][2].getCurrentSessionToken, 'function');
-  assert.equal(calls[0][2].getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
-  assert.equal(calls[0][2].getCurrentSessionToken(), 9);
-  calls[0][2].onSuccess();
-  calls[0][2].refreshVersionEntries('/presentations/onboarding-presentation/index.html', 9);
-  assert.deepEqual(calls.slice(1), [
-    ['onSuccess'],
-    ['loadVersions', '/presentations/onboarding-presentation/index.html', 9]
-  ]);
-});
-
-test('handleCurrentStudioVersionListMutationSuccess can skip version refresh wiring', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const calls = [];
-  const context = {
-    SlideNextStudioVersionActions: {
-      ...versionActions,
-      handleStudioVersionListMutationSuccess(versionActionContext, options) {
-        calls.push(['handleStudioVersionListMutationSuccess', versionActionContext, options]);
-        return false;
-      }
-    },
-    createCurrentStudioSessionStateReaders() {
-      return {
-        getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
-        getCurrentSessionToken: () => 10
-      };
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    loadVersions() {
-      calls.push(['loadVersions']);
-    },
-    studioEditorSessionToken: 10
-  };
-
-  vm.createContext(context);
-  loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context);
-
-  const result = context.handleCurrentStudioVersionListMutationSuccess(
-    {
-      presentationUrl: '/presentations/onboarding-presentation/index.html',
-      sessionToken: 10
-    },
-    {
-      shouldRefreshVersionEntries: false,
-      isCurrentSession: () => true
-    }
-  );
-
-  assert.equal(result, false);
-  assert.equal(calls[0][0], 'handleStudioVersionListMutationSuccess');
-  assert.equal(calls[0][2].refreshVersionEntries, undefined);
-  assert.equal(typeof calls[0][2].isCurrentSession, 'function');
-  assert.equal(calls.length, 1);
+  assert.equal(result.isCurrentSession, isCurrentSession);
+  assert.equal(result.onSuccess, onSuccess);
+  assert.equal(result.refreshVersionEntries, context.loadVersions);
 });
 
 test('createCurrentStudioSessionStateOptions exposes live presentation and session getters', () => {
