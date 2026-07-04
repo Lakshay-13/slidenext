@@ -6578,13 +6578,6 @@
       );
     }
 
-    function handleCurrentStudioVersionRestoreSuccess(versionActionContext, options = {}) {
-      return SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(
-        versionActionContext,
-        createCurrentStudioVersionActionHandlerOptions(options)
-      );
-    }
-
     // Rollback backup version
     async function restoreVersion(filename) {
       if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
@@ -6608,20 +6601,23 @@
           }
         );
         if (data.success) {
-          handleCurrentStudioVersionRestoreSuccess(restoreContext, {
-            onSuccess: () => {
-              alert('Rollback successfully restored!');
-            },
-            hideVersionsDropdown: () => {
-              const versionsDropdown = document.getElementById('versionsDropdown');
-              if (versionsDropdown) {
-                versionsDropdown.classList.add('hidden');
+          SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(
+            restoreContext,
+            createCurrentStudioVersionActionHandlerOptions({
+              onSuccess: () => {
+                alert('Rollback successfully restored!');
+              },
+              hideVersionsDropdown: () => {
+                const versionsDropdown = document.getElementById('versionsDropdown');
+                if (versionsDropdown) {
+                  versionsDropdown.classList.add('hidden');
+                }
+              },
+              relaunchEditor: (presentationUrl, presentationTitle, presentationCategory) => {
+                launchStudioEditor(presentationUrl, presentationTitle, presentationCategory);
               }
-            },
-            relaunchEditor: (presentationUrl, presentationTitle, presentationCategory) => {
-              launchStudioEditor(presentationUrl, presentationTitle, presentationCategory);
-            }
-          });
+            })
+          );
         } else {
           handleCurrentStudioVersionActionFailure(restoreContext, {
             onFailure: () => {

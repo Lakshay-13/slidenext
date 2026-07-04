@@ -60,17 +60,6 @@ function loadHandleCurrentStudioVersionActionFailure(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionActionFailure(versionActionContext, options = {}) {',
-    '\n\n    function handleCurrentStudioVersionRestoreSuccess(versionActionContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
-function loadHandleCurrentStudioVersionRestoreSuccess(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function handleCurrentStudioVersionRestoreSuccess(versionActionContext, options = {}) {',
     '\n\n    // Rollback backup version'
   );
   vm.runInContext(helperSource, context);
@@ -796,6 +785,7 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
   const calls = [];
   const context = {
     SlideNextStudioVersionActions: {
+      ...versionActions,
       createStudioVersionActionContext(presentationUrl, presentationTitle, presentationCategory, options) {
         calls.push(['createStudioVersionActionContext', presentationUrl, presentationTitle, presentationCategory, options]);
         return {
@@ -808,6 +798,12 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
       async executeStudioRestoreVersionRequest(...args) {
         calls.push(['executeStudioRestoreVersionRequest', ...args]);
         return { success: true };
+      },
+      handleStudioRestoreVersionSuccess(restoreContext, options) {
+        calls.push(['handleStudioRestoreVersionSuccess', restoreContext, options]);
+        options.hideVersionsDropdown();
+        options.onSuccess();
+        return true;
       }
     },
     alert(message) {
@@ -835,12 +831,6 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
     handleCurrentStudioVersionActionFailure() {
       calls.push(['handleCurrentStudioVersionActionFailure']);
     },
-    handleCurrentStudioVersionRestoreSuccess(restoreContext, options) {
-      calls.push(['handleCurrentStudioVersionRestoreSuccess', restoreContext, options]);
-      options.hideVersionsDropdown();
-      options.onSuccess();
-      return true;
-    },
     launchStudioEditor(presentationUrl, presentationTitle, presentationCategory) {
       calls.push(['launchStudioEditor', presentationUrl, presentationTitle, presentationCategory]);
     },
@@ -848,6 +838,7 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
   vm.runInContext(restoreVersionSource, context);
 
   await assert.doesNotReject(async () => {
@@ -856,7 +847,7 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
   assert.ok(calls.some(([name]) => name === 'executeStudioRestoreVersionRequest'));
   assert.ok(calls.some(([name, , , options]) => name === 'executeStudioRestoreVersionRequest' && options.fetchImpl === context.fetch));
   assert.ok(calls.some(([name]) => name === 'createStudioVersionActionContext'));
-  assert.ok(calls.some(([name]) => name === 'handleCurrentStudioVersionRestoreSuccess'));
+  assert.ok(calls.some(([name]) => name === 'handleStudioRestoreVersionSuccess'));
   assert.ok(calls.some(([name, id]) => name === 'getElementById' && id === 'versionsDropdown'));
   assert.ok(calls.some(([name, message]) => name === 'alert' && /Rollback successfully restored!/.test(message)));
   assert.ok(!calls.some(([name]) => name === 'handleCurrentStudioVersionActionFailure'));
@@ -875,6 +866,7 @@ test('restoreVersion reuses the shared restore request helper when available', a
   const calls = [];
   const context = {
     SlideNextStudioVersionActions: {
+      ...versionActions,
       createStudioVersionActionContext(presentationUrl, presentationTitle, presentationCategory, options) {
         builderArgs = [presentationUrl, presentationTitle, presentationCategory, options];
         return {
@@ -887,6 +879,12 @@ test('restoreVersion reuses the shared restore request helper when available', a
       executeStudioRestoreVersionRequest: async (...args) => {
         helperArgs = args;
         return { success: true };
+      },
+      handleStudioRestoreVersionSuccess(restoreContext, options) {
+        calls.push(['handleStudioRestoreVersionSuccess', restoreContext, options]);
+        options.hideVersionsDropdown();
+        options.onSuccess();
+        return true;
       }
     },
     alert(message) {
@@ -916,17 +914,12 @@ test('restoreVersion reuses the shared restore request helper when available', a
     handleCurrentStudioVersionActionFailure() {
       throw new Error('restoreVersion should not use the failure handler for a successful shared helper result');
     },
-    handleCurrentStudioVersionRestoreSuccess(restoreContext, options) {
-      calls.push(['handleCurrentStudioVersionRestoreSuccess', restoreContext, options]);
-      options.hideVersionsDropdown();
-      options.onSuccess();
-      return true;
-    },
     launchStudioEditor() {},
     studioEditorSessionToken: 13
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
   vm.runInContext(restoreVersionSource, context);
 
   await context.restoreVersion('index_20260101_120000_Auto.html');
@@ -943,7 +936,7 @@ test('restoreVersion reuses the shared restore request helper when available', a
     sessionToken: 13
   });
   assert.equal(helperArgs[2].fetchImpl, context.fetch);
-  assert.ok(calls.some(([name]) => name === 'handleCurrentStudioVersionRestoreSuccess'));
+  assert.ok(calls.some(([name]) => name === 'handleStudioRestoreVersionSuccess'));
   assert.ok(calls.some(([name, message]) => name === 'alert' && /Rollback successfully restored!/.test(message)));
 });
 
@@ -1217,63 +1210,6 @@ test('handleCurrentStudioVersionActionFailure reuses current session readers for
   assert.equal(calls[0][2].getCurrentSessionToken(), 11);
   calls[0][2].onFailure();
   assert.deepEqual(calls.slice(1), [['onFailure']]);
-});
-
-test('handleCurrentStudioVersionRestoreSuccess reuses current session readers and restore hooks', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const calls = [];
-  const context = {
-    SlideNextStudioVersionActions: {
-      ...versionActions,
-      handleStudioRestoreVersionSuccess(versionActionContext, options) {
-        calls.push(['handleStudioRestoreVersionSuccess', versionActionContext, options]);
-        return true;
-      }
-    },
-    createCurrentStudioSessionStateReaders() {
-      return {
-        getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
-        getCurrentSessionToken: () => 12
-      };
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 12
-  };
-
-  vm.createContext(context);
-  loadHandleCurrentStudioVersionRestoreSuccess(fileContent, context);
-
-  const versionActionContext = {
-    presentationUrl: '/presentations/onboarding-presentation/index.html',
-    sessionToken: 12
-  };
-  const result = context.handleCurrentStudioVersionRestoreSuccess(versionActionContext, {
-    onSuccess() {
-      calls.push(['onSuccess']);
-    },
-    hideVersionsDropdown() {
-      calls.push(['hideVersionsDropdown']);
-    },
-    relaunchEditor() {
-      calls.push(['relaunchEditor']);
-    }
-  });
-
-  assert.equal(result, true);
-  assert.equal(calls[0][0], 'handleStudioRestoreVersionSuccess');
-  assert.equal(calls[0][1], versionActionContext);
-  assert.equal(typeof calls[0][2].getCurrentPresentationUrl, 'function');
-  assert.equal(typeof calls[0][2].getCurrentSessionToken, 'function');
-  assert.equal(calls[0][2].getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
-  assert.equal(calls[0][2].getCurrentSessionToken(), 12);
-  calls[0][2].onSuccess();
-  calls[0][2].hideVersionsDropdown();
-  calls[0][2].relaunchEditor();
-  assert.deepEqual(calls.slice(1), [
-    ['onSuccess'],
-    ['hideVersionsDropdown'],
-    ['relaunchEditor']
-  ]);
 });
 
 test('createCurrentStudioSessionStateOptions exposes live presentation and session getters', () => {
