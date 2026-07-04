@@ -368,9 +368,14 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
 test('createCurrentStudioSessionStateOptions exposes live session getters and forwards the session token', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let capturedOptions = null;
+  let capturedReaderOptions = null;
   const context = {
     SlideNextStudioEditorSession: {
       ...editorSession,
+      createStudioSessionStateReaders(options) {
+        capturedReaderOptions = options;
+        return editorSession.createStudioSessionStateReaders(options);
+      },
       createStudioSessionStateOptions(options) {
         capturedOptions = options;
         return editorSession.createStudioSessionStateOptions(options);
@@ -387,10 +392,14 @@ test('createCurrentStudioSessionStateOptions exposes live session getters and fo
 
   assert.equal(options.sessionToken, 4);
   assert.equal(capturedOptions.sessionToken, 4);
+  assert.equal(typeof capturedReaderOptions.getCurrentPresentationUrl, 'function');
+  assert.equal(typeof capturedReaderOptions.getCurrentSessionToken, 'function');
   assert.equal(typeof options.getCurrentPresentationUrl, 'function');
   assert.equal(typeof options.getCurrentSessionToken, 'function');
   assert.equal(typeof capturedOptions.getCurrentPresentationUrl, 'function');
   assert.equal(typeof capturedOptions.getCurrentSessionToken, 'function');
+  assert.equal(capturedReaderOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedReaderOptions.getCurrentSessionToken(), 4);
   assert.equal(options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
   assert.equal(options.getCurrentSessionToken(), 4);
   assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
@@ -398,6 +407,8 @@ test('createCurrentStudioSessionStateOptions exposes live session getters and fo
 
   context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
   context.studioEditorSessionToken = 5;
+  assert.equal(capturedReaderOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(capturedReaderOptions.getCurrentSessionToken(), 5);
   assert.equal(options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
   assert.equal(options.getCurrentSessionToken(), 5);
   assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');

@@ -1928,8 +1928,10 @@
     function createCurrentStudioSessionStateOptions(options = {}) {
       return SlideNextStudioEditorSession.createStudioSessionStateOptions({
         sessionToken: options.sessionToken,
-        getCurrentPresentationUrl: () => currentPresentationUrl,
-        getCurrentSessionToken: () => studioEditorSessionToken
+        ...SlideNextStudioEditorSession.createStudioSessionStateReaders({
+          getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentSessionToken: () => studioEditorSessionToken
+        })
       });
     }
 
