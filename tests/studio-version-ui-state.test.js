@@ -818,8 +818,11 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
     currentCategory: 'General',
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
-    createCurrentStudioSessionStateOptions() {
-      return {};
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
     },
     document: {
       getElementById(id) {
@@ -867,6 +870,9 @@ test('restoreVersion reuses the shared restore request helper when available', a
 
   let helperArgs = null;
   let builderArgs = null;
+  let readerCallCount = 0;
+  let capturedReaders = null;
+  let successOptions = null;
   const calls = [];
   const context = {
     SlideNextStudioVersionActions: {
@@ -885,6 +891,7 @@ test('restoreVersion reuses the shared restore request helper when available', a
         return { success: true };
       },
       handleStudioRestoreVersionSuccess(restoreContext, options) {
+        successOptions = options;
         calls.push(['handleStudioRestoreVersionSuccess', restoreContext, options]);
         options.hideVersionsDropdown();
         options.onSuccess();
@@ -900,8 +907,13 @@ test('restoreVersion reuses the shared restore request helper when available', a
     currentCategory: 'General',
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
-    createCurrentStudioSessionStateOptions() {
-      return {};
+    createCurrentStudioSessionStateReaders() {
+      readerCallCount += 1;
+      capturedReaders = {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+      return capturedReaders;
     },
     fetch() {
       throw new Error('restoreVersion should pass fetch to the shared restore helper instead of calling it directly');
@@ -942,8 +954,18 @@ test('restoreVersion reuses the shared restore request helper when available', a
     sessionToken: 13
   });
   assert.equal(helperArgs[2].fetchImpl, context.fetch);
+  assert.equal(readerCallCount, 1);
+  assert.equal(successOptions.getCurrentPresentationUrl, capturedReaders.getCurrentPresentationUrl);
+  assert.equal(successOptions.getCurrentSessionToken, capturedReaders.getCurrentSessionToken);
+  assert.equal(successOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(successOptions.getCurrentSessionToken(), 13);
   assert.ok(calls.some(([name]) => name === 'handleStudioRestoreVersionSuccess'));
   assert.ok(calls.some(([name, message]) => name === 'alert' && /Rollback successfully restored!/.test(message)));
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 14;
+  assert.equal(successOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(successOptions.getCurrentSessionToken(), 14);
 });
 
 test('loadVersions reuses the shared session reader helper when delegating to the version history loader', async () => {

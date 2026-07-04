@@ -6581,7 +6581,7 @@
           SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(
             restoreContext,
             SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-              ...createCurrentStudioSessionStateOptions(),
+              ...createCurrentStudioSessionStateReaders(),
               onSuccess: () => {
                 alert('Rollback successfully restored!');
               },
@@ -6600,7 +6600,7 @@
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(
             restoreContext,
             SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-              ...createCurrentStudioSessionStateOptions(),
+              ...createCurrentStudioSessionStateReaders(),
               onFailure: () => {
                 alert(`Restore failed: ${data.error}`);
               }
@@ -6611,7 +6611,7 @@
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(
           restoreContext,
           SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-            ...createCurrentStudioSessionStateOptions(),
+            ...createCurrentStudioSessionStateReaders(),
             onFailure: () => {
               alert(`Network error restoring version: ${err.message}`);
             }
