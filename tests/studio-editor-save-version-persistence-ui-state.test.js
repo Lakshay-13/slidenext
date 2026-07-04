@@ -44,7 +44,7 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {'
+    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }

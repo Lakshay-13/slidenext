@@ -76,23 +76,13 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {'
+    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
-}
-
-function loadApplyCurrentStudioPersistenceFailure(fileContent, context) {
-  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {',
-    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
 }
 
 function loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context) {
@@ -466,53 +456,6 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure reuses the shared fai
   });
 });
 
-test('applyCurrentStudioPersistenceFailure delegates through the shared failure helper with current handler options', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const persistenceContext = { presentationUrl: '/presentations/onboarding-presentation/index.html' };
-  const onFailure = () => {};
-  let capturedHandlerOptionsArgs = null;
-  let delegatedArgs = null;
-  const context = {
-    currentPresentationUrl: '/presentations/default/index.html',
-    SlideNextStudioEditorPersistence: {
-      createStudioPersistenceHandlerOptions(options = {}) {
-        capturedHandlerOptionsArgs = options;
-        return {
-          marker: 'failure-handler-options',
-          ...options
-        };
-      },
-      handleStudioPersistenceFailure(nextPersistenceContext, handlerOptions) {
-        delegatedArgs = {
-          nextPersistenceContext,
-          handlerOptions
-        };
-        return 'failed';
-      }
-    },
-    createCurrentStudioSessionStateOptions() {
-      return {
-        sessionMarker: 'session-options'
-      };
-    }
-  };
-
-  vm.createContext(context);
-  loadApplyCurrentStudioPersistenceFailure(fileContent, context);
-
-  const result = context.applyCurrentStudioPersistenceFailure(persistenceContext, {
-    onFailure
-  });
-
-  assert.equal(result, 'failed');
-  assert.equal(capturedHandlerOptionsArgs.sessionMarker, 'session-options');
-  assert.equal(capturedHandlerOptionsArgs.onFailure, onFailure);
-  assert.equal(delegatedArgs.nextPersistenceContext, persistenceContext);
-  assert.equal(delegatedArgs.handlerOptions.marker, 'failure-handler-options');
-  assert.equal(delegatedArgs.handlerOptions.sessionMarker, 'session-options');
-  assert.equal(delegatedArgs.handlerOptions.onFailure, onFailure);
-});
-
 test('submitSaveVersion keeps the save button idle when editor content is unavailable', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const submitSaveVersionSource = extractFunctionSource(
@@ -610,7 +553,6 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
@@ -721,7 +663,6 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
@@ -843,7 +784,6 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
@@ -965,7 +905,6 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
