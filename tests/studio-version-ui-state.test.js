@@ -827,6 +827,59 @@ test('applyCurrentStudioRestoreVersionSuccess delegates through the shared handl
   assert.equal(successArgs[1].onSuccess, onSuccess);
 });
 
+test('applyCurrentStudioRestoreVersionSuccess reuses the shared restore-success handler when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioRestoreVersionSuccess(versionContext, options = {}) {',
+    '\n\n    function createCurrentStudioVersionRequestOptions(options = {}) {'
+  );
+
+  let delegatedArgs = null;
+  const context = {
+    createCurrentStudioVersionActionHandlerOptions() {},
+    SlideNextStudioVersionActions: {
+      ...versionActions,
+      createStudioRestoreVersionSuccessHandler(options = {}) {
+        delegatedArgs = options;
+        return (versionContext, nextOptions = {}) => ({
+          versionContext,
+          createHandlerOptions: typeof options.createHandlerOptions,
+          handleRestoreVersionSuccess: typeof options.handleRestoreVersionSuccess,
+          onSuccess: nextOptions.onSuccess
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.applyCurrentStudioRestoreVersionSuccess(
+      {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      },
+      {
+        onSuccess: 'success-sentinel'
+      }
+    ))),
+    {
+      versionContext: {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      },
+      createHandlerOptions: 'function',
+      handleRestoreVersionSuccess: 'function',
+      onSuccess: 'success-sentinel'
+    }
+  );
+  assert.equal(delegatedArgs.createHandlerOptions, context.createCurrentStudioVersionActionHandlerOptions);
+  assert.equal(
+    delegatedArgs.handleRestoreVersionSuccess,
+    context.SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess
+  );
+});
+
 test('createCurrentStudioVersionRequestOptions merges the shared fetch implementation with overrides', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const context = {

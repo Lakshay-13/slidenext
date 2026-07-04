@@ -192,6 +192,51 @@ test('createStudioVersionListMutationSuccessHandler reuses handler-option defaul
   ]);
 });
 
+test('createStudioRestoreVersionSuccessHandler reuses handler-option defaults and call-time overrides', () => {
+  const calls = [];
+  let overrideOptionsRef = null;
+  const handleRestoreVersionSuccess = versionActions.createStudioRestoreVersionSuccessHandler({
+    createHandlerOptions(nextOptions = {}) {
+      calls.push(['createHandlerOptions', nextOptions]);
+      return { onSuccess: nextOptions.onSuccess };
+    }
+  });
+
+  assert.equal(
+    handleRestoreVersionSuccess(
+      {
+        presentationUrl: '/presentations/onboarding-presentation/index.html',
+        sessionToken: 15
+      },
+      {
+        onSuccess: 'success-sentinel',
+        createHandlerOptions(nextOptions = {}) {
+          overrideOptionsRef = nextOptions;
+          calls.push(['overrideCreateHandlerOptions']);
+          return { onSuccess: nextOptions.onSuccess, override: true };
+        },
+        handleRestoreVersionSuccess(context, options = {}) {
+          calls.push(['handleRestoreVersionSuccess', context, options]);
+          return options.override === true;
+        }
+      }
+    ),
+    true
+  );
+
+  assert.equal(overrideOptionsRef.onSuccess, 'success-sentinel');
+  assert.deepEqual(calls, [
+    ['overrideCreateHandlerOptions'],
+    ['handleRestoreVersionSuccess', {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      sessionToken: 15
+    }, {
+      onSuccess: 'success-sentinel',
+      override: true
+    }]
+  ]);
+});
+
 test('executeStudioVersionActionRequest posts the supplied request init and returns the parsed response payload', async () => {
   const fetchCalls = [];
 
