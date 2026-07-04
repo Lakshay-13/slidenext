@@ -6832,6 +6832,26 @@
     }
 
     function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
+      const createStudioPersistenceFailureHandler = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistenceFailureHandler === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistenceFailureHandler
+        : null;
+      if (createStudioPersistenceFailureHandler) {
+        return createStudioPersistenceFailureHandler({
+          createHandlerOptions: createCurrentStudioPersistenceHandlerOptions,
+          handlePersistenceFailure: (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+            && typeof SlideNextStudioEditorPersistence.handleStudioPersistenceFailure === 'function'
+          )
+            ? SlideNextStudioEditorPersistence.handleStudioPersistenceFailure
+            : null
+        })(persistenceContext, options);
+      }
+
       return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
         persistenceContext,
         createCurrentStudioPersistenceHandlerOptions(options)

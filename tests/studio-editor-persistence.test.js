@@ -4202,6 +4202,51 @@ test('handleStudioPersistenceFailure reports failures only for the active deck',
   assert.deepEqual(calls, [['onFailure', '/presentations/onboarding-presentation/index.html']]);
 });
 
+test('createStudioPersistenceFailureHandler reuses handler-option defaults and call-time overrides', () => {
+  const calls = [];
+  let overrideOptionsRef = null;
+  const handlePersistenceFailure = editorPersistence.createStudioPersistenceFailureHandler({
+    createHandlerOptions(nextOptions = {}) {
+      calls.push(['createHandlerOptions', nextOptions]);
+      return { onFailure: nextOptions.onFailure };
+    }
+  });
+
+  assert.equal(
+    handlePersistenceFailure(
+      {
+        presentationUrl: '/presentations/onboarding-presentation/index.html',
+        sessionToken: 15
+      },
+      {
+        onFailure: 'callback-sentinel',
+        createHandlerOptions(nextOptions = {}) {
+          overrideOptionsRef = nextOptions;
+          calls.push(['overrideCreateHandlerOptions']);
+          return { onFailure: nextOptions.onFailure, override: true };
+        },
+        handlePersistenceFailure(context, options = {}) {
+          calls.push(['handlePersistenceFailure', context, options]);
+          return options.override === true;
+        }
+      }
+    ),
+    true
+  );
+
+  assert.equal(overrideOptionsRef.onFailure, 'callback-sentinel');
+  assert.deepEqual(calls, [
+    ['overrideCreateHandlerOptions'],
+    ['handlePersistenceFailure', {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      sessionToken: 15
+    }, {
+      onFailure: 'callback-sentinel',
+      override: true
+    }]
+  ]);
+});
+
 test('handleStudioPersistenceFailure skips stale deck failures', () => {
   const context = editorPersistence.createStudioPersistenceActionContext(
     '/presentations/onboarding-presentation/index.html',

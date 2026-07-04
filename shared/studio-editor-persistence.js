@@ -1987,6 +1987,26 @@
     };
   }
 
+  function createStudioPersistenceFailureHandler(options = {}) {
+    const createHandlerOptions = typeof options.createHandlerOptions === 'function'
+      ? options.createHandlerOptions
+      : (nextOptions = {}) => nextOptions;
+    const defaultHandlePersistenceFailure = typeof options.handlePersistenceFailure === 'function'
+      ? options.handlePersistenceFailure
+      : handleStudioPersistenceFailure;
+
+    return function handlePersistenceFailure(context = {}, nextOptions = {}) {
+      const handlePersistenceFailure = typeof nextOptions.handlePersistenceFailure === 'function'
+        ? nextOptions.handlePersistenceFailure
+        : defaultHandlePersistenceFailure;
+      const resolveHandlerOptions = typeof nextOptions.createHandlerOptions === 'function'
+        ? nextOptions.createHandlerOptions
+        : createHandlerOptions;
+
+      return handlePersistenceFailure(context, resolveHandlerOptions(nextOptions));
+    };
+  }
+
   function handleStudioPersistenceSuccess(context = {}, options = {}) {
     return runStudioPersistenceActionIfCurrent(context, options, (nextContext) => {
       if (nextContext.shouldUpdatePersistedHtml !== false && typeof options.setPersistedHtml === 'function') {
@@ -2111,6 +2131,7 @@
     isStudioPersistenceActionCurrent,
     runStudioPersistenceActionIfCurrent,
     createStudioPersistenceActionCurrentRunner,
+    createStudioPersistenceFailureHandler,
     handleStudioPersistenceSuccess,
     handleStudioVersionPersistenceSuccess,
     handleStudioPersistenceFailure

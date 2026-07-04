@@ -788,6 +788,67 @@ test('runCurrentStudioPersistenceActionIfCurrent reuses the shared current-actio
   );
 });
 
+test('applyCurrentStudioPersistenceFailure reuses the shared failure handler when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyCurrentStudioPersistenceFailureSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistenceFailure(',
+    '\n\n    function applyCurrentStudioPersistenceSuccess('
+  );
+
+  let delegatedArgs = null;
+  const context = {
+    createCurrentStudioPersistenceHandlerOptions(options = {}) {
+      return {
+        handlerOptions: true,
+        onFailure: options.onFailure
+      };
+    },
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      createStudioPersistenceFailureHandler(options = {}) {
+        delegatedArgs = options;
+        return (persistenceContext, nextOptions) => ({
+          persistenceContext,
+          resolvedOptions: options.createHandlerOptions(nextOptions),
+          handlePersistenceFailure: typeof options.handlePersistenceFailure
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyCurrentStudioPersistenceFailureSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.applyCurrentStudioPersistenceFailure(
+      {
+        presentationUrl: 'presentations/custom/index.html',
+        sessionToken: 15
+      },
+      {
+        onFailure: 'callback-sentinel'
+      }
+    ))),
+    {
+      persistenceContext: {
+        presentationUrl: 'presentations/custom/index.html',
+        sessionToken: 15
+      },
+      resolvedOptions: {
+        handlerOptions: true,
+        onFailure: 'callback-sentinel'
+      },
+      handlePersistenceFailure: 'function'
+    }
+  );
+  assert.equal(delegatedArgs.createHandlerOptions, context.createCurrentStudioPersistenceHandlerOptions);
+  assert.equal(
+    delegatedArgs.handlePersistenceFailure,
+    context.SlideNextStudioEditorPersistence.handleStudioPersistenceFailure
+  );
+});
+
 test('buildEditorSaveRequestBody reuses the local canonical override helper when capture state omits a canonical deck', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(
