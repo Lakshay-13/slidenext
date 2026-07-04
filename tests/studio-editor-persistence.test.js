@@ -78,6 +78,92 @@ test('applyStudioPersistedDeckState updates persisted state and syncs canonical 
   ]);
 });
 
+test('syncStudioPresentationMetadataPersistedCanonicalDeck updates the persisted canonical baseline and refreshes fallback chrome when the iframe is unavailable', () => {
+  const calls = [];
+  const metadata = {
+    id: 'onboarding-presentation',
+    canonicalDeck: {
+      slides: []
+    }
+  };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+
+  assert.equal(
+    editorPersistence.syncStudioPresentationMetadataPersistedCanonicalDeck(metadata, {
+      currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+      resolveStoredCanonicalDeck(nextMetadata) {
+        calls.push(['resolveStoredCanonicalDeck', nextMetadata]);
+        return canonicalDeck;
+      },
+      applyPersistedDeckState(nextState, options) {
+        calls.push(['applyPersistedDeckState', nextState, options]);
+      },
+      getIframeDoc() {
+        calls.push(['getIframeDoc']);
+        return null;
+      },
+      generateThumbnails() {
+        calls.push(['generateThumbnails']);
+      },
+      syncStudioChromeToActiveSlide(nextDoc) {
+        calls.push(['syncStudioChromeToActiveSlide', nextDoc]);
+      },
+      updateDeckReadyToolbarActionState(nextDoc) {
+        calls.push(['updateDeckReadyToolbarActionState', nextDoc]);
+      }
+    }),
+    canonicalDeck
+  );
+
+  assert.deepEqual(calls, [
+    ['resolveStoredCanonicalDeck', metadata],
+    [
+      'applyPersistedDeckState',
+      { canonicalDeck },
+      {
+        presentationUrl: '/presentations/onboarding-presentation/index.html',
+        syncPresentationMetadata: false
+      }
+    ],
+    ['getIframeDoc'],
+    ['generateThumbnails'],
+    ['syncStudioChromeToActiveSlide', null],
+    ['updateDeckReadyToolbarActionState', null]
+  ]);
+});
+
+test('syncStudioPresentationMetadataPersistedCanonicalDeck skips persistence refresh when metadata has no stored canonical deck', () => {
+  const calls = [];
+
+  assert.equal(
+    editorPersistence.syncStudioPresentationMetadataPersistedCanonicalDeck(
+      { id: 'onboarding-presentation' },
+      {
+        resolveStoredCanonicalDeck(nextMetadata) {
+          calls.push(['resolveStoredCanonicalDeck', nextMetadata]);
+          return null;
+        },
+        applyPersistedDeckState() {
+          calls.push(['applyPersistedDeckState']);
+        },
+        getIframeDoc() {
+          calls.push(['getIframeDoc']);
+          return null;
+        }
+      }
+    ),
+    null
+  );
+
+  assert.deepEqual(calls, [
+    ['resolveStoredCanonicalDeck', { id: 'onboarding-presentation' }]
+  ]);
+});
+
 test('updateStudioPersistedDeckState normalizes persisted html, canonical deck, and playback state before applying them', () => {
   const calls = [];
   const rawCanonicalDeck = {

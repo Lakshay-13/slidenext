@@ -57,6 +57,59 @@
     return nextState;
   }
 
+  function syncStudioPresentationMetadataPersistedCanonicalDeck(metadata = null, options = {}) {
+    if (!metadata) {
+      return null;
+    }
+
+    const resolveStoredCanonicalDeck = typeof options.resolveStoredCanonicalDeck === 'function'
+      ? options.resolveStoredCanonicalDeck
+      : null;
+    const storedCanonicalDeck = resolveStoredCanonicalDeck
+      ? resolveStoredCanonicalDeck(metadata)
+      : null;
+    if (!storedCanonicalDeck) {
+      return null;
+    }
+
+    const applyPersistedDeckState = typeof options.applyPersistedDeckState === 'function'
+      ? options.applyPersistedDeckState
+      : null;
+    if (applyPersistedDeckState) {
+      applyPersistedDeckState(
+        { canonicalDeck: storedCanonicalDeck },
+        {
+          presentationUrl: Object.prototype.hasOwnProperty.call(options, 'presentationUrl')
+            ? options.presentationUrl
+            : normalizeString(options.currentPresentationUrl),
+          syncPresentationMetadata: false
+        }
+      );
+    }
+
+    const getIframeDoc = typeof options.getIframeDoc === 'function'
+      ? options.getIframeDoc
+      : null;
+    if (!getIframeDoc) {
+      return storedCanonicalDeck;
+    }
+
+    const iframeDoc = getIframeDoc();
+    if (!iframeDoc) {
+      if (typeof options.generateThumbnails === 'function') {
+        options.generateThumbnails();
+      }
+      if (typeof options.syncStudioChromeToActiveSlide === 'function') {
+        options.syncStudioChromeToActiveSlide(iframeDoc);
+      }
+      if (typeof options.updateDeckReadyToolbarActionState === 'function') {
+        options.updateDeckReadyToolbarActionState(iframeDoc);
+      }
+    }
+
+    return storedCanonicalDeck;
+  }
+
   function updateStudioPersistedDeckState(nextState = {}, options = {}) {
     const nextResolvedState = {};
 
@@ -1050,6 +1103,7 @@
   return {
     createStudioPersistableDeckState,
     applyStudioPersistedDeckState,
+    syncStudioPresentationMetadataPersistedCanonicalDeck,
     updateStudioPersistedDeckState,
     resolveStudioPersistableDeckStateWithContent,
     resolveStudioCapturedPersistableDeckState,

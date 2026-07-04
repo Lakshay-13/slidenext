@@ -3061,6 +3061,26 @@
         return currentPresentationMetadata;
       }
 
+      const syncStudioPresentationMetadataPersistedCanonicalDeck = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.syncStudioPresentationMetadataPersistedCanonicalDeck === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.syncStudioPresentationMetadataPersistedCanonicalDeck
+        : null;
+      if (syncStudioPresentationMetadataPersistedCanonicalDeck) {
+        syncStudioPresentationMetadataPersistedCanonicalDeck(currentPresentationMetadata, {
+          presentationUrl: typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '',
+          resolveStoredCanonicalDeck: resolveEditorStoredCanonicalDeck,
+          applyPersistedDeckState: applyCurrentStudioPersistedDeckState,
+          getIframeDoc,
+          generateThumbnails,
+          syncStudioChromeToActiveSlide,
+          updateDeckReadyToolbarActionState
+        });
+        return currentPresentationMetadata;
+      }
+
       const storedCanonicalDeck = resolveEditorStoredCanonicalDeck(currentPresentationMetadata);
       if (storedCanonicalDeck) {
         applyCurrentStudioPersistedDeckState(
@@ -3155,7 +3175,8 @@
 
     function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {
       const applyStudioPersistedDeckState = (
-        SlideNextStudioEditorPersistence
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
         && typeof SlideNextStudioEditorPersistence.applyStudioPersistedDeckState === 'function'
       )
         ? SlideNextStudioEditorPersistence.applyStudioPersistedDeckState

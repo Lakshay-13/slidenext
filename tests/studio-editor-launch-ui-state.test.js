@@ -1179,6 +1179,84 @@ test('applyCurrentPresentationMetadata refreshes fallback deck chrome from store
   assert.deepEqual(callLog[4], ['updateDeckReadyToolbarActionState', null]);
 });
 
+test('applyCurrentPresentationMetadata delegates persisted canonical baseline sync through the shared persistence helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyCurrentPresentationMetadataSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentPresentationMetadata(metadata, options = {}) {',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+
+  const metadata = {
+    id: 'onboarding-presentation',
+    canonicalDeck: {
+      slides: []
+    }
+  };
+  let helperCall = null;
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      syncStudioPresentationMetadataPersistedCanonicalDeck(nextMetadata, options = {}) {
+        helperCall = {
+          nextMetadata,
+          presentationUrl: options.presentationUrl,
+          hasResolveStoredCanonicalDeck: typeof options.resolveStoredCanonicalDeck === 'function',
+          hasApplyPersistedDeckState: typeof options.applyPersistedDeckState === 'function',
+          hasGetIframeDoc: typeof options.getIframeDoc === 'function',
+          hasGenerateThumbnails: typeof options.generateThumbnails === 'function',
+          hasSyncStudioChromeToActiveSlide: typeof options.syncStudioChromeToActiveSlide === 'function',
+          hasUpdateDeckReadyToolbarActionState: typeof options.updateDeckReadyToolbarActionState === 'function'
+        };
+        return {
+          kind: 'slidenext.deck',
+          schemaVersion: 1,
+          slides: []
+        };
+      }
+    },
+    SlideNextStudioDeckContext: {
+      resolveStoredStudioCanonicalDeck() {
+        throw new Error('resolveStoredStudioCanonicalDeck should be delegated through the shared persistence helper');
+      }
+    },
+    currentPresentationMetadata: null,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    generateThumbnails() {
+      throw new Error('generateThumbnails should be delegated through the shared persistence helper');
+    },
+    getIframeDoc() {
+      throw new Error('getIframeDoc should be delegated through the shared persistence helper');
+    },
+    syncStudioChromeToActiveSlide() {
+      throw new Error('syncStudioChromeToActiveSlide should be delegated through the shared persistence helper');
+    },
+    updateDeckReadyToolbarActionState() {
+      throw new Error('updateDeckReadyToolbarActionState should be delegated through the shared persistence helper');
+    },
+    updateEditorPersistedDeckState() {
+      throw new Error('updateEditorPersistedDeckState should be delegated through the shared persistence helper');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyCurrentPresentationMetadataSource, context);
+
+  const result = context.applyCurrentPresentationMetadata(metadata, { syncPersistedCanonicalDeck: true });
+
+  assert.equal(result, metadata);
+  assert.equal(context.currentPresentationMetadata, metadata);
+  assert.deepEqual(helperCall, {
+    nextMetadata: metadata,
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    hasResolveStoredCanonicalDeck: true,
+    hasApplyPersistedDeckState: true,
+    hasGetIframeDoc: true,
+    hasGenerateThumbnails: true,
+    hasSyncStudioChromeToActiveSlide: true,
+    hasUpdateDeckReadyToolbarActionState: true
+  });
+});
+
 test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline from stored metadata sidecars', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
