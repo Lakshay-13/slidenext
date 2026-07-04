@@ -357,6 +357,74 @@ test('buildEditorSaveRequestBody reuses the captured persistable deck state when
   assert.deepEqual(calls.map(([name]) => name), ['captureEditorPersistableDeckState']);
 });
 
+test('buildEditorSaveRequestBody delegates save-request deck-state resolution through the shared persistence helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSaveRequestBodySource = extractFunctionSource(
+    fileContent,
+    'function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {',
+    '\n\n    function isCurrentDeckHtmlPersisted(cleanHtml) {'
+  );
+
+  const doc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      resolveStudioSaveRequestDeckState(nextDoc, nextCleanHtml, options = {}) {
+        delegatedArgs = {
+          doc: nextDoc,
+          cleanHtml: nextCleanHtml,
+          canonicalDeck: options.canonicalDeck,
+          capturePersistableDeckState: options.capturePersistableDeckState,
+          resolveCanonicalDeck: options.resolveCanonicalDeck,
+          buildPersistableDeckHtml: options.buildPersistableDeckHtml
+        };
+        return {
+          cleanHtml: '<html>captured</html>',
+          canonicalDeck
+        };
+      }
+    },
+    captureEditorPersistableDeckState() {
+      throw new Error('captureEditorPersistableDeckState should be delegated through the shared save-request helper');
+    },
+    buildPersistableDeckHtml() {
+      throw new Error('buildPersistableDeckHtml should be delegated through the shared save-request helper');
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('buildEditorCanonicalDeck should not run when the shared save-request helper resolves the canonical deck');
+    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildEditorSaveRequestBody(fileContent, context, buildEditorSaveRequestBodySource);
+
+  assert.deepEqual(
+    context.buildEditorSaveRequestBody(),
+    {
+      htmlPath: 'presentations/onboarding-presentation/index.html',
+      htmlContent: '<html>captured</html>',
+      isAutoSave: false,
+      canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeck)
+    }
+  );
+  assert.equal(delegatedArgs.doc, doc);
+  assert.equal(delegatedArgs.cleanHtml, null);
+  assert.equal(delegatedArgs.canonicalDeck, null);
+  assert.equal(typeof delegatedArgs.capturePersistableDeckState, 'function');
+  assert.equal(typeof delegatedArgs.resolveCanonicalDeck, 'function');
+  assert.equal(delegatedArgs.buildPersistableDeckHtml, context.buildPersistableDeckHtml);
+});
+
 test('buildEditorSaveRequestBody reuses the local canonical override helper when capture state omits a canonical deck', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(

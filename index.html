@@ -5896,6 +5896,38 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
         ? options.canonicalDeck
         : null;
+      const resolveStudioSaveRequestDeckState = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.resolveStudioSaveRequestDeckState === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.resolveStudioSaveRequestDeckState
+        : null;
+      if (resolveStudioSaveRequestDeckState) {
+        const resolvedDeckState = resolveStudioSaveRequestDeckState(doc, cleanHtml, {
+          canonicalDeck: providedCanonicalDeck,
+          capturePersistableDeckState: typeof captureEditorPersistableDeckState === 'function'
+            ? captureEditorPersistableDeckState
+            : null,
+          resolveCanonicalDeck: (nextCanonicalDeck, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
+            nextCanonicalDeck,
+            {
+              buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
+            }
+          ),
+          buildPersistableDeckHtml
+        });
+        return SlideNextStudioEditorPersistence.buildStudioSaveRequestBody(
+          presentationUrl,
+          resolvedDeckState.cleanHtml,
+          {
+            isAutoSave: !!options.isAutoSave,
+            versionLabel: options.versionLabel,
+            canonicalDeck: resolvedDeckState.canonicalDeck
+          }
+        );
+      }
+
       const capturedDeckState = typeof cleanHtml === 'string' || typeof captureEditorPersistableDeckState !== 'function'
         ? null
         : captureEditorPersistableDeckState(doc, {

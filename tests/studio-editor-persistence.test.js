@@ -697,6 +697,80 @@ test('createStudioVersionPersistenceActionContext always disables persisted-html
   );
 });
 
+test('resolveStudioSaveRequestDeckState reuses captured deck state and falls back to canonical/html builders only when needed', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  let resolveCanonicalDeckCalls = 0;
+  let buildPersistableDeckHtmlCalls = 0;
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioSaveRequestDeckState(
+      iframeDoc,
+      null,
+      {
+        capturePersistableDeckState(doc, captureOptions = {}) {
+          assert.equal(doc, iframeDoc);
+          assert.equal(captureOptions.canonicalDeck, null);
+          return {
+            cleanHtml: '<html>captured</html>',
+            canonicalDeck
+          };
+        },
+        resolveCanonicalDeck() {
+          resolveCanonicalDeckCalls += 1;
+          return null;
+        },
+        buildPersistableDeckHtml() {
+          buildPersistableDeckHtmlCalls += 1;
+          return '';
+        }
+      }
+    ),
+    {
+      cleanHtml: '<html>captured</html>',
+      canonicalDeck
+    }
+  );
+  assert.equal(resolveCanonicalDeckCalls, 0);
+  assert.equal(buildPersistableDeckHtmlCalls, 0);
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioSaveRequestDeckState(
+      iframeDoc,
+      null,
+      {
+        canonicalDeck,
+        capturePersistableDeckState(doc, captureOptions = {}) {
+          assert.equal(doc, iframeDoc);
+          assert.equal(captureOptions.canonicalDeck, canonicalDeck);
+          return {
+            cleanHtml: null,
+            canonicalDeck: null
+          };
+        },
+        resolveCanonicalDeck(nextCanonicalDeck, doc) {
+          assert.equal(nextCanonicalDeck, canonicalDeck);
+          assert.equal(doc, iframeDoc);
+          return canonicalDeck;
+        },
+        buildPersistableDeckHtml(doc, buildOptions = {}) {
+          assert.equal(doc, iframeDoc);
+          assert.equal(buildOptions.canonicalDeck, canonicalDeck);
+          return '<html>rebuilt</html>';
+        }
+      }
+    ),
+    {
+      cleanHtml: '<html>rebuilt</html>',
+      canonicalDeck
+    }
+  );
+});
+
 test('buildStudioSaveRequestBody includes canonical deck sidecars only when they are valid', () => {
   const canonicalDeck = {
     metadata: {

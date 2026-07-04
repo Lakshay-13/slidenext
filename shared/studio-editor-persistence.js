@@ -441,6 +441,41 @@
     });
   }
 
+  function resolveStudioSaveRequestDeckState(doc = null, cleanHtml = null, options = {}) {
+    const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
+      ? options.canonicalDeck
+      : null;
+    const capturePersistableDeckState = typeof options.capturePersistableDeckState === 'function'
+      ? options.capturePersistableDeckState
+      : null;
+    const capturedDeckState = typeof cleanHtml === 'string' || !capturePersistableDeckState
+      ? null
+      : capturePersistableDeckState(doc, {
+          canonicalDeck: providedCanonicalDeck
+        });
+    const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
+      ? options.resolveCanonicalDeck
+      : (canonicalDeck) => canonicalDeck || null;
+    const resolvedCanonicalDeck = capturedDeckState && capturedDeckState.canonicalDeck
+      ? capturedDeckState.canonicalDeck
+      : resolveCanonicalDeck(providedCanonicalDeck, doc, capturedDeckState);
+    const buildPersistableDeckHtml = typeof options.buildPersistableDeckHtml === 'function'
+      ? options.buildPersistableDeckHtml
+      : () => cleanHtml;
+    const resolvedCleanHtml = typeof cleanHtml === 'string'
+      ? cleanHtml
+      : capturedDeckState && typeof capturedDeckState.cleanHtml === 'string'
+        ? capturedDeckState.cleanHtml
+        : buildPersistableDeckHtml(doc, {
+            canonicalDeck: resolvedCanonicalDeck
+          });
+
+    return {
+      cleanHtml: normalizeString(resolvedCleanHtml),
+      canonicalDeck: resolvedCanonicalDeck
+    };
+  }
+
   function buildStudioSaveRequestBody(presentationUrl = '', cleanHtml = '', options = {}) {
     const body = {
       htmlPath: normalizeString(presentationUrl),
@@ -1235,6 +1270,7 @@
     createStudioPersistenceActionContext,
     createStudioPersistedDeckStateActionContext,
     createStudioVersionPersistenceActionContext,
+    resolveStudioSaveRequestDeckState,
     buildStudioSaveRequestBody,
     buildStudioPersistenceRequestPlan,
     resolveStudioPersistenceStateFromDocumentCapture,
