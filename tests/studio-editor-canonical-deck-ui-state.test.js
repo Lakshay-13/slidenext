@@ -243,6 +243,52 @@ test('resolveEditorStoredCanonicalBaseline delegates precedence to the shared de
   );
 });
 
+test('resolveEditorStoredCanonicalBaseline reuses the shared canonical baseline helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const currentMetadataCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-current', nodes: [] }
+    ]
+  };
+  const persistedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-persisted', nodes: [] }
+    ]
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckContext: {
+      resolveStudioCanonicalBaseline(options = {}) {
+        calls.push(options);
+        return currentMetadataCanonicalDeck;
+      }
+    },
+    currentPresentationMetadata: {
+      id: 'deck-1',
+      canonicalDeck: currentMetadataCanonicalDeck
+    },
+    lastPersistedCanonicalDeck: persistedCanonicalDeck
+  };
+
+  vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
+
+  const result = context.resolveEditorStoredCanonicalBaseline();
+
+  assert.equal(result, currentMetadataCanonicalDeck);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    currentPresentationMetadata: {
+      id: 'deck-1',
+      canonicalDeck: currentMetadataCanonicalDeck
+    },
+    persistedCanonicalDeck
+  }]);
+});
+
 test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical deck for the active editor session', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorCanonicalDeckSource = extractFunctionSource(

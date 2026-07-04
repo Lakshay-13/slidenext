@@ -3124,6 +3124,17 @@
       const persistedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'persistedCanonicalDeck')
         ? options.persistedCanonicalDeck
         : lastPersistedCanonicalDeck;
+      const resolveStudioCanonicalBaseline = SlideNextStudioDeckContext
+        && typeof SlideNextStudioDeckContext.resolveStudioCanonicalBaseline === 'function'
+        ? SlideNextStudioDeckContext.resolveStudioCanonicalBaseline
+        : null;
+      if (resolveStudioCanonicalBaseline) {
+        return resolveStudioCanonicalBaseline({
+          currentPresentationMetadata: nextPresentationMetadata,
+          persistedCanonicalDeck
+        });
+      }
+
       const resolvePreferredStoredCanonicalDeck = SlideNextStudioDeckContext
         && typeof SlideNextStudioDeckContext.resolvePreferredStoredStudioCanonicalDeck === 'function'
         ? SlideNextStudioDeckContext.resolvePreferredStoredStudioCanonicalDeck

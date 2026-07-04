@@ -209,6 +209,36 @@ test('resolvePreferredStoredStudioCanonicalDeck prefers the primary stored canon
   assert.deepEqual(resolverCalls, [primaryStoredMetadata]);
 });
 
+test('resolveStudioCanonicalBaseline wraps current metadata and persisted canonical deck precedence through the shared resolver', () => {
+  const currentPresentationMetadata = {
+    canonicalDeck: {
+      id: 'current'
+    }
+  };
+  const persistedCanonicalDeck = {
+    id: 'persisted'
+  };
+  const calls = [];
+  const result = deckContext.resolveStudioCanonicalBaseline({
+    currentPresentationMetadata,
+    persistedCanonicalDeck,
+    resolvePresentationCanonicalDeck(nextMetadata) {
+      calls.push(nextMetadata);
+      if (nextMetadata === currentPresentationMetadata) {
+        return { kind: 'slidenext.deck', schemaVersion: 1, slides: [{ id: 'slide-current', nodes: [] }] };
+      }
+      return null;
+    }
+  });
+
+  assert.deepEqual(result, {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-current', nodes: [] }]
+  });
+  assert.deepEqual(calls, [currentPresentationMetadata]);
+});
+
 test('mergeStudioPresentationMetadataCanonicalDeck seeds metadata and delegates canonical deck merging', () => {
   const mergeCalls = [];
   const mergedMetadata = {
