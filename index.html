@@ -5618,6 +5618,17 @@
       );
     }
 
+    function isCurrentStudioPersistenceTaskStale(
+      presentationUrl = currentPresentationUrl,
+      sessionToken = studioEditorSessionToken
+    ) {
+      return SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale(presentationUrl, {
+        currentPresentationUrl,
+        currentSessionToken: studioEditorSessionToken,
+        sessionToken
+      });
+    }
+
     function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {
       const nextOptions = options && typeof options === 'object'
         ? options
@@ -5720,11 +5731,7 @@
       clearTimeout(autoSaveDebounceTimer);
       autoSaveDebounceTimer = setTimeout(async () => {
         autoSaveDebounceTimer = null;
-        if (SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale(scheduledPresentationUrl, {
-          currentPresentationUrl,
-          currentSessionToken: studioEditorSessionToken,
-          sessionToken: scheduledSessionToken
-        })) return;
+        if (isCurrentStudioPersistenceTaskStale(scheduledPresentationUrl, scheduledSessionToken)) return;
         const iframeDoc = getIframeDoc();
         const autoSavePersistenceState = resolveCurrentStudioPersistenceStateFromCapture(iframeDoc, {
           presentationUrl: scheduledPresentationUrl,
@@ -6453,11 +6460,7 @@
     }
 
     async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
-      if (SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale(presentationUrl, {
-        currentPresentationUrl,
-        currentSessionToken: studioEditorSessionToken,
-        sessionToken
-      })) return;
+      if (isCurrentStudioPersistenceTaskStale(presentationUrl, sessionToken)) return;
       const iframeDoc = getIframeDoc();
       const versionCheckpointPersistenceState = resolveCurrentStudioVersionCheckpointPersistenceState(
         iframeDoc,

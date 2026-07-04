@@ -81,6 +81,16 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
   vm.runInContext(helperSource, context);
 }
 
+function loadIsCurrentStudioPersistenceTaskStale(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function isCurrentStudioPersistenceTaskStale(',
+    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('applyCurrentStudioPersistenceFailure delegates through the shared failure helper with current handler options', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let readerCallCount = 0;
@@ -1263,6 +1273,7 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -1359,6 +1370,7 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -1463,6 +1475,7 @@ test('executeSaveAutoVersion skips redundant auto version saves when the capture
   loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   const result = await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -1934,6 +1947,7 @@ test('executeSaveAutoVersion reuses the local version checkpoint failure-aware h
   vm.createContext(context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   vm.runInContext('executeCurrentStudioVersionCheckpointSaveWithFailure = __executeCurrentStudioVersionCheckpointSaveWithFailure;', context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -2013,6 +2027,7 @@ test('executeSaveAutoVersion reports unsuccessful checkpoint responses through t
   vm.createContext(context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   vm.runInContext('executeCurrentStudioVersionCheckpointSaveWithFailure = __executeCurrentStudioVersionCheckpointSaveWithFailure;', context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -2100,6 +2115,7 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
   vm.createContext(context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
@@ -2191,6 +2207,7 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
   context.triggerAutoSave();
@@ -2317,6 +2334,7 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
   context.triggerAutoSave();
@@ -2455,6 +2473,7 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
   context.triggerAutoSave();
@@ -2581,6 +2600,7 @@ test('triggerAutoSave clears the persisted playback baseline after a successful 
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
   context.triggerAutoSave();
@@ -2695,6 +2715,7 @@ test('triggerAutoSave reports network persistence errors through the shared fail
   };
 
   vm.createContext(context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
   context.triggerAutoSave();
