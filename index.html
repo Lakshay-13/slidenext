@@ -5644,7 +5644,12 @@
           buildSaveRequestBody: buildEditorSaveRequestBody,
           resolvePlaybackState: capturePersistedDeckPlaybackState,
           fetchImpl: fetch,
-          applyPersistenceSuccess: applyCurrentStudioPersistenceSuccess,
+          applyPersistenceSuccess: (persistenceContext, successOptions = {}) => {
+            return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
+              persistenceContext,
+              createCurrentStudioPersistenceHandlerOptions(successOptions)
+            );
+          },
           successOptions: {
             presentationUrl
           }

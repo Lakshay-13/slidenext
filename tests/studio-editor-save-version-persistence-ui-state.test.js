@@ -41,6 +41,12 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
 function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
+    '\n\n    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
@@ -365,7 +371,6 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
   vm.createContext(context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   const result = await context.saveVersionCheckpoint(
@@ -395,10 +400,7 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
   assert.equal(capturedVersionCheckpointExecutionArgs[3].sessionToken, 4);
   assert.deepEqual(capturedVersionCheckpointExecutionArgs[3].doc, { label: 'iframe-doc' });
   assert.equal(capturedVersionCheckpointExecutionArgs[3].canonicalDeck, canonicalDeck);
-  assert.equal(
-    capturedVersionCheckpointExecutionArgs[3].applyPersistenceSuccess,
-    context.applyCurrentStudioPersistenceSuccess
-  );
+  assert.equal(typeof capturedVersionCheckpointExecutionArgs[3].applyPersistenceSuccess, 'function');
   assert.deepEqual(JSON.parse(JSON.stringify(capturedVersionCheckpointExecutionArgs[3].successOptions)), {
     presentationUrl: 'presentations/onboarding-presentation/index.html'
   });
@@ -482,7 +484,6 @@ test('saveVersionCheckpoint clears the persisted playback baseline after a succe
   vm.createContext(context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   await context.saveVersionCheckpoint(
@@ -621,7 +622,6 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
   vm.createContext(context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(getPersistedActiveSlideIdSource, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(capturePersistedDeckPlaybackStateSource, context);
@@ -730,7 +730,6 @@ test('saveVersionCheckpoint preserves the persisted playback baseline when no li
   vm.createContext(context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   await context.saveVersionCheckpoint(
@@ -839,7 +838,6 @@ test('saveVersionCheckpoint keeps save rewrites enabled when canonical state cha
   vm.createContext(context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   await context.saveVersionCheckpoint(
