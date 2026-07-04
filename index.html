@@ -6728,7 +6728,7 @@
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
             renameContext,
             SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-              ...createCurrentStudioSessionStateOptions(),
+              ...createCurrentStudioSessionStateReaders(),
               isCurrentSession: isCurrentRenameSession,
               onSuccess: () => {
                 closeRenameVersionModal();
@@ -6740,7 +6740,7 @@
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(
             renameContext,
             SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-              ...createCurrentStudioSessionStateOptions(),
+              ...createCurrentStudioSessionStateReaders(),
               isCurrentSession: isCurrentRenameSession,
               onFailure: () => {
                 alert(`Rename failed: ${data.error}`);
@@ -6752,7 +6752,7 @@
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(
           renameContext,
           SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-            ...createCurrentStudioSessionStateOptions(),
+            ...createCurrentStudioSessionStateReaders(),
             isCurrentSession: isCurrentRenameSession,
             onFailure: () => {
               alert(`Error renaming version: ${err.message}`);
@@ -6763,7 +6763,7 @@
         SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
           renameContext,
           SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-            ...createCurrentStudioSessionStateOptions(),
+            ...createCurrentStudioSessionStateReaders(),
             isCurrentSession: isCurrentRenameSession,
             onSuccess: () => {
               if (btn) {

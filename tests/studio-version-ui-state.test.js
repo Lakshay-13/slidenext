@@ -542,8 +542,11 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
     closeRenameVersionModal() {
       calls.push(['closeRenameVersionModal']);
     },
-    createCurrentStudioSessionStateOptions() {
-      return {};
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.renamingVersionContext.presentationUrl,
+        getCurrentSessionToken: () => null
+      };
     },
     createCurrentStudioVersionActionContext() {
       calls.push(['createCurrentStudioVersionActionContext']);
@@ -599,6 +602,9 @@ test('submitRenameVersion reuses the shared rename request helper when available
   );
 
   let helperArgs = null;
+  let readerCallCount = 0;
+  const capturedReaders = [];
+  const mutationHandlerOptions = [];
   const calls = [];
   const context = {
     SlideNextStudioModalVisibility: {
@@ -621,6 +627,7 @@ test('submitRenameVersion reuses the shared rename request helper when available
         return { success: true };
       },
       handleStudioVersionListMutationSuccess(renameContext, options) {
+        mutationHandlerOptions.push(options);
         calls.push(['handleStudioVersionListMutationSuccess', renameContext, options.refreshVersionEntries]);
         if (options.onSuccess) {
           options.onSuccess();
@@ -631,8 +638,14 @@ test('submitRenameVersion reuses the shared rename request helper when available
     closeRenameVersionModal() {
       calls.push(['closeRenameVersionModal']);
     },
-    createCurrentStudioSessionStateOptions() {
-      return {};
+    createCurrentStudioSessionStateReaders() {
+      readerCallCount += 1;
+      const readers = {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+      capturedReaders.push(readers);
+      return readers;
     },
     createCurrentStudioVersionActionContext() {
       return {
@@ -658,13 +671,15 @@ test('submitRenameVersion reuses the shared rename request helper when available
     fetch() {
       throw new Error('submitRenameVersion should pass fetch to the shared rename helper instead of calling it directly');
     },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     loadVersions() {
       calls.push(['loadVersions']);
     },
     renamingFilename: 'index_20260101_120000_Auto.html',
     renamingVersionContext: {
       presentationUrl: '/presentations/onboarding-presentation/index.html'
-    }
+    },
+    studioEditorSessionToken: 21
   };
 
   vm.createContext(context);
@@ -678,8 +693,25 @@ test('submitRenameVersion reuses the shared rename request helper when available
     presentationUrl: '/presentations/onboarding-presentation/index.html'
   });
   assert.equal(helperArgs[3].fetchImpl, context.fetch);
+  assert.equal(readerCallCount, 2);
+  assert.equal(mutationHandlerOptions.length, 2);
+  assert.equal(mutationHandlerOptions[0].getCurrentPresentationUrl, capturedReaders[0].getCurrentPresentationUrl);
+  assert.equal(mutationHandlerOptions[0].getCurrentSessionToken, capturedReaders[0].getCurrentSessionToken);
+  assert.equal(mutationHandlerOptions[1].getCurrentPresentationUrl, capturedReaders[1].getCurrentPresentationUrl);
+  assert.equal(mutationHandlerOptions[1].getCurrentSessionToken, capturedReaders[1].getCurrentSessionToken);
+  assert.equal(mutationHandlerOptions[0].getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(mutationHandlerOptions[0].getCurrentSessionToken(), 21);
+  assert.equal(mutationHandlerOptions[1].getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(mutationHandlerOptions[1].getCurrentSessionToken(), 21);
   assert.ok(calls.some(([name]) => name === 'handleStudioVersionListMutationSuccess'));
   assert.ok(calls.some(([name]) => name === 'closeRenameVersionModal'));
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 22;
+  assert.equal(mutationHandlerOptions[0].getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(mutationHandlerOptions[0].getCurrentSessionToken(), 22);
+  assert.equal(mutationHandlerOptions[1].getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(mutationHandlerOptions[1].getCurrentSessionToken(), 22);
 });
 
 test('deleteVersion reuses the shared delete request helper when available', async () => {
