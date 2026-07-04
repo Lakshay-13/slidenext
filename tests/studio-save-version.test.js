@@ -1326,6 +1326,8 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
 
   const alerts = [];
   let closeModalCalls = 0;
+  let readerCallCount = 0;
+  let capturedReaders = null;
   let successHelperArgs = null;
   const inputEl = { value: 'Checkpoint Baseline' };
   const saveBtnEl = {
@@ -1353,6 +1355,14 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
     },
     closeSaveVersionModal() {
       closeModalCalls += 1;
+    },
+    createCurrentStudioSessionStateReaders() {
+      readerCallCount += 1;
+      capturedReaders = {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+      return capturedReaders;
     },
     createCurrentStudioSessionStateOptions() {
       return {};
@@ -1425,6 +1435,11 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
   await context.submitSaveVersion();
 
   assert.equal(successHelperArgs.persistenceContext, versionCheckpointPersistenceState.persistenceContext);
+  assert.equal(readerCallCount, 1);
+  assert.equal(successHelperArgs.options.getCurrentPresentationUrl, capturedReaders.getCurrentPresentationUrl);
+  assert.equal(successHelperArgs.options.getCurrentSessionToken, capturedReaders.getCurrentSessionToken);
+  assert.equal(successHelperArgs.options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(successHelperArgs.options.getCurrentSessionToken(), 4);
   assert.equal(typeof successHelperArgs.options.onSuccess, 'function');
   assert.equal(typeof context.executeCurrentStudioVersionCheckpointSaveWithFailure, 'function');
   assert.deepEqual(alerts, ['Successfully saved named version backup checkpoint!']);
@@ -1432,6 +1447,11 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
   assert.equal(saveBtnEl.disabled, false);
   assert.equal(saveBtnEl.innerHTML, '<span>Save Version</span>');
   assert.equal(statusEl.innerHTML, 'saved');
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 5;
+  assert.equal(successHelperArgs.options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(successHelperArgs.options.getCurrentSessionToken(), 5);
 });
 
 test('submitSaveVersion reports network save errors through the shared persistence failure helper', async () => {
@@ -1736,6 +1756,12 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
     },
     buildEditorSaveRequestBody() {
       return {};
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
     },
     createCurrentStudioSessionStateOptions() {
       return {};

@@ -5675,7 +5675,7 @@
             return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
               nextVersionCheckpointPersistenceState.persistenceContext,
               SlideNextStudioEditorPersistence.createStudioVersionPersistenceHandlerOptions({
-                ...createCurrentStudioSessionStateOptions(),
+                ...createCurrentStudioSessionStateReaders(),
                 refreshVersionEntries: loadVersions,
                 onSuccess: successOptions.onSuccess
               })
