@@ -58,6 +58,48 @@ function getWallpaperStates(controls) {
   };
 }
 
+function loadResolveCurrentStudioWallpaperActionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveCurrentStudioWallpaperActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateWallpaperActionState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+test('resolveCurrentStudioWallpaperActionState reports wallpaper readiness from the live active slide state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveCurrentStudioWallpaperActionState(null))),
+    {
+      activeSlide: null,
+      canUseWallpaperControls: false
+    }
+  );
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveCurrentStudioWallpaperActionState({
+      activeSlide: { id: 'slide-1' }
+    }))),
+    {
+      activeSlide: { id: 'slide-1' },
+      canUseWallpaperControls: true
+    }
+  );
+});
+
 test('updateWallpaperActionState enables wallpaper controls only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateWallpaperActionStateSource = extractFunctionSource(
@@ -82,6 +124,7 @@ test('updateWallpaperActionState enables wallpaper controls only when the iframe
   };
 
   vm.createContext(context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
   vm.runInContext(updateWallpaperActionStateSource, context);
 
   context.updateWallpaperActionState(null);
@@ -215,7 +258,7 @@ test('setWallpaperTab keeps disabled-aware idle classes on inactive wallpaper ta
   assert.equal(elements.wpPanelCustom.classList.contains('hidden'), false);
 });
 
-test('wallpaper mutation helpers no-op when wallpaper controls are disabled', () => {
+test('wallpaper mutation helpers no-op when wallpaper readiness or required controls are disabled', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyPresetWallpaperSource = extractFunctionSource(
     fileContent,
@@ -268,6 +311,11 @@ test('wallpaper mutation helpers no-op when wallpaper controls are disabled', ()
       getElementById(id) {
         return elements[id] || null;
       }
+    },
+    resolveCurrentStudioWallpaperActionState() {
+      return {
+        canUseWallpaperControls: false
+      };
     },
     getIframeDoc() {
       return iframeDoc;

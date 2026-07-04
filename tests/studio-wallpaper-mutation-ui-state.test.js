@@ -23,6 +23,15 @@ function loadFinalizeWallpaperMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadResolveCurrentStudioWallpaperActionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveCurrentStudioWallpaperActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateWallpaperActionState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('finalizeWallpaperMutation refreshes thumbnails and persists wallpaper changes', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
@@ -100,6 +109,7 @@ test('flushPendingWallpaperVersion commits a custom wallpaper version only when 
 
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
   assert.equal(context.flushPendingWallpaperVersion(), false);
@@ -165,6 +175,7 @@ test('applyPresetWallpaper uses the shared iframe accessor and records a version
 
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
   assert.equal(context.applyPresetWallpaper('linear-gradient(red, blue)'), true);
@@ -224,6 +235,7 @@ test('applyPresetWallpaper exits cleanly when the shared iframe accessor has no 
 
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
   assert.equal(context.applyPresetWallpaper('#000000'), false);
@@ -274,6 +286,7 @@ test('applyPresetWallpaper skips persistence when the active slide already has t
 
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
   assert.equal(context.applyPresetWallpaper('linear-gradient(red, blue)'), false);
@@ -335,6 +348,7 @@ test('applyWallpaperToAllSlides uses the shared iframe accessor and propagates t
 
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
   vm.runInContext(applyWallpaperToAllSlidesSource, context);
 
   assert.equal(context.applyWallpaperToAllSlides(), true);
@@ -398,6 +412,7 @@ test('applyWallpaperToAllSlides exits when the shared iframe accessor has no act
 
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
   vm.runInContext(applyWallpaperToAllSlidesSource, context);
 
   assert.equal(context.applyWallpaperToAllSlides(), false);
@@ -460,6 +475,7 @@ test('applyWallpaperToAllSlides skips persistence and alerts when every slide al
 
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
   vm.runInContext(applyWallpaperToAllSlidesSource, context);
 
   assert.equal(context.applyWallpaperToAllSlides(), false);

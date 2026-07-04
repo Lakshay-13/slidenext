@@ -4800,12 +4800,10 @@
     }
 
     function applyPresetWallpaper(val, isCustomInput = false) {
-      const wallpaperTabBtn = typeof document !== 'undefined' && document && typeof document.getElementById === 'function'
-        ? document.getElementById('wpTabSolid')
-        : null;
-      if (wallpaperTabBtn && wallpaperTabBtn.disabled) return false;
       const iframeDoc = getIframeDoc();
-      const activeSlide = getActiveSlide(iframeDoc);
+      const actionState = resolveCurrentStudioWallpaperActionState(iframeDoc);
+      if (!actionState.canUseWallpaperControls) return false;
+      const activeSlide = actionState.activeSlide;
       
       if (!activeSlide) return false;
       if (activeSlide.style.background === val) return false;
@@ -4885,12 +4883,10 @@
     }
 
     function applyWallpaperToAllSlides() {
-      const applyBtn = typeof document !== 'undefined' && document && typeof document.getElementById === 'function'
-        ? document.getElementById('applyWallpaperToAllSlidesBtn')
-        : null;
-      if (applyBtn && applyBtn.disabled) return false;
       const iframeDoc = getIframeDoc();
-      const activeSlide = getActiveSlide(iframeDoc);
+      const actionState = resolveCurrentStudioWallpaperActionState(iframeDoc);
+      if (!actionState.canUseWallpaperControls) return false;
+      const activeSlide = actionState.activeSlide;
       
       if (!activeSlide) return false;
       const paint = activeSlide.style.background;
@@ -6293,8 +6289,16 @@
       });
     }
 
+    function resolveCurrentStudioWallpaperActionState(doc = getIframeDoc()) {
+      const activeSlide = getActiveSlide(doc);
+      return {
+        activeSlide,
+        canUseWallpaperControls: !!activeSlide
+      };
+    }
+
     function updateWallpaperActionState(doc = getIframeDoc()) {
-      const hasActiveSlide = !!getActiveSlide(doc);
+      const actionState = resolveCurrentStudioWallpaperActionState(doc);
 
       [
         'wpTabSolid',
@@ -6310,7 +6314,7 @@
       ].forEach((id) => {
         const control = document.getElementById(id);
         if (control) {
-          control.disabled = !hasActiveSlide;
+          control.disabled = !actionState.canUseWallpaperControls;
         }
       });
 
@@ -6318,7 +6322,7 @@
         const container = document.getElementById(id);
         if (!container || typeof container.querySelectorAll !== 'function') return;
         container.querySelectorAll('button').forEach((button) => {
-          button.disabled = !hasActiveSlide;
+          button.disabled = !actionState.canUseWallpaperControls;
         });
       });
     }
