@@ -5803,8 +5803,7 @@
 
     // Custom styled checkpoint version modal controls
     function openSaveVersionModal() {
-      const saveBtn = document.getElementById('studioSaveBtn');
-      if (saveBtn && saveBtn.disabled) {
+      if (!resolveCurrentStudioDeckReadyActionState().canUseSaveButton) {
         return;
       }
       const modal = document.getElementById('saveVersionModal');
@@ -6308,12 +6307,13 @@
       });
     }
 
-    function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {
+    function resolveCurrentStudioDeckReadyActionState(doc = getIframeDoc()) {
       const persistedDeckState = getCurrentEditorPersistedDeckState();
       const persistedDeckStateWithContent = resolveEditorPersistedDeckStateWithContent(persistedDeckState);
       const storedCanonicalDeck = resolveEditorStoredCanonicalBaseline();
-      const isSavingVersion = typeof currentStudioSaveButtonState === 'string'
-        && currentStudioSaveButtonState === 'saving-version';
+      const saveButtonState = typeof currentStudioSaveButtonState === 'string'
+        ? currentStudioSaveButtonState
+        : 'idle';
       const resolveStudioDeckReadyActionState = (
         typeof SlideNextStudioDeckReady !== 'undefined'
         && SlideNextStudioDeckReady
@@ -6321,27 +6321,32 @@
       )
         ? SlideNextStudioDeckReady.resolveStudioDeckReadyActionState
         : null;
-      const actionState = resolveStudioDeckReadyActionState
-        ? resolveStudioDeckReadyActionState({
-            doc,
-            presentationUrl: currentPresentationUrl,
-            persistedDeckStateWithContent,
-            storedCanonicalDeck,
-            saveButtonState: currentStudioSaveButtonState
-          })
-        : {
-            canUseDeckActions: !!currentPresentationUrl && !!(
-              (doc && doc.documentElement)
-              || persistedDeckStateWithContent
-              || storedCanonicalDeck
-            ),
-            canUseSaveButton: !!currentPresentationUrl && !!(
-              (doc && doc.documentElement)
-              || persistedDeckStateWithContent
-              || storedCanonicalDeck
-            ) && !isSavingVersion,
-            canLaunchPreview: !!currentPresentationUrl
-          };
+      if (resolveStudioDeckReadyActionState) {
+        return resolveStudioDeckReadyActionState({
+          doc,
+          presentationUrl: currentPresentationUrl,
+          persistedDeckStateWithContent,
+          storedCanonicalDeck,
+          saveButtonState
+        });
+      }
+
+      const hasDeckContent = !!(
+        (doc && doc.documentElement)
+        || persistedDeckStateWithContent
+        || storedCanonicalDeck
+      );
+      const canUseDeckActions = !!currentPresentationUrl && hasDeckContent;
+      const isSavingVersion = saveButtonState === 'saving-version';
+      return {
+        canUseSaveButton: canUseDeckActions && !isSavingVersion,
+        canUseDeckActions,
+        canLaunchPreview: !!currentPresentationUrl
+      };
+    }
+
+    function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {
+      const actionState = resolveCurrentStudioDeckReadyActionState(doc);
 
       const saveBtn = document.getElementById('studioSaveBtn');
       if (saveBtn) {
@@ -6555,8 +6560,7 @@
 
     // 7. Versions and Backups listing
     function toggleVersionDropdown() {
-      const versionBtn = document.getElementById('studioVersionBtn');
-      if (versionBtn && versionBtn.disabled) return;
+      if (!resolveCurrentStudioDeckReadyActionState().canUseDeckActions) return;
       const menu = document.getElementById('versionsDropdown');
       if (!menu) return;
       const shouldOpen = menu.classList.contains('hidden');

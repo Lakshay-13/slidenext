@@ -34,6 +34,15 @@ function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadResolveCurrentStudioDeckReadyActionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveCurrentStudioDeckReadyActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when fallback deck state remains available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateDeckReadyToolbarActionStateSource = extractFunctionSource(
@@ -75,6 +84,7 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when 
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  loadResolveCurrentStudioDeckReadyActionState(fileContent, context);
   vm.runInContext(updateDeckReadyToolbarActionStateSource, context);
 
   context.updateDeckReadyToolbarActionState(null);
@@ -164,6 +174,7 @@ test('updateDeckReadyToolbarActionState preserves the save button disabled state
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  loadResolveCurrentStudioDeckReadyActionState(fileContent, context);
   vm.runInContext(updateDeckReadyToolbarActionStateSource, context);
 
   context.updateDeckReadyToolbarActionState(null);
@@ -219,6 +230,7 @@ test('updateDeckReadyToolbarActionState prefers the shared persisted-content res
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  loadResolveCurrentStudioDeckReadyActionState(fileContent, context);
   vm.runInContext(updateDeckReadyToolbarActionStateSource, context);
 
   context.updateDeckReadyToolbarActionState(null);
@@ -278,6 +290,7 @@ test('updateDeckReadyToolbarActionState reuses the local persisted deck state-wi
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  loadResolveCurrentStudioDeckReadyActionState(fileContent, context);
   vm.runInContext(updateDeckReadyToolbarActionStateSource, context);
   vm.runInContext('resolveEditorPersistedDeckStateWithContent = __resolveEditorPersistedDeckStateWithContent;', context);
 
@@ -357,6 +370,7 @@ test('updateDeckReadyToolbarActionState delegates action gating to the shared de
     'resolveEditorPersistedDeckStateWithContent = (persistedDeckState) => getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState);',
     context
   );
+  loadResolveCurrentStudioDeckReadyActionState(fileContent, context);
   vm.runInContext(updateDeckReadyToolbarActionStateSource, context);
 
   context.updateDeckReadyToolbarActionState(doc);
@@ -372,4 +386,65 @@ test('updateDeckReadyToolbarActionState delegates action gating to the shared de
   assert.equal(elements.studioSaveBtn.disabled, true);
   assert.equal(elements.openSourceViewBtn.disabled, false);
   assert.equal(elements.studioVersionBtn.disabled, false);
+});
+
+test('resolveCurrentStudioDeckReadyActionState reuses the shared deck-ready helper with persisted state and save button state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = { documentElement: {} };
+  const persistedDeckStateWithContent = {
+    cleanHtml: '<html>persisted-baseline</html>'
+  };
+  const storedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    slides: []
+  };
+  const calls = [];
+  const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentStudioSaveButtonState: 'saving-version',
+    getCurrentEditorPersistedDeckState() {
+      return {
+        cleanHtml: '<html>persisted-baseline</html>',
+        canonicalDeck: null,
+        playbackState: null
+      };
+    },
+    resolveEditorStoredCanonicalBaseline() {
+      return storedCanonicalDeck;
+    },
+    SlideNextStudioDeckReady: {
+      resolveStudioDeckReadyActionState(options = {}) {
+        calls.push(options);
+        return {
+          canUseSaveButton: false,
+          canUseDeckActions: true,
+          canLaunchPreview: true
+        };
+      }
+    }
+  };
+  context.getCurrentEditorPersistedDeckState.resolveWithContent = () => persistedDeckStateWithContent;
+
+  vm.createContext(context);
+  vm.runInContext(
+    'resolveEditorPersistedDeckStateWithContent = (persistedDeckState) => getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState);',
+    context
+  );
+  loadResolveCurrentStudioDeckReadyActionState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveCurrentStudioDeckReadyActionState(doc))),
+    {
+      canUseSaveButton: false,
+      canUseDeckActions: true,
+      canLaunchPreview: true
+    }
+  );
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    doc,
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    persistedDeckStateWithContent,
+    storedCanonicalDeck,
+    saveButtonState: 'saving-version'
+  }]);
 });

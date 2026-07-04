@@ -802,7 +802,7 @@ test('resetStudioVersionUiState hides open version chrome and clears modal state
   );
 });
 
-test('openSaveVersionModal does not open when the save button is disabled', () => {
+test('openSaveVersionModal does not open when deck-ready state disables version saves', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const openSaveVersionModalSource = extractFunctionSource(
     fileContent,
@@ -811,9 +811,6 @@ test('openSaveVersionModal does not open when the save button is disabled', () =
   );
 
   const elements = {
-    studioSaveBtn: {
-      disabled: true
-    },
     saveVersionModal: {
       classList: createClassList(['hidden', 'opacity-0']),
       offsetHeight: 0
@@ -831,6 +828,11 @@ test('openSaveVersionModal does not open when the save button is disabled', () =
   };
 
   const context = {
+    resolveCurrentStudioDeckReadyActionState() {
+      return {
+        canUseSaveButton: false
+      };
+    },
     SlideNextStudioModalVisibility: modalVisibility,
     document: {
       getElementById(id) {
@@ -862,11 +864,9 @@ test('toggleVersionDropdown refreshes version history only when opening the menu
   );
 
   const loadVersionsCalls = [];
+  let canUseDeckActions = true;
   const versionsDropdown = {
     classList: createClassList(['hidden'])
-  };
-  const versionButton = {
-    disabled: false
   };
   versionsDropdown.classList.toggle = function toggle(value) {
     if (this.contains(value)) {
@@ -879,11 +879,14 @@ test('toggleVersionDropdown refreshes version history only when opening the menu
 
   const context = {
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    resolveCurrentStudioDeckReadyActionState() {
+      return {
+        canUseDeckActions
+      };
+    },
     document: {
       getElementById(id) {
         switch (id) {
-          case 'studioVersionBtn':
-            return versionButton;
           case 'versionsDropdown':
             return versionsDropdown;
           default:
@@ -914,7 +917,7 @@ test('toggleVersionDropdown refreshes version history only when opening the menu
     14
   ]]);
 
-  versionButton.disabled = true;
+  canUseDeckActions = false;
   context.toggleVersionDropdown();
   assert.equal(versionsDropdown.classList.contains('hidden'), true);
   assert.deepEqual(loadVersionsCalls, [[
