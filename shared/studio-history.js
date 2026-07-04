@@ -344,6 +344,50 @@
     };
   }
 
+  function createStudioHistoryStepRunner(options = {}) {
+    const stepHistory = typeof options.stepHistory === 'function'
+      ? options.stepHistory
+      : () => ({});
+    const didStepKey = typeof options.didStepKey === 'string' && options.didStepKey.trim()
+      ? options.didStepKey
+      : 'didStep';
+    const getUndoStack = typeof options.getUndoStack === 'function'
+      ? options.getUndoStack
+      : () => [];
+    const getRedoStack = typeof options.getRedoStack === 'function'
+      ? options.getRedoStack
+      : () => [];
+    const setUndoStack = typeof options.setUndoStack === 'function'
+      ? options.setUndoStack
+      : () => {};
+    const setRedoStack = typeof options.setRedoStack === 'function'
+      ? options.setRedoStack
+      : () => {};
+    const restoreHistoryEntry = typeof options.restoreHistoryEntry === 'function'
+      ? options.restoreHistoryEntry
+      : () => {};
+    const updateHistoryButtons = typeof options.updateHistoryButtons === 'function'
+      ? options.updateHistoryButtons
+      : () => {};
+    const triggerAutoSave = typeof options.triggerAutoSave === 'function'
+      ? options.triggerAutoSave
+      : () => {};
+
+    return function runHistoryStep() {
+      const nextHistoryState = stepHistory(getUndoStack(), getRedoStack(), options);
+      if (!nextHistoryState || !nextHistoryState[didStepKey]) {
+        return nextHistoryState;
+      }
+
+      setUndoStack(nextHistoryState.undoStack);
+      setRedoStack(nextHistoryState.redoStack);
+      restoreHistoryEntry(nextHistoryState.restoreEntry);
+      updateHistoryButtons();
+      triggerAutoSave();
+      return nextHistoryState;
+    };
+  }
+
   function stepStudioHistoryUndo(undoStack = [], redoStack = []) {
     const nextUndoStack = [...undoStack];
     const nextRedoStack = [...redoStack];
@@ -599,6 +643,7 @@
     areStudioHistoryEntriesEqual,
     captureStudioHistoryState,
     createStudioHistoryStateCapturer,
+    createStudioHistoryStepRunner,
     stepStudioHistoryUndo,
     stepStudioHistoryRedo,
     getStudioHistoryButtonState,

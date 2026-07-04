@@ -108,6 +108,114 @@ test('updateHistoryButtons reuses the shared history button updater when availab
   assert.equal(typeof delegatedArgs.getRedoButton, 'function');
 });
 
+test('editorUndo reuses the shared history step runner when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const editorUndoSource = extractFunctionSource(
+    fileContent,
+    'function editorUndo() {',
+    '\n\n    function editorRedo() {'
+  );
+
+  const stepResult = {
+    didUndo: true,
+    undoStack: ['undo-next'],
+    redoStack: [],
+    restoreEntry: { html: '<html></html>' }
+  };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioHistory: {
+      stepStudioHistoryUndo() {},
+      createStudioHistoryStepRunner(options = {}) {
+        delegatedArgs = options;
+        return () => stepResult;
+      }
+    },
+    redoStack: ['redo-entry'],
+    restoreFrameFromHistoryEntry() {
+      throw new Error('restoreFrameFromHistoryEntry should be delegated through the shared runner');
+    },
+    triggerAutoSave() {
+      throw new Error('triggerAutoSave should be delegated through the shared runner');
+    },
+    undoStack: ['undo-entry'],
+    updateHistoryButtons() {
+      throw new Error('updateHistoryButtons should be delegated through the shared runner');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(editorUndoSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.editorUndo())),
+    stepResult
+  );
+  assert.equal(delegatedArgs.stepHistory, context.SlideNextStudioHistory.stepStudioHistoryUndo);
+  assert.equal(delegatedArgs.didStepKey, 'didUndo');
+  assert.equal(typeof delegatedArgs.getUndoStack, 'function');
+  assert.equal(typeof delegatedArgs.getRedoStack, 'function');
+  assert.equal(typeof delegatedArgs.setUndoStack, 'function');
+  assert.equal(typeof delegatedArgs.setRedoStack, 'function');
+  assert.equal(delegatedArgs.restoreHistoryEntry, context.restoreFrameFromHistoryEntry);
+  assert.equal(delegatedArgs.updateHistoryButtons, context.updateHistoryButtons);
+  assert.equal(delegatedArgs.triggerAutoSave, context.triggerAutoSave);
+});
+
+test('editorRedo reuses the shared history step runner when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const editorRedoSource = extractFunctionSource(
+    fileContent,
+    'function editorRedo() {',
+    '\n\n    function restoreFrameFromHistoryEntry(entry) {'
+  );
+
+  const stepResult = {
+    didRedo: true,
+    undoStack: ['undo-next'],
+    redoStack: [],
+    restoreEntry: { html: '<html></html>' }
+  };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioHistory: {
+      stepStudioHistoryRedo() {},
+      createStudioHistoryStepRunner(options = {}) {
+        delegatedArgs = options;
+        return () => stepResult;
+      }
+    },
+    redoStack: ['redo-entry'],
+    restoreFrameFromHistoryEntry() {
+      throw new Error('restoreFrameFromHistoryEntry should be delegated through the shared runner');
+    },
+    triggerAutoSave() {
+      throw new Error('triggerAutoSave should be delegated through the shared runner');
+    },
+    undoStack: ['undo-entry'],
+    updateHistoryButtons() {
+      throw new Error('updateHistoryButtons should be delegated through the shared runner');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(editorRedoSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.editorRedo())),
+    stepResult
+  );
+  assert.equal(delegatedArgs.stepHistory, context.SlideNextStudioHistory.stepStudioHistoryRedo);
+  assert.equal(delegatedArgs.didStepKey, 'didRedo');
+  assert.equal(typeof delegatedArgs.getUndoStack, 'function');
+  assert.equal(typeof delegatedArgs.getRedoStack, 'function');
+  assert.equal(typeof delegatedArgs.setUndoStack, 'function');
+  assert.equal(typeof delegatedArgs.setRedoStack, 'function');
+  assert.equal(delegatedArgs.restoreHistoryEntry, context.restoreFrameFromHistoryEntry);
+  assert.equal(delegatedArgs.updateHistoryButtons, context.updateHistoryButtons);
+  assert.equal(delegatedArgs.triggerAutoSave, context.triggerAutoSave);
+});
+
 test('createHistoryEntry attaches the current canonical deck sidecar and live editor state to history entries', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createHistoryEntrySource = extractFunctionSource(

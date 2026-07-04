@@ -5538,6 +5538,28 @@
     }
 
     function editorUndo() {
+      const createStudioHistoryStepRunner = SlideNextStudioHistory
+        && typeof SlideNextStudioHistory.createStudioHistoryStepRunner === 'function'
+        ? SlideNextStudioHistory.createStudioHistoryStepRunner
+        : null;
+      if (createStudioHistoryStepRunner) {
+        return createStudioHistoryStepRunner({
+          stepHistory: SlideNextStudioHistory.stepStudioHistoryUndo,
+          didStepKey: 'didUndo',
+          getUndoStack: () => undoStack,
+          getRedoStack: () => redoStack,
+          setUndoStack(nextUndoStack) {
+            undoStack = nextUndoStack;
+          },
+          setRedoStack(nextRedoStack) {
+            redoStack = nextRedoStack;
+          },
+          restoreHistoryEntry: restoreFrameFromHistoryEntry,
+          updateHistoryButtons,
+          triggerAutoSave
+        })();
+      }
+
       const nextHistoryState = SlideNextStudioHistory.stepStudioHistoryUndo(undoStack, redoStack);
       if (!nextHistoryState.didUndo) return;
 
@@ -5549,6 +5571,28 @@
     }
 
     function editorRedo() {
+      const createStudioHistoryStepRunner = SlideNextStudioHistory
+        && typeof SlideNextStudioHistory.createStudioHistoryStepRunner === 'function'
+        ? SlideNextStudioHistory.createStudioHistoryStepRunner
+        : null;
+      if (createStudioHistoryStepRunner) {
+        return createStudioHistoryStepRunner({
+          stepHistory: SlideNextStudioHistory.stepStudioHistoryRedo,
+          didStepKey: 'didRedo',
+          getUndoStack: () => undoStack,
+          getRedoStack: () => redoStack,
+          setUndoStack(nextUndoStack) {
+            undoStack = nextUndoStack;
+          },
+          setRedoStack(nextRedoStack) {
+            redoStack = nextRedoStack;
+          },
+          restoreHistoryEntry: restoreFrameFromHistoryEntry,
+          updateHistoryButtons,
+          triggerAutoSave
+        })();
+      }
+
       const nextHistoryState = SlideNextStudioHistory.stepStudioHistoryRedo(undoStack, redoStack);
       if (!nextHistoryState.didRedo) return;
 

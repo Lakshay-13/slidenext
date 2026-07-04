@@ -482,6 +482,114 @@ test('createStudioHistoryButtonUpdater applies the computed history button state
   ]);
 });
 
+test('createStudioHistoryStepRunner applies successful history steps and skips unsuccessful ones', () => {
+  const calls = [];
+  let undoStack = ['undo-entry'];
+  let redoStack = ['redo-entry'];
+  const restoreEntry = { html: '<html></html>' };
+  const runHistoryStep = studioHistory.createStudioHistoryStepRunner({
+    stepHistory(nextUndoStack, nextRedoStack) {
+      calls.push(['stepHistory', nextUndoStack, nextRedoStack]);
+      return {
+        didUndo: true,
+        undoStack: ['undo-next'],
+        redoStack: ['redo-next'],
+        restoreEntry
+      };
+    },
+    didStepKey: 'didUndo',
+    getUndoStack() {
+      calls.push(['getUndoStack']);
+      return undoStack;
+    },
+    getRedoStack() {
+      calls.push(['getRedoStack']);
+      return redoStack;
+    },
+    setUndoStack(nextUndoStack) {
+      calls.push(['setUndoStack', nextUndoStack]);
+      undoStack = nextUndoStack;
+    },
+    setRedoStack(nextRedoStack) {
+      calls.push(['setRedoStack', nextRedoStack]);
+      redoStack = nextRedoStack;
+    },
+    restoreHistoryEntry(nextRestoreEntry) {
+      calls.push(['restoreHistoryEntry', nextRestoreEntry]);
+    },
+    updateHistoryButtons() {
+      calls.push(['updateHistoryButtons']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    }
+  });
+
+  assert.deepEqual(runHistoryStep(), {
+    didUndo: true,
+    undoStack: ['undo-next'],
+    redoStack: ['redo-next'],
+    restoreEntry
+  });
+  assert.deepEqual(undoStack, ['undo-next']);
+  assert.deepEqual(redoStack, ['redo-next']);
+  assert.deepEqual(calls, [
+    ['getUndoStack'],
+    ['getRedoStack'],
+    ['stepHistory', ['undo-entry'], ['redo-entry']],
+    ['setUndoStack', ['undo-next']],
+    ['setRedoStack', ['redo-next']],
+    ['restoreHistoryEntry', restoreEntry],
+    ['updateHistoryButtons'],
+    ['triggerAutoSave']
+  ]);
+
+  const skippedCalls = [];
+  const skippedRunner = studioHistory.createStudioHistoryStepRunner({
+    stepHistory(nextUndoStack, nextRedoStack) {
+      skippedCalls.push(['stepHistory', nextUndoStack, nextRedoStack]);
+      return {
+        didUndo: false,
+        undoStack: nextUndoStack,
+        redoStack: nextRedoStack,
+        restoreEntry: null
+      };
+    },
+    didStepKey: 'didUndo',
+    getUndoStack() {
+      return ['undo-entry'];
+    },
+    getRedoStack() {
+      return ['redo-entry'];
+    },
+    setUndoStack() {
+      throw new Error('setUndoStack should not run when the history step is skipped');
+    },
+    setRedoStack() {
+      throw new Error('setRedoStack should not run when the history step is skipped');
+    },
+    restoreHistoryEntry() {
+      throw new Error('restoreHistoryEntry should not run when the history step is skipped');
+    },
+    updateHistoryButtons() {
+      throw new Error('updateHistoryButtons should not run when the history step is skipped');
+    },
+    triggerAutoSave() {
+      throw new Error('triggerAutoSave should not run when the history step is skipped');
+    }
+  });
+
+  assert.deepEqual(skippedRunner(), {
+    didUndo: false,
+    undoStack: ['undo-entry'],
+    redoStack: ['redo-entry'],
+    restoreEntry: null
+  });
+  assert.deepEqual(skippedCalls, [
+    ['stepHistory', ['undo-entry'], ['redo-entry']]
+  ]);
+});
+
 test('buildStudioHistoryFrameHtml strips editor runtime ids from the captured html snapshot', () => {
   const runtimeNode = createHistorySerializableNode(
     'div',
