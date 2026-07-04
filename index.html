@@ -1935,6 +1935,19 @@
     }
 
     function createCurrentStudioSessionReaderOptions(options = {}) {
+      const createStudioSessionReaderOptionsBuilder = (
+        typeof SlideNextStudioEditorSession !== 'undefined'
+        && SlideNextStudioEditorSession
+        && typeof SlideNextStudioEditorSession.createStudioSessionReaderOptionsBuilder === 'function'
+      )
+        ? SlideNextStudioEditorSession.createStudioSessionReaderOptionsBuilder
+        : null;
+      if (createStudioSessionReaderOptionsBuilder) {
+        return createStudioSessionReaderOptionsBuilder({
+          readCurrentSessionState: createCurrentStudioSessionStateReaders
+        })(options);
+      }
+
       return {
         ...createCurrentStudioSessionStateReaders(),
         ...options

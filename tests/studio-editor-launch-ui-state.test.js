@@ -411,6 +411,55 @@ test('createCurrentStudioSessionStateReaders exposes live session getters throug
   assert.equal(readers.getCurrentSessionToken(), 5);
 });
 
+test('createCurrentStudioSessionReaderOptions reuses the shared session-reader options builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let delegatedArgs = null;
+  const context = {
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+        getCurrentSessionToken: () => 12
+      };
+    },
+    SlideNextStudioEditorSession: {
+      ...editorSession,
+      createStudioSessionReaderOptionsBuilder(options = {}) {
+        delegatedArgs = options;
+        const sessionStateReaders = options.readCurrentSessionState();
+        return (nextOptions = {}) => ({
+          getCurrentPresentationUrl: sessionStateReaders.getCurrentPresentationUrl,
+          getCurrentSessionToken: sessionStateReaders.getCurrentSessionToken,
+          onLoad: nextOptions.onLoad,
+          readCurrentSessionState: typeof options.readCurrentSessionState
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioSessionReaderOptions(fileContent, context);
+
+  const sessionReaderOptions = context.createCurrentStudioSessionReaderOptions({
+    onLoad: 'load-sentinel'
+  });
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify({
+      presentationUrl: sessionReaderOptions.getCurrentPresentationUrl(),
+      sessionToken: sessionReaderOptions.getCurrentSessionToken(),
+      onLoad: sessionReaderOptions.onLoad,
+      readCurrentSessionState: sessionReaderOptions.readCurrentSessionState
+    })),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      sessionToken: 12,
+      onLoad: 'load-sentinel',
+      readCurrentSessionState: 'function'
+    }
+  );
+  assert.equal(delegatedArgs.readCurrentSessionState, context.createCurrentStudioSessionStateReaders);
+});
+
 test('createCurrentStudioPresentationMetadataLoadOptions merges live session readers with metadata sync behavior', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(

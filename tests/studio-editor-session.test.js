@@ -27,6 +27,37 @@ test('createStudioSessionStateReaders exposes supplied live readers and normaliz
   assert.equal(fallbackReaders.getCurrentSessionToken(), null);
 });
 
+test('createStudioSessionReaderOptionsBuilder reuses live session readers and call-time overrides', () => {
+  const calls = [];
+  const createSessionReaderOptions = editorSession.createStudioSessionReaderOptionsBuilder({
+    readCurrentSessionState() {
+      calls.push(['readCurrentSessionState']);
+      return {
+        getCurrentPresentationUrl: () => '/presentations/default/index.html',
+        getCurrentSessionToken: () => 3
+      };
+    }
+  });
+
+  const sessionReaderOptions = createSessionReaderOptions({
+    onLoad: 'default-sentinel',
+    readCurrentSessionState() {
+      calls.push(['overrideReadCurrentSessionState']);
+      return {
+        getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+        getCurrentSessionToken: () => 12
+      };
+    }
+  });
+
+  assert.equal(sessionReaderOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(sessionReaderOptions.getCurrentSessionToken(), 12);
+  assert.equal(sessionReaderOptions.onLoad, 'default-sentinel');
+  assert.deepEqual(calls, [
+    ['overrideReadCurrentSessionState']
+  ]);
+});
+
 test('createStudioSessionSnapshot preserves the supplied presentation identity and normalized session token', () => {
   const snapshot = editorSession.createStudioSessionSnapshot({
     presentationUrl: '/presentations/onboarding-presentation/index.html',

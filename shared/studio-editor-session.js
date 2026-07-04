@@ -22,6 +22,23 @@
     };
   }
 
+  function createStudioSessionReaderOptionsBuilder(options = {}) {
+    const defaultReadCurrentSessionState = typeof options.readCurrentSessionState === 'function'
+      ? options.readCurrentSessionState
+      : () => createStudioSessionStateReaders(options);
+
+    return function createSessionReaderOptions(nextOptions = {}) {
+      const readCurrentSessionState = typeof nextOptions.readCurrentSessionState === 'function'
+        ? nextOptions.readCurrentSessionState
+        : defaultReadCurrentSessionState;
+
+      return {
+        ...readCurrentSessionState(),
+        ...nextOptions
+      };
+    };
+  }
+
   function createStudioSessionSnapshot(options = {}) {
     return {
       presentationUrl: normalizeString(options.presentationUrl),
@@ -104,6 +121,7 @@
 
   return {
     createStudioSessionStateReaders,
+    createStudioSessionReaderOptionsBuilder,
     createStudioSessionSnapshot,
     createStudioPresentationSessionStateUpdate,
     isCurrentStudioEditorSession,
