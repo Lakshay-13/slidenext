@@ -402,6 +402,75 @@ test('createCurrentStudioSessionStateReaders exposes live session getters throug
   assert.equal(readers.getCurrentSessionToken(), 5);
 });
 
+test('createCurrentStudioPresentationMetadataLoadOptions merges live session readers with metadata sync behavior', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = studioEditorSessionToken) {',
+    '\n\n    async function loadCurrentPresentationMetadata('
+  );
+
+  let readerCallCount = 0;
+  let capturedReaders = null;
+  const warningCalls = [];
+  const context = {
+    applyCurrentPresentationMetadataCalls: [],
+    applyCurrentPresentationMetadata(metadata, options) {
+      context.applyCurrentPresentationMetadataCalls.push([metadata, options]);
+      return metadata;
+    },
+    console: {
+      warn(...args) {
+        warningCalls.push(args);
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      readerCallCount += 1;
+      capturedReaders = {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+      return capturedReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 12
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  const options = context.createCurrentStudioPresentationMetadataLoadOptions(12);
+
+  assert.equal(readerCallCount, 1);
+  assert.equal(options.sessionToken, 12);
+  assert.equal(options.getCurrentPresentationUrl, capturedReaders.getCurrentPresentationUrl);
+  assert.equal(options.getCurrentSessionToken, capturedReaders.getCurrentSessionToken);
+  assert.equal(options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(options.getCurrentSessionToken(), 12);
+
+  const metadata = {
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: '/presentations/onboarding-presentation/index.html'
+  };
+  options.setCurrentPresentationMetadata(metadata);
+  assert.equal(context.applyCurrentPresentationMetadataCalls.length, 1);
+  assert.equal(context.applyCurrentPresentationMetadataCalls[0][0], metadata);
+  assert.equal(
+    context.applyCurrentPresentationMetadataCalls[0][1].syncPersistedCanonicalDeck,
+    true
+  );
+
+  options.onError(new Error('missing sidecar'), '/presentations/onboarding-presentation/presentation.json');
+  assert.equal(warningCalls.length, 1);
+  assert.match(String(warningCalls[0][0]), /Failed to load presentation metadata/);
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 13;
+  assert.equal(options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(options.getCurrentSessionToken(), 13);
+});
+
 test('launchStudioEditor after-load zoom guard passes live session getters to the editor session helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const launchStudioEditorSource = extractFunctionSource(
@@ -793,6 +862,11 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
 
 test('loadCurrentPresentationMetadata passes live session getters when delegating to the deck context', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = studioEditorSessionToken) {',
+    '\n\n    async function loadCurrentPresentationMetadata('
+  );
   const loadCurrentPresentationMetadataSource = extractFunctionSource(
     fileContent,
     'async function loadCurrentPresentationMetadata(',
@@ -843,6 +917,7 @@ test('loadCurrentPresentationMetadata passes live session getters when delegatin
   };
 
   vm.createContext(context);
+  vm.runInContext(helperSource, context);
   vm.runInContext(loadCurrentPresentationMetadataSource, context);
 
   const metadata = await context.loadCurrentPresentationMetadata(
@@ -909,6 +984,11 @@ test('buildCurrentPresentationMetadataSeed falls back to the shared deck loader 
 
 test('loadCurrentPresentationMetadata falls back to the shared deck loader when the deck context loader is unavailable', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = studioEditorSessionToken) {',
+    '\n\n    async function loadCurrentPresentationMetadata('
+  );
   const loadCurrentPresentationMetadataSource = extractFunctionSource(
     fileContent,
     'async function loadCurrentPresentationMetadata(',
@@ -949,6 +1029,7 @@ test('loadCurrentPresentationMetadata falls back to the shared deck loader when 
 
   vm.createContext(context);
   loadCreateCurrentStudioSessionStateReaders(fileContent, context);
+  vm.runInContext(helperSource, context);
   vm.runInContext(loadCurrentPresentationMetadataSource, context);
 
   const metadata = await context.loadCurrentPresentationMetadata(
@@ -1088,6 +1169,11 @@ test('applyCurrentPresentationMetadata refreshes fallback deck chrome from store
 
 test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline from stored metadata sidecars', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = studioEditorSessionToken) {',
+    '\n\n    async function loadCurrentPresentationMetadata('
+  );
   const loadCurrentPresentationMetadataSource = extractFunctionSource(
     fileContent,
     'async function loadCurrentPresentationMetadata(',
@@ -1151,6 +1237,7 @@ test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline
 
   vm.createContext(context);
   loadCreateCurrentStudioSessionStateReaders(fileContent, context);
+  vm.runInContext(helperSource, context);
   vm.runInContext(loadCurrentPresentationMetadataSource, context);
 
   const metadata = await context.loadCurrentPresentationMetadata(

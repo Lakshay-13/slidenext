@@ -2981,6 +2981,19 @@
       return buildStudioPresentationMetadataSeed(presentationUrl, presentationTitle);
     }
 
+    function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = studioEditorSessionToken) {
+      return {
+        ...createCurrentStudioSessionStateReaders(),
+        sessionToken,
+        setCurrentPresentationMetadata: (metadata) => {
+          applyCurrentPresentationMetadata(metadata, { syncPersistedCanonicalDeck: true });
+        },
+        onError: (err, metadataUrl) => {
+          console.warn(`Failed to load presentation metadata from ${metadataUrl}:`, err);
+        }
+      };
+    }
+
     async function loadCurrentPresentationMetadata(
       presentationUrl = currentPresentationUrl,
       presentationTitle = currentTitle,
@@ -3024,16 +3037,7 @@
       return loadStudioPresentationMetadata(
         presentationUrl,
         presentationTitle,
-        {
-          ...createCurrentStudioSessionStateReaders(),
-          sessionToken,
-          setCurrentPresentationMetadata: (metadata) => {
-            applyCurrentPresentationMetadata(metadata, { syncPersistedCanonicalDeck: true });
-          },
-          onError: (err, metadataUrl) => {
-            console.warn(`Failed to load presentation metadata from ${metadataUrl}:`, err);
-          }
-        }
+        createCurrentStudioPresentationMetadataLoadOptions(sessionToken)
       );
     }
 
