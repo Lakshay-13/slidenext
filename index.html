@@ -6571,13 +6571,6 @@
       );
     }
 
-    function handleCurrentStudioVersionActionFailure(versionActionContext, options = {}) {
-      return SlideNextStudioVersionActions.handleStudioVersionActionFailure(
-        versionActionContext,
-        createCurrentStudioVersionActionHandlerOptions(options)
-      );
-    }
-
     // Rollback backup version
     async function restoreVersion(filename) {
       if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
@@ -6619,18 +6612,24 @@
             })
           );
         } else {
-          handleCurrentStudioVersionActionFailure(restoreContext, {
-            onFailure: () => {
-              alert(`Restore failed: ${data.error}`);
-            }
-          });
+          SlideNextStudioVersionActions.handleStudioVersionActionFailure(
+            restoreContext,
+            createCurrentStudioVersionActionHandlerOptions({
+              onFailure: () => {
+                alert(`Restore failed: ${data.error}`);
+              }
+            })
+          );
         }
       } catch (err) {
-        handleCurrentStudioVersionActionFailure(restoreContext, {
-          onFailure: () => {
-            alert(`Network error restoring version: ${err.message}`);
-          }
-        });
+        SlideNextStudioVersionActions.handleStudioVersionActionFailure(
+          restoreContext,
+          createCurrentStudioVersionActionHandlerOptions({
+            onFailure: () => {
+              alert(`Network error restoring version: ${err.message}`);
+            }
+          })
+        );
       }
     }
 
@@ -6746,20 +6745,26 @@
             }
           });
         } else {
-          handleCurrentStudioVersionActionFailure(renameContext, {
-            isCurrentSession: isCurrentRenameSession,
-            onFailure: () => {
-              alert(`Rename failed: ${data.error}`);
-            }
-          });
+          SlideNextStudioVersionActions.handleStudioVersionActionFailure(
+            renameContext,
+            createCurrentStudioVersionActionHandlerOptions({
+              isCurrentSession: isCurrentRenameSession,
+              onFailure: () => {
+                alert(`Rename failed: ${data.error}`);
+              }
+            })
+          );
         }
       } catch (err) {
-        handleCurrentStudioVersionActionFailure(renameContext, {
-          isCurrentSession: isCurrentRenameSession,
-          onFailure: () => {
-            alert(`Error renaming version: ${err.message}`);
-          }
-        });
+        SlideNextStudioVersionActions.handleStudioVersionActionFailure(
+          renameContext,
+          createCurrentStudioVersionActionHandlerOptions({
+            isCurrentSession: isCurrentRenameSession,
+            onFailure: () => {
+              alert(`Error renaming version: ${err.message}`);
+            }
+          })
+        );
       } finally {
         handleCurrentStudioVersionListMutationSuccess(renameContext, {
           isCurrentSession: isCurrentRenameSession,
@@ -6798,18 +6803,24 @@
         if (data.success) {
           handleCurrentStudioVersionListMutationSuccess(deleteContext);
         } else {
-          handleCurrentStudioVersionActionFailure(deleteContext, {
-            onFailure: () => {
-              alert(`Delete failed: ${data.error}`);
-            }
-          });
+          SlideNextStudioVersionActions.handleStudioVersionActionFailure(
+            deleteContext,
+            createCurrentStudioVersionActionHandlerOptions({
+              onFailure: () => {
+                alert(`Delete failed: ${data.error}`);
+              }
+            })
+          );
         }
       } catch (err) {
-        handleCurrentStudioVersionActionFailure(deleteContext, {
-          onFailure: () => {
-            alert(`Error deleting version: ${err.message}`);
-          }
-        });
+        SlideNextStudioVersionActions.handleStudioVersionActionFailure(
+          deleteContext,
+          createCurrentStudioVersionActionHandlerOptions({
+            onFailure: () => {
+              alert(`Error deleting version: ${err.message}`);
+            }
+          })
+        );
       }
     }
 

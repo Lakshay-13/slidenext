@@ -49,17 +49,6 @@ function loadHandleCurrentStudioVersionListMutationSuccess(fileContent, context)
   const helperSource = extractFunctionSource(
     fileContent,
     'function handleCurrentStudioVersionListMutationSuccess(versionActionContext, options = {}) {',
-    '\n\n    function handleCurrentStudioVersionActionFailure(versionActionContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
-function loadHandleCurrentStudioVersionActionFailure(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function handleCurrentStudioVersionActionFailure(versionActionContext, options = {}) {',
     '\n\n    // Rollback backup version'
   );
   vm.runInContext(helperSource, context);
@@ -1163,53 +1152,6 @@ test('handleCurrentStudioVersionListMutationSuccess can skip version refresh wir
   assert.equal(calls[0][2].refreshVersionEntries, undefined);
   assert.equal(typeof calls[0][2].isCurrentSession, 'function');
   assert.equal(calls.length, 1);
-});
-
-test('handleCurrentStudioVersionActionFailure reuses current session readers for failure handling', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const calls = [];
-  const context = {
-    SlideNextStudioVersionActions: {
-      ...versionActions,
-      handleStudioVersionActionFailure(versionActionContext, options) {
-        calls.push(['handleStudioVersionActionFailure', versionActionContext, options]);
-        return true;
-      }
-    },
-    createCurrentStudioSessionStateReaders() {
-      return {
-        getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
-        getCurrentSessionToken: () => 11
-      };
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 11
-  };
-
-  vm.createContext(context);
-  loadHandleCurrentStudioVersionActionFailure(fileContent, context);
-
-  const versionActionContext = {
-    presentationUrl: '/presentations/onboarding-presentation/index.html',
-    sessionToken: 11
-  };
-  const result = context.handleCurrentStudioVersionActionFailure(versionActionContext, {
-    isCurrentSession: () => true,
-    onFailure() {
-      calls.push(['onFailure']);
-    }
-  });
-
-  assert.equal(result, true);
-  assert.equal(calls[0][0], 'handleStudioVersionActionFailure');
-  assert.equal(calls[0][1], versionActionContext);
-  assert.equal(typeof calls[0][2].getCurrentPresentationUrl, 'function');
-  assert.equal(typeof calls[0][2].getCurrentSessionToken, 'function');
-  assert.equal(typeof calls[0][2].isCurrentSession, 'function');
-  assert.equal(calls[0][2].getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
-  assert.equal(calls[0][2].getCurrentSessionToken(), 11);
-  calls[0][2].onFailure();
-  assert.deepEqual(calls.slice(1), [['onFailure']]);
 });
 
 test('createCurrentStudioSessionStateOptions exposes live presentation and session getters', () => {
