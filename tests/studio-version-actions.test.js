@@ -51,6 +51,39 @@ test('createStudioVersionActionContext normalizes the captured deck state', () =
   );
 });
 
+test('createStudioVersionActionHandlerOptionsBuilder reuses session-reader defaults and call-time overrides', () => {
+  const calls = [];
+  const createVersionActionHandlerOptions = versionActions.createStudioVersionActionHandlerOptionsBuilder({
+    createSessionReaderOptions(nextOptions = {}) {
+      calls.push(['createSessionReaderOptions', nextOptions]);
+      return {
+        marker: 'default',
+        ...nextOptions
+      };
+    }
+  });
+
+  const handlerOptions = createVersionActionHandlerOptions({
+    onSuccess: 'success-sentinel',
+    createSessionReaderOptions(nextOptions = {}) {
+      calls.push(['overrideCreateSessionReaderOptions', nextOptions]);
+      return {
+        marker: 'override',
+        ...nextOptions
+      };
+    }
+  });
+
+  assert.equal(handlerOptions.marker, 'override');
+  assert.equal(handlerOptions.onSuccess, 'success-sentinel');
+  assert.deepEqual(calls, [
+    ['overrideCreateSessionReaderOptions', {
+      onSuccess: 'success-sentinel',
+      createSessionReaderOptions: calls[0] && calls[0][1] && calls[0][1].createSessionReaderOptions
+    }]
+  ]);
+});
+
 test('executeStudioVersionActionRequest posts the supplied request init and returns the parsed response payload', async () => {
   const fetchCalls = [];
 

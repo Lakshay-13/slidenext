@@ -31,6 +31,20 @@
     return context;
   }
 
+  function createStudioVersionActionHandlerOptionsBuilder(options = {}) {
+    const defaultCreateSessionReaderOptions = typeof options.createSessionReaderOptions === 'function'
+      ? options.createSessionReaderOptions
+      : (nextOptions = {}) => nextOptions;
+
+    return function createVersionActionHandlerOptions(nextOptions = {}) {
+      const createSessionReaderOptions = typeof nextOptions.createSessionReaderOptions === 'function'
+        ? nextOptions.createSessionReaderOptions
+        : defaultCreateSessionReaderOptions;
+
+      return createSessionReaderOptions(nextOptions);
+    };
+  }
+
   function isStudioVersionActionCurrent(context = {}, options = {}) {
     const requestedPresentationUrl = normalizeString(context.presentationUrl);
     if (!requestedPresentationUrl) {
@@ -213,6 +227,7 @@
     STUDIO_AUTO_VERSION_DEBOUNCE_MS,
     STUDIO_AUTO_VERSION_TIMER_KEY,
     createStudioVersionActionContext,
+    createStudioVersionActionHandlerOptionsBuilder,
     isStudioVersionActionCurrent,
     isStudioVersionActionSessionCurrent,
     shouldDebounceStudioAutoVersion,

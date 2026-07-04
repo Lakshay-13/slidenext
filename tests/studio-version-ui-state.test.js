@@ -584,6 +584,44 @@ test('createCurrentStudioVersionActionHandlerOptions merges live session readers
   assert.equal(handlerOptions.getCurrentSessionToken(), 22);
 });
 
+test('createCurrentStudioVersionActionHandlerOptions reuses the shared version-action handler-options builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionActionHandlerOptions(options = {}) {',
+    '\n\n    function applyCurrentStudioVersionActionFailure(versionContext, options = {}) {'
+  );
+
+  let delegatedArgs = null;
+  const context = {
+    createCurrentStudioSessionReaderOptions() {},
+    SlideNextStudioVersionActions: {
+      ...versionActions,
+      createStudioVersionActionHandlerOptionsBuilder(options = {}) {
+        delegatedArgs = options;
+        return (nextOptions = {}) => ({
+          createSessionReaderOptions: typeof options.createSessionReaderOptions,
+          onSuccess: nextOptions.onSuccess
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.createCurrentStudioVersionActionHandlerOptions({
+      onSuccess: 'success-sentinel'
+    }))),
+    {
+      createSessionReaderOptions: 'function',
+      onSuccess: 'success-sentinel'
+    }
+  );
+  assert.equal(delegatedArgs.createSessionReaderOptions, context.createCurrentStudioSessionReaderOptions);
+});
+
 test('applyCurrentStudioVersionActionFailure delegates through the shared handler options helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let failureArgs = null;

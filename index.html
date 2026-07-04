@@ -8121,6 +8121,19 @@
     }
 
     function createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      const createStudioVersionActionHandlerOptionsBuilder = (
+        typeof SlideNextStudioVersionActions !== 'undefined'
+        && SlideNextStudioVersionActions
+        && typeof SlideNextStudioVersionActions.createStudioVersionActionHandlerOptionsBuilder === 'function'
+      )
+        ? SlideNextStudioVersionActions.createStudioVersionActionHandlerOptionsBuilder
+        : null;
+      if (createStudioVersionActionHandlerOptionsBuilder) {
+        return createStudioVersionActionHandlerOptionsBuilder({
+          createSessionReaderOptions: createCurrentStudioSessionReaderOptions
+        })(options);
+      }
+
       return createCurrentStudioSessionReaderOptions(options);
     }
 
