@@ -5749,7 +5749,12 @@
                   createCurrentStudioPersistenceHandlerOptions(successOptions)
                 );
               },
-              applyPersistenceFailure: applyCurrentStudioPersistenceFailure,
+              applyPersistenceFailure: (persistenceContext, failureOptions = {}) => {
+                return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+                  persistenceContext,
+                  createCurrentStudioPersistenceHandlerOptions(failureOptions)
+                );
+              },
               successOptions: {
                 presentationUrl: persistencePlan.persistenceContext
                   ? persistencePlan.persistenceContext.presentationUrl

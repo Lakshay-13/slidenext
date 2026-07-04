@@ -1807,7 +1807,6 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
@@ -1934,7 +1933,6 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
@@ -2073,7 +2071,6 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
@@ -2200,7 +2197,6 @@ test('triggerAutoSave clears the persisted playback baseline after a successful 
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   vm.runInContext(triggerAutoSaveSource, context);
 
