@@ -6559,7 +6559,7 @@
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(
             restoreContext,
-            SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+            {
               ...createCurrentStudioSessionStateReaders(),
               onSuccess: () => {
                 alert('Rollback successfully restored!');
@@ -6573,28 +6573,28 @@
               relaunchEditor: (presentationUrl, presentationTitle, presentationCategory) => {
                 launchStudioEditor(presentationUrl, presentationTitle, presentationCategory);
               }
-            })
+            }
           );
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(
             restoreContext,
-            SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+            {
               ...createCurrentStudioSessionStateReaders(),
               onFailure: () => {
                 alert(`Restore failed: ${data.error}`);
               }
-            })
+            }
           );
         }
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(
           restoreContext,
-          SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+          {
             ...createCurrentStudioSessionStateReaders(),
             onFailure: () => {
               alert(`Network error restoring version: ${err.message}`);
             }
-          })
+          }
         );
       }
     }
@@ -6706,42 +6706,42 @@
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
             renameContext,
-            SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+            {
               ...createCurrentStudioSessionStateReaders(),
               isCurrentSession: isCurrentRenameSession,
               onSuccess: () => {
                 closeRenameVersionModal();
               },
               refreshVersionEntries: loadVersions
-            })
+            }
           );
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(
             renameContext,
-            SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+            {
               ...createCurrentStudioSessionStateReaders(),
               isCurrentSession: isCurrentRenameSession,
               onFailure: () => {
                 alert(`Rename failed: ${data.error}`);
               }
-            })
+            }
           );
         }
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(
           renameContext,
-          SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+          {
             ...createCurrentStudioSessionStateReaders(),
             isCurrentSession: isCurrentRenameSession,
             onFailure: () => {
               alert(`Error renaming version: ${err.message}`);
             }
-          })
+          }
         );
       } finally {
         SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
           renameContext,
-          SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+          {
             ...createCurrentStudioSessionStateReaders(),
             isCurrentSession: isCurrentRenameSession,
             onSuccess: () => {
@@ -6750,7 +6750,7 @@
                 btn.textContent = 'Rename';
               }
             }
-          })
+          }
         );
       }
     }
@@ -6779,31 +6779,31 @@
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
             deleteContext,
-            SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+            {
               ...createCurrentStudioSessionStateReaders(),
               refreshVersionEntries: loadVersions
-            })
+            }
           );
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(
             deleteContext,
-            SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+            {
               ...createCurrentStudioSessionStateReaders(),
               onFailure: () => {
                 alert(`Delete failed: ${data.error}`);
               }
-            })
+            }
           );
         }
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(
           deleteContext,
-          SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+          {
             ...createCurrentStudioSessionStateReaders(),
             onFailure: () => {
               alert(`Error deleting version: ${err.message}`);
             }
-          })
+          }
         );
       }
     }

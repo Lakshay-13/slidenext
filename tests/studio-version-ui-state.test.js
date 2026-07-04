@@ -520,10 +520,6 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
       }
     },
     SlideNextStudioVersionActions: {
-      createStudioVersionActionHandlerOptions(options) {
-        calls.push(['createStudioVersionActionHandlerOptions', options.refreshVersionEntries]);
-        return options;
-      },
       async executeStudioRenameVersionRequest(...args) {
         calls.push(['executeStudioRenameVersionRequest', ...args]);
         return { success: true };
@@ -619,9 +615,6 @@ test('submitRenameVersion reuses the shared rename request helper when available
       }
     },
     SlideNextStudioVersionActions: {
-      createStudioVersionActionHandlerOptions(options) {
-        return options;
-      },
       executeStudioRenameVersionRequest: async (...args) => {
         helperArgs = args;
         return { success: true };
@@ -742,9 +735,6 @@ test('deleteVersion reuses the shared delete request helper when available', asy
       executeStudioDeleteVersionRequest: async (...args) => {
         helperArgs = args;
         return { success: true };
-      },
-      createStudioVersionActionHandlerOptions(options) {
-        return options;
       },
       handleStudioVersionListMutationSuccess(deleteContext, options) {
         successOptions = options;

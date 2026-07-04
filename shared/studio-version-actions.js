@@ -74,19 +74,6 @@
       || versionLabel.includes('Rearranged');
   }
 
-  function createStudioVersionActionHandlerOptions(options = {}) {
-    return {
-      getCurrentPresentationUrl: options.getCurrentPresentationUrl,
-      getCurrentSessionToken: options.getCurrentSessionToken,
-      isCurrentSession: options.isCurrentSession,
-      onSuccess: options.onSuccess,
-      onFailure: options.onFailure,
-      hideVersionsDropdown: options.hideVersionsDropdown,
-      relaunchEditor: options.relaunchEditor,
-      refreshVersionEntries: options.refreshVersionEntries
-    };
-  }
-
   async function executeStudioVersionActionRequest(request = {}, options = {}) {
     const fetchImpl = typeof options.fetchImpl === 'function'
       ? options.fetchImpl
@@ -229,7 +216,6 @@
     isStudioVersionActionCurrent,
     isStudioVersionActionSessionCurrent,
     shouldDebounceStudioAutoVersion,
-    createStudioVersionActionHandlerOptions,
     executeStudioVersionActionRequest,
     createStudioRestoreVersionRequest,
     executeStudioRestoreVersionRequest,
