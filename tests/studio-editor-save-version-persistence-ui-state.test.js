@@ -44,22 +44,13 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
+    '\n\n    function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
-}
-
-function loadApplyCurrentStudioPersistenceSuccess(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',
-    '\n\n    function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
 }
 
 test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata updates for the active presentation', () => {

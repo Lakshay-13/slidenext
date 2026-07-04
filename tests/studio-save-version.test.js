@@ -76,23 +76,13 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {'
+    '\n\n    function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
-}
-
-function loadApplyCurrentStudioPersistenceSuccess(fileContent, context) {
-  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',
-    '\n\n    function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
 }
 
 function loadApplyCurrentStudioPersistenceFailure(fileContent, context) {
@@ -466,55 +456,6 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure reuses the shared fai
       }
     }
   });
-});
-
-test('applyCurrentStudioPersistenceSuccess delegates through the shared persistence helper with current handler options', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const persistenceContext = { presentationUrl: '/presentations/onboarding-presentation/index.html' };
-  const onSuccess = () => {};
-  let capturedHandlerOptionsArgs = null;
-  let delegatedArgs = null;
-  const context = {
-    currentPresentationUrl: '/presentations/default/index.html',
-    SlideNextStudioEditorPersistence: {
-      createStudioPersistenceHandlerOptions(options = {}) {
-        capturedHandlerOptionsArgs = options;
-        return {
-          marker: 'persistence-handler-options',
-          ...options
-        };
-      },
-      handleStudioPersistenceSuccess(nextPersistenceContext, handlerOptions) {
-        delegatedArgs = {
-          nextPersistenceContext,
-          handlerOptions
-        };
-        return 'applied';
-      }
-    },
-    createCurrentStudioSessionStateOptions() {
-      return {
-        sessionMarker: 'session-options'
-      };
-    }
-  };
-
-  vm.createContext(context);
-  loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
-
-  const result = context.applyCurrentStudioPersistenceSuccess(persistenceContext, {
-    presentationUrl: persistenceContext.presentationUrl,
-    onSuccess
-  });
-
-  assert.equal(result, 'applied');
-  assert.equal(capturedHandlerOptionsArgs.sessionMarker, 'session-options');
-  assert.equal(capturedHandlerOptionsArgs.onSuccess, onSuccess);
-  assert.equal(delegatedArgs.nextPersistenceContext, persistenceContext);
-  assert.equal(delegatedArgs.handlerOptions.marker, 'persistence-handler-options');
-  assert.equal(delegatedArgs.handlerOptions.sessionMarker, 'session-options');
-  assert.equal(delegatedArgs.handlerOptions.presentationUrl, undefined);
-  assert.equal(delegatedArgs.handlerOptions.onSuccess, onSuccess);
 });
 
 test('applyCurrentStudioPersistenceFailure delegates through the shared failure helper with current handler options', () => {

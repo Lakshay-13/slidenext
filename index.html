@@ -5595,13 +5595,6 @@
       });
     }
 
-    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
-      return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
-        persistenceContext,
-        createCurrentStudioPersistenceHandlerOptions(options)
-      );
-    }
-
     function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
       return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
         persistenceContext,
