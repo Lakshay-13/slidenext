@@ -56,6 +56,15 @@ function loadApplyCurrentStudioVersionActionFailure(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioVersionActionFailure(versionContext, options = {}) {',
+    '\n\n    function applyCurrentStudioVersionListMutationSuccess(versionContext, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioVersionListMutationSuccess(versionContext, options = {}) {',
     '\n\n    async function restoreVersion(filename) {'
   );
   vm.runInContext(helperSource, context);
@@ -193,6 +202,39 @@ test('applyCurrentStudioVersionActionFailure delegates through the shared handle
   assert.equal(failureArgs[0], versionContext);
   assert.equal(failureArgs[1].marker, 'version-handler-options');
   assert.equal(failureArgs[1].onFailure, onFailure);
+});
+
+test('applyCurrentStudioVersionListMutationSuccess delegates through the shared handler options helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let successArgs = null;
+  const onSuccess = () => {};
+  const versionContext = {
+    presentationUrl: '/presentations/onboarding-presentation/index.html'
+  };
+  const context = {
+    SlideNextStudioVersionActions: {
+      handleStudioVersionListMutationSuccess(nextVersionContext, options) {
+        successArgs = [nextVersionContext, options];
+        return 'handled';
+      }
+    },
+    createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return {
+        marker: 'version-handler-options',
+        ...options
+      };
+    }
+  };
+
+  vm.createContext(context);
+  loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
+
+  const result = context.applyCurrentStudioVersionListMutationSuccess(versionContext, { onSuccess });
+
+  assert.equal(result, 'handled');
+  assert.equal(successArgs[0], versionContext);
+  assert.equal(successArgs[1].marker, 'version-handler-options');
+  assert.equal(successArgs[1].onSuccess, onSuccess);
 });
 
 test('resetStudioVersionUiState hides open version chrome and clears modal state', () => {
@@ -634,6 +676,7 @@ test('submitRenameVersion no-ops when the rename input is missing', async () => 
 
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
+  loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
   vm.runInContext(submitRenameVersionSource, context);
 
   await assert.doesNotReject(async () => {
@@ -730,6 +773,7 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
 
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
+  loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
   vm.runInContext(submitRenameVersionSource, context);
 
   await assert.doesNotReject(async () => {
@@ -839,6 +883,7 @@ test('submitRenameVersion reuses the shared rename request helper when available
 
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
+  loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
   vm.runInContext(submitRenameVersionSource, context);
 
   await context.submitRenameVersion();
@@ -949,6 +994,7 @@ test('deleteVersion reuses the shared delete request helper when available', asy
 
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
+  loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
   vm.runInContext(deleteVersionSource, context);
 
   await context.deleteVersion('index_20260101_120000_Auto.html');

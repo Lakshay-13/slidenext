@@ -6603,6 +6603,13 @@
       );
     }
 
+    function applyCurrentStudioVersionListMutationSuccess(versionContext, options = {}) {
+      return SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
+        versionContext,
+        createCurrentStudioVersionActionHandlerOptions(options)
+      );
+    }
+
     async function restoreVersion(filename) {
       if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
         return;
@@ -6742,16 +6749,13 @@
           }
         );
         if (data.success) {
-          SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
-            renameContext,
-            createCurrentStudioVersionActionHandlerOptions({
-              isCurrentSession: isCurrentRenameSession,
-              onSuccess: () => {
-                closeRenameVersionModal();
-              },
-              refreshVersionEntries: loadVersions
-            })
-          );
+          applyCurrentStudioVersionListMutationSuccess(renameContext, {
+            isCurrentSession: isCurrentRenameSession,
+            onSuccess: () => {
+              closeRenameVersionModal();
+            },
+            refreshVersionEntries: loadVersions
+          });
         } else {
           applyCurrentStudioVersionActionFailure(renameContext, {
             isCurrentSession: isCurrentRenameSession,
@@ -6768,18 +6772,15 @@
           }
         });
       } finally {
-        SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
-          renameContext,
-          createCurrentStudioVersionActionHandlerOptions({
-            isCurrentSession: isCurrentRenameSession,
-            onSuccess: () => {
-              if (btn) {
-                btn.disabled = false;
-                btn.textContent = 'Rename';
-              }
+        applyCurrentStudioVersionListMutationSuccess(renameContext, {
+          isCurrentSession: isCurrentRenameSession,
+          onSuccess: () => {
+            if (btn) {
+              btn.disabled = false;
+              btn.textContent = 'Rename';
             }
-          })
-        );
+          }
+        });
       }
     }
 
@@ -6798,12 +6799,9 @@
           }
         );
         if (data.success) {
-          SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
-            deleteContext,
-            createCurrentStudioVersionActionHandlerOptions({
-              refreshVersionEntries: loadVersions
-            })
-          );
+          applyCurrentStudioVersionListMutationSuccess(deleteContext, {
+            refreshVersionEntries: loadVersions
+          });
         } else {
           applyCurrentStudioVersionActionFailure(deleteContext, {
             onFailure: () => {
