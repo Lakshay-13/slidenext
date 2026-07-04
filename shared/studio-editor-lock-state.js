@@ -36,6 +36,16 @@
     };
   }
 
+  function buildStudioLockToolbarState(elements = [], options = {}) {
+    const actionState = buildStudioLockActionState(elements, options);
+
+    return {
+      ...actionState,
+      iconText: actionState.allLocked ? 'lock_open' : 'lock',
+      labelText: actionState.allLocked ? 'Unlock Selected' : 'Lock Selected'
+    };
+  }
+
   function buildStudioLockMutationPlan(elements = [], options = {}) {
     const selection = getStudioLockSelection(elements, options);
     const isLocked = typeof options.isLocked === 'function'
@@ -66,6 +76,7 @@
   return {
     getStudioLockSelection,
     buildStudioLockActionState,
+    buildStudioLockToolbarState,
     buildStudioLockMutationPlan
   };
 });

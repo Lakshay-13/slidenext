@@ -3960,7 +3960,18 @@
     }
 
     function updateLockActionState(doc = getIframeDoc()) {
-      const lockActionState = SlideNextStudioEditorLockState.buildStudioLockActionState(selectedElements, {
+      const buildStudioLockToolbarState = (
+        SlideNextStudioEditorLockState
+        && typeof SlideNextStudioEditorLockState.buildStudioLockToolbarState === 'function'
+      )
+        ? SlideNextStudioEditorLockState.buildStudioLockToolbarState
+        : null;
+      const lockActionState = buildStudioLockToolbarState
+        ? buildStudioLockToolbarState(selectedElements, {
+          isLocked: isElementLocked,
+          canMutateDeck: () => !!getActiveSlide(doc)
+        })
+        : SlideNextStudioEditorLockState.buildStudioLockActionState(selectedElements, {
         isLocked: isElementLocked,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
@@ -3968,8 +3979,8 @@
       const lockIcon = document.getElementById('toggleLockSelectionIcon');
       const lockLabel = document.getElementById('toggleLockSelectionLabel');
       if (lockBtn) lockBtn.disabled = !lockActionState.canToggle;
-      if (lockIcon) lockIcon.textContent = lockActionState.allLocked ? 'lock_open' : 'lock';
-      if (lockLabel) lockLabel.textContent = lockActionState.allLocked ? 'Unlock Selected' : 'Lock Selected';
+      if (lockIcon) lockIcon.textContent = lockActionState.iconText || (lockActionState.allLocked ? 'lock_open' : 'lock');
+      if (lockLabel) lockLabel.textContent = lockActionState.labelText || (lockActionState.allLocked ? 'Unlock Selected' : 'Lock Selected');
     }
 
     function buildRemovalSelectionActionState(doc = null) {

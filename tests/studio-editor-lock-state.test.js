@@ -60,6 +60,34 @@ test('buildStudioLockActionState derives button state from live selections only'
   });
 });
 
+test('buildStudioLockToolbarState derives lock control chrome from the live selection state', () => {
+  assert.deepEqual(lockState.buildStudioLockToolbarState([
+    { id: 1, isConnected: true, locked: false }
+  ], {
+    isLocked: (element) => !!element.locked
+  }), {
+    hasSelection: true,
+    canToggle: true,
+    allLocked: false,
+    canRemove: true,
+    iconText: 'lock',
+    labelText: 'Lock Selected'
+  });
+
+  assert.deepEqual(lockState.buildStudioLockToolbarState([
+    { id: 1, isConnected: true, locked: true }
+  ], {
+    isLocked: (element) => !!element.locked
+  }), {
+    hasSelection: true,
+    canToggle: true,
+    allLocked: true,
+    canRemove: false,
+    iconText: 'lock_open',
+    labelText: 'Unlock Selected'
+  });
+});
+
 test('buildStudioLockMutationPlan derives the next lock toggle from the live selection only', () => {
   const unlocked = { id: 1, isConnected: true, locked: false };
   const locked = { id: 2, isConnected: true, locked: true };

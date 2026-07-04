@@ -27,7 +27,7 @@ function loadSyncSelectionUiAfterMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function syncSelectionUiAfterMutation() {',
-    '\n\n    function finalizeSelectionToggleMutation(versionLabel) {'
+    '\n\n    function finalizeSelectionToggleMutation(versionLabel, options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -35,7 +35,7 @@ function loadSyncSelectionUiAfterMutation(fileContent, context) {
 function loadFinalizeSelectionToggleMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function finalizeSelectionToggleMutation(versionLabel) {',
+    'function finalizeSelectionToggleMutation(versionLabel, options = {}) {',
     '\n\n    function toggleSelectedElementsLockState() {'
   );
   vm.runInContext(helperSource, context);
@@ -152,12 +152,79 @@ test('updateLockActionState enables the lock control only when the iframe has a 
   assert.equal(toggleLockSelectionLabel.textContent, 'Unlock Selected');
 });
 
+test('updateLockActionState reuses the shared lock toolbar helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateLockActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateLockActionState(doc = getIframeDoc()) {',
+    '\n\n    function buildRemovalSelectionActionState(doc = null) {'
+  );
+
+  const calls = [];
+  const toggleLockSelectionBtn = { disabled: true };
+  const toggleLockSelectionIcon = { textContent: '' };
+  const toggleLockSelectionLabel = { textContent: '' };
+  const context = {
+    selectedElements: [{ id: 'selected' }],
+    isElementLocked() {
+      return false;
+    },
+    SlideNextStudioEditorLockState: {
+      buildStudioLockActionState() {
+        throw new Error('buildStudioLockActionState should not be used when shared toolbar helper exists');
+      },
+      buildStudioLockToolbarState(elements, options = {}) {
+        calls.push({
+          elements,
+          hasCanMutateDeck: typeof options.canMutateDeck === 'function',
+          canToggle: options.canMutateDeck()
+        });
+        return {
+          canToggle: true,
+          iconText: 'lock_open',
+          labelText: 'Unlock Selected'
+        };
+      }
+    },
+    document: {
+      getElementById(id) {
+        if (id === 'toggleLockSelectionBtn') return toggleLockSelectionBtn;
+        if (id === 'toggleLockSelectionIcon') return toggleLockSelectionIcon;
+        if (id === 'toggleLockSelectionLabel') return toggleLockSelectionLabel;
+        return null;
+      }
+    },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateLockActionStateSource, context);
+
+  context.updateLockActionState({
+    activeSlide: {}
+  });
+
+  assert.equal(toggleLockSelectionBtn.disabled, false);
+  assert.equal(toggleLockSelectionIcon.textContent, 'lock_open');
+  assert.equal(toggleLockSelectionLabel.textContent, 'Unlock Selected');
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    elements: [{ id: 'selected' }],
+    hasCanMutateDeck: true,
+    canToggle: true
+  }]);
+});
+
 test('toggleSelectedElementsLockState returns false and skips persistence when planned targets disconnect before apply', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const toggleSelectedElementsLockStateSource = extractFunctionSource(
     fileContent,
     'function toggleSelectedElementsLockState() {',
-    '\n\n    function toggleSelectedElementsVisibility() {'
+    '\n\n    function toggleSelectedElementsVisibility(options = {}) {'
   );
 
   const disconnectedTarget = { isConnected: false };
@@ -238,7 +305,7 @@ test('toggleSelectedElementsLockState returns true after locking live targets an
   const toggleSelectedElementsLockStateSource = extractFunctionSource(
     fileContent,
     'function toggleSelectedElementsLockState() {',
-    '\n\n    function toggleSelectedElementsVisibility() {'
+    '\n\n    function toggleSelectedElementsVisibility(options = {}) {'
   );
 
   const liveTarget = { isConnected: true };
