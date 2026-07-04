@@ -105,6 +105,79 @@ test('buildClipboardSelectionMutationPlan reuses the current selection, clipboar
   ]);
 });
 
+test('buildClipboardSelectionMutationPlan reuses the shared clipboard selection helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
+
+  const selection = [{ id: 'node-1' }];
+  const clipboard = { items: [{ id: 'clipboard-item' }], pasteCount: 0 };
+  const payloadItems = [{ id: 'payload-item' }];
+  const calls = [];
+  const context = {
+    selectedElements: selection,
+    editorClipboard: clipboard,
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardSelectionMutationPlan(elements, nextClipboard, options = {}) {
+        calls.push({
+          elements,
+          nextClipboard,
+          hasCanMutateDeck: typeof options.canMutateDeck === 'function',
+          canMutateDeck: options.canMutateDeck(),
+          payloadItems: options.buildPayloadItems(elements)
+        });
+        return {
+          selection: elements,
+          canCopy: true,
+          canDuplicate: true,
+          canPaste: false,
+          payloadItems,
+          canBuildPayload: true
+        };
+      }
+    },
+    buildClipboardPayload(elements, doc) {
+      calls.push(['buildClipboardPayload', elements, doc]);
+      return payloadItems;
+    },
+    getActiveSlide(doc) {
+      calls.push(['getActiveSlide', doc]);
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      const doc = { activeSlide: { id: 'slide-1' } };
+      calls.push(['getIframeDoc', doc]);
+      return doc;
+    },
+    isElementLocked() {
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildClipboardSelectionMutationPlanSource, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(context.buildClipboardSelectionMutationPlan())), {
+    selection,
+    canCopy: true,
+    canDuplicate: true,
+    canPaste: false,
+    payloadItems,
+    canBuildPayload: true
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
+    ['getIframeDoc', { activeSlide: { id: 'slide-1' } }],
+    ['getActiveSlide', { activeSlide: { id: 'slide-1' } }],
+    ['buildClipboardPayload', selection, { activeSlide: { id: 'slide-1' } }],
+    {
+      elements: selection,
+      nextClipboard: clipboard,
+      hasCanMutateDeck: true,
+      canMutateDeck: true,
+      payloadItems
+    }
+  ]);
+});
+
 test('finalizeClipboardActionResult refreshes clipboard controls and preserves the action result', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);

@@ -193,6 +193,27 @@ test('buildStudioClipboardToolbarState derives clipboard button states from the 
   });
 });
 
+test('buildStudioClipboardSelectionMutationPlan combines payload viability with the shared clipboard mutation state', () => {
+  assert.deepEqual(clipboardState.buildStudioClipboardSelectionMutationPlan(
+    [{ id: 1 }],
+    { items: [{ id: 'copy' }] },
+    {
+      isLocked: () => false,
+      buildPayloadItems(selection) {
+        assert.deepEqual(selection, [{ id: 1 }]);
+        return [{ id: 'payload' }];
+      }
+    }
+  ), {
+    selection: [{ id: 1 }],
+    canCopy: true,
+    canDuplicate: true,
+    canPaste: true,
+    payloadItems: [{ id: 'payload' }],
+    canBuildPayload: true
+  });
+});
+
 test('buildStudioClipboardMutationPlan reuses the live unlocked selection for copy and duplicate actions', () => {
   const stale = { id: 'stale', isConnected: false, locked: false };
   const live = { id: 'live', isConnected: true, locked: false };

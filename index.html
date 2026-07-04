@@ -4499,6 +4499,22 @@
 
     function buildClipboardSelectionMutationPlan(doc = null) {
       const resolvedDoc = doc || getIframeDoc();
+      const buildStudioClipboardSelectionMutationPlan = (
+        SlideNextStudioEditorClipboard
+        && typeof SlideNextStudioEditorClipboard.buildStudioClipboardSelectionMutationPlan === 'function'
+      )
+        ? SlideNextStudioEditorClipboard.buildStudioClipboardSelectionMutationPlan
+        : null;
+      if (buildStudioClipboardSelectionMutationPlan) {
+        return buildStudioClipboardSelectionMutationPlan(selectedElements, editorClipboard, {
+          isLocked: isElementLocked,
+          canMutateDeck: () => !!getActiveSlide(resolvedDoc),
+          buildPayloadItems(selection) {
+            return buildClipboardPayload(selection, resolvedDoc);
+          }
+        });
+      }
+
       const clipboardMutationPlan = SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
         isLocked: isElementLocked,
         canMutateDeck: () => !!getActiveSlide(resolvedDoc)

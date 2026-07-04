@@ -83,6 +83,25 @@
     };
   }
 
+  function buildStudioClipboardSelectionMutationPlan(elements = [], clipboard = null, options = {}) {
+    const clipboardMutationPlan = buildStudioClipboardMutationPlan(elements, clipboard, options);
+    const buildPayloadItems = typeof options.buildPayloadItems === 'function'
+      ? options.buildPayloadItems
+      : () => [];
+    const payloadItems = (clipboardMutationPlan.canCopy || clipboardMutationPlan.canDuplicate)
+      ? buildPayloadItems(clipboardMutationPlan.selection, options)
+      : [];
+    const canBuildPayload = payloadItems.length > 0;
+
+    return {
+      ...clipboardMutationPlan,
+      payloadItems,
+      canBuildPayload,
+      canCopy: clipboardMutationPlan.canCopy && canBuildPayload,
+      canDuplicate: clipboardMutationPlan.canDuplicate && canBuildPayload
+    };
+  }
+
   function buildStudioClipboardMutationPlan(elements = [], clipboard = null, options = {}) {
     const selection = getStudioClipboardSelection(elements, options);
     const isLocked = typeof options.isLocked === 'function'
@@ -293,6 +312,7 @@
     canStudioCopySelection,
     buildStudioClipboardActionState,
     buildStudioClipboardToolbarState,
+    buildStudioClipboardSelectionMutationPlan,
     buildStudioClipboardMutationPlan,
     buildStudioClipboardPayloadItem,
     buildStudioClipboardPayloadItems,
