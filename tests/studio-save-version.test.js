@@ -1238,6 +1238,12 @@ test('submitSaveVersion reuses the local version checkpoint failure-aware helper
     closeSaveVersionModal() {
       closeModalCalls += 1;
     },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
     createCurrentStudioSessionStateOptions() {
       return {};
     },
@@ -1327,7 +1333,8 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
   const alerts = [];
   let closeModalCalls = 0;
   let readerCallCount = 0;
-  let capturedReaders = null;
+  const capturedReaders = [];
+  let finalSessionOptions = null;
   let successHelperArgs = null;
   const inputEl = { value: 'Checkpoint Baseline' };
   const saveBtnEl = {
@@ -1358,11 +1365,12 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
     },
     createCurrentStudioSessionStateReaders() {
       readerCallCount += 1;
-      capturedReaders = {
+      const readers = {
         getCurrentPresentationUrl: () => context.currentPresentationUrl,
         getCurrentSessionToken: () => context.studioEditorSessionToken
       };
-      return capturedReaders;
+      capturedReaders.push(readers);
+      return readers;
     },
     createCurrentStudioSessionStateOptions() {
       return {};
@@ -1422,6 +1430,7 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
         return 'applied';
       },
       runStudioPersistenceActionIfCurrent(persistenceContext, sessionOptions, action) {
+        finalSessionOptions = sessionOptions;
         action();
       }
     },
@@ -1435,11 +1444,15 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
   await context.submitSaveVersion();
 
   assert.equal(successHelperArgs.persistenceContext, versionCheckpointPersistenceState.persistenceContext);
-  assert.equal(readerCallCount, 1);
-  assert.equal(successHelperArgs.options.getCurrentPresentationUrl, capturedReaders.getCurrentPresentationUrl);
-  assert.equal(successHelperArgs.options.getCurrentSessionToken, capturedReaders.getCurrentSessionToken);
+  assert.equal(readerCallCount, 2);
+  assert.equal(successHelperArgs.options.getCurrentPresentationUrl, capturedReaders[0].getCurrentPresentationUrl);
+  assert.equal(successHelperArgs.options.getCurrentSessionToken, capturedReaders[0].getCurrentSessionToken);
   assert.equal(successHelperArgs.options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
   assert.equal(successHelperArgs.options.getCurrentSessionToken(), 4);
+  assert.equal(finalSessionOptions.getCurrentPresentationUrl, capturedReaders[1].getCurrentPresentationUrl);
+  assert.equal(finalSessionOptions.getCurrentSessionToken, capturedReaders[1].getCurrentSessionToken);
+  assert.equal(finalSessionOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(finalSessionOptions.getCurrentSessionToken(), 4);
   assert.equal(typeof successHelperArgs.options.onSuccess, 'function');
   assert.equal(typeof context.executeCurrentStudioVersionCheckpointSaveWithFailure, 'function');
   assert.deepEqual(alerts, ['Successfully saved named version backup checkpoint!']);
@@ -1452,6 +1465,8 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
   context.studioEditorSessionToken = 5;
   assert.equal(successHelperArgs.options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
   assert.equal(successHelperArgs.options.getCurrentSessionToken(), 5);
+  assert.equal(finalSessionOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(finalSessionOptions.getCurrentSessionToken(), 5);
 });
 
 test('submitSaveVersion reports network save errors through the shared persistence failure helper', async () => {
@@ -1493,6 +1508,12 @@ test('submitSaveVersion reports network save errors through the shared persisten
       return {
         marker: 'persistence-handler-options',
         ...options
+      };
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
       };
     },
     createCurrentStudioSessionStateOptions() {

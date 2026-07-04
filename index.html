@@ -6405,7 +6405,7 @@
       } finally {
         SlideNextStudioEditorPersistence.runStudioPersistenceActionIfCurrent(
           versionCheckpointPersistenceState.persistenceContext,
-          createCurrentStudioSessionStateOptions(),
+          createCurrentStudioSessionStateReaders(),
           () => {
             resetStudioSaveButtonState();
           }
