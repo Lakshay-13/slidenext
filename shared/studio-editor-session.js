@@ -11,14 +11,6 @@
     return typeof value === 'string' ? value : fallback;
   }
 
-  function createStudioSessionStateOptions(options = {}) {
-    return {
-      sessionToken: Number.isInteger(options.sessionToken) ? options.sessionToken : null,
-      getCurrentPresentationUrl: options.getCurrentPresentationUrl,
-      getCurrentSessionToken: options.getCurrentSessionToken
-    };
-  }
-
   function createStudioSessionStateReaders(options = {}) {
     return {
       getCurrentPresentationUrl: typeof options.getCurrentPresentationUrl === 'function'
@@ -122,7 +114,6 @@
   }
 
   return {
-    createStudioSessionStateOptions,
     createStudioSessionStateReaders,
     createStudioSessionSnapshot,
     createStudioPresentationSessionStateUpdate,

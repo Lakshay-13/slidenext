@@ -3,29 +3,6 @@ const assert = require('node:assert/strict');
 
 const editorSession = require('../shared/studio-editor-session.js');
 
-test('createStudioSessionStateOptions preserves the supplied session readers and normalized session token', () => {
-  const getCurrentPresentationUrl = () => '/presentations/onboarding-presentation/index.html';
-  const getCurrentSessionToken = () => 4;
-
-  const options = editorSession.createStudioSessionStateOptions({
-    sessionToken: 4,
-    getCurrentPresentationUrl,
-    getCurrentSessionToken
-  });
-
-  assert.equal(options.sessionToken, 4);
-  assert.equal(options.getCurrentPresentationUrl, getCurrentPresentationUrl);
-  assert.equal(options.getCurrentSessionToken, getCurrentSessionToken);
-
-  const normalizedOptions = editorSession.createStudioSessionStateOptions({
-    sessionToken: 'invalid',
-    getCurrentPresentationUrl,
-    getCurrentSessionToken
-  });
-
-  assert.equal(normalizedOptions.sessionToken, null);
-});
-
 test('createStudioSessionStateReaders exposes supplied live readers and normalizes fallback state', () => {
   let currentPresentationUrl = '/presentations/onboarding-presentation/index.html';
   let currentSessionToken = 4;
