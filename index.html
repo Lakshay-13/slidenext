@@ -5690,7 +5690,54 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(buildOptions, 'canonicalDeck')
         ? buildOptions.canonicalDeck
         : null;
+      const buildStudioPersistableDeckHtmlWithoutDocument = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.buildStudioPersistableDeckHtmlWithoutDocument === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.buildStudioPersistableDeckHtmlWithoutDocument
+        : null;
       if (!doc) {
+        if (buildStudioPersistableDeckHtmlWithoutDocument) {
+          return buildStudioPersistableDeckHtmlWithoutDocument({
+            getPersistedDeckState: getCurrentEditorPersistedDeckState,
+            resolvePersistedDeckStateWithContent: resolveEditorPersistedDeckStateWithContent,
+            resolveCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
+              buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+            }),
+            onCanonicalDeckResolved: typeof buildOptions.onCanonicalDeckResolved === 'function'
+              ? buildOptions.onCanonicalDeckResolved
+              : null,
+            onPlaybackStateResolved: typeof buildOptions.onPlaybackStateResolved === 'function'
+              ? buildOptions.onPlaybackStateResolved
+              : null,
+            resolveReusablePersistedHtml: resolveEditorReusablePersistedHtml,
+            sanitizeReusablePersistedHtml: (persistedHtml, options = {}) => sanitizeEditorReusablePersistedHtml(
+              persistedHtml,
+              {
+                playbackState: Object.prototype.hasOwnProperty.call(options, 'playbackState')
+                  ? options.playbackState
+                  : null,
+                resolveMetadataPersistenceOptions: resolveEditorMetadataPersistenceOptions
+              }
+            ),
+            buildSourceDeckHtml: ({ canonicalDeck, persistedHtml }) => {
+              const sourceViewOptions = createEditorDeckViewBuildOptions(doc, {
+                buildCanonicalDeck: () => canonicalDeck,
+                buildFallbackHtml: () => persistedHtml,
+                buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
+                  sourceDoc,
+                  nextCanonicalDeck,
+                  options
+                )
+              });
+              return buildEditorSourceDeckHtml(doc, {
+                buildViewOptions: () => sourceViewOptions
+              });
+            }
+          });
+        }
+
         const persistedDeckState = getCurrentEditorPersistedDeckState();
         const persistedDeckStateWithContent = resolveEditorPersistedDeckStateWithContent(persistedDeckState);
         const persistedHtml = persistedDeckStateWithContent

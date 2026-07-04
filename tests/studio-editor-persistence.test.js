@@ -876,6 +876,106 @@ test('sanitizeStudioReusablePersistedHtml sanitizes reusable persisted html thro
   );
 });
 
+test('buildStudioPersistableDeckHtmlWithoutDocument reuses persisted html when possible and otherwise falls back to canonical source rendering', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted-baseline</html>',
+    canonicalDeck,
+    playbackState: {
+      activeSlideIds: ['slide-1']
+    }
+  };
+  const persistedCalls = [];
+
+  assert.equal(
+    editorPersistence.buildStudioPersistableDeckHtmlWithoutDocument({
+      getPersistedDeckState() {
+        persistedCalls.push(['getPersistedDeckState']);
+        return persistedDeckState;
+      },
+      resolvePersistedDeckStateWithContent(nextPersistedDeckState) {
+        persistedCalls.push(['resolvePersistedDeckStateWithContent', nextPersistedDeckState]);
+        return nextPersistedDeckState;
+      },
+      resolveCanonicalDeck(nextPersistedDeckState) {
+        persistedCalls.push(['resolveCanonicalDeck', nextPersistedDeckState]);
+        return nextPersistedDeckState.canonicalDeck;
+      },
+      resolveReusablePersistedHtml(nextPersistedDeckState, options = {}) {
+        persistedCalls.push(['resolveReusablePersistedHtml', nextPersistedDeckState, options]);
+        return nextPersistedDeckState.cleanHtml;
+      },
+      sanitizeReusablePersistedHtml(persistedHtml, options = {}) {
+        persistedCalls.push(['sanitizeReusablePersistedHtml', persistedHtml, options]);
+        return '<html>sanitized</html>';
+      },
+      buildSourceDeckHtml() {
+        throw new Error('buildSourceDeckHtml should not run when reusable persisted html is available');
+      }
+    }),
+    '<html>sanitized</html>'
+  );
+  assert.deepEqual(persistedCalls.map(([name]) => name), [
+    'getPersistedDeckState',
+    'resolvePersistedDeckStateWithContent',
+    'resolveCanonicalDeck',
+    'resolveReusablePersistedHtml',
+    'sanitizeReusablePersistedHtml'
+  ]);
+
+  const sourceCalls = [];
+  assert.equal(
+    editorPersistence.buildStudioPersistableDeckHtmlWithoutDocument({
+      persistedDeckState: {
+        cleanHtml: '',
+        canonicalDeck: null,
+        playbackState: null
+      },
+      resolvePersistedDeckStateWithContent() {
+        sourceCalls.push(['resolvePersistedDeckStateWithContent']);
+        return null;
+      },
+      resolveCanonicalDeck() {
+        sourceCalls.push(['resolveCanonicalDeck']);
+        return canonicalDeck;
+      },
+      resolveReusablePersistedHtml() {
+        sourceCalls.push(['resolveReusablePersistedHtml']);
+        return '';
+      },
+      buildSourceDeckHtml(context) {
+        sourceCalls.push(['buildSourceDeckHtml', context]);
+        return '<html>canonical-source</html>';
+      }
+    }),
+    '<html>canonical-source</html>'
+  );
+  assert.deepEqual(sourceCalls.map(([name]) => name), [
+    'resolvePersistedDeckStateWithContent',
+    'resolveCanonicalDeck',
+    'resolveReusablePersistedHtml',
+    'buildSourceDeckHtml'
+  ]);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(sourceCalls[3][1])),
+    {
+      canonicalDeck,
+      persistedHtml: '',
+      persistedDeckState: {
+        cleanHtml: '',
+        canonicalDeck: null,
+        playbackState: null
+      },
+      persistedDeckStateWithContent: null,
+      playbackState: null
+    }
+  );
+});
+
 test('buildStudioSaveRequestBody includes canonical deck sidecars only when they are valid', () => {
   const canonicalDeck = {
     metadata: {

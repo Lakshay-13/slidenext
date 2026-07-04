@@ -1259,6 +1259,82 @@ test('sanitizeEditorReusablePersistedHtml delegates through the shared persisten
   assert.equal(delegatedArgs.DOMParser, context.DOMParser);
 });
 
+test('buildPersistableDeckHtml delegates the no-document persistence flow through the shared helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+
+  let delegatedArgs = null;
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-2']
+  };
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      buildStudioPersistableDeckHtmlWithoutDocument(options = {}) {
+        delegatedArgs = {
+          getPersistedDeckState: options.getPersistedDeckState,
+          resolvePersistedDeckStateWithContent: options.resolvePersistedDeckStateWithContent,
+          resolveCanonicalDeck: options.resolveCanonicalDeck,
+          onCanonicalDeckResolved: options.onCanonicalDeckResolved,
+          onPlaybackStateResolved: options.onPlaybackStateResolved,
+          resolveReusablePersistedHtml: options.resolveReusablePersistedHtml,
+          sanitizeReusablePersistedHtml: options.sanitizeReusablePersistedHtml,
+          buildSourceDeckHtml: options.buildSourceDeckHtml
+        };
+        options.onCanonicalDeckResolved(canonicalDeck);
+        options.onPlaybackStateResolved(playbackState);
+        return '<html>persisted-baseline</html>';
+      }
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('buildEditorCanonicalDeck should not run when the shared no-document helper resolves the html');
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedDeckHtml: '<html>persisted-baseline</html>',
+    lastPersistedCanonicalDeck: canonicalDeck,
+    persistedDeckPlaybackState: playbackState
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
+
+  let reportedCanonicalDeck = null;
+  let reportedPlaybackState = null;
+  assert.equal(
+    context.buildPersistableDeckHtml(null, {
+      onCanonicalDeckResolved(deck) {
+        reportedCanonicalDeck = deck;
+      },
+      onPlaybackStateResolved(nextPlaybackState) {
+        reportedPlaybackState = nextPlaybackState;
+      }
+    }),
+    '<html>persisted-baseline</html>'
+  );
+  assert.equal(reportedCanonicalDeck, canonicalDeck);
+  assert.equal(reportedPlaybackState, playbackState);
+  assert.equal(typeof delegatedArgs.getPersistedDeckState, 'function');
+  assert.equal(typeof delegatedArgs.resolvePersistedDeckStateWithContent, 'function');
+  assert.equal(typeof delegatedArgs.resolveCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.onCanonicalDeckResolved, 'function');
+  assert.equal(typeof delegatedArgs.onPlaybackStateResolved, 'function');
+  assert.equal(typeof delegatedArgs.resolveReusablePersistedHtml, 'function');
+  assert.equal(typeof delegatedArgs.sanitizeReusablePersistedHtml, 'function');
+  assert.equal(typeof delegatedArgs.buildSourceDeckHtml, 'function');
+});
+
 test('buildPersistableDeckHtml reuses the local reusable persisted html resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
