@@ -5653,11 +5653,11 @@
             }
             return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
               nextVersionCheckpointPersistenceState.persistenceContext,
-              SlideNextStudioEditorPersistence.createStudioVersionPersistenceHandlerOptions({
+              {
                 ...createCurrentStudioSessionStateReaders(),
                 refreshVersionEntries: loadVersions,
                 onSuccess: successOptions.onSuccess
-              })
+              }
             );
           },
           successOptions: {

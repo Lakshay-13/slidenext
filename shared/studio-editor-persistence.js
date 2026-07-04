@@ -955,15 +955,6 @@
     };
   }
 
-  function createStudioVersionPersistenceHandlerOptions(options = {}) {
-    return {
-      getCurrentPresentationUrl: options.getCurrentPresentationUrl,
-      getCurrentSessionToken: options.getCurrentSessionToken,
-      onSuccess: options.onSuccess,
-      refreshVersionEntries: options.refreshVersionEntries
-    };
-  }
-
   function handleStudioPersistenceSuccess(context = {}, options = {}) {
     return runStudioPersistenceActionIfCurrent(context, options, (nextContext) => {
       if (nextContext.shouldUpdatePersistedHtml !== false && typeof options.setPersistedHtml === 'function') {
@@ -1054,7 +1045,6 @@
     isStudioPersistenceActionCurrent,
     runStudioPersistenceActionIfCurrent,
     createStudioPersistenceHandlerOptions,
-    createStudioVersionPersistenceHandlerOptions,
     handleStudioPersistenceSuccess,
     handleStudioVersionPersistenceSuccess,
     handleStudioPersistenceFailure

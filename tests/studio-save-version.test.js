@@ -1402,9 +1402,6 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
       success: true
     }),
     SlideNextStudioEditorPersistence: {
-      createStudioVersionPersistenceHandlerOptions(options = {}) {
-        return options;
-      },
       executeStudioVersionCheckpointSaveWithFailure: editorPersistence.executeStudioVersionCheckpointSaveWithFailure,
       executeStudioVersionCheckpointSaveWithSuccess: editorPersistence.executeStudioVersionCheckpointSaveWithSuccess,
       handleStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
@@ -1784,9 +1781,6 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
       success: true
     }),
     SlideNextStudioEditorPersistence: {
-      createStudioVersionPersistenceHandlerOptions(options = {}) {
-        return options;
-      },
       handleStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
         successHelperArgs = {
           persistenceContext,

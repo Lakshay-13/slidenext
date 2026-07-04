@@ -2163,26 +2163,6 @@ test('createStudioPersistenceHandlerOptions preserves the supplied session reade
   assert.equal(options.onFailure, hooks.onFailure);
 });
 
-test('createStudioVersionPersistenceHandlerOptions preserves the supplied session readers and version hooks', () => {
-  const getCurrentPresentationUrl = () => '/presentations/onboarding-presentation/index.html';
-  const getCurrentSessionToken = () => 9;
-  const hooks = {
-    onSuccess() {},
-    refreshVersionEntries() {}
-  };
-
-  const options = editorPersistence.createStudioVersionPersistenceHandlerOptions({
-    getCurrentPresentationUrl,
-    getCurrentSessionToken,
-    ...hooks
-  });
-
-  assert.equal(options.getCurrentPresentationUrl, getCurrentPresentationUrl);
-  assert.equal(options.getCurrentSessionToken, getCurrentSessionToken);
-  assert.equal(options.onSuccess, hooks.onSuccess);
-  assert.equal(options.refreshVersionEntries, hooks.refreshVersionEntries);
-});
-
 test('resolveStudioPersistenceCanonicalDeck normalizes valid deck-like payloads and rejects malformed ones', () => {
   assert.deepEqual(
     editorPersistence.resolveStudioPersistenceCanonicalDeck({
