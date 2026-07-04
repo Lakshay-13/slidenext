@@ -3043,9 +3043,7 @@
         presentationUrl,
         presentationTitle,
         createStudioPresentationMetadataLoadOptions({
-          ...createCurrentStudioSessionStateOptions({
-            sessionToken
-          }),
+          ...createCurrentStudioSessionStateReaders(),
           sessionToken,
           setCurrentPresentationMetadata: (metadata) => {
             applyCurrentPresentationMetadata(metadata, { syncPersistedCanonicalDeck: true });

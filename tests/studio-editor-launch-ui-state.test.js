@@ -797,6 +797,8 @@ test('loadCurrentPresentationMetadata passes live session getters when delegatin
   );
 
   let capturedOptions = null;
+  let readerCallCount = 0;
+  let capturedReaders = null;
   const context = {
     SlideNextStudioEditorSession: editorSession,
     SlideNextStudioDeckContext: {
@@ -818,6 +820,14 @@ test('loadCurrentPresentationMetadata passes live session getters when delegatin
         return null;
       }
     },
+    createCurrentStudioSessionStateReaders() {
+      readerCallCount += 1;
+      capturedReaders = {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+      return capturedReaders;
+    },
     currentPresentationMetadata: null,
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
@@ -830,7 +840,6 @@ test('loadCurrentPresentationMetadata passes live session getters when delegatin
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   vm.runInContext(loadCurrentPresentationMetadataSource, context);
 
   const metadata = await context.loadCurrentPresentationMetadata(
@@ -844,7 +853,10 @@ test('loadCurrentPresentationMetadata passes live session getters when delegatin
     title: 'Project Onboarding',
     sourcePath: '/presentations/onboarding-presentation/index.html'
   });
+  assert.equal(readerCallCount, 1);
   assert.equal(capturedOptions.sessionToken, 12);
+  assert.equal(capturedOptions.getCurrentPresentationUrl, capturedReaders.getCurrentPresentationUrl);
+  assert.equal(capturedOptions.getCurrentSessionToken, capturedReaders.getCurrentSessionToken);
   assert.equal(typeof capturedOptions.getCurrentPresentationUrl, 'function');
   assert.equal(typeof capturedOptions.getCurrentSessionToken, 'function');
   assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
