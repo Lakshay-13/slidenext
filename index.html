@@ -8440,12 +8440,34 @@
         return;
       }
       const deleteContext = createCurrentStudioVersionActionContext();
+      const createStudioDeleteVersionRequestExecutor = (
+        typeof SlideNextStudioVersionActions !== 'undefined'
+        && SlideNextStudioVersionActions
+        && typeof SlideNextStudioVersionActions.createStudioDeleteVersionRequestExecutor === 'function'
+      )
+        ? SlideNextStudioVersionActions.createStudioDeleteVersionRequestExecutor
+        : null;
+      const executeDeleteVersionRequest = createStudioDeleteVersionRequestExecutor
+        ? createStudioDeleteVersionRequestExecutor({
+          createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
+          executeDeleteVersionRequest: (
+            typeof SlideNextStudioVersionActions !== 'undefined'
+            && SlideNextStudioVersionActions
+            && typeof SlideNextStudioVersionActions.executeStudioDeleteVersionRequest === 'function'
+          )
+            ? SlideNextStudioVersionActions.executeStudioDeleteVersionRequest
+            : null
+        })
+        : (versionFilename, nextContext) => SlideNextStudioVersionActions.executeStudioDeleteVersionRequest(
+          versionFilename,
+          nextContext,
+          createCurrentStudioVersionRequestOptions()
+        );
       
       try {
-        const data = await SlideNextStudioVersionActions.executeStudioDeleteVersionRequest(
+        const data = await executeDeleteVersionRequest(
           filename,
-          deleteContext,
-          createCurrentStudioVersionRequestOptions()
+          deleteContext
         );
         if (data.success) {
           applyCurrentStudioVersionListMutationSuccess(deleteContext, {

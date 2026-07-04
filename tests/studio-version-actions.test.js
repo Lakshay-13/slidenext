@@ -178,6 +178,40 @@ test('createStudioVersionRequestOptionsBuilder reuses the default fetch implemen
   assert.equal(overrideOptions.requestId, 'rename');
 });
 
+test('createStudioDeleteVersionRequestExecutor reuses request-option defaults and call-time overrides', async () => {
+  const calls = [];
+  const executeDeleteVersionRequest = versionActions.createStudioDeleteVersionRequestExecutor({
+    createVersionRequestOptions() {
+      calls.push(['createVersionRequestOptions']);
+      return { fetchImpl: 'default-fetch' };
+    }
+  });
+
+  const result = await executeDeleteVersionRequest(
+    'index_20260101_120000_Auto.html',
+    { presentationUrl: '/presentations/onboarding-presentation/index.html' },
+    {
+      createVersionRequestOptions() {
+        calls.push(['overrideCreateVersionRequestOptions']);
+        return { fetchImpl: 'override-fetch' };
+      },
+      executeDeleteVersionRequest(versionFilename, context, options = {}) {
+        calls.push(['executeDeleteVersionRequest', versionFilename, context, options]);
+        return { success: options.fetchImpl === 'override-fetch' };
+      }
+    }
+  );
+
+  assert.deepEqual(result, { success: true });
+  assert.deepEqual(calls, [
+    ['overrideCreateVersionRequestOptions'],
+    ['executeDeleteVersionRequest',
+      'index_20260101_120000_Auto.html',
+      { presentationUrl: '/presentations/onboarding-presentation/index.html' },
+      { fetchImpl: 'override-fetch' }]
+  ]);
+});
+
 test('createStudioVersionActionFailureHandler reuses handler-option defaults and call-time overrides', () => {
   const calls = [];
   let overrideOptionsRef = null;

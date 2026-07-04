@@ -1796,6 +1796,102 @@ test('deleteVersion reuses the shared delete request helper when available', asy
   assert.equal(successOptions.getCurrentSessionToken(), 18);
 });
 
+test('deleteVersion reuses the shared delete request executor when available', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const deleteVersionSource = extractFunctionSource(
+    fileContent,
+    'async function deleteVersion(filename) {',
+    '\n\n    // Slide Elements / Layers List Inspector Panel'
+  );
+
+  let delegatedArgs = null;
+  let executorArgs = null;
+  let successOptions = null;
+  const context = {
+    SlideNextStudioVersionActions: {
+      ...versionActions,
+      createStudioDeleteVersionRequestExecutor(options = {}) {
+        delegatedArgs = options;
+        return async (versionFilename, deleteContext) => {
+          executorArgs = [versionFilename, deleteContext];
+          return { success: true };
+        };
+      },
+      createStudioVersionActionContext(presentationUrl, presentationTitle, presentationCategory, options) {
+        return {
+          presentationUrl,
+          presentationTitle,
+          presentationCategory,
+          sessionToken: options.sessionToken
+        };
+      },
+      handleStudioVersionListMutationSuccess(deleteContext, options) {
+        successOptions = options;
+        return true;
+      }
+    },
+    alert() {
+      throw new Error('deleteVersion should not alert on a successful executor result');
+    },
+    confirm() {
+      return true;
+    },
+    currentCategory: 'General',
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    createCurrentStudioVersionActionContext() {
+      return context.SlideNextStudioVersionActions.createStudioVersionActionContext(
+        context.currentPresentationUrl,
+        context.currentTitle,
+        context.currentCategory,
+        {
+          sessionToken: context.studioEditorSessionToken
+        }
+      );
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return {
+        ...context.createCurrentStudioSessionStateReaders(),
+        ...options
+      };
+    },
+    createCurrentStudioVersionRequestOptions() {
+      return { fetchImpl: context.fetch };
+    },
+    fetch() {},
+    loadVersions() {},
+    studioEditorSessionToken: 17
+  };
+
+  vm.createContext(context);
+  loadApplyCurrentStudioVersionActionFailure(fileContent, context);
+  loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
+  loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
+  vm.runInContext(deleteVersionSource, context);
+
+  await context.deleteVersion('index_20260101_120000_Auto.html');
+
+  assert.equal(executorArgs[0], 'index_20260101_120000_Auto.html');
+  assert.deepEqual(executorArgs[1], {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    presentationTitle: 'Project Onboarding',
+    presentationCategory: 'General',
+    sessionToken: 17
+  });
+  assert.equal(delegatedArgs.createVersionRequestOptions, context.createCurrentStudioVersionRequestOptions);
+  assert.equal(
+    delegatedArgs.executeDeleteVersionRequest,
+    context.SlideNextStudioVersionActions.executeStudioDeleteVersionRequest
+  );
+  assert.equal(successOptions.refreshVersionEntries, context.loadVersions);
+});
+
 test('restoreVersion tolerates a missing versions dropdown after a successful restore', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const restoreVersionSource = extractFunctionSource(
