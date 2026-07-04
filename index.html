@@ -6810,6 +6810,21 @@
     }
 
     function createCurrentStudioPersistenceHandlerOptions(options = {}) {
+      const createStudioPersistenceHandlerOptionsBuilder = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptionsBuilder === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptionsBuilder
+        : null;
+      if (createStudioPersistenceHandlerOptionsBuilder) {
+        return createStudioPersistenceHandlerOptionsBuilder({
+          getPresentationUrl: () => currentPresentationUrl,
+          createSessionReaderOptions: createCurrentStudioSessionReaderOptions,
+          applyPersistedDeckState: applyCurrentStudioPersistedDeckState
+        })(options);
+      }
+
       const persistencePresentationUrl = typeof options.presentationUrl === 'string' && options.presentationUrl
         ? options.presentationUrl
         : currentPresentationUrl;

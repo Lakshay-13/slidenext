@@ -2047,6 +2047,47 @@
     };
   }
 
+  function createStudioPersistenceHandlerOptionsBuilder(options = {}) {
+    const getPresentationUrl = typeof options.getPresentationUrl === 'function'
+      ? options.getPresentationUrl
+      : () => normalizeString(options.presentationUrl);
+    const defaultCreateSessionReaderOptions = typeof options.createSessionReaderOptions === 'function'
+      ? options.createSessionReaderOptions
+      : (nextOptions = {}) => nextOptions;
+    const defaultApplyPersistedDeckState = typeof options.applyPersistedDeckState === 'function'
+      ? options.applyPersistedDeckState
+      : () => {};
+
+    return function createPersistenceHandlerOptions(nextOptions = {}) {
+      const createSessionReaderOptions = typeof nextOptions.createSessionReaderOptions === 'function'
+        ? nextOptions.createSessionReaderOptions
+        : defaultCreateSessionReaderOptions;
+      const applyPersistedDeckState = typeof nextOptions.applyPersistedDeckState === 'function'
+        ? nextOptions.applyPersistedDeckState
+        : defaultApplyPersistedDeckState;
+      const persistencePresentationUrl = typeof nextOptions.presentationUrl === 'string' && nextOptions.presentationUrl
+        ? nextOptions.presentationUrl
+        : getPresentationUrl();
+
+      return createSessionReaderOptions({
+        setPersistedHtml(nextHtml) {
+          applyPersistedDeckState({ cleanHtml: nextHtml });
+        },
+        setPersistedCanonicalDeck(nextCanonicalDeck) {
+          applyPersistedDeckState(
+            { canonicalDeck: nextCanonicalDeck },
+            { presentationUrl: persistencePresentationUrl }
+          );
+        },
+        setPersistedPlaybackState(nextPlaybackState) {
+          applyPersistedDeckState({ playbackState: nextPlaybackState });
+        },
+        onSuccess: nextOptions.onSuccess,
+        onFailure: nextOptions.onFailure
+      });
+    };
+  }
+
   function handleStudioPersistenceSuccess(context = {}, options = {}) {
     return runStudioPersistenceActionIfCurrent(context, options, (nextContext) => {
       if (nextContext.shouldUpdatePersistedHtml !== false && typeof options.setPersistedHtml === 'function') {
@@ -2174,6 +2215,7 @@
     createStudioPersistenceFailureHandler,
     createStudioPersistenceSuccessHandler,
     createStudioVersionPersistenceSuccessHandler,
+    createStudioPersistenceHandlerOptionsBuilder,
     handleStudioPersistenceSuccess,
     handleStudioVersionPersistenceSuccess,
     handleStudioPersistenceFailure

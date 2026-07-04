@@ -4087,6 +4087,70 @@ test('createStudioVersionPersistenceSuccessHandler reuses handler-option default
   ]);
 });
 
+test('createStudioPersistenceHandlerOptionsBuilder reuses session-reader defaults and persisted-state overrides', () => {
+  const calls = [];
+  const createPersistenceHandlerOptions = editorPersistence.createStudioPersistenceHandlerOptionsBuilder({
+    getPresentationUrl() {
+      calls.push(['getPresentationUrl']);
+      return '/presentations/default/index.html';
+    }
+  });
+
+  const handlerOptions = createPersistenceHandlerOptions({
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    onSuccess: 'success-sentinel',
+    onFailure: 'failure-sentinel',
+    createSessionReaderOptions(nextOptions = {}) {
+      calls.push(['createSessionReaderOptions', {
+        onSuccess: nextOptions.onSuccess,
+        onFailure: nextOptions.onFailure,
+        setPersistedHtml: typeof nextOptions.setPersistedHtml,
+        setPersistedCanonicalDeck: typeof nextOptions.setPersistedCanonicalDeck,
+        setPersistedPlaybackState: typeof nextOptions.setPersistedPlaybackState
+      }]);
+      return nextOptions;
+    },
+    applyPersistedDeckState(nextState, nextOptions = {}) {
+      calls.push(['applyPersistedDeckState', nextState, nextOptions]);
+    }
+  });
+
+  handlerOptions.setPersistedHtml('<html></html>');
+  handlerOptions.setPersistedCanonicalDeck({
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  });
+  handlerOptions.setPersistedPlaybackState(null);
+
+  assert.equal(handlerOptions.onSuccess, 'success-sentinel');
+  assert.equal(handlerOptions.onFailure, 'failure-sentinel');
+  assert.deepEqual(calls, [
+    ['createSessionReaderOptions', {
+      onSuccess: 'success-sentinel',
+      onFailure: 'failure-sentinel',
+      setPersistedHtml: 'function',
+      setPersistedCanonicalDeck: 'function',
+      setPersistedPlaybackState: 'function'
+    }],
+    ['applyPersistedDeckState', {
+      cleanHtml: '<html></html>'
+    }, {}],
+    ['applyPersistedDeckState', {
+      canonicalDeck: {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: []
+      }
+    }, {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    }],
+    ['applyPersistedDeckState', {
+      playbackState: null
+    }, {}]
+  ]);
+});
+
 test('runStudioPersistenceActionIfCurrent invokes callbacks only for the active deck session', () => {
   const context = editorPersistence.createStudioPersistenceActionContext(
     '/presentations/onboarding-presentation/index.html',

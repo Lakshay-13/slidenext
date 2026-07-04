@@ -611,6 +611,58 @@ test('isCurrentDeckStatePersisted reuses the shared persisted-save-request check
   assert.equal(delegatedArgs.isPersistedSaveRequest, context.SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest);
 });
 
+test('createCurrentStudioPersistenceHandlerOptions reuses the shared handler-options builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createCurrentStudioPersistenceHandlerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
+    '\n\n    function applyCurrentStudioPersistenceFailure('
+  );
+
+  let delegatedArgs = null;
+  const context = {
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    createCurrentStudioSessionReaderOptions() {},
+    applyCurrentStudioPersistedDeckState() {},
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      createStudioPersistenceHandlerOptionsBuilder(options = {}) {
+        delegatedArgs = options;
+        return (nextOptions = {}) => ({
+          presentationUrl: typeof nextOptions.presentationUrl === 'string' && nextOptions.presentationUrl
+            ? nextOptions.presentationUrl
+            : options.getPresentationUrl(),
+          createSessionReaderOptions: typeof options.createSessionReaderOptions,
+          applyPersistedDeckState: typeof options.applyPersistedDeckState,
+          onSuccess: nextOptions.onSuccess,
+          onFailure: nextOptions.onFailure
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createCurrentStudioPersistenceHandlerOptionsSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.createCurrentStudioPersistenceHandlerOptions({
+      presentationUrl: 'presentations/custom/index.html',
+      onSuccess: 'success-sentinel',
+      onFailure: 'failure-sentinel'
+    }))),
+    {
+      presentationUrl: 'presentations/custom/index.html',
+      createSessionReaderOptions: 'function',
+      applyPersistedDeckState: 'function',
+      onSuccess: 'success-sentinel',
+      onFailure: 'failure-sentinel'
+    }
+  );
+  assert.equal(delegatedArgs.getPresentationUrl(), 'presentations/onboarding-presentation/index.html');
+  assert.equal(delegatedArgs.createSessionReaderOptions, context.createCurrentStudioSessionReaderOptions);
+  assert.equal(delegatedArgs.applyPersistedDeckState, context.applyCurrentStudioPersistedDeckState);
+});
+
 test('resolveCurrentStudioPersistenceStateFromCapture reuses the shared capture-state resolver builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
