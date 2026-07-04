@@ -1079,6 +1079,56 @@ test('buildStudioPersistableDeckSanitizerOptions composes metadata cleanup, edit
   ]);
 });
 
+test('createStudioPersistableDeckSanitizerOptionsBuilder reuses builder defaults and call-time overrides', () => {
+  const calls = [];
+  const playbackState = {
+    activeSlideIds: ['slide-2']
+  };
+  const buildPersistableDeckSanitizerOptions = editorPersistence.createStudioPersistableDeckSanitizerOptionsBuilder({
+    resolveMetadataPersistenceOptions() {
+      calls.push(['defaultResolveMetadataPersistenceOptions']);
+      return {
+        emptyContainerIds: ['pixelMatrix']
+      };
+    },
+    getDeckSanitizerOptions() {
+      calls.push(['defaultGetDeckSanitizerOptions']);
+      return {
+        chromeNodeIds: ['editorSelectionOverlay'],
+        transientClassNames: ['revealed'],
+        editorElementIdAttr: 'data-editor-id',
+        editorSlideIdAttr: 'data-slide-id'
+      };
+    }
+  });
+
+  assert.deepEqual(
+    buildPersistableDeckSanitizerOptions(playbackState, {
+      resolveMetadataPersistenceOptions() {
+        calls.push(['overrideResolveMetadataPersistenceOptions']);
+        return {
+          emptyContainerIds: ['chartRoot']
+        };
+      }
+    }),
+    {
+      emptyContainerIds: ['chartRoot'],
+      editorChromeNodeIds: ['editorSelectionOverlay'],
+      editorTransientClasses: ['revealed'],
+      editorElementIdAttr: 'data-editor-id',
+      editorSlideIdAttr: 'data-slide-id',
+      persistedDeckPlaybackState: {
+        activeSlideIds: ['slide-2']
+      }
+    }
+  );
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'defaultGetDeckSanitizerOptions',
+    'overrideResolveMetadataPersistenceOptions'
+  ]);
+});
+
 test('sanitizeStudioReusablePersistedHtml sanitizes reusable persisted html through the shared deck builder wrapper', () => {
   const playbackState = {
     activeSlideIds: ['slide-2']

@@ -646,6 +646,29 @@
     };
   }
 
+  function createStudioPersistableDeckSanitizerOptionsBuilder(options = {}) {
+    const resolveMetadataPersistenceOptions = typeof options.resolveMetadataPersistenceOptions === 'function'
+      ? options.resolveMetadataPersistenceOptions
+      : () => ({});
+    const getDeckSanitizerOptions = typeof options.getDeckSanitizerOptions === 'function'
+      ? options.getDeckSanitizerOptions
+      : () => ({});
+    const buildPersistableDeckSanitizerOptions = typeof options.buildPersistableDeckSanitizerOptions === 'function'
+      ? options.buildPersistableDeckSanitizerOptions
+      : buildStudioPersistableDeckSanitizerOptions;
+
+    return function buildSanitizerOptions(playbackState = null, nextOptions = {}) {
+      return buildPersistableDeckSanitizerOptions(playbackState, {
+        resolveMetadataPersistenceOptions: typeof nextOptions.resolveMetadataPersistenceOptions === 'function'
+          ? nextOptions.resolveMetadataPersistenceOptions
+          : resolveMetadataPersistenceOptions,
+        getDeckSanitizerOptions: typeof nextOptions.getDeckSanitizerOptions === 'function'
+          ? nextOptions.getDeckSanitizerOptions
+          : getDeckSanitizerOptions
+      });
+    };
+  }
+
   function sanitizeStudioReusablePersistedHtml(persistedHtml, options = {}) {
     const nextPersistedHtml = normalizeString(persistedHtml);
     const buildPersistableDeckHtml = typeof options.buildPersistableDeckHtml === 'function'
@@ -1690,6 +1713,7 @@
     createStudioVersionPersistenceActionContext,
     resolveStudioSaveRequestDeckState,
     buildStudioPersistableDeckSanitizerOptions,
+    createStudioPersistableDeckSanitizerOptionsBuilder,
     sanitizeStudioReusablePersistedHtml,
     buildStudioPersistableDeckHtmlWithoutDocument,
     buildStudioPersistableDeckHtmlFromDocument,

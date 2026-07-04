@@ -5970,6 +5970,26 @@
     }
 
     function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {
+      const createStudioPersistableDeckSanitizerOptionsBuilder = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistableDeckSanitizerOptionsBuilder === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistableDeckSanitizerOptionsBuilder
+        : null;
+      if (createStudioPersistableDeckSanitizerOptionsBuilder) {
+        return createStudioPersistableDeckSanitizerOptionsBuilder({
+          resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
+            ? options.resolveMetadataPersistenceOptions
+            : () => ({}),
+          getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
+            ? options.getDeckSanitizerOptions
+            : typeof getEditorDeckSanitizerOptions === 'function'
+              ? getEditorDeckSanitizerOptions
+              : () => ({})
+        })(playbackState, options);
+      }
+
       const buildStudioPersistableDeckSanitizerOptions = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence
