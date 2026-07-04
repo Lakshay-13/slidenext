@@ -6354,6 +6354,20 @@
     function resetStudioSaveButtonState() {
       setStudioSaveButtonState('idle');
     }
+
+    function resolveCurrentStudioVersionCheckpointPersistenceState(
+      doc = getIframeDoc(),
+      presentationUrl = currentPresentationUrl,
+      sessionToken = studioEditorSessionToken
+    ) {
+      return resolveCurrentStudioPersistenceStateFromCapture(doc, {
+        presentationUrl,
+        resolvePersistenceStateFromCapture: SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture,
+        persistenceOptions: {
+          sessionToken
+        }
+      });
+    }
     
     async function submitSaveVersion() {
       const input = document.getElementById('versionCheckpointName');
@@ -6366,13 +6380,11 @@
       const scheduledPresentationUrl = currentPresentationUrl;
       const scheduledSessionToken = studioEditorSessionToken;
       const iframeDoc = getIframeDoc();
-      const versionCheckpointPersistenceState = resolveCurrentStudioPersistenceStateFromCapture(iframeDoc, {
-        presentationUrl: scheduledPresentationUrl,
-        resolvePersistenceStateFromCapture: SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture,
-        persistenceOptions: {
-          sessionToken: scheduledSessionToken
-        }
-      });
+      const versionCheckpointPersistenceState = resolveCurrentStudioVersionCheckpointPersistenceState(
+        iframeDoc,
+        scheduledPresentationUrl,
+        scheduledSessionToken
+      );
       if (!versionCheckpointPersistenceState) {
         alert('Save version failed: editor content is unavailable.');
         return;
@@ -6447,13 +6459,11 @@
         sessionToken
       })) return;
       const iframeDoc = getIframeDoc();
-      const versionCheckpointPersistenceState = resolveCurrentStudioPersistenceStateFromCapture(iframeDoc, {
+      const versionCheckpointPersistenceState = resolveCurrentStudioVersionCheckpointPersistenceState(
+        iframeDoc,
         presentationUrl,
-        resolvePersistenceStateFromCapture: SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture,
-        persistenceOptions: {
-          sessionToken
-        }
-      });
+        sessionToken
+      );
       if (!versionCheckpointPersistenceState) return;
 
       if (SlideNextStudioEditorPersistence.isStudioVersionCheckpointSavePersisted(
