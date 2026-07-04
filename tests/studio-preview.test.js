@@ -397,6 +397,46 @@ test('openStudioSourceView skips lazy source generation when the source view but
   assert.equal(resolveSourceHtmlCalls, 0);
 });
 
+test('openStudioSourceView prefers explicit source view readiness over the toolbar button disabled state', async () => {
+  const modalEl = { classList: createClassList(['hidden', 'opacity-0']) };
+  const contentEl = { classList: createClassList(['scale-95']) };
+  const textareaEl = {
+    value: '',
+    scrollTop: 8
+  };
+  const documentStub = {
+    getElementById(id) {
+      switch (id) {
+        case 'openSourceViewBtn':
+          return { disabled: true };
+        case 'sourceViewModal':
+          return modalEl;
+        case 'sourceViewModalContent':
+          return contentEl;
+        case 'sourceViewContent':
+          return textareaEl;
+        default:
+          return null;
+      }
+    }
+  };
+
+  const didOpen = preview.openStudioSourceView({
+    canOpenSourceView: true,
+    document: documentStub,
+    sourceHtml: '<html>source</html>'
+  });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  assert.equal(didOpen, true);
+  assert.equal(textareaEl.value, '<html>source</html>');
+  assert.equal(textareaEl.scrollTop, 0);
+  assert.equal(modalEl.classList.contains('hidden'), false);
+  assert.equal(modalEl.classList.contains('opacity-0'), false);
+  assert.equal(contentEl.classList.contains('scale-95'), false);
+  assert.equal(contentEl.classList.contains('scale-100'), true);
+});
+
 test('openStudioSourceView resolves source modal chrome from the document', async () => {
   const modalEl = { classList: createClassList(['hidden', 'opacity-0']) };
   const contentEl = { classList: createClassList(['scale-95']) };

@@ -1865,6 +1865,7 @@
 
     function openSourceViewModal() {
       SlideNextStudioPreview.openStudioSourceView({
+        canOpenSourceView: resolveCurrentStudioDeckReadyActionState().canUseDeckActions,
         document,
         resolveSourceHtml: () => buildEditorSourceHtml()
       });

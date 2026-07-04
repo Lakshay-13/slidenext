@@ -288,8 +288,12 @@
 
   function openStudioSourceView(options = {}) {
     const documentRef = resolvePreviewDocument(options);
+    const hasExplicitOpenPermission = typeof options.canOpenSourceView === 'boolean';
+    if (hasExplicitOpenPermission && !options.canOpenSourceView) {
+      return false;
+    }
     const sourceViewBtnEl = options.sourceViewBtnEl || resolvePreviewDocumentElement(documentRef, 'openSourceViewBtn');
-    if (sourceViewBtnEl && sourceViewBtnEl.disabled) {
+    if (!hasExplicitOpenPermission && sourceViewBtnEl && sourceViewBtnEl.disabled) {
       return false;
     }
 

@@ -88,6 +88,11 @@ test('openSourceViewModal delegates source view opening to the shared preview he
   let buildEditorSourceHtmlCalls = 0;
   const previewOpenCalls = [];
   const context = {
+    resolveCurrentStudioDeckReadyActionState() {
+      return {
+        canUseDeckActions: false
+      };
+    },
     SlideNextStudioPreview: {
       openStudioSourceView(options = {}) {
         previewOpenCalls.push(options);
@@ -122,6 +127,7 @@ test('openSourceViewModal delegates source view opening to the shared preview he
   context.openSourceViewModal();
 
   assert.equal(previewOpenCalls.length, 1);
+  assert.equal(previewOpenCalls[0].canOpenSourceView, false);
   assert.equal(previewOpenCalls[0].document, context.document);
   assert.equal(typeof previewOpenCalls[0].resolveSourceHtml, 'function');
   assert.equal(buildEditorSourceHtmlCalls, 0);
