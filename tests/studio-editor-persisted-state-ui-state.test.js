@@ -495,6 +495,56 @@ test('applyCurrentStudioPersistedDeckState updates persisted baselines together 
   assert.deepEqual(metadataSyncCalls, [[rawCanonicalDeck, '/presentations/onboarding-presentation/index.html']]);
 });
 
+test('applyCurrentStudioPersistedDeckState reuses the shared persisted-state applier builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistedDeckStateApplier(options = {}) {
+        calls.push({
+          currentPresentationUrl: options.currentPresentationUrl,
+          hasUpdatePersistedDeckState: typeof options.updatePersistedDeckState === 'function',
+          hasSetCurrentPresentationCanonicalDeck: typeof options.setCurrentPresentationCanonicalDeck === 'function'
+        });
+        return (nextState, nextOptions = {}) => ({
+          nextState,
+          nextOptions
+        });
+      }
+    },
+    updateEditorPersistedDeckState() {
+      throw new Error('updateEditorPersistedDeckState should be delegated through the shared builder');
+    },
+    setCurrentPresentationCanonicalDeck() {
+      throw new Error('setCurrentPresentationCanonicalDeck should be delegated through the shared builder');
+    }
+  };
+
+  vm.createContext(context);
+  loadApplyCurrentStudioPersistedDeckState(fileContent, context);
+
+  const nextState = {
+    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] }
+  };
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.applyCurrentStudioPersistedDeckState(nextState, {
+      presentationUrl: '/presentations/custom/index.html'
+    }))),
+    {
+      nextState,
+      nextOptions: {
+        presentationUrl: '/presentations/custom/index.html'
+      }
+    }
+  );
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    hasUpdatePersistedDeckState: true,
+    hasSetCurrentPresentationCanonicalDeck: true
+  }]);
+});
+
 test('applyCurrentStudioPersistedDeckState reuses the shared persisted-state helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];

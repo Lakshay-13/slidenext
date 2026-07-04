@@ -3174,6 +3174,21 @@
     }
 
     function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {
+      const createStudioPersistedDeckStateApplier = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateApplier === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateApplier
+        : null;
+      if (createStudioPersistedDeckStateApplier) {
+        return createStudioPersistedDeckStateApplier({
+          currentPresentationUrl,
+          updatePersistedDeckState: updateEditorPersistedDeckState,
+          setCurrentPresentationCanonicalDeck
+        })(nextState, options);
+      }
+
       const applyStudioPersistedDeckState = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence

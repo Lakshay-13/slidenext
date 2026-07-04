@@ -254,6 +254,34 @@ test('applyStudioPersistedDeckState updates persisted state and syncs canonical 
   ]);
 });
 
+test('createStudioPersistedDeckStateApplier delegates persisted-state application and preserves call-time overrides', () => {
+  const calls = [];
+  const nextState = {
+    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] }
+  };
+  const applyPersistedDeckState = editorPersistence.createStudioPersistedDeckStateApplier({
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    updatePersistedDeckState(state) {
+      calls.push(['updatePersistedDeckState', state]);
+    },
+    setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl) {
+      calls.push(['setCurrentPresentationCanonicalDeck', canonicalDeck, presentationUrl]);
+    }
+  });
+
+  assert.equal(
+    applyPersistedDeckState(nextState, {
+      presentationUrl: '/presentations/custom/index.html'
+    }),
+    nextState
+  );
+
+  assert.deepEqual(calls, [
+    ['updatePersistedDeckState', nextState],
+    ['setCurrentPresentationCanonicalDeck', nextState.canonicalDeck, '/presentations/custom/index.html']
+  ]);
+});
+
 test('syncStudioPresentationMetadataPersistedCanonicalDeck updates the persisted canonical baseline and refreshes fallback chrome when the iframe is unavailable', () => {
   const calls = [];
   const metadata = {

@@ -117,6 +117,15 @@
     return nextState;
   }
 
+  function createStudioPersistedDeckStateApplier(options = {}) {
+    return function applyPersistedDeckState(nextState = {}, nextOptions = {}) {
+      return applyStudioPersistedDeckState(nextState, {
+        ...options,
+        ...nextOptions
+      });
+    };
+  }
+
   function syncStudioPresentationMetadataPersistedCanonicalDeck(metadata = null, options = {}) {
     if (!metadata) {
       return null;
@@ -1583,6 +1592,7 @@
     createStudioPersistedDeckStateUpdater,
     resolveStudioPersistedDeckStateSnapshotWithContent,
     applyStudioPersistedDeckState,
+    createStudioPersistedDeckStateApplier,
     syncStudioPresentationMetadataPersistedCanonicalDeck,
     updateStudioPersistedDeckState,
     captureStudioPersistedDeckPlaybackState,
