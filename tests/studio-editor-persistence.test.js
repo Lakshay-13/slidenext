@@ -3697,6 +3697,57 @@ test('isStudioPersistedSaveRequest reuses persisted deck-state baselines for htm
   );
 });
 
+test('createStudioPersistedSaveRequestChecker reuses current persisted state and call-time overrides', () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+  const persistedDeckState = {
+    cleanHtml: '<html></html>',
+    canonicalDeck
+  };
+  const saveRequestBody = {
+    htmlContent: '<html></html>',
+    canonicalDeck
+  };
+  const calls = [];
+  const isPersistedSaveRequest = editorPersistence.createStudioPersistedSaveRequestChecker({
+    readPersistedDeckState() {
+      calls.push(['defaultReadPersistedDeckState']);
+      return {
+        cleanHtml: '<html>default</html>'
+      };
+    }
+  });
+
+  assert.equal(
+    isPersistedSaveRequest(
+      saveRequestBody,
+      '<html></html>',
+      {
+        readPersistedDeckState() {
+          calls.push(['overrideReadPersistedDeckState']);
+          return persistedDeckState;
+        },
+        isPersistedSaveRequest(nextSaveRequestBody, nextPersistedDeckState, nextCleanHtml) {
+          calls.push(['isPersistedSaveRequest', nextSaveRequestBody, nextPersistedDeckState, nextCleanHtml]);
+          return true;
+        }
+      }
+    ),
+    true
+  );
+
+  assert.deepEqual(calls, [
+    ['overrideReadPersistedDeckState'],
+    ['isPersistedSaveRequest', saveRequestBody, persistedDeckState, '<html></html>']
+  ]);
+});
+
 test('isStudioPersistenceTaskStale rejects missing or stale deck/session combinations', () => {
   assert.equal(
     editorPersistence.isStudioPersistenceTaskStale('', {

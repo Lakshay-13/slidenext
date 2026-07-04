@@ -1798,6 +1798,34 @@
     );
   }
 
+  function createStudioPersistedSaveRequestChecker(options = {}) {
+    const readPersistedDeckState = typeof options.readPersistedDeckState === 'function'
+      ? options.readPersistedDeckState
+      : () => options.persistedDeckState || {};
+    const isPersistedSaveRequest = typeof options.isPersistedSaveRequest === 'function'
+      ? options.isPersistedSaveRequest
+      : isStudioPersistedSaveRequest;
+
+    return function isPersistedSaveRequestWithCurrentState(
+      saveRequestBody = null,
+      cleanHtml = saveRequestBody && saveRequestBody.htmlContent,
+      nextOptions = {}
+    ) {
+      const nextPersistedDeckState = typeof nextOptions.readPersistedDeckState === 'function'
+        ? nextOptions.readPersistedDeckState()
+        : readPersistedDeckState();
+      const checkPersistedSaveRequest = typeof nextOptions.isPersistedSaveRequest === 'function'
+        ? nextOptions.isPersistedSaveRequest
+        : isPersistedSaveRequest;
+      return checkPersistedSaveRequest(
+        saveRequestBody,
+        nextPersistedDeckState,
+        cleanHtml,
+        nextOptions
+      );
+    };
+  }
+
   function isStudioPersistenceTaskStale(presentationUrl = '', options = {}) {
     const requestedPresentationUrl = normalizeString(presentationUrl);
     const currentPresentationUrl = normalizeString(
@@ -1997,6 +2025,7 @@
     isStudioPersistedState,
     isStudioPersistedDeckHtml,
     isStudioPersistedSaveRequest,
+    createStudioPersistedSaveRequestChecker,
     isStudioPersistenceTaskStale,
     clearStudioPersistenceTimers,
     isStudioPersistenceActionCurrent,

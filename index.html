@@ -6762,6 +6762,26 @@
     }
 
     function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {
+      const createStudioPersistedSaveRequestChecker = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistedSaveRequestChecker === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistedSaveRequestChecker
+        : null;
+      if (createStudioPersistedSaveRequestChecker) {
+        return createStudioPersistedSaveRequestChecker({
+          readPersistedDeckState: getCurrentEditorPersistedDeckState,
+          isPersistedSaveRequest: (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+            && typeof SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest === 'function'
+          )
+            ? SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest
+            : null
+        })(saveRequestBody, cleanHtml);
+      }
+
       return SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest(
         saveRequestBody,
         getCurrentEditorPersistedDeckState(),

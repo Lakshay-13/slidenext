@@ -501,6 +501,65 @@ test('buildEditorSaveRequestBody reuses the shared save-request body builder whe
   assert.equal(delegatedArgs.buildPersistableDeckHtml, context.buildPersistableDeckHtml);
 });
 
+test('isCurrentDeckStatePersisted reuses the shared persisted-save-request checker when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const isCurrentDeckStatePersistedSource = extractFunctionSource(
+    fileContent,
+    'function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {',
+    '\n\n    function createCurrentStudioPersistenceHandlerOptions(options = {}) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  let delegatedArgs = null;
+  const context = {
+    lastPersistedDeckHtml: '<html></html>',
+    lastPersistedCanonicalDeck: canonicalDeck,
+    persistedDeckPlaybackState: null,
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      createStudioPersistedSaveRequestChecker(options = {}) {
+        delegatedArgs = options;
+        return (saveRequestBody, nextCleanHtml) => ({
+          saveRequestBody,
+          cleanHtml: nextCleanHtml,
+          persistedDeckState: options.readPersistedDeckState(),
+          isPersistedSaveRequest: typeof options.isPersistedSaveRequest
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  vm.runInContext(isCurrentDeckStatePersistedSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.isCurrentDeckStatePersisted({
+      htmlContent: '<html></html>',
+      canonicalDeck
+    }))),
+    {
+      saveRequestBody: {
+        htmlContent: '<html></html>',
+        canonicalDeck
+      },
+      cleanHtml: '<html></html>',
+      persistedDeckState: {
+        cleanHtml: '<html></html>',
+        canonicalDeck,
+        playbackState: null
+      },
+      isPersistedSaveRequest: 'function'
+    }
+  );
+  assert.equal(delegatedArgs.readPersistedDeckState, context.getCurrentEditorPersistedDeckState);
+  assert.equal(delegatedArgs.isPersistedSaveRequest, context.SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest);
+});
+
 test('resolveCurrentStudioPersistenceStateFromCapture reuses the shared capture-state resolver builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
