@@ -2152,7 +2152,7 @@
         observeDeckActiveSlideState,
         captureInitialHistoryState: () => {
           saveHistoryState(false);
-          applyCurrentStudioPersistenceSuccess(
+          SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
             SlideNextStudioEditorPersistence.createStudioPersistedDeckStateActionContext(
               captureEditorPersistableDeckState(iframeDoc),
               currentPresentationUrl,
@@ -2160,9 +2160,9 @@
                 sessionToken: studioEditorSessionToken
               }
             ),
-            {
+            createCurrentStudioPersistenceHandlerOptions({
               presentationUrl: currentPresentationUrl
-            }
+            })
           );
         }
       });

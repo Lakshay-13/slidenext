@@ -705,16 +705,17 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
   };
   let capturedActionContextArgs = null;
   let delegatedArgs = null;
+  let capturedHandlerOptionsArgs = null;
   const calls = [];
   let buildEditorCanonicalDeckCalls = 0;
 
   const context = {
-    applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
-      delegatedArgs = {
-        persistenceContext,
-        options
+    createCurrentStudioPersistenceHandlerOptions(options = {}) {
+      capturedHandlerOptionsArgs = options;
+      return {
+        marker: 'persistence-handler-options',
+        ...options
       };
-      return 'applied';
     },
     getIframeDoc() {
       return iframeDoc;
@@ -782,6 +783,13 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     SlideNextStudioEditorPersistence: {
       ...editorPersistence,
+      handleStudioPersistenceSuccess(persistenceContext, options = {}) {
+        delegatedArgs = {
+          persistenceContext,
+          options
+        };
+        return 'applied';
+      },
       createStudioPersistedDeckStateActionContext(nextPersistedDeckState, presentationUrl, options = {}) {
         capturedActionContextArgs = {
           nextPersistedDeckState,
@@ -829,6 +837,9 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
       sessionToken: 7
     }
   });
+  assert.deepEqual(JSON.parse(JSON.stringify(capturedHandlerOptionsArgs)), {
+    presentationUrl: '/presentations/onboarding-presentation/index.html'
+  });
   assert.deepEqual(JSON.parse(JSON.stringify(delegatedArgs)), {
     persistenceContext: {
       presentationUrl: '/presentations/onboarding-presentation/index.html',
@@ -838,6 +849,7 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
       sessionToken: 7
     },
     options: {
+      marker: 'persistence-handler-options',
       presentationUrl: '/presentations/onboarding-presentation/index.html'
     }
   });
