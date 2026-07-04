@@ -5610,6 +5610,14 @@
       );
     }
 
+    function runCurrentStudioPersistenceActionIfCurrent(persistenceContext, action) {
+      return SlideNextStudioEditorPersistence.runStudioPersistenceActionIfCurrent(
+        persistenceContext,
+        createCurrentStudioSessionStateReaders(),
+        action
+      );
+    }
+
     function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {
       const nextOptions = options && typeof options === 'object'
         ? options
@@ -6401,9 +6409,8 @@
           }
         );
       } finally {
-        SlideNextStudioEditorPersistence.runStudioPersistenceActionIfCurrent(
+        runCurrentStudioPersistenceActionIfCurrent(
           versionCheckpointPersistenceState.persistenceContext,
-          createCurrentStudioSessionStateReaders(),
           () => {
             resetStudioSaveButtonState();
           }

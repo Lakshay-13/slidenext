@@ -239,6 +239,61 @@ test('applyCurrentStudioVersionPersistenceSuccess delegates through the shared v
   assert.equal(successHelperArgs.options.getCurrentSessionToken(), 12);
 });
 
+test('runCurrentStudioPersistenceActionIfCurrent delegates through the shared guard with live session readers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let readerCallCount = 0;
+  let capturedReaders = null;
+  let delegatedArgs = null;
+  let actionCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      runStudioPersistenceActionIfCurrent(persistenceContext, sessionOptions, action) {
+        delegatedArgs = {
+          persistenceContext,
+          sessionOptions,
+          action
+        };
+        action();
+        return 'handled';
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      readerCallCount += 1;
+      capturedReaders = {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+      return capturedReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 14
+  };
+
+  vm.createContext(context);
+  loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
+
+  const persistenceContext = {
+    presentationUrl: '/presentations/onboarding-presentation/index.html'
+  };
+  const result = context.runCurrentStudioPersistenceActionIfCurrent(persistenceContext, () => {
+    actionCalls += 1;
+  });
+
+  assert.equal(result, 'handled');
+  assert.equal(actionCalls, 1);
+  assert.equal(readerCallCount, 1);
+  assert.equal(delegatedArgs.persistenceContext, persistenceContext);
+  assert.equal(delegatedArgs.sessionOptions.getCurrentPresentationUrl, capturedReaders.getCurrentPresentationUrl);
+  assert.equal(delegatedArgs.sessionOptions.getCurrentSessionToken, capturedReaders.getCurrentSessionToken);
+  assert.equal(delegatedArgs.sessionOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(delegatedArgs.sessionOptions.getCurrentSessionToken(), 14);
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 15;
+  assert.equal(delegatedArgs.sessionOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(delegatedArgs.sessionOptions.getCurrentSessionToken(), 15);
+});
+
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
 }
@@ -249,6 +304,15 @@ function loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, c
     fileContent,
     'async function executeCurrentStudioVersionCheckpointSaveWithFailure(',
     '\n\n    // 6. AutoSave debouncing pipeline'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function runCurrentStudioPersistenceActionIfCurrent(persistenceContext, action) {',
+    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -715,6 +779,7 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
+  loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -826,6 +891,7 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
+  loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -947,6 +1013,7 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
+  loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -1068,6 +1135,7 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
+  loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   const savePromise = context.submitSaveVersion();
@@ -1452,6 +1520,7 @@ test('submitSaveVersion reuses the local version checkpoint failure-aware helper
   };
 
   vm.createContext(context);
+  loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -1579,6 +1648,7 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
 
   vm.createContext(context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
+  loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
@@ -1718,6 +1788,7 @@ test('submitSaveVersion reports network save errors through the shared persisten
   };
 
   vm.createContext(context);
+  loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
 
   await context.submitSaveVersion();
