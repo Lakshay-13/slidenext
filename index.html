@@ -4394,13 +4394,28 @@
     }
 
     function updateClipboardActionState(doc = getIframeDoc()) {
-      const clipboardActionState = buildClipboardSelectionMutationPlan(doc);
-      const copyBtn = document.getElementById('copySelectionBtn');
-      const pasteBtn = document.getElementById('pasteClipboardBtn');
-      const slidePasteBtn = document.getElementById('slidePasteClipboardBtn');
-      if (copyBtn) copyBtn.disabled = !clipboardActionState.canCopy;
-      if (pasteBtn) pasteBtn.disabled = !clipboardActionState.canPaste;
-      if (slidePasteBtn) slidePasteBtn.disabled = !clipboardActionState.canPaste;
+      const buildStudioClipboardToolbarState = (
+        SlideNextStudioEditorClipboard
+        && typeof SlideNextStudioEditorClipboard.buildStudioClipboardToolbarState === 'function'
+      )
+        ? SlideNextStudioEditorClipboard.buildStudioClipboardToolbarState
+        : null;
+      const clipboardActionState = buildStudioClipboardToolbarState
+        ? buildStudioClipboardToolbarState(selectedElements, editorClipboard, {
+          isLocked: isElementLocked,
+          canMutateDeck: () => !!getActiveSlide(doc)
+        })
+        : buildClipboardSelectionMutationPlan(doc);
+      const buttonStates = clipboardActionState.buttonStates || {
+        copySelectionBtn: clipboardActionState.canCopy,
+        pasteClipboardBtn: clipboardActionState.canPaste,
+        slidePasteClipboardBtn: clipboardActionState.canPaste
+      };
+
+      Object.entries(buttonStates).forEach(([id, canRun]) => {
+        const btn = document.getElementById(id);
+        if (btn) btn.disabled = !canRun;
+      });
     }
 
     function sanitizeDuplicatedSubtree(root) {

@@ -70,6 +70,19 @@
     return buildStudioClipboardMutationPlan(elements, clipboard, options);
   }
 
+  function buildStudioClipboardToolbarState(elements = [], clipboard = null, options = {}) {
+    const actionState = buildStudioClipboardActionState(elements, clipboard, options);
+
+    return {
+      ...actionState,
+      buttonStates: {
+        copySelectionBtn: actionState.canCopy,
+        pasteClipboardBtn: actionState.canPaste,
+        slidePasteClipboardBtn: actionState.canPaste
+      }
+    };
+  }
+
   function buildStudioClipboardMutationPlan(elements = [], clipboard = null, options = {}) {
     const selection = getStudioClipboardSelection(elements, options);
     const isLocked = typeof options.isLocked === 'function'
@@ -279,6 +292,7 @@
     getStudioClipboardSelection,
     canStudioCopySelection,
     buildStudioClipboardActionState,
+    buildStudioClipboardToolbarState,
     buildStudioClipboardMutationPlan,
     buildStudioClipboardPayloadItem,
     buildStudioClipboardPayloadItems,

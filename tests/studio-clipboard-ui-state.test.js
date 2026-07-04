@@ -251,6 +251,74 @@ test('updateClipboardActionState enables paste on a live slide and enables copy 
   });
 });
 
+test('updateClipboardActionState reuses the shared clipboard toolbar helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateClipboardActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateClipboardActionState(doc = getIframeDoc()) {',
+    '\n\n    function sanitizeDuplicatedSubtree(root) {'
+  );
+
+  const controls = createControls();
+  const calls = [];
+  const context = {
+    selectedElements: [{ id: 'selected' }],
+    editorClipboard: { items: [{ id: 'clipboard-item' }], pasteCount: 0 },
+    isElementLocked() {
+      return false;
+    },
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardMutationPlan() {
+        throw new Error('buildStudioClipboardMutationPlan should not be used when shared toolbar helper exists');
+      },
+      buildStudioClipboardToolbarState(elements, clipboard, options = {}) {
+        calls.push({
+          elements,
+          clipboard,
+          hasCanMutateDeck: typeof options.canMutateDeck === 'function',
+          canMutateDeck: options.canMutateDeck()
+        });
+        return {
+          buttonStates: {
+            copySelectionBtn: true,
+            pasteClipboardBtn: false,
+            slidePasteClipboardBtn: false
+          }
+        };
+      }
+    },
+    document: {
+      getElementById(id) {
+        return controls[id] || null;
+      }
+    },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateClipboardActionStateSource, context);
+
+  context.updateClipboardActionState({
+    activeSlide: {}
+  });
+  assert.deepEqual(getControlStates(controls), {
+    copySelectionBtn: false,
+    pasteClipboardBtn: true,
+    slidePasteClipboardBtn: true
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    elements: [{ id: 'selected' }],
+    clipboard: { items: [{ id: 'clipboard-item' }], pasteCount: 0 },
+    hasCanMutateDeck: true,
+    canMutateDeck: true
+  }]);
+});
+
 test('copySelectedElements returns false and refreshes clipboard controls when payload build yields no items', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);

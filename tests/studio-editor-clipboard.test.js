@@ -173,6 +173,26 @@ test('buildStudioClipboardActionState combines lock-aware copy state with clipbo
   });
 });
 
+test('buildStudioClipboardToolbarState derives clipboard button states from the shared action state', () => {
+  assert.deepEqual(clipboardState.buildStudioClipboardToolbarState(
+    [{ id: 1 }],
+    { items: [{ id: 'copy' }] },
+    {
+      isLocked: () => false
+    }
+  ), {
+    selection: [{ id: 1 }],
+    canCopy: true,
+    canDuplicate: true,
+    canPaste: true,
+    buttonStates: {
+      copySelectionBtn: true,
+      pasteClipboardBtn: true,
+      slidePasteClipboardBtn: true
+    }
+  });
+});
+
 test('buildStudioClipboardMutationPlan reuses the live unlocked selection for copy and duplicate actions', () => {
   const stale = { id: 'stale', isConnected: false, locked: false };
   const live = { id: 'live', isConnected: true, locked: false };
