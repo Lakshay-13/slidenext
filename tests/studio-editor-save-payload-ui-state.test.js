@@ -559,6 +559,78 @@ test('resolveEditorPersistedDeckStateWithContent reuses the shared persisted-sta
   assert.equal(delegatedArgs.resolveWithContent, context.getCurrentEditorPersistedDeckState.resolveWithContent);
 });
 
+test('resolveEditorCapturedPersistableDeckState reuses the shared captured-state resolver builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorCapturedPersistableDeckStateSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {',
+    '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
+  );
+
+  let delegatedArgs = null;
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1']
+  };
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      createStudioCapturedPersistableDeckStateResolver(options = {}) {
+        delegatedArgs = options;
+        return (nextCleanHtml, nextOptions = {}) => ({
+          cleanHtml: nextCleanHtml,
+          canonicalDeck: Object.prototype.hasOwnProperty.call(nextOptions, 'canonicalDeck')
+            ? nextOptions.canonicalDeck
+            : options.buildCanonicalDeck(),
+          playbackState: Object.prototype.hasOwnProperty.call(nextOptions, 'playbackState')
+            ? nextOptions.playbackState
+            : (
+                typeof nextOptions.resolvePlaybackState === 'function'
+                  ? nextOptions.resolvePlaybackState(nextOptions.canonicalDeck || null)
+                  : options.resolvePlaybackState(nextOptions.canonicalDeck || null)
+              )
+        });
+      },
+      resolveStudioCapturedPersistableDeckState() {
+        throw new Error('captured persistable deck state resolution should be delegated through the shared resolver builder');
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorCapturedPersistableDeckStateSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveEditorCapturedPersistableDeckState('<html>persisted</html>', {
+      canonicalDeck,
+      resolvePlaybackState(nextCanonicalDeck) {
+        assert.equal(nextCanonicalDeck, canonicalDeck);
+        return playbackState;
+      }
+    }))),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck,
+      playbackState: {
+        activeSlideIds: ['slide-1']
+      }
+    }
+  );
+  assert.equal(delegatedArgs.resolveCapturedPersistableDeckState, context.SlideNextStudioEditorPersistence.resolveStudioCapturedPersistableDeckState);
+  assert.equal(typeof delegatedArgs.buildCanonicalDeck, 'function');
+  assert.equal(delegatedArgs.buildCanonicalDeck(), null);
+  assert.equal(typeof delegatedArgs.resolvePlaybackState, 'function');
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(delegatedArgs.resolvePlaybackState(canonicalDeck))),
+    {
+      activeSlideIds: ['slide-1']
+    }
+  );
+});
+
 test('buildPersistableDeckHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(

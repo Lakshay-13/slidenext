@@ -6346,6 +6346,33 @@
       const nextCleanHtml = typeof cleanHtml === 'string'
         ? cleanHtml
         : '';
+      const createStudioCapturedPersistableDeckStateResolver = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioCapturedPersistableDeckStateResolver === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioCapturedPersistableDeckStateResolver
+        : null;
+      if (createStudioCapturedPersistableDeckStateResolver) {
+        return createStudioCapturedPersistableDeckStateResolver({
+          buildCanonicalDeck: typeof options.buildCanonicalDeck === 'function'
+            ? options.buildCanonicalDeck
+            : () => null,
+          resolvePlaybackState: typeof options.resolvePlaybackState === 'function'
+            ? options.resolvePlaybackState
+            : () => null,
+          resolveCapturedPersistableDeckState: typeof options.resolveStudioCapturedPersistableDeckState === 'function'
+            ? options.resolveStudioCapturedPersistableDeckState
+            : (
+                typeof SlideNextStudioEditorPersistence !== 'undefined'
+                && SlideNextStudioEditorPersistence
+                && typeof SlideNextStudioEditorPersistence.resolveStudioCapturedPersistableDeckState === 'function'
+              )
+              ? SlideNextStudioEditorPersistence.resolveStudioCapturedPersistableDeckState
+              : null
+        })(nextCleanHtml, options);
+      }
+
       const resolvedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
         ? options.canonicalDeck
         : null;

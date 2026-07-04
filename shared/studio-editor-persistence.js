@@ -337,6 +337,35 @@
     };
   }
 
+  function createStudioCapturedPersistableDeckStateResolver(options = {}) {
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : () => null;
+    const resolvePlaybackState = typeof options.resolvePlaybackState === 'function'
+      ? options.resolvePlaybackState
+      : () => null;
+    const resolveCapturedPersistableDeckState = typeof options.resolveCapturedPersistableDeckState === 'function'
+      ? options.resolveCapturedPersistableDeckState
+      : resolveStudioCapturedPersistableDeckState;
+
+    return function resolveCapturedPersistableDeckStateWithDefaults(cleanHtml = '', nextOptions = {}) {
+      return resolveCapturedPersistableDeckState(normalizeString(cleanHtml), {
+        canonicalDeck: Object.prototype.hasOwnProperty.call(nextOptions, 'canonicalDeck')
+          ? nextOptions.canonicalDeck
+          : null,
+        playbackState: Object.prototype.hasOwnProperty.call(nextOptions, 'playbackState')
+          ? nextOptions.playbackState
+          : undefined,
+        buildCanonicalDeck: typeof nextOptions.buildCanonicalDeck === 'function'
+          ? nextOptions.buildCanonicalDeck
+          : buildCanonicalDeck,
+        resolvePlaybackState: typeof nextOptions.resolvePlaybackState === 'function'
+          ? nextOptions.resolvePlaybackState
+          : resolvePlaybackState
+      });
+    };
+  }
+
   function captureStudioPersistableDeckBuildState(doc = null, options = {}) {
     const nextOptions = options && typeof options === 'object'
       ? options
@@ -1733,6 +1762,7 @@
     captureStudioPersistedDeckPlaybackState,
     resolveStudioPersistableDeckStateWithContent,
     resolveStudioCapturedPersistableDeckState,
+    createStudioCapturedPersistableDeckStateResolver,
     captureStudioPersistableDeckBuildState,
     captureStudioPersistableDeckState,
     resolveStudioPersistenceCanonicalDeck,
