@@ -37,6 +37,47 @@ test('createStudioPersistableDeckState preserves the iframe doc and captured dec
   );
 });
 
+test('applyStudioPersistedDeckState updates persisted state and syncs canonical metadata only when allowed', () => {
+  const calls = [];
+  const nextState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] }
+  };
+
+  assert.equal(
+    editorPersistence.applyStudioPersistedDeckState(nextState, {
+      currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+      updatePersistedDeckState(state) {
+        calls.push(['updatePersistedDeckState', state]);
+      },
+      setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl) {
+        calls.push(['setCurrentPresentationCanonicalDeck', canonicalDeck, presentationUrl]);
+      }
+    }),
+    nextState
+  );
+
+  editorPersistence.applyStudioPersistedDeckState(
+    { canonicalDeck: nextState.canonicalDeck },
+    {
+      presentationUrl: '/presentations/custom/index.html',
+      syncPresentationMetadata: false,
+      updatePersistedDeckState(state) {
+        calls.push(['updatePersistedDeckState', state]);
+      },
+      setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl) {
+        calls.push(['setCurrentPresentationCanonicalDeck', canonicalDeck, presentationUrl]);
+      }
+    }
+  );
+
+  assert.deepEqual(calls, [
+    ['updatePersistedDeckState', nextState],
+    ['setCurrentPresentationCanonicalDeck', nextState.canonicalDeck, '/presentations/onboarding-presentation/index.html'],
+    ['updatePersistedDeckState', { canonicalDeck: nextState.canonicalDeck }]
+  ]);
+});
+
 test('resolveStudioPersistableDeckStateWithContent requires non-empty persisted html', () => {
   const persistedDeckState = {
     doc: { label: 'iframe-doc' },

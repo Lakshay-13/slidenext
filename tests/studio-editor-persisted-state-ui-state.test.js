@@ -37,6 +37,7 @@ function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
 }
 
 function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
@@ -262,4 +263,43 @@ test('applyCurrentStudioPersistedDeckState updates persisted baselines together 
     slideCounterText: ''
   });
   assert.deepEqual(metadataSyncCalls, [[rawCanonicalDeck, '/presentations/onboarding-presentation/index.html']]);
+});
+
+test('applyCurrentStudioPersistedDeckState reuses the shared persisted-state helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    SlideNextStudioEditorPersistence: {
+      applyStudioPersistedDeckState(nextState, options = {}) {
+        calls.push({
+          nextState,
+          currentPresentationUrl: options.currentPresentationUrl,
+          hasUpdatePersistedDeckState: typeof options.updatePersistedDeckState === 'function',
+          hasSetCurrentPresentationCanonicalDeck: typeof options.setCurrentPresentationCanonicalDeck === 'function'
+        });
+        return nextState;
+      }
+    },
+    updateEditorPersistedDeckState() {
+      throw new Error('updateEditorPersistedDeckState should be delegated through the shared helper');
+    },
+    setCurrentPresentationCanonicalDeck() {
+      throw new Error('setCurrentPresentationCanonicalDeck should be delegated through the shared helper');
+    }
+  };
+
+  vm.createContext(context);
+  loadApplyCurrentStudioPersistedDeckState(fileContent, context);
+
+  const nextState = {
+    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] }
+  };
+  assert.equal(context.applyCurrentStudioPersistedDeckState(nextState), nextState);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    nextState,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    hasUpdatePersistedDeckState: true,
+    hasSetCurrentPresentationCanonicalDeck: true
+  }]);
 });

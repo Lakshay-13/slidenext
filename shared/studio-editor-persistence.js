@@ -32,6 +32,31 @@
     };
   }
 
+  function applyStudioPersistedDeckState(nextState = {}, options = {}) {
+    const updatePersistedDeckState = typeof options.updatePersistedDeckState === 'function'
+      ? options.updatePersistedDeckState
+      : null;
+    if (updatePersistedDeckState) {
+      updatePersistedDeckState(nextState);
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck') || options.syncPresentationMetadata === false) {
+      return nextState;
+    }
+
+    const presentationUrl = Object.prototype.hasOwnProperty.call(options, 'presentationUrl')
+      ? options.presentationUrl
+      : normalizeString(options.currentPresentationUrl);
+    const setCurrentPresentationCanonicalDeck = typeof options.setCurrentPresentationCanonicalDeck === 'function'
+      ? options.setCurrentPresentationCanonicalDeck
+      : null;
+    if (setCurrentPresentationCanonicalDeck) {
+      setCurrentPresentationCanonicalDeck(nextState.canonicalDeck, presentationUrl);
+    }
+
+    return nextState;
+  }
+
   function resolveStudioPersistableDeckStateWithContent(persistedDeckState = {}) {
     const nextPersistedDeckState = asPlainObject(persistedDeckState);
     return normalizeString(nextPersistedDeckState.cleanHtml) ? nextPersistedDeckState : null;
@@ -991,6 +1016,7 @@
 
   return {
     createStudioPersistableDeckState,
+    applyStudioPersistedDeckState,
     resolveStudioPersistableDeckStateWithContent,
     resolveStudioCapturedPersistableDeckState,
     resolveStudioPersistenceCanonicalDeck,
