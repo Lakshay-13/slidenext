@@ -476,6 +476,24 @@
     };
   }
 
+  function buildStudioPersistableDeckSanitizerOptions(playbackState = null, options = {}) {
+    const getDeckSanitizerOptions = typeof options.getDeckSanitizerOptions === 'function'
+      ? options.getDeckSanitizerOptions
+      : () => ({});
+    const deckSanitizerOptions = getDeckSanitizerOptions() || {};
+    const resolveMetadataPersistenceOptions = typeof options.resolveMetadataPersistenceOptions === 'function'
+      ? options.resolveMetadataPersistenceOptions
+      : () => ({});
+    return {
+      ...resolveMetadataPersistenceOptions(),
+      editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,
+      editorTransientClasses: deckSanitizerOptions.transientClassNames,
+      editorElementIdAttr: deckSanitizerOptions.editorElementIdAttr,
+      editorSlideIdAttr: deckSanitizerOptions.editorSlideIdAttr,
+      persistedDeckPlaybackState: playbackState
+    };
+  }
+
   function buildStudioSaveRequestBody(presentationUrl = '', cleanHtml = '', options = {}) {
     const body = {
       htmlPath: normalizeString(presentationUrl),
@@ -1271,6 +1289,7 @@
     createStudioPersistedDeckStateActionContext,
     createStudioVersionPersistenceActionContext,
     resolveStudioSaveRequestDeckState,
+    buildStudioPersistableDeckSanitizerOptions,
     buildStudioSaveRequestBody,
     buildStudioPersistenceRequestPlan,
     resolveStudioPersistenceStateFromDocumentCapture,

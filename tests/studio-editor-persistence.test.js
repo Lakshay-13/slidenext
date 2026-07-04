@@ -771,6 +771,48 @@ test('resolveStudioSaveRequestDeckState reuses captured deck state and falls bac
   );
 });
 
+test('buildStudioPersistableDeckSanitizerOptions composes metadata cleanup, editor cleanup, and playback state', () => {
+  const calls = [];
+  const playbackState = {
+    activeSlideIds: ['slide-2']
+  };
+
+  assert.deepEqual(
+    editorPersistence.buildStudioPersistableDeckSanitizerOptions(playbackState, {
+      resolveMetadataPersistenceOptions() {
+        calls.push(['resolveMetadataPersistenceOptions']);
+        return {
+          emptyContainerIds: ['pixelMatrix']
+        };
+      },
+      getDeckSanitizerOptions() {
+        calls.push(['getDeckSanitizerOptions']);
+        return {
+          chromeNodeIds: ['editorSelectionOverlay'],
+          transientClassNames: ['revealed'],
+          editorElementIdAttr: 'data-editor-id',
+          editorSlideIdAttr: 'data-slide-id'
+        };
+      }
+    }),
+    {
+      emptyContainerIds: ['pixelMatrix'],
+      editorChromeNodeIds: ['editorSelectionOverlay'],
+      editorTransientClasses: ['revealed'],
+      editorElementIdAttr: 'data-editor-id',
+      editorSlideIdAttr: 'data-slide-id',
+      persistedDeckPlaybackState: {
+        activeSlideIds: ['slide-2']
+      }
+    }
+  );
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'getDeckSanitizerOptions',
+    'resolveMetadataPersistenceOptions'
+  ]);
+});
+
 test('buildStudioSaveRequestBody includes canonical deck sidecars only when they are valid', () => {
   const canonicalDeck = {
     metadata: {

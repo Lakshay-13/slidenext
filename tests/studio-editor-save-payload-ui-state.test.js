@@ -1033,6 +1033,68 @@ test('buildEditorPersistableDeckSanitizerOptions composes metadata cleanup, chro
   ]);
 });
 
+test('buildEditorPersistableDeckSanitizerOptions delegates through the shared persistence helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {',
+    '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
+  );
+
+  const playbackState = {
+    activeSlideIds: ['slide-2']
+  };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      buildStudioPersistableDeckSanitizerOptions(nextPlaybackState, options = {}) {
+        delegatedArgs = {
+          playbackState: nextPlaybackState,
+          resolveMetadataPersistenceOptions: options.resolveMetadataPersistenceOptions,
+          getDeckSanitizerOptions: options.getDeckSanitizerOptions
+        };
+        return {
+          emptyContainerIds: ['pixelMatrix'],
+          editorChromeNodeIds: ['editorSelectionOverlay'],
+          editorTransientClasses: ['revealed'],
+          editorElementIdAttr: 'data-editor-id',
+          editorSlideIdAttr: 'data-slide-id',
+          persistedDeckPlaybackState: nextPlaybackState
+        };
+      }
+    },
+    getEditorDeckSanitizerOptions() {
+      throw new Error('getEditorDeckSanitizerOptions should be delegated through the shared persistence helper');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.buildEditorPersistableDeckSanitizerOptions(playbackState, {
+      resolveMetadataPersistenceOptions() {
+        return {
+          emptyContainerIds: ['pixelMatrix']
+        };
+      }
+    }))),
+    {
+      emptyContainerIds: ['pixelMatrix'],
+      editorChromeNodeIds: ['editorSelectionOverlay'],
+      editorTransientClasses: ['revealed'],
+      editorElementIdAttr: 'data-editor-id',
+      editorSlideIdAttr: 'data-slide-id',
+      persistedDeckPlaybackState: {
+        activeSlideIds: ['slide-2']
+      }
+    }
+  );
+  assert.equal(delegatedArgs.playbackState, playbackState);
+  assert.equal(typeof delegatedArgs.resolveMetadataPersistenceOptions, 'function');
+  assert.equal(delegatedArgs.getDeckSanitizerOptions, context.getEditorDeckSanitizerOptions);
+});
+
 test('sanitizeEditorReusablePersistedHtml reuses the local persistable deck sanitizer options helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const sanitizeEditorReusablePersistedHtmlSource = extractFunctionSource(

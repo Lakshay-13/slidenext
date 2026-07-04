@@ -5576,6 +5576,26 @@
     }
 
     function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {
+      const buildStudioPersistableDeckSanitizerOptions = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.buildStudioPersistableDeckSanitizerOptions === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.buildStudioPersistableDeckSanitizerOptions
+        : null;
+      if (buildStudioPersistableDeckSanitizerOptions) {
+        return buildStudioPersistableDeckSanitizerOptions(playbackState, {
+          resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
+            ? options.resolveMetadataPersistenceOptions
+            : () => ({}),
+          getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
+            ? options.getDeckSanitizerOptions
+            : typeof getEditorDeckSanitizerOptions === 'function'
+              ? getEditorDeckSanitizerOptions
+              : () => ({})
+        });
+      }
+
       const resolveMetadataPersistenceOptions = typeof options.resolveMetadataPersistenceOptions === 'function'
         ? options.resolveMetadataPersistenceOptions
         : () => ({});
