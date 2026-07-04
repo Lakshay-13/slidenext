@@ -100,6 +100,53 @@ test('resolveCurrentStudioWallpaperActionState reports wallpaper readiness from 
   );
 });
 
+test('resolveCurrentStudioWallpaperActionState reuses the shared deck-view wallpaper helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = {
+    activeSlide: { id: 'slide-1' }
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      resolveStudioWallpaperActionState(sourceDoc, options = {}) {
+        calls.push({
+          sourceDoc,
+          hasGetActiveSlide: typeof options.getActiveSlide === 'function',
+          activeSlideId: options.getActiveSlide(sourceDoc)?.id || ''
+        });
+        return {
+          activeSlide: { id: 'slide-1' },
+          canUseWallpaperControls: true
+        };
+      }
+    },
+    getActiveSlide(sourceDoc) {
+      return sourceDoc && sourceDoc.activeSlide ? sourceDoc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveCurrentStudioWallpaperActionState(doc))),
+    {
+      activeSlide: { id: 'slide-1' },
+      canUseWallpaperControls: true
+    }
+  );
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    sourceDoc: {
+      activeSlide: { id: 'slide-1' }
+    },
+    hasGetActiveSlide: true,
+    activeSlideId: 'slide-1'
+  }]);
+});
+
 test('updateWallpaperActionState enables wallpaper controls only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateWallpaperActionStateSource = extractFunctionSource(

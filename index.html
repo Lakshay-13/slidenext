@@ -6308,6 +6308,19 @@
     }
 
     function resolveCurrentStudioWallpaperActionState(doc = getIframeDoc()) {
+      const resolveStudioWallpaperActionState = (
+        typeof SlideNextStudioDeckView !== 'undefined'
+        && SlideNextStudioDeckView
+        && typeof SlideNextStudioDeckView.resolveStudioWallpaperActionState === 'function'
+      )
+        ? SlideNextStudioDeckView.resolveStudioWallpaperActionState
+        : null;
+      if (resolveStudioWallpaperActionState) {
+        return resolveStudioWallpaperActionState(doc, {
+          getActiveSlide
+        });
+      }
+
       const activeSlide = getActiveSlide(doc);
       return {
         activeSlide,
