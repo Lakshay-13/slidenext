@@ -145,6 +145,19 @@
     return mergeStudioPresentationMetadataCanonicalDeck(nextCanonicalDeck, options);
   }
 
+  function applyStudioPresentationMetadataCanonicalDeckUpdate(canonicalDeckLike = null, options = {}) {
+    const nextPresentationMetadata = resolveStudioPresentationMetadataCanonicalDeckUpdate(canonicalDeckLike, options);
+    if (!nextPresentationMetadata) {
+      return null;
+    }
+
+    if (typeof options.applyPresentationMetadata === 'function') {
+      options.applyPresentationMetadata(nextPresentationMetadata);
+    }
+
+    return nextPresentationMetadata;
+  }
+
   function buildStudioCanonicalDeck(doc, options = {}) {
     const createCanonicalDeck = typeof options.createCanonicalDeck === 'function'
       ? options.createCanonicalDeck
@@ -217,6 +230,7 @@
     loadStudioPresentationMetadata,
     mergeStudioPresentationMetadataCanonicalDeck,
     resolveStudioPresentationMetadataCanonicalDeckUpdate,
+    applyStudioPresentationMetadataCanonicalDeckUpdate,
     resolveStudioCanonicalBaseline,
     resolvePreferredStoredStudioCanonicalDeck,
     resolveStoredStudioCanonicalDeck,

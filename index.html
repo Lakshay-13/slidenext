@@ -3202,6 +3202,25 @@
     }
 
     function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
+      const applyStudioPresentationMetadataCanonicalDeckUpdate = SlideNextStudioDeckContext
+        && typeof SlideNextStudioDeckContext.applyStudioPresentationMetadataCanonicalDeckUpdate === 'function'
+        ? SlideNextStudioDeckContext.applyStudioPresentationMetadataCanonicalDeckUpdate
+        : null;
+      if (applyStudioPresentationMetadataCanonicalDeckUpdate) {
+        applyStudioPresentationMetadataCanonicalDeckUpdate(
+          canonicalDeck,
+          {
+            currentPresentationMetadata,
+            currentPresentationUrl,
+            presentationUrl,
+            presentationTitle,
+            buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
+            applyPresentationMetadata: applyCurrentPresentationMetadata
+          }
+        );
+        return;
+      }
+
       const resolveStudioPresentationMetadataCanonicalDeckUpdate = SlideNextStudioDeckContext
         && typeof SlideNextStudioDeckContext.resolveStudioPresentationMetadataCanonicalDeckUpdate === 'function'
         ? SlideNextStudioDeckContext.resolveStudioPresentationMetadataCanonicalDeckUpdate

@@ -407,6 +407,41 @@ test('resolveStudioPresentationMetadataCanonicalDeckUpdate rejects inactive pres
   assert.equal(result, null);
 });
 
+test('applyStudioPresentationMetadataCanonicalDeckUpdate applies resolved active metadata updates through the provided callback', () => {
+  const appliedMetadata = [];
+  const result = deckContext.applyStudioPresentationMetadataCanonicalDeckUpdate(
+    {
+      metadata: {
+        title: 'Project Onboarding'
+      },
+      slides: [
+        {
+          id: 'slide-1',
+          nodes: []
+        }
+      ]
+    },
+    {
+      currentPresentationMetadata: {
+        id: 'onboarding-presentation',
+        title: 'Project Onboarding',
+        sourcePath: '/presentations/onboarding-presentation/index.html'
+      },
+      currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      presentationTitle: 'Project Onboarding',
+      createCanonicalDeck: canonicalDeck.createCanonicalDeck,
+      isCanonicalDeck: canonicalDeck.isCanonicalDeck,
+      applyPresentationMetadata(nextMetadata) {
+        appliedMetadata.push(nextMetadata);
+      }
+    }
+  );
+
+  assert.deepEqual(result, appliedMetadata[0]);
+  assert.deepEqual(appliedMetadata, [result]);
+});
+
 test('buildStudioCanonicalDeck returns the validated deck from the canonical builder', () => {
   const doc = { label: 'doc' };
   const presentationMetadata = {

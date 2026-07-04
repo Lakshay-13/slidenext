@@ -270,6 +270,77 @@ test('setCurrentPresentationCanonicalDeck ignores updates for inactive presentat
   assert.equal(context.currentPresentationMetadata, activeMetadata);
 });
 
+test('setCurrentPresentationCanonicalDeck delegates metadata application through the shared deck context helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {',
+    '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
+  );
+
+  const canonicalDeckLike = {
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  };
+  const nextPresentationMetadata = {
+    id: 'onboarding-presentation',
+    title: 'Project Onboarding',
+    sourcePath: 'presentations/onboarding-presentation/index.html',
+    canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeckLike)
+  };
+  let helperCall = null;
+  const context = {
+    SlideNextStudioDeckContext: {
+      applyStudioPresentationMetadataCanonicalDeckUpdate(nextCanonicalDeck, options = {}) {
+        helperCall = {
+          nextCanonicalDeck,
+          currentPresentationMetadata: options.currentPresentationMetadata,
+          currentPresentationUrl: options.currentPresentationUrl,
+          presentationUrl: options.presentationUrl,
+          presentationTitle: options.presentationTitle,
+          hasBuildPresentationMetadataSeed: typeof options.buildPresentationMetadataSeed === 'function',
+          hasApplyPresentationMetadata: typeof options.applyPresentationMetadata === 'function'
+        };
+        options.applyPresentationMetadata(nextPresentationMetadata);
+        return nextPresentationMetadata;
+      }
+    },
+    applyCurrentPresentationMetadata(metadata) {
+      context.currentPresentationMetadata = metadata;
+      return metadata;
+    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    currentPresentationMetadata: null,
+    buildCurrentPresentationMetadataSeed() {
+      throw new Error('buildCurrentPresentationMetadataSeed should be delegated through the shared deck context helper');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setCurrentPresentationCanonicalDeckSource, context);
+
+  context.setCurrentPresentationCanonicalDeck(canonicalDeckLike);
+
+  assert.deepEqual(helperCall, {
+    nextCanonicalDeck: canonicalDeckLike,
+    currentPresentationMetadata: null,
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    presentationUrl: 'presentations/onboarding-presentation/index.html',
+    presentationTitle: 'Project Onboarding',
+    hasBuildPresentationMetadataSeed: true,
+    hasApplyPresentationMetadata: true
+  });
+  assert.deepEqual(context.currentPresentationMetadata, nextPresentationMetadata);
+});
+
 test('saveVersionCheckpoint refreshes persisted html and canonical metadata after a successful save rewrite through the shared helper', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const saveVersionCheckpointSource = extractFunctionSource(
