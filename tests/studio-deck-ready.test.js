@@ -16,7 +16,9 @@ test('resolveStudioDeckReadyActionState enables deck actions only when a session
       hasPresentationSession: false,
       hasPersistedDeckContent: false,
       hasStoredCanonicalDeck: false,
+      isSaveVersionInProgress: false,
       hasDeckContent: false,
+      canUseSaveButton: false,
       canUseDeckActions: false,
       canLaunchPreview: false
     }
@@ -34,7 +36,9 @@ test('resolveStudioDeckReadyActionState enables deck actions only when a session
       hasPresentationSession: true,
       hasPersistedDeckContent: true,
       hasStoredCanonicalDeck: false,
+      isSaveVersionInProgress: false,
       hasDeckContent: true,
+      canUseSaveButton: true,
       canUseDeckActions: true,
       canLaunchPreview: true
     }
@@ -60,5 +64,28 @@ test('resolveStudioDeckReadyActionState treats a live deck document or stored ca
       storedCanonicalDeck: { kind: 'slidenext.deck', slides: [] }
     }).canUseDeckActions,
     true
+  );
+});
+
+test('resolveStudioDeckReadyActionState disables only the save button while a version save is already running', () => {
+  assert.deepEqual(
+    deckReady.resolveStudioDeckReadyActionState({
+      doc: null,
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      persistedDeckStateWithContent: { cleanHtml: '<html>persisted</html>' },
+      storedCanonicalDeck: null,
+      saveButtonState: 'saving-version'
+    }),
+    {
+      hasDeckDocument: false,
+      hasPresentationSession: true,
+      hasPersistedDeckContent: true,
+      hasStoredCanonicalDeck: false,
+      isSaveVersionInProgress: true,
+      hasDeckContent: true,
+      canUseSaveButton: false,
+      canUseDeckActions: true,
+      canLaunchPreview: true
+    }
   );
 });

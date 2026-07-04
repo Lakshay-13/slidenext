@@ -12,6 +12,7 @@
     const hasPresentationSession = typeof options.presentationUrl === 'string' && !!options.presentationUrl;
     const hasPersistedDeckContent = !!options.persistedDeckStateWithContent;
     const hasStoredCanonicalDeck = !!options.storedCanonicalDeck;
+    const isSaveVersionInProgress = options.saveButtonState === 'saving-version';
     const hasDeckContent = hasDeckDocument || hasPersistedDeckContent || hasStoredCanonicalDeck;
 
     return {
@@ -19,7 +20,9 @@
       hasPresentationSession,
       hasPersistedDeckContent,
       hasStoredCanonicalDeck,
+      isSaveVersionInProgress,
       hasDeckContent,
+      canUseSaveButton: hasPresentationSession && hasDeckContent && !isSaveVersionInProgress,
       canUseDeckActions: hasPresentationSession && hasDeckContent,
       canLaunchPreview: hasPresentationSession
     };

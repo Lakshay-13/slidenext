@@ -6312,6 +6312,8 @@
       const persistedDeckState = getCurrentEditorPersistedDeckState();
       const persistedDeckStateWithContent = resolveEditorPersistedDeckStateWithContent(persistedDeckState);
       const storedCanonicalDeck = resolveEditorStoredCanonicalBaseline();
+      const isSavingVersion = typeof currentStudioSaveButtonState === 'string'
+        && currentStudioSaveButtonState === 'saving-version';
       const resolveStudioDeckReadyActionState = (
         typeof SlideNextStudioDeckReady !== 'undefined'
         && SlideNextStudioDeckReady
@@ -6324,7 +6326,8 @@
             doc,
             presentationUrl: currentPresentationUrl,
             persistedDeckStateWithContent,
-            storedCanonicalDeck
+            storedCanonicalDeck,
+            saveButtonState: currentStudioSaveButtonState
           })
         : {
             canUseDeckActions: !!currentPresentationUrl && !!(
@@ -6332,14 +6335,17 @@
               || persistedDeckStateWithContent
               || storedCanonicalDeck
             ),
+            canUseSaveButton: !!currentPresentationUrl && !!(
+              (doc && doc.documentElement)
+              || persistedDeckStateWithContent
+              || storedCanonicalDeck
+            ) && !isSavingVersion,
             canLaunchPreview: !!currentPresentationUrl
           };
 
       const saveBtn = document.getElementById('studioSaveBtn');
       if (saveBtn) {
-        const isSavingVersion = typeof currentStudioSaveButtonState === 'string'
-          && currentStudioSaveButtonState === 'saving-version';
-        saveBtn.disabled = isSavingVersion || !actionState.canUseDeckActions;
+        saveBtn.disabled = !actionState.canUseSaveButton;
       }
 
       const sourceViewBtn = document.getElementById('openSourceViewBtn');

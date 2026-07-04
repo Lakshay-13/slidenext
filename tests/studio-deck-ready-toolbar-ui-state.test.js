@@ -319,6 +319,7 @@ test('updateDeckReadyToolbarActionState delegates action gating to the shared de
     slides: []
   };
   const context = {
+    currentStudioSaveButtonState: 'saving-version',
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     document: {
       getElementById(id) {
@@ -342,6 +343,7 @@ test('updateDeckReadyToolbarActionState delegates action gating to the shared de
       resolveStudioDeckReadyActionState(options = {}) {
         calls.push(options);
         return {
+          canUseSaveButton: false,
           canUseDeckActions: true,
           canLaunchPreview: true
         };
@@ -363,10 +365,11 @@ test('updateDeckReadyToolbarActionState delegates action gating to the shared de
     doc,
     presentationUrl: '/presentations/onboarding-presentation/index.html',
     persistedDeckStateWithContent,
-    storedCanonicalDeck
+    storedCanonicalDeck,
+    saveButtonState: 'saving-version'
   }]);
   assert.equal(elements.launchPreviewBtn.disabled, false);
-  assert.equal(elements.studioSaveBtn.disabled, false);
+  assert.equal(elements.studioSaveBtn.disabled, true);
   assert.equal(elements.openSourceViewBtn.disabled, false);
   assert.equal(elements.studioVersionBtn.disabled, false);
 });
