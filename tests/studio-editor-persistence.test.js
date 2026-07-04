@@ -743,6 +743,51 @@ test('captureStudioPersistableDeckBuildState captures canonical and playback sta
   assert.equal(reportedPlaybackState, playbackState);
 });
 
+test('createStudioPersistableDeckBuildStateCapturer reuses call-time overrides before builder defaults', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const calls = [];
+  const capturePersistableDeckBuildState = editorPersistence.createStudioPersistableDeckBuildStateCapturer({
+    buildPersistableDeckHtml() {
+      calls.push(['defaultBuildPersistableDeckHtml']);
+      return '<html>default</html>';
+    }
+  });
+
+  assert.deepEqual(
+    capturePersistableDeckBuildState(iframeDoc, {
+      canonicalDeck,
+      buildPersistableDeckHtml(doc, buildOptions = {}) {
+        calls.push(['overrideBuildPersistableDeckHtml', doc, buildOptions]);
+        buildOptions.onCanonicalDeckResolved(canonicalDeck);
+        buildOptions.onPlaybackStateResolved({
+          activeSlideIds: ['slide-1'],
+          slideCounterText: '1 / 1'
+        });
+        return '<html>persisted</html>';
+      }
+    }),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck,
+      playbackState: {
+        activeSlideIds: ['slide-1'],
+        slideCounterText: '1 / 1'
+      }
+    }
+  );
+
+  assert.equal(calls[0][0], 'overrideBuildPersistableDeckHtml');
+  assert.equal(calls[0][1], iframeDoc);
+  assert.equal(calls[0][2].canonicalDeck, canonicalDeck);
+  assert.equal(typeof calls[0][2].onCanonicalDeckResolved, 'function');
+  assert.equal(typeof calls[0][2].onPlaybackStateResolved, 'function');
+});
+
 test('captureStudioPersistableDeckState reuses captured build-state values and shared fallback resolution', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',

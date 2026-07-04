@@ -6298,6 +6298,30 @@
       const nextBuildOptions = buildOptions && typeof buildOptions === 'object'
         ? buildOptions
         : {};
+      const createStudioPersistableDeckBuildStateCapturer = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistableDeckBuildStateCapturer === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistableDeckBuildStateCapturer
+        : null;
+      if (createStudioPersistableDeckBuildStateCapturer) {
+        return createStudioPersistableDeckBuildStateCapturer({
+          capturePersistableDeckBuildState: (
+            typeof nextBuildOptions.captureStudioPersistableDeckBuildState === 'function'
+              ? nextBuildOptions.captureStudioPersistableDeckBuildState
+              : (
+                  typeof SlideNextStudioEditorPersistence !== 'undefined'
+                  && SlideNextStudioEditorPersistence
+                  && typeof SlideNextStudioEditorPersistence.captureStudioPersistableDeckBuildState === 'function'
+                )
+                ? SlideNextStudioEditorPersistence.captureStudioPersistableDeckBuildState
+                : null
+          ),
+          buildPersistableDeckHtml
+        })(doc, nextBuildOptions);
+      }
+
       const captureStudioPersistableDeckBuildState = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence

@@ -631,6 +631,79 @@ test('resolveEditorCapturedPersistableDeckState reuses the shared captured-state
   );
 });
 
+test('captureEditorPersistableDeckBuildState reuses the shared build-state capturer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(
+    fileContent,
+    'function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {',
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const calls = [];
+  let delegatedArgs = null;
+  const explicitCaptureStudioPersistableDeckBuildState = () => ({ cleanHtml: '<html>capture</html>' });
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistableDeckBuildStateCapturer(options = {}) {
+        delegatedArgs = options;
+        return (nextDoc, nextOptions = {}) => ({
+          doc: nextDoc,
+          canonicalDeck: nextOptions.canonicalDeck,
+          onCanonicalDeckResolved: typeof nextOptions.onCanonicalDeckResolved,
+          onPlaybackStateResolved: typeof nextOptions.onPlaybackStateResolved,
+          capturePersistableDeckBuildState: typeof options.capturePersistableDeckBuildState,
+          html: options.buildPersistableDeckHtml(nextDoc, nextOptions)
+        });
+      },
+      captureStudioPersistableDeckBuildState() {
+        throw new Error('persistable deck build-state capture should be delegated through the shared capturer builder');
+      }
+    },
+    buildPersistableDeckHtml(nextDoc, nextOptions = {}) {
+      calls.push(['buildPersistableDeckHtml', nextDoc, nextOptions]);
+      return '<html>persisted</html>';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(captureEditorPersistableDeckBuildStateSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.captureEditorPersistableDeckBuildState(iframeDoc, {
+      canonicalDeck,
+      captureStudioPersistableDeckBuildState: explicitCaptureStudioPersistableDeckBuildState,
+      onCanonicalDeckResolved() {},
+      onPlaybackStateResolved() {}
+    }))),
+    {
+      doc: {
+        label: 'iframe-doc'
+      },
+      canonicalDeck,
+      onCanonicalDeckResolved: 'function',
+      onPlaybackStateResolved: 'function',
+      capturePersistableDeckBuildState: 'function',
+      html: '<html>persisted</html>'
+    }
+  );
+  assert.equal(delegatedArgs.capturePersistableDeckBuildState, explicitCaptureStudioPersistableDeckBuildState);
+  assert.equal(delegatedArgs.buildPersistableDeckHtml, context.buildPersistableDeckHtml);
+  assert.equal(calls[0][0], 'buildPersistableDeckHtml');
+  assert.equal(calls[0][1], iframeDoc);
+  assert.equal(calls[0][2].canonicalDeck, canonicalDeck);
+  assert.equal(typeof calls[0][2].onCanonicalDeckResolved, 'function');
+  assert.equal(typeof calls[0][2].onPlaybackStateResolved, 'function');
+});
+
 test('captureEditorPersistableDeckState reuses the shared persistable-deck-state capturer when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const captureEditorPersistableDeckStateSource = extractFunctionSource(

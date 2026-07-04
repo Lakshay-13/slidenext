@@ -407,6 +407,26 @@
     };
   }
 
+  function createStudioPersistableDeckBuildStateCapturer(options = {}) {
+    const buildPersistableDeckHtml = typeof options.buildPersistableDeckHtml === 'function'
+      ? options.buildPersistableDeckHtml
+      : () => '';
+    const capturePersistableDeckBuildState = typeof options.capturePersistableDeckBuildState === 'function'
+      ? options.capturePersistableDeckBuildState
+      : captureStudioPersistableDeckBuildState;
+
+    return function capturePersistableDeckBuildStateWithDefaults(doc = null, nextOptions = {}) {
+      return capturePersistableDeckBuildState(doc, {
+        ...(nextOptions && typeof nextOptions === 'object'
+          ? nextOptions
+          : {}),
+        buildPersistableDeckHtml: typeof nextOptions.buildPersistableDeckHtml === 'function'
+          ? nextOptions.buildPersistableDeckHtml
+          : buildPersistableDeckHtml
+      });
+    };
+  }
+
   function captureStudioPersistableDeckState(doc = null, options = {}) {
     const captureBuildState = typeof options.captureBuildState === 'function'
       ? options.captureBuildState
@@ -1796,6 +1816,7 @@
     resolveStudioCapturedPersistableDeckState,
     createStudioCapturedPersistableDeckStateResolver,
     captureStudioPersistableDeckBuildState,
+    createStudioPersistableDeckBuildStateCapturer,
     captureStudioPersistableDeckState,
     createStudioPersistableDeckStateCapturer,
     resolveStudioPersistenceCanonicalDeck,
