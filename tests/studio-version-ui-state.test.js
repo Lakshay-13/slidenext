@@ -74,6 +74,15 @@ function loadApplyCurrentStudioRestoreVersionSuccess(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioRestoreVersionSuccess(versionContext, options = {}) {',
+    '\n\n    function createCurrentStudioVersionRequestOptions(options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadCreateCurrentStudioVersionRequestOptions(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionRequestOptions(options = {}) {',
     '\n\n    async function restoreVersion(filename) {'
   );
   vm.runInContext(helperSource, context);
@@ -277,6 +286,28 @@ test('applyCurrentStudioRestoreVersionSuccess delegates through the shared handl
   assert.equal(successArgs[0], versionContext);
   assert.equal(successArgs[1].marker, 'version-handler-options');
   assert.equal(successArgs[1].onSuccess, onSuccess);
+});
+
+test('createCurrentStudioVersionRequestOptions merges the shared fetch implementation with overrides', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    fetch() {},
+    marker: 'context'
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
+
+  const defaultOptions = context.createCurrentStudioVersionRequestOptions();
+  const overrideFetch = () => {};
+  const overrideOptions = context.createCurrentStudioVersionRequestOptions({
+    fetchImpl: overrideFetch,
+    requestId: 'rename'
+  });
+
+  assert.equal(defaultOptions.fetchImpl, context.fetch);
+  assert.equal(overrideOptions.fetchImpl, overrideFetch);
+  assert.equal(overrideOptions.requestId, 'rename');
 });
 
 test('resetStudioVersionUiState hides open version chrome and clears modal state', () => {
@@ -719,6 +750,7 @@ test('submitRenameVersion no-ops when the rename input is missing', async () => 
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
+  loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
   vm.runInContext(submitRenameVersionSource, context);
 
   await assert.doesNotReject(async () => {
@@ -816,6 +848,7 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
+  loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
   vm.runInContext(submitRenameVersionSource, context);
 
   await assert.doesNotReject(async () => {
@@ -926,6 +959,7 @@ test('submitRenameVersion reuses the shared rename request helper when available
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
+  loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
   vm.runInContext(submitRenameVersionSource, context);
 
   await context.submitRenameVersion();
@@ -1037,6 +1071,7 @@ test('deleteVersion reuses the shared delete request helper when available', asy
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
+  loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
   vm.runInContext(deleteVersionSource, context);
 
   await context.deleteVersion('index_20260101_120000_Auto.html');
@@ -1154,6 +1189,7 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   loadApplyCurrentStudioRestoreVersionSuccess(fileContent, context);
+  loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
   vm.runInContext(restoreVersionSource, context);
 
   await assert.doesNotReject(async () => {
@@ -1264,6 +1300,7 @@ test('restoreVersion reuses the shared restore request helper when available', a
   vm.createContext(context);
   loadApplyCurrentStudioVersionActionFailure(fileContent, context);
   loadApplyCurrentStudioRestoreVersionSuccess(fileContent, context);
+  loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
   vm.runInContext(restoreVersionSource, context);
 
   await context.restoreVersion('index_20260101_120000_Auto.html');

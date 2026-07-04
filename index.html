@@ -6617,6 +6617,13 @@
       );
     }
 
+    function createCurrentStudioVersionRequestOptions(options = {}) {
+      return {
+        fetchImpl: fetch,
+        ...options
+      };
+    }
+
     async function restoreVersion(filename) {
       if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
         return;
@@ -6627,9 +6634,7 @@
         const data = await SlideNextStudioVersionActions.executeStudioRestoreVersionRequest(
           filename,
           restoreContext,
-          {
-            fetchImpl: fetch
-          }
+          createCurrentStudioVersionRequestOptions()
         );
         if (data.success) {
           applyCurrentStudioRestoreVersionSuccess(restoreContext, {
@@ -6748,9 +6753,7 @@
           versionFilename,
           newLabel,
           renameContext,
-          {
-            fetchImpl: fetch
-          }
+          createCurrentStudioVersionRequestOptions()
         );
         if (data.success) {
           applyCurrentStudioVersionListMutationSuccess(renameContext, {
@@ -6798,9 +6801,7 @@
         const data = await SlideNextStudioVersionActions.executeStudioDeleteVersionRequest(
           filename,
           deleteContext,
-          {
-            fetchImpl: fetch
-          }
+          createCurrentStudioVersionRequestOptions()
         );
         if (data.success) {
           applyCurrentStudioVersionListMutationSuccess(deleteContext, {
