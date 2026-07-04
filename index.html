@@ -2004,29 +2004,25 @@
       // Configure load triggers BEFORE setting src
       iframe.onload = SlideNextStudioEditorSession.createStudioFrameLoadHandler({
         presentationUrl: url,
-        ...SlideNextStudioEditorSession.createStudioFrameLoadStateOptions({
-          ...createCurrentStudioSessionStateReaders(),
-          sessionToken: editorSessionToken,
-          isEditorActive,
-          handleLoad: () => {
-            initStudioFrame();
-          },
-          afterLoad: () => {
-            const savedZoom = localStorage.getItem('presentationZoom') || 'fit';
-            setTimeout(() => {
-              if (!SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(url, {
-                ...SlideNextStudioEditorSession.createStudioFrameLoadStateOptions({
-                  ...createCurrentStudioSessionStateReaders(),
-                  sessionToken: editorSessionToken,
-                  isEditorActive
-                })
-              })) {
-                return;
-              }
-              applyZoom(savedZoom);
-            }, 150);
-          }
-        })
+        ...createCurrentStudioSessionStateReaders(),
+        sessionToken: editorSessionToken,
+        isEditorActive,
+        handleLoad: () => {
+          initStudioFrame();
+        },
+        afterLoad: () => {
+          const savedZoom = localStorage.getItem('presentationZoom') || 'fit';
+          setTimeout(() => {
+            if (!SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(url, {
+              ...createCurrentStudioSessionStateReaders(),
+              sessionToken: editorSessionToken,
+              isEditorActive
+            })) {
+              return;
+            }
+            applyZoom(savedZoom);
+          }, 150);
+        }
       });
       
       editor.classList.remove('hidden');

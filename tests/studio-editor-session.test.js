@@ -147,30 +147,6 @@ test('createStudioFrameLoadHandler runs load hooks for the active editor session
   assert.deepEqual(calls, ['handleLoad', 'afterLoad']);
 });
 
-test('createStudioFrameLoadStateOptions preserves the supplied session readers and frame hooks', () => {
-  const getCurrentPresentationUrl = () => '/presentations/onboarding-presentation/index.html';
-  const getCurrentSessionToken = () => 5;
-  const isEditorActive = () => true;
-  const handleLoad = () => {};
-  const afterLoad = () => {};
-
-  const options = editorSession.createStudioFrameLoadStateOptions({
-    sessionToken: 5,
-    getCurrentPresentationUrl,
-    getCurrentSessionToken,
-    isEditorActive,
-    handleLoad,
-    afterLoad
-  });
-
-  assert.equal(options.sessionToken, 5);
-  assert.equal(options.getCurrentPresentationUrl, getCurrentPresentationUrl);
-  assert.equal(options.getCurrentSessionToken, getCurrentSessionToken);
-  assert.equal(options.isEditorActive, isEditorActive);
-  assert.equal(options.handleLoad, handleLoad);
-  assert.equal(options.afterLoad, afterLoad);
-});
-
 test('createStudioFrameLoadHandler skips stale editor sessions', () => {
   const calls = [];
   const onLoad = editorSession.createStudioFrameLoadHandler({
