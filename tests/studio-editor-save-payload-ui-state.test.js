@@ -525,6 +525,40 @@ test('resolveEditorPersistedDeckStateWithContent reuses getCurrentEditorPersiste
   ]);
 });
 
+test('resolveEditorPersistedDeckStateWithContent reuses the shared persisted-state content resolver when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let delegatedArgs = null;
+  const context = {
+    lastPersistedCanonicalDeck: null,
+    lastPersistedDeckHtml: '<html>persisted-baseline</html>',
+    persistedDeckPlaybackState: null,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistedDeckStateContentResolver(options = {}) {
+        delegatedArgs = options;
+        return (persistedDeckState) => persistedDeckState;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  vm.runInContext(
+    'getCurrentEditorPersistedDeckState.resolveWithContent = (persistedDeckState) => persistedDeckState;',
+    context
+  );
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveEditorPersistedDeckStateWithContent())),
+    {
+      cleanHtml: '<html>persisted-baseline</html>',
+      canonicalDeck: null,
+      playbackState: null
+    }
+  );
+  assert.equal(delegatedArgs.readPersistedDeckState, context.getCurrentEditorPersistedDeckState);
+  assert.equal(delegatedArgs.resolveWithContent, context.getCurrentEditorPersistedDeckState.resolveWithContent);
+});
+
 test('buildPersistableDeckHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(

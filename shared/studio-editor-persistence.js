@@ -126,6 +126,19 @@
     };
   }
 
+  function createStudioPersistedDeckStateContentResolver(options = {}) {
+    const readPersistedDeckState = typeof options.readPersistedDeckState === 'function'
+      ? options.readPersistedDeckState
+      : () => null;
+    const resolveWithContent = typeof options.resolveWithContent === 'function'
+      ? options.resolveWithContent
+      : (persistedDeckState) => persistedDeckState;
+
+    return function resolvePersistedDeckStateWithContent(persistedDeckState = readPersistedDeckState()) {
+      return resolveWithContent(persistedDeckState);
+    };
+  }
+
   function syncStudioPresentationMetadataPersistedCanonicalDeck(metadata = null, options = {}) {
     if (!metadata) {
       return null;
@@ -1593,6 +1606,7 @@
     resolveStudioPersistedDeckStateSnapshotWithContent,
     applyStudioPersistedDeckState,
     createStudioPersistedDeckStateApplier,
+    createStudioPersistedDeckStateContentResolver,
     syncStudioPresentationMetadataPersistedCanonicalDeck,
     updateStudioPersistedDeckState,
     captureStudioPersistedDeckPlaybackState,

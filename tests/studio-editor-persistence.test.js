@@ -171,6 +171,31 @@ test('createStudioPersistedDeckStateUpdater delegates persisted baseline writes 
   ]);
 });
 
+test('createStudioPersistedDeckStateContentResolver reads persisted state and resolves it through the provided resolver', () => {
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: { id: 'persisted-deck' },
+    playbackState: { activeSlideIds: ['slide-2'], slideCounterText: '2 / 4' }
+  };
+  const calls = [];
+  const resolvePersistedDeckStateWithContent = editorPersistence.createStudioPersistedDeckStateContentResolver({
+    readPersistedDeckState() {
+      calls.push(['readPersistedDeckState']);
+      return persistedDeckState;
+    },
+    resolveWithContent(nextPersistedDeckState) {
+      calls.push(['resolveWithContent', nextPersistedDeckState]);
+      return nextPersistedDeckState;
+    }
+  });
+
+  assert.deepEqual(resolvePersistedDeckStateWithContent(), persistedDeckState);
+  assert.deepEqual(calls, [
+    ['readPersistedDeckState'],
+    ['resolveWithContent', persistedDeckState]
+  ]);
+});
+
 test('resolveStudioPersistedDeckStateSnapshotWithContent reuses an explicit snapshot and otherwise composes it from persisted baselines', () => {
   const persistedDeckState = {
     cleanHtml: '<html>persisted</html>',

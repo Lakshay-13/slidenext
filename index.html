@@ -3566,6 +3566,20 @@
     };
 
     function resolveEditorPersistedDeckStateWithContent(persistedDeckState = getCurrentEditorPersistedDeckState()) {
+      const createStudioPersistedDeckStateContentResolver = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateContentResolver === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateContentResolver
+        : null;
+      if (createStudioPersistedDeckStateContentResolver) {
+        return createStudioPersistedDeckStateContentResolver({
+          readPersistedDeckState: getCurrentEditorPersistedDeckState,
+          resolveWithContent: getCurrentEditorPersistedDeckState.resolveWithContent
+        })(persistedDeckState);
+      }
+
       return getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState);
     }
 
