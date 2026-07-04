@@ -710,6 +710,12 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
   let buildEditorCanonicalDeckCalls = 0;
 
   const context = {
+    applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
+      return context.SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
+        persistenceContext,
+        context.createCurrentStudioPersistenceHandlerOptions(options)
+      );
+    },
     createCurrentStudioPersistenceHandlerOptions(options = {}) {
       capturedHandlerOptionsArgs = options;
       return {

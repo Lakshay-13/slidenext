@@ -133,6 +133,58 @@ test('applyCurrentStudioPersistenceFailure delegates through the shared failure 
   assert.equal(failureHelperArgs.options.getCurrentSessionToken(), 8);
 });
 
+test('applyCurrentStudioPersistenceSuccess delegates through the shared success helper with current handler options', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let readerCallCount = 0;
+  let capturedReaders = null;
+  let successHelperArgs = null;
+  const onSuccess = () => {};
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      handleStudioPersistenceSuccess(persistenceContext, options = {}) {
+        successHelperArgs = {
+          persistenceContext,
+          options
+        };
+        return 'handled';
+      }
+    },
+    applyCurrentStudioPersistedDeckState() {},
+    createCurrentStudioSessionStateReaders() {
+      readerCallCount += 1;
+      capturedReaders = {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+      return capturedReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 9
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
+
+  const persistenceContext = {
+    presentationUrl: '/presentations/onboarding-presentation/index.html'
+  };
+  const result = context.applyCurrentStudioPersistenceSuccess(persistenceContext, { onSuccess });
+
+  assert.equal(result, 'handled');
+  assert.equal(readerCallCount, 1);
+  assert.equal(successHelperArgs.persistenceContext, persistenceContext);
+  assert.equal(successHelperArgs.options.getCurrentPresentationUrl, capturedReaders.getCurrentPresentationUrl);
+  assert.equal(successHelperArgs.options.getCurrentSessionToken, capturedReaders.getCurrentSessionToken);
+  assert.equal(successHelperArgs.options.onSuccess, onSuccess);
+  assert.equal(successHelperArgs.options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(successHelperArgs.options.getCurrentSessionToken(), 9);
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 10;
+  assert.equal(successHelperArgs.options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(successHelperArgs.options.getCurrentSessionToken(), 10);
+});
+
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
 }

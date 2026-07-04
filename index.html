@@ -2143,7 +2143,7 @@
         observeDeckActiveSlideState,
         captureInitialHistoryState: () => {
           saveHistoryState(false);
-          SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
+          applyCurrentStudioPersistenceSuccess(
             SlideNextStudioEditorPersistence.createStudioPersistedDeckStateActionContext(
               captureEditorPersistableDeckState(iframeDoc),
               currentPresentationUrl,
@@ -2151,9 +2151,9 @@
                 sessionToken: studioEditorSessionToken
               }
             ),
-            createCurrentStudioPersistenceHandlerOptions({
+            {
               presentationUrl: currentPresentationUrl
-            })
+            }
           );
         }
       });
@@ -5587,6 +5587,13 @@
       );
     }
 
+    function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
+      return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
+        persistenceContext,
+        createCurrentStudioPersistenceHandlerOptions(options)
+      );
+    }
+
     function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {
       const nextOptions = options && typeof options === 'object'
         ? options
@@ -5623,10 +5630,7 @@
           resolvePlaybackState: capturePersistedDeckPlaybackState,
           fetchImpl: fetch,
           applyPersistenceSuccess: (persistenceContext, successOptions = {}) => {
-            return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
-              persistenceContext,
-              createCurrentStudioPersistenceHandlerOptions(successOptions)
-            );
+            return applyCurrentStudioPersistenceSuccess(persistenceContext, successOptions);
           },
           successOptions: {
             presentationUrl
@@ -5726,10 +5730,7 @@
             {
               fetchImpl: fetch,
               applyPersistenceSuccess: (persistenceContext, successOptions = {}) => {
-                return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
-                  persistenceContext,
-                  createCurrentStudioPersistenceHandlerOptions(successOptions)
-                );
+                return applyCurrentStudioPersistenceSuccess(persistenceContext, successOptions);
               },
               applyPersistenceFailure: (persistenceContext, failureOptions = {}) => {
                 return applyCurrentStudioPersistenceFailure(persistenceContext, failureOptions);
