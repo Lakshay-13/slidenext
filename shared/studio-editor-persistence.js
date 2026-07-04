@@ -57,6 +57,39 @@
     return nextState;
   }
 
+  function updateStudioPersistedDeckState(nextState = {}, options = {}) {
+    const nextResolvedState = {};
+
+    if (Object.prototype.hasOwnProperty.call(nextState, 'cleanHtml')) {
+      nextResolvedState.cleanHtml = normalizeString(nextState.cleanHtml);
+      if (typeof options.setPersistedDeckHtml === 'function') {
+        options.setPersistedDeckHtml(nextResolvedState.cleanHtml);
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck')) {
+      const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
+        ? options.resolveCanonicalDeck
+        : (canonicalDeck) => canonicalDeck || null;
+      nextResolvedState.canonicalDeck = resolveCanonicalDeck(nextState.canonicalDeck) || null;
+      if (typeof options.setPersistedCanonicalDeck === 'function') {
+        options.setPersistedCanonicalDeck(nextResolvedState.canonicalDeck);
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(nextState, 'playbackState')) {
+      const normalizePlaybackState = typeof options.normalizePlaybackState === 'function'
+        ? options.normalizePlaybackState
+        : (playbackState) => playbackState || null;
+      nextResolvedState.playbackState = normalizePlaybackState(nextState.playbackState);
+      if (typeof options.setPersistedPlaybackState === 'function') {
+        options.setPersistedPlaybackState(nextResolvedState.playbackState);
+      }
+    }
+
+    return nextResolvedState;
+  }
+
   function resolveStudioPersistableDeckStateWithContent(persistedDeckState = {}) {
     const nextPersistedDeckState = asPlainObject(persistedDeckState);
     return normalizeString(nextPersistedDeckState.cleanHtml) ? nextPersistedDeckState : null;
@@ -1017,6 +1050,7 @@
   return {
     createStudioPersistableDeckState,
     applyStudioPersistedDeckState,
+    updateStudioPersistedDeckState,
     resolveStudioPersistableDeckStateWithContent,
     resolveStudioCapturedPersistableDeckState,
     resolveStudioPersistenceCanonicalDeck,

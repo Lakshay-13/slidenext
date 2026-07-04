@@ -78,6 +78,63 @@ test('applyStudioPersistedDeckState updates persisted state and syncs canonical 
   ]);
 });
 
+test('updateStudioPersistedDeckState normalizes persisted html, canonical deck, and playback state before applying them', () => {
+  const calls = [];
+  const rawCanonicalDeck = {
+    metadata: {
+      id: 'onboarding-presentation'
+    },
+    slides: []
+  };
+  const normalizedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+
+  assert.deepEqual(
+    editorPersistence.updateStudioPersistedDeckState(
+      {
+        cleanHtml: '<html>persisted</html>',
+        canonicalDeck: rawCanonicalDeck,
+        playbackState: { activeSlideId: 'slide-2' }
+      },
+      {
+        resolveCanonicalDeck(canonicalDeck) {
+          calls.push(['resolveCanonicalDeck', canonicalDeck]);
+          return normalizedCanonicalDeck;
+        },
+        normalizePlaybackState(playbackState) {
+          calls.push(['normalizePlaybackState', playbackState]);
+          return { activeSlideIds: ['slide-2'], slideCounterText: '' };
+        },
+        setPersistedDeckHtml(cleanHtml) {
+          calls.push(['setPersistedDeckHtml', cleanHtml]);
+        },
+        setPersistedCanonicalDeck(canonicalDeck) {
+          calls.push(['setPersistedCanonicalDeck', canonicalDeck]);
+        },
+        setPersistedPlaybackState(playbackState) {
+          calls.push(['setPersistedPlaybackState', playbackState]);
+        }
+      }
+    ),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck: normalizedCanonicalDeck,
+      playbackState: { activeSlideIds: ['slide-2'], slideCounterText: '' }
+    }
+  );
+
+  assert.deepEqual(calls, [
+    ['setPersistedDeckHtml', '<html>persisted</html>'],
+    ['resolveCanonicalDeck', rawCanonicalDeck],
+    ['setPersistedCanonicalDeck', normalizedCanonicalDeck],
+    ['normalizePlaybackState', { activeSlideId: 'slide-2' }],
+    ['setPersistedPlaybackState', { activeSlideIds: ['slide-2'], slideCounterText: '' }]
+  ]);
+});
+
 test('resolveStudioPersistableDeckStateWithContent requires non-empty persisted html', () => {
   const persistedDeckState = {
     doc: { label: 'iframe-doc' },

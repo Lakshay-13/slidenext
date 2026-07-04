@@ -5193,6 +5193,39 @@
     }
 
     function updateEditorPersistedDeckState(nextState = {}) {
+      const updateStudioPersistedDeckState = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.updateStudioPersistedDeckState === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.updateStudioPersistedDeckState
+        : null;
+      if (updateStudioPersistedDeckState) {
+        updateStudioPersistedDeckState(nextState, {
+          resolveCanonicalDeck(canonicalDeck) {
+            return resolveEditorStoredCanonicalDeck({
+              canonicalDeck
+            }) || null;
+          },
+          normalizePlaybackState(playbackState) {
+            return SlideNextDeckPersistence
+              && typeof SlideNextDeckPersistence.normalizePersistedDeckPlaybackState === 'function'
+              ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(playbackState)
+              : (playbackState || null);
+          },
+          setPersistedDeckHtml(cleanHtml) {
+            lastPersistedDeckHtml = cleanHtml;
+          },
+          setPersistedCanonicalDeck(canonicalDeck) {
+            lastPersistedCanonicalDeck = canonicalDeck;
+          },
+          setPersistedPlaybackState(playbackState) {
+            persistedDeckPlaybackState = playbackState;
+          }
+        });
+        return;
+      }
+
       if (Object.prototype.hasOwnProperty.call(nextState, 'cleanHtml')) {
         lastPersistedDeckHtml = typeof nextState.cleanHtml === 'string' ? nextState.cleanHtml : '';
       }

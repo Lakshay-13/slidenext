@@ -138,6 +138,54 @@ test('updateEditorPersistedDeckState updates only the provided persisted baselin
   assert.deepEqual(context.persistedDeckPlaybackState, { activeSlideIds: ['slide-2'], slideCounterText: '' });
 });
 
+test('updateEditorPersistedDeckState reuses the shared persisted-baseline updater when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateEditorPersistedDeckStateSource = extractFunctionSource(
+    fileContent,
+    'function updateEditorPersistedDeckState(nextState = {}) {',
+    '\n\n    function captureState() {'
+  );
+
+  const calls = [];
+  const context = {
+    lastPersistedDeckHtml: '<html>old</html>',
+    lastPersistedCanonicalDeck: { id: 'old-deck' },
+    persistedDeckPlaybackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 2' },
+    SlideNextDeckPersistence: deckPersistence,
+    SlideNextStudioEditorPersistence: {
+      updateStudioPersistedDeckState(nextState, options = {}) {
+        calls.push({
+          nextState,
+          hasResolveCanonicalDeck: typeof options.resolveCanonicalDeck === 'function',
+          hasNormalizePlaybackState: typeof options.normalizePlaybackState === 'function',
+          hasSetPersistedDeckHtml: typeof options.setPersistedDeckHtml === 'function',
+          hasSetPersistedCanonicalDeck: typeof options.setPersistedCanonicalDeck === 'function',
+          hasSetPersistedPlaybackState: typeof options.setPersistedPlaybackState === 'function'
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
+  vm.runInContext(updateEditorPersistedDeckStateSource, context);
+
+  context.updateEditorPersistedDeckState({
+    cleanHtml: '<html>new</html>'
+  });
+
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    nextState: {
+      cleanHtml: '<html>new</html>'
+    },
+    hasResolveCanonicalDeck: true,
+    hasNormalizePlaybackState: true,
+    hasSetPersistedDeckHtml: true,
+    hasSetPersistedCanonicalDeck: true,
+    hasSetPersistedPlaybackState: true
+  }]);
+});
+
 test('updateEditorPersistedDeckState normalizes the persisted canonical baseline through the shared deck context', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
