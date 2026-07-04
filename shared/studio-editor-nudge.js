@@ -33,6 +33,39 @@
     };
   }
 
+  function buildStudioNudgeActionState(selectionState = {}, options = {}) {
+    const selection = Array.isArray(selectionState.selection) ? selectionState.selection : [];
+    const canNudgeSelection = !!selectionState.canNudge;
+    const resolvedDoc = options.doc || null;
+    const slide = options.slide || null;
+    const slideMetrics = options.slideMetrics || null;
+    const slideBounds = slideMetrics
+      ? {
+          width: slideMetrics.logicalWidth,
+          height: slideMetrics.logicalHeight
+        }
+      : null;
+    const buildPositionedLayoutItems = typeof options.buildPositionedLayoutItems === 'function'
+      ? options.buildPositionedLayoutItems
+      : () => [];
+    const nudgeLayoutItems = resolvedDoc && slide && canNudgeSelection
+      ? buildPositionedLayoutItems(selection, slideMetrics)
+      : [];
+    const canResolveNudgeLayout = nudgeLayoutItems.length === selection.length
+      && nudgeLayoutItems.length > 0;
+
+    return {
+      doc: resolvedDoc,
+      slide,
+      slideMetrics,
+      slideBounds,
+      nudgeSelectionState: selectionState,
+      nudgeLayoutItems,
+      canResolveNudgeLayout,
+      canNudge: !!(resolvedDoc && slide && canNudgeSelection && canResolveNudgeLayout)
+    };
+  }
+
   function clampStudioNudgeValue(value, min, max) {
     return Math.max(min, Math.min(max, value));
   }
@@ -87,6 +120,7 @@
   return {
     getStudioNudgeSelection,
     buildStudioNudgeSelectionState,
+    buildStudioNudgeActionState,
     buildStudioNudgeDeltaFromKey,
     buildStudioNudgedLayout
   };

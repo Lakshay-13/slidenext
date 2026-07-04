@@ -117,6 +117,104 @@ test('buildMotionSelectionActionState resolves nudge geometry from the current d
   ]);
 });
 
+test('buildMotionSelectionActionState reuses the shared nudge action helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = { activeSlide: { id: 'slide-1' } };
+  const selectedElement = { id: 'node-1' };
+  const nudgeSelectionState = {
+    canNudge: true,
+    selection: [selectedElement]
+  };
+  const slideMetrics = {
+    logicalWidth: 1920,
+    logicalHeight: 1080
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      getStudioClosestPositionedAncestor() {
+        return doc.activeSlide;
+      }
+    },
+    SlideNextStudioEditorNudge: {
+      buildStudioNudgeActionState(selectionState, options = {}) {
+        calls.push([
+          'buildStudioNudgeActionState',
+          selectionState,
+          {
+            doc: options.doc,
+            slide: options.slide,
+            slideMetrics: options.slideMetrics,
+            layoutItems: options.buildPositionedLayoutItems(selectionState.selection, options.slideMetrics)
+          }
+        ]);
+        return {
+          doc: options.doc,
+          slide: options.slide,
+          slideMetrics: options.slideMetrics,
+          slideBounds: { width: 1920, height: 1080 },
+          nudgeSelectionState: selectionState,
+          nudgeLayoutItems: [{ element: selectedElement }],
+          canResolveNudgeLayout: true,
+          canNudge: true
+        };
+      }
+    },
+    SlideNextStudioEditorTransform: {
+      buildStudioPositionedLayoutItems(selection, options) {
+        calls.push(['buildStudioPositionedLayoutItems', selection, Object.keys(options).sort()]);
+        return [{ element: selectedElement }];
+      }
+    },
+    getActiveSlide(currentDoc) {
+      calls.push(['getActiveSlide', currentDoc]);
+      return currentDoc && currentDoc.activeSlide ? currentDoc.activeSlide : null;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return doc;
+    },
+    getNudgeSelectionState() {
+      calls.push(['getNudgeSelectionState']);
+      return nudgeSelectionState;
+    },
+    getRectOnSlide() {
+      return { left: 0, top: 0, width: 100, height: 60 };
+    },
+    getSlideMetrics(currentSlide) {
+      calls.push(['getSlideMetrics', currentSlide]);
+      return slideMetrics;
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildMotionSelectionActionState(fileContent, context);
+
+  const motionActionState = context.buildMotionSelectionActionState();
+
+  assert.equal(motionActionState.doc, doc);
+  assert.equal(motionActionState.slide, doc.activeSlide);
+  assert.equal(motionActionState.slideMetrics, slideMetrics);
+  assert.equal(motionActionState.canNudge, true);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getActiveSlide', doc],
+    ['getNudgeSelectionState'],
+    ['getSlideMetrics', doc.activeSlide],
+    ['buildStudioPositionedLayoutItems', [selectedElement], ['getClosestPositionedAncestor', 'getRectOnSlide', 'slideMetrics']],
+    [
+      'buildStudioNudgeActionState',
+      nudgeSelectionState,
+      {
+        doc,
+        slide: doc.activeSlide,
+        slideMetrics,
+        layoutItems: [{ element: selectedElement }]
+      }
+    ]
+  ]);
+});
+
 test('updateMotionActionState enables nudge controls only when the iframe has a live active slide and resolvable geometry', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateMotionActionStateSource = extractFunctionSource(

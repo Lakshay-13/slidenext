@@ -64,6 +64,58 @@ test('buildStudioNudgeDeltaFromKey resolves fine and coarse arrow-key deltas', (
   assert.equal(nudge.buildStudioNudgeDeltaFromKey('Enter'), null);
 });
 
+test('buildStudioNudgeActionState derives geometry readiness from the resolved slide metrics and layout items', () => {
+  const selectionState = {
+    selection: [{ id: 'node-1' }],
+    canNudge: true
+  };
+  const slideMetrics = {
+    logicalWidth: 1920,
+    logicalHeight: 1080
+  };
+
+  assert.deepEqual(nudge.buildStudioNudgeActionState(selectionState, {
+    doc: { id: 'doc' },
+    slide: { id: 'slide-1' },
+    slideMetrics,
+    buildPositionedLayoutItems(selection, currentSlideMetrics) {
+      assert.deepEqual(selection, selectionState.selection);
+      assert.equal(currentSlideMetrics, slideMetrics);
+      return [{ element: selection[0] }];
+    }
+  }), {
+    doc: { id: 'doc' },
+    slide: { id: 'slide-1' },
+    slideMetrics,
+    slideBounds: {
+      width: 1920,
+      height: 1080
+    },
+    nudgeSelectionState: selectionState,
+    nudgeLayoutItems: [{ element: selectionState.selection[0] }],
+    canResolveNudgeLayout: true,
+    canNudge: true
+  });
+
+  assert.deepEqual(nudge.buildStudioNudgeActionState(selectionState, {
+    doc: null,
+    slide: { id: 'slide-1' },
+    slideMetrics
+  }), {
+    doc: null,
+    slide: { id: 'slide-1' },
+    slideMetrics,
+    slideBounds: {
+      width: 1920,
+      height: 1080
+    },
+    nudgeSelectionState: selectionState,
+    nudgeLayoutItems: [],
+    canResolveNudgeLayout: false,
+    canNudge: false
+  });
+});
+
 test('buildStudioNudgedLayout clamps to slide bounds and skips no-op edge nudges', () => {
   assert.deepEqual(nudge.buildStudioNudgedLayout([
     {

@@ -4030,6 +4030,28 @@
       const slide = getActiveSlide(resolvedDoc);
       const nudgeSelectionState = getNudgeSelectionState();
       const slideMetrics = slide ? getSlideMetrics(slide) : null;
+      const buildStudioNudgeActionState = (
+        typeof SlideNextStudioEditorNudge !== 'undefined'
+        && SlideNextStudioEditorNudge
+        && typeof SlideNextStudioEditorNudge.buildStudioNudgeActionState === 'function'
+      )
+        ? SlideNextStudioEditorNudge.buildStudioNudgeActionState
+        : null;
+      if (buildStudioNudgeActionState) {
+        return buildStudioNudgeActionState(nudgeSelectionState, {
+          doc: resolvedDoc,
+          slide,
+          slideMetrics,
+          buildPositionedLayoutItems(selection, currentSlideMetrics) {
+            return SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(selection, {
+              getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+              getRectOnSlide,
+              slideMetrics: currentSlideMetrics
+            });
+          }
+        });
+      }
+
       const slideBounds = slideMetrics
         ? {
             width: slideMetrics.logicalWidth,
