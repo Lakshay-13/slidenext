@@ -353,6 +353,90 @@ test('updateStudioPersistedDeckState normalizes persisted html, canonical deck, 
   ]);
 });
 
+test('captureStudioPersistedDeckPlaybackState reuses deck persistence helpers before synthesizing a fallback active slide id', () => {
+  const doc = { label: 'iframe-doc' };
+  const calls = [];
+  const playbackState = {
+    activeSlideIds: [],
+    slideCounterText: '2 / 5'
+  };
+
+  assert.deepEqual(
+    editorPersistence.captureStudioPersistedDeckPlaybackState(doc, {
+      capturePersistedDeckPlaybackState(nextDoc, options) {
+        calls.push(['capturePersistedDeckPlaybackState', nextDoc, options]);
+        return playbackState;
+      },
+      ensurePersistedDeckPlaybackStateActiveSlideId(nextPlaybackState, options) {
+        calls.push(['ensurePersistedDeckPlaybackStateActiveSlideId', nextPlaybackState, options]);
+        return {
+          activeSlideIds: [options.resolveFallbackActiveSlideId(nextPlaybackState)],
+          slideCounterText: nextPlaybackState.slideCounterText
+        };
+      },
+      getSlides() {
+        calls.push(['getSlides']);
+        return [];
+      },
+      slideIdAttr: 'data-slide-id',
+      resolveFallbackActiveSlideId(nextPlaybackState) {
+        calls.push(['resolveFallbackActiveSlideId', nextPlaybackState]);
+        return 'slide-2';
+      }
+    }),
+    {
+      activeSlideIds: ['slide-2'],
+      slideCounterText: '2 / 5'
+    }
+  );
+
+  assert.equal(calls[0][0], 'capturePersistedDeckPlaybackState');
+  assert.equal(calls[0][1], doc);
+  assert.equal(calls[0][2].slideIdAttr, 'data-slide-id');
+  assert.equal(typeof calls[0][2].getSlides, 'function');
+  assert.equal(calls[1][0], 'ensurePersistedDeckPlaybackStateActiveSlideId');
+  assert.equal(calls[1][1], playbackState);
+  assert.equal(typeof calls[1][2].resolveFallbackActiveSlideId, 'function');
+  assert.deepEqual(calls[2], ['resolveFallbackActiveSlideId', playbackState]);
+
+  const fallbackCalls = [];
+  assert.deepEqual(
+    editorPersistence.captureStudioPersistedDeckPlaybackState(doc, {
+      capturePersistedDeckPlaybackStateWithFallback(nextDoc, options) {
+        fallbackCalls.push(['capturePersistedDeckPlaybackStateWithFallback', nextDoc, options]);
+        return {
+          activeSlideIds: [options.resolveFallbackActiveSlideId()],
+          slideCounterText: '3 / 5'
+        };
+      },
+      capturePersistedDeckPlaybackState() {
+        throw new Error('capturePersistedDeckPlaybackState should not run when the fallback helper is available');
+      },
+      ensurePersistedDeckPlaybackStateActiveSlideId() {
+        throw new Error('ensurePersistedDeckPlaybackStateActiveSlideId should not run when the fallback helper is available');
+      },
+      getSlides() {
+        return [];
+      },
+      slideIdAttr: 'data-slide-id',
+      resolveFallbackActiveSlideId() {
+        fallbackCalls.push(['resolveFallbackActiveSlideId']);
+        return 'slide-3';
+      }
+    }),
+    {
+      activeSlideIds: ['slide-3'],
+      slideCounterText: '3 / 5'
+    }
+  );
+
+  assert.equal(fallbackCalls[0][0], 'capturePersistedDeckPlaybackStateWithFallback');
+  assert.equal(fallbackCalls[0][1], doc);
+  assert.equal(fallbackCalls[0][2].slideIdAttr, 'data-slide-id');
+  assert.equal(typeof fallbackCalls[0][2].resolveFallbackActiveSlideId, 'function');
+  assert.deepEqual(fallbackCalls[1], ['resolveFallbackActiveSlideId']);
+});
+
 test('resolveStudioPersistableDeckStateWithContent requires non-empty persisted html', () => {
   const persistedDeckState = {
     doc: { label: 'iframe-doc' },
