@@ -5745,7 +5745,12 @@
             autoSavePersistenceState,
             {
               fetchImpl: fetch,
-              applyPersistenceSuccess: applyCurrentStudioPersistenceSuccess,
+              applyPersistenceSuccess: (persistenceContext, successOptions = {}) => {
+                return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
+                  persistenceContext,
+                  createCurrentStudioPersistenceHandlerOptions(successOptions)
+                );
+              },
               applyPersistenceFailure: applyCurrentStudioPersistenceFailure,
               successOptions: {
                 presentationUrl: persistencePlan.persistenceContext
