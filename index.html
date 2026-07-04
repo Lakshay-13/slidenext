@@ -5633,14 +5633,6 @@
       );
     }
 
-    function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {
-      return SlideNextStudioEditorPersistence.createStudioVersionPersistenceHandlerOptions({
-        ...createCurrentStudioSessionStateOptions(),
-        refreshVersionEntries: loadVersions,
-        onSuccess: options.onSuccess
-      });
-    }
-
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
       const versionCheckpointResult = await SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess(
         versionLabel,
@@ -5685,7 +5677,11 @@
             }
             return SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess(
               nextVersionCheckpointPersistenceState.persistenceContext,
-              createCurrentStudioVersionPersistenceHandlerOptions(successOptions)
+              SlideNextStudioEditorPersistence.createStudioVersionPersistenceHandlerOptions({
+                ...createCurrentStudioSessionStateOptions(),
+                refreshVersionEntries: loadVersions,
+                onSuccess: successOptions.onSuccess
+              })
             );
           },
           successOptions: {

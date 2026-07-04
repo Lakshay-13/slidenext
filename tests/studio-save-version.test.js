@@ -85,18 +85,6 @@ function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
 }
 
-function loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context) {
-  if (typeof context.createCurrentStudioSessionStateOptions !== 'function') {
-    loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  }
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {',
-    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
-}
-
 function loadApplyCurrentStudioPersistenceSuccess(fileContent, context) {
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
@@ -118,7 +106,7 @@ function loadApplyCurrentStudioPersistenceFailure(fileContent, context) {
 }
 
 function loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context) {
-  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
+  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'async function executeCurrentStudioVersionCheckpointSaveWithFailure(',
@@ -131,7 +119,7 @@ function loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, contex
   const helperSource = extractFunctionSource(
     fileContent,
     'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
-    '\n\n    function createCurrentStudioVersionPersistenceHandlerOptions(options = {}) {'
+    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -673,7 +661,6 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   vm.runInContext(submitSaveVersionSource, context);
@@ -785,7 +772,6 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
@@ -908,7 +894,6 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
@@ -1031,7 +1016,6 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadApplyCurrentStudioPersistenceFailure(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
@@ -1105,7 +1089,6 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
@@ -1201,7 +1184,6 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
@@ -1306,7 +1288,6 @@ test('executeSaveAutoVersion skips redundant auto version saves when the capture
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  loadCreateCurrentStudioVersionPersistenceHandlerOptions(fileContent, context);
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   vm.runInContext(executeSaveAutoVersionSource, context);
 
