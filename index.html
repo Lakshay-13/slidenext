@@ -1928,10 +1928,14 @@
     function createCurrentStudioSessionStateOptions(options = {}) {
       return SlideNextStudioEditorSession.createStudioSessionStateOptions({
         sessionToken: options.sessionToken,
-        ...SlideNextStudioEditorSession.createStudioSessionStateReaders({
-          getCurrentPresentationUrl: () => currentPresentationUrl,
-          getCurrentSessionToken: () => studioEditorSessionToken
-        })
+        ...createCurrentStudioSessionStateReaders()
+      });
+    }
+
+    function createCurrentStudioSessionStateReaders() {
+      return SlideNextStudioEditorSession.createStudioSessionStateReaders({
+        getCurrentPresentationUrl: () => currentPresentationUrl,
+        getCurrentSessionToken: () => studioEditorSessionToken
       });
     }
 
@@ -5579,7 +5583,7 @@
         ? options.presentationUrl
         : currentPresentationUrl;
       return SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptions({
-        ...createCurrentStudioSessionStateOptions(),
+        ...createCurrentStudioSessionStateReaders(),
         setPersistedHtml: (nextHtml) => {
           applyCurrentStudioPersistedDeckState({ cleanHtml: nextHtml });
         },

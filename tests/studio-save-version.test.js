@@ -317,6 +317,12 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure delegates through the
     applyCurrentStudioVersionCheckpointSaveSuccess() {
       throw new Error('executeCurrentStudioVersionCheckpointSaveWithFailure should not report success for an unsuccessful result');
     },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => null
+      };
+    },
     createCurrentStudioSessionStateOptions() {
       return {};
     },
@@ -385,6 +391,12 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure reuses the shared fai
   const context = {
     applyCurrentStudioVersionCheckpointSaveSuccess() {
       throw new Error('executeCurrentStudioVersionCheckpointSaveWithFailure should pass the success helper to the shared helper');
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => null
+      };
     },
     createCurrentStudioSessionStateOptions() {
       return {};
