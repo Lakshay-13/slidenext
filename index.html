@@ -5883,6 +5883,19 @@
       }
     }
 
+    function hideCurrentStudioVersionModalImmediately(modal, content) {
+      if (modal) {
+        SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
+        modal.classList.add('hidden');
+        modal.classList.add('opacity-0');
+        modal.classList.remove('opacity-100');
+      }
+      if (content) {
+        content.classList.add('scale-95');
+        content.classList.remove('scale-100');
+      }
+    }
+
     function hideCurrentStudioVersionsDropdown() {
       const versionsDropdown = document.getElementById('versionsDropdown');
       if (versionsDropdown) {
@@ -5904,16 +5917,7 @@
       if (saveVersionNameInput) {
         saveVersionNameInput.value = '';
       }
-      if (saveVersionModal) {
-        SlideNextStudioModalVisibility.cancelStudioModalHide(saveVersionModal);
-        saveVersionModal.classList.add('hidden');
-        saveVersionModal.classList.add('opacity-0');
-        saveVersionModal.classList.remove('opacity-100');
-      }
-      if (saveVersionModalContent) {
-        saveVersionModalContent.classList.add('scale-95');
-        saveVersionModalContent.classList.remove('scale-100');
-      }
+      hideCurrentStudioVersionModalImmediately(saveVersionModal, saveVersionModalContent);
 
       const renameVersionModal = document.getElementById('renameVersionModal');
       const renameVersionModalContent = document.getElementById('renameVersionModalContent');
@@ -5927,16 +5931,7 @@
         confirmRenameVersionBtn.disabled = false;
         confirmRenameVersionBtn.textContent = 'Rename';
       }
-      if (renameVersionModal) {
-        SlideNextStudioModalVisibility.cancelStudioModalHide(renameVersionModal);
-        renameVersionModal.classList.add('hidden');
-        renameVersionModal.classList.add('opacity-0');
-        renameVersionModal.classList.remove('opacity-100');
-      }
-      if (renameVersionModalContent) {
-        renameVersionModalContent.classList.add('scale-95');
-        renameVersionModalContent.classList.remove('scale-100');
-      }
+      hideCurrentStudioVersionModalImmediately(renameVersionModal, renameVersionModalContent);
     }
 
     function resetStudioDeckUiState(options = {}) {

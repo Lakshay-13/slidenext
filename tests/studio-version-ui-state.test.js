@@ -92,6 +92,15 @@ function loadHideCurrentStudioVersionModal(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function hideCurrentStudioVersionModal(modal, content) {',
+    '\n\n    function hideCurrentStudioVersionModalImmediately(modal, content) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadHideCurrentStudioVersionModalImmediately(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function hideCurrentStudioVersionModalImmediately(modal, content) {',
     '\n\n    function hideCurrentStudioVersionsDropdown() {'
   );
   vm.runInContext(helperSource, context);
@@ -213,6 +222,56 @@ test('hideCurrentStudioVersionModal tolerates missing chrome nodes', () => {
 
   assert.doesNotThrow(() => {
     context.hideCurrentStudioVersionModal(null, null);
+  });
+  assert.deepEqual(calls, []);
+});
+
+test('hideCurrentStudioVersionModalImmediately hides chrome and cancels pending hides', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const modal = {
+    classList: createClassList(['opacity-100'])
+  };
+  const content = {
+    classList: createClassList(['scale-100'])
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioModalVisibility: {
+      cancelStudioModalHide(nextModal) {
+        calls.push(['cancelStudioModalHide', nextModal]);
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadHideCurrentStudioVersionModalImmediately(fileContent, context);
+
+  context.hideCurrentStudioVersionModalImmediately(modal, content);
+
+  assert.equal(modal.classList.contains('hidden'), true);
+  assert.equal(modal.classList.contains('opacity-0'), true);
+  assert.equal(modal.classList.contains('opacity-100'), false);
+  assert.equal(content.classList.contains('scale-95'), true);
+  assert.equal(content.classList.contains('scale-100'), false);
+  assert.deepEqual(calls, [['cancelStudioModalHide', modal]]);
+});
+
+test('hideCurrentStudioVersionModalImmediately tolerates missing chrome nodes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    SlideNextStudioModalVisibility: {
+      cancelStudioModalHide() {
+        calls.push('cancelStudioModalHide');
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadHideCurrentStudioVersionModalImmediately(fileContent, context);
+
+  assert.doesNotThrow(() => {
+    context.hideCurrentStudioVersionModalImmediately(null, null);
   });
   assert.deepEqual(calls, []);
 });
@@ -606,6 +665,7 @@ test('resetStudioVersionUiState hides open version chrome and clears modal state
 
   vm.createContext(context);
   loadHideCurrentStudioVersionsDropdown(fileContent, context);
+  loadHideCurrentStudioVersionModalImmediately(fileContent, context);
   loadResetCurrentStudioRenameVersionState(fileContent, context);
   vm.runInContext(resetStudioVersionUiStateSource, context);
 
