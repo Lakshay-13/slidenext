@@ -1780,6 +1780,25 @@
     );
   }
 
+  function createStudioPersistedDeckHtmlChecker(options = {}) {
+    const readPersistedDeckState = typeof options.readPersistedDeckState === 'function'
+      ? options.readPersistedDeckState
+      : () => options.persistedDeckState || {};
+    const isPersistedDeckHtml = typeof options.isPersistedDeckHtml === 'function'
+      ? options.isPersistedDeckHtml
+      : isStudioPersistedDeckHtml;
+
+    return function isPersistedDeckHtmlWithCurrentState(cleanHtml = '', nextOptions = {}) {
+      const nextPersistedDeckState = typeof nextOptions.readPersistedDeckState === 'function'
+        ? nextOptions.readPersistedDeckState()
+        : readPersistedDeckState();
+      const checkPersistedDeckHtml = typeof nextOptions.isPersistedDeckHtml === 'function'
+        ? nextOptions.isPersistedDeckHtml
+        : isPersistedDeckHtml;
+      return checkPersistedDeckHtml(cleanHtml, nextPersistedDeckState);
+    };
+  }
+
   function isStudioPersistedSaveRequest(
     saveRequestBody = null,
     persistedDeckState = {},
@@ -2024,6 +2043,7 @@
     createStudioMetadataPersistenceOptionsResolver,
     isStudioPersistedState,
     isStudioPersistedDeckHtml,
+    createStudioPersistedDeckHtmlChecker,
     isStudioPersistedSaveRequest,
     createStudioPersistedSaveRequestChecker,
     isStudioPersistenceTaskStale,

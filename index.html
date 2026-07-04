@@ -6755,6 +6755,26 @@
     }
 
     function isCurrentDeckHtmlPersisted(cleanHtml) {
+      const createStudioPersistedDeckHtmlChecker = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckHtmlChecker === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistedDeckHtmlChecker
+        : null;
+      if (createStudioPersistedDeckHtmlChecker) {
+        return createStudioPersistedDeckHtmlChecker({
+          readPersistedDeckState: getCurrentEditorPersistedDeckState,
+          isPersistedDeckHtml: (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+            && typeof SlideNextStudioEditorPersistence.isStudioPersistedDeckHtml === 'function'
+          )
+            ? SlideNextStudioEditorPersistence.isStudioPersistedDeckHtml
+            : null
+        })(cleanHtml);
+      }
+
       return SlideNextStudioEditorPersistence.isStudioPersistedDeckHtml(
         cleanHtml,
         getCurrentEditorPersistedDeckState()

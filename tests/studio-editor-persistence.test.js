@@ -3642,6 +3642,44 @@ test('isStudioPersistedDeckHtml reuses persisted deck-state baselines for html c
   );
 });
 
+test('createStudioPersistedDeckHtmlChecker reuses current persisted state and call-time overrides', () => {
+  const persistedDeckState = {
+    cleanHtml: '<html></html>',
+    canonicalDeck: null
+  };
+  const calls = [];
+  const isPersistedDeckHtml = editorPersistence.createStudioPersistedDeckHtmlChecker({
+    readPersistedDeckState() {
+      calls.push(['defaultReadPersistedDeckState']);
+      return {
+        cleanHtml: '<html>default</html>'
+      };
+    }
+  });
+
+  assert.equal(
+    isPersistedDeckHtml(
+      '<html></html>',
+      {
+        readPersistedDeckState() {
+          calls.push(['overrideReadPersistedDeckState']);
+          return persistedDeckState;
+        },
+        isPersistedDeckHtml(nextCleanHtml, nextPersistedDeckState) {
+          calls.push(['isPersistedDeckHtml', nextCleanHtml, nextPersistedDeckState]);
+          return true;
+        }
+      }
+    ),
+    true
+  );
+
+  assert.deepEqual(calls, [
+    ['overrideReadPersistedDeckState'],
+    ['isPersistedDeckHtml', '<html></html>', persistedDeckState]
+  ]);
+});
+
 test('isStudioPersistedSaveRequest reuses persisted deck-state baselines for html and canonical deck comparisons', () => {
   const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
     slides: [

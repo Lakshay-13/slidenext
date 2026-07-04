@@ -501,6 +501,57 @@ test('buildEditorSaveRequestBody reuses the shared save-request body builder whe
   assert.equal(delegatedArgs.buildPersistableDeckHtml, context.buildPersistableDeckHtml);
 });
 
+test('isCurrentDeckHtmlPersisted reuses the shared persisted-html checker when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const isCurrentDeckHtmlPersistedSource = extractFunctionSource(
+    fileContent,
+    'function isCurrentDeckHtmlPersisted(cleanHtml) {',
+    '\n\n    function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  let delegatedArgs = null;
+  const context = {
+    lastPersistedDeckHtml: '<html></html>',
+    lastPersistedCanonicalDeck: canonicalDeck,
+    persistedDeckPlaybackState: null,
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      createStudioPersistedDeckHtmlChecker(options = {}) {
+        delegatedArgs = options;
+        return (cleanHtml) => ({
+          cleanHtml,
+          persistedDeckState: options.readPersistedDeckState(),
+          isPersistedDeckHtml: typeof options.isPersistedDeckHtml
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  vm.runInContext(isCurrentDeckHtmlPersistedSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.isCurrentDeckHtmlPersisted('<html></html>'))),
+    {
+      cleanHtml: '<html></html>',
+      persistedDeckState: {
+        cleanHtml: '<html></html>',
+        canonicalDeck,
+        playbackState: null
+      },
+      isPersistedDeckHtml: 'function'
+    }
+  );
+  assert.equal(delegatedArgs.readPersistedDeckState, context.getCurrentEditorPersistedDeckState);
+  assert.equal(delegatedArgs.isPersistedDeckHtml, context.SlideNextStudioEditorPersistence.isStudioPersistedDeckHtml);
+});
+
 test('isCurrentDeckStatePersisted reuses the shared persisted-save-request checker when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const isCurrentDeckStatePersistedSource = extractFunctionSource(
