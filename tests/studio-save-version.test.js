@@ -66,6 +66,40 @@ function loadCaptureCurrentStudioSessionState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+test('captureCurrentStudioSessionState reuses the shared session snapshot helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let delegatedArgs = null;
+  const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 12,
+    SlideNextStudioEditorSession: {
+      ...editorSession,
+      createStudioSessionSnapshot(options = {}) {
+        delegatedArgs = options;
+        return editorSession.createStudioSessionSnapshot(options);
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureCurrentStudioSessionState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.captureCurrentStudioSessionState())),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      sessionToken: 12
+    }
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(delegatedArgs)),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      sessionToken: 12
+    }
+  );
+});
+
 function loadCreateCurrentStudioSessionReaderOptions(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,

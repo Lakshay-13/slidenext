@@ -1955,6 +1955,20 @@
     }
 
     function captureCurrentStudioSessionState() {
+      const createStudioSessionSnapshot = (
+        typeof SlideNextStudioEditorSession !== 'undefined'
+        && SlideNextStudioEditorSession
+        && typeof SlideNextStudioEditorSession.createStudioSessionSnapshot === 'function'
+      )
+        ? SlideNextStudioEditorSession.createStudioSessionSnapshot
+        : null;
+      if (createStudioSessionSnapshot) {
+        return createStudioSessionSnapshot({
+          presentationUrl: currentPresentationUrl,
+          sessionToken: studioEditorSessionToken
+        });
+      }
+
       return {
         presentationUrl: currentPresentationUrl,
         sessionToken: studioEditorSessionToken
