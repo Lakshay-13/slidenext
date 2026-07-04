@@ -692,6 +692,9 @@ test('deleteVersion reuses the shared delete request helper when available', asy
 
   let helperArgs = null;
   let builderArgs = null;
+  let readerCallCount = 0;
+  let capturedReaders = null;
+  let successOptions = null;
   const calls = [];
   const context = {
     SlideNextStudioVersionActions: {
@@ -712,6 +715,7 @@ test('deleteVersion reuses the shared delete request helper when available', asy
         return options;
       },
       handleStudioVersionListMutationSuccess(deleteContext, options) {
+        successOptions = options;
         calls.push(['handleStudioVersionListMutationSuccess', deleteContext, options.refreshVersionEntries]);
         return true;
       }
@@ -725,8 +729,13 @@ test('deleteVersion reuses the shared delete request helper when available', asy
     currentCategory: 'General',
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
-    createCurrentStudioSessionStateOptions() {
-      return {};
+    createCurrentStudioSessionStateReaders() {
+      readerCallCount += 1;
+      capturedReaders = {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+      return capturedReaders;
     },
     fetch() {
       throw new Error('deleteVersion should pass fetch to the shared delete helper instead of calling it directly');
@@ -754,7 +763,17 @@ test('deleteVersion reuses the shared delete request helper when available', asy
     sessionToken: 17
   });
   assert.equal(helperArgs[2].fetchImpl, context.fetch);
+  assert.equal(readerCallCount, 1);
+  assert.equal(successOptions.getCurrentPresentationUrl, capturedReaders.getCurrentPresentationUrl);
+  assert.equal(successOptions.getCurrentSessionToken, capturedReaders.getCurrentSessionToken);
+  assert.equal(successOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(successOptions.getCurrentSessionToken(), 17);
   assert.ok(calls.some(([name]) => name === 'handleStudioVersionListMutationSuccess'));
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 18;
+  assert.equal(successOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(successOptions.getCurrentSessionToken(), 18);
 });
 
 test('restoreVersion tolerates a missing versions dropdown after a successful restore', async () => {

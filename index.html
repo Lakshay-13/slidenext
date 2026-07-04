@@ -6801,7 +6801,7 @@
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
             deleteContext,
             SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-              ...createCurrentStudioSessionStateOptions(),
+              ...createCurrentStudioSessionStateReaders(),
               refreshVersionEntries: loadVersions
             })
           );
@@ -6809,7 +6809,7 @@
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(
             deleteContext,
             SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-              ...createCurrentStudioSessionStateOptions(),
+              ...createCurrentStudioSessionStateReaders(),
               onFailure: () => {
                 alert(`Delete failed: ${data.error}`);
               }
@@ -6820,7 +6820,7 @@
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(
           deleteContext,
           SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-            ...createCurrentStudioSessionStateOptions(),
+            ...createCurrentStudioSessionStateReaders(),
             onFailure: () => {
               alert(`Error deleting version: ${err.message}`);
             }
