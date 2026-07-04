@@ -5685,7 +5685,12 @@
           successOptions: {
             onSuccess
           },
-          applyPersistenceFailure: applyCurrentStudioPersistenceFailure,
+          applyPersistenceFailure: (persistenceContext, failureOptions = {}) => {
+            return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+              persistenceContext,
+              createCurrentStudioPersistenceHandlerOptions(failureOptions)
+            );
+          },
           buildFailureOptions: (data) => ({
             onFailure: onFailure
               ? () => {

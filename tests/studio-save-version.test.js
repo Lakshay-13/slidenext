@@ -96,7 +96,7 @@ function loadApplyCurrentStudioPersistenceFailure(fileContent, context) {
 }
 
 function loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context) {
-  loadCreateCurrentStudioSessionStateOptions(fileContent, context);
+  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   const helperSource = extractFunctionSource(
     fileContent,
     'async function executeCurrentStudioVersionCheckpointSaveWithFailure(',
@@ -301,16 +301,21 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure delegates through the
   let failureHelperArgs = null;
   let saveArgs = null;
   const context = {
-    SlideNextStudioEditorPersistence: editorPersistence,
-    applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
-      failureHelperArgs = {
-        persistenceContext,
-        options
-      };
-      if (typeof options.onFailure === 'function') {
-        options.onFailure();
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      createStudioPersistenceHandlerOptions(options = {}) {
+        return options;
+      },
+      handleStudioPersistenceFailure(persistenceContext, options = {}) {
+        failureHelperArgs = {
+          persistenceContext,
+          options
+        };
+        if (typeof options.onFailure === 'function') {
+          options.onFailure();
+        }
+        return 'failed';
       }
-      return 'failed';
     },
     saveVersionCheckpoint: async (...args) => {
       saveArgs = args;
@@ -321,6 +326,9 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure delegates through the
     },
     applyCurrentStudioVersionCheckpointSaveSuccess() {
       throw new Error('executeCurrentStudioVersionCheckpointSaveWithFailure should not report success for an unsuccessful result');
+    },
+    createCurrentStudioSessionStateOptions() {
+      return {};
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html'
   };
@@ -385,11 +393,11 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure reuses the shared fai
   let helperArgs = null;
   const failureCalls = [];
   const context = {
-    applyCurrentStudioPersistenceFailure() {
-      throw new Error('executeCurrentStudioVersionCheckpointSaveWithFailure should pass the failure helper to the shared helper');
-    },
     applyCurrentStudioVersionCheckpointSaveSuccess() {
       throw new Error('executeCurrentStudioVersionCheckpointSaveWithFailure should pass the success helper to the shared helper');
+    },
+    createCurrentStudioSessionStateOptions() {
+      return {};
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     saveVersionCheckpoint() {
@@ -429,7 +437,7 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure reuses the shared fai
   assert.equal(helperArgs[2], '/presentations/onboarding-presentation/index.html');
   assert.equal(helperArgs[3].saveVersionCheckpoint, context.saveVersionCheckpoint);
   assert.equal(typeof helperArgs[3].applyVersionCheckpointSaveSuccess, 'function');
-  assert.equal(helperArgs[3].applyPersistenceFailure, context.applyCurrentStudioPersistenceFailure);
+  assert.equal(typeof helperArgs[3].applyPersistenceFailure, 'function');
   assert.equal(typeof helperArgs[3].successOptions.onSuccess, 'function');
   const failureOptions = helperArgs[3].buildFailureOptions({
     success: false,
