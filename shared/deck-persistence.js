@@ -209,6 +209,21 @@
     });
   }
 
+  function capturePersistedDeckPlaybackStateWithFallback(doc, options = {}) {
+    const capturePlaybackState = typeof options.capturePlaybackState === 'function'
+      ? options.capturePlaybackState
+      : (nextDoc, captureOptions) => capturePersistedDeckPlaybackState(nextDoc, captureOptions);
+    const playbackState = capturePlaybackState(doc, options);
+    if (!doc) {
+      return playbackState;
+    }
+
+    return ensurePersistedDeckPlaybackStateActiveSlideId(playbackState, {
+      resolveFallbackActiveSlideId: options.resolveFallbackActiveSlideId,
+      fallbackActiveSlideId: options.fallbackActiveSlideId
+    });
+  }
+
   function restorePersistedDeckPlaybackState(root, persistedDeckPlaybackState, options = {}) {
     const normalizedPlaybackState = normalizePersistedDeckPlaybackState(persistedDeckPlaybackState);
     if (!root || !normalizedPlaybackState) return;
@@ -281,6 +296,7 @@
     resolvePersistedDeckActiveSlideId,
     ensurePersistedDeckPlaybackStateActiveSlideId,
     capturePersistedDeckPlaybackState,
+    capturePersistedDeckPlaybackStateWithFallback,
     restorePersistedDeckPlaybackState,
     buildPersistableDeckHtml
   };

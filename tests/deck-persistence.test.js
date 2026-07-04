@@ -75,6 +75,52 @@ test('ensurePersistedDeckPlaybackStateActiveSlideId injects a fallback active sl
   );
 });
 
+test('capturePersistedDeckPlaybackStateWithFallback reuses captured active slide ids and only resolves a fallback when needed', () => {
+  const playbackState = {
+    activeSlideIds: ['slide-live'],
+    slideCounterText: '2 / 5'
+  };
+  let fallbackCalls = 0;
+
+  assert.equal(
+    deckPersistence.capturePersistedDeckPlaybackStateWithFallback(
+      { label: 'iframe-doc' },
+      {
+        capturePlaybackState(doc, options) {
+          assert.equal(doc.label, 'iframe-doc');
+          assert.equal(typeof options.resolveFallbackActiveSlideId, 'function');
+          return playbackState;
+        },
+        resolveFallbackActiveSlideId() {
+          fallbackCalls += 1;
+          return 'slide-fallback';
+        }
+      }
+    ),
+    playbackState
+  );
+  assert.equal(fallbackCalls, 0);
+
+  assert.deepEqual(
+    deckPersistence.capturePersistedDeckPlaybackStateWithFallback(
+      { label: 'iframe-doc' },
+      {
+        capturePlaybackState() {
+          return {
+            activeSlideIds: [],
+            slideCounterText: '2 / 5'
+          };
+        },
+        fallbackActiveSlideId: 'slide-2'
+      }
+    ),
+    {
+      activeSlideIds: ['slide-2'],
+      slideCounterText: '2 / 5'
+    }
+  );
+});
+
 test('stripTransientDeckRuntimeState removes configured transient class names from the cloned deck html', () => {
   function createClassList(initialValues = []) {
     const values = new Set(initialValues);
