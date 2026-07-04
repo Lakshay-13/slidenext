@@ -45,6 +45,19 @@
     };
   }
 
+  function createStudioVersionRequestOptionsBuilder(options = {}) {
+    const defaultFetchImpl = typeof options.fetchImpl === 'function'
+      ? options.fetchImpl
+      : null;
+
+    return function createVersionRequestOptions(nextOptions = {}) {
+      return {
+        fetchImpl: defaultFetchImpl,
+        ...nextOptions
+      };
+    };
+  }
+
   function isStudioVersionActionCurrent(context = {}, options = {}) {
     const requestedPresentationUrl = normalizeString(context.presentationUrl);
     if (!requestedPresentationUrl) {
@@ -228,6 +241,7 @@
     STUDIO_AUTO_VERSION_TIMER_KEY,
     createStudioVersionActionContext,
     createStudioVersionActionHandlerOptionsBuilder,
+    createStudioVersionRequestOptionsBuilder,
     isStudioVersionActionCurrent,
     isStudioVersionActionSessionCurrent,
     shouldDebounceStudioAutoVersion,

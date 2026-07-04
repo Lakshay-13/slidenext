@@ -743,6 +743,38 @@ test('createCurrentStudioVersionRequestOptions merges the shared fetch implement
   assert.equal(overrideOptions.requestId, 'rename');
 });
 
+test('createCurrentStudioVersionRequestOptions reuses the shared version-request builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let delegatedArgs = null;
+  const context = {
+    fetch() {},
+    SlideNextStudioVersionActions: {
+      ...versionActions,
+      createStudioVersionRequestOptionsBuilder(options = {}) {
+        delegatedArgs = options;
+        return (nextOptions = {}) => ({
+          fetchImpl: typeof options.fetchImpl,
+          requestId: nextOptions.requestId
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.createCurrentStudioVersionRequestOptions({
+      requestId: 'rename'
+    }))),
+    {
+      fetchImpl: 'function',
+      requestId: 'rename'
+    }
+  );
+  assert.equal(delegatedArgs.fetchImpl, context.fetch);
+});
+
 test('resetStudioVersionUiState hides open version chrome and clears modal state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resetStudioVersionUiStateSource = extractFunctionSource(

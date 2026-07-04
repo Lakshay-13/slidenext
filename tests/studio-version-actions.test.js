@@ -84,6 +84,24 @@ test('createStudioVersionActionHandlerOptionsBuilder reuses session-reader defau
   ]);
 });
 
+test('createStudioVersionRequestOptionsBuilder reuses the default fetch implementation and call-time overrides', () => {
+  const defaultFetch = () => {};
+  const createVersionRequestOptions = versionActions.createStudioVersionRequestOptionsBuilder({
+    fetchImpl: defaultFetch
+  });
+
+  const defaultOptions = createVersionRequestOptions();
+  const overrideFetch = () => {};
+  const overrideOptions = createVersionRequestOptions({
+    fetchImpl: overrideFetch,
+    requestId: 'rename'
+  });
+
+  assert.equal(defaultOptions.fetchImpl, defaultFetch);
+  assert.equal(overrideOptions.fetchImpl, overrideFetch);
+  assert.equal(overrideOptions.requestId, 'rename');
+});
+
 test('executeStudioVersionActionRequest posts the supplied request init and returns the parsed response payload', async () => {
   const fetchCalls = [];
 
