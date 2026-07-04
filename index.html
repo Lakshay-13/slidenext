@@ -3457,6 +3457,21 @@
     }
 
     function getCurrentEditorPersistedDeckState() {
+      const createStudioPersistedDeckStateReader = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateReader === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateReader
+        : null;
+      if (createStudioPersistedDeckStateReader) {
+        return createStudioPersistedDeckStateReader({
+          getPersistedDeckHtml: () => lastPersistedDeckHtml,
+          getPersistedCanonicalDeck: () => lastPersistedCanonicalDeck,
+          getPersistedPlaybackState: () => persistedDeckPlaybackState
+        })();
+      }
+
       const createStudioPersistedDeckStateSnapshot = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence
@@ -3480,6 +3495,35 @@
     }
 
     getCurrentEditorPersistedDeckState.resolveWithContent = function (persistedDeckState = getCurrentEditorPersistedDeckState()) {
+      const createStudioPersistedDeckStateReader = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateReader === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateReader
+        : null;
+      if (createStudioPersistedDeckStateReader) {
+        return createStudioPersistedDeckStateReader({
+          getPersistedDeckHtml: () => lastPersistedDeckHtml,
+          getPersistedCanonicalDeck: () => lastPersistedCanonicalDeck,
+          getPersistedPlaybackState: () => persistedDeckPlaybackState,
+          resolvePersistedDeckStateSnapshotWithContent: (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+            && typeof SlideNextStudioEditorPersistence.resolveStudioPersistedDeckStateSnapshotWithContent === 'function'
+          )
+            ? SlideNextStudioEditorPersistence.resolveStudioPersistedDeckStateSnapshotWithContent
+            : null,
+          resolvePersistableDeckStateWithContent: (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+            && typeof SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent === 'function'
+          )
+            ? SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent
+            : null
+        }).resolveWithContent(persistedDeckState);
+      }
+
       const resolveStudioPersistedDeckStateSnapshotWithContent = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence

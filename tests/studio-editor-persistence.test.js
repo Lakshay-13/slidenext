@@ -75,6 +75,58 @@ test('createStudioPersistedDeckStateSnapshot normalizes persisted html and prese
   );
 });
 
+test('createStudioPersistedDeckStateReader reads persisted baselines and resolves content through the shared helpers', () => {
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: { id: 'persisted-deck' },
+    playbackState: { activeSlideIds: ['slide-2'], slideCounterText: '2 / 4' }
+  };
+  const calls = [];
+  const reader = editorPersistence.createStudioPersistedDeckStateReader({
+    getPersistedDeckHtml() {
+      calls.push(['getPersistedDeckHtml']);
+      return persistedDeckState.cleanHtml;
+    },
+    getPersistedCanonicalDeck() {
+      calls.push(['getPersistedCanonicalDeck']);
+      return persistedDeckState.canonicalDeck;
+    },
+    getPersistedPlaybackState() {
+      calls.push(['getPersistedPlaybackState']);
+      return persistedDeckState.playbackState;
+    },
+    resolvePersistedDeckStateSnapshotWithContent(options = {}) {
+      calls.push(['resolvePersistedDeckStateSnapshotWithContent', options]);
+      return options.persistedDeckState;
+    }
+  });
+
+  assert.deepEqual(reader(), persistedDeckState);
+  assert.deepEqual(reader.resolveWithContent(), persistedDeckState);
+  assert.deepEqual(calls.map(([name]) => name), [
+    'getPersistedDeckHtml',
+    'getPersistedCanonicalDeck',
+    'getPersistedPlaybackState',
+    'getPersistedDeckHtml',
+    'getPersistedCanonicalDeck',
+    'getPersistedPlaybackState',
+    'resolvePersistedDeckStateSnapshotWithContent'
+  ]);
+
+  const fallbackCalls = [];
+  const fallbackReader = editorPersistence.createStudioPersistedDeckStateReader({
+    persistedDeckHtml: '<html>persisted</html>',
+    persistedCanonicalDeck: persistedDeckState.canonicalDeck,
+    persistedPlaybackState: persistedDeckState.playbackState,
+    resolvePersistableDeckStateWithContent(nextPersistedDeckState) {
+      fallbackCalls.push(nextPersistedDeckState);
+      return nextPersistedDeckState;
+    }
+  });
+  assert.deepEqual(fallbackReader.resolveWithContent(), persistedDeckState);
+  assert.deepEqual(fallbackCalls, [persistedDeckState]);
+});
+
 test('resolveStudioPersistedDeckStateSnapshotWithContent reuses an explicit snapshot and otherwise composes it from persisted baselines', () => {
   const persistedDeckState = {
     cleanHtml: '<html>persisted</html>',

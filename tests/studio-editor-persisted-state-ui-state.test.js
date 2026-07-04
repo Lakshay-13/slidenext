@@ -107,6 +107,39 @@ test('getCurrentEditorPersistedDeckState reuses the shared persisted snapshot he
   }]);
 });
 
+test('getCurrentEditorPersistedDeckState reuses the shared persisted state reader when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: { id: 'persisted-deck' },
+    playbackState: { activeSlideIds: ['slide-2'], slideCounterText: '2 / 4' }
+  };
+  let delegatedArgs = null;
+  const context = {
+    lastPersistedDeckHtml: persistedDeckState.cleanHtml,
+    lastPersistedCanonicalDeck: persistedDeckState.canonicalDeck,
+    persistedDeckPlaybackState: persistedDeckState.playbackState,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistedDeckStateReader(options = {}) {
+        delegatedArgs = options;
+        return () => persistedDeckState;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState())),
+    persistedDeckState
+  );
+  assert.equal(typeof delegatedArgs.getPersistedDeckHtml, 'function');
+  assert.equal(typeof delegatedArgs.getPersistedCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.getPersistedPlaybackState, 'function');
+});
+
 test('getCurrentEditorPersistedDeckState.resolveWithContent prefers the shared persisted-content resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
@@ -136,6 +169,43 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent prefers the shared p
     persistedDeckState
   );
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [persistedDeckState]);
+});
+
+test('getCurrentEditorPersistedDeckState.resolveWithContent reuses the shared persisted state reader when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: { id: 'persisted-deck' },
+    playbackState: { activeSlideIds: ['slide-2'], slideCounterText: '2 / 4' }
+  };
+  let delegatedArgs = null;
+  const context = {
+    lastPersistedDeckHtml: persistedDeckState.cleanHtml,
+    lastPersistedCanonicalDeck: persistedDeckState.canonicalDeck,
+    persistedDeckPlaybackState: persistedDeckState.playbackState,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistedDeckStateReader(options = {}) {
+        delegatedArgs = options;
+        const reader = () => persistedDeckState;
+        reader.resolveWithContent = (nextPersistedDeckState = persistedDeckState) => nextPersistedDeckState;
+        return reader;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState.resolveWithContent())),
+    persistedDeckState
+  );
+  assert.equal(typeof delegatedArgs.getPersistedDeckHtml, 'function');
+  assert.equal(typeof delegatedArgs.getPersistedCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.getPersistedPlaybackState, 'function');
+  assert.equal(delegatedArgs.resolvePersistedDeckStateSnapshotWithContent, null);
+  assert.equal(delegatedArgs.resolvePersistableDeckStateWithContent, null);
 });
 
 test('getCurrentEditorPersistedDeckState.resolveWithContent reuses the shared persisted snapshot-with-content helper when available', () => {

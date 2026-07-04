@@ -43,6 +43,42 @@
     };
   }
 
+  function createStudioPersistedDeckStateReader(options = {}) {
+    const getPersistedDeckHtml = typeof options.getPersistedDeckHtml === 'function'
+      ? options.getPersistedDeckHtml
+      : () => options.persistedDeckHtml;
+    const getPersistedCanonicalDeck = typeof options.getPersistedCanonicalDeck === 'function'
+      ? options.getPersistedCanonicalDeck
+      : () => options.persistedCanonicalDeck;
+    const getPersistedPlaybackState = typeof options.getPersistedPlaybackState === 'function'
+      ? options.getPersistedPlaybackState
+      : () => options.persistedPlaybackState;
+
+    const readPersistedDeckState = function () {
+      return createStudioPersistedDeckStateSnapshot({
+        persistedDeckHtml: getPersistedDeckHtml(),
+        persistedCanonicalDeck: getPersistedCanonicalDeck(),
+        persistedPlaybackState: getPersistedPlaybackState()
+      });
+    };
+
+    readPersistedDeckState.resolveWithContent = function (persistedDeckState = readPersistedDeckState()) {
+      const resolvePersistedDeckStateSnapshotWithContent = typeof options.resolvePersistedDeckStateSnapshotWithContent === 'function'
+        ? options.resolvePersistedDeckStateSnapshotWithContent
+        : null;
+      if (resolvePersistedDeckStateSnapshotWithContent) {
+        return resolvePersistedDeckStateSnapshotWithContent({ persistedDeckState });
+      }
+
+      const resolvePersistableDeckStateWithContent = typeof options.resolvePersistableDeckStateWithContent === 'function'
+        ? options.resolvePersistableDeckStateWithContent
+        : resolveStudioPersistableDeckStateWithContent;
+      return resolvePersistableDeckStateWithContent(persistedDeckState);
+    };
+
+    return readPersistedDeckState;
+  }
+
   function resolveStudioPersistedDeckStateSnapshotWithContent(options = {}) {
     const persistedDeckState = Object.prototype.hasOwnProperty.call(options, 'persistedDeckState')
       ? options.persistedDeckState
@@ -1478,6 +1514,7 @@
   return {
     createStudioPersistableDeckState,
     createStudioPersistedDeckStateSnapshot,
+    createStudioPersistedDeckStateReader,
     resolveStudioPersistedDeckStateSnapshotWithContent,
     applyStudioPersistedDeckState,
     syncStudioPresentationMetadataPersistedCanonicalDeck,
