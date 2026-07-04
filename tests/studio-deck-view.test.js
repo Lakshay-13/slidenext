@@ -274,6 +274,34 @@ test('resolveStudioZoomActionState derives zoom readiness from the active slide 
   );
 });
 
+test('resolveStudioInsertionActionState derives slide insertion readiness from the active slide and slide container resolvers', () => {
+  assert.deepEqual(
+    deckView.resolveStudioInsertionActionState(null),
+    {
+      canAddSlide: false,
+      canInsertElements: false
+    }
+  );
+
+  assert.deepEqual(
+    deckView.resolveStudioInsertionActionState(
+      { activeSlide: { id: 'slide-1' }, slideContainer: {} },
+      {
+        getActiveSlide(doc) {
+          return doc && doc.activeSlide ? doc.activeSlide : null;
+        },
+        getSlideContainer(doc) {
+          return doc && doc.slideContainer ? doc.slideContainer : null;
+        }
+      }
+    ),
+    {
+      canAddSlide: true,
+      canInsertElements: true
+    }
+  );
+});
+
 test('resolveStudioWallpaperActionState derives wallpaper readiness from the active slide resolver', () => {
   assert.deepEqual(
     deckView.resolveStudioWallpaperActionState(null),

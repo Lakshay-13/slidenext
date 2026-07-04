@@ -91,6 +91,60 @@ test('resolveCurrentStudioInsertionActionState reports add-slide and insertion r
   );
 });
 
+test('resolveCurrentStudioInsertionActionState reuses the shared deck-view insertion helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = {
+    activeSlide: { id: 'slide-1' },
+    getElementById(id) {
+      return id === 'slidesContainer' ? { id: 'slides-container' } : null;
+    }
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      resolveStudioInsertionActionState(sourceDoc, options = {}) {
+        calls.push({
+          sourceDoc,
+          hasGetActiveSlide: typeof options.getActiveSlide === 'function',
+          hasGetSlideContainer: typeof options.getSlideContainer === 'function',
+          activeSlideId: options.getActiveSlide(sourceDoc)?.id || '',
+          hasSlideContainer: !!options.getSlideContainer(sourceDoc)
+        });
+        return {
+          canAddSlide: true,
+          canInsertElements: true
+        };
+      }
+    },
+    getActiveSlide(sourceDoc) {
+      return sourceDoc && sourceDoc.activeSlide ? sourceDoc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioInsertionActionState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveCurrentStudioInsertionActionState(doc))),
+    {
+      canAddSlide: true,
+      canInsertElements: true
+    }
+  );
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    sourceDoc: {
+      activeSlide: { id: 'slide-1' }
+    },
+    hasGetActiveSlide: true,
+    hasGetSlideContainer: true,
+    activeSlideId: 'slide-1',
+    hasSlideContainer: true
+  }]);
+});
+
 test('updateInsertionActionState enables deck-ready insert controls only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateInsertionActionStateSource = extractFunctionSource(
