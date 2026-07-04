@@ -5772,13 +5772,13 @@
           );
         } catch (err) {
           console.error('AutoSave Error:', err);
-          applyCurrentStudioPersistenceFailure(
+          SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
             persistencePlan.persistenceContext,
-            {
+            createCurrentStudioPersistenceHandlerOptions({
               onFailure: () => {
                 setStudioAutoSaveStatus('network-error');
               }
-            }
+            })
           );
         }
       }, 1500); // 1.5s debounce delay

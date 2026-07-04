@@ -2339,3 +2339,100 @@ test('triggerAutoSave clears the persisted playback baseline after a successful 
   assert.equal(persistedStateUpdates[2].playbackState, null);
   assert.equal(statusEl.innerHTML, 'saved');
 });
+
+test('triggerAutoSave reports network persistence errors through the shared failure helper', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const triggerAutoSaveSource = extractFunctionSource(
+    fileContent,
+    'function triggerAutoSave() {',
+    '\n\n    // Custom styled checkpoint version modal controls'
+  );
+
+  let scheduledCallback = null;
+  let failureHelperArgs = null;
+  const errorCalls = [];
+  let statusState = 'Saved to disk';
+  const autoSavePersistenceState = {
+    persistencePlan: {
+      hasPersistedCurrentState: false,
+      persistenceContext: {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      }
+    }
+  };
+
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      handleStudioPersistenceFailure(persistenceContext, options = {}) {
+        failureHelperArgs = {
+          persistenceContext,
+          options
+        };
+        if (typeof options.onFailure === 'function') {
+          options.onFailure();
+        }
+        return 'handled';
+      },
+      isStudioPersistenceTaskStale() {
+        return false;
+      },
+      async executeStudioAutoSavePersistenceRequestWithHandlers() {
+        throw new Error('socket down');
+      }
+    },
+    autoSaveDebounceTimer: null,
+    buildEditorSaveRequestBody() {
+      return {};
+    },
+    clearTimeout() {},
+    console: {
+      error(...args) {
+        errorCalls.push(args);
+      }
+    },
+    createCurrentStudioPersistenceHandlerOptions(options = {}) {
+      return {
+        marker: 'persistence-handler-options',
+        ...options
+      };
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    fetch() {
+      throw new Error('triggerAutoSave should not call fetch after the shared autosave helper throws');
+    },
+    getIframeDoc() {
+      return { label: 'iframe-doc' };
+    },
+    isCurrentDeckStatePersisted() {
+      return false;
+    },
+    resolveCurrentStudioPersistenceStateFromCapture() {
+      return autoSavePersistenceState;
+    },
+    setStudioAutoSaveStatus(state) {
+      statusState = state;
+    },
+    setTimeout(callback) {
+      scheduledCallback = callback;
+      return 1;
+    },
+    studioEditorSessionToken: 9
+  };
+
+  vm.createContext(context);
+  vm.runInContext(triggerAutoSaveSource, context);
+
+  context.triggerAutoSave();
+  assert.equal(statusState, 'saving');
+  assert.equal(typeof scheduledCallback, 'function');
+
+  await scheduledCallback();
+
+  assert.equal(failureHelperArgs.persistenceContext, autoSavePersistenceState.persistencePlan.persistenceContext);
+  assert.equal(failureHelperArgs.options.marker, 'persistence-handler-options');
+  assert.equal(typeof failureHelperArgs.options.onFailure, 'function');
+  assert.equal(statusState, 'network-error');
+  assert.equal(errorCalls.length, 1);
+  assert.equal(errorCalls[0][0], 'AutoSave Error:');
+  assert.equal(errorCalls[0][1].message, 'socket down');
+});
