@@ -509,6 +509,11 @@ test('applyCustomGradient exits cleanly when the custom gradient controls are un
         }
         return null;
       }
+    },
+    resolveCurrentStudioWallpaperActionState() {
+      return {
+        canUseWallpaperControls: true
+      };
     }
   };
 
@@ -546,6 +551,11 @@ test('setCustomGradientType exits cleanly when the gradient chrome is unavailabl
         }
         return null;
       }
+    },
+    resolveCurrentStudioWallpaperActionState() {
+      return {
+        canUseWallpaperControls: true
+      };
     }
   };
 
@@ -583,6 +593,11 @@ test('updateCustomGradientAngle exits cleanly when the angle label is unavailabl
         }
         return null;
       }
+    },
+    resolveCurrentStudioWallpaperActionState() {
+      return {
+        canUseWallpaperControls: true
+      };
     }
   };
 

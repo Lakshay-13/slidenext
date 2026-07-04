@@ -4718,6 +4718,9 @@
 
     // Wallpaper / Background styles Tabs
     function setWallpaperTab(tab) {
+      if (!resolveCurrentStudioWallpaperActionState().canUseWallpaperControls) {
+        return false;
+      }
       const solidTab = document.getElementById('wpTabSolid');
       const presetsTab = document.getElementById('wpTabPresets');
       const customTab = document.getElementById('wpTabCustom');
@@ -4732,7 +4735,7 @@
       const solidPanel = document.getElementById('wpPanelSolid');
       const presetsPanel = document.getElementById('wpPanelPresets');
       const customPanel = document.getElementById('wpPanelCustom');
-      if (!solidTab || !presetsTab || !customTab || !nextTabButton || nextTabButton.disabled || !solidPanel || !presetsPanel || !customPanel) {
+      if (!solidTab || !presetsTab || !customTab || !nextTabButton || !solidPanel || !presetsPanel || !customPanel) {
         return false;
       }
 
@@ -4815,11 +4818,12 @@
     }
 
     function setCustomGradientType(type) {
+      if (!resolveCurrentStudioWallpaperActionState().canUseWallpaperControls) return false;
       const linearBtn = document.getElementById('cgLinearBtn');
       const radialBtn = document.getElementById('cgRadialBtn');
       const angleGroup = document.getElementById('cgAngleGroup');
       const nextGradientTypeBtn = type === 'radial' ? radialBtn : linearBtn;
-      if (!linearBtn || !radialBtn || !angleGroup || !nextGradientTypeBtn || nextGradientTypeBtn.disabled) {
+      if (!linearBtn || !radialBtn || !angleGroup || !nextGradientTypeBtn) {
         return false;
       }
 
@@ -4851,8 +4855,8 @@
     }
 
     function updateCustomGradientAngle(value) {
+      if (!resolveCurrentStudioWallpaperActionState().canUseWallpaperControls) return false;
       const angleInput = document.getElementById('cgAngle');
-      if (angleInput && angleInput.disabled) return false;
       const angleLabel = document.getElementById('cgAngleVal');
       if (angleLabel) {
         angleLabel.textContent = `${value}°`;
@@ -4862,10 +4866,11 @@
 
     // Build background CSS based on custom stops
     function applyCustomGradient() {
+      if (!resolveCurrentStudioWallpaperActionState().canUseWallpaperControls) return false;
       const color1Input = document.getElementById('cgColor1');
       const color2Input = document.getElementById('cgColor2');
       const angleInput = document.getElementById('cgAngle');
-      if (!color1Input || !color2Input || !angleInput || color1Input.disabled || color2Input.disabled || angleInput.disabled) {
+      if (!color1Input || !color2Input || !angleInput) {
         return false;
       }
       const color1 = color1Input.value;

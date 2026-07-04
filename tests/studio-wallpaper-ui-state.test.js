@@ -180,7 +180,7 @@ function createClassList(initialValues = []) {
   };
 }
 
-test('setWallpaperTab returns false without mutating chrome when the target tab is disabled', () => {
+test('setWallpaperTab returns false without mutating chrome when wallpaper readiness is disabled', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setWallpaperTabSource = extractFunctionSource(
     fileContent,
@@ -191,12 +191,17 @@ test('setWallpaperTab returns false without mutating chrome when the target tab 
   const elements = {
     wpTabSolid: { disabled: false, className: 'solid-idle' },
     wpTabPresets: { disabled: false, className: 'presets-idle' },
-    wpTabCustom: { disabled: true, className: 'custom-idle' },
+    wpTabCustom: { disabled: false, className: 'custom-idle' },
     wpPanelSolid: { classList: createClassList([]) },
     wpPanelPresets: { classList: createClassList(['hidden']) },
     wpPanelCustom: { classList: createClassList(['hidden']) }
   };
   const context = {
+    resolveCurrentStudioWallpaperActionState() {
+      return {
+        canUseWallpaperControls: false
+      };
+    },
     wallpaperTab: 'solid',
     document: {
       getElementById(id) {
@@ -235,6 +240,11 @@ test('setWallpaperTab keeps disabled-aware idle classes on inactive wallpaper ta
     wpPanelCustom: { classList: createClassList(['hidden']) }
   };
   const context = {
+    resolveCurrentStudioWallpaperActionState() {
+      return {
+        canUseWallpaperControls: true
+      };
+    },
     wallpaperTab: 'solid',
     document: {
       getElementById(id) {
