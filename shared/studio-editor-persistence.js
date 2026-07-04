@@ -1447,6 +1447,38 @@
       : '');
   }
 
+  function createStudioReusablePersistedHtmlResolver(options = {}) {
+    const resolveReusablePersistedHtml = typeof options.resolveReusablePersistedHtml === 'function'
+      ? options.resolveReusablePersistedHtml
+      : resolveStudioReusablePersistedHtml;
+    const resolvePersistedHtmlReuse = typeof options.resolvePersistedHtmlReuse === 'function'
+      ? options.resolvePersistedHtmlReuse
+      : null;
+    const isPersistedCanonicalDeck = typeof options.isPersistedCanonicalDeck === 'function'
+      ? options.isPersistedCanonicalDeck
+      : null;
+
+    return function resolveReusablePersistedHtmlWithDefaults(persistedDeckState = {}, nextOptions = {}) {
+      return resolveReusablePersistedHtml(persistedDeckState, {
+        persistedHtml: typeof nextOptions.persistedHtml === 'string'
+          ? nextOptions.persistedHtml
+          : undefined,
+        canonicalDeck: Object.prototype.hasOwnProperty.call(nextOptions, 'canonicalDeck')
+          ? nextOptions.canonicalDeck
+          : null,
+        persistedCanonicalDeck: Object.prototype.hasOwnProperty.call(nextOptions, 'persistedCanonicalDeck')
+          ? nextOptions.persistedCanonicalDeck
+          : undefined,
+        resolvePersistedHtmlReuse: typeof nextOptions.resolvePersistedHtmlReuse === 'function'
+          ? nextOptions.resolvePersistedHtmlReuse
+          : resolvePersistedHtmlReuse,
+        isPersistedCanonicalDeck: typeof nextOptions.isPersistedCanonicalDeck === 'function'
+          ? nextOptions.isPersistedCanonicalDeck
+          : isPersistedCanonicalDeck
+      });
+    };
+  }
+
   function resolveStudioMetadataPersistenceOptions(options = {}) {
     const activePresentationMetadata = Object.prototype.hasOwnProperty.call(options, 'currentPresentationMetadata')
       ? options.currentPresentationMetadata
@@ -1744,6 +1776,7 @@
     isStudioPersistedCanonicalDeck,
     resolveStudioPersistedHtmlReuse,
     resolveStudioReusablePersistedHtml,
+    createStudioReusablePersistedHtmlResolver,
     resolveStudioMetadataPersistenceOptions,
     createStudioMetadataPersistenceOptionsResolver,
     isStudioPersistedState,

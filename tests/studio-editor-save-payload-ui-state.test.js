@@ -908,6 +908,85 @@ test('resolveEditorReusablePersistedHtml delegates reusable persisted html resol
   assert.equal(typeof delegatedArgs.options.isPersistedCanonicalDeck, 'function');
 });
 
+test('resolveEditorReusablePersistedHtml reuses the shared reusable-html resolver builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorReusablePersistedHtmlSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+
+  let delegatedArgs = null;
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted-baseline</html>',
+    canonicalDeck,
+    playbackState: null
+  };
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      createStudioReusablePersistedHtmlResolver(options = {}) {
+        delegatedArgs = options;
+        return (nextPersistedDeckState, nextOptions = {}) => ({
+          persistedDeckState: nextPersistedDeckState,
+          canonicalDeck: nextOptions.canonicalDeck,
+          persistedHtml: nextOptions.persistedHtml,
+          persistedCanonicalDeck: nextOptions.persistedCanonicalDeck,
+          resolvePersistedHtmlReuse: typeof (
+            typeof nextOptions.resolvePersistedHtmlReuse === 'function'
+              ? nextOptions.resolvePersistedHtmlReuse
+              : options.resolvePersistedHtmlReuse
+          ),
+          isPersistedCanonicalDeck: typeof (
+            typeof nextOptions.isPersistedCanonicalDeck === 'function'
+              ? nextOptions.isPersistedCanonicalDeck
+              : options.isPersistedCanonicalDeck
+          )
+        });
+      },
+      resolveStudioReusablePersistedHtml() {
+        throw new Error('reusable persisted html resolution should be delegated through the shared resolver builder');
+      },
+      resolveStudioPersistedHtmlReuse() {
+        throw new Error('persisted html reuse should be delegated through the shared resolver builder');
+      },
+      isStudioPersistedCanonicalDeck() {
+        throw new Error('canonical deck comparison should be delegated through the shared resolver builder');
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorReusablePersistedHtmlSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveEditorReusablePersistedHtml(persistedDeckState, {
+      canonicalDeck,
+      persistedHtml: '<html>persisted-baseline</html>',
+      persistedCanonicalDeck: canonicalDeck
+    }))),
+    {
+      persistedDeckState: {
+        cleanHtml: '<html>persisted-baseline</html>',
+        canonicalDeck,
+        playbackState: null
+      },
+      canonicalDeck,
+      persistedHtml: '<html>persisted-baseline</html>',
+      persistedCanonicalDeck: canonicalDeck,
+      resolvePersistedHtmlReuse: 'function',
+      isPersistedCanonicalDeck: 'function'
+    }
+  );
+  assert.equal(delegatedArgs.resolveReusablePersistedHtml, context.SlideNextStudioEditorPersistence.resolveStudioReusablePersistedHtml);
+  assert.equal(delegatedArgs.resolvePersistedHtmlReuse, context.SlideNextStudioEditorPersistence.resolveStudioPersistedHtmlReuse);
+  assert.equal(delegatedArgs.isPersistedCanonicalDeck, context.SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck);
+});
+
 test('resolveEditorMetadataPersistenceOptions delegates through the shared metadata persistence helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(

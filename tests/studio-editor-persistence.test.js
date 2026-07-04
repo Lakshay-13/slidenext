@@ -1852,6 +1852,48 @@ test('resolveStudioReusablePersistedHtml prefers a provided reuse resolver and o
   );
 });
 
+test('createStudioReusablePersistedHtmlResolver reuses call-time overrides before builder defaults', () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck
+  };
+  const calls = [];
+  const resolveReusablePersistedHtml = editorPersistence.createStudioReusablePersistedHtmlResolver({
+    resolvePersistedHtmlReuse() {
+      calls.push(['defaultResolvePersistedHtmlReuse']);
+      return '<html>default</html>';
+    }
+  });
+
+  assert.equal(
+    resolveReusablePersistedHtml(persistedDeckState, {
+      canonicalDeck,
+      resolvePersistedHtmlReuse(nextPersistedDeckState, options = {}) {
+        calls.push(['overrideResolvePersistedHtmlReuse', nextPersistedDeckState, options]);
+        return nextPersistedDeckState.cleanHtml;
+      }
+    }),
+    '<html>persisted</html>'
+  );
+
+  assert.deepEqual(calls, [[
+    'overrideResolvePersistedHtmlReuse',
+    persistedDeckState,
+    { canonicalDeck }
+  ]]);
+});
+
 test('resolveStudioMetadataPersistenceOptions prefers a merged resolver and otherwise merges metadata and explicit persistence options', () => {
   const currentPresentationMetadata = {
     id: 'computer-vision-presentation',
