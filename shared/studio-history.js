@@ -122,6 +122,38 @@
     return buildFallbackHtml(doc, options) || '';
   }
 
+  function buildStudioHistoryEntry(doc, options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => doc;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : () => null;
+    const getHistoryOptions = typeof options.getHistoryOptions === 'function'
+      ? options.getHistoryOptions
+      : () => ({});
+    const resolveFallbackActiveSlideId = typeof options.resolveFallbackActiveSlideId === 'function'
+      ? options.resolveFallbackActiveSlideId
+      : () => '';
+    const createHistoryEntry = typeof options.createHistoryEntry === 'function'
+      ? options.createHistoryEntry
+      : createStudioHistoryEntry;
+
+    const nextDoc = doc || getDocument();
+    const canonicalDeck = buildCanonicalDeck(nextDoc);
+    const historyOptions = getHistoryOptions();
+
+    return createHistoryEntry(nextDoc, {
+      ...historyOptions,
+      getActiveSlideId: options.getActiveSlideId,
+      getSelectedElementIds: options.getSelectedElementIds,
+      activeSlideId: nextDoc ? '' : resolveFallbackActiveSlideId(nextDoc, canonicalDeck),
+      selectedElementIds: [],
+      buildHistoryHtml: options.buildHistoryHtml,
+      canonicalDeck
+    });
+  }
+
   function createStudioHistoryEntry(doc, options = {}) {
     const buildHistoryHtml = typeof options.buildHistoryHtml === 'function'
       ? options.buildHistoryHtml
@@ -468,6 +500,7 @@
     normalizeStudioHistoryFrameHtml,
     buildStudioHistoryFrameHtml,
     buildStudioHistoryCaptureHtml,
+    buildStudioHistoryEntry,
     createStudioHistoryEntry,
     normalizeStudioHistoryEntry,
     areStudioHistoryEntriesEqual,

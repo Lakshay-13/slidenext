@@ -247,6 +247,54 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
   assert.equal(entry.canonicalDeck, canonicalDeck);
 });
 
+test('createHistoryEntry reuses the shared history entry builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createHistoryEntrySource = extractFunctionSource(
+    fileContent,
+    'function createHistoryEntry(doc) {',
+    '\n\n    function updateEditorPersistedDeckState(nextState = {}) {'
+  );
+
+  const resultEntry = {
+    html: '<body><main>persisted</main></body>',
+    activeSlideId: 'slide-2',
+    selectedElementIds: ['node-1'],
+    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] }
+  };
+  let delegatedArgs = null;
+  const context = {
+    buildEditorCanonicalDeck() {},
+    buildHistoryFrameHtml() {},
+    getActiveSlideId() {},
+    getCommittedSelectedEditorElementIds() {},
+    getEditorHistoryOptions() {},
+    getIframeDoc() {},
+    resolveEditorFallbackActiveSlideId() {},
+    SlideNextStudioHistory: {
+      buildStudioHistoryEntry(doc, options) {
+        delegatedArgs = { doc, options };
+        return resultEntry;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createHistoryEntrySource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.createHistoryEntry())),
+    resultEntry
+  );
+  assert.equal(delegatedArgs.doc, undefined);
+  assert.equal(delegatedArgs.options.getDocument, context.getIframeDoc);
+  assert.equal(delegatedArgs.options.buildCanonicalDeck, context.buildEditorCanonicalDeck);
+  assert.equal(delegatedArgs.options.getHistoryOptions, context.getEditorHistoryOptions);
+  assert.equal(delegatedArgs.options.resolveFallbackActiveSlideId, context.resolveEditorFallbackActiveSlideId);
+  assert.equal(delegatedArgs.options.buildHistoryHtml, context.buildHistoryFrameHtml);
+  assert.equal(delegatedArgs.options.getActiveSlideId, context.getActiveSlideId);
+  assert.equal(delegatedArgs.options.getSelectedElementIds, context.getCommittedSelectedEditorElementIds);
+});
+
 test('buildHistoryFrameHtml reuses shared deck source sanitization for history snapshots', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(

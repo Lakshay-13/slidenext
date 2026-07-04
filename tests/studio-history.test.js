@@ -96,6 +96,110 @@ test('createStudioHistoryEntry can capture a model-only history entry without a 
   });
 });
 
+test('buildStudioHistoryEntry resolves live editor history state before delegating to entry creation', () => {
+  const doc = { id: 'doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const calls = [];
+
+  const entry = studioHistory.buildStudioHistoryEntry(undefined, {
+    getDocument() {
+      calls.push(['getDocument']);
+      return doc;
+    },
+    buildCanonicalDeck(nextDoc) {
+      calls.push(['buildCanonicalDeck', nextDoc]);
+      return canonicalDeck;
+    },
+    getHistoryOptions() {
+      calls.push(['getHistoryOptions']);
+      return { chromeNodeIds: ['editorSelectionOverlay'] };
+    },
+    buildHistoryHtml(nextDoc) {
+      calls.push(['buildHistoryHtml', nextDoc]);
+      return '<html></html>';
+    },
+    getActiveSlideId(nextDoc) {
+      calls.push(['getActiveSlideId', nextDoc]);
+      return 'slide-1';
+    },
+    getSelectedElementIds(nextDoc) {
+      calls.push(['getSelectedElementIds', nextDoc]);
+      return ['node-1'];
+    }
+  });
+
+  assert.deepEqual(calls, [
+    ['getDocument'],
+    ['buildCanonicalDeck', doc],
+    ['getHistoryOptions'],
+    ['getActiveSlideId', doc],
+    ['getSelectedElementIds', doc],
+    ['buildHistoryHtml', doc]
+  ]);
+  assert.deepEqual(entry, {
+    html: '',
+    activeSlideId: 'slide-1',
+    selectedElementIds: ['node-1'],
+    canonicalDeck
+  });
+});
+
+test('buildStudioHistoryEntry resolves fallback active slide ids for model-only history entries', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const calls = [];
+
+  const entry = studioHistory.buildStudioHistoryEntry(null, {
+    getDocument() {
+      calls.push(['getDocument']);
+      return null;
+    },
+    buildCanonicalDeck(nextDoc) {
+      calls.push(['buildCanonicalDeck', nextDoc]);
+      return canonicalDeck;
+    },
+    getHistoryOptions() {
+      calls.push(['getHistoryOptions']);
+      return { chromeNodeIds: ['editorSelectionOverlay'] };
+    },
+    resolveFallbackActiveSlideId(nextDoc, nextCanonicalDeck) {
+      calls.push(['resolveFallbackActiveSlideId', nextDoc, nextCanonicalDeck]);
+      return 'slide-1';
+    },
+    buildHistoryHtml(nextDoc) {
+      calls.push(['buildHistoryHtml', nextDoc]);
+      return '<!DOCTYPE html><html><body><main>persisted</main></body></html>';
+    },
+    getActiveSlideId() {
+      throw new Error('getActiveSlideId should not run without a live document');
+    },
+    getSelectedElementIds() {
+      throw new Error('getSelectedElementIds should not run without a live document');
+    }
+  });
+
+  assert.deepEqual(calls, [
+    ['getDocument'],
+    ['buildCanonicalDeck', null],
+    ['getHistoryOptions'],
+    ['resolveFallbackActiveSlideId', null, canonicalDeck],
+    ['buildHistoryHtml', null]
+  ]);
+  assert.deepEqual(entry, {
+    html: '<body><main>persisted</main></body>',
+    activeSlideId: 'slide-1',
+    selectedElementIds: [],
+    canonicalDeck
+  });
+});
+
 test('normalizeStudioHistoryEntry preserves the canonical deck sidecar', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',

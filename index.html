@@ -5343,6 +5343,22 @@
     }
 
     function createHistoryEntry(doc) {
+      const buildStudioHistoryEntry = SlideNextStudioHistory
+        && typeof SlideNextStudioHistory.buildStudioHistoryEntry === 'function'
+        ? SlideNextStudioHistory.buildStudioHistoryEntry
+        : null;
+      if (buildStudioHistoryEntry) {
+        return buildStudioHistoryEntry(doc, {
+          getDocument: getIframeDoc,
+          buildCanonicalDeck: buildEditorCanonicalDeck,
+          getHistoryOptions: getEditorHistoryOptions,
+          resolveFallbackActiveSlideId: resolveEditorFallbackActiveSlideId,
+          buildHistoryHtml: buildHistoryFrameHtml,
+          getActiveSlideId,
+          getSelectedElementIds: getCommittedSelectedEditorElementIds
+        });
+      }
+
       const nextDoc = doc || getIframeDoc();
       const canonicalDeck = buildEditorCanonicalDeck(nextDoc);
       const historyOptions = getEditorHistoryOptions();
