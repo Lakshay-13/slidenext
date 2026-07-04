@@ -21,24 +21,6 @@ test('deriveStudioVersionDeckBaseName removes the presentation extension', () =>
   assert.equal(versionHistory.deriveStudioVersionDeckBaseName(''), '');
 });
 
-test('createStudioVersionHistoryLoadOptions preserves the supplied session readers and commit hook', () => {
-  const getCurrentPresentationUrl = () => '/presentations/onboarding-presentation/index.html';
-  const getCurrentSessionToken = () => 7;
-  const commitVersionEntries = () => {};
-
-  const options = versionHistory.createStudioVersionHistoryLoadOptions({
-    sessionToken: 7,
-    getCurrentPresentationUrl,
-    getCurrentSessionToken,
-    commitVersionEntries
-  });
-
-  assert.equal(options.sessionToken, 7);
-  assert.equal(options.getCurrentPresentationUrl, getCurrentPresentationUrl);
-  assert.equal(options.getCurrentSessionToken, getCurrentSessionToken);
-  assert.equal(options.commitVersionEntries, commitVersionEntries);
-});
-
 test('loadStudioVersionHistory commits fetched versions when the requested deck is still current', async () => {
   const fetchDeferred = createDeferred();
   const committedVersions = [];

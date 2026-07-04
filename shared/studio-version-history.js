@@ -27,15 +27,6 @@
     return extensionIndex === -1 ? lastPart : lastPart.substring(0, extensionIndex);
   }
 
-  function createStudioVersionHistoryLoadOptions(options = {}) {
-    return {
-      sessionToken: normalizeSessionToken(options.sessionToken),
-      getCurrentPresentationUrl: options.getCurrentPresentationUrl,
-      getCurrentSessionToken: options.getCurrentSessionToken,
-      commitVersionEntries: options.commitVersionEntries
-    };
-  }
-
   async function loadStudioVersionHistory(presentationUrl = '', options = {}) {
     const requestedPresentationUrl = normalizeString(presentationUrl);
     if (!requestedPresentationUrl) {
@@ -79,7 +70,6 @@
 
   return {
     deriveStudioVersionDeckBaseName,
-    createStudioVersionHistoryLoadOptions,
     loadStudioVersionHistory
   };
 });

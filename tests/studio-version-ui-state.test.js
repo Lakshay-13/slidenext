@@ -1014,11 +1014,8 @@ test('loadVersions reuses the shared session reader helper when delegating to th
   const errorCalls = [];
   const context = {
     SlideNextStudioVersionHistory: {
-      createStudioVersionHistoryLoadOptions(options) {
-        capturedOptions = options;
-        return options;
-      },
       async loadStudioVersionHistory(presentationUrl, options) {
+        capturedOptions = options;
         const versions = [
           {
             filename: 'index_20260101_120000_Auto.html',
