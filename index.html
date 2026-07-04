@@ -6738,6 +6738,14 @@
       button.disabled = false;
       button.textContent = 'Rename';
     }
+
+    function setCurrentStudioRenameVersionButtonBusyState(button = document.getElementById('confirmRenameVersionBtn')) {
+      if (!button) {
+        return;
+      }
+      button.disabled = true;
+      button.textContent = 'Renaming...';
+    }
     
     async function submitRenameVersion() {
       const renameInput = document.getElementById('newVersionNameInput');
@@ -6756,10 +6764,7 @@
       );
       
       const btn = document.getElementById('confirmRenameVersionBtn');
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'Renaming...';
-      }
+      setCurrentStudioRenameVersionButtonBusyState(btn);
       
       try {
         const data = await SlideNextStudioVersionActions.executeStudioRenameVersionRequest(

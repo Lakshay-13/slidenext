@@ -128,6 +128,15 @@ function loadResetCurrentStudioRenameVersionButtonState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     "function resetCurrentStudioRenameVersionButtonState(button = document.getElementById('confirmRenameVersionBtn')) {",
+    "\n\n    function setCurrentStudioRenameVersionButtonBusyState(button = document.getElementById('confirmRenameVersionBtn')) {"
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadSetCurrentStudioRenameVersionButtonBusyState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    "function setCurrentStudioRenameVersionButtonBusyState(button = document.getElementById('confirmRenameVersionBtn')) {",
     '\n    \n    async function submitRenameVersion() {'
   );
   vm.runInContext(helperSource, context);
@@ -443,6 +452,35 @@ test('resetCurrentStudioRenameVersionButtonState tolerates a missing rename butt
   assert.doesNotThrow(() => {
     context.resetCurrentStudioRenameVersionButtonState();
   });
+});
+
+test('setCurrentStudioRenameVersionButtonBusyState restores the busy rename label by default lookup', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const button = {
+    disabled: false,
+    textContent: 'Rename'
+  };
+  const context = {
+    document: {
+      getElementById(id) {
+        calls.push(id);
+        if (id === 'confirmRenameVersionBtn') {
+          return button;
+        }
+        return null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadSetCurrentStudioRenameVersionButtonBusyState(fileContent, context);
+
+  context.setCurrentStudioRenameVersionButtonBusyState();
+
+  assert.deepEqual(calls, ['confirmRenameVersionBtn']);
+  assert.equal(button.disabled, true);
+  assert.equal(button.textContent, 'Renaming...');
 });
 
 test('createCurrentStudioVersionActionContext captures the active presentation version context', () => {
@@ -1118,6 +1156,7 @@ test('submitRenameVersion no-ops when the rename input is missing', async () => 
   loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
   loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
   loadResetCurrentStudioRenameVersionButtonState(fileContent, context);
+  loadSetCurrentStudioRenameVersionButtonBusyState(fileContent, context);
   vm.runInContext(submitRenameVersionSource, context);
 
   await assert.doesNotReject(async () => {
@@ -1217,6 +1256,7 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
   loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
   loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
   loadResetCurrentStudioRenameVersionButtonState(fileContent, context);
+  loadSetCurrentStudioRenameVersionButtonBusyState(fileContent, context);
   vm.runInContext(submitRenameVersionSource, context);
 
   await assert.doesNotReject(async () => {
@@ -1329,6 +1369,7 @@ test('submitRenameVersion reuses the shared rename request helper when available
   loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
   loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
   loadResetCurrentStudioRenameVersionButtonState(fileContent, context);
+  loadSetCurrentStudioRenameVersionButtonBusyState(fileContent, context);
   vm.runInContext(submitRenameVersionSource, context);
 
   await context.submitRenameVersion();
