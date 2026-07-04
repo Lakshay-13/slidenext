@@ -532,6 +532,12 @@
       : null;
   }
 
+  function createStudioFallbackCanonicalDeckResolver(options = {}) {
+    return function resolveFallbackCanonicalDeck(canonicalDeck = null) {
+      return resolveStudioFallbackCanonicalDeck(canonicalDeck, options);
+    };
+  }
+
   function createStudioPersistenceActionContext(presentationUrl = '', cleanHtml = '', options = {}) {
     const context = {
       presentationUrl: normalizeString(presentationUrl),
@@ -1642,6 +1648,7 @@
     resolveStudioSaveRequestCanonicalDeck,
     resolveStudioCanonicalDeckOverride,
     resolveStudioFallbackCanonicalDeck,
+    createStudioFallbackCanonicalDeckResolver,
     createStudioPersistenceActionContext,
     createStudioPersistedDeckStateActionContext,
     createStudioVersionPersistenceActionContext,

@@ -1503,6 +1503,50 @@ test('resolveStudioFallbackCanonicalDeck rebuilds malformed canonical deck overr
   ]);
 });
 
+test('createStudioFallbackCanonicalDeckResolver delegates fallback canonical resolution through the shared helper', () => {
+  const fallbackCanonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+  const malformedCanonicalDeck = {
+    metadata: {
+      title: 'Broken Deck'
+    }
+  };
+  const calls = [];
+  const resolveFallbackCanonicalDeck = editorPersistence.createStudioFallbackCanonicalDeckResolver({
+    buildCanonicalDeck() {
+      calls.push(['buildCanonicalDeck']);
+      return fallbackCanonicalDeck;
+    },
+    resolveCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+      calls.push(['resolveCanonicalDeckOverride', nextCanonicalDeck, options.buildCanonicalDeck]);
+      return malformedCanonicalDeck;
+    },
+    isCanonicalDeck(nextCanonicalDeck) {
+      calls.push(['isCanonicalDeck', nextCanonicalDeck]);
+      return nextCanonicalDeck === fallbackCanonicalDeck;
+    }
+  });
+
+  assert.equal(resolveFallbackCanonicalDeck(malformedCanonicalDeck), fallbackCanonicalDeck);
+  assert.equal(calls.length, 3);
+  assert.equal(calls[0][0], 'resolveCanonicalDeckOverride');
+  assert.equal(calls[0][1], malformedCanonicalDeck);
+  assert.equal(typeof calls[0][2], 'function');
+  assert.deepEqual(calls.slice(1), [
+    ['isCanonicalDeck', malformedCanonicalDeck],
+    ['buildCanonicalDeck']
+  ]);
+});
+
 test('buildStudioSaveRequestBody can rebuild a canonical deck sidecar from a fallback deck builder', () => {
   const fallbackCanonicalDeck = {
     metadata: {

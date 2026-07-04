@@ -1186,6 +1186,71 @@ test('resolveEditorFallbackCanonicalDeck delegates fallback deck resolution thro
   });
 });
 
+test('resolveEditorFallbackCanonicalDeck reuses the shared fallback deck resolver builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const malformedCanonicalDeck = {
+    metadata: {
+      title: 'Broken Deck'
+    }
+  };
+  const resolvedCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] }
+    ]
+  };
+  const isCanonicalDeck = (deck) => deck === resolvedCanonicalDeck;
+  let helperCall = null;
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      createStudioFallbackCanonicalDeckResolver(options = {}) {
+        helperCall = {
+          hasBuildCanonicalDeck: typeof options.buildCanonicalDeck === 'function',
+          hasResolveCanonicalDeckOverride: typeof options.resolveCanonicalDeckOverride === 'function',
+          isCanonicalDeck: options.isCanonicalDeck
+        };
+        return (nextCanonicalDeck) => {
+          helperCall.nextCanonicalDeck = nextCanonicalDeck;
+          return resolvedCanonicalDeck;
+        };
+      }
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('buildEditorCanonicalDeck should be delegated through the shared fallback builder');
+    },
+    getEditorCanonicalDeckValidator() {
+      return isCanonicalDeck;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    resolveEditorCanonicalDeckOverride() {
+      throw new Error('resolveEditorCanonicalDeckOverride should be delegated through the shared fallback builder');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  const result = context.resolveEditorFallbackCanonicalDeck(iframeDoc, malformedCanonicalDeck);
+
+  assert.equal(result, resolvedCanonicalDeck);
+  assert.deepEqual(helperCall, {
+    hasBuildCanonicalDeck: true,
+    hasResolveCanonicalDeckOverride: true,
+    isCanonicalDeck,
+    nextCanonicalDeck: malformedCanonicalDeck
+  });
+});
+
 test('resolveEditorFallbackActiveSlideId rebuilds a malformed canonical deck input before choosing the fallback slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
