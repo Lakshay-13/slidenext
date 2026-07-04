@@ -5467,6 +5467,38 @@
     }
 
     function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {
+      const resolveStudioReusablePersistedHtml = typeof options.resolveStudioReusablePersistedHtml === 'function'
+        ? options.resolveStudioReusablePersistedHtml
+        : SlideNextStudioEditorPersistence
+          && typeof SlideNextStudioEditorPersistence.resolveStudioReusablePersistedHtml === 'function'
+          ? SlideNextStudioEditorPersistence.resolveStudioReusablePersistedHtml
+          : null;
+      if (resolveStudioReusablePersistedHtml) {
+        return resolveStudioReusablePersistedHtml(persistedDeckState, {
+          persistedHtml: typeof options.persistedHtml === 'string'
+            ? options.persistedHtml
+            : undefined,
+          canonicalDeck: Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
+            ? options.canonicalDeck
+            : null,
+          persistedCanonicalDeck: Object.prototype.hasOwnProperty.call(options, 'persistedCanonicalDeck')
+            ? options.persistedCanonicalDeck
+            : undefined,
+          resolvePersistedHtmlReuse: typeof options.resolveStudioPersistedHtmlReuse === 'function'
+            ? options.resolveStudioPersistedHtmlReuse
+            : SlideNextStudioEditorPersistence
+              && typeof SlideNextStudioEditorPersistence.resolveStudioPersistedHtmlReuse === 'function'
+              ? SlideNextStudioEditorPersistence.resolveStudioPersistedHtmlReuse
+              : null,
+          isPersistedCanonicalDeck: typeof options.isPersistedCanonicalDeck === 'function'
+            ? options.isPersistedCanonicalDeck
+            : SlideNextStudioEditorPersistence
+              && typeof SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck === 'function'
+              ? SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck
+              : null
+        });
+      }
+
       const nextPersistedDeckState = persistedDeckState && typeof persistedDeckState === 'object'
         ? persistedDeckState
         : {};

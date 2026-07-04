@@ -1434,6 +1434,64 @@ test('resolveStudioPersistedHtmlReuse ignores whitespace-only persisted html bas
   );
 });
 
+test('resolveStudioReusablePersistedHtml prefers a provided reuse resolver and otherwise falls back to canonical deck comparison', () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      title: 'Project Onboarding'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck
+  };
+  let delegatedArgs = null;
+
+  assert.equal(
+    editorPersistence.resolveStudioReusablePersistedHtml(persistedDeckState, {
+      canonicalDeck,
+      resolvePersistedHtmlReuse(nextPersistedDeckState, options = {}) {
+        delegatedArgs = { persistedDeckState: nextPersistedDeckState, options };
+        return nextPersistedDeckState.cleanHtml;
+      },
+      isPersistedCanonicalDeck() {
+        throw new Error('canonical fallback should not run when a persisted-html reuse resolver is provided');
+      }
+    }),
+    '<html>persisted</html>'
+  );
+  assert.deepEqual(delegatedArgs.persistedDeckState, persistedDeckState);
+  assert.equal(delegatedArgs.options.canonicalDeck, canonicalDeck);
+
+  assert.equal(
+    editorPersistence.resolveStudioReusablePersistedHtml(persistedDeckState, {
+      canonicalDeck,
+      resolvePersistedHtmlReuse: null,
+      isPersistedCanonicalDeck(nextCanonicalDeck, nextPersistedCanonicalDeck) {
+        return nextCanonicalDeck === canonicalDeck && nextPersistedCanonicalDeck === canonicalDeck;
+      }
+    }),
+    '<html>persisted</html>'
+  );
+
+  assert.equal(
+    editorPersistence.resolveStudioReusablePersistedHtml(persistedDeckState, {
+      canonicalDeck,
+      persistedCanonicalDeck: null,
+      resolvePersistedHtmlReuse: null,
+      isPersistedCanonicalDeck() {
+        return false;
+      }
+    }),
+    ''
+  );
+});
+
 test('isStudioPersistedState requires both html and canonical deck sidecars to match when a canonical deck is present', () => {
   const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
     metadata: {

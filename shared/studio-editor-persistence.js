@@ -1247,6 +1247,31 @@
       : '';
   }
 
+  function resolveStudioReusablePersistedHtml(persistedDeckState = {}, options = {}) {
+    const nextPersistedDeckState = asPlainObject(persistedDeckState);
+    const persistedHtml = typeof options.persistedHtml === 'string'
+      ? options.persistedHtml
+      : normalizeString(nextPersistedDeckState.cleanHtml);
+    const canonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
+      ? options.canonicalDeck
+      : null;
+    const persistedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'persistedCanonicalDeck')
+      ? options.persistedCanonicalDeck
+      : (nextPersistedDeckState.canonicalDeck || null);
+    const resolvePersistedHtmlReuse = Object.prototype.hasOwnProperty.call(options, 'resolvePersistedHtmlReuse')
+      ? (typeof options.resolvePersistedHtmlReuse === 'function' ? options.resolvePersistedHtmlReuse : null)
+      : resolveStudioPersistedHtmlReuse;
+    const isPersistedCanonicalDeck = typeof options.isPersistedCanonicalDeck === 'function'
+      ? options.isPersistedCanonicalDeck
+      : isStudioPersistedCanonicalDeck;
+
+    return resolvePersistedHtmlReuse
+      ? resolvePersistedHtmlReuse(nextPersistedDeckState, { canonicalDeck })
+      : (persistedHtml.trim() && isPersistedCanonicalDeck(canonicalDeck, persistedCanonicalDeck, options)
+          ? persistedHtml
+          : '');
+  }
+
   function isStudioPersistedState(cleanHtml = '', canonicalDeck = null, options = {}) {
     if (!isStudioPersistedHtml(cleanHtml, options.persistedHtml)) {
       return false;
@@ -1458,6 +1483,7 @@
     isStudioPersistedHtml,
     isStudioPersistedCanonicalDeck,
     resolveStudioPersistedHtmlReuse,
+    resolveStudioReusablePersistedHtml,
     isStudioPersistedState,
     isStudioPersistedDeckHtml,
     isStudioPersistedSaveRequest,

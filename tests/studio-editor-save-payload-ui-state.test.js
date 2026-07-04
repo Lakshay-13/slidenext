@@ -820,7 +820,7 @@ test('buildPersistableDeckHtml reports the resolved canonical deck when the edit
   assert.equal(reportedCanonicalDeck, canonicalDeck);
 });
 
-test('resolveEditorReusablePersistedHtml delegates persisted html reuse checks to the shared editor persistence helper when available', () => {
+test('resolveEditorReusablePersistedHtml delegates reusable persisted html resolution through the shared persistence helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorReusablePersistedHtmlSource = extractFunctionSource(
     fileContent,
@@ -842,12 +842,15 @@ test('resolveEditorReusablePersistedHtml delegates persisted html reuse checks t
   const context = {
     SlideNextStudioEditorPersistence: {
       ...editorPersistence,
-      resolveStudioPersistedHtmlReuse(nextPersistedDeckState, options = {}) {
+      resolveStudioReusablePersistedHtml(nextPersistedDeckState, options = {}) {
         delegatedArgs = { persistedDeckState: nextPersistedDeckState, options };
         return nextPersistedDeckState.cleanHtml;
       },
+      resolveStudioPersistedHtmlReuse() {
+        throw new Error('persisted html reuse should be delegated through the shared reusable-html helper');
+      },
       isStudioPersistedCanonicalDeck() {
-        throw new Error('fallback canonical comparison should not run when persisted html reuse is delegated');
+        throw new Error('canonical fallback should not run when reusable persisted html resolution is delegated');
       }
     }
   };
@@ -865,6 +868,10 @@ test('resolveEditorReusablePersistedHtml delegates persisted html reuse checks t
   );
   assert.equal(delegatedArgs.persistedDeckState, persistedDeckState);
   assert.equal(delegatedArgs.options.canonicalDeck, canonicalDeck);
+  assert.equal(delegatedArgs.options.persistedHtml, '<html>persisted-baseline</html>');
+  assert.equal(delegatedArgs.options.persistedCanonicalDeck, canonicalDeck);
+  assert.equal(typeof delegatedArgs.options.resolvePersistedHtmlReuse, 'function');
+  assert.equal(typeof delegatedArgs.options.isPersistedCanonicalDeck, 'function');
 });
 
 test('resolveEditorMetadataPersistenceOptions prefers the shared merged persistence resolver when available', () => {
