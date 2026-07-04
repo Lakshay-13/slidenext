@@ -8110,6 +8110,29 @@
 
     // Rollback backup version
     function createCurrentStudioVersionActionContext() {
+      const createStudioVersionActionContextBuilder = (
+        typeof SlideNextStudioVersionActions !== 'undefined'
+        && SlideNextStudioVersionActions
+        && typeof SlideNextStudioVersionActions.createStudioVersionActionContextBuilder === 'function'
+      )
+        ? SlideNextStudioVersionActions.createStudioVersionActionContextBuilder
+        : null;
+      if (createStudioVersionActionContextBuilder) {
+        return createStudioVersionActionContextBuilder({
+          getPresentationUrl: () => currentPresentationUrl,
+          getPresentationTitle: () => currentTitle,
+          getPresentationCategory: () => currentCategory,
+          getSessionToken: () => studioEditorSessionToken,
+          createVersionActionContext: (
+            typeof SlideNextStudioVersionActions !== 'undefined'
+            && SlideNextStudioVersionActions
+            && typeof SlideNextStudioVersionActions.createStudioVersionActionContext === 'function'
+          )
+            ? SlideNextStudioVersionActions.createStudioVersionActionContext
+            : null
+        })();
+      }
+
       return SlideNextStudioVersionActions.createStudioVersionActionContext(
         currentPresentationUrl,
         currentTitle,

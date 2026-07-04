@@ -51,6 +51,82 @@ test('createStudioVersionActionContext normalizes the captured deck state', () =
   );
 });
 
+test('createStudioVersionActionContextBuilder reuses live getters and call-time overrides', () => {
+  const calls = [];
+  const createVersionActionContext = versionActions.createStudioVersionActionContextBuilder({
+    getPresentationUrl() {
+      calls.push(['getPresentationUrl']);
+      return '/presentations/default/index.html';
+    },
+    getPresentationTitle() {
+      calls.push(['getPresentationTitle']);
+      return 'Default Deck';
+    },
+    getPresentationCategory() {
+      calls.push(['getPresentationCategory']);
+      return 'General';
+    },
+    getSessionToken() {
+      calls.push(['getSessionToken']);
+      return 3;
+    }
+  });
+
+  assert.deepEqual(
+    createVersionActionContext({
+      getPresentationUrl() {
+        calls.push(['overrideGetPresentationUrl']);
+        return '/presentations/onboarding-presentation/index.html';
+      },
+      getPresentationTitle() {
+        calls.push(['overrideGetPresentationTitle']);
+        return 'Project Onboarding';
+      },
+      getPresentationCategory() {
+        calls.push(['overrideGetPresentationCategory']);
+        return 'Business';
+      },
+      getSessionToken() {
+        calls.push(['overrideGetSessionToken']);
+        return 12;
+      },
+      createVersionActionContext(presentationUrl, presentationTitle, presentationCategory, options = {}) {
+        calls.push([
+          'createVersionActionContext',
+          presentationUrl,
+          presentationTitle,
+          presentationCategory,
+          options
+        ]);
+        return {
+          presentationUrl,
+          presentationTitle,
+          presentationCategory,
+          sessionToken: options.sessionToken
+        };
+      }
+    }),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      presentationTitle: 'Project Onboarding',
+      presentationCategory: 'Business',
+      sessionToken: 12
+    }
+  );
+
+  assert.deepEqual(calls, [
+    ['overrideGetPresentationUrl'],
+    ['overrideGetPresentationTitle'],
+    ['overrideGetPresentationCategory'],
+    ['overrideGetSessionToken'],
+    ['createVersionActionContext',
+      '/presentations/onboarding-presentation/index.html',
+      'Project Onboarding',
+      'Business',
+      { sessionToken: 12 }]
+  ]);
+});
+
 test('createStudioVersionActionHandlerOptionsBuilder reuses session-reader defaults and call-time overrides', () => {
   const calls = [];
   const createVersionActionHandlerOptions = versionActions.createStudioVersionActionHandlerOptionsBuilder({

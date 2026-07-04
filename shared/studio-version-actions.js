@@ -31,6 +31,47 @@
     return context;
   }
 
+  function createStudioVersionActionContextBuilder(options = {}) {
+    const getPresentationUrl = typeof options.getPresentationUrl === 'function'
+      ? options.getPresentationUrl
+      : () => normalizeString(options.presentationUrl);
+    const getPresentationTitle = typeof options.getPresentationTitle === 'function'
+      ? options.getPresentationTitle
+      : () => normalizeString(options.presentationTitle);
+    const getPresentationCategory = typeof options.getPresentationCategory === 'function'
+      ? options.getPresentationCategory
+      : () => normalizeString(options.presentationCategory);
+    const getSessionToken = typeof options.getSessionToken === 'function'
+      ? options.getSessionToken
+      : () => normalizeSessionToken(options.sessionToken);
+    const defaultCreateVersionActionContext = typeof options.createVersionActionContext === 'function'
+      ? options.createVersionActionContext
+      : createStudioVersionActionContext;
+
+    return function createVersionActionContext(nextOptions = {}) {
+      const createVersionActionContext = typeof nextOptions.createVersionActionContext === 'function'
+        ? nextOptions.createVersionActionContext
+        : defaultCreateVersionActionContext;
+
+      return createVersionActionContext(
+        typeof nextOptions.getPresentationUrl === 'function'
+          ? nextOptions.getPresentationUrl()
+          : getPresentationUrl(),
+        typeof nextOptions.getPresentationTitle === 'function'
+          ? nextOptions.getPresentationTitle()
+          : getPresentationTitle(),
+        typeof nextOptions.getPresentationCategory === 'function'
+          ? nextOptions.getPresentationCategory()
+          : getPresentationCategory(),
+        {
+          sessionToken: typeof nextOptions.getSessionToken === 'function'
+            ? nextOptions.getSessionToken()
+            : getSessionToken()
+        }
+      );
+    };
+  }
+
   function createStudioVersionActionHandlerOptionsBuilder(options = {}) {
     const defaultCreateSessionReaderOptions = typeof options.createSessionReaderOptions === 'function'
       ? options.createSessionReaderOptions
@@ -300,6 +341,7 @@
     STUDIO_AUTO_VERSION_DEBOUNCE_MS,
     STUDIO_AUTO_VERSION_TIMER_KEY,
     createStudioVersionActionContext,
+    createStudioVersionActionContextBuilder,
     createStudioVersionActionHandlerOptionsBuilder,
     createStudioVersionRequestOptionsBuilder,
     createStudioVersionActionFailureHandler,

@@ -542,6 +542,58 @@ test('createCurrentStudioVersionActionContext captures the active presentation v
   assert.equal(calls[1][3].sessionToken, 12);
 });
 
+test('createCurrentStudioVersionActionContext reuses the shared version-action context builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionActionContext() {',
+    '\n\n    function createCurrentStudioVersionActionHandlerOptions(options = {}) {'
+  );
+
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioVersionActions: {
+      ...versionActions,
+      createStudioVersionActionContextBuilder(options = {}) {
+        delegatedArgs = options;
+        return () => ({
+          presentationUrl: options.getPresentationUrl(),
+          presentationTitle: options.getPresentationTitle(),
+          presentationCategory: options.getPresentationCategory(),
+          sessionToken: options.getSessionToken(),
+          createVersionActionContext: typeof options.createVersionActionContext
+        });
+      }
+    },
+    currentCategory: 'General',
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    studioEditorSessionToken: 11
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.createCurrentStudioVersionActionContext())),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      presentationTitle: 'Project Onboarding',
+      presentationCategory: 'General',
+      sessionToken: 11,
+      createVersionActionContext: 'function'
+    }
+  );
+  assert.equal(delegatedArgs.getPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(delegatedArgs.getPresentationTitle(), 'Project Onboarding');
+  assert.equal(delegatedArgs.getPresentationCategory(), 'General');
+  assert.equal(delegatedArgs.getSessionToken(), 11);
+  assert.equal(
+    delegatedArgs.createVersionActionContext,
+    context.SlideNextStudioVersionActions.createStudioVersionActionContext
+  );
+});
+
 test('createCurrentStudioVersionActionHandlerOptions merges live session readers with handler callbacks', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
