@@ -97,6 +97,15 @@ function loadHideCurrentStudioVersionModal(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadShowCurrentStudioVersionModal(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function showCurrentStudioVersionModal(modal, content, options = {}) {',
+    '\n\n    function hideCurrentStudioVersionModal(modal, content) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateCurrentStudioVersionRequestOptions(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -197,6 +206,101 @@ test('hideCurrentStudioVersionModal tolerates missing chrome nodes', () => {
     context.hideCurrentStudioVersionModal(null, null);
   });
   assert.deepEqual(calls, []);
+});
+
+test('showCurrentStudioVersionModal reveals chrome immediately when requested', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const modal = {
+    classList: createClassList(['hidden', 'opacity-0']),
+    offsetHeight: 0
+  };
+  const content = {
+    classList: createClassList(['scale-95'])
+  };
+  const calls = [];
+  let shownCalls = 0;
+  const context = {
+    SlideNextStudioModalVisibility: {
+      cancelStudioModalHide(nextModal) {
+        calls.push(['cancelStudioModalHide', nextModal]);
+      },
+      scheduleStudioModalCallback() {
+        calls.push(['scheduleStudioModalCallback']);
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadShowCurrentStudioVersionModal(fileContent, context);
+
+  context.showCurrentStudioVersionModal(modal, content, {
+    forceReflow: true,
+    onShown() {
+      shownCalls += 1;
+    }
+  });
+
+  assert.equal(modal.classList.contains('hidden'), false);
+  assert.equal(modal.classList.contains('opacity-0'), false);
+  assert.equal(modal.classList.contains('opacity-100'), true);
+  assert.equal(content.classList.contains('scale-95'), false);
+  assert.equal(content.classList.contains('scale-100'), true);
+  assert.equal(shownCalls, 1);
+  assert.deepEqual(calls, [['cancelStudioModalHide', modal]]);
+});
+
+test('showCurrentStudioVersionModal defers chrome changes when delay is requested', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const modal = {
+    classList: createClassList(['hidden', 'opacity-0'])
+  };
+  const content = {
+    classList: createClassList(['scale-95'])
+  };
+  const calls = [];
+  let shownCalls = 0;
+  let scheduledCallback = null;
+  const context = {
+    SlideNextStudioModalVisibility: {
+      cancelStudioModalHide(nextModal) {
+        calls.push(['cancelStudioModalHide', nextModal]);
+      },
+      scheduleStudioModalCallback(nextModal, options) {
+        calls.push(['scheduleStudioModalCallback', nextModal, options.delayMs]);
+        scheduledCallback = options.callback;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadShowCurrentStudioVersionModal(fileContent, context);
+
+  context.showCurrentStudioVersionModal(modal, content, {
+    delayMs: 10,
+    onShown() {
+      shownCalls += 1;
+    }
+  });
+
+  assert.equal(modal.classList.contains('hidden'), false);
+  assert.equal(modal.classList.contains('opacity-0'), true);
+  assert.equal(modal.classList.contains('opacity-100'), false);
+  assert.equal(content.classList.contains('scale-95'), true);
+  assert.equal(content.classList.contains('scale-100'), false);
+  assert.equal(typeof scheduledCallback, 'function');
+  assert.equal(shownCalls, 0);
+  assert.deepEqual(calls, [
+    ['cancelStudioModalHide', modal],
+    ['scheduleStudioModalCallback', modal, 10]
+  ]);
+
+  scheduledCallback();
+
+  assert.equal(modal.classList.contains('opacity-0'), false);
+  assert.equal(modal.classList.contains('opacity-100'), true);
+  assert.equal(content.classList.contains('scale-95'), false);
+  assert.equal(content.classList.contains('scale-100'), true);
+  assert.equal(shownCalls, 1);
 });
 
 test('createCurrentStudioVersionActionContext captures the active presentation version context', () => {
@@ -692,6 +796,7 @@ test('promptRenameVersion tolerates a missing rename input', () => {
   };
 
   vm.createContext(context);
+  loadShowCurrentStudioVersionModal(fileContent, context);
   vm.runInContext(promptRenameVersionSource, context);
 
   assert.doesNotThrow(() => context.promptRenameVersion('index_20260101_120000_Auto.html', 'Draft Name'));
@@ -760,6 +865,7 @@ test('promptRenameVersion tolerates missing rename modal chrome', () => {
   };
 
   vm.createContext(context);
+  loadShowCurrentStudioVersionModal(fileContent, context);
   vm.runInContext(promptRenameVersionSource, context);
 
   assert.doesNotThrow(() => context.promptRenameVersion('index_20260101_120000_Auto.html', 'Draft Name'));

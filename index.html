@@ -5814,13 +5814,9 @@
       }
       
       input.value = '';
-      SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
-      modal.classList.remove('hidden');
-      modal.offsetHeight; // trigger reflow
-      modal.classList.remove('opacity-0');
-      modal.classList.add('opacity-100');
-      content.classList.remove('scale-95');
-      content.classList.add('scale-100');
+      showCurrentStudioVersionModal(modal, content, {
+        forceReflow: true
+      });
       
       SlideNextStudioModalVisibility.scheduleStudioModalCallback(modal, {
         delayMs: 50,
@@ -5832,6 +5828,40 @@
       const modal = document.getElementById('saveVersionModal');
       const content = document.getElementById('saveVersionModalContent');
       hideCurrentStudioVersionModal(modal, content);
+    }
+
+    function showCurrentStudioVersionModal(modal, content, options = {}) {
+      if (!modal) {
+        return;
+      }
+      const showOptions = options && typeof options === 'object'
+        ? options
+        : {};
+      const applyChrome = () => {
+        modal.classList.remove('opacity-0');
+        modal.classList.add('opacity-100');
+        if (content) {
+          content.classList.remove('scale-95');
+          content.classList.add('scale-100');
+        }
+        if (typeof showOptions.onShown === 'function') {
+          showOptions.onShown();
+        }
+      };
+
+      SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
+      modal.classList.remove('hidden');
+      if (showOptions.forceReflow) {
+        modal.offsetHeight;
+      }
+      if (typeof showOptions.delayMs === 'number' && showOptions.delayMs > 0) {
+        SlideNextStudioModalVisibility.scheduleStudioModalCallback(modal, {
+          delayMs: showOptions.delayMs,
+          callback: applyChrome
+        });
+        return;
+      }
+      applyChrome();
     }
 
     function hideCurrentStudioVersionModal(modal, content) {
@@ -6690,24 +6720,15 @@
         btn.textContent = 'Rename';
       }
       
-      if (modal) {
-        SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
-        modal.classList.remove('hidden');
-        SlideNextStudioModalVisibility.scheduleStudioModalCallback(modal, {
-          delayMs: 10,
-          callback: () => {
-            modal.classList.add('opacity-100');
-            if (content) {
-              content.classList.remove('scale-95');
-              content.classList.add('scale-100');
-            }
-            if (renameInput) {
-              renameInput.focus();
-              renameInput.select();
-            }
+      showCurrentStudioVersionModal(modal, content, {
+        delayMs: 10,
+        onShown: () => {
+          if (renameInput) {
+            renameInput.focus();
+            renameInput.select();
           }
-        });
-      }
+        }
+      });
     }
     
     function closeRenameVersionModal() {
