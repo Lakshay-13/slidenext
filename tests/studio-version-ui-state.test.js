@@ -43,19 +43,6 @@ function loadCreateCurrentStudioSessionStateOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context) {
-  if (typeof context.createCurrentStudioSessionStateOptions !== 'function') {
-    loadCreateCurrentStudioSessionStateOptions(fileContent, context);
-  }
-  context.SlideNextStudioVersionActions ??= versionActions;
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioVersionActionHandlerOptions(options = {}) {',
-    '\n\n    // Rollback backup version'
-  );
-  vm.runInContext(helperSource, context);
-}
-
 test('resetStudioVersionUiState hides open version chrome and clears modal state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resetStudioVersionUiStateSource = extractFunctionSource(
@@ -533,6 +520,10 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
       }
     },
     SlideNextStudioVersionActions: {
+      createStudioVersionActionHandlerOptions(options) {
+        calls.push(['createStudioVersionActionHandlerOptions', options.refreshVersionEntries]);
+        return options;
+      },
       async executeStudioRenameVersionRequest(...args) {
         calls.push(['executeStudioRenameVersionRequest', ...args]);
         return { success: true };
@@ -551,9 +542,8 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
     closeRenameVersionModal() {
       calls.push(['closeRenameVersionModal']);
     },
-    createCurrentStudioVersionActionHandlerOptions(options) {
-      calls.push(['createCurrentStudioVersionActionHandlerOptions', options.refreshVersionEntries]);
-      return options;
+    createCurrentStudioSessionStateOptions() {
+      return {};
     },
     createCurrentStudioVersionActionContext() {
       calls.push(['createCurrentStudioVersionActionContext']);
@@ -623,6 +613,9 @@ test('submitRenameVersion reuses the shared rename request helper when available
       }
     },
     SlideNextStudioVersionActions: {
+      createStudioVersionActionHandlerOptions(options) {
+        return options;
+      },
       executeStudioRenameVersionRequest: async (...args) => {
         helperArgs = args;
         return { success: true };
@@ -638,8 +631,8 @@ test('submitRenameVersion reuses the shared rename request helper when available
     closeRenameVersionModal() {
       calls.push(['closeRenameVersionModal']);
     },
-    createCurrentStudioVersionActionHandlerOptions(options) {
-      return options;
+    createCurrentStudioSessionStateOptions() {
+      return {};
     },
     createCurrentStudioVersionActionContext() {
       return {
@@ -715,6 +708,9 @@ test('deleteVersion reuses the shared delete request helper when available', asy
         helperArgs = args;
         return { success: true };
       },
+      createStudioVersionActionHandlerOptions(options) {
+        return options;
+      },
       handleStudioVersionListMutationSuccess(deleteContext, options) {
         calls.push(['handleStudioVersionListMutationSuccess', deleteContext, options.refreshVersionEntries]);
         return true;
@@ -729,8 +725,8 @@ test('deleteVersion reuses the shared delete request helper when available', asy
     currentCategory: 'General',
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
-    createCurrentStudioVersionActionHandlerOptions(options) {
-      return options;
+    createCurrentStudioSessionStateOptions() {
+      return {};
     },
     fetch() {
       throw new Error('deleteVersion should pass fetch to the shared delete helper instead of calling it directly');
@@ -803,6 +799,9 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
     currentCategory: 'General',
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
+    createCurrentStudioSessionStateOptions() {
+      return {};
+    },
     document: {
       getElementById(id) {
         calls.push(['getElementById', id]);
@@ -825,7 +824,6 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
   vm.runInContext(restoreVersionSource, context);
 
   await assert.doesNotReject(async () => {
@@ -883,6 +881,9 @@ test('restoreVersion reuses the shared restore request helper when available', a
     currentCategory: 'General',
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
+    createCurrentStudioSessionStateOptions() {
+      return {};
+    },
     fetch() {
       throw new Error('restoreVersion should pass fetch to the shared restore helper instead of calling it directly');
     },
@@ -906,7 +907,6 @@ test('restoreVersion reuses the shared restore request helper when available', a
   };
 
   vm.createContext(context);
-  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
   vm.runInContext(restoreVersionSource, context);
 
   await context.restoreVersion('index_20260101_120000_Auto.html');
@@ -996,57 +996,6 @@ test('loadVersions passes live session getters when delegating to the version hi
   context.studioEditorSessionToken = 19;
   assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
   assert.equal(capturedOptions.getCurrentSessionToken(), 19);
-});
-
-test('createCurrentStudioVersionActionHandlerOptions delegates through the shared action handler options builder', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const isCurrentSession = () => true;
-  const onSuccess = () => {};
-  let capturedBuilderOptions = null;
-  const context = {
-    SlideNextStudioEditorSession: editorSession,
-    SlideNextStudioVersionActions: {
-      ...versionActions,
-      createStudioVersionActionHandlerOptions(options) {
-        capturedBuilderOptions = options;
-        return {
-          marker: 'version-action-handler-options',
-          ...options
-        };
-      },
-      handleStudioVersionListMutationSuccess(nextVersionActionContext, handlerOptions) {
-        delegatedArgs = {
-          nextVersionActionContext,
-          handlerOptions
-        };
-        return 'handled';
-      }
-    },
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    loadVersions() {},
-    studioEditorSessionToken: 31
-  };
-
-  vm.createContext(context);
-  loadCreateCurrentStudioVersionActionHandlerOptions(fileContent, context);
-
-  const result = context.createCurrentStudioVersionActionHandlerOptions({
-    isCurrentSession,
-    onSuccess,
-    refreshVersionEntries: context.loadVersions
-  });
-
-  assert.equal(result.marker, 'version-action-handler-options');
-  assert.equal(typeof capturedBuilderOptions.getCurrentPresentationUrl, 'function');
-  assert.equal(typeof capturedBuilderOptions.getCurrentSessionToken, 'function');
-  assert.equal(capturedBuilderOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
-  assert.equal(capturedBuilderOptions.getCurrentSessionToken(), 31);
-  assert.equal(capturedBuilderOptions.isCurrentSession, isCurrentSession);
-  assert.equal(capturedBuilderOptions.onSuccess, onSuccess);
-  assert.equal(capturedBuilderOptions.refreshVersionEntries, context.loadVersions);
-  assert.equal(result.isCurrentSession, isCurrentSession);
-  assert.equal(result.onSuccess, onSuccess);
-  assert.equal(result.refreshVersionEntries, context.loadVersions);
 });
 
 test('createCurrentStudioSessionStateOptions exposes live presentation and session getters', () => {

@@ -6545,18 +6545,6 @@
       }
     }
 
-    function createCurrentStudioVersionActionHandlerOptions(options = {}) {
-      return SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
-        ...createCurrentStudioSessionStateOptions(),
-        isCurrentSession: options.isCurrentSession,
-        onSuccess: options.onSuccess,
-        onFailure: options.onFailure,
-        refreshVersionEntries: options.refreshVersionEntries,
-        hideVersionsDropdown: options.hideVersionsDropdown,
-        relaunchEditor: options.relaunchEditor
-      });
-    }
-
     // Rollback backup version
     async function restoreVersion(filename) {
       if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
@@ -6582,7 +6570,8 @@
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(
             restoreContext,
-            createCurrentStudioVersionActionHandlerOptions({
+            SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+              ...createCurrentStudioSessionStateOptions(),
               onSuccess: () => {
                 alert('Rollback successfully restored!');
               },
@@ -6600,7 +6589,8 @@
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(
             restoreContext,
-            createCurrentStudioVersionActionHandlerOptions({
+            SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+              ...createCurrentStudioSessionStateOptions(),
               onFailure: () => {
                 alert(`Restore failed: ${data.error}`);
               }
@@ -6610,7 +6600,8 @@
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(
           restoreContext,
-          createCurrentStudioVersionActionHandlerOptions({
+          SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+            ...createCurrentStudioSessionStateOptions(),
             onFailure: () => {
               alert(`Network error restoring version: ${err.message}`);
             }
@@ -6726,7 +6717,8 @@
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
             renameContext,
-            createCurrentStudioVersionActionHandlerOptions({
+            SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+              ...createCurrentStudioSessionStateOptions(),
               isCurrentSession: isCurrentRenameSession,
               onSuccess: () => {
                 closeRenameVersionModal();
@@ -6737,7 +6729,8 @@
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(
             renameContext,
-            createCurrentStudioVersionActionHandlerOptions({
+            SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+              ...createCurrentStudioSessionStateOptions(),
               isCurrentSession: isCurrentRenameSession,
               onFailure: () => {
                 alert(`Rename failed: ${data.error}`);
@@ -6748,7 +6741,8 @@
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(
           renameContext,
-          createCurrentStudioVersionActionHandlerOptions({
+          SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+            ...createCurrentStudioSessionStateOptions(),
             isCurrentSession: isCurrentRenameSession,
             onFailure: () => {
               alert(`Error renaming version: ${err.message}`);
@@ -6758,7 +6752,8 @@
       } finally {
         SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
           renameContext,
-          createCurrentStudioVersionActionHandlerOptions({
+          SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+            ...createCurrentStudioSessionStateOptions(),
             isCurrentSession: isCurrentRenameSession,
             onSuccess: () => {
               if (btn) {
@@ -6795,14 +6790,16 @@
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
             deleteContext,
-            createCurrentStudioVersionActionHandlerOptions({
+            SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+              ...createCurrentStudioSessionStateOptions(),
               refreshVersionEntries: loadVersions
             })
           );
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(
             deleteContext,
-            createCurrentStudioVersionActionHandlerOptions({
+            SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+              ...createCurrentStudioSessionStateOptions(),
               onFailure: () => {
                 alert(`Delete failed: ${data.error}`);
               }
@@ -6812,7 +6809,8 @@
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(
           deleteContext,
-          createCurrentStudioVersionActionHandlerOptions({
+          SlideNextStudioVersionActions.createStudioVersionActionHandlerOptions({
+            ...createCurrentStudioSessionStateOptions(),
             onFailure: () => {
               alert(`Error deleting version: ${err.message}`);
             }
