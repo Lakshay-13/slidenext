@@ -32,6 +32,17 @@
     };
   }
 
+  function createStudioPersistedDeckStateSnapshot(options = {}) {
+    const hasPersistedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'persistedCanonicalDeck');
+    const hasPersistedPlaybackState = Object.prototype.hasOwnProperty.call(options, 'persistedPlaybackState');
+
+    return {
+      cleanHtml: normalizeString(options.persistedDeckHtml),
+      canonicalDeck: hasPersistedCanonicalDeck ? options.persistedCanonicalDeck : null,
+      playbackState: hasPersistedPlaybackState ? options.persistedPlaybackState : null
+    };
+  }
+
   function applyStudioPersistedDeckState(nextState = {}, options = {}) {
     const updatePersistedDeckState = typeof options.updatePersistedDeckState === 'function'
       ? options.updatePersistedDeckState
@@ -1132,6 +1143,7 @@
 
   return {
     createStudioPersistableDeckState,
+    createStudioPersistedDeckStateSnapshot,
     applyStudioPersistedDeckState,
     syncStudioPresentationMetadataPersistedCanonicalDeck,
     updateStudioPersistedDeckState,

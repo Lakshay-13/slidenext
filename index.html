@@ -3457,6 +3457,21 @@
     }
 
     function getCurrentEditorPersistedDeckState() {
+      const createStudioPersistedDeckStateSnapshot = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateSnapshot === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateSnapshot
+        : null;
+      if (createStudioPersistedDeckStateSnapshot) {
+        return createStudioPersistedDeckStateSnapshot({
+          persistedDeckHtml: lastPersistedDeckHtml,
+          persistedCanonicalDeck: lastPersistedCanonicalDeck,
+          persistedPlaybackState: persistedDeckPlaybackState
+        });
+      }
+
       return {
         cleanHtml: typeof lastPersistedDeckHtml === 'string' ? lastPersistedDeckHtml : '',
         canonicalDeck: lastPersistedCanonicalDeck,

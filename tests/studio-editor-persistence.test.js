@@ -37,6 +37,44 @@ test('createStudioPersistableDeckState preserves the iframe doc and captured dec
   );
 });
 
+test('createStudioPersistedDeckStateSnapshot normalizes persisted html and preserves canonical and playback baselines', () => {
+  assert.deepEqual(
+    editorPersistence.createStudioPersistedDeckStateSnapshot({
+      persistedDeckHtml: '<html>persisted</html>',
+      persistedCanonicalDeck: {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: []
+      },
+      persistedPlaybackState: {
+        activeSlideIds: ['slide-1'],
+        slideCounterText: '1 / 1'
+      }
+    }),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck: {
+        kind: 'slidenext.deck',
+        schemaVersion: 1,
+        slides: []
+      },
+      playbackState: {
+        activeSlideIds: ['slide-1'],
+        slideCounterText: '1 / 1'
+      }
+    }
+  );
+
+  assert.deepEqual(
+    editorPersistence.createStudioPersistedDeckStateSnapshot({}),
+    {
+      cleanHtml: '',
+      canonicalDeck: null,
+      playbackState: null
+    }
+  );
+});
+
 test('applyStudioPersistedDeckState updates persisted state and syncs canonical metadata only when allowed', () => {
   const calls = [];
   const nextState = {

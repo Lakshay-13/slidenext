@@ -72,6 +72,41 @@ test('getCurrentEditorPersistedDeckState returns the current persisted html, can
   );
 });
 
+test('getCurrentEditorPersistedDeckState reuses the shared persisted snapshot helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: { id: 'persisted-deck' },
+    playbackState: { activeSlideIds: ['slide-2'], slideCounterText: '2 / 4' }
+  };
+  const calls = [];
+  const context = {
+    lastPersistedDeckHtml: persistedDeckState.cleanHtml,
+    lastPersistedCanonicalDeck: persistedDeckState.canonicalDeck,
+    persistedDeckPlaybackState: persistedDeckState.playbackState,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistedDeckStateSnapshot(options = {}) {
+        calls.push(options);
+        return persistedDeckState;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState())),
+    persistedDeckState
+  );
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    persistedDeckHtml: '<html>persisted</html>',
+    persistedCanonicalDeck: { id: 'persisted-deck' },
+    persistedPlaybackState: { activeSlideIds: ['slide-2'], slideCounterText: '2 / 4' }
+  }]);
+});
+
 test('getCurrentEditorPersistedDeckState.resolveWithContent prefers the shared persisted-content resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
