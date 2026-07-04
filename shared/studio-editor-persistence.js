@@ -191,6 +191,34 @@
     };
   }
 
+  function captureStudioPersistableDeckState(doc = null, options = {}) {
+    const captureBuildState = typeof options.captureBuildState === 'function'
+      ? options.captureBuildState
+      : () => ({ cleanHtml: '' });
+    const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
+      ? options.canonicalDeck
+      : null;
+    const capturedBuildState = captureBuildState(doc, {
+      canonicalDeck: providedCanonicalDeck
+    });
+
+    return resolveStudioCapturedPersistableDeckState(
+      typeof capturedBuildState.cleanHtml === 'string'
+        ? capturedBuildState.cleanHtml
+        : '',
+      {
+        canonicalDeck: Object.prototype.hasOwnProperty.call(capturedBuildState, 'canonicalDeck')
+          ? capturedBuildState.canonicalDeck
+          : null,
+        playbackState: Object.prototype.hasOwnProperty.call(capturedBuildState, 'playbackState')
+          ? capturedBuildState.playbackState
+          : undefined,
+        buildCanonicalDeck: options.buildCanonicalDeck,
+        resolvePlaybackState: options.resolvePlaybackState
+      }
+    );
+  }
+
   function areStudioPersistenceCanonicalDecksEqual(left, right, options = {}) {
     const areCanonicalDecksEqual = typeof options.areCanonicalDecksEqual === 'function'
       ? options.areCanonicalDecksEqual
@@ -1157,6 +1185,7 @@
     updateStudioPersistedDeckState,
     resolveStudioPersistableDeckStateWithContent,
     resolveStudioCapturedPersistableDeckState,
+    captureStudioPersistableDeckState,
     resolveStudioPersistenceCanonicalDeck,
     resolveStudioSaveRequestCanonicalDeck,
     resolveStudioCanonicalDeckOverride,

@@ -384,6 +384,59 @@ test('resolveStudioCapturedPersistableDeckState rebuilds canonical and playback 
   assert.equal(resolvePlaybackStateCalls, 1);
 });
 
+test('captureStudioPersistableDeckState reuses captured build-state values and shared fallback resolution', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    editorPersistence.captureStudioPersistableDeckState(
+      { label: 'iframe-doc' },
+      {
+        captureBuildState(doc, buildOptions = {}) {
+          calls.push(['captureBuildState', doc, buildOptions]);
+          return {
+            cleanHtml: '<html>persisted</html>',
+            canonicalDeck: null,
+            playbackState: undefined
+          };
+        },
+        canonicalDeck,
+        buildCanonicalDeck() {
+          calls.push(['buildCanonicalDeck']);
+          return canonicalDeck;
+        },
+        resolvePlaybackState(nextCanonicalDeck) {
+          calls.push(['resolvePlaybackState', nextCanonicalDeck]);
+          return {
+            activeSlideIds: ['slide-1'],
+            slideCounterText: '1 / 1'
+          };
+        }
+      }
+    ),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck,
+      playbackState: {
+        activeSlideIds: ['slide-1'],
+        slideCounterText: '1 / 1'
+      }
+    }
+  );
+
+  assert.equal(calls[0][0], 'captureBuildState');
+  assert.deepEqual(calls[0][1], { label: 'iframe-doc' });
+  assert.deepEqual(calls[0][2], { canonicalDeck });
+  assert.deepEqual(calls.slice(1), [
+    ['buildCanonicalDeck'],
+    ['resolvePlaybackState', canonicalDeck]
+  ]);
+});
+
 test('resolveStudioPersistenceStateFromDocumentCapture captures deck state before delegating to a persistence resolver', () => {
   const iframeDoc = { label: 'iframe-doc' };
   const capturedDeckState = {

@@ -5771,6 +5771,24 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(captureOptions, 'canonicalDeck')
         ? captureOptions.canonicalDeck
         : null;
+      const captureStudioPersistableDeckState = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.captureStudioPersistableDeckState === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.captureStudioPersistableDeckState
+        : null;
+      if (captureStudioPersistableDeckState) {
+        return captureStudioPersistableDeckState(doc, {
+          canonicalDeck: providedCanonicalDeck,
+          captureBuildState: captureEditorPersistableDeckBuildState,
+          buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+          }),
+          resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
+        });
+      }
+
       const capturedBuildState = captureEditorPersistableDeckBuildState(doc, {
         canonicalDeck: providedCanonicalDeck
       });

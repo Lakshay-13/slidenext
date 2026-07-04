@@ -319,6 +319,75 @@ test('captureEditorPersistableDeckState delegates final capture-state resolution
   assert.equal(typeof delegatedArgs.options.resolvePlaybackState, 'function');
 });
 
+test('captureEditorPersistableDeckState delegates capture orchestration through the shared editor persistence helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [
+      { id: 'slide-1', nodes: [] }
+    ]
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 1'
+  };
+  let delegatedArgs = null;
+
+  const context = {
+    resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+      return nextCanonicalDeck || options.buildCanonicalDeck();
+    },
+    SlideNextStudioEditorPersistence: {
+      captureStudioPersistableDeckState(doc, options = {}) {
+        delegatedArgs = {
+          doc,
+          canonicalDeck: options.canonicalDeck,
+          captureBuildState: options.captureBuildState,
+          buildCanonicalDeck: options.buildCanonicalDeck,
+          resolvePlaybackState: options.resolvePlaybackState
+        };
+        return {
+          cleanHtml: '<html>persisted</html>',
+          canonicalDeck: options.buildCanonicalDeck(),
+          playbackState: options.resolvePlaybackState(canonicalDeck)
+        };
+      }
+    },
+    captureEditorPersistableDeckBuildState() {
+      throw new Error('captureEditorPersistableDeckBuildState should be delegated through the shared persistence helper');
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return canonicalDeck;
+    },
+    capturePersistedDeckPlaybackState(doc, nextCanonicalDeck) {
+      assert.equal(doc, iframeDoc);
+      assert.equal(nextCanonicalDeck, canonicalDeck);
+      return playbackState;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
+
+  const persistedDeckState = JSON.parse(JSON.stringify(context.captureEditorPersistableDeckState()));
+  assert.deepEqual(persistedDeckState, {
+    cleanHtml: '<html>persisted</html>',
+    playbackState,
+    canonicalDeck
+  });
+  assert.deepEqual(delegatedArgs.doc, iframeDoc);
+  assert.equal(delegatedArgs.canonicalDeck, null);
+  assert.equal(typeof delegatedArgs.captureBuildState, 'function');
+  assert.equal(typeof delegatedArgs.buildCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.resolvePlaybackState, 'function');
+});
+
 test('captureEditorPersistableDeckState reuses the local captured persistable deck-state resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
@@ -333,6 +402,7 @@ test('captureEditorPersistableDeckState reuses the local captured persistable de
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorPersistence: {},
     __resolveEditorCapturedPersistableDeckState(cleanHtml, options = {}) {
       calls.push(['resolveEditorCapturedPersistableDeckState', cleanHtml, options]);
       return {
