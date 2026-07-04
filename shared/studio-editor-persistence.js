@@ -604,6 +604,35 @@
     });
   }
 
+  function buildStudioPersistableDeckHtmlFromDocument(doc, options = {}) {
+    const shouldReportCanonicalDeck = typeof options.onCanonicalDeckResolved === 'function';
+    const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
+      ? options.resolveCanonicalDeck
+      : () => null;
+    const canonicalDeck = resolveCanonicalDeck(shouldReportCanonicalDeck);
+    const resolvePlaybackState = typeof options.resolvePlaybackState === 'function'
+      ? options.resolvePlaybackState
+      : () => null;
+    const playbackState = resolvePlaybackState(canonicalDeck);
+    if (typeof options.onCanonicalDeckResolved === 'function') {
+      options.onCanonicalDeckResolved(canonicalDeck);
+    }
+    if (typeof options.onPlaybackStateResolved === 'function') {
+      options.onPlaybackStateResolved(playbackState);
+    }
+
+    const buildPersistableDeckSanitizerOptions = typeof options.buildPersistableDeckSanitizerOptions === 'function'
+      ? options.buildPersistableDeckSanitizerOptions
+      : () => ({});
+    const persistableDeckSanitizerOptions = buildPersistableDeckSanitizerOptions(playbackState);
+    const buildPersistableDeckHtml = typeof options.buildPersistableDeckHtml === 'function'
+      ? options.buildPersistableDeckHtml
+      : () => '';
+    return buildPersistableDeckHtml(doc, {
+      ...persistableDeckSanitizerOptions
+    });
+  }
+
   function buildStudioSaveRequestBody(presentationUrl = '', cleanHtml = '', options = {}) {
     const body = {
       htmlPath: normalizeString(presentationUrl),
@@ -1402,6 +1431,7 @@
     buildStudioPersistableDeckSanitizerOptions,
     sanitizeStudioReusablePersistedHtml,
     buildStudioPersistableDeckHtmlWithoutDocument,
+    buildStudioPersistableDeckHtmlFromDocument,
     buildStudioSaveRequestBody,
     buildStudioPersistenceRequestPlan,
     resolveStudioPersistenceStateFromDocumentCapture,

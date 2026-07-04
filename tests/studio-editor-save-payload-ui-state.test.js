@@ -1655,6 +1655,80 @@ test('buildPersistableDeckHtml reuses the local reusable persisted html sanitize
   );
 });
 
+test('buildPersistableDeckHtml delegates the live-document persistence flow through the shared helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-live'],
+    slideCounterText: '2 / 5'
+  };
+  let delegatedArgs = null;
+  let reportedCanonicalDeck = null;
+  let reportedPlaybackState = null;
+  const context = {
+    SlideNextDeckPersistence: {
+      buildPersistableDeckHtml() {
+        throw new Error('shared deck persistence builder should be delegated through the shared live-document helper');
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
+      buildStudioPersistableDeckHtmlFromDocument(nextDoc, options = {}) {
+        delegatedArgs = {
+          doc: nextDoc,
+          resolveCanonicalDeck: options.resolveCanonicalDeck,
+          resolvePlaybackState: options.resolvePlaybackState,
+          onCanonicalDeckResolved: options.onCanonicalDeckResolved,
+          onPlaybackStateResolved: options.onPlaybackStateResolved,
+          buildPersistableDeckSanitizerOptions: options.buildPersistableDeckSanitizerOptions,
+          buildPersistableDeckHtml: options.buildPersistableDeckHtml
+        };
+        options.onCanonicalDeckResolved(canonicalDeck);
+        options.onPlaybackStateResolved(playbackState);
+        return '<html>persisted-live</html>';
+      }
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
+
+  assert.equal(
+    context.buildPersistableDeckHtml(iframeDoc, {
+      onCanonicalDeckResolved(deck) {
+        reportedCanonicalDeck = deck;
+      },
+      onPlaybackStateResolved(nextPlaybackState) {
+        reportedPlaybackState = nextPlaybackState;
+      }
+    }),
+    '<html>persisted-live</html>'
+  );
+  assert.equal(reportedCanonicalDeck, canonicalDeck);
+  assert.equal(reportedPlaybackState, playbackState);
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(typeof delegatedArgs.resolveCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.resolvePlaybackState, 'function');
+  assert.equal(typeof delegatedArgs.onCanonicalDeckResolved, 'function');
+  assert.equal(typeof delegatedArgs.onPlaybackStateResolved, 'function');
+  assert.equal(typeof delegatedArgs.buildPersistableDeckSanitizerOptions, 'function');
+  assert.equal(delegatedArgs.buildPersistableDeckHtml, context.SlideNextDeckPersistence.buildPersistableDeckHtml);
+});
+
 test('buildPersistableDeckHtml reuses the local persistable deck sanitizer options helper when persisting live iframe html', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildPersistableDeckHtmlSource = extractFunctionSource(

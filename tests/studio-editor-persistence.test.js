@@ -976,6 +976,76 @@ test('buildStudioPersistableDeckHtmlWithoutDocument reuses persisted html when p
   );
 });
 
+test('buildStudioPersistableDeckHtmlFromDocument resolves canonical deck, captures playback state, and builds persistable html', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 1'
+  };
+  const calls = [];
+
+  assert.equal(
+    editorPersistence.buildStudioPersistableDeckHtmlFromDocument(iframeDoc, {
+      resolveCanonicalDeck(shouldReportCanonicalDeck) {
+        calls.push(['resolveCanonicalDeck', shouldReportCanonicalDeck]);
+        return canonicalDeck;
+      },
+      onCanonicalDeckResolved(nextCanonicalDeck) {
+        calls.push(['onCanonicalDeckResolved', nextCanonicalDeck]);
+      },
+      resolvePlaybackState(nextCanonicalDeck) {
+        calls.push(['resolvePlaybackState', nextCanonicalDeck]);
+        return playbackState;
+      },
+      onPlaybackStateResolved(nextPlaybackState) {
+        calls.push(['onPlaybackStateResolved', nextPlaybackState]);
+      },
+      buildPersistableDeckSanitizerOptions(nextPlaybackState) {
+        calls.push(['buildPersistableDeckSanitizerOptions', nextPlaybackState]);
+        return {
+          persistedDeckPlaybackState: nextPlaybackState,
+          editorChromeNodeIds: ['editorSelectionOverlay']
+        };
+      },
+      buildPersistableDeckHtml(nextDoc, options = {}) {
+        calls.push(['buildPersistableDeckHtml', nextDoc, options]);
+        return '<html>persisted-live</html>';
+      }
+    }),
+    '<html>persisted-live</html>'
+  );
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'resolveCanonicalDeck',
+    'resolvePlaybackState',
+    'onCanonicalDeckResolved',
+    'onPlaybackStateResolved',
+    'buildPersistableDeckSanitizerOptions',
+    'buildPersistableDeckHtml'
+  ]);
+  assert.equal(calls[0][1], true);
+  assert.equal(calls[1][1], canonicalDeck);
+  assert.equal(calls[2][1], canonicalDeck);
+  assert.equal(calls[3][1], playbackState);
+  assert.equal(calls[4][1], playbackState);
+  assert.equal(calls[5][1], iframeDoc);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[5][2])),
+    {
+      persistedDeckPlaybackState: {
+        activeSlideIds: ['slide-1'],
+        slideCounterText: '1 / 1'
+      },
+      editorChromeNodeIds: ['editorSelectionOverlay']
+    }
+  );
+});
+
 test('buildStudioSaveRequestBody includes canonical deck sidecars only when they are valid', () => {
   const canonicalDeck = {
     metadata: {

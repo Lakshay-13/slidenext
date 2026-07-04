@@ -5697,6 +5697,13 @@
       )
         ? SlideNextStudioEditorPersistence.buildStudioPersistableDeckHtmlWithoutDocument
         : null;
+      const buildStudioPersistableDeckHtmlFromDocument = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.buildStudioPersistableDeckHtmlFromDocument === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.buildStudioPersistableDeckHtmlFromDocument
+        : null;
       if (!doc) {
         if (buildStudioPersistableDeckHtmlWithoutDocument) {
           return buildStudioPersistableDeckHtmlWithoutDocument({
@@ -5779,6 +5786,27 @@
           buildViewOptions: () => sourceViewOptions
         });
       }
+      if (buildStudioPersistableDeckHtmlFromDocument) {
+        return buildStudioPersistableDeckHtmlFromDocument(doc, {
+          resolveCanonicalDeck: (shouldReportCanonicalDeck) => resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
+            || (shouldReportCanonicalDeck ? buildEditorCanonicalDeck(doc) : null),
+          resolvePlaybackState: (canonicalDeck) => capturePersistedDeckPlaybackState(doc, canonicalDeck),
+          onCanonicalDeckResolved: typeof buildOptions.onCanonicalDeckResolved === 'function'
+            ? buildOptions.onCanonicalDeckResolved
+            : null,
+          onPlaybackStateResolved: typeof buildOptions.onPlaybackStateResolved === 'function'
+            ? buildOptions.onPlaybackStateResolved
+            : null,
+          buildPersistableDeckSanitizerOptions: (playbackState) => buildEditorPersistableDeckSanitizerOptions(
+            playbackState,
+            {
+              resolveMetadataPersistenceOptions: resolveEditorMetadataPersistenceOptions
+            }
+          ),
+          buildPersistableDeckHtml: SlideNextDeckPersistence.buildPersistableDeckHtml
+        });
+      }
+
       const shouldReportCanonicalDeck = typeof buildOptions.onCanonicalDeckResolved === 'function';
       const canonicalDeck = resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
         || (shouldReportCanonicalDeck ? buildEditorCanonicalDeck(doc) : null);
