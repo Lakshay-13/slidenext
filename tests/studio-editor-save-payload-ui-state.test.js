@@ -631,6 +631,88 @@ test('resolveEditorCapturedPersistableDeckState reuses the shared captured-state
   );
 });
 
+test('captureEditorPersistableDeckState reuses the shared persistable-deck-state capturer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const captureEditorPersistableDeckStateSource = extractFunctionSource(
+    fileContent,
+    'function captureEditorPersistableDeckState(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1']
+  };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistableDeckStateCapturer(options = {}) {
+        delegatedArgs = options;
+        return (nextDoc, nextOptions = {}) => ({
+          doc: nextDoc,
+          canonicalDeck: nextOptions.canonicalDeck,
+          builtCanonicalDeck: options.buildCanonicalDeck(),
+          playbackState: options.resolvePlaybackState(nextOptions.canonicalDeck || null)
+        });
+      },
+      captureStudioPersistableDeckState() {
+        throw new Error('persistable deck state capture should be delegated through the shared capturer builder');
+      }
+    },
+    captureEditorPersistableDeckBuildState() {},
+    resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+      return nextCanonicalDeck || (
+        typeof options.buildCanonicalDeck === 'function'
+          ? options.buildCanonicalDeck()
+          : null
+      );
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('buildEditorCanonicalDeck should not run when a canonical override is provided');
+    },
+    capturePersistedDeckPlaybackState(nextDoc, nextCanonicalDeck) {
+      assert.equal(nextDoc, iframeDoc);
+      assert.equal(nextCanonicalDeck, canonicalDeck);
+      return playbackState;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(captureEditorPersistableDeckStateSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.captureEditorPersistableDeckState(iframeDoc, {
+      canonicalDeck
+    }))),
+    {
+      doc: {
+        label: 'iframe-doc'
+      },
+      canonicalDeck,
+      builtCanonicalDeck: canonicalDeck,
+      playbackState: {
+        activeSlideIds: ['slide-1']
+      }
+    }
+  );
+  assert.equal(delegatedArgs.capturePersistableDeckState, context.SlideNextStudioEditorPersistence.captureStudioPersistableDeckState);
+  assert.equal(delegatedArgs.captureBuildState, context.captureEditorPersistableDeckBuildState);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(delegatedArgs.resolvePlaybackState(canonicalDeck))),
+    {
+      activeSlideIds: ['slide-1']
+    }
+  );
+});
+
 test('buildPersistableDeckHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(

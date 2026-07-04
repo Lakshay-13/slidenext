@@ -435,6 +435,38 @@
     );
   }
 
+  function createStudioPersistableDeckStateCapturer(options = {}) {
+    const capturePersistableDeckState = typeof options.capturePersistableDeckState === 'function'
+      ? options.capturePersistableDeckState
+      : captureStudioPersistableDeckState;
+    const captureBuildState = typeof options.captureBuildState === 'function'
+      ? options.captureBuildState
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : () => null;
+    const resolvePlaybackState = typeof options.resolvePlaybackState === 'function'
+      ? options.resolvePlaybackState
+      : () => null;
+
+    return function capturePersistableDeckStateWithDefaults(doc = null, nextOptions = {}) {
+      return capturePersistableDeckState(doc, {
+        canonicalDeck: Object.prototype.hasOwnProperty.call(nextOptions, 'canonicalDeck')
+          ? nextOptions.canonicalDeck
+          : null,
+        captureBuildState: typeof nextOptions.captureBuildState === 'function'
+          ? nextOptions.captureBuildState
+          : captureBuildState,
+        buildCanonicalDeck: typeof nextOptions.buildCanonicalDeck === 'function'
+          ? nextOptions.buildCanonicalDeck
+          : buildCanonicalDeck,
+        resolvePlaybackState: typeof nextOptions.resolvePlaybackState === 'function'
+          ? nextOptions.resolvePlaybackState
+          : resolvePlaybackState
+      });
+    };
+  }
+
   function areStudioPersistenceCanonicalDecksEqual(left, right, options = {}) {
     const areCanonicalDecksEqual = typeof options.areCanonicalDecksEqual === 'function'
       ? options.areCanonicalDecksEqual
@@ -1765,6 +1797,7 @@
     createStudioCapturedPersistableDeckStateResolver,
     captureStudioPersistableDeckBuildState,
     captureStudioPersistableDeckState,
+    createStudioPersistableDeckStateCapturer,
     resolveStudioPersistenceCanonicalDeck,
     resolveStudioSaveRequestCanonicalDeck,
     resolveStudioCanonicalDeckOverride,

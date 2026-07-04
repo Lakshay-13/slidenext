@@ -796,6 +796,67 @@ test('captureStudioPersistableDeckState reuses captured build-state values and s
   ]);
 });
 
+test('createStudioPersistableDeckStateCapturer reuses call-time overrides before builder defaults', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const calls = [];
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 1'
+  };
+  const capturePersistableDeckState = editorPersistence.createStudioPersistableDeckStateCapturer({
+    captureBuildState() {
+      calls.push(['defaultCaptureBuildState']);
+      return { cleanHtml: '<html>default</html>' };
+    },
+    buildCanonicalDeck() {
+      calls.push(['defaultBuildCanonicalDeck']);
+      return null;
+    },
+    resolvePlaybackState() {
+      calls.push(['defaultResolvePlaybackState']);
+      return null;
+    }
+  });
+
+  assert.deepEqual(
+    capturePersistableDeckState(iframeDoc, {
+      canonicalDeck,
+      captureBuildState(doc, buildOptions = {}) {
+        calls.push(['overrideCaptureBuildState', doc, buildOptions]);
+        return {
+          cleanHtml: '<html>persisted</html>',
+          canonicalDeck: null,
+          playbackState: undefined
+        };
+      },
+      buildCanonicalDeck() {
+        calls.push(['overrideBuildCanonicalDeck']);
+        return canonicalDeck;
+      },
+      resolvePlaybackState(nextCanonicalDeck) {
+        calls.push(['overrideResolvePlaybackState', nextCanonicalDeck]);
+        return playbackState;
+      }
+    }),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck,
+      playbackState
+    }
+  );
+
+  assert.deepEqual(calls, [
+    ['overrideCaptureBuildState', iframeDoc, { canonicalDeck }],
+    ['overrideBuildCanonicalDeck'],
+    ['overrideResolvePlaybackState', canonicalDeck]
+  ]);
+});
+
 test('resolveStudioPersistenceStateFromDocumentCapture captures deck state before delegating to a persistence resolver', () => {
   const iframeDoc = { label: 'iframe-doc' };
   const capturedDeckState = {

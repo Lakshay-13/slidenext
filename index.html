@@ -6403,6 +6403,36 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(captureOptions, 'canonicalDeck')
         ? captureOptions.canonicalDeck
         : null;
+      const createStudioPersistableDeckStateCapturer = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistableDeckStateCapturer === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistableDeckStateCapturer
+        : null;
+      if (createStudioPersistableDeckStateCapturer) {
+        return createStudioPersistableDeckStateCapturer({
+          capturePersistableDeckState: (
+            typeof captureOptions.captureStudioPersistableDeckState === 'function'
+              ? captureOptions.captureStudioPersistableDeckState
+              : (
+                  typeof SlideNextStudioEditorPersistence !== 'undefined'
+                  && SlideNextStudioEditorPersistence
+                  && typeof SlideNextStudioEditorPersistence.captureStudioPersistableDeckState === 'function'
+                )
+                ? SlideNextStudioEditorPersistence.captureStudioPersistableDeckState
+                : null
+          ),
+          captureBuildState: captureEditorPersistableDeckBuildState,
+          buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+          }),
+          resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
+        })(doc, {
+          canonicalDeck: providedCanonicalDeck
+        });
+      }
+
       const captureStudioPersistableDeckState = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence
