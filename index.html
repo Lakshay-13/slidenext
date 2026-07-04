@@ -5580,6 +5580,13 @@
       };
     }
 
+    function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
+      return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+        persistenceContext,
+        createCurrentStudioPersistenceHandlerOptions(options)
+      );
+    }
+
     function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {
       const nextOptions = options && typeof options === 'object'
         ? options
@@ -5664,10 +5671,7 @@
             onSuccess
           },
           applyPersistenceFailure: (persistenceContext, failureOptions = {}) => {
-            return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
-              persistenceContext,
-              createCurrentStudioPersistenceHandlerOptions(failureOptions)
-            );
+            return applyCurrentStudioPersistenceFailure(persistenceContext, failureOptions);
           },
           buildFailureOptions: (data) => ({
             onFailure: onFailure
@@ -5728,10 +5732,7 @@
                 );
               },
               applyPersistenceFailure: (persistenceContext, failureOptions = {}) => {
-                return SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
-                  persistenceContext,
-                  createCurrentStudioPersistenceHandlerOptions(failureOptions)
-                );
+                return applyCurrentStudioPersistenceFailure(persistenceContext, failureOptions);
               },
               successOptions: {
                 presentationUrl: persistencePlan.persistenceContext
@@ -5750,14 +5751,11 @@
           );
         } catch (err) {
           console.error('AutoSave Error:', err);
-          SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
-            persistencePlan.persistenceContext,
-            createCurrentStudioPersistenceHandlerOptions({
-              onFailure: () => {
-                setStudioAutoSaveStatus('network-error');
-              }
-            })
-          );
+          applyCurrentStudioPersistenceFailure(persistencePlan.persistenceContext, {
+            onFailure: () => {
+              setStudioAutoSaveStatus('network-error');
+            }
+          });
         }
       }, 1500); // 1.5s debounce delay
     }
@@ -6378,14 +6376,14 @@
           }
         );
       } catch (err) {
-        SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+        applyCurrentStudioPersistenceFailure(
           versionCheckpointPersistenceState.persistenceContext,
-          createCurrentStudioPersistenceHandlerOptions({
+          {
             onFailure: () => {
               alert(`Network error saving version: ${err.message}`);
               setStudioAutoSaveStatus('network-error');
             }
-          })
+          }
         );
       } finally {
         SlideNextStudioEditorPersistence.runStudioPersistenceActionIfCurrent(

@@ -81,6 +81,58 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
   vm.runInContext(helperSource, context);
 }
 
+test('applyCurrentStudioPersistenceFailure delegates through the shared failure helper with current handler options', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let readerCallCount = 0;
+  let capturedReaders = null;
+  let failureHelperArgs = null;
+  const onFailure = () => {};
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      handleStudioPersistenceFailure(persistenceContext, options = {}) {
+        failureHelperArgs = {
+          persistenceContext,
+          options
+        };
+        return 'handled';
+      }
+    },
+    applyCurrentStudioPersistedDeckState() {},
+    createCurrentStudioSessionStateReaders() {
+      readerCallCount += 1;
+      capturedReaders = {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+      return capturedReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 7
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
+
+  const persistenceContext = {
+    presentationUrl: '/presentations/onboarding-presentation/index.html'
+  };
+  const result = context.applyCurrentStudioPersistenceFailure(persistenceContext, { onFailure });
+
+  assert.equal(result, 'handled');
+  assert.equal(readerCallCount, 1);
+  assert.equal(failureHelperArgs.persistenceContext, persistenceContext);
+  assert.equal(failureHelperArgs.options.getCurrentPresentationUrl, capturedReaders.getCurrentPresentationUrl);
+  assert.equal(failureHelperArgs.options.getCurrentSessionToken, capturedReaders.getCurrentSessionToken);
+  assert.equal(failureHelperArgs.options.onFailure, onFailure);
+  assert.equal(failureHelperArgs.options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(failureHelperArgs.options.getCurrentSessionToken(), 7);
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 8;
+  assert.equal(failureHelperArgs.options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(failureHelperArgs.options.getCurrentSessionToken(), 8);
+});
+
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
 }
@@ -1483,6 +1535,12 @@ test('submitSaveVersion reports network save errors through the shared persisten
     alert(message) {
       alerts.push(message);
     },
+    applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
+      return context.SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+        persistenceContext,
+        context.createCurrentStudioPersistenceHandlerOptions(options)
+      );
+    },
     closeSaveVersionModal() {
       closeModalCalls += 1;
     },
@@ -2360,6 +2418,12 @@ test('triggerAutoSave reports network persistence errors through the shared fail
       error(...args) {
         errorCalls.push(args);
       }
+    },
+    applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
+      return context.SlideNextStudioEditorPersistence.handleStudioPersistenceFailure(
+        persistenceContext,
+        context.createCurrentStudioPersistenceHandlerOptions(options)
+      );
     },
     createCurrentStudioPersistenceHandlerOptions(options = {}) {
       return {
