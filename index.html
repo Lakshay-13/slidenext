@@ -3604,6 +3604,30 @@
     }
 
     function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {
+      const createStudioDeckSnapshotBuilder = (
+        typeof SlideNextStudioDeckSnapshot !== 'undefined'
+        && SlideNextStudioDeckSnapshot
+      )
+        && typeof SlideNextStudioDeckSnapshot.createStudioDeckSnapshotBuilder === 'function'
+        ? SlideNextStudioDeckSnapshot.createStudioDeckSnapshotBuilder
+        : null;
+      if (createStudioDeckSnapshotBuilder) {
+        return createStudioDeckSnapshotBuilder({
+          getDocument: getIframeDoc,
+          createDeckViewStateOptions: () => createEditorCanonicalDeckViewStateOptions(),
+          resolveCanonicalDeckViewState: (nextDoc) => resolveEditorCanonicalDeckViewState(nextDoc),
+          resolveFallbackActiveSlideId: (nextDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
+            nextDoc,
+            canonicalDeck
+          ),
+          resolveLiveActiveSlide: (nextDoc) => resolveEditorLiveActiveSlide(nextDoc),
+          buildDomSnapshot: (sourceDoc, buildOptions = {}) => buildEditorDeckSnapshotFromDom(sourceDoc, buildOptions),
+          getActiveSlideId: getEditorSlideId,
+          getSlideById,
+          buildSlideLayerSnapshot: (slideEl) => buildEditorLayerSnapshot(slideEl)
+        })(doc, options);
+      }
+
       const createStudioDeckSnapshotBuildOptions = (
         typeof SlideNextStudioDeckSnapshot !== 'undefined'
         && SlideNextStudioDeckSnapshot

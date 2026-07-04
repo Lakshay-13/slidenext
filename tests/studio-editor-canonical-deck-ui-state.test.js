@@ -2813,6 +2813,83 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
   assert.equal(result.activeSlideIndex, 1);
 });
 
+test('buildEditorDeckSnapshot reuses the shared snapshot builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorDeckSnapshotSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function getStudioActiveSlideIndex(doc = getIframeDoc()) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const snapshotResult = {
+    activeSlideId: 'slide-shared',
+    activeSlideIndex: 1,
+    slides: []
+  };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioDeckSnapshot: {
+      createStudioDeckSnapshotBuilder(options = {}) {
+        delegatedArgs = options;
+        return (nextDoc, nextOptions = {}) => ({
+          ...snapshotResult,
+          nextDoc,
+          includeLayers: !!nextOptions.includeLayers
+        });
+      }
+    },
+    buildEditorDeckSnapshotFromDom() {
+      throw new Error('buildEditorDeckSnapshotFromDom should be delegated through the shared snapshot builder');
+    },
+    buildEditorLayerSnapshot() {
+      throw new Error('buildEditorLayerSnapshot should be delegated through the shared snapshot builder');
+    },
+    createEditorCanonicalDeckViewStateOptions() {
+      return {};
+    },
+    getEditorSlideId() {
+      return 'slide-live';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlideById() {
+      return null;
+    },
+    resolveEditorCanonicalDeckViewState() {
+      throw new Error('resolveEditorCanonicalDeckViewState should be delegated through the shared snapshot builder');
+    },
+    resolveEditorFallbackActiveSlideId() {
+      throw new Error('resolveEditorFallbackActiveSlideId should be delegated through the shared snapshot builder');
+    },
+    resolveEditorLiveActiveSlide() {
+      throw new Error('resolveEditorLiveActiveSlide should be delegated through the shared snapshot builder');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorDeckSnapshotSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.buildEditorDeckSnapshot(undefined, { includeLayers: true }))),
+    {
+      ...snapshotResult,
+      nextDoc: iframeDoc,
+      includeLayers: true
+    }
+  );
+  assert.equal(delegatedArgs.getDocument, context.getIframeDoc);
+  assert.equal(typeof delegatedArgs.createDeckViewStateOptions, 'function');
+  assert.equal(typeof delegatedArgs.resolveCanonicalDeckViewState, 'function');
+  assert.equal(typeof delegatedArgs.resolveFallbackActiveSlideId, 'function');
+  assert.equal(typeof delegatedArgs.resolveLiveActiveSlide, 'function');
+  assert.equal(typeof delegatedArgs.buildDomSnapshot, 'function');
+  assert.equal(delegatedArgs.getActiveSlideId, context.getEditorSlideId);
+  assert.equal(delegatedArgs.getSlideById, context.getSlideById);
+  assert.equal(typeof delegatedArgs.buildSlideLayerSnapshot, 'function');
+});
+
 test('buildEditorDeckSnapshot prefers the current session active slide fallback when the iframe is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(

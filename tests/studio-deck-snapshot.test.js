@@ -386,6 +386,87 @@ test('createStudioDeckSnapshotBuildOptions reuses the resolved canonical deck wh
   });
 });
 
+test('createStudioDeckSnapshotBuilder composes build options and snapshot dependencies through the shared helpers', () => {
+  const doc = { label: 'doc' };
+  const canonicalDeck = {
+    slides: [
+      { id: 'slide-1', title: 'Intro', nodes: [] },
+      { id: 'slide-2', title: 'Agenda', nodes: [] }
+    ]
+  };
+  const activeSlide = { id: 'active-slide-el' };
+  const calls = [];
+
+  const buildDeckSnapshot = deckSnapshot.createStudioDeckSnapshotBuilder({
+    getDocument() {
+      calls.push(['getDocument']);
+      return doc;
+    },
+    createDeckViewStateOptions(nextDoc, buildOptions) {
+      calls.push(['createDeckViewStateOptions', nextDoc, buildOptions]);
+      return {
+        buildCanonicalDeck(sourceDoc) {
+          calls.push(['buildCanonicalDeck', sourceDoc]);
+          return canonicalDeck;
+        },
+        resolveLiveActiveSlideId(sourceDoc) {
+          calls.push(['resolveLiveActiveSlideId', sourceDoc]);
+          return 'slide-2';
+        }
+      };
+    },
+    resolveFallbackActiveSlideId() {
+      calls.push(['resolveFallbackActiveSlideId']);
+      return 'slide-fallback';
+    },
+    resolveLiveActiveSlide(nextDoc, buildOptions) {
+      calls.push(['resolveLiveActiveSlide', nextDoc, buildOptions]);
+      return activeSlide;
+    },
+    buildDomSnapshot(sourceDoc, buildOptions) {
+      calls.push(['buildDomSnapshot', sourceDoc, buildOptions]);
+      return {
+        activeSlideId: 'dom-slide',
+        activeSlideIndex: 0,
+        slides: []
+      };
+    },
+    buildDeckSnapshot(nextDoc, options) {
+      calls.push(['buildDeckSnapshot', nextDoc, options.includeLayers, options.fallbackActiveSlideId]);
+      return {
+        canonicalDeck: options.buildCanonicalDeck(nextDoc),
+        activeSlide: options.getActiveSlide(nextDoc)
+      };
+    },
+    getActiveSlideId() {
+      return 'slide-2';
+    },
+    getSlideById() {
+      return null;
+    },
+    buildSlideLayerSnapshot() {
+      return [];
+    }
+  });
+
+  assert.deepEqual(
+    buildDeckSnapshot(undefined, { includeLayers: true }),
+    {
+      canonicalDeck,
+      activeSlide
+    }
+  );
+
+  assert.deepEqual(calls, [
+    ['getDocument'],
+    ['createDeckViewStateOptions', doc, { includeLayers: true }],
+    ['resolveLiveActiveSlideId', doc],
+    ['resolveLiveActiveSlide', doc, { includeLayers: true }],
+    ['buildDeckSnapshot', doc, true, 'slide-2'],
+    ['buildCanonicalDeck', doc]
+  ]);
+});
+
 test('buildStudioDeckSnapshot merges live layer snapshots onto canonical slides when requested', () => {
   const doc = { label: 'doc' };
   const slideElsById = new Map([
