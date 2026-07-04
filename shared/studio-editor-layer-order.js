@@ -58,6 +58,12 @@
 
   function buildStudioLayerOrderToolbarState(targetElements = [], options = {}) {
     const actionState = buildStudioLayerOrderActionState(targetElements, options);
+    const buildZIndexMutationPlan = typeof options.buildZIndexMutationPlan === 'function'
+      ? options.buildZIndexMutationPlan
+      : null;
+    const zIndexMutationPlan = buildZIndexMutationPlan
+      ? buildZIndexMutationPlan(targetElements, options)
+      : null;
 
     return {
       ...actionState,
@@ -66,6 +72,9 @@
         arrangeLayerBackBtn: actionState.canSendToBack,
         arrangeLayerForwardBtn: actionState.canBringForward,
         arrangeLayerBackwardBtn: actionState.canSendBackward
+      },
+      controlStates: {
+        elZIndex: !!(zIndexMutationPlan && zIndexMutationPlan.canApply)
       }
     };
   }

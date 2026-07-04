@@ -103,7 +103,29 @@ test('buildStudioLayerOrderToolbarState derives layer arrangement button states 
       arrangeLayerBackBtn: false,
       arrangeLayerForwardBtn: true,
       arrangeLayerBackwardBtn: false
+    },
+    controlStates: {
+      elZIndex: false
     }
+  });
+});
+
+test('buildStudioLayerOrderToolbarState can include shared z-index control enablement', () => {
+  const first = { id: 'first', isConnected: true, locked: false };
+  const orderedElements = [first];
+
+  assert.deepEqual(layerOrder.buildStudioLayerOrderToolbarState([first], {
+    orderedElements,
+    isLocked: (element) => !!element.locked,
+    buildZIndexMutationPlan(elements, options = {}) {
+      assert.deepEqual(elements, [first]);
+      assert.deepEqual(options.orderedElements, orderedElements);
+      return {
+        canApply: true
+      };
+    }
+  }).controlStates, {
+    elZIndex: true
   });
 });
 

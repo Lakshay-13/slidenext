@@ -4187,7 +4187,13 @@
         ? buildStudioLayerOrderToolbarState(selectedElements, {
           orderedElements,
           isLocked: isElementLocked,
-          canMutateDeck
+          canMutateDeck,
+          buildZIndexMutationPlan(elements) {
+            return SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(elements, 'zIndex', '', {
+              isLocked: isElementLocked,
+              canMutateDeck
+            });
+          }
         })
         : buildLayerOrderSelectionActionState(selectedElements, {
           slide,
@@ -4208,6 +4214,11 @@
 
       const zIndexInput = document.getElementById('elZIndex');
       if (zIndexInput) {
+        const controlStates = layerOrderActionState.controlStates || null;
+        if (controlStates && Object.prototype.hasOwnProperty.call(controlStates, 'elZIndex')) {
+          zIndexInput.disabled = !controlStates.elZIndex;
+          return;
+        }
         const zIndexMutationPlan = SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(selectedElements, 'zIndex', '', {
           isLocked: isElementLocked,
           canMutateDeck

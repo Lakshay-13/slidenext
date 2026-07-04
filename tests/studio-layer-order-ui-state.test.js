@@ -295,6 +295,7 @@ test('updateLayerOrderActionState reuses the shared layer-order toolbar helper w
         calls.push({
           elements,
           orderedElements: options.orderedElements,
+          zIndexMutationPlan: options.buildZIndexMutationPlan(elements, options),
           hasCanMutateDeck: typeof options.canMutateDeck === 'function',
           canMutateDeck: options.canMutateDeck()
         });
@@ -304,6 +305,9 @@ test('updateLayerOrderActionState reuses the shared layer-order toolbar helper w
             arrangeLayerBackBtn: false,
             arrangeLayerForwardBtn: true,
             arrangeLayerBackwardBtn: false
+          },
+          controlStates: {
+            elZIndex: true
           }
         };
       }
@@ -351,6 +355,9 @@ test('updateLayerOrderActionState reuses the shared layer-order toolbar helper w
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
     elements: [{ id: 'selected', isConnected: true }],
     orderedElements: [{ id: 'selected' }],
+    zIndexMutationPlan: {
+      canApply: true
+    },
     hasCanMutateDeck: true,
     canMutateDeck: true
   }]);
