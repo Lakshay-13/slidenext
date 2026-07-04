@@ -1810,6 +1810,50 @@ test('createCurrentStudioVersionHistoryLoadOptions merges live session readers w
   assert.equal(loadOptions.getCurrentSessionToken(), 19);
 });
 
+test('createCurrentStudioVersionHistoryLoadOptions reuses the shared version-history builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionHistoryLoadOptions(',
+    '\n\n    async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {'
+  );
+
+  let delegatedArgs = null;
+  const context = {
+    createCurrentStudioSessionReaderOptions() {},
+    renderVersionsList() {},
+    SlideNextStudioVersionHistory: {
+      createStudioVersionHistoryLoadOptionsBuilder(options = {}) {
+        delegatedArgs = options;
+        return (presentationUrl, sessionToken) => ({
+          presentationUrl,
+          sessionToken,
+          createSessionReaderOptions: typeof options.createSessionReaderOptions,
+          renderVersionEntries: typeof options.renderVersionEntries
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.createCurrentStudioVersionHistoryLoadOptions(
+      '/presentations/onboarding-presentation/index.html',
+      18
+    ))),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      sessionToken: 18,
+      createSessionReaderOptions: 'function',
+      renderVersionEntries: 'function'
+    }
+  );
+  assert.equal(delegatedArgs.createSessionReaderOptions, context.createCurrentStudioSessionReaderOptions);
+  assert.equal(delegatedArgs.renderVersionEntries, context.renderVersionsList);
+});
+
 test('loadVersions reuses the shared session reader helper when delegating to the version history loader', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(

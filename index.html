@@ -8074,6 +8074,20 @@
       presentationUrl = currentPresentationUrl,
       sessionToken = studioEditorSessionToken
     ) {
+      const createStudioVersionHistoryLoadOptionsBuilder = (
+        typeof SlideNextStudioVersionHistory !== 'undefined'
+        && SlideNextStudioVersionHistory
+        && typeof SlideNextStudioVersionHistory.createStudioVersionHistoryLoadOptionsBuilder === 'function'
+      )
+        ? SlideNextStudioVersionHistory.createStudioVersionHistoryLoadOptionsBuilder
+        : null;
+      if (createStudioVersionHistoryLoadOptionsBuilder) {
+        return createStudioVersionHistoryLoadOptionsBuilder({
+          createSessionReaderOptions: createCurrentStudioSessionReaderOptions,
+          renderVersionEntries: renderVersionsList
+        })(presentationUrl, sessionToken);
+      }
+
       return createCurrentStudioSessionReaderOptions({
         sessionToken,
         commitVersionEntries: (versions) => {

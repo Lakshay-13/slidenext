@@ -21,6 +21,42 @@ test('deriveStudioVersionDeckBaseName removes the presentation extension', () =>
   assert.equal(versionHistory.deriveStudioVersionDeckBaseName(''), '');
 });
 
+test('createStudioVersionHistoryLoadOptionsBuilder reuses session-reader defaults and rendered version callbacks', () => {
+  const calls = [];
+  const createVersionHistoryLoadOptions = versionHistory.createStudioVersionHistoryLoadOptionsBuilder({
+    createSessionReaderOptions(nextOptions = {}) {
+      calls.push(['createSessionReaderOptions', {
+        sessionToken: nextOptions.sessionToken,
+        commitVersionEntries: typeof nextOptions.commitVersionEntries
+      }]);
+      return nextOptions;
+    },
+    renderVersionEntries(presentationUrl, versions) {
+      calls.push(['renderVersionEntries', presentationUrl, versions]);
+    }
+  });
+
+  const loadOptions = createVersionHistoryLoadOptions(
+    '/presentations/onboarding-presentation/index.html',
+    12
+  );
+
+  loadOptions.commitVersionEntries([
+    { filename: 'index_20260101_120000_Auto.html' }
+  ]);
+
+  assert.equal(loadOptions.sessionToken, 12);
+  assert.deepEqual(calls, [
+    ['createSessionReaderOptions', {
+      sessionToken: 12,
+      commitVersionEntries: 'function'
+    }],
+    ['renderVersionEntries', '/presentations/onboarding-presentation/index.html', [
+      { filename: 'index_20260101_120000_Auto.html' }
+    ]]
+  ]);
+});
+
 test('loadStudioVersionHistory commits fetched versions when the requested deck is still current', async () => {
   const fetchDeferred = createDeferred();
   const committedVersions = [];

@@ -27,6 +27,35 @@
     return extensionIndex === -1 ? lastPart : lastPart.substring(0, extensionIndex);
   }
 
+  function createStudioVersionHistoryLoadOptionsBuilder(options = {}) {
+    const defaultCreateSessionReaderOptions = typeof options.createSessionReaderOptions === 'function'
+      ? options.createSessionReaderOptions
+      : (nextOptions = {}) => nextOptions;
+    const defaultRenderVersionEntries = typeof options.renderVersionEntries === 'function'
+      ? options.renderVersionEntries
+      : () => {};
+
+    return function createVersionHistoryLoadOptions(
+      presentationUrl = '',
+      sessionToken = null,
+      nextOptions = {}
+    ) {
+      const createSessionReaderOptions = typeof nextOptions.createSessionReaderOptions === 'function'
+        ? nextOptions.createSessionReaderOptions
+        : defaultCreateSessionReaderOptions;
+      const renderVersionEntries = typeof nextOptions.renderVersionEntries === 'function'
+        ? nextOptions.renderVersionEntries
+        : defaultRenderVersionEntries;
+
+      return createSessionReaderOptions({
+        sessionToken: normalizeSessionToken(sessionToken),
+        commitVersionEntries(versions) {
+          renderVersionEntries(normalizeString(presentationUrl), versions);
+        }
+      });
+    };
+  }
+
   async function loadStudioVersionHistory(presentationUrl = '', options = {}) {
     const requestedPresentationUrl = normalizeString(presentationUrl);
     if (!requestedPresentationUrl) {
@@ -70,6 +99,7 @@
 
   return {
     deriveStudioVersionDeckBaseName,
+    createStudioVersionHistoryLoadOptionsBuilder,
     loadStudioVersionHistory
   };
 });
