@@ -138,7 +138,7 @@ test('launchPresentation delegates url preview chrome resolution to the shared p
   }]);
 });
 
-test('launchPreview does not open preview flows when the present button is disabled', () => {
+test('launchPreview does not open preview flows when deck-ready state disables preview', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const launchPreviewSource = extractFunctionSource(
     fileContent,
@@ -155,13 +155,10 @@ test('launchPreview does not open preview flows when the present button is disab
       return '<html>preview</html>';
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    document: {
-      getElementById(id) {
-        if (id === 'launchPreviewBtn') {
-          return { disabled: true };
-        }
-        return null;
-      }
+    resolveCurrentStudioDeckReadyActionState() {
+      return {
+        canLaunchPreview: false
+      };
     },
     getStudioActiveSlideIndex() {
       return 2;
@@ -209,6 +206,11 @@ test('launchPreview delegates the launch-mode decision to the shared preview hel
       return '<html>preview</html>';
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    resolveCurrentStudioDeckReadyActionState() {
+      return {
+        canLaunchPreview: true
+      };
+    },
     document: {
       body: { style: {} },
       getElementById(id) {

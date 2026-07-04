@@ -7006,8 +7006,7 @@
 
     // Presentation Live Preview from workspace
     function launchPreview() {
-      const previewBtn = document.getElementById('launchPreviewBtn');
-      if (previewBtn && previewBtn.disabled) return;
+      if (!resolveCurrentStudioDeckReadyActionState().canLaunchPreview) return;
       if (!currentPresentationUrl) return;
       SlideNextStudioPreview.launchStudioPresentation({
         document,
