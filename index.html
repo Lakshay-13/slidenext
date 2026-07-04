@@ -5513,6 +5513,19 @@
     }
 
     function updateHistoryButtons() {
+      const createStudioHistoryButtonUpdater = SlideNextStudioHistory
+        && typeof SlideNextStudioHistory.createStudioHistoryButtonUpdater === 'function'
+        ? SlideNextStudioHistory.createStudioHistoryButtonUpdater
+        : null;
+      if (createStudioHistoryButtonUpdater) {
+        return createStudioHistoryButtonUpdater({
+          getUndoStack: () => undoStack,
+          getRedoStack: () => redoStack,
+          getUndoButton: () => document.getElementById('studioUndoBtn'),
+          getRedoButton: () => document.getElementById('studioRedoBtn')
+        })();
+      }
+
       const historyButtonState = SlideNextStudioHistory.getStudioHistoryButtonState(undoStack, redoStack);
       const undoButton = document.getElementById('studioUndoBtn');
       if (undoButton) {

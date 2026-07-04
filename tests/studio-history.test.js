@@ -437,6 +437,51 @@ test('createStudioHistoryStateCapturer leaves history state unchanged when no en
   assert.equal(captureCalls, 1);
 });
 
+test('createStudioHistoryButtonUpdater applies the computed history button state to the provided controls', () => {
+  const undoButton = { disabled: false };
+  const redoButton = { disabled: true };
+  const calls = [];
+  const updateHistoryButtons = studioHistory.createStudioHistoryButtonUpdater({
+    getUndoStack() {
+      calls.push(['getUndoStack']);
+      return ['entry-1'];
+    },
+    getRedoStack() {
+      calls.push(['getRedoStack']);
+      return ['entry-2'];
+    },
+    getUndoButton() {
+      calls.push(['getUndoButton']);
+      return undoButton;
+    },
+    getRedoButton() {
+      calls.push(['getRedoButton']);
+      return redoButton;
+    },
+    getHistoryButtonState(undoStack, redoStack) {
+      calls.push(['getHistoryButtonState', undoStack, redoStack]);
+      return {
+        undoDisabled: true,
+        redoDisabled: false
+      };
+    }
+  });
+
+  assert.deepEqual(updateHistoryButtons(), {
+    undoDisabled: true,
+    redoDisabled: false
+  });
+  assert.equal(undoButton.disabled, true);
+  assert.equal(redoButton.disabled, false);
+  assert.deepEqual(calls, [
+    ['getUndoStack'],
+    ['getRedoStack'],
+    ['getHistoryButtonState', ['entry-1'], ['entry-2']],
+    ['getUndoButton'],
+    ['getRedoButton']
+  ]);
+});
+
 test('buildStudioHistoryFrameHtml strips editor runtime ids from the captured html snapshot', () => {
   const runtimeNode = createHistorySerializableNode(
     'div',

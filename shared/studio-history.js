@@ -401,6 +401,37 @@
     };
   }
 
+  function createStudioHistoryButtonUpdater(options = {}) {
+    const getUndoStack = typeof options.getUndoStack === 'function'
+      ? options.getUndoStack
+      : () => [];
+    const getRedoStack = typeof options.getRedoStack === 'function'
+      ? options.getRedoStack
+      : () => [];
+    const getUndoButton = typeof options.getUndoButton === 'function'
+      ? options.getUndoButton
+      : () => null;
+    const getRedoButton = typeof options.getRedoButton === 'function'
+      ? options.getRedoButton
+      : () => null;
+    const getHistoryButtonState = typeof options.getHistoryButtonState === 'function'
+      ? options.getHistoryButtonState
+      : getStudioHistoryButtonState;
+
+    return function updateHistoryButtons() {
+      const historyButtonState = getHistoryButtonState(getUndoStack(), getRedoStack(), options);
+      const undoButton = getUndoButton();
+      if (undoButton) {
+        undoButton.disabled = historyButtonState.undoDisabled;
+      }
+      const redoButton = getRedoButton();
+      if (redoButton) {
+        redoButton.disabled = historyButtonState.redoDisabled;
+      }
+      return historyButtonState;
+    };
+  }
+
   function scheduleStudioHistoryCapture(currentTimer, debounce, captureFn, options = {}) {
     const clearScheduledCapture = typeof options.clearScheduledCapture === 'function'
       ? options.clearScheduledCapture
@@ -571,6 +602,7 @@
     stepStudioHistoryUndo,
     stepStudioHistoryRedo,
     getStudioHistoryButtonState,
+    createStudioHistoryButtonUpdater,
     scheduleStudioHistoryCapture,
     restoreStudioHistoryActiveSlide,
     restoreStudioHistorySelectionState,

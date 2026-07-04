@@ -64,6 +64,50 @@ test('updateHistoryButtons tolerates missing history controls', () => {
   ]);
 });
 
+test('updateHistoryButtons reuses the shared history button updater when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateHistoryButtonsSource = extractFunctionSource(
+    fileContent,
+    'function updateHistoryButtons() {',
+    '\n\n    function editorUndo() {'
+  );
+
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioHistory: {
+      createStudioHistoryButtonUpdater(options = {}) {
+        delegatedArgs = options;
+        return () => ({
+          undoDisabled: true,
+          redoDisabled: false
+        });
+      }
+    },
+    document: {
+      getElementById(id) {
+        return { id, disabled: null };
+      }
+    },
+    undoStack: ['entry-1'],
+    redoStack: ['entry-2']
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateHistoryButtonsSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.updateHistoryButtons())),
+    {
+      undoDisabled: true,
+      redoDisabled: false
+    }
+  );
+  assert.equal(typeof delegatedArgs.getUndoStack, 'function');
+  assert.equal(typeof delegatedArgs.getRedoStack, 'function');
+  assert.equal(typeof delegatedArgs.getUndoButton, 'function');
+  assert.equal(typeof delegatedArgs.getRedoButton, 'function');
+});
+
 test('createHistoryEntry attaches the current canonical deck sidecar and live editor state to history entries', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createHistoryEntrySource = extractFunctionSource(
