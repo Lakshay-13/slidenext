@@ -1146,8 +1146,76 @@ test('restoreVersion reuses the shared restore request helper when available', a
   assert.equal(successOptions.getCurrentSessionToken(), 14);
 });
 
+test('createCurrentStudioVersionHistoryLoadOptions merges live session readers with version list refresh behavior', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionHistoryLoadOptions(',
+    '\n\n    async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {'
+  );
+
+  let readerCallCount = 0;
+  let capturedReaders = null;
+  const context = {
+    createCurrentStudioSessionStateReaders() {
+      readerCallCount += 1;
+      capturedReaders = {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+      return capturedReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    renderVersionsListCalls: [],
+    renderVersionsList(presentationUrl, versions) {
+      context.renderVersionsListCalls.push([presentationUrl, versions]);
+    },
+    studioEditorSessionToken: 18
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  const loadOptions = context.createCurrentStudioVersionHistoryLoadOptions(
+    '/presentations/onboarding-presentation/index.html',
+    18
+  );
+
+  assert.equal(readerCallCount, 1);
+  assert.equal(loadOptions.sessionToken, 18);
+  assert.equal(loadOptions.getCurrentPresentationUrl, capturedReaders.getCurrentPresentationUrl);
+  assert.equal(loadOptions.getCurrentSessionToken, capturedReaders.getCurrentSessionToken);
+  assert.equal(loadOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(loadOptions.getCurrentSessionToken(), 18);
+  loadOptions.commitVersionEntries([
+    {
+      filename: 'index_20260101_120000_Auto.html',
+      createdAt: '2026-01-01T12:00:00.000Z'
+    }
+  ]);
+  assert.deepEqual(context.renderVersionsListCalls, [[
+    '/presentations/onboarding-presentation/index.html',
+    [
+      {
+        filename: 'index_20260101_120000_Auto.html',
+        createdAt: '2026-01-01T12:00:00.000Z'
+      }
+    ]
+  ]]);
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 19;
+  assert.equal(loadOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(loadOptions.getCurrentSessionToken(), 19);
+});
+
 test('loadVersions reuses the shared session reader helper when delegating to the version history loader', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionHistoryLoadOptions(',
+    '\n\n    async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {'
+  );
   const loadVersionsSource = extractFunctionSource(
     fileContent,
     'async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
@@ -1194,6 +1262,7 @@ test('loadVersions reuses the shared session reader helper when delegating to th
   };
 
   vm.createContext(context);
+  vm.runInContext(helperSource, context);
   vm.runInContext(loadVersionsSource, context);
 
   await context.loadVersions(

@@ -6524,19 +6524,25 @@
     }
 
     // Fetch versions checklist
+    function createCurrentStudioVersionHistoryLoadOptions(
+      presentationUrl = currentPresentationUrl,
+      sessionToken = studioEditorSessionToken
+    ) {
+      return {
+        ...createCurrentStudioSessionStateReaders(),
+        sessionToken,
+        commitVersionEntries: (versions) => {
+          renderVersionsList(presentationUrl, versions);
+        }
+      };
+    }
+
     async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
       if (!presentationUrl) return;
       try {
-        const loadOptions = {
-          ...createCurrentStudioSessionStateReaders(),
-          sessionToken,
-          commitVersionEntries: (versions) => {
-            renderVersionsList(presentationUrl, versions);
-          }
-        };
         await SlideNextStudioVersionHistory.loadStudioVersionHistory(
           presentationUrl,
-          loadOptions
+          createCurrentStudioVersionHistoryLoadOptions(presentationUrl, sessionToken)
         );
       } catch (err) {
         console.error('Failed to load version history:', err);
