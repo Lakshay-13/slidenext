@@ -102,6 +102,47 @@ test('createCurrentStudioVersionActionContext captures the active presentation v
   assert.equal(calls[1][3].sessionToken, 12);
 });
 
+test('createCurrentStudioVersionActionHandlerOptions merges live session readers with handler callbacks', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionActionHandlerOptions(options = {}) {',
+    '\n\n    async function restoreVersion(filename) {'
+  );
+
+  let readerCallCount = 0;
+  let capturedReaders = null;
+  const onSuccess = () => {};
+  const context = {
+    createCurrentStudioSessionStateReaders() {
+      readerCallCount += 1;
+      capturedReaders = {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+      return capturedReaders;
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 21
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  const handlerOptions = context.createCurrentStudioVersionActionHandlerOptions({ onSuccess });
+  assert.equal(readerCallCount, 1);
+  assert.equal(handlerOptions.getCurrentPresentationUrl, capturedReaders.getCurrentPresentationUrl);
+  assert.equal(handlerOptions.getCurrentSessionToken, capturedReaders.getCurrentSessionToken);
+  assert.equal(handlerOptions.onSuccess, onSuccess);
+  assert.equal(handlerOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(handlerOptions.getCurrentSessionToken(), 21);
+
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 22;
+  assert.equal(handlerOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(handlerOptions.getCurrentSessionToken(), 22);
+});
+
 test('resetStudioVersionUiState hides open version chrome and clears modal state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resetStudioVersionUiStateSource = extractFunctionSource(
@@ -599,6 +640,12 @@ test('submitRenameVersion tolerates missing rename modal chrome during a success
         getCurrentSessionToken: () => null
       };
     },
+    createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return {
+        ...context.createCurrentStudioSessionStateReaders(),
+        ...options
+      };
+    },
     createCurrentStudioVersionActionContext() {
       calls.push(['createCurrentStudioVersionActionContext']);
       return {
@@ -694,6 +741,12 @@ test('submitRenameVersion reuses the shared rename request helper when available
       };
       capturedReaders.push(readers);
       return readers;
+    },
+    createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return {
+        ...context.createCurrentStudioSessionStateReaders(),
+        ...options
+      };
     },
     createCurrentStudioVersionActionContext() {
       return {
@@ -824,6 +877,12 @@ test('deleteVersion reuses the shared delete request helper when available', asy
       };
       return capturedReaders;
     },
+    createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return {
+        ...context.createCurrentStudioSessionStateReaders(),
+        ...options
+      };
+    },
     fetch() {
       throw new Error('deleteVersion should pass fetch to the shared delete helper instead of calling it directly');
     },
@@ -919,6 +978,12 @@ test('restoreVersion tolerates a missing versions dropdown after a successful re
       return {
         getCurrentPresentationUrl: () => context.currentPresentationUrl,
         getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return {
+        ...context.createCurrentStudioSessionStateReaders(),
+        ...options
       };
     },
     document: {
@@ -1021,6 +1086,12 @@ test('restoreVersion reuses the shared restore request helper when available', a
         getCurrentSessionToken: () => context.studioEditorSessionToken
       };
       return capturedReaders;
+    },
+    createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return {
+        ...context.createCurrentStudioSessionStateReaders(),
+        ...options
+      };
     },
     fetch() {
       throw new Error('restoreVersion should pass fetch to the shared restore helper instead of calling it directly');

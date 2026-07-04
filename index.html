@@ -6546,6 +6546,13 @@
       );
     }
 
+    function createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return {
+        ...createCurrentStudioSessionStateReaders(),
+        ...options
+      };
+    }
+
     async function restoreVersion(filename) {
       if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
         return;
@@ -6563,8 +6570,7 @@
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioRestoreVersionSuccess(
             restoreContext,
-            {
-              ...createCurrentStudioSessionStateReaders(),
+            createCurrentStudioVersionActionHandlerOptions({
               onSuccess: () => {
                 alert('Rollback successfully restored!');
               },
@@ -6577,28 +6583,26 @@
               relaunchEditor: (presentationUrl, presentationTitle, presentationCategory) => {
                 launchStudioEditor(presentationUrl, presentationTitle, presentationCategory);
               }
-            }
+            })
           );
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(
             restoreContext,
-            {
-              ...createCurrentStudioSessionStateReaders(),
+            createCurrentStudioVersionActionHandlerOptions({
               onFailure: () => {
                 alert(`Restore failed: ${data.error}`);
               }
-            }
+            })
           );
         }
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(
           restoreContext,
-          {
-            ...createCurrentStudioSessionStateReaders(),
+          createCurrentStudioVersionActionHandlerOptions({
             onFailure: () => {
               alert(`Network error restoring version: ${err.message}`);
             }
-          }
+          })
         );
       }
     }
@@ -6696,43 +6700,39 @@
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
             renameContext,
-            {
-              ...createCurrentStudioSessionStateReaders(),
+            createCurrentStudioVersionActionHandlerOptions({
               isCurrentSession: isCurrentRenameSession,
               onSuccess: () => {
                 closeRenameVersionModal();
               },
               refreshVersionEntries: loadVersions
-            }
+            })
           );
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(
             renameContext,
-            {
-              ...createCurrentStudioSessionStateReaders(),
+            createCurrentStudioVersionActionHandlerOptions({
               isCurrentSession: isCurrentRenameSession,
               onFailure: () => {
                 alert(`Rename failed: ${data.error}`);
               }
-            }
+            })
           );
         }
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(
           renameContext,
-          {
-            ...createCurrentStudioSessionStateReaders(),
+          createCurrentStudioVersionActionHandlerOptions({
             isCurrentSession: isCurrentRenameSession,
             onFailure: () => {
               alert(`Error renaming version: ${err.message}`);
             }
-          }
+          })
         );
       } finally {
         SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
           renameContext,
-          {
-            ...createCurrentStudioSessionStateReaders(),
+          createCurrentStudioVersionActionHandlerOptions({
             isCurrentSession: isCurrentRenameSession,
             onSuccess: () => {
               if (btn) {
@@ -6740,7 +6740,7 @@
                 btn.textContent = 'Rename';
               }
             }
-          }
+          })
         );
       }
     }
@@ -6762,31 +6762,28 @@
         if (data.success) {
           SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess(
             deleteContext,
-            {
-              ...createCurrentStudioSessionStateReaders(),
+            createCurrentStudioVersionActionHandlerOptions({
               refreshVersionEntries: loadVersions
-            }
+            })
           );
         } else {
           SlideNextStudioVersionActions.handleStudioVersionActionFailure(
             deleteContext,
-            {
-              ...createCurrentStudioSessionStateReaders(),
+            createCurrentStudioVersionActionHandlerOptions({
               onFailure: () => {
                 alert(`Delete failed: ${data.error}`);
               }
-            }
+            })
           );
         }
       } catch (err) {
         SlideNextStudioVersionActions.handleStudioVersionActionFailure(
           deleteContext,
-          {
-            ...createCurrentStudioSessionStateReaders(),
+          createCurrentStudioVersionActionHandlerOptions({
             onFailure: () => {
               alert(`Error deleting version: ${err.message}`);
             }
-          }
+          })
         );
       }
     }
