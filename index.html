@@ -3480,7 +3480,30 @@
     }
 
     getCurrentEditorPersistedDeckState.resolveWithContent = function (persistedDeckState = getCurrentEditorPersistedDeckState()) {
-      return SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent(persistedDeckState);
+      const resolveStudioPersistedDeckStateSnapshotWithContent = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.resolveStudioPersistedDeckStateSnapshotWithContent === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.resolveStudioPersistedDeckStateSnapshotWithContent
+        : null;
+      if (resolveStudioPersistedDeckStateSnapshotWithContent) {
+        return resolveStudioPersistedDeckStateSnapshotWithContent({ persistedDeckState });
+      }
+
+      const resolveStudioPersistableDeckStateWithContent = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent
+        : (nextPersistedDeckState = {}) => {
+            const nextCleanHtml = nextPersistedDeckState && typeof nextPersistedDeckState.cleanHtml === 'string'
+              ? nextPersistedDeckState.cleanHtml
+              : '';
+            return nextCleanHtml ? nextPersistedDeckState : null;
+          };
+      return resolveStudioPersistableDeckStateWithContent(persistedDeckState);
     };
 
     function resolveEditorPersistedDeckStateWithContent(persistedDeckState = getCurrentEditorPersistedDeckState()) {

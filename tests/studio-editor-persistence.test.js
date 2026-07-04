@@ -75,6 +75,48 @@ test('createStudioPersistedDeckStateSnapshot normalizes persisted html and prese
   );
 });
 
+test('resolveStudioPersistedDeckStateSnapshotWithContent reuses an explicit snapshot and otherwise composes it from persisted baselines', () => {
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: []
+    },
+    playbackState: {
+      activeSlideIds: ['slide-1'],
+      slideCounterText: '1 / 1'
+    }
+  };
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioPersistedDeckStateSnapshotWithContent({
+      persistedDeckState
+    }),
+    persistedDeckState
+  );
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioPersistedDeckStateSnapshotWithContent({
+      persistedDeckHtml: '<html>persisted</html>',
+      persistedCanonicalDeck: persistedDeckState.canonicalDeck,
+      persistedPlaybackState: persistedDeckState.playbackState
+    }),
+    persistedDeckState
+  );
+
+  assert.equal(
+    editorPersistence.resolveStudioPersistedDeckStateSnapshotWithContent({
+      persistedDeckState: {
+        cleanHtml: '',
+        canonicalDeck: null,
+        playbackState: null
+      }
+    }),
+    null
+  );
+});
+
 test('applyStudioPersistedDeckState updates persisted state and syncs canonical metadata only when allowed', () => {
   const calls = [];
   const nextState = {
