@@ -120,6 +120,51 @@ test('resolveCurrentStudioZoomActionState reports zoom readiness from the live a
   );
 });
 
+test('resolveCurrentStudioZoomActionState reuses the shared deck-view zoom helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = {
+    activeSlide: { id: 'slide-1' }
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      resolveStudioZoomActionState(sourceDoc, options = {}) {
+        calls.push({
+          sourceDoc,
+          hasGetActiveSlide: typeof options.getActiveSlide === 'function',
+          activeSlideId: options.getActiveSlide(sourceDoc)?.id || ''
+        });
+        return {
+          canUseZoomControls: true
+        };
+      }
+    },
+    getActiveSlide(sourceDoc) {
+      return sourceDoc && sourceDoc.activeSlide ? sourceDoc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioZoomActionState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveCurrentStudioZoomActionState(doc))),
+    {
+      canUseZoomControls: true
+    }
+  );
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    sourceDoc: {
+      activeSlide: { id: 'slide-1' }
+    },
+    hasGetActiveSlide: true,
+    activeSlideId: 'slide-1'
+  }]);
+});
+
 test('updateZoomActionState enables zoom controls only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateZoomActionStateSource = extractFunctionSource(

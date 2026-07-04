@@ -6273,6 +6273,19 @@
     }
 
     function resolveCurrentStudioZoomActionState(doc = getIframeDoc()) {
+      const resolveStudioZoomActionState = (
+        typeof SlideNextStudioDeckView !== 'undefined'
+        && SlideNextStudioDeckView
+        && typeof SlideNextStudioDeckView.resolveStudioZoomActionState === 'function'
+      )
+        ? SlideNextStudioDeckView.resolveStudioZoomActionState
+        : null;
+      if (resolveStudioZoomActionState) {
+        return resolveStudioZoomActionState(doc, {
+          getActiveSlide
+        });
+      }
+
       const hasActiveSlide = !!getActiveSlide(doc);
       return {
         canUseZoomControls: hasActiveSlide

@@ -251,6 +251,29 @@ test('createStudioDeckRenderOptions falls back through shared active slide resol
   ]);
 });
 
+test('resolveStudioZoomActionState derives zoom readiness from the active slide resolver', () => {
+  assert.deepEqual(
+    deckView.resolveStudioZoomActionState(null),
+    {
+      canUseZoomControls: false
+    }
+  );
+
+  assert.deepEqual(
+    deckView.resolveStudioZoomActionState(
+      { activeSlide: { id: 'slide-1' } },
+      {
+        getActiveSlide(doc) {
+          return doc && doc.activeSlide ? doc.activeSlide : null;
+        }
+      }
+    ),
+    {
+      canUseZoomControls: true
+    }
+  );
+});
+
 test('resolveStudioLiveActiveSlide returns the active slide node when present and null otherwise', () => {
   const activeSlide = { label: 'slide-active' };
   const doc = {

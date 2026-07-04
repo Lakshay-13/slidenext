@@ -126,6 +126,16 @@
     };
   }
 
+  function resolveStudioZoomActionState(doc, options = {}) {
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+
+    return {
+      canUseZoomControls: !!getActiveSlide(doc)
+    };
+  }
+
   function resolveStudioLiveActiveSlide(doc, options = {}) {
     const querySelector = typeof options.querySelector === 'function'
       ? options.querySelector
@@ -743,6 +753,7 @@
     resolveStudioCanonicalDeckViewState,
     createStudioDeckViewBuildOptions,
     createStudioDeckRenderOptions,
+    resolveStudioZoomActionState,
     resolveStudioLiveActiveSlide,
     resolveStudioLiveActiveSlideId,
     resolveStudioFallbackActiveSlideId,
