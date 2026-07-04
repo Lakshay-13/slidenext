@@ -3362,6 +3362,29 @@
     }
 
     function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {
+      const isCanonicalDeck = getEditorCanonicalDeckValidator();
+      const {
+        buildCanonicalDeck,
+        resolveLiveActiveSlideId
+      } = createEditorCanonicalDeckViewStateOptions();
+      const createStudioDeckViewSharedOptions = (
+        typeof SlideNextStudioDeckView !== 'undefined'
+        && SlideNextStudioDeckView
+        && typeof SlideNextStudioDeckView.createStudioDeckViewSharedOptions === 'function'
+      )
+        ? SlideNextStudioDeckView.createStudioDeckViewSharedOptions
+        : null;
+      if (createStudioDeckViewSharedOptions) {
+        return createStudioDeckViewSharedOptions(doc, {
+          currentSlideIndex,
+          getPersistedActiveSlideId,
+          buildCanonicalDeck,
+          resolveCanonicalDeckOverride: resolveEditorCanonicalDeckOverride,
+          resolveLiveActiveSlideId,
+          isCanonicalDeck
+        });
+      }
+
       const resolveCanonicalDeckOverride = (canonicalDeck = null, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
         canonicalDeck,
         {
@@ -3370,11 +3393,6 @@
             : null
         }
       );
-      const isCanonicalDeck = getEditorCanonicalDeckValidator();
-      const {
-        buildCanonicalDeck,
-        resolveLiveActiveSlideId
-      } = createEditorCanonicalDeckViewStateOptions();
       return {
         currentSlideIndex,
         getPersistedActiveSlideId,

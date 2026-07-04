@@ -251,6 +251,50 @@ test('createStudioDeckRenderOptions falls back through shared active slide resol
   ]);
 });
 
+test('createStudioDeckViewSharedOptions composes persisted, canonical, and live slide resolvers for the current editor session', () => {
+  const doc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const calls = [];
+  const isCanonicalDeck = (deck) => deck === canonicalDeck;
+
+  const options = deckView.createStudioDeckViewSharedOptions(doc, {
+    currentSlideIndex: 2,
+    getPersistedActiveSlideId() {
+      return 'slide-persisted';
+    },
+    buildCanonicalDeck(nextDoc) {
+      calls.push(['buildCanonicalDeck', nextDoc]);
+      return canonicalDeck;
+    },
+    resolveCanonicalDeckOverride(nextCanonicalDeck, overrideOptions = {}) {
+      calls.push(['resolveCanonicalDeckOverride', nextCanonicalDeck, overrideOptions.buildCanonicalDeck]);
+      return canonicalDeck;
+    },
+    resolveLiveActiveSlideId(nextDoc) {
+      calls.push(['resolveLiveActiveSlideId', nextDoc]);
+      return 'slide-live';
+    },
+    isCanonicalDeck
+  });
+
+  assert.equal(options.currentSlideIndex, 2);
+  assert.equal(options.getPersistedActiveSlideId(), 'slide-persisted');
+  assert.equal(options.resolveCanonicalDeck(doc), canonicalDeck);
+  assert.equal(options.resolveCanonicalDeckOverride(canonicalDeck, doc), canonicalDeck);
+  assert.equal(options.resolveLiveActiveSlideId(doc), 'slide-live');
+  assert.equal(options.isCanonicalDeck, isCanonicalDeck);
+  assert.deepEqual(calls, [
+    ['buildCanonicalDeck', doc],
+    ['resolveCanonicalDeckOverride', canonicalDeck, calls[1][2]],
+    ['resolveLiveActiveSlideId', doc]
+  ]);
+  assert.equal(typeof calls[1][2], 'function');
+});
+
 test('resolveStudioZoomActionState derives zoom readiness from the active slide resolver', () => {
   assert.deepEqual(
     deckView.resolveStudioZoomActionState(null),

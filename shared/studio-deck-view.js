@@ -126,6 +126,40 @@
     };
   }
 
+  function createStudioDeckViewSharedOptions(doc, options = {}) {
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : () => null;
+    const resolveCanonicalDeckOverride = typeof options.resolveCanonicalDeckOverride === 'function'
+      ? options.resolveCanonicalDeckOverride
+      : (canonicalDeck) => canonicalDeck;
+    const resolveLiveActiveSlideId = typeof options.resolveLiveActiveSlideId === 'function'
+      ? options.resolveLiveActiveSlideId
+      : () => '';
+    const getPersistedActiveSlideId = typeof options.getPersistedActiveSlideId === 'function'
+      ? options.getPersistedActiveSlideId
+      : () => '';
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : isCanonicalDeckLike;
+
+    return {
+      currentSlideIndex: Number.isInteger(options.currentSlideIndex) ? options.currentSlideIndex : 0,
+      getPersistedActiveSlideId,
+      resolveCanonicalDeck: buildCanonicalDeck,
+      resolveCanonicalDeckOverride: (canonicalDeck = null, nextDoc = doc) => resolveCanonicalDeckOverride(
+        canonicalDeck,
+        {
+          buildCanonicalDeck: canonicalDeck
+            ? () => buildCanonicalDeck(nextDoc)
+            : null
+        }
+      ),
+      resolveLiveActiveSlideId,
+      isCanonicalDeck
+    };
+  }
+
   function resolveStudioZoomActionState(doc, options = {}) {
     const getActiveSlide = typeof options.getActiveSlide === 'function'
       ? options.getActiveSlide
@@ -780,6 +814,7 @@
     resolveStudioCanonicalDeckViewState,
     createStudioDeckViewBuildOptions,
     createStudioDeckRenderOptions,
+    createStudioDeckViewSharedOptions,
     resolveStudioZoomActionState,
     resolveStudioInsertionActionState,
     resolveStudioWallpaperActionState,
