@@ -741,6 +741,59 @@ test('applyCurrentStudioVersionListMutationSuccess delegates through the shared 
   assert.equal(successArgs[1].onSuccess, onSuccess);
 });
 
+test('applyCurrentStudioVersionListMutationSuccess reuses the shared list-mutation handler when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioVersionListMutationSuccess(versionContext, options = {}) {',
+    '\n\n    function applyCurrentStudioRestoreVersionSuccess(versionContext, options = {}) {'
+  );
+
+  let delegatedArgs = null;
+  const context = {
+    createCurrentStudioVersionActionHandlerOptions() {},
+    SlideNextStudioVersionActions: {
+      ...versionActions,
+      createStudioVersionListMutationSuccessHandler(options = {}) {
+        delegatedArgs = options;
+        return (versionContext, nextOptions = {}) => ({
+          versionContext,
+          createHandlerOptions: typeof options.createHandlerOptions,
+          handleVersionListMutationSuccess: typeof options.handleVersionListMutationSuccess,
+          onSuccess: nextOptions.onSuccess
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.applyCurrentStudioVersionListMutationSuccess(
+      {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      },
+      {
+        onSuccess: 'success-sentinel'
+      }
+    ))),
+    {
+      versionContext: {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      },
+      createHandlerOptions: 'function',
+      handleVersionListMutationSuccess: 'function',
+      onSuccess: 'success-sentinel'
+    }
+  );
+  assert.equal(delegatedArgs.createHandlerOptions, context.createCurrentStudioVersionActionHandlerOptions);
+  assert.equal(
+    delegatedArgs.handleVersionListMutationSuccess,
+    context.SlideNextStudioVersionActions.handleStudioVersionListMutationSuccess
+  );
+});
+
 test('applyCurrentStudioRestoreVersionSuccess delegates through the shared handler options helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let successArgs = null;
