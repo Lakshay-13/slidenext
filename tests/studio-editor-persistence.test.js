@@ -384,6 +384,53 @@ test('resolveStudioCapturedPersistableDeckState rebuilds canonical and playback 
   assert.equal(resolvePlaybackStateCalls, 1);
 });
 
+test('captureStudioPersistableDeckBuildState captures canonical and playback state through the shared html builder wrapper', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 1'
+  };
+  let reportedCanonicalDeck = null;
+  let reportedPlaybackState = null;
+
+  assert.deepEqual(
+    editorPersistence.captureStudioPersistableDeckBuildState(
+      iframeDoc,
+      {
+        canonicalDeck,
+        buildPersistableDeckHtml(doc, buildOptions = {}) {
+          assert.equal(doc, iframeDoc);
+          assert.equal(buildOptions.canonicalDeck, canonicalDeck);
+          assert.equal(typeof buildOptions.onCanonicalDeckResolved, 'function');
+          assert.equal(typeof buildOptions.onPlaybackStateResolved, 'function');
+          buildOptions.onCanonicalDeckResolved(canonicalDeck);
+          buildOptions.onPlaybackStateResolved(playbackState);
+          return '<html>persisted</html>';
+        },
+        onCanonicalDeckResolved(nextCanonicalDeck) {
+          reportedCanonicalDeck = nextCanonicalDeck;
+        },
+        onPlaybackStateResolved(nextPlaybackState) {
+          reportedPlaybackState = nextPlaybackState;
+        }
+      }
+    ),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck,
+      playbackState
+    }
+  );
+
+  assert.equal(reportedCanonicalDeck, canonicalDeck);
+  assert.equal(reportedPlaybackState, playbackState);
+});
+
 test('captureStudioPersistableDeckState reuses captured build-state values and shared fallback resolution', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',

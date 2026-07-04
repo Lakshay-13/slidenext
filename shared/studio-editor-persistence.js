@@ -191,6 +191,47 @@
     };
   }
 
+  function captureStudioPersistableDeckBuildState(doc = null, options = {}) {
+    const nextOptions = options && typeof options === 'object'
+      ? options
+      : {};
+    const buildPersistableDeckHtml = typeof nextOptions.buildPersistableDeckHtml === 'function'
+      ? nextOptions.buildPersistableDeckHtml
+      : () => '';
+    const onCanonicalDeckResolved = typeof nextOptions.onCanonicalDeckResolved === 'function'
+      ? nextOptions.onCanonicalDeckResolved
+      : null;
+    const onPlaybackStateResolved = typeof nextOptions.onPlaybackStateResolved === 'function'
+      ? nextOptions.onPlaybackStateResolved
+      : null;
+    const {
+      buildPersistableDeckHtml: ignoredBuildPersistableDeckHtml,
+      ...persistableDeckBuildOptions
+    } = nextOptions;
+    let resolvedCanonicalDeck = null;
+    let resolvedPlaybackState;
+    const cleanHtml = buildPersistableDeckHtml(doc, {
+      ...persistableDeckBuildOptions,
+      onCanonicalDeckResolved(canonicalDeck) {
+        resolvedCanonicalDeck = canonicalDeck;
+        if (onCanonicalDeckResolved) {
+          onCanonicalDeckResolved(canonicalDeck);
+        }
+      },
+      onPlaybackStateResolved(playbackState) {
+        resolvedPlaybackState = playbackState;
+        if (onPlaybackStateResolved) {
+          onPlaybackStateResolved(playbackState);
+        }
+      }
+    });
+    return {
+      cleanHtml,
+      canonicalDeck: resolvedCanonicalDeck,
+      playbackState: resolvedPlaybackState
+    };
+  }
+
   function captureStudioPersistableDeckState(doc = null, options = {}) {
     const captureBuildState = typeof options.captureBuildState === 'function'
       ? options.captureBuildState
@@ -1185,6 +1226,7 @@
     updateStudioPersistedDeckState,
     resolveStudioPersistableDeckStateWithContent,
     resolveStudioCapturedPersistableDeckState,
+    captureStudioPersistableDeckBuildState,
     captureStudioPersistableDeckState,
     resolveStudioPersistenceCanonicalDeck,
     resolveStudioSaveRequestCanonicalDeck,

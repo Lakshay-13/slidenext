@@ -5707,6 +5707,20 @@
       const nextBuildOptions = buildOptions && typeof buildOptions === 'object'
         ? buildOptions
         : {};
+      const captureStudioPersistableDeckBuildState = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.captureStudioPersistableDeckBuildState === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.captureStudioPersistableDeckBuildState
+        : null;
+      if (captureStudioPersistableDeckBuildState) {
+        return captureStudioPersistableDeckBuildState(doc, {
+          ...nextBuildOptions,
+          buildPersistableDeckHtml
+        });
+      }
+
       const onCanonicalDeckResolved = typeof nextBuildOptions.onCanonicalDeckResolved === 'function'
         ? nextBuildOptions.onCanonicalDeckResolved
         : null;

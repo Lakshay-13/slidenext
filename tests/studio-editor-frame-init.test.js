@@ -152,6 +152,63 @@ test('captureEditorPersistableDeckBuildState captures and forwards canonical dec
   assert.equal(reportedPlaybackState, playbackState);
 });
 
+test('captureEditorPersistableDeckBuildState delegates through the shared persistence helper when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 2'
+  };
+  let delegatedArgs = null;
+
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      captureStudioPersistableDeckBuildState(doc, options = {}) {
+        delegatedArgs = {
+          doc,
+          canonicalDeck: options.canonicalDeck,
+          buildPersistableDeckHtml: options.buildPersistableDeckHtml,
+          onCanonicalDeckResolved: options.onCanonicalDeckResolved,
+          onPlaybackStateResolved: options.onPlaybackStateResolved
+        };
+        return {
+          cleanHtml: '<html>persisted</html>',
+          canonicalDeck,
+          playbackState
+        };
+      }
+    },
+    buildPersistableDeckHtml() {
+      throw new Error('buildPersistableDeckHtml should be delegated through the shared persistence helper');
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckBuildState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.captureEditorPersistableDeckBuildState(iframeDoc, { canonicalDeck }))),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck,
+      playbackState
+    }
+  );
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(delegatedArgs.canonicalDeck, canonicalDeck);
+  assert.equal(delegatedArgs.buildPersistableDeckHtml, context.buildPersistableDeckHtml);
+  assert.equal(typeof delegatedArgs.onCanonicalDeckResolved, 'undefined');
+  assert.equal(typeof delegatedArgs.onPlaybackStateResolved, 'undefined');
+});
+
 test('resolveEditorCapturedPersistableDeckState delegates capture-state fallback resolution through the shared persistence helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const canonicalDeck = {
