@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const modalVisibility = require('../shared/studio-modal-visibility.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const versionActions = require('../shared/studio-version-actions.js');
+const versionHistory = require('../shared/studio-version-history.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -2220,6 +2221,65 @@ test('loadVersions reuses the shared session reader helper when delegating to th
   context.studioEditorSessionToken = 19;
   assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
   assert.equal(capturedOptions.getCurrentSessionToken(), 19);
+});
+
+test('loadVersions reuses the shared version-history loader when available', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionHistoryLoadOptions(',
+    '\n\n    async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {'
+  );
+  const loadVersionsSource = extractFunctionSource(
+    fileContent,
+    'async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
+    '\n\n    // Rollback backup version'
+  );
+
+  let delegatedArgs = null;
+  const context = {
+    console: {
+      error() {}
+    },
+    createCurrentStudioVersionHistoryLoadOptions() {},
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 18,
+    SlideNextStudioVersionHistory: {
+      ...versionHistory,
+      createStudioVersionHistoryLoader(options = {}) {
+        delegatedArgs = options;
+        return async (presentationUrl, sessionToken) => ({
+          presentationUrl,
+          sessionToken,
+          createLoadOptions: typeof options.createLoadOptions,
+          loadVersionHistory: typeof options.loadVersionHistory,
+          reportLoadError: typeof options.reportLoadError
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+  vm.runInContext(loadVersionsSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(await context.loadVersions(
+      '/presentations/onboarding-presentation/index.html',
+      18
+    ))),
+    {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      sessionToken: 18,
+      createLoadOptions: 'function',
+      loadVersionHistory: 'function',
+      reportLoadError: 'function'
+    }
+  );
+  assert.equal(delegatedArgs.getPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(delegatedArgs.getSessionToken(), 18);
+  assert.equal(delegatedArgs.createLoadOptions, context.createCurrentStudioVersionHistoryLoadOptions);
+  assert.equal(delegatedArgs.loadVersionHistory, context.SlideNextStudioVersionHistory.loadStudioVersionHistory);
 });
 
 test('createCurrentStudioSessionStateReaders exposes live presentation and session getters', () => {

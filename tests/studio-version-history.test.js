@@ -57,6 +57,42 @@ test('createStudioVersionHistoryLoadOptionsBuilder reuses session-reader default
   ]);
 });
 
+test('createStudioVersionHistoryLoader reuses load-option defaults and call-time overrides', async () => {
+  const calls = [];
+  const loadVersionHistory = versionHistory.createStudioVersionHistoryLoader({
+    getPresentationUrl() {
+      calls.push(['getPresentationUrl']);
+      return '/presentations/default/index.html';
+    },
+    getSessionToken() {
+      calls.push(['getSessionToken']);
+      return 3;
+    }
+  });
+
+  await loadVersionHistory(
+    '/presentations/onboarding-presentation/index.html',
+    12,
+    {
+      createLoadOptions(presentationUrl, sessionToken) {
+        calls.push(['createLoadOptions', presentationUrl, sessionToken]);
+        return { presentationUrl, sessionToken };
+      },
+      loadVersionHistory(presentationUrl, options = {}) {
+        calls.push(['loadVersionHistory', presentationUrl, options]);
+      }
+    }
+  );
+
+  assert.deepEqual(calls, [
+    ['createLoadOptions', '/presentations/onboarding-presentation/index.html', 12],
+    ['loadVersionHistory', '/presentations/onboarding-presentation/index.html', {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      sessionToken: 12
+    }]
+  ]);
+});
+
 test('loadStudioVersionHistory commits fetched versions when the requested deck is still current', async () => {
   const fetchDeferred = createDeferred();
   const committedVersions = [];

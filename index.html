@@ -8097,6 +8097,31 @@
     }
 
     async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
+      const createStudioVersionHistoryLoader = (
+        typeof SlideNextStudioVersionHistory !== 'undefined'
+        && SlideNextStudioVersionHistory
+        && typeof SlideNextStudioVersionHistory.createStudioVersionHistoryLoader === 'function'
+      )
+        ? SlideNextStudioVersionHistory.createStudioVersionHistoryLoader
+        : null;
+      if (createStudioVersionHistoryLoader) {
+        return createStudioVersionHistoryLoader({
+          getPresentationUrl: () => currentPresentationUrl,
+          getSessionToken: () => studioEditorSessionToken,
+          createLoadOptions: createCurrentStudioVersionHistoryLoadOptions,
+          loadVersionHistory: (
+            typeof SlideNextStudioVersionHistory !== 'undefined'
+            && SlideNextStudioVersionHistory
+            && typeof SlideNextStudioVersionHistory.loadStudioVersionHistory === 'function'
+          )
+            ? SlideNextStudioVersionHistory.loadStudioVersionHistory
+            : null,
+          reportLoadError: (error) => {
+            console.error('Failed to load version history:', error);
+          }
+        })(presentationUrl, sessionToken);
+      }
+
       if (!presentationUrl) return;
       try {
         await SlideNextStudioVersionHistory.loadStudioVersionHistory(

@@ -56,6 +56,57 @@
     };
   }
 
+  function createStudioVersionHistoryLoader(options = {}) {
+    const getPresentationUrl = typeof options.getPresentationUrl === 'function'
+      ? options.getPresentationUrl
+      : () => normalizeString(options.presentationUrl);
+    const getSessionToken = typeof options.getSessionToken === 'function'
+      ? options.getSessionToken
+      : () => normalizeSessionToken(options.sessionToken);
+    const defaultCreateLoadOptions = typeof options.createLoadOptions === 'function'
+      ? options.createLoadOptions
+      : () => ({});
+    const defaultLoadVersionHistory = typeof options.loadVersionHistory === 'function'
+      ? options.loadVersionHistory
+      : loadStudioVersionHistory;
+    const defaultReportLoadError = typeof options.reportLoadError === 'function'
+      ? options.reportLoadError
+      : () => {};
+
+    return async function loadVersionHistory(
+      presentationUrl = getPresentationUrl(),
+      sessionToken = getSessionToken(),
+      nextOptions = {}
+    ) {
+      const requestedPresentationUrl = normalizeString(presentationUrl);
+      if (!requestedPresentationUrl) {
+        return undefined;
+      }
+
+      const requestedSessionToken = normalizeSessionToken(sessionToken);
+      const createLoadOptions = typeof nextOptions.createLoadOptions === 'function'
+        ? nextOptions.createLoadOptions
+        : defaultCreateLoadOptions;
+      const loadVersionHistory = typeof nextOptions.loadVersionHistory === 'function'
+        ? nextOptions.loadVersionHistory
+        : defaultLoadVersionHistory;
+      const reportLoadError = typeof nextOptions.reportLoadError === 'function'
+        ? nextOptions.reportLoadError
+        : defaultReportLoadError;
+
+      try {
+        await loadVersionHistory(
+          requestedPresentationUrl,
+          createLoadOptions(requestedPresentationUrl, requestedSessionToken)
+        );
+      } catch (error) {
+        reportLoadError(error, requestedPresentationUrl, requestedSessionToken);
+      }
+
+      return undefined;
+    };
+  }
+
   async function loadStudioVersionHistory(presentationUrl = '', options = {}) {
     const requestedPresentationUrl = normalizeString(presentationUrl);
     if (!requestedPresentationUrl) {
@@ -100,6 +151,7 @@
   return {
     deriveStudioVersionDeckBaseName,
     createStudioVersionHistoryLoadOptionsBuilder,
+    createStudioVersionHistoryLoader,
     loadStudioVersionHistory
   };
 });
