@@ -136,27 +136,6 @@ test('loadStudioPresentationMetadata skips committing stale same-url editor sess
   assert.deepEqual(committedMetadata, []);
 });
 
-test('createStudioPresentationMetadataLoadOptions preserves the supplied session readers and metadata hooks', () => {
-  const getCurrentPresentationUrl = () => '/presentations/onboarding-presentation/index.html';
-  const getCurrentSessionToken = () => 4;
-  const setCurrentPresentationMetadata = () => {};
-  const onError = () => {};
-
-  const options = deckContext.createStudioPresentationMetadataLoadOptions({
-    sessionToken: 4,
-    getCurrentPresentationUrl,
-    getCurrentSessionToken,
-    setCurrentPresentationMetadata,
-    onError
-  });
-
-  assert.equal(options.sessionToken, 4);
-  assert.equal(options.getCurrentPresentationUrl, getCurrentPresentationUrl);
-  assert.equal(options.getCurrentSessionToken, getCurrentSessionToken);
-  assert.equal(options.setCurrentPresentationMetadata, setCurrentPresentationMetadata);
-  assert.equal(options.onError, onError);
-});
-
 test('resolveStoredStudioCanonicalDeck delegates sidecar normalization to the shared metadata resolver', () => {
   const storedMetadata = {
     canonicalDeck: {

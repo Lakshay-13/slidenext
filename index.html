@@ -3024,14 +3024,10 @@
             }
             return metadata;
           };
-      const createStudioPresentationMetadataLoadOptions = SlideNextStudioDeckContext
-        && typeof SlideNextStudioDeckContext.createStudioPresentationMetadataLoadOptions === 'function'
-        ? SlideNextStudioDeckContext.createStudioPresentationMetadataLoadOptions
-        : (options = {}) => options;
       return loadStudioPresentationMetadata(
         presentationUrl,
         presentationTitle,
-        createStudioPresentationMetadataLoadOptions({
+        {
           ...createCurrentStudioSessionStateReaders(),
           sessionToken,
           setCurrentPresentationMetadata: (metadata) => {
@@ -3040,7 +3036,7 @@
           onError: (err, metadataUrl) => {
             console.warn(`Failed to load presentation metadata from ${metadataUrl}:`, err);
           }
-        })
+        }
       );
     }
 
