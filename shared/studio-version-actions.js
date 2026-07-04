@@ -58,6 +58,26 @@
     };
   }
 
+  function createStudioVersionActionFailureHandler(options = {}) {
+    const createHandlerOptions = typeof options.createHandlerOptions === 'function'
+      ? options.createHandlerOptions
+      : (nextOptions = {}) => nextOptions;
+    const defaultHandleVersionActionFailure = typeof options.handleVersionActionFailure === 'function'
+      ? options.handleVersionActionFailure
+      : handleStudioVersionActionFailure;
+
+    return function handleVersionActionFailure(context = {}, nextOptions = {}) {
+      const handleVersionActionFailure = typeof nextOptions.handleVersionActionFailure === 'function'
+        ? nextOptions.handleVersionActionFailure
+        : defaultHandleVersionActionFailure;
+      const resolveHandlerOptions = typeof nextOptions.createHandlerOptions === 'function'
+        ? nextOptions.createHandlerOptions
+        : createHandlerOptions;
+
+      return handleVersionActionFailure(context, resolveHandlerOptions(nextOptions));
+    };
+  }
+
   function isStudioVersionActionCurrent(context = {}, options = {}) {
     const requestedPresentationUrl = normalizeString(context.presentationUrl);
     if (!requestedPresentationUrl) {
@@ -242,6 +262,7 @@
     createStudioVersionActionContext,
     createStudioVersionActionHandlerOptionsBuilder,
     createStudioVersionRequestOptionsBuilder,
+    createStudioVersionActionFailureHandler,
     isStudioVersionActionCurrent,
     isStudioVersionActionSessionCurrent,
     shouldDebounceStudioAutoVersion,

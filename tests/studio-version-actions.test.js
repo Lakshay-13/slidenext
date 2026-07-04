@@ -102,6 +102,51 @@ test('createStudioVersionRequestOptionsBuilder reuses the default fetch implemen
   assert.equal(overrideOptions.requestId, 'rename');
 });
 
+test('createStudioVersionActionFailureHandler reuses handler-option defaults and call-time overrides', () => {
+  const calls = [];
+  let overrideOptionsRef = null;
+  const handleVersionActionFailure = versionActions.createStudioVersionActionFailureHandler({
+    createHandlerOptions(nextOptions = {}) {
+      calls.push(['createHandlerOptions', nextOptions]);
+      return { onFailure: nextOptions.onFailure };
+    }
+  });
+
+  assert.equal(
+    handleVersionActionFailure(
+      {
+        presentationUrl: '/presentations/onboarding-presentation/index.html',
+        sessionToken: 15
+      },
+      {
+        onFailure: 'failure-sentinel',
+        createHandlerOptions(nextOptions = {}) {
+          overrideOptionsRef = nextOptions;
+          calls.push(['overrideCreateHandlerOptions']);
+          return { onFailure: nextOptions.onFailure, override: true };
+        },
+        handleVersionActionFailure(context, options = {}) {
+          calls.push(['handleVersionActionFailure', context, options]);
+          return options.override === true;
+        }
+      }
+    ),
+    true
+  );
+
+  assert.equal(overrideOptionsRef.onFailure, 'failure-sentinel');
+  assert.deepEqual(calls, [
+    ['overrideCreateHandlerOptions'],
+    ['handleVersionActionFailure', {
+      presentationUrl: '/presentations/onboarding-presentation/index.html',
+      sessionToken: 15
+    }, {
+      onFailure: 'failure-sentinel',
+      override: true
+    }]
+  ]);
+});
+
 test('executeStudioVersionActionRequest posts the supplied request init and returns the parsed response payload', async () => {
   const fetchCalls = [];
 

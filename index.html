@@ -8138,6 +8138,26 @@
     }
 
     function applyCurrentStudioVersionActionFailure(versionContext, options = {}) {
+      const createStudioVersionActionFailureHandler = (
+        typeof SlideNextStudioVersionActions !== 'undefined'
+        && SlideNextStudioVersionActions
+        && typeof SlideNextStudioVersionActions.createStudioVersionActionFailureHandler === 'function'
+      )
+        ? SlideNextStudioVersionActions.createStudioVersionActionFailureHandler
+        : null;
+      if (createStudioVersionActionFailureHandler) {
+        return createStudioVersionActionFailureHandler({
+          createHandlerOptions: createCurrentStudioVersionActionHandlerOptions,
+          handleVersionActionFailure: (
+            typeof SlideNextStudioVersionActions !== 'undefined'
+            && SlideNextStudioVersionActions
+            && typeof SlideNextStudioVersionActions.handleStudioVersionActionFailure === 'function'
+          )
+            ? SlideNextStudioVersionActions.handleStudioVersionActionFailure
+            : null
+        })(versionContext, options);
+      }
+
       return SlideNextStudioVersionActions.handleStudioVersionActionFailure(
         versionContext,
         createCurrentStudioVersionActionHandlerOptions(options)

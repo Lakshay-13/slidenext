@@ -655,6 +655,59 @@ test('applyCurrentStudioVersionActionFailure delegates through the shared handle
   assert.equal(failureArgs[1].onFailure, onFailure);
 });
 
+test('applyCurrentStudioVersionActionFailure reuses the shared failure handler when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioVersionActionFailure(versionContext, options = {}) {',
+    '\n\n    function applyCurrentStudioVersionListMutationSuccess(versionContext, options = {}) {'
+  );
+
+  let delegatedArgs = null;
+  const context = {
+    createCurrentStudioVersionActionHandlerOptions() {},
+    SlideNextStudioVersionActions: {
+      ...versionActions,
+      createStudioVersionActionFailureHandler(options = {}) {
+        delegatedArgs = options;
+        return (versionContext, nextOptions = {}) => ({
+          versionContext,
+          createHandlerOptions: typeof options.createHandlerOptions,
+          handleVersionActionFailure: typeof options.handleVersionActionFailure,
+          onFailure: nextOptions.onFailure
+        });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.applyCurrentStudioVersionActionFailure(
+      {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      },
+      {
+        onFailure: 'failure-sentinel'
+      }
+    ))),
+    {
+      versionContext: {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      },
+      createHandlerOptions: 'function',
+      handleVersionActionFailure: 'function',
+      onFailure: 'failure-sentinel'
+    }
+  );
+  assert.equal(delegatedArgs.createHandlerOptions, context.createCurrentStudioVersionActionHandlerOptions);
+  assert.equal(
+    delegatedArgs.handleVersionActionFailure,
+    context.SlideNextStudioVersionActions.handleStudioVersionActionFailure
+  );
+});
+
 test('applyCurrentStudioVersionListMutationSuccess delegates through the shared handler options helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let successArgs = null;
