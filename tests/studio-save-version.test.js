@@ -432,10 +432,12 @@ test('setStudioSaveButtonState renders the version button loading and idle state
   vm.runInContext(setStudioSaveButtonStateSource, context);
 
   context.setStudioSaveButtonState('saving-version');
+  assert.equal(context.currentStudioSaveButtonState, 'saving-version');
   assert.equal(saveBtnEl.disabled, true);
   assert.match(saveBtnEl.innerHTML, /Creating version/);
 
   context.setStudioSaveButtonState('idle');
+  assert.equal(context.currentStudioSaveButtonState, 'idle');
   assert.equal(saveBtnEl.disabled, false);
   assert.match(saveBtnEl.innerHTML, /Save Version/);
 });

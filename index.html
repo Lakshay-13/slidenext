@@ -1070,6 +1070,7 @@
     let zoomFactor = 1.0;
     let customGradientType = 'linear';
     let hasPendingCustomWallpaperVersion = false;
+    let currentStudioSaveButtonState = 'idle';
     let renamingFilename = '';
     let renamingVersionContext = null;
     let editorClipboard = null;
@@ -6336,7 +6337,9 @@
 
       const saveBtn = document.getElementById('studioSaveBtn');
       if (saveBtn) {
-        saveBtn.disabled = !actionState.canUseDeckActions;
+        const isSavingVersion = typeof currentStudioSaveButtonState === 'string'
+          && currentStudioSaveButtonState === 'saving-version';
+        saveBtn.disabled = isSavingVersion || !actionState.canUseDeckActions;
       }
 
       const sourceViewBtn = document.getElementById('openSourceViewBtn');
@@ -6388,6 +6391,9 @@
     }
 
     function setStudioSaveButtonState(state) {
+      currentStudioSaveButtonState = state === 'saving-version'
+        ? 'saving-version'
+        : 'idle';
       const saveBtn = document.getElementById('studioSaveBtn');
       if (!saveBtn) return;
 

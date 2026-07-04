@@ -125,6 +125,55 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when 
   assert.equal(elements.studioVersionBtn.disabled, false);
 });
 
+test('updateDeckReadyToolbarActionState preserves the save button disabled state while a version save is in flight', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateDeckReadyToolbarActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {',
+    '\n\n    function resetStudioSaveButtonState() {'
+  );
+
+  const elements = {
+    launchPreviewBtn: { disabled: false },
+    studioSaveBtn: { disabled: false },
+    openSourceViewBtn: { disabled: false },
+    studioVersionBtn: { disabled: false }
+  };
+  const context = {
+    currentPresentationMetadata: null,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentStudioSaveButtonState: 'saving-version',
+    document: {
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    },
+    getIframeDoc() {
+      return null;
+    },
+    lastPersistedCanonicalDeck: null,
+    lastPersistedDeckHtml: '<html>persisted-baseline</html>',
+    persistedDeckPlaybackState: null,
+    SlideNextStudioDeckContext: {
+      resolveStoredStudioCanonicalDeck() {
+        return null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  vm.runInContext(updateDeckReadyToolbarActionStateSource, context);
+
+  context.updateDeckReadyToolbarActionState(null);
+
+  assert.equal(elements.launchPreviewBtn.disabled, false);
+  assert.equal(elements.studioSaveBtn.disabled, true);
+  assert.equal(elements.openSourceViewBtn.disabled, false);
+  assert.equal(elements.studioVersionBtn.disabled, false);
+});
+
 test('updateDeckReadyToolbarActionState prefers the shared persisted-content resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateDeckReadyToolbarActionStateSource = extractFunctionSource(
