@@ -127,6 +127,50 @@ test('createStudioPersistedDeckStateReader reads persisted baselines and resolve
   assert.deepEqual(fallbackCalls, [persistedDeckState]);
 });
 
+test('createStudioPersistedDeckStateUpdater delegates persisted baseline writes through the shared updater', () => {
+  const calls = [];
+  const updater = editorPersistence.createStudioPersistedDeckStateUpdater({
+    resolveCanonicalDeck(canonicalDeck) {
+      calls.push(['resolveCanonicalDeck', canonicalDeck]);
+      return { id: 'normalized-deck' };
+    },
+    normalizePlaybackState(playbackState) {
+      calls.push(['normalizePlaybackState', playbackState]);
+      return { activeSlideIds: ['slide-2'], slideCounterText: '' };
+    },
+    setPersistedDeckHtml(cleanHtml) {
+      calls.push(['setPersistedDeckHtml', cleanHtml]);
+    },
+    setPersistedCanonicalDeck(canonicalDeck) {
+      calls.push(['setPersistedCanonicalDeck', canonicalDeck]);
+    },
+    setPersistedPlaybackState(playbackState) {
+      calls.push(['setPersistedPlaybackState', playbackState]);
+    }
+  });
+
+  assert.deepEqual(
+    updater({
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck: { id: 'raw-deck' },
+      playbackState: { activeSlideId: 'slide-2' }
+    }),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck: { id: 'normalized-deck' },
+      playbackState: { activeSlideIds: ['slide-2'], slideCounterText: '' }
+    }
+  );
+
+  assert.deepEqual(calls, [
+    ['setPersistedDeckHtml', '<html>persisted</html>'],
+    ['resolveCanonicalDeck', { id: 'raw-deck' }],
+    ['setPersistedCanonicalDeck', { id: 'normalized-deck' }],
+    ['normalizePlaybackState', { activeSlideId: 'slide-2' }],
+    ['setPersistedPlaybackState', { activeSlideIds: ['slide-2'], slideCounterText: '' }]
+  ]);
+});
+
 test('resolveStudioPersistedDeckStateSnapshotWithContent reuses an explicit snapshot and otherwise composes it from persisted baselines', () => {
   const persistedDeckState = {
     cleanHtml: '<html>persisted</html>',

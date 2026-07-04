@@ -79,6 +79,12 @@
     return readPersistedDeckState;
   }
 
+  function createStudioPersistedDeckStateUpdater(options = {}) {
+    return function updatePersistedDeckState(nextState = {}) {
+      return updateStudioPersistedDeckState(nextState, options);
+    };
+  }
+
   function resolveStudioPersistedDeckStateSnapshotWithContent(options = {}) {
     const persistedDeckState = Object.prototype.hasOwnProperty.call(options, 'persistedDeckState')
       ? options.persistedDeckState
@@ -1574,6 +1580,7 @@
     createStudioPersistableDeckState,
     createStudioPersistedDeckStateSnapshot,
     createStudioPersistedDeckStateReader,
+    createStudioPersistedDeckStateUpdater,
     resolveStudioPersistedDeckStateSnapshotWithContent,
     applyStudioPersistedDeckState,
     syncStudioPresentationMetadataPersistedCanonicalDeck,

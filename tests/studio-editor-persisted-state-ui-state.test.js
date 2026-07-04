@@ -279,6 +279,47 @@ test('updateEditorPersistedDeckState updates only the provided persisted baselin
   assert.deepEqual(context.persistedDeckPlaybackState, { activeSlideIds: ['slide-2'], slideCounterText: '' });
 });
 
+test('updateEditorPersistedDeckState reuses the shared persisted-state updater builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateEditorPersistedDeckStateSource = extractFunctionSource(
+    fileContent,
+    'function updateEditorPersistedDeckState(nextState = {}) {',
+    '\n\n    function captureState() {'
+  );
+
+  let delegatedArgs = null;
+  const context = {
+    lastPersistedDeckHtml: '<html>old</html>',
+    lastPersistedCanonicalDeck: { id: 'old-deck' },
+    persistedDeckPlaybackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 2' },
+    SlideNextDeckPersistence: deckPersistence,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistedDeckStateUpdater(options = {}) {
+        delegatedArgs = options;
+        return (nextState) => nextState;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
+  vm.runInContext(updateEditorPersistedDeckStateSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.updateEditorPersistedDeckState({
+      cleanHtml: '<html>new</html>'
+    }))),
+    {
+      cleanHtml: '<html>new</html>'
+    }
+  );
+  assert.equal(typeof delegatedArgs.resolveCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.normalizePlaybackState, 'function');
+  assert.equal(typeof delegatedArgs.setPersistedDeckHtml, 'function');
+  assert.equal(typeof delegatedArgs.setPersistedCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.setPersistedPlaybackState, 'function');
+});
+
 test('updateEditorPersistedDeckState reuses the shared persisted-baseline updater when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
