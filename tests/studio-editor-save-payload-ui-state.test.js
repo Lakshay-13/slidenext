@@ -501,6 +501,72 @@ test('buildEditorSaveRequestBody reuses the shared save-request body builder whe
   assert.equal(delegatedArgs.buildPersistableDeckHtml, context.buildPersistableDeckHtml);
 });
 
+test('resolveCurrentStudioPersistenceStateFromCapture reuses the shared capture-state resolver builder when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
+    fileContent,
+    'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
+    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
+  );
+
+  const doc = { label: 'iframe-doc' };
+  let delegatedArgs = null;
+  const context = {
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistenceStateFromDocumentCaptureResolver(options = {}) {
+        delegatedArgs = options;
+        return (nextDoc, nextOptions = {}) => ({
+          doc: nextDoc,
+          presentationUrl: typeof nextOptions.presentationUrl === 'string' && nextOptions.presentationUrl
+            ? nextOptions.presentationUrl
+            : options.getPresentationUrl(),
+          capturePersistableDeckState: typeof (
+            typeof nextOptions.capturePersistableDeckState === 'function'
+              ? nextOptions.capturePersistableDeckState
+              : options.capturePersistableDeckState
+          ),
+          persistenceOptions: nextOptions.persistenceOptions || {},
+          resolvePersistenceStateFromCapture: typeof nextOptions.resolvePersistenceStateFromCapture
+        });
+      },
+      resolveStudioPersistenceStateFromDocumentCapture() {
+        throw new Error('capture-state resolution should be delegated through the shared builder');
+      }
+    },
+    captureEditorPersistableDeckState() {},
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveCurrentStudioPersistenceStateFromCaptureSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveCurrentStudioPersistenceStateFromCapture(doc, {
+      persistenceOptions: {
+        sessionToken: 12
+      },
+      resolvePersistenceStateFromCapture() {}
+    }))),
+    {
+      doc: {
+        label: 'iframe-doc'
+      },
+      presentationUrl: 'presentations/onboarding-presentation/index.html',
+      capturePersistableDeckState: 'function',
+      persistenceOptions: {
+        sessionToken: 12
+      },
+      resolvePersistenceStateFromCapture: 'function'
+    }
+  );
+  assert.equal(delegatedArgs.getPresentationUrl(), 'presentations/onboarding-presentation/index.html');
+  assert.equal(delegatedArgs.capturePersistableDeckState, context.captureEditorPersistableDeckState);
+  assert.equal(delegatedArgs.resolvePersistenceStateFromDocumentCapture, context.SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture);
+});
+
 test('buildEditorSaveRequestBody reuses the local canonical override helper when capture state omits a canonical deck', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(

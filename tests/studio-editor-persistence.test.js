@@ -1001,6 +1001,61 @@ test('resolveStudioPersistenceStateFromDocumentCapture captures deck state befor
   });
 });
 
+test('createStudioPersistenceStateFromDocumentCaptureResolver reuses call-time overrides before builder defaults', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const capturedDeckState = {
+    cleanHtml: '<html>persisted</html>'
+  };
+  const calls = [];
+  const resolvePersistenceStateFromCapture = editorPersistence.createStudioPersistenceStateFromDocumentCaptureResolver({
+    getPresentationUrl() {
+      calls.push(['getPresentationUrl']);
+      return '/presentations/onboarding-presentation/index.html';
+    },
+    capturePersistableDeckState() {
+      calls.push(['defaultCapturePersistableDeckState']);
+      return {
+        cleanHtml: '<html>default</html>'
+      };
+    }
+  });
+
+  assert.deepEqual(
+    resolvePersistenceStateFromCapture(iframeDoc, {
+      capturePersistableDeckState(nextDoc) {
+        calls.push(['overrideCapturePersistableDeckState', nextDoc]);
+        return capturedDeckState;
+      },
+      persistenceOptions: {
+        sessionToken: 12
+      },
+      resolvePersistenceStateFromCapture(doc, nextCapturedDeckState, presentationUrl, options = {}) {
+        calls.push(['resolvePersistenceStateFromCapture', doc, nextCapturedDeckState, presentationUrl, options]);
+        return {
+          persistenceContext: {
+            presentationUrl,
+            sessionToken: options.sessionToken
+          }
+        };
+      }
+    }),
+    {
+      persistenceContext: {
+        presentationUrl: '/presentations/onboarding-presentation/index.html',
+        sessionToken: 12
+      }
+    }
+  );
+
+  assert.deepEqual(calls, [
+    ['getPresentationUrl'],
+    ['overrideCapturePersistableDeckState', iframeDoc],
+    ['resolvePersistenceStateFromCapture', iframeDoc, capturedDeckState, '/presentations/onboarding-presentation/index.html', {
+      sessionToken: 12
+    }]
+  ]);
+});
+
 test('createStudioPersistenceActionContext normalizes persistence state', () => {
   assert.deepEqual(
     editorPersistence.createStudioPersistenceActionContext(

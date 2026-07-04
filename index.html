@@ -6838,6 +6838,27 @@
       const nextOptions = options && typeof options === 'object'
         ? options
         : {};
+      const createStudioPersistenceStateFromDocumentCaptureResolver = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.createStudioPersistenceStateFromDocumentCaptureResolver === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.createStudioPersistenceStateFromDocumentCaptureResolver
+        : null;
+      if (createStudioPersistenceStateFromDocumentCaptureResolver) {
+        return createStudioPersistenceStateFromDocumentCaptureResolver({
+          getPresentationUrl: () => currentPresentationUrl,
+          capturePersistableDeckState: captureEditorPersistableDeckState,
+          resolvePersistenceStateFromDocumentCapture: (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+            && typeof SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture === 'function'
+          )
+            ? SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture
+            : null
+        })(doc, nextOptions);
+      }
+
       if (typeof nextOptions.resolvePersistenceStateFromCapture !== 'function') {
         return null;
       }

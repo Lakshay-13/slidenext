@@ -1147,6 +1147,42 @@
     );
   }
 
+  function createStudioPersistenceStateFromDocumentCaptureResolver(options = {}) {
+    const getPresentationUrl = typeof options.getPresentationUrl === 'function'
+      ? options.getPresentationUrl
+      : () => normalizeString(options.presentationUrl);
+    const capturePersistableDeckState = typeof options.capturePersistableDeckState === 'function'
+      ? options.capturePersistableDeckState
+      : null;
+    const resolvePersistenceStateFromDocumentCapture = typeof options.resolvePersistenceStateFromDocumentCapture === 'function'
+      ? options.resolvePersistenceStateFromDocumentCapture
+      : resolveStudioPersistenceStateFromDocumentCapture;
+
+    return function resolvePersistenceStateFromCapture(doc = null, nextOptions = {}) {
+      const resolveFromCapture = typeof nextOptions.resolvePersistenceStateFromCapture === 'function'
+        ? nextOptions.resolvePersistenceStateFromCapture
+        : null;
+      if (!resolveFromCapture) {
+        return null;
+      }
+      return resolvePersistenceStateFromDocumentCapture(
+        doc,
+        typeof nextOptions.presentationUrl === 'string' && nextOptions.presentationUrl
+          ? nextOptions.presentationUrl
+          : getPresentationUrl(),
+        {
+          capturePersistableDeckState: typeof nextOptions.capturePersistableDeckState === 'function'
+            ? nextOptions.capturePersistableDeckState
+            : capturePersistableDeckState,
+          persistenceOptions: nextOptions.persistenceOptions && typeof nextOptions.persistenceOptions === 'object' && !Array.isArray(nextOptions.persistenceOptions)
+            ? { ...nextOptions.persistenceOptions }
+            : {}
+        },
+        resolveFromCapture
+      );
+    };
+  }
+
   function resolveStudioAutoSavePersistenceState(
     persistedDeckState = {},
     presentationUrl = '',
@@ -1930,6 +1966,7 @@
     createStudioSaveRequestBodyBuilder,
     buildStudioPersistenceRequestPlan,
     resolveStudioPersistenceStateFromDocumentCapture,
+    createStudioPersistenceStateFromDocumentCaptureResolver,
     buildStudioAutoSavePersistencePlan,
     createStudioAutoSavePersistenceState,
     resolveStudioAutoSavePersistenceState,
