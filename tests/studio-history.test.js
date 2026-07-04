@@ -306,6 +306,137 @@ test('captureStudioHistoryState stores normalized history entries in the undo st
   assert.deepEqual(result.redoStack, []);
 });
 
+test('createStudioHistoryStateCapturer updates history stacks only when a new entry is captured', () => {
+  const calls = [];
+  let undoStack = [];
+  let redoStack = ['redo-entry'];
+  const historyEntry = { html: '<html></html>' };
+  const capturer = studioHistory.createStudioHistoryStateCapturer({
+    createHistoryEntry() {
+      calls.push(['createHistoryEntry']);
+      return historyEntry;
+    },
+    getUndoStack() {
+      calls.push(['getUndoStack']);
+      return undoStack;
+    },
+    getRedoStack() {
+      calls.push(['getRedoStack']);
+      return redoStack;
+    },
+    getHistoryStateOptions() {
+      calls.push(['getHistoryStateOptions']);
+      return { limit: 50 };
+    },
+    captureHistoryState(nextUndoStack, nextRedoStack, nextHistoryEntry, options) {
+      calls.push(['captureHistoryState', nextUndoStack, nextRedoStack, nextHistoryEntry, options]);
+      return {
+        didCapture: true,
+        undoStack: ['undo-entry'],
+        redoStack: []
+      };
+    },
+    setUndoStack(nextUndoStack) {
+      calls.push(['setUndoStack', nextUndoStack]);
+      undoStack = nextUndoStack;
+    },
+    setRedoStack(nextRedoStack) {
+      calls.push(['setRedoStack', nextRedoStack]);
+      redoStack = nextRedoStack;
+    },
+    updateHistoryButtons() {
+      calls.push(['updateHistoryButtons']);
+    }
+  });
+
+  assert.deepEqual(capturer(), {
+    didCapture: true,
+    undoStack: ['undo-entry'],
+    redoStack: [],
+    historyEntry
+  });
+  assert.deepEqual(undoStack, ['undo-entry']);
+  assert.deepEqual(redoStack, []);
+  assert.deepEqual(calls, [
+    ['createHistoryEntry'],
+    ['getUndoStack'],
+    ['getRedoStack'],
+    ['getHistoryStateOptions'],
+    ['captureHistoryState', [], ['redo-entry'], historyEntry, { limit: 50 }],
+    ['setUndoStack', ['undo-entry']],
+    ['setRedoStack', []],
+    ['updateHistoryButtons']
+  ]);
+});
+
+test('createStudioHistoryStateCapturer leaves history state unchanged when no entry is available or capture is skipped', () => {
+  const missingEntryCapturer = studioHistory.createStudioHistoryStateCapturer({
+    createHistoryEntry() {
+      return null;
+    },
+    getUndoStack() {
+      return ['undo-entry'];
+    },
+    getRedoStack() {
+      return ['redo-entry'];
+    },
+    setUndoStack() {
+      throw new Error('setUndoStack should not run when there is no history entry');
+    },
+    setRedoStack() {
+      throw new Error('setRedoStack should not run when there is no history entry');
+    },
+    updateHistoryButtons() {
+      throw new Error('updateHistoryButtons should not run when there is no history entry');
+    }
+  });
+
+  assert.deepEqual(missingEntryCapturer(), {
+    didCapture: false,
+    undoStack: ['undo-entry'],
+    redoStack: ['redo-entry'],
+    historyEntry: null
+  });
+
+  let captureCalls = 0;
+  const skippedCaptureCapturer = studioHistory.createStudioHistoryStateCapturer({
+    createHistoryEntry() {
+      return { html: '<html></html>' };
+    },
+    getUndoStack() {
+      return ['undo-entry'];
+    },
+    getRedoStack() {
+      return ['redo-entry'];
+    },
+    captureHistoryState() {
+      captureCalls += 1;
+      return {
+        didCapture: false,
+        undoStack: ['undo-entry'],
+        redoStack: ['redo-entry']
+      };
+    },
+    setUndoStack() {
+      throw new Error('setUndoStack should not run when captureStudioHistoryState skips the entry');
+    },
+    setRedoStack() {
+      throw new Error('setRedoStack should not run when captureStudioHistoryState skips the entry');
+    },
+    updateHistoryButtons() {
+      throw new Error('updateHistoryButtons should not run when captureStudioHistoryState skips the entry');
+    }
+  });
+
+  assert.deepEqual(skippedCaptureCapturer(), {
+    didCapture: false,
+    undoStack: ['undo-entry'],
+    redoStack: ['redo-entry'],
+    historyEntry: { html: '<html></html>' }
+  });
+  assert.equal(captureCalls, 1);
+});
+
 test('buildStudioHistoryFrameHtml strips editor runtime ids from the captured html snapshot', () => {
   const runtimeNode = createHistorySerializableNode(
     'div',

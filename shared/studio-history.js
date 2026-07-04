@@ -282,6 +282,68 @@
     };
   }
 
+  function createStudioHistoryStateCapturer(options = {}) {
+    const createHistoryEntry = typeof options.createHistoryEntry === 'function'
+      ? options.createHistoryEntry
+      : () => null;
+    const getUndoStack = typeof options.getUndoStack === 'function'
+      ? options.getUndoStack
+      : () => [];
+    const getRedoStack = typeof options.getRedoStack === 'function'
+      ? options.getRedoStack
+      : () => [];
+    const getHistoryStateOptions = typeof options.getHistoryStateOptions === 'function'
+      ? options.getHistoryStateOptions
+      : () => ({});
+    const setUndoStack = typeof options.setUndoStack === 'function'
+      ? options.setUndoStack
+      : () => {};
+    const setRedoStack = typeof options.setRedoStack === 'function'
+      ? options.setRedoStack
+      : () => {};
+    const updateHistoryButtons = typeof options.updateHistoryButtons === 'function'
+      ? options.updateHistoryButtons
+      : () => {};
+    const captureHistoryState = typeof options.captureHistoryState === 'function'
+      ? options.captureHistoryState
+      : captureStudioHistoryState;
+
+    return function captureHistoryStateAction() {
+      const historyEntry = createHistoryEntry();
+      const currentUndoStack = getUndoStack();
+      const currentRedoStack = getRedoStack();
+      if (!historyEntry) {
+        return {
+          undoStack: currentUndoStack,
+          redoStack: currentRedoStack,
+          historyEntry: null,
+          didCapture: false
+        };
+      }
+
+      const nextHistoryState = captureHistoryState(
+        currentUndoStack,
+        currentRedoStack,
+        historyEntry,
+        getHistoryStateOptions()
+      );
+      if (!nextHistoryState.didCapture) {
+        return {
+          ...nextHistoryState,
+          historyEntry
+        };
+      }
+
+      setUndoStack(nextHistoryState.undoStack);
+      setRedoStack(nextHistoryState.redoStack);
+      updateHistoryButtons();
+      return {
+        ...nextHistoryState,
+        historyEntry
+      };
+    };
+  }
+
   function stepStudioHistoryUndo(undoStack = [], redoStack = []) {
     const nextUndoStack = [...undoStack];
     const nextRedoStack = [...redoStack];
@@ -505,6 +567,7 @@
     normalizeStudioHistoryEntry,
     areStudioHistoryEntriesEqual,
     captureStudioHistoryState,
+    createStudioHistoryStateCapturer,
     stepStudioHistoryUndo,
     stepStudioHistoryRedo,
     getStudioHistoryButtonState,

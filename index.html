@@ -5459,6 +5459,26 @@
     }
 
     function captureState() {
+      const createStudioHistoryStateCapturer = SlideNextStudioHistory
+        && typeof SlideNextStudioHistory.createStudioHistoryStateCapturer === 'function'
+        ? SlideNextStudioHistory.createStudioHistoryStateCapturer
+        : null;
+      if (createStudioHistoryStateCapturer) {
+        return createStudioHistoryStateCapturer({
+          createHistoryEntry,
+          getUndoStack: () => undoStack,
+          getRedoStack: () => redoStack,
+          getHistoryStateOptions: getEditorHistoryStackOptions,
+          setUndoStack(nextUndoStack) {
+            undoStack = nextUndoStack;
+          },
+          setRedoStack(nextRedoStack) {
+            redoStack = nextRedoStack;
+          },
+          updateHistoryButtons
+        })();
+      }
+
       const historyEntry = createHistoryEntry();
       if (!historyEntry) return;
 

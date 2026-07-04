@@ -964,6 +964,51 @@ test('captureState can store a persisted baseline history entry without a live f
   ]);
 });
 
+test('captureState reuses the shared history state capturer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const captureStateSource = extractFunctionSource(
+    fileContent,
+    'function captureState() {',
+    '\n\n    function updateHistoryButtons() {'
+  );
+
+  const captureResult = {
+    didCapture: true,
+    undoStack: ['undo-entry'],
+    redoStack: [],
+    historyEntry: { html: '<html></html>' }
+  };
+  let delegatedArgs = null;
+  const context = {
+    createHistoryEntry() {},
+    getEditorHistoryStackOptions() {},
+    redoStack: ['redo-entry'],
+    SlideNextStudioHistory: {
+      createStudioHistoryStateCapturer(options = {}) {
+        delegatedArgs = options;
+        return () => captureResult;
+      }
+    },
+    undoStack: [],
+    updateHistoryButtons() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(captureStateSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.captureState())),
+    captureResult
+  );
+  assert.equal(delegatedArgs.createHistoryEntry, context.createHistoryEntry);
+  assert.equal(typeof delegatedArgs.getUndoStack, 'function');
+  assert.equal(typeof delegatedArgs.getRedoStack, 'function');
+  assert.equal(delegatedArgs.getHistoryStateOptions, context.getEditorHistoryStackOptions);
+  assert.equal(typeof delegatedArgs.setUndoStack, 'function');
+  assert.equal(typeof delegatedArgs.setRedoStack, 'function');
+  assert.equal(delegatedArgs.updateHistoryButtons, context.updateHistoryButtons);
+});
+
 test('restoreFrameFromHistoryEntry threads the shared iframe accessor through history restore callbacks', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
