@@ -2744,9 +2744,8 @@
 
     // Add Blank Slide Node
     function addSlideNode() {
-      const addSlideBtn = document.getElementById('addSlideBtn');
-      if (addSlideBtn && addSlideBtn.disabled) return false;
       const iframeDoc = getIframeDoc();
+      if (!resolveCurrentStudioInsertionActionState(iframeDoc).canAddSlide) return false;
       if (!iframeDoc) return false;
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return false;
@@ -6232,16 +6231,24 @@
       });
     }
 
-    function updateInsertionActionState(doc = getIframeDoc()) {
+    function resolveCurrentStudioInsertionActionState(doc = getIframeDoc()) {
       const slideContainer = doc && typeof doc.getElementById === 'function'
         ? doc.getElementById('slidesContainer')
         : null;
       const hasSlideContainer = !!slideContainer;
       const hasActiveSlide = !!getActiveSlide(doc);
+      return {
+        canAddSlide: hasSlideContainer,
+        canInsertElements: hasActiveSlide
+      };
+    }
+
+    function updateInsertionActionState(doc = getIframeDoc()) {
+      const actionState = resolveCurrentStudioInsertionActionState(doc);
 
       const addSlideBtn = document.getElementById('addSlideBtn');
       if (addSlideBtn) {
-        addSlideBtn.disabled = !hasSlideContainer;
+        addSlideBtn.disabled = !actionState.canAddSlide;
       }
 
       [
@@ -6258,7 +6265,7 @@
       ].forEach((id) => {
         const control = document.getElementById(id);
         if (control) {
-          control.disabled = !hasActiveSlide;
+          control.disabled = !actionState.canInsertElements;
         }
       });
     }

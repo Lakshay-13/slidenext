@@ -34,6 +34,63 @@ function getDisabledStates(controls) {
   return Object.fromEntries(Object.entries(controls).map(([id, control]) => [id, control.disabled]));
 }
 
+function loadResolveCurrentStudioInsertionActionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveCurrentStudioInsertionActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateInsertionActionState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+test('resolveCurrentStudioInsertionActionState reports add-slide and insertion readiness from the live deck document', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioInsertionActionState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveCurrentStudioInsertionActionState(null))),
+    {
+      canAddSlide: false,
+      canInsertElements: false
+    }
+  );
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveCurrentStudioInsertionActionState({
+      getElementById(id) {
+        return id === 'slidesContainer' ? {} : null;
+      }
+    }))),
+    {
+      canAddSlide: true,
+      canInsertElements: false
+    }
+  );
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveCurrentStudioInsertionActionState({
+      activeSlide: {},
+      getElementById(id) {
+        return id === 'slidesContainer' ? {} : null;
+      }
+    }))),
+    {
+      canAddSlide: true,
+      canInsertElements: true
+    }
+  );
+});
+
 test('updateInsertionActionState enables deck-ready insert controls only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateInsertionActionStateSource = extractFunctionSource(
@@ -58,6 +115,7 @@ test('updateInsertionActionState enables deck-ready insert controls only when th
   };
 
   vm.createContext(context);
+  loadResolveCurrentStudioInsertionActionState(fileContent, context);
   vm.runInContext(updateInsertionActionStateSource, context);
 
   context.updateInsertionActionState(null);

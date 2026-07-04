@@ -41,6 +41,15 @@ function loadRestoreDeckViewAfterSlideMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadResolveCurrentStudioInsertionActionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveCurrentStudioInsertionActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateInsertionActionState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('finalizeSlideMutationPersistence saves, autosaves, and versions slide changes', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
@@ -202,6 +211,9 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
       calls.push(['getEditorDomOptions']);
       return {};
     },
+    getActiveSlide() {
+      return null;
+    },
     getIframeDoc() {
       calls.push(['getIframeDoc']);
       return iframeDoc;
@@ -238,6 +250,7 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
+  loadResolveCurrentStudioInsertionActionState(fileContent, context);
   vm.runInContext(addSlideNodeSource, context);
 
   const result = context.addSlideNode();
@@ -262,7 +275,7 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   assert.equal(calls[9][1], 'Auto: Added Slide');
 });
 
-test('addSlideNode no-ops when the add-slide control is disabled or the iframe document is unavailable', () => {
+test('addSlideNode no-ops when insertion state or the iframe document disallows adding slides', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const addSlideNodeSource = extractFunctionSource(
     fileContent,
@@ -271,18 +284,12 @@ test('addSlideNode no-ops when the add-slide control is disabled or the iframe d
   );
 
   const calls = [];
-  const addSlideBtn = { disabled: true };
   const context = {
-    document: {
-      getElementById(id) {
-        if (id === 'addSlideBtn') {
-          return addSlideBtn;
-        }
-        return null;
-      }
-    },
     getIframeDoc() {
       calls.push(['getIframeDoc']);
+      return null;
+    },
+    getActiveSlide() {
       return null;
     },
     saveHistoryState() {
@@ -294,14 +301,26 @@ test('addSlideNode no-ops when the add-slide control is disabled or the iframe d
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
+  loadResolveCurrentStudioInsertionActionState(fileContent, context);
   vm.runInContext(addSlideNodeSource, context);
 
   assert.equal(context.addSlideNode(), false);
-  assert.deepEqual(calls, []);
-
-  addSlideBtn.disabled = false;
-  assert.equal(context.addSlideNode(), false);
   assert.deepEqual(calls, [['getIframeDoc']]);
+
+  context.getIframeDoc = () => {
+    calls.push(['getIframeDoc']);
+    return {
+      getElementById(id) {
+        assert.equal(id, 'slidesContainer');
+        return null;
+      }
+    };
+  };
+  assert.equal(context.addSlideNode(), false);
+  assert.deepEqual(calls, [
+    ['getIframeDoc'],
+    ['getIframeDoc']
+  ]);
 });
 
 test('addSlideNode skips history when blank slide creation fails', () => {
@@ -336,6 +355,9 @@ test('addSlideNode skips history when blank slide creation fails', () => {
       calls.push(['getEditorDomOptions']);
       return {};
     },
+    getActiveSlide() {
+      return null;
+    },
     getIframeDoc() {
       calls.push(['getIframeDoc']);
       return iframeDoc;
@@ -369,6 +391,7 @@ test('addSlideNode skips history when blank slide creation fails', () => {
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
+  loadResolveCurrentStudioInsertionActionState(fileContent, context);
   vm.runInContext(addSlideNodeSource, context);
 
   assert.equal(context.addSlideNode(), false);
