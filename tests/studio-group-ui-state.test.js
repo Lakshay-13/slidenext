@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -101,12 +102,15 @@ test('groupSelectedElements wraps selected children with relative coordinates an
     }
   };
   const parent = {
+    dataset: { editorId: 'parent-1' },
+    innerHTML: '<div data-editor-id="first"></div><div data-editor-id="second"></div>',
     children: [first, second],
     getBoundingClientRect() {
       return { left: 0, top: 0, right: 500, bottom: 400 };
     },
     insertBefore(nextGroup) {
       this.children.unshift(nextGroup);
+      this.innerHTML = '<div data-editor-id="group-1"></div>';
       nextGroup.parentElement = this;
     },
     appendChild(nextGroup) {
@@ -152,6 +156,7 @@ test('groupSelectedElements wraps selected children with relative coordinates an
     getNormalizedSlideLayerOrder() {
       return [first, second];
     },
+    SlideNextStudioEditorTransaction: studioTransaction,
     assignEditorElementId(nextGroup) {
       nextGroup.editorId = 'group-1';
     },
@@ -196,6 +201,16 @@ test('groupSelectedElements wraps selected children with relative coordinates an
   assert.equal(second.parentElement, group);
   assert.equal(calls[1][0], 'commitEditorSelectionState');
   assert.equal(calls[2][1], 'Auto: Grouped Elements');
+  assert.deepEqual(calls[2][2].transaction, {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'markup',
+      elementId: 'parent-1',
+      before: '<div data-editor-id="first"></div><div data-editor-id="second"></div>',
+      after: '<div data-editor-id="group-1"></div>'
+    }]
+  });
 });
 
 test('ungroupSelectedElements restores child positions, removes the wrapper, and records one mutation', () => {
