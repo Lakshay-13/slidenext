@@ -6505,6 +6505,27 @@
       if (!paint) return false;
       
       const slides = getSlides(iframeDoc);
+      const createStudioStyleTransaction = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+        : null;
+      const transactionItems = createStudioStyleTransaction
+        ? slides.reduce((items, slide) => {
+            const slideId = typeof getEditorSlideId === 'function'
+              ? getEditorSlideId(slide)
+              : '';
+            if (!slideId) return items;
+            items.push({
+              element: slide,
+              elementId: `slide:${slideId}`,
+              before: { background: slide.style.background }
+            });
+            return items;
+          }, [])
+        : [];
       let changedCount = 0;
       slides.forEach(slide => {
         if (slide.style.background === paint) return;
@@ -6513,7 +6534,13 @@
       });
       if (changedCount === 0) return false;
 
-      finalizeWallpaperMutation('Auto: Applied Background to All Slides');
+      transactionItems.forEach((item) => {
+        item.after = { background: item.element.style.background };
+      });
+      const transaction = createStudioStyleTransaction
+        ? createStudioStyleTransaction(transactionItems)
+        : null;
+      finalizeWallpaperMutation('Auto: Applied Background to All Slides', transaction);
       
       alert("Successfully applied active background paint to all slides in the deck.");
       return true;

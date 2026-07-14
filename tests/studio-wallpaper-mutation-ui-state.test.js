@@ -424,6 +424,70 @@ test('applyWallpaperToAllSlides uses the shared iframe accessor and propagates t
   ]);
 });
 
+test('applyWallpaperToAllSlides records one style transaction per changed slide', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyWallpaperToAllSlidesSource = extractFunctionSource(
+    fileContent,
+    'function applyWallpaperToAllSlides() {',
+    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+  );
+
+  const iframeDoc = { id: 'doc' };
+  const activeSlide = {
+    style: {
+      background: 'linear-gradient(red, blue)'
+    }
+  };
+  const siblingSlide = {
+    style: {
+      background: ''
+    }
+  };
+  let saveArgs = null;
+  const context = {
+    SlideNextStudioEditorTransaction: studioTransaction,
+    alert() {},
+    generateThumbnails() {},
+    getActiveSlide() {
+      return activeSlide;
+    },
+    getEditorSlideId(slide) {
+      return slide === activeSlide ? 'slide-1' : 'slide-2';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlides() {
+      return [activeSlide, siblingSlide];
+    },
+    saveHistoryState(...args) {
+      saveArgs = args;
+    },
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+  vm.runInContext(applyWallpaperToAllSlidesSource, context);
+
+  assert.equal(context.applyWallpaperToAllSlides(), true);
+  assert.deepEqual(JSON.parse(JSON.stringify(saveArgs)), [
+    false,
+    {
+      kind: 'slidenext.editor.transaction',
+      version: 1,
+      operations: [{
+        type: 'style',
+        elementId: 'slide:slide-2',
+        before: { background: '' },
+        after: { background: 'linear-gradient(red, blue)' }
+      }]
+    }
+  ]);
+});
+
 test('applyWallpaperToAllSlides exits when the shared iframe accessor has no active background', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyWallpaperToAllSlidesSource = extractFunctionSource(
