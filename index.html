@@ -5723,16 +5723,18 @@
 
       const doc = getIframeDoc();
       const { slide, parent, groupPlan } = groupActionState;
-      const createStudioMarkupTransaction = (
+      const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransaction === 'function'
+        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
       )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransaction
+        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const parentMarkupBefore = createStudioMarkupTransaction && parent
-        ? parent.innerHTML
-        : '';
+      const markupCapture = createStudioMarkupTransactionCapture && parent
+        ? createStudioMarkupTransactionCapture([{
+            element: parent
+          }])
+        : null;
       const slideMetrics = getSlideMetrics(slide);
       const parentBounds = getRectOnSlide(parent.getBoundingClientRect(), slideMetrics);
       const group = doc.createElement('div');
@@ -5771,12 +5773,8 @@
       commitEditorSelectionState({
         selectedElements: [group]
       });
-      const transaction = createStudioMarkupTransaction
-        ? createStudioMarkupTransaction([{
-            element: parent,
-            before: parentMarkupBefore,
-            after: parent.innerHTML
-          }])
+      const transaction = markupCapture
+        ? markupCapture.createTransaction()
         : null;
       finalizeEditorDeckMutation('Auto: Grouped Elements', {
         syncSelectionOverlay: true,
