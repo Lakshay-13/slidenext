@@ -45,7 +45,17 @@
     return ticks;
   }
 
+  function buildStudioRulerRenderState(lengthPx = 0, offsetPx = 0, scale = 1, options = {}) {
+    const normalizedOffset = Number.isFinite(offsetPx) ? offsetPx : 0;
+    const normalizedScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
+    return buildStudioRulerTicks(lengthPx, options).map((tick) => ({
+      ...tick,
+      screenPosition: normalizedOffset + (tick.position * normalizedScale)
+    }));
+  }
+
   return {
-    buildStudioRulerTicks
+    buildStudioRulerTicks,
+    buildStudioRulerRenderState
   };
 });

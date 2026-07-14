@@ -34,3 +34,14 @@ test('buildStudioRulerTicks includes a final partial-length tick and normalizes 
 
   assert.deepEqual(ruler.buildStudioRulerTicks(0), []);
 });
+
+test('buildStudioRulerRenderState maps logical ticks through zoom and visible offset', () => {
+  assert.deepEqual(ruler.buildStudioRulerRenderState(100, -12, 0.5, {
+    majorStepPx: 50,
+    minorStepPx: 50
+  }), [
+    { position: 0, isMajor: true, label: '0', screenPosition: -12 },
+    { position: 50, isMajor: true, label: '50', screenPosition: 13 },
+    { position: 100, isMajor: true, label: '100', screenPosition: 38 }
+  ]);
+});
