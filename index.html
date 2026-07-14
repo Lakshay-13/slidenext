@@ -82,6 +82,94 @@
       pointer-events: none;
     }
 
+    .studio-ruler {
+      position: absolute;
+      z-index: 16;
+      overflow: hidden;
+      pointer-events: none;
+      background: rgba(10, 10, 10, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #a1a1aa;
+      font: 9px/1 monospace;
+    }
+
+    .studio-ruler-horizontal {
+      top: 40px;
+      left: 0;
+      right: 0;
+      height: 24px;
+      border-left: 0;
+    }
+
+    .studio-ruler-vertical {
+      top: 40px;
+      left: 0;
+      bottom: 0;
+      width: 24px;
+      border-top: 0;
+    }
+
+    .studio-ruler-corner {
+      top: 40px;
+      left: 0;
+      width: 24px;
+      height: 24px;
+    }
+
+    .studio-ruler-tick {
+      position: absolute;
+      display: block;
+      background: currentColor;
+      opacity: 0.7;
+    }
+
+    .studio-ruler-horizontal .studio-ruler-tick {
+      bottom: 0;
+      width: 1px;
+      height: 7px;
+    }
+
+    .studio-ruler-horizontal .studio-ruler-tick.major {
+      height: 13px;
+      opacity: 0.95;
+    }
+
+    .studio-ruler-vertical .studio-ruler-tick {
+      right: 0;
+      width: 7px;
+      height: 1px;
+    }
+
+    .studio-ruler-vertical .studio-ruler-tick.major {
+      width: 13px;
+      opacity: 0.95;
+    }
+
+    .studio-ruler-label {
+      position: absolute;
+      color: inherit;
+      white-space: nowrap;
+      opacity: 0.9;
+    }
+
+    .studio-ruler-horizontal .studio-ruler-label {
+      bottom: 7px;
+      transform: translateX(3px);
+    }
+
+    .studio-ruler-vertical .studio-ruler-label {
+      top: 3px;
+      left: 2px;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+
+    html:not(.dark) .studio-ruler {
+      background: rgba(249, 250, 251, 0.94);
+      border-color: rgba(0, 0, 0, 0.1);
+      color: #4b5563;
+    }
+
     .bg-ambient-layer {
       position: fixed;
       inset: 0;
@@ -659,6 +747,9 @@
         </div>
         
         <!-- Inner canvas workspace stage that allows scrollbars when zoomed in -->
+        <div id="canvasRulerHorizontal" class="studio-ruler studio-ruler-horizontal" aria-hidden="true"></div>
+        <div id="canvasRulerVertical" class="studio-ruler studio-ruler-vertical" aria-hidden="true"></div>
+        <div id="canvasRulerCorner" class="studio-ruler studio-ruler-corner" aria-hidden="true"></div>
         <div class="flex-1 overflow-auto p-12 flex bg-[#030303]" id="canvasStage">
           <!-- Fixed 1920x1080 Aspect-Ratio container wrapper scaled dynamically -->
           <div id="canvasScrollContainer" style="width: 1920px; height: 1080px; position: relative; transition: all 0.2s ease; flex-shrink: 0; margin: auto;">
@@ -1045,6 +1136,7 @@
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
+  <script src="/shared/studio-editor-ruler.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
@@ -1218,7 +1310,13 @@
         if (document.getElementById('zoomSelect') && document.getElementById('zoomSelect').value === 'fit') {
           applyZoom('fit');
         }
+        syncCanvasRulers();
       });
+      const canvasStage = document.getElementById('canvasStage');
+      if (canvasStage) {
+        canvasStage.addEventListener('scroll', syncCanvasRulers);
+      }
+      syncCanvasRulers();
     });
 
     function updateGridSnapActionState() {
@@ -5927,6 +6025,59 @@
       return true;
     }
 
+    function syncCanvasRulers() {
+      const stage = document.getElementById('canvasStage');
+      const wrapper = document.getElementById('canvasWrapper');
+      const horizontal = document.getElementById('canvasRulerHorizontal');
+      const vertical = document.getElementById('canvasRulerVertical');
+      const rulerApi = typeof SlideNextStudioEditorRuler !== 'undefined'
+        ? SlideNextStudioEditorRuler
+        : null;
+      if (!stage || !wrapper || !horizontal || !vertical || !rulerApi
+        || typeof rulerApi.buildStudioRulerRenderState !== 'function'
+        || typeof stage.getBoundingClientRect !== 'function'
+        || typeof wrapper.getBoundingClientRect !== 'function') {
+        return false;
+      }
+
+      const stageRect = stage.getBoundingClientRect();
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const offsetX = wrapperRect.left - stageRect.left;
+      const offsetY = wrapperRect.top - stageRect.top;
+      const horizontalTicks = rulerApi.buildStudioRulerRenderState(1920, offsetX, zoomFactor, {
+        majorStepPx: 100,
+        minorStepPx: 20
+      });
+      const verticalTicks = rulerApi.buildStudioRulerRenderState(1080, offsetY, zoomFactor, {
+        majorStepPx: 100,
+        minorStepPx: 20
+      });
+      const renderTicks = (container, ticks, axis) => {
+        if (typeof container.replaceChildren === 'function') {
+          container.replaceChildren();
+        } else {
+          container.innerHTML = '';
+        }
+        const ownerDocument = container.ownerDocument || document;
+        ticks.forEach((tick) => {
+          const mark = ownerDocument.createElement('span');
+          mark.className = `studio-ruler-tick${tick.isMajor ? ' major' : ''}`;
+          mark.style[axis === 'horizontal' ? 'left' : 'top'] = `${tick.screenPosition}px`;
+          container.appendChild(mark);
+          if (!tick.label) return;
+          const label = ownerDocument.createElement('span');
+          label.className = 'studio-ruler-label';
+          label.textContent = tick.label;
+          label.style[axis === 'horizontal' ? 'left' : 'top'] = `${tick.screenPosition}px`;
+          container.appendChild(label);
+        });
+      };
+
+      renderTicks(horizontal, horizontalTicks, 'horizontal');
+      renderTicks(vertical, verticalTicks, 'vertical');
+      return true;
+    }
+
     // 4. Zoom Engine (Center workspace stage)
     function applyZoom(scaleVal) {
       const stage = document.getElementById('canvasStage');
@@ -5960,6 +6111,9 @@
       scroller.style.width = (1920 * zoomFactor) + 'px';
       scroller.style.height = (1080 * zoomFactor) + 'px';
       wrapper.style.transform = `translate(-50%, -50%) scale(${zoomFactor})`;
+      if (typeof syncCanvasRulers === 'function') {
+        syncCanvasRulers();
+      }
     }
 
     function zoomIn() {
