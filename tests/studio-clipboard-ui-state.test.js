@@ -320,6 +320,111 @@ test('duplicateSelectedElements forwards the insertion markup transaction to his
   assert.deepEqual(JSON.parse(JSON.stringify(finalized.options.transaction)), markupTransaction);
 });
 
+test('insertClipboardPayload captures each insertion parent once through the shared markup adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const insertClipboardPayloadSource = extractFunctionSource(
+    fileContent,
+    'function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {',
+    '\n\n    function buildClipboardSelectionMutationPlan'
+  );
+  const parent = {
+    dataset: { editorId: 'parent-1' },
+    innerHTML: '<div data-editor-id="source"></div>',
+    appended: [],
+    appendChild(element) {
+      this.appended.push(element);
+      this.innerHTML = `<div data-editor-id="source"></div>${this.appended.map((item) => `<div>${item.id}</div>`).join('')}`;
+    },
+    getBoundingClientRect() {
+      return { left: 0, top: 0, right: 500, bottom: 400 };
+    }
+  };
+  const slide = {
+    contains() {
+      return true;
+    },
+    appendChild(element) {
+      parent.appendChild(element);
+    }
+  };
+  const doc = { id: 'iframe-doc' };
+  const firstClone = { id: 'clone-1', style: {} };
+  const secondClone = { id: 'clone-2', style: {} };
+  let capturedTransaction = null;
+  const context = {
+    DUPLICATE_OFFSET_PX: 24,
+    SlideNextStudioEditorTransaction: studioTransaction,
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardInsertionPlan() {
+        return [
+          {
+            clone: firstClone,
+            insertionTarget: { mode: 'absolute', parent },
+            absolutePlacement: { nextLeft: 10, nextTop: 20 }
+          },
+          {
+            clone: secondClone,
+            insertionTarget: { mode: 'absolute', parent },
+            absolutePlacement: { nextLeft: 30, nextTop: 40 }
+          }
+        ];
+      }
+    },
+    assignEditorElementId(element) {
+      return element.dataset.editorId;
+    },
+    getActiveSlide(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return slide;
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getRectOnSlide(rect) {
+      return rect;
+    },
+    getSlideMetrics() {
+      return { logicalWidth: 500, logicalHeight: 400 };
+    },
+    makeElementsHoverable() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(insertClipboardPayloadSource, context);
+
+  const inserted = context.insertClipboardPayload([{ id: 'source-1' }, { id: 'source-2' }], 1, {
+    onTransaction(transaction) {
+      capturedTransaction = transaction;
+    }
+  });
+
+  assert.equal(inserted.length, 2);
+  assert.equal(inserted[0].id, 'clone-1');
+  assert.equal(inserted[1].id, 'clone-2');
+  assert.deepEqual(JSON.parse(JSON.stringify(capturedTransaction)), {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'markup',
+      elementId: 'parent-1',
+      before: '<div data-editor-id="source"></div>',
+      after: '<div data-editor-id="source"></div><div>clone-1</div><div>clone-2</div>'
+    }]
+  });
+  assert.deepEqual(firstClone.style, {
+    position: 'absolute',
+    margin: '0',
+    left: '10px',
+    top: '20px'
+  });
+  assert.deepEqual(secondClone.style, {
+    position: 'absolute',
+    margin: '0',
+    left: '30px',
+    top: '40px'
+  });
+});
+
 test('updateClipboardActionState enables paste on a live slide and enables copy only when clipboard payloads can be built', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);

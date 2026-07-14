@@ -5434,15 +5434,15 @@
       });
       if (insertionPlans.length !== items.length) return [];
 
-      const createStudioMarkupTransaction = (
+      const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransaction === 'function'
+        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
       )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransaction
+        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const markupTransactionItems = [];
-      if (createStudioMarkupTransaction) {
+      const markupCaptureTargets = [];
+      if (createStudioMarkupTransactionCapture) {
         const parentSet = new Set();
         insertionPlans.forEach(({ insertionTarget }) => {
           const parent = insertionTarget.mode === 'absolute'
@@ -5455,12 +5455,12 @@
           if (typeof assignEditorElementId === 'function') {
             assignEditorElementId(parent);
           }
-          markupTransactionItems.push({
-            element: parent,
-            before: parent.innerHTML
-          });
+          markupCaptureTargets.push({ element: parent });
         });
       }
+      const markupCapture = createStudioMarkupTransactionCapture
+        ? createStudioMarkupTransactionCapture(markupCaptureTargets)
+        : null;
       const inserted = [];
 
       insertionPlans.forEach(({ clone, insertionTarget, absolutePlacement }) => {
@@ -5480,12 +5480,9 @@
         inserted.push(clone);
       });
 
-      markupTransactionItems.forEach((item) => {
-        item.after = item.element.innerHTML;
-      });
       if (typeof options.onTransaction === 'function') {
-        options.onTransaction(createStudioMarkupTransaction
-          ? createStudioMarkupTransaction(markupTransactionItems)
+        options.onTransaction(markupCapture
+          ? markupCapture.createTransaction()
           : null);
       }
 
