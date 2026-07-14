@@ -761,6 +761,7 @@
               <button id="distributeSelectionHorizontalBtn" onclick="distributeSelectedElements('horizontal')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Distribute Horizontally">Distribute H</button>
               <button id="distributeSelectionVerticalBtn" onclick="distributeSelectedElements('vertical')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Distribute Vertically">Distribute V</button>
             </div>
+            <button id="groupSelectionBtn" onclick="groupSelectedElements()" class="py-1.5 flex items-center justify-center rounded bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Group Selected">Group</button>
           </div>
 
           <div class="h-[1px] bg-white/5"></div>
@@ -1041,6 +1042,7 @@
   <script src="/shared/studio-editor-transform.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
+  <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
@@ -4192,6 +4194,9 @@
       if (typeof updateAlignmentActionState === 'function') {
         updateAlignmentActionState();
       }
+      if (typeof updateGroupActionState === 'function') {
+        updateGroupActionState();
+      }
       updateStyleActionState();
       updateLayerOrderActionState();
       if (!liveSelectionState.hasSelection) {
@@ -4581,6 +4586,63 @@
         ...motionActionState,
         alignmentActionState
       };
+    }
+
+    function buildGroupSelectionActionState(doc = null) {
+      const resolvedDoc = doc || getIframeDoc();
+      const slide = getActiveSlide(resolvedDoc);
+      const selection = getLiveSelectedElements(selectedElements, resolvedDoc);
+      if (!resolvedDoc || !slide || selection.length < 2) {
+        return {
+          slide,
+          selection,
+          layoutItems: [],
+          parent: null,
+          groupPlan: {
+            canGroup: false,
+            selection: [],
+            bounds: null,
+            nextItems: []
+          },
+          canGroup: false
+        };
+      }
+
+      const slideMetrics = getSlideMetrics(slide);
+      const layoutItems = SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(selection, {
+        getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+        getRectOnSlide,
+        slideMetrics
+      });
+      const parent = selection.length > 0
+        ? SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(selection[0])
+        : null;
+      const sameDirectParent = !!parent && selection.every((element) => {
+        return element.parentElement === parent
+          && SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(element) === parent;
+      });
+      const groupPlan = SlideNextStudioEditorGroup.buildStudioGroupPlan(layoutItems, {
+        isLocked: isElementLocked,
+        isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
+      });
+
+      return {
+        slide,
+        selection,
+        layoutItems,
+        parent: sameDirectParent ? parent : null,
+        groupPlan,
+        canGroup: !!(sameDirectParent
+          && groupPlan.canGroup
+          && groupPlan.selection.length === selection.length)
+      };
+    }
+
+    function updateGroupActionState(doc = getIframeDoc()) {
+      const button = document.getElementById('groupSelectionBtn');
+      if (button) {
+        button.disabled = !buildGroupSelectionActionState(doc).canGroup;
+      }
     }
 
     function updateAlignmentActionState(doc = getIframeDoc()) {
@@ -5139,6 +5201,61 @@
         item.element.style.top = `${item.nextTop}px`;
       });
       finalizeEditorDeckMutation(`Auto: Distributed ${axis}`, {
+        syncSelectionOverlay: true,
+        refreshThumbnails: false,
+        debounceHistory: true
+      });
+      return true;
+    }
+
+    function groupSelectedElements() {
+      const groupActionState = buildGroupSelectionActionState();
+      if (!groupActionState.canGroup) {
+        updateGroupActionState();
+        return false;
+      }
+
+      const doc = getIframeDoc();
+      const { slide, parent, groupPlan } = groupActionState;
+      const slideMetrics = getSlideMetrics(slide);
+      const parentBounds = getRectOnSlide(parent.getBoundingClientRect(), slideMetrics);
+      const group = doc.createElement('div');
+      group.className = 'editor-group editor-hoverable';
+      group.setAttribute('data-editor-group', 'true');
+      group.style.position = 'absolute';
+      group.style.left = `${groupPlan.bounds.left - parentBounds.left}px`;
+      group.style.top = `${groupPlan.bounds.top - parentBounds.top}px`;
+      group.style.width = `${groupPlan.bounds.width}px`;
+      group.style.height = `${groupPlan.bounds.height}px`;
+      group.style.overflow = 'visible';
+      group.style.boxSizing = 'border-box';
+      assignEditorElementId(group);
+
+      const itemByElement = new Map(groupPlan.nextItems.map((item) => [item.element, item]));
+      const selectedSet = new Set(groupActionState.selection);
+      const orderedSelection = getNormalizedSlideLayerOrder(slide)
+        .filter((element) => selectedSet.has(element));
+      const firstElement = orderedSelection[0];
+      if (firstElement && firstElement.parentElement === parent) {
+        parent.insertBefore(group, firstElement);
+      } else {
+        parent.appendChild(group);
+      }
+
+      orderedSelection.forEach((element) => {
+        const item = itemByElement.get(element);
+        if (!item) return;
+        element.style.position = 'absolute';
+        element.style.margin = '0';
+        element.style.left = `${item.nextLeft}px`;
+        element.style.top = `${item.nextTop}px`;
+        group.appendChild(element);
+      });
+      makeElementsHoverable(group);
+      commitEditorSelectionState({
+        selectedElements: [group]
+      });
+      finalizeEditorDeckMutation('Auto: Grouped Elements', {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
         debounceHistory: true
@@ -8009,6 +8126,7 @@
         'alignSelectionBottomBtn',
         'distributeSelectionHorizontalBtn',
         'distributeSelectionVerticalBtn',
+        'groupSelectionBtn',
         'arrangeLayerFrontBtn',
         'arrangeLayerBackBtn',
         'arrangeLayerForwardBtn',
