@@ -5,6 +5,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const styleState = require('../shared/studio-editor-style.js');
+const studioMutation = require('../shared/studio-editor-mutation.js');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -671,4 +673,63 @@ test('applySelectedElementStyle refreshes the layer list when the z-index change
   assert.ok(calls.some(([name]) => name === 'triggerAutoSave'));
   assert.ok(calls.some(([name, label]) => name === 'triggerAutoVersion' && label === 'Auto: Updated Layer Order'));
   assert.ok(!calls.some(([name]) => name === 'updateStyleActionState'));
+});
+
+test('applySelectedElementStyle forwards a reversible CSS style transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applySelectedElementStyleSource = extractFunctionSource(
+    fileContent,
+    'function applySelectedElementStyle(prop, val) {',
+    '\n\n    // Delete active selection'
+  );
+  const element = {
+    dataset: { editorId: 'node-1' },
+    isConnected: true,
+    style: { color: 'red' }
+  };
+  const doc = { label: 'iframe-doc' };
+  const historyCalls = [];
+  const context = {
+    SlideNextStudioEditorMutation: studioMutation,
+    SlideNextStudioEditorStyle: styleState,
+    SlideNextStudioEditorTransaction: studioTransaction,
+    selectedElements: [element],
+    assignEditorElementId() {
+      return 'node-1';
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    isElementLocked() {
+      return false;
+    },
+    syncInspectorForSelection() {},
+    syncSelectionOverlay() {},
+    generateThumbnails() {},
+    updateLayersList() {},
+    saveHistoryState(...args) {
+      historyCalls.push(args);
+    },
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
+  vm.runInContext(applySelectedElementStyleSource, context);
+
+  assert.equal(context.applySelectedElementStyle('color', '#fff'), true);
+  assert.deepEqual(historyCalls, [[true, {
+    kind: studioTransaction.STUDIO_EDITOR_TRANSACTION_KIND,
+    version: studioTransaction.STUDIO_EDITOR_TRANSACTION_VERSION,
+    operations: [{
+      type: 'style',
+      elementId: 'node-1',
+      before: { color: 'red' },
+      after: { color: '#fff' }
+    }]
+  }]]);
 });

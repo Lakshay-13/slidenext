@@ -5058,11 +5058,58 @@
         syncInspectorForSelection();
         return false;
       }
+      const styleTransactionProperty = {
+        size: 'fontSize',
+        family: 'fontFamily',
+        weight: 'fontWeight',
+        color: 'color',
+        align: 'textAlign',
+        opacity: 'opacity',
+        zIndex: 'zIndex',
+        borderStyle: 'borderStyle',
+        borderWidth: 'borderWidth',
+        borderRadius: 'borderRadius',
+        borderColor: 'borderColor'
+      }[prop] || '';
+      const createStudioStyleTransaction = (
+        styleTransactionProperty
+        && typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+        : null;
+      const transactionItems = createStudioStyleTransaction
+        ? styleMutationPlan.selection.map((element) => {
+            if (typeof assignEditorElementId === 'function') {
+              assignEditorElementId(element);
+            }
+            return {
+              element,
+              before: {
+                [styleTransactionProperty]: element && element.style
+                  ? element.style[styleTransactionProperty]
+                  : ''
+              }
+            };
+          })
+        : [];
       const styleMutationResult = SlideNextStudioEditorStyle.applyStudioStyleMutation(styleMutationPlan.selection, prop, val);
       if (!styleMutationResult.didApply) {
         syncInspectorForSelection();
         return false;
       }
+
+      transactionItems.forEach((item) => {
+        item.after = {
+          [styleTransactionProperty]: item.element && item.element.style
+            ? item.element.style[styleTransactionProperty]
+            : ''
+        };
+      });
+      const transaction = createStudioStyleTransaction
+        ? createStudioStyleTransaction(transactionItems)
+        : null;
 
       if (prop === 'size') {
         const fontSizeLabel = document.getElementById('fontSizeVal');
@@ -5090,7 +5137,8 @@
       finalizeEditorDeckMutation(styleMutationPlan.versionLabel, {
         syncSelectionOverlay: true,
         refreshLayersList: prop === 'zIndex',
-        debounceHistory: true
+        debounceHistory: true,
+        transaction
       });
       return true;
     }
