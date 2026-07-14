@@ -79,3 +79,36 @@ test('buildStudioGroupPlan rejects insufficient, invalid, or ineligible selectio
     isFreeformPositioned: () => false
   }).canGroup, false);
 });
+
+test('buildStudioUngroupedLayout restores absolute positions from group-relative coordinates', () => {
+  assert.deepEqual(group.buildStudioUngroupedLayout({ left: 100, top: 120 }, [
+    { id: 'first', relativeLeft: 0, relativeTop: 0, parentLeft: 0, parentTop: 0 },
+    { id: 'second', relativeLeft: 160, relativeTop: 100, parentLeft: 20, parentTop: 30 }
+  ]), {
+    canUngroup: true,
+    nextItems: [
+      {
+        id: 'first',
+        relativeLeft: 0,
+        relativeTop: 0,
+        parentLeft: 0,
+        parentTop: 0,
+        nextAbsLeft: 100,
+        nextAbsTop: 120,
+        nextLeft: 100,
+        nextTop: 120
+      },
+      {
+        id: 'second',
+        relativeLeft: 160,
+        relativeTop: 100,
+        parentLeft: 20,
+        parentTop: 30,
+        nextAbsLeft: 260,
+        nextAbsTop: 220,
+        nextLeft: 240,
+        nextTop: 190
+      }
+    ]
+  });
+});

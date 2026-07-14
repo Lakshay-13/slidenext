@@ -68,8 +68,41 @@
     };
   }
 
+  function buildStudioUngroupedLayout(groupBounds = {}, items = []) {
+    const layoutItems = Array.isArray(items) ? items : [];
+    if (!Number.isFinite(groupBounds.left)
+      || !Number.isFinite(groupBounds.top)
+      || layoutItems.length === 0
+      || !layoutItems.every((item) => item
+        && Number.isFinite(item.relativeLeft)
+        && Number.isFinite(item.relativeTop)
+        && Number.isFinite(item.parentLeft)
+        && Number.isFinite(item.parentTop))) {
+      return {
+        canUngroup: false,
+        nextItems: []
+      };
+    }
+
+    return {
+      canUngroup: true,
+      nextItems: layoutItems.map((item) => {
+        const nextAbsLeft = groupBounds.left + item.relativeLeft;
+        const nextAbsTop = groupBounds.top + item.relativeTop;
+        return {
+          ...item,
+          nextAbsLeft,
+          nextAbsTop,
+          nextLeft: nextAbsLeft - item.parentLeft,
+          nextTop: nextAbsTop - item.parentTop
+        };
+      })
+    };
+  }
+
   return {
     getStudioGroupableSelection,
-    buildStudioGroupPlan
+    buildStudioGroupPlan,
+    buildStudioUngroupedLayout
   };
 });
