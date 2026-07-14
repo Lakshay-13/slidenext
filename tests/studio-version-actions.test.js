@@ -246,6 +246,42 @@ test('createStudioRestoreVersionRequestExecutor reuses request-option defaults a
   ]);
 });
 
+test('createStudioRenameVersionRequestExecutor reuses request-option defaults and call-time overrides', async () => {
+  const calls = [];
+  const executeRenameVersionRequest = versionActions.createStudioRenameVersionRequestExecutor({
+    createVersionRequestOptions() {
+      calls.push(['createVersionRequestOptions']);
+      return { fetchImpl: 'default-fetch' };
+    }
+  });
+
+  const result = await executeRenameVersionRequest(
+    'index_20260101_120000_Auto.html',
+    'Draft Name',
+    { presentationUrl: '/presentations/onboarding-presentation/index.html' },
+    {
+      createVersionRequestOptions() {
+        calls.push(['overrideCreateVersionRequestOptions']);
+        return { fetchImpl: 'override-fetch' };
+      },
+      executeRenameVersionRequest(versionFilename, newLabel, context, options = {}) {
+        calls.push(['executeRenameVersionRequest', versionFilename, newLabel, context, options]);
+        return { success: options.fetchImpl === 'override-fetch' };
+      }
+    }
+  );
+
+  assert.deepEqual(result, { success: true });
+  assert.deepEqual(calls, [
+    ['overrideCreateVersionRequestOptions'],
+    ['executeRenameVersionRequest',
+      'index_20260101_120000_Auto.html',
+      'Draft Name',
+      { presentationUrl: '/presentations/onboarding-presentation/index.html' },
+      { fetchImpl: 'override-fetch' }]
+  ]);
+});
+
 test('createStudioVersionActionFailureHandler reuses handler-option defaults and call-time overrides', () => {
   const calls = [];
   let overrideOptionsRef = null;

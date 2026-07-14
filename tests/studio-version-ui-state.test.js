@@ -1686,6 +1686,116 @@ test('submitRenameVersion reuses the shared rename request helper when available
   assert.equal(mutationHandlerOptions[1].getCurrentSessionToken(), 22);
 });
 
+test('submitRenameVersion reuses the shared rename request executor when available', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const submitRenameVersionSource = extractFunctionSource(
+    fileContent,
+    'async function submitRenameVersion() {',
+    '\n\n    async function deleteVersion(filename) {'
+  );
+
+  let delegatedArgs = null;
+  let executorArgs = null;
+  const mutationHandlerOptions = [];
+  const context = {
+    SlideNextStudioModalVisibility: {
+      getCurrentStudioModalVisibilityToken() {
+        return 7;
+      },
+      createStudioModalVisibilityGuard() {
+        return () => true;
+      },
+      isStudioModalVisibilityCurrent() {
+        return true;
+      }
+    },
+    SlideNextStudioVersionActions: {
+      ...versionActions,
+      createStudioRenameVersionRequestExecutor(options = {}) {
+        delegatedArgs = options;
+        return async (versionFilename, newLabel, renameContext) => {
+          executorArgs = [versionFilename, newLabel, renameContext];
+          return { success: true };
+        };
+      },
+      handleStudioVersionListMutationSuccess(renameContext, options) {
+        mutationHandlerOptions.push(options);
+        if (options.onSuccess) {
+          options.onSuccess();
+        }
+        return true;
+      }
+    },
+    closeRenameVersionModal() {},
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return {
+        ...context.createCurrentStudioSessionStateReaders(),
+        ...options
+      };
+    },
+    createCurrentStudioVersionActionContext() {
+      return {
+        presentationUrl: '/presentations/onboarding-presentation/index.html'
+      };
+    },
+    createCurrentStudioVersionRequestOptions() {
+      return { fetchImpl: context.fetch };
+    },
+    document: {
+      getElementById(id) {
+        if (id === 'newVersionNameInput') {
+          return {
+            value: 'Draft Name'
+          };
+        }
+        if (id === 'confirmRenameVersionBtn') {
+          return {
+            disabled: false,
+            textContent: 'Rename'
+          };
+        }
+        return null;
+      }
+    },
+    fetch() {},
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    loadVersions() {},
+    renamingFilename: 'index_20260101_120000_Auto.html',
+    renamingVersionContext: {
+      presentationUrl: '/presentations/onboarding-presentation/index.html'
+    },
+    studioEditorSessionToken: 21
+  };
+
+  vm.createContext(context);
+  loadApplyCurrentStudioVersionActionFailure(fileContent, context);
+  loadApplyCurrentStudioVersionListMutationSuccess(fileContent, context);
+  loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
+  loadResetCurrentStudioRenameVersionButtonState(fileContent, context);
+  loadSetCurrentStudioRenameVersionButtonBusyState(fileContent, context);
+  vm.runInContext(submitRenameVersionSource, context);
+
+  await context.submitRenameVersion();
+
+  assert.equal(executorArgs[0], 'index_20260101_120000_Auto.html');
+  assert.equal(executorArgs[1], 'Draft Name');
+  assert.deepEqual(executorArgs[2], {
+    presentationUrl: '/presentations/onboarding-presentation/index.html'
+  });
+  assert.equal(delegatedArgs.createVersionRequestOptions, context.createCurrentStudioVersionRequestOptions);
+  assert.equal(
+    delegatedArgs.executeRenameVersionRequest,
+    context.SlideNextStudioVersionActions.executeStudioRenameVersionRequest
+  );
+  assert.equal(mutationHandlerOptions.length, 2);
+});
+
 test('deleteVersion reuses the shared delete request helper when available', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const deleteVersionSource = extractFunctionSource(

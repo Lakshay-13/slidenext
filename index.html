@@ -8416,13 +8416,36 @@
       
       const btn = document.getElementById('confirmRenameVersionBtn');
       setCurrentStudioRenameVersionButtonBusyState(btn);
+      const createStudioRenameVersionRequestExecutor = (
+        typeof SlideNextStudioVersionActions !== 'undefined'
+        && SlideNextStudioVersionActions
+        && typeof SlideNextStudioVersionActions.createStudioRenameVersionRequestExecutor === 'function'
+      )
+        ? SlideNextStudioVersionActions.createStudioRenameVersionRequestExecutor
+        : null;
+      const executeRenameVersionRequest = createStudioRenameVersionRequestExecutor
+        ? createStudioRenameVersionRequestExecutor({
+          createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
+          executeRenameVersionRequest: (
+            typeof SlideNextStudioVersionActions !== 'undefined'
+            && SlideNextStudioVersionActions
+            && typeof SlideNextStudioVersionActions.executeStudioRenameVersionRequest === 'function'
+          )
+            ? SlideNextStudioVersionActions.executeStudioRenameVersionRequest
+            : null
+        })
+        : (versionFilename, nextLabel, nextContext) => SlideNextStudioVersionActions.executeStudioRenameVersionRequest(
+          versionFilename,
+          nextLabel,
+          nextContext,
+          createCurrentStudioVersionRequestOptions()
+        );
       
       try {
-        const data = await SlideNextStudioVersionActions.executeStudioRenameVersionRequest(
+        const data = await executeRenameVersionRequest(
           versionFilename,
           newLabel,
-          renameContext,
-          createCurrentStudioVersionRequestOptions()
+          renameContext
         );
         if (data.success) {
           applyCurrentStudioVersionListMutationSuccess(renameContext, {
