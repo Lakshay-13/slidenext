@@ -64,12 +64,14 @@ test('updateAlignmentActionState enables all positional controls only when align
     'alignSelectionRightBtn',
     'alignSelectionTopBtn',
     'alignSelectionMiddleBtn',
-    'alignSelectionBottomBtn'
+    'alignSelectionBottomBtn',
+    'distributeSelectionHorizontalBtn',
+    'distributeSelectionVerticalBtn'
   ];
   const controls = Object.fromEntries(ids.map((id) => [id, { disabled: true }]));
   const context = {
     buildAlignmentActionState() {
-      return { alignmentActionState: { canAlign: true } };
+      return { alignmentActionState: { canAlign: true, selection: [{}, {}, {}] } };
     },
     document: {
       getElementById(id) {
@@ -82,6 +84,60 @@ test('updateAlignmentActionState enables all positional controls only when align
   context.updateAlignmentActionState({ id: 'doc' });
 
   ids.forEach((id) => assert.equal(controls[id].disabled, false));
+});
+
+test('distributeSelectedElements writes distribution positions and records one mutation', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function distributeSelectedElements(axis = \'\') {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const first = { style: {} };
+  const second = { style: {} };
+  const third = { style: {} };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorAlignment: {
+      buildStudioDistributedLayout(selection, axis) {
+        calls.push(['buildStudioDistributedLayout', selection, axis]);
+        return {
+          didChange: true,
+          nextItems: [
+            { element: first, nextLeft: 10, nextTop: 20 },
+            { element: second, nextLeft: 30, nextTop: 40 },
+            { element: third, nextLeft: 50, nextTop: 60 }
+          ]
+        };
+      }
+    },
+    buildAlignmentActionState() {
+      return {
+        alignmentActionState: {
+          canAlign: true,
+          selection: [{ element: first }, { element: second }, { element: third }]
+        }
+      };
+    },
+    updateAlignmentActionState() {
+      calls.push(['updateAlignmentActionState']);
+    },
+    finalizeEditorDeckMutation(label, options) {
+      calls.push(['finalizeEditorDeckMutation', label, options]);
+    }
+  };
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.distributeSelectedElements('horizontal'), true);
+  assert.deepEqual(JSON.parse(JSON.stringify({ first, second, third })), {
+    first: { style: { left: '10px', top: '20px' } },
+    second: { style: { left: '30px', top: '40px' } },
+    third: { style: { left: '50px', top: '60px' } }
+  });
+  assert.equal(calls[0][0], 'buildStudioDistributedLayout');
+  assert.equal(calls[0][2], 'horizontal');
+  assert.equal(calls[1][1], 'Auto: Distributed horizontal');
 });
 
 test('alignSelectedElements writes aligned parent-relative positions and records one mutation', () => {

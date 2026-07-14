@@ -758,6 +758,8 @@
               <button id="alignSelectionTopBtn" onclick="alignSelectedElements('top')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Top">Top</button>
               <button id="alignSelectionMiddleBtn" onclick="alignSelectedElements('middle')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Middle">Middle</button>
               <button id="alignSelectionBottomBtn" onclick="alignSelectedElements('bottom')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Bottom">Bottom</button>
+              <button id="distributeSelectionHorizontalBtn" onclick="distributeSelectedElements('horizontal')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Distribute Horizontally">Distribute H</button>
+              <button id="distributeSelectionVerticalBtn" onclick="distributeSelectedElements('vertical')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Distribute Vertically">Distribute V</button>
             </div>
           </div>
 
@@ -4498,6 +4500,11 @@
         const button = document.getElementById(id);
         if (button) button.disabled = !canAlign;
       });
+      const canDistribute = canAlign && alignmentActionState.selection.length >= 3;
+      ['distributeSelectionHorizontalBtn', 'distributeSelectionVerticalBtn'].forEach(id => {
+        const button = document.getElementById(id);
+        if (button) button.disabled = !canDistribute;
+      });
     }
 
     function updateStyleActionState(doc = getIframeDoc()) {
@@ -5010,6 +5017,31 @@
         item.element.style.top = `${item.nextTop}px`;
       });
       finalizeEditorDeckMutation(`Auto: Aligned ${action}`, {
+        syncSelectionOverlay: true,
+        refreshThumbnails: false,
+        debounceHistory: true
+      });
+      return true;
+    }
+
+    function distributeSelectedElements(axis = '') {
+      const alignmentActionState = buildAlignmentActionState().alignmentActionState;
+      if (!alignmentActionState.canAlign || alignmentActionState.selection.length < 3) {
+        updateAlignmentActionState();
+        return false;
+      }
+
+      const distributionResult = SlideNextStudioEditorAlignment.buildStudioDistributedLayout(
+        alignmentActionState.selection,
+        axis
+      );
+      if (!distributionResult.didChange) return false;
+
+      distributionResult.nextItems.forEach((item) => {
+        item.element.style.left = `${item.nextLeft}px`;
+        item.element.style.top = `${item.nextTop}px`;
+      });
+      finalizeEditorDeckMutation(`Auto: Distributed ${axis}`, {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
         debounceHistory: true
@@ -7878,6 +7910,8 @@
         'alignSelectionTopBtn',
         'alignSelectionMiddleBtn',
         'alignSelectionBottomBtn',
+        'distributeSelectionHorizontalBtn',
+        'distributeSelectionVerticalBtn',
         'arrangeLayerFrontBtn',
         'arrangeLayerBackBtn',
         'arrangeLayerForwardBtn',
