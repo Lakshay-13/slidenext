@@ -4094,7 +4094,9 @@
       updateLockActionState();
       updateVisibilityActionState();
       updateMotionActionState();
-      updateAlignmentActionState();
+      if (typeof updateAlignmentActionState === 'function') {
+        updateAlignmentActionState();
+      }
       updateStyleActionState();
       updateLayerOrderActionState();
       if (!liveSelectionState.hasSelection) {
