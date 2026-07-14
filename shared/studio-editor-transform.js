@@ -382,6 +382,68 @@
     return { left, top, right, bottom };
   }
 
+  function snapStudioTransformBounds(bounds = {}, session = {}, options = {}) {
+    if (session.type !== 'drag' || options.snapEnabled === false) {
+      return {
+        bounds,
+        guides: []
+      };
+    }
+
+    const slideBounds = options.slideBounds || session.slideBounds || {};
+    const slideWidth = Number.isFinite(slideBounds.width) ? slideBounds.width : 0;
+    const slideHeight = Number.isFinite(slideBounds.height) ? slideBounds.height : 0;
+    const snapDistancePx = Number.isFinite(options.snapDistancePx) ? options.snapDistancePx : 8;
+    const left = Number.isFinite(bounds.left) ? bounds.left : 0;
+    const top = Number.isFinite(bounds.top) ? bounds.top : 0;
+    const right = Number.isFinite(bounds.right) ? bounds.right : left;
+    const bottom = Number.isFinite(bounds.bottom) ? bounds.bottom : top;
+    const width = right - left;
+    const height = bottom - top;
+    const xCandidates = slideWidth > 0
+      ? [
+          { position: left, target: 0 },
+          { position: (left + right) / 2, target: slideWidth / 2 },
+          { position: right, target: slideWidth }
+        ]
+      : [];
+    const yCandidates = slideHeight > 0
+      ? [
+          { position: top, target: 0 },
+          { position: (top + bottom) / 2, target: slideHeight / 2 },
+          { position: bottom, target: slideHeight }
+        ]
+      : [];
+    const findSnap = (candidates) => candidates
+      .map((candidate) => ({
+        ...candidate,
+        distance: Math.abs(candidate.target - candidate.position)
+      }))
+      .sort((first, second) => first.distance - second.distance)[0];
+    const xSnap = findSnap(xCandidates);
+    const ySnap = findSnap(yCandidates);
+    const nextBounds = { left, top, right, bottom };
+    const guides = [];
+
+    if (xSnap && xSnap.distance <= snapDistancePx) {
+      const offset = xSnap.target - xSnap.position;
+      nextBounds.left += offset;
+      nextBounds.right = nextBounds.left + width;
+      guides.push({ axis: 'x', position: xSnap.target });
+    }
+    if (ySnap && ySnap.distance <= snapDistancePx) {
+      const offset = ySnap.target - ySnap.position;
+      nextBounds.top += offset;
+      nextBounds.bottom = nextBounds.top + height;
+      guides.push({ axis: 'y', position: ySnap.target });
+    }
+
+    return {
+      bounds: nextBounds,
+      guides
+    };
+  }
+
   function buildStudioTransformInteractionBounds(session = {}, options = {}) {
     const startBounds = session.startBounds || {};
     const startLeft = Number.isFinite(startBounds.left) ? startBounds.left : 0;
@@ -430,7 +492,14 @@
       dragOverflowMarginPx: Number.isFinite(options.dragOverflowMarginPx) ? options.dragOverflowMarginPx : 0
     };
     const rawBounds = buildStudioTransformInteractionBounds(session, options);
-    const normalizedBounds = normalizeStudioTransformBounds(rawBounds, slideBounds, normalizeOptions);
+    const snapResult = snapStudioTransformBounds(rawBounds, session, {
+      ...options,
+      slideBounds
+    });
+    if (typeof options.onGuides === 'function') {
+      options.onGuides(snapResult.guides);
+    }
+    const normalizedBounds = normalizeStudioTransformBounds(snapResult.bounds, slideBounds, normalizeOptions);
     return normalizeStudioTransformBounds(normalizedBounds, slideBounds, normalizeOptions);
   }
 
@@ -870,7 +939,8 @@
       };
     }
 
-    return {
+    let guides = [];
+    const frameState = {
       isActive: true,
       motionState,
       progressResult,
@@ -880,10 +950,19 @@
         dy: motionState.dy,
         minSizePx: Number.isFinite(options.minSizePx) ? options.minSizePx : 0,
         dragOverflowMarginPx: Number.isFinite(options.dragOverflowMarginPx) ? options.dragOverflowMarginPx : 0,
-        lockAspectRatio: !!options.lockAspectRatio
+        lockAspectRatio: !!options.lockAspectRatio,
+        snapEnabled: options.snapEnabled,
+        snapDistancePx: options.snapDistancePx,
+        onGuides: (nextGuides) => {
+          guides = nextGuides;
+        }
       }),
       session
     };
+    if (guides.length > 0) {
+      frameState.guides = guides;
+    }
+    return frameState;
   }
 
   function buildStudioTransformStartState(elements = [], options = {}) {
@@ -1129,6 +1208,7 @@
     buildStudioTransformMotionState,
     buildStudioTransformFrameState,
     buildStudioTransformStartState,
-    createStudioTransformPointerHandlers
+    createStudioTransformPointerHandlers,
+    snapStudioTransformBounds
   };
 });

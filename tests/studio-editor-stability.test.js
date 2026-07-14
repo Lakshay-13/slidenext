@@ -604,6 +604,7 @@ test('setupIframeDragging finalizes drag sessions without redundantly refreshing
     DRAG_OVERFLOW_MARGIN_PX: 24,
     DRAG_START_THRESHOLD_PX: 3,
     MIN_ELEMENT_SIZE_PX: 12,
+    SNAP_THRESHOLD_PX: 12,
     SlideNextStudioEditorDom: {
       getStudioClosestPositionedAncestor() {
         return null;
@@ -767,6 +768,7 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
     DRAG_OVERFLOW_MARGIN_PX: 24,
     DRAG_START_THRESHOLD_PX: 3,
     MIN_ELEMENT_SIZE_PX: 12,
+    SNAP_THRESHOLD_PX: 12,
     SlideNextStudioEditorDom: {
       getStudioClosestPositionedAncestor() {}
     },
@@ -790,6 +792,9 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
     },
     isDraggingElement: false,
     resolveEditableTarget() {},
+    renderGuides(guides) {
+      calls.push(['renderGuides', guides]);
+    },
     saveHistoryState() {
       calls.push(['saveHistoryState']);
     },
@@ -828,7 +833,7 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
 
   const startBounds = { left: 0, top: 0, width: 20, height: 20 };
   delegatedOptions.onSessionStart(startBounds);
-  delegatedOptions.onSessionFrame(startBounds);
+  delegatedOptions.onSessionFrame(startBounds, { guides: [] });
   delegatedOptions.onSessionFinalize({}, {
     shouldPersist: true,
     versionLabel: 'Auto: Moved Element'
@@ -838,6 +843,7 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
   assert.deepEqual(calls.map(([name]) => name), [
     'doc.addEventListener',
     'updateDragHud',
+    'renderGuides',
     'syncSelectionOverlay',
     'updateDragHud',
     'hideGuides',

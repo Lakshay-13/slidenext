@@ -1078,6 +1078,7 @@
     let deckActiveSlideSyncTimer = null;
     let preserveSelectionOnNextActiveSlideSync = false;
     const DRAG_START_THRESHOLD_PX = 4;
+    const SNAP_THRESHOLD_PX = 12;
     const DUPLICATE_OFFSET_PX = 24;
     const MIN_ELEMENT_SIZE_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
@@ -4910,7 +4911,7 @@
       return true;
     }
 
-    // Element dragging + resize on an open canvas (no snapping)
+    // Element dragging + resize on an open canvas
     function setupIframeDragging(doc) {
       const createStudioTransformPointerHandlers = (
         typeof SlideNextStudioEditorTransform !== 'undefined'
@@ -4937,11 +4938,13 @@
           dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
           minSizePx: MIN_ELEMENT_SIZE_PX,
           dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX,
+          snapDistancePx: SNAP_THRESHOLD_PX,
           onSessionStart: (startBounds) => {
             updateDragHud(startBounds);
             isDraggingElement = true;
           },
-          onSessionFrame: (bounds) => {
+          onSessionFrame: (bounds, frameState) => {
+            renderGuides(frameState.guides || []);
             syncSelectionOverlay();
             updateDragHud(bounds);
           },

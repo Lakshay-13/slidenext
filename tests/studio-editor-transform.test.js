@@ -529,6 +529,76 @@ test('buildStudioTransformInteractionBounds preserves aspect ratio for locked re
   });
 });
 
+test('snapStudioTransformBounds aligns dragged bounds to slide edges and centers', () => {
+  const result = transformState.snapStudioTransformBounds({
+    left: 49,
+    top: 38,
+    right: 149,
+    bottom: 88
+  }, {
+    type: 'drag',
+    slideBounds: { width: 200, height: 120 }
+  }, {
+    snapDistancePx: 5
+  });
+
+  assert.deepEqual(result, {
+    bounds: {
+      left: 50,
+      top: 35,
+      right: 150,
+      bottom: 85
+    },
+    guides: [
+      { axis: 'x', position: 100 },
+      { axis: 'y', position: 60 }
+    ]
+  });
+
+  let emittedGuides = null;
+  transformState.resolveStudioTransformBounds({
+    type: 'drag',
+    slideBounds: { width: 200, height: 120 },
+    startBounds: {
+      left: 49,
+      top: 35,
+      right: 149,
+      bottom: 85,
+      width: 100,
+      height: 50
+    },
+    grabOffset: { x: 0, y: 0 }
+  }, {
+    pointer: { x: 49, y: 35 },
+    snapDistancePx: 5,
+    onGuides(guides) {
+      emittedGuides = guides;
+    }
+  });
+  assert.deepEqual(emittedGuides, [
+    { axis: 'x', position: 100 },
+    { axis: 'y', position: 60 }
+  ]);
+
+  assert.deepEqual(transformState.snapStudioTransformBounds({
+    left: 20,
+    top: 20,
+    right: 70,
+    bottom: 70
+  }, {
+    type: 'resize',
+    slideBounds: { width: 200, height: 120 }
+  }), {
+    bounds: {
+      left: 20,
+      top: 20,
+      right: 70,
+      bottom: 70
+    },
+    guides: []
+  });
+});
+
 test('resolveStudioTransformBounds applies the shared interaction and normalization pipeline', () => {
   assert.deepEqual(transformState.resolveStudioTransformBounds({
     type: 'drag',
