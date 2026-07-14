@@ -5312,15 +5312,15 @@
       const doc = getIframeDoc();
       const removalActionState = buildRemovalSelectionActionState(doc);
       if (!removalActionState.canRemove) return finalizeRemovalActionResult(false, doc);
-      const createStudioMarkupTransaction = (
+      const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransaction === 'function'
+        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
       )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransaction
+        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const markupTransactionItems = [];
-      if (createStudioMarkupTransaction) {
+      const markupCaptureTargets = [];
+      if (createStudioMarkupTransactionCapture) {
         const parentSet = new Set();
         removalActionState.selection.forEach((el) => {
           if (!el || !el.isConnected || !el.parentElement || parentSet.has(el.parentElement)) return;
@@ -5328,12 +5328,12 @@
           if (typeof assignEditorElementId === 'function') {
             assignEditorElementId(el.parentElement);
           }
-          markupTransactionItems.push({
-            element: el.parentElement,
-            before: el.parentElement.innerHTML
-          });
+          markupCaptureTargets.push({ element: el.parentElement });
         });
       }
+      const markupCapture = createStudioMarkupTransactionCapture
+        ? createStudioMarkupTransactionCapture(markupCaptureTargets)
+        : null;
       let removedCount = 0;
       removalActionState.selection.forEach(el => {
         if (el && el.isConnected) {
@@ -5342,11 +5342,8 @@
         }
       });
       if (removedCount === 0) return finalizeRemovalActionResult(false, doc);
-      markupTransactionItems.forEach((item) => {
-        item.after = item.element.innerHTML;
-      });
-      const transaction = createStudioMarkupTransaction
-        ? createStudioMarkupTransaction(markupTransactionItems)
+      const transaction = markupCapture
+        ? markupCapture.createTransaction()
         : null;
       deselectElement();
       finalizeEditorDeckMutation('Auto: Deleted Element', {
