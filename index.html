@@ -1137,6 +1137,7 @@
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-ruler.js"></script>
+  <script src="/shared/studio-editor-mutation.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
@@ -5007,6 +5008,23 @@
     }
 
     function finalizeEditorDeckMutation(versionLabel, options = {}) {
+      const createStudioMutationFinalizer = (
+        typeof SlideNextStudioEditorMutation !== 'undefined'
+        && SlideNextStudioEditorMutation
+        && typeof SlideNextStudioEditorMutation.createStudioMutationFinalizer === 'function'
+      )
+        ? SlideNextStudioEditorMutation.createStudioMutationFinalizer
+        : null;
+      if (createStudioMutationFinalizer) {
+        return createStudioMutationFinalizer({
+          syncSelectionOverlay,
+          generateThumbnails,
+          updateLayersList,
+          saveHistoryState,
+          triggerAutoSave,
+          triggerAutoVersion
+        })(versionLabel, options);
+      }
       if (options.syncSelectionOverlay) {
         syncSelectionOverlay();
       }
