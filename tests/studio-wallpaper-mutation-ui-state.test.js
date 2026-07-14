@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -17,7 +18,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 function loadFinalizeWallpaperMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function finalizeWallpaperMutation(versionLabel = \'\') {',
+    'function finalizeWallpaperMutation(versionLabel = \'\', transaction = null) {',
     '\n\n    function applyPresetWallpaper(val, isCustomInput = false) {'
   );
   vm.runInContext(helperSource, context);
@@ -198,6 +199,62 @@ test('applyPresetWallpaper uses the shared iframe accessor and records a version
     ['generateThumbnails'],
     ['saveHistoryState'],
     ['triggerAutoSave']
+  ]);
+});
+
+test('applyPresetWallpaper records a slide-scoped background style transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyPresetWallpaperSource = extractFunctionSource(
+    fileContent,
+    'function applyPresetWallpaper(val, isCustomInput = false) {',
+    '\n\n    function setCustomGradientType(type) {'
+  );
+
+  const iframeDoc = { id: 'doc' };
+  const activeSlide = {
+    style: {
+      background: '#000000'
+    }
+  };
+  let saveArgs = null;
+  const context = {
+    SlideNextStudioEditorTransaction: studioTransaction,
+    generateThumbnails() {},
+    getActiveSlide() {
+      return activeSlide;
+    },
+    getEditorSlideId(slide) {
+      assert.equal(slide, activeSlide);
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    saveHistoryState(...args) {
+      saveArgs = args;
+    },
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+  vm.runInContext(applyPresetWallpaperSource, context);
+
+  assert.equal(context.applyPresetWallpaper('#ffffff'), true);
+  assert.deepEqual(JSON.parse(JSON.stringify(saveArgs)), [
+    false,
+    {
+      kind: 'slidenext.editor.transaction',
+      version: 1,
+      operations: [{
+        type: 'style',
+        elementId: 'slide:slide-1',
+        before: { background: '#000000' },
+        after: { background: '#ffffff' }
+      }]
+    }
   ]);
 });
 

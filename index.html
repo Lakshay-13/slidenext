@@ -6372,9 +6372,9 @@
       `).join('');
     }
 
-    function finalizeWallpaperMutation(versionLabel = '') {
+    function finalizeWallpaperMutation(versionLabel = '', transaction = null) {
       generateThumbnails();
-      saveHistoryState();
+      saveHistoryState(false, transaction);
       triggerAutoSave();
       if (versionLabel) {
         triggerAutoVersion(versionLabel);
@@ -6398,9 +6398,29 @@
       if (!activeSlide) return false;
       if (activeSlide.style.background === val) return false;
 
+      const createStudioStyleTransaction = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+        : null;
+      const activeSlideId = typeof getEditorSlideId === 'function'
+        ? getEditorSlideId(activeSlide)
+        : '';
+      const previousBackground = activeSlide.style.background;
+
       activeSlide.style.background = val;
+      const transaction = createStudioStyleTransaction && activeSlideId
+        ? createStudioStyleTransaction([{
+            element: activeSlide,
+            elementId: `slide:${activeSlideId}`,
+            before: { background: previousBackground },
+            after: { background: activeSlide.style.background }
+          }])
+        : null;
       hasPendingCustomWallpaperVersion = !!isCustomInput;
-      finalizeWallpaperMutation(isCustomInput ? '' : 'Auto: Changed Background');
+      finalizeWallpaperMutation(isCustomInput ? '' : 'Auto: Changed Background', transaction);
       return true;
     }
 
