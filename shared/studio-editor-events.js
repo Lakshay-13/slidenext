@@ -65,6 +65,203 @@
     };
   }
 
+  function createStudioMarqueePointerHandlers(options = {}) {
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const resolveEditableTarget = typeof options.resolveEditableTarget === 'function'
+      ? options.resolveEditableTarget
+      : () => null;
+    const shouldIgnoreTarget = typeof options.shouldIgnoreTarget === 'function'
+      ? options.shouldIgnoreTarget
+      : () => false;
+    const getSlideMetrics = typeof options.getSlideMetrics === 'function'
+      ? options.getSlideMetrics
+      : () => null;
+    const getPointerOnSlide = typeof options.getPointerOnSlide === 'function'
+      ? options.getPointerOnSlide
+      : () => ({ x: 0, y: 0 });
+    const getMarqueeElements = typeof options.getMarqueeElements === 'function'
+      ? options.getMarqueeElements
+      : () => [];
+    const getMarqueeSelection = typeof options.getMarqueeSelection === 'function'
+      ? options.getMarqueeSelection
+      : () => [];
+    const getSelectedElements = typeof options.getSelectedElements === 'function'
+      ? options.getSelectedElements
+      : () => [];
+    const captureTarget = options.captureTarget || null;
+    const dragStartThresholdPx = Number.isFinite(options.dragStartThresholdPx)
+      ? options.dragStartThresholdPx
+      : 3;
+    let session = null;
+
+    function isPrimaryPointer(event = {}) {
+      return event.isPrimary !== false && (typeof event.button !== 'number' || event.button === 0);
+    }
+
+    function isSessionPointer(event = {}) {
+      return !!session
+        && (typeof event.pointerId !== 'number' || event.pointerId === session.pointerId);
+    }
+
+    function buildMarqueeRect(startPointer, pointer) {
+      return {
+        left: startPointer.x,
+        top: startPointer.y,
+        right: pointer.x,
+        bottom: pointer.y
+      };
+    }
+
+    function updateSession(event = {}) {
+      if (!isSessionPointer(event)) {
+        return false;
+      }
+
+      const pointer = getPointerOnSlide(event, session.slideMetrics);
+      const clientX = Number.isFinite(event.clientX) ? event.clientX : session.startClientX;
+      const clientY = Number.isFinite(event.clientY) ? event.clientY : session.startClientY;
+      const moveDistanceScreen = Math.hypot(
+        clientX - session.startClientX,
+        clientY - session.startClientY
+      );
+      const rect = buildMarqueeRect(session.startPointer, pointer);
+      if (!session.active && moveDistanceScreen < dragStartThresholdPx) {
+        return false;
+      }
+
+      if (!session.active) {
+        session.active = true;
+        if (typeof options.onSessionStart === 'function') {
+          options.onSessionStart(session);
+        }
+      }
+
+      session.currentRect = rect;
+      session.selection = getMarqueeSelection(
+        getMarqueeElements(session.slide),
+        rect,
+        session
+      );
+      if (typeof options.onSessionFrame === 'function') {
+        options.onSessionFrame(rect, session.selection, session);
+      }
+      if (typeof event.preventDefault === 'function') {
+        event.preventDefault();
+      }
+      return true;
+    }
+
+    function releasePointerCapture(nextSession) {
+      if (!captureTarget || typeof captureTarget.releasePointerCapture !== 'function') {
+        return;
+      }
+      if (typeof captureTarget.hasPointerCapture === 'function'
+        && !captureTarget.hasPointerCapture(nextSession.pointerId)) {
+        return;
+      }
+      captureTarget.releasePointerCapture(nextSession.pointerId);
+    }
+
+    function finalizeSession(cancelled = false) {
+      if (!session) {
+        return false;
+      }
+
+      const finalizedSession = session;
+      releasePointerCapture(finalizedSession);
+      session = null;
+      if (typeof options.onSessionFinalize === 'function') {
+        options.onSessionFinalize({
+          cancelled,
+          didSelect: finalizedSession.active && !cancelled,
+          rect: finalizedSession.currentRect,
+          selection: finalizedSession.selection,
+          additive: finalizedSession.additive
+        }, finalizedSession);
+      }
+      return true;
+    }
+
+    function handlePointerDown(event = {}) {
+      const slide = getActiveSlide();
+      const target = event.target || null;
+      if (session || !slide || !isPrimaryPointer(event)) {
+        return false;
+      }
+      if (shouldIgnoreTarget(target) || resolveEditableTarget(target)) {
+        return false;
+      }
+      if (target && typeof slide.contains === 'function' && !slide.contains(target)) {
+        return false;
+      }
+
+      const slideMetrics = getSlideMetrics(slide);
+      const startPointer = getPointerOnSlide(event, slideMetrics);
+      session = {
+        pointerId: event.pointerId,
+        slide,
+        slideMetrics,
+        startPointer,
+        startClientX: Number.isFinite(event.clientX) ? event.clientX : 0,
+        startClientY: Number.isFinite(event.clientY) ? event.clientY : 0,
+        additive: !!event.shiftKey,
+        previousSelection: getSelectedElements(),
+        active: false,
+        currentRect: null,
+        selection: []
+      };
+
+      if (captureTarget && typeof captureTarget.setPointerCapture === 'function'
+        && typeof event.pointerId === 'number') {
+        captureTarget.setPointerCapture(event.pointerId);
+      }
+      if (typeof event.preventDefault === 'function') {
+        event.preventDefault();
+      }
+      if (typeof event.stopPropagation === 'function') {
+        event.stopPropagation();
+      }
+      return true;
+    }
+
+    function handlePointerMove(event = {}) {
+      return updateSession(event);
+    }
+
+    function handlePointerUp(event = {}) {
+      if (!isSessionPointer(event)) {
+        return false;
+      }
+      updateSession(event);
+      finalizeSession(false);
+      return true;
+    }
+
+    function handlePointerCancel(event = {}) {
+      if (!isSessionPointer(event)) {
+        return false;
+      }
+      finalizeSession(true);
+      return true;
+    }
+
+    function handleWindowBlur() {
+      return finalizeSession(true);
+    }
+
+    return {
+      handlePointerDown,
+      handlePointerMove,
+      handlePointerUp,
+      handlePointerCancel,
+      handleWindowBlur,
+      finalizeSession,
+      getSession: () => session
+    };
+  }
+
   function createStudioFrameKeydownHandler(options = {}) {
     const getActiveElement = typeof options.getActiveElement === 'function'
       ? options.getActiveElement
@@ -328,6 +525,7 @@
 
   return {
     createStudioFrameClickHandler,
+    createStudioMarqueePointerHandlers,
     createStudioFrameKeydownHandler,
     createStudioGlobalKeydownHandler
   };

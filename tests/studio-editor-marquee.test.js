@@ -1,0 +1,162 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+const events = require('../shared/studio-editor-events.js');
+
+function createPointerEvent(overrides = {}) {
+  let prevented = 0;
+  let stopped = 0;
+
+  return {
+    pointerId: 1,
+    button: 0,
+    isPrimary: true,
+    clientX: 10,
+    clientY: 10,
+    shiftKey: false,
+    preventDefault() {
+      prevented += 1;
+    },
+    stopPropagation() {
+      stopped += 1;
+    },
+    get prevented() {
+      return prevented;
+    },
+    get stopped() {
+      return stopped;
+    },
+    ...overrides
+  };
+}
+
+test('createStudioMarqueePointerHandlers starts only on empty primary slide space', () => {
+  const slide = {
+    contains(target) {
+      return target === slide || target === 'empty';
+    }
+  };
+  const editableTarget = { id: 'element' };
+  const handler = events.createStudioMarqueePointerHandlers({
+    getActiveSlide: () => slide,
+    resolveEditableTarget: (target) => target === editableTarget ? editableTarget : null,
+    getSlideMetrics: () => ({ scaleX: 1, scaleY: 1 }),
+    getPointerOnSlide: (event) => ({ x: event.clientX, y: event.clientY }),
+    captureTarget: {}
+  });
+
+  assert.equal(handler.handlePointerDown(createPointerEvent({ target: editableTarget })), false);
+  assert.equal(handler.handlePointerDown(createPointerEvent({ target: 'outside' })), false);
+  assert.equal(handler.handlePointerDown(createPointerEvent({ target: 'empty', button: 2 })), false);
+  assert.equal(handler.handlePointerDown(createPointerEvent({ target: 'empty' })), true);
+  assert.equal(handler.getSession().additive, false);
+});
+
+test('createStudioMarqueePointerHandlers captures, frames, and finalizes a marquee selection', () => {
+  const calls = [];
+  const slide = { contains: () => true };
+  const captureTarget = {
+    captured: null,
+    setPointerCapture(pointerId) {
+      this.captured = pointerId;
+      calls.push(['capture', pointerId]);
+    },
+    hasPointerCapture(pointerId) {
+      return this.captured === pointerId;
+    },
+    releasePointerCapture(pointerId) {
+      calls.push(['release', pointerId]);
+      this.captured = null;
+    }
+  };
+  const handler = events.createStudioMarqueePointerHandlers({
+    getActiveSlide: () => slide,
+    getSlideMetrics: () => ({ scaleX: 1, scaleY: 1 }),
+    getPointerOnSlide: (event) => ({ x: event.clientX, y: event.clientY }),
+    getMarqueeElements: () => ['element-a'],
+    getMarqueeSelection(elements, rect, session) {
+      calls.push(['selection', elements, rect, session.additive]);
+      return ['selected'];
+    },
+    captureTarget,
+    dragStartThresholdPx: 4,
+    onSessionStart(session) {
+      calls.push(['start', session.startPointer]);
+    },
+    onSessionFrame(rect, selection) {
+      calls.push(['frame', rect, selection]);
+    },
+    onSessionFinalize(result) {
+      calls.push(['finalize', result]);
+    }
+  });
+
+  const downEvent = createPointerEvent({
+    pointerId: 7,
+    target: slide,
+    clientX: 80,
+    clientY: 70,
+    shiftKey: true
+  });
+  assert.equal(handler.handlePointerDown(downEvent), true);
+  assert.equal(downEvent.prevented, 1);
+  assert.equal(downEvent.stopped, 1);
+  assert.equal(handler.handlePointerMove(createPointerEvent({
+    pointerId: 7,
+    clientX: 78,
+    clientY: 68
+  })), false);
+  assert.equal(handler.handlePointerMove(createPointerEvent({
+    pointerId: 7,
+    clientX: 20,
+    clientY: 30
+  })), true);
+  assert.equal(handler.handlePointerUp(createPointerEvent({
+    pointerId: 7,
+    clientX: 10,
+    clientY: 15
+  })), true);
+  assert.equal(handler.getSession(), null);
+  assert.deepEqual(calls, [
+    ['capture', 7],
+    ['start', { x: 80, y: 70 }],
+    ['selection', ['element-a'], { left: 80, top: 70, right: 20, bottom: 30 }, true],
+    ['frame', { left: 80, top: 70, right: 20, bottom: 30 }, ['selected']],
+    ['selection', ['element-a'], { left: 80, top: 70, right: 10, bottom: 15 }, true],
+    ['frame', { left: 80, top: 70, right: 10, bottom: 15 }, ['selected']],
+    ['release', 7],
+    ['finalize', {
+      cancelled: false,
+      didSelect: true,
+      rect: { left: 80, top: 70, right: 10, bottom: 15 },
+      selection: ['selected'],
+      additive: true
+    }]
+  ]);
+});
+
+test('createStudioMarqueePointerHandlers cancels without committing an inactive or blurred drag', () => {
+  const results = [];
+  const slide = { contains: () => true };
+  const handler = events.createStudioMarqueePointerHandlers({
+    getActiveSlide: () => slide,
+    getSlideMetrics: () => ({}),
+    getPointerOnSlide: (event) => ({ x: event.clientX, y: event.clientY }),
+    onSessionFinalize: (result) => results.push(result)
+  });
+
+  assert.equal(handler.handlePointerDown(createPointerEvent({ target: slide })), true);
+  assert.equal(handler.handlePointerCancel(createPointerEvent({ pointerId: 1 })), true);
+  assert.deepEqual(results, [{
+    cancelled: true,
+    didSelect: false,
+    rect: null,
+    selection: [],
+    additive: false
+  }]);
+
+  assert.equal(handler.handlePointerDown(createPointerEvent({ target: slide })), true);
+  assert.equal(handler.handleWindowBlur(), true);
+  assert.equal(results.length, 2);
+  assert.equal(results[1].cancelled, true);
+});
