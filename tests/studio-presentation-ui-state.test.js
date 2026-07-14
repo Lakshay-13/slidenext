@@ -271,6 +271,9 @@ test('buildEditorPreviewHtml falls back to the persisted html baseline when the 
       assert.equal(nextDoc, null);
       return canonicalDeck;
     },
+    resolveEditorFallbackCanonicalDeck(nextDoc) {
+      return canonicalDeck;
+    },
     buildPersistableDeckHtml(nextDoc, options = {}) {
       assert.equal(nextDoc, null);
       assert.equal(options.canonicalDeck, canonicalDeck);
@@ -333,6 +336,9 @@ test('buildEditorPreviewHtml falls back to the shared deck html preview builder 
     },
     buildEditorCanonicalDeck(nextDoc) {
       assert.equal(nextDoc, null);
+      return canonicalDeck;
+    },
+    resolveEditorFallbackCanonicalDeck(nextDoc) {
       return canonicalDeck;
     },
     buildPersistableDeckHtml() {
@@ -656,6 +662,9 @@ test('buildEditorPreviewHtml reuses the shared deck-view html builder when the p
       assert.equal(nextDoc, null);
       return canonicalDeck;
     },
+    resolveEditorFallbackCanonicalDeck(nextDoc) {
+      return canonicalDeck;
+    },
     currentSlideIndex: 1,
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     getPersistedActiveSlideId() {
@@ -827,10 +836,16 @@ test('buildEditorPreviewHtml prefers the live active slide when the editor frame
       assert.equal(nextDoc, iframeDoc);
       return canonicalDeck;
     },
+    resolveEditorFallbackCanonicalDeck(nextDoc) {
+      return canonicalDeck;
+    },
     buildPersistableDeckHtml() {
       throw new Error('buildPersistableDeckHtml should not run when preview html renders from the canonical deck');
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    getActiveSlide() {
+      return { label: 'active-slide' };
+    },
     getActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return 'slide-2';
@@ -887,12 +902,18 @@ test('buildEditorPreviewHtml reuses the resolved live canonical deck when previe
       assert.equal(nextDoc, iframeDoc);
       return canonicalDeck;
     },
+    resolveEditorFallbackCanonicalDeck(nextDoc) {
+      return canonicalDeck;
+    },
     buildPersistableDeckHtml(nextDoc, options = {}) {
       assert.equal(nextDoc, iframeDoc);
       assert.equal(options.canonicalDeck, canonicalDeck);
       return '<html>persisted-preview</html>';
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    getActiveSlide() {
+      return { label: 'active-slide' };
+    },
     getActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return 'slide-1';
@@ -948,11 +969,17 @@ test('buildEditorPreviewHtml falls back to the current session slide when live a
       assert.equal(nextDoc, iframeDoc);
       return canonicalDeck;
     },
+    resolveEditorFallbackCanonicalDeck(nextDoc) {
+      return canonicalDeck;
+    },
     buildPersistableDeckHtml() {
       throw new Error('buildPersistableDeckHtml should not run when preview html resolves through the canonical deck');
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentSlideIndex: 1,
+    getActiveSlide() {
+      return null;
+    },
     getActiveSlideId(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
       return '';

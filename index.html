@@ -1796,6 +1796,30 @@
       });
     }
 
+    function createEditorDeckViewBuildViewOptionsResolver(options = {}) {
+      const buildViewOptions = typeof options.buildViewOptions === 'function'
+        ? options.buildViewOptions
+        : (sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc);
+      const extendViewOptions = typeof options.extendViewOptions === 'function'
+        ? options.extendViewOptions
+        : (deckViewOptions) => deckViewOptions;
+      return function resolveViewOptions(sourceDoc = getIframeDoc()) {
+        return extendViewOptions(buildViewOptions(sourceDoc), sourceDoc);
+      };
+    }
+
+    function createEditorDeckViewCanonicalHtmlResolver(options = {}) {
+      const buildCanonicalHtml = typeof options.buildCanonicalHtml === 'function'
+        ? options.buildCanonicalHtml
+        : null;
+      const mapCanonicalHtmlArgs = typeof options.mapCanonicalHtmlArgs === 'function'
+        ? options.mapCanonicalHtmlArgs
+        : (canonicalDeck, deckHtmlOptions) => [canonicalDeck, deckHtmlOptions];
+      return buildCanonicalHtml
+        ? (canonicalDeck, deckHtmlOptions) => buildCanonicalHtml(...mapCanonicalHtmlArgs(canonicalDeck, deckHtmlOptions))
+        : null;
+    }
+
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
       const buildStudioPreviewHtml = resolveStudioDeckViewMethod('buildStudioPreviewHtml');
       const buildDeckPreviewHtml = resolveDeckHtmlMethod('buildDeckPreviewHtml');
@@ -1849,21 +1873,92 @@
 
       return {
         buildSharedHtml,
-        buildViewOptions(sourceDoc = getIframeDoc()) {
-          const deckViewOptions = (buildViewOptions || createEditorDeckViewBuildOptions)(sourceDoc);
-          return extendViewOptions
-            ? extendViewOptions(deckViewOptions, sourceDoc)
-            : deckViewOptions;
-        },
-        buildCanonicalHtml: buildCanonicalHtml
-          ? (canonicalDeck, deckHtmlOptions) => buildCanonicalHtml(
-              ...(mapCanonicalHtmlArgs
-                ? mapCanonicalHtmlArgs(canonicalDeck, deckHtmlOptions)
-                : [canonicalDeck, deckHtmlOptions])
-            )
-          : null,
+        buildViewOptions: typeof createEditorDeckViewBuildViewOptionsResolver === 'function'
+          ? createEditorDeckViewBuildViewOptionsResolver({
+              buildViewOptions,
+              extendViewOptions
+            })
+          : buildViewOptions
+            ? extendViewOptions
+              ? (sourceDoc) => extendViewOptions(buildViewOptions(sourceDoc), sourceDoc)
+              : buildViewOptions
+            : extendViewOptions
+              ? (sourceDoc) => extendViewOptions(createEditorDeckViewBuildOptions(sourceDoc), sourceDoc)
+              : (sourceDoc) => createEditorDeckViewBuildOptions(sourceDoc),
+        buildCanonicalHtml: typeof createEditorDeckViewCanonicalHtmlResolver === 'function'
+          ? createEditorDeckViewCanonicalHtmlResolver({
+              buildCanonicalHtml,
+              mapCanonicalHtmlArgs
+            })
+          : buildCanonicalHtml
+            ? (canonicalDeck, deckHtmlOptions) => buildCanonicalHtml(...(
+                typeof mapCanonicalHtmlArgs === 'function'
+                  ? mapCanonicalHtmlArgs(canonicalDeck, deckHtmlOptions)
+                  : [canonicalDeck, deckHtmlOptions]
+              ))
+            : null,
         transformFallbackHtml
       };
+    }
+
+    function createEditorPreviewFallbackHtmlTransformer(options = {}) {
+      const injectBaseHrefIntoHtml = typeof options.injectBaseHrefIntoHtml === 'function'
+        ? options.injectBaseHrefIntoHtml
+        : null;
+      const buildPresentationBaseHref = typeof options.buildPresentationBaseHref === 'function'
+        ? options.buildPresentationBaseHref
+        : null;
+      const presentationUrl = typeof options.presentationUrl === 'string'
+        ? options.presentationUrl
+        : '';
+      return function transformFallbackHtml(fallbackHtml, deckHtmlOptions = {}) {
+        if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
+          return fallbackHtml;
+        }
+        return injectBaseHrefIntoHtml(
+          fallbackHtml,
+          buildPresentationBaseHref(presentationUrl, deckHtmlOptions)
+        );
+      };
+    }
+
+    function createEditorPreviewDeckViewHtmlOptions(options = {}) {
+      const presentationUrl = typeof options.presentationUrl === 'string'
+        ? options.presentationUrl
+        : '';
+      const buildStudioPreviewHtml = typeof options.buildStudioPreviewHtml === 'function'
+        ? options.buildStudioPreviewHtml
+        : null;
+      const buildDeckPreviewHtml = typeof options.buildDeckPreviewHtml === 'function'
+        ? options.buildDeckPreviewHtml
+        : null;
+      const injectBaseHrefIntoHtml = typeof options.injectBaseHrefIntoHtml === 'function'
+        ? options.injectBaseHrefIntoHtml
+        : null;
+      const buildPresentationBaseHref = typeof options.buildPresentationBaseHref === 'function'
+        ? options.buildPresentationBaseHref
+        : null;
+
+      return createEditorDeckViewHtmlOptions({
+        buildSharedHtml: buildStudioPreviewHtml,
+        extendViewOptions: (deckViewOptions) => ({
+          ...deckViewOptions,
+          presentationUrl
+        }),
+        buildCanonicalHtml: buildDeckPreviewHtml,
+        mapCanonicalHtmlArgs: (canonicalDeck, deckHtmlOptions) => [
+          canonicalDeck,
+          presentationUrl,
+          deckHtmlOptions
+        ],
+        transformFallbackHtml: typeof createEditorPreviewFallbackHtmlTransformer === 'function'
+          ? createEditorPreviewFallbackHtmlTransformer({
+              injectBaseHrefIntoHtml,
+              buildPresentationBaseHref,
+              presentationUrl
+            })
+          : null
+      });
     }
 
     function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {
