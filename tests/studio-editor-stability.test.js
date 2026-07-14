@@ -728,3 +728,124 @@ test('setupIframeDragging finalizes drag sessions without redundantly refreshing
   assert.deepEqual(calls[2][1], { left: 0, top: 0, width: 100, height: 60 });
   assert.equal(calls[11][1], 'Auto: Moved Element');
 });
+
+test('setupIframeDragging delegates pointer binding to the shared transform handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setupIframeDraggingSource = extractFunctionSource(
+    fileContent,
+    'function setupIframeDragging(doc) {',
+    '\n\n    // Insert New elements'
+  );
+
+  const calls = [];
+  const bodyListeners = new Map();
+  const windowListeners = new Map();
+  let delegatedOptions = null;
+  const transformHandlers = {
+    handlePointerDown() {},
+    handlePointerMove() {},
+    handlePointerUp() {},
+    handlePointerCancel() {},
+    handleWindowBlur() {}
+  };
+  const doc = {
+    addEventListener(type) {
+      calls.push(['doc.addEventListener', type]);
+    },
+    body: {
+      addEventListener(type, handler) {
+        bodyListeners.set(type, handler);
+      }
+    },
+    defaultView: {
+      addEventListener(type, handler) {
+        windowListeners.set(type, handler);
+      }
+    }
+  };
+  const context = {
+    DRAG_OVERFLOW_MARGIN_PX: 24,
+    DRAG_START_THRESHOLD_PX: 3,
+    MIN_ELEMENT_SIZE_PX: 12,
+    SlideNextStudioEditorDom: {
+      getStudioClosestPositionedAncestor() {}
+    },
+    SlideNextStudioEditorTransform: {
+      createStudioTransformPointerHandlers(options) {
+        delegatedOptions = options;
+        return transformHandlers;
+      }
+    },
+    getActiveSlide() {},
+    getPointerOnSlide() {},
+    getRectOnSlide() {},
+    getSelectionBounds() {},
+    getSlideMetrics() {},
+    getTransformSelectionState() {},
+    hideDragHud() {
+      calls.push(['hideDragHud']);
+    },
+    hideGuides() {
+      calls.push(['hideGuides']);
+    },
+    isDraggingElement: false,
+    resolveEditableTarget() {},
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    selectElement() {},
+    ensureSelectionOverlay() {},
+    syncInspectorForSelection() {
+      calls.push(['syncInspectorForSelection']);
+    },
+    syncSelectionOverlay() {
+      calls.push(['syncSelectionOverlay']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    },
+    updateDragHud(bounds) {
+      calls.push(['updateDragHud', bounds]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setupIframeDraggingSource, context);
+
+  context.setupIframeDragging(doc);
+
+  assert.equal(bodyListeners.get('pointerdown'), transformHandlers.handlePointerDown);
+  assert.equal(bodyListeners.get('pointermove'), transformHandlers.handlePointerMove);
+  assert.equal(bodyListeners.get('pointerup'), transformHandlers.handlePointerUp);
+  assert.equal(bodyListeners.get('pointercancel'), transformHandlers.handlePointerCancel);
+  assert.equal(windowListeners.get('blur'), transformHandlers.handleWindowBlur);
+  assert.equal(typeof delegatedOptions.onSessionStart, 'function');
+  assert.equal(typeof delegatedOptions.onSessionFrame, 'function');
+  assert.equal(typeof delegatedOptions.onSessionFinalize, 'function');
+
+  const startBounds = { left: 0, top: 0, width: 20, height: 20 };
+  delegatedOptions.onSessionStart(startBounds);
+  delegatedOptions.onSessionFrame(startBounds);
+  delegatedOptions.onSessionFinalize({}, {
+    shouldPersist: true,
+    versionLabel: 'Auto: Moved Element'
+  });
+
+  assert.equal(context.isDraggingElement, false);
+  assert.deepEqual(calls.map(([name]) => name), [
+    'doc.addEventListener',
+    'updateDragHud',
+    'syncSelectionOverlay',
+    'updateDragHud',
+    'hideGuides',
+    'hideDragHud',
+    'syncSelectionOverlay',
+    'syncInspectorForSelection',
+    'saveHistoryState',
+    'triggerAutoSave',
+    'triggerAutoVersion'
+  ]);
+});

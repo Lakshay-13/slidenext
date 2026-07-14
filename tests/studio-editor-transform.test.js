@@ -1279,6 +1279,91 @@ test('buildStudioTransformFrameState combines motion, threshold progress, and re
   });
 });
 
+test('createStudioTransformPointerHandlers coordinates the shared pointer lifecycle', () => {
+  const calls = [];
+  const session = { pointerId: 7, slideMetrics: { scaleX: 1, scaleY: 1 } };
+  const startBounds = { left: 1, top: 2, width: 30, height: 40 };
+  const bounds = { left: 4, top: 5, width: 30, height: 40 };
+  const transformHandlers = transformState.createStudioTransformPointerHandlers({
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    resolveTransformSessionStart(options) {
+      calls.push(['start', options.captureTarget]);
+      return { session, startBounds };
+    },
+    shouldHandlePointerEvent(nextSession, event) {
+      return nextSession === session && event.pointerId === 7;
+    },
+    buildTransformFrameState(nextSession, options) {
+      calls.push(['frame', nextSession, options.clientX, options.clientY]);
+      return { isActive: true, bounds };
+    },
+    applyTransformBounds(nextSession, nextBounds, options) {
+      calls.push(['apply', nextSession, nextBounds, options.minSizePx]);
+    },
+    finalizeTransformSession(nextSession) {
+      calls.push(['finalize', nextSession]);
+      return { didMove: true };
+    },
+    buildCompletionPlan(finalizeResult) {
+      calls.push(['completion', finalizeResult]);
+      return { shouldPersist: true, versionLabel: 'Auto: Moved Element' };
+    },
+    captureTarget: { id: 'body' },
+    minSizePx: 12,
+    onSessionStart(nextBounds) {
+      calls.push(['session-start', nextBounds]);
+    },
+    onSessionFrame(nextBounds) {
+      calls.push(['session-frame', nextBounds]);
+    },
+    onSessionFinalize(finalizeResult, completionPlan) {
+      calls.push(['session-finalize', finalizeResult, completionPlan]);
+    }
+  });
+
+  const downEvent = {
+    pointerId: 7,
+    preventDefault() {
+      calls.push(['down-prevented']);
+    },
+    stopPropagation() {
+      calls.push(['down-stopped']);
+    }
+  };
+  assert.equal(transformHandlers.handlePointerDown(downEvent), true);
+  assert.equal(transformHandlers.getSession(), session);
+  assert.equal(transformHandlers.handlePointerMove({
+    pointerId: 7,
+    clientX: 40,
+    clientY: 50,
+    preventDefault() {
+      calls.push(['move-prevented']);
+    }
+  }), true);
+  assert.equal(transformHandlers.handlePointerUp({ pointerId: 7 }), true);
+  assert.equal(transformHandlers.getSession(), null);
+  assert.equal(transformHandlers.handlePointerUp({ pointerId: 8 }), false);
+
+  assert.deepEqual(calls, [
+    ['start', { id: 'body' }],
+    ['session-start', startBounds],
+    ['down-prevented'],
+    ['down-stopped'],
+    ['frame', session, 40, 50],
+    ['apply', session, bounds, 12],
+    ['session-frame', bounds],
+    ['move-prevented'],
+    ['finalize', session],
+    ['completion', { didMove: true }],
+    ['session-finalize', { didMove: true }, {
+      shouldPersist: true,
+      versionLabel: 'Auto: Moved Element'
+    }]
+  ]);
+});
+
 test('buildStudioTransformStartState derives the shared transform bootstrap state', () => {
   const slide = { id: 'slide-1' };
   const selection = [{ id: 'node-1' }, { id: 'node-2' }];
