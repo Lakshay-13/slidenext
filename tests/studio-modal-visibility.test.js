@@ -10,6 +10,21 @@ function createModal() {
   };
 }
 
+function createClassList(initialValues = []) {
+  const values = new Set(initialValues);
+  return {
+    add(...nextValues) {
+      nextValues.forEach((value) => values.add(value));
+    },
+    remove(...nextValues) {
+      nextValues.forEach((value) => values.delete(value));
+    },
+    contains(value) {
+      return values.has(value);
+    }
+  };
+}
+
 test('scheduleStudioModalHide runs the hide callback for the current modal session', () => {
   const modalEl = createModal();
   const scheduledCallbacks = [];
@@ -97,4 +112,52 @@ test('scheduleStudioModalCallback skips stale delayed callbacks after the modal 
   scheduledCallbacks[0].callback();
 
   assert.deepEqual(calls, []);
+});
+
+test('createStudioModalChromeController centralizes modal class transitions', () => {
+  const modalEl = {
+    classList: createClassList(['hidden', 'opacity-0']),
+    offsetHeight: 0
+  };
+  const contentEl = {
+    classList: createClassList(['scale-95'])
+  };
+  const calls = [];
+  let scheduledCallback = null;
+  const controller = modalVisibility.createStudioModalChromeController({
+    modalVisibility: {
+      cancelStudioModalHide(modal) {
+        calls.push(['cancel', modal]);
+      },
+      scheduleStudioModalCallback(modal, options) {
+        calls.push(['show-delay', modal, options.delayMs]);
+        scheduledCallback = options.callback;
+      },
+      scheduleStudioModalHide(modal, options) {
+        calls.push(['hide-delay', modal, options.hideDelayMs]);
+        options.onHide();
+      }
+    }
+  });
+
+  controller.show(modalEl, contentEl, { delayMs: 10 });
+  assert.equal(modalEl.classList.contains('hidden'), false);
+  assert.equal(modalEl.classList.contains('opacity-0'), true);
+  assert.equal(contentEl.classList.contains('scale-95'), true);
+  scheduledCallback();
+  assert.equal(modalEl.classList.contains('opacity-100'), true);
+  assert.equal(contentEl.classList.contains('scale-100'), true);
+
+  controller.hide(modalEl, contentEl);
+  assert.equal(modalEl.classList.contains('hidden'), true);
+  assert.equal(modalEl.classList.contains('opacity-0'), true);
+  assert.equal(contentEl.classList.contains('scale-95'), true);
+
+  controller.hideImmediately(modalEl, contentEl);
+  assert.deepEqual(calls, [
+    ['cancel', modalEl],
+    ['show-delay', modalEl, 10],
+    ['hide-delay', modalEl, 200],
+    ['cancel', modalEl]
+  ]);
 });

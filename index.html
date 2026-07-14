@@ -7231,6 +7231,19 @@
     }
 
     function showCurrentStudioVersionModal(modal, content, options = {}) {
+      const createStudioModalChromeController = (
+        typeof SlideNextStudioModalVisibility !== 'undefined'
+        && SlideNextStudioModalVisibility
+        && typeof SlideNextStudioModalVisibility.createStudioModalChromeController === 'function'
+      )
+        ? SlideNextStudioModalVisibility.createStudioModalChromeController
+        : null;
+      if (createStudioModalChromeController) {
+        return createStudioModalChromeController({
+          modalVisibility: SlideNextStudioModalVisibility
+        }).show(modal, content, options);
+      }
+
       if (!modal) {
         return;
       }
@@ -7265,6 +7278,19 @@
     }
 
     function hideCurrentStudioVersionModal(modal, content) {
+      const createStudioModalChromeController = (
+        typeof SlideNextStudioModalVisibility !== 'undefined'
+        && SlideNextStudioModalVisibility
+        && typeof SlideNextStudioModalVisibility.createStudioModalChromeController === 'function'
+      )
+        ? SlideNextStudioModalVisibility.createStudioModalChromeController
+        : null;
+      if (createStudioModalChromeController) {
+        return createStudioModalChromeController({
+          modalVisibility: SlideNextStudioModalVisibility
+        }).hide(modal, content);
+      }
+
       if (modal) {
         modal.classList.remove('opacity-100');
         modal.classList.add('opacity-0');
@@ -7284,6 +7310,19 @@
     }
 
     function hideCurrentStudioVersionModalImmediately(modal, content) {
+      const createStudioModalChromeController = (
+        typeof SlideNextStudioModalVisibility !== 'undefined'
+        && SlideNextStudioModalVisibility
+        && typeof SlideNextStudioModalVisibility.createStudioModalChromeController === 'function'
+      )
+        ? SlideNextStudioModalVisibility.createStudioModalChromeController
+        : null;
+      if (createStudioModalChromeController) {
+        return createStudioModalChromeController({
+          modalVisibility: SlideNextStudioModalVisibility
+        }).hideImmediately(modal, content);
+      }
+
       if (modal) {
         SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
         modal.classList.add('hidden');

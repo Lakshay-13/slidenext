@@ -390,6 +390,68 @@ test('showCurrentStudioVersionModal defers chrome changes when delay is requeste
   assert.equal(shownCalls, 1);
 });
 
+test('version modal chrome wrappers reuse the shared controller when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const showSource = extractFunctionSource(
+    fileContent,
+    'function showCurrentStudioVersionModal(modal, content, options = {}) {',
+    '\n\n    function hideCurrentStudioVersionModal'
+  );
+  const hideSource = extractFunctionSource(
+    fileContent,
+    'function hideCurrentStudioVersionModal(modal, content) {',
+    '\n\n    function hideCurrentStudioVersionModalImmediately'
+  );
+  const hideImmediatelySource = extractFunctionSource(
+    fileContent,
+    'function hideCurrentStudioVersionModalImmediately(modal, content) {',
+    '\n\n    function hideCurrentStudioVersionsDropdown'
+  );
+  const calls = [];
+  const controller = {
+    show(...args) {
+      calls.push(['show', ...args]);
+      return 'shown';
+    },
+    hide(...args) {
+      calls.push(['hide', ...args]);
+      return 'hidden';
+    },
+    hideImmediately(...args) {
+      calls.push(['hideImmediately', ...args]);
+      return 'hidden-immediately';
+    }
+  };
+  const modalVisibility = {
+    createStudioModalChromeController(options) {
+      calls.push(['create', options.modalVisibility === modalVisibility]);
+      return controller;
+    }
+  };
+  const context = {
+    SlideNextStudioModalVisibility: modalVisibility
+  };
+  vm.createContext(context);
+  vm.runInContext(showSource, context);
+  vm.runInContext(hideSource, context);
+  vm.runInContext(hideImmediatelySource, context);
+
+  const modal = {};
+  const content = {};
+  const options = { delayMs: 10 };
+  assert.equal(context.showCurrentStudioVersionModal(modal, content, options), 'shown');
+  assert.equal(context.hideCurrentStudioVersionModal(modal, content), 'hidden');
+  assert.equal(context.hideCurrentStudioVersionModalImmediately(modal, content), 'hidden-immediately');
+  assert.deepEqual(calls, [
+    ['create', true],
+    ['show', modal, content, options],
+    ['create', true],
+    ['hide', modal, content],
+    ['create', true],
+    ['hideImmediately', modal, content]
+  ]);
+});
+
 test('resetCurrentStudioRenameVersionState clears pending rename context', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const context = {
