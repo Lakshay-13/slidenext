@@ -174,7 +174,10 @@
     const canonicalDeck = options.canonicalDeck && typeof options.canonicalDeck === 'object'
       ? options.canonicalDeck
       : null;
-    const html = normalizeStudioHistoryFrameHtml(buildHistoryHtml(doc, options));
+    const transaction = normalizeStudioHistoryTransaction(options.transaction);
+    const html = canonicalDeck && transaction
+      ? ''
+      : normalizeStudioHistoryFrameHtml(buildHistoryHtml(doc, options));
 
     if (!doc && !html && !canonicalDeck) {
       return null;
@@ -186,7 +189,6 @@
       selectedElementIds,
       canonicalDeck
     };
-    const transaction = normalizeStudioHistoryTransaction(options.transaction);
     if (transaction) {
       historyEntry.transaction = transaction;
     }

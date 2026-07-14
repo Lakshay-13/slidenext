@@ -97,6 +97,49 @@ test('createStudioHistoryEntry preserves optional transaction metadata', () => {
   assert.deepEqual(studioHistory.normalizeStudioHistoryEntry(entry), entry);
 });
 
+test('createStudioHistoryEntry makes canonical transaction entries model-first without building HTML', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const transaction = {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'markup',
+      elementId: 'slide:slide-1',
+      before: '<p>Before</p>',
+      after: '<p>After</p>'
+    }]
+  };
+  let buildHistoryHtmlCalls = 0;
+
+  const entry = studioHistory.createStudioHistoryEntry({ id: 'doc' }, {
+    canonicalDeck,
+    transaction,
+    buildHistoryHtml() {
+      buildHistoryHtmlCalls += 1;
+      return '<html>should not be serialized</html>';
+    },
+    getActiveSlideId() {
+      return 'slide-1';
+    },
+    getSelectedElementIds() {
+      return [];
+    }
+  });
+
+  assert.equal(buildHistoryHtmlCalls, 0);
+  assert.deepEqual(entry, {
+    html: '',
+    activeSlideId: 'slide-1',
+    selectedElementIds: [],
+    canonicalDeck,
+    transaction
+  });
+});
+
 test('createStudioHistoryEntry can capture a model-only history entry without a live document', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',
