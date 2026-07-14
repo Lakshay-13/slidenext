@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const layerOrder = require('../shared/studio-editor-layer-order.js');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -17,7 +19,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 function loadFinalizeLayerOrderMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function finalizeLayerOrderMutation(versionLabel = \'Auto: Rearranged Layers\') {',
+    'function finalizeLayerOrderMutation(versionLabel = \'Auto: Rearranged Layers\', options = {}) {',
     '\n\n    function syncLayerOrderZIndexInput(target) {'
   );
   vm.runInContext(helperSource, context);
@@ -46,6 +48,15 @@ function loadBuildLayerOrderSelectionActionState(fileContent, context) {
     fileContent,
     'function buildLayerOrderSelectionActionState(elements = selectedElements, options = {}) {',
     '\n\n    function updateLayerOrderActionState(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadReorderSlideLayers(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {',
+    '\n\n    function findPreferredDragContainer(el) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -114,6 +125,74 @@ test('buildLayerOrderSelectionActionState reuses the current slide ordering and 
     ['getNormalizedSlideLayerOrder', slide],
     ['buildStudioLayerOrderActionState', selection, orderedElements]
   ]);
+});
+
+test('reorderSlideLayers forwards a reversible z-index transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const first = {
+    isConnected: true,
+    dataset: { editorId: 'node-1' },
+    style: { zIndex: '0' }
+  };
+  const second = {
+    isConnected: true,
+    dataset: { editorId: 'node-2' },
+    style: { zIndex: '1' }
+  };
+  const slide = { id: 'slide-1' };
+  slide.contains = (element) => element === first || element === second;
+  const transactions = [];
+  const context = {
+    selectedElements: [first],
+    SlideNextStudioEditorLayerOrder: layerOrder,
+    SlideNextStudioEditorTransaction: studioTransaction,
+    getActiveSlide() {
+      return slide;
+    },
+    getNormalizedSlideLayerOrder() {
+      return [first, second];
+    },
+    isElementLocked() {
+      return false;
+    },
+    assignEditorElementId(element) {
+      return element.dataset.editorId;
+    },
+    applySlideLayerOrder(currentSlide, orderedElements) {
+      assert.equal(currentSlide, slide);
+      orderedElements.forEach((element, index) => {
+        element.style.zIndex = String(index);
+      });
+      return orderedElements;
+    }
+  };
+
+  vm.createContext(context);
+  loadReorderSlideLayers(fileContent, context);
+
+  assert.equal(context.reorderSlideLayers('front', [first], {
+    onTransaction(transaction) {
+      transactions.push(transaction);
+    }
+  }), true);
+  assert.deepEqual(transactions, [{
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [
+      {
+        type: 'style',
+        elementId: 'node-1',
+        before: { zIndex: '0' },
+        after: { zIndex: '1' }
+      },
+      {
+        type: 'style',
+        elementId: 'node-2',
+        before: { zIndex: '1' },
+        after: { zIndex: '0' }
+      }
+    ]
+  }]);
 });
 
 test('finalizeLayerOrderMutation refreshes layer chrome before versioning', () => {

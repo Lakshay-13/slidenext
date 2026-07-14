@@ -17,7 +17,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 function loadFinalizeLayerOrderMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function finalizeLayerOrderMutation(versionLabel = \'Auto: Rearranged Layers\') {',
+    'function finalizeLayerOrderMutation(versionLabel = \'Auto: Rearranged Layers\', options = {}) {',
     '\n\n    function syncLayerOrderZIndexInput(target) {'
   );
   vm.runInContext(helperSource, context);

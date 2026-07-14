@@ -4079,7 +4079,7 @@
       return SlideNextStudioEditorDom.applyStudioSlideLayerOrder(slide, orderedElements);
     }
 
-    function reorderSlideLayers(action, targetElements = selectedElements) {
+    function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {
       const slide = getActiveSlide();
       if (!slide) return false;
       const initialOrder = getNormalizedSlideLayerOrder(slide);
@@ -4092,7 +4092,35 @@
         return false;
       }
 
+      const createStudioStyleTransaction = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+        : null;
+      const transactionItems = createStudioStyleTransaction
+        ? initialOrder.map((element) => {
+            if (typeof assignEditorElementId === 'function') {
+              assignEditorElementId(element);
+            }
+            return {
+              element,
+              before: {
+                zIndex: element && element.style ? element.style.zIndex : ''
+              }
+            };
+          })
+        : [];
       applySlideLayerOrder(slide, reorderResult.nextOrder);
+      transactionItems.forEach((item) => {
+        item.after = {
+          zIndex: item.element && item.element.style ? item.element.style.zIndex : ''
+        };
+      });
+      if (typeof options.onTransaction === 'function') {
+        options.onTransaction(createStudioStyleTransaction(transactionItems));
+      }
       return true;
     }
 
@@ -6033,8 +6061,8 @@
       return false;
     }
 
-    function finalizeLayerOrderMutation(versionLabel = 'Auto: Rearranged Layers') {
-      saveHistoryState();
+    function finalizeLayerOrderMutation(versionLabel = 'Auto: Rearranged Layers', options = {}) {
+      saveHistoryState(false, options.transaction || null);
       triggerAutoSave();
       updateLayersList();
       updateLayerOrderActionState();
@@ -6072,12 +6100,17 @@
       if (selectionHasLockedElements(targets)) {
         return refreshLayerOrderUi();
       }
-      const didChange = reorderSlideLayers(action, targets);
+      let transaction = null;
+      const didChange = reorderSlideLayers(action, targets, {
+        onTransaction(nextTransaction) {
+          transaction = nextTransaction;
+        }
+      });
       if (!didChange) {
         return refreshLayerOrderUi();
       }
       syncLayerOrderZIndexInput(targets[0]);
-      finalizeLayerOrderMutation();
+      finalizeLayerOrderMutation('Auto: Rearranged Layers', { transaction });
       return true;
     }
 
@@ -9788,7 +9821,12 @@
         refreshLayerOrderUi({ refreshLayersList: true, result: null });
         return;
       }
-      const didChange = reorderSlideLayers(action, [el]);
+      let transaction = null;
+      const didChange = reorderSlideLayers(action, [el], {
+        onTransaction(nextTransaction) {
+          transaction = nextTransaction;
+        }
+      });
       if (!didChange) {
         refreshLayerOrderUi({ refreshLayersList: true, result: null });
         return;
@@ -9799,7 +9837,7 @@
         syncLayerOrderZIndexInput(el);
       }
 
-      finalizeLayerOrderMutation();
+      finalizeLayerOrderMutation('Auto: Rearranged Layers', { transaction });
     }
 
     // Presentation Live Preview from workspace
