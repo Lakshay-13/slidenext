@@ -29,6 +29,9 @@
     const shouldIgnoreTarget = typeof options.shouldIgnoreTarget === 'function'
       ? options.shouldIgnoreTarget
       : () => false;
+    const consumeClickSuppression = typeof options.consumeClickSuppression === 'function'
+      ? options.consumeClickSuppression
+      : () => false;
     const resolveEditableTarget = typeof options.resolveEditableTarget === 'function'
       ? options.resolveEditableTarget
       : () => null;
@@ -41,6 +44,7 @@
 
     return function studioFrameClickHandler(event) {
       if (isDraggingElement()) return;
+      if (consumeClickSuppression()) return;
       if (shouldIgnoreTarget(event && event.target ? event.target : null)) {
         return;
       }

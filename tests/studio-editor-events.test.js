@@ -111,6 +111,29 @@ test('createStudioFrameKeydownHandler ignores stale disconnected selections for 
   assert.equal(nudgeEvent.stopped, 0);
 });
 
+test('createStudioFrameClickHandler consumes one suppressed click without changing selection', () => {
+  const calls = [];
+  let suppress = true;
+  const handler = events.createStudioFrameClickHandler({
+    consumeClickSuppression() {
+      const current = suppress;
+      suppress = false;
+      return current;
+    },
+    resolveEditableTarget: (target) => target,
+    selectElement(target) {
+      calls.push(['select', target]);
+    },
+    deselectElement() {
+      calls.push(['deselect']);
+    }
+  });
+
+  handler({ target: { id: 'first' } });
+  handler({ target: { id: 'second' } });
+  assert.deepEqual(calls, [['select', { id: 'second' }]]);
+});
+
 test('createStudioFrameKeydownHandler still honors shortcuts for live selections', () => {
   const calls = {
     remove: 0,

@@ -1067,6 +1067,7 @@
     let presentationLibraryLoadToken = 0;
     let studioEditorSessionToken = 0;
     let isDraggingElement = false;
+    let suppressNextFrameClick = false;
     let zoomFactor = 1.0;
     let customGradientType = 'linear';
     let hasPendingCustomWallpaperVersion = false;
@@ -2169,6 +2170,11 @@
       // 3. Setup click listeners on the document (survives innerHTML body swaps)
       iframeDoc.addEventListener('click', SlideNextStudioEditorEvents.createStudioFrameClickHandler({
         isDraggingElement: () => isDraggingElement,
+        consumeClickSuppression: () => {
+          const shouldSuppress = suppressNextFrameClick;
+          suppressNextFrameClick = false;
+          return shouldSuppress;
+        },
         shouldIgnoreTarget: (target) => !!(target && (target.closest('.editor-resize-handle') || target.closest('#editorSelectionOverlay'))),
         resolveEditableTarget,
         selectElement,
@@ -3971,6 +3977,36 @@
       SlideNextStudioEditorOverlay.renderStudioGuides(doc, slide, guidesDef, getEditorOverlayOptions());
     }
 
+    function renderMarqueeSelection(rect) {
+      const doc = getIframeDoc();
+      const slide = getActiveSlide(doc);
+      if (!doc || !slide || !rect) return;
+      const overlay = ensureSelectionOverlay(doc, slide);
+      if (!overlay) return;
+      const left = Math.min(rect.left, rect.right);
+      const top = Math.min(rect.top, rect.bottom);
+      overlay.classList.add('drag-preview');
+      overlay.style.display = 'block';
+      overlay.style.pointerEvents = 'none';
+      overlay.style.left = `${left}px`;
+      overlay.style.top = `${top}px`;
+      overlay.style.width = `${Math.abs(rect.right - rect.left)}px`;
+      overlay.style.height = `${Math.abs(rect.bottom - rect.top)}px`;
+      overlay.querySelectorAll('.editor-resize-handle').forEach(handle => {
+        handle.style.display = 'none';
+      });
+    }
+
+    function clearMarqueeSelection() {
+      const doc = getIframeDoc();
+      const slide = getActiveSlide(doc);
+      if (!slide) return;
+      const overlay = slide.querySelector('#editorSelectionOverlay');
+      if (!overlay) return;
+      overlay.classList.remove('drag-preview');
+      overlay.style.display = 'none';
+    }
+
     function getSlideMetrics(slide) {
       return SlideNextStudioEditorTransform.getStudioSlideMetrics(slide);
     }
@@ -4970,6 +5006,64 @@
         doc.body.addEventListener('pointerup', transformHandlers.handlePointerUp, true);
         doc.body.addEventListener('pointercancel', transformHandlers.handlePointerCancel, true);
         doc.defaultView?.addEventListener('blur', transformHandlers.handleWindowBlur, true);
+
+        const createStudioMarqueePointerHandlers = (
+          typeof SlideNextStudioEditorEvents !== 'undefined'
+          && SlideNextStudioEditorEvents
+          && typeof SlideNextStudioEditorEvents.createStudioMarqueePointerHandlers === 'function'
+        )
+          ? SlideNextStudioEditorEvents.createStudioMarqueePointerHandlers
+          : null;
+        if (createStudioMarqueePointerHandlers) {
+          const marqueeHandlers = createStudioMarqueePointerHandlers({
+            getActiveSlide: () => getActiveSlide(doc),
+            resolveEditableTarget,
+            shouldIgnoreTarget: (target) => !!(target && (target.closest('.editor-resize-handle') || target.closest('#editorSelectionOverlay'))),
+            getSlideMetrics,
+            getPointerOnSlide,
+            getMarqueeElements: (slide) => getNormalizedSlideLayerOrder(slide),
+            getMarqueeSelection: (elements, rect, session) => SlideNextStudioEditorSelectionBounds.getStudioMarqueeSelection(elements, rect, {
+              isHidden: isElementHidden,
+              getElementBounds: (element) => getRectOnSlide(element.getBoundingClientRect(), session.slideMetrics)
+            }),
+            getSelectedElements: () => getLiveSelectedElements(selectedElements, doc),
+            captureTarget: doc.body,
+            dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
+            onSessionStart: () => {
+              isDraggingElement = true;
+              hideGuides();
+              hideDragHud();
+            },
+            onSessionFrame: (rect) => {
+              renderMarqueeSelection(rect);
+            },
+            onSessionFinalize: (result, session) => {
+              isDraggingElement = false;
+              hideGuides();
+              hideDragHud();
+              clearMarqueeSelection();
+              if (result.cancelled || !result.didSelect) {
+                syncSelectionOverlay();
+                return;
+              }
+
+              const previousSelection = result.additive ? session.previousSelection : [];
+              const nextSelection = Array.from(new Set([
+                ...previousSelection,
+                ...(result.selection || [])
+              ]));
+              commitEditorSelectionState({
+                selectedElements: nextSelection
+              });
+              suppressNextFrameClick = true;
+            }
+          });
+          doc.body.addEventListener('pointerdown', marqueeHandlers.handlePointerDown, true);
+          doc.body.addEventListener('pointermove', marqueeHandlers.handlePointerMove, true);
+          doc.body.addEventListener('pointerup', marqueeHandlers.handlePointerUp, true);
+          doc.body.addEventListener('pointercancel', marqueeHandlers.handlePointerCancel, true);
+          doc.defaultView?.addEventListener('blur', marqueeHandlers.handleWindowBlur, true);
+        }
         return;
       }
 
