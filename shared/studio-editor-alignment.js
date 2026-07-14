@@ -88,9 +88,61 @@
     };
   }
 
+  function buildStudioDistributedLayout(items = [], axis = '') {
+    const layoutItems = Array.isArray(items) ? items : [];
+    if (layoutItems.length < 3 || !['horizontal', 'vertical'].includes(axis) || !layoutItems.every(isValidAlignmentItem)) {
+      return {
+        didChange: false,
+        nextItems: layoutItems
+      };
+    }
+
+    const sortedItems = [...layoutItems].sort((first, second) => axis === 'horizontal'
+      ? first.absLeft - second.absLeft
+      : first.absTop - second.absTop);
+    const firstItem = sortedItems[0];
+    const lastItem = sortedItems[sortedItems.length - 1];
+    const start = axis === 'horizontal' ? firstItem.absLeft : firstItem.absTop;
+    const end = axis === 'horizontal'
+      ? lastItem.absLeft + lastItem.width
+      : lastItem.absTop + lastItem.height;
+    const totalSize = sortedItems.reduce((sum, item) => sum + (axis === 'horizontal' ? item.width : item.height), 0);
+    const gap = (end - start - totalSize) / (sortedItems.length - 1);
+    let cursor = start;
+    const nextPositionByItem = new Map();
+
+    sortedItems.forEach((item) => {
+      nextPositionByItem.set(item, cursor);
+      cursor += (axis === 'horizontal' ? item.width : item.height) + gap;
+    });
+
+    let didChange = false;
+    const nextItems = layoutItems.map((item) => {
+      const nextPosition = nextPositionByItem.get(item);
+      const nextAbsLeft = axis === 'horizontal' ? nextPosition : item.absLeft;
+      const nextAbsTop = axis === 'vertical' ? nextPosition : item.absTop;
+      if (nextAbsLeft !== item.absLeft || nextAbsTop !== item.absTop) {
+        didChange = true;
+      }
+      return {
+        ...item,
+        nextAbsLeft,
+        nextAbsTop,
+        nextLeft: nextAbsLeft - item.parentLeft,
+        nextTop: nextAbsTop - item.parentTop
+      };
+    });
+
+    return {
+      didChange,
+      nextItems
+    };
+  }
+
   return {
     getStudioAlignmentSelection,
     buildStudioAlignmentActionState,
-    buildStudioAlignedLayout
+    buildStudioAlignedLayout,
+    buildStudioDistributedLayout
   };
 });

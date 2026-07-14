@@ -100,3 +100,44 @@ test('buildStudioAlignedLayout returns a no-op for unsupported actions or incomp
     nextItems: [items[0], { id: 'invalid' }]
   });
 });
+
+test('buildStudioDistributedLayout equalizes horizontal gaps while preserving visual order', () => {
+  const items = [
+    { id: 'middle', absLeft: 260, absTop: 40, width: 40, height: 20, parentLeft: 10, parentTop: 10 },
+    { id: 'last', absLeft: 500, absTop: 80, width: 60, height: 30, parentLeft: 20, parentTop: 20 },
+    { id: 'first', absLeft: 100, absTop: 120, width: 80, height: 40, parentLeft: 30, parentTop: 30 }
+  ];
+
+  const result = alignment.buildStudioDistributedLayout(items, 'horizontal');
+  assert.equal(result.didChange, true);
+  const byId = Object.fromEntries(result.nextItems.map((item) => [item.id, item]));
+  assert.deepEqual({
+    first: [byId.first.nextAbsLeft, byId.first.nextLeft],
+    middle: [byId.middle.nextAbsLeft, byId.middle.nextLeft],
+    last: [byId.last.nextAbsLeft, byId.last.nextLeft]
+  }, {
+    first: [100, 70],
+    middle: [320, 310],
+    last: [500, 480]
+  });
+});
+
+test('buildStudioDistributedLayout equalizes vertical gaps and requires at least three items', () => {
+  const items = [
+    { id: 'first', absLeft: 40, absTop: 100, width: 20, height: 40, parentLeft: 10, parentTop: 5 },
+    { id: 'middle', absLeft: 80, absTop: 260, width: 30, height: 20, parentLeft: 20, parentTop: 15 },
+    { id: 'last', absLeft: 120, absTop: 500, width: 40, height: 60, parentLeft: 30, parentTop: 25 }
+  ];
+
+  const result = alignment.buildStudioDistributedLayout(items, 'vertical');
+  assert.equal(result.didChange, true);
+  assert.deepEqual(result.nextItems.map((item) => [item.id, item.nextAbsTop, item.nextTop]), [
+    ['first', 100, 95],
+    ['middle', 310, 295],
+    ['last', 500, 475]
+  ]);
+  assert.deepEqual(alignment.buildStudioDistributedLayout(items.slice(0, 2), 'vertical'), {
+    didChange: false,
+    nextItems: items.slice(0, 2)
+  });
+});
