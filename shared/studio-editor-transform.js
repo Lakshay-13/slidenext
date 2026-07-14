@@ -298,6 +298,90 @@
     };
   }
 
+  function lockStudioTransformAspectRatio(bounds = {}, session = {}, options = {}) {
+    if (session.type !== 'resize' || (!session.lockAspectRatio && !options.lockAspectRatio)) {
+      return bounds;
+    }
+
+    const startBounds = session.startBounds || {};
+    const startWidth = Number.isFinite(startBounds.width)
+      ? startBounds.width
+      : (Number.isFinite(startBounds.right) ? startBounds.right : 0) - (Number.isFinite(startBounds.left) ? startBounds.left : 0);
+    const startHeight = Number.isFinite(startBounds.height)
+      ? startBounds.height
+      : (Number.isFinite(startBounds.bottom) ? startBounds.bottom : 0) - (Number.isFinite(startBounds.top) ? startBounds.top : 0);
+    if (!(startWidth > 0) || !(startHeight > 0)) {
+      return bounds;
+    }
+
+    const aspectRatio = startWidth / startHeight;
+    const handleDir = typeof session.handleDir === 'string' ? session.handleDir : '';
+    const hasHorizontalHandle = handleDir.includes('e') || handleDir.includes('w');
+    const hasVerticalHandle = handleDir.includes('n') || handleDir.includes('s');
+    if (!hasHorizontalHandle && !hasVerticalHandle) {
+      return bounds;
+    }
+
+    const minSizePx = Number.isFinite(options.minSizePx) ? options.minSizePx : 0;
+    const rawWidth = Math.max(minSizePx, Math.abs((bounds.right || 0) - (bounds.left || 0)));
+    const rawHeight = Math.max(minSizePx, Math.abs((bounds.bottom || 0) - (bounds.top || 0)));
+    let width = rawWidth;
+    let height = rawHeight;
+
+    if (hasHorizontalHandle && hasVerticalHandle) {
+      const heightFromWidth = rawWidth / aspectRatio;
+      const widthFromHeight = rawHeight * aspectRatio;
+      if (Math.abs(heightFromWidth - rawHeight) <= Math.abs(widthFromHeight - rawWidth)) {
+        height = heightFromWidth;
+      } else {
+        width = widthFromHeight;
+      }
+    } else if (hasHorizontalHandle) {
+      height = rawWidth / aspectRatio;
+    } else {
+      width = rawHeight * aspectRatio;
+    }
+
+    width = Math.max(minSizePx, width);
+    height = Math.max(minSizePx, width / aspectRatio);
+    width = Math.max(minSizePx, height * aspectRatio);
+
+    let left = Number.isFinite(bounds.left) ? bounds.left : 0;
+    let top = Number.isFinite(bounds.top) ? bounds.top : 0;
+    let right = Number.isFinite(bounds.right) ? bounds.right : left;
+    let bottom = Number.isFinite(bounds.bottom) ? bounds.bottom : top;
+
+    if (hasHorizontalHandle) {
+      if (handleDir.includes('w')) {
+        right = Number.isFinite(bounds.right) ? bounds.right : right;
+        left = right - width;
+      } else {
+        left = Number.isFinite(bounds.left) ? bounds.left : left;
+        right = left + width;
+      }
+    } else {
+      const centerX = (left + right) / 2;
+      left = centerX - (width / 2);
+      right = centerX + (width / 2);
+    }
+
+    if (hasVerticalHandle) {
+      if (handleDir.includes('n')) {
+        bottom = Number.isFinite(bounds.bottom) ? bounds.bottom : bottom;
+        top = bottom - height;
+      } else {
+        top = Number.isFinite(bounds.top) ? bounds.top : top;
+        bottom = top + height;
+      }
+    } else {
+      const centerY = (top + bottom) / 2;
+      top = centerY - (height / 2);
+      bottom = centerY + (height / 2);
+    }
+
+    return { left, top, right, bottom };
+  }
+
   function buildStudioTransformInteractionBounds(session = {}, options = {}) {
     const startBounds = session.startBounds || {};
     const startLeft = Number.isFinite(startBounds.left) ? startBounds.left : 0;
@@ -329,7 +413,11 @@
       if (handleDir.includes('s')) bottom += dy;
     }
 
-    return { left, top, right, bottom };
+    return lockStudioTransformAspectRatio(
+      { left, top, right, bottom },
+      session,
+      options
+    );
   }
 
   function resolveStudioTransformBounds(session = {}, options = {}) {
@@ -664,7 +752,8 @@
       items: Array.isArray(options.items) ? options.items : [],
       moved: false,
       materialized: false,
-      overlay: options.overlay || null
+      overlay: options.overlay || null,
+      ...(options.lockAspectRatio ? { lockAspectRatio: true } : {})
     };
   }
 
@@ -790,7 +879,8 @@
         dx: motionState.dx,
         dy: motionState.dy,
         minSizePx: Number.isFinite(options.minSizePx) ? options.minSizePx : 0,
-        dragOverflowMarginPx: Number.isFinite(options.dragOverflowMarginPx) ? options.dragOverflowMarginPx : 0
+        dragOverflowMarginPx: Number.isFinite(options.dragOverflowMarginPx) ? options.dragOverflowMarginPx : 0,
+        lockAspectRatio: !!options.lockAspectRatio
       }),
       session
     };
@@ -958,7 +1048,8 @@
         clientY: event.clientY,
         dragStartThresholdPx,
         minSizePx,
-        dragOverflowMarginPx
+        dragOverflowMarginPx,
+        lockAspectRatio: !!event.shiftKey
       });
       if (!transformFrameState.isActive) {
         return false;

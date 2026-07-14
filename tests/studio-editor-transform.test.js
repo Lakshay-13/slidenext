@@ -481,6 +481,54 @@ test('buildStudioTransformInteractionBounds derives raw drag and resize bounds f
   });
 });
 
+test('buildStudioTransformInteractionBounds preserves aspect ratio for locked resize sessions', () => {
+  assert.deepEqual(transformState.buildStudioTransformInteractionBounds({
+    type: 'resize',
+    handleDir: 'se',
+    lockAspectRatio: true,
+    startBounds: {
+      left: 100,
+      top: 100,
+      right: 200,
+      bottom: 150,
+      width: 100,
+      height: 50
+    }
+  }, {
+    dx: 50,
+    dy: 0,
+    minSizePx: 24
+  }), {
+    left: 100,
+    top: 100,
+    right: 250,
+    bottom: 175
+  });
+
+  assert.deepEqual(transformState.buildStudioTransformInteractionBounds({
+    type: 'resize',
+    handleDir: 'e',
+    lockAspectRatio: true,
+    startBounds: {
+      left: 100,
+      top: 100,
+      right: 200,
+      bottom: 150,
+      width: 100,
+      height: 50
+    }
+  }, {
+    dx: 50,
+    dy: 0,
+    minSizePx: 24
+  }), {
+    left: 100,
+    top: 87.5,
+    right: 250,
+    bottom: 162.5
+  });
+});
+
 test('resolveStudioTransformBounds applies the shared interaction and normalization pipeline', () => {
   assert.deepEqual(transformState.resolveStudioTransformBounds({
     type: 'drag',
@@ -1296,7 +1344,7 @@ test('createStudioTransformPointerHandlers coordinates the shared pointer lifecy
       return nextSession === session && event.pointerId === 7;
     },
     buildTransformFrameState(nextSession, options) {
-      calls.push(['frame', nextSession, options.clientX, options.clientY]);
+      calls.push(['frame', nextSession, options.clientX, options.clientY, options.lockAspectRatio]);
       return { isActive: true, bounds };
     },
     applyTransformBounds(nextSession, nextBounds, options) {
@@ -1338,6 +1386,7 @@ test('createStudioTransformPointerHandlers coordinates the shared pointer lifecy
     pointerId: 7,
     clientX: 40,
     clientY: 50,
+    shiftKey: true,
     preventDefault() {
       calls.push(['move-prevented']);
     }
@@ -1351,7 +1400,7 @@ test('createStudioTransformPointerHandlers coordinates the shared pointer lifecy
     ['session-start', startBounds],
     ['down-prevented'],
     ['down-stopped'],
-    ['frame', session, 40, 50],
+    ['frame', session, 40, 50, true],
     ['apply', session, bounds, 12],
     ['session-frame', bounds],
     ['move-prevented'],
