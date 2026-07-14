@@ -829,10 +829,13 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
   );
 
   const selectionIds = ['element-1', 'element-2'];
+  const slidesContainer = {
+    innerHTML: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section>'
+  };
   const iframeDoc = {
     getElementById(id) {
       assert.equal(id, 'slidesContainer');
-      return {};
+      return slidesContainer;
     }
   };
   let slides = [];
@@ -846,6 +849,7 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
     id: 'slide-2',
     remove() {
       slides = [firstSlide];
+      slidesContainer.innerHTML = '<section data-slide-id="slide-1"></section>';
     }
   };
   slides = [firstSlide, secondSlide];
@@ -859,6 +863,7 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
         calls.push(['restoreStudioDeckViewAfterSlideMutation', payload]);
       }
     },
+    SlideNextStudioEditorTransaction: studioTransaction,
     getActiveSlideId(doc) {
       calls.push(['getActiveSlideId', doc]);
       return 'slide-2';
@@ -885,8 +890,8 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
     restoreSelectionAfterPreservedSlideMutation(ids, doc) {
       calls.push(['restoreSelectionAfterPreservedSlideMutation', ids, doc]);
     },
-    saveHistoryState() {
-      calls.push(['saveHistoryState']);
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
     },
     setActiveSlide(index) {
       calls.push(['setActiveSlide', index]);
@@ -931,6 +936,16 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
   assert.equal(calls[4][1], iframeDoc);
   assert.equal(calls[5][1], secondSlide);
   assert.equal(calls[11][1], 'Auto: Deleted Slide');
+  assert.deepEqual(calls[9][2], {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'markup',
+      elementId: 'slides-container',
+      before: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section>',
+      after: '<section data-slide-id="slide-1"></section>'
+    }]
+  });
   assert.equal(restorePayload.preservedActiveSlideId, 'slide-2');
   assert.equal(restorePayload.removedSlideId, 'slide-2');
   assert.equal(restorePayload.fallbackIndex, 0);
