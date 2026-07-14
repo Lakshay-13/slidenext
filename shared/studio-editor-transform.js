@@ -400,6 +400,9 @@
     const bottom = Number.isFinite(bounds.bottom) ? bounds.bottom : top;
     const width = right - left;
     const height = bottom - top;
+    const gridSizePx = Number.isFinite(options.gridSizePx) && options.gridSizePx > 0
+      ? options.gridSizePx
+      : null;
     const xCandidates = slideWidth > 0
       ? [
           { position: left, target: 0 },
@@ -414,6 +417,18 @@
           { position: bottom, target: slideHeight }
         ]
       : [];
+    if (gridSizePx) {
+      xCandidates.push({
+        position: left,
+        target: Math.round(left / gridSizePx) * gridSizePx,
+        kind: 'grid'
+      });
+      yCandidates.push({
+        position: top,
+        target: Math.round(top / gridSizePx) * gridSizePx,
+        kind: 'grid'
+      });
+    }
     const findSnap = (candidates) => candidates
       .map((candidate) => ({
         ...candidate,
@@ -429,13 +444,21 @@
       const offset = xSnap.target - xSnap.position;
       nextBounds.left += offset;
       nextBounds.right = nextBounds.left + width;
-      guides.push({ axis: 'x', position: xSnap.target });
+      guides.push({
+        axis: 'x',
+        position: xSnap.target,
+        ...(xSnap.kind ? { kind: xSnap.kind } : {})
+      });
     }
     if (ySnap && ySnap.distance <= snapDistancePx) {
       const offset = ySnap.target - ySnap.position;
       nextBounds.top += offset;
       nextBounds.bottom = nextBounds.top + height;
-      guides.push({ axis: 'y', position: ySnap.target });
+      guides.push({
+        axis: 'y',
+        position: ySnap.target,
+        ...(ySnap.kind ? { kind: ySnap.kind } : {})
+      });
     }
 
     return {
@@ -953,6 +976,7 @@
         lockAspectRatio: !!options.lockAspectRatio,
         snapEnabled: options.snapEnabled,
         snapDistancePx: options.snapDistancePx,
+        gridSizePx: options.gridSizePx,
         onGuides: (nextGuides) => {
           guides = nextGuides;
         }

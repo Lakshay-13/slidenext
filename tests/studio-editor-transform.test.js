@@ -599,6 +599,49 @@ test('snapStudioTransformBounds aligns dragged bounds to slide edges and centers
   });
 });
 
+test('snapStudioTransformBounds optionally aligns dragged top-left bounds to a grid', () => {
+  assert.deepEqual(transformState.snapStudioTransformBounds({
+    left: 23,
+    top: 37,
+    right: 123,
+    bottom: 87
+  }, {
+    type: 'drag',
+    slideBounds: { width: 500, height: 400 }
+  }, {
+    snapDistancePx: 5,
+    gridSizePx: 20
+  }), {
+    bounds: {
+      left: 20,
+      top: 40,
+      right: 120,
+      bottom: 90
+    },
+    guides: [
+      { axis: 'x', position: 20, kind: 'grid' },
+      { axis: 'y', position: 40, kind: 'grid' }
+    ]
+  });
+
+  assert.deepEqual(transformState.snapStudioTransformBounds({
+    left: 23,
+    top: 37,
+    right: 123,
+    bottom: 87
+  }, {
+    type: 'drag',
+    slideBounds: { width: 500, height: 400 }
+  }, {
+    snapDistancePx: 5
+  }).bounds, {
+    left: 23,
+    top: 37,
+    right: 123,
+    bottom: 87
+  });
+});
+
 test('resolveStudioTransformBounds applies the shared interaction and normalization pipeline', () => {
   assert.deepEqual(transformState.resolveStudioTransformBounds({
     type: 'drag',
