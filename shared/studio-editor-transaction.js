@@ -235,6 +235,36 @@
     };
   }
 
+  function createStudioMarkupTransaction(items = [], options = {}) {
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const sourceItems = Array.isArray(items) ? items : [];
+    const operations = sourceItems.reduce((nextOperations, item) => {
+      if (!item || typeof item !== 'object') return nextOperations;
+      const elementId = typeof item.elementId === 'string' && item.elementId.trim()
+        ? item.elementId.trim()
+        : getElementId(item.element);
+      const before = normalizeTransactionValue(item.before);
+      const after = normalizeTransactionValue(item.after);
+      if (!elementId || before === after) return nextOperations;
+      nextOperations.push({
+        type: 'markup',
+        elementId,
+        before,
+        after
+      });
+      return nextOperations;
+    }, []);
+
+    if (operations.length === 0) return null;
+    return {
+      kind: STUDIO_EDITOR_TRANSACTION_KIND,
+      version: STUDIO_EDITOR_TRANSACTION_VERSION,
+      operations
+    };
+  }
+
   function normalizeStudioEditorTransaction(transaction) {
     if (!transaction || typeof transaction !== 'object') return null;
     if (transaction.kind !== STUDIO_EDITOR_TRANSACTION_KIND
@@ -260,6 +290,12 @@
             }])
         : operation.type === 'visibility'
           ? createStudioVisibilityTransaction([{
+              elementId: operation.elementId,
+              before: operation.before,
+              after: operation.after
+            }])
+        : operation.type === 'markup'
+          ? createStudioMarkupTransaction([{
               elementId: operation.elementId,
               before: operation.before,
               after: operation.after
@@ -310,6 +346,8 @@
                 before: { ...operation.before, dataset: { ...operation.before.dataset } },
                 after: { ...operation.after, dataset: { ...operation.after.dataset } }
               }
+          : operation.type === 'markup'
+            ? { ...operation }
           : {
               type: 'style',
               elementId: operation.elementId,
@@ -326,6 +364,8 @@
           ...operation.after,
           dataset: { ...operation.after.dataset }
         };
+      } else if (operation.type === 'markup') {
+        existingOperation.after = operation.after;
       } else {
         existingOperation.before = {
           ...operation.before,
@@ -370,11 +410,15 @@
     const applyVisibilityState = typeof options.applyVisibilityState === 'function'
       ? options.applyVisibilityState
       : null;
+    const applyMarkupState = typeof options.applyMarkupState === 'function'
+      ? options.applyMarkupState
+      : null;
     if (resolvedOperations.some(({ operation, element }) => {
       return !element
         || (operation.type === 'style' && !element.style)
         || (operation.type === 'dataset' && !element.dataset)
-        || (operation.type === 'visibility' && !applyVisibilityState);
+        || (operation.type === 'visibility' && !applyVisibilityState)
+        || (operation.type === 'markup' && (!element || !applyMarkupState));
     })) {
       return {
         didApply: false,
@@ -402,6 +446,11 @@
         applyVisibilityState(element, state);
         return;
       }
+      if (operation.type === 'markup') {
+        const markup = nextDirection === 'undo' ? operation.before : operation.after;
+        applyMarkupState(element, markup);
+        return;
+      }
       const patch = nextDirection === 'undo' ? operation.before : operation.after;
       Object.keys(patch).forEach((property) => {
         element.style[property] = patch[property];
@@ -425,6 +474,7 @@
     createStudioPropertyTransaction,
     createStudioDatasetTransaction,
     createStudioVisibilityTransaction,
+    createStudioMarkupTransaction,
     normalizeVisibilityState,
     normalizeStudioEditorTransaction,
     isStudioEditorTransaction,

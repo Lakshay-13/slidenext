@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -436,4 +437,76 @@ test('removeSelectedElement returns true after removing live targets and persist
     ['triggerAutoSave'],
     ['triggerAutoVersion', 'Auto: Deleted Element']
   ]);
+});
+
+test('removeSelectedElement captures a scoped parent markup transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const removeSelectedElementSource = extractFunctionSource(
+    fileContent,
+    'function removeSelectedElement() {',
+    '\n\n    function updateClipboardActionState(doc = getIframeDoc()) {'
+  );
+  const parent = {
+    dataset: { editorId: 'slide-1' },
+    innerHTML: '<div data-editor-id="node-1">A</div>'
+  };
+  const liveTarget = {
+    isConnected: true,
+    parentElement: parent,
+    remove() {
+      this.isConnected = false;
+      parent.innerHTML = '';
+    }
+  };
+  let finalized = null;
+  const context = {
+    selectedElements: [liveTarget],
+    SlideNextStudioEditorTransaction: studioTransaction,
+    SlideNextStudioEditorRemoval: {
+      buildStudioRemovalActionState() {
+        return {
+          canRemove: true,
+          selection: [liveTarget]
+        };
+      }
+    },
+    assignEditorElementId(element) {
+      return element.dataset.editorId;
+    },
+    deselectElement() {},
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      return { label: 'iframe-doc' };
+    },
+    isElementLocked() {
+      return false;
+    },
+    finalizeEditorDeckMutation(versionLabel, options) {
+      finalized = { versionLabel, options };
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildRemovalSelectionActionState(fileContent, context);
+  vm.runInContext(removeSelectedElementSource, context);
+
+  assert.equal(context.removeSelectedElement(), true);
+  assert.equal(parent.innerHTML, '');
+  assert.deepEqual(JSON.parse(JSON.stringify(finalized)), {
+    versionLabel: 'Auto: Deleted Element',
+    options: {
+      transaction: {
+        kind: 'slidenext.editor.transaction',
+        version: 1,
+        operations: [{
+          type: 'markup',
+          elementId: 'slide-1',
+          before: '<div data-editor-id="node-1">A</div>',
+          after: ''
+        }]
+      }
+    }
+  });
 });

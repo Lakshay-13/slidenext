@@ -5264,6 +5264,28 @@
       const doc = getIframeDoc();
       const removalActionState = buildRemovalSelectionActionState(doc);
       if (!removalActionState.canRemove) return finalizeRemovalActionResult(false, doc);
+      const createStudioMarkupTransaction = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioMarkupTransaction
+        : null;
+      const markupTransactionItems = [];
+      if (createStudioMarkupTransaction) {
+        const parentSet = new Set();
+        removalActionState.selection.forEach((el) => {
+          if (!el || !el.isConnected || !el.parentElement || parentSet.has(el.parentElement)) return;
+          parentSet.add(el.parentElement);
+          if (typeof assignEditorElementId === 'function') {
+            assignEditorElementId(el.parentElement);
+          }
+          markupTransactionItems.push({
+            element: el.parentElement,
+            before: el.parentElement.innerHTML
+          });
+        });
+      }
       let removedCount = 0;
       removalActionState.selection.forEach(el => {
         if (el && el.isConnected) {
@@ -5272,8 +5294,15 @@
         }
       });
       if (removedCount === 0) return finalizeRemovalActionResult(false, doc);
+      markupTransactionItems.forEach((item) => {
+        item.after = item.element.innerHTML;
+      });
+      const transaction = createStudioMarkupTransaction
+        ? createStudioMarkupTransaction(markupTransactionItems)
+        : null;
       deselectElement();
       finalizeEditorDeckMutation('Auto: Deleted Element', {
+        transaction
       });
       return true;
     }
@@ -6788,7 +6817,13 @@
               && typeof SlideNextStudioElementState.applyStudioElementVisibilityState === 'function'
             )
               ? SlideNextStudioElementState.applyStudioElementVisibilityState
-              : null
+              : null,
+            applyMarkupState(element, markup) {
+              if (!element || typeof markup !== 'string') return false;
+              element.innerHTML = markup;
+              makeElementsHoverable(element);
+              return true;
+            }
           }
         );
         if (transactionResult.didApply) {

@@ -203,6 +203,54 @@ test('createStudioVisibilityTransaction applies reversible visibility state thro
   assert.deepEqual(appliedStates, [after, before]);
 });
 
+test('createStudioMarkupTransaction applies scoped container markup through its adapter', () => {
+  const element = {
+    dataset: { editorId: 'slide-1' }
+  };
+  const markupTransaction = transaction.createStudioMarkupTransaction([{
+    element,
+    before: '<div data-editor-id="node-1">A</div>',
+    after: '<div data-editor-id="node-2">B</div>'
+  }]);
+  const appliedMarkup = [];
+  const getElementById = (editorId) => editorId === 'slide-1' ? element : null;
+
+  assert.deepEqual(markupTransaction.operations, [{
+    type: 'markup',
+    elementId: 'slide-1',
+    before: '<div data-editor-id="node-1">A</div>',
+    after: '<div data-editor-id="node-2">B</div>'
+  }]);
+  assert.equal(transaction.applyStudioEditorTransaction(
+    markupTransaction,
+    'redo',
+    {
+      getElementById,
+      applyMarkupState(target, markup) {
+        assert.equal(target, element);
+        appliedMarkup.push(markup);
+        return true;
+      }
+    }
+  ).didApply, true);
+  assert.equal(transaction.applyStudioEditorTransaction(
+    markupTransaction,
+    'undo',
+    {
+      getElementById,
+      applyMarkupState(target, markup) {
+        assert.equal(target, element);
+        appliedMarkup.push(markup);
+        return true;
+      }
+    }
+  ).didApply, true);
+  assert.deepEqual(appliedMarkup, [
+    '<div data-editor-id="node-2">B</div>',
+    '<div data-editor-id="node-1">A</div>'
+  ]);
+});
+
 test('mergeStudioStyleTransactions coalesces sequential changes per element', () => {
   const first = transaction.createStudioStyleTransaction([{
     elementId: 'node-1',
