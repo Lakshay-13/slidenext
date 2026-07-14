@@ -6364,8 +6364,11 @@
         : transaction;
       if (normalizedTransaction) {
         pendingEditorTransaction = transactionApi
-          && typeof transactionApi.mergeStudioStyleTransactions === 'function'
-          ? transactionApi.mergeStudioStyleTransactions(pendingEditorTransaction, normalizedTransaction)
+          && typeof transactionApi.mergeStudioEditorTransactions === 'function'
+          ? transactionApi.mergeStudioEditorTransactions(pendingEditorTransaction, normalizedTransaction)
+          : transactionApi
+            && typeof transactionApi.mergeStudioStyleTransactions === 'function'
+              ? transactionApi.mergeStudioStyleTransactions(pendingEditorTransaction, normalizedTransaction)
           : normalizedTransaction;
       } else {
         pendingEditorTransaction = null;

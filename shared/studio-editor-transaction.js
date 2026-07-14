@@ -27,6 +27,14 @@
     }, {});
   }
 
+  function normalizeTransactionValue(value) {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      return `${value}`;
+    }
+    return '';
+  }
+
   function createStudioStyleTransaction(items = [], options = {}) {
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
@@ -70,6 +78,42 @@
     };
   }
 
+  function createStudioPropertyTransaction(items = [], options = {}) {
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const sourceItems = Array.isArray(items) ? items : [];
+    const operations = sourceItems.reduce((nextOperations, item) => {
+      if (!item || typeof item !== 'object') return nextOperations;
+      const elementId = typeof item.elementId === 'string' && item.elementId.trim()
+        ? item.elementId.trim()
+        : getElementId(item.element);
+      const property = typeof item.property === 'string' && /^[A-Za-z][A-Za-z0-9-]*$/.test(item.property)
+        ? item.property
+        : '';
+      if (!elementId || !property) return nextOperations;
+
+      const before = normalizeTransactionValue(item.before);
+      const after = normalizeTransactionValue(item.after);
+      if (before === after) return nextOperations;
+      nextOperations.push({
+        type: 'property',
+        elementId,
+        property,
+        before,
+        after
+      });
+      return nextOperations;
+    }, []);
+
+    if (operations.length === 0) return null;
+    return {
+      kind: STUDIO_EDITOR_TRANSACTION_KIND,
+      version: STUDIO_EDITOR_TRANSACTION_VERSION,
+      operations
+    };
+  }
+
   function normalizeStudioEditorTransaction(transaction) {
     if (!transaction || typeof transaction !== 'object') return null;
     if (transaction.kind !== STUDIO_EDITOR_TRANSACTION_KIND
@@ -77,46 +121,86 @@
       || !Array.isArray(transaction.operations)) {
       return null;
     }
-    return createStudioStyleTransaction(transaction.operations.map((operation) => ({
-      elementId: operation && operation.elementId,
-      before: operation && operation.before,
-      after: operation && operation.after
-    })));
+    const normalizedOperations = transaction.operations.reduce((nextOperations, operation) => {
+      if (!operation || typeof operation !== 'object') return nextOperations;
+      const nextTransaction = operation.type === 'property'
+        ? createStudioPropertyTransaction([{
+            elementId: operation.elementId,
+            property: operation.property,
+            before: operation.before,
+            after: operation.after
+          }])
+        : operation.type === 'style'
+          ? createStudioStyleTransaction([{
+              elementId: operation.elementId,
+              before: operation.before,
+              after: operation.after
+            }])
+          : null;
+      if (nextTransaction) {
+        nextOperations.push(...nextTransaction.operations);
+      }
+      return nextOperations;
+    }, []);
+    if (normalizedOperations.length === 0) return null;
+    return {
+      kind: STUDIO_EDITOR_TRANSACTION_KIND,
+      version: STUDIO_EDITOR_TRANSACTION_VERSION,
+      operations: normalizedOperations
+    };
   }
 
   function isStudioEditorTransaction(transaction) {
     return !!normalizeStudioEditorTransaction(transaction);
   }
 
-  function mergeStudioStyleTransactions(firstTransaction, secondTransaction) {
+  function mergeStudioEditorTransactions(firstTransaction, secondTransaction) {
     const first = normalizeStudioEditorTransaction(firstTransaction);
     const second = normalizeStudioEditorTransaction(secondTransaction);
     if (!first) return second;
     if (!second) return first;
 
-    const operationsByElementId = new Map();
+    const operationsByKey = new Map();
     [...first.operations, ...second.operations].forEach((operation) => {
-      const existingOperation = operationsByElementId.get(operation.elementId);
+      const operationKey = operation.type === 'property'
+        ? `property:${operation.elementId}:${operation.property}`
+        : `style:${operation.elementId}`;
+      const existingOperation = operationsByKey.get(operationKey);
       if (!existingOperation) {
-        operationsByElementId.set(operation.elementId, {
-          elementId: operation.elementId,
-          before: { ...operation.before },
-          after: { ...operation.after }
-        });
+        operationsByKey.set(operationKey, operation.type === 'property'
+          ? { ...operation }
+          : {
+              type: 'style',
+              elementId: operation.elementId,
+              before: { ...operation.before },
+              after: { ...operation.after }
+            });
         return;
       }
 
-      existingOperation.before = {
-        ...operation.before,
-        ...existingOperation.before
-      };
-      existingOperation.after = {
-        ...existingOperation.after,
-        ...operation.after
-      };
+      if (operation.type === 'property') {
+        existingOperation.after = operation.after;
+      } else {
+        existingOperation.before = {
+          ...operation.before,
+          ...existingOperation.before
+        };
+        existingOperation.after = {
+          ...existingOperation.after,
+          ...operation.after
+        };
+      }
     });
 
-    return createStudioStyleTransaction(Array.from(operationsByElementId.values()));
+    return normalizeStudioEditorTransaction({
+      kind: STUDIO_EDITOR_TRANSACTION_KIND,
+      version: STUDIO_EDITOR_TRANSACTION_VERSION,
+      operations: Array.from(operationsByKey.values())
+    });
+  }
+
+  function mergeStudioStyleTransactions(firstTransaction, secondTransaction) {
+    return mergeStudioEditorTransactions(firstTransaction, secondTransaction);
   }
 
   function applyStudioEditorTransaction(transaction, direction, options = {}) {
@@ -137,7 +221,9 @@
       operation,
       element: getElementById(operation.elementId)
     }));
-    if (resolvedOperations.some(({ element }) => !element || !element.style)) {
+    if (resolvedOperations.some(({ operation, element }) => {
+      return !element || (operation.type === 'style' && !element.style);
+    })) {
       return {
         didApply: false,
         appliedCount: 0,
@@ -146,6 +232,10 @@
     }
 
     resolvedOperations.forEach(({ operation, element }) => {
+      if (operation.type === 'property') {
+        element[operation.property] = nextDirection === 'undo' ? operation.before : operation.after;
+        return;
+      }
       const patch = nextDirection === 'undo' ? operation.before : operation.after;
       Object.keys(patch).forEach((property) => {
         element.style[property] = patch[property];
@@ -163,9 +253,12 @@
     STUDIO_EDITOR_TRANSACTION_KIND,
     STUDIO_EDITOR_TRANSACTION_VERSION,
     normalizeStylePatch,
+    normalizeTransactionValue,
     createStudioStyleTransaction,
+    createStudioPropertyTransaction,
     normalizeStudioEditorTransaction,
     isStudioEditorTransaction,
+    mergeStudioEditorTransactions,
     mergeStudioStyleTransactions,
     applyStudioEditorTransaction
   };

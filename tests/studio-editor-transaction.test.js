@@ -78,6 +78,30 @@ test('applyStudioEditorTransaction fails atomically when a target is missing', (
   assert.deepEqual(element.style, { left: '10px' });
 });
 
+test('createStudioPropertyTransaction and applyStudioEditorTransaction handle reversible element properties', () => {
+  const element = {
+    dataset: { editorId: 'node-1' },
+    textContent: 'Before',
+    src: '/before.png'
+  };
+  const propertyTransaction = transaction.createStudioPropertyTransaction([
+    { element, property: 'textContent', before: element.textContent, after: 'After' },
+    { element, property: 'src', before: element.src, after: '/after.png' }
+  ]);
+
+  assert.deepEqual(propertyTransaction.operations, [
+    { type: 'property', elementId: 'node-1', property: 'textContent', before: 'Before', after: 'After' },
+    { type: 'property', elementId: 'node-1', property: 'src', before: '/before.png', after: '/after.png' }
+  ]);
+  const getElementById = (editorId) => editorId === 'node-1' ? element : null;
+  assert.equal(transaction.applyStudioEditorTransaction(propertyTransaction, 'redo', { getElementById }).didApply, true);
+  assert.equal(element.textContent, 'After');
+  assert.equal(element.src, '/after.png');
+  assert.equal(transaction.applyStudioEditorTransaction(propertyTransaction, 'undo', { getElementById }).didApply, true);
+  assert.equal(element.textContent, 'Before');
+  assert.equal(element.src, '/before.png');
+});
+
 test('mergeStudioStyleTransactions coalesces sequential changes per element', () => {
   const first = transaction.createStudioStyleTransaction([{
     elementId: 'node-1',
@@ -100,6 +124,25 @@ test('mergeStudioStyleTransactions coalesces sequential changes per element', ()
       after: { left: '20px', top: '5px' }
     }]
   });
+});
+
+test('mergeStudioEditorTransactions coalesces mixed style and property changes', () => {
+  const styleTransaction = transaction.createStudioStyleTransaction([{
+    elementId: 'node-1',
+    before: { left: '0px' },
+    after: { left: '10px' }
+  }]);
+  const propertyTransaction = transaction.createStudioPropertyTransaction([{
+    elementId: 'node-1',
+    property: 'textContent',
+    before: 'Before',
+    after: 'After'
+  }]);
+
+  assert.deepEqual(transaction.mergeStudioEditorTransactions(styleTransaction, propertyTransaction).operations, [
+    { type: 'style', elementId: 'node-1', before: { left: '0px' }, after: { left: '10px' } },
+    { type: 'property', elementId: 'node-1', property: 'textContent', before: 'Before', after: 'After' }
+  ]);
 });
 
 test('normalizeStudioEditorTransaction rejects other transaction formats', () => {
