@@ -1267,6 +1267,24 @@ test('importElementToCanonicalNode merges configured transient classes with edit
   assert.equal(node.html.includes('revealed'), false);
 });
 
+test('importElementToCanonicalNode preserves persisted editor groups as canonical group nodes', () => {
+  const element = createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['editor-group']),
+    attributes: {
+      class: 'editor-group',
+      'data-editor-group': 'true'
+    },
+    textContent: 'Grouped content',
+    outerHTML: '<div class="editor-group" data-editor-group="true">Grouped content</div>'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+
+  assert.equal(node.type, 'group');
+  assert.equal(node.attributes['data-editor-group'], 'true');
+});
+
 test('importElementToCanonicalNode ignores computed hidden styles when visibility is not explicitly encoded', () => {
   const element = createImportedElement({
     tagName: 'DIV',
