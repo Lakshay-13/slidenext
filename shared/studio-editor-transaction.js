@@ -142,6 +142,42 @@
     };
   }
 
+  function createStudioDatasetTransaction(items = [], options = {}) {
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const sourceItems = Array.isArray(items) ? items : [];
+    const operations = sourceItems.reduce((nextOperations, item) => {
+      if (!item || typeof item !== 'object') return nextOperations;
+      const elementId = typeof item.elementId === 'string' && item.elementId.trim()
+        ? item.elementId.trim()
+        : getElementId(item.element);
+      const property = typeof item.property === 'string' && /^[A-Za-z][A-Za-z0-9-]*$/.test(item.property)
+        ? item.property
+        : '';
+      if (!elementId || !property) return nextOperations;
+
+      const before = normalizeTransactionValue(item.before);
+      const after = normalizeTransactionValue(item.after);
+      if (before === after) return nextOperations;
+      nextOperations.push({
+        type: 'dataset',
+        elementId,
+        property,
+        before,
+        after
+      });
+      return nextOperations;
+    }, []);
+
+    if (operations.length === 0) return null;
+    return {
+      kind: STUDIO_EDITOR_TRANSACTION_KIND,
+      version: STUDIO_EDITOR_TRANSACTION_VERSION,
+      operations
+    };
+  }
+
   function normalizeStudioEditorTransaction(transaction) {
     if (!transaction || typeof transaction !== 'object') return null;
     if (transaction.kind !== STUDIO_EDITOR_TRANSACTION_KIND
@@ -158,6 +194,13 @@
             before: operation.before,
             after: operation.after
           }])
+        : operation.type === 'dataset'
+          ? createStudioDatasetTransaction([{
+              elementId: operation.elementId,
+              property: operation.property,
+              before: operation.before,
+              after: operation.after
+            }])
         : operation.type === 'style'
           ? createStudioStyleTransaction([{
               elementId: operation.elementId,
@@ -190,12 +233,12 @@
 
     const operationsByKey = new Map();
     [...first.operations, ...second.operations].forEach((operation) => {
-      const operationKey = operation.type === 'property'
-        ? `property:${operation.elementId}:${operation.property}`
+      const operationKey = operation.type === 'property' || operation.type === 'dataset'
+        ? `${operation.type}:${operation.elementId}:${operation.property}`
         : `style:${operation.elementId}`;
       const existingOperation = operationsByKey.get(operationKey);
       if (!existingOperation) {
-        operationsByKey.set(operationKey, operation.type === 'property'
+        operationsByKey.set(operationKey, operation.type === 'property' || operation.type === 'dataset'
           ? { ...operation }
           : {
               type: 'style',
@@ -206,7 +249,7 @@
         return;
       }
 
-      if (operation.type === 'property') {
+      if (operation.type === 'property' || operation.type === 'dataset') {
         existingOperation.after = operation.after;
       } else {
         existingOperation.before = {
@@ -250,7 +293,9 @@
       element: getElementById(operation.elementId)
     }));
     if (resolvedOperations.some(({ operation, element }) => {
-      return !element || (operation.type === 'style' && !element.style);
+      return !element
+        || (operation.type === 'style' && !element.style)
+        || (operation.type === 'dataset' && !element.dataset);
     })) {
       return {
         didApply: false,
@@ -262,6 +307,15 @@
     resolvedOperations.forEach(({ operation, element }) => {
       if (operation.type === 'property') {
         element[operation.property] = nextDirection === 'undo' ? operation.before : operation.after;
+        return;
+      }
+      if (operation.type === 'dataset') {
+        const value = nextDirection === 'undo' ? operation.before : operation.after;
+        if (value) {
+          element.dataset[operation.property] = value;
+        } else {
+          delete element.dataset[operation.property];
+        }
         return;
       }
       const patch = nextDirection === 'undo' ? operation.before : operation.after;
@@ -285,6 +339,7 @@
     createStudioStyleTransaction,
     createStudioPositionTransaction,
     createStudioPropertyTransaction,
+    createStudioDatasetTransaction,
     normalizeStudioEditorTransaction,
     isStudioEditorTransaction,
     mergeStudioEditorTransactions,

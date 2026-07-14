@@ -4943,7 +4943,8 @@
         syncSelectionUiAfterMutation();
       }
       finalizeEditorDeckMutation(versionLabel, {
-        refreshThumbnails: false
+        refreshThumbnails: false,
+        ...(options.transaction ? { transaction: options.transaction } : {})
       });
       return true;
     }
@@ -4955,6 +4956,31 @@
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!lockMutationPlan.didChange) return false;
+      const createStudioDatasetTransaction = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioDatasetTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioDatasetTransaction
+        : null;
+      const transactionItems = createStudioDatasetTransaction
+        ? lockMutationPlan.selection
+            .filter((el) => el && el.isConnected && isElementLocked(el) !== lockMutationPlan.shouldLock)
+            .map((el) => {
+              if (typeof assignEditorElementId === 'function') {
+                assignEditorElementId(el);
+              }
+              return {
+                element: el,
+                property: 'editorLocked',
+                before: el.dataset && el.dataset.editorLocked ? el.dataset.editorLocked : '',
+                after: lockMutationPlan.shouldLock ? 'true' : ''
+              };
+            })
+        : [];
+      const transaction = createStudioDatasetTransaction
+        ? createStudioDatasetTransaction(transactionItems)
+        : null;
       let changedCount = 0;
       lockMutationPlan.selection.forEach(el => {
         if (!el || !el.isConnected) return;
@@ -4963,7 +4989,9 @@
         changedCount += 1;
       });
       if (changedCount === 0) return false;
-      return finalizeSelectionToggleMutation(lockMutationPlan.versionLabel);
+      return finalizeSelectionToggleMutation(lockMutationPlan.versionLabel, {
+        transaction
+      });
     }
 
     function toggleSelectedElementsVisibility(options = {}) {

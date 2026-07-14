@@ -124,6 +124,31 @@ test('createStudioPropertyTransaction and applyStudioEditorTransaction handle re
   assert.equal(element.src, '/before.png');
 });
 
+test('createStudioDatasetTransaction applies and removes reversible dataset state', () => {
+  const element = {
+    dataset: { editorId: 'node-1' }
+  };
+  const datasetTransaction = transaction.createStudioDatasetTransaction([{
+    element,
+    property: 'editorLocked',
+    before: '',
+    after: 'true'
+  }]);
+  const getElementById = (editorId) => editorId === 'node-1' ? element : null;
+
+  assert.deepEqual(datasetTransaction.operations, [{
+    type: 'dataset',
+    elementId: 'node-1',
+    property: 'editorLocked',
+    before: '',
+    after: 'true'
+  }]);
+  assert.equal(transaction.applyStudioEditorTransaction(datasetTransaction, 'redo', { getElementById }).didApply, true);
+  assert.equal(element.dataset.editorLocked, 'true');
+  assert.equal(transaction.applyStudioEditorTransaction(datasetTransaction, 'undo', { getElementById }).didApply, true);
+  assert.equal(Object.prototype.hasOwnProperty.call(element.dataset, 'editorLocked'), false);
+});
+
 test('mergeStudioStyleTransactions coalesces sequential changes per element', () => {
   const first = transaction.createStudioStyleTransaction([{
     elementId: 'node-1',

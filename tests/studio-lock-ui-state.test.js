@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -386,4 +387,88 @@ test('toggleSelectedElementsLockState returns true after locking live targets an
     ['triggerAutoSave'],
     ['triggerAutoVersion', 'Auto: Locked Element']
   ]);
+});
+
+test('toggleSelectedElementsLockState captures a reversible dataset transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toggleSelectedElementsLockStateSource = extractFunctionSource(
+    fileContent,
+    'function toggleSelectedElementsLockState() {',
+    '\n\n    function toggleSelectedElementsVisibility(options = {}) {'
+  );
+  const liveTarget = {
+    isConnected: true,
+    dataset: {}
+  };
+  let finalized = null;
+  const context = {
+    selectedElements: [liveTarget],
+    SlideNextStudioEditorTransaction: studioTransaction,
+    SlideNextStudioEditorLockState: {
+      buildStudioLockMutationPlan() {
+        return {
+          didChange: true,
+          selection: [liveTarget],
+          shouldLock: true,
+          versionLabel: 'Auto: Locked Element'
+        };
+      }
+    },
+    SlideNextStudioEditorSelection: {
+      syncStudioSelectionUi() {}
+    },
+    SlideNextStudioElementState: {
+      setStudioElementLockedState(element, shouldLock) {
+        if (shouldLock) {
+          element.dataset.editorLocked = 'true';
+        } else {
+          delete element.dataset.editorLocked;
+        }
+      }
+    },
+    assignEditorElementId(element) {
+      element.dataset.editorId = 'node-1';
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      return { label: 'iframe-doc' };
+    },
+    isElementLocked(element) {
+      return element.dataset.editorLocked === 'true';
+    },
+    refreshSelectionClasses() {},
+    syncInspectorForSelection() {},
+    syncSelectionOverlay() {},
+    updateLayersList() {},
+    finalizeEditorDeckMutation(versionLabel, options) {
+      finalized = { versionLabel, options };
+    }
+  };
+
+  vm.createContext(context);
+  loadSyncSelectionUiAfterMutation(fileContent, context);
+  loadFinalizeSelectionToggleMutation(fileContent, context);
+  vm.runInContext(toggleSelectedElementsLockStateSource, context);
+
+  assert.equal(context.toggleSelectedElementsLockState(), true);
+  assert.equal(liveTarget.dataset.editorLocked, 'true');
+  assert.deepEqual(JSON.parse(JSON.stringify(finalized)), {
+    versionLabel: 'Auto: Locked Element',
+    options: {
+      refreshThumbnails: false,
+      transaction: {
+        kind: 'slidenext.editor.transaction',
+        version: 1,
+        operations: [{
+          type: 'dataset',
+          elementId: 'node-1',
+          property: 'editorLocked',
+          before: '',
+          after: 'true'
+        }]
+      }
+    }
+  });
 });
