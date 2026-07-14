@@ -37,7 +37,10 @@
       if (mutationOptions.refreshLayersList) {
         updateLayersList();
       }
-      saveHistoryState(mutationOptions.debounceHistory === true);
+      saveHistoryState(
+        mutationOptions.debounceHistory === true,
+        mutationOptions.transaction || null
+      );
       triggerAutoSave();
       if (versionLabel) {
         triggerAutoVersion(versionLabel);

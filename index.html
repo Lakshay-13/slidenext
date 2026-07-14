@@ -1174,6 +1174,7 @@
     let persistedDeckPlaybackState = null;
     let undoStack = [];
     let redoStack = [];
+    let pendingEditorTransaction = null;
     let wallpaperTab = 'solid';
     let activeCategory = 'all';
     let presentationLibraryData = [];
@@ -5035,7 +5036,10 @@
       if (options.refreshLayersList) {
         updateLayersList();
       }
-      saveHistoryState(options.debounceHistory === true);
+      saveHistoryState(
+        options.debounceHistory === true,
+        options.transaction || null
+      );
       triggerAutoSave();
       if (versionLabel) {
         triggerAutoVersion(versionLabel);
@@ -5302,6 +5306,32 @@
       }
       const nudgeResult = SlideNextStudioEditorNudge.buildStudioNudgedLayout(nudgeLayoutItems, { dx, dy }, slideBounds);
       if (!nudgeResult.didChange) return false;
+      const createStudioStyleTransaction = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+        : null;
+      const transactionItems = nudgeResult.nextItems.map((item) => {
+        if (typeof assignEditorElementId === 'function') {
+          assignEditorElementId(item.element);
+        }
+        return {
+          element: item.element,
+          before: {
+            left: item.element && item.element.style ? item.element.style.left : '',
+            top: item.element && item.element.style ? item.element.style.top : ''
+          },
+          after: {
+            left: `${item.nextLeft}px`,
+            top: `${item.nextTop}px`
+          }
+        };
+      });
+      const transaction = createStudioStyleTransaction
+        ? createStudioStyleTransaction(transactionItems)
+        : null;
       nudgeResult.nextItems.forEach((item) => {
         item.element.style.left = `${item.nextLeft}px`;
         item.element.style.top = `${item.nextTop}px`;
@@ -5309,7 +5339,8 @@
       finalizeEditorDeckMutation('Auto: Nudged Element', {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
-        debounceHistory: true
+        debounceHistory: true,
+        transaction
       });
       return true;
     }
@@ -6179,7 +6210,25 @@
 
     // 5. Undo/Redo Engine
     let undoDebounceTimer = null;
-    function saveHistoryState(debounce = false) {
+    function saveHistoryState(debounce = false, transaction = null) {
+      const transactionApi = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+      )
+        ? SlideNextStudioEditorTransaction
+        : null;
+      const normalizedTransaction = transactionApi
+        && typeof transactionApi.normalizeStudioEditorTransaction === 'function'
+        ? transactionApi.normalizeStudioEditorTransaction(transaction)
+        : transaction;
+      if (normalizedTransaction) {
+        pendingEditorTransaction = transactionApi
+          && typeof transactionApi.mergeStudioStyleTransactions === 'function'
+          ? transactionApi.mergeStudioStyleTransactions(pendingEditorTransaction, normalizedTransaction)
+          : normalizedTransaction;
+      } else {
+        pendingEditorTransaction = null;
+      }
       const nextCaptureState = SlideNextStudioHistory.scheduleStudioHistoryCapture(
         undoDebounceTimer,
         debounce,
@@ -6223,7 +6272,10 @@
           resolveFallbackActiveSlideId: resolveEditorFallbackActiveSlideId,
           buildHistoryHtml: buildHistoryFrameHtml,
           getActiveSlideId,
-          getSelectedElementIds: getCommittedSelectedEditorElementIds
+          getSelectedElementIds: getCommittedSelectedEditorElementIds,
+          transaction: typeof pendingEditorTransaction !== 'undefined'
+            ? pendingEditorTransaction
+            : null
         });
       }
 
@@ -6240,7 +6292,10 @@
         activeSlideId,
         selectedElementIds: [],
         buildHistoryHtml: buildHistoryFrameHtml,
-        canonicalDeck
+        canonicalDeck,
+        transaction: typeof pendingEditorTransaction !== 'undefined'
+          ? pendingEditorTransaction
+          : null
       });
     }
 
@@ -6327,12 +6382,17 @@
     }
 
     function captureState() {
+      const clearPendingTransaction = () => {
+        if (typeof pendingEditorTransaction !== 'undefined') {
+          pendingEditorTransaction = null;
+        }
+      };
       const createStudioHistoryStateCapturer = SlideNextStudioHistory
         && typeof SlideNextStudioHistory.createStudioHistoryStateCapturer === 'function'
         ? SlideNextStudioHistory.createStudioHistoryStateCapturer
         : null;
       if (createStudioHistoryStateCapturer) {
-        return createStudioHistoryStateCapturer({
+        const captureResult = createStudioHistoryStateCapturer({
           createHistoryEntry,
           getUndoStack: () => undoStack,
           getRedoStack: () => redoStack,
@@ -6345,10 +6405,15 @@
           },
           updateHistoryButtons
         })();
+        clearPendingTransaction();
+        return captureResult;
       }
 
       const historyEntry = createHistoryEntry();
-      if (!historyEntry) return;
+      if (!historyEntry) {
+        clearPendingTransaction();
+        return;
+      }
 
       const nextHistoryState = SlideNextStudioHistory.captureStudioHistoryState(
         undoStack,
@@ -6357,12 +6422,14 @@
         getEditorHistoryStackOptions()
       );
       if (!nextHistoryState.didCapture) {
+        clearPendingTransaction();
         return;
       }
 
       undoStack = nextHistoryState.undoStack;
       redoStack = nextHistoryState.redoStack;
       updateHistoryButtons();
+      clearPendingTransaction();
     }
 
     function updateHistoryButtons() {
@@ -6459,7 +6526,46 @@
     function restoreFrameFromHistoryEntry(entry) {
       const iframeDoc = getIframeDoc();
       const historyEntry = SlideNextStudioHistory.normalizeStudioHistoryEntry(entry);
+      const historyStep = arguments.length > 1 ? arguments[1] : null;
       const fallbackIndex = currentSlideIndex;
+
+      const transactionApi = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+      )
+        ? SlideNextStudioEditorTransaction
+        : null;
+      if (transactionApi
+        && historyStep
+        && historyStep.transaction
+        && typeof transactionApi.applyStudioEditorTransaction === 'function') {
+        const transactionResult = transactionApi.applyStudioEditorTransaction(
+          historyStep.transaction,
+          historyStep.direction,
+          {
+            getElementById: (editorId) => getElementByEditorId(editorId, iframeDoc)
+          }
+        );
+        if (transactionResult.didApply) {
+          SlideNextStudioHistory.restoreStudioHistorySelectionState(historyEntry, {
+            doc: iframeDoc,
+            restoreCommittedSelectionState: (selectedElementIds, doc) => restoreCommittedSelectionByIdsOnActiveSlide(selectedElementIds, doc),
+            observeDeckActiveSlideState
+          });
+          syncSelectionOverlay();
+          const restoredPlaybackState = capturePersistedDeckPlaybackState(iframeDoc, historyEntry.canonicalDeck);
+          applyCurrentStudioPersistedDeckState({ playbackState: restoredPlaybackState });
+          setCurrentPresentationCanonicalDeck(
+            Object.prototype.hasOwnProperty.call(historyEntry, 'canonicalDeck')
+              ? historyEntry.canonicalDeck
+              : null
+          );
+          return {
+            didRestoreTransaction: true,
+            transactionResult
+          };
+        }
+      }
       
       applyEditorSelectionState({});
       

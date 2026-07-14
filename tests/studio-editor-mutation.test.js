@@ -67,3 +67,17 @@ test('createStudioMutationFinalizer honors refresh and version guards', () => {
   }), '');
   assert.deepEqual(calls, ['history', 'save']);
 });
+
+test('createStudioMutationFinalizer forwards optional history transactions', () => {
+  const transaction = { kind: 'slidenext.editor.transaction', version: 1, operations: [] };
+  let historyArgs = null;
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    saveHistoryState(...args) {
+      historyArgs = args;
+    }
+  });
+
+  finalizeMutation('', { debounceHistory: true, transaction });
+
+  assert.deepEqual(historyArgs, [true, transaction]);
+});

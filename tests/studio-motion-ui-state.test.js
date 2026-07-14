@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -539,4 +540,65 @@ test('nudgeSelectedElements persists the moved selection through the shared muta
   assert.deepEqual(JSON.parse(JSON.stringify(calls[5][3])), { width: 1920, height: 1080 });
   assert.deepEqual(calls[7], ['saveHistoryState', true]);
   assert.deepEqual(calls[9], ['triggerAutoVersion', 'Auto: Nudged Element']);
+});
+
+test('nudgeSelectedElements forwards a reversible style transaction to history', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const nudgeSelectedElementsSource = extractFunctionSource(
+    fileContent,
+    'function nudgeSelectedElements(dx, dy) {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const movedElement = {
+    dataset: { editorId: 'node-1' },
+    style: { left: '10px', top: '20px' }
+  };
+  const historyCalls = [];
+  const context = {
+    SlideNextStudioEditorNudge: {
+      buildStudioNudgedLayout() {
+        return {
+          didChange: true,
+          nextItems: [{ element: movedElement, nextLeft: 120, nextTop: 80 }]
+        };
+      }
+    },
+    SlideNextStudioEditorMutation: require('../shared/studio-editor-mutation.js'),
+    SlideNextStudioEditorTransaction: studioTransaction,
+    buildMotionSelectionActionState() {
+      return {
+        canNudge: true,
+        doc: {},
+        nudgeLayoutItems: [{ element: movedElement }],
+        slideBounds: { width: 1920, height: 1080 }
+      };
+    },
+    assignEditorElementId() {
+      return 'node-1';
+    },
+    syncSelectionOverlay() {},
+    generateThumbnails() {},
+    updateLayersList() {},
+    saveHistoryState(...args) {
+      historyCalls.push(args);
+    },
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
+  vm.runInContext(nudgeSelectedElementsSource, context);
+
+  assert.equal(context.nudgeSelectedElements(1, 1), true);
+  assert.deepEqual(historyCalls, [[true, {
+    kind: studioTransaction.STUDIO_EDITOR_TRANSACTION_KIND,
+    version: studioTransaction.STUDIO_EDITOR_TRANSACTION_VERSION,
+    operations: [{
+      type: 'style',
+      elementId: 'node-1',
+      before: { left: '10px', top: '20px' },
+      after: { left: '120px', top: '80px' }
+    }]
+  }]]);
 });

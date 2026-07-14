@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const studioHistory = require('../shared/studio-history.js');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -1461,4 +1462,99 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
     ['updateEditorPersistedDeckState', { playbackState: null }]
   );
   assert.deepEqual(callLog[3], ['setCurrentPresentationCanonicalDeck', null]);
+});
+
+test('restoreFrameFromHistoryEntry applies a valid transaction without replacing the live frame', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const persistedDeckStateHelperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+  const restoreFrameFromHistoryEntrySource = extractFunctionSource(
+    fileContent,
+    'function restoreFrameFromHistoryEntry(entry) {',
+    '\n\n    function buildPersistableDeckHtml('
+  );
+  const element = {
+    style: { left: '30px', top: '40px' }
+  };
+  const iframeDoc = {
+    querySelector(selector) {
+      return selector === '[data-editor-id="node-1"]' ? element : null;
+    }
+  };
+  const callLog = [];
+  const styleTransaction = studioTransaction.createStudioStyleTransaction([{
+    elementId: 'node-1',
+    before: { left: '10px', top: '20px' },
+    after: { left: '30px', top: '40px' }
+  }]);
+  const context = {
+    SlideNextStudioEditorTransaction: studioTransaction,
+    SlideNextStudioHistory: {
+      normalizeStudioHistoryEntry(entry) {
+        return entry;
+      },
+      restoreStudioHistorySelectionState(entry, options) {
+        callLog.push(['restoreStudioHistorySelectionState', entry]);
+        options.restoreCommittedSelectionState(entry.selectedElementIds, options.doc);
+        options.observeDeckActiveSlideState(options.doc);
+      }
+    },
+    applyEditorSelectionState() {
+      throw new Error('snapshot restore should not clear the live selection');
+    },
+    capturePersistedDeckPlaybackState(doc, canonicalDeck) {
+      callLog.push(['capturePersistedDeckPlaybackState', doc, canonicalDeck]);
+      return null;
+    },
+    currentSlideIndex: 0,
+    getElementByEditorId(editorId, doc) {
+      return doc.querySelector(`[data-editor-id="${editorId}"]`);
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    observeDeckActiveSlideState(doc) {
+      callLog.push(['observeDeckActiveSlideState', doc]);
+    },
+    restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc) {
+      callLog.push(['restoreCommittedSelectionByIdsOnActiveSlide', selectedIds, doc]);
+    },
+    setCurrentPresentationCanonicalDeck(canonicalDeck) {
+      callLog.push(['setCurrentPresentationCanonicalDeck', canonicalDeck]);
+    },
+    syncSelectionOverlay() {
+      callLog.push(['syncSelectionOverlay']);
+    },
+    updateEditorPersistedDeckState(nextState) {
+      callLog.push(['updateEditorPersistedDeckState', nextState]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(persistedDeckStateHelperSource, context);
+  vm.runInContext(restoreFrameFromHistoryEntrySource, context);
+
+  const result = context.restoreFrameFromHistoryEntry({
+    html: '<html>snapshot</html>',
+    selectedElementIds: ['node-1'],
+    canonicalDeck: null
+  }, {
+    transaction: styleTransaction,
+    direction: 'undo'
+  });
+
+  assert.equal(result.didRestoreTransaction, true);
+  assert.deepEqual(element.style, { left: '10px', top: '20px' });
+  assert.deepEqual(callLog.map(([name]) => name), [
+    'restoreStudioHistorySelectionState',
+    'restoreCommittedSelectionByIdsOnActiveSlide',
+    'observeDeckActiveSlideState',
+    'syncSelectionOverlay',
+    'capturePersistedDeckPlaybackState',
+    'updateEditorPersistedDeckState',
+    'setCurrentPresentationCanonicalDeck'
+  ]);
 });
