@@ -5793,15 +5793,15 @@
       }
 
       const doc = getIframeDoc();
-      const createStudioMarkupTransaction = (
+      const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransaction === 'function'
+        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
       )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransaction
+        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const markupTransactionItems = [];
-      if (createStudioMarkupTransaction) {
+      const markupCaptureTargets = [];
+      if (createStudioMarkupTransactionCapture) {
         const parentSet = new Set();
         ungroupActionState.groups.forEach((group) => {
           const parent = group && group.parentElement;
@@ -5810,12 +5810,12 @@
           if (typeof assignEditorElementId === 'function') {
             assignEditorElementId(parent);
           }
-          markupTransactionItems.push({
-            element: parent,
-            before: parent.innerHTML
-          });
+          markupCaptureTargets.push({ element: parent });
         });
       }
+      const markupCapture = createStudioMarkupTransactionCapture
+        ? createStudioMarkupTransactionCapture(markupCaptureTargets)
+        : null;
       const slideMetrics = getSlideMetrics(ungroupActionState.slide);
       const restoredElements = [];
       ungroupActionState.groups.forEach((group) => {
@@ -5851,11 +5851,8 @@
       });
 
       if (restoredElements.length === 0) return false;
-      markupTransactionItems.forEach((item) => {
-        item.after = item.element.innerHTML;
-      });
-      const transaction = createStudioMarkupTransaction
-        ? createStudioMarkupTransaction(markupTransactionItems)
+      const transaction = markupCapture
+        ? markupCapture.createTransaction()
         : null;
       commitEditorSelectionState({
         selectedElements: restoredElements
