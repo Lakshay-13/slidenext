@@ -228,11 +228,14 @@ test('ungroupSelectedElements restores child positions, removes the wrapper, and
     }
   };
   const parent = {
+    dataset: { editorId: 'parent-2' },
+    innerHTML: '<div data-editor-id="group-1"><div data-editor-id="child-1"></div></div>',
     getBoundingClientRect() {
       return { left: 0, top: 0, right: 500, bottom: 400 };
     },
     insertBefore(element) {
       element.parentElement = this;
+      this.innerHTML = '<div data-editor-id="child-1"></div>';
       calls.push(['insertBefore', element]);
     }
   };
@@ -244,6 +247,7 @@ test('ungroupSelectedElements restores child positions, removes the wrapper, and
     },
     remove() {
       this.removed = true;
+      parent.innerHTML = '<div data-editor-id="child-1"></div>';
     }
   };
   const slide = { id: 'slide' };
@@ -283,6 +287,7 @@ test('ungroupSelectedElements restores child positions, removes the wrapper, and
         };
       }
     },
+    SlideNextStudioEditorTransaction: studioTransaction,
     commitEditorSelectionState(state) {
       calls.push(['commitEditorSelectionState', state]);
     },
@@ -304,4 +309,14 @@ test('ungroupSelectedElements restores child positions, removes the wrapper, and
   assert.equal(group.removed, true);
   assert.equal(calls[1][0], 'commitEditorSelectionState');
   assert.equal(calls[2][1], 'Auto: Ungrouped Elements');
+  assert.deepEqual(calls[2][2].transaction, {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'markup',
+      elementId: 'parent-2',
+      before: '<div data-editor-id="group-1"><div data-editor-id="child-1"></div></div>',
+      after: '<div data-editor-id="child-1"></div>'
+    }]
+  });
 });

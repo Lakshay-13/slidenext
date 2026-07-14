@@ -5750,6 +5750,29 @@
       }
 
       const doc = getIframeDoc();
+      const createStudioMarkupTransaction = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioMarkupTransaction
+        : null;
+      const markupTransactionItems = [];
+      if (createStudioMarkupTransaction) {
+        const parentSet = new Set();
+        ungroupActionState.groups.forEach((group) => {
+          const parent = group && group.parentElement;
+          if (!parent || parentSet.has(parent)) return;
+          parentSet.add(parent);
+          if (typeof assignEditorElementId === 'function') {
+            assignEditorElementId(parent);
+          }
+          markupTransactionItems.push({
+            element: parent,
+            before: parent.innerHTML
+          });
+        });
+      }
       const slideMetrics = getSlideMetrics(ungroupActionState.slide);
       const restoredElements = [];
       ungroupActionState.groups.forEach((group) => {
@@ -5785,13 +5808,20 @@
       });
 
       if (restoredElements.length === 0) return false;
+      markupTransactionItems.forEach((item) => {
+        item.after = item.element.innerHTML;
+      });
+      const transaction = createStudioMarkupTransaction
+        ? createStudioMarkupTransaction(markupTransactionItems)
+        : null;
       commitEditorSelectionState({
         selectedElements: restoredElements
       });
       finalizeEditorDeckMutation('Auto: Ungrouped Elements', {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
-        debounceHistory: true
+        debounceHistory: true,
+        transaction
       });
       return true;
     }
