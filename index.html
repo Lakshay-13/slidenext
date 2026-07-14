@@ -2573,6 +2573,16 @@
       if (!draggedNode || !targetNode) return false;
       if (fromIdx === toIdx) return false;
       const slideMutationState = captureSlideMutationRestoreState(iframeDoc);
+      const createStudioMarkupTransaction = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioMarkupTransaction
+        : null;
+      const containerMarkupBefore = createStudioMarkupTransaction
+        ? container.innerHTML
+        : '';
       
       if (fromIdx < toIdx) {
         container.insertBefore(draggedNode, targetNode.nextSibling);
@@ -2586,7 +2596,14 @@
         preservedActiveSlideId: slideMutationState.preservedActiveSlideId,
         fallbackIndex: slideCount === 0 ? 0 : Math.min(toIdx, slideCount - 1),
       });
-      finalizeSlideMutationPersistence('Auto: Reordered Slides');
+      const transaction = createStudioMarkupTransaction
+        ? createStudioMarkupTransaction([{
+            elementId: 'slides-container',
+            before: containerMarkupBefore,
+            after: container.innerHTML
+          }])
+        : null;
+      finalizeSlideMutationPersistence('Auto: Reordered Slides', transaction);
       return true;
     }
 
@@ -2985,8 +3002,8 @@
       });
     }
 
-    function finalizeSlideMutationPersistence(versionLabel) {
-      saveHistoryState();
+    function finalizeSlideMutationPersistence(versionLabel, transaction = null) {
+      saveHistoryState(false, transaction);
       triggerAutoSave();
       if (versionLabel) {
         triggerAutoVersion(versionLabel);
@@ -6910,7 +6927,9 @@
           historyStep.transaction,
           historyStep.direction,
           {
-            getElementById: (editorId) => getElementByEditorId(editorId, iframeDoc),
+            getElementById: (editorId) => editorId === 'slides-container'
+              ? iframeDoc && iframeDoc.getElementById('slidesContainer')
+              : getElementByEditorId(editorId, iframeDoc),
             applyVisibilityState: (
               typeof SlideNextStudioElementState !== 'undefined'
               && SlideNextStudioElementState
@@ -6922,6 +6941,9 @@
               if (!element || typeof markup !== 'string') return false;
               element.innerHTML = markup;
               makeElementsHoverable(element);
+              if (element.id === 'slidesContainer' && typeof generateThumbnails === 'function') {
+                generateThumbnails();
+              }
               return true;
             }
           }

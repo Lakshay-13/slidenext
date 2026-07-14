@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -17,7 +18,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 function loadFinalizeSlideMutationPersistence(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function finalizeSlideMutationPersistence(versionLabel) {',
+    'function finalizeSlideMutationPersistence(versionLabel, transaction = null) {',
     '\n\n    function captureSlideMutationRestoreState(iframeDoc) {'
   );
   vm.runInContext(helperSource, context);
@@ -428,12 +429,14 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
   const calls = [];
   let restorePayload = null;
   const slidesContainer = {
+    innerHTML: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section><section data-slide-id="slide-3"></section>',
     insertBefore(node, beforeNode) {
       calls.push(['insertBefore', node, beforeNode]);
       const currentIndex = slides.indexOf(node);
       slides.splice(currentIndex, 1);
       const targetIndex = beforeNode ? slides.indexOf(beforeNode) : slides.length;
       slides.splice(targetIndex, 0, node);
+      this.innerHTML = '<section data-slide-id="slide-2"></section><section data-slide-id="slide-3"></section><section data-slide-id="slide-1"></section>';
       return node;
     }
   };
@@ -450,6 +453,7 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
         calls.push(['restoreStudioDeckViewAfterSlideMutation', payload]);
       }
     },
+    SlideNextStudioEditorTransaction: studioTransaction,
     generateThumbnails() {
       calls.push(['generateThumbnails']);
     },
@@ -472,8 +476,8 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
     restoreSelectionAfterPreservedSlideMutation(ids, doc) {
       calls.push(['restoreSelectionAfterPreservedSlideMutation', ids, doc]);
     },
-    saveHistoryState() {
-      calls.push(['saveHistoryState']);
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
     },
     setActiveSlide(index) {
       calls.push(['setActiveSlide', index]);
@@ -518,6 +522,16 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
   assert.equal(calls[5][1], firstSlide);
   assert.equal(calls[5][2], null);
   assert.equal(calls[11][1], 'Auto: Reordered Slides');
+  assert.deepEqual(calls[9][2], {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'markup',
+      elementId: 'slides-container',
+      before: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section><section data-slide-id="slide-3"></section>',
+      after: '<section data-slide-id="slide-2"></section><section data-slide-id="slide-3"></section><section data-slide-id="slide-1"></section>'
+    }]
+  });
   assert.equal(restorePayload.preservedActiveSlideId, 'slide-2');
   assert.equal(restorePayload.fallbackIndex, 2);
 
