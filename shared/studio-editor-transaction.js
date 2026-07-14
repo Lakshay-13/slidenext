@@ -265,6 +265,40 @@
     };
   }
 
+  function createStudioMarkupTransactionCapture(items = [], options = {}) {
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const sourceItems = Array.isArray(items) ? items : [];
+    const seenElementIds = new Set();
+    const captureItems = sourceItems.reduce((nextItems, item) => {
+      const element = item && item.element;
+      const elementId = typeof item?.elementId === 'string' && item.elementId.trim()
+        ? item.elementId.trim()
+        : getElementId(element);
+      if (!element || !elementId || seenElementIds.has(elementId)) return nextItems;
+      seenElementIds.add(elementId);
+      nextItems.push({
+        element,
+        elementId,
+        before: typeof element.innerHTML === 'string' ? element.innerHTML : ''
+      });
+      return nextItems;
+    }, []);
+    if (captureItems.length === 0) return null;
+
+    return {
+      createTransaction() {
+        return createStudioMarkupTransaction(captureItems.map((item) => ({
+          element: item.element,
+          elementId: item.elementId,
+          before: item.before,
+          after: typeof item.element.innerHTML === 'string' ? item.element.innerHTML : ''
+        })));
+      }
+    };
+  }
+
   function normalizeStudioEditorTransaction(transaction) {
     if (!transaction || typeof transaction !== 'object') return null;
     if (transaction.kind !== STUDIO_EDITOR_TRANSACTION_KIND
@@ -475,6 +509,7 @@
     createStudioDatasetTransaction,
     createStudioVisibilityTransaction,
     createStudioMarkupTransaction,
+    createStudioMarkupTransactionCapture,
     normalizeVisibilityState,
     normalizeStudioEditorTransaction,
     isStudioEditorTransaction,

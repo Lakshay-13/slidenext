@@ -2573,16 +2573,19 @@
       if (!draggedNode || !targetNode) return false;
       if (fromIdx === toIdx) return false;
       const slideMutationState = captureSlideMutationRestoreState(iframeDoc);
-      const createStudioMarkupTransaction = (
+      const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransaction === 'function'
+        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
       )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransaction
+        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const containerMarkupBefore = createStudioMarkupTransaction
-        ? container.innerHTML
-        : '';
+      const markupCapture = createStudioMarkupTransactionCapture
+        ? createStudioMarkupTransactionCapture([{
+            element: container,
+            elementId: 'slides-container'
+          }])
+        : null;
       
       if (fromIdx < toIdx) {
         container.insertBefore(draggedNode, targetNode.nextSibling);
@@ -2596,12 +2599,8 @@
         preservedActiveSlideId: slideMutationState.preservedActiveSlideId,
         fallbackIndex: slideCount === 0 ? 0 : Math.min(toIdx, slideCount - 1),
       });
-      const transaction = createStudioMarkupTransaction
-        ? createStudioMarkupTransaction([{
-            elementId: 'slides-container',
-            before: containerMarkupBefore,
-            after: container.innerHTML
-          }])
+      const transaction = markupCapture
+        ? markupCapture.createTransaction()
         : null;
       finalizeSlideMutationPersistence('Auto: Reordered Slides', transaction);
       return true;
@@ -3044,16 +3043,19 @@
       if (!iframeDoc) return false;
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return false;
-      const createStudioMarkupTransaction = (
+      const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransaction === 'function'
+        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
       )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransaction
+        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const containerMarkupBefore = createStudioMarkupTransaction
-        ? container.innerHTML
-        : '';
+      const markupCapture = createStudioMarkupTransactionCapture
+        ? createStudioMarkupTransactionCapture([{
+            element: container,
+            elementId: 'slides-container'
+          }])
+        : null;
       
       const newIndex = getSlides(iframeDoc).length;
       const newSlide = SlideNextStudioEditorDom.createStudioBlankSlide(iframeDoc, {
@@ -3070,12 +3072,8 @@
       // Update UI
       generateThumbnails();
       setActiveSlide(newIndex);
-      const transaction = createStudioMarkupTransaction
-        ? createStudioMarkupTransaction([{
-            elementId: 'slides-container',
-            before: containerMarkupBefore,
-            after: container.innerHTML
-          }])
+      const transaction = markupCapture
+        ? markupCapture.createTransaction()
         : null;
       finalizeSlideMutationPersistence('Auto: Added Slide', transaction);
       return true;
@@ -3087,16 +3085,19 @@
       if (!iframeDoc) return false;
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return false;
-      const createStudioMarkupTransaction = (
+      const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransaction === 'function'
+        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
       )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransaction
+        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const containerMarkupBefore = createStudioMarkupTransaction
-        ? container.innerHTML
-        : '';
+      const markupCapture = createStudioMarkupTransactionCapture
+        ? createStudioMarkupTransactionCapture([{
+            element: container,
+            elementId: 'slides-container'
+          }])
+        : null;
       
       const slides = getSlides(iframeDoc);
       if (slides.length <= 1) {
@@ -3117,12 +3118,8 @@
         removedSlideId: deletedSlideId,
         fallbackIndex: remainingSlides.length === 0 ? 0 : Math.max(0, Math.min(idx - 1, remainingSlides.length - 1)),
       });
-      const transaction = createStudioMarkupTransaction
-        ? createStudioMarkupTransaction([{
-            elementId: 'slides-container',
-            before: containerMarkupBefore,
-            after: container.innerHTML
-          }])
+      const transaction = markupCapture
+        ? markupCapture.createTransaction()
         : null;
       finalizeSlideMutationPersistence('Auto: Deleted Slide', transaction);
       return true;

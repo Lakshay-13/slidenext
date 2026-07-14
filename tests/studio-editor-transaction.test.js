@@ -251,6 +251,30 @@ test('createStudioMarkupTransaction applies scoped container markup through its 
   ]);
 });
 
+test('createStudioMarkupTransactionCapture snapshots markup once and creates a transaction after mutation', () => {
+  const element = {
+    dataset: { editorId: 'parent-1' },
+    innerHTML: '<div>A</div>'
+  };
+  const markupCapture = transaction.createStudioMarkupTransactionCapture([
+    { element },
+    { element, elementId: 'parent-1' }
+  ]);
+
+  element.innerHTML = '<div>B</div>';
+
+  assert.deepEqual(markupCapture.createTransaction(), {
+    kind: transaction.STUDIO_EDITOR_TRANSACTION_KIND,
+    version: transaction.STUDIO_EDITOR_TRANSACTION_VERSION,
+    operations: [{
+      type: 'markup',
+      elementId: 'parent-1',
+      before: '<div>A</div>',
+      after: '<div>B</div>'
+    }]
+  });
+});
+
 test('mergeStudioStyleTransactions coalesces sequential changes per element', () => {
   const first = transaction.createStudioStyleTransaction([{
     elementId: 'node-1',
