@@ -78,6 +78,30 @@ test('applyStudioEditorTransaction fails atomically when a target is missing', (
   assert.deepEqual(element.style, { left: '10px' });
 });
 
+test('mergeStudioStyleTransactions coalesces sequential changes per element', () => {
+  const first = transaction.createStudioStyleTransaction([{
+    elementId: 'node-1',
+    before: { left: '0px', top: '0px' },
+    after: { left: '10px', top: '0px' }
+  }]);
+  const second = transaction.createStudioStyleTransaction([{
+    elementId: 'node-1',
+    before: { left: '10px', top: '0px' },
+    after: { left: '20px', top: '5px' }
+  }]);
+
+  assert.deepEqual(transaction.mergeStudioStyleTransactions(first, second), {
+    kind: transaction.STUDIO_EDITOR_TRANSACTION_KIND,
+    version: transaction.STUDIO_EDITOR_TRANSACTION_VERSION,
+    operations: [{
+      type: 'style',
+      elementId: 'node-1',
+      before: { left: '0px', top: '0px' },
+      after: { left: '20px', top: '5px' }
+    }]
+  });
+});
+
 test('normalizeStudioEditorTransaction rejects other transaction formats', () => {
   assert.equal(transaction.normalizeStudioEditorTransaction({ kind: 'other' }), null);
   assert.equal(transaction.isStudioEditorTransaction({ kind: 'other' }), false);

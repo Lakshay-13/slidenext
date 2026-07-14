@@ -88,6 +88,37 @@
     return !!normalizeStudioEditorTransaction(transaction);
   }
 
+  function mergeStudioStyleTransactions(firstTransaction, secondTransaction) {
+    const first = normalizeStudioEditorTransaction(firstTransaction);
+    const second = normalizeStudioEditorTransaction(secondTransaction);
+    if (!first) return second;
+    if (!second) return first;
+
+    const operationsByElementId = new Map();
+    [...first.operations, ...second.operations].forEach((operation) => {
+      const existingOperation = operationsByElementId.get(operation.elementId);
+      if (!existingOperation) {
+        operationsByElementId.set(operation.elementId, {
+          elementId: operation.elementId,
+          before: { ...operation.before },
+          after: { ...operation.after }
+        });
+        return;
+      }
+
+      existingOperation.before = {
+        ...operation.before,
+        ...existingOperation.before
+      };
+      existingOperation.after = {
+        ...existingOperation.after,
+        ...operation.after
+      };
+    });
+
+    return createStudioStyleTransaction(Array.from(operationsByElementId.values()));
+  }
+
   function applyStudioEditorTransaction(transaction, direction, options = {}) {
     const normalizedTransaction = normalizeStudioEditorTransaction(transaction);
     const nextDirection = direction === 'undo' || direction === 'redo' ? direction : '';
@@ -135,6 +166,7 @@
     createStudioStyleTransaction,
     normalizeStudioEditorTransaction,
     isStudioEditorTransaction,
+    mergeStudioStyleTransactions,
     applyStudioEditorTransaction
   };
 });
