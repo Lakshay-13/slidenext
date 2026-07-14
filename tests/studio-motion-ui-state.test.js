@@ -312,7 +312,7 @@ test('nudgeSelectedElements returns false and refreshes motion controls when sel
   const nudgeSelectedElementsSource = extractFunctionSource(
     fileContent,
     'function nudgeSelectedElements(dx, dy) {',
-    '\n\n    // Element dragging + resize on an open canvas (no snapping)'
+    '\n\n    // Element dragging + resize on an open canvas'
   );
 
   const doc = { label: 'iframe-doc' };
@@ -381,7 +381,7 @@ test('nudgeSelectedElements returns false and refreshes motion controls when nud
   const nudgeSelectedElementsSource = extractFunctionSource(
     fileContent,
     'function nudgeSelectedElements(dx, dy) {',
-    '\n\n    // Element dragging + resize on an open canvas (no snapping)'
+    '\n\n    // Element dragging + resize on an open canvas'
   );
 
   const doc = { label: 'iframe-doc' };
@@ -426,7 +426,7 @@ test('nudgeSelectedElements persists the moved selection through the shared muta
   const nudgeSelectedElementsSource = extractFunctionSource(
     fileContent,
     'function nudgeSelectedElements(dx, dy) {',
-    '\n\n    // Element dragging + resize on an open canvas (no snapping)'
+    '\n\n    // Element dragging + resize on an open canvas'
   );
 
   const movedElement = {
