@@ -183,8 +183,10 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   const newSlide = { id: 'slide-2' };
   const slides = [existingSlide];
   const slidesContainer = {
+    innerHTML: '<section data-slide-id="slide-1"></section>',
     appendChild(node) {
       slides.push(node);
+      this.innerHTML = '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section>';
       return node;
     }
   };
@@ -205,6 +207,7 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
         return null;
       }
     },
+    SlideNextStudioEditorTransaction: studioTransaction,
     generateThumbnails() {
       calls.push(['generateThumbnails']);
     },
@@ -224,8 +227,8 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
       return slides;
     },
     makeElementsHoverable() {},
-    saveHistoryState() {
-      calls.push(['saveHistoryState']);
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
     },
     setActiveSlide(index) {
       calls.push(['setActiveSlide', index]);
@@ -274,6 +277,16 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   assert.equal(calls[3][1], iframeDoc);
   assert.equal(calls[6][1], 1);
   assert.equal(calls[9][1], 'Auto: Added Slide');
+  assert.deepEqual(calls[7][2], {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'markup',
+      elementId: 'slides-container',
+      before: '<section data-slide-id="slide-1"></section>',
+      after: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section>'
+    }]
+  });
 });
 
 test('addSlideNode no-ops when insertion state or the iframe document disallows adding slides', () => {

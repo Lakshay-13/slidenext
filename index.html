@@ -3044,6 +3044,16 @@
       if (!iframeDoc) return false;
       const container = iframeDoc.getElementById('slidesContainer');
       if (!container) return false;
+      const createStudioMarkupTransaction = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioMarkupTransaction
+        : null;
+      const containerMarkupBefore = createStudioMarkupTransaction
+        ? container.innerHTML
+        : '';
       
       const newIndex = getSlides(iframeDoc).length;
       const newSlide = SlideNextStudioEditorDom.createStudioBlankSlide(iframeDoc, {
@@ -3060,7 +3070,14 @@
       // Update UI
       generateThumbnails();
       setActiveSlide(newIndex);
-      finalizeSlideMutationPersistence('Auto: Added Slide');
+      const transaction = createStudioMarkupTransaction
+        ? createStudioMarkupTransaction([{
+            elementId: 'slides-container',
+            before: containerMarkupBefore,
+            after: container.innerHTML
+          }])
+        : null;
+      finalizeSlideMutationPersistence('Auto: Added Slide', transaction);
       return true;
     }
 
