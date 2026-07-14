@@ -1087,6 +1087,9 @@
     const dragOverflowMarginPx = Number.isFinite(options.dragOverflowMarginPx)
       ? options.dragOverflowMarginPx
       : 0;
+    const getGridSizePx = typeof options.getGridSizePx === 'function'
+      ? options.getGridSizePx
+      : () => options.gridSizePx;
     let session = null;
 
     function finalizeSession() {
@@ -1152,6 +1155,7 @@
         dragStartThresholdPx,
         minSizePx,
         dragOverflowMarginPx,
+        gridSizePx: getGridSizePx(),
         lockAspectRatio: !!event.shiftKey
       });
       if (!transformFrameState.isActive) {

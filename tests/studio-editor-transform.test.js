@@ -1457,7 +1457,7 @@ test('createStudioTransformPointerHandlers coordinates the shared pointer lifecy
       return nextSession === session && event.pointerId === 7;
     },
     buildTransformFrameState(nextSession, options) {
-      calls.push(['frame', nextSession, options.clientX, options.clientY, options.lockAspectRatio]);
+      calls.push(['frame', nextSession, options.clientX, options.clientY, options.lockAspectRatio, options.gridSizePx]);
       return { isActive: true, bounds };
     },
     applyTransformBounds(nextSession, nextBounds, options) {
@@ -1473,6 +1473,9 @@ test('createStudioTransformPointerHandlers coordinates the shared pointer lifecy
     },
     captureTarget: { id: 'body' },
     minSizePx: 12,
+    getGridSizePx() {
+      return 20;
+    },
     onSessionStart(nextBounds) {
       calls.push(['session-start', nextBounds]);
     },
@@ -1513,7 +1516,7 @@ test('createStudioTransformPointerHandlers coordinates the shared pointer lifecy
     ['session-start', startBounds],
     ['down-prevented'],
     ['down-stopped'],
-    ['frame', session, 40, 50, true],
+    ['frame', session, 40, 50, true, 20],
     ['apply', session, bounds, 12],
     ['session-frame', bounds],
     ['move-prevented'],

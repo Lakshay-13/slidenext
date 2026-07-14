@@ -763,6 +763,7 @@
             </div>
             <button id="groupSelectionBtn" onclick="groupSelectedElements()" class="py-1.5 flex items-center justify-center rounded bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Group Selected">Group</button>
             <button id="ungroupSelectionBtn" onclick="ungroupSelectedElements()" class="py-1.5 flex items-center justify-center rounded bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Ungroup Selected">Ungroup</button>
+            <button id="toggleGridSnapBtn" onclick="toggleGridSnap()" aria-pressed="false" class="py-1.5 flex items-center justify-center rounded bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white transition-all" title="Toggle 20px Grid Snap">Grid Snap: Off</button>
           </div>
 
           <div class="h-[1px] bg-white/5"></div>
@@ -1096,8 +1097,10 @@
     let deckActiveSlideObserver = null;
     let deckActiveSlideSyncTimer = null;
     let preserveSelectionOnNextActiveSlideSync = false;
+    let isGridSnapEnabled = false;
     const DRAG_START_THRESHOLD_PX = 4;
     const SNAP_THRESHOLD_PX = 12;
+    const GRID_SNAP_SIZE_PX = 20;
     const DUPLICATE_OFFSET_PX = 24;
     const MIN_ELEMENT_SIZE_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
@@ -1180,6 +1183,7 @@
       loadPresentations();
       renderWallpaperPresets();
       updateWallpaperActionState();
+      updateGridSnapActionState();
       updateDeckReadyToolbarActionState();
       
       // Update theme toggle icons
@@ -1216,6 +1220,19 @@
         }
       });
     });
+
+    function updateGridSnapActionState() {
+      const button = document.getElementById('toggleGridSnapBtn');
+      if (!button) return;
+      button.textContent = `Grid Snap: ${isGridSnapEnabled ? 'On' : 'Off'}`;
+      button.setAttribute('aria-pressed', String(isGridSnapEnabled));
+    }
+
+    function toggleGridSnap() {
+      isGridSnapEnabled = !isGridSnapEnabled;
+      updateGridSnapActionState();
+      return isGridSnapEnabled;
+    }
 
     // Theme Toggle Functionality
     function toggleGlobalTheme() {
@@ -5367,6 +5384,7 @@
           minSizePx: MIN_ELEMENT_SIZE_PX,
           dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX,
           snapDistancePx: SNAP_THRESHOLD_PX,
+          getGridSizePx: () => isGridSnapEnabled ? GRID_SNAP_SIZE_PX : null,
           onSessionStart: (startBounds) => {
             updateDragHud(startBounds);
             isDraggingElement = true;
@@ -8204,6 +8222,7 @@
         'distributeSelectionVerticalBtn',
         'groupSelectionBtn',
         'ungroupSelectionBtn',
+        'toggleGridSnapBtn',
         'arrangeLayerFrontBtn',
         'arrangeLayerBackBtn',
         'arrangeLayerForwardBtn',
