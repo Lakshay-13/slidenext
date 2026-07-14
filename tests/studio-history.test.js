@@ -72,6 +72,31 @@ test('createStudioHistoryEntry includes the canonical deck sidecar when provided
   });
 });
 
+test('createStudioHistoryEntry preserves optional transaction metadata', () => {
+  const transaction = {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'style',
+      elementId: 'node-1',
+      before: { left: '0px' },
+      after: { left: '10px' }
+    }]
+  };
+
+  const entry = studioHistory.createStudioHistoryEntry(null, {
+    buildHistoryHtml() {
+      return '<main>transaction-state</main>';
+    },
+    activeSlideId: 'slide-1',
+    selectedElementIds: [],
+    transaction
+  });
+
+  assert.deepEqual(entry.transaction, transaction);
+  assert.deepEqual(studioHistory.normalizeStudioHistoryEntry(entry), entry);
+});
+
 test('createStudioHistoryEntry can capture a model-only history entry without a live document', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',
@@ -218,6 +243,26 @@ test('normalizeStudioHistoryEntry preserves the canonical deck sidecar', () => {
     selectedElementIds: ['node-1'],
     canonicalDeck
   });
+});
+
+test('history equality includes optional transaction metadata', () => {
+  const baseEntry = {
+    html: '<main>same</main>',
+    activeSlideId: 'slide-1',
+    selectedElementIds: [],
+    canonicalDeck: null,
+    transaction: {
+      kind: 'slidenext.editor.transaction',
+      version: 1,
+      operations: [{ type: 'style', elementId: 'node-1', before: { left: '0px' }, after: { left: '10px' } }]
+    }
+  };
+
+  assert.equal(studioHistory.areStudioHistoryEntriesEqual(baseEntry, { ...baseEntry }), true);
+  assert.equal(studioHistory.areStudioHistoryEntriesEqual(baseEntry, {
+    ...baseEntry,
+    transaction: { ...baseEntry.transaction, operations: [] }
+  }), false);
 });
 
 test('captureStudioHistoryState ignores equivalent full-document and inner-html history snapshots', () => {
@@ -588,6 +633,22 @@ test('createStudioHistoryStepRunner applies successful history steps and skips u
   assert.deepEqual(skippedCalls, [
     ['stepHistory', ['undo-entry'], ['redo-entry']]
   ]);
+});
+
+test('history undo and redo steps carry transaction direction when present', () => {
+  const transaction = {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{ type: 'style', elementId: 'node-1', before: { left: '0px' }, after: { left: '10px' } }]
+  };
+  const undoState = studioHistory.stepStudioHistoryUndo([
+    { html: '<main>initial</main>' },
+    { html: '<main>next</main>', transaction }
+  ], []);
+  assert.deepEqual(undoState.transaction, { transaction, direction: 'undo' });
+
+  const redoState = studioHistory.stepStudioHistoryRedo(undoState.undoStack, undoState.redoStack);
+  assert.deepEqual(redoState.transaction, { transaction, direction: 'redo' });
 });
 
 test('buildStudioHistoryFrameHtml strips editor runtime ids from the captured html snapshot', () => {

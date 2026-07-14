@@ -180,12 +180,21 @@
       return null;
     }
 
-    return {
+    const historyEntry = {
       html,
       activeSlideId,
       selectedElementIds,
       canonicalDeck
     };
+    const transaction = normalizeStudioHistoryTransaction(options.transaction);
+    if (transaction) {
+      historyEntry.transaction = transaction;
+    }
+    return historyEntry;
+  }
+
+  function normalizeStudioHistoryTransaction(transaction) {
+    return transaction && typeof transaction === 'object' ? transaction : null;
   }
 
   function normalizeStudioHistoryEntry(entry) {
@@ -201,7 +210,7 @@
       };
     }
 
-    return {
+    const normalizedEntry = {
       html: normalizeStudioHistoryFrameHtml(entry.html || ''),
       activeSlideId: entry.activeSlideId || '',
       selectedElementIds: Array.isArray(entry.selectedElementIds) ? entry.selectedElementIds.filter(Boolean) : [],
@@ -209,6 +218,11 @@
         ? entry.canonicalDeck
         : null
     };
+    const transaction = normalizeStudioHistoryTransaction(entry.transaction);
+    if (transaction) {
+      normalizedEntry.transaction = transaction;
+    }
+    return normalizedEntry;
   }
 
   function areStudioHistoryEntriesEqual(a, b, options = {}) {
@@ -236,7 +250,8 @@
     return normalizedA.html === normalizedB.html
       && normalizedA.activeSlideId === normalizedB.activeSlideId
       && areIdListsEqual(normalizedA.selectedElementIds, normalizedB.selectedElementIds)
-      && areCanonicalDecksEqual(normalizedA.canonicalDeck, normalizedB.canonicalDeck);
+      && areCanonicalDecksEqual(normalizedA.canonicalDeck, normalizedB.canonicalDeck)
+      && areCanonicalDecksEqual(normalizedA.transaction, normalizedB.transaction);
   }
 
   function captureStudioHistoryState(undoStack = [], redoStack = [], historyEntry, options = {}) {
@@ -381,7 +396,11 @@
 
       setUndoStack(nextHistoryState.undoStack);
       setRedoStack(nextHistoryState.redoStack);
-      restoreHistoryEntry(nextHistoryState.restoreEntry);
+      if (Object.prototype.hasOwnProperty.call(nextHistoryState, 'transaction')) {
+        restoreHistoryEntry(nextHistoryState.restoreEntry, nextHistoryState.transaction);
+      } else {
+        restoreHistoryEntry(nextHistoryState.restoreEntry);
+      }
       updateHistoryButtons();
       triggerAutoSave();
       return nextHistoryState;
@@ -403,12 +422,20 @@
     const currentState = nextUndoStack.pop();
     nextRedoStack.push(currentState);
 
-    return {
+    const nextHistoryState = {
       undoStack: nextUndoStack,
       redoStack: nextRedoStack,
       restoreEntry: nextUndoStack[nextUndoStack.length - 1] || null,
       didUndo: true
     };
+    const transaction = normalizeStudioHistoryTransaction(currentState && currentState.transaction);
+    if (transaction) {
+      nextHistoryState.transaction = {
+        transaction,
+        direction: 'undo'
+      };
+    }
+    return nextHistoryState;
   }
 
   function stepStudioHistoryRedo(undoStack = [], redoStack = []) {
@@ -426,12 +453,20 @@
     const restoreEntry = nextRedoStack.pop();
     nextUndoStack.push(restoreEntry);
 
-    return {
+    const nextHistoryState = {
       undoStack: nextUndoStack,
       redoStack: nextRedoStack,
       restoreEntry,
       didRedo: true
     };
+    const transaction = normalizeStudioHistoryTransaction(restoreEntry && restoreEntry.transaction);
+    if (transaction) {
+      nextHistoryState.transaction = {
+        transaction,
+        direction: 'redo'
+      };
+    }
+    return nextHistoryState;
   }
 
   function getStudioHistoryButtonState(undoStack = [], redoStack = [], options = {}) {
@@ -639,6 +674,7 @@
     buildStudioHistoryCaptureHtml,
     buildStudioHistoryEntry,
     createStudioHistoryEntry,
+    normalizeStudioHistoryTransaction,
     normalizeStudioHistoryEntry,
     areStudioHistoryEntriesEqual,
     captureStudioHistoryState,
