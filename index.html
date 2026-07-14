@@ -5554,6 +5554,41 @@
 
     // Element dragging + resize on an open canvas
     function setupIframeDragging(doc) {
+      const buildTransformTransaction = (finalizeResult) => {
+        const transactionApi = (
+          typeof SlideNextStudioEditorTransaction !== 'undefined'
+          && SlideNextStudioEditorTransaction
+        )
+          ? SlideNextStudioEditorTransaction
+          : null;
+        const session = finalizeResult && finalizeResult.session;
+        if (!transactionApi
+          || !session
+          || !Array.isArray(session.items)
+          || typeof transactionApi.createStudioStyleTransaction !== 'function') {
+          return null;
+        }
+
+        const properties = ['position', 'margin', 'left', 'top', 'width', 'height'];
+        const transactionItems = session.items.map((item) => {
+          const element = item && item.element;
+          if (!element) return null;
+          if (typeof assignEditorElementId === 'function') {
+            assignEditorElementId(element);
+          }
+          const style = element.style || {};
+          const after = properties.reduce((nextStyle, property) => {
+            nextStyle[property] = typeof style[property] === 'string' ? style[property] : '';
+            return nextStyle;
+          }, {});
+          return {
+            element,
+            before: item.startStyle || {},
+            after
+          };
+        }).filter(Boolean);
+        return transactionApi.createStudioStyleTransaction(transactionItems);
+      };
       const createStudioTransformPointerHandlers = (
         typeof SlideNextStudioEditorTransform !== 'undefined'
         && SlideNextStudioEditorTransform
@@ -5597,7 +5632,8 @@
             syncSelectionOverlay();
             syncInspectorForSelection();
             if (completionPlan.shouldPersist) {
-              saveHistoryState();
+              const transaction = buildTransformTransaction(_finalizeResult);
+              saveHistoryState(false, transaction);
               triggerAutoSave();
               triggerAutoVersion(completionPlan.versionLabel);
             }
@@ -5686,7 +5722,8 @@
         syncSelectionOverlay();
         syncInspectorForSelection();
         if (completionPlan.shouldPersist) {
-          saveHistoryState();
+          const transaction = buildTransformTransaction(finalizeResult);
+          saveHistoryState(false, transaction);
           triggerAutoSave();
           triggerAutoVersion(completionPlan.versionLabel);
         }

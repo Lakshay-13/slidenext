@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const selection = require('../shared/studio-editor-selection.js');
 const deckView = require('../shared/studio-deck-view.js');
 const history = require('../shared/studio-history.js');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
@@ -769,6 +770,7 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
     DRAG_START_THRESHOLD_PX: 3,
     MIN_ELEMENT_SIZE_PX: 12,
     SNAP_THRESHOLD_PX: 12,
+    SlideNextStudioEditorTransaction: studioTransaction,
     SlideNextStudioEditorDom: {
       getStudioClosestPositionedAncestor() {}
     },
@@ -795,8 +797,8 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
     renderGuides(guides) {
       calls.push(['renderGuides', guides]);
     },
-    saveHistoryState() {
-      calls.push(['saveHistoryState']);
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
     },
     selectElement() {},
     ensureSelectionOverlay() {},
@@ -832,9 +834,34 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
   assert.equal(typeof delegatedOptions.onSessionFinalize, 'function');
 
   const startBounds = { left: 0, top: 0, width: 20, height: 20 };
+  const movedElement = {
+    dataset: { editorId: 'node-1' },
+    style: {
+      position: 'absolute',
+      margin: '0',
+      left: '20px',
+      top: '30px',
+      width: '120px',
+      height: '80px'
+    }
+  };
   delegatedOptions.onSessionStart(startBounds);
   delegatedOptions.onSessionFrame(startBounds, { guides: [] });
-  delegatedOptions.onSessionFinalize({}, {
+  delegatedOptions.onSessionFinalize({
+    session: {
+      items: [{
+        element: movedElement,
+        startStyle: {
+          position: '',
+          margin: '',
+          left: '',
+          top: '',
+          width: '',
+          height: ''
+        }
+      }]
+    }
+  }, {
     shouldPersist: true,
     versionLabel: 'Auto: Moved Element'
   });
@@ -854,4 +881,29 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
     'triggerAutoSave',
     'triggerAutoVersion'
   ]);
+  assert.equal(calls[9][1], false);
+  assert.deepEqual(calls[9][2], {
+    kind: studioTransaction.STUDIO_EDITOR_TRANSACTION_KIND,
+    version: studioTransaction.STUDIO_EDITOR_TRANSACTION_VERSION,
+    operations: [{
+      type: 'style',
+      elementId: 'node-1',
+      before: {
+        position: '',
+        margin: '',
+        left: '',
+        top: '',
+        width: '',
+        height: ''
+      },
+      after: {
+        position: 'absolute',
+        margin: '0',
+        left: '20px',
+        top: '30px',
+        width: '120px',
+        height: '80px'
+      }
+    }]
+  });
 });
