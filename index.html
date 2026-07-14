@@ -1554,6 +1554,19 @@
       doc = getIframeDoc(),
       buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)
     ) {
+      const createStudioCanonicalDeckResolver = (
+        typeof SlideNextStudioDeckView !== 'undefined'
+        && SlideNextStudioDeckView
+        && typeof SlideNextStudioDeckView.createStudioCanonicalDeckResolver === 'function'
+      )
+        ? SlideNextStudioDeckView.createStudioCanonicalDeckResolver
+        : null;
+      if (createStudioCanonicalDeckResolver) {
+        return createStudioCanonicalDeckResolver(doc, {
+          buildCanonicalDeck
+        });
+      }
+
       const resolveCanonicalDeckBuilder = buildCanonicalDeck;
       let didResolveCanonicalDeck = false;
       let resolvedCanonicalDeck = null;
