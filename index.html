@@ -5001,6 +5001,26 @@
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!visibilityMutationPlan.didChange) return false;
+      const createStudioVisibilityTransaction = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioVisibilityTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioVisibilityTransaction
+        : null;
+      const visibilityTransactionItems = createStudioVisibilityTransaction
+        ? visibilityMutationPlan.selection
+            .filter((el) => el && el.isConnected && isElementHidden(el) !== visibilityMutationPlan.shouldHide)
+            .map((el) => {
+              if (typeof assignEditorElementId === 'function') {
+                assignEditorElementId(el);
+              }
+              return {
+                element: el,
+                before: SlideNextStudioElementState.getStudioElementVisibilityState(el)
+              };
+            })
+        : [];
       let changedCount = 0;
       visibilityMutationPlan.selection.forEach(el => {
         if (!el || !el.isConnected) return;
@@ -5009,7 +5029,16 @@
         changedCount += 1;
       });
       if (changedCount === 0) return false;
-      return finalizeSelectionToggleMutation(visibilityMutationPlan.versionLabel, options);
+      visibilityTransactionItems.forEach((item) => {
+        item.after = SlideNextStudioElementState.getStudioElementVisibilityState(item.element);
+      });
+      const transaction = createStudioVisibilityTransaction
+        ? createStudioVisibilityTransaction(visibilityTransactionItems)
+        : null;
+      return finalizeSelectionToggleMutation(visibilityMutationPlan.versionLabel, {
+        ...options,
+        transaction
+      });
     }
 
     // Helper: RGB to hex converters
@@ -6719,7 +6748,14 @@
           historyStep.transaction,
           historyStep.direction,
           {
-            getElementById: (editorId) => getElementByEditorId(editorId, iframeDoc)
+            getElementById: (editorId) => getElementByEditorId(editorId, iframeDoc),
+            applyVisibilityState: (
+              typeof SlideNextStudioElementState !== 'undefined'
+              && SlideNextStudioElementState
+              && typeof SlideNextStudioElementState.applyStudioElementVisibilityState === 'function'
+            )
+              ? SlideNextStudioElementState.applyStudioElementVisibilityState
+              : null
           }
         );
         if (transactionResult.didApply) {

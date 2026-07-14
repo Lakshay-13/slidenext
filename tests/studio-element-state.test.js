@@ -156,6 +156,33 @@ test('setStudioElementHiddenState restores a pre-existing aria-hidden value afte
   assert.equal(el.getAttribute('aria-hidden'), 'false');
 });
 
+test('visibility state snapshots restore all editor-managed hidden state', () => {
+  const el = createElement({
+    display: 'flex',
+    attributes: { 'aria-hidden': 'false' },
+    dataset: { editorId: 'node-1' },
+    classNames: ['hero-card']
+  });
+  const visibleState = studioElementState.getStudioElementVisibilityState(el);
+
+  studioElementState.setStudioElementHiddenState(el, true);
+  const hiddenState = studioElementState.getStudioElementVisibilityState(el);
+
+  studioElementState.applyStudioElementVisibilityState(el, visibleState);
+  assert.equal(el.hidden, false);
+  assert.equal(el.style.display, 'flex');
+  assert.equal(el.getAttribute('aria-hidden'), 'false');
+  assert.equal(el.classList.contains('hidden'), false);
+  assert.deepEqual(studioElementState.getStudioElementVisibilityState(el), visibleState);
+
+  studioElementState.applyStudioElementVisibilityState(el, hiddenState);
+  assert.equal(el.hidden, true);
+  assert.equal(el.style.display, 'none');
+  assert.equal(el.getAttribute('aria-hidden'), 'true');
+  assert.equal(el.classList.contains('hidden'), true);
+  assert.deepEqual(studioElementState.getStudioElementVisibilityState(el), hiddenState);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

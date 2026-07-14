@@ -24,6 +24,77 @@
     delete el.dataset.editorLocked;
   }
 
+  const STUDIO_VISIBILITY_DATASET_KEYS = [
+    'editorHidden',
+    'editorPrevDisplay',
+    'editorPrevAriaHidden'
+  ];
+
+  function getStudioElementVisibilityState(el) {
+    if (!el) return null;
+    const dataset = {};
+    STUDIO_VISIBILITY_DATASET_KEYS.forEach((key) => {
+      if (el.dataset && Object.prototype.hasOwnProperty.call(el.dataset, key)) {
+        dataset[key] = String(el.dataset[key]);
+      }
+    });
+    const ariaHidden = typeof el.getAttribute === 'function'
+      ? el.getAttribute('aria-hidden')
+      : null;
+    return {
+      hidden: el.hidden === true,
+      display: el.style && typeof el.style.display === 'string' ? el.style.display : '',
+      ariaHidden: typeof ariaHidden === 'string' ? ariaHidden : null,
+      hasHiddenClass: hasStudioHiddenClass(el),
+      dataset
+    };
+  }
+
+  function applyStudioElementVisibilityState(el, state) {
+    if (!el || !state || typeof state !== 'object') return false;
+
+    const display = typeof state.display === 'string' ? state.display : '';
+    if (el.style) {
+      if (display) {
+        el.style.display = display;
+      } else if (typeof el.style.removeProperty === 'function') {
+        el.style.removeProperty('display');
+      } else {
+        el.style.display = '';
+      }
+    }
+
+    if (el.classList) {
+      if (state.hasHiddenClass === true && typeof el.classList.add === 'function') {
+        el.classList.add('hidden');
+      } else if (state.hasHiddenClass !== true && typeof el.classList.remove === 'function') {
+        el.classList.remove('hidden');
+      }
+    }
+
+    if (typeof el.setAttribute === 'function' && typeof el.removeAttribute === 'function') {
+      if (typeof state.ariaHidden === 'string') {
+        el.setAttribute('aria-hidden', state.ariaHidden);
+      } else {
+        el.removeAttribute('aria-hidden');
+      }
+    }
+
+    el.hidden = state.hidden === true;
+
+    STUDIO_VISIBILITY_DATASET_KEYS.forEach((key) => {
+      const dataset = state.dataset && typeof state.dataset === 'object'
+        ? state.dataset
+        : {};
+      if (Object.prototype.hasOwnProperty.call(dataset, key)) {
+        if (el.dataset) el.dataset[key] = String(dataset[key]);
+      } else if (el.dataset) {
+        delete el.dataset[key];
+      }
+    });
+    return true;
+  }
+
   function isStudioElementHidden(el) {
     const computedStyle = el && el.ownerDocument && el.ownerDocument.defaultView
       && typeof el.ownerDocument.defaultView.getComputedStyle === 'function'
@@ -140,6 +211,8 @@
   return {
     isStudioElementLocked,
     setStudioElementLockedState,
+    getStudioElementVisibilityState,
+    applyStudioElementVisibilityState,
     isStudioElementHidden,
     setStudioElementHiddenState,
     sanitizeStudioDuplicatedSubtree

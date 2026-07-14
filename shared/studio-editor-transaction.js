@@ -9,6 +9,11 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const STUDIO_EDITOR_TRANSACTION_KIND = 'slidenext.editor.transaction';
   const STUDIO_EDITOR_TRANSACTION_VERSION = 1;
+  const STUDIO_VISIBILITY_DATASET_KEYS = [
+    'editorHidden',
+    'editorPrevDisplay',
+    'editorPrevAriaHidden'
+  ];
 
   function normalizeStylePatch(patch) {
     if (!patch || typeof patch !== 'object') return {};
@@ -178,6 +183,58 @@
     };
   }
 
+  function normalizeVisibilityState(state) {
+    if (!state || typeof state !== 'object') return null;
+    const sourceDataset = state.dataset && typeof state.dataset === 'object'
+      ? state.dataset
+      : {};
+    const dataset = {};
+    STUDIO_VISIBILITY_DATASET_KEYS.forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(sourceDataset, key)) {
+        dataset[key] = normalizeTransactionValue(sourceDataset[key]);
+      }
+    });
+    return {
+      hidden: state.hidden === true,
+      display: normalizeTransactionValue(state.display),
+      ariaHidden: typeof state.ariaHidden === 'string' ? state.ariaHidden : null,
+      hasHiddenClass: state.hasHiddenClass === true,
+      dataset
+    };
+  }
+
+  function createStudioVisibilityTransaction(items = [], options = {}) {
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const sourceItems = Array.isArray(items) ? items : [];
+    const operations = sourceItems.reduce((nextOperations, item) => {
+      if (!item || typeof item !== 'object') return nextOperations;
+      const elementId = typeof item.elementId === 'string' && item.elementId.trim()
+        ? item.elementId.trim()
+        : getElementId(item.element);
+      const before = normalizeVisibilityState(item.before);
+      const after = normalizeVisibilityState(item.after);
+      if (!elementId || !before || !after || JSON.stringify(before) === JSON.stringify(after)) {
+        return nextOperations;
+      }
+      nextOperations.push({
+        type: 'visibility',
+        elementId,
+        before,
+        after
+      });
+      return nextOperations;
+    }, []);
+
+    if (operations.length === 0) return null;
+    return {
+      kind: STUDIO_EDITOR_TRANSACTION_KIND,
+      version: STUDIO_EDITOR_TRANSACTION_VERSION,
+      operations
+    };
+  }
+
   function normalizeStudioEditorTransaction(transaction) {
     if (!transaction || typeof transaction !== 'object') return null;
     if (transaction.kind !== STUDIO_EDITOR_TRANSACTION_KIND
@@ -198,6 +255,12 @@
           ? createStudioDatasetTransaction([{
               elementId: operation.elementId,
               property: operation.property,
+              before: operation.before,
+              after: operation.after
+            }])
+        : operation.type === 'visibility'
+          ? createStudioVisibilityTransaction([{
+              elementId: operation.elementId,
               before: operation.before,
               after: operation.after
             }])
@@ -235,11 +298,18 @@
     [...first.operations, ...second.operations].forEach((operation) => {
       const operationKey = operation.type === 'property' || operation.type === 'dataset'
         ? `${operation.type}:${operation.elementId}:${operation.property}`
-        : `style:${operation.elementId}`;
+        : `${operation.type}:${operation.elementId}`;
       const existingOperation = operationsByKey.get(operationKey);
       if (!existingOperation) {
         operationsByKey.set(operationKey, operation.type === 'property' || operation.type === 'dataset'
           ? { ...operation }
+          : operation.type === 'visibility'
+            ? {
+                type: 'visibility',
+                elementId: operation.elementId,
+                before: { ...operation.before, dataset: { ...operation.before.dataset } },
+                after: { ...operation.after, dataset: { ...operation.after.dataset } }
+              }
           : {
               type: 'style',
               elementId: operation.elementId,
@@ -251,6 +321,11 @@
 
       if (operation.type === 'property' || operation.type === 'dataset') {
         existingOperation.after = operation.after;
+      } else if (operation.type === 'visibility') {
+        existingOperation.after = {
+          ...operation.after,
+          dataset: { ...operation.after.dataset }
+        };
       } else {
         existingOperation.before = {
           ...operation.before,
@@ -292,10 +367,14 @@
       operation,
       element: getElementById(operation.elementId)
     }));
+    const applyVisibilityState = typeof options.applyVisibilityState === 'function'
+      ? options.applyVisibilityState
+      : null;
     if (resolvedOperations.some(({ operation, element }) => {
       return !element
         || (operation.type === 'style' && !element.style)
-        || (operation.type === 'dataset' && !element.dataset);
+        || (operation.type === 'dataset' && !element.dataset)
+        || (operation.type === 'visibility' && !applyVisibilityState);
     })) {
       return {
         didApply: false,
@@ -316,6 +395,11 @@
         } else {
           delete element.dataset[operation.property];
         }
+        return;
+      }
+      if (operation.type === 'visibility') {
+        const state = nextDirection === 'undo' ? operation.before : operation.after;
+        applyVisibilityState(element, state);
         return;
       }
       const patch = nextDirection === 'undo' ? operation.before : operation.after;
@@ -340,6 +424,8 @@
     createStudioPositionTransaction,
     createStudioPropertyTransaction,
     createStudioDatasetTransaction,
+    createStudioVisibilityTransaction,
+    normalizeVisibilityState,
     normalizeStudioEditorTransaction,
     isStudioEditorTransaction,
     mergeStudioEditorTransactions,

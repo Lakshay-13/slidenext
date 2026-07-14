@@ -149,6 +149,60 @@ test('createStudioDatasetTransaction applies and removes reversible dataset stat
   assert.equal(Object.prototype.hasOwnProperty.call(element.dataset, 'editorLocked'), false);
 });
 
+test('createStudioVisibilityTransaction applies reversible visibility state through its adapter', () => {
+  const element = {
+    dataset: { editorId: 'node-1' }
+  };
+  const before = {
+    hidden: false,
+    display: 'flex',
+    ariaHidden: null,
+    hasHiddenClass: false,
+    dataset: {}
+  };
+  const after = {
+    hidden: true,
+    display: 'none',
+    ariaHidden: 'true',
+    hasHiddenClass: true,
+    dataset: {
+      editorHidden: 'true',
+      editorPrevDisplay: 'flex',
+      editorPrevAriaHidden: ''
+    }
+  };
+  const visibilityTransaction = transaction.createStudioVisibilityTransaction([{
+    element,
+    before,
+    after
+  }]);
+  const appliedStates = [];
+  const getElementById = (editorId) => editorId === 'node-1' ? element : null;
+  const applyVisibilityState = (target, state) => {
+    assert.equal(target, element);
+    appliedStates.push(state);
+    return true;
+  };
+
+  assert.deepEqual(visibilityTransaction.operations, [{
+    type: 'visibility',
+    elementId: 'node-1',
+    before,
+    after
+  }]);
+  assert.equal(transaction.applyStudioEditorTransaction(
+    visibilityTransaction,
+    'redo',
+    { getElementById, applyVisibilityState }
+  ).didApply, true);
+  assert.equal(transaction.applyStudioEditorTransaction(
+    visibilityTransaction,
+    'undo',
+    { getElementById, applyVisibilityState }
+  ).didApply, true);
+  assert.deepEqual(appliedStates, [after, before]);
+});
+
 test('mergeStudioStyleTransactions coalesces sequential changes per element', () => {
   const first = transaction.createStudioStyleTransaction([{
     elementId: 'node-1',

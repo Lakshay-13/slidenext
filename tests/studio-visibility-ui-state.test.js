@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const studioElementState = require('../shared/studio-element-state.js');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -328,6 +330,125 @@ test('toggleSelectedElementsVisibility returns true after hiding live targets an
     ['triggerAutoSave'],
     ['triggerAutoVersion', 'Auto: Hid Element']
   ]);
+});
+
+test('toggleSelectedElementsVisibility captures a reversible visibility transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toggleSelectedElementsVisibilitySource = extractFunctionSource(
+    fileContent,
+    'function toggleSelectedElementsVisibility(options = {}) {',
+    '\n\n    // Helper: RGB to hex converters'
+  );
+  const attributes = {};
+  const classNames = new Set();
+  const liveTarget = {
+    isConnected: true,
+    dataset: {},
+    hidden: false,
+    style: {
+      display: '',
+      removeProperty(name) {
+        if (name === 'display') this.display = '';
+      }
+    },
+    classList: {
+      contains(name) {
+        return classNames.has(name);
+      },
+      add(name) {
+        classNames.add(name);
+      },
+      remove(name) {
+        classNames.delete(name);
+      }
+    },
+    getAttribute(name) {
+      return Object.prototype.hasOwnProperty.call(attributes, name) ? attributes[name] : null;
+    },
+    setAttribute(name, value) {
+      attributes[name] = String(value);
+    },
+    removeAttribute(name) {
+      delete attributes[name];
+    }
+  };
+  let finalized = null;
+  const context = {
+    selectedElements: [liveTarget],
+    SlideNextStudioEditorTransaction: studioTransaction,
+    SlideNextStudioEditorSelection: {
+      syncStudioSelectionUi() {}
+    },
+    SlideNextStudioEditorVisibilityState: {
+      buildStudioVisibilityMutationPlan() {
+        return {
+          didChange: true,
+          selection: [liveTarget],
+          shouldHide: true,
+          versionLabel: 'Auto: Hid Element'
+        };
+      }
+    },
+    SlideNextStudioElementState: studioElementState,
+    assignEditorElementId(element) {
+      element.dataset.editorId = 'node-1';
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      return { label: 'iframe-doc' };
+    },
+    isElementHidden: studioElementState.isStudioElementHidden,
+    refreshSelectionClasses() {},
+    setElementHiddenState: studioElementState.setStudioElementHiddenState,
+    syncInspectorForSelection() {},
+    syncSelectionOverlay() {},
+    updateLayersList() {},
+    finalizeEditorDeckMutation(versionLabel, options) {
+      finalized = { versionLabel, options };
+    }
+  };
+
+  vm.createContext(context);
+  loadSyncSelectionUiAfterMutation(fileContent, context);
+  loadFinalizeSelectionToggleMutation(fileContent, context);
+  vm.runInContext(toggleSelectedElementsVisibilitySource, context);
+
+  assert.equal(context.toggleSelectedElementsVisibility(), true);
+  assert.equal(liveTarget.hidden, true);
+  assert.deepEqual(JSON.parse(JSON.stringify(finalized)), {
+    versionLabel: 'Auto: Hid Element',
+    options: {
+      refreshThumbnails: false,
+      transaction: {
+        kind: 'slidenext.editor.transaction',
+        version: 1,
+        operations: [{
+          type: 'visibility',
+          elementId: 'node-1',
+          before: {
+            hidden: false,
+            display: '',
+            ariaHidden: null,
+            hasHiddenClass: false,
+            dataset: {}
+          },
+          after: {
+            hidden: true,
+            display: 'none',
+            ariaHidden: 'true',
+            hasHiddenClass: true,
+            dataset: {
+              editorHidden: 'true',
+              editorPrevDisplay: '',
+              editorPrevAriaHidden: ''
+            }
+          }
+        }]
+      }
+    }
+  });
 });
 
 test('toggleSelectedElementsVisibility can skip temporary selection UI sync when requested', () => {
