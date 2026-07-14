@@ -733,3 +733,65 @@ test('applySelectedElementStyle forwards a reversible CSS style transaction', ()
     }]
   }]]);
 });
+
+test('applySelectedElementStyle forwards a reversible text property transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applySelectedElementStyleSource = extractFunctionSource(
+    fileContent,
+    'function applySelectedElementStyle(prop, val) {',
+    '\n\n    // Delete active selection'
+  );
+  const element = {
+    dataset: { editorId: 'node-1' },
+    isConnected: true,
+    tagName: 'DIV',
+    style: {},
+    textContent: 'Before'
+  };
+  const historyCalls = [];
+  const context = {
+    SlideNextStudioEditorMutation: studioMutation,
+    SlideNextStudioEditorStyle: styleState,
+    SlideNextStudioEditorTransaction: studioTransaction,
+    selectedElements: [element],
+    assignEditorElementId() {
+      return 'node-1';
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      return {};
+    },
+    isElementLocked() {
+      return false;
+    },
+    syncInspectorForSelection() {},
+    syncSelectionOverlay() {},
+    generateThumbnails() {},
+    updateLayersList() {},
+    saveHistoryState(...args) {
+      historyCalls.push(args);
+    },
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
+  vm.runInContext(applySelectedElementStyleSource, context);
+
+  assert.equal(context.applySelectedElementStyle('text', 'After'), true);
+  assert.equal(element.textContent, 'After');
+  assert.deepEqual(historyCalls, [[true, {
+    kind: studioTransaction.STUDIO_EDITOR_TRANSACTION_KIND,
+    version: studioTransaction.STUDIO_EDITOR_TRANSACTION_VERSION,
+    operations: [{
+      type: 'property',
+      elementId: 'node-1',
+      property: 'textContent',
+      before: 'Before',
+      after: 'After'
+    }]
+  }]]);
+});

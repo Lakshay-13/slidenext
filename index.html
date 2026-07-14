@@ -5079,7 +5079,19 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
         : null;
-      const transactionItems = createStudioStyleTransaction
+      const propertyTransactionProperty = {
+        text: 'textContent',
+        src: 'src'
+      }[prop] || '';
+      const createStudioPropertyTransaction = (
+        propertyTransactionProperty
+        && typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioPropertyTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioPropertyTransaction
+        : null;
+      const styleTransactionItems = createStudioStyleTransaction
         ? styleMutationPlan.selection.map((element) => {
             if (typeof assignEditorElementId === 'function') {
               assignEditorElementId(element);
@@ -5094,22 +5106,41 @@
             };
           })
         : [];
+      const propertyTransactionItems = createStudioPropertyTransaction
+        ? styleMutationPlan.selection.slice(0, 1).map((element) => {
+            if (typeof assignEditorElementId === 'function') {
+              assignEditorElementId(element);
+            }
+            return {
+              element,
+              property: propertyTransactionProperty,
+              before: element ? element[propertyTransactionProperty] : ''
+            };
+          })
+        : [];
       const styleMutationResult = SlideNextStudioEditorStyle.applyStudioStyleMutation(styleMutationPlan.selection, prop, val);
       if (!styleMutationResult.didApply) {
         syncInspectorForSelection();
         return false;
       }
 
-      transactionItems.forEach((item) => {
+      styleTransactionItems.forEach((item) => {
         item.after = {
           [styleTransactionProperty]: item.element && item.element.style
             ? item.element.style[styleTransactionProperty]
             : ''
         };
       });
-      const transaction = createStudioStyleTransaction
-        ? createStudioStyleTransaction(transactionItems)
+      const styleTransaction = createStudioStyleTransaction
+        ? createStudioStyleTransaction(styleTransactionItems)
         : null;
+      propertyTransactionItems.forEach((item) => {
+        item.after = item.element ? item.element[propertyTransactionProperty] : '';
+      });
+      const propertyTransaction = createStudioPropertyTransaction
+        ? createStudioPropertyTransaction(propertyTransactionItems)
+        : null;
+      const transaction = styleTransaction || propertyTransaction;
 
       if (prop === 'size') {
         const fontSizeLabel = document.getElementById('fontSizeVal');
