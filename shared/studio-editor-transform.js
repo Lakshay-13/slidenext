@@ -796,6 +796,14 @@
     return items.length === selection.length ? items : [];
   }
 
+  function getStudioTransformInlineStyle(element) {
+    const style = element && element.style ? element.style : {};
+    return ['position', 'margin', 'left', 'top', 'width', 'height'].reduce((inlineStyle, property) => {
+      inlineStyle[property] = typeof style[property] === 'string' ? style[property] : '';
+      return inlineStyle;
+    }, {});
+  }
+
   function buildStudioTransformSessionItem(element, options = {}) {
     const geometry = buildStudioPositionedLayoutItem(element, options);
     if (!geometry) {
@@ -812,7 +820,8 @@
       parentOffsetLeft: geometry.parentLeft,
       parentOffsetTop: geometry.parentTop,
       lockWidth: sizingLockState.lockWidth,
-      lockHeight: sizingLockState.lockHeight
+      lockHeight: sizingLockState.lockHeight,
+      startStyle: getStudioTransformInlineStyle(element)
     };
   }
 
@@ -1229,6 +1238,7 @@
     buildStudioTransformCompletionPlan,
     buildStudioPositionedLayoutItem,
     buildStudioPositionedLayoutItems,
+    getStudioTransformInlineStyle,
     buildStudioTransformSessionItem,
     buildStudioTransformSession,
     startStudioTransformSession,

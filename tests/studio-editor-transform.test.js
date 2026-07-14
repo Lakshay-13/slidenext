@@ -1135,7 +1135,15 @@ test('buildStudioTransformSessionItem captures transform geometry and sizing loc
     parentOffsetLeft: 20,
     parentOffsetTop: 30,
     lockWidth: true,
-    lockHeight: true
+    lockHeight: true,
+    startStyle: {
+      position: '',
+      margin: '',
+      left: '',
+      top: '',
+      width: '',
+      height: ''
+    }
   });
 
   assert.equal(transformState.buildStudioTransformSessionItem(null), null);
