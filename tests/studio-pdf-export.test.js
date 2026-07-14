@@ -1,0 +1,93 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+const pdfExport = require('../shared/studio-pdf-export.js');
+
+test('buildStudioPdfPrintHtml injects fixed-size one-slide-per-page print styles', () => {
+  const html = pdfExport.buildStudioPdfPrintHtml(
+    '<!doctype html><html><head><title>Deck</title></head><body><div class="slide">A</div></body></html>'
+  );
+
+  assert.match(html, /data-slidenext-pdf-print="true"/);
+  assert.match(html, /size: 16in 9in/);
+  assert.match(html, /break-after: page/);
+  assert.match(html, /\.slide:last-child/);
+  assert.match(html, /#indicatorDots/);
+  assert.equal((html.match(/data-slidenext-pdf-print="true"/g) || []).length, 1);
+});
+
+test('buildStudioPdfPrintHtml preserves legacy html fallback and supports safe dimensions', () => {
+  const html = pdfExport.buildStudioPdfPrintHtml(
+    '<html><body><section class="frame">A</section></body></html>',
+    {
+      pageWidth: '210mm',
+      pageHeight: '148mm',
+      slideSelector: '.frame'
+    }
+  );
+
+  assert.match(html, /<head><style/);
+  assert.match(html, /size: 210mm 148mm/);
+  assert.match(html, /\.frame \{/);
+  assert.match(html, /<section class="frame">A<\/section>/);
+  assert.equal(pdfExport.normalizeDimension('javascript:alert(1)', '16in'), '16in');
+});
+
+test('openStudioPdfPrintWindow writes export html and waits for the print window load event', () => {
+  let writtenHtml = '';
+  let printCalls = 0;
+  let focusCalls = 0;
+  let loadHandler = null;
+  const printWindow = {
+    document: {
+      open() {},
+      write(html) {
+        writtenHtml = html;
+      },
+      close() {},
+      fonts: {
+        ready: Promise.resolve()
+      }
+    },
+    addEventListener(type, handler) {
+      assert.equal(type, 'load');
+      loadHandler = handler;
+    },
+    focus() {
+      focusCalls += 1;
+    },
+    print() {
+      printCalls += 1;
+    }
+  };
+
+  assert.equal(pdfExport.openStudioPdfPrintWindow({
+    html: '<html><head></head><body><div class="slide">A</div></body></html>',
+    openWindow() {
+      return printWindow;
+    }
+  }), true);
+  assert.match(writtenHtml, /data-slidenext-pdf-print="true"/);
+  assert.equal(printCalls, 0);
+  assert.equal(typeof loadHandler, 'function');
+
+  loadHandler();
+
+  return new Promise((resolve) => {
+    setImmediate(() => {
+      assert.equal(printCalls, 1);
+      assert.equal(focusCalls, 1);
+      resolve();
+    });
+  });
+});
+
+test('openStudioPdfPrintWindow returns false when popup or html input is unavailable', () => {
+  assert.equal(pdfExport.openStudioPdfPrintWindow({ html: '' }), false);
+  assert.equal(pdfExport.openStudioPdfPrintWindow({
+    html: '<html></html>',
+    openWindow() {
+      return null;
+    }
+  }), false);
+});

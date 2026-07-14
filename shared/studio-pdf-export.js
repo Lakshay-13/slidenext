@@ -1,0 +1,157 @@
+(function (root, factory) {
+  const api = factory(root);
+  if (typeof module === 'object' && module.exports) {
+    module.exports = api;
+  }
+  if (root) {
+    root.SlideNextStudioPdfExport = api;
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  const DEFAULT_PAGE_WIDTH = '16in';
+  const DEFAULT_PAGE_HEIGHT = '9in';
+
+  function normalizeDimension(value, fallback) {
+    if (typeof value !== 'string' || !/^\d+(?:\.\d+)?(?:in|cm|mm|px|pt)$/.test(value.trim())) {
+      return fallback;
+    }
+    return value.trim();
+  }
+
+  function buildStudioPdfPrintStyles(options = {}) {
+    const pageWidth = normalizeDimension(options.pageWidth, DEFAULT_PAGE_WIDTH);
+    const pageHeight = normalizeDimension(options.pageHeight, DEFAULT_PAGE_HEIGHT);
+    const slideSelector = typeof options.slideSelector === 'string' && options.slideSelector.trim()
+      ? options.slideSelector.trim()
+      : '.slide';
+
+    return `
+@page {
+  size: ${pageWidth} ${pageHeight};
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .presentation-viewport {
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .slides-container {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  ${slideSelector} {
+    display: flex !important;
+    width: ${pageWidth} !important;
+    height: ${pageHeight} !important;
+    min-height: 0 !important;
+    max-height: ${pageHeight} !important;
+    margin: 0 !important;
+    flex: none !important;
+    break-after: page;
+    page-break-after: always;
+    overflow: hidden !important;
+  }
+
+  ${slideSelector}:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  #prevBtn,
+  #nextBtn,
+  #progressLine,
+  #slideNum,
+  #indicatorDots {
+    display: none !important;
+  }
+}
+`.trim();
+  }
+
+  function buildStudioPdfPrintHtml(html, options = {}) {
+    if (typeof html !== 'string' || !html.trim()) {
+      return '';
+    }
+
+    const styleTag = `<style data-slidenext-pdf-print="true">\n${buildStudioPdfPrintStyles(options)}\n</style>`;
+    if (/<\/head\s*>/i.test(html)) {
+      return html.replace(/<\/head\s*>/i, `${styleTag}</head>`);
+    }
+    if (/<head(?:\s[^>]*)?>/i.test(html)) {
+      return html.replace(/<head(?:\s[^>]*)?>/i, `$&${styleTag}`);
+    }
+    return html.replace(/<html(?:\s[^>]*)?>/i, `$&<head>${styleTag}</head>`);
+  }
+
+  function openStudioPdfPrintWindow(options = {}) {
+    const openWindow = typeof options.openWindow === 'function'
+      ? options.openWindow
+      : root && typeof root.open === 'function'
+        ? root.open.bind(root)
+        : null;
+    const html = buildStudioPdfPrintHtml(options.html, options);
+    if (!openWindow || !html) {
+      return false;
+    }
+
+    const printWindow = openWindow('', '_blank', 'noopener,noreferrer');
+    if (!printWindow || !printWindow.document) {
+      return false;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    let didPrint = false;
+    const print = () => {
+      if (didPrint) return;
+      didPrint = true;
+      if (typeof printWindow.focus === 'function') {
+        printWindow.focus();
+      }
+      if (typeof printWindow.print === 'function') {
+        printWindow.print();
+      }
+    };
+    const waitForFonts = () => {
+      const fontsReady = printWindow.document.fonts && printWindow.document.fonts.ready;
+      if (fontsReady && typeof fontsReady.then === 'function') {
+        fontsReady.then(print).catch(print);
+        return;
+      }
+      print();
+    };
+
+    if (typeof printWindow.addEventListener === 'function') {
+      printWindow.addEventListener('load', waitForFonts, { once: true });
+    } else {
+      waitForFonts();
+    }
+    return true;
+  }
+
+  return {
+    DEFAULT_PAGE_WIDTH,
+    DEFAULT_PAGE_HEIGHT,
+    normalizeDimension,
+    buildStudioPdfPrintStyles,
+    buildStudioPdfPrintHtml,
+    openStudioPdfPrintWindow
+  };
+});
