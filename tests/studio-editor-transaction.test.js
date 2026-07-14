@@ -36,6 +36,28 @@ test('createStudioStyleTransaction returns null without valid changed targets', 
   ]), null);
 });
 
+test('createStudioPositionTransaction derives reversible left and top patches', () => {
+  const element = {
+    dataset: { editorId: 'node-1' },
+    style: { left: '10px', top: '20px' }
+  };
+
+  assert.deepEqual(transaction.createStudioPositionTransaction([{
+    element,
+    nextLeft: 30,
+    nextTop: 40
+  }]), {
+    kind: transaction.STUDIO_EDITOR_TRANSACTION_KIND,
+    version: transaction.STUDIO_EDITOR_TRANSACTION_VERSION,
+    operations: [{
+      type: 'style',
+      elementId: 'node-1',
+      before: { left: '10px', top: '20px' },
+      after: { left: '30px', top: '40px' }
+    }]
+  });
+});
+
 test('applyStudioEditorTransaction applies before and after style patches', () => {
   const element = createStyleElement('node-1', { left: '10px', top: '20px' });
   const styleTransaction = transaction.createStudioStyleTransaction([{

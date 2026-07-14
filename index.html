@@ -5385,31 +5385,22 @@
       }
       const nudgeResult = SlideNextStudioEditorNudge.buildStudioNudgedLayout(nudgeLayoutItems, { dx, dy }, slideBounds);
       if (!nudgeResult.didChange) return false;
-      const createStudioStyleTransaction = (
+      const createStudioPositionTransaction = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
+        && typeof SlideNextStudioEditorTransaction.createStudioPositionTransaction === 'function'
       )
-        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+        ? SlideNextStudioEditorTransaction.createStudioPositionTransaction
         : null;
-      const transactionItems = nudgeResult.nextItems.map((item) => {
-        if (typeof assignEditorElementId === 'function') {
-          assignEditorElementId(item.element);
-        }
-        return {
-          element: item.element,
-          before: {
-            left: item.element && item.element.style ? item.element.style.left : '',
-            top: item.element && item.element.style ? item.element.style.top : ''
-          },
-          after: {
-            left: `${item.nextLeft}px`,
-            top: `${item.nextTop}px`
-          }
-        };
-      });
-      const transaction = createStudioStyleTransaction
-        ? createStudioStyleTransaction(transactionItems)
+      const transaction = createStudioPositionTransaction
+        ? createStudioPositionTransaction(nudgeResult.nextItems, {
+            getElementId(element) {
+              if (typeof assignEditorElementId === 'function') {
+                return assignEditorElementId(element);
+              }
+              return element && element.dataset && element.dataset.editorId;
+            }
+          })
         : null;
       nudgeResult.nextItems.forEach((item) => {
         item.element.style.left = `${item.nextLeft}px`;
@@ -5437,31 +5428,22 @@
       );
       if (!alignmentResult.didChange) return false;
 
-      const createStudioStyleTransaction = (
+      const createStudioPositionTransaction = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
+        && typeof SlideNextStudioEditorTransaction.createStudioPositionTransaction === 'function'
       )
-        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+        ? SlideNextStudioEditorTransaction.createStudioPositionTransaction
         : null;
-      const transactionItems = alignmentResult.nextItems.map((item) => {
-        if (typeof assignEditorElementId === 'function') {
-          assignEditorElementId(item.element);
-        }
-        return {
-          element: item.element,
-          before: {
-            left: item.element && item.element.style ? item.element.style.left : '',
-            top: item.element && item.element.style ? item.element.style.top : ''
-          },
-          after: {
-            left: `${item.nextLeft}px`,
-            top: `${item.nextTop}px`
-          }
-        };
-      });
-      const transaction = createStudioStyleTransaction
-        ? createStudioStyleTransaction(transactionItems)
+      const transaction = createStudioPositionTransaction
+        ? createStudioPositionTransaction(alignmentResult.nextItems, {
+            getElementId(element) {
+              if (typeof assignEditorElementId === 'function') {
+                return assignEditorElementId(element);
+              }
+              return element && element.dataset && element.dataset.editorId;
+            }
+          })
         : null;
 
       alignmentResult.nextItems.forEach((item) => {
@@ -5490,31 +5472,22 @@
       );
       if (!distributionResult.didChange) return false;
 
-      const createStudioStyleTransaction = (
+      const createStudioPositionTransaction = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
+        && typeof SlideNextStudioEditorTransaction.createStudioPositionTransaction === 'function'
       )
-        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+        ? SlideNextStudioEditorTransaction.createStudioPositionTransaction
         : null;
-      const transactionItems = distributionResult.nextItems.map((item) => {
-        if (typeof assignEditorElementId === 'function') {
-          assignEditorElementId(item.element);
-        }
-        return {
-          element: item.element,
-          before: {
-            left: item.element && item.element.style ? item.element.style.left : '',
-            top: item.element && item.element.style ? item.element.style.top : ''
-          },
-          after: {
-            left: `${item.nextLeft}px`,
-            top: `${item.nextTop}px`
-          }
-        };
-      });
-      const transaction = createStudioStyleTransaction
-        ? createStudioStyleTransaction(transactionItems)
+      const transaction = createStudioPositionTransaction
+        ? createStudioPositionTransaction(distributionResult.nextItems, {
+            getElementId(element) {
+              if (typeof assignEditorElementId === 'function') {
+                return assignEditorElementId(element);
+              }
+              return element && element.dataset && element.dataset.editorId;
+            }
+          })
         : null;
 
       distributionResult.nextItems.forEach((item) => {

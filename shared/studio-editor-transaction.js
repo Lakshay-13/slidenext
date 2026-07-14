@@ -78,6 +78,34 @@
     };
   }
 
+  function createStudioPositionTransaction(items = [], options = {}) {
+    const sourceItems = Array.isArray(items) ? items : [];
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const transactionItems = sourceItems.map((item) => {
+      const element = item && item.element;
+      const style = element && element.style ? element.style : {};
+      return {
+        element,
+        elementId: item && item.elementId,
+        before: item && item.before
+          ? item.before
+          : {
+              left: typeof style.left === 'string' ? style.left : '',
+              top: typeof style.top === 'string' ? style.top : ''
+            },
+        after: item && item.after
+          ? item.after
+          : {
+              left: Number.isFinite(item && item.nextLeft) ? `${item.nextLeft}px` : style.left || '',
+              top: Number.isFinite(item && item.nextTop) ? `${item.nextTop}px` : style.top || ''
+            }
+      };
+    });
+    return createStudioStyleTransaction(transactionItems, { getElementId });
+  }
+
   function createStudioPropertyTransaction(items = [], options = {}) {
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
@@ -255,6 +283,7 @@
     normalizeStylePatch,
     normalizeTransactionValue,
     createStudioStyleTransaction,
+    createStudioPositionTransaction,
     createStudioPropertyTransaction,
     normalizeStudioEditorTransaction,
     isStudioEditorTransaction,
