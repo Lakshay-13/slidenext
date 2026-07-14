@@ -5406,6 +5406,33 @@
       );
       if (!alignmentResult.didChange) return false;
 
+      const createStudioStyleTransaction = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+        : null;
+      const transactionItems = alignmentResult.nextItems.map((item) => {
+        if (typeof assignEditorElementId === 'function') {
+          assignEditorElementId(item.element);
+        }
+        return {
+          element: item.element,
+          before: {
+            left: item.element && item.element.style ? item.element.style.left : '',
+            top: item.element && item.element.style ? item.element.style.top : ''
+          },
+          after: {
+            left: `${item.nextLeft}px`,
+            top: `${item.nextTop}px`
+          }
+        };
+      });
+      const transaction = createStudioStyleTransaction
+        ? createStudioStyleTransaction(transactionItems)
+        : null;
+
       alignmentResult.nextItems.forEach((item) => {
         item.element.style.left = `${item.nextLeft}px`;
         item.element.style.top = `${item.nextTop}px`;
@@ -5413,7 +5440,8 @@
       finalizeEditorDeckMutation(`Auto: Aligned ${action}`, {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
-        debounceHistory: true
+        debounceHistory: true,
+        transaction
       });
       return true;
     }
@@ -5431,6 +5459,33 @@
       );
       if (!distributionResult.didChange) return false;
 
+      const createStudioStyleTransaction = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+        : null;
+      const transactionItems = distributionResult.nextItems.map((item) => {
+        if (typeof assignEditorElementId === 'function') {
+          assignEditorElementId(item.element);
+        }
+        return {
+          element: item.element,
+          before: {
+            left: item.element && item.element.style ? item.element.style.left : '',
+            top: item.element && item.element.style ? item.element.style.top : ''
+          },
+          after: {
+            left: `${item.nextLeft}px`,
+            top: `${item.nextTop}px`
+          }
+        };
+      });
+      const transaction = createStudioStyleTransaction
+        ? createStudioStyleTransaction(transactionItems)
+        : null;
+
       distributionResult.nextItems.forEach((item) => {
         item.element.style.left = `${item.nextLeft}px`;
         item.element.style.top = `${item.nextTop}px`;
@@ -5438,7 +5493,8 @@
       finalizeEditorDeckMutation(`Auto: Distributed ${axis}`, {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
-        debounceHistory: true
+        debounceHistory: true,
+        transaction
       });
       return true;
     }

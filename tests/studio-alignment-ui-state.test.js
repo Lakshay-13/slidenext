@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -191,4 +192,68 @@ test('alignSelectedElements writes aligned parent-relative positions and records
   assert.equal(calls[1][0], 'finalizeEditorDeckMutation');
   assert.equal(calls[1][1], 'Auto: Aligned middle');
   assert.equal(calls[1][2].syncSelectionOverlay, true);
+});
+
+test('alignSelectedElements forwards a reversible position transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function alignSelectedElements(action = \'\') {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const first = { dataset: { editorId: 'node-1' }, style: { left: '10px', top: '20px' } };
+  const second = { dataset: { editorId: 'node-2' }, style: { left: '30px', top: '40px' } };
+  let finalizedOptions = null;
+  const context = {
+    SlideNextStudioEditorAlignment: {
+      buildStudioAlignedLayout() {
+        return {
+          didChange: true,
+          nextItems: [
+            { element: first, nextLeft: 40, nextTop: 50 },
+            { element: second, nextLeft: 70, nextTop: 80 }
+          ]
+        };
+      }
+    },
+    SlideNextStudioEditorTransaction: studioTransaction,
+    buildAlignmentActionState() {
+      return {
+        alignmentActionState: {
+          canAlign: true,
+          selection: [{ element: first }, { element: second }]
+        }
+      };
+    },
+    assignEditorElementId(element) {
+      return element.dataset.editorId;
+    },
+    finalizeEditorDeckMutation(label, options) {
+      finalizedOptions = { label, options };
+    },
+    updateAlignmentActionState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.alignSelectedElements('middle'), true);
+  assert.deepEqual(finalizedOptions.options.transaction, {
+    kind: studioTransaction.STUDIO_EDITOR_TRANSACTION_KIND,
+    version: studioTransaction.STUDIO_EDITOR_TRANSACTION_VERSION,
+    operations: [
+      {
+        type: 'style',
+        elementId: 'node-1',
+        before: { left: '10px', top: '20px' },
+        after: { left: '40px', top: '50px' }
+      },
+      {
+        type: 'style',
+        elementId: 'node-2',
+        before: { left: '30px', top: '40px' },
+        after: { left: '70px', top: '80px' }
+      }
+    ]
+  });
 });
