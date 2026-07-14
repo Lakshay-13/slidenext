@@ -6118,6 +6118,22 @@
         updateInsertionActionState(iframeDoc);
         return false;
       }
+      const createStudioMarkupTransactionCapture = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
+        : null;
+      const activeSlideId = typeof getEditorSlideId === 'function'
+        ? getEditorSlideId(activeSlide)
+        : '';
+      const markupCapture = createStudioMarkupTransactionCapture && activeSlideId
+        ? createStudioMarkupTransactionCapture([{
+            element: activeSlide,
+            elementId: `slide:${activeSlideId}`
+          }])
+        : null;
 
       const offset = (activeSlide.children.length * 15) % 150;
       
@@ -6217,7 +6233,14 @@
         
         selectElement(newEl);
         generateThumbnails();
-        saveHistoryState();
+        const transaction = markupCapture
+          ? markupCapture.createTransaction()
+          : null;
+        if (transaction) {
+          saveHistoryState(false, transaction);
+        } else {
+          saveHistoryState();
+        }
         triggerAutoSave();
         triggerAutoVersion('Auto: Added ' + type.toUpperCase());
         return true;
@@ -6947,9 +6970,17 @@
           historyStep.transaction,
           historyStep.direction,
           {
-            getElementById: (editorId) => editorId === 'slides-container'
-              ? iframeDoc && iframeDoc.getElementById('slidesContainer')
-              : getElementByEditorId(editorId, iframeDoc),
+            getElementById: (editorId) => {
+              if (editorId === 'slides-container') {
+                return iframeDoc && iframeDoc.getElementById('slidesContainer');
+              }
+              if (typeof editorId === 'string'
+                && editorId.startsWith('slide:')
+                && typeof getSlideById === 'function') {
+                return getSlideById(editorId.slice('slide:'.length), iframeDoc);
+              }
+              return getElementByEditorId(editorId, iframeDoc);
+            },
             applyVisibilityState: (
               typeof SlideNextStudioElementState !== 'undefined'
               && SlideNextStudioElementState

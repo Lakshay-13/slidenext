@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -104,6 +105,76 @@ test('insertElement uses the shared iframe accessor before adding a heading elem
   assert.equal(calls[3][1], appendedElement);
   assert.equal(calls[5][1], appendedElement);
   assert.equal(calls[10][1], 'Auto: Added H2');
+});
+
+test('insertElement records a slide-scoped markup transaction when adding a heading', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const insertElementSource = extractFunctionSource(
+    fileContent,
+    'function insertElement(type) {',
+    '\n\n    // Rearrange Selected Element Layers'
+  );
+
+  const calls = [];
+  const activeSlide = {
+    children: [],
+    innerHTML: '<p>Before</p>',
+    appendChild(node) {
+      this.innerHTML = '<p>Before</p><h2>New Heading</h2>';
+      calls.push(['appendChild', node]);
+      return node;
+    }
+  };
+  const iframeDoc = {
+    createElement(tag) {
+      return {
+        tagName: tag.toUpperCase(),
+        style: {},
+        appendChild() {}
+      };
+    }
+  };
+  const context = {
+    SlideNextStudioEditorTransaction: studioTransaction,
+    generateThumbnails() {},
+    getActiveSlide() {
+      return activeSlide;
+    },
+    getEditorSlideId(slide) {
+      assert.equal(slide, activeSlide);
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    makeElementsHoverable() {},
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
+    },
+    selectElement() {},
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(insertElementSource, context);
+
+  assert.equal(context.insertElement('h2'), true);
+  const saveCall = calls.find(([name]) => name === 'saveHistoryState');
+  assert.deepEqual(JSON.parse(JSON.stringify(saveCall)), [
+    'saveHistoryState',
+    false,
+    {
+      kind: 'slidenext.editor.transaction',
+      version: 1,
+      operations: [{
+        type: 'markup',
+        elementId: 'slide:slide-1',
+        before: '<p>Before</p>',
+        after: '<p>Before</p><h2>New Heading</h2>'
+      }]
+    }
+  ]);
 });
 
 test('insertElement no-ops when no active slide is available or the element type is unsupported', () => {

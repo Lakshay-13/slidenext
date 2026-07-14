@@ -1558,3 +1558,81 @@ test('restoreFrameFromHistoryEntry applies a valid transaction without replacing
     'setCurrentPresentationCanonicalDeck'
   ]);
 });
+
+test('restoreFrameFromHistoryEntry resolves slide-scoped markup transactions without replacing the live frame', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const persistedDeckStateHelperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+  const restoreFrameFromHistoryEntrySource = extractFunctionSource(
+    fileContent,
+    'function restoreFrameFromHistoryEntry(entry) {',
+    '\n\n    function buildPersistableDeckHtml('
+  );
+  const slide = { innerHTML: '<p>After</p>' };
+  const iframeDoc = {
+    getElementById() {
+      return null;
+    }
+  };
+  const callLog = [];
+  const markupTransaction = studioTransaction.createStudioMarkupTransaction([{
+    elementId: 'slide:slide-1',
+    before: '<p>Before</p>',
+    after: '<p>After</p>'
+  }]);
+  const context = {
+    SlideNextStudioEditorTransaction: studioTransaction,
+    SlideNextStudioHistory: {
+      normalizeStudioHistoryEntry(entry) {
+        return entry;
+      },
+      restoreStudioHistorySelectionState(entry, options) {
+        options.restoreCommittedSelectionState(entry.selectedElementIds, options.doc);
+        options.observeDeckActiveSlideState(options.doc);
+      }
+    },
+    applyEditorSelectionState() {
+      throw new Error('snapshot restore should not clear the live selection');
+    },
+    capturePersistedDeckPlaybackState() {
+      return null;
+    },
+    currentSlideIndex: 0,
+    getElementByEditorId() {
+      return null;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlideById(slideId, doc) {
+      assert.equal(slideId, 'slide-1');
+      assert.equal(doc, iframeDoc);
+      return slide;
+    },
+    makeElementsHoverable() {},
+    observeDeckActiveSlideState() {},
+    restoreCommittedSelectionByIdsOnActiveSlide() {},
+    setCurrentPresentationCanonicalDeck() {},
+    syncSelectionOverlay() {},
+    updateEditorPersistedDeckState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(persistedDeckStateHelperSource, context);
+  vm.runInContext(restoreFrameFromHistoryEntrySource, context);
+
+  const result = context.restoreFrameFromHistoryEntry({
+    html: '<html>snapshot</html>',
+    selectedElementIds: [],
+    canonicalDeck: null
+  }, {
+    transaction: markupTransaction,
+    direction: 'undo'
+  });
+
+  assert.equal(result.didRestoreTransaction, true);
+  assert.equal(slide.innerHTML, '<p>Before</p>');
+});
