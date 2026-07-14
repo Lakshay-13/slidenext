@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -26,7 +27,7 @@ function extractClipboardActionFinalizerSource(fileContent) {
   return extractFunctionSource(
     fileContent,
     'function finalizeClipboardActionResult(result) {',
-    '\n\n    function finalizeInsertedElements(insertedElements, versionLabel) {'
+    '\n\n    function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {'
   );
 }
 
@@ -204,7 +205,7 @@ test('finalizeInsertedElements commits the new selection and delegates persisten
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const finalizeInsertedElementsSource = extractFunctionSource(
     fileContent,
-    'function finalizeInsertedElements(insertedElements, versionLabel) {',
+    'function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {',
     '\n\n    function copySelectedElements() {'
   );
 
@@ -239,6 +240,84 @@ test('finalizeInsertedElements commits the new selection and delegates persisten
     ['commitEditorSelectionState', nextSelectionState],
     ['finalizeEditorDeckMutation', 'Auto: Pasted Element']
   ]);
+});
+
+test('duplicateSelectedElements forwards the insertion markup transaction to history', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
+  const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
+  const finalizeInsertedElementsSource = extractFunctionSource(
+    fileContent,
+    'function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {',
+    '\n\n    function copySelectedElements() {'
+  );
+  const duplicateSelectedElementsSource = extractFunctionSource(
+    fileContent,
+    'function duplicateSelectedElements() {',
+    '\n\n    function nudgeSelectedElements(dx, dy) {'
+  );
+  const insertedElement = { id: 'node-2' };
+  const markupTransaction = studioTransaction.createStudioMarkupTransaction([{
+    elementId: 'slide-1',
+    before: '<div data-editor-id="node-1">A</div>',
+    after: '<div data-editor-id="node-1">A</div><div data-editor-id="node-2">B</div>'
+  }]);
+  let finalized = null;
+  const context = {
+    editorClipboard: null,
+    selectedElements: [{ id: 'node-1', isConnected: true }],
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardSelectionMutationPlan() {
+        return {
+          canDuplicate: true,
+          selection: [{ id: 'node-1', isConnected: true }],
+          payloadItems: [{ id: 'clipboard-item' }],
+          canBuildPayload: true
+        };
+      }
+    },
+    SlideNextStudioEditorSelection: {
+      selectAllStudioElements(elements) {
+        return {
+          selectedElement: elements[0],
+          selectedElements: elements
+        };
+      }
+    },
+    buildClipboardPayload() {
+      return [{ id: 'clipboard-item' }];
+    },
+    commitEditorSelectionState() {},
+    finalizeEditorDeckMutation(versionLabel, options) {
+      finalized = { versionLabel, options };
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      return { label: 'iframe-doc' };
+    },
+    insertClipboardPayload(items, offsetMultiplier, options) {
+      assert.deepEqual(items, [{ id: 'clipboard-item' }]);
+      assert.equal(offsetMultiplier, 1);
+      options.onTransaction(markupTransaction);
+      return [insertedElement];
+    },
+    isElementLocked() {
+      return false;
+    },
+    updateClipboardActionState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(
+    `${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${finalizeInsertedElementsSource}\n${duplicateSelectedElementsSource}`,
+    context
+  );
+
+  assert.equal(context.duplicateSelectedElements(), true);
+  assert.equal(finalized.versionLabel, 'Auto: Duplicated Element');
+  assert.deepEqual(JSON.parse(JSON.stringify(finalized.options.transaction)), markupTransaction);
 });
 
 test('updateClipboardActionState enables paste on a live slide and enables copy only when clipboard payloads can be built', () => {
