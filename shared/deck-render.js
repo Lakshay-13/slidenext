@@ -384,6 +384,9 @@
 
   function buildRenderedNodeAttributes(node = {}, fallbackStyleText = '') {
     const attributes = asPlainObject(node.attributes);
+    if (node.type === 'group') {
+      attributes['data-editor-group'] = 'true';
+    }
     const explicitClassName = normalizeString(attributes.class).trim()
       || (Array.isArray(node.classes) && node.classes.length > 0 ? node.classes.join(' ') : '');
     const renderedClassName = buildRenderedNodeClassName(explicitClassName, node.visibility);

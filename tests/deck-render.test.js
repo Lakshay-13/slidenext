@@ -1273,6 +1273,23 @@ test('renderCanonicalNode uses dedicated class and style fields when attributes 
   assert.equal(html, '<div aria-label="Hero" class="hero-card" style="color: red;">Hero copy</div>');
 });
 
+test('renderCanonicalNode emits the persisted group marker for canonical group nodes', () => {
+  const html = deckRender.renderCanonicalNode({
+    type: 'group',
+    tagName: 'div',
+    children: [
+      {
+        tagName: 'p',
+        text: 'Grouped copy'
+      }
+    ]
+  }, {
+    preferNodeSourceHtml: false
+  });
+
+  assert.equal(html, '<div data-editor-group="true"><p>Grouped copy</p></div>');
+});
+
 test('renderCanonicalNode falls back to canonical absolute layout when style is absent', () => {
   const html = deckRender.renderCanonicalNode({
     tagName: 'div',
