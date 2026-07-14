@@ -762,6 +762,7 @@
               <button id="distributeSelectionVerticalBtn" onclick="distributeSelectedElements('vertical')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Distribute Vertically">Distribute V</button>
             </div>
             <button id="groupSelectionBtn" onclick="groupSelectedElements()" class="py-1.5 flex items-center justify-center rounded bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Group Selected">Group</button>
+            <button id="ungroupSelectionBtn" onclick="ungroupSelectedElements()" class="py-1.5 flex items-center justify-center rounded bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Ungroup Selected">Ungroup</button>
           </div>
 
           <div class="h-[1px] bg-white/5"></div>
@@ -4639,10 +4640,31 @@
     }
 
     function updateGroupActionState(doc = getIframeDoc()) {
-      const button = document.getElementById('groupSelectionBtn');
-      if (button) {
-        button.disabled = !buildGroupSelectionActionState(doc).canGroup;
-      }
+      const groupButton = document.getElementById('groupSelectionBtn');
+      if (groupButton) groupButton.disabled = !buildGroupSelectionActionState(doc).canGroup;
+      const ungroupButton = document.getElementById('ungroupSelectionBtn');
+      if (ungroupButton) ungroupButton.disabled = !buildUngroupSelectionActionState(doc).canUngroup;
+    }
+
+    function isEditorGroupElement(element) {
+      return !!(element
+        && typeof element.getAttribute === 'function'
+        && element.getAttribute('data-editor-group') === 'true');
+    }
+
+    function buildUngroupSelectionActionState(doc = null) {
+      const resolvedDoc = doc || getIframeDoc();
+      const slide = getActiveSlide(resolvedDoc);
+      const selection = getLiveSelectedElements(selectedElements, resolvedDoc);
+      const groups = selection.filter(isEditorGroupElement).filter((group) => {
+        return !!(group.parentElement && group.children && group.children.length > 0);
+      });
+      return {
+        slide,
+        selection,
+        groups,
+        canUngroup: !!(slide && selection.length > 0 && groups.length === selection.length)
+      };
     }
 
     function updateAlignmentActionState(doc = getIframeDoc()) {
@@ -5256,6 +5278,60 @@
         selectedElements: [group]
       });
       finalizeEditorDeckMutation('Auto: Grouped Elements', {
+        syncSelectionOverlay: true,
+        refreshThumbnails: false,
+        debounceHistory: true
+      });
+      return true;
+    }
+
+    function ungroupSelectedElements() {
+      const ungroupActionState = buildUngroupSelectionActionState();
+      if (!ungroupActionState.canUngroup) {
+        updateGroupActionState();
+        return false;
+      }
+
+      const doc = getIframeDoc();
+      const slideMetrics = getSlideMetrics(ungroupActionState.slide);
+      const restoredElements = [];
+      ungroupActionState.groups.forEach((group) => {
+        const parent = group.parentElement;
+        if (!parent || typeof parent.getBoundingClientRect !== 'function') return;
+        const groupBounds = getRectOnSlide(group.getBoundingClientRect(), slideMetrics);
+        const parentBounds = getRectOnSlide(parent.getBoundingClientRect(), slideMetrics);
+        const childItems = Array.from(group.children || []).map((element) => {
+          const childBounds = getRectOnSlide(element.getBoundingClientRect(), slideMetrics);
+          return {
+            element,
+            relativeLeft: childBounds.left - groupBounds.left,
+            relativeTop: childBounds.top - groupBounds.top,
+            parentLeft: parentBounds.left,
+            parentTop: parentBounds.top
+          };
+        });
+        const ungroupPlan = SlideNextStudioEditorGroup.buildStudioUngroupedLayout(groupBounds, childItems);
+        if (!ungroupPlan.canUngroup) return;
+
+        const itemByElement = new Map(ungroupPlan.nextItems.map((item) => [item.element, item]));
+        Array.from(group.children || []).forEach((element) => {
+          const item = itemByElement.get(element);
+          if (!item) return;
+          element.style.position = 'absolute';
+          element.style.margin = '0';
+          element.style.left = `${item.nextLeft}px`;
+          element.style.top = `${item.nextTop}px`;
+          parent.insertBefore(element, group);
+          restoredElements.push(element);
+        });
+        group.remove();
+      });
+
+      if (restoredElements.length === 0) return false;
+      commitEditorSelectionState({
+        selectedElements: restoredElements
+      });
+      finalizeEditorDeckMutation('Auto: Ungrouped Elements', {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
         debounceHistory: true
@@ -8127,6 +8203,7 @@
         'distributeSelectionHorizontalBtn',
         'distributeSelectionVerticalBtn',
         'groupSelectionBtn',
+        'ungroupSelectionBtn',
         'arrangeLayerFrontBtn',
         'arrangeLayerBackBtn',
         'arrangeLayerForwardBtn',

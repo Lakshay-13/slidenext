@@ -197,3 +197,96 @@ test('groupSelectedElements wraps selected children with relative coordinates an
   assert.equal(calls[1][0], 'commitEditorSelectionState');
   assert.equal(calls[2][1], 'Auto: Grouped Elements');
 });
+
+test('ungroupSelectedElements restores child positions, removes the wrapper, and records one mutation', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function ungroupSelectedElements() {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const calls = [];
+  const child = {
+    style: {},
+    getBoundingClientRect() {
+      return { left: 110, top: 135, right: 190, bottom: 175 };
+    }
+  };
+  const parent = {
+    getBoundingClientRect() {
+      return { left: 0, top: 0, right: 500, bottom: 400 };
+    },
+    insertBefore(element) {
+      element.parentElement = this;
+      calls.push(['insertBefore', element]);
+    }
+  };
+  const group = {
+    children: [child],
+    parentElement: parent,
+    getBoundingClientRect() {
+      return { left: 100, top: 120, right: 380, bottom: 280 };
+    },
+    remove() {
+      this.removed = true;
+    }
+  };
+  const slide = { id: 'slide' };
+  const context = {
+    buildUngroupSelectionActionState() {
+      return {
+        canUngroup: true,
+        slide,
+        groups: [group]
+      };
+    },
+    updateGroupActionState() {
+      calls.push(['updateGroupActionState']);
+    },
+    getIframeDoc() {
+      return { id: 'doc' };
+    },
+    getSlideMetrics() {
+      return { scaleX: 1 };
+    },
+    getRectOnSlide(rect) {
+      return rect;
+    },
+    SlideNextStudioEditorGroup: {
+      buildStudioUngroupedLayout(groupBounds, items) {
+        assert.deepEqual(groupBounds, {
+          left: 100,
+          top: 120,
+          right: 380,
+          bottom: 280
+        });
+        assert.equal(items[0].relativeLeft, 10);
+        assert.equal(items[0].relativeTop, 15);
+        return {
+          canUngroup: true,
+          nextItems: [{ element: child, nextLeft: 110, nextTop: 135 }]
+        };
+      }
+    },
+    commitEditorSelectionState(state) {
+      calls.push(['commitEditorSelectionState', state]);
+    },
+    finalizeEditorDeckMutation(label, options) {
+      calls.push(['finalizeEditorDeckMutation', label, options]);
+    }
+  };
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.ungroupSelectedElements(), true);
+  assert.deepEqual(child.style, {
+    position: 'absolute',
+    margin: '0',
+    left: '110px',
+    top: '135px'
+  });
+  assert.equal(child.parentElement, parent);
+  assert.equal(group.removed, true);
+  assert.equal(calls[1][0], 'commitEditorSelectionState');
+  assert.equal(calls[2][1], 'Auto: Ungrouped Elements');
+});
