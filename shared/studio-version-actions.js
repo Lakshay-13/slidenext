@@ -123,6 +123,30 @@
     };
   }
 
+  function createStudioRestoreVersionRequestExecutor(options = {}) {
+    const defaultCreateVersionRequestOptions = typeof options.createVersionRequestOptions === 'function'
+      ? options.createVersionRequestOptions
+      : () => ({});
+    const defaultExecuteRestoreVersionRequest = typeof options.executeRestoreVersionRequest === 'function'
+      ? options.executeRestoreVersionRequest
+      : executeStudioRestoreVersionRequest;
+
+    return async function executeRestoreVersionRequest(versionFilename = '', context = {}, nextOptions = {}) {
+      const createVersionRequestOptions = typeof nextOptions.createVersionRequestOptions === 'function'
+        ? nextOptions.createVersionRequestOptions
+        : defaultCreateVersionRequestOptions;
+      const executeRestoreVersionRequest = typeof nextOptions.executeRestoreVersionRequest === 'function'
+        ? nextOptions.executeRestoreVersionRequest
+        : defaultExecuteRestoreVersionRequest;
+
+      return executeRestoreVersionRequest(
+        versionFilename,
+        context,
+        createVersionRequestOptions()
+      );
+    };
+  }
+
   function createStudioVersionActionFailureHandler(options = {}) {
     const createHandlerOptions = typeof options.createHandlerOptions === 'function'
       ? options.createHandlerOptions
@@ -369,6 +393,7 @@
     createStudioVersionActionHandlerOptionsBuilder,
     createStudioVersionRequestOptionsBuilder,
     createStudioDeleteVersionRequestExecutor,
+    createStudioRestoreVersionRequestExecutor,
     createStudioVersionActionFailureHandler,
     createStudioVersionListMutationSuccessHandler,
     createStudioRestoreVersionSuccessHandler,

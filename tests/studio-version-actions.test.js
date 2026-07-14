@@ -212,6 +212,40 @@ test('createStudioDeleteVersionRequestExecutor reuses request-option defaults an
   ]);
 });
 
+test('createStudioRestoreVersionRequestExecutor reuses request-option defaults and call-time overrides', async () => {
+  const calls = [];
+  const executeRestoreVersionRequest = versionActions.createStudioRestoreVersionRequestExecutor({
+    createVersionRequestOptions() {
+      calls.push(['createVersionRequestOptions']);
+      return { fetchImpl: 'default-fetch' };
+    }
+  });
+
+  const result = await executeRestoreVersionRequest(
+    'index_20260101_120000_Auto.html',
+    { presentationUrl: '/presentations/onboarding-presentation/index.html' },
+    {
+      createVersionRequestOptions() {
+        calls.push(['overrideCreateVersionRequestOptions']);
+        return { fetchImpl: 'override-fetch' };
+      },
+      executeRestoreVersionRequest(versionFilename, context, options = {}) {
+        calls.push(['executeRestoreVersionRequest', versionFilename, context, options]);
+        return { success: options.fetchImpl === 'override-fetch' };
+      }
+    }
+  );
+
+  assert.deepEqual(result, { success: true });
+  assert.deepEqual(calls, [
+    ['overrideCreateVersionRequestOptions'],
+    ['executeRestoreVersionRequest',
+      'index_20260101_120000_Auto.html',
+      { presentationUrl: '/presentations/onboarding-presentation/index.html' },
+      { fetchImpl: 'override-fetch' }]
+  ]);
+});
+
 test('createStudioVersionActionFailureHandler reuses handler-option defaults and call-time overrides', () => {
   const calls = [];
   let overrideOptionsRef = null;

@@ -8291,12 +8291,34 @@
         return;
       }
       const restoreContext = createCurrentStudioVersionActionContext();
+      const createStudioRestoreVersionRequestExecutor = (
+        typeof SlideNextStudioVersionActions !== 'undefined'
+        && SlideNextStudioVersionActions
+        && typeof SlideNextStudioVersionActions.createStudioRestoreVersionRequestExecutor === 'function'
+      )
+        ? SlideNextStudioVersionActions.createStudioRestoreVersionRequestExecutor
+        : null;
+      const executeRestoreVersionRequest = createStudioRestoreVersionRequestExecutor
+        ? createStudioRestoreVersionRequestExecutor({
+          createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
+          executeRestoreVersionRequest: (
+            typeof SlideNextStudioVersionActions !== 'undefined'
+            && SlideNextStudioVersionActions
+            && typeof SlideNextStudioVersionActions.executeStudioRestoreVersionRequest === 'function'
+          )
+            ? SlideNextStudioVersionActions.executeStudioRestoreVersionRequest
+            : null
+        })
+        : (versionFilename, nextContext) => SlideNextStudioVersionActions.executeStudioRestoreVersionRequest(
+          versionFilename,
+          nextContext,
+          createCurrentStudioVersionRequestOptions()
+        );
       
       try {
-        const data = await SlideNextStudioVersionActions.executeStudioRestoreVersionRequest(
+        const data = await executeRestoreVersionRequest(
           filename,
-          restoreContext,
-          createCurrentStudioVersionRequestOptions()
+          restoreContext
         );
         if (data.success) {
           applyCurrentStudioRestoreVersionSuccess(restoreContext, {

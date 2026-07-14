@@ -2124,6 +2124,111 @@ test('restoreVersion reuses the shared restore request helper when available', a
   assert.equal(successOptions.getCurrentSessionToken(), 14);
 });
 
+test('restoreVersion reuses the shared restore request executor when available', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const restoreVersionSource = extractFunctionSource(
+    fileContent,
+    'async function restoreVersion(filename) {',
+    '\n\n    function promptRenameVersion(filename, currentLabel) {'
+  );
+
+  let delegatedArgs = null;
+  let executorArgs = null;
+  let successOptions = null;
+  const calls = [];
+  const context = {
+    SlideNextStudioVersionActions: {
+      ...versionActions,
+      createStudioRestoreVersionRequestExecutor(options = {}) {
+        delegatedArgs = options;
+        return async (versionFilename, restoreContext) => {
+          executorArgs = [versionFilename, restoreContext];
+          return { success: true };
+        };
+      },
+      createStudioVersionActionContext(presentationUrl, presentationTitle, presentationCategory, options) {
+        return {
+          presentationUrl,
+          presentationTitle,
+          presentationCategory,
+          sessionToken: options.sessionToken
+        };
+      },
+      handleStudioRestoreVersionSuccess(restoreContext, options) {
+        successOptions = options;
+        calls.push(['handleStudioRestoreVersionSuccess', restoreContext, options]);
+        return true;
+      }
+    },
+    alert() {
+      throw new Error('restoreVersion should not alert on a successful executor result');
+    },
+    confirm() {
+      return true;
+    },
+    currentCategory: 'General',
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentTitle: 'Project Onboarding',
+    createCurrentStudioVersionActionContext() {
+      return context.SlideNextStudioVersionActions.createStudioVersionActionContext(
+        context.currentPresentationUrl,
+        context.currentTitle,
+        context.currentCategory,
+        {
+          sessionToken: context.studioEditorSessionToken
+        }
+      );
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    createCurrentStudioVersionActionHandlerOptions(options = {}) {
+      return {
+        ...context.createCurrentStudioSessionStateReaders(),
+        ...options
+      };
+    },
+    createCurrentStudioVersionRequestOptions() {
+      return { fetchImpl: context.fetch };
+    },
+    document: {
+      getElementById() {
+        return null;
+      }
+    },
+    fetch() {},
+    hideCurrentStudioVersionsDropdown() {},
+    launchStudioEditor() {},
+    studioEditorSessionToken: 13
+  };
+
+  vm.createContext(context);
+  loadApplyCurrentStudioVersionActionFailure(fileContent, context);
+  loadApplyCurrentStudioRestoreVersionSuccess(fileContent, context);
+  loadHideCurrentStudioVersionsDropdown(fileContent, context);
+  loadCreateCurrentStudioVersionRequestOptions(fileContent, context);
+  vm.runInContext(restoreVersionSource, context);
+
+  await context.restoreVersion('index_20260101_120000_Auto.html');
+
+  assert.equal(executorArgs[0], 'index_20260101_120000_Auto.html');
+  assert.deepEqual(executorArgs[1], {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    presentationTitle: 'Project Onboarding',
+    presentationCategory: 'General',
+    sessionToken: 13
+  });
+  assert.equal(delegatedArgs.createVersionRequestOptions, context.createCurrentStudioVersionRequestOptions);
+  assert.equal(
+    delegatedArgs.executeRestoreVersionRequest,
+    context.SlideNextStudioVersionActions.executeStudioRestoreVersionRequest
+  );
+  assert.equal(typeof successOptions.hideVersionsDropdown, 'function');
+});
+
 test('createCurrentStudioVersionHistoryLoadOptions merges live session readers with version list refresh behavior', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
