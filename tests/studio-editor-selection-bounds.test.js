@@ -58,3 +58,42 @@ test('buildStudioSelectionBounds enforces minimum size and skips invalid bounds'
     getElementBounds: (element) => element.bounds
   }), null);
 });
+
+test('getStudioMarqueeSelection normalizes reverse drags and returns overlapping live elements', () => {
+  const elements = [
+    { id: 1, isConnected: false, hidden: false, bounds: { left: 10, top: 10, right: 30, bottom: 30 } },
+    { id: 2, isConnected: true, hidden: true, bounds: { left: 10, top: 10, right: 30, bottom: 30 } },
+    { id: 3, isConnected: true, hidden: false, bounds: { left: 10, top: 10, right: 30, bottom: 30 } },
+    { id: 4, isConnected: true, hidden: false, bounds: { left: 30, top: 30, right: 50, bottom: 50 } },
+    { id: 5, isConnected: true, hidden: false, bounds: null }
+  ];
+
+  assert.deepEqual(selectionBounds.getStudioMarqueeSelection(elements, {
+    left: 35,
+    top: 35,
+    right: 15,
+    bottom: 15
+  }, {
+    isHidden: (element) => element.hidden,
+    getElementBounds: (element) => element.bounds
+  }), [elements[2], elements[3]]);
+});
+
+test('getStudioMarqueeSelection ignores edge-only contact and invalid marquee bounds', () => {
+  const elements = [
+    { id: 1, isConnected: true, bounds: { left: 0, top: 0, right: 10, bottom: 10 } },
+    { id: 2, isConnected: true, bounds: { left: 10, top: 0, right: 20, bottom: 10 } }
+  ];
+
+  assert.deepEqual(selectionBounds.getStudioMarqueeSelection(elements, {
+    left: 10,
+    top: 0,
+    right: 20,
+    bottom: 10
+  }, {
+    getElementBounds: (element) => element.bounds
+  }), [elements[1]]);
+  assert.deepEqual(selectionBounds.getStudioMarqueeSelection(elements, null, {
+    getElementBounds: (element) => element.bounds
+  }), []);
+});

@@ -19,6 +19,46 @@
     return selection.filter((element) => isEligibleElement(element) && !isHidden(element));
   }
 
+  function normalizeStudioSelectionRect(rect) {
+    if (!rect
+      || !Number.isFinite(rect.left)
+      || !Number.isFinite(rect.top)
+      || !Number.isFinite(rect.right)
+      || !Number.isFinite(rect.bottom)) {
+      return null;
+    }
+
+    return {
+      left: Math.min(rect.left, rect.right),
+      top: Math.min(rect.top, rect.bottom),
+      right: Math.max(rect.left, rect.right),
+      bottom: Math.max(rect.top, rect.bottom)
+    };
+  }
+
+  function getStudioMarqueeSelection(elements = [], marqueeRect, options = {}) {
+    const normalizedMarqueeRect = normalizeStudioSelectionRect(marqueeRect);
+    if (!normalizedMarqueeRect) {
+      return [];
+    }
+
+    const getElementBounds = typeof options.getElementBounds === 'function'
+      ? options.getElementBounds
+      : () => null;
+
+    return getStudioBoundableSelection(elements, options).filter((element) => {
+      const elementRect = normalizeStudioSelectionRect(getElementBounds(element));
+      if (!elementRect) {
+        return false;
+      }
+
+      return elementRect.left < normalizedMarqueeRect.right
+        && elementRect.right > normalizedMarqueeRect.left
+        && elementRect.top < normalizedMarqueeRect.bottom
+        && elementRect.bottom > normalizedMarqueeRect.top;
+    });
+  }
+
   function buildStudioSelectionBounds(elements = [], options = {}) {
     const selection = getStudioBoundableSelection(elements, options);
     if (selection.length === 0) {
@@ -58,6 +98,7 @@
 
   return {
     getStudioBoundableSelection,
+    getStudioMarqueeSelection,
     buildStudioSelectionBounds
   };
 });
