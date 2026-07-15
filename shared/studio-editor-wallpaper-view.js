@@ -125,6 +125,46 @@
     return true;
   }
 
+  function setStudioWallpaperTab(options = {}) {
+    const documentRef = options.documentRef;
+    const solidTab = documentRef && documentRef.getElementById('wpTabSolid');
+    const presetsTab = documentRef && documentRef.getElementById('wpTabPresets');
+    const customTab = documentRef && documentRef.getElementById('wpTabCustom');
+    const solidPanel = documentRef && documentRef.getElementById('wpPanelSolid');
+    const presetsPanel = documentRef && documentRef.getElementById('wpPanelPresets');
+    const customPanel = documentRef && documentRef.getElementById('wpPanelCustom');
+    const tab = options.tab;
+    const nextTabButton = tab === 'solid'
+      ? solidTab
+      : tab === 'presets'
+        ? presetsTab
+        : customTab;
+    if (!solidTab || !presetsTab || !customTab || !nextTabButton || !solidPanel || !presetsPanel || !customPanel) {
+      return false;
+    }
+
+    const inactiveTabClass = 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
+    const activeTabClass = 'py-1 text-center text-[10px] font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
+    [solidTab, presetsTab, customTab].forEach((tabButton) => {
+      tabButton.className = inactiveTabClass;
+    });
+    [solidPanel, presetsPanel, customPanel].forEach((panel) => {
+      panel.classList.add('hidden');
+    });
+
+    if (tab === 'solid') {
+      solidTab.className = activeTabClass;
+      solidPanel.classList.remove('hidden');
+    } else if (tab === 'presets') {
+      presetsTab.className = activeTabClass;
+      presetsPanel.classList.remove('hidden');
+    } else if (tab === 'custom') {
+      customTab.className = activeTabClass;
+      customPanel.classList.remove('hidden');
+    }
+    return true;
+  }
+
   function syncStudioWallpaperTabChrome(options = {}) {
     const documentRef = options.documentRef;
     const solidTab = documentRef && documentRef.getElementById('wpTabSolid');
@@ -277,6 +317,7 @@
     extractStudioGradientStopColor,
     resolveStudioActiveSlideSolidWallpaperColor,
     renderStudioWallpaperPresets,
+    setStudioWallpaperTab,
     resolveStudioActiveSlideGradientBackground,
     syncStudioSolidWallpaperControl,
     syncStudioWallpaperTabChrome,

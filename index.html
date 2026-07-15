@@ -5728,48 +5728,16 @@
       if (!resolveCurrentStudioWallpaperActionState().canUseWallpaperControls) {
         return false;
       }
-      const solidTab = document.getElementById('wpTabSolid');
-      const presetsTab = document.getElementById('wpTabPresets');
-      const customTab = document.getElementById('wpTabCustom');
-      const inactiveTabClass = 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
-      const activeTabClass = 'py-1 text-center text-[10px] font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
-      const nextTabButton = tab === 'solid'
-        ? solidTab
-        : tab === 'presets'
-          ? presetsTab
-          : customTab;
-
-      const solidPanel = document.getElementById('wpPanelSolid');
-      const presetsPanel = document.getElementById('wpPanelPresets');
-      const customPanel = document.getElementById('wpPanelCustom');
-      if (!solidTab || !presetsTab || !customTab || !nextTabButton || !solidPanel || !presetsPanel || !customPanel) {
-        return false;
-      }
-
-      wallpaperTab = tab;
-      
-      // Clear tab visual selection styles
-      [solidTab, presetsTab, customTab].forEach(t => {
-        t.className = inactiveTabClass;
+      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+        ? SlideNextStudioEditorWallpaperView
+        : null;
+      if (!wallpaperView || typeof wallpaperView.setStudioWallpaperTab !== 'function') return false;
+      const didApply = wallpaperView.setStudioWallpaperTab({
+        documentRef: document,
+        tab
       });
-      
-      // Hide all panels
-      solidPanel.classList.add('hidden');
-      presetsPanel.classList.add('hidden');
-      customPanel.classList.add('hidden');
-      
-      // Activate
-      if (tab === 'solid') {
-        solidTab.className = activeTabClass;
-        solidPanel.classList.remove('hidden');
-      } else if (tab === 'presets') {
-        presetsTab.className = activeTabClass;
-        presetsPanel.classList.remove('hidden');
-      } else if (tab === 'custom') {
-        customTab.className = activeTabClass;
-        customPanel.classList.remove('hidden');
-      }
-      return true;
+      if (didApply) wallpaperTab = tab;
+      return didApply;
     }
 
     // Render preset solid & gradient options

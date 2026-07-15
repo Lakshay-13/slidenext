@@ -114,6 +114,44 @@ test('renderStudioWallpaperPresets tolerates missing wallpaper containers', () =
   assert.equal(wallpaperView.renderStudioWallpaperPresets({ documentRef: null }), false);
 });
 
+test('setStudioWallpaperTab applies the requested tab and panel chrome', () => {
+  const createClassList = (initialValues = []) => {
+    const values = new Set(initialValues);
+    return {
+      add(value) {
+        values.add(value);
+      },
+      remove(value) {
+        values.delete(value);
+      },
+      contains(value) {
+        return values.has(value);
+      }
+    };
+  };
+  const elements = {
+    wpTabSolid: { className: '' },
+    wpTabPresets: { className: '' },
+    wpTabCustom: { className: '' },
+    wpPanelSolid: { classList: createClassList() },
+    wpPanelPresets: { classList: createClassList(['hidden']) },
+    wpPanelCustom: { classList: createClassList(['hidden']) }
+  };
+
+  assert.equal(wallpaperView.setStudioWallpaperTab({
+    documentRef: {
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    },
+    tab: 'custom'
+  }), true);
+  assert.match(elements.wpTabCustom.className, /bg-white\/5/);
+  assert.equal(elements.wpPanelSolid.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelPresets.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelCustom.classList.contains('hidden'), false);
+});
+
 test('syncStudioWallpaperTabChrome selects the matching wallpaper panel', () => {
   const classList = () => ({
     values: new Set(),

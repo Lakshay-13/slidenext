@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const wallpaperView = require('../shared/studio-editor-wallpaper-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -244,6 +245,7 @@ test('setWallpaperTab returns false without mutating chrome when wallpaper readi
     wpPanelCustom: { classList: createClassList(['hidden']) }
   };
   const context = {
+    SlideNextStudioEditorWallpaperView: wallpaperView,
     resolveCurrentStudioWallpaperActionState() {
       return {
         canUseWallpaperControls: false
@@ -287,6 +289,7 @@ test('setWallpaperTab keeps disabled-aware idle classes on inactive wallpaper ta
     wpPanelCustom: { classList: createClassList(['hidden']) }
   };
   const context = {
+    SlideNextStudioEditorWallpaperView: wallpaperView,
     resolveCurrentStudioWallpaperActionState() {
       return {
         canUseWallpaperControls: true
