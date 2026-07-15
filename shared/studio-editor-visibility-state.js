@@ -57,6 +57,17 @@
     return true;
   }
 
+  function syncStudioVisibilityToolbarState(options = {}) {
+    const actionState = buildStudioVisibilityToolbarState(options.elements, {
+      isHidden: options.isHidden,
+      canMutateDeck: options.canMutateDeck
+    });
+    return renderStudioVisibilityToolbarState({
+      documentRef: options.documentRef,
+      actionState
+    });
+  }
+
   function buildStudioVisibilityMutationPlan(elements = [], options = {}) {
     const selection = getStudioVisibilitySelection(elements, options);
     const isHidden = typeof options.isHidden === 'function'
@@ -148,6 +159,7 @@
     buildStudioVisibilityActionState,
     buildStudioVisibilityToolbarState,
     renderStudioVisibilityToolbarState,
+    syncStudioVisibilityToolbarState,
     buildStudioVisibilityMutationPlan,
     applyStudioVisibilityMutation
   };

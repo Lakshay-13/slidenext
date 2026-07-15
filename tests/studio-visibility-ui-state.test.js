@@ -174,6 +174,44 @@ test('updateVisibilityActionState reuses the shared visibility toolbar helper wh
   }]);
 });
 
+test('updateVisibilityActionState delegates toolbar state assembly to the shared visibility view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateVisibilityActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateVisibilityActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateMotionActionState(doc = getIframeDoc()) {'
+  );
+  const selectedElement = { id: 'selected' };
+  const calls = [];
+  const context = {
+    selectedElements: [selectedElement],
+    isElementHidden() {
+      return false;
+    },
+    SlideNextStudioEditorVisibilityState: {
+      syncStudioVisibilityToolbarState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    document: {},
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateVisibilityActionStateSource, context);
+
+  const doc = { activeSlide: {} };
+  assert.equal(context.updateVisibilityActionState(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.deepEqual(calls[0].elements, [selectedElement]);
+  assert.equal(calls[0].isHidden, context.isElementHidden);
+  assert.equal(calls[0].canMutateDeck(), true);
+});
+
 test('toggleSelectedElementsVisibility returns false and skips persistence when planned targets disconnect before apply', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const toggleSelectedElementsVisibilitySource = extractFunctionSource(

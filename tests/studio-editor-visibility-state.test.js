@@ -107,6 +107,31 @@ test('renderStudioVisibilityToolbarState applies visibility button, icon, and la
   assert.equal(nodes.toggleVisibilitySelectionLabel.textContent, 'Show Selected');
 });
 
+test('syncStudioVisibilityToolbarState builds and renders visibility controls in one shared operation', () => {
+  const button = { disabled: true };
+  const icon = { textContent: '' };
+  const label = { textContent: '' };
+  const element = { isConnected: true, hidden: true };
+
+  assert.equal(visibilityState.syncStudioVisibilityToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return {
+          toggleVisibilitySelectionBtn: button,
+          toggleVisibilitySelectionIcon: icon,
+          toggleVisibilitySelectionLabel: label
+        }[id] || null;
+      }
+    },
+    elements: [element],
+    isHidden: (target) => !!target.hidden,
+    canMutateDeck: () => true
+  }), true);
+  assert.equal(button.disabled, false);
+  assert.equal(icon.textContent, 'visibility');
+  assert.equal(label.textContent, 'Show Selected');
+});
+
 test('buildStudioVisibilityMutationPlan derives the next visibility toggle from the live selection only', () => {
   const visible = { id: 1, isConnected: true, hidden: false };
   const hidden = { id: 2, isConnected: true, hidden: true };

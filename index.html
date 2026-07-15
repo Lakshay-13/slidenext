@@ -4406,6 +4406,20 @@
     }
 
     function updateVisibilityActionState(doc = getIframeDoc()) {
+      const syncStudioVisibilityToolbarState = (
+        SlideNextStudioEditorVisibilityState
+        && typeof SlideNextStudioEditorVisibilityState.syncStudioVisibilityToolbarState === 'function'
+      )
+        ? SlideNextStudioEditorVisibilityState.syncStudioVisibilityToolbarState
+        : null;
+      if (syncStudioVisibilityToolbarState) {
+        return syncStudioVisibilityToolbarState({
+          documentRef: document,
+          elements: selectedElements,
+          isHidden: isElementHidden,
+          canMutateDeck: () => !!getActiveSlide(doc)
+        });
+      }
       const buildStudioVisibilityToolbarState = (
         SlideNextStudioEditorVisibilityState
         && typeof SlideNextStudioEditorVisibilityState.buildStudioVisibilityToolbarState === 'function'
