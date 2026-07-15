@@ -32,6 +32,29 @@
     return Number.isFinite(value) ? value : fallback;
   }
 
+  function createUniqueCanonicalId(value, fallback, usedIds) {
+    const baseId = normalizeString(value).trim() || fallback;
+    let nextId = baseId;
+    let suffix = 2;
+    while (usedIds.has(nextId)) {
+      nextId = `${baseId}-${suffix}`;
+      suffix += 1;
+    }
+    usedIds.add(nextId);
+    return nextId;
+  }
+
+  function normalizeCanonicalNodeIds(nodes = [], usedIds = new Set()) {
+    return (Array.isArray(nodes) ? nodes : []).map((node, index) => {
+      const normalizedNode = createCanonicalNode(node, index);
+      return {
+        ...normalizedNode,
+        id: createUniqueCanonicalId(normalizedNode.id, `node-${index + 1}`, usedIds),
+        children: normalizeCanonicalNodeIds(normalizedNode.children, usedIds)
+      };
+    });
+  }
+
   function createCanonicalAsset(seed = {}, index = 0) {
     const asset = asPlainObject(seed);
     return {
@@ -128,6 +151,12 @@
     const exportMeta = asPlainObject(deck.export);
     const source = asPlainObject(deck.source);
 
+    const normalizedSlides = Array.isArray(deck.slides)
+      ? deck.slides.map((slide, slideIndex) => createCanonicalSlide(slide, slideIndex))
+      : [];
+    const slideIds = new Set();
+    const nodeIds = new Set();
+
     return {
       kind: DECK_KIND,
       schemaVersion: Number.isInteger(deck.schemaVersion) ? deck.schemaVersion : DECK_SCHEMA_VERSION,
@@ -156,9 +185,11 @@
       assets: Array.isArray(deck.assets)
         ? deck.assets.map((asset, assetIndex) => createCanonicalAsset(asset, assetIndex))
         : [],
-      slides: Array.isArray(deck.slides)
-        ? deck.slides.map((slide, slideIndex) => createCanonicalSlide(slide, slideIndex))
-        : [],
+      slides: normalizedSlides.map((slide, slideIndex) => ({
+        ...slide,
+        id: createUniqueCanonicalId(slide.id, `slide-${slideIndex + 1}`, slideIds),
+        nodes: normalizeCanonicalNodeIds(slide.nodes, nodeIds)
+      })),
       notes: {
         deck: normalizeString(notes.deck)
       },

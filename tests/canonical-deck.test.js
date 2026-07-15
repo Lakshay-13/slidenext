@@ -3,6 +3,28 @@ const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
 
+test('createCanonicalDeck repairs duplicate slide and nested node ids deterministically', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: [{ id: 'node-1', children: [{ id: 'node-1' }] }]
+      },
+      {
+        id: 'slide-1',
+        nodes: [{ id: 'node-1' }]
+      }
+    ]
+  });
+
+  assert.deepEqual(deck.slides.map((slide) => slide.id), ['slide-1', 'slide-1-2']);
+  assert.deepEqual([
+    deck.slides[0].nodes[0].id,
+    deck.slides[0].nodes[0].children[0].id,
+    deck.slides[1].nodes[0].id
+  ], ['node-1', 'node-1-2', 'node-1-3']);
+});
+
 test('reorderCanonicalSlides moves a slide after a later target without mutating the source deck', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     metadata: { title: 'Deck' },
