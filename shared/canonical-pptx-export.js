@@ -9,6 +9,8 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (canonicalDeck, defaultPptxGenJS) {
   const DEFAULT_PPTX_WIDTH = 13.333;
   const DEFAULT_PPTX_HEIGHT = 7.5;
+  const DEFAULT_PPTX_ASPECT_RATIO = DEFAULT_PPTX_WIDTH / DEFAULT_PPTX_HEIGHT;
+  const CUSTOM_PPTX_LAYOUT_NAME = 'SLIDENEXT_CANVAS';
   const DEFAULT_SOURCE_WIDTH = 1920;
   const DEFAULT_SOURCE_HEIGHT = 1080;
   const UNSUPPORTED_NODE_TYPES = new Set(['vector', 'video', 'audio', 'embed', 'script']);
@@ -221,10 +223,46 @@
     };
   }
 
-  function preflightCanonicalPptxExport(deckSeed, options = {}) {
-    const deck = canonicalDeck.createCanonicalDeck(deckSeed);
+  function resolvePptxExportOptions(deck, options = {}) {
     const normalizedOptions = normalizePptxExportOptions(options);
     const sourceSize = getSourceSize(deck, normalizedOptions);
+    const sourceAspectRatio = sourceSize.width / sourceSize.height;
+    const requestedPageHeight = finitePositive(options.pageHeight, null);
+
+    if (
+      requestedPageHeight === null
+      && normalizedOptions.layout === 'LAYOUT_WIDE'
+      && Number.isFinite(sourceAspectRatio)
+      && sourceAspectRatio > 0
+      && Math.abs(sourceAspectRatio - DEFAULT_PPTX_ASPECT_RATIO) > 0.001
+    ) {
+      normalizedOptions.pageHeight = normalizedOptions.pageWidth / sourceAspectRatio;
+    }
+
+    const outputAspectRatio = normalizedOptions.pageWidth / normalizedOptions.pageHeight;
+    if (
+      normalizedOptions.layout === 'LAYOUT_WIDE'
+      && Number.isFinite(outputAspectRatio)
+      && Math.abs(outputAspectRatio - DEFAULT_PPTX_ASPECT_RATIO) > 0.001
+    ) {
+      normalizedOptions.layout = CUSTOM_PPTX_LAYOUT_NAME;
+      normalizedOptions.customLayout = {
+        name: CUSTOM_PPTX_LAYOUT_NAME,
+        width: normalizedOptions.pageWidth,
+        height: normalizedOptions.pageHeight
+      };
+    } else {
+      normalizedOptions.customLayout = null;
+    }
+
+    return { options: normalizedOptions, sourceSize };
+  }
+
+  function preflightCanonicalPptxExport(deckSeed, options = {}) {
+    const deck = canonicalDeck.createCanonicalDeck(deckSeed);
+    const resolvedExportOptions = resolvePptxExportOptions(deck, options);
+    const normalizedOptions = resolvedExportOptions.options;
+    const sourceSize = resolvedExportOptions.sourceSize;
     const diagnostics = createExportDiagnostics();
 
     function visit(node) {
@@ -382,6 +420,23 @@
       return { deck, pptx: null, slideCount: 0, diagnostics };
     }
 
+    if (normalizedOptions.customLayout) {
+      if (typeof pptx.defineLayout !== 'function') {
+        diagnostics.warnings.push('PptxGenJS custom layouts are unavailable; using the default wide layout');
+        normalizedOptions.layout = 'LAYOUT_WIDE';
+        normalizedOptions.pageWidth = DEFAULT_PPTX_WIDTH;
+        normalizedOptions.pageHeight = DEFAULT_PPTX_HEIGHT;
+      } else {
+        try {
+          pptx.defineLayout(normalizedOptions.customLayout);
+        } catch (error) {
+          diagnostics.warnings.push('PptxGenJS custom layout could not be defined; using the default wide layout');
+          normalizedOptions.layout = 'LAYOUT_WIDE';
+          normalizedOptions.pageWidth = DEFAULT_PPTX_WIDTH;
+          normalizedOptions.pageHeight = DEFAULT_PPTX_HEIGHT;
+        }
+      }
+    }
     pptx.layout = normalizedOptions.layout;
     if (deck.metadata.title) pptx.title = deck.metadata.title;
     if (deck.metadata.description) pptx.subject = deck.metadata.description;
@@ -414,9 +469,12 @@
   return {
     DEFAULT_PPTX_WIDTH,
     DEFAULT_PPTX_HEIGHT,
+    DEFAULT_PPTX_ASPECT_RATIO,
+    CUSTOM_PPTX_LAYOUT_NAME,
     DEFAULT_SOURCE_WIDTH,
     DEFAULT_SOURCE_HEIGHT,
     normalizePptxExportOptions,
+    resolvePptxExportOptions,
     normalizeHexColor,
     preflightCanonicalPptxExport,
     createCanonicalPptxExport

@@ -32,7 +32,12 @@ class FakeSlide {
 class FakePptx {
   constructor() {
     this.ShapeType = { rect: 'RECTANGLE' };
+    this.layouts = [];
     this.slides = [];
+  }
+
+  defineLayout(layout) {
+    this.layouts.push(layout);
   }
 
   addSlide() {
@@ -115,7 +120,12 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
   }, { PptxGenJS: FakePptx });
 
   assert.equal(result.slideCount, 1);
-  assert.equal(result.pptx.layout, 'LAYOUT_WIDE');
+  assert.equal(result.pptx.layout, 'SLIDENEXT_CANVAS');
+  assert.deepEqual(result.pptx.layouts, [{
+    name: 'SLIDENEXT_CANVAS',
+    width: 13.333,
+    height: 6.6665
+  }]);
   assert.equal(result.pptx.title, 'Canonical deck');
   assert.equal(result.pptx.subject, 'Export smoke test');
   assert.deepEqual(result.pptx.slides[0].background, { color: 'AABBCC' });
@@ -137,6 +147,18 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
   ]);
   assert.equal(result.diagnostics.unsupportedNodes[0].id, 'table-1');
   assert.deepEqual(result.diagnostics.missingAssets, []);
+});
+
+test('resolvePptxExportOptions keeps the default wide layout for canonical 16:9 decks', () => {
+  const result = pptxExport.resolvePptxExportOptions({
+    layout: { size: { width: 1920, height: 1080, unit: 'px' } },
+    slides: []
+  });
+
+  assert.equal(result.options.layout, 'LAYOUT_WIDE');
+  assert.equal(result.options.pageWidth, 13.333);
+  assert.equal(result.options.pageHeight, 7.5);
+  assert.equal(result.options.customLayout, null);
 });
 
 test('createCanonicalPptxExport reports missing geometry and image assets without throwing', () => {
