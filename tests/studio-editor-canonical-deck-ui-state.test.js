@@ -2658,7 +2658,7 @@ test('createEditorCanonicalDeckViewStateOptions reuses provided canonical and li
   assert.equal(options.resolveLiveActiveSlideId, customResolveLiveActiveSlideId);
 });
 
-test('buildEditorDeckSnapshot delegates snapshot build-option composition to the shared snapshot helper when available', () => {
+test('buildEditorDeckSnapshot fails closed when only the legacy snapshot builder is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorDeckSnapshotSource = extractFunctionSource(
     fileContent,
@@ -2687,33 +2687,11 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
   const helperCalls = [];
   const context = {
     SlideNextStudioDeckSnapshot: {
-      createStudioDeckSnapshotBuildOptions(nextDoc, options) {
-        delegatedArgs = {
-          nextDoc,
-          options,
-          canonicalDeck: options.buildCanonicalDeck(nextDoc),
-          liveActiveSlideId: options.resolveLiveActiveSlideId(nextDoc),
-          fallbackActiveSlideId: options.resolveFallbackActiveSlideId(nextDoc, canonicalDeck),
-          liveActiveSlide: iframeDoc.querySelector('.slide-active')
-        };
-        return {
-          buildCanonicalDeck: () => canonicalDeck,
-          fallbackActiveSlideId: 'slide-shared',
-          getActiveSlide: () => activeSlide
-        };
+      createStudioDeckSnapshotBuildOptions() {
+        throw new Error('legacy snapshot build-options helper should not run');
       },
       buildStudioDeckSnapshot(nextDoc, options) {
-        calls.push({
-          nextDoc,
-          options,
-          canonicalDeck: options.buildCanonicalDeck(nextDoc),
-          activeSlide: options.getActiveSlide(nextDoc)
-        });
-        return {
-          activeSlideId: options.fallbackActiveSlideId,
-          activeSlideIndex: 1,
-          slides: []
-        };
+        throw new Error('legacy snapshot builder should not run');
       }
     },
     createEditorCanonicalDeckViewStateOptions() {
@@ -2776,19 +2754,9 @@ test('buildEditorDeckSnapshot delegates snapshot build-option composition to the
 
   const result = context.buildEditorDeckSnapshot();
 
-  assert.equal(delegatedArgs.nextDoc, iframeDoc);
-  assert.equal(delegatedArgs.liveActiveSlideId, 'slide-live');
-  assert.equal(delegatedArgs.canonicalDeck, canonicalDeck);
-  assert.equal(delegatedArgs.fallbackActiveSlideId, 'slide-fallback');
-  assert.equal(delegatedArgs.liveActiveSlide, activeSlide);
-  assert.deepEqual(helperCalls, ['createEditorCanonicalDeckViewStateOptions']);
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].nextDoc, iframeDoc);
-  assert.equal(calls[0].options.fallbackActiveSlideId, 'slide-shared');
-  assert.equal(calls[0].canonicalDeck, canonicalDeck);
-  assert.equal(calls[0].activeSlide, activeSlide);
-  assert.equal(result.activeSlideId, 'slide-shared');
-  assert.equal(result.activeSlideIndex, 1);
+  assert.equal(result, null);
+  assert.deepEqual(helperCalls, []);
+  assert.deepEqual(calls, []);
 });
 
 test('buildEditorDeckSnapshot reuses the shared snapshot builder when available', () => {
