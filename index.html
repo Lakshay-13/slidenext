@@ -4482,22 +4482,12 @@
 
     function updateAlignmentActionState(doc = getIframeDoc()) {
       const alignmentActionState = buildAlignmentActionState(doc).alignmentActionState;
-      const canAlign = !!alignmentActionState.canAlign;
-      [
-        'alignSelectionLeftBtn',
-        'alignSelectionCenterBtn',
-        'alignSelectionRightBtn',
-        'alignSelectionTopBtn',
-        'alignSelectionMiddleBtn',
-        'alignSelectionBottomBtn'
-      ].forEach(id => {
-        const button = document.getElementById(id);
-        if (button) button.disabled = !canAlign;
-      });
-      const canDistribute = canAlign && alignmentActionState.selection.length >= 3;
-      ['distributeSelectionHorizontalBtn', 'distributeSelectionVerticalBtn'].forEach(id => {
-        const button = document.getElementById(id);
-        if (button) button.disabled = !canDistribute;
+      return SlideNextStudioEditorAlignment.renderStudioAlignmentToolbarState({
+        documentRef: document,
+        canAlign: alignmentActionState.canAlign,
+        selectionCount: Array.isArray(alignmentActionState.selection)
+          ? alignmentActionState.selection.length
+          : 0
       });
     }
 

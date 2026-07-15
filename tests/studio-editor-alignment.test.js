@@ -141,3 +141,28 @@ test('buildStudioDistributedLayout equalizes vertical gaps and requires at least
     nextItems: items.slice(0, 2)
   });
 });
+
+test('renderStudioAlignmentToolbarState separates alignment and distribution readiness', () => {
+  const ids = [
+    'alignSelectionLeftBtn',
+    'alignSelectionCenterBtn',
+    'alignSelectionRightBtn',
+    'alignSelectionTopBtn',
+    'alignSelectionMiddleBtn',
+    'alignSelectionBottomBtn',
+    'distributeSelectionHorizontalBtn',
+    'distributeSelectionVerticalBtn'
+  ];
+  const buttons = Object.fromEntries(ids.map((id) => [id, { disabled: true }]));
+
+  assert.equal(alignment.renderStudioAlignmentToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return buttons[id] || null;
+      }
+    },
+    canAlign: true,
+    selectionCount: 3
+  }), true);
+  assert.deepEqual(Object.values(buttons).map((button) => button.disabled), ids.map(() => false));
+});

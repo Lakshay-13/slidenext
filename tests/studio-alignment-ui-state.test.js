@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const studioAlignment = require('../shared/studio-editor-alignment.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -71,6 +72,7 @@ test('updateAlignmentActionState enables all positional controls only when align
   ];
   const controls = Object.fromEntries(ids.map((id) => [id, { disabled: true }]));
   const context = {
+    SlideNextStudioEditorAlignment: studioAlignment,
     buildAlignmentActionState() {
       return { alignmentActionState: { canAlign: true, selection: [{}, {}, {}] } };
     },

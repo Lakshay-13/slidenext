@@ -33,6 +33,30 @@
     };
   }
 
+  function renderStudioAlignmentToolbarState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    const canAlign = !!options.canAlign;
+    const canDistribute = canAlign && Number.isInteger(options.selectionCount)
+      && options.selectionCount >= 3;
+    [
+      'alignSelectionLeftBtn',
+      'alignSelectionCenterBtn',
+      'alignSelectionRightBtn',
+      'alignSelectionTopBtn',
+      'alignSelectionMiddleBtn',
+      'alignSelectionBottomBtn'
+    ].forEach((id) => {
+      const button = documentRef.getElementById(id);
+      if (button) button.disabled = !canAlign;
+    });
+    ['distributeSelectionHorizontalBtn', 'distributeSelectionVerticalBtn'].forEach((id) => {
+      const button = documentRef.getElementById(id);
+      if (button) button.disabled = !canDistribute;
+    });
+    return true;
+  }
+
   function isValidAlignmentItem(item) {
     return item
       && Number.isFinite(item.absLeft)
@@ -142,6 +166,7 @@
   return {
     getStudioAlignmentSelection,
     buildStudioAlignmentActionState,
+    renderStudioAlignmentToolbarState,
     buildStudioAlignedLayout,
     buildStudioDistributedLayout
   };
