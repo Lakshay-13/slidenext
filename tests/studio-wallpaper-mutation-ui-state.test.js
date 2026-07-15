@@ -24,6 +24,15 @@ function loadFinalizeWallpaperMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadApplyEditorWallpaperMutationWithTransaction(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorWallpaperMutationWithTransaction(activeSlide, background, options = {}) {',
+    '\n\n    function applyPresetWallpaper(val, isCustomInput = false) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadResolveCurrentStudioWallpaperActionState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -134,6 +143,7 @@ test('flushPendingWallpaperVersion commits a custom wallpaper version only when 
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
   loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+  loadApplyEditorWallpaperMutationWithTransaction(fileContent, context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
   assert.equal(context.flushPendingWallpaperVersion(), false);
@@ -200,6 +210,7 @@ test('applyPresetWallpaper uses the shared iframe accessor and records a version
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
   loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+  loadApplyEditorWallpaperMutationWithTransaction(fileContent, context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
   assert.equal(context.applyPresetWallpaper('linear-gradient(red, blue)'), true);
@@ -263,6 +274,7 @@ test('applyPresetWallpaper records a slide-scoped background style transaction',
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
   loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+  loadApplyEditorWallpaperMutationWithTransaction(fileContent, context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
   assert.equal(context.applyPresetWallpaper('#ffffff'), true);
@@ -316,6 +328,7 @@ test('applyPresetWallpaper delegates the active-slide mutation to the shared wal
   };
 
   vm.createContext(context);
+  loadApplyEditorWallpaperMutationWithTransaction(fileContent, context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
   assert.equal(context.applyPresetWallpaper('#ffffff'), true);
@@ -361,6 +374,7 @@ test('applyPresetWallpaper exits cleanly when the shared iframe accessor has no 
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
   loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+  loadApplyEditorWallpaperMutationWithTransaction(fileContent, context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
   assert.equal(context.applyPresetWallpaper('#000000'), false);
@@ -412,6 +426,7 @@ test('applyPresetWallpaper skips persistence when the active slide already has t
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
   loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+  loadApplyEditorWallpaperMutationWithTransaction(fileContent, context);
   vm.runInContext(applyPresetWallpaperSource, context);
 
   assert.equal(context.applyPresetWallpaper('linear-gradient(red, blue)'), false);

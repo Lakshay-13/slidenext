@@ -7072,14 +7072,13 @@
       return true;
     }
 
-    function applyPresetWallpaper(val, isCustomInput = false) {
-      const iframeDoc = getIframeDoc();
-      const actionState = resolveCurrentStudioWallpaperActionState(iframeDoc);
-      if (!actionState.canUseWallpaperControls) return false;
-      const activeSlide = actionState.activeSlide;
-      
-      if (!activeSlide) return false;
-      if (activeSlide.style.background === val) return false;
+    function applyEditorWallpaperMutationWithTransaction(activeSlide, background, options = {}) {
+      if (!activeSlide || !activeSlide.style) {
+        return {
+          didChange: false,
+          transaction: null
+        };
+      }
 
       const createStudioStyleTransaction = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
@@ -7088,9 +7087,6 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
         : null;
-      const activeSlideId = typeof getEditorSlideId === 'function'
-        ? getEditorSlideId(activeSlide)
-        : '';
       const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
         ? SlideNextStudioEditorWallpaperView
         : null;
@@ -7098,29 +7094,58 @@
         && typeof wallpaperView.applyStudioWallpaperToSlides === 'function'
         ? wallpaperView.applyStudioWallpaperToSlides
         : null;
-      let transaction = null;
+      const slideId = typeof options.slideId === 'string' ? options.slideId : '';
 
       if (applyStudioWallpaperToSlides) {
-        const mutation = applyStudioWallpaperToSlides([activeSlide], val, {
+        const mutation = applyStudioWallpaperToSlides([activeSlide], background, {
           createStyleTransaction: createStudioStyleTransaction,
-          getSlideId: () => activeSlideId
+          getSlideId: () => slideId
         });
-        if (!mutation || !mutation.didChange) return false;
-        transaction = mutation.transaction;
-      } else {
-        const previousBackground = activeSlide.style.background;
-        activeSlide.style.background = val;
-        transaction = createStudioStyleTransaction && activeSlideId
-          ? createStudioStyleTransaction([{
-              element: activeSlide,
-              elementId: `slide:${activeSlideId}`,
-              before: { background: previousBackground },
-              after: { background: activeSlide.style.background }
-            }])
-          : null;
+        return mutation && typeof mutation === 'object'
+          ? {
+              didChange: !!mutation.didChange,
+              transaction: mutation.transaction || null
+            }
+          : {
+              didChange: false,
+              transaction: null
+            };
       }
+
+      const previousBackground = activeSlide.style.background;
+      activeSlide.style.background = background;
+      const transaction = createStudioStyleTransaction && slideId
+        ? createStudioStyleTransaction([{
+            element: activeSlide,
+            elementId: `slide:${slideId}`,
+            before: { background: previousBackground },
+            after: { background: activeSlide.style.background }
+          }])
+        : null;
+      return {
+        didChange: true,
+        transaction
+      };
+    }
+
+    function applyPresetWallpaper(val, isCustomInput = false) {
+      const iframeDoc = getIframeDoc();
+      const actionState = resolveCurrentStudioWallpaperActionState(iframeDoc);
+      if (!actionState.canUseWallpaperControls) return false;
+      const activeSlide = actionState.activeSlide;
+
+      if (!activeSlide) return false;
+      if (activeSlide.style.background === val) return false;
+
+      const activeSlideId = typeof getEditorSlideId === 'function'
+        ? getEditorSlideId(activeSlide)
+        : '';
+      const mutation = applyEditorWallpaperMutationWithTransaction(activeSlide, val, {
+        slideId: activeSlideId
+      });
+      if (!mutation.didChange) return false;
       hasPendingCustomWallpaperVersion = !!isCustomInput;
-      finalizeWallpaperMutation(isCustomInput ? '' : 'Auto: Changed Background', transaction);
+      finalizeWallpaperMutation(isCustomInput ? '' : 'Auto: Changed Background', mutation.transaction);
       return true;
     }
 
