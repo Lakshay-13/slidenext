@@ -41,6 +41,21 @@ test('createCanonicalDeck repairs duplicate asset ids without changing asset ord
   ]);
 });
 
+test('isCanonicalDeck rejects malformed identity fields and accepts repaired decks', () => {
+  const malformedDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    assets: [{ id: 'asset-1' }, { id: 'asset-1' }],
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', children: [{ id: '' }] }]
+    }]
+  };
+
+  assert.equal(canonicalDeck.isCanonicalDeck(malformedDeck), false);
+  assert.equal(canonicalDeck.isCanonicalDeck(canonicalDeck.createCanonicalDeck(malformedDeck)), true);
+});
+
 test('reorderCanonicalSlides moves a slide after a later target without mutating the source deck', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     metadata: { title: 'Deck' },

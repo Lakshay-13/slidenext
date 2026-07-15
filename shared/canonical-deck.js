@@ -224,12 +224,46 @@
     };
   }
 
+  function hasUniqueCanonicalIds(deck) {
+    const assetIds = new Set();
+    const slideIds = new Set();
+    const nodeIds = new Set();
+    const registerId = (value, usedIds) => {
+      if (typeof value !== 'string' || !value.trim() || usedIds.has(value)) {
+        return false;
+      }
+      usedIds.add(value);
+      return true;
+    };
+    const hasUniqueNodeIds = (nodes) => {
+      if (!Array.isArray(nodes)) return true;
+      return nodes.every((node) => {
+        return !!node
+          && registerId(node.id, nodeIds)
+          && hasUniqueNodeIds(node.children);
+      });
+    };
+
+    if (Array.isArray(deck.assets) && !deck.assets.every((asset) => {
+      return !!asset && registerId(asset.id, assetIds);
+    })) {
+      return false;
+    }
+    if (!Array.isArray(deck.slides)) return false;
+    return deck.slides.every((slide) => {
+      return !!slide
+        && registerId(slide.id, slideIds)
+        && hasUniqueNodeIds(slide.nodes);
+    });
+  }
+
   function isCanonicalDeck(value) {
     return !!value
       && typeof value === 'object'
       && value.kind === DECK_KIND
       && Number.isInteger(value.schemaVersion)
-      && Array.isArray(value.slides);
+      && Array.isArray(value.slides)
+      && hasUniqueCanonicalIds(value);
   }
 
   function reorderCanonicalSlides(deckLike, sourceSlideId, targetSlideId) {
