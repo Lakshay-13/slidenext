@@ -81,3 +81,31 @@ test('syncCanvasRulers renders zoomed ticks against the visible canvas wrapper o
   assert.equal(vertical.children[1].textContent, '0');
   assert.equal(vertical.children[2].style.top, '-10px');
 });
+
+test('syncCanvasRulers delegates ruler rendering to the shared coordinator', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function syncCanvasRulers() {',
+    '\n\n    // 4. Zoom Engine'
+  );
+  const calls = [];
+  const context = {
+    document: {},
+    zoomFactor: 0.75,
+    SlideNextStudioEditorRulerView: {
+      syncStudioCanvasRulers(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.syncCanvasRulers(), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.equal(calls[0].zoomFactor, 0.75);
+});

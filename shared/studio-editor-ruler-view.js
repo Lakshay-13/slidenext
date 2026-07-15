@@ -63,5 +63,12 @@
     return true;
   }
 
-  return { renderStudioCanvasRulers };
+  function syncStudioCanvasRulers(options = {}) {
+    return renderStudioCanvasRulers({
+      documentRef: options.documentRef,
+      zoomFactor: options.zoomFactor
+    });
+  }
+
+  return { renderStudioCanvasRulers, syncStudioCanvasRulers };
 });

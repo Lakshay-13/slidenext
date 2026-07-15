@@ -6696,6 +6696,12 @@
       const rulerViewApi = typeof SlideNextStudioEditorRulerView !== 'undefined'
         ? SlideNextStudioEditorRulerView
         : null;
+      if (rulerViewApi && typeof rulerViewApi.syncStudioCanvasRulers === 'function') {
+        return rulerViewApi.syncStudioCanvasRulers({
+          documentRef: document,
+          zoomFactor
+        });
+      }
       return rulerViewApi && typeof rulerViewApi.renderStudioCanvasRulers === 'function'
         ? rulerViewApi.renderStudioCanvasRulers({
             documentRef: document,
