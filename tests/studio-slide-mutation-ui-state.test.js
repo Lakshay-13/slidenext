@@ -337,6 +337,7 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   const calls = [];
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorSlideCommands: slideCommands,
     assignEditorSlideId() {},
     document: {
       getElementById(id) {
@@ -454,6 +455,7 @@ test('addSlideNode delegates slide insertion and transaction capture to the shar
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideCommands: slideCommands,
     SlideNextStudioDeckView: {
       applyStudioSlideInsertionMutation(...args) {
         calls.push(['applyStudioSlideInsertionMutation', ...args]);
@@ -526,6 +528,7 @@ test('addSlideNode no-ops when insertion state or the iframe document disallows 
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideCommands: slideCommands,
     getIframeDoc() {
       calls.push(['getIframeDoc']);
       return null;
@@ -581,6 +584,7 @@ test('addSlideNode skips history when blank slide creation fails', () => {
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideCommands: slideCommands,
     assignEditorSlideId() {},
     document: {
       getElementById(id) {

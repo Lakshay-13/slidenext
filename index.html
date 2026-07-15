@@ -3080,18 +3080,14 @@
 
     // Add Blank Slide Node
     function addSlideNode() {
-      const iframeDoc = getIframeDoc();
-      if (!resolveCurrentStudioInsertionActionState(iframeDoc).canAddSlide) return false;
-      if (!iframeDoc) return false;
-      const container = iframeDoc.getElementById('slidesContainer');
-      if (!container) return false;
-      const newIndex = getSlides(iframeDoc).length;
-      const newSlide = SlideNextStudioEditorDom.createStudioBlankSlide(iframeDoc, {
-        ...getEditorDomOptions(),
-        assignSlideId: assignEditorSlideId,
-        decorateSlide: makeElementsHoverable
-      });
-      if (!newSlide) return false;
+      const slideCommands = typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+        ? SlideNextStudioEditorSlideCommands
+        : null;
+      const addStudioSlideNode = slideCommands
+        && typeof slideCommands.addStudioSlideNode === 'function'
+        ? slideCommands.addStudioSlideNode
+        : null;
+      if (!addStudioSlideNode) return false;
 
       const appendCanonicalSlide = (
         typeof SlideNextCanonicalDeck !== 'undefined'
@@ -3100,9 +3096,6 @@
       )
         ? SlideNextCanonicalDeck.appendCanonicalSlide
         : null;
-      const newSlideId = typeof getEditorSlideId === 'function'
-        ? getEditorSlideId(newSlide)
-        : (newSlide.id || '');
       const importSlideToCanonicalSlide = (
         typeof SlideNextDeckImport !== 'undefined'
         && SlideNextDeckImport
@@ -3110,36 +3103,37 @@
       )
         ? SlideNextDeckImport.importSlideToCanonicalSlide
         : null;
-      const canonicalDeckBeforeAddition = appendCanonicalSlide
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(iframeDoc)
-        : null;
-      const canonicalSlide = importSlideToCanonicalSlide && newSlideId
-        ? importSlideToCanonicalSlide(newSlide, newIndex, {
-            getSlideId: () => newSlideId
-          })
-        : {
-            id: newSlideId,
-            title: `Slide ${newIndex + 1}`
-          };
-      const canonicalDeckAfterAddition = appendCanonicalSlide
-        ? appendCanonicalSlide(canonicalDeckBeforeAddition, canonicalSlide)
-        : null;
 
-      saveHistoryState();
-      const mutation = applyEditorSlideInsertionWithTransaction(container, newSlide);
-      if (!mutation.didApply) return false;
-      const transaction = mutation.transaction;
-      
-      // Update UI
-      generateThumbnails();
-      setActiveSlide(newIndex);
-      if (canonicalDeckAfterAddition) {
-        finalizeSlideMutationPersistence('Auto: Added Slide', transaction, canonicalDeckAfterAddition);
-      } else {
-        finalizeSlideMutationPersistence('Auto: Added Slide', transaction);
-      }
-      return true;
+      return addStudioSlideNode({
+        getIframeDoc,
+        resolveInsertionActionState: resolveCurrentStudioInsertionActionState,
+        getSlideContainer: (doc) => doc && typeof doc.getElementById === 'function'
+          ? doc.getElementById('slidesContainer')
+          : null,
+        getSlides: typeof getSlides === 'function' ? getSlides : () => [],
+        createBlankSlide: (doc) => SlideNextStudioEditorDom.createStudioBlankSlide(doc, {
+          ...getEditorDomOptions(),
+          assignSlideId: assignEditorSlideId,
+          decorateSlide: makeElementsHoverable
+        }),
+        getSlideId: typeof getEditorSlideId === 'function'
+          ? getEditorSlideId
+          : (slide) => slide && slide.id || '',
+        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck
+          : null,
+        appendCanonicalSlide,
+        importSlideToCanonicalSlide,
+        saveHistoryState: typeof saveHistoryState === 'function' ? saveHistoryState : () => {},
+        applyInsertion: typeof applyEditorSlideInsertionWithTransaction === 'function'
+          ? applyEditorSlideInsertionWithTransaction
+          : () => ({ didApply: false, transaction: null }),
+        generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
+        setActiveSlide: typeof setActiveSlide === 'function' ? setActiveSlide : null,
+        finalizeMutation: typeof finalizeSlideMutationPersistence === 'function'
+          ? finalizeSlideMutationPersistence
+          : null
+      });
     }
 
     function duplicateSlideNode() {
