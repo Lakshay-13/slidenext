@@ -1149,6 +1149,7 @@
   <script src="/shared/studio-editor-ruler.js"></script>
   <script src="/shared/studio-editor-ruler-view.js"></script>
   <script src="/shared/studio-editor-zoom.js"></script>
+  <script src="/shared/studio-editor-status-view.js"></script>
   <script src="/shared/studio-editor-mutation.js"></script>
   <script src="/shared/studio-editor-transaction.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
@@ -9169,50 +9170,14 @@
     }
 
     function setStudioAutoSaveStatus(state) {
-      const statusEl = document.getElementById('autoSaveStatus');
-      if (!statusEl) return;
-
-      if (state === 'loading') {
-        statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Loading deck...</span>`;
-        return;
-      }
-
-      if (state === 'saving') {
-        statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Saving...</span>`;
-        return;
-      }
-
-      if (state === 'autosave-failed') {
-        statusEl.innerHTML = `<span class="text-rose-400">AutoSave Failed</span>`;
-        return;
-      }
-
-      if (state === 'save-version-failed') {
-        statusEl.innerHTML = `<span class="text-rose-400">Save Version Failed</span>`;
-        return;
-      }
-
-      if (state === 'network-error') {
-        statusEl.innerHTML = `<span class="text-rose-400">Network Error</span>`;
-        return;
-      }
-
-      if (state === 'exporting') {
-        statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Exporting PPTX...</span>`;
-        return;
-      }
-
-      if (state === 'export-failed') {
-        statusEl.innerHTML = `<span class="text-rose-400">PPTX Export Failed</span>`;
-        return;
-      }
-
-      if (state === 'exported') {
-        statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> PPTX Exported</span>`;
-        return;
-      }
-
-      statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
+      const statusView = typeof SlideNextStudioEditorStatusView !== 'undefined'
+        ? SlideNextStudioEditorStatusView
+        : null;
+      if (!statusView || typeof statusView.setStudioAutoSaveStatus !== 'function') return false;
+      return statusView.setStudioAutoSaveStatus({
+        documentRef: document,
+        state
+      });
     }
 
     function setStudioSaveButtonState(state) {

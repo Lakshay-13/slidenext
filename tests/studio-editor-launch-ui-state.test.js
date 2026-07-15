@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const deckContext = require('../shared/studio-deck-context.js');
 const editorSession = require('../shared/studio-editor-session.js');
+const editorStatusView = require('../shared/studio-editor-status-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -176,6 +177,7 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   };
 
   vm.createContext(context);
+  context.SlideNextStudioEditorStatusView = editorStatusView;
   loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
@@ -341,6 +343,7 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
   };
 
   vm.createContext(context);
+  context.SlideNextStudioEditorStatusView = editorStatusView;
   loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
@@ -669,6 +672,7 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
   };
 
   vm.createContext(context);
+  context.SlideNextStudioEditorStatusView = editorStatusView;
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
@@ -769,6 +773,7 @@ test('setStudioAutoSaveStatus renders saving and failure editor states', () => {
   };
 
   vm.createContext(context);
+  context.SlideNextStudioEditorStatusView = editorStatusView;
   vm.runInContext(setStudioAutoSaveStatusSource, context);
 
   context.setStudioAutoSaveStatus('saving');
