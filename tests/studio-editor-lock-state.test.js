@@ -134,3 +134,26 @@ test('buildStudioLockMutationPlan derives the next lock toggle from the live sel
     versionLabel: ''
   });
 });
+
+test('renderStudioLockToolbarState applies lock button, icon, and label chrome', () => {
+  const nodes = {
+    toggleLockSelectionBtn: { disabled: true },
+    toggleLockSelectionIcon: { textContent: '' },
+    toggleLockSelectionLabel: { textContent: '' }
+  };
+
+  assert.equal(lockState.renderStudioLockToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return nodes[id] || null;
+      }
+    },
+    actionState: {
+      canToggle: true,
+      allLocked: true
+    }
+  }), true);
+  assert.equal(nodes.toggleLockSelectionBtn.disabled, false);
+  assert.equal(nodes.toggleLockSelectionIcon.textContent, 'lock_open');
+  assert.equal(nodes.toggleLockSelectionLabel.textContent, 'Unlock Selected');
+});

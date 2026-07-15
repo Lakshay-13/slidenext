@@ -4258,12 +4258,10 @@
         isLocked: isElementLocked,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
-      const lockBtn = document.getElementById('toggleLockSelectionBtn');
-      const lockIcon = document.getElementById('toggleLockSelectionIcon');
-      const lockLabel = document.getElementById('toggleLockSelectionLabel');
-      if (lockBtn) lockBtn.disabled = !lockActionState.canToggle;
-      if (lockIcon) lockIcon.textContent = lockActionState.iconText || (lockActionState.allLocked ? 'lock_open' : 'lock');
-      if (lockLabel) lockLabel.textContent = lockActionState.labelText || (lockActionState.allLocked ? 'Unlock Selected' : 'Lock Selected');
+      return SlideNextStudioEditorLockState.renderStudioLockToolbarState({
+        documentRef: document,
+        actionState: lockActionState
+      });
     }
 
     function buildRemovalSelectionActionState(doc = null) {

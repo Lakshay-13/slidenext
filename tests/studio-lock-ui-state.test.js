@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const lockState = require('../shared/studio-editor-lock-state.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -119,6 +120,9 @@ test('updateLockActionState enables the lock control only when the iframe has a 
           canToggle,
           allLocked: canToggle
         };
+      },
+      renderStudioLockToolbarState(options) {
+        return lockState.renderStudioLockToolbarState(options);
       }
     },
     document: {
@@ -185,6 +189,9 @@ test('updateLockActionState reuses the shared lock toolbar helper when available
           iconText: 'lock_open',
           labelText: 'Unlock Selected'
         };
+      },
+      renderStudioLockToolbarState(options) {
+        return lockState.renderStudioLockToolbarState(options);
       }
     },
     document: {

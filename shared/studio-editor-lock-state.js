@@ -46,6 +46,19 @@
     };
   }
 
+  function renderStudioLockToolbarState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    const actionState = options.actionState || {};
+    const button = documentRef.getElementById('toggleLockSelectionBtn');
+    const icon = documentRef.getElementById('toggleLockSelectionIcon');
+    const label = documentRef.getElementById('toggleLockSelectionLabel');
+    if (button) button.disabled = !actionState.canToggle;
+    if (icon) icon.textContent = actionState.iconText || (actionState.allLocked ? 'lock_open' : 'lock');
+    if (label) label.textContent = actionState.labelText || (actionState.allLocked ? 'Unlock Selected' : 'Lock Selected');
+    return true;
+  }
+
   function buildStudioLockMutationPlan(elements = [], options = {}) {
     const selection = getStudioLockSelection(elements, options);
     const isLocked = typeof options.isLocked === 'function'
@@ -77,6 +90,7 @@
     getStudioLockSelection,
     buildStudioLockActionState,
     buildStudioLockToolbarState,
+    renderStudioLockToolbarState,
     buildStudioLockMutationPlan
   };
 });
