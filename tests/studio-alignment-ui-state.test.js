@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioAlignment = require('../shared/studio-editor-alignment.js');
 
@@ -413,6 +414,7 @@ test('alignSelectedElements forwards an immutable canonical layout sidecar', () 
   let finalized = null;
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalLayout: canonicalLayout,
     SlideNextStudioEditorAlignment: {
       buildStudioAlignedLayout() {
         return {

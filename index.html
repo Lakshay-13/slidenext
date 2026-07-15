@@ -5924,11 +5924,14 @@
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
-      const updateCanonicalNodeLayout = canonicalDeckApi
-        && typeof canonicalDeckApi.updateCanonicalNodeLayout === 'function'
-        ? canonicalDeckApi.updateCanonicalNodeLayout
+      const canonicalLayoutApi = typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
+        ? SlideNextStudioEditorCanonicalLayout
         : null;
-      const canonicalNodeLayouts = updateCanonicalNodeLayout
+      const buildCanonicalLayoutDeck = canonicalLayoutApi
+        && typeof canonicalLayoutApi.buildStudioCanonicalLayoutDeck === 'function'
+        ? canonicalLayoutApi.buildStudioCanonicalLayoutDeck
+        : null;
+      const canonicalNodeLayouts = buildCanonicalLayoutDeck
         && Array.isArray(alignmentResult.nextItems)
         ? alignmentResult.nextItems.map((item) => {
             const nodeId = getAlignmentElementId(item && item.element);
@@ -5944,12 +5947,15 @@
             };
           }).filter(Boolean)
         : [];
-      const canonicalDeckBeforeAlignment = updateCanonicalNodeLayout
+      const canonicalDeckBeforeAlignment = buildCanonicalLayoutDeck
         && typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck()
         : null;
-      const canonicalDeck = updateCanonicalNodeLayout
-        ? updateCanonicalNodeLayout(canonicalDeckBeforeAlignment, canonicalNodeLayouts)
+      const canonicalDeck = buildCanonicalLayoutDeck
+        ? buildCanonicalLayoutDeck(canonicalNodeLayouts, {
+            canonicalDeckApi,
+            canonicalDeckBeforeMutation: canonicalDeckBeforeAlignment
+          })
         : null;
       const mutation = applyEditorPositionLayoutWithTransaction(alignmentResult.nextItems, {
         getElementId: getAlignmentElementId
