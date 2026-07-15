@@ -135,6 +135,54 @@ test('updateCanonicalNodeVisibility returns null for no-op or invalid patches', 
   assert.equal(canonicalDeck.updateCanonicalNodeVisibility(deck, ['node-1'], { color: true }), null);
 });
 
+test('updateCanonicalNodeLayout immutably updates nested node positions by id', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'node-1',
+        layout: { mode: 'absolute', x: 10, y: 20 },
+        children: [{
+          id: 'child-1',
+          layout: { mode: 'absolute', x: 5, y: 6 }
+        }]
+      }]
+    }]
+  });
+
+  const updatedDeck = canonicalDeck.updateCanonicalNodeLayout(sourceDeck, [
+    { id: 'node-1', layout: { x: 120, y: 80 } },
+    { id: 'child-1', layout: { x: 30, y: 40 } }
+  ]);
+
+  assert.ok(canonicalDeck.isCanonicalDeck(updatedDeck));
+  assert.equal(sourceDeck.slides[0].nodes[0].layout.x, 10);
+  assert.equal(sourceDeck.slides[0].nodes[0].children[0].layout.x, 5);
+  assert.equal(updatedDeck.slides[0].nodes[0].layout.x, 120);
+  assert.equal(updatedDeck.slides[0].nodes[0].layout.y, 80);
+  assert.equal(updatedDeck.slides[0].nodes[0].children[0].layout.x, 30);
+  assert.equal(updatedDeck.slides[0].nodes[0].children[0].layout.y, 40);
+});
+
+test('updateCanonicalNodeLayout returns null for no-op or invalid layout updates', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', layout: { x: 10, y: 20 } }]
+    }]
+  });
+
+  assert.equal(canonicalDeck.updateCanonicalNodeLayout(deck, [
+    { id: 'node-1', layout: { x: 10 } }
+  ]), null);
+  assert.equal(canonicalDeck.updateCanonicalNodeLayout(deck, [
+    { id: 'missing', layout: { x: 30 } }
+  ]), null);
+  assert.equal(canonicalDeck.updateCanonicalNodeLayout(deck, [
+    { id: 'node-1', layout: { x: '30px' } }
+  ]), null);
+});
+
 test('updateCanonicalSlideBackground immutably updates selected slide backgrounds', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{

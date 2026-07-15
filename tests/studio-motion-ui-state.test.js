@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioNudge = require('../shared/studio-editor-nudge.js');
 
@@ -590,6 +591,76 @@ test('nudgeSelectedElements persists the moved selection through the shared muta
   assert.deepEqual(JSON.parse(JSON.stringify(calls[5][3])), { width: 1920, height: 1080 });
   assert.deepEqual(calls[7], ['saveHistoryState', true]);
   assert.deepEqual(calls[9], ['triggerAutoVersion', 'Auto: Nudged Element']);
+});
+
+test('nudgeSelectedElements forwards an immutable canonical layout sidecar', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const nudgeSelectedElementsSource = extractFunctionSource(
+    fileContent,
+    'function nudgeSelectedElements(dx, dy) {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const movedElement = {
+    dataset: { editorId: 'node-1' },
+    style: { left: '10px', top: '20px' }
+  };
+  const canonicalDeckBefore = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'node-1',
+        layout: { mode: 'absolute', x: 10, y: 20 }
+      }]
+    }]
+  });
+  let finalized = null;
+  const context = {
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorNudge: {
+      buildStudioNudgedLayout() {
+        return {
+          didChange: true,
+          nextItems: [{
+            element: movedElement,
+            nextLeft: 120,
+            nextTop: 80,
+            nextAbsLeft: 120,
+            nextAbsTop: 80
+          }]
+        };
+      },
+      applyStudioNudgedLayout: studioNudge.applyStudioNudgedLayout
+    },
+    buildEditorCanonicalDeck() {
+      return canonicalDeckBefore;
+    },
+    buildMotionSelectionActionState() {
+      return {
+        canNudge: true,
+        doc: { id: 'iframe-doc' },
+        nudgeLayoutItems: [{ element: movedElement }],
+        slideBounds: { width: 1920, height: 1080 }
+      };
+    },
+    assignEditorElementId() {
+      return 'node-1';
+    },
+    finalizeEditorDeckMutation(versionLabel, options) {
+      finalized = { versionLabel, options };
+    }
+  };
+
+  vm.createContext(context);
+  loadPositionMutationHelper(fileContent, context);
+  vm.runInContext(nudgeSelectedElementsSource, context);
+
+  assert.equal(context.nudgeSelectedElements(1, 1), true);
+  assert.equal(movedElement.style.left, '120px');
+  assert.equal(movedElement.style.top, '80px');
+  assert.equal(canonicalDeckBefore.slides[0].nodes[0].layout.x, 10);
+  assert.equal(finalized.versionLabel, 'Auto: Nudged Element');
+  assert.equal(finalized.options.canonicalDeck.slides[0].nodes[0].layout.x, 120);
+  assert.equal(finalized.options.canonicalDeck.slides[0].nodes[0].layout.y, 80);
 });
 
 test('nudgeSelectedElements delegates position application to the shared nudge module', () => {
