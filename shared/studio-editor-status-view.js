@@ -37,5 +37,23 @@
     return true;
   }
 
-  return { setStudioAutoSaveStatus };
+  function setStudioSaveButtonState(options = {}) {
+    const documentRef = options.documentRef;
+    const saveBtn = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('studioSaveBtn')
+      : null;
+    if (!saveBtn) return false;
+
+    if (options.state === 'saving-version') {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>Creating version...</span>`;
+      return true;
+    }
+
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = `<span class="material-symbols-outlined text-[16px] font-bold">bookmarks</span><span>Save Version</span>`;
+    return true;
+  }
+
+  return { setStudioAutoSaveStatus, setStudioSaveButtonState };
 });

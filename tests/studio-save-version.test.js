@@ -8,6 +8,7 @@ const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorSession = require('../shared/studio-editor-session.js');
+const editorStatusView = require('../shared/studio-editor-status-view.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
@@ -463,6 +464,7 @@ test('setStudioSaveButtonState renders the version button loading and idle state
   };
 
   vm.createContext(context);
+  context.SlideNextStudioEditorStatusView = editorStatusView;
   vm.runInContext(setStudioSaveButtonStateSource, context);
 
   context.setStudioSaveButtonState('saving-version');

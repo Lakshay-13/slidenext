@@ -30,3 +30,20 @@ test('setStudioAutoSaveStatus renders loading, export, failure, and saved states
 test('setStudioAutoSaveStatus safely skips missing status chrome', () => {
   assert.equal(statusView.setStudioAutoSaveStatus({ documentRef: { getElementById() { return null; } } }), false);
 });
+
+test('setStudioSaveButtonState renders saving and idle version states', () => {
+  const saveBtn = { disabled: false, innerHTML: '<span>Save Version</span>' };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'studioSaveBtn' ? saveBtn : null;
+    }
+  };
+
+  assert.equal(statusView.setStudioSaveButtonState({ documentRef, state: 'saving-version' }), true);
+  assert.equal(saveBtn.disabled, true);
+  assert.match(saveBtn.innerHTML, /Creating version/);
+
+  assert.equal(statusView.setStudioSaveButtonState({ documentRef, state: 'idle' }), true);
+  assert.equal(saveBtn.disabled, false);
+  assert.match(saveBtn.innerHTML, /Save Version/);
+});
