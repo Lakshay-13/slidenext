@@ -221,19 +221,17 @@ test('updateWallpaperActionState delegates toolbar rendering to the shared deck 
     '\n\n    function resolveCurrentStudioDeckReadyActionState(doc = getIframeDoc()) {'
   );
   const doc = { activeSlide: {} };
-  const actionState = {
-    activeSlide: doc.activeSlide,
-    canUseWallpaperControls: true
-  };
   const calls = [];
   const context = {
-    resolveCurrentStudioWallpaperActionState(currentDoc) {
+    getActiveSlide(currentDoc) {
       assert.equal(currentDoc, doc);
-      return actionState;
+      return currentDoc.activeSlide;
     },
     SlideNextStudioDeckView: {
       syncStudioWallpaperToolbarActionState(options) {
         calls.push(options);
+        assert.equal(options.doc, doc);
+        assert.equal(options.getActiveSlide(doc), doc.activeSlide);
         return 'delegated';
       }
     },
@@ -249,7 +247,8 @@ test('updateWallpaperActionState delegates toolbar rendering to the shared deck 
   assert.equal(context.updateWallpaperActionState(doc), 'delegated');
   assert.equal(calls.length, 1);
   assert.equal(calls[0].documentRef, context.document);
-  assert.deepEqual(calls[0].actionState, actionState);
+  assert.equal(calls[0].doc, doc);
+  assert.equal(calls[0].getActiveSlide, context.getActiveSlide);
 });
 
 function createClassList(initialValues = []) {
