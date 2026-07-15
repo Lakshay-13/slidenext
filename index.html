@@ -3181,7 +3181,14 @@
     }
 
     function applyEditorSlideDeletionWithTransaction(container, slideNode, options = {}) {
-      if (!container || !slideNode) {
+      const slideCommands = typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+        ? SlideNextStudioEditorSlideCommands
+        : null;
+      const applyStudioSlideDeletionWithTransaction = slideCommands
+        && typeof slideCommands.applyStudioSlideDeletionWithTransaction === 'function'
+        ? slideCommands.applyStudioSlideDeletionWithTransaction
+        : null;
+      if (!applyStudioSlideDeletionWithTransaction) {
         return {
           didApply: false,
           transaction: null
@@ -3203,44 +3210,12 @@
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
 
-      if (applyStudioSlideDeletionMutation) {
-        const mutation = applyStudioSlideDeletionMutation(container, slideNode, {
-          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
-          containerElementId: options.containerElementId,
-          getElementId: options.getElementId
-        });
-        return {
-          didApply: !!(mutation && mutation.didApply),
-          transaction: mutation && mutation.transaction ? mutation.transaction : null
-        };
-      }
-
-      if (typeof slideNode.remove !== 'function') {
-        return {
-          didApply: false,
-          transaction: null
-        };
-      }
-
-      const containerElementId = typeof options.containerElementId === 'string'
-        && options.containerElementId.trim()
-        ? options.containerElementId.trim()
-        : 'slides-container';
-      const markupCapture = createStudioMarkupTransactionCapture
-        ? createStudioMarkupTransactionCapture([{
-            element: container,
-            elementId: containerElementId
-          }], {
-            getElementId: options.getElementId
-          })
-        : null;
-      slideNode.remove();
-      return {
-        didApply: true,
-        transaction: markupCapture
-          ? markupCapture.createTransaction()
-          : null
-      };
+      return applyStudioSlideDeletionWithTransaction(container, slideNode, {
+        applyStudioSlideDeletionMutation,
+        createStudioMarkupTransactionCapture,
+        containerElementId: options.containerElementId,
+        getElementId: options.getElementId
+      });
     }
 
     // Delete Active Slide Node

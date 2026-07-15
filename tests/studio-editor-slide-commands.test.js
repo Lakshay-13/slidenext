@@ -411,3 +411,49 @@ test('applyStudioSlideInsertionWithTransaction uses the fallback insertion and m
   assert.equal(result.transaction.operations[0].elementId, 'slides-container');
   assert.equal(result.transaction.operations[0].after, '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section><section data-slide-id="slide-3"></section>');
 });
+
+test('applyStudioSlideDeletionWithTransaction delegates the shared slide mutation and preserves options', () => {
+  const container = { id: 'slides-container' };
+  const slideNode = { id: 'slide-2' };
+  let delegatedOptions = null;
+  const result = slideCommands.applyStudioSlideDeletionWithTransaction(container, slideNode, {
+    applyStudioSlideDeletionMutation(sourceContainer, sourceSlide, options) {
+      assert.equal(sourceContainer, container);
+      assert.equal(sourceSlide, slideNode);
+      delegatedOptions = options;
+      return { didApply: true, transaction: { type: 'markup' } };
+    },
+    createStudioMarkupTransactionCapture() {},
+    containerElementId: 'deck-slides',
+    getElementId() {}
+  });
+
+  assert.deepEqual(result, {
+    didApply: true,
+    transaction: { type: 'markup' }
+  });
+  assert.equal(delegatedOptions.containerElementId, 'deck-slides');
+  assert.equal(typeof delegatedOptions.createMarkupTransactionCapture, 'function');
+});
+
+test('applyStudioSlideDeletionWithTransaction uses the fallback remove and markup transaction', () => {
+  const container = {
+    id: 'slides-container',
+    innerHTML: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section>'
+  };
+  const slideNode = {
+    remove() {
+      container.innerHTML = '<section data-slide-id="slide-1"></section>';
+    }
+  };
+
+  const result = slideCommands.applyStudioSlideDeletionWithTransaction(container, slideNode, {
+    createStudioMarkupTransactionCapture(items, options) {
+      return studioTransaction.createStudioMarkupTransactionCapture(items, options);
+    }
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.transaction.operations[0].elementId, 'slides-container');
+  assert.equal(result.transaction.operations[0].after, '<section data-slide-id="slide-1"></section>');
+});

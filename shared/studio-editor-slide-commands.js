@@ -334,11 +334,67 @@
     };
   }
 
+  function applyStudioSlideDeletionWithTransaction(container, slideNode, options = {}) {
+    if (!container || !slideNode) {
+      return {
+        didApply: false,
+        transaction: null
+      };
+    }
+
+    const applyStudioSlideDeletionMutation = typeof options.applyStudioSlideDeletionMutation === 'function'
+      ? options.applyStudioSlideDeletionMutation
+      : null;
+    const createStudioMarkupTransactionCapture = typeof options.createStudioMarkupTransactionCapture === 'function'
+      ? options.createStudioMarkupTransactionCapture
+      : null;
+    const containerElementId = typeof options.containerElementId === 'string'
+      && options.containerElementId.trim()
+      ? options.containerElementId.trim()
+      : 'slides-container';
+
+    if (applyStudioSlideDeletionMutation) {
+      const mutation = applyStudioSlideDeletionMutation(container, slideNode, {
+        createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+        containerElementId,
+        getElementId: options.getElementId
+      });
+      return {
+        didApply: !!(mutation && mutation.didApply),
+        transaction: mutation && mutation.transaction ? mutation.transaction : null
+      };
+    }
+
+    if (typeof slideNode.remove !== 'function') {
+      return {
+        didApply: false,
+        transaction: null
+      };
+    }
+
+    const markupCapture = createStudioMarkupTransactionCapture
+      ? createStudioMarkupTransactionCapture([{
+          element: container,
+          elementId: containerElementId
+        }], {
+          getElementId: options.getElementId
+        })
+      : null;
+    slideNode.remove();
+    return {
+      didApply: true,
+      transaction: markupCapture
+        ? markupCapture.createTransaction()
+        : null
+    };
+  }
+
   return {
     prepareStudioSlideDuplication,
     addStudioSlideNode,
     deleteStudioSlideNode,
     reorderStudioSlideNodes,
-    applyStudioSlideInsertionWithTransaction
+    applyStudioSlideInsertionWithTransaction,
+    applyStudioSlideDeletionWithTransaction
   };
 });
