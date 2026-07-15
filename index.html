@@ -6387,6 +6387,15 @@
     }
 
     function syncLayerOrderZIndexInput(target) {
+      const layerOrderView = typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+        ? SlideNextStudioEditorLayerOrder
+        : null;
+      if (layerOrderView && typeof layerOrderView.syncStudioLayerOrderZIndexInput === 'function') {
+        return layerOrderView.syncStudioLayerOrderZIndexInput({
+          documentRef: document,
+          target
+        });
+      }
       if (!target) {
         return null;
       }

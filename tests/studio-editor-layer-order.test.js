@@ -145,6 +145,22 @@ test('renderStudioLayerOrderToolbarState applies arrangement and z-index control
   assert.equal(buttons.elZIndex.disabled, false);
 });
 
+test('syncStudioLayerOrderZIndexInput updates the inspector control for a target', () => {
+  const zIndexInput = { value: '' };
+  const target = { style: { zIndex: '12' } };
+
+  assert.equal(layerOrder.syncStudioLayerOrderZIndexInput({
+    target,
+    documentRef: {
+      getElementById(id) {
+        return id === 'elZIndex' ? zIndexInput : null;
+      }
+    }
+  }), zIndexInput);
+  assert.equal(zIndexInput.value, '12');
+  assert.equal(layerOrder.syncStudioLayerOrderZIndexInput({ target: null }), null);
+});
+
 test('syncStudioLayerOrderToolbarState builds and renders layer controls in one shared operation', () => {
   const element = { id: 'element-1', isConnected: true, locked: false };
   const controls = {

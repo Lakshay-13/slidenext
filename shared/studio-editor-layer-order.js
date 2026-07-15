@@ -108,6 +108,17 @@
     return true;
   }
 
+  function syncStudioLayerOrderZIndexInput(options = {}) {
+    const target = options.target;
+    if (!target) return null;
+    const documentRef = options.documentRef;
+    const zIndexInput = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('elZIndex')
+      : null;
+    if (zIndexInput) zIndexInput.value = target.style && target.style.zIndex || 0;
+    return zIndexInput;
+  }
+
   function syncStudioLayerOrderToolbarState(options = {}) {
     const canMutateDeck = typeof options.canMutateDeck === 'function'
       ? options.canMutateDeck
@@ -276,6 +287,7 @@
     buildStudioLayerOrderActionState,
     buildStudioLayerOrderToolbarState,
     renderStudioLayerOrderToolbarState,
+    syncStudioLayerOrderZIndexInput,
     syncStudioLayerOrderToolbarState,
     buildStudioLayerOrderMutationPlan,
     buildStudioReorderedLayerOrder,
