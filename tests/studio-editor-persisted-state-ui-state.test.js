@@ -183,7 +183,7 @@ test('getCurrentEditorPersistedDeckState reuses the shared persisted state reade
   assert.equal(typeof delegatedArgs.getPersistedPlaybackState, 'function');
 });
 
-test('getCurrentEditorPersistedDeckState.resolveWithContent prefers the shared persisted-content resolver when available', () => {
+test('getCurrentEditorPersistedDeckState.resolveWithContent fails closed without the shared reader', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   const calls = [];
@@ -198,8 +198,7 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent prefers the shared p
     persistedDeckPlaybackState: persistedDeckState.playbackState,
     SlideNextStudioEditorPersistence: {
       resolveStudioPersistableDeckStateWithContent(nextPersistedDeckState) {
-        calls.push(nextPersistedDeckState);
-        return nextPersistedDeckState;
+        throw new Error('resolveStudioPersistableDeckStateWithContent should remain owned by the shared reader');
       }
     }
   };
@@ -207,11 +206,8 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent prefers the shared p
   vm.createContext(context);
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
 
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState))),
-    persistedDeckState
-  );
-  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [persistedDeckState]);
+  assert.equal(context.getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState), null);
+  assert.deepEqual(calls, []);
 });
 
 test('getCurrentEditorPersistedDeckState.resolveWithContent reuses the shared persisted state reader when available', () => {
@@ -251,7 +247,7 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent reuses the shared pe
   assert.equal(delegatedArgs.resolvePersistableDeckStateWithContent, null);
 });
 
-test('getCurrentEditorPersistedDeckState.resolveWithContent reuses the shared persisted snapshot-with-content helper when available', () => {
+test('getCurrentEditorPersistedDeckState.resolveWithContent does not use the snapshot-with-content helper without the shared reader', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   const calls = [];
@@ -266,11 +262,10 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent reuses the shared pe
     persistedDeckPlaybackState: persistedDeckState.playbackState,
     SlideNextStudioEditorPersistence: {
       resolveStudioPersistedDeckStateSnapshotWithContent(options = {}) {
-        calls.push(options);
-        return options.persistedDeckState;
+        throw new Error('resolveStudioPersistedDeckStateSnapshotWithContent should remain owned by the shared reader');
       },
       resolveStudioPersistableDeckStateWithContent() {
-        throw new Error('resolveStudioPersistableDeckStateWithContent should not run when the snapshot helper is available');
+        throw new Error('resolveStudioPersistableDeckStateWithContent should remain owned by the shared reader');
       }
     }
   };
@@ -278,13 +273,8 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent reuses the shared pe
   vm.createContext(context);
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
 
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState))),
-    persistedDeckState
-  );
-  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
-    persistedDeckState
-  }]);
+  assert.equal(context.getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState), null);
+  assert.deepEqual(calls, []);
 });
 
 test('updateEditorPersistedDeckState updates only the provided persisted baseline fields', () => {
