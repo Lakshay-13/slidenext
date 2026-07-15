@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioNudge = require('../shared/studio-editor-nudge.js');
 
@@ -660,6 +661,7 @@ test('nudgeSelectedElements forwards an immutable canonical layout sidecar', () 
   let finalized = null;
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalLayout: canonicalLayout,
     SlideNextStudioEditorNudge: {
       buildStudioNudgedLayout() {
         return {
