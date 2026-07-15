@@ -226,12 +226,14 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent reuses the shared pe
     playbackState: { activeSlideIds: ['slide-2'], slideCounterText: '2 / 4' }
   };
   let delegatedArgs = null;
+  let readerCreateCalls = 0;
   const context = {
     lastPersistedDeckHtml: persistedDeckState.cleanHtml,
     lastPersistedCanonicalDeck: persistedDeckState.canonicalDeck,
     persistedDeckPlaybackState: persistedDeckState.playbackState,
     SlideNextStudioEditorPersistence: {
       createStudioPersistedDeckStateReader(options = {}) {
+        readerCreateCalls += 1;
         delegatedArgs = options;
         const reader = () => persistedDeckState;
         reader.resolveWithContent = (nextPersistedDeckState = persistedDeckState) => nextPersistedDeckState;
@@ -247,6 +249,17 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent reuses the shared pe
     JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState))),
     persistedDeckState
   );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState.resolveWithContent({
+      ...persistedDeckState,
+      cleanHtml: '<html>second</html>'
+    }))),
+    {
+      ...persistedDeckState,
+      cleanHtml: '<html>second</html>'
+    }
+  );
+  assert.equal(readerCreateCalls, 1);
   assert.equal(typeof delegatedArgs.getPersistedDeckHtml, 'function');
   assert.equal(typeof delegatedArgs.getPersistedCanonicalDeck, 'function');
   assert.equal(typeof delegatedArgs.getPersistedPlaybackState, 'function');
