@@ -5764,6 +5764,18 @@
       if (!styleMutationPlan.canApply) {
         return finalizeStyleActionResult(false);
       }
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const updateCanonicalNodeLayout = prop === 'zIndex'
+        && canonicalDeckApi
+        && typeof canonicalDeckApi.updateCanonicalNodeLayout === 'function'
+        ? canonicalDeckApi.updateCanonicalNodeLayout
+        : null;
+      const canonicalDeckBeforeMutation = updateCanonicalNodeLayout
+        && typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(doc)
+        : null;
       const getStyleElementId = (element) => {
         if (typeof assignEditorElementId === 'function') {
           const assignedId = assignEditorElementId(element);
@@ -5804,11 +5816,24 @@
         const opacityLabel = document.getElementById('opacityVal');
         if (opacityLabel) opacityLabel.textContent = `${styleMutationResult.displayValue}%`;
       }
+      const canonicalNodeLayouts = updateCanonicalNodeLayout
+        ? styleMutationPlan.selection.map((element) => {
+            const elementId = getStyleElementId(element);
+            const zIndex = element && element.style ? Number(element.style.zIndex) : NaN;
+            return elementId && Number.isFinite(zIndex)
+              ? { id: elementId, layout: { zIndex } }
+              : null;
+          }).filter(Boolean)
+        : [];
+      const canonicalDeck = updateCanonicalNodeLayout
+        ? updateCanonicalNodeLayout(canonicalDeckBeforeMutation, canonicalNodeLayouts)
+        : null;
       finalizeEditorDeckMutation(styleMutationPlan.versionLabel, {
         syncSelectionOverlay: true,
         refreshLayersList: prop === 'zIndex',
         debounceHistory: true,
-        transaction
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
       });
       return true;
     }

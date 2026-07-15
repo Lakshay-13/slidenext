@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 const styleState = require('../shared/studio-editor-style.js');
 const studioMutation = require('../shared/studio-editor-mutation.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
@@ -779,11 +780,23 @@ test('applySelectedElementStyle refreshes the layer list when the z-index change
     '\n\n    // Delete active selection'
   );
 
-  const liveTarget = { isConnected: true };
+  const liveTarget = {
+    dataset: { editorId: 'node-1' },
+    isConnected: true,
+    style: { zIndex: '1' }
+  };
   const doc = { label: 'iframe-doc-z-index' };
+  const sourceDeck = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', layout: { zIndex: 1 } }]
+    }]
+  });
   const calls = [];
   const context = {
     selectedElements: [liveTarget],
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorMutation: studioMutation,
     SlideNextStudioEditorStyle: {
       buildStudioStyleMutationPlan(selection, prop, value) {
         calls.push(['buildStudioStyleMutationPlan', selection, prop, value]);
@@ -795,6 +808,7 @@ test('applySelectedElementStyle refreshes the layer list when the z-index change
       },
       applyStudioStyleMutation(selection, prop, value) {
         calls.push(['applyStudioStyleMutation', selection, prop, value]);
+        selection[0].style.zIndex = String(value);
         return {
           didApply: true,
           displayValue: 9
@@ -815,6 +829,12 @@ test('applySelectedElementStyle refreshes the layer list when the z-index change
       calls.push(['getIframeDoc']);
       return doc;
     },
+    buildEditorCanonicalDeck() {
+      return sourceDeck;
+    },
+    assignEditorElementId(element) {
+      return element.dataset.editorId;
+    },
     isElementLocked() {
       calls.push(['isElementLocked']);
       return false;
@@ -831,8 +851,8 @@ test('applySelectedElementStyle refreshes the layer list when the z-index change
     updateLayersList() {
       calls.push(['updateLayersList']);
     },
-    saveHistoryState(immediate) {
-      calls.push(['saveHistoryState', immediate]);
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
     },
     triggerAutoSave() {
       calls.push(['triggerAutoSave']);
@@ -855,6 +875,9 @@ test('applySelectedElementStyle refreshes the layer list when the z-index change
   assert.ok(calls.some(([name]) => name === 'generateThumbnails'));
   assert.ok(calls.some(([name]) => name === 'updateLayersList'));
   assert.ok(calls.some(([name, immediate]) => name === 'saveHistoryState' && immediate === true));
+  const historyCall = calls.find(([name]) => name === 'saveHistoryState');
+  assert.equal(historyCall[3].slides[0].nodes[0].layout.zIndex, 9);
+  assert.equal(sourceDeck.slides[0].nodes[0].layout.zIndex, 1);
   assert.ok(calls.some(([name]) => name === 'triggerAutoSave'));
   assert.ok(calls.some(([name, label]) => name === 'triggerAutoVersion' && label === 'Auto: Updated Layer Order'));
   assert.ok(!calls.some(([name]) => name === 'updateStyleActionState'));
