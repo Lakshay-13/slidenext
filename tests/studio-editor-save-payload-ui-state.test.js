@@ -1117,7 +1117,7 @@ test('buildEditorSaveRequestBody reuses the local canonical override helper when
   assert.equal(typeof calls[1][2], 'function');
 });
 
-test('resolveEditorPersistedDeckStateWithContent reuses getCurrentEditorPersistedDeckState.resolveWithContent when available', () => {
+test('resolveEditorPersistedDeckStateWithContent fails closed when the shared resolver factory is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
   const context = {
@@ -1127,28 +1127,16 @@ test('resolveEditorPersistedDeckStateWithContent reuses getCurrentEditorPersiste
     },
     lastPersistedCanonicalDeck: null,
     lastPersistedDeckHtml: '<html>persisted-baseline</html>',
-    persistedDeckPlaybackState: null
+    persistedDeckPlaybackState: null,
+    SlideNextStudioEditorPersistence: {}
   };
 
   vm.createContext(context);
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
   vm.runInContext('getCurrentEditorPersistedDeckState.resolveWithContent = __resolveWithContent;', context);
 
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(context.resolveEditorPersistedDeckStateWithContent())),
-    {
-      cleanHtml: '<html>persisted-baseline</html>',
-      canonicalDeck: null,
-      playbackState: null
-    }
-  );
-  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
-    {
-      cleanHtml: '<html>persisted-baseline</html>',
-      canonicalDeck: null,
-      playbackState: null
-    }
-  ]);
+  assert.equal(context.resolveEditorPersistedDeckStateWithContent(), null);
+  assert.deepEqual(calls, []);
 });
 
 test('resolveEditorPersistedDeckStateWithContent reuses the shared persisted-state content resolver when available', () => {
