@@ -6335,6 +6335,34 @@
     function duplicateSelectedElements() {
       const clipboardActionState = buildClipboardSelectionMutationPlan();
       if (!clipboardActionState.canDuplicate) return finalizeClipboardActionResult(false);
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const appendCanonicalNode = canonicalDeckApi
+        && typeof canonicalDeckApi.appendCanonicalNode === 'function'
+        ? canonicalDeckApi.appendCanonicalNode
+        : null;
+      const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
+        ? SlideNextDeckImport
+        : null;
+      const importElementToCanonicalNode = deckImportApi
+        && typeof deckImportApi.importElementToCanonicalNode === 'function'
+        ? deckImportApi.importElementToCanonicalNode
+        : null;
+      let canonicalDeckBeforeDuplication = null;
+      let canonicalSlideId = '';
+      if (appendCanonicalNode
+        && importElementToCanonicalNode
+        && typeof buildEditorCanonicalDeck === 'function'
+        && typeof getIframeDoc === 'function'
+        && typeof getActiveSlide === 'function') {
+        const doc = getIframeDoc();
+        const activeSlide = getActiveSlide(doc);
+        canonicalSlideId = typeof getEditorSlideId === 'function'
+          ? getEditorSlideId(activeSlide)
+          : activeSlide && activeSlide.id;
+        canonicalDeckBeforeDuplication = buildEditorCanonicalDeck(doc);
+      }
       let transaction = null;
       const duplicates = insertClipboardPayload(clipboardActionState.payloadItems, 1, {
         onTransaction(nextTransaction) {
@@ -6342,10 +6370,39 @@
         }
       });
       if (duplicates.length === 0) return finalizeClipboardActionResult(false);
+      let canonicalDeck = null;
+      if (canonicalDeckBeforeDuplication && canonicalSlideId) {
+        let nextCanonicalDeck = canonicalDeckBeforeDuplication;
+        let didAppendAll = true;
+        duplicates.forEach((element) => {
+          if (!didAppendAll) return;
+          const canonicalNode = importElementToCanonicalNode(element, {
+            getNodeId: (node) => {
+              if (node && node.dataset && typeof assignEditorElementId === 'function') {
+                const assignedId = assignEditorElementId(node);
+                if (assignedId) return assignedId;
+              }
+              return node && node.dataset && node.dataset.editorId;
+            }
+          });
+          const appendedDeck = appendCanonicalNode(
+            nextCanonicalDeck,
+            canonicalSlideId,
+            canonicalNode
+          );
+          if (!appendedDeck) {
+            didAppendAll = false;
+            return;
+          }
+          nextCanonicalDeck = appendedDeck;
+        });
+        canonicalDeck = didAppendAll ? nextCanonicalDeck : null;
+      }
       return finalizeClipboardActionResult(finalizeInsertedElements(
         duplicates,
         'Auto: Duplicated Element',
-        transaction
+        transaction,
+        canonicalDeck
       ));
     }
 

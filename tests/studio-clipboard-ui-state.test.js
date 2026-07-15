@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -383,6 +384,100 @@ test('duplicateSelectedElements forwards the insertion markup transaction to his
   assert.equal(context.duplicateSelectedElements(), true);
   assert.equal(finalized.versionLabel, 'Auto: Duplicated Element');
   assert.deepEqual(JSON.parse(JSON.stringify(finalized.options.transaction)), markupTransaction);
+});
+
+test('duplicateSelectedElements forwards a canonical deck sidecar for cloned nodes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
+  const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
+  const finalizeInsertedElementsSource = extractFunctionSource(
+    fileContent,
+    'function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {',
+    '\n\n    function copySelectedElements() {'
+  );
+  const duplicateSelectedElementsSource = extractFunctionSource(
+    fileContent,
+    'function duplicateSelectedElements() {',
+    '\n\n    function nudgeSelectedElements(dx, dy) {'
+  );
+  const sourceDeck = canonicalDeckModel.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', text: 'Original' }] }]
+  });
+  const duplicate = { dataset: { editorId: 'node-2' } };
+  const activeSlide = { id: 'slide-1' };
+  let finalized = null;
+  const context = {
+    editorClipboard: null,
+    selectedElements: [{ id: 'node-1', isConnected: true }],
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextDeckImport: {
+      importElementToCanonicalNode(element, options) {
+        assert.equal(element, duplicate);
+        assert.equal(options.getNodeId(element), 'node-2');
+        return { id: 'node-2', tagName: 'p', text: 'Duplicate' };
+      }
+    },
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardSelectionMutationPlan() {
+        return {
+          canDuplicate: true,
+          selection: [{ id: 'node-1', isConnected: true }],
+          payloadItems: [{ id: 'clipboard-item' }],
+          canBuildPayload: true
+        };
+      }
+    },
+    SlideNextStudioEditorSelection: {
+      selectAllStudioElements(elements) {
+        return { selectedElements: elements, selectedElement: elements[0] };
+      }
+    },
+    buildEditorCanonicalDeck(doc) {
+      assert.equal(doc.label, 'iframe-doc');
+      return sourceDeck;
+    },
+    buildClipboardPayload() {
+      return [{ id: 'clipboard-item' }];
+    },
+    commitEditorSelectionState() {},
+    finalizeEditorDeckMutation(versionLabel, options) {
+      finalized = { versionLabel, options };
+    },
+    getActiveSlide(doc) {
+      assert.equal(doc.label, 'iframe-doc');
+      return activeSlide;
+    },
+    getEditorSlideId(slide) {
+      assert.equal(slide, activeSlide);
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return { label: 'iframe-doc' };
+    },
+    insertClipboardPayload(items, offsetMultiplier, options) {
+      assert.deepEqual(items, [{ id: 'clipboard-item' }]);
+      assert.equal(offsetMultiplier, 1);
+      options.onTransaction({ id: 'tx-duplicate' });
+      return [duplicate];
+    },
+    isElementLocked() {
+      return false;
+    },
+    updateClipboardActionState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(
+    `${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${finalizeInsertedElementsSource}\n${duplicateSelectedElementsSource}`,
+    context
+  );
+
+  assert.equal(context.duplicateSelectedElements(), true);
+  assert.equal(finalized.versionLabel, 'Auto: Duplicated Element');
+  assert.deepEqual(finalized.options.transaction, { id: 'tx-duplicate' });
+  assert.deepEqual(finalized.options.canonicalDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'node-2']);
+  assert.equal(finalized.options.canonicalDeck.slides[0].nodes[1].text, 'Duplicate');
+  assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1']);
 });
 
 test('insertClipboardPayload captures each insertion parent once through the shared markup adapter', () => {
