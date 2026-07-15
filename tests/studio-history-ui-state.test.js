@@ -1250,12 +1250,14 @@ test('captureState reuses the shared history state capturer when available', () 
     historyEntry: { html: '<html></html>' }
   };
   let delegatedArgs = null;
+  let capturerCreateCalls = 0;
   const context = {
     createHistoryEntry() {},
     getEditorHistoryStackOptions() {},
     redoStack: ['redo-entry'],
     SlideNextStudioHistory: {
       createStudioHistoryStateCapturer(options = {}) {
+        capturerCreateCalls += 1;
         delegatedArgs = options;
         return () => {
           options.afterCapture();
@@ -1276,6 +1278,11 @@ test('captureState reuses the shared history state capturer when available', () 
     JSON.parse(JSON.stringify(context.captureState())),
     captureResult
   );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.captureState())),
+    captureResult
+  );
+  assert.equal(capturerCreateCalls, 1);
   assert.equal(delegatedArgs.createHistoryEntry, context.createHistoryEntry);
   assert.equal(typeof delegatedArgs.getUndoStack, 'function');
   assert.equal(typeof delegatedArgs.getRedoStack, 'function');

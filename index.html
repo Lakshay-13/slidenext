@@ -7700,11 +7700,36 @@
           pendingEditorCanonicalDeck = null;
         }
       };
-      const createStudioHistoryStateCapturer = SlideNextStudioHistory
-        && typeof SlideNextStudioHistory.createStudioHistoryStateCapturer === 'function'
-        ? SlideNextStudioHistory.createStudioHistoryStateCapturer
-        : null;
-      if (!createStudioHistoryStateCapturer) {
+      if (typeof captureState.historyCapturer !== 'function') {
+        const createStudioHistoryStateCapturer = SlideNextStudioHistory
+          && typeof SlideNextStudioHistory.createStudioHistoryStateCapturer === 'function'
+          ? SlideNextStudioHistory.createStudioHistoryStateCapturer
+          : null;
+        if (!createStudioHistoryStateCapturer) {
+          clearPendingTransaction();
+          return {
+            didCapture: false,
+            undoStack,
+            redoStack,
+            historyEntry: null
+          };
+        }
+        captureState.historyCapturer = createStudioHistoryStateCapturer({
+          createHistoryEntry,
+          getUndoStack: () => undoStack,
+          getRedoStack: () => redoStack,
+          getHistoryStateOptions: getEditorHistoryStackOptions,
+          setUndoStack(nextUndoStack) {
+            undoStack = nextUndoStack;
+          },
+          setRedoStack(nextRedoStack) {
+            redoStack = nextRedoStack;
+          },
+          updateHistoryButtons,
+          afterCapture: clearPendingTransaction
+        });
+      }
+      if (typeof captureState.historyCapturer !== 'function') {
         clearPendingTransaction();
         return {
           didCapture: false,
@@ -7713,20 +7738,7 @@
           historyEntry: null
         };
       }
-      return createStudioHistoryStateCapturer({
-        createHistoryEntry,
-        getUndoStack: () => undoStack,
-        getRedoStack: () => redoStack,
-        getHistoryStateOptions: getEditorHistoryStackOptions,
-        setUndoStack(nextUndoStack) {
-          undoStack = nextUndoStack;
-        },
-        setRedoStack(nextRedoStack) {
-          redoStack = nextRedoStack;
-        },
-        updateHistoryButtons,
-        afterCapture: clearPendingTransaction
-      })();
+      return captureState.historyCapturer();
     }
 
     function updateHistoryButtons() {
