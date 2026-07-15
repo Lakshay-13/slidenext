@@ -5118,30 +5118,6 @@
           triggerAutoVersion
         });
       }
-      const createStudioMutationFinalizer = (
-        typeof SlideNextStudioEditorMutation !== 'undefined'
-        && SlideNextStudioEditorMutation
-        && typeof SlideNextStudioEditorMutation.createStudioMutationFinalizer === 'function'
-      )
-        ? SlideNextStudioEditorMutation.createStudioMutationFinalizer
-        : null;
-      if (createStudioMutationFinalizer) {
-        return createStudioMutationFinalizer({
-          ...(typeof buildEditorCanonicalDeck === 'function'
-            ? {
-                buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
-                  preferLiveCanonicalDeck: false
-                })
-              }
-            : {}),
-          syncSelectionOverlay,
-          generateThumbnails,
-          updateLayersList,
-          saveHistoryState,
-          triggerAutoSave,
-          triggerAutoVersion
-        })(versionLabel, options);
-      }
       const mutationOptions = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
         || typeof buildEditorCanonicalDeck !== 'function'
         ? options

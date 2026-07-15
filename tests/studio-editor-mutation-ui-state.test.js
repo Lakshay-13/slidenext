@@ -24,12 +24,14 @@ test('finalizeEditorDeckMutation delegates to the shared mutation finalizer', ()
   const calls = [];
   const context = {
     SlideNextStudioEditorMutation: {
-      createStudioMutationFinalizer(options) {
-        calls.push(['factory', Object.keys(options).sort()]);
-        return (label, mutationOptions) => {
-          calls.push(['finalize', label, mutationOptions]);
-          return label;
-        };
+      finalizeStudioMutation(options) {
+        calls.push([
+          'finalize',
+          options.versionLabel,
+          options.mutationOptions,
+          Object.keys(options).sort()
+        ]);
+        return options.versionLabel;
       }
     },
     syncSelectionOverlay() {},
@@ -49,15 +51,16 @@ test('finalizeEditorDeckMutation delegates to the shared mutation finalizer', ()
   };
   assert.equal(context.finalizeEditorDeckMutation('Auto: Grouped Elements', options), 'Auto: Grouped Elements');
   assert.deepEqual(calls, [
-    ['factory', [
+    ['finalize', 'Auto: Grouped Elements', options, [
       'generateThumbnails',
+      'mutationOptions',
       'saveHistoryState',
       'syncSelectionOverlay',
       'triggerAutoSave',
       'triggerAutoVersion',
-      'updateLayersList'
-    ]],
-    ['finalize', 'Auto: Grouped Elements', options]
+      'updateLayersList',
+      'versionLabel'
+    ]]
   ]);
 });
 
