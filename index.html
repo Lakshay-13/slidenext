@@ -6743,14 +6743,7 @@
     }
 
     // Insert New elements (perfectly centered on native 1080p slide)
-    function insertElement(type) {
-      const iframeDoc = getIframeDoc();
-      
-      const activeSlide = getActiveSlide(iframeDoc);
-      if (!activeSlide) {
-        updateInsertionActionState(iframeDoc);
-        return false;
-      }
+    function applyEditorElementInsertionWithTransaction(type, options = {}) {
       const insertionApi = typeof SlideNextStudioEditorInsertion !== 'undefined'
         ? SlideNextStudioEditorInsertion
         : null;
@@ -6758,7 +6751,6 @@
         && typeof insertionApi.applyStudioElementInsertion === 'function'
         ? insertionApi.applyStudioElementInsertion
         : null;
-      const offset = (activeSlide.children.length * 15) % 150;
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -6766,44 +6758,80 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const activeSlideId = typeof getEditorSlideId === 'function'
-        ? getEditorSlideId(activeSlide)
-        : '';
-      let newEl = null;
-      let transaction = null;
 
       if (applyStudioElementInsertion) {
         const mutation = applyStudioElementInsertion(type, {
-          documentRef: iframeDoc,
-          slide: activeSlide,
-          offset,
-          prepareElement: typeof makeElementsHoverable === 'function'
-            ? makeElementsHoverable
+          documentRef: options.documentRef,
+          slide: options.slide,
+          offset: options.offset,
+          prepareElement: typeof options.prepareElement === 'function'
+            ? options.prepareElement
             : null,
           createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
-          transactionElementId: activeSlideId ? `slide:${activeSlideId}` : ''
+          transactionElementId: options.transactionElementId || '',
+          getElementId: options.getElementId
         });
-        newEl = mutation.element;
-        transaction = mutation.transaction;
-      } else {
-        const markupCapture = createStudioMarkupTransactionCapture && activeSlideId
+        return {
+          element: mutation && mutation.element ? mutation.element : null,
+          transaction: mutation && mutation.transaction ? mutation.transaction : null
+        };
+      }
+
+      const markupCapture = createStudioMarkupTransactionCapture
+        && options.slide
+        && options.transactionElementId
           ? createStudioMarkupTransactionCapture([{
-              element: activeSlide,
-              elementId: `slide:${activeSlideId}`
-            }])
-          : null;
-        newEl = insertionApi && typeof insertionApi.createStudioInsertedElement === 'function'
-          ? insertionApi.createStudioInsertedElement(type, { documentRef: iframeDoc, offset })
+              element: options.slide,
+              elementId: options.transactionElementId
+            }], {
+              getElementId: options.getElementId
+            })
           : null;
 
-        if (newEl) {
-          makeElementsHoverable(newEl);
-          activeSlide.appendChild(newEl);
-          transaction = markupCapture
-            ? markupCapture.createTransaction()
-            : null;
+      const newEl = insertionApi && typeof insertionApi.createStudioInsertedElement === 'function'
+        ? insertionApi.createStudioInsertedElement(type, {
+            documentRef: options.documentRef,
+            offset: options.offset
+          })
+        : null;
+
+      if (newEl && options.slide && typeof options.slide.appendChild === 'function') {
+        if (typeof options.prepareElement === 'function') {
+          options.prepareElement(newEl);
         }
+        options.slide.appendChild(newEl);
       }
+
+      return {
+        element: newEl,
+        transaction: newEl && markupCapture
+          ? markupCapture.createTransaction()
+          : null
+      };
+    }
+
+    function insertElement(type) {
+      const iframeDoc = getIframeDoc();
+      const activeSlide = getActiveSlide(iframeDoc);
+      if (!activeSlide) {
+        updateInsertionActionState(iframeDoc);
+        return false;
+      }
+
+      const activeSlideId = typeof getEditorSlideId === 'function'
+        ? getEditorSlideId(activeSlide)
+        : '';
+      const mutation = applyEditorElementInsertionWithTransaction(type, {
+        documentRef: iframeDoc,
+        slide: activeSlide,
+        offset: (activeSlide.children.length * 15) % 150,
+        prepareElement: typeof makeElementsHoverable === 'function'
+          ? makeElementsHoverable
+          : null,
+        transactionElementId: activeSlideId ? `slide:${activeSlideId}` : ''
+      });
+      const newEl = mutation.element;
+      const transaction = mutation.transaction;
       
       if (newEl) {
         if (typeof finalizeInsertedElements === 'function') {
