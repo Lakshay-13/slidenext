@@ -4837,6 +4837,17 @@
     }
 
     function syncSelectionUiAfterMutation() {
+      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
+        ? SlideNextStudioEditorSelection
+        : null;
+      if (selectionApi && typeof selectionApi.syncStudioSelectionUiAfterMutation === 'function') {
+        return selectionApi.syncStudioSelectionUiAfterMutation(selectedElements, {
+          refreshSelectionClasses,
+          syncSelectionOverlay,
+          syncInspectorForSelection,
+          updateLayersList
+        });
+      }
       refreshSelectionClasses();
       SlideNextStudioEditorSelection.syncStudioSelectionUi(selectedElements, {
         syncSelectionOverlay,

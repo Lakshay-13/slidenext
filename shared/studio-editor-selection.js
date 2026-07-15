@@ -241,6 +241,15 @@
     updateLayersList();
   }
 
+  function syncStudioSelectionUiAfterMutation(selectedElements = [], options = {}) {
+    const refreshSelectionClasses = typeof options.refreshSelectionClasses === 'function'
+      ? options.refreshSelectionClasses
+      : () => {};
+    refreshSelectionClasses();
+    syncStudioSelectionUi(selectedElements, options);
+    return selectedElements;
+  }
+
   function restoreCommittedStudioSelectionByIdsOnActiveSlide(selectedIds, doc, options = {}) {
     const nextSelectionState = restoreStudioSelectionByIdsOnActiveSlide(selectedIds, doc, options);
     const applySelectionState = typeof options.applySelectionState === 'function'
@@ -269,6 +278,7 @@
     selectAllStudioElements,
     commitStudioSelectionState,
     syncStudioSelectionUi,
+    syncStudioSelectionUiAfterMutation,
     restoreCommittedStudioSelectionByIdsOnActiveSlide
   };
 });
