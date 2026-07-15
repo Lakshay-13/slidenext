@@ -403,6 +403,11 @@
     const gridSizePx = Number.isFinite(options.gridSizePx) && options.gridSizePx > 0
       ? options.gridSizePx
       : null;
+    const snapTargets = Array.isArray(options.snapTargets)
+      ? options.snapTargets
+      : Array.isArray(session.snapTargets)
+        ? session.snapTargets
+        : [];
     const xCandidates = slideWidth > 0
       ? [
           { position: left, target: 0 },
@@ -429,6 +434,24 @@
         kind: 'grid'
       });
     }
+    snapTargets.forEach((target) => {
+      if (!target || !Number.isFinite(target.left) || !Number.isFinite(target.right)
+        || !Number.isFinite(target.top) || !Number.isFinite(target.bottom)) {
+        return;
+      }
+      const targetCenterX = (target.left + target.right) / 2;
+      const targetCenterY = (target.top + target.bottom) / 2;
+      [target.left, targetCenterX, target.right].forEach((targetPosition) => {
+        xCandidates.push({ position: left, target: targetPosition, kind: 'guide' });
+        xCandidates.push({ position: (left + right) / 2, target: targetPosition, kind: 'guide' });
+        xCandidates.push({ position: right, target: targetPosition, kind: 'guide' });
+      });
+      [target.top, targetCenterY, target.bottom].forEach((targetPosition) => {
+        yCandidates.push({ position: top, target: targetPosition, kind: 'guide' });
+        yCandidates.push({ position: (top + bottom) / 2, target: targetPosition, kind: 'guide' });
+        yCandidates.push({ position: bottom, target: targetPosition, kind: 'guide' });
+      });
+    });
     const findSnap = (candidates) => candidates
       .map((candidate) => ({
         ...candidate,
@@ -988,6 +1011,9 @@
       moved: false,
       materialized: false,
       overlay: options.overlay || null,
+      ...(Array.isArray(options.snapTargets) && options.snapTargets.length > 0
+        ? { snapTargets: options.snapTargets }
+        : {}),
       ...(options.lockAspectRatio ? { lockAspectRatio: true } : {})
     };
   }
@@ -1040,7 +1066,8 @@
       getPointerOnSlide: options.getPointerOnSlide,
       getSelectionBounds: options.getSelectionBounds,
       itemOptions: options.itemOptions,
-      buildSessionItem: options.buildSessionItem
+      buildSessionItem: options.buildSessionItem,
+      getSnapTargets: options.getSnapTargets
     });
     if (!transformStartState) {
       return null;
@@ -1063,6 +1090,7 @@
       slideBounds: transformStartState.slideBounds,
       startBounds: transformStartState.startBounds,
       items: transformStartState.items,
+      snapTargets: transformStartState.snapTargets,
       overlay
     });
 
@@ -1168,12 +1196,18 @@
       return null;
     }
 
+    const getSnapTargets = typeof options.getSnapTargets === 'function'
+      ? options.getSnapTargets
+      : () => [];
+    const snapTargets = getSnapTargets(options.slide, selection, slideMetrics);
+
     return {
       slideMetrics,
       slideBounds,
       startPointer,
       startBounds,
-      items
+      items,
+      ...(Array.isArray(snapTargets) && snapTargets.length > 0 ? { snapTargets } : {})
     };
   }
 

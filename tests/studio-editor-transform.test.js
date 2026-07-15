@@ -917,6 +917,32 @@ test('snapStudioTransformBounds optionally aligns dragged top-left bounds to a g
   });
 });
 
+test('snapStudioTransformBounds aligns dragged bounds to neighboring element guides', () => {
+  assert.deepEqual(transformState.snapStudioTransformBounds({
+    left: 97,
+    top: 48,
+    right: 147,
+    bottom: 98
+  }, {
+    type: 'drag',
+    slideBounds: { width: 500, height: 400 },
+    snapTargets: [{ left: 150, top: 100, right: 250, bottom: 200 }]
+  }, {
+    snapDistancePx: 5
+  }), {
+    bounds: {
+      left: 100,
+      top: 50,
+      right: 150,
+      bottom: 100
+    },
+    guides: [
+      { axis: 'x', position: 150, kind: 'guide' },
+      { axis: 'y', position: 100, kind: 'guide' }
+    ]
+  });
+});
+
 test('resolveStudioTransformBounds applies the shared interaction and normalization pipeline', () => {
   assert.deepEqual(transformState.resolveStudioTransformBounds({
     type: 'drag',
@@ -1579,6 +1605,9 @@ test('resolveStudioTransformSessionStart assembles the transform session from sh
     getSelectionBounds() {
       return { left: 100, top: 80, width: 120, height: 90 };
     },
+    getSnapTargets() {
+      return [{ left: 240, top: 180, right: 360, bottom: 270 }];
+    },
     buildSessionItem(element) {
       return { elementId: element.id };
     },
@@ -1600,6 +1629,7 @@ test('resolveStudioTransformSessionStart assembles the transform session from sh
       slideBounds: { width: 1280, height: 720 },
       startBounds: { left: 100, top: 80, width: 120, height: 90 },
       items: [{ elementId: 'node-1' }],
+      snapTargets: [{ left: 240, top: 180, right: 360, bottom: 270 }],
       moved: false,
       materialized: false,
       overlay: overlayNode

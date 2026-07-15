@@ -7433,6 +7433,17 @@
         getSlideMetrics,
         getPointerOnSlide,
         getSelectionBounds,
+        getSnapTargets: (slide, selection, slideMetrics) => {
+          const selectedSet = new Set(Array.isArray(selection) ? selection : []);
+          return getSlideEditableElements(slide)
+            .filter((element) => !selectedSet.has(element) && !isElementHidden(element))
+            .map((element) => getRectOnSlide(element.getBoundingClientRect(), slideMetrics))
+            .filter((bounds) => bounds
+              && Number.isFinite(bounds.left)
+              && Number.isFinite(bounds.top)
+              && Number.isFinite(bounds.right)
+              && Number.isFinite(bounds.bottom));
+        },
         ensureOverlay: (slide) => ensureSelectionOverlay(doc, slide),
         itemOptions: {
           getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
