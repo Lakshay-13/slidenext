@@ -94,8 +94,31 @@
     return appendCanonicalSlide(canonicalDeckBeforeMutation, canonicalSlide);
   }
 
+  function buildStudioCanonicalDeleteSlideDeck(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const removeCanonicalSlide = canonicalDeckApi
+      && typeof canonicalDeckApi.removeCanonicalSlide === 'function'
+      ? canonicalDeckApi.removeCanonicalSlide
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
+      ? options.canonicalDeckBeforeMutation
+      : (removeCanonicalSlide && buildCanonicalDeck
+        ? buildCanonicalDeck(options.sourceDocument)
+        : null);
+    const slideId = typeof options.slideId === 'string' ? options.slideId : '';
+
+    if (!removeCanonicalSlide || !canonicalDeckBeforeMutation || !slideId) return null;
+    return removeCanonicalSlide(canonicalDeckBeforeMutation, slideId);
+  }
+
   return {
     buildStudioCanonicalAddSlideDeck,
+    buildStudioCanonicalDeleteSlideDeck,
     buildStudioCanonicalDuplicateSlideDeck
   };
 });

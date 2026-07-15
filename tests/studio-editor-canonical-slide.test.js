@@ -65,3 +65,25 @@ test('buildStudioCanonicalAddSlideDeck imports and appends a new slide without m
   assert.deepEqual(result.slides.map((slide) => slide.id), ['slide-1', 'generated-slide']);
   assert.deepEqual(sourceDeck.slides.map((slide) => slide.id), ['slide-1']);
 });
+
+test('buildStudioCanonicalDeleteSlideDeck removes only the requested slide without mutating the source', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }, { id: 'slide-2' }]
+  });
+  const sourceDocument = { id: 'editor-doc' };
+  let builtFromDocument = null;
+  const result = canonicalSlide.buildStudioCanonicalDeleteSlideDeck({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtFromDocument = documentRef;
+      return sourceDeck;
+    },
+    sourceDocument,
+    deletedSlide: { id: 'slide-2' },
+    slideId: 'slide-2'
+  });
+
+  assert.equal(builtFromDocument, sourceDocument);
+  assert.deepEqual(result.slides.map((slide) => slide.id), ['slide-1']);
+  assert.deepEqual(sourceDeck.slides.map((slide) => slide.id), ['slide-1', 'slide-2']);
+});

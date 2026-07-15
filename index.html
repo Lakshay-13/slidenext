@@ -3116,12 +3116,20 @@
         : null;
       if (!deleteStudioSlideNode) return false;
 
-      const removeCanonicalSlide = (
-        typeof SlideNextCanonicalDeck !== 'undefined'
-        && SlideNextCanonicalDeck
-        && typeof SlideNextCanonicalDeck.removeCanonicalSlide === 'function'
-      )
-        ? SlideNextCanonicalDeck.removeCanonicalSlide
+      const canonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
+        ? SlideNextStudioEditorCanonicalSlide
+        : null;
+      const buildCanonicalDeleteSlideDeck = canonicalSlideApi
+        && typeof canonicalSlideApi.buildStudioCanonicalDeleteSlideDeck === 'function'
+        ? (options) => canonicalSlideApi.buildStudioCanonicalDeleteSlideDeck({
+            ...options,
+            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+              ? SlideNextCanonicalDeck
+              : null,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null
+          })
         : null;
 
       return deleteStudioSlideNode(idx, {
@@ -3137,10 +3145,7 @@
         getSlideId: typeof getEditorSlideId === 'function'
           ? getEditorSlideId
           : (slide) => slide && slide.id || '',
-        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-          ? buildEditorCanonicalDeck
-          : null,
-        removeCanonicalSlide,
+        buildCanonicalDeleteSlideDeck,
         applyDeletion: typeof applyEditorSlideDeletionWithTransaction === 'function'
           ? applyEditorSlideDeletionWithTransaction
           : () => ({ didApply: false, transaction: null }),

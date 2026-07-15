@@ -1436,6 +1436,7 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
   let restorePayload = null;
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalSlide: canonicalSlide,
     SlideNextStudioEditorSlideCommands: slideCommands,
     SlideNextStudioDeckView: {
       restoreStudioDeckViewAfterSlideMutation(payload) {

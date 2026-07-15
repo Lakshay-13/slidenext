@@ -138,17 +138,15 @@
       ? options.getSlideId
       : (slide) => slide && slide.id || '';
     const deletedSlideId = getSlideId(deletedSlide);
-    const removeCanonicalSlide = typeof options.removeCanonicalSlide === 'function'
-      ? options.removeCanonicalSlide
+    const buildCanonicalDeleteSlideDeck = typeof options.buildCanonicalDeleteSlideDeck === 'function'
+      ? options.buildCanonicalDeleteSlideDeck
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
-    const canonicalDeckBeforeDeletion = removeCanonicalSlide && buildCanonicalDeck
-      ? buildCanonicalDeck(iframeDoc)
-      : null;
-    const canonicalDeckAfterDeletion = removeCanonicalSlide
-      ? removeCanonicalSlide(canonicalDeckBeforeDeletion, deletedSlideId)
+    const canonicalDeckAfterDeletion = buildCanonicalDeleteSlideDeck
+      ? buildCanonicalDeleteSlideDeck({
+          sourceDocument: iframeDoc,
+          deletedSlide,
+          slideId: deletedSlideId
+        })
       : null;
 
     const applyDeletion = typeof options.applyDeletion === 'function'

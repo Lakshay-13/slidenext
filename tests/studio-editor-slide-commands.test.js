@@ -193,16 +193,12 @@ test('deleteStudioSlideNode preserves view state, canonical removal, and mutatio
       calls.push('getSlideId');
       return slide.id;
     },
-    buildCanonicalDeck(sourceDoc) {
-      assert.equal(sourceDoc, doc);
-      calls.push('buildCanonicalDeck');
-      return { slides: [{ id: 'slide-1' }, { id: 'slide-2' }] };
-    },
-    removeCanonicalSlide(deck, slideId) {
-      assert.deepEqual(deck.slides.map((slide) => slide.id), ['slide-1', 'slide-2']);
-      assert.equal(slideId, 'slide-2');
-      calls.push('removeCanonicalSlide');
-      return { slides: [deck.slides[0]] };
+    buildCanonicalDeleteSlideDeck(options) {
+      assert.equal(options.sourceDocument, doc);
+      assert.equal(options.deletedSlide, deletedSlide);
+      assert.equal(options.slideId, 'slide-2');
+      calls.push('buildCanonicalDeleteSlideDeck');
+      return { slides: [{ id: 'slide-1' }] };
     },
     applyDeletion(sourceContainer, slide) {
       assert.equal(sourceContainer, container);
@@ -239,8 +235,7 @@ test('deleteStudioSlideNode preserves view state, canonical removal, and mutatio
     'getSlides',
     'captureSlideMutationState',
     'getSlideId',
-    'buildCanonicalDeck',
-    'removeCanonicalSlide',
+    'buildCanonicalDeleteSlideDeck',
     'applyDeletion',
     'generateThumbnails',
     'getSlides',
