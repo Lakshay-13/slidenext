@@ -2581,6 +2581,9 @@
       const activeSlideView = typeof SlideNextStudioEditorActiveSlideView !== 'undefined'
         ? SlideNextStudioEditorActiveSlideView
         : null;
+      const thumbnailView = typeof SlideNextStudioEditorThumbnailView !== 'undefined'
+        ? SlideNextStudioEditorThumbnailView
+        : null;
       if (!activeSlideView || typeof activeSlideView.syncStudioActiveSlideChrome !== 'function') return false;
 
       return activeSlideView.syncStudioActiveSlideChrome(doc, {
@@ -2601,6 +2604,12 @@
             : undefined
         ),
         setSlideCountLabel: (label) => {
+          if (thumbnailView && typeof thumbnailView.setStudioThumbnailSlideCount === 'function') {
+            return thumbnailView.setStudioThumbnailSlideCount({
+              documentRef: document,
+              label
+            });
+          }
           const slideCountLabel = document.getElementById('slideCountLabel');
           if (slideCountLabel) slideCountLabel.textContent = label;
         },

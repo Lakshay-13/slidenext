@@ -47,6 +47,22 @@ function createThumbCard() {
   };
 }
 
+test('setStudioThumbnailSlideCount updates the shared slide counter control', () => {
+  const slideCountLabel = { textContent: '' };
+  const documentRef = {
+    getElementById(id) {
+      assert.equal(id, 'slideCountLabel');
+      return slideCountLabel;
+    }
+  };
+
+  assert.equal(thumbnailView.setStudioThumbnailSlideCount({
+    documentRef,
+    label: '3 / 8'
+  }), true);
+  assert.equal(slideCountLabel.textContent, '3 / 8');
+});
+
 test('syncStudioThumbnailList derives the slide-delete affordance from snapshot size', () => {
   const thumbnailsList = createListContainer();
   const documentRef = {

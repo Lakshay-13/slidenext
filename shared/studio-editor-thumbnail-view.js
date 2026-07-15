@@ -7,6 +7,16 @@
     root.SlideNextStudioEditorThumbnailView = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function setStudioThumbnailSlideCount(options = {}) {
+    const documentRef = options.documentRef;
+    const slideCountLabel = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('slideCountLabel')
+      : null;
+    if (!slideCountLabel) return false;
+    slideCountLabel.textContent = typeof options.label === 'string' ? options.label : '';
+    return true;
+  }
+
   function renderStudioThumbnailList(options = {}) {
     const documentRef = options.documentRef;
     const listContainer = documentRef && typeof documentRef.getElementById === 'function'
@@ -22,12 +32,10 @@
       ? options.getActiveSlideIndex()
       : (Number.isInteger(options.activeSlideIndex) ? options.activeSlideIndex : 0);
     const visibleIndex = slides.length === 0 ? 0 : activeSlideIndex + 1;
-    const slideCountLabel = documentRef && typeof documentRef.getElementById === 'function'
-      ? documentRef.getElementById('slideCountLabel')
-      : null;
-    if (slideCountLabel) {
-      slideCountLabel.textContent = `${visibleIndex} / ${slides.length}`;
-    }
+    setStudioThumbnailSlideCount({
+      documentRef,
+      label: `${visibleIndex} / ${slides.length}`
+    });
     if (!listContainer || !documentRef || typeof documentRef.createElement !== 'function') {
       return false;
     }
@@ -140,6 +148,7 @@
   }
 
   return {
+    setStudioThumbnailSlideCount,
     renderStudioThumbnailList,
     syncStudioThumbnailList,
     attachStudioThumbnailDragAndDrop
