@@ -213,6 +213,7 @@ test('attachStudioTransformPointerHandlers binds the shared pointer lifecycle', 
   assert.equal(bodyListeners.get('pointermove').handler, handlers.handlePointerMove);
   assert.equal(bodyListeners.get('pointerup').handler, handlers.handlePointerUp);
   assert.equal(bodyListeners.get('pointercancel').handler, handlers.handlePointerCancel);
+  assert.equal(bodyListeners.get('lostpointercapture').handler, handlers.handlePointerCancel);
   assert.deepEqual(windowListeners.get('blur'), {
     handler: handlers.handleWindowBlur,
     capture: true

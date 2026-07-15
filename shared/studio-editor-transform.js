@@ -980,7 +980,8 @@
       ['pointerdown', handlers.handlePointerDown],
       ['pointermove', handlers.handlePointerMove],
       ['pointerup', handlers.handlePointerUp],
-      ['pointercancel', handlers.handlePointerCancel]
+      ['pointercancel', handlers.handlePointerCancel],
+      ['lostpointercapture', handlers.handlePointerCancel]
     ].forEach(([eventName, handler]) => {
       if (typeof handler === 'function') body.addEventListener(eventName, handler, true);
     });

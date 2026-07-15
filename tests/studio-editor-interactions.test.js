@@ -38,6 +38,7 @@ test('attachStudioEditorInteractionHandlers binds transform and marquee pointer 
   assert.equal(bodyListeners.get('pointermove').length, 2);
   assert.equal(bodyListeners.get('pointerup').length, 2);
   assert.equal(bodyListeners.get('pointercancel').length, 2);
+  assert.equal(bodyListeners.get('lostpointercapture').length, 1);
   assert.equal(bodyListeners.get('document:dragstart').capture, true);
   assert.equal(windowListeners.get('blur').capture, true);
 });
