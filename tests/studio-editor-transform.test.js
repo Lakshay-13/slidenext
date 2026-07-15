@@ -1899,6 +1899,45 @@ test('transform pointer cancellation restores styles and does not persist either
   });
 });
 
+test('transform window blur rolls back the active gesture instead of persisting it', () => {
+  const element = {
+    style: {
+      position: 'relative',
+      margin: '4px',
+      left: '12px',
+      top: '18px',
+      width: '80px',
+      height: '40px'
+    }
+  };
+  const startStyle = { ...element.style };
+  const session = {
+    pointerId: 3,
+    materialized: true,
+    moved: true,
+    items: [{ element, startStyle }]
+  };
+  let completionPlan = null;
+  const handlers = transformState.createStudioTransformPointerHandlers({
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    resolveTransformSessionStart: () => ({ session, startBounds: {} }),
+    onSessionFinalize(_finalizeResult, nextCompletionPlan) {
+      completionPlan = nextCompletionPlan;
+    }
+  });
+
+  assert.equal(handlers.handlePointerDown({ pointerId: 3 }), true);
+  element.style.left = '120px';
+  handlers.handleWindowBlur();
+
+  assert.deepEqual(element.style, startStyle);
+  assert.deepEqual(completionPlan, {
+    shouldPersist: false,
+    versionLabel: ''
+  });
+  assert.equal(handlers.getSession(), null);
+});
+
 test('buildStudioTransformStartState derives the shared transform bootstrap state', () => {
   const slide = { id: 'slide-1' };
   const selection = [{ id: 'node-1' }, { id: 'node-2' }];

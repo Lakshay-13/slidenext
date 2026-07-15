@@ -1442,7 +1442,7 @@
     }
 
     function handleWindowBlur() {
-      finalizeSession();
+      finalizeSession({ cancelled: true });
     }
 
     return {
@@ -1589,7 +1589,7 @@
     }
 
     function handleWindowBlur() {
-      finalizeSession();
+      finalizeSession({ cancelled: true });
     }
 
     return {
