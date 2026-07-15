@@ -2416,6 +2416,25 @@
     // HTML5 Drag and Drop handlers for thumbnail cards
     let draggedThumbSlideId = '';
     function setupDragAndDropThumbnail(card) {
+      const thumbnailView = typeof SlideNextStudioEditorThumbnailView !== 'undefined'
+        ? SlideNextStudioEditorThumbnailView
+        : null;
+      const attachStudioThumbnailDragAndDrop = thumbnailView
+        && typeof thumbnailView.attachStudioThumbnailDragAndDrop === 'function'
+        ? thumbnailView.attachStudioThumbnailDragAndDrop
+        : null;
+      if (attachStudioThumbnailDragAndDrop) {
+        return attachStudioThumbnailDragAndDrop(card, {
+          getDraggedSlideId: () => draggedThumbSlideId,
+          setDraggedSlideId: (nextSlideId) => {
+            draggedThumbSlideId = nextSlideId || '';
+          },
+          onReorder: (sourceSlideId, targetSlideId) => {
+            reorderSlidesById(sourceSlideId, targetSlideId);
+          }
+        });
+      }
+
       card.addEventListener('dragstart', (e) => {
         draggedThumbSlideId = card.dataset.slideId || '';
         card.style.opacity = '0.4';

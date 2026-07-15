@@ -76,5 +76,59 @@
     return true;
   }
 
-  return { renderStudioThumbnailList };
+  function attachStudioThumbnailDragAndDrop(card, options = {}) {
+    if (!card || typeof card.addEventListener !== 'function') return false;
+
+    const getSlideId = typeof options.getSlideId === 'function'
+      ? options.getSlideId
+      : (targetCard) => targetCard && targetCard.dataset
+        ? targetCard.dataset.slideId || ''
+        : '';
+    const getDraggedSlideId = typeof options.getDraggedSlideId === 'function'
+      ? options.getDraggedSlideId
+      : () => '';
+    const setDraggedSlideId = typeof options.setDraggedSlideId === 'function'
+      ? options.setDraggedSlideId
+      : () => {};
+    const onReorder = typeof options.onReorder === 'function'
+      ? options.onReorder
+      : null;
+
+    card.addEventListener('dragstart', () => {
+      setDraggedSlideId(getSlideId(card));
+      card.style.opacity = '0.4';
+    });
+
+    card.addEventListener('dragend', () => {
+      card.style.opacity = '1';
+      setDraggedSlideId('');
+    });
+
+    card.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      card.classList.add('border-dashed', 'border-[#7028d0]/50');
+    });
+
+    card.addEventListener('dragleave', () => {
+      card.classList.remove('border-dashed', 'border-[#7028d0]/50');
+    });
+
+    card.addEventListener('drop', (event) => {
+      event.preventDefault();
+      card.classList.remove('border-dashed', 'border-[#7028d0]/50');
+
+      const draggedSlideId = getDraggedSlideId();
+      const targetSlideId = getSlideId(card);
+      if (onReorder && draggedSlideId && draggedSlideId !== targetSlideId) {
+        onReorder(draggedSlideId, targetSlideId);
+      }
+    });
+
+    return true;
+  }
+
+  return {
+    renderStudioThumbnailList,
+    attachStudioThumbnailDragAndDrop
+  };
 });

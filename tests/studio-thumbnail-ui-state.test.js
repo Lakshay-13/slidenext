@@ -47,6 +47,97 @@ function createThumbCard() {
   };
 }
 
+test('attachStudioThumbnailDragAndDrop preserves thumbnail drag state and reorder behavior', () => {
+  const card = createThumbCard();
+  card.dataset.slideId = 'slide-2';
+  const classes = new Set();
+  card.classList = {
+    add(...values) {
+      values.forEach((value) => classes.add(value));
+    },
+    remove(...values) {
+      values.forEach((value) => classes.delete(value));
+    },
+    contains(value) {
+      return classes.has(value);
+    }
+  };
+  let draggedSlideId = '';
+  const calls = [];
+  assert.equal(thumbnailView.attachStudioThumbnailDragAndDrop(card, {
+    getDraggedSlideId: () => draggedSlideId,
+    setDraggedSlideId(nextSlideId) {
+      draggedSlideId = nextSlideId;
+    },
+    onReorder(sourceSlideId, targetSlideId) {
+      calls.push(['reorder', sourceSlideId, targetSlideId]);
+    }
+  }), true);
+
+  const getHandler = (type) => card.listeners.find((listener) => listener.type === type).handler;
+  getHandler('dragstart')({});
+  assert.equal(draggedSlideId, 'slide-2');
+  assert.equal(card.style.opacity, '0.4');
+
+  let prevented = false;
+  getHandler('dragover')({
+    preventDefault() {
+      prevented = true;
+    }
+  });
+  assert.equal(prevented, true);
+  assert.equal(card.classList.contains('border-dashed'), true);
+  assert.equal(card.classList.contains('border-[#7028d0]/50'), true);
+
+  card.dataset.slideId = 'slide-3';
+  getHandler('drop')({
+    preventDefault() {}
+  });
+  assert.deepEqual(calls, [['reorder', 'slide-2', 'slide-3']]);
+  assert.equal(card.classList.contains('border-dashed'), false);
+
+  getHandler('dragend')({});
+  assert.equal(draggedSlideId, '');
+  assert.equal(card.style.opacity, '1');
+});
+
+test('setupDragAndDropThumbnail delegates event binding to the shared thumbnail view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setupSource = extractFunctionSource(
+    fileContent,
+    'function setupDragAndDropThumbnail(card) {',
+    '\n\n    // Swap node indices in iframe and re-render'
+  );
+  const card = { dataset: { slideId: 'slide-2' } };
+  const calls = [];
+  const context = {
+    draggedThumbSlideId: '',
+    SlideNextStudioEditorThumbnailView: {
+      attachStudioThumbnailDragAndDrop(nextCard, options) {
+        calls.push(['attach', nextCard, options]);
+        return true;
+      }
+    },
+    reorderSlidesById(sourceSlideId, targetSlideId) {
+      calls.push(['reorder', sourceSlideId, targetSlideId]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`let draggedThumbSlideId = '';\n${setupSource}`, context);
+
+  assert.equal(context.setupDragAndDropThumbnail(card), true);
+  assert.equal(calls[0][0], 'attach');
+  assert.equal(calls[0][1], card);
+  assert.equal(typeof calls[0][2].getDraggedSlideId, 'function');
+  assert.equal(typeof calls[0][2].setDraggedSlideId, 'function');
+  assert.equal(typeof calls[0][2].onReorder, 'function');
+  calls[0][2].setDraggedSlideId('slide-1');
+  assert.equal(calls[0][2].getDraggedSlideId(), 'slide-1');
+  calls[0][2].onReorder('slide-1', 'slide-2');
+  assert.deepEqual(calls[1], ['reorder', 'slide-1', 'slide-2']);
+});
+
 test('generateThumbnails hides the slide delete affordance when only one slide remains', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const generateThumbnailsSource = extractFunctionSource(
