@@ -1151,6 +1151,7 @@
   <script src="/shared/studio-editor-zoom.js"></script>
   <script src="/shared/studio-editor-status-view.js"></script>
   <script src="/shared/studio-editor-grid-snap-view.js"></script>
+  <script src="/shared/studio-editor-wallpaper-view.js"></script>
   <script src="/shared/studio-editor-mutation.js"></script>
   <script src="/shared/studio-editor-transaction.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
@@ -2596,84 +2597,21 @@
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
       const previousIndex = currentSlideIndex;
       const preserveSelection = !!options.preserveSelection || preserveSelectionOnNextActiveSlideSync;
-      const getActiveSlideInlineBackground = (activeSlide) => (
-        activeSlide && activeSlide.style && typeof activeSlide.style.background === 'string'
-          ? activeSlide.style.background.trim()
-          : ''
-      );
-      const getActiveSlideInlineBackgroundImage = (activeSlide) => (
-        activeSlide && activeSlide.style && typeof activeSlide.style.backgroundImage === 'string'
-          ? activeSlide.style.backgroundImage.trim()
-          : ''
-      );
-      const normalizeColorInputValue = (value) => {
-        if (typeof value !== 'string') {
-          return '';
-        }
-        const trimmedValue = value.trim();
-        if (!trimmedValue) {
-          return '';
-        }
-        if (trimmedValue.startsWith('#')) {
-          return trimmedValue;
-        }
-        if (/^rgba?\(/i.test(trimmedValue)) {
-          return rgbToHex(trimmedValue);
-        }
-        return '';
-      };
-      const splitGradientSegments = (value) => {
-        if (typeof value !== 'string' || !value.trim()) {
-          return [];
-        }
-
-        const segments = [];
-        let currentSegment = '';
-        let depth = 0;
-        for (let index = 0; index < value.length; index += 1) {
-          const char = value[index];
-          if (char === '(') {
-            depth += 1;
-          } else if (char === ')' && depth > 0) {
-            depth -= 1;
-          }
-
-          if (char === ',' && depth === 0) {
-            segments.push(currentSegment.trim());
-            currentSegment = '';
-            continue;
-          }
-
-          currentSegment += char;
-        }
-
-        if (currentSegment.trim()) {
-          segments.push(currentSegment.trim());
-        }
-        return segments;
-      };
-      const extractGradientStopColor = (segment) => {
-        if (typeof segment !== 'string') {
-          return '';
-        }
-        const colorMatch = segment.trim().match(/^(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\))/i);
-        return colorMatch ? colorMatch[1] : '';
-      };
-      const resolveActiveSlideSolidWallpaperColor = (activeSlide) => {
-        const backgroundImage = getActiveSlideInlineBackgroundImage(activeSlide);
-        if (backgroundImage && backgroundImage !== 'none') {
-          return '';
-        }
-
-        const backgroundColor = activeSlide && activeSlide.style && typeof activeSlide.style.backgroundColor === 'string'
-          ? activeSlide.style.backgroundColor.trim()
-          : '';
-        const background = getActiveSlideInlineBackground(activeSlide);
-        const fallbackColorMatch = background && !/gradient\(/i.test(background)
-          ? background.match(/#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)/)
-          : null;
-        return backgroundColor || (fallbackColorMatch ? fallbackColorMatch[0] : '');
-      };
+      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+        ? SlideNextStudioEditorWallpaperView
+        : null;
+      const resolveActiveSlideSolidWallpaperColor = wallpaperView
+        && typeof wallpaperView.resolveStudioActiveSlideSolidWallpaperColor === 'function'
+        ? wallpaperView.resolveStudioActiveSlideSolidWallpaperColor
+        : () => '';
+      const resolveActiveSlideGradientBackground = wallpaperView
+        && typeof wallpaperView.resolveStudioActiveSlideGradientBackground === 'function'
+        ? wallpaperView.resolveStudioActiveSlideGradientBackground
+        : () => '';
+      const resolveActiveSlideGradientControls = wallpaperView
+        && typeof wallpaperView.resolveStudioActiveSlideGradientControls === 'function'
+        ? (activeSlide) => wallpaperView.resolveStudioActiveSlideGradientControls(activeSlide, { rgbToHex })
+        : () => null;
       const syncSolidWallpaperControlToActiveSlide = (activeSlide) => {
         const solidWallpaperColorInput = document.getElementById('wallpaperCustomColor');
         if (!solidWallpaperColorInput || !activeSlide || !activeSlide.style) {
@@ -2685,30 +2623,8 @@
           return false;
         }
 
-        if (solidColor.startsWith('#')) {
-          solidWallpaperColorInput.value = solidColor;
-          return true;
-        }
-
-        if (!/^rgba?\(/i.test(solidColor)) {
-          return false;
-        }
-
-        solidWallpaperColorInput.value = rgbToHex(solidColor);
+        solidWallpaperColorInput.value = wallpaperView.normalizeStudioWallpaperColor(solidColor, { rgbToHex });
         return true;
-      };
-      const resolveActiveSlideGradientBackground = (activeSlide) => {
-        const background = getActiveSlideInlineBackground(activeSlide);
-        if (background && /gradient\(/i.test(background)) {
-          return background;
-        }
-
-        const backgroundImage = getActiveSlideInlineBackgroundImage(activeSlide);
-        if (backgroundImage && backgroundImage !== 'none' && /gradient\(/i.test(backgroundImage)) {
-          return backgroundImage;
-        }
-
-        return '';
       };
       const syncWallpaperTabChromeToActiveSlide = (activeSlide, options = {}) => {
         const solidTab = document.getElementById('wpTabSolid');
@@ -2783,53 +2699,15 @@
           return false;
         }
 
-        const background = resolveActiveSlideGradientBackground(activeSlide);
-        if (!background || !/gradient\(/i.test(background)) {
+        const gradientControls = resolveActiveSlideGradientControls(activeSlide);
+        if (!gradientControls || !syncCustomGradientTypeChrome(gradientControls.gradientType)) {
           return false;
         }
-
-        const linearGradientMatch = background.match(/^linear-gradient\((.*)\)$/i);
-        const radialGradientMatch = linearGradientMatch
-          ? null
-          : background.match(/^radial-gradient\((.*)\)$/i);
-        const linearGradientSegments = linearGradientMatch
-          ? splitGradientSegments(linearGradientMatch[1])
-          : [];
-        const radialGradientSegments = radialGradientMatch
-          ? splitGradientSegments(radialGradientMatch[1])
-          : [];
-        const linearGradientAngleMatch = linearGradientSegments.length === 3
-          ? linearGradientSegments[0].match(/^(-?\d+(?:\.\d+)?)deg$/i)
-          : null;
-        const gradientType = linearGradientAngleMatch
-          ? 'linear'
-          : radialGradientSegments.length === 3 && /^circle$/i.test(radialGradientSegments[0])
-            ? 'radial'
-            : '';
-        const color1Value = normalizeColorInputValue(
-          gradientType === 'linear'
-            ? extractGradientStopColor(linearGradientSegments[1])
-            : gradientType === 'radial'
-              ? extractGradientStopColor(radialGradientSegments[1])
-              : ''
-        );
-        const color2Value = normalizeColorInputValue(
-          gradientType === 'linear'
-            ? extractGradientStopColor(linearGradientSegments[2])
-            : gradientType === 'radial'
-              ? extractGradientStopColor(radialGradientSegments[2])
-              : ''
-        );
-        if (!gradientType || !color1Value || !color2Value || !syncCustomGradientTypeChrome(gradientType)) {
-          return false;
-        }
-
-        color1Input.value = color1Value;
-        color2Input.value = color2Value;
-        if (gradientType === 'linear') {
-          const angleValue = `${parseFloat(linearGradientAngleMatch[1])}`;
-          angleInput.value = angleValue;
-          angleLabel.textContent = `${angleValue}°`;
+        color1Input.value = gradientControls.color1Value;
+        color2Input.value = gradientControls.color2Value;
+        if (gradientControls.gradientType === 'linear') {
+          angleInput.value = gradientControls.angleValue;
+          angleLabel.textContent = `${gradientControls.angleValue}°`;
         }
         return true;
       };

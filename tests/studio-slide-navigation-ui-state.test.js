@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const wallpaperView = require('../shared/studio-editor-wallpaper-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -15,6 +16,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 }
 
 function ensureSyncStudioChromeActionStateHelpers(context) {
+  context.SlideNextStudioEditorWallpaperView ??= wallpaperView;
   if (typeof context.updateInsertionActionState !== 'function') {
     context.updateInsertionActionState = () => {};
   }
