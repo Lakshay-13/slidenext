@@ -3872,9 +3872,18 @@
         && typeof canonicalLayoutApi.buildStudioCanonicalLayoutDeck === 'function'
         ? canonicalLayoutApi.buildStudioCanonicalLayoutDeck
         : null;
-      const canonicalDeckBefore = buildCanonicalLayoutDeck
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck()
+      const buildCanonicalLayoutBaseline = canonicalLayoutApi
+        && typeof canonicalLayoutApi.buildStudioCanonicalLayoutBaseline === 'function'
+        ? canonicalLayoutApi.buildStudioCanonicalLayoutBaseline
+        : null;
+      const canonicalDeckBefore = buildCanonicalLayoutBaseline
+        ? buildCanonicalLayoutBaseline({
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+            sourceDocument: typeof getIframeDoc === 'function' ? getIframeDoc() : null
+          })
         : null;
       const initialOrder = getNormalizedSlideLayerOrder(slide);
       const reorderResult = SlideNextStudioEditorLayerOrder.buildStudioLayerOrderMutationPlan(targetElements, action, {
