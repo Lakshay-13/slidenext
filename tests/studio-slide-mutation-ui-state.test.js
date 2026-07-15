@@ -61,6 +61,15 @@ function loadApplyEditorSlideDeletionWithTransaction(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadApplyEditorSlideReorderWithTransaction(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorSlideReorderWithTransaction(container, slideNode, beforeNode = null, options = {}) {',
+    '\n\n    // Swap node indices in iframe and re-render'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadRestoreSelectionAfterPreservedSlideMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -742,6 +751,7 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
+  loadApplyEditorSlideReorderWithTransaction(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   context.reorderSlides(0, 2);
@@ -849,6 +859,7 @@ test('reorderSlides delegates DOM ordering and transaction capture to the shared
   iframeDoc.getElementById = (id) => id === 'slidesContainer' ? container : null;
 
   vm.createContext(context);
+  loadApplyEditorSlideReorderWithTransaction(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   assert.equal(context.reorderSlides(0, 1), true);
@@ -887,6 +898,7 @@ test('reorderSlides no-ops when the iframe document is unavailable', () => {
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
+  loadApplyEditorSlideReorderWithTransaction(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   assert.equal(context.reorderSlides(0, 1), false);
@@ -924,6 +936,7 @@ test('reorderSlides no-ops when the slide container is unavailable', () => {
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
+  loadApplyEditorSlideReorderWithTransaction(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   assert.equal(context.reorderSlides(0, 1), false);
@@ -968,6 +981,7 @@ test('reorderSlides no-ops when the requested slide indexes are unavailable', ()
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
+  loadApplyEditorSlideReorderWithTransaction(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   const result = context.reorderSlides(0, 9);
@@ -1015,6 +1029,7 @@ test('reorderSlides no-ops when the requested slide indexes are unchanged', () =
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
+  loadApplyEditorSlideReorderWithTransaction(fileContent, context);
   vm.runInContext(reorderSlidesSource, context);
 
   const result = context.reorderSlides(1, 1);
