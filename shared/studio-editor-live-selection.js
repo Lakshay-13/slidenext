@@ -13,8 +13,15 @@
     const isEligibleElement = typeof options.isEligibleElement === 'function'
       ? options.isEligibleElement
       : () => true;
+    const seenElements = new Set();
 
-    return selection.filter((element) => matchesBaseEligibility(element) && isEligibleElement(element));
+    return selection.filter((element) => {
+      if (!matchesBaseEligibility(element) || !isEligibleElement(element) || seenElements.has(element)) {
+        return false;
+      }
+      seenElements.add(element);
+      return true;
+    });
   }
 
   function buildStudioLiveSelectionState(elements = [], options = {}) {

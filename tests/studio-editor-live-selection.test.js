@@ -4,11 +4,13 @@ const assert = require('node:assert/strict');
 const liveSelection = require('../shared/studio-editor-live-selection.js');
 
 test('getStudioLiveSelection ignores disconnected stale selections', () => {
+  const duplicate = { id: 2, isConnected: true };
   assert.deepEqual(liveSelection.getStudioLiveSelection([
     { id: 1, isConnected: false },
-    { id: 2, isConnected: true }
+    duplicate,
+    duplicate
   ]), [
-    { id: 2, isConnected: true }
+    duplicate
   ]);
 
   assert.deepEqual(liveSelection.getStudioLiveSelection([
