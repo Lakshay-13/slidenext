@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const styleState = require('../shared/studio-editor-style.js');
+const transactionState = require('../shared/studio-editor-transaction.js');
 
 function createElement(tagName = 'div') {
   return {
@@ -139,5 +140,45 @@ test('applyStudioStyleMutation only edits the primary target for text and image 
   assert.deepEqual(styleState.applyStudioStyleMutation([first], 'src', '/ignored.png'), {
     didApply: false,
     displayValue: '/ignored.png'
+  });
+});
+
+test('applyStudioStyleMutationWithTransaction applies a mutation and builds a reversible style or property transaction', () => {
+  const styledElement = createElement('div');
+  styledElement.style.color = 'red';
+  const styleResult = styleState.applyStudioStyleMutationWithTransaction(
+    [styledElement],
+    'color',
+    '#fff',
+    {
+      createStyleTransaction: transactionState.createStudioStyleTransaction,
+      getElementId: () => 'node-style'
+    }
+  );
+
+  assert.equal(styleResult.didApply, true);
+  assert.equal(styleResult.transaction.operations[0].elementId, 'node-style');
+  assert.deepEqual(styleResult.transaction.operations[0].before, { color: 'red' });
+  assert.deepEqual(styleResult.transaction.operations[0].after, { color: '#fff' });
+
+  const textElement = createElement('div');
+  textElement.textContent = 'Before';
+  const propertyResult = styleState.applyStudioStyleMutationWithTransaction(
+    [textElement],
+    'text',
+    'After',
+    {
+      createPropertyTransaction: transactionState.createStudioPropertyTransaction,
+      getElementId: () => 'node-text'
+    }
+  );
+
+  assert.equal(propertyResult.didApply, true);
+  assert.deepEqual(propertyResult.transaction.operations[0], {
+    type: 'property',
+    elementId: 'node-text',
+    property: 'textContent',
+    before: 'Before',
+    after: 'After'
   });
 });

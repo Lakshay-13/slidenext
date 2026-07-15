@@ -427,6 +427,67 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
   ]);
 });
 
+test('applySelectedElementStyle delegates mutation and transaction assembly to the shared style module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applySelectedElementStyleSource = extractFunctionSource(
+    fileContent,
+    'function applySelectedElementStyle(prop, val) {',
+    '\n\n    // Delete active selection'
+  );
+  const element = { isConnected: true, style: { color: 'red' } };
+  const calls = [];
+  const context = {
+    selectedElements: [element],
+    SlideNextStudioEditorStyle: {
+      buildStudioStyleMutationPlan() {
+        return {
+          canApply: true,
+          selection: [element],
+          versionLabel: 'Auto: Styled Element'
+        };
+      },
+      applyStudioStyleMutationWithTransaction(selection, prop, value, options) {
+        calls.push(['applyStudioStyleMutationWithTransaction', selection, prop, value, options]);
+        return {
+          didApply: true,
+          displayValue: value,
+          transaction: { type: 'style' }
+        };
+      }
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      return {};
+    },
+    isElementLocked() {
+      return false;
+    },
+    syncInspectorForSelection() {},
+    syncSelectionOverlay() {},
+    generateThumbnails() {},
+    updateLayersList() {},
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
+    },
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
+  vm.runInContext(applySelectedElementStyleSource, context);
+
+  assert.equal(context.applySelectedElementStyle('color', '#fff'), true);
+  assert.equal(calls[0][0], 'applyStudioStyleMutationWithTransaction');
+  assert.equal(calls[0][1][0], element);
+  assert.equal(calls[0][2], 'color');
+  assert.equal(calls[0][3], '#fff');
+  assert.equal(typeof calls[0][4].getElementId, 'function');
+  assert.deepEqual(calls.find(([name]) => name === 'saveHistoryState')[2], { type: 'style' });
+});
+
 test('applySelectedElementStyle falls back to style-action refresh when inspector sync is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(

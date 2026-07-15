@@ -180,6 +180,85 @@
     };
   }
 
+  function applyStudioStyleMutationWithTransaction(elements = [], prop, value, options = {}) {
+    const selection = Array.isArray(elements) ? elements : [];
+    const styleTransactionProperty = {
+      size: 'fontSize',
+      family: 'fontFamily',
+      weight: 'fontWeight',
+      color: 'color',
+      align: 'textAlign',
+      opacity: 'opacity',
+      zIndex: 'zIndex',
+      borderStyle: 'borderStyle',
+      borderWidth: 'borderWidth',
+      borderRadius: 'borderRadius',
+      borderColor: 'borderColor'
+    }[prop] || '';
+    const propertyTransactionProperty = {
+      text: 'textContent',
+      src: 'src'
+    }[prop] || '';
+    const createStyleTransaction = typeof options.createStyleTransaction === 'function'
+      ? options.createStyleTransaction
+      : null;
+    const createPropertyTransaction = typeof options.createPropertyTransaction === 'function'
+      ? options.createPropertyTransaction
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const styleTransactionItems = createStyleTransaction && styleTransactionProperty
+      ? selection.map((element) => ({
+          element,
+          elementId: getElementId(element),
+          before: {
+            [styleTransactionProperty]: element && element.style
+              ? element.style[styleTransactionProperty]
+              : ''
+          }
+        }))
+      : [];
+    const propertyTransactionItems = createPropertyTransaction && propertyTransactionProperty
+      ? selection.slice(0, 1).map((element) => ({
+          element,
+          elementId: getElementId(element),
+          property: propertyTransactionProperty,
+          before: element ? element[propertyTransactionProperty] : ''
+        }))
+      : [];
+
+    const mutationResult = applyStudioStyleMutation(selection, prop, value);
+    if (!mutationResult.didApply) {
+      return {
+        ...mutationResult,
+        transaction: null
+      };
+    }
+
+    styleTransactionItems.forEach((item) => {
+      item.after = {
+        [styleTransactionProperty]: item.element && item.element.style
+          ? item.element.style[styleTransactionProperty]
+          : ''
+      };
+    });
+    const styleTransaction = styleTransactionItems.length > 0
+      ? createStyleTransaction(styleTransactionItems, { getElementId })
+      : null;
+    propertyTransactionItems.forEach((item) => {
+      item.after = item.element ? item.element[propertyTransactionProperty] : '';
+    });
+    const propertyTransaction = propertyTransactionItems.length > 0
+      ? createPropertyTransaction(propertyTransactionItems, { getElementId })
+      : null;
+
+    return {
+      ...mutationResult,
+      transaction: styleTransaction || propertyTransaction
+    };
+  }
+
   function getStudioEditorStyleText() {
     return `
       .slide {
@@ -345,6 +424,7 @@
     renderStudioStyleToolbarState,
     normalizeStudioStyleMutationValue,
     applyStudioStyleMutation,
+    applyStudioStyleMutationWithTransaction,
     getStudioEditorStyleText,
     ensureStudioEditorStyle
   };
