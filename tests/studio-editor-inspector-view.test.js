@@ -151,3 +151,42 @@ test('syncStudioInspectorTypographyControls applies font, color, alignment, z-in
   assert.equal(nodes.opacityVal.textContent, '65%');
   assert.deepEqual(alignment, ['right']);
 });
+
+test('syncStudioInspectorBorderControls applies border values for shape-like selections', () => {
+  const classList = createClassList();
+  classList.add('editor-shape');
+  const nodes = {
+    inspectorBorderGroup: { classList },
+    elBorderStyle: { value: '' },
+    elBorderWidth: { value: '' },
+    borderWidthVal: { textContent: '' },
+    elBorderRadius: { value: '' },
+    borderRadiusVal: { textContent: '' },
+    elBorderColor: { value: '' }
+  };
+
+  assert.equal(inspectorView.syncStudioInspectorBorderControls({
+    documentRef: {
+      getElementById(id) {
+        return nodes[id] || null;
+      }
+    },
+    selection: [{ tagName: 'DIV', classList }],
+    computedStyles: {
+      borderStyle: 'solid',
+      borderWidth: '3px',
+      borderRadius: '9px',
+      borderColor: 'rgb(1, 2, 3)'
+    },
+    rgbToHex() {
+      return '#010203';
+    }
+  }), true);
+  assert.equal(nodes.elBorderStyle.value, 'solid');
+  assert.equal(nodes.elBorderWidth.value, 3);
+  assert.equal(nodes.borderWidthVal.textContent, '3px');
+  assert.equal(nodes.elBorderRadius.value, 9);
+  assert.equal(nodes.borderRadiusVal.textContent, '9px');
+  assert.equal(nodes.elBorderColor.value, '#010203');
+  assert.equal(classList.contains('hidden'), false);
+});

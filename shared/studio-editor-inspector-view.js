@@ -122,9 +122,46 @@
     return true;
   }
 
+  function syncStudioInspectorBorderControls(options = {}) {
+    const documentRef = options.documentRef;
+    const selection = Array.isArray(options.selection) ? options.selection : [];
+    const computedStyles = options.computedStyles || {};
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    const rgbToHex = typeof options.rgbToHex === 'function' ? options.rgbToHex : (value) => value;
+    const isImgOrShape = selection.some((node) => {
+      return node.tagName.toLowerCase() === 'img'
+        || node.classList.contains('editor-shape')
+        || node.tagName.toLowerCase() === 'table'
+        || node.tagName.toLowerCase() === 'div';
+    });
+    const borderGroup = documentRef.getElementById('inspectorBorderGroup');
+    if (!isImgOrShape) {
+      if (borderGroup) borderGroup.classList.add('hidden');
+      return true;
+    }
+
+    if (borderGroup) borderGroup.classList.remove('hidden');
+    const borderStyleInput = documentRef.getElementById('elBorderStyle');
+    if (borderStyleInput) borderStyleInput.value = computedStyles.borderStyle || 'none';
+    const bWidth = parseInt(computedStyles.borderWidth) || 0;
+    const borderWidthInput = documentRef.getElementById('elBorderWidth');
+    if (borderWidthInput) borderWidthInput.value = bWidth;
+    const borderWidthLabel = documentRef.getElementById('borderWidthVal');
+    if (borderWidthLabel) borderWidthLabel.textContent = bWidth + 'px';
+    const bRadius = parseInt(computedStyles.borderRadius) || 0;
+    const borderRadiusInput = documentRef.getElementById('elBorderRadius');
+    if (borderRadiusInput) borderRadiusInput.value = bRadius;
+    const borderRadiusLabel = documentRef.getElementById('borderRadiusVal');
+    if (borderRadiusLabel) borderRadiusLabel.textContent = bRadius + 'px';
+    const borderColorInput = documentRef.getElementById('elBorderColor');
+    if (borderColorInput) borderColorInput.value = rgbToHex(computedStyles.borderColor || '#ffffff');
+    return true;
+  }
+
   return {
     renderStudioInspectorSelectionSummary,
     syncStudioInspectorContentControls,
-    syncStudioInspectorTypographyControls
+    syncStudioInspectorTypographyControls,
+    syncStudioInspectorBorderControls
   };
 });

@@ -4037,44 +4037,12 @@
         rgbToHex,
         highlightAlignButton
       });
-
-      const isImgOrShape = liveSelectionState.selection.some(node => node.tagName.toLowerCase() === 'img' || node.classList.contains('editor-shape') || node.tagName.toLowerCase() === 'table' || node.tagName.toLowerCase() === 'div');
-      const borderGroup = document.getElementById('inspectorBorderGroup');
-      if (isImgOrShape) {
-        if (borderGroup) {
-          borderGroup.classList.remove('hidden');
-        }
-        const borderStyleInput = document.getElementById('elBorderStyle');
-        if (borderStyleInput) {
-          borderStyleInput.value = computedStyles.borderStyle || 'none';
-        }
-        const bWidth = parseInt(computedStyles.borderWidth) || 0;
-        const borderWidthInput = document.getElementById('elBorderWidth');
-        if (borderWidthInput) {
-          borderWidthInput.value = bWidth;
-        }
-        const borderWidthLabel = document.getElementById('borderWidthVal');
-        if (borderWidthLabel) {
-          borderWidthLabel.textContent = bWidth + 'px';
-        }
-        const bRadius = parseInt(computedStyles.borderRadius) || 0;
-        const borderRadiusInput = document.getElementById('elBorderRadius');
-        if (borderRadiusInput) {
-          borderRadiusInput.value = bRadius;
-        }
-        const borderRadiusLabel = document.getElementById('borderRadiusVal');
-        if (borderRadiusLabel) {
-          borderRadiusLabel.textContent = bRadius + 'px';
-        }
-        const borderColorInput = document.getElementById('elBorderColor');
-        if (borderColorInput) {
-          borderColorInput.value = rgbToHex(computedStyles.borderColor || '#ffffff');
-        }
-      } else {
-        if (borderGroup) {
-          borderGroup.classList.add('hidden');
-        }
-      }
+      inspectorView.syncStudioInspectorBorderControls({
+        documentRef: document,
+        selection: liveSelectionState.selection,
+        computedStyles,
+        rgbToHex
+      });
     }
 
     // Click Selection highlights
