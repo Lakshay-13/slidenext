@@ -748,6 +748,34 @@
     };
   }
 
+  function restoreStudioTransformSessionStyles(session = {}) {
+    if (!session) {
+      return {
+        didRestore: false,
+        restoredCount: 0,
+        session
+      };
+    }
+
+    const properties = ['position', 'margin', 'left', 'top', 'width', 'height'];
+    let restoredCount = 0;
+    const items = Array.isArray(session.items) ? session.items : [];
+    items.forEach((item) => {
+      if (!item || !item.element || !item.element.style || !item.startStyle) return;
+      properties.forEach((property) => {
+        const value = item.startStyle[property];
+        item.element.style[property] = typeof value === 'string' ? value : '';
+      });
+      restoredCount += 1;
+    });
+
+    return {
+      didRestore: restoredCount > 0,
+      restoredCount,
+      session
+    };
+  }
+
   function finalizeStudioTransformSession(session = {}, options = {}) {
     if (!session) {
       return {
@@ -775,6 +803,53 @@
       versionLabel: didMove
         ? (typeof options.versionLabel === 'string' && options.versionLabel ? options.versionLabel : STUDIO_TRANSFORM_MOVED_VERSION_LABEL)
         : ''
+    };
+  }
+
+  function finalizeStudioTransformInteractionSession(session, options = {}) {
+    const cancelled = options.cancelled === true;
+    const finalizeTransformSession = typeof options.finalizeTransformSession === 'function'
+      ? options.finalizeTransformSession
+      : finalizeStudioTransformSession;
+    const buildCompletionPlan = typeof options.buildCompletionPlan === 'function'
+      ? options.buildCompletionPlan
+      : buildStudioTransformCompletionPlan;
+
+    if (!session) {
+      const finalizeResult = finalizeTransformSession(session);
+      return {
+        finalizeResult,
+        completionPlan: buildCompletionPlan(finalizeResult),
+        cancelled
+      };
+    }
+
+    if (cancelled) {
+      restoreStudioTransformSessionStyles(session);
+      session.moved = false;
+    }
+
+    const rawFinalizeResult = finalizeTransformSession(session);
+    const finalizeResult = cancelled
+      ? {
+          ...(rawFinalizeResult && typeof rawFinalizeResult === 'object' ? rawFinalizeResult : {}),
+          didMove: false,
+          cancelled: true
+        }
+      : rawFinalizeResult;
+    const rawCompletionPlan = buildCompletionPlan(finalizeResult);
+    const completionPlan = cancelled
+      ? {
+          ...(rawCompletionPlan && typeof rawCompletionPlan === 'object' ? rawCompletionPlan : {}),
+          shouldPersist: false,
+          versionLabel: ''
+        }
+      : rawCompletionPlan;
+
+    return {
+      finalizeResult,
+      completionPlan,
+      cancelled
     };
   }
 
@@ -1269,22 +1344,22 @@
       : () => options.gridSizePx;
     let session = null;
 
-    function finalizeSession() {
+    function finalizeSession(finalizeOptions = {}) {
       if (!session) {
         return null;
       }
 
       const finalizedSession = session;
-      const finalizeResult = finalizeTransformSession(finalizedSession);
-      const completionPlan = buildCompletionPlan(finalizeResult);
+      const finalization = finalizeStudioTransformInteractionSession(finalizedSession, {
+        finalizeTransformSession,
+        buildCompletionPlan,
+        cancelled: finalizeOptions.cancelled === true
+      });
       session = null;
       if (typeof options.onSessionFinalize === 'function') {
-        options.onSessionFinalize(finalizeResult, completionPlan);
+        options.onSessionFinalize(finalization.finalizeResult, finalization.completionPlan);
       }
-      return {
-        finalizeResult,
-        completionPlan
-      };
+      return finalization;
     }
 
     function handlePointerDown(event = {}) {
@@ -1359,7 +1434,11 @@
     }
 
     function handlePointerCancel(event = {}) {
-      return handlePointerUp(event);
+      if (!shouldHandlePointerEvent(session, event)) {
+        return false;
+      }
+      finalizeSession({ cancelled: true });
+      return true;
     }
 
     function handleWindowBlur() {
@@ -1432,20 +1511,20 @@
       : 0;
     let session = null;
 
-    function finalizeSession() {
+    function finalizeSession(finalizeOptions = {}) {
       if (!session) return null;
 
       const finalizedSession = session;
-      const finalizeResult = finalizeTransformSession(finalizedSession);
-      const completionPlan = buildCompletionPlan(finalizeResult);
+      const finalization = finalizeStudioTransformInteractionSession(finalizedSession, {
+        finalizeTransformSession,
+        buildCompletionPlan,
+        cancelled: finalizeOptions.cancelled === true
+      });
       session = null;
       if (typeof options.onSessionFinalize === 'function') {
-        options.onSessionFinalize(finalizeResult, completionPlan);
+        options.onSessionFinalize(finalization.finalizeResult, finalization.completionPlan);
       }
-      return {
-        finalizeResult,
-        completionPlan
-      };
+      return finalization;
     }
 
     function handlePointerDown(event = {}) {
@@ -1504,7 +1583,9 @@
     }
 
     function handlePointerCancel(event = {}) {
-      return handlePointerUp(event);
+      if (!shouldHandlePointerEvent(session, event)) return false;
+      finalizeSession({ cancelled: true });
+      return true;
     }
 
     function handleWindowBlur() {
@@ -1547,8 +1628,10 @@
     captureStudioTransformSessionPointer,
     progressStudioTransformSession,
     cleanupStudioTransformSession,
+    restoreStudioTransformSessionStyles,
     finalizeStudioTransformSession,
     buildStudioTransformCompletionPlan,
+    finalizeStudioTransformInteractionSession,
     buildStudioTransformStyleTransaction,
     buildStudioTransformCanonicalLayoutUpdates,
     createStudioTransformSessionFinalizer,

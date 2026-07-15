@@ -1842,6 +1842,63 @@ test('createStudioTransformPointerHandlers coordinates the shared pointer lifecy
   ]);
 });
 
+test('transform pointer cancellation restores styles and does not persist either handler path', () => {
+  [
+    transformState.createStudioTransformPointerHandlers,
+    transformState.createStudioTransformFallbackPointerHandlers
+  ].forEach((createHandlers) => {
+    const element = {
+      style: {
+        position: 'relative',
+        margin: '8px',
+        left: '10px',
+        top: '20px',
+        width: '100px',
+        height: '50px'
+      }
+    };
+    const startStyle = { ...element.style };
+    const session = {
+      pointerId: 7,
+      materialized: true,
+      moved: true,
+      slideMetrics: {},
+      items: [{ element, startStyle }]
+    };
+    let completionPlan = null;
+    const handlers = createHandlers({
+      getActiveSlide() {
+        return { id: 'slide-1' };
+      },
+      resolveTransformSessionStart() {
+        return { session, startBounds: {} };
+      },
+      buildTransformFrameState() {
+        return { isActive: true, bounds: {} };
+      },
+      applyTransformBounds() {
+        element.style.position = 'absolute';
+        element.style.left = '90px';
+        element.style.top = '100px';
+      },
+      onSessionFinalize(_finalizeResult, nextCompletionPlan) {
+        completionPlan = nextCompletionPlan;
+      }
+    });
+
+    assert.equal(handlers.handlePointerDown({ pointerId: 7 }), true);
+    assert.equal(handlers.handlePointerMove({ pointerId: 7 }), true);
+    assert.equal(element.style.left, '90px');
+    assert.equal(handlers.handlePointerCancel({ pointerId: 7 }), true);
+    assert.deepEqual(element.style, startStyle);
+    assert.deepEqual(completionPlan, {
+      shouldPersist: false,
+      versionLabel: ''
+    });
+    assert.equal(handlers.getSession(), null);
+  });
+});
+
 test('buildStudioTransformStartState derives the shared transform bootstrap state', () => {
   const slide = { id: 'slide-1' };
   const selection = [{ id: 'node-1' }, { id: 'node-2' }];
