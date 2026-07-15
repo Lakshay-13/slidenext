@@ -27,7 +27,7 @@ function loadFinalizeWallpaperMutation(fileContent, context) {
 function loadApplyEditorWallpaperMutationWithTransaction(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function applyEditorWallpaperMutationWithTransaction(activeSlide, background, options = {}) {',
+    'function applyEditorWallpaperSlidesMutationWithTransaction(slides, background, options = {}) {',
     '\n\n    function applyPresetWallpaper(val, isCustomInput = false) {'
   );
   vm.runInContext(helperSource, context);
@@ -489,6 +489,7 @@ test('applyWallpaperToAllSlides uses the shared iframe accessor and propagates t
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
   loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+  loadApplyEditorWallpaperMutationWithTransaction(fileContent, context);
   vm.runInContext(applyWallpaperToAllSlidesSource, context);
 
   assert.equal(context.applyWallpaperToAllSlides(), true);
@@ -543,6 +544,7 @@ test('applyWallpaperToAllSlides delegates slide mutation to the shared wallpaper
   };
 
   vm.createContext(context);
+  loadApplyEditorWallpaperMutationWithTransaction(fileContent, context);
   vm.runInContext(applyWallpaperToAllSlidesSource, context);
 
   assert.equal(context.applyWallpaperToAllSlides(), true);
@@ -599,6 +601,7 @@ test('applyWallpaperToAllSlides records one style transaction per changed slide'
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
   loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+  loadApplyEditorWallpaperMutationWithTransaction(fileContent, context);
   vm.runInContext(applyWallpaperToAllSlidesSource, context);
 
   assert.equal(context.applyWallpaperToAllSlides(), true);
@@ -663,6 +666,7 @@ test('applyWallpaperToAllSlides exits when the shared iframe accessor has no act
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
   loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+  loadApplyEditorWallpaperMutationWithTransaction(fileContent, context);
   vm.runInContext(applyWallpaperToAllSlidesSource, context);
 
   assert.equal(context.applyWallpaperToAllSlides(), false);
@@ -726,6 +730,7 @@ test('applyWallpaperToAllSlides skips persistence and alerts when every slide al
   vm.createContext(context);
   loadFinalizeWallpaperMutation(fileContent, context);
   loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+  loadApplyEditorWallpaperMutationWithTransaction(fileContent, context);
   vm.runInContext(applyWallpaperToAllSlidesSource, context);
 
   assert.equal(context.applyWallpaperToAllSlides(), false);

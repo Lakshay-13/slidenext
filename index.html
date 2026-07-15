@@ -7072,8 +7072,9 @@
       return true;
     }
 
-    function applyEditorWallpaperMutationWithTransaction(activeSlide, background, options = {}) {
-      if (!activeSlide || !activeSlide.style) {
+    function applyEditorWallpaperSlidesMutationWithTransaction(slides, background, options = {}) {
+      const sourceSlides = Array.isArray(slides) ? slides : [];
+      if (sourceSlides.length === 0) {
         return {
           didChange: false,
           transaction: null
@@ -7094,12 +7095,18 @@
         && typeof wallpaperView.applyStudioWallpaperToSlides === 'function'
         ? wallpaperView.applyStudioWallpaperToSlides
         : null;
-      const slideId = typeof options.slideId === 'string' ? options.slideId : '';
+      const getSlideId = typeof options.getSlideId === 'function'
+        ? options.getSlideId
+        : (slide) => {
+            if (typeof options.slideId === 'string') return options.slideId;
+            if (typeof getEditorSlideId === 'function') return getEditorSlideId(slide);
+            return '';
+          };
 
       if (applyStudioWallpaperToSlides) {
-        const mutation = applyStudioWallpaperToSlides([activeSlide], background, {
+        const mutation = applyStudioWallpaperToSlides(sourceSlides, background, {
           createStyleTransaction: createStudioStyleTransaction,
-          getSlideId: () => slideId
+          getSlideId
         });
         return mutation && typeof mutation === 'object'
           ? {
@@ -7109,23 +7116,48 @@
           : {
               didChange: false,
               transaction: null
-            };
+          };
       }
 
-      const previousBackground = activeSlide.style.background;
-      activeSlide.style.background = background;
-      const transaction = createStudioStyleTransaction && slideId
-        ? createStudioStyleTransaction([{
-            element: activeSlide,
-            elementId: `slide:${slideId}`,
-            before: { background: previousBackground },
-            after: { background: activeSlide.style.background }
-          }])
-        : null;
+      const transactionItems = createStudioStyleTransaction
+        ? sourceSlides.reduce((items, slide) => {
+            const slideId = getSlideId(slide);
+            if (!slideId || !slide || !slide.style) return items;
+            items.push({
+              element: slide,
+              elementId: `slide:${slideId}`,
+              before: { background: slide.style.background }
+            });
+            return items;
+          }, [])
+        : [];
+      let changedCount = 0;
+      sourceSlides.forEach((slide) => {
+        if (!slide || !slide.style || slide.style.background === background) return;
+        slide.style.background = background;
+        changedCount += 1;
+      });
+      if (changedCount === 0) {
+        return {
+          didChange: false,
+          transaction: null
+        };
+      }
+
+      transactionItems.forEach((item) => {
+        item.after = { background: item.element.style.background };
+      });
       return {
         didChange: true,
-        transaction
+        changedCount,
+        transaction: createStudioStyleTransaction
+          ? createStudioStyleTransaction(transactionItems)
+          : null
       };
+    }
+
+    function applyEditorWallpaperMutationWithTransaction(activeSlide, background, options = {}) {
+      return applyEditorWallpaperSlidesMutationWithTransaction([activeSlide], background, options);
     }
 
     function applyPresetWallpaper(val, isCustomInput = false) {
@@ -7141,7 +7173,7 @@
         ? getEditorSlideId(activeSlide)
         : '';
       const mutation = applyEditorWallpaperMutationWithTransaction(activeSlide, val, {
-        slideId: activeSlideId
+        getSlideId: () => activeSlideId
       });
       if (!mutation.didChange) return false;
       hasPendingCustomWallpaperVersion = !!isCustomInput;
@@ -7244,66 +7276,13 @@
       if (!paint) return false;
       
       const slides = getSlides(iframeDoc);
-      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
-        ? SlideNextStudioEditorWallpaperView
-        : null;
-      const applyStudioWallpaperToSlides = wallpaperView
-        && typeof wallpaperView.applyStudioWallpaperToSlides === 'function'
-        ? wallpaperView.applyStudioWallpaperToSlides
-        : null;
-      if (applyStudioWallpaperToSlides) {
-        const mutation = applyStudioWallpaperToSlides(slides, paint, {
-          createStyleTransaction: typeof SlideNextStudioEditorTransaction !== 'undefined'
-            && SlideNextStudioEditorTransaction
-            && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
-            ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
-            : null,
-          getSlideId: (slide) => typeof getEditorSlideId === 'function'
-            ? getEditorSlideId(slide)
-            : ''
-        });
-        if (!mutation || !mutation.didChange) return false;
-        finalizeWallpaperMutation('Auto: Applied Background to All Slides', mutation.transaction);
-        alert("Successfully applied active background paint to all slides in the deck.");
-        return true;
-      }
-
-      const createStudioStyleTransaction = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
-        : null;
-      const transactionItems = createStudioStyleTransaction
-        ? slides.reduce((items, slide) => {
-            const slideId = typeof getEditorSlideId === 'function'
-              ? getEditorSlideId(slide)
-              : '';
-            if (!slideId) return items;
-            items.push({
-              element: slide,
-              elementId: `slide:${slideId}`,
-              before: { background: slide.style.background }
-            });
-            return items;
-          }, [])
-        : [];
-      let changedCount = 0;
-      slides.forEach(slide => {
-        if (slide.style.background === paint) return;
-        slide.style.background = paint;
-        changedCount += 1;
+      const mutation = applyEditorWallpaperSlidesMutationWithTransaction(slides, paint, {
+        getSlideId: (slide) => typeof getEditorSlideId === 'function'
+          ? getEditorSlideId(slide)
+          : ''
       });
-      if (changedCount === 0) return false;
-
-      transactionItems.forEach((item) => {
-        item.after = { background: item.element.style.background };
-      });
-      const transaction = createStudioStyleTransaction
-        ? createStudioStyleTransaction(transactionItems)
-        : null;
-      finalizeWallpaperMutation('Auto: Applied Background to All Slides', transaction);
+      if (!mutation.didChange) return false;
+      finalizeWallpaperMutation('Auto: Applied Background to All Slides', mutation.transaction);
       
       alert("Successfully applied active background paint to all slides in the deck.");
       return true;
