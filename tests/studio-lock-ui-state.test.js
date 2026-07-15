@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const lockState = require('../shared/studio-editor-lock-state.js');
 
@@ -528,6 +529,76 @@ test('toggleSelectedElementsLockState captures a reversible dataset transaction'
       }
     }
   });
+});
+
+test('toggleSelectedElementsLockState forwards an immutable canonical visibility sidecar', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toggleSelectedElementsLockStateSource = extractFunctionSource(
+    fileContent,
+    'function toggleSelectedElementsLockState() {',
+    '\n\n    function toggleSelectedElementsVisibility(options = {}) {'
+  );
+  const liveTarget = {
+    isConnected: true,
+    dataset: {}
+  };
+  const canonicalDeckBefore = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', visibility: { locked: false } }]
+    }]
+  });
+  let finalized = null;
+  const context = {
+    selectedElements: [liveTarget],
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorTransaction: studioTransaction,
+    SlideNextStudioEditorLockState: {
+      buildStudioLockMutationPlan() {
+        return {
+          didChange: true,
+          selection: [liveTarget],
+          shouldLock: true,
+          versionLabel: 'Auto: Locked Element'
+        };
+      }
+    },
+    SlideNextStudioElementState: {
+      setStudioElementLockedState(element, shouldLock) {
+        if (shouldLock) element.dataset.editorLocked = 'true';
+      }
+    },
+    assignEditorElementId(element) {
+      element.dataset.editorId = 'node-1';
+      return 'node-1';
+    },
+    buildEditorCanonicalDeck() {
+      return canonicalDeckBefore;
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      return { id: 'iframe-doc' };
+    },
+    isElementLocked() {
+      return false;
+    },
+    syncSelectionUiAfterMutation() {},
+    finalizeEditorDeckMutation(versionLabel, options) {
+      finalized = { versionLabel, options };
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeSelectionToggleMutation(fileContent, context);
+  loadLockMutationHelper(fileContent, context);
+  vm.runInContext(toggleSelectedElementsLockStateSource, context);
+
+  assert.equal(context.toggleSelectedElementsLockState(), true);
+  assert.equal(canonicalDeckBefore.slides[0].nodes[0].visibility.locked, false);
+  assert.equal(finalized.options.canonicalDeck.slides[0].nodes[0].visibility.locked, true);
+  assert.equal(finalized.options.transaction.operations[0].elementId, 'node-1');
 });
 
 test('toggleSelectedElementsLockState delegates lock application to the shared lock module', () => {

@@ -5250,7 +5250,8 @@
       }
       finalizeEditorDeckMutation(versionLabel, {
         refreshThumbnails: false,
-        ...(options.transaction ? { transaction: options.transaction } : {})
+        ...(options.transaction ? { transaction: options.transaction } : {}),
+        ...(options.canonicalDeck ? { canonicalDeck: options.canonicalDeck } : {})
       });
       return true;
     }
@@ -5344,6 +5345,26 @@
         }
         return element && element.dataset && element.dataset.editorId;
       };
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const canonicalNodeIds = lockMutationPlan.selection
+        .map(getLockElementId)
+        .filter(Boolean);
+      const canUpdateCanonicalVisibility = canonicalDeckApi
+        && typeof canonicalDeckApi.updateCanonicalNodeVisibility === 'function';
+      const canonicalDeckBeforeMutation = canUpdateCanonicalVisibility
+        && typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(doc)
+        : null;
+      const canonicalDeck = canonicalDeckApi
+        && canUpdateCanonicalVisibility
+        ? canonicalDeckApi.updateCanonicalNodeVisibility(
+            canonicalDeckBeforeMutation,
+            canonicalNodeIds,
+            { locked: lockMutationPlan.shouldLock }
+          )
+        : null;
       const mutation = applyEditorLockMutationWithTransaction(lockMutationPlan.selection, lockMutationPlan.shouldLock, {
         isLocked: isElementLocked,
         setLocked: SlideNextStudioElementState.setStudioElementLockedState,
@@ -5351,7 +5372,8 @@
       });
       if (!mutation.didApply) return false;
       return finalizeSelectionToggleMutation(lockMutationPlan.versionLabel, {
-        transaction: mutation.transaction
+        transaction: mutation.transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
       });
     }
 

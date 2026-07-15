@@ -150,6 +150,31 @@ test('finalizeStudioSelectionToggleMutation syncs selection before persisting a 
   ]);
 });
 
+test('finalizeStudioSelectionToggleMutation forwards a canonical history sidecar', () => {
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  let finalized = null;
+
+  assert.equal(mutation.finalizeStudioSelectionToggleMutation({
+    versionLabel: 'Auto: Locked Element',
+    mutationOptions: {
+      transaction: { id: 'tx-lock' },
+      canonicalDeck
+    },
+    finalizeMutation(label, options) {
+      finalized = { label, options };
+    }
+  }), true);
+
+  assert.deepEqual(finalized, {
+    label: 'Auto: Locked Element',
+    options: {
+      refreshThumbnails: false,
+      transaction: { id: 'tx-lock' },
+      canonicalDeck
+    }
+  });
+});
+
 test('finalizeStudioSelectionToggleMutation honors skipped selection UI', () => {
   const calls = [];
   assert.equal(mutation.finalizeStudioSelectionToggleMutation({

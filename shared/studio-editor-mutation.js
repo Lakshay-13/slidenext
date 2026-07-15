@@ -67,7 +67,8 @@
     if (typeof finalizeMutation !== 'function') return false;
     finalizeMutation(options.versionLabel, {
       refreshThumbnails: false,
-      ...(mutationOptions.transaction ? { transaction: mutationOptions.transaction } : {})
+      ...(mutationOptions.transaction ? { transaction: mutationOptions.transaction } : {}),
+      ...(mutationOptions.canonicalDeck ? { canonicalDeck: mutationOptions.canonicalDeck } : {})
     });
     return true;
   }
