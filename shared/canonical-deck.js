@@ -251,16 +251,33 @@
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
       : createCanonicalDeck(deckLike);
-    if (!isCanonicalDeck(deck) || !slideLike || typeof slideLike !== 'object') {
+    if (!isCanonicalDeck(deck)) {
+      return null;
+    }
+    return insertCanonicalSlide(deck, slideLike, deck.slides.length);
+  }
+
+  function insertCanonicalSlide(deckLike, slideLike = {}, index) {
+    if (!deckLike || typeof deckLike !== 'object') {
+      return null;
+    }
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    if (!isCanonicalDeck(deck)
+      || !slideLike
+      || typeof slideLike !== 'object'
+      || !Number.isInteger(index)
+      || index < 0
+      || index > deck.slides.length) {
       return null;
     }
 
+    const nextSlides = [...deck.slides];
+    nextSlides.splice(index, 0, createCanonicalSlide(slideLike, index));
     return createCanonicalDeck({
       ...deck,
-      slides: [
-        ...deck.slides,
-        createCanonicalSlide(slideLike, deck.slides.length)
-      ]
+      slides: nextSlides
     });
   }
 
@@ -1023,6 +1040,7 @@
     reorderCanonicalSlides,
     removeCanonicalSlide,
     appendCanonicalSlide,
+    insertCanonicalSlide,
     appendCanonicalNode,
     groupCanonicalNodes,
     ungroupCanonicalNodes,

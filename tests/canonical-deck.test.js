@@ -90,6 +90,41 @@ test('appendCanonicalSlide rejects invalid deck or slide input', () => {
   assert.equal(canonicalDeck.appendCanonicalSlide(deck, null), null);
 });
 
+test('insertCanonicalSlide inserts a normalized slide at an index without mutating the source deck', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    metadata: { title: 'Deck' },
+    slides: [{ id: 'slide-1' }, { id: 'slide-3' }]
+  });
+
+  const expandedDeck = canonicalDeck.insertCanonicalSlide(sourceDeck, {
+    id: 'slide-2',
+    title: 'Inserted Slide',
+    nodes: [{ id: 'node-1', tagName: 'H2', text: 'Heading' }]
+  }, 1);
+
+  assert.deepEqual(expandedDeck.slides.map((slide) => slide.id), ['slide-1', 'slide-2', 'slide-3']);
+  assert.equal(expandedDeck.slides[1].title, 'Inserted Slide');
+  assert.equal(expandedDeck.slides[1].nodes[0].tagName, 'h2');
+  assert.deepEqual(sourceDeck.slides.map((slide) => slide.id), ['slide-1', 'slide-3']);
+  assert.equal(expandedDeck.metadata.title, 'Deck');
+});
+
+test('insertCanonicalSlide accepts the start and end indexes and rejects invalid indexes', () => {
+  const deck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+
+  assert.deepEqual(
+    canonicalDeck.insertCanonicalSlide(deck, { id: 'slide-0' }, 0).slides.map((slide) => slide.id),
+    ['slide-0', 'slide-1']
+  );
+  assert.deepEqual(
+    canonicalDeck.insertCanonicalSlide(deck, { id: 'slide-2' }, 1).slides.map((slide) => slide.id),
+    ['slide-1', 'slide-2']
+  );
+  assert.equal(canonicalDeck.insertCanonicalSlide(deck, { id: 'slide-2' }, -1), null);
+  assert.equal(canonicalDeck.insertCanonicalSlide(deck, { id: 'slide-2' }, 2), null);
+  assert.equal(canonicalDeck.insertCanonicalSlide(deck, { id: 'slide-2' }, 1.5), null);
+});
+
 test('appendCanonicalNode immutably appends a normalized node to a slide', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     metadata: { title: 'Deck' },
