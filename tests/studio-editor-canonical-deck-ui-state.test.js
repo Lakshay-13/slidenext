@@ -1164,7 +1164,7 @@ test('resolveEditorFallbackCanonicalDeck fails closed when the shared helper is 
   );
 });
 
-test('resolveEditorFallbackCanonicalDeck delegates fallback deck resolution through the shared persistence helper when available', () => {
+test('resolveEditorFallbackCanonicalDeck fails closed when only the legacy shared fallback helper is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
@@ -1178,38 +1178,23 @@ test('resolveEditorFallbackCanonicalDeck delegates fallback deck resolution thro
       title: 'Broken Deck'
     }
   };
-  const resolvedCanonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: [
-      { id: 'slide-1', nodes: [] }
-    ]
-  };
-  const isCanonicalDeck = (deck) => deck === resolvedCanonicalDeck;
-  let helperCall = null;
   const context = {
     SlideNextStudioEditorPersistence: {
-      resolveStudioFallbackCanonicalDeck(nextCanonicalDeck, options = {}) {
-        helperCall = {
-          nextCanonicalDeck,
-          hasBuildCanonicalDeck: typeof options.buildCanonicalDeck === 'function',
-          hasResolveCanonicalDeckOverride: typeof options.resolveCanonicalDeckOverride === 'function',
-          isCanonicalDeck: options.isCanonicalDeck
-        };
-        return resolvedCanonicalDeck;
+      resolveStudioFallbackCanonicalDeck() {
+        throw new Error('legacy fallback helper should not run');
       }
     },
     buildEditorCanonicalDeck() {
-      throw new Error('buildEditorCanonicalDeck should be delegated through the shared fallback helper');
+      throw new Error('buildEditorCanonicalDeck should not run without the shared fallback builder');
     },
     getEditorCanonicalDeckValidator() {
-      return isCanonicalDeck;
+      throw new Error('canonical validator should not run without the shared fallback builder');
     },
     getIframeDoc() {
       return iframeDoc;
     },
     resolveEditorCanonicalDeckOverride() {
-      throw new Error('resolveEditorCanonicalDeckOverride should be delegated through the shared fallback helper');
+      throw new Error('canonical override should not run without the shared fallback builder');
     }
   };
 
@@ -1218,13 +1203,7 @@ test('resolveEditorFallbackCanonicalDeck delegates fallback deck resolution thro
 
   const result = context.resolveEditorFallbackCanonicalDeck(iframeDoc, malformedCanonicalDeck);
 
-  assert.equal(result, resolvedCanonicalDeck);
-  assert.deepEqual(helperCall, {
-    nextCanonicalDeck: malformedCanonicalDeck,
-    hasBuildCanonicalDeck: true,
-    hasResolveCanonicalDeckOverride: true,
-    isCanonicalDeck
-  });
+  assert.equal(result, null);
 });
 
 test('resolveEditorFallbackCanonicalDeck reuses the shared fallback deck resolver builder when available', () => {
