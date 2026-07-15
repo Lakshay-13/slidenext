@@ -60,3 +60,39 @@ test('finalizeEditorDeckMutation delegates to the shared mutation finalizer', ()
     ['finalize', 'Auto: Grouped Elements', options]
   ]);
 });
+
+test('finalizeEditorDeckMutation supplies a post-mutation canonical deck to shared history', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function finalizeEditorDeckMutation(versionLabel, options = {}) {',
+    '\n\n    // Apply styles immediately to active selected elements'
+  );
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  let capturedMutationOptions = null;
+  const context = {
+    SlideNextStudioEditorMutation: {
+      finalizeStudioMutation(options) {
+        capturedMutationOptions = options.mutationOptions;
+        return options.versionLabel;
+      }
+    },
+    buildEditorCanonicalDeck() {
+      return canonicalDeck;
+    },
+    syncSelectionOverlay() {},
+    generateThumbnails() {},
+    updateLayersList() {},
+    saveHistoryState() {},
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.finalizeEditorDeckMutation('Auto: Styled Element', {
+    transaction: { id: 'tx-1' }
+  }), 'Auto: Styled Element');
+  assert.equal(capturedMutationOptions.canonicalDeck, canonicalDeck);
+});

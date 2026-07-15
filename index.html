@@ -5211,13 +5211,20 @@
     }
 
     function finalizeEditorDeckMutation(versionLabel, options = {}) {
+      const mutationOptions = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
+        || typeof buildEditorCanonicalDeck !== 'function'
+        ? options
+        : (() => {
+            const canonicalDeck = buildEditorCanonicalDeck();
+            return canonicalDeck ? { ...options, canonicalDeck } : options;
+          })();
       const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
         ? SlideNextStudioEditorMutation
         : null;
       if (mutationApi && typeof mutationApi.finalizeStudioMutation === 'function') {
         return mutationApi.finalizeStudioMutation({
           versionLabel,
-          mutationOptions: options,
+          mutationOptions,
           syncSelectionOverlay,
           generateThumbnails,
           updateLayersList,
@@ -5241,21 +5248,25 @@
           saveHistoryState,
           triggerAutoSave,
           triggerAutoVersion
-        })(versionLabel, options);
+        })(versionLabel, mutationOptions);
       }
-      if (options.syncSelectionOverlay) {
+      if (mutationOptions.syncSelectionOverlay) {
         syncSelectionOverlay();
       }
-      if (options.refreshThumbnails !== false) {
+      if (mutationOptions.refreshThumbnails !== false) {
         generateThumbnails();
       }
-      if (options.refreshLayersList) {
+      if (mutationOptions.refreshLayersList) {
         updateLayersList();
       }
-      saveHistoryState(
-        options.debounceHistory === true,
-        options.transaction || null
-      );
+      const historyArgs = [
+        mutationOptions.debounceHistory === true,
+        mutationOptions.transaction || null
+      ];
+      if (Object.prototype.hasOwnProperty.call(mutationOptions, 'canonicalDeck')) {
+        historyArgs.push(mutationOptions.canonicalDeck);
+      }
+      saveHistoryState(...historyArgs);
       triggerAutoSave();
       if (versionLabel) {
         triggerAutoVersion(versionLabel);
