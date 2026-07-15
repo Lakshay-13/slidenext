@@ -4261,6 +4261,15 @@
       const inspectorView = typeof SlideNextStudioEditorInspectorView !== 'undefined'
         ? SlideNextStudioEditorInspectorView
         : null;
+      if (inspectorController && typeof inspectorController.syncStudioInspectorSelection === 'function') {
+        return inspectorController.syncStudioInspectorSelection({
+          documentRef: document,
+          selectionState: liveSelectionState,
+          inspectorView,
+          rgbToHex,
+          highlightAlignButton
+        });
+      }
       if (inspectorView && typeof inspectorView.syncStudioInspectorSelection === 'function') {
         return inspectorView.syncStudioInspectorSelection({
           documentRef: document,

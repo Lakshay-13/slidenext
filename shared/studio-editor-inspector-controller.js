@@ -24,5 +24,51 @@
     return true;
   }
 
-  return { syncStudioInspectorActionStates };
+  function syncStudioInspectorSelection(options = {}) {
+    const documentRef = options.documentRef;
+    const selectionState = options.selectionState || {};
+    const inspectorView = options.inspectorView;
+    if (!inspectorView) return false;
+    if (typeof inspectorView.syncStudioInspectorSelection === 'function') {
+      return inspectorView.syncStudioInspectorSelection({
+        documentRef,
+        selectionState,
+        rgbToHex: options.rgbToHex,
+        highlightAlignButton: options.highlightAlignButton
+      });
+    }
+    if (typeof inspectorView.renderStudioInspectorSelectionSummary !== 'function') return false;
+    const selectionSummary = inspectorView.renderStudioInspectorSelectionSummary({
+      documentRef,
+      selectionState
+    });
+    if (!selectionSummary.hasSelection) return false;
+
+    const primaryElement = selectionSummary.primaryElement;
+    const computedStyles = primaryElement.ownerDocument.defaultView.getComputedStyle(primaryElement);
+    inspectorView.syncStudioInspectorContentControls({
+      documentRef,
+      primaryElement,
+      isMulti: selectionSummary.isMulti
+    });
+    inspectorView.syncStudioInspectorTypographyControls({
+      documentRef,
+      primaryElement,
+      computedStyles,
+      rgbToHex: options.rgbToHex,
+      highlightAlignButton: options.highlightAlignButton
+    });
+    inspectorView.syncStudioInspectorBorderControls({
+      documentRef,
+      selection: selectionState.selection,
+      computedStyles,
+      rgbToHex: options.rgbToHex
+    });
+    return true;
+  }
+
+  return {
+    syncStudioInspectorActionStates,
+    syncStudioInspectorSelection
+  };
 });
