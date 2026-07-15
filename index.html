@@ -4330,6 +4330,17 @@
     }
 
     function selectAllElementsOnActiveSlide() {
+      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
+        ? SlideNextStudioEditorSelection
+        : null;
+      if (selectionApi && typeof selectionApi.selectAllStudioElementsOnActiveSlide === 'function') {
+        return selectionApi.selectAllStudioElementsOnActiveSlide({
+          getActiveSlide,
+          getElements: getNormalizedSlideLayerOrder,
+          getSelectionOptions: getEditorSelectionOptions,
+          commitSelectionState: commitEditorSelectionState
+        });
+      }
       const slide = getActiveSlide();
       if (!slide) return false;
       const nextSelection = getNormalizedSlideLayerOrder(slide);

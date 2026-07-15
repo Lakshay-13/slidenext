@@ -98,3 +98,63 @@ test('deselectStudioElement clears selection and hides the drag HUD on clear', (
   assert.equal(calls[0][1].hideDragHud, hideDragHud);
   assert.equal(calls[0][1].hideDragHudOnClear, true);
 });
+
+test('selectAllStudioElementsOnActiveSlide commits the normalized active-slide layer order', () => {
+  const activeSlide = { id: 'slide-1' };
+  const elements = [{ id: 'node-1' }, { id: 'node-2' }];
+  const calls = [];
+
+  assert.equal(studioSelection.selectAllStudioElementsOnActiveSlide({
+    doc: { id: 'doc-1' },
+    getActiveSlide(doc) {
+      calls.push(['getActiveSlide', doc]);
+      return activeSlide;
+    },
+    getElements(slide) {
+      calls.push(['getElements', slide]);
+      return elements;
+    },
+    getSelectionOptions(options) {
+      calls.push(['getSelectionOptions', options]);
+      return {};
+    },
+    commitSelectionState(nextSelectionState) {
+      calls.push(['commitSelectionState', nextSelectionState]);
+    }
+  }), true);
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'getActiveSlide',
+    'getElements',
+    'getSelectionOptions',
+    'commitSelectionState'
+  ]);
+  assert.equal(calls[2][1].activeSlide, activeSlide);
+  assert.deepEqual(calls[3][1], {
+    selectedElements: elements,
+    selectedElement: elements[0]
+  });
+});
+
+test('selectAllStudioElementsOnActiveSlide returns false without an active slide or elements', () => {
+  assert.equal(studioSelection.selectAllStudioElementsOnActiveSlide({
+    getActiveSlide() {
+      return null;
+    },
+    commitSelectionState() {
+      throw new Error('should not commit without an active slide');
+    }
+  }), false);
+
+  assert.equal(studioSelection.selectAllStudioElementsOnActiveSlide({
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getElements() {
+      return [];
+    },
+    commitSelectionState() {
+      throw new Error('should not commit without elements');
+    }
+  }), false);
+});

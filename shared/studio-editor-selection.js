@@ -209,6 +209,29 @@
     return true;
   }
 
+  function selectAllStudioElementsOnActiveSlide(options = {}) {
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const activeSlide = getActiveSlide(options.doc);
+    if (!activeSlide) return false;
+    const getElements = typeof options.getElements === 'function'
+      ? options.getElements
+      : () => [];
+    const elements = getElements(activeSlide) || [];
+    if (!Array.isArray(elements) || elements.length === 0) return false;
+    const getSelectionOptions = typeof options.getSelectionOptions === 'function'
+      ? options.getSelectionOptions
+      : () => ({});
+    const nextSelectionState = selectAllStudioElements(
+      elements,
+      getSelectionOptions({ activeSlide })
+    );
+    if (typeof options.commitSelectionState !== 'function') return false;
+    options.commitSelectionState(nextSelectionState);
+    return true;
+  }
+
   function commitStudioSelectionState(nextSelectionState = {}, options = {}) {
     const normalizedSelectionState = normalizeStudioSelectionState(nextSelectionState, options);
     const selectedElements = normalizedSelectionState.selectedElements;
@@ -310,6 +333,7 @@
     selectAllStudioElements,
     selectStudioElement,
     deselectStudioElement,
+    selectAllStudioElementsOnActiveSlide,
     commitStudioSelectionState,
     syncStudioSelectionUi,
     syncStudioSelectionUiAfterMutation,
