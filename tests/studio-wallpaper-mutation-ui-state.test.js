@@ -128,6 +128,38 @@ test('finalizeWallpaperMutation forwards an optional canonical wallpaper sidecar
   })));
 });
 
+test('finalizeWallpaperMutation preserves the canonical sidecar in its legacy fallback', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const transaction = { id: 'wallpaper-tx-legacy' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const calls = [];
+  const context = {
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
+
+  assert.equal(
+    context.finalizeWallpaperMutation('Auto: Changed Background', transaction, canonicalDeck),
+    'Auto: Changed Background'
+  );
+  assert.deepEqual(calls, [
+    ['generateThumbnails'],
+    ['saveHistoryState', false, transaction, canonicalDeck],
+    ['triggerAutoSave']
+  ]);
+});
+
 test('applyEditorWallpaperSlidesMutationWithTransaction returns an immutable canonical background sidecar', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const sourceSlide = {

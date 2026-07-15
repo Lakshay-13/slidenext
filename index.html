@@ -7930,7 +7930,11 @@
         });
       }
       generateThumbnails();
-      saveHistoryState(false, transaction);
+      if (canonicalDeck) {
+        saveHistoryState(false, transaction, canonicalDeck);
+      } else {
+        saveHistoryState(false, transaction);
+      }
       triggerAutoSave();
       if (versionLabel) {
         triggerAutoVersion(versionLabel);
