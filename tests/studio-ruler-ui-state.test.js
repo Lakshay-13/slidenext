@@ -68,7 +68,7 @@ test('syncCanvasRulers renders zoomed ticks against the visible canvas wrapper o
       }
     },
     zoomFactor: 0.5,
-    SlideNextStudioEditorRuler: require('../shared/studio-editor-ruler.js')
+    SlideNextStudioEditorRulerView: require('../shared/studio-editor-ruler-view.js')
   };
   vm.createContext(context);
   vm.runInContext(source, context);

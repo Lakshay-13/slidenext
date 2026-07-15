@@ -1147,6 +1147,7 @@
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-ruler.js"></script>
+  <script src="/shared/studio-editor-ruler-view.js"></script>
   <script src="/shared/studio-editor-mutation.js"></script>
   <script src="/shared/studio-editor-transaction.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
@@ -6529,56 +6530,15 @@
     }
 
     function syncCanvasRulers() {
-      const stage = document.getElementById('canvasStage');
-      const wrapper = document.getElementById('canvasWrapper');
-      const horizontal = document.getElementById('canvasRulerHorizontal');
-      const vertical = document.getElementById('canvasRulerVertical');
-      const rulerApi = typeof SlideNextStudioEditorRuler !== 'undefined'
-        ? SlideNextStudioEditorRuler
+      const rulerViewApi = typeof SlideNextStudioEditorRulerView !== 'undefined'
+        ? SlideNextStudioEditorRulerView
         : null;
-      if (!stage || !wrapper || !horizontal || !vertical || !rulerApi
-        || typeof rulerApi.buildStudioRulerRenderState !== 'function'
-        || typeof stage.getBoundingClientRect !== 'function'
-        || typeof wrapper.getBoundingClientRect !== 'function') {
-        return false;
-      }
-
-      const stageRect = stage.getBoundingClientRect();
-      const wrapperRect = wrapper.getBoundingClientRect();
-      const offsetX = wrapperRect.left - stageRect.left;
-      const offsetY = wrapperRect.top - stageRect.top;
-      const horizontalTicks = rulerApi.buildStudioRulerRenderState(1920, offsetX, zoomFactor, {
-        majorStepPx: 100,
-        minorStepPx: 20
-      });
-      const verticalTicks = rulerApi.buildStudioRulerRenderState(1080, offsetY, zoomFactor, {
-        majorStepPx: 100,
-        minorStepPx: 20
-      });
-      const renderTicks = (container, ticks, axis) => {
-        if (typeof container.replaceChildren === 'function') {
-          container.replaceChildren();
-        } else {
-          container.innerHTML = '';
-        }
-        const ownerDocument = container.ownerDocument || document;
-        ticks.forEach((tick) => {
-          const mark = ownerDocument.createElement('span');
-          mark.className = `studio-ruler-tick${tick.isMajor ? ' major' : ''}`;
-          mark.style[axis === 'horizontal' ? 'left' : 'top'] = `${tick.screenPosition}px`;
-          container.appendChild(mark);
-          if (!tick.label) return;
-          const label = ownerDocument.createElement('span');
-          label.className = 'studio-ruler-label';
-          label.textContent = tick.label;
-          label.style[axis === 'horizontal' ? 'left' : 'top'] = `${tick.screenPosition}px`;
-          container.appendChild(label);
-        });
-      };
-
-      renderTicks(horizontal, horizontalTicks, 'horizontal');
-      renderTicks(vertical, verticalTicks, 'vertical');
-      return true;
+      return rulerViewApi && typeof rulerViewApi.renderStudioCanvasRulers === 'function'
+        ? rulerViewApi.renderStudioCanvasRulers({
+            documentRef: document,
+            zoomFactor
+          })
+        : false;
     }
 
     // 4. Zoom Engine (Center workspace stage)
