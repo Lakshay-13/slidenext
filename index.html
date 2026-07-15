@@ -3914,14 +3914,23 @@
     }
 
     function refreshSelectionClasses() {
+      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
+        ? SlideNextStudioEditorSelection
+        : null;
+      if (!selectionApi || typeof selectionApi.refreshStudioSelectionClasses !== 'function') {
+        selectedElements = [];
+        selectedElement = null;
+        return false;
+      }
       const doc = getIframeDoc();
-      const nextSelectionState = SlideNextStudioEditorSelection.refreshStudioSelectionClasses(
+      const nextSelectionState = selectionApi.refreshStudioSelectionClasses(
         doc,
         selectedElements,
         getEditorSelectionOptions({ doc })
       );
       selectedElements = nextSelectionState.selectedElements;
       selectedElement = nextSelectionState.selectedElement;
+      return true;
     }
 
     function applyEditorSelectionState(nextState = {}) {
