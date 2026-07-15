@@ -62,7 +62,7 @@
       const presentationUrl = readPresentationUrl();
       const presentationTitle = readPresentationTitle();
       if (buildStudioCanonicalDeck) {
-        return buildStudioCanonicalDeck(doc, {
+        const studioCanonicalDeck = buildStudioCanonicalDeck(doc, {
           currentPresentationMetadata: presentationMetadata,
           fallbackStoredPresentationMetadata: {
             canonicalDeck: readPersistedCanonicalDeck()
@@ -74,6 +74,9 @@
           getSlideId: options.getSlideId,
           getNodeId: options.getNodeId
         });
+        if (isCanonicalDeck(studioCanonicalDeck)) {
+          return studioCanonicalDeck;
+        }
       }
 
       const storedCanonicalDeck = resolveStoredCanonicalBaseline({

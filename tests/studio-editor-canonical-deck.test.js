@@ -56,6 +56,28 @@ test('canonical deck builder rejects invalid overrides and live models before fa
   assert.equal(builder(documentRef, { canonicalDeckOverride: invalidOverride }), rebuiltDeck);
 });
 
+test('canonical deck builder rejects invalid DOM adapter output before using the stored baseline', () => {
+  const storedDeck = createDeck('stored');
+  const invalidDomDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    isCanonicalDeck(value) {
+      return !!value
+        && value.kind === 'slidenext.deck'
+        && value.metadata
+        && typeof value.metadata.id === 'string'
+        && value.metadata.id.trim() !== '';
+    },
+    buildStudioCanonicalDeck() {
+      return invalidDomDeck;
+    },
+    resolveStoredCanonicalBaseline() {
+      return storedDeck;
+    }
+  });
+
+  assert.equal(builder({ id: 'document' }), storedDeck);
+});
+
 test('canonical deck builder can rebuild from a document or return the stored model without one', () => {
   const storedDeck = createDeck('stored');
   const importedDeck = createDeck('imported');
