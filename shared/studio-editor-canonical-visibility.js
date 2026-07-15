@@ -7,8 +7,7 @@
     root.SlideNextStudioEditorCanonicalVisibility = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  function buildStudioCanonicalVisibilityDeck(selection, visibilityPatch = {}, options = {}) {
-    const sourceSelection = Array.isArray(selection) ? selection : [];
+  function buildStudioCanonicalVisibilityBaseline(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
       : null;
@@ -19,6 +18,26 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+
+    if (!updateCanonicalNodeVisibility || !buildCanonicalDeck) {
+      return null;
+    }
+
+    return buildCanonicalDeck(options.sourceDocument);
+  }
+
+  function buildStudioCanonicalVisibilityDeck(selection, visibilityPatch = {}, options = {}) {
+    const sourceSelection = Array.isArray(selection) ? selection : [];
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const updateCanonicalNodeVisibility = canonicalDeckApi
+      && typeof canonicalDeckApi.updateCanonicalNodeVisibility === 'function'
+      ? canonicalDeckApi.updateCanonicalNodeVisibility
+      : null;
+    const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
+      ? options.canonicalDeckBeforeMutation
+      : buildStudioCanonicalVisibilityBaseline(options);
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
@@ -28,13 +47,11 @@
     }
 
     const nodeIds = sourceSelection.map(getElementId).filter(Boolean);
-    const canonicalDeckBeforeMutation = buildCanonicalDeck
-      ? buildCanonicalDeck()
-      : null;
     return updateCanonicalNodeVisibility(canonicalDeckBeforeMutation, nodeIds, visibilityPatch);
   }
 
   return {
+    buildStudioCanonicalVisibilityBaseline,
     buildStudioCanonicalVisibilityDeck
   };
 });
