@@ -70,6 +70,14 @@
     });
   }
 
+  function finalizeStudioRemovalActionResult(result, options = {}) {
+    const updateRemovalActionState = typeof options.updateRemovalActionState === 'function'
+      ? options.updateRemovalActionState
+      : () => {};
+    updateRemovalActionState(options.doc);
+    return result;
+  }
+
   function removeStudioElements(elements = [], options = {}) {
     const selection = Array.isArray(elements) ? elements : [];
     const removeElement = typeof options.removeElement === 'function'
@@ -123,6 +131,7 @@
     buildStudioRemovalToolbarState,
     renderStudioRemovalToolbarState,
     syncStudioRemovalToolbarState,
+    finalizeStudioRemovalActionResult,
     removeStudioElements
   };
 });

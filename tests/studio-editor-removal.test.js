@@ -130,3 +130,16 @@ test('syncStudioRemovalToolbarState builds and renders deletion controls in one 
   }), true);
   assert.equal(removeSelectionBtn.disabled, false);
 });
+
+test('finalizeStudioRemovalActionResult refreshes removal state and preserves the result', () => {
+  const doc = { id: 'doc' };
+  const calls = [];
+
+  assert.equal(removal.finalizeStudioRemovalActionResult(false, {
+    doc,
+    updateRemovalActionState(currentDoc) {
+      calls.push(currentDoc);
+    }
+  }), false);
+  assert.deepEqual(calls, [doc]);
+});

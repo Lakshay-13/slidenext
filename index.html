@@ -4559,6 +4559,15 @@
     }
 
     function finalizeRemovalActionResult(result, doc = getIframeDoc()) {
+      const removalApi = typeof SlideNextStudioEditorRemoval !== 'undefined'
+        ? SlideNextStudioEditorRemoval
+        : null;
+      if (removalApi && typeof removalApi.finalizeStudioRemovalActionResult === 'function') {
+        return removalApi.finalizeStudioRemovalActionResult(result, {
+          doc,
+          updateRemovalActionState
+        });
+      }
       updateRemovalActionState(doc);
       return result;
     }

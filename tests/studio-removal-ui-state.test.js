@@ -272,6 +272,32 @@ test('finalizeRemovalActionResult refreshes removal controls and preserves the a
   ]);
 });
 
+test('finalizeRemovalActionResult delegates result refresh to the shared removal module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = { label: 'iframe-doc' };
+  let delegated = null;
+  const context = {
+    SlideNextStudioEditorRemoval: {
+      finalizeStudioRemovalActionResult(result, options) {
+        delegated = { result, options };
+        return 'delegated';
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    updateRemovalActionState() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeRemovalActionResult(fileContent, context);
+
+  assert.equal(context.finalizeRemovalActionResult(true, doc), 'delegated');
+  assert.equal(delegated.result, true);
+  assert.equal(delegated.options.doc, doc);
+  assert.equal(delegated.options.updateRemovalActionState, context.updateRemovalActionState);
+});
+
 test('removeSelectedElement returns false and skips persistence when planned targets disconnect before removal', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const removeSelectedElementSource = extractFunctionSource(
