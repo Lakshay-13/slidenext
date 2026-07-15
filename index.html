@@ -6643,13 +6643,6 @@
     }
 
     function applyEditorGroupMutationWithTransaction(options = {}) {
-      const documentRef = options.documentRef;
-      const parent = options.parent || null;
-      const groupPlan = options.groupPlan || null;
-      const parentBounds = options.parentBounds || {};
-      const orderedSelection = Array.isArray(options.orderedSelection)
-        ? options.orderedSelection
-        : [];
       const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
         ? SlideNextStudioEditorGroup
         : null;
@@ -6657,6 +6650,9 @@
         && typeof groupApi.applyStudioGroupMutation === 'function'
         ? groupApi.applyStudioGroupMutation
         : null;
+      if (!applyStudioGroupMutation) {
+        return { didApply: false, group: null, transaction: null };
+      }
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -6679,80 +6675,16 @@
       const prepareGroup = typeof options.prepareGroup === 'function'
         ? options.prepareGroup
         : null;
-
-      if (applyStudioGroupMutation) {
-        const mutation = applyStudioGroupMutation({
-          documentRef,
-          parent,
-          groupPlan,
-          parentBounds,
-          orderedSelection,
-          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
-          getElementId,
-          assignElementId,
-          prepareGroup
-        });
-        return mutation && typeof mutation === 'object'
-          ? mutation
-          : { didApply: false, group: null, transaction: null };
-      }
-
-      if (!documentRef || typeof documentRef.createElement !== 'function'
-        || !parent || !groupPlan || !groupPlan.bounds || !Array.isArray(groupPlan.nextItems)
-        || orderedSelection.length === 0) {
-        return { didApply: false, group: null, transaction: null };
-      }
-      const markupCapture = createStudioMarkupTransactionCapture
-        ? createStudioMarkupTransactionCapture([{
-            element: parent,
-            elementId: getElementId(parent)
-          }], { getElementId })
-        : null;
-      const group = documentRef.createElement('div');
-      if (!group || !group.style || typeof group.appendChild !== 'function') {
-        return { didApply: false, group: null, transaction: null };
-      }
-      group.className = 'editor-group editor-hoverable';
-      if (typeof group.setAttribute === 'function') {
-        group.setAttribute('data-editor-group', 'true');
-      }
-      group.style.position = 'absolute';
-      group.style.left = `${groupPlan.bounds.left - parentBounds.left}px`;
-      group.style.top = `${groupPlan.bounds.top - parentBounds.top}px`;
-      group.style.width = `${groupPlan.bounds.width}px`;
-      group.style.height = `${groupPlan.bounds.height}px`;
-      group.style.overflow = 'visible';
-      group.style.boxSizing = 'border-box';
-      if (assignElementId) {
-        assignElementId(group);
-      }
-
-      const itemByElement = new Map(groupPlan.nextItems.map((item) => [item.element, item]));
-      const firstElement = orderedSelection[0];
-      if (firstElement && firstElement.parentElement === parent) {
-        parent.insertBefore(group, firstElement);
-      } else {
-        parent.appendChild(group);
-      }
-      orderedSelection.forEach((element) => {
-        const item = itemByElement.get(element);
-        if (!item) return;
-        element.style.position = 'absolute';
-        element.style.margin = '0';
-        element.style.left = `${item.nextLeft}px`;
-        element.style.top = `${item.nextTop}px`;
-        group.appendChild(element);
+      const mutation = applyStudioGroupMutation({
+        ...options,
+        createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+        getElementId,
+        assignElementId,
+        prepareGroup
       });
-      if (prepareGroup) {
-        prepareGroup(group);
-      }
-      return {
-        didApply: true,
-        group,
-        transaction: markupCapture
-          ? markupCapture.createTransaction()
-          : null
-      };
+      return mutation && typeof mutation === 'object'
+        ? mutation
+        : { didApply: false, group: null, transaction: null };
     }
 
     function groupSelectedElements() {
@@ -6860,11 +6792,6 @@
     }
 
     function applyEditorUngroupMutationWithTransaction(options = {}) {
-      const groups = Array.isArray(options.groups) ? options.groups : [];
-      const slideMetrics = options.slideMetrics || {};
-      const getRectOnSlide = typeof options.getRectOnSlide === 'function'
-        ? options.getRectOnSlide
-        : (rect) => rect;
       const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
         ? SlideNextStudioEditorGroup
         : null;
@@ -6872,6 +6799,9 @@
         && typeof groupApi.applyStudioUngroupMutation === 'function'
         ? groupApi.applyStudioUngroupMutation
         : null;
+      if (!applyStudioUngroupMutation) {
+        return { didApply: false, restoredElements: [], restoredGroups: [], transaction: null };
+      }
       const buildStudioUngroupedLayout = groupApi
         && typeof groupApi.buildStudioUngroupedLayout === 'function'
         ? groupApi.buildStudioUngroupedLayout
@@ -6892,91 +6822,15 @@
             }
             return element && element.dataset && element.dataset.editorId;
           };
-      if (applyStudioUngroupMutation) {
-        const mutation = applyStudioUngroupMutation({
-          groups,
-          slideMetrics,
-          getRectOnSlide,
-          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
-          getElementId
-        });
-        return mutation && typeof mutation === 'object'
-          ? mutation
-          : { didApply: false, restoredElements: [], restoredGroups: [], transaction: null };
-      }
-      if (!buildStudioUngroupedLayout || groups.length === 0) {
-        return { didApply: false, restoredElements: [], restoredGroups: [], transaction: null };
-      }
-
-      const markupCaptureTargets = [];
-      if (createStudioMarkupTransactionCapture) {
-        const parentSet = new Set();
-        groups.forEach((group) => {
-          const parent = group && group.parentElement;
-          if (!parent || parentSet.has(parent)) return;
-          parentSet.add(parent);
-          markupCaptureTargets.push({
-            element: parent,
-            elementId: getElementId(parent)
-          });
-        });
-      }
-      const markupCapture = createStudioMarkupTransactionCapture
-        ? createStudioMarkupTransactionCapture(markupCaptureTargets, { getElementId })
-        : null;
-      const restoredElements = [];
-      const restoredGroups = [];
-      groups.forEach((group) => {
-        const parent = group && group.parentElement;
-        if (!parent || typeof parent.getBoundingClientRect !== 'function') return;
-        const groupBounds = getRectOnSlide(group.getBoundingClientRect(), slideMetrics);
-        const parentBounds = getRectOnSlide(parent.getBoundingClientRect(), slideMetrics);
-        const childItems = Array.from(group.children || []).map((element) => {
-          const childBounds = getRectOnSlide(element.getBoundingClientRect(), slideMetrics);
-          return {
-            element,
-            relativeLeft: childBounds.left - groupBounds.left,
-            relativeTop: childBounds.top - groupBounds.top,
-            parentLeft: parentBounds.left,
-            parentTop: parentBounds.top
-          };
-        });
-        const ungroupPlan = buildStudioUngroupedLayout(groupBounds, childItems);
-        if (!ungroupPlan.canUngroup) return;
-
-        const itemByElement = new Map(ungroupPlan.nextItems.map((item) => [item.element, item]));
-        const restoredGroupElements = [];
-        Array.from(group.children || []).forEach((element) => {
-          const item = itemByElement.get(element);
-          if (!item) return;
-          element.style.position = 'absolute';
-          element.style.margin = '0';
-          element.style.left = `${item.nextLeft}px`;
-          element.style.top = `${item.nextTop}px`;
-          parent.insertBefore(element, group);
-          restoredElements.push(element);
-          restoredGroupElements.push(element);
-        });
-        if (typeof group.remove === 'function') {
-          group.remove();
-        }
-        if (restoredGroupElements.length > 0) {
-          restoredGroups.push({
-            group,
-            parent,
-            restoredElements: restoredGroupElements
-          });
-        }
+      const mutation = applyStudioUngroupMutation({
+        ...options,
+        buildUngroupedLayout: buildStudioUngroupedLayout,
+        createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+        getElementId
       });
-
-      return {
-        didApply: restoredElements.length > 0,
-        restoredElements,
-        restoredGroups,
-        transaction: restoredElements.length > 0 && markupCapture
-          ? markupCapture.createTransaction()
-          : null
-      };
+      return mutation && typeof mutation === 'object'
+        ? mutation
+        : { didApply: false, restoredElements: [], restoredGroups: [], transaction: null };
     }
 
     function ungroupSelectedElements() {

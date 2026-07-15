@@ -326,6 +326,9 @@
     const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
       ? options.createMarkupTransactionCapture
       : null;
+    const buildUngroupedLayout = typeof options.buildUngroupedLayout === 'function'
+      ? options.buildUngroupedLayout
+      : buildStudioUngroupedLayout;
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
@@ -384,7 +387,7 @@
         };
       });
       if (childItems.some((item) => !item)) return;
-      const ungroupPlan = buildStudioUngroupedLayout(groupBounds, childItems);
+      const ungroupPlan = buildUngroupedLayout(groupBounds, childItems);
       if (!ungroupPlan.canUngroup) return;
 
       const itemByElement = new Map(ungroupPlan.nextItems.map((item) => [item.element, item]));

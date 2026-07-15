@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const studioGroup = require('../shared/studio-editor-group.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -22,6 +23,10 @@ function loadGroupMutationHelper(fileContent, context) {
     'function applyEditorGroupMutationWithTransaction(options = {}) {',
     'function groupSelectedElements() {'
   );
+  context.SlideNextStudioEditorGroup = {
+    ...studioGroup,
+    ...(context.SlideNextStudioEditorGroup || {})
+  };
   vm.runInContext(helperSource, context);
 }
 
@@ -31,6 +36,10 @@ function loadUngroupMutationHelper(fileContent, context) {
     'function applyEditorUngroupMutationWithTransaction(options = {}) {',
     'function ungroupSelectedElements() {'
   );
+  context.SlideNextStudioEditorGroup = {
+    ...studioGroup,
+    ...(context.SlideNextStudioEditorGroup || {})
+  };
   vm.runInContext(helperSource, context);
 }
 
