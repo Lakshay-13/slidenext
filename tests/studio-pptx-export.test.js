@@ -78,7 +78,26 @@ test('exportStudioPptx reports unavailable dependencies and failed responses', a
     error: 'PPTX browser export dependencies are unavailable'
   });
 
+  let fetchCalls = 0;
+  const missingDeck = await pptxExport.exportStudioPptx({
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return { ok: false };
+    },
+    documentRef: { body: {}, createElement() {} },
+    urlApi: {
+      createObjectURL() {},
+      revokeObjectURL() {}
+    }
+  });
+  assert.deepEqual(missingDeck, {
+    success: false,
+    error: 'PPTX canonical deck is unavailable'
+  });
+  assert.equal(fetchCalls, 0);
+
   const result = await pptxExport.exportStudioPptx({
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] },
     fetchImpl: async () => ({ ok: false }),
     documentRef: { body: {}, createElement() {} },
     urlApi: {
@@ -93,6 +112,7 @@ test('exportStudioPptx reports unavailable dependencies and failed responses', a
 test('exportStudioPptx converts request and download exceptions into failed results', async () => {
   const revokedUrls = [];
   const baseOptions = {
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] },
     documentRef: {
       body: {},
       createElement() {

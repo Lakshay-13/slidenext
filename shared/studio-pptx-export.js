@@ -48,6 +48,9 @@
       || typeof urlApi.revokeObjectURL !== 'function') {
       return { success: false, error: 'PPTX browser export dependencies are unavailable' };
     }
+    if (!options.canonicalDeck || !Array.isArray(options.canonicalDeck.slides)) {
+      return { success: false, error: 'PPTX canonical deck is unavailable' };
+    }
 
     const endpoint = typeof options.endpoint === 'string' && options.endpoint.trim()
       ? options.endpoint.trim()
