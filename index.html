@@ -2795,6 +2795,17 @@
     }
 
     function captureSlideMutationRestoreState(iframeDoc) {
+      const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
+        : null;
+      if (deckViewApi && typeof deckViewApi.captureStudioDeckViewBeforeSlideMutation === 'function') {
+        return deckViewApi.captureStudioDeckViewBeforeSlideMutation({
+          doc: iframeDoc,
+          saveHistoryState,
+          getActiveSlideId,
+          getCommittedSelectedElementIds
+        });
+      }
       saveHistoryState();
       return {
         preservedActiveSlideId: getActiveSlideId(iframeDoc),

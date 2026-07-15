@@ -4,6 +4,36 @@ const assert = require('node:assert/strict');
 const deckView = require('../shared/studio-deck-view.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 
+test('captureStudioDeckViewBeforeSlideMutation saves history before preserving slide view state', () => {
+  const doc = { id: 'editor-doc' };
+  const calls = [];
+
+  const result = deckView.captureStudioDeckViewBeforeSlideMutation({
+    doc,
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    getActiveSlideId(nextDoc) {
+      calls.push(['getActiveSlideId', nextDoc]);
+      return 'slide-2';
+    },
+    getCommittedSelectedElementIds(nextDoc) {
+      calls.push(['getCommittedSelectedElementIds', nextDoc]);
+      return ['element-1'];
+    }
+  });
+
+  assert.deepEqual(result, {
+    preservedActiveSlideId: 'slide-2',
+    preservedSelectionIds: ['element-1']
+  });
+  assert.deepEqual(calls, [
+    ['saveHistoryState'],
+    ['getActiveSlideId', doc],
+    ['getCommittedSelectedElementIds', doc]
+  ]);
+});
+
 test('applyStudioSlideReorderMutation moves a slide node and captures the container markup transaction', () => {
   const draggedNode = { id: 'slide-1' };
   const beforeNode = { id: 'slide-3' };
