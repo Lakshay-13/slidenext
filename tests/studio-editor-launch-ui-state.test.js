@@ -1170,6 +1170,40 @@ test('applyCurrentPresentationMetadata refreshes the persisted canonical baselin
   assert.deepEqual(context.updateEditorPersistedDeckStateCalls[0].canonicalDeck.slides, []);
 });
 
+test('applyCurrentPresentationMetadata fails closed when shared persistence is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyCurrentPresentationMetadataSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentPresentationMetadata(metadata, options = {}) {',
+    '\n\n    function setCurrentPresentationCanonicalDeck('
+  );
+  const metadata = {
+    id: 'onboarding-presentation',
+    canonicalDeck: {
+      slides: []
+    }
+  };
+  let updateCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    currentPresentationMetadata: null,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    updateEditorPersistedDeckState() {
+      updateCalls += 1;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyCurrentPresentationMetadataSource, context);
+
+  assert.equal(
+    context.applyCurrentPresentationMetadata(metadata, { syncPersistedCanonicalDeck: true }),
+    metadata
+  );
+  assert.equal(context.currentPresentationMetadata, metadata);
+  assert.equal(updateCalls, 0);
+});
+
 test('applyCurrentPresentationMetadata refreshes fallback deck chrome from stored canonical metadata when the iframe is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyCurrentPresentationMetadataSource = extractFunctionSource(
