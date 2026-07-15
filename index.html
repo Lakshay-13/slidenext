@@ -1163,6 +1163,7 @@
   <script src="/shared/studio-editor-canonical-layout.js"></script>
   <script src="/shared/studio-editor-canonical-group.js"></script>
   <script src="/shared/studio-editor-canonical-removal.js"></script>
+  <script src="/shared/studio-editor-canonical-insertion.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
@@ -6679,9 +6680,12 @@
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
-      const appendCanonicalNode = canonicalDeckApi
-        && typeof canonicalDeckApi.appendCanonicalNode === 'function'
-        ? canonicalDeckApi.appendCanonicalNode
+      const canonicalInsertionApi = typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
+        ? SlideNextStudioEditorCanonicalInsertion
+        : null;
+      const buildCanonicalInsertionDeck = canonicalInsertionApi
+        && typeof canonicalInsertionApi.buildStudioCanonicalInsertionDeck === 'function'
+        ? canonicalInsertionApi.buildStudioCanonicalInsertionDeck
         : null;
       const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
         ? SlideNextDeckImport
@@ -6690,7 +6694,9 @@
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
         ? deckImportApi.importElementToCanonicalNode
         : null;
-      const canonicalDeckBeforeInsertion = appendCanonicalNode
+      const canonicalDeckBeforeInsertion = buildCanonicalInsertionDeck
+        && canonicalDeckApi
+        && typeof canonicalDeckApi.appendCanonicalNode === 'function'
         && importElementToCanonicalNode
         && typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(iframeDoc)
@@ -6707,8 +6713,12 @@
       const newEl = mutation.element;
       const transaction = mutation.transaction;
       let canonicalDeck = null;
-      if (canonicalDeckBeforeInsertion && newEl) {
-        const canonicalNode = importElementToCanonicalNode(newEl, {
+      if (buildCanonicalInsertionDeck && canonicalDeckBeforeInsertion && newEl) {
+        canonicalDeck = buildCanonicalInsertionDeck(newEl, {
+          canonicalDeckApi,
+          canonicalDeckBeforeMutation: canonicalDeckBeforeInsertion,
+          importElementToCanonicalNode,
+          slideId: activeSlideId,
           getNodeId: (element) => {
             if (element && element.dataset && typeof assignEditorElementId === 'function') {
               const assignedId = assignEditorElementId(element);
@@ -6717,7 +6727,6 @@
             return element && element.dataset && element.dataset.editorId;
           }
         });
-        canonicalDeck = appendCanonicalNode(canonicalDeckBeforeInsertion, activeSlideId, canonicalNode);
       }
       
       if (newEl) {

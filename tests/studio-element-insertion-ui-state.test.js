@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const insertion = require('../shared/studio-editor-insertion.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -262,6 +263,7 @@ test('insertElement forwards an immutable canonical node sidecar for new element
   let finalized = null;
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalInsertion: canonicalInsertion,
     SlideNextDeckImport: {
       importElementToCanonicalNode(element, options) {
         assert.equal(element, insertedElement);
@@ -333,6 +335,7 @@ test('insertElement preserves the canonical sidecar in its legacy persistence fa
   const calls = [];
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalInsertion: canonicalInsertion,
     SlideNextDeckImport: {
       importElementToCanonicalNode() {
         return { id: 'node-2', tagName: 'h2', text: 'New Heading' };

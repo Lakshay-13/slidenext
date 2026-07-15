@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const studioInsertion = require('../shared/studio-editor-insertion.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -54,6 +56,15 @@ function loadElementInsertionMutationHelper(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadInsertElement(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function insertElement(type) {',
+    '\n\n    function finalizeLayerOrderMutation'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('applyEditorElementInsertionWithTransaction delegates element creation and transaction capture to the shared insertion module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slide = { appendChild() {} };
@@ -86,6 +97,56 @@ test('applyEditorElementInsertionWithTransaction delegates element creation and 
   assert.equal(calls[0][1].slide, slide);
   assert.equal(calls[0][1].offset, 15);
   assert.equal(calls[0][1].transactionElementId, 'slide:slide-1');
+});
+
+test('insertElement forwards an immutable canonical node sidecar after insertion', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [] }]
+  });
+  const activeSlide = { children: [] };
+  const insertedElement = { dataset: { editorId: 'node-1' } };
+  let finalized = null;
+  const context = {
+    SlideNextCanonicalDeck: canonicalDeck,
+    SlideNextStudioEditorCanonicalInsertion: canonicalInsertion,
+    SlideNextDeckImport: {
+      importElementToCanonicalNode(element, options) {
+        return { id: options.getNodeId(element), type: 'heading' };
+      }
+    },
+    SlideNextStudioEditorInsertion: {
+      applyStudioElementInsertion() {
+        return { element: insertedElement, transaction: { id: 'tx-insert' } };
+      }
+    },
+    getIframeDoc() {
+      return { id: 'iframe-doc' };
+    },
+    getActiveSlide() {
+      return activeSlide;
+    },
+    getEditorSlideId() {
+      return 'slide-1';
+    },
+    buildEditorCanonicalDeck() {
+      return sourceDeck;
+    },
+    finalizeInsertedElements(elements, versionLabel, transaction, canonicalDeckValue) {
+      finalized = { elements, versionLabel, transaction, canonicalDeck: canonicalDeckValue };
+      return true;
+    },
+    updateInsertionActionState() {}
+  };
+
+  vm.createContext(context);
+  loadElementInsertionMutationHelper(fileContent, context);
+  loadInsertElement(fileContent, context);
+
+  assert.equal(context.insertElement('h2'), true);
+  assert.equal(finalized.transaction.id, 'tx-insert');
+  assert.deepEqual(finalized.canonicalDeck.slides[0].nodes.map((node) => node.id), ['node-1']);
+  assert.equal(sourceDeck.slides[0].nodes.length, 0);
 });
 
 test('resolveCurrentStudioInsertionActionState reports add-slide and insertion readiness from the live deck document', () => {
