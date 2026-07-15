@@ -201,24 +201,16 @@
     const targetNode = slides[toIndex];
     if (!draggedNode || !targetNode || fromIndex === toIndex) return false;
 
-    const getSlideId = typeof options.getSlideId === 'function'
-      ? options.getSlideId
-      : (slide) => slide && slide.id || '';
-    const reorderCanonicalSlides = typeof options.reorderCanonicalSlides === 'function'
-      ? options.reorderCanonicalSlides
+    const buildCanonicalReorderSlideDeck = typeof options.buildCanonicalReorderSlideDeck === 'function'
+      ? options.buildCanonicalReorderSlideDeck
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
-    const canonicalDeckBeforeReorder = reorderCanonicalSlides && buildCanonicalDeck
-      ? buildCanonicalDeck(iframeDoc)
-      : null;
-    const canonicalDeckAfterReorder = reorderCanonicalSlides
-      ? reorderCanonicalSlides(
-          canonicalDeckBeforeReorder,
-          getSlideId(draggedNode),
-          getSlideId(targetNode)
-        )
+    const canonicalDeckAfterReorder = buildCanonicalReorderSlideDeck
+      ? buildCanonicalReorderSlideDeck({
+          sourceDocument: iframeDoc,
+          sourceSlide: draggedNode,
+          targetSlide: targetNode,
+          getSlideId: options.getSlideId
+        })
       : null;
 
     const captureSlideMutationState = typeof options.captureSlideMutationState === 'function'

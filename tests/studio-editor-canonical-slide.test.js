@@ -87,3 +87,28 @@ test('buildStudioCanonicalDeleteSlideDeck removes only the requested slide witho
   assert.deepEqual(result.slides.map((slide) => slide.id), ['slide-1']);
   assert.deepEqual(sourceDeck.slides.map((slide) => slide.id), ['slide-1', 'slide-2']);
 });
+
+test('buildStudioCanonicalReorderSlideDeck moves the requested slide without mutating the source', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }, { id: 'slide-2' }, { id: 'slide-3' }]
+  });
+  const sourceDocument = { id: 'editor-doc' };
+  let builtFromDocument = null;
+  const sourceSlide = { id: 'slide-1' };
+  const targetSlide = { id: 'slide-3' };
+  const result = canonicalSlide.buildStudioCanonicalReorderSlideDeck({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtFromDocument = documentRef;
+      return sourceDeck;
+    },
+    sourceDocument,
+    sourceSlide,
+    targetSlide,
+    getSlideId: (slide) => slide.id
+  });
+
+  assert.equal(builtFromDocument, sourceDocument);
+  assert.deepEqual(result.slides.map((slide) => slide.id), ['slide-2', 'slide-3', 'slide-1']);
+  assert.deepEqual(sourceDeck.slides.map((slide) => slide.id), ['slide-1', 'slide-2', 'slide-3']);
+});

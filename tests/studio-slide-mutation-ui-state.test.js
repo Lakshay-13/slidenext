@@ -947,6 +947,7 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
   };
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalSlide: canonicalSlide,
     SlideNextStudioEditorSlideCommands: slideCommands,
     SlideNextStudioDeckView: {
       restoreStudioDeckViewAfterSlideMutation(payload) {

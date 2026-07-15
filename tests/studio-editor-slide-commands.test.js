@@ -278,15 +278,11 @@ test('reorderStudioSlideNodes preserves insertion target, canonical order, and a
     getIframeDoc: () => doc,
     getSlideContainer: () => container,
     getSlides: () => slides,
-    getSlideId: (slide) => slide.id,
-    buildCanonicalDeck() {
-      calls.push('buildCanonicalDeck');
-      return { slides: [{ id: 'slide-1' }, { id: 'slide-2' }, { id: 'slide-3' }] };
-    },
-    reorderCanonicalSlides(deck, sourceId, targetId) {
-      assert.equal(sourceId, 'slide-1');
-      assert.equal(targetId, 'slide-3');
-      calls.push('reorderCanonicalSlides');
+    buildCanonicalReorderSlideDeck(options) {
+      assert.equal(options.sourceDocument, doc);
+      assert.equal(options.sourceSlide, firstSlide);
+      assert.equal(options.targetSlide, thirdSlide);
+      calls.push('buildCanonicalReorderSlideDeck');
       return { slides: [{ id: 'slide-2' }, { id: 'slide-3' }, { id: 'slide-1' }] };
     },
     captureSlideMutationState() {
@@ -326,8 +322,7 @@ test('reorderStudioSlideNodes preserves insertion target, canonical order, and a
 
   assert.equal(result, true);
   assert.deepEqual(calls, [
-    'buildCanonicalDeck',
-    'reorderCanonicalSlides',
+    'buildCanonicalReorderSlideDeck',
     'captureSlideMutationState',
     'applyReorder',
     'generateThumbnails',
