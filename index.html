@@ -6259,6 +6259,33 @@
         triggerAutoSave,
         triggerAutoVersion
       });
+      const attachStudioPointerHandlers = (handlers, attachHandlers, options = {}) => {
+        if (typeof attachHandlers === 'function') {
+          return attachHandlers(doc, handlers);
+        }
+        const body = doc && doc.body;
+        if (!body || typeof body.addEventListener !== 'function' || !handlers) return false;
+        if (options.preventNativeDrag && typeof doc.addEventListener === 'function') {
+          doc.addEventListener('dragstart', (event) => {
+            if (event && typeof event.preventDefault === 'function') event.preventDefault();
+          }, true);
+        }
+        [
+          ['pointerdown', handlers.handlePointerDown],
+          ['pointermove', handlers.handlePointerMove],
+          ['pointerup', handlers.handlePointerUp],
+          ['pointercancel', handlers.handlePointerCancel]
+        ].forEach(([eventName, handler]) => {
+          if (typeof handler === 'function') body.addEventListener(eventName, handler, true);
+        });
+        const frameWindow = doc.defaultView;
+        if (frameWindow
+          && typeof frameWindow.addEventListener === 'function'
+          && typeof handlers.handleWindowBlur === 'function') {
+          frameWindow.addEventListener('blur', handlers.handleWindowBlur, true);
+        }
+        return true;
+      };
       const interactionApi = typeof SlideNextStudioEditorInteractions !== 'undefined'
         ? SlideNextStudioEditorInteractions
         : null;
@@ -6377,18 +6404,9 @@
         const attachStudioTransformPointerHandlers = typeof transformApi.attachStudioTransformPointerHandlers === 'function'
           ? transformApi.attachStudioTransformPointerHandlers
           : null;
-        if (attachStudioTransformPointerHandlers) {
-          attachStudioTransformPointerHandlers(doc, transformHandlers);
-        } else {
-          doc.addEventListener('dragstart', (e) => {
-            e.preventDefault();
-          }, true);
-          doc.body.addEventListener('pointerdown', transformHandlers.handlePointerDown, true);
-          doc.body.addEventListener('pointermove', transformHandlers.handlePointerMove, true);
-          doc.body.addEventListener('pointerup', transformHandlers.handlePointerUp, true);
-          doc.body.addEventListener('pointercancel', transformHandlers.handlePointerCancel, true);
-          doc.defaultView?.addEventListener('blur', transformHandlers.handleWindowBlur, true);
-        }
+        attachStudioPointerHandlers(transformHandlers, attachStudioTransformPointerHandlers, {
+          preventNativeDrag: true
+        });
 
         const createStudioMarqueeSelectionHandlers = (
           typeof SlideNextStudioEditorEvents !== 'undefined'
@@ -6466,15 +6484,7 @@
           const attachStudioMarqueePointerHandlers = typeof SlideNextStudioEditorEvents.attachStudioMarqueePointerHandlers === 'function'
             ? SlideNextStudioEditorEvents.attachStudioMarqueePointerHandlers
             : null;
-          if (attachStudioMarqueePointerHandlers) {
-            attachStudioMarqueePointerHandlers(doc, marqueeHandlers);
-          } else {
-            doc.body.addEventListener('pointerdown', marqueeHandlers.handlePointerDown, true);
-            doc.body.addEventListener('pointermove', marqueeHandlers.handlePointerMove, true);
-            doc.body.addEventListener('pointerup', marqueeHandlers.handlePointerUp, true);
-            doc.body.addEventListener('pointercancel', marqueeHandlers.handlePointerCancel, true);
-            doc.defaultView?.addEventListener('blur', marqueeHandlers.handleWindowBlur, true);
-          }
+          attachStudioPointerHandlers(marqueeHandlers, attachStudioMarqueePointerHandlers);
         }
         return;
       }
@@ -6515,16 +6525,9 @@
       const attachStudioTransformPointerHandlers = typeof transformApi.attachStudioTransformPointerHandlers === 'function'
         ? transformApi.attachStudioTransformPointerHandlers
         : null;
-      if (attachStudioTransformPointerHandlers) {
-        attachStudioTransformPointerHandlers(doc, fallbackTransformHandlers);
-      } else {
-        doc.addEventListener('dragstart', (e) => e.preventDefault(), true);
-        doc.body.addEventListener('pointerdown', fallbackTransformHandlers.handlePointerDown, true);
-        doc.body.addEventListener('pointermove', fallbackTransformHandlers.handlePointerMove, true);
-        doc.body.addEventListener('pointerup', fallbackTransformHandlers.handlePointerUp, true);
-        doc.body.addEventListener('pointercancel', fallbackTransformHandlers.handlePointerCancel, true);
-        doc.defaultView?.addEventListener('blur', fallbackTransformHandlers.handleWindowBlur, true);
-      }
+      attachStudioPointerHandlers(fallbackTransformHandlers, attachStudioTransformPointerHandlers, {
+        preventNativeDrag: true
+      });
     }
 
     // Insert New elements (perfectly centered on native 1080p slide)
