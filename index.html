@@ -6346,6 +6346,36 @@
         }
         return element && element.dataset && element.dataset.editorId;
       };
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const updateCanonicalNodeLayout = canonicalDeckApi
+        && typeof canonicalDeckApi.updateCanonicalNodeLayout === 'function'
+        ? canonicalDeckApi.updateCanonicalNodeLayout
+        : null;
+      const canonicalNodeLayouts = updateCanonicalNodeLayout
+        && Array.isArray(alignmentResult.nextItems)
+        ? alignmentResult.nextItems.map((item) => {
+            const nodeId = getAlignmentElementId(item && item.element);
+            if (!nodeId || !Number.isFinite(item && item.nextAbsLeft) || !Number.isFinite(item && item.nextAbsTop)) {
+              return null;
+            }
+            return {
+              id: nodeId,
+              layout: {
+                x: item.nextAbsLeft,
+                y: item.nextAbsTop
+              }
+            };
+          }).filter(Boolean)
+        : [];
+      const canonicalDeckBeforeAlignment = updateCanonicalNodeLayout
+        && typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck()
+        : null;
+      const canonicalDeck = updateCanonicalNodeLayout
+        ? updateCanonicalNodeLayout(canonicalDeckBeforeAlignment, canonicalNodeLayouts)
+        : null;
       const mutation = applyEditorPositionLayoutWithTransaction(alignmentResult.nextItems, {
         getElementId: getAlignmentElementId
       });
@@ -6354,7 +6384,8 @@
         syncSelectionOverlay: true,
         refreshThumbnails: false,
         debounceHistory: true,
-        transaction: mutation.transaction
+        transaction: mutation.transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
       });
       return true;
     }

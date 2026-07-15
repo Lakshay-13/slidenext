@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioAlignment = require('../shared/studio-editor-alignment.js');
 
@@ -318,6 +319,71 @@ test('alignSelectedElements forwards a reversible position transaction', () => {
       }
     ]
   });
+});
+
+test('alignSelectedElements forwards an immutable canonical layout sidecar', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function alignSelectedElements(action = \'\') {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const first = { dataset: { editorId: 'node-1' }, style: {} };
+  const second = { dataset: { editorId: 'node-2' }, style: {} };
+  const canonicalDeckBefore = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [
+        { id: 'node-1', layout: { mode: 'absolute', x: 10, y: 20 } },
+        { id: 'node-2', layout: { mode: 'absolute', x: 90, y: 100 } }
+      ]
+    }]
+  });
+  let finalized = null;
+  const context = {
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorAlignment: {
+      buildStudioAlignedLayout() {
+        return {
+          didChange: true,
+          nextItems: [
+            { element: first, nextLeft: 40, nextTop: 50, nextAbsLeft: 40, nextAbsTop: 50 },
+            { element: second, nextLeft: 70, nextTop: 80, nextAbsLeft: 70, nextAbsTop: 80 }
+          ]
+        };
+      }
+    },
+    assignEditorElementId(element) {
+      return element.dataset.editorId;
+    },
+    buildAlignmentActionState() {
+      return {
+        alignmentActionState: {
+          canAlign: true,
+          selection: [{ element: first }, { element: second }]
+        }
+      };
+    },
+    buildEditorCanonicalDeck() {
+      return canonicalDeckBefore;
+    },
+    finalizeEditorDeckMutation(label, options) {
+      finalized = { label, options };
+    },
+    updateAlignmentActionState() {}
+  };
+
+  vm.createContext(context);
+  loadPositionMutationHelper(fileContent, context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.alignSelectedElements('middle'), true);
+  assert.equal(first.style.left, '40px');
+  assert.equal(second.style.top, '80px');
+  assert.equal(canonicalDeckBefore.slides[0].nodes[0].layout.x, 10);
+  assert.equal(finalized.label, 'Auto: Aligned middle');
+  assert.equal(finalized.options.canonicalDeck.slides[0].nodes[0].layout.x, 40);
+  assert.equal(finalized.options.canonicalDeck.slides[0].nodes[1].layout.y, 80);
 });
 
 test('alignSelectedElements delegates position application to the shared alignment module', () => {
