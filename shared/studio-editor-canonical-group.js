@@ -22,6 +22,21 @@
     return buildCanonicalDeck(options.sourceDocument);
   }
 
+  function buildStudioCanonicalUngroupBaseline(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const ungroupCanonicalNodes = canonicalDeckApi
+      && typeof canonicalDeckApi.ungroupCanonicalNodes === 'function'
+      ? canonicalDeckApi.ungroupCanonicalNodes
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    if (!ungroupCanonicalNodes || !buildCanonicalDeck) return null;
+    return buildCanonicalDeck(options.sourceDocument);
+  }
+
   function buildStudioCanonicalGroupDeck(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -120,6 +135,7 @@
   return {
     buildStudioCanonicalGroupBaseline,
     buildStudioCanonicalGroupDeck,
+    buildStudioCanonicalUngroupBaseline,
     buildStudioCanonicalUngroupDeck
   };
 });

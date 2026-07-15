@@ -6340,6 +6340,10 @@
         && typeof canonicalGroupApi.buildStudioCanonicalUngroupDeck === 'function'
         ? canonicalGroupApi.buildStudioCanonicalUngroupDeck
         : null;
+      const buildCanonicalUngroupBaseline = canonicalGroupApi
+        && typeof canonicalGroupApi.buildStudioCanonicalUngroupBaseline === 'function'
+        ? canonicalGroupApi.buildStudioCanonicalUngroupBaseline
+        : null;
       const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
         ? SlideNextDeckImport
         : null;
@@ -6375,7 +6379,14 @@
           canBuildCanonicalSidecar = false;
         }
         if (canBuildCanonicalSidecar) {
-          canonicalDeckBeforeUngrouping = buildEditorCanonicalDeck();
+          canonicalDeckBeforeUngrouping = buildCanonicalUngroupBaseline
+            ? buildCanonicalUngroupBaseline({
+                canonicalDeckApi,
+                buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+                  ? buildEditorCanonicalDeck
+                  : null
+              })
+            : null;
           canonicalGroupTargets = canonicalGroupTargets.map((target) => ({
             ...target,
             slideId: canonicalSlideId

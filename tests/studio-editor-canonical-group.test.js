@@ -89,3 +89,20 @@ test('buildStudioCanonicalUngroupDeck restores imported children without mutatin
   assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['child-1', 'child-2']);
   assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['group-1']);
 });
+
+test('buildStudioCanonicalUngroupBaseline builds from the source document', () => {
+  const sourceDeck = createSourceDeck();
+  const sourceDocument = { id: 'editor-doc' };
+  let builtFromDocument = null;
+  const result = canonicalGroup.buildStudioCanonicalUngroupBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtFromDocument = documentRef;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(builtFromDocument, sourceDocument);
+  assert.equal(result, sourceDeck);
+});
