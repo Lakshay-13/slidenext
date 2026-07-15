@@ -25,6 +25,22 @@ test('createCanonicalDeck repairs duplicate slide and nested node ids determinis
   ], ['node-1', 'node-1-2', 'node-1-3']);
 });
 
+test('createCanonicalDeck repairs duplicate asset ids without changing asset order', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    assets: [
+      { id: 'asset-1', src: 'one.png' },
+      { id: 'asset-1', src: 'two.png' },
+      { src: 'three.png' }
+    ]
+  });
+
+  assert.deepEqual(deck.assets.map((asset) => [asset.id, asset.src]), [
+    ['asset-1', 'one.png'],
+    ['asset-1-2', 'two.png'],
+    ['asset-3', 'three.png']
+  ]);
+});
+
 test('reorderCanonicalSlides moves a slide after a later target without mutating the source deck', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     metadata: { title: 'Deck' },

@@ -154,6 +154,10 @@
     const normalizedSlides = Array.isArray(deck.slides)
       ? deck.slides.map((slide, slideIndex) => createCanonicalSlide(slide, slideIndex))
       : [];
+    const normalizedAssets = Array.isArray(deck.assets)
+      ? deck.assets.map((asset, assetIndex) => createCanonicalAsset(asset, assetIndex))
+      : [];
+    const assetIds = new Set();
     const slideIds = new Set();
     const nodeIds = new Set();
 
@@ -182,9 +186,10 @@
         },
         aspectRatio: normalizeString(layout.aspectRatio)
       },
-      assets: Array.isArray(deck.assets)
-        ? deck.assets.map((asset, assetIndex) => createCanonicalAsset(asset, assetIndex))
-        : [],
+      assets: normalizedAssets.map((asset, assetIndex) => ({
+        ...asset,
+        id: createUniqueCanonicalId(asset.id, `asset-${assetIndex + 1}`, assetIds)
+      })),
       slides: normalizedSlides.map((slide, slideIndex) => ({
         ...slide,
         id: createUniqueCanonicalId(slide.id, `slide-${slideIndex + 1}`, slideIds),
