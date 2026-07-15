@@ -99,6 +99,31 @@ test('createStudioMutationFinalizer preserves an optional canonical deck history
   assert.deepEqual(historyArgs, [false, { id: 'tx-canonical' }, canonicalDeck]);
 });
 
+test('createStudioMutationFinalizer resolves a canonical deck only when the mutation has no sidecar', () => {
+  const calls = [];
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    buildCanonicalDeck() {
+      calls.push(['buildCanonicalDeck']);
+      return canonicalDeck;
+    },
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    }
+  });
+
+  finalizeMutation('Auto: Styled Element', { transaction: { id: 'tx-1' } });
+  finalizeMutation('Auto: Explicit Deck', {
+    canonicalDeck: { kind: 'slidenext.deck', slides: [{ id: 'slide-2' }] }
+  });
+
+  assert.deepEqual(calls, [
+    ['buildCanonicalDeck'],
+    ['history', false, { id: 'tx-1' }, canonicalDeck],
+    ['history', false, null, { kind: 'slidenext.deck', slides: [{ id: 'slide-2' }] }]
+  ]);
+});
+
 test('finalizeStudioMutation delegates version and mutation options to the shared finalizer', () => {
   const calls = [];
   const result = mutation.finalizeStudioMutation({

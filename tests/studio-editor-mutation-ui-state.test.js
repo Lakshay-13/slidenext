@@ -61,7 +61,7 @@ test('finalizeEditorDeckMutation delegates to the shared mutation finalizer', ()
   ]);
 });
 
-test('finalizeEditorDeckMutation supplies a post-mutation canonical deck to shared history', () => {
+test('finalizeEditorDeckMutation supplies the canonical deck builder to shared mutation finalization', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
     fileContent,
@@ -70,10 +70,12 @@ test('finalizeEditorDeckMutation supplies a post-mutation canonical deck to shar
   );
   const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
   let capturedMutationOptions = null;
+  let capturedBuildCanonicalDeck = null;
   const context = {
     SlideNextStudioEditorMutation: {
       finalizeStudioMutation(options) {
         capturedMutationOptions = options.mutationOptions;
+        capturedBuildCanonicalDeck = options.buildCanonicalDeck;
         return options.versionLabel;
       }
     },
@@ -94,5 +96,6 @@ test('finalizeEditorDeckMutation supplies a post-mutation canonical deck to shar
   assert.equal(context.finalizeEditorDeckMutation('Auto: Styled Element', {
     transaction: { id: 'tx-1' }
   }), 'Auto: Styled Element');
-  assert.equal(capturedMutationOptions.canonicalDeck, canonicalDeck);
+  assert.equal(capturedMutationOptions.canonicalDeck, undefined);
+  assert.equal(capturedBuildCanonicalDeck(), canonicalDeck);
 });

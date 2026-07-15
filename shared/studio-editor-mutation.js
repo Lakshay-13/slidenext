@@ -7,6 +7,21 @@
     root.SlideNextStudioEditorMutation = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function resolveStudioMutationOptions(mutationOptions = {}, options = {}) {
+    const sourceOptions = mutationOptions && typeof mutationOptions === 'object'
+      ? mutationOptions
+      : {};
+    if (Object.prototype.hasOwnProperty.call(sourceOptions, 'canonicalDeck')
+      || typeof options.buildCanonicalDeck !== 'function') {
+      return sourceOptions;
+    }
+
+    const canonicalDeck = options.buildCanonicalDeck();
+    return canonicalDeck
+      ? { ...sourceOptions, canonicalDeck }
+      : sourceOptions;
+  }
+
   function createStudioMutationFinalizer(options = {}) {
     const syncSelectionOverlay = typeof options.syncSelectionOverlay === 'function'
       ? options.syncSelectionOverlay
@@ -26,23 +41,29 @@
     const triggerAutoVersion = typeof options.triggerAutoVersion === 'function'
       ? options.triggerAutoVersion
       : () => {};
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
 
     return function finalizeStudioMutation(versionLabel, mutationOptions = {}) {
-      if (mutationOptions.syncSelectionOverlay) {
+      const resolvedMutationOptions = resolveStudioMutationOptions(mutationOptions, {
+        buildCanonicalDeck
+      });
+      if (resolvedMutationOptions.syncSelectionOverlay) {
         syncSelectionOverlay();
       }
-      if (mutationOptions.refreshThumbnails !== false) {
+      if (resolvedMutationOptions.refreshThumbnails !== false) {
         generateThumbnails();
       }
-      if (mutationOptions.refreshLayersList) {
+      if (resolvedMutationOptions.refreshLayersList) {
         updateLayersList();
       }
       const historyArgs = [
-        mutationOptions.debounceHistory === true,
-        mutationOptions.transaction || null
+        resolvedMutationOptions.debounceHistory === true,
+        resolvedMutationOptions.transaction || null
       ];
-      if (Object.prototype.hasOwnProperty.call(mutationOptions, 'canonicalDeck')) {
-        historyArgs.push(mutationOptions.canonicalDeck);
+      if (Object.prototype.hasOwnProperty.call(resolvedMutationOptions, 'canonicalDeck')) {
+        historyArgs.push(resolvedMutationOptions.canonicalDeck);
       }
       saveHistoryState(...historyArgs);
       triggerAutoSave();
@@ -197,6 +218,7 @@
   }
 
   return {
+    resolveStudioMutationOptions,
     createStudioMutationFinalizer,
     finalizeStudioMutation,
     finalizeStudioSelectionToggleMutation,
