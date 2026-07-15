@@ -138,18 +138,9 @@ test('resolveEditorStoredCanonicalBaseline prefers the current metadata canonica
   const calls = [];
   const context = {
     SlideNextStudioDeckContext: {
-      resolveStoredStudioCanonicalDeck(metadata) {
-        calls.push(metadata);
-        if (metadata === context.currentPresentationMetadata) {
-          return currentMetadataCanonicalDeck;
-        }
-        if (metadata && metadata.canonicalDeck === persistedCanonicalDeck) {
-          return persistedCanonicalDeck;
-        }
-        return null;
-      },
-      resolvePreferredStoredStudioCanonicalDeck(primaryStoredPresentationMetadata) {
-        return context.SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck(primaryStoredPresentationMetadata);
+      resolveStudioCanonicalBaseline(options) {
+        calls.push(options.currentPresentationMetadata);
+        return currentMetadataCanonicalDeck;
       }
     },
     currentPresentationMetadata: {
@@ -214,8 +205,8 @@ test('resolveEditorStoredCanonicalBaseline delegates precedence to the shared de
   const calls = [];
   const context = {
     SlideNextStudioDeckContext: {
-      resolvePreferredStoredStudioCanonicalDeck(primaryStoredPresentationMetadata, fallbackStoredPresentationMetadata) {
-        calls.push([primaryStoredPresentationMetadata, fallbackStoredPresentationMetadata]);
+      resolveStudioCanonicalBaseline(options) {
+        calls.push(options);
         return currentMetadataCanonicalDeck;
       }
     },
@@ -233,10 +224,13 @@ test('resolveEditorStoredCanonicalBaseline delegates precedence to the shared de
 
   assert.equal(result, currentMetadataCanonicalDeck);
   assert.equal(calls.length, 1);
-  assert.equal(calls[0][0], context.currentPresentationMetadata);
+  assert.equal(calls[0].currentPresentationMetadata, context.currentPresentationMetadata);
   assert.deepEqual(
-    JSON.parse(JSON.stringify(calls[0][1])),
-    { canonicalDeck: persistedCanonicalDeck }
+    JSON.parse(JSON.stringify(calls[0])),
+    {
+      currentPresentationMetadata: context.currentPresentationMetadata,
+      persistedCanonicalDeck
+    }
   );
 });
 
@@ -399,7 +393,7 @@ test('buildEditorCanonicalDeck falls back to the shared deck loader when the dec
   assert.equal(typeof calls[0].options.getNodeId, 'function');
 });
 
-test('buildEditorCanonicalDeck reuses the local stored canonical resolver when the deck context builder is unavailable', () => {
+test('buildEditorCanonicalDeck reuses the shared stored canonical baseline when the deck context builder is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorCanonicalDeckSource = extractFunctionSource(
     fileContent,
@@ -429,7 +423,12 @@ test('buildEditorCanonicalDeck reuses the local stored canonical resolver when t
   };
   const calls = [];
   const context = {
-    SlideNextStudioDeckContext: {},
+    SlideNextStudioDeckContext: {
+      resolveStudioCanonicalBaseline(options) {
+        calls.push(options.currentPresentationMetadata);
+        return currentMetadataCanonicalDeck;
+      }
+    },
     currentPresentationMetadata: {
       id: 'deck-1',
       canonicalDeck: currentMetadataCanonicalDeck
@@ -437,16 +436,6 @@ test('buildEditorCanonicalDeck reuses the local stored canonical resolver when t
     lastPersistedCanonicalDeck: persistedCanonicalDeck,
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
-    resolveEditorStoredCanonicalDeck(metadata) {
-      calls.push(metadata);
-      if (metadata === context.currentPresentationMetadata) {
-        return currentMetadataCanonicalDeck;
-      }
-      if (metadata && metadata.canonicalDeck === persistedCanonicalDeck) {
-        return persistedCanonicalDeck;
-      }
-      return null;
-    },
     getEditorSlideId() {
       return 'slide-1';
     },

@@ -3574,29 +3574,11 @@
         && typeof SlideNextStudioDeckContext.resolveStudioCanonicalBaseline === 'function'
         ? SlideNextStudioDeckContext.resolveStudioCanonicalBaseline
         : null;
-      if (resolveStudioCanonicalBaseline) {
-        return resolveStudioCanonicalBaseline({
-          currentPresentationMetadata: nextPresentationMetadata,
-          persistedCanonicalDeck
-        });
-      }
-
-      const resolvePreferredStoredCanonicalDeck = SlideNextStudioDeckContext
-        && typeof SlideNextStudioDeckContext.resolvePreferredStoredStudioCanonicalDeck === 'function'
-        ? SlideNextStudioDeckContext.resolvePreferredStoredStudioCanonicalDeck
-        : (primaryStoredPresentationMetadata, fallbackStoredPresentationMetadata) => {
-            const primaryCanonicalDeck = resolveEditorStoredCanonicalDeck(primaryStoredPresentationMetadata);
-            if (primaryCanonicalDeck) {
-              return primaryCanonicalDeck;
-            }
-            return resolveEditorStoredCanonicalDeck(fallbackStoredPresentationMetadata);
-          };
-      return resolvePreferredStoredCanonicalDeck(
-        nextPresentationMetadata,
-        {
-          canonicalDeck: persistedCanonicalDeck
-        }
-      );
+      if (!resolveStudioCanonicalBaseline) return null;
+      return resolveStudioCanonicalBaseline({
+        currentPresentationMetadata: nextPresentationMetadata,
+        persistedCanonicalDeck
+      });
     }
 
     function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {

@@ -79,6 +79,11 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when 
           return null;
         }
         return metadata.canonicalDeck;
+      },
+      resolveStudioCanonicalBaseline(options = {}) {
+        return context.SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck(
+          options.currentPresentationMetadata
+        );
       }
     }
   };
