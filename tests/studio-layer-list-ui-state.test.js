@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const layerOrder = require('../shared/studio-editor-layer-order.js');
+const layerView = require('../shared/studio-editor-layer-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -92,6 +93,7 @@ test('updateLayersList disables row layer controls when a layer cannot move in t
 
   const context = {
     SlideNextStudioEditorLayerOrder: layerOrder,
+    SlideNextStudioEditorLayerView: layerView,
     buildEditorDeckSnapshot() {
       return {
         activeSlideId: 'slide-1',
@@ -167,6 +169,7 @@ test('updateLayersList renders canonical layer snapshots when the editor frame i
 
   const context = {
     SlideNextStudioEditorLayerOrder: layerOrder,
+    SlideNextStudioEditorLayerView: layerView,
     buildEditorDeckSnapshot() {
       return {
         activeSlideId: 'slide-1',
