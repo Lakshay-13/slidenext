@@ -1868,7 +1868,7 @@ test('resolveEditorCanonicalDeckViewState reuses the local deck view state optio
   ]);
 });
 
-test('resolveEditorCanonicalDeckViewState reuses the local canonical deck resolver builder helper when a custom canonical builder is provided', () => {
+test('resolveEditorCanonicalDeckViewState fails closed when the shared deck view helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
     fileContent,
@@ -1913,14 +1913,13 @@ test('resolveEditorCanonicalDeckViewState reuses the local canonical deck resolv
     }
   });
 
-  assert.equal(result.resolvedCanonicalDeck, canonicalDeck);
-  assert.deepEqual(calls, [
-    ['createEditorCanonicalDeckResolverWithBuilder', iframeDoc, 'function'],
-    ['resolveCanonicalDeck', iframeDoc]
-  ]);
+  assert.equal(result.liveActiveSlideId, '');
+  assert.equal(result.resolveCanonicalDeck(), null);
+  assert.equal(result.resolvedCanonicalDeck, null);
+  assert.deepEqual(calls, []);
 });
 
-test('resolveEditorCanonicalDeckViewState delegates fallback resolver creation to the shared snapshot helper when deck view helper is unavailable', () => {
+test('resolveEditorCanonicalDeckViewState does not use the snapshot helper as a fallback', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
     fileContent,
@@ -1961,13 +1960,12 @@ test('resolveEditorCanonicalDeckViewState delegates fallback resolver creation t
 
   const result = context.resolveEditorCanonicalDeckViewState(iframeDoc);
 
-  assert.equal(delegatedArgs.doc, iframeDoc);
-  assert.equal(typeof delegatedArgs.options.buildCanonicalDeck, 'function');
-  assert.equal(typeof result.resolveCanonicalDeck, 'function');
-  assert.equal(result.resolvedCanonicalDeck, canonicalDeck);
+  assert.equal(delegatedArgs, null);
+  assert.equal(result.resolveCanonicalDeck(), null);
+  assert.equal(result.resolvedCanonicalDeck, null);
 });
 
-test('resolveEditorCanonicalDeckViewState reuses the local canonical deck resolver builder helper when shared resolvers are unavailable', () => {
+test('resolveEditorCanonicalDeckViewState keeps the local resolver builder unused when shared resolvers are unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
     fileContent,
@@ -2015,11 +2013,10 @@ test('resolveEditorCanonicalDeckViewState reuses the local canonical deck resolv
   const result = context.resolveEditorCanonicalDeckViewState(iframeDoc);
 
   assert.equal(typeof result.resolveCanonicalDeck, 'function');
-  assert.equal(result.resolvedCanonicalDeck, canonicalDeck);
+  assert.equal(result.resolveCanonicalDeck(), null);
+  assert.equal(result.resolvedCanonicalDeck, null);
   assert.deepEqual(calls, [
-    ['createEditorCanonicalDeckViewStateOptions'],
-    ['createEditorCanonicalDeckResolverWithBuilder', iframeDoc, 'function'],
-    ['resolveCanonicalDeck', iframeDoc]
+    ['createEditorCanonicalDeckViewStateOptions']
   ]);
 });
 

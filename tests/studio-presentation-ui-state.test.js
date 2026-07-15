@@ -277,6 +277,7 @@ test('buildEditorPreviewHtml falls back to the persisted html baseline when the 
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState,
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc && nextDoc.querySelector('.slide-active');
       },
@@ -358,7 +359,8 @@ test('buildEditorPreviewHtml falls back to the shared deck html preview builder 
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
-      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState
     },
     SlideNextDeckHtml: {
       buildDeckPreviewHtml(nextCanonicalDeck, presentationUrl, options) {
@@ -864,6 +866,7 @@ test('buildEditorPreviewHtml prefers the live active slide when the editor frame
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState,
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc && nextDoc.querySelector('.slide-active');
       },
@@ -940,6 +943,7 @@ test('buildEditorPreviewHtml reuses the resolved live canonical deck when previe
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState,
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc.querySelector('.slide-active');
       },
@@ -1018,6 +1022,7 @@ test('buildEditorPreviewHtml falls back to the current session slide when live a
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState,
       buildStudioPreviewHtml(doc, options) {
         assert.equal(options.buildCanonicalDeck(doc), canonicalDeck);
         return options.deckHtmlOptions.renderOptions.activeSlideId;

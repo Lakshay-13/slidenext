@@ -175,6 +175,7 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState,
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc && nextDoc.querySelector('.slide-active');
       },
@@ -258,7 +259,8 @@ test('buildEditorSourceHtml falls back to the shared deck html source builder wh
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
-      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState
     },
     SlideNextDeckHtml: {
       buildDeckSourceHtml(nextCanonicalDeck, options) {
@@ -598,6 +600,7 @@ test('buildEditorSourceHtml reuses the resolved live canonical deck when source 
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState,
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc.querySelector('.slide-active');
       },
@@ -676,6 +679,7 @@ test('buildEditorSourceHtml falls back to the current session slide when live ac
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState,
       buildStudioSourceHtml(doc, options) {
         assert.equal(options.buildCanonicalDeck(doc), canonicalDeck);
         return options.deckHtmlOptions.renderOptions.activeSlideId;

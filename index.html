@@ -1687,35 +1687,11 @@
           resolveLiveActiveSlideId
         });
       }
-
-      const createSharedCanonicalDeckResolver = (
-        typeof SlideNextStudioDeckView !== 'undefined'
-        && SlideNextStudioDeckView
-      )
-        && typeof SlideNextStudioDeckView.createStudioCanonicalDeckResolver === 'function'
-        ? SlideNextStudioDeckView.createStudioCanonicalDeckResolver
-        : (
-          typeof SlideNextStudioDeckSnapshot !== 'undefined'
-          && SlideNextStudioDeckSnapshot
-          && typeof SlideNextStudioDeckSnapshot.createStudioDeckSnapshotCanonicalDeckResolver === 'function'
-        )
-          ? SlideNextStudioDeckSnapshot.createStudioDeckSnapshotCanonicalDeckResolver
-        : null;
-      const resolveCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-        ? createEditorCanonicalDeckResolverWithBuilder(doc, buildCanonicalDeck)
-        : createSharedCanonicalDeckResolver
-          ? createSharedCanonicalDeckResolver(doc, {
-              buildCanonicalDeck
-            })
-          : createEditorCanonicalDeckResolverWithBuilder(doc, buildCanonicalDeck);
       const liveActiveSlideId = resolveLiveActiveSlideId(doc);
-      const resolvedCanonicalDeck = !doc
-        ? resolveCanonicalDeck(doc)
-        : (liveActiveSlideId ? null : resolveCanonicalDeck(doc));
       return {
-        resolveCanonicalDeck,
+        resolveCanonicalDeck: () => null,
         liveActiveSlideId,
-        resolvedCanonicalDeck
+        resolvedCanonicalDeck: null
       };
     }
 

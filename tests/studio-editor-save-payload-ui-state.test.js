@@ -4324,6 +4324,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState,
       createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       buildStudioSourceHtml(nextDoc, options) {
         calls.push([nextDoc, options]);
@@ -4457,7 +4458,8 @@ test('buildPersistableDeckHtml reuses the local deck view build options helper w
       return '<html>canonical-source</html>';
     },
     SlideNextStudioDeckView: {
-      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState
     },
     createEditorDeckViewSharedOptions(nextDoc) {
       return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
@@ -4552,7 +4554,8 @@ test('buildPersistableDeckHtml reuses buildEditorSourceDeckHtml when rendering c
     },
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
-      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState
     },
     createEditorDeckViewSharedOptions(nextDoc) {
       return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
@@ -4651,7 +4654,8 @@ test('buildPersistableDeckHtml reuses the local persistable source deck html ren
     },
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
-      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState
     },
     createEditorDeckViewSharedOptions(nextDoc) {
       return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
@@ -4753,6 +4757,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState,
       createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       buildStudioSourceHtml(nextDoc, options) {
         calls.push([nextDoc, options]);
