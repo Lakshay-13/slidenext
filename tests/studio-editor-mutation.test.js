@@ -82,6 +82,23 @@ test('createStudioMutationFinalizer forwards optional history transactions', () 
   assert.deepEqual(historyArgs, [true, transaction]);
 });
 
+test('createStudioMutationFinalizer preserves an optional canonical deck history sidecar', () => {
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  let historyArgs = null;
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    saveHistoryState(...args) {
+      historyArgs = args;
+    }
+  });
+
+  finalizeMutation('', {
+    transaction: { id: 'tx-canonical' },
+    canonicalDeck
+  });
+
+  assert.deepEqual(historyArgs, [false, { id: 'tx-canonical' }, canonicalDeck]);
+});
+
 test('finalizeStudioMutation delegates version and mutation options to the shared finalizer', () => {
   const calls = [];
   const result = mutation.finalizeStudioMutation({

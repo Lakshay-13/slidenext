@@ -37,10 +37,14 @@
       if (mutationOptions.refreshLayersList) {
         updateLayersList();
       }
-      saveHistoryState(
+      const historyArgs = [
         mutationOptions.debounceHistory === true,
         mutationOptions.transaction || null
-      );
+      ];
+      if (Object.prototype.hasOwnProperty.call(mutationOptions, 'canonicalDeck')) {
+        historyArgs.push(mutationOptions.canonicalDeck);
+      }
+      saveHistoryState(...historyArgs);
       triggerAutoSave();
       if (versionLabel) {
         triggerAutoVersion(versionLabel);
