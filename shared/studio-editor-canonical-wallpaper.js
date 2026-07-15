@@ -7,6 +7,25 @@
     root.SlideNextStudioEditorCanonicalWallpaper = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function buildStudioCanonicalWallpaperBaseline(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const updateCanonicalSlideBackground = canonicalDeckApi
+      && typeof canonicalDeckApi.updateCanonicalSlideBackground === 'function'
+      ? canonicalDeckApi.updateCanonicalSlideBackground
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+
+    if (!updateCanonicalSlideBackground || !buildCanonicalDeck) {
+      return null;
+    }
+
+    return buildCanonicalDeck(options.sourceDocument);
+  }
+
   function buildStudioCanonicalWallpaperDeck(slides, background, options = {}) {
     const sourceSlides = Array.isArray(slides) ? slides : [];
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
@@ -28,13 +47,14 @@
     }
 
     const slideIds = sourceSlides.map(getSlideId).filter(Boolean);
-    const canonicalDeckBeforeMutation = buildCanonicalDeck
-      ? buildCanonicalDeck()
-      : null;
+    const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
+      ? options.canonicalDeckBeforeMutation
+      : buildStudioCanonicalWallpaperBaseline(options);
     return updateCanonicalSlideBackground(canonicalDeckBeforeMutation, slideIds, background);
   }
 
   return {
+    buildStudioCanonicalWallpaperBaseline,
     buildStudioCanonicalWallpaperDeck
   };
 });

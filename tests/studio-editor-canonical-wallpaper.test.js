@@ -20,7 +20,7 @@ test('buildStudioCanonicalWallpaperDeck updates backgrounds for the affected sli
     'linear-gradient(#000000, #ffffff)',
     {
       canonicalDeckApi: canonicalDeck,
-      buildCanonicalDeck: () => sourceDeck,
+      canonicalDeckBeforeMutation: sourceDeck,
       getSlideId: (slide) => slide.id
     }
   );
@@ -29,6 +29,23 @@ test('buildStudioCanonicalWallpaperDeck updates backgrounds for the affected sli
   assert.equal(result.slides[1].layout.background.style, 'linear-gradient(#000000, #ffffff)');
   assert.equal(sourceDeck.slides[0].layout.background.style, '#000000');
   assert.equal(sourceDeck.slides[1].layout.background.style, '#ffffff');
+});
+
+test('buildStudioCanonicalWallpaperBaseline builds from the source document', () => {
+  const sourceDeck = createSourceDeck();
+  const sourceDocument = { id: 'editor-doc' };
+  let builtFromDocument = null;
+  const result = canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtFromDocument = documentRef;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(builtFromDocument, sourceDocument);
+  assert.equal(result, sourceDeck);
 });
 
 test('buildStudioCanonicalWallpaperDeck fails closed when an adapter dependency is missing', () => {

@@ -7268,12 +7268,27 @@
         && typeof canonicalWallpaperApi.buildStudioCanonicalWallpaperDeck === 'function'
         ? canonicalWallpaperApi.buildStudioCanonicalWallpaperDeck
         : null;
+      const buildCanonicalWallpaperBaseline = canonicalWallpaperApi
+        && typeof canonicalWallpaperApi.buildStudioCanonicalWallpaperBaseline === 'function'
+        ? canonicalWallpaperApi.buildStudioCanonicalWallpaperBaseline
+        : null;
+      const canonicalDeckBeforeMutation = buildCanonicalWallpaperBaseline
+        ? buildCanonicalWallpaperBaseline({
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? () => buildEditorCanonicalDeck()
+              : null
+          })
+        : null;
       const canonicalDeck = buildCanonicalWallpaperDeck
         ? buildCanonicalWallpaperDeck(sourceSlides, background, {
             canonicalDeckApi,
             buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
               ? () => buildEditorCanonicalDeck()
               : null,
+            ...(canonicalDeckBeforeMutation
+              ? { canonicalDeckBeforeMutation }
+              : {}),
             getSlideId
           })
         : null;
