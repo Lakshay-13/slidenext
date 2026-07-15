@@ -271,6 +271,35 @@ test('finalizeLayerOrderMutation reuses the shared deck mutation lifecycle when 
   assert.deepEqual(calls, ['updateLayerOrderActionState']);
 });
 
+test('finalizeLayerOrderMutation delegates its lifecycle adapter to shared mutation state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const transaction = { id: 'layer-order-tx' };
+  let delegatedOptions = null;
+  const context = {
+    SlideNextStudioEditorMutation: {
+      finalizeStudioLayerOrderMutation(options) {
+        delegatedOptions = options;
+        return 'shared-layer-order';
+      }
+    },
+    finalizeEditorDeckMutation() {},
+    saveHistoryState() {},
+    triggerAutoSave() {},
+    updateLayersList() {},
+    updateLayerOrderActionState() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeLayerOrderMutation(fileContent, context);
+
+  assert.equal(context.finalizeLayerOrderMutation('Auto: Layer Order', { transaction }), 'shared-layer-order');
+  assert.equal(delegatedOptions.versionLabel, 'Auto: Layer Order');
+  assert.equal(delegatedOptions.transaction.id, transaction.id);
+  assert.equal(delegatedOptions.finalizeMutation, context.finalizeEditorDeckMutation);
+  assert.equal(delegatedOptions.updateLayerOrderActionState, context.updateLayerOrderActionState);
+});
+
 test('syncLayerOrderZIndexInput updates the z-index inspector only when a target and input are available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const zIndexInput = { value: '' };

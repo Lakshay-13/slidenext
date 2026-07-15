@@ -275,3 +275,62 @@ test('createStudioSlideMutationPersistenceFinalizer forwards canonical deck over
 
   assert.deepEqual(historyArgs, [false, null, canonicalDeck]);
 });
+
+test('finalizeStudioLayerOrderMutation preserves layer UI ordering around shared persistence', () => {
+  const calls = [];
+  const transaction = { id: 'tx-layer-order' };
+
+  assert.equal(mutation.finalizeStudioLayerOrderMutation({
+    versionLabel: 'Auto: Layer Order',
+    transaction,
+    finalizeMutation(label, options) {
+      calls.push(['finalize', label, options]);
+      return 'delegated';
+    },
+    updateLayerOrderActionState() {
+      calls.push('layer-controls');
+    }
+  }), 'delegated');
+
+  assert.deepEqual(calls, [
+    ['finalize', 'Auto: Layer Order', {
+      refreshThumbnails: false,
+      refreshLayersList: true,
+      transaction
+    }],
+    'layer-controls'
+  ]);
+});
+
+test('finalizeStudioLayerOrderMutation falls back to layer persistence ordering', () => {
+  const calls = [];
+  const transaction = { id: 'tx-layer-order-fallback' };
+
+  assert.equal(mutation.finalizeStudioLayerOrderMutation({
+    versionLabel: 'Auto: Layer Order',
+    transaction,
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    updateLayersList() {
+      calls.push('layers');
+    },
+    updateLayerOrderActionState() {
+      calls.push('layer-controls');
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    }
+  }), 'Auto: Layer Order');
+
+  assert.deepEqual(calls, [
+    ['history', false, transaction],
+    'save',
+    'layers',
+    'layer-controls',
+    ['version', 'Auto: Layer Order']
+  ]);
+});

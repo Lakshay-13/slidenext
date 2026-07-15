@@ -129,12 +129,47 @@
     };
   }
 
+  function finalizeStudioLayerOrderMutation(options = {}) {
+    const versionLabel = options.versionLabel || '';
+    const transaction = options.transaction || null;
+    const finalizeMutation = options.finalizeMutation;
+    if (typeof finalizeMutation === 'function') {
+      const result = finalizeMutation(versionLabel, {
+        refreshThumbnails: false,
+        refreshLayersList: true,
+        transaction
+      });
+      if (typeof options.updateLayerOrderActionState === 'function') {
+        options.updateLayerOrderActionState();
+      }
+      return result;
+    }
+
+    if (typeof options.saveHistoryState === 'function') {
+      options.saveHistoryState(false, transaction);
+    }
+    if (typeof options.triggerAutoSave === 'function') {
+      options.triggerAutoSave();
+    }
+    if (typeof options.updateLayersList === 'function') {
+      options.updateLayersList();
+    }
+    if (typeof options.updateLayerOrderActionState === 'function') {
+      options.updateLayerOrderActionState();
+    }
+    if (versionLabel && typeof options.triggerAutoVersion === 'function') {
+      options.triggerAutoVersion(versionLabel);
+    }
+    return versionLabel;
+  }
+
   return {
     createStudioMutationFinalizer,
     finalizeStudioMutation,
     finalizeStudioSelectionToggleMutation,
     finalizeStudioInsertedElements,
     finalizeStudioSlideMutation,
-    createStudioSlideMutationPersistenceFinalizer
+    createStudioSlideMutationPersistenceFinalizer,
+    finalizeStudioLayerOrderMutation
   };
 });

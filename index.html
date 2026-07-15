@@ -7002,6 +7002,23 @@
     }
 
     function finalizeLayerOrderMutation(versionLabel = 'Auto: Rearranged Layers', options = {}) {
+      const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
+        ? SlideNextStudioEditorMutation
+        : null;
+      if (mutationApi && typeof mutationApi.finalizeStudioLayerOrderMutation === 'function') {
+        return mutationApi.finalizeStudioLayerOrderMutation({
+          versionLabel,
+          transaction: options.transaction || null,
+          finalizeMutation: typeof finalizeEditorDeckMutation === 'function'
+            ? finalizeEditorDeckMutation
+            : null,
+          saveHistoryState,
+          triggerAutoSave,
+          updateLayersList,
+          updateLayerOrderActionState,
+          triggerAutoVersion
+        });
+      }
       if (typeof finalizeEditorDeckMutation === 'function') {
         const result = finalizeEditorDeckMutation(versionLabel, {
           refreshThumbnails: false,
