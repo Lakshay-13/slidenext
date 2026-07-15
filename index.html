@@ -4585,6 +4585,19 @@
     function updateGroupActionState(doc = getIframeDoc()) {
       const groupState = buildGroupSelectionActionState(doc);
       const ungroupState = buildUngroupSelectionActionState(doc);
+      const syncStudioGroupToolbarState = (
+        SlideNextStudioEditorGroup
+        && typeof SlideNextStudioEditorGroup.syncStudioGroupToolbarState === 'function'
+      )
+        ? SlideNextStudioEditorGroup.syncStudioGroupToolbarState
+        : null;
+      if (syncStudioGroupToolbarState) {
+        return syncStudioGroupToolbarState({
+          documentRef: document,
+          canGroup: groupState.canGroup,
+          canUngroup: ungroupState.canUngroup
+        });
+      }
       return SlideNextStudioEditorGroup.renderStudioGroupToolbarState({
         documentRef: document,
         canGroup: groupState.canGroup,

@@ -15,6 +15,46 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+test('updateGroupActionState delegates toolbar state assembly to the shared group view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateGroupActionState(doc = getIframeDoc()) {',
+    '\n\n    function isEditorGroupElement(element) {'
+  );
+  const calls = [];
+  const doc = { activeSlide: {} };
+  const context = {
+    buildGroupSelectionActionState(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return { canGroup: true };
+    },
+    buildUngroupSelectionActionState(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return { canUngroup: false };
+    },
+    SlideNextStudioEditorGroup: {
+      syncStudioGroupToolbarState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateGroupActionState(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.equal(calls[0].canGroup, true);
+  assert.equal(calls[0].canUngroup, false);
+});
+
 test('buildGroupSelectionActionState requires a complete same-parent freeform selection', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(

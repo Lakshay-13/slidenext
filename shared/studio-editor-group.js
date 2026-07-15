@@ -78,6 +78,21 @@
     return true;
   }
 
+  function buildStudioGroupToolbarState(options = {}) {
+    return {
+      canGroup: !!options.canGroup,
+      canUngroup: !!options.canUngroup
+    };
+  }
+
+  function syncStudioGroupToolbarState(options = {}) {
+    const actionState = buildStudioGroupToolbarState(options);
+    return renderStudioGroupToolbarState({
+      documentRef: options.documentRef,
+      ...actionState
+    });
+  }
+
   function buildStudioUngroupedLayout(groupBounds = {}, items = []) {
     const layoutItems = Array.isArray(items) ? items : [];
     if (!Number.isFinite(groupBounds.left)
@@ -307,7 +322,9 @@
   return {
     getStudioGroupableSelection,
     buildStudioGroupPlan,
+    buildStudioGroupToolbarState,
     renderStudioGroupToolbarState,
+    syncStudioGroupToolbarState,
     buildStudioUngroupedLayout,
     applyStudioGroupMutation,
     applyStudioUngroupMutation

@@ -133,6 +133,25 @@ test('renderStudioGroupToolbarState applies group and ungroup readiness', () => 
   assert.equal(buttons.ungroupSelectionBtn.disabled, true);
 });
 
+test('syncStudioGroupToolbarState builds and renders group controls in one shared operation', () => {
+  const buttons = {
+    groupSelectionBtn: { disabled: true },
+    ungroupSelectionBtn: { disabled: true }
+  };
+
+  assert.equal(group.syncStudioGroupToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return buttons[id] || null;
+      }
+    },
+    canGroup: true,
+    canUngroup: false
+  }), true);
+  assert.equal(buttons.groupSelectionBtn.disabled, false);
+  assert.equal(buttons.ungroupSelectionBtn.disabled, true);
+});
+
 test('applyStudioGroupMutation wraps ordered children and captures the parent markup transaction', () => {
   const first = { style: {}, parentElement: null };
   const second = { style: {}, parentElement: null };
