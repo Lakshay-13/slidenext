@@ -517,3 +517,59 @@ test('removeSelectedElement captures a scoped parent markup transaction', () => 
     }
   });
 });
+
+test('removeSelectedElement delegates removal and markup capture to the shared removal module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const removeSelectedElementSource = extractFunctionSource(
+    fileContent,
+    'function removeSelectedElement() {',
+    '\n\n    function updateClipboardActionState(doc = getIframeDoc()) {'
+  );
+  const liveTarget = { isConnected: true };
+  const calls = [];
+  const context = {
+    selectedElements: [liveTarget],
+    SlideNextStudioEditorRemoval: {
+      buildStudioRemovalActionState() {
+        return {
+          canRemove: true,
+          selection: [liveTarget]
+        };
+      },
+      removeStudioElements(selection, options) {
+        calls.push(['removeStudioElements', selection, options]);
+        return { didRemove: true, transaction: { type: 'markup' } };
+      }
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      return {};
+    },
+    isElementLocked() {
+      return false;
+    },
+    deselectElement() {
+      calls.push(['deselectElement']);
+    },
+    finalizeEditorDeckMutation(label, options) {
+      calls.push(['finalizeEditorDeckMutation', label, options]);
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildRemovalSelectionActionState(fileContent, context);
+  vm.runInContext(removeSelectedElementSource, context);
+
+  assert.equal(context.removeSelectedElement(), true);
+  assert.equal(calls[0][0], 'removeStudioElements');
+  assert.equal(calls[0][1][0], liveTarget);
+  assert.equal(typeof calls[0][2].getElementId, 'function');
+  assert.deepEqual(JSON.parse(JSON.stringify(calls.slice(1))), [
+    ['deselectElement'],
+    ['finalizeEditorDeckMutation', 'Auto: Deleted Element', {
+      transaction: { type: 'markup' }
+    }]
+  ]);
+});

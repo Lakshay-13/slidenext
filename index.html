@@ -4982,6 +4982,13 @@
       const doc = getIframeDoc();
       const removalActionState = buildRemovalSelectionActionState(doc);
       if (!removalActionState.canRemove) return finalizeRemovalActionResult(false, doc);
+      const removeStudioElements = (
+        typeof SlideNextStudioEditorRemoval !== 'undefined'
+        && SlideNextStudioEditorRemoval
+        && typeof SlideNextStudioEditorRemoval.removeStudioElements === 'function'
+      )
+        ? SlideNextStudioEditorRemoval.removeStudioElements
+        : null;
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -4989,15 +4996,34 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
+      const getRemovalElementId = (element) => {
+        if (typeof assignEditorElementId === 'function') {
+          return assignEditorElementId(element);
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
+      if (removeStudioElements) {
+        const mutation = removeStudioElements(removalActionState.selection, {
+          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+          getElementId: getRemovalElementId,
+          removeElement(element) {
+            element.remove();
+          }
+        });
+        if (!mutation.didRemove) return finalizeRemovalActionResult(false, doc);
+        deselectElement();
+        finalizeEditorDeckMutation('Auto: Deleted Element', {
+          transaction: mutation.transaction
+        });
+        return true;
+      }
       const markupCaptureTargets = [];
       if (createStudioMarkupTransactionCapture) {
         const parentSet = new Set();
         removalActionState.selection.forEach((el) => {
           if (!el || !el.isConnected || !el.parentElement || parentSet.has(el.parentElement)) return;
           parentSet.add(el.parentElement);
-          if (typeof assignEditorElementId === 'function') {
-            assignEditorElementId(el.parentElement);
-          }
+          getRemovalElementId(el.parentElement);
           markupCaptureTargets.push({ element: el.parentElement });
         });
       }

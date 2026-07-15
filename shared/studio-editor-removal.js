@@ -59,10 +59,58 @@
     return true;
   }
 
+  function removeStudioElements(elements = [], options = {}) {
+    const selection = Array.isArray(elements) ? elements : [];
+    const removeElement = typeof options.removeElement === 'function'
+      ? options.removeElement
+      : (element) => {
+          if (element && typeof element.remove === 'function') {
+            element.remove();
+          }
+        };
+    const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
+      ? options.createMarkupTransactionCapture
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const markupCaptureTargets = [];
+    if (createMarkupTransactionCapture) {
+      const parentSet = new Set();
+      selection.forEach((element) => {
+        const parent = element && element.isConnected ? element.parentElement : null;
+        if (!parent || parentSet.has(parent)) return;
+        parentSet.add(parent);
+        markupCaptureTargets.push({
+          element: parent,
+          elementId: getElementId(parent)
+        });
+      });
+    }
+    const markupCapture = createMarkupTransactionCapture
+      ? createMarkupTransactionCapture(markupCaptureTargets, { getElementId })
+      : null;
+    let removedCount = 0;
+    selection.forEach((element) => {
+      if (!element || !element.isConnected) return;
+      removeElement(element);
+      removedCount += 1;
+    });
+
+    return {
+      didRemove: removedCount > 0,
+      removedCount,
+      transaction: removedCount > 0 && markupCapture
+        ? markupCapture.createTransaction()
+        : null
+    };
+  }
+
   return {
     getStudioRemovableSelection,
     buildStudioRemovalActionState,
     buildStudioRemovalToolbarState,
-    renderStudioRemovalToolbarState
+    renderStudioRemovalToolbarState,
+    removeStudioElements
   };
 });

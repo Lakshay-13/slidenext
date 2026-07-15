@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const removal = require('../shared/studio-editor-removal.js');
+const transactionState = require('../shared/studio-editor-transaction.js');
 
 test('getStudioRemovableSelection ignores disconnected stale selections', () => {
   assert.deepEqual(removal.getStudioRemovableSelection([
@@ -68,6 +69,35 @@ test('buildStudioRemovalToolbarState derives delete button state from the remova
     buttonStates: {
       removeSelectionBtn: true
     }
+  });
+});
+
+test('removeStudioElements removes live targets and creates an optional parent markup transaction', () => {
+  const parent = {
+    dataset: { editorId: 'slide-1' },
+    innerHTML: '<div data-editor-id="node-1">A</div>'
+  };
+  const element = {
+    isConnected: true,
+    parentElement: parent,
+    remove() {
+      this.isConnected = false;
+      parent.innerHTML = '';
+    }
+  };
+  const result = removal.removeStudioElements([element], {
+    createMarkupTransactionCapture: transactionState.createStudioMarkupTransactionCapture,
+    getElementId: (target) => target.dataset.editorId
+  });
+
+  assert.equal(result.didRemove, true);
+  assert.equal(result.removedCount, 1);
+  assert.equal(parent.innerHTML, '');
+  assert.deepEqual(result.transaction.operations[0], {
+    type: 'markup',
+    elementId: 'slide-1',
+    before: '<div data-editor-id="node-1">A</div>',
+    after: ''
   });
 });
 
