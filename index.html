@@ -5738,88 +5738,22 @@
         && typeof resolvedStyleApi.applyStudioStyleMutationWithTransaction === 'function'
         ? resolvedStyleApi.applyStudioStyleMutationWithTransaction
         : null;
-      if (applyStudioStyleMutationWithTransaction) {
-        const mutation = applyStudioStyleMutationWithTransaction(selection, prop, value, {
-          createStyleTransaction,
-          createPropertyTransaction,
-          getElementId
-        });
-        return mutation && typeof mutation === 'object'
-          ? mutation
-          : { didApply: false, displayValue: `${value}`, transaction: null };
-      }
-
-      const styleTransactionProperty = {
-        size: 'fontSize',
-        family: 'fontFamily',
-        weight: 'fontWeight',
-        color: 'color',
-        align: 'textAlign',
-        opacity: 'opacity',
-        zIndex: 'zIndex',
-        borderStyle: 'borderStyle',
-        borderWidth: 'borderWidth',
-        borderRadius: 'borderRadius',
-        borderColor: 'borderColor'
-      }[prop] || '';
-      const propertyTransactionProperty = {
-        text: 'textContent',
-        src: 'src'
-      }[prop] || '';
-      const styleTransactionItems = createStyleTransaction
-        ? selection.map((element) => ({
-            element,
-            elementId: getElementId(element),
-            before: {
-              [styleTransactionProperty]: element && element.style
-                ? element.style[styleTransactionProperty]
-                : ''
-            }
-          }))
-        : [];
-      const propertyTransactionItems = createPropertyTransaction
-        ? selection.slice(0, 1).map((element) => ({
-            element,
-            elementId: getElementId(element),
-            property: propertyTransactionProperty,
-            before: element ? element[propertyTransactionProperty] : ''
-          }))
-        : [];
       const applyStudioStyleMutation = resolvedStyleApi
         && typeof resolvedStyleApi.applyStudioStyleMutation === 'function'
         ? resolvedStyleApi.applyStudioStyleMutation
         : null;
-      if (!applyStudioStyleMutation) {
+      if (!applyStudioStyleMutationWithTransaction) {
         return { didApply: false, displayValue: `${value}`, transaction: null };
       }
-      const mutationResult = applyStudioStyleMutation(selection, prop, value);
-      if (!mutationResult || !mutationResult.didApply) {
-        return {
-          ...(mutationResult || { didApply: false, displayValue: `${value}` }),
-          transaction: null
-        };
-      }
-
-      styleTransactionItems.forEach((item) => {
-        item.after = {
-          [styleTransactionProperty]: item.element && item.element.style
-            ? item.element.style[styleTransactionProperty]
-            : ''
-        };
+      const mutation = applyStudioStyleMutationWithTransaction(selection, prop, value, {
+        createStyleTransaction,
+        createPropertyTransaction,
+        getElementId,
+        applyStudioStyleMutation
       });
-      const styleTransaction = styleTransactionItems.length > 0
-        ? createStyleTransaction(styleTransactionItems, { getElementId })
-        : null;
-      propertyTransactionItems.forEach((item) => {
-        item.after = item.element ? item.element[propertyTransactionProperty] : '';
-      });
-      const propertyTransaction = propertyTransactionItems.length > 0
-        ? createPropertyTransaction(propertyTransactionItems, { getElementId })
-        : null;
-      return {
-        ...mutationResult,
-        transaction: styleTransaction || propertyTransaction
-      };
+      return mutation && typeof mutation === 'object'
+        ? mutation
+        : { didApply: false, displayValue: `${value}`, transaction: null };
     }
 
     // Apply styles immediately to active selected elements

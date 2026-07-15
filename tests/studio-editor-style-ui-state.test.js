@@ -35,6 +35,18 @@ function loadStyleMutationHelper(fileContent, context) {
     '\n\n    // Apply styles immediately to active selected elements'
   );
   vm.runInContext(helperSource, context);
+  const styleApi = context.SlideNextStudioEditorStyle;
+  if (styleApi
+    && typeof styleApi.applyStudioStyleMutationWithTransaction !== 'function'
+    && typeof styleApi.applyStudioStyleMutation === 'function') {
+    const applyStudioStyleMutation = styleApi.applyStudioStyleMutation;
+    styleApi.applyStudioStyleMutationWithTransaction = (selection, prop, value, options = {}) => (
+      styleState.applyStudioStyleMutationWithTransaction(selection, prop, value, {
+        ...options,
+        applyStudioStyleMutation
+      })
+    );
+  }
 }
 
 function createControlMap() {

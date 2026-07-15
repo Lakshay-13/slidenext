@@ -244,6 +244,9 @@
 
   function applyStudioStyleMutationWithTransaction(elements = [], prop, value, options = {}) {
     const selection = Array.isArray(elements) ? elements : [];
+    const applyMutation = typeof options.applyStudioStyleMutation === 'function'
+      ? options.applyStudioStyleMutation
+      : applyStudioStyleMutation;
     const styleTransactionProperty = {
       size: 'fontSize',
       family: 'fontFamily',
@@ -290,7 +293,7 @@
         }))
       : [];
 
-    const mutationResult = applyStudioStyleMutation(selection, prop, value);
+    const mutationResult = applyMutation(selection, prop, value);
     if (!mutationResult.didApply) {
       return {
         ...mutationResult,

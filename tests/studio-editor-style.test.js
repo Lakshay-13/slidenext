@@ -273,3 +273,18 @@ test('applyStudioStyleMutationWithTransaction applies a mutation and builds a re
     after: 'After'
   });
 });
+
+test('applyStudioStyleMutationWithTransaction accepts an injected mutation primitive', () => {
+  const element = createElement();
+  const calls = [];
+  const result = styleState.applyStudioStyleMutationWithTransaction([element], 'color', '#fff', {
+    applyStudioStyleMutation(selection, prop, value) {
+      calls.push([selection, prop, value]);
+      return { didApply: true, displayValue: value };
+    }
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.displayValue, '#fff');
+  assert.deepEqual(calls, [[[element], 'color', '#fff']]);
+});
