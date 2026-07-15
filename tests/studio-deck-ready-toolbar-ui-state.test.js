@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
+const deckReadyView = require('../shared/studio-deck-ready.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -58,6 +59,7 @@ test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when 
     studioVersionBtn: { disabled: false }
   };
   const context = {
+    SlideNextStudioDeckReady: deckReadyView,
     currentPresentationMetadata: null,
     currentPresentationUrl: '',
     document: {
@@ -150,6 +152,7 @@ test('updateDeckReadyToolbarActionState preserves the save button disabled state
     studioVersionBtn: { disabled: false }
   };
   const context = {
+    SlideNextStudioDeckReady: deckReadyView,
     currentPresentationMetadata: null,
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentStudioSaveButtonState: 'saving-version',
@@ -201,6 +204,7 @@ test('updateDeckReadyToolbarActionState prefers the shared persisted-content res
   };
   const calls = [];
   const context = {
+    SlideNextStudioDeckReady: deckReadyView,
     currentPresentationMetadata: null,
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     document: {
@@ -263,6 +267,7 @@ test('updateDeckReadyToolbarActionState reuses the local persisted deck state-wi
   };
   const calls = [];
   const context = {
+    SlideNextStudioDeckReady: deckReadyView,
     __resolveEditorPersistedDeckStateWithContent(persistedDeckState) {
       calls.push(persistedDeckState);
       return persistedDeckState;
@@ -360,6 +365,9 @@ test('updateDeckReadyToolbarActionState delegates action gating to the shared de
           canUseDeckActions: true,
           canLaunchPreview: true
         };
+      },
+      renderStudioDeckReadyToolbarActionState(options = {}) {
+        return deckReadyView.renderStudioDeckReadyToolbarActionState(options);
       }
     }
   };
@@ -420,6 +428,9 @@ test('resolveCurrentStudioDeckReadyActionState reuses the shared deck-ready help
           canUseDeckActions: true,
           canLaunchPreview: true
         };
+      },
+      renderStudioDeckReadyToolbarActionState(options = {}) {
+        return deckReadyView.renderStudioDeckReadyToolbarActionState(options);
       }
     }
   };

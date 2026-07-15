@@ -89,3 +89,35 @@ test('resolveStudioDeckReadyActionState disables only the save button while a ve
     }
   );
 });
+
+test('renderStudioDeckReadyToolbarActionState applies readiness to all deck toolbar actions', () => {
+  const ids = [
+    'studioSaveBtn',
+    'openSourceViewBtn',
+    'studioVersionBtn',
+    'launchPreviewBtn',
+    'exportPdfBtn',
+    'exportPptxBtn'
+  ];
+  const buttons = Object.fromEntries(ids.map((id) => [id, { disabled: false }]));
+
+  assert.equal(deckReady.renderStudioDeckReadyToolbarActionState({
+    documentRef: {
+      getElementById(id) {
+        return buttons[id] || null;
+      }
+    },
+    actionState: {
+      canUseSaveButton: false,
+      canUseDeckActions: true,
+      canLaunchPreview: false
+    }
+  }), true);
+
+  assert.equal(buttons.studioSaveBtn.disabled, true);
+  assert.equal(buttons.openSourceViewBtn.disabled, false);
+  assert.equal(buttons.studioVersionBtn.disabled, false);
+  assert.equal(buttons.launchPreviewBtn.disabled, true);
+  assert.equal(buttons.exportPdfBtn.disabled, false);
+  assert.equal(buttons.exportPptxBtn.disabled, false);
+});
