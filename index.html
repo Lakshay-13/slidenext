@@ -4451,10 +4451,13 @@
     }
 
     function updateGroupActionState(doc = getIframeDoc()) {
-      const groupButton = document.getElementById('groupSelectionBtn');
-      if (groupButton) groupButton.disabled = !buildGroupSelectionActionState(doc).canGroup;
-      const ungroupButton = document.getElementById('ungroupSelectionBtn');
-      if (ungroupButton) ungroupButton.disabled = !buildUngroupSelectionActionState(doc).canUngroup;
+      const groupState = buildGroupSelectionActionState(doc);
+      const ungroupState = buildUngroupSelectionActionState(doc);
+      return SlideNextStudioEditorGroup.renderStudioGroupToolbarState({
+        documentRef: document,
+        canGroup: groupState.canGroup,
+        canUngroup: ungroupState.canUngroup
+      });
     }
 
     function isEditorGroupElement(element) {

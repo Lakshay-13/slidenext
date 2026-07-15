@@ -112,3 +112,22 @@ test('buildStudioUngroupedLayout restores absolute positions from group-relative
     ]
   });
 });
+
+test('renderStudioGroupToolbarState applies group and ungroup readiness', () => {
+  const buttons = {
+    groupSelectionBtn: { disabled: true },
+    ungroupSelectionBtn: { disabled: true }
+  };
+
+  assert.equal(group.renderStudioGroupToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return buttons[id] || null;
+      }
+    },
+    canGroup: true,
+    canUngroup: false
+  }), true);
+  assert.equal(buttons.groupSelectionBtn.disabled, false);
+  assert.equal(buttons.ungroupSelectionBtn.disabled, true);
+});

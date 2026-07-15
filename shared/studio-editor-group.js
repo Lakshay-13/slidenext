@@ -68,6 +68,16 @@
     };
   }
 
+  function renderStudioGroupToolbarState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    const groupButton = documentRef.getElementById('groupSelectionBtn');
+    const ungroupButton = documentRef.getElementById('ungroupSelectionBtn');
+    if (groupButton) groupButton.disabled = !options.canGroup;
+    if (ungroupButton) ungroupButton.disabled = !options.canUngroup;
+    return true;
+  }
+
   function buildStudioUngroupedLayout(groupBounds = {}, items = []) {
     const layoutItems = Array.isArray(items) ? items : [];
     if (!Number.isFinite(groupBounds.left)
@@ -103,6 +113,7 @@
   return {
     getStudioGroupableSelection,
     buildStudioGroupPlan,
+    renderStudioGroupToolbarState,
     buildStudioUngroupedLayout
   };
 });
