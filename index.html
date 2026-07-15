@@ -3946,30 +3946,14 @@
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
       if (!doc || !slide || !rect) return;
-      const overlay = ensureSelectionOverlay(doc, slide);
-      if (!overlay) return;
-      const left = Math.min(rect.left, rect.right);
-      const top = Math.min(rect.top, rect.bottom);
-      overlay.classList.add('drag-preview');
-      overlay.style.display = 'block';
-      overlay.style.pointerEvents = 'none';
-      overlay.style.left = `${left}px`;
-      overlay.style.top = `${top}px`;
-      overlay.style.width = `${Math.abs(rect.right - rect.left)}px`;
-      overlay.style.height = `${Math.abs(rect.bottom - rect.top)}px`;
-      overlay.querySelectorAll('.editor-resize-handle').forEach(handle => {
-        handle.style.display = 'none';
-      });
+      SlideNextStudioEditorOverlay.renderStudioMarqueeSelection(doc, slide, rect, getEditorOverlayOptions());
     }
 
     function clearMarqueeSelection() {
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
       if (!slide) return;
-      const overlay = slide.querySelector('#editorSelectionOverlay');
-      if (!overlay) return;
-      overlay.classList.remove('drag-preview');
-      overlay.style.display = 'none';
+      SlideNextStudioEditorOverlay.clearStudioMarqueeSelection(slide, getEditorOverlayOptions());
     }
 
     function getSlideMetrics(slide) {

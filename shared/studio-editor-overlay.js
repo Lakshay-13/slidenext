@@ -110,6 +110,36 @@
     return guidesLayer;
   }
 
+  function renderStudioMarqueeSelection(doc, slide, rect, options = {}) {
+    if (!doc || !slide || !rect) return null;
+    const overlay = ensureStudioSelectionOverlay(doc, slide, options);
+    if (!overlay) return null;
+
+    const left = Math.min(rect.left, rect.right);
+    const top = Math.min(rect.top, rect.bottom);
+    overlay.classList.add('drag-preview');
+    overlay.style.display = 'block';
+    overlay.style.pointerEvents = 'none';
+    overlay.style.left = `${left}px`;
+    overlay.style.top = `${top}px`;
+    overlay.style.width = `${Math.abs(rect.right - rect.left)}px`;
+    overlay.style.height = `${Math.abs(rect.bottom - rect.top)}px`;
+    overlay.querySelectorAll('.editor-resize-handle').forEach((handle) => {
+      handle.style.display = 'none';
+    });
+    return overlay;
+  }
+
+  function clearStudioMarqueeSelection(slide, options = {}) {
+    if (!slide) return false;
+    const overlayId = options.selectionOverlayId || 'editorSelectionOverlay';
+    const overlay = slide.querySelector(`#${overlayId}`);
+    if (!overlay) return false;
+    overlay.classList.remove('drag-preview');
+    overlay.style.display = 'none';
+    return true;
+  }
+
   return {
     ensureStudioSelectionOverlay,
     ensureStudioGuidesLayer,
@@ -117,6 +147,8 @@
     clearStudioGuides,
     hideStudioDragHud,
     updateStudioDragHud,
-    renderStudioGuides
+    renderStudioGuides,
+    renderStudioMarqueeSelection,
+    clearStudioMarqueeSelection
   };
 });
