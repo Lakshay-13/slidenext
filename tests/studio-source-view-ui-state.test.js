@@ -239,7 +239,7 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
   assert.equal(result, '<html>persisted-baseline</html>');
 });
 
-test('buildEditorSourceHtml falls back to the shared deck html source builder when the deck view helper is unavailable', () => {
+test('buildEditorSourceHtml fails closed when the shared deck html helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(
     fileContent,
@@ -255,18 +255,11 @@ test('buildEditorSourceHtml falls back to the shared deck html source builder wh
       { id: 'slide-2', nodes: [] }
     ]
   };
-  const calls = [];
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState
-    },
-    SlideNextDeckHtml: {
-      buildDeckSourceHtml(nextCanonicalDeck, options) {
-        calls.push({ nextCanonicalDeck, options });
-        return '<html>source-from-deck-html</html>';
-      }
     },
     resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
       return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
@@ -299,10 +292,7 @@ test('buildEditorSourceHtml falls back to the shared deck html source builder wh
 
   const result = context.buildEditorSourceHtml();
 
-  assert.equal(result, '<html>source-from-deck-html</html>');
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].nextCanonicalDeck, canonicalDeck);
-  assert.equal(calls[0].options.renderOptions.activeSlideId, 'slide-2');
+  assert.equal(result, '');
 });
 
 test('buildEditorSourceHtml reuses the shared deck-view html builder when the source helper is unavailable', () => {

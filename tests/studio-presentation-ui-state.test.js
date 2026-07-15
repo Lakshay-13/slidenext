@@ -339,7 +339,7 @@ test('buildEditorPreviewHtml falls back to the persisted html baseline when the 
   assert.equal(result, '<html>persisted-preview</html>');
 });
 
-test('buildEditorPreviewHtml falls back to the shared deck html preview builder when the deck view helper is unavailable', () => {
+test('buildEditorPreviewHtml fails closed when the shared deck html helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorPreviewHtmlSource = extractFunctionSource(
     fileContent,
@@ -355,18 +355,11 @@ test('buildEditorPreviewHtml falls back to the shared deck html preview builder 
       { id: 'slide-2', nodes: [] }
     ]
   };
-  const calls = [];
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState
-    },
-    SlideNextDeckHtml: {
-      buildDeckPreviewHtml(nextCanonicalDeck, presentationUrl, options) {
-        calls.push({ nextCanonicalDeck, presentationUrl, options });
-        return '<html>preview-from-deck-html</html>';
-      }
     },
     buildEditorCanonicalDeck(nextDoc) {
       assert.equal(nextDoc, null);
@@ -396,11 +389,7 @@ test('buildEditorPreviewHtml falls back to the shared deck html preview builder 
 
   const result = context.buildEditorPreviewHtml();
 
-  assert.equal(result, '<html>preview-from-deck-html</html>');
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].nextCanonicalDeck, canonicalDeck);
-  assert.equal(calls[0].presentationUrl, '/presentations/onboarding-presentation/index.html');
-  assert.equal(calls[0].options.renderOptions.activeSlideId, 'slide-2');
+  assert.equal(result, '');
 });
 
 test('createEditorDeckViewBuildViewOptionsResolver decorates resolved deck view options when requested', () => {

@@ -1780,32 +1780,9 @@
 
     function buildEditorDeckHtml(doc = getIframeDoc(), options = {}) {
       const buildStudioDeckHtml = resolveStudioDeckViewMethod('buildStudioDeckHtml');
-      if (buildStudioDeckHtml) {
-        return buildStudioDeckHtml(doc, options);
-      }
-
-      const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-        ? options.buildCanonicalDeck
-        : () => null;
-      const buildFallbackHtml = typeof options.buildFallbackHtml === 'function'
-        ? options.buildFallbackHtml
-        : () => '';
-      const deckHtmlOptions = options.deckHtmlOptions && typeof options.deckHtmlOptions === 'object'
-        ? options.deckHtmlOptions
-        : {};
-      const buildCanonicalHtml = typeof options.buildCanonicalHtml === 'function'
-        ? options.buildCanonicalHtml
-        : null;
-
-      const canonicalDeck = buildCanonicalDeck(doc);
-      if (buildCanonicalHtml && canonicalDeck && Array.isArray(canonicalDeck.slides)) {
-        return buildCanonicalHtml(canonicalDeck, deckHtmlOptions);
-      }
-
-      const fallbackHtml = buildFallbackHtml(doc);
-      return typeof options.transformFallbackHtml === 'function'
-        ? options.transformFallbackHtml(fallbackHtml, deckHtmlOptions)
-        : fallbackHtml;
+      return buildStudioDeckHtml
+        ? buildStudioDeckHtml(doc, options)
+        : '';
     }
 
     function buildEditorDeckViewHtml(doc = getIframeDoc(), options = {}) {
