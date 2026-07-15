@@ -8846,31 +8846,17 @@
     }
 
     function resetStudioVersionUiState(options = {}) {
-      const isLoading = !!options.isLoading;
-      hideCurrentStudioVersionsDropdown();
-      const versionsList = document.getElementById('versionsList');
-      if (versionsList) {
-        versionsList.innerHTML = `<span class="text-zinc-500 text-center py-2 text-[11px]">${isLoading ? 'Loading versions...' : 'No versions saved yet'}</span>`;
-      }
-
-      const saveVersionModal = document.getElementById('saveVersionModal');
-      const saveVersionModalContent = document.getElementById('saveVersionModalContent');
-      const saveVersionNameInput = document.getElementById('versionCheckpointName');
-      if (saveVersionNameInput) {
-        saveVersionNameInput.value = '';
-      }
-      hideCurrentStudioVersionModalImmediately(saveVersionModal, saveVersionModalContent);
-
-      const renameVersionModal = document.getElementById('renameVersionModal');
-      const renameVersionModalContent = document.getElementById('renameVersionModalContent');
-      const renameVersionInput = document.getElementById('newVersionNameInput');
-      const confirmRenameVersionBtn = document.getElementById('confirmRenameVersionBtn');
-      resetCurrentStudioRenameVersionState();
-      if (renameVersionInput) {
-        renameVersionInput.value = '';
-      }
-      resetCurrentStudioRenameVersionButtonState(confirmRenameVersionBtn);
-      hideCurrentStudioVersionModalImmediately(renameVersionModal, renameVersionModalContent);
+      const versionView = typeof SlideNextStudioVersionView !== 'undefined'
+        ? SlideNextStudioVersionView
+        : null;
+      if (!versionView || typeof versionView.resetStudioVersionUiState !== 'function') return false;
+      return versionView.resetStudioVersionUiState({
+        documentRef: document,
+        isLoading: !!options.isLoading,
+        hideVersionModalImmediately: hideCurrentStudioVersionModalImmediately,
+        resetRenameVersionState: resetCurrentStudioRenameVersionState,
+        resetRenameVersionButtonState: resetCurrentStudioRenameVersionButtonState
+      });
     }
 
     function resetStudioDeckUiState(options = {}) {

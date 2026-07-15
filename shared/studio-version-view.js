@@ -17,6 +17,49 @@
     return true;
   }
 
+  function resetStudioVersionUiState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+
+    const isLoading = !!options.isLoading;
+    hideStudioVersionsDropdown({ documentRef });
+
+    const versionsList = documentRef.getElementById('versionsList');
+    if (versionsList) {
+      versionsList.innerHTML = `<span class="text-zinc-500 text-center py-2 text-[11px]">${isLoading ? 'Loading versions...' : 'No versions saved yet'}</span>`;
+    }
+
+    const hideVersionModalImmediately = typeof options.hideVersionModalImmediately === 'function'
+      ? options.hideVersionModalImmediately
+      : () => {};
+    const resetRenameVersionState = typeof options.resetRenameVersionState === 'function'
+      ? options.resetRenameVersionState
+      : () => {};
+    const resetRenameVersionButtonState = typeof options.resetRenameVersionButtonState === 'function'
+      ? options.resetRenameVersionButtonState
+      : () => {};
+
+    const saveVersionModal = documentRef.getElementById('saveVersionModal');
+    const saveVersionModalContent = documentRef.getElementById('saveVersionModalContent');
+    const saveVersionNameInput = documentRef.getElementById('versionCheckpointName');
+    if (saveVersionNameInput) {
+      saveVersionNameInput.value = '';
+    }
+    hideVersionModalImmediately(saveVersionModal, saveVersionModalContent);
+
+    const renameVersionModal = documentRef.getElementById('renameVersionModal');
+    const renameVersionModalContent = documentRef.getElementById('renameVersionModalContent');
+    const renameVersionInput = documentRef.getElementById('newVersionNameInput');
+    const confirmRenameVersionBtn = documentRef.getElementById('confirmRenameVersionBtn');
+    resetRenameVersionState();
+    if (renameVersionInput) {
+      renameVersionInput.value = '';
+    }
+    resetRenameVersionButtonState(confirmRenameVersionBtn);
+    hideVersionModalImmediately(renameVersionModal, renameVersionModalContent);
+    return true;
+  }
+
   function resetStudioRenameVersionButton(button) {
     if (!button) return false;
     button.disabled = false;
@@ -89,6 +132,7 @@
 
   return {
     hideStudioVersionsDropdown,
+    resetStudioVersionUiState,
     resetStudioRenameVersionButton,
     setStudioRenameVersionButtonBusy,
     renderStudioVersionsList,
