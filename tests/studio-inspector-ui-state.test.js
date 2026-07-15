@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const liveSelection = require('../shared/studio-editor-live-selection.js');
+const inspectorView = require('../shared/studio-editor-inspector-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -26,6 +27,7 @@ test('syncInspectorForSelection tolerates missing inspector chrome when no selec
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorInspectorView: inspectorView,
     SlideNextStudioEditorLiveSelection: liveSelection,
     document: {
       getElementById(id) {
@@ -182,6 +184,7 @@ test('syncInspectorForSelection tolerates a missing z-index input when a live se
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorInspectorView: inspectorView,
     SlideNextStudioEditorLiveSelection: liveSelection,
     document: {
       getElementById(id) {
@@ -329,6 +332,7 @@ test('syncInspectorForSelection tolerates a missing font-family select when a li
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorInspectorView: inspectorView,
     SlideNextStudioEditorLiveSelection: liveSelection,
     document: {
       getElementById(id) {
@@ -468,6 +472,7 @@ test('syncInspectorForSelection tolerates a missing text-color input when a live
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorInspectorView: inspectorView,
     SlideNextStudioEditorLiveSelection: liveSelection,
     document: {
       getElementById(id) {
@@ -609,6 +614,7 @@ test('syncInspectorForSelection tolerates a missing font-weight control when a l
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorInspectorView: inspectorView,
     SlideNextStudioEditorLiveSelection: liveSelection,
     document: {
       getElementById(id) {
@@ -747,6 +753,7 @@ test('syncInspectorForSelection tolerates missing opacity controls when a live s
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorInspectorView: inspectorView,
     SlideNextStudioEditorLiveSelection: liveSelection,
     document: {
       getElementById(id) {
@@ -886,6 +893,7 @@ test('syncInspectorForSelection tolerates missing font-size controls when a live
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorInspectorView: inspectorView,
     SlideNextStudioEditorLiveSelection: liveSelection,
     document: {
       getElementById(id) {
@@ -1022,6 +1030,7 @@ test('syncInspectorForSelection tolerates missing border inspector controls when
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorInspectorView: inspectorView,
     SlideNextStudioEditorLiveSelection: liveSelection,
     document: {
       getElementById(id) {
@@ -1165,6 +1174,7 @@ test('syncInspectorForSelection tolerates missing content and image controls for
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorInspectorView: inspectorView,
     SlideNextStudioEditorLiveSelection: liveSelection,
     document: {
       getElementById(id) {

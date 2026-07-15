@@ -1135,6 +1135,7 @@
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-element-state.js"></script>
   <script src="/shared/studio-editor-live-selection.js"></script>
+  <script src="/shared/studio-editor-inspector-view.js"></script>
   <script src="/shared/studio-editor-layer-order.js"></script>
   <script src="/shared/studio-editor-selection-bounds.js"></script>
   <script src="/shared/studio-editor-overlay-state.js"></script>
@@ -3997,10 +3998,6 @@
 
     function syncInspectorForSelection() {
       const liveSelectionState = SlideNextStudioEditorLiveSelection.buildStudioLiveSelectionState(selectedElements);
-      const count = liveSelectionState.count;
-      const inspectorTargetLabel = document.getElementById('inspectorTargetLabel');
-      const slideInspectorPanel = document.getElementById('slideInspectorPanel');
-      const elementInspectorPanel = document.getElementById('elementInspectorPanel');
       updateClipboardActionState();
       updateRemovalActionState();
       updateLockActionState();
@@ -4014,37 +4011,18 @@
       }
       updateStyleActionState();
       updateLayerOrderActionState();
-      if (!liveSelectionState.hasSelection) {
-        if (inspectorTargetLabel) {
-          inspectorTargetLabel.innerHTML = `
-            <span class="material-symbols-outlined text-[16px] text-[#7028d0]">settings_suggest</span>
-            No selection active
-          `;
-        }
-        if (slideInspectorPanel) {
-          slideInspectorPanel.classList.remove('hidden');
-        }
-        if (elementInspectorPanel) {
-          elementInspectorPanel.classList.add('hidden');
-        }
-        return;
-      }
+      const inspectorView = typeof SlideNextStudioEditorInspectorView !== 'undefined'
+        ? SlideNextStudioEditorInspectorView
+        : null;
+      if (!inspectorView || typeof inspectorView.renderStudioInspectorSelectionSummary !== 'function') return false;
+      const selectionSummary = inspectorView.renderStudioInspectorSelectionSummary({
+        documentRef: document,
+        selectionState: liveSelectionState
+      });
+      if (!selectionSummary.hasSelection) return false;
 
-      const el = liveSelectionState.primaryElement;
-      const isMulti = count > 1;
-      if (inspectorTargetLabel) {
-        inspectorTargetLabel.innerHTML = `
-          <span class="material-symbols-outlined text-[16px] text-[#7028d0]">edit</span>
-          ${isMulti ? `Editing ${count} elements` : `Editing ${el.tagName.toLowerCase()}`}
-        `;
-      }
-
-      if (slideInspectorPanel) {
-        slideInspectorPanel.classList.add('hidden');
-      }
-      if (elementInspectorPanel) {
-        elementInspectorPanel.classList.remove('hidden');
-      }
+      const el = selectionSummary.primaryElement;
+      const isMulti = selectionSummary.isMulti;
 
       const textVal = el.innerText || el.textContent || '';
       const textContentInput = document.getElementById('elTextContent');
