@@ -44,6 +44,15 @@ function loadFinalizeSelectionToggleMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadVisibilityMutationHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorVisibilityMutationWithTransaction(selection, shouldHide, options = {}) {',
+    'function toggleSelectedElementsVisibility(options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('updateVisibilityActionState enables the visibility control only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateVisibilityActionStateSource = extractFunctionSource(
@@ -282,6 +291,7 @@ test('toggleSelectedElementsVisibility returns false and skips persistence when 
   loadSyncSelectionUiAfterMutation(fileContent, context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadVisibilityMutationHelper(fileContent, context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility(), false);
@@ -361,6 +371,7 @@ test('toggleSelectedElementsVisibility returns true after hiding live targets an
   loadSyncSelectionUiAfterMutation(fileContent, context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadVisibilityMutationHelper(fileContent, context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility(), true);
@@ -458,6 +469,7 @@ test('toggleSelectedElementsVisibility captures a reversible visibility transact
   vm.createContext(context);
   loadSyncSelectionUiAfterMutation(fileContent, context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
+  loadVisibilityMutationHelper(fileContent, context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility(), true);
@@ -566,6 +578,7 @@ test('toggleSelectedElementsVisibility can skip temporary selection UI sync when
   loadSyncSelectionUiAfterMutation(fileContent, context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadVisibilityMutationHelper(fileContent, context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility({ skipSelectionUi: true }), true);
@@ -628,6 +641,7 @@ test('toggleSelectedElementsVisibility delegates visibility application to the s
 
   vm.createContext(context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
+  loadVisibilityMutationHelper(fileContent, context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility(), true);
