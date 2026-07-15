@@ -89,3 +89,48 @@ test('appendCanonicalSlide rejects invalid deck or slide input', () => {
   assert.equal(canonicalDeck.appendCanonicalSlide(null, { id: 'slide-2' }), null);
   assert.equal(canonicalDeck.appendCanonicalSlide(deck, null), null);
 });
+
+test('updateCanonicalNodeVisibility immutably updates nested node visibility by id', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'node-1',
+        visibility: { hidden: false, locked: false },
+        children: [{
+          id: 'child-1',
+          visibility: { hidden: false, locked: false }
+        }]
+      }, {
+        id: 'node-2',
+        visibility: { hidden: false, locked: false }
+      }]
+    }]
+  });
+
+  const updatedDeck = canonicalDeck.updateCanonicalNodeVisibility(
+    sourceDeck,
+    ['node-1', 'child-1'],
+    { locked: true }
+  );
+
+  assert.ok(canonicalDeck.isCanonicalDeck(updatedDeck));
+  assert.equal(sourceDeck.slides[0].nodes[0].visibility.locked, false);
+  assert.equal(sourceDeck.slides[0].nodes[0].children[0].visibility.locked, false);
+  assert.equal(updatedDeck.slides[0].nodes[0].visibility.locked, true);
+  assert.equal(updatedDeck.slides[0].nodes[0].children[0].visibility.locked, true);
+  assert.equal(updatedDeck.slides[0].nodes[1].visibility.locked, false);
+});
+
+test('updateCanonicalNodeVisibility returns null for no-op or invalid patches', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', visibility: { hidden: true } }]
+    }]
+  });
+
+  assert.equal(canonicalDeck.updateCanonicalNodeVisibility(deck, ['node-1'], { hidden: true }), null);
+  assert.equal(canonicalDeck.updateCanonicalNodeVisibility(deck, ['missing'], { hidden: false }), null);
+  assert.equal(canonicalDeck.updateCanonicalNodeVisibility(deck, ['node-1'], { color: true }), null);
+});

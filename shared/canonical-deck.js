@@ -264,6 +264,70 @@
     });
   }
 
+  function updateCanonicalNodeVisibility(deckLike, nodeIds = [], visibilityPatch = {}) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedIds = new Set(normalizeStringArray(nodeIds).map((id) => id.trim()));
+    const patch = asPlainObject(visibilityPatch);
+    const patchKeys = ['hidden', 'locked']
+      .filter((key) => Object.prototype.hasOwnProperty.call(patch, key));
+    if (!isCanonicalDeck(deck) || normalizedIds.size === 0 || patchKeys.length === 0) {
+      return null;
+    }
+
+    let didChange = false;
+    function updateNodes(nodes = []) {
+      return nodes.map((node, index) => {
+        if (!node || typeof node !== 'object') return node;
+        let nextNode = node;
+        let nodeChanged = false;
+        if (normalizedIds.has(node.id)) {
+          const currentVisibility = asPlainObject(node.visibility);
+          const nextVisibility = { ...currentVisibility };
+          patchKeys.forEach((key) => {
+            const nextValue = !!patch[key];
+            if (nextVisibility[key] !== nextValue) {
+              nextVisibility[key] = nextValue;
+              nodeChanged = true;
+            }
+          });
+          if (nodeChanged) {
+            nextNode = {
+              ...nextNode,
+              visibility: nextVisibility
+            };
+          }
+        }
+
+        if (Array.isArray(node.children) && node.children.length > 0) {
+          const nextChildren = updateNodes(node.children);
+          if (nextChildren.some((child, childIndex) => child !== node.children[childIndex])) {
+            nextNode = {
+              ...nextNode,
+              children: nextChildren
+            };
+            nodeChanged = true;
+          }
+        }
+
+        if (!nodeChanged) return node;
+        didChange = true;
+        return createCanonicalNode(nextNode, index);
+      });
+    }
+
+    const nextSlides = deck.slides.map((slide) => ({
+      ...slide,
+      nodes: updateNodes(Array.isArray(slide.nodes) ? slide.nodes : [])
+    }));
+    if (!didChange) return null;
+    return createCanonicalDeck({
+      ...deck,
+      slides: nextSlides
+    });
+  }
+
   return {
     DECK_KIND,
     DECK_SCHEMA_VERSION,
@@ -277,6 +341,7 @@
     isCanonicalDeck,
     reorderCanonicalSlides,
     removeCanonicalSlide,
-    appendCanonicalSlide
+    appendCanonicalSlide,
+    updateCanonicalNodeVisibility
   };
 });
