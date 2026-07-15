@@ -140,6 +140,53 @@
     return true;
   }
 
+  function syncStudioSelectionOverlay(doc, slide, options = {}) {
+    if (!doc || !slide) return { didSync: false };
+    const overlay = ensureStudioSelectionOverlay(doc, slide, options);
+    if (!overlay) return { didSync: false };
+
+    const buildSelectionOverlayState = typeof options.buildSelectionOverlayState === 'function'
+      ? options.buildSelectionOverlayState
+      : () => ({ visibleSelection: [], hasVisibleSelection: false });
+    const overlaySelectionState = buildSelectionOverlayState(options.selectedElements, {
+      isHidden: options.isHidden
+    });
+    const hideOverlay = () => {
+      overlay.style.display = 'none';
+      if (typeof options.hideGuides === 'function') options.hideGuides();
+      if (typeof options.hideDragHud === 'function') options.hideDragHud();
+    };
+    if (!overlaySelectionState || !overlaySelectionState.hasVisibleSelection) {
+      hideOverlay();
+      return { didSync: false, overlay };
+    }
+
+    const getSelectionBounds = typeof options.getSelectionBounds === 'function'
+      ? options.getSelectionBounds
+      : () => null;
+    const bounds = getSelectionBounds(overlaySelectionState.visibleSelection);
+    if (!bounds) {
+      hideOverlay();
+      return { didSync: false, overlay };
+    }
+
+    overlay.style.display = 'block';
+    overlay.style.left = `${bounds.left}px`;
+    overlay.style.top = `${bounds.top}px`;
+    overlay.style.width = `${bounds.width}px`;
+    overlay.style.height = `${bounds.height}px`;
+    const transformState = typeof options.getTransformSelectionState === 'function'
+      ? options.getTransformSelectionState()
+      : { canTransform: false };
+    const canTransform = !!transformState.canTransform;
+    overlay.style.pointerEvents = canTransform ? 'auto' : 'none';
+    overlay.style.opacity = '1';
+    overlay.querySelectorAll('.editor-resize-handle').forEach((handle) => {
+      handle.style.display = canTransform ? '' : 'none';
+    });
+    return { didSync: true, overlay, bounds, canTransform };
+  }
+
   return {
     ensureStudioSelectionOverlay,
     ensureStudioGuidesLayer,
@@ -149,6 +196,7 @@
     updateStudioDragHud,
     renderStudioGuides,
     renderStudioMarqueeSelection,
-    clearStudioMarqueeSelection
+    clearStudioMarqueeSelection,
+    syncStudioSelectionOverlay
   };
 });

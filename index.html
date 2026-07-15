@@ -3983,37 +3983,15 @@
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
       if (!doc || !slide) return;
-      const overlay = ensureSelectionOverlay(doc, slide);
-
-      const overlaySelectionState = SlideNextStudioEditorOverlayState.buildStudioSelectionOverlayState(selectedElements, {
-        isHidden: isElementHidden
-      });
-      if (!overlaySelectionState.hasVisibleSelection) {
-        overlay.style.display = 'none';
-        hideGuides();
-        hideDragHud();
-        return;
-      }
-
-      const bounds = getSelectionBounds(overlaySelectionState.visibleSelection);
-      if (!bounds) {
-        overlay.style.display = 'none';
-        hideGuides();
-        hideDragHud();
-        return;
-      }
-
-      overlay.style.display = 'block';
-      overlay.style.left = `${bounds.left}px`;
-      overlay.style.top = `${bounds.top}px`;
-      overlay.style.width = `${bounds.width}px`;
-      overlay.style.height = `${bounds.height}px`;
-      const canTransform = getTransformSelectionState().canTransform;
-      overlay.style.pointerEvents = canTransform ? 'auto' : 'none';
-      overlay.style.opacity = '1';
-      const hideHandles = !canTransform;
-      overlay.querySelectorAll('.editor-resize-handle').forEach(handle => {
-        handle.style.display = hideHandles ? 'none' : '';
+      return SlideNextStudioEditorOverlay.syncStudioSelectionOverlay(doc, slide, {
+        ...getEditorOverlayOptions(),
+        selectedElements,
+        buildSelectionOverlayState: SlideNextStudioEditorOverlayState.buildStudioSelectionOverlayState,
+        isHidden: isElementHidden,
+        getSelectionBounds,
+        getTransformSelectionState,
+        hideGuides,
+        hideDragHud
       });
     }
 

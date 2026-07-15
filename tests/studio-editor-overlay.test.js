@@ -71,3 +71,69 @@ test('clearStudioMarqueeSelection hides the existing selection overlay', () => {
   assert.equal(overlay.classList.contains('drag-preview'), false);
   assert.equal(overlay.style.display, 'none');
 });
+
+test('syncStudioSelectionOverlay applies bounds and transform handle state', () => {
+  const overlay = createOverlay();
+  const slide = {
+    querySelector(selector) {
+      assert.equal(selector, '#editorSelectionOverlay');
+      return overlay;
+    }
+  };
+
+  const result = overlayView.syncStudioSelectionOverlay({}, slide, {
+    selectedElements: ['element'],
+    buildSelectionOverlayState() {
+      return {
+        hasVisibleSelection: true,
+        visibleSelection: ['element']
+      };
+    },
+    getSelectionBounds(elements) {
+      assert.deepEqual(elements, ['element']);
+      return { left: 4, top: 8, width: 12, height: 16 };
+    },
+    getTransformSelectionState() {
+      return { canTransform: false };
+    }
+  });
+
+  assert.equal(result.didSync, true);
+  assert.equal(result.canTransform, false);
+  assert.deepEqual(overlay.style, {
+    display: 'block',
+    left: '4px',
+    top: '8px',
+    width: '12px',
+    height: '16px',
+    pointerEvents: 'none',
+    opacity: '1'
+  });
+  assert.equal(overlay.hiddenHandle.style.display, 'none');
+});
+
+test('syncStudioSelectionOverlay hides the overlay and transient guides when selection is empty', () => {
+  const overlay = createOverlay();
+  const slide = {
+    querySelector() {
+      return overlay;
+    }
+  };
+  const calls = [];
+
+  const result = overlayView.syncStudioSelectionOverlay({}, slide, {
+    buildSelectionOverlayState() {
+      return { hasVisibleSelection: false, visibleSelection: [] };
+    },
+    hideGuides() {
+      calls.push('hideGuides');
+    },
+    hideDragHud() {
+      calls.push('hideDragHud');
+    }
+  });
+
+  assert.equal(result.didSync, false);
+  assert.equal(overlay.style.display, 'none');
+  assert.deepEqual(calls, ['hideGuides', 'hideDragHud']);
+});
