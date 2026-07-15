@@ -1,12 +1,17 @@
 (function (root, factory) {
-  const api = factory();
+  const colorUtils = root && root.SlideNextStudioColorUtils
+    ? root.SlideNextStudioColorUtils
+    : typeof require === 'function'
+      ? require('./studio-color-utils.js')
+      : null;
+  const api = factory(colorUtils);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorWallpaperView = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (colorUtils) {
   function readInlineStyleValue(element, property) {
     return element && element.style && typeof element.style[property] === 'string'
       ? element.style[property].trim()
@@ -15,14 +20,8 @@
 
   function rgbToHex(value, converter = null) {
     if (typeof converter === 'function') return converter(value);
-    if (!value) return '#ffffff';
-    if (value.startsWith('#')) return value;
-    const rgbValues = value.match(/\d+/g);
-    if (!rgbValues) return '#ffffff';
-    const red = parseInt(rgbValues[0], 10);
-    const green = parseInt(rgbValues[1], 10);
-    const blue = parseInt(rgbValues[2], 10);
-    return `#${((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).slice(1)}`;
+    if (!colorUtils || typeof colorUtils.rgbToHex !== 'function') return '#ffffff';
+    return colorUtils.rgbToHex(value);
   }
 
   function normalizeStudioWallpaperColor(value, options = {}) {
