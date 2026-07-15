@@ -533,6 +533,130 @@
     });
   }
 
+  function updateCanonicalNodeStyle(deckLike, nodeStyles = []) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const styleUpdates = new Map();
+    const splitDeclarations = (styleText = '') => {
+      const declarations = [];
+      let current = '';
+      let quote = '';
+      let parenDepth = 0;
+      const sourceText = normalizeString(styleText);
+      for (let index = 0; index < sourceText.length; index += 1) {
+        const char = sourceText[index];
+        if (quote) {
+          current += char;
+          if (char === quote && sourceText[index - 1] !== '\\') quote = '';
+          continue;
+        }
+        if (char === '"' || char === '\'') {
+          quote = char;
+          current += char;
+          continue;
+        }
+        if (char === '(') parenDepth += 1;
+        if (char === ')' && parenDepth > 0) parenDepth -= 1;
+        if (char === ';' && parenDepth === 0) {
+          if (current.trim()) declarations.push(current.trim());
+          current = '';
+          continue;
+        }
+        current += char;
+      }
+      if (current.trim()) declarations.push(current.trim());
+      return declarations;
+    };
+    (Array.isArray(nodeStyles) ? nodeStyles : []).forEach((entry) => {
+      const nodeId = normalizeString(entry && entry.id).trim();
+      const property = normalizeString(entry && entry.property).trim().toLowerCase();
+      if (!nodeId || !property) return;
+      const updates = styleUpdates.get(nodeId) || [];
+      updates.push({
+        property,
+        value: entry && entry.value === null || entry && entry.value === undefined
+          ? ''
+          : normalizeString(entry.value).trim()
+      });
+      styleUpdates.set(nodeId, updates);
+    });
+    if (!isCanonicalDeck(deck) || styleUpdates.size === 0) {
+      return null;
+    }
+
+    const applyStyleUpdates = (styleText, updates) => {
+      let declarations = splitDeclarations(styleText);
+      updates.forEach(({ property, value }) => {
+        let replaced = false;
+        declarations = declarations.reduce((nextDeclarations, declaration) => {
+          const separatorIndex = declaration.indexOf(':');
+          const declarationProperty = separatorIndex === -1
+            ? ''
+            : declaration.slice(0, separatorIndex).trim().toLowerCase();
+          if (declarationProperty !== property) {
+            nextDeclarations.push(`${declaration};`);
+            return nextDeclarations;
+          }
+          if (!replaced && value) {
+            nextDeclarations.push(`${property}: ${value};`);
+            replaced = true;
+          }
+          return nextDeclarations;
+        }, []);
+        if (!replaced && value) {
+          declarations.push(`${property}: ${value};`);
+        }
+      });
+      return declarations.join(' ');
+    };
+
+    let didChange = false;
+    function updateNodes(nodes = []) {
+      return nodes.map((node, index) => {
+        if (!node || typeof node !== 'object') return node;
+        let nextNode = node;
+        let nodeChanged = false;
+        const currentChildren = Array.isArray(node.children) ? node.children : [];
+        const nextChildren = updateNodes(currentChildren);
+        if (nextChildren.some((child, childIndex) => child !== currentChildren[childIndex])) {
+          nextNode = {
+            ...nextNode,
+            children: nextChildren
+          };
+          nodeChanged = true;
+        }
+
+        const updates = styleUpdates.get(node.id);
+        if (updates) {
+          const currentStyle = normalizeString(node.style).trim();
+          const nextStyle = applyStyleUpdates(currentStyle, updates);
+          if (nextStyle !== currentStyle) {
+            nextNode = {
+              ...nextNode,
+              style: nextStyle
+            };
+            nodeChanged = true;
+          }
+        }
+
+        if (!nodeChanged) return node;
+        didChange = true;
+        return createCanonicalNode(nextNode, index);
+      });
+    }
+
+    const nextSlides = deck.slides.map((slide) => ({
+      ...slide,
+      nodes: updateNodes(Array.isArray(slide.nodes) ? slide.nodes : [])
+    }));
+    if (!didChange) return null;
+    return createCanonicalDeck({
+      ...deck,
+      slides: nextSlides
+    });
+  }
+
   function updateCanonicalSlideBackground(deckLike, slideIds = [], background = '') {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -586,6 +710,7 @@
     updateCanonicalNodeLayout,
     updateCanonicalNodeText,
     updateCanonicalNodeAttributes,
+    updateCanonicalNodeStyle,
     updateCanonicalSlideBackground
   };
 });

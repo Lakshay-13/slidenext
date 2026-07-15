@@ -277,6 +277,48 @@ test('updateCanonicalNodeAttributes returns null for no-op or invalid attribute 
   ]), null);
 });
 
+test('updateCanonicalNodeStyle immutably upserts CSS declarations on nested nodes', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'node-1',
+        style: 'color: red; background: linear-gradient(red, blue);',
+        children: [{ id: 'child-1', style: 'border-width: 1px;' }]
+      }]
+    }]
+  });
+
+  const updatedDeck = canonicalDeck.updateCanonicalNodeStyle(sourceDeck, [
+    { id: 'node-1', property: 'color', value: '#fff' },
+    { id: 'child-1', property: 'border-width', value: '4px' }
+  ]);
+
+  assert.ok(canonicalDeck.isCanonicalDeck(updatedDeck));
+  assert.equal(sourceDeck.slides[0].nodes[0].style, 'color: red; background: linear-gradient(red, blue);');
+  assert.equal(updatedDeck.slides[0].nodes[0].style, 'color: #fff; background: linear-gradient(red, blue);');
+  assert.equal(updatedDeck.slides[0].nodes[0].children[0].style, 'border-width: 4px;');
+});
+
+test('updateCanonicalNodeStyle returns null for no-op or invalid style updates', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', style: 'color: red;' }]
+    }]
+  });
+
+  assert.equal(canonicalDeck.updateCanonicalNodeStyle(deck, [
+    { id: 'node-1', property: 'color', value: 'red' }
+  ]), null);
+  assert.equal(canonicalDeck.updateCanonicalNodeStyle(deck, [
+    { id: 'missing', property: 'color', value: 'blue' }
+  ]), null);
+  assert.equal(canonicalDeck.updateCanonicalNodeStyle(deck, [
+    { id: 'node-1', property: '', value: 'blue' }
+  ]), null);
+});
+
 test('updateCanonicalSlideBackground immutably updates selected slide backgrounds', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{

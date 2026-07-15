@@ -5782,10 +5782,28 @@
         && typeof canonicalDeckApi.updateCanonicalNodeAttributes === 'function'
         ? canonicalDeckApi.updateCanonicalNodeAttributes
         : null;
+      const canonicalStyleProperty = {
+        size: { property: 'font-size', domProperty: 'fontSize' },
+        family: { property: 'font-family', domProperty: 'fontFamily' },
+        weight: { property: 'font-weight', domProperty: 'fontWeight' },
+        color: { property: 'color', domProperty: 'color' },
+        align: { property: 'text-align', domProperty: 'textAlign' },
+        opacity: { property: 'opacity', domProperty: 'opacity' },
+        borderStyle: { property: 'border-style', domProperty: 'borderStyle' },
+        borderWidth: { property: 'border-width', domProperty: 'borderWidth' },
+        borderRadius: { property: 'border-radius', domProperty: 'borderRadius' },
+        borderColor: { property: 'border-color', domProperty: 'borderColor' }
+      }[prop] || null;
+      const updateCanonicalNodeStyle = canonicalStyleProperty
+        && canonicalDeckApi
+        && typeof canonicalDeckApi.updateCanonicalNodeStyle === 'function'
+        ? canonicalDeckApi.updateCanonicalNodeStyle
+        : null;
       const canonicalDeckBeforeMutation = (
         updateCanonicalNodeLayout
         || updateCanonicalNodeText
         || updateCanonicalNodeAttributes
+        || updateCanonicalNodeStyle
       )
         && typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(doc)
@@ -5862,7 +5880,20 @@
                       : `${val}`
                 }
               }])
-            : null;
+            : updateCanonicalNodeStyle
+              ? updateCanonicalNodeStyle(
+                  canonicalDeckBeforeMutation,
+                  styleMutationPlan.selection.map((element) => ({
+                    id: getStyleElementId(element),
+                    property: canonicalStyleProperty.property,
+                    value: element
+                      && element.style
+                      && typeof element.style[canonicalStyleProperty.domProperty] === 'string'
+                      ? element.style[canonicalStyleProperty.domProperty]
+                      : `${val}`
+                  }))
+                )
+              : null;
       finalizeEditorDeckMutation(styleMutationPlan.versionLabel, {
         syncSelectionOverlay: true,
         refreshLayersList: prop === 'zIndex',

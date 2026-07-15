@@ -897,8 +897,15 @@ test('applySelectedElementStyle forwards a reversible CSS style transaction', ()
   };
   const doc = { label: 'iframe-doc' };
   const historyCalls = [];
+  const sourceDeck = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', style: 'color: red;' }]
+    }]
+  });
   const context = {
     SlideNextStudioEditorMutation: studioMutation,
+    SlideNextCanonicalDeck: canonicalDeckModel,
     SlideNextStudioEditorStyle: styleState,
     SlideNextStudioEditorTransaction: studioTransaction,
     selectedElements: [element],
@@ -910,6 +917,9 @@ test('applySelectedElementStyle forwards a reversible CSS style transaction', ()
     },
     getIframeDoc() {
       return doc;
+    },
+    buildEditorCanonicalDeck() {
+      return sourceDeck;
     },
     isElementLocked() {
       return false;
@@ -939,8 +949,18 @@ test('applySelectedElementStyle forwards a reversible CSS style transaction', ()
       elementId: 'node-1',
       before: { color: 'red' },
       after: { color: '#fff' }
+      }]
+  }, {
+    ...sourceDeck,
+    slides: [{
+      ...sourceDeck.slides[0],
+      nodes: [{
+        ...sourceDeck.slides[0].nodes[0],
+        style: 'color: #fff;'
+      }]
     }]
   }]]);
+  assert.equal(sourceDeck.slides[0].nodes[0].style, 'color: red;');
 });
 
 test('applySelectedElementStyle forwards a reversible text property transaction', () => {
