@@ -47,13 +47,13 @@
       const canonicalDeckOverride = Object.prototype.hasOwnProperty.call(buildOptions, 'canonicalDeckOverride')
         ? buildOptions.canonicalDeckOverride
         : null;
-      if (isCanonicalDeckLike(canonicalDeckOverride)) {
+      if (isCanonicalDeck(canonicalDeckOverride)) {
         return canonicalDeckOverride;
       }
 
       if (buildOptions.preferLiveCanonicalDeck !== false && doc) {
         const liveCanonicalDeck = resolveLiveCanonicalDeck(doc, buildOptions);
-        if (liveCanonicalDeck) {
+        if (isCanonicalDeck(liveCanonicalDeck)) {
           return liveCanonicalDeck;
         }
       }

@@ -32,6 +32,30 @@ test('canonical deck builder prioritizes overrides and session-scoped live state
   assert.deepEqual(calls, [['live', documentRef]]);
 });
 
+test('canonical deck builder rejects invalid overrides and live models before falling back', () => {
+  const invalidOverride = { slides: [] };
+  const invalidLiveDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+  const rebuiltDeck = createDeck('rebuilt');
+  const documentRef = {};
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    isCanonicalDeck(value) {
+      return !!value
+        && value.kind === 'slidenext.deck'
+        && value.metadata
+        && typeof value.metadata.id === 'string'
+        && value.metadata.id.trim() !== '';
+    },
+    resolveLiveCanonicalDeck() {
+      return invalidLiveDeck;
+    },
+    buildStudioCanonicalDeck() {
+      return rebuiltDeck;
+    }
+  });
+
+  assert.equal(builder(documentRef, { canonicalDeckOverride: invalidOverride }), rebuiltDeck);
+});
+
 test('canonical deck builder can rebuild from a document or return the stored model without one', () => {
   const storedDeck = createDeck('stored');
   const importedDeck = createDeck('imported');
