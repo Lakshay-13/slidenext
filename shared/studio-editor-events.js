@@ -5,14 +5,17 @@
   const nudge = typeof module === 'object' && module.exports
     ? require('./studio-editor-nudge')
     : root && root.SlideNextStudioEditorNudge;
-  const api = factory(liveSelection, nudge);
+  const transform = typeof module === 'object' && module.exports
+    ? require('./studio-editor-transform')
+    : root && root.SlideNextStudioEditorTransform;
+  const api = factory(liveSelection, nudge, transform);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorEvents = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (liveSelection, nudge) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (liveSelection, nudge, transform) {
   function getFrameShortcutSelection(elements = []) {
     if (liveSelection && typeof liveSelection.getStudioLiveSelection === 'function') {
       return liveSelection.getStudioLiveSelection(elements);
@@ -95,9 +98,13 @@
       ? options.getSelectedElements
       : () => [];
     const captureTarget = options.captureTarget || null;
+    const defaultDragStartThresholdPx = transform
+      && Number.isFinite(transform.DEFAULT_DRAG_START_THRESHOLD_PX)
+      ? transform.DEFAULT_DRAG_START_THRESHOLD_PX
+      : 4;
     const dragStartThresholdPx = Number.isFinite(options.dragStartThresholdPx)
-      ? options.dragStartThresholdPx
-      : 3;
+      ? Math.max(0, options.dragStartThresholdPx)
+      : defaultDragStartThresholdPx;
     let session = null;
 
     function isPrimaryPointer(event = {}) {

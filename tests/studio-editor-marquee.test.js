@@ -52,6 +52,30 @@ test('createStudioMarqueePointerHandlers starts only on empty primary slide spac
   assert.equal(handler.getSession().additive, false);
 });
 
+test('createStudioMarqueePointerHandlers uses the shared drag threshold by default', () => {
+  const slide = { contains: () => true };
+  const handler = events.createStudioMarqueePointerHandlers({
+    getActiveSlide: () => slide,
+    getSlideMetrics: () => ({ scaleX: 1, scaleY: 1 }),
+    getPointerOnSlide: (event) => ({ x: event.clientX, y: event.clientY })
+  });
+
+  assert.equal(handler.handlePointerDown(createPointerEvent({
+    target: slide,
+    clientX: 0,
+    clientY: 0
+  })), true);
+  assert.equal(handler.handlePointerMove(createPointerEvent({
+    clientX: 3,
+    clientY: 0
+  })), false);
+  assert.equal(handler.handlePointerMove(createPointerEvent({
+    clientX: 4,
+    clientY: 0
+  })), true);
+  assert.equal(handler.handlePointerCancel(createPointerEvent()), true);
+});
+
 test('attachStudioMarqueePointerHandlers binds the shared marquee lifecycle', () => {
   const bodyListeners = new Map();
   const windowListeners = new Map();
