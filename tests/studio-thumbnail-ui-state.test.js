@@ -47,6 +47,33 @@ function createThumbCard() {
   };
 }
 
+test('syncStudioThumbnailList derives the slide-delete affordance from snapshot size', () => {
+  const thumbnailsList = createListContainer();
+  const documentRef = {
+    getElementById(id) {
+      return id === 'thumbnailsList' ? thumbnailsList : null;
+    },
+    createElement() {
+      return createThumbCard();
+    }
+  };
+  const deckSnapshot = {
+    activeSlideId: 'slide-1',
+    slides: [
+      { id: 'slide-1', index: 0, title: 'First', backgroundLabel: 'Solid' },
+      { id: 'slide-2', index: 1, title: 'Second', backgroundLabel: 'Solid' }
+    ]
+  };
+
+  assert.equal(thumbnailView.syncStudioThumbnailList({
+    documentRef,
+    deckSnapshot,
+    canMutateSlides: true
+  }), true);
+  assert.equal(thumbnailsList.children.length, 2);
+  assert.match(thumbnailsList.children[0].innerHTML, /deleteSlideNodeById/);
+});
+
 test('attachStudioThumbnailDragAndDrop preserves thumbnail drag state and reorder behavior', () => {
   const card = createThumbCard();
   card.dataset.slideId = 'slide-2';
@@ -136,6 +163,52 @@ test('setupDragAndDropThumbnail delegates event binding to the shared thumbnail 
   assert.equal(calls[0][2].getDraggedSlideId(), 'slide-1');
   calls[0][2].onReorder('slide-1', 'slide-2');
   assert.deepEqual(calls[1], ['reorder', 'slide-1', 'slide-2']);
+});
+
+test('generateThumbnails delegates thumbnail option assembly to the shared coordinator', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const generateThumbnailsSource = extractFunctionSource(
+    fileContent,
+    'function generateThumbnails() {',
+    '\n\n    // HTML5 Drag and Drop handlers for thumbnail cards'
+  );
+  const deckSnapshot = {
+    activeSlideId: 'slide-1',
+    slides: [{ id: 'slide-1', index: 0 }]
+  };
+  const calls = [];
+  const iframeDoc = { id: 'doc' };
+  const context = {
+    SlideNextStudioEditorThumbnailView: {
+      syncStudioThumbnailList(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    buildEditorDeckSnapshot() {
+      return deckSnapshot;
+    },
+    document: {},
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getStudioActiveSlideIndex() {
+      return 0;
+    },
+    setActiveSlideById() {},
+    setupDragAndDropThumbnail() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(generateThumbnailsSource, context);
+
+  assert.equal(context.generateThumbnails(), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.equal(calls[0].deckSnapshot, deckSnapshot);
+  assert.equal(calls[0].canMutateSlides, true);
+  assert.equal(typeof calls[0].onSelectSlide, 'function');
+  assert.equal(typeof calls[0].setupDragAndDropThumbnail, 'function');
 });
 
 test('generateThumbnails hides the slide delete affordance when only one slide remains', () => {

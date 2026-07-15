@@ -76,6 +76,18 @@
     return true;
   }
 
+  function syncStudioThumbnailList(options = {}) {
+    const deckSnapshot = options.deckSnapshot || {};
+    const slides = Array.isArray(deckSnapshot.slides) ? deckSnapshot.slides : [];
+    const canDeleteSlides = typeof options.canDeleteSlides === 'boolean'
+      ? options.canDeleteSlides
+      : slides.length > 1;
+    return renderStudioThumbnailList({
+      ...options,
+      canDeleteSlides
+    });
+  }
+
   function attachStudioThumbnailDragAndDrop(card, options = {}) {
     if (!card || typeof card.addEventListener !== 'function') return false;
 
@@ -129,6 +141,7 @@
 
   return {
     renderStudioThumbnailList,
+    syncStudioThumbnailList,
     attachStudioThumbnailDragAndDrop
   };
 });

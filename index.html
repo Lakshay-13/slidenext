@@ -2402,20 +2402,26 @@
       const thumbnailView = typeof SlideNextStudioEditorThumbnailView !== 'undefined'
         ? SlideNextStudioEditorThumbnailView
         : null;
-      if (!thumbnailView || typeof thumbnailView.renderStudioThumbnailList !== 'function') return false;
-
-      return thumbnailView.renderStudioThumbnailList({
+      if (!thumbnailView) return false;
+      const options = {
         documentRef: document,
         deckSnapshot,
         getActiveSlideIndex: () => (
           deckSnapshot.slides.length === 0 ? 0 : getStudioActiveSlideIndex(iframeDoc)
         ),
         canMutateSlides: !!iframeDoc,
-        canDeleteSlides: deckSnapshot.slides.length > 1,
         onSelectSlide: (slideId) => {
           setActiveSlideById(slideId, undefined, { captureHistory: true });
         },
         setupDragAndDropThumbnail
+      };
+      if (typeof thumbnailView.syncStudioThumbnailList === 'function') {
+        return thumbnailView.syncStudioThumbnailList(options);
+      }
+      if (typeof thumbnailView.renderStudioThumbnailList !== 'function') return false;
+      return thumbnailView.renderStudioThumbnailList({
+        ...options,
+        canDeleteSlides: deckSnapshot.slides.length > 1
       });
     }
 
