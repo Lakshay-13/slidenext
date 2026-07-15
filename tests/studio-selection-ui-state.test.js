@@ -45,6 +45,60 @@ function loadRefreshSelectionClasses(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadCommitEditorSelectionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function commitEditorSelectionState(nextSelectionState, options = {}) {',
+    '\n\n    function restoreSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+test('commitEditorSelectionState delegates to the shared selection commit helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const nextSelectionState = { selectedElements: [{ id: 'node-1' }] };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioEditorSelection: {
+      commitStudioSelectionState(...args) {
+        delegatedArgs = args;
+        return { committed: true };
+      }
+    },
+    getEditorSelectionOptions() {
+      return { selectionOptions: true };
+    },
+    applyEditorSelectionState() {},
+    refreshSelectionClasses() {},
+    syncSelectionOverlay() {},
+    syncInspectorForSelection() {},
+    updateLayersList() {}
+  };
+
+  vm.createContext(context);
+  loadCommitEditorSelectionState(fileContent, context);
+
+  assert.deepEqual(
+    context.commitEditorSelectionState(nextSelectionState),
+    { committed: true }
+  );
+  assert.equal(delegatedArgs[0], nextSelectionState);
+  assert.equal(delegatedArgs[1].selectionOptions, true);
+  assert.equal(delegatedArgs[1].applySelectionState, context.applyEditorSelectionState);
+});
+
+test('commitEditorSelectionState fails closed when the shared selection API is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    SlideNextStudioEditorSelection: null
+  };
+
+  vm.createContext(context);
+  loadCommitEditorSelectionState(fileContent, context);
+
+  assert.equal(context.commitEditorSelectionState({ selectedElements: [] }), false);
+});
+
 test('refreshSelectionClasses delegates shared class refresh and updates local selection', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { id: 'doc' };

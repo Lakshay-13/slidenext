@@ -3952,7 +3952,11 @@
     }
 
     function commitEditorSelectionState(nextSelectionState, options = {}) {
-      return SlideNextStudioEditorSelection.commitStudioSelectionState(nextSelectionState, {
+      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
+        ? SlideNextStudioEditorSelection
+        : null;
+      if (!selectionApi || typeof selectionApi.commitStudioSelectionState !== 'function') return false;
+      return selectionApi.commitStudioSelectionState(nextSelectionState, {
         ...getEditorSelectionOptions(),
         applySelectionState: applyEditorSelectionState,
         refreshSelectionClasses,
