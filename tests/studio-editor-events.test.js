@@ -3,6 +3,29 @@ const assert = require('node:assert/strict');
 
 const events = require('../shared/studio-editor-events.js');
 
+test('attachStudioFrameInteractionHandlers binds frame click and keyboard listeners', () => {
+  const listeners = new Map();
+  const doc = {
+    addEventListener(type, handler, capture) {
+      listeners.set(type, { handler, capture });
+    }
+  };
+  const clickHandler = () => {};
+  const keydownHandler = () => {};
+
+  assert.equal(events.attachStudioFrameInteractionHandlers(doc, {
+    clickHandler,
+    keydownHandler
+  }), true);
+  assert.deepEqual(listeners.get('click'), { handler: clickHandler, capture: true });
+  assert.deepEqual(listeners.get('keydown'), { handler: keydownHandler, capture: true });
+});
+
+test('attachStudioFrameInteractionHandlers tolerates missing frame documents', () => {
+  assert.equal(events.attachStudioFrameInteractionHandlers(null), false);
+  assert.equal(events.attachStudioFrameInteractionHandlers({}), false);
+});
+
 function createKeyboardEvent(overrides = {}) {
   let prevented = 0;
   let stopped = 0;

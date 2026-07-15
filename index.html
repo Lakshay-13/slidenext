@@ -2323,8 +2323,8 @@
       // 2. Make elements hoverable & selectable
       makeElementsHoverable(iframeDoc);
       
-      // 3. Setup click listeners on the document (survives innerHTML body swaps)
-      iframeDoc.addEventListener('click', SlideNextStudioEditorEvents.createStudioFrameClickHandler({
+      // 3. Setup click and keyboard listeners on the document (survive innerHTML body swaps)
+      const frameClickHandler = SlideNextStudioEditorEvents.createStudioFrameClickHandler({
         isDraggingElement: () => isDraggingElement,
         consumeClickSuppression: () => {
           const shouldSuppress = suppressNextFrameClick;
@@ -2335,10 +2335,8 @@
         resolveEditableTarget,
         selectElement,
         deselectElement
-      }), true);
-      
-      // 4. Setup Keydown bubble
-      iframeDoc.addEventListener('keydown', SlideNextStudioEditorEvents.createStudioFrameKeydownHandler({
+      });
+      const frameKeydownHandler = SlideNextStudioEditorEvents.createStudioFrameKeydownHandler({
         getActiveElement: () => iframeDoc.activeElement,
         getSelectedElements: () => getLiveSelectedElements(selectedElements, iframeDoc),
         canMutateDeck: () => !!getActiveSlide(iframeDoc),
@@ -2352,7 +2350,19 @@
         pasteClipboardElements,
         duplicateSelectedElements,
         nudgeSelectedElements
-      }), true);
+      });
+      const attachFrameInteractionHandlers = typeof SlideNextStudioEditorEvents.attachStudioFrameInteractionHandlers === 'function'
+        ? SlideNextStudioEditorEvents.attachStudioFrameInteractionHandlers
+        : null;
+      if (attachFrameInteractionHandlers) {
+        attachFrameInteractionHandlers(iframeDoc, {
+          clickHandler: frameClickHandler,
+          keydownHandler: frameKeydownHandler
+        });
+      } else {
+        iframeDoc.addEventListener('click', frameClickHandler, true);
+        iframeDoc.addEventListener('keydown', frameKeydownHandler, true);
+      }
 
       SlideNextStudioFrameBootstrap.runStudioFrameBootstrap(iframeDoc, {
         setupIframeDragging,

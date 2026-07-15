@@ -333,6 +333,20 @@
     return attachStudioPointerHandlers(doc, handlers);
   }
 
+  function attachStudioFrameInteractionHandlers(doc, options = {}) {
+    if (!doc || typeof doc.addEventListener !== 'function') return false;
+    let didAttach = false;
+    [
+      ['click', options.clickHandler],
+      ['keydown', options.keydownHandler]
+    ].forEach(([eventName, handler]) => {
+      if (typeof handler !== 'function') return;
+      doc.addEventListener(eventName, handler, true);
+      didAttach = true;
+    });
+    return didAttach;
+  }
+
   function createStudioFrameKeydownHandler(options = {}) {
     const getActiveElement = typeof options.getActiveElement === 'function'
       ? options.getActiveElement
@@ -600,6 +614,7 @@
     createStudioMarqueeSelectionHandlers,
     attachStudioPointerHandlers,
     attachStudioMarqueePointerHandlers,
+    attachStudioFrameInteractionHandlers,
     createStudioFrameKeydownHandler,
     createStudioGlobalKeydownHandler
   };
