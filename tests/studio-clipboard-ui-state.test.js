@@ -31,6 +31,15 @@ function extractClipboardActionFinalizerSource(fileContent) {
   );
 }
 
+function loadClipboardInsertionHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorClipboardInsertionWithTransaction(insertionPlans, slide, options = {}) {',
+    '\n\n    function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function createControls() {
   return {
     copySelectionBtn: { disabled: true },
@@ -446,6 +455,7 @@ test('insertClipboardPayload captures each insertion parent once through the sha
   };
 
   vm.createContext(context);
+  loadClipboardInsertionHelper(fileContent, context);
   vm.runInContext(insertClipboardPayloadSource, context);
 
   const inserted = context.insertClipboardPayload([{ id: 'source-1' }, { id: 'source-2' }], 1, {
@@ -525,6 +535,7 @@ test('insertClipboardPayload delegates insertion application to the shared clipb
   };
 
   vm.createContext(context);
+  loadClipboardInsertionHelper(fileContent, context);
   vm.runInContext(insertClipboardPayloadSource, context);
 
   const result = context.insertClipboardPayload([{ id: 'source-1' }], 1, {
