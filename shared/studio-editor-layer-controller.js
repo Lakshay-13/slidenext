@@ -47,6 +47,62 @@
     return true;
   }
 
+  function toggleStudioLayerVisibilityByRef(options = {}) {
+    const event = options.event;
+    if (!event) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    const currentTarget = event.currentTarget;
+    const parentRow = currentTarget && typeof currentTarget.closest === 'function'
+      ? currentTarget.closest('[class*="border"]')
+      : null;
+    const resolveLayerRowElement = typeof options.resolveLayerRowElement === 'function'
+      ? options.resolveLayerRowElement
+      : (row) => resolveStudioLayerRowElement({
+        row,
+        getElementByEditorId: options.getElementByEditorId
+      });
+    const target = resolveLayerRowElement(parentRow);
+    if (!target) {
+      if (typeof options.updateLayersList === 'function') options.updateLayersList();
+      return false;
+    }
+
+    const getCommittedSelectedEditorElementIds = options.getCommittedSelectedEditorElementIds;
+    const preservedSelectionIds = typeof getCommittedSelectedEditorElementIds === 'function'
+      ? getCommittedSelectedEditorElementIds()
+      : [];
+    const restorePreservedSelection = () => {
+      if (preservedSelectionIds.length === 0) {
+        if (typeof options.deselectElement === 'function') options.deselectElement();
+        return;
+      }
+      if (typeof options.restoreCommittedSelectionByIdsOnActiveSlide === 'function') {
+        options.restoreCommittedSelectionByIdsOnActiveSlide(preservedSelectionIds);
+      }
+    };
+
+    if (typeof options.applyEditorSelectionState === 'function') {
+      options.applyEditorSelectionState({
+        selectedElements: [target],
+        selectedElement: target
+      });
+    }
+    if (typeof options.refreshSelectionClasses === 'function') {
+      options.refreshSelectionClasses();
+    }
+    const toggleSelectedElementsVisibility = options.toggleSelectedElementsVisibility;
+    const didToggle = typeof toggleSelectedElementsVisibility === 'function'
+      ? toggleSelectedElementsVisibility({ skipSelectionUi: true })
+      : false;
+    if (!didToggle) {
+      restorePreservedSelection();
+      return false;
+    }
+    restorePreservedSelection();
+    return true;
+  }
+
   function syncStudioLayerList(options = {}) {
     const documentRef = options.documentRef;
     const iframeDoc = options.iframeDoc || null;
@@ -127,6 +183,7 @@
   return {
     resolveStudioLayerRowElement,
     selectStudioLayerElementByRef,
+    toggleStudioLayerVisibilityByRef,
     syncStudioLayerList
   };
 });

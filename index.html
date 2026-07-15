@@ -9879,6 +9879,22 @@
     }
 
     function toggleLayerVisibilityByRef(event) {
+      const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
+        ? SlideNextStudioEditorLayerController
+        : null;
+      if (layerController && typeof layerController.toggleStudioLayerVisibilityByRef === 'function') {
+        return layerController.toggleStudioLayerVisibilityByRef({
+          event,
+          resolveLayerRowElement,
+          updateLayersList,
+          getCommittedSelectedEditorElementIds,
+          deselectElement,
+          restoreCommittedSelectionByIdsOnActiveSlide,
+          applyEditorSelectionState,
+          refreshSelectionClasses,
+          toggleSelectedElementsVisibility
+        });
+      }
       event.preventDefault();
       event.stopPropagation();
       const parentRow = event.currentTarget.closest('[class*="border"]');

@@ -104,6 +104,108 @@ test('selectStudioLayerElementByRef refreshes stale rows and preserves selection
   assert.deepEqual(calls[9][2], { additive: true, toggle: true });
 });
 
+test('toggleStudioLayerVisibilityByRef restores the committed selection after a failed toggle', () => {
+  const row = { id: 'row-1' };
+  const target = { id: 'node-1' };
+  const calls = [];
+  const event = {
+    currentTarget: {
+      closest(selector) {
+        calls.push(['closest', selector]);
+        return row;
+      }
+    },
+    preventDefault() {
+      calls.push(['preventDefault']);
+    },
+    stopPropagation() {
+      calls.push(['stopPropagation']);
+    }
+  };
+
+  assert.equal(layerController.toggleStudioLayerVisibilityByRef({
+    event,
+    resolveLayerRowElement(currentRow) {
+      calls.push(['resolveLayerRowElement', currentRow]);
+      return target;
+    },
+    getCommittedSelectedEditorElementIds() {
+      calls.push(['getCommittedSelectedEditorElementIds']);
+      return ['node-2'];
+    },
+    applyEditorSelectionState(nextState) {
+      calls.push(['applyEditorSelectionState', nextState]);
+    },
+    refreshSelectionClasses() {
+      calls.push(['refreshSelectionClasses']);
+    },
+    toggleSelectedElementsVisibility(options) {
+      calls.push(['toggleSelectedElementsVisibility', options]);
+      return false;
+    },
+    restoreCommittedSelectionByIdsOnActiveSlide(ids) {
+      calls.push(['restoreCommittedSelectionByIdsOnActiveSlide', ids]);
+    }
+  }), false);
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'preventDefault',
+    'stopPropagation',
+    'closest',
+    'resolveLayerRowElement',
+    'getCommittedSelectedEditorElementIds',
+    'applyEditorSelectionState',
+    'refreshSelectionClasses',
+    'toggleSelectedElementsVisibility',
+    'restoreCommittedSelectionByIdsOnActiveSlide'
+  ]);
+  assert.equal(calls[5][1].selectedElement, target);
+  assert.deepEqual(calls[7][1], { skipSelectionUi: true });
+  assert.deepEqual(calls[8][1], ['node-2']);
+});
+
+test('toggleStudioLayerVisibilityByRef refreshes stale rows without mutating selection', () => {
+  const row = { id: 'row-1' };
+  const calls = [];
+  const event = {
+    currentTarget: {
+      closest(selector) {
+        calls.push(['closest', selector]);
+        return row;
+      }
+    },
+    preventDefault() {
+      calls.push(['preventDefault']);
+    },
+    stopPropagation() {
+      calls.push(['stopPropagation']);
+    }
+  };
+
+  assert.equal(layerController.toggleStudioLayerVisibilityByRef({
+    event,
+    resolveLayerRowElement(currentRow) {
+      calls.push(['resolveLayerRowElement', currentRow]);
+      return null;
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    },
+    getCommittedSelectedEditorElementIds() {
+      calls.push(['getCommittedSelectedEditorElementIds']);
+      return ['node-2'];
+    }
+  }), false);
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'preventDefault',
+    'stopPropagation',
+    'closest',
+    'resolveLayerRowElement',
+    'updateLayersList'
+  ]);
+});
+
 test('syncStudioLayerList assembles live layer action state before shared rendering', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const activeSlide = { id: 'slide-1' };
