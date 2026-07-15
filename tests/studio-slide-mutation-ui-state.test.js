@@ -289,6 +289,25 @@ test('restoreSelectionAfterPreservedSlideMutation delegates preservation orderin
   assert.equal(context.preserveSelectionOnNextActiveSlideSync, true);
 });
 
+test('restoreSelectionAfterPreservedSlideMutation fails closed when the shared selection API is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const restoreSelectionSource = extractFunctionSource(
+    fileContent,
+    'function restoreSelectionAfterPreservedSlideMutation(selectedIds, doc = getIframeDoc()) {',
+    '\n\n    function ensureSelectionOverlay(doc, slide) {'
+  );
+  const context = {
+    preserveSelectionOnNextActiveSlideSync: false,
+    SlideNextStudioEditorSelection: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(restoreSelectionSource, context);
+
+  assert.equal(context.restoreSelectionAfterPreservedSlideMutation(['node-1'], { id: 'doc' }), false);
+  assert.equal(context.preserveSelectionOnNextActiveSlideSync, false);
+});
+
 test('restoreDeckViewAfterSlideMutation delegates slide restore callbacks through shared selection and navigation helpers', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { id: 'doc' };

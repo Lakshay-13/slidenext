@@ -3968,21 +3968,18 @@
       const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
         ? SlideNextStudioEditorSelection
         : null;
-      if (selectionApi && typeof selectionApi.restoreStudioSelectionAfterSlideMutation === 'function') {
-        return selectionApi.restoreStudioSelectionAfterSlideMutation(selectedIds, doc, {
-          ...getEditorSelectionOptions({ doc }),
-          applySelectionState: applyEditorSelectionState,
-          syncSelectionOverlay,
-          hideDragHud,
-          syncInspectorForSelection,
-          updateLayersList,
-          preserveSelection: () => {
-            preserveSelectionOnNextActiveSlideSync = true;
-          }
-        }).restored;
-      }
-      preserveSelectionOnNextActiveSlideSync = true;
-      return restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc);
+      if (!selectionApi || typeof selectionApi.restoreStudioSelectionAfterSlideMutation !== 'function') return false;
+      return selectionApi.restoreStudioSelectionAfterSlideMutation(selectedIds, doc, {
+        ...getEditorSelectionOptions({ doc }),
+        applySelectionState: applyEditorSelectionState,
+        syncSelectionOverlay,
+        hideDragHud,
+        syncInspectorForSelection,
+        updateLayersList,
+        preserveSelection: () => {
+          preserveSelectionOnNextActiveSlideSync = true;
+        }
+      }).restored;
     }
 
     function ensureSelectionOverlay(doc, slide) {
