@@ -7,6 +7,21 @@
     root.SlideNextStudioEditorCanonicalLayout = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function buildStudioCanonicalLayoutBaseline(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+
+    if (!canonicalDeckApi || !buildCanonicalDeck) {
+      return null;
+    }
+
+    return buildCanonicalDeck(options.sourceDocument);
+  }
+
   function buildStudioCanonicalLayoutDeck(layoutUpdates, options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -30,6 +45,7 @@
   }
 
   return {
+    buildStudioCanonicalLayoutBaseline,
     buildStudioCanonicalLayoutDeck
   };
 });

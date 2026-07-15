@@ -13,6 +13,23 @@ function createSourceDeck() {
   });
 }
 
+test('buildStudioCanonicalLayoutBaseline builds from the source document', () => {
+  const sourceDeck = createSourceDeck();
+  const sourceDocument = { id: 'editor-doc' };
+  let builtFromDocument = null;
+  const result = canonicalLayout.buildStudioCanonicalLayoutBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtFromDocument = documentRef;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(builtFromDocument, sourceDocument);
+  assert.equal(result, sourceDeck);
+});
+
 test('buildStudioCanonicalLayoutDeck applies layout updates to the provided pre-mutation deck', () => {
   const sourceDeck = createSourceDeck();
   const result = canonicalLayout.buildStudioCanonicalLayoutDeck(
