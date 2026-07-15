@@ -241,6 +241,17 @@ test('syncStudioClipboardToolbarState builds and renders clipboard controls in o
   assert.deepEqual(Object.values(buttons).map((button) => button.disabled), [false, false, false]);
 });
 
+test('finalizeStudioClipboardActionResult refreshes clipboard state and preserves the result', () => {
+  const calls = [];
+
+  assert.equal(clipboardState.finalizeStudioClipboardActionResult(true, {
+    updateClipboardActionState() {
+      calls.push('updateClipboardActionState');
+    }
+  }), true);
+  assert.deepEqual(calls, ['updateClipboardActionState']);
+});
+
 test('buildStudioClipboardSelectionMutationPlan combines payload viability with the shared clipboard mutation state', () => {
   assert.deepEqual(clipboardState.buildStudioClipboardSelectionMutationPlan(
     [{ id: 1 }],

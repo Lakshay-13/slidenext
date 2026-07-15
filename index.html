@@ -5698,6 +5698,14 @@
     }
 
     function finalizeClipboardActionResult(result) {
+      const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
+        ? SlideNextStudioEditorClipboard
+        : null;
+      if (clipboardApi && typeof clipboardApi.finalizeStudioClipboardActionResult === 'function') {
+        return clipboardApi.finalizeStudioClipboardActionResult(result, {
+          updateClipboardActionState
+        });
+      }
       updateClipboardActionState();
       return result;
     }

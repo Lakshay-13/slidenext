@@ -115,6 +115,14 @@
     });
   }
 
+  function finalizeStudioClipboardActionResult(result, options = {}) {
+    const updateClipboardActionState = typeof options.updateClipboardActionState === 'function'
+      ? options.updateClipboardActionState
+      : () => {};
+    updateClipboardActionState();
+    return result;
+  }
+
   function buildStudioClipboardSelectionMutationPlan(elements = [], clipboard = null, options = {}) {
     const clipboardMutationPlan = buildStudioClipboardMutationPlan(elements, clipboard, options);
     const buildPayloadItems = typeof options.buildPayloadItems === 'function'
@@ -413,6 +421,7 @@
     buildStudioClipboardToolbarState,
     renderStudioClipboardToolbarState,
     syncStudioClipboardToolbarState,
+    finalizeStudioClipboardActionResult,
     buildStudioClipboardSelectionMutationPlan,
     buildStudioClipboardMutationPlan,
     buildStudioClipboardPayloadItem,

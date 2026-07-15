@@ -201,6 +201,27 @@ test('finalizeClipboardActionResult refreshes clipboard controls and preserves t
   ]);
 });
 
+test('finalizeClipboardActionResult delegates result refresh to the shared clipboard module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let delegated = null;
+  const context = {
+    SlideNextStudioEditorClipboard: {
+      finalizeStudioClipboardActionResult(result, options) {
+        delegated = { result, options };
+        return 'delegated';
+      }
+    },
+    updateClipboardActionState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(extractClipboardActionFinalizerSource(fileContent), context);
+
+  assert.equal(context.finalizeClipboardActionResult(false), 'delegated');
+  assert.equal(delegated.result, false);
+  assert.equal(delegated.options.updateClipboardActionState, context.updateClipboardActionState);
+});
+
 test('finalizeInsertedElements commits the new selection and delegates persistence through the shared mutation helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const finalizeInsertedElementsSource = extractFunctionSource(
