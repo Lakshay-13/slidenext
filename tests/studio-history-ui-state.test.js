@@ -331,6 +331,7 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
   const calls = [];
   const context = {
     SlideNextStudioDeckView: {
+      createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId
     },
     SlideNextStudioHistory: {

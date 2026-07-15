@@ -607,6 +607,7 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
   const context = {
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
     SlideNextStudioDeckView: {
+      createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId
     },
     SlideNextDeckPersistence: {

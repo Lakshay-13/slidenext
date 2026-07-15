@@ -779,7 +779,7 @@ test('getEditorCanonicalDeckValidator returns the shared canonical deck validato
   );
 });
 
-test('createEditorDeckViewSharedOptions reuses the local deck canonical override selector and validator when available', () => {
+test('createEditorDeckViewSharedOptions reuses the shared deck canonical override selector and validator when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
@@ -797,6 +797,9 @@ test('createEditorDeckViewSharedOptions reuses the local deck canonical override
   const helperCalls = [];
   const isCanonicalDeck = (deck) => deck === canonicalDeck;
   const context = {
+    SlideNextStudioDeckView: {
+      createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions
+    },
     currentSlideIndex: 2,
     getPersistedActiveSlideId() {
       return 'slide-persisted';
@@ -1292,6 +1295,7 @@ test('resolveEditorFallbackActiveSlideId delegates to the shared deck view helpe
   let delegatedArgs = null;
   const context = {
     SlideNextStudioDeckView: {
+      createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       resolveStudioFallbackActiveSlideId(doc, nextCanonicalDeck, options) {
         delegatedArgs = { doc, nextCanonicalDeck, options };
         return 'slide-shared';
@@ -1355,6 +1359,7 @@ test('resolveEditorFallbackActiveSlideId forwards canonical override resolution 
       }
     },
     SlideNextStudioDeckView: {
+      createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       resolveStudioFallbackActiveSlideId(doc, nextCanonicalDeck, options) {
         delegatedArgs = { doc, nextCanonicalDeck, options };
         return options.resolveCanonicalDeckOverride(nextCanonicalDeck, doc);

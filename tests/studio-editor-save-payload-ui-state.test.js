@@ -3588,6 +3588,7 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when playback-st
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
     SlideNextStudioDeckView: {
+      createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId
     },
     SlideNextDeckPersistence: {
@@ -3762,6 +3763,7 @@ test('capturePersistedDeckPlaybackState delegates fallback active slide resoluti
   const context = {
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
     SlideNextStudioDeckView: {
+      createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId
     },
     SlideNextDeckPersistence: {
@@ -4085,6 +4087,7 @@ test('capturePersistedDeckPlaybackState falls back to the current session slide 
   const context = {
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
     SlideNextStudioDeckView: {
+      createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId
     },
     SlideNextDeckPersistence: {
@@ -4321,6 +4324,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       buildStudioSourceHtml(nextDoc, options) {
         calls.push([nextDoc, options]);
         return '<html>canonical-source</html>';
@@ -4749,6 +4753,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
+      createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       buildStudioSourceHtml(nextDoc, options) {
         calls.push([nextDoc, options]);
         return '<html>canonical-source</html>';

@@ -3640,23 +3640,7 @@
           isCanonicalDeck
         });
       }
-
-      const resolveCanonicalDeckOverride = (canonicalDeck = null, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
-        canonicalDeck,
-        {
-          buildCanonicalDeck: canonicalDeck
-            ? () => buildEditorCanonicalDeck(nextDoc)
-            : null
-        }
-      );
-      return {
-        currentSlideIndex,
-        getPersistedActiveSlideId,
-        resolveCanonicalDeck: buildCanonicalDeck,
-        resolveCanonicalDeckOverride,
-        resolveLiveActiveSlideId,
-        isCanonicalDeck
-      };
+      return {};
     }
 
     function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
