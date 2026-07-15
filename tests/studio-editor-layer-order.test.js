@@ -110,6 +110,40 @@ test('buildStudioLayerOrderToolbarState derives layer arrangement button states 
   });
 });
 
+test('renderStudioLayerOrderToolbarState applies arrangement and z-index control states', () => {
+  const buttons = {
+    arrangeLayerFrontBtn: { disabled: true },
+    arrangeLayerBackBtn: { disabled: true },
+    arrangeLayerForwardBtn: { disabled: true },
+    arrangeLayerBackwardBtn: { disabled: true },
+    elZIndex: { disabled: true }
+  };
+
+  assert.equal(layerOrder.renderStudioLayerOrderToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return buttons[id] || null;
+      }
+    },
+    actionState: {
+      buttonStates: {
+        arrangeLayerFrontBtn: true,
+        arrangeLayerBackBtn: false,
+        arrangeLayerForwardBtn: true,
+        arrangeLayerBackwardBtn: false
+      },
+      controlStates: {
+        elZIndex: true
+      }
+    }
+  }), true);
+  assert.equal(buttons.arrangeLayerFrontBtn.disabled, false);
+  assert.equal(buttons.arrangeLayerBackBtn.disabled, true);
+  assert.equal(buttons.arrangeLayerForwardBtn.disabled, false);
+  assert.equal(buttons.arrangeLayerBackwardBtn.disabled, true);
+  assert.equal(buttons.elZIndex.disabled, false);
+});
+
 test('buildStudioLayerOrderToolbarState can include shared z-index control enablement', () => {
   const first = { id: 'first', isConnected: true, locked: false };
   const orderedElements = [first];

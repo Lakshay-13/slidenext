@@ -79,6 +79,35 @@
     };
   }
 
+  function renderStudioLayerOrderToolbarState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    const actionState = options.actionState || {};
+    const buttonStates = actionState.buttonStates || {
+      arrangeLayerFrontBtn: actionState.canBringToFront,
+      arrangeLayerBackBtn: actionState.canSendToBack,
+      arrangeLayerForwardBtn: actionState.canBringForward,
+      arrangeLayerBackwardBtn: actionState.canSendBackward
+    };
+    Object.entries(buttonStates).forEach(([id, canRun]) => {
+      const button = documentRef.getElementById(id);
+      if (button) button.disabled = !canRun;
+    });
+
+    const zIndexInput = documentRef.getElementById('elZIndex');
+    if (zIndexInput) {
+      const controlStates = actionState.controlStates || null;
+      const hasControlState = controlStates
+        && Object.prototype.hasOwnProperty.call(controlStates, 'elZIndex');
+      if (hasControlState) {
+        zIndexInput.disabled = !controlStates.elZIndex;
+      } else if (typeof options.zIndexCanApply === 'boolean') {
+        zIndexInput.disabled = !options.zIndexCanApply;
+      }
+    }
+    return true;
+  }
+
   function buildStudioLayerOrderMutationPlan(targetElements = [], action, options = {}) {
     const orderedElements = Array.isArray(options.orderedElements) ? options.orderedElements : [];
     const actionState = buildStudioLayerOrderActionState(targetElements, {
@@ -164,6 +193,7 @@
     getStudioLayerOrderSelection,
     buildStudioLayerOrderActionState,
     buildStudioLayerOrderToolbarState,
+    renderStudioLayerOrderToolbarState,
     buildStudioLayerOrderMutationPlan,
     buildStudioReorderedLayerOrder
   };

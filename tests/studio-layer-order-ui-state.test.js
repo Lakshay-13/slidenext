@@ -300,6 +300,9 @@ test('updateLayerOrderActionState enables layer order controls only when the ifr
           canBringForward: canReorder,
           canSendBackward: canReorder
         };
+      },
+      renderStudioLayerOrderToolbarState(options) {
+        return layerOrder.renderStudioLayerOrderToolbarState(options);
       }
     },
     SlideNextStudioEditorStyle: {
@@ -389,6 +392,9 @@ test('updateLayerOrderActionState reuses the shared layer-order toolbar helper w
             elZIndex: true
           }
         };
+      },
+      renderStudioLayerOrderToolbarState(options) {
+        return layerOrder.renderStudioLayerOrderToolbarState(options);
       }
     },
     SlideNextStudioEditorStyle: {

@@ -4587,31 +4587,25 @@
           orderedElements,
           canMutateDeck
         });
-      const buttonStates = layerOrderActionState.buttonStates || {
-        arrangeLayerFrontBtn: layerOrderActionState.canBringToFront,
-        arrangeLayerBackBtn: layerOrderActionState.canSendToBack,
-        arrangeLayerForwardBtn: layerOrderActionState.canBringForward,
-        arrangeLayerBackwardBtn: layerOrderActionState.canSendBackward
-      };
-
-      Object.entries(buttonStates).forEach(([id, canRun]) => {
-        const btn = document.getElementById(id);
-        if (btn) btn.disabled = !canRun;
-      });
-
+      let zIndexCanApply;
       const zIndexInput = document.getElementById('elZIndex');
       if (zIndexInput) {
         const controlStates = layerOrderActionState.controlStates || null;
         if (controlStates && Object.prototype.hasOwnProperty.call(controlStates, 'elZIndex')) {
-          zIndexInput.disabled = !controlStates.elZIndex;
-          return;
+          zIndexCanApply = !!controlStates.elZIndex;
+        } else {
+          const zIndexMutationPlan = SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(selectedElements, 'zIndex', '', {
+            isLocked: isElementLocked,
+            canMutateDeck
+          });
+          zIndexCanApply = !!zIndexMutationPlan.canApply;
         }
-        const zIndexMutationPlan = SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(selectedElements, 'zIndex', '', {
-          isLocked: isElementLocked,
-          canMutateDeck
-        });
-        zIndexInput.disabled = !zIndexMutationPlan.canApply;
       }
+      return SlideNextStudioEditorLayerOrder.renderStudioLayerOrderToolbarState({
+        documentRef: document,
+        actionState: layerOrderActionState,
+        zIndexCanApply
+      });
     }
 
     function syncSelectionUiAfterMutation() {
