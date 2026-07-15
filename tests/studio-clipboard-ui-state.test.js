@@ -434,6 +434,7 @@ test('duplicateSelectedElements forwards a canonical deck sidecar for cloned nod
     editorClipboard: null,
     selectedElements: [{ id: 'node-1', isConnected: true }],
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalInsertion: canonicalInsertion,
     SlideNextDeckImport: {
       importElementToCanonicalNode(element, options) {
         assert.equal(element, duplicate);
