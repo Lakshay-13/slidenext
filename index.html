@@ -1138,6 +1138,7 @@
   <script src="/shared/studio-editor-inspector-view.js"></script>
   <script src="/shared/studio-editor-layer-order.js"></script>
   <script src="/shared/studio-editor-layer-view.js"></script>
+  <script src="/shared/studio-editor-insertion.js"></script>
   <script src="/shared/studio-editor-selection-bounds.js"></script>
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
@@ -5623,96 +5624,12 @@
         : null;
 
       const offset = (activeSlide.children.length * 15) % 150;
-      
-      let newEl;
-      if (type === 'h2') {
-        newEl = iframeDoc.createElement('h2');
-        newEl.textContent = 'New Heading';
-        newEl.style.fontSize = '48px';
-        newEl.style.fontWeight = '700';
-        newEl.style.color = '#ffffff';
-        newEl.style.fontFamily = "'Geist', sans-serif";
-        newEl.style.position = 'absolute';
-        newEl.style.left = `calc(30% + ${offset}px)`;
-        newEl.style.top = `calc(40% + ${offset}px)`;
-      } else if (type === 'p') {
-        newEl = iframeDoc.createElement('p');
-        newEl.textContent = 'Enter text descriptions here.';
-        newEl.style.fontSize = '20px';
-        newEl.style.fontWeight = '400';
-        newEl.style.color = '#bcc9c6';
-        newEl.style.fontFamily = "'Geist', sans-serif";
-        newEl.style.position = 'absolute';
-        newEl.style.left = `calc(30% + ${offset}px)`;
-        newEl.style.top = `calc(50% + ${offset}px)`;
-      } else if (type === 'img') {
-        newEl = iframeDoc.createElement('img');
-        newEl.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800';
-        newEl.style.width = '450px';
-        newEl.style.borderRadius = '12px';
-        newEl.style.position = 'absolute';
-        newEl.style.left = `calc(40% + ${offset}px)`;
-        newEl.style.top = `calc(30% + ${offset}px)`;
-      } else if (type === 'shape') {
-        newEl = iframeDoc.createElement('div');
-        newEl.className = 'editor-shape';
-        newEl.style.width = '200px';
-        newEl.style.height = '200px';
-        newEl.style.backgroundColor = '#7028d0';
-        newEl.style.borderRadius = '16px';
-        newEl.style.position = 'absolute';
-        newEl.style.left = `calc(45% + ${offset}px)`;
-        newEl.style.top = `calc(40% + ${offset}px)`;
-      } else if (type === 'table') {
-        newEl = iframeDoc.createElement('table');
-        newEl.className = 'editor-table border-collapse border border-white/10 rounded-lg text-left text-sm';
-        newEl.style.width = '600px';
-        newEl.style.position = 'absolute';
-        newEl.style.left = `calc(30% + ${offset}px)`;
-        newEl.style.top = `calc(35% + ${offset}px)`;
-        newEl.style.border = '1px solid rgba(255, 255, 255, 0.15)';
-        newEl.style.backgroundColor = 'rgba(10, 10, 10, 0.6)';
-        newEl.style.color = '#ffffff';
-        newEl.style.borderRadius = '8px';
-        newEl.style.fontFamily = "'Geist', sans-serif";
-        
-        newEl.innerHTML = `
-          <thead>
-            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.15)">
-              <th style="padding: 10px; font-weight: 600; color: #7028d0">Metric</th>
-              <th style="padding: 10px; font-weight: 600; color: #7028d0">Value</th>
-              <th style="padding: 10px; font-weight: 600; color: #7028d0">Change</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.08)">
-              <td style="padding: 10px;">Accuracy</td>
-              <td style="padding: 10px;">94.2%</td>
-              <td style="padding: 10px; color: #10b981">+2.4%</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px;">Latency</td>
-              <td style="padding: 10px;">12ms</td>
-              <td style="padding: 10px; color: #10b981">-4ms</td>
-            </tr>
-          </tbody>
-        `;
-      } else if (type === 'code') {
-        newEl = iframeDoc.createElement('pre');
-        newEl.className = 'editor-code border border-white/10 rounded-lg p-4 font-mono text-xs overflow-x-auto';
-        newEl.style.width = '550px';
-        newEl.style.position = 'absolute';
-        newEl.style.left = `calc(35% + ${offset}px)`;
-        newEl.style.top = `calc(40% + ${offset}px)`;
-        newEl.style.backgroundColor = '#0c0c0e';
-        newEl.style.color = '#a9b1d6';
-        newEl.style.borderRadius = '10px';
-        newEl.style.border = '1px solid rgba(255, 255, 255, 0.1)';
-        
-        const codeNode = iframeDoc.createElement('code');
-        codeNode.textContent = `// Sample algorithm block\nfunction trainEpoch(model, data) {\n  const loss = model.computeLoss(data);\n  loss.backward();\n  model.step();\n  return loss.val;\n}`;
-        newEl.appendChild(codeNode);
-      }
+      const insertionApi = typeof SlideNextStudioEditorInsertion !== 'undefined'
+        ? SlideNextStudioEditorInsertion
+        : null;
+      const newEl = insertionApi && typeof insertionApi.createStudioInsertedElement === 'function'
+        ? insertionApi.createStudioInsertedElement(type, { documentRef: iframeDoc, offset })
+        : null;
       
       if (newEl) {
         makeElementsHoverable(newEl);

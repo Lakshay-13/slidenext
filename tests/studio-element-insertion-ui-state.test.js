@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const insertion = require('../shared/studio-editor-insertion.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -44,6 +45,7 @@ test('insertElement uses the shared iframe accessor before adding a heading elem
     }
   };
   const context = {
+    SlideNextStudioEditorInsertion: insertion,
     generateThumbnails() {
       calls.push(['generateThumbnails']);
     },
@@ -136,6 +138,7 @@ test('insertElement records a slide-scoped markup transaction when adding a head
   };
   const context = {
     SlideNextStudioEditorTransaction: studioTransaction,
+    SlideNextStudioEditorInsertion: insertion,
     generateThumbnails() {},
     getActiveSlide() {
       return activeSlide;
@@ -198,6 +201,7 @@ test('insertElement no-ops when no active slide is available or the element type
   };
   let activeSlide = null;
   const context = {
+    SlideNextStudioEditorInsertion: insertion,
     getActiveSlide(doc) {
       calls.push(['getActiveSlide', doc]);
       return activeSlide;
