@@ -1770,7 +1770,7 @@ test('resolveEditorLiveActiveSlide returns null when the iframe doc is unavailab
   assert.equal(context.resolveEditorLiveActiveSlide(), null);
 });
 
-test('getPersistedActiveSlideId delegates to the shared deck persistence helper when available', () => {
+test('getPersistedActiveSlideId returns an empty id when the shared editor reader is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getPersistedActiveSlideIdSource = extractFunctionSource(
     fileContent,
@@ -1778,14 +1778,13 @@ test('getPersistedActiveSlideId delegates to the shared deck persistence helper 
     '\n\n    function getCurrentEditorPersistedDeckState() {'
   );
 
-  let delegatedPlaybackState = null;
   const context = {
     SlideNextDeckPersistence: {
       resolvePersistedDeckActiveSlideId(playbackState) {
-        delegatedPlaybackState = playbackState;
         return 'slide-shared';
       }
     },
+    SlideNextStudioEditorPersistence: {},
     persistedDeckPlaybackState: {
       activeSlideIds: ['slide-2'],
       slideCounterText: '2 / 4'
@@ -1797,8 +1796,7 @@ test('getPersistedActiveSlideId delegates to the shared deck persistence helper 
 
   const result = context.getPersistedActiveSlideId();
 
-  assert.equal(result, 'slide-shared');
-  assert.equal(delegatedPlaybackState, context.persistedDeckPlaybackState);
+  assert.equal(result, '');
 });
 
 test('getPersistedActiveSlideId reuses the shared editor persistence helper when available', () => {

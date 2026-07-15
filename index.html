@@ -3985,37 +3985,17 @@
       )
         ? SlideNextStudioEditorPersistence.createStudioPersistedActiveSlideIdReader
         : null;
-      if (createStudioPersistedActiveSlideIdReader) {
-        return createStudioPersistedActiveSlideIdReader({
-          getPlaybackState: () => persistedDeckPlaybackState,
-          resolvePersistedDeckActiveSlideId: (
-            typeof SlideNextDeckPersistence !== 'undefined'
-            && SlideNextDeckPersistence
-            && typeof SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId === 'function'
-          )
-            ? SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId
-            : null
-        })(playbackState);
-      }
-
-      const resolvePersistedDeckActiveSlideId = (
-        typeof SlideNextDeckPersistence !== 'undefined'
-        && SlideNextDeckPersistence
-      )
-        && typeof SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId === 'function'
-        ? SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId
-        : null;
-      if (resolvePersistedDeckActiveSlideId) {
-        return resolvePersistedDeckActiveSlideId(playbackState);
-      }
-
-      if (!playbackState || typeof playbackState !== 'object') {
-        return '';
-      }
-      if (Array.isArray(playbackState.activeSlideIds)) {
-        return playbackState.activeSlideIds.find((slideId) => typeof slideId === 'string' && slideId.trim()) || '';
-      }
-      return typeof playbackState.activeSlideId === 'string' ? playbackState.activeSlideId : '';
+      if (!createStudioPersistedActiveSlideIdReader) return '';
+      return createStudioPersistedActiveSlideIdReader({
+        getPlaybackState: () => persistedDeckPlaybackState,
+        resolvePersistedDeckActiveSlideId: (
+          typeof SlideNextDeckPersistence !== 'undefined'
+          && SlideNextDeckPersistence
+          && typeof SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId === 'function'
+        )
+          ? SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId
+          : null
+      })(playbackState);
     }
 
     function getCurrentEditorPersistedDeckState() {
