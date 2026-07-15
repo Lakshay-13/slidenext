@@ -133,6 +133,55 @@ test('deselectElement fails closed when the shared selection module is unavailab
   assert.equal(context.deselectElement(), false);
 });
 
+test('selectAllElementsOnActiveSlide delegates selection orchestration to the shared module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectAllSource = extractFunctionSource(
+    fileContent,
+    'function selectAllElementsOnActiveSlide() {',
+    '\n\n    function isElementLocked(el) {'
+  );
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorSelection: {
+      selectAllStudioElementsOnActiveSlide(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    getActiveSlide() {},
+    getNormalizedSlideLayerOrder() {},
+    getEditorSelectionOptions() {},
+    commitEditorSelectionState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(selectAllSource, context);
+
+  assert.equal(context.selectAllElementsOnActiveSlide(), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(typeof calls[0].getActiveSlide, 'function');
+  assert.equal(typeof calls[0].getElements, 'function');
+  assert.equal(typeof calls[0].getSelectionOptions, 'function');
+  assert.equal(typeof calls[0].commitSelectionState, 'function');
+});
+
+test('selectAllElementsOnActiveSlide fails closed when the shared selection module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectAllSource = extractFunctionSource(
+    fileContent,
+    'function selectAllElementsOnActiveSlide() {',
+    '\n\n    function isElementLocked(el) {'
+  );
+
+  const context = {
+    SlideNextStudioEditorSelection: null
+  };
+  vm.createContext(context);
+  vm.runInContext(selectAllSource, context);
+
+  assert.equal(context.selectAllElementsOnActiveSlide(), false);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

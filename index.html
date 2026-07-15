@@ -4211,24 +4211,13 @@
       const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
         ? SlideNextStudioEditorSelection
         : null;
-      if (selectionApi && typeof selectionApi.selectAllStudioElementsOnActiveSlide === 'function') {
-        return selectionApi.selectAllStudioElementsOnActiveSlide({
-          getActiveSlide,
-          getElements: getNormalizedSlideLayerOrder,
-          getSelectionOptions: getEditorSelectionOptions,
-          commitSelectionState: commitEditorSelectionState
-        });
-      }
-      const slide = getActiveSlide();
-      if (!slide) return false;
-      const nextSelection = getNormalizedSlideLayerOrder(slide);
-      if (nextSelection.length === 0) return false;
-      const nextSelectionState = SlideNextStudioEditorSelection.selectAllStudioElements(
-        nextSelection,
-        getEditorSelectionOptions({ activeSlide: slide })
-      );
-      commitEditorSelectionState(nextSelectionState);
-      return true;
+      if (!selectionApi || typeof selectionApi.selectAllStudioElementsOnActiveSlide !== 'function') return false;
+      return selectionApi.selectAllStudioElementsOnActiveSlide({
+        getActiveSlide,
+        getElements: getNormalizedSlideLayerOrder,
+        getSelectionOptions: getEditorSelectionOptions,
+        commitSelectionState: commitEditorSelectionState
+      });
     }
 
     function isElementLocked(el) {
