@@ -235,20 +235,26 @@ test('updateInsertionActionState delegates toolbar rendering to the shared deck 
     'function updateInsertionActionState(doc = getIframeDoc()) {',
     '\n\n    function resolveCurrentStudioZoomActionState(doc = getIframeDoc()) {'
   );
-  const doc = { activeSlide: {} };
-  const actionState = {
-    canAddSlide: true,
-    canInsertElements: true
+  const slideContainer = { id: 'slides-container' };
+  const doc = {
+    activeSlide: {},
+    getElementById(id) {
+      assert.equal(id, 'slidesContainer');
+      return slideContainer;
+    }
   };
   const calls = [];
   const context = {
-    resolveCurrentStudioInsertionActionState(currentDoc) {
+    getActiveSlide(currentDoc) {
       assert.equal(currentDoc, doc);
-      return actionState;
+      return currentDoc.activeSlide;
     },
     SlideNextStudioDeckView: {
       syncStudioInsertionToolbarActionState(options) {
         calls.push(options);
+        assert.equal(options.doc, doc);
+        assert.equal(options.getActiveSlide(doc), doc.activeSlide);
+        assert.equal(options.getSlideContainer(doc), slideContainer);
         return 'delegated';
       }
     },
@@ -264,5 +270,6 @@ test('updateInsertionActionState delegates toolbar rendering to the shared deck 
   assert.equal(context.updateInsertionActionState(doc), 'delegated');
   assert.equal(calls.length, 1);
   assert.equal(calls[0].documentRef, context.document);
-  assert.deepEqual(calls[0].actionState, actionState);
+  assert.equal(calls[0].doc, doc);
+  assert.equal(calls[0].getActiveSlide, context.getActiveSlide);
 });

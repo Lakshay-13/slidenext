@@ -9144,17 +9144,21 @@
     }
 
     function updateInsertionActionState(doc = getIframeDoc()) {
-      const actionState = resolveCurrentStudioInsertionActionState(doc);
       const deckView = typeof SlideNextStudioDeckView !== 'undefined'
         ? SlideNextStudioDeckView
         : null;
       if (deckView && typeof deckView.syncStudioInsertionToolbarActionState === 'function') {
         return deckView.syncStudioInsertionToolbarActionState({
           documentRef: document,
-          actionState
+          doc,
+          getActiveSlide,
+          getSlideContainer: (sourceDoc) => sourceDoc && typeof sourceDoc.getElementById === 'function'
+            ? sourceDoc.getElementById('slidesContainer')
+            : null
         });
       }
 
+      const actionState = resolveCurrentStudioInsertionActionState(doc);
       const addSlideBtn = document.getElementById('addSlideBtn');
       if (addSlideBtn) {
         addSlideBtn.disabled = !actionState.canAddSlide;
