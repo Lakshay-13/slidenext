@@ -205,6 +205,29 @@
     return true;
   }
 
+  function resetStudioWallpaperUiState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+
+    setStudioWallpaperTab({ documentRef, tab: 'solid' });
+    syncStudioCustomGradientTypeChrome({
+      documentRef,
+      gradientType: 'linear'
+    });
+
+    const solidColorInput = documentRef.getElementById('wallpaperCustomColor');
+    if (solidColorInput) solidColorInput.value = solidColorInput.defaultValue || '#000000';
+    const color1Input = documentRef.getElementById('cgColor1');
+    if (color1Input) color1Input.value = '#5050e8';
+    const color2Input = documentRef.getElementById('cgColor2');
+    if (color2Input) color2Input.value = '#050505';
+    const angleInput = documentRef.getElementById('cgAngle');
+    if (angleInput) angleInput.value = '135';
+    const angleLabel = documentRef.getElementById('cgAngleVal');
+    if (angleLabel) angleLabel.textContent = '135°';
+    return true;
+  }
+
   function syncStudioWallpaperTabChrome(options = {}) {
     const documentRef = options.documentRef;
     const solidTab = documentRef && documentRef.getElementById('wpTabSolid');
@@ -359,6 +382,7 @@
     renderStudioWallpaperPresets,
     applyStudioWallpaperToSlides,
     setStudioWallpaperTab,
+    resetStudioWallpaperUiState,
     resolveStudioActiveSlideGradientBackground,
     syncStudioSolidWallpaperControl,
     syncStudioWallpaperTabChrome,
