@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalStyle = require('../shared/studio-editor-canonical-style.js');
 const styleState = require('../shared/studio-editor-style.js');
 const studioMutation = require('../shared/studio-editor-mutation.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
@@ -29,6 +30,7 @@ function loadFinalizeEditorDeckMutation(fileContent, context) {
 }
 
 function loadStyleMutationHelper(fileContent, context) {
+  context.SlideNextStudioEditorCanonicalStyle = canonicalStyle;
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyEditorStyleMutationWithTransaction(styleApi, selection, prop, value, options = {}) {',

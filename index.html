@@ -1132,6 +1132,7 @@
   </div>
   </div>  <!-- Logic scripts -->
   <script src="/shared/canonical-deck.js"></script>
+  <script src="/shared/studio-editor-canonical-style.js"></script>
   <script src="/shared/studio-editor-canonical-state.js"></script>
   <script src="/shared/studio-editor-canonical-deck.js"></script>
   <script src="/shared/presentation-metadata.js"></script>
@@ -5209,44 +5210,11 @@
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
-      const updateCanonicalNodeLayout = prop === 'zIndex'
-        && canonicalDeckApi
-        && typeof canonicalDeckApi.updateCanonicalNodeLayout === 'function'
-        ? canonicalDeckApi.updateCanonicalNodeLayout
+      const canonicalStyleApi = typeof SlideNextStudioEditorCanonicalStyle !== 'undefined'
+        ? SlideNextStudioEditorCanonicalStyle
         : null;
-      const updateCanonicalNodeText = prop === 'text'
-        && canonicalDeckApi
-        && typeof canonicalDeckApi.updateCanonicalNodeText === 'function'
-        ? canonicalDeckApi.updateCanonicalNodeText
-        : null;
-      const updateCanonicalNodeAttributes = prop === 'src'
-        && canonicalDeckApi
-        && typeof canonicalDeckApi.updateCanonicalNodeAttributes === 'function'
-        ? canonicalDeckApi.updateCanonicalNodeAttributes
-        : null;
-      const canonicalStyleProperty = {
-        size: { property: 'font-size', domProperty: 'fontSize' },
-        family: { property: 'font-family', domProperty: 'fontFamily' },
-        weight: { property: 'font-weight', domProperty: 'fontWeight' },
-        color: { property: 'color', domProperty: 'color' },
-        align: { property: 'text-align', domProperty: 'textAlign' },
-        opacity: { property: 'opacity', domProperty: 'opacity' },
-        borderStyle: { property: 'border-style', domProperty: 'borderStyle' },
-        borderWidth: { property: 'border-width', domProperty: 'borderWidth' },
-        borderRadius: { property: 'border-radius', domProperty: 'borderRadius' },
-        borderColor: { property: 'border-color', domProperty: 'borderColor' }
-      }[prop] || null;
-      const updateCanonicalNodeStyle = canonicalStyleProperty
-        && canonicalDeckApi
-        && typeof canonicalDeckApi.updateCanonicalNodeStyle === 'function'
-        ? canonicalDeckApi.updateCanonicalNodeStyle
-        : null;
-      const canonicalDeckBeforeMutation = (
-        updateCanonicalNodeLayout
-        || updateCanonicalNodeText
-        || updateCanonicalNodeAttributes
-        || updateCanonicalNodeStyle
-      )
+      const canonicalDeckBeforeMutation = canonicalStyleApi
+        && typeof canonicalStyleApi.buildStudioCanonicalStyleMutation === 'function'
         && typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(doc)
         : null;
@@ -5290,52 +5258,17 @@
         const opacityLabel = document.getElementById('opacityVal');
         if (opacityLabel) opacityLabel.textContent = `${styleMutationResult.displayValue}%`;
       }
-      const canonicalNodeLayouts = updateCanonicalNodeLayout
-        ? styleMutationPlan.selection.map((element) => {
-            const elementId = getStyleElementId(element);
-            const zIndex = element && element.style ? Number(element.style.zIndex) : NaN;
-            return elementId && Number.isFinite(zIndex)
-              ? { id: elementId, layout: { zIndex } }
-              : null;
-          }).filter(Boolean)
-        : [];
-      const canonicalDeck = updateCanonicalNodeLayout
-        ? updateCanonicalNodeLayout(canonicalDeckBeforeMutation, canonicalNodeLayouts)
-        : updateCanonicalNodeText
-          ? updateCanonicalNodeText(canonicalDeckBeforeMutation, [{
-              id: getStyleElementId(styleMutationPlan.selection[0]),
-              text: styleMutationPlan.selection[0]
-                && typeof styleMutationPlan.selection[0].textContent === 'string'
-                ? styleMutationPlan.selection[0].textContent
-                : `${val}`
-            }])
-          : updateCanonicalNodeAttributes
-            ? updateCanonicalNodeAttributes(canonicalDeckBeforeMutation, [{
-                id: getStyleElementId(styleMutationPlan.selection[0]),
-                attributes: {
-                  src: styleMutationPlan.selection[0]
-                    && typeof styleMutationPlan.selection[0].getAttribute === 'function'
-                    ? styleMutationPlan.selection[0].getAttribute('src') || `${val}`
-                    : styleMutationPlan.selection[0]
-                      && typeof styleMutationPlan.selection[0].src === 'string'
-                      ? styleMutationPlan.selection[0].src
-                      : `${val}`
-                }
-              }])
-            : updateCanonicalNodeStyle
-              ? updateCanonicalNodeStyle(
-                  canonicalDeckBeforeMutation,
-                  styleMutationPlan.selection.map((element) => ({
-                    id: getStyleElementId(element),
-                    property: canonicalStyleProperty.property,
-                    value: element
-                      && element.style
-                      && typeof element.style[canonicalStyleProperty.domProperty] === 'string'
-                      ? element.style[canonicalStyleProperty.domProperty]
-                      : `${val}`
-                  }))
-                )
-              : null;
+      const canonicalDeck = canonicalStyleApi
+        && typeof canonicalStyleApi.buildStudioCanonicalStyleMutation === 'function'
+        ? canonicalStyleApi.buildStudioCanonicalStyleMutation({
+            canonicalDeckApi,
+            canonicalDeckBeforeMutation,
+            selection: styleMutationPlan.selection,
+            prop,
+            value: val,
+            getElementId: getStyleElementId
+          })
+        : null;
       finalizeEditorDeckMutation(styleMutationPlan.versionLabel, {
         syncSelectionOverlay: true,
         refreshLayersList: prop === 'zIndex',
