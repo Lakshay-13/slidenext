@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const studioElementState = require('../shared/studio-element-state.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const visibilityState = require('../shared/studio-editor-visibility-state.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -66,6 +67,9 @@ test('updateVisibilityActionState enables the visibility control only when the i
           canToggle,
           allHidden: canToggle
         };
+      },
+      renderStudioVisibilityToolbarState(options) {
+        return visibilityState.renderStudioVisibilityToolbarState(options);
       }
     },
     document: {
@@ -132,6 +136,9 @@ test('updateVisibilityActionState reuses the shared visibility toolbar helper wh
           iconText: 'visibility',
           labelText: 'Show Selected'
         };
+      },
+      renderStudioVisibilityToolbarState(options) {
+        return visibilityState.renderStudioVisibilityToolbarState(options);
       }
     },
     document: {

@@ -82,6 +82,29 @@ test('buildStudioVisibilityToolbarState derives visibility control chrome from t
   });
 });
 
+test('renderStudioVisibilityToolbarState applies visibility button, icon, and label chrome', () => {
+  const nodes = {
+    toggleVisibilitySelectionBtn: { disabled: true },
+    toggleVisibilitySelectionIcon: { textContent: '' },
+    toggleVisibilitySelectionLabel: { textContent: '' }
+  };
+
+  assert.equal(visibilityState.renderStudioVisibilityToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return nodes[id] || null;
+      }
+    },
+    actionState: {
+      canToggle: true,
+      allHidden: true
+    }
+  }), true);
+  assert.equal(nodes.toggleVisibilitySelectionBtn.disabled, false);
+  assert.equal(nodes.toggleVisibilitySelectionIcon.textContent, 'visibility');
+  assert.equal(nodes.toggleVisibilitySelectionLabel.textContent, 'Show Selected');
+});
+
 test('buildStudioVisibilityMutationPlan derives the next visibility toggle from the live selection only', () => {
   const visible = { id: 1, isConnected: true, hidden: false };
   const hidden = { id: 2, isConnected: true, hidden: true };

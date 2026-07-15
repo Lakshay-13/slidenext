@@ -44,6 +44,19 @@
     };
   }
 
+  function renderStudioVisibilityToolbarState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    const actionState = options.actionState || {};
+    const button = documentRef.getElementById('toggleVisibilitySelectionBtn');
+    const icon = documentRef.getElementById('toggleVisibilitySelectionIcon');
+    const label = documentRef.getElementById('toggleVisibilitySelectionLabel');
+    if (button) button.disabled = !actionState.canToggle;
+    if (icon) icon.textContent = actionState.iconText || (actionState.allHidden ? 'visibility' : 'visibility_off');
+    if (label) label.textContent = actionState.labelText || (actionState.allHidden ? 'Show Selected' : 'Hide Selected');
+    return true;
+  }
+
   function buildStudioVisibilityMutationPlan(elements = [], options = {}) {
     const selection = getStudioVisibilitySelection(elements, options);
     const isHidden = typeof options.isHidden === 'function'
@@ -75,6 +88,7 @@
     getStudioVisibilitySelection,
     buildStudioVisibilityActionState,
     buildStudioVisibilityToolbarState,
+    renderStudioVisibilityToolbarState,
     buildStudioVisibilityMutationPlan
   };
 });

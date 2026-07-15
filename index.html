@@ -4317,12 +4317,10 @@
         isHidden: isElementHidden,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
-      const visibilityBtn = document.getElementById('toggleVisibilitySelectionBtn');
-      const visibilityIcon = document.getElementById('toggleVisibilitySelectionIcon');
-      const visibilityLabel = document.getElementById('toggleVisibilitySelectionLabel');
-      if (visibilityBtn) visibilityBtn.disabled = !visibilityActionState.canToggle;
-      if (visibilityIcon) visibilityIcon.textContent = visibilityActionState.iconText || (visibilityActionState.allHidden ? 'visibility' : 'visibility_off');
-      if (visibilityLabel) visibilityLabel.textContent = visibilityActionState.labelText || (visibilityActionState.allHidden ? 'Show Selected' : 'Hide Selected');
+      return SlideNextStudioEditorVisibilityState.renderStudioVisibilityToolbarState({
+        documentRef: document,
+        actionState: visibilityActionState
+      });
     }
 
     function buildMotionSelectionActionState(doc = null) {
