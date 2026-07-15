@@ -79,6 +79,36 @@ test('finalizeSlideMutationPersistence saves, autosaves, and versions slide chan
   ]);
 });
 
+test('finalizeSlideMutationPersistence delegates lifecycle ordering to the shared mutation module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const transaction = { kind: 'slidenext.editor.transaction' };
+  let delegatedOptions = null;
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioEditorMutation: {
+      createStudioSlideMutationPersistenceFinalizer(options) {
+        delegatedOptions = options;
+        return (versionLabel, nextTransaction) => {
+          delegatedArgs = [versionLabel, nextTransaction];
+          return 'delegated';
+        };
+      }
+    },
+    saveHistoryState() {},
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
+
+  assert.equal(context.finalizeSlideMutationPersistence('Auto: Added Slide', transaction), 'delegated');
+  assert.deepEqual(delegatedArgs, ['Auto: Added Slide', transaction]);
+  assert.equal(delegatedOptions.saveHistoryState, context.saveHistoryState);
+  assert.equal(delegatedOptions.triggerAutoSave, context.triggerAutoSave);
+  assert.equal(delegatedOptions.triggerAutoVersion, context.triggerAutoVersion);
+});
+
 test('captureSlideMutationRestoreState snapshots the active slide id and committed selection after saving history', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { id: 'doc' };

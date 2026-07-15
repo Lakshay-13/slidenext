@@ -49,7 +49,29 @@
     };
   }
 
+  function createStudioSlideMutationPersistenceFinalizer(options = {}) {
+    const saveHistoryState = typeof options.saveHistoryState === 'function'
+      ? options.saveHistoryState
+      : () => {};
+    const triggerAutoSave = typeof options.triggerAutoSave === 'function'
+      ? options.triggerAutoSave
+      : () => {};
+    const triggerAutoVersion = typeof options.triggerAutoVersion === 'function'
+      ? options.triggerAutoVersion
+      : () => {};
+
+    return function finalizeStudioSlideMutation(versionLabel, transaction = null) {
+      saveHistoryState(false, transaction);
+      triggerAutoSave();
+      if (versionLabel) {
+        triggerAutoVersion(versionLabel);
+      }
+      return versionLabel;
+    };
+  }
+
   return {
-    createStudioMutationFinalizer
+    createStudioMutationFinalizer,
+    createStudioSlideMutationPersistenceFinalizer
   };
 });

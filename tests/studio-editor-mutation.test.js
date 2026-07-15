@@ -81,3 +81,44 @@ test('createStudioMutationFinalizer forwards optional history transactions', () 
 
   assert.deepEqual(historyArgs, [true, transaction]);
 });
+
+test('createStudioSlideMutationPersistenceFinalizer preserves slide persistence ordering', () => {
+  const calls = [];
+  const finalizeSlideMutation = mutation.createStudioSlideMutationPersistenceFinalizer({
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    }
+  });
+  const transaction = { kind: 'slidenext.editor.transaction' };
+
+  assert.equal(finalizeSlideMutation('Auto: Reordered Slides', transaction), 'Auto: Reordered Slides');
+  assert.deepEqual(calls, [
+    ['history', false, transaction],
+    'save',
+    ['version', 'Auto: Reordered Slides']
+  ]);
+});
+
+test('createStudioSlideMutationPersistenceFinalizer skips empty version labels', () => {
+  const calls = [];
+  const finalizeSlideMutation = mutation.createStudioSlideMutationPersistenceFinalizer({
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      calls.push('version');
+    }
+  });
+
+  assert.equal(finalizeSlideMutation(''), '');
+  assert.deepEqual(calls, ['history', 'save']);
+});

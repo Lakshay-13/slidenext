@@ -2663,6 +2663,21 @@
     }
 
     function finalizeSlideMutationPersistence(versionLabel, transaction = null) {
+      const createStudioSlideMutationPersistenceFinalizer = (
+        typeof SlideNextStudioEditorMutation !== 'undefined'
+        && SlideNextStudioEditorMutation
+        && typeof SlideNextStudioEditorMutation.createStudioSlideMutationPersistenceFinalizer === 'function'
+      )
+        ? SlideNextStudioEditorMutation.createStudioSlideMutationPersistenceFinalizer
+        : null;
+      if (createStudioSlideMutationPersistenceFinalizer) {
+        return createStudioSlideMutationPersistenceFinalizer({
+          saveHistoryState,
+          triggerAutoSave,
+          triggerAutoVersion
+        })(versionLabel, transaction);
+      }
+
       saveHistoryState(false, transaction);
       triggerAutoSave();
       if (versionLabel) {
