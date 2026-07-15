@@ -79,8 +79,52 @@
     return true;
   }
 
+  function syncStudioInspectorTypographyControls(options = {}) {
+    const documentRef = options.documentRef;
+    const primaryElement = options.primaryElement;
+    const computedStyles = options.computedStyles || {};
+    if (!documentRef || !primaryElement || typeof documentRef.getElementById !== 'function') return false;
+    const rgbToHex = typeof options.rgbToHex === 'function' ? options.rgbToHex : (value) => value;
+    const highlightAlignButton = typeof options.highlightAlignButton === 'function'
+      ? options.highlightAlignButton
+      : () => {};
+    const fSize = parseInt(computedStyles.fontSize) || 16;
+    const fontSizeInput = documentRef.getElementById('elFontSize');
+    if (fontSizeInput) fontSizeInput.value = fSize;
+    const fontSizeLabel = documentRef.getElementById('fontSizeVal');
+    if (fontSizeLabel) fontSizeLabel.textContent = fSize + 'px';
+
+    const fFamily = computedStyles.fontFamily.replace(/['"]/g, '');
+    const familySelect = documentRef.getElementById('elFontFamily');
+    if (familySelect) {
+      familySelect.value = "'Geist', sans-serif";
+      for (const option of familySelect.options) {
+        if (option.value.replace(/['"]/g, '').includes(fFamily)) {
+          familySelect.value = option.value;
+          break;
+        }
+      }
+    }
+
+    const fontWeightInput = documentRef.getElementById('elFontWeight');
+    if (fontWeightInput) fontWeightInput.value = computedStyles.fontWeight;
+    const textColorInput = documentRef.getElementById('elTextColor');
+    if (textColorInput) textColorInput.value = rgbToHex(computedStyles.color);
+    highlightAlignButton(computedStyles.textAlign || 'left');
+    const zIndexInput = documentRef.getElementById('elZIndex');
+    if (zIndexInput) zIndexInput.value = primaryElement.style.zIndex || 0;
+
+    const opacityVal = Math.round((parseFloat(computedStyles.opacity || '1')) * 100);
+    const opacityInput = documentRef.getElementById('elOpacity');
+    if (opacityInput) opacityInput.value = opacityVal;
+    const opacityLabel = documentRef.getElementById('opacityVal');
+    if (opacityLabel) opacityLabel.textContent = opacityVal + '%';
+    return true;
+  }
+
   return {
     renderStudioInspectorSelectionSummary,
-    syncStudioInspectorContentControls
+    syncStudioInspectorContentControls,
+    syncStudioInspectorTypographyControls
   };
 });

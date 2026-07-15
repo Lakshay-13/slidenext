@@ -4030,51 +4030,13 @@
       });
 
       const computedStyles = el.ownerDocument.defaultView.getComputedStyle(el);
-      const fSize = parseInt(computedStyles.fontSize) || 16;
-      const fontSizeInput = document.getElementById('elFontSize');
-      if (fontSizeInput) {
-        fontSizeInput.value = fSize;
-      }
-      const fontSizeLabel = document.getElementById('fontSizeVal');
-      if (fontSizeLabel) {
-        fontSizeLabel.textContent = fSize + 'px';
-      }
-
-      const fFamily = computedStyles.fontFamily.replace(/['"]/g, '');
-      const familySelect = document.getElementById('elFontFamily');
-      if (familySelect) {
-        familySelect.value = "'Geist', sans-serif";
-        for (let opt of familySelect.options) {
-          if (opt.value.replace(/['"]/g, '').includes(fFamily)) {
-            familySelect.value = opt.value;
-            break;
-          }
-        }
-      }
-
-      const fontWeightInput = document.getElementById('elFontWeight');
-      if (fontWeightInput) {
-        fontWeightInput.value = computedStyles.fontWeight;
-      }
-      const textColorInput = document.getElementById('elTextColor');
-      if (textColorInput) {
-        textColorInput.value = rgbToHex(computedStyles.color);
-      }
-      highlightAlignButton(computedStyles.textAlign || 'left');
-      const zIndexInput = document.getElementById('elZIndex');
-      if (zIndexInput) {
-        zIndexInput.value = el.style.zIndex || 0;
-      }
-
-      const opacityVal = Math.round((parseFloat(computedStyles.opacity || '1')) * 100);
-      const opacityInput = document.getElementById('elOpacity');
-      if (opacityInput) {
-        opacityInput.value = opacityVal;
-      }
-      const opacityLabel = document.getElementById('opacityVal');
-      if (opacityLabel) {
-        opacityLabel.textContent = opacityVal + '%';
-      }
+      inspectorView.syncStudioInspectorTypographyControls({
+        documentRef: document,
+        primaryElement: el,
+        computedStyles,
+        rgbToHex,
+        highlightAlignButton
+      });
 
       const isImgOrShape = liveSelectionState.selection.some(node => node.tagName.toLowerCase() === 'img' || node.classList.contains('editor-shape') || node.tagName.toLowerCase() === 'table' || node.tagName.toLowerCase() === 'div');
       const borderGroup = document.getElementById('inspectorBorderGroup');

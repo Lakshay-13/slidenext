@@ -105,3 +105,49 @@ test('syncStudioInspectorContentControls switches between image and text control
   assert.equal(classLists.imageGroup.contains('hidden'), false);
   assert.equal(classLists.textGroup.contains('hidden'), true);
 });
+
+test('syncStudioInspectorTypographyControls applies font, color, alignment, z-index, and opacity values', () => {
+  const nodes = {
+    elFontSize: { value: '' },
+    fontSizeVal: { textContent: '' },
+    elFontFamily: { value: '', options: [{ value: "'Geist', sans-serif" }] },
+    elFontWeight: { value: '' },
+    elTextColor: { value: '' },
+    elZIndex: { value: '' },
+    elOpacity: { value: '' },
+    opacityVal: { textContent: '' }
+  };
+  const alignment = [];
+  const element = { style: { zIndex: '4' } };
+
+  assert.equal(inspectorView.syncStudioInspectorTypographyControls({
+    documentRef: {
+      getElementById(id) {
+        return nodes[id] || null;
+      }
+    },
+    primaryElement: element,
+    computedStyles: {
+      fontSize: '22px',
+      fontFamily: "'Geist', sans-serif",
+      fontWeight: '600',
+      color: 'rgb(1, 2, 3)',
+      textAlign: 'right',
+      opacity: '0.65'
+    },
+    rgbToHex() {
+      return '#010203';
+    },
+    highlightAlignButton(value) {
+      alignment.push(value);
+    }
+  }), true);
+  assert.equal(nodes.elFontSize.value, 22);
+  assert.equal(nodes.fontSizeVal.textContent, '22px');
+  assert.equal(nodes.elFontWeight.value, '600');
+  assert.equal(nodes.elTextColor.value, '#010203');
+  assert.equal(nodes.elZIndex.value, '4');
+  assert.equal(nodes.elOpacity.value, 65);
+  assert.equal(nodes.opacityVal.textContent, '65%');
+  assert.deepEqual(alignment, ['right']);
+});
