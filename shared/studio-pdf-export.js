@@ -9,6 +9,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   const DEFAULT_PAGE_WIDTH = '16in';
   const DEFAULT_PAGE_HEIGHT = '9in';
+  const DEFAULT_LOAD_TIMEOUT_MS = 10000;
 
   function normalizeDimension(value, fallback) {
     if (typeof value !== 'string' || !/^\d+(?:\.\d+)?(?:in|cm|mm|px|pt)$/.test(value.trim())) {
@@ -161,6 +162,14 @@
     }
 
     let didPrint = false;
+    let didLoad = false;
+    let loadTimeoutId = null;
+    const clearLoadTimeout = () => {
+      if (loadTimeoutId) {
+        clearTimeout(loadTimeoutId);
+        loadTimeoutId = null;
+      }
+    };
     const reportPrintSuccess = () => {
       if (typeof options.onPrint === 'function') {
         options.onPrint();
@@ -191,14 +200,34 @@
     const waitForResources = () => {
       waitForStudioPdfPrintResources(printWindow.document, options).then(print).catch(print);
     };
+    const handleLoad = () => {
+      if (didLoad) return;
+      didLoad = true;
+      clearLoadTimeout();
+      waitForResources();
+    };
 
     if (typeof printWindow.addEventListener === 'function') {
-      printWindow.addEventListener('load', waitForResources, { once: true });
+      printWindow.addEventListener('load', handleLoad, { once: true });
+      const loadTimeoutMs = Number.isFinite(options.loadTimeoutMs)
+        ? Math.max(0, options.loadTimeoutMs)
+        : DEFAULT_LOAD_TIMEOUT_MS;
+      loadTimeoutId = setTimeout(() => {
+        if (didLoad || didPrint) return;
+        didLoad = true;
+        reportPrintFailure(new Error('Print window load timed out'));
+      }, loadTimeoutMs);
     }
 
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
+    try {
+      printWindow.document.open();
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      clearLoadTimeout();
+      reportPrintFailure(error);
+      return false;
+    }
 
     if (typeof printWindow.addEventListener !== 'function') {
       waitForResources();
@@ -209,6 +238,7 @@
   return {
     DEFAULT_PAGE_WIDTH,
     DEFAULT_PAGE_HEIGHT,
+    DEFAULT_LOAD_TIMEOUT_MS,
     normalizeDimension,
     buildStudioPdfPrintStyles,
     buildStudioPdfPrintHtml,
