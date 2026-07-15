@@ -1841,27 +1841,12 @@
       const buildPresentationBaseHref = resolveDeckHtmlMethod('buildPresentationBaseHref');
       const presentationUrl = currentPresentationUrl || '';
 
-      return buildEditorDeckViewHtml(doc, createEditorDeckViewHtmlOptions({
-        buildSharedHtml: buildStudioPreviewHtml,
-        extendViewOptions: (deckViewOptions) => ({
-          ...deckViewOptions,
-          presentationUrl
-        }),
-        buildCanonicalHtml: buildDeckPreviewHtml,
-        mapCanonicalHtmlArgs: (canonicalDeck, deckHtmlOptions) => [
-          canonicalDeck,
-          presentationUrl,
-          deckHtmlOptions
-        ],
-        transformFallbackHtml(fallbackHtml, deckHtmlOptions = {}) {
-          if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
-            return fallbackHtml;
-          }
-          return injectBaseHrefIntoHtml(
-            fallbackHtml,
-            buildPresentationBaseHref(presentationUrl, deckHtmlOptions)
-          );
-        }
+      return buildEditorDeckViewHtml(doc, createEditorPreviewDeckViewHtmlOptions({
+        buildStudioPreviewHtml,
+        buildDeckPreviewHtml,
+        injectBaseHrefIntoHtml,
+        buildPresentationBaseHref,
+        presentationUrl
       }));
     }
 
