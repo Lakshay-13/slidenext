@@ -93,6 +93,37 @@ test('buildStudioTransformStyleTransaction returns null without a transaction-re
   }), null);
 });
 
+test('buildStudioTransformCanonicalLayoutUpdates derives absolute positions and resized dimensions', () => {
+  const element = {
+    dataset: { editorId: 'node-1' },
+    style: {
+      left: '120px',
+      top: '80px',
+      width: '240px',
+      height: '120px'
+    }
+  };
+
+  assert.deepEqual(transformState.buildStudioTransformCanonicalLayoutUpdates({
+    session: {
+      items: [{
+        element,
+        parentOffsetLeft: 20,
+        parentOffsetTop: 10
+      }]
+    }
+  }), [{
+    id: 'node-1',
+    layout: {
+      mode: 'absolute',
+      x: 140,
+      y: 90,
+      width: 240,
+      height: 120
+    }
+  }]);
+});
+
 test('createStudioTransformSessionFinalizer closes the session before persisting a move', () => {
   const calls = [];
   const transaction = { type: 'style' };
@@ -127,6 +158,26 @@ test('createStudioTransformSessionFinalizer closes the session before persisting
     'save',
     ['version', 'Auto: Moved Element']
   ]);
+});
+
+test('createStudioTransformSessionFinalizer forwards an optional canonical deck sidecar', () => {
+  const calls = [];
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const finalizeSession = transformState.createStudioTransformSessionFinalizer({
+    buildTransaction() {
+      return { type: 'style' };
+    },
+    buildCanonicalDeck() {
+      return canonicalDeck;
+    },
+    saveHistoryState(...args) {
+      calls.push(args);
+    }
+  });
+
+  finalizeSession({ id: 'move' }, { shouldPersist: true, versionLabel: 'Auto: Moved Element' });
+
+  assert.deepEqual(calls, [[false, { type: 'style' }, canonicalDeck]]);
 });
 
 test('attachStudioTransformPointerHandlers binds the shared pointer lifecycle', () => {

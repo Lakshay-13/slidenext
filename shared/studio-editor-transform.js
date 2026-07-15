@@ -787,6 +787,43 @@
     return transactionApi.createStudioStyleTransaction(transactionItems);
   }
 
+  function buildStudioTransformCanonicalLayoutUpdates(finalizeResult = {}, options = {}) {
+    const session = finalizeResult && finalizeResult.session;
+    const items = session && Array.isArray(session.items) ? session.items : [];
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const parsePixelValue = (value) => {
+      if (Number.isFinite(value)) return value;
+      if (typeof value !== 'string' || !value.trim()) return null;
+      const parsed = Number.parseFloat(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+
+    return items.map((item) => {
+      const element = item && item.element;
+      const style = element && element.style ? element.style : null;
+      const nodeId = getElementId(element);
+      const left = parsePixelValue(style && style.left);
+      const top = parsePixelValue(style && style.top);
+      if (!nodeId || left === null || top === null) return null;
+
+      const layout = {
+        mode: 'absolute',
+        x: left + (Number.isFinite(item.parentOffsetLeft) ? item.parentOffsetLeft : 0),
+        y: top + (Number.isFinite(item.parentOffsetTop) ? item.parentOffsetTop : 0)
+      };
+      const width = parsePixelValue(style && style.width);
+      const height = parsePixelValue(style && style.height);
+      if (width !== null) layout.width = width;
+      if (height !== null) layout.height = height;
+      return {
+        id: nodeId,
+        layout
+      };
+    }).filter(Boolean);
+  }
+
   function createStudioTransformSessionFinalizer(options = {}) {
     const onSessionEnd = typeof options.onSessionEnd === 'function'
       ? options.onSessionEnd
@@ -803,12 +840,22 @@
     const triggerAutoVersion = typeof options.triggerAutoVersion === 'function'
       ? options.triggerAutoVersion
       : () => {};
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
 
     return function finalizeStudioTransformSession(finalizeResult, completionPlan = {}) {
       onSessionEnd(finalizeResult, completionPlan);
       if (!completionPlan || !completionPlan.shouldPersist) return;
       const transaction = buildTransaction(finalizeResult);
-      saveHistoryState(false, transaction);
+      const canonicalDeck = buildCanonicalDeck
+        ? buildCanonicalDeck(finalizeResult)
+        : null;
+      if (canonicalDeck) {
+        saveHistoryState(false, transaction, canonicalDeck);
+      } else {
+        saveHistoryState(false, transaction);
+      }
       triggerAutoSave();
       triggerAutoVersion(completionPlan.versionLabel);
     };
@@ -1469,6 +1516,7 @@
     finalizeStudioTransformSession,
     buildStudioTransformCompletionPlan,
     buildStudioTransformStyleTransaction,
+    buildStudioTransformCanonicalLayoutUpdates,
     createStudioTransformSessionFinalizer,
     attachStudioTransformPointerHandlers,
     buildStudioPositionedLayoutItem,

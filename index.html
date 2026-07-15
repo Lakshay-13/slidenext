@@ -6778,11 +6778,21 @@
             const persistAutoVersion = typeof fallbackOptions.triggerAutoVersion === 'function'
               ? fallbackOptions.triggerAutoVersion
               : () => {};
+            const buildCanonicalDeck = typeof fallbackOptions.buildCanonicalDeck === 'function'
+              ? fallbackOptions.buildCanonicalDeck
+              : null;
             return (finalizeResult, completionPlan = {}) => {
               onSessionEnd(finalizeResult, completionPlan);
               if (!completionPlan || !completionPlan.shouldPersist) return;
               const transaction = buildTransaction(finalizeResult);
-              persistHistory(false, transaction);
+              const canonicalDeck = buildCanonicalDeck
+                ? buildCanonicalDeck(finalizeResult)
+                : null;
+              if (canonicalDeck) {
+                persistHistory(false, transaction, canonicalDeck);
+              } else {
+                persistHistory(false, transaction);
+              }
               persistAutoSave();
               persistAutoVersion(completionPlan.versionLabel);
             };
@@ -6815,6 +6825,30 @@
             : null
         });
       };
+      const buildCanonicalTransformDeck = (finalizeResult) => {
+        const updateCanonicalNodeLayout = transformApi
+          && typeof SlideNextCanonicalDeck !== 'undefined'
+          && SlideNextCanonicalDeck
+          && typeof SlideNextCanonicalDeck.updateCanonicalNodeLayout === 'function'
+          ? SlideNextCanonicalDeck.updateCanonicalNodeLayout
+          : null;
+        const buildCanonicalLayoutUpdates = transformApi
+          && typeof transformApi.buildStudioTransformCanonicalLayoutUpdates === 'function'
+          ? transformApi.buildStudioTransformCanonicalLayoutUpdates
+          : null;
+        if (!updateCanonicalNodeLayout || !buildCanonicalLayoutUpdates
+          || typeof buildEditorCanonicalDeck !== 'function') {
+          return null;
+        }
+        const getElementId = typeof assignEditorElementId === 'function'
+          ? assignEditorElementId
+          : null;
+        const layoutUpdates = buildCanonicalLayoutUpdates(finalizeResult, { getElementId });
+        return updateCanonicalNodeLayout(
+          buildEditorCanonicalDeck(doc),
+          layoutUpdates
+        );
+      };
       const finalizeTransformSession = createEditorTransformSessionFinalizer(transformApi, {
         onSessionEnd: () => {
           isDraggingElement = false;
@@ -6824,6 +6858,7 @@
           syncInspectorForSelection();
         },
         buildTransaction: buildTransformTransaction,
+        buildCanonicalDeck: buildCanonicalTransformDeck,
         saveHistoryState,
         triggerAutoSave,
         triggerAutoVersion

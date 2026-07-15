@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const selection = require('../shared/studio-editor-selection.js');
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 const deckView = require('../shared/studio-deck-view.js');
 const history = require('../shared/studio-history.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
@@ -774,6 +775,12 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
   const bodyListeners = new Map();
   const windowListeners = new Map();
   let delegatedOptions = null;
+  const canonicalDeckBefore = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', layout: { mode: 'absolute', x: 10, y: 20 } }]
+    }]
+  });
   const transformHandlers = {
     handlePointerDown() {},
     handlePointerMove() {},
@@ -801,11 +808,13 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
     DRAG_START_THRESHOLD_PX: 3,
     MIN_ELEMENT_SIZE_PX: 12,
     SNAP_THRESHOLD_PX: 12,
+    SlideNextCanonicalDeck: canonicalDeckModel,
     SlideNextStudioEditorTransaction: studioTransaction,
     SlideNextStudioEditorDom: {
       getStudioClosestPositionedAncestor() {}
     },
     SlideNextStudioEditorTransform: {
+      buildStudioTransformCanonicalLayoutUpdates: transformState.buildStudioTransformCanonicalLayoutUpdates,
       buildStudioTransformStyleTransaction: transformState.buildStudioTransformStyleTransaction,
       attachStudioTransformPointerHandlers: transformState.attachStudioTransformPointerHandlers,
       createStudioTransformPointerHandlers(options) {
@@ -814,11 +823,17 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
       }
     },
     getActiveSlide() {},
+    buildEditorCanonicalDeck() {
+      return canonicalDeckBefore;
+    },
     getPointerOnSlide() {},
     getRectOnSlide() {},
     getSelectionBounds() {},
     getSlideMetrics() {},
     getTransformSelectionState() {},
+    assignEditorElementId(element) {
+      return element.dataset.editorId;
+    },
     hideDragHud() {
       calls.push(['hideDragHud']);
     },
@@ -940,6 +955,8 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
       }
     }]
   });
+  assert.equal(calls[9][3].slides[0].nodes[0].layout.x, 20);
+  assert.equal(calls[9][3].slides[0].nodes[0].layout.y, 30);
 });
 
 test('setupIframeDragging delegates interaction binding to the shared interaction module', () => {
