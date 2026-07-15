@@ -4572,7 +4572,22 @@
     }
 
     function updateAlignmentActionState(doc = getIframeDoc()) {
-      const alignmentActionState = buildAlignmentActionState(doc).alignmentActionState;
+      const alignmentState = buildAlignmentActionState(doc);
+      const alignmentActionState = alignmentState.alignmentActionState;
+      const syncStudioAlignmentToolbarState = (
+        SlideNextStudioEditorAlignment
+        && typeof SlideNextStudioEditorAlignment.syncStudioAlignmentToolbarState === 'function'
+      )
+        ? SlideNextStudioEditorAlignment.syncStudioAlignmentToolbarState
+        : null;
+      if (syncStudioAlignmentToolbarState && Array.isArray(alignmentState.nudgeLayoutItems)) {
+        return syncStudioAlignmentToolbarState({
+          documentRef: document,
+          items: alignmentState.nudgeLayoutItems,
+          isLocked: isElementLocked,
+          canMutateDeck: () => !!alignmentState.slide && alignmentState.canNudge
+        });
+      }
       return SlideNextStudioEditorAlignment.renderStudioAlignmentToolbarState({
         documentRef: document,
         canAlign: alignmentActionState.canAlign,

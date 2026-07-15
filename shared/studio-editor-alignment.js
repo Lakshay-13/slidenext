@@ -57,6 +57,18 @@
     return true;
   }
 
+  function syncStudioAlignmentToolbarState(options = {}) {
+    const actionState = buildStudioAlignmentActionState(options.items, {
+      isLocked: options.isLocked,
+      canMutateDeck: options.canMutateDeck
+    });
+    return renderStudioAlignmentToolbarState({
+      documentRef: options.documentRef,
+      canAlign: actionState.canAlign,
+      selectionCount: actionState.selection.length
+    });
+  }
+
   function isValidAlignmentItem(item) {
     return item
       && Number.isFinite(item.absLeft)
@@ -193,6 +205,7 @@
     getStudioAlignmentSelection,
     buildStudioAlignmentActionState,
     renderStudioAlignmentToolbarState,
+    syncStudioAlignmentToolbarState,
     buildStudioAlignedLayout,
     buildStudioDistributedLayout,
     applyStudioAlignmentLayout

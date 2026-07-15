@@ -168,6 +168,34 @@ test('renderStudioAlignmentToolbarState separates alignment and distribution rea
   assert.deepEqual(Object.values(buttons).map((button) => button.disabled), ids.map(() => false));
 });
 
+test('syncStudioAlignmentToolbarState builds and renders alignment controls in one shared operation', () => {
+  const ids = [
+    'alignSelectionLeftBtn',
+    'alignSelectionCenterBtn',
+    'alignSelectionRightBtn',
+    'alignSelectionTopBtn',
+    'alignSelectionMiddleBtn',
+    'alignSelectionBottomBtn',
+    'distributeSelectionHorizontalBtn',
+    'distributeSelectionVerticalBtn'
+  ];
+  const buttons = Object.fromEntries(ids.map((id) => [id, { disabled: true }]));
+  const items = [{ element: {} }, { element: {} }];
+
+  assert.equal(alignment.syncStudioAlignmentToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return buttons[id] || null;
+      }
+    },
+    items,
+    isLocked: () => false,
+    canMutateDeck: () => true
+  }), true);
+  assert.equal(buttons.alignSelectionLeftBtn.disabled, false);
+  assert.equal(buttons.distributeSelectionHorizontalBtn.disabled, true);
+});
+
 test('applyStudioAlignmentLayout applies positions and creates an optional position transaction', () => {
   const first = {
     dataset: { editorId: 'node-1' },

@@ -89,6 +89,50 @@ test('updateAlignmentActionState enables all positional controls only when align
   ids.forEach((id) => assert.equal(controls[id].disabled, false));
 });
 
+test('updateAlignmentActionState delegates toolbar state assembly to the shared alignment view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateAlignmentActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateStyleActionState'
+  );
+  const slide = { id: 'slide-1' };
+  const layoutItems = [{ element: {} }, { element: {} }];
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorAlignment: {
+      syncStudioAlignmentToolbarState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    buildAlignmentActionState() {
+      return {
+        slide,
+        canNudge: true,
+        nudgeLayoutItems: layoutItems,
+        alignmentActionState: {
+          selection: layoutItems,
+          canAlign: true
+        }
+      };
+    },
+    document: {},
+    isElementLocked() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  const doc = { id: 'doc' };
+  assert.equal(context.updateAlignmentActionState(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.equal(calls[0].items, layoutItems);
+  assert.equal(calls[0].isLocked, context.isElementLocked);
+  assert.equal(calls[0].canMutateDeck(), true);
+});
+
 test('distributeSelectedElements writes distribution positions and records one mutation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
