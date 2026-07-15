@@ -13,6 +13,7 @@ test('buildStudioPdfPrintHtml injects fixed-size one-slide-per-page print styles
   assert.match(html, /break-after: page/);
   assert.match(html, /\.slide:last-child/);
   assert.match(html, /#indicatorDots/);
+  assert.match(html, /print-color-adjust: exact/);
   assert.equal((html.match(/data-slidenext-pdf-print="true"/g) || []).length, 1);
 });
 
