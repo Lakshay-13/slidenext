@@ -7,6 +7,25 @@
     root.SlideNextStudioEditorCanonicalTransform = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function buildStudioCanonicalTransformBaseline(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const updateCanonicalNodeLayout = canonicalDeckApi
+      && typeof canonicalDeckApi.updateCanonicalNodeLayout === 'function'
+      ? canonicalDeckApi.updateCanonicalNodeLayout
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+
+    if (!updateCanonicalNodeLayout || !buildCanonicalDeck) {
+      return null;
+    }
+
+    return buildCanonicalDeck(options.sourceDocument);
+  }
+
   function buildStudioCanonicalTransformDeck(finalizeResult, options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -18,21 +37,22 @@
     const buildCanonicalLayoutUpdates = typeof options.buildCanonicalLayoutUpdates === 'function'
       ? options.buildCanonicalLayoutUpdates
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
+    const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
+      ? options.canonicalDeckBeforeMutation
+      : buildStudioCanonicalTransformBaseline(options);
 
-    if (!updateCanonicalNodeLayout || !buildCanonicalLayoutUpdates || !buildCanonicalDeck) {
+    if (!updateCanonicalNodeLayout || !buildCanonicalLayoutUpdates || !canonicalDeckBeforeMutation) {
       return null;
     }
 
     const layoutUpdates = buildCanonicalLayoutUpdates(finalizeResult, {
       getElementId: options.getElementId
     });
-    return updateCanonicalNodeLayout(buildCanonicalDeck(), layoutUpdates);
+    return updateCanonicalNodeLayout(canonicalDeckBeforeMutation, layoutUpdates);
   }
 
   return {
+    buildStudioCanonicalTransformBaseline,
     buildStudioCanonicalTransformDeck
   };
 });

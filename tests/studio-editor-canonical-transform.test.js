@@ -4,6 +4,23 @@ const assert = require('node:assert/strict');
 const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalTransform = require('../shared/studio-editor-canonical-transform.js');
 
+test('buildStudioCanonicalTransformBaseline builds from the source document', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [] });
+  const sourceDocument = { id: 'editor-doc' };
+  let builtFromDocument = null;
+  const result = canonicalTransform.buildStudioCanonicalTransformBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtFromDocument = documentRef;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(builtFromDocument, sourceDocument);
+  assert.equal(result, sourceDeck);
+});
+
 test('buildStudioCanonicalTransformDeck applies canonical layout updates to the current model', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{
