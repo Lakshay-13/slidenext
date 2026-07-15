@@ -161,14 +161,31 @@
     }
 
     let didPrint = false;
+    const reportPrintSuccess = () => {
+      if (typeof options.onPrint === 'function') {
+        options.onPrint();
+      }
+    };
+    const reportPrintFailure = (error) => {
+      if (typeof options.onError === 'function') {
+        options.onError(error);
+      }
+    };
     const print = () => {
       if (didPrint) return;
       didPrint = true;
+      if (typeof printWindow.print !== 'function') {
+        reportPrintFailure(new Error('Print dialog is unavailable'));
+        return;
+      }
       if (typeof printWindow.focus === 'function') {
         printWindow.focus();
       }
-      if (typeof printWindow.print === 'function') {
+      try {
         printWindow.print();
+        reportPrintSuccess();
+      } catch (error) {
+        reportPrintFailure(error);
       }
     };
     const waitForResources = () => {

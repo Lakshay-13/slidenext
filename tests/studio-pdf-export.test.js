@@ -78,6 +78,7 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
   let printCalls = 0;
   let focusCalls = 0;
   let loadHandler = null;
+  let printSuccessCalls = 0;
   const events = [];
   const printWindow = {
     document: {
@@ -112,6 +113,9 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
     html: '<html><head></head><body><div class="slide">A</div></body></html>',
     openWindow() {
       return printWindow;
+    },
+    onPrint() {
+      printSuccessCalls += 1;
     }
   }), true);
   assert.match(writtenHtml, /data-slidenext-pdf-print="true"/);
@@ -125,6 +129,41 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
     setImmediate(() => {
       assert.equal(printCalls, 1);
       assert.equal(focusCalls, 1);
+      assert.equal(printSuccessCalls, 1);
+      resolve();
+    });
+  });
+});
+
+test('openStudioPdfPrintWindow reports print-dialog failures', () => {
+  let printErrors = 0;
+  const printWindow = {
+    document: {
+      open() {},
+      write() {},
+      close() {}
+    },
+    addEventListener(type, handler) {
+      assert.equal(type, 'load');
+      this.loadHandler = handler;
+    }
+  };
+
+  assert.equal(pdfExport.openStudioPdfPrintWindow({
+    html: '<html><body><div class="slide">A</div></body></html>',
+    openWindow() {
+      return printWindow;
+    },
+    onError(error) {
+      assert.match(error.message, /Print dialog is unavailable/);
+      printErrors += 1;
+    }
+  }), true);
+
+  printWindow.loadHandler();
+  return new Promise((resolve) => {
+    setImmediate(() => {
+      assert.equal(printErrors, 1);
       resolve();
     });
   });

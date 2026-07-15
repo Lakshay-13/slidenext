@@ -28,6 +28,7 @@ test('exportPdf delegates a ready deck to the shared browser print exporter', ()
     SlideNextStudioPdfExport: {
       openStudioPdfPrintWindow(options) {
         calls.push(['openStudioPdfPrintWindow', options]);
+        options.onPrint();
         return true;
       }
     },

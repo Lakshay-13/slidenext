@@ -10435,9 +10435,13 @@
       if (exportButton) exportButton.disabled = true;
       setPdfExportStatus('exporting-pdf');
       try {
-        const didOpenPrintFlow = pdfExport.openStudioPdfPrintWindow({ html });
-        setPdfExportStatus(didOpenPrintFlow ? 'pdf-exported' : 'pdf-export-failed');
-        return !!didOpenPrintFlow;
+        const didOpenPrintFlow = pdfExport.openStudioPdfPrintWindow({
+          html,
+          onPrint: () => setPdfExportStatus('pdf-exported'),
+          onError: () => setPdfExportStatus('pdf-export-failed')
+        });
+        if (!didOpenPrintFlow) return failPdfExport();
+        return true;
       } catch (error) {
         return failPdfExport();
       } finally {
