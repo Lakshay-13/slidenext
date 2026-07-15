@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const editorEvents = require('../shared/studio-editor-events.js');
+const canonicalTransform = require('../shared/studio-editor-canonical-transform.js');
 const transformState = require('../shared/studio-editor-transform.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -26,6 +27,7 @@ function loadTransformSessionFinalizer(fileContent, context) {
     createStudioTransformSessionFinalizer: transformState.createStudioTransformSessionFinalizer,
     ...(context.SlideNextStudioEditorTransform || {})
   };
+  context.SlideNextStudioEditorCanonicalTransform = canonicalTransform;
   vm.runInContext(helperSource, context);
 }
 

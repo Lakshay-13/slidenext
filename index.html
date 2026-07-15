@@ -1157,6 +1157,7 @@
   <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
   <script src="/shared/studio-editor-transform.js"></script>
+  <script src="/shared/studio-editor-canonical-transform.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
@@ -6353,28 +6354,29 @@
         });
       };
       const buildCanonicalTransformDeck = (finalizeResult) => {
-        const updateCanonicalNodeLayout = transformApi
-          && typeof SlideNextCanonicalDeck !== 'undefined'
-          && SlideNextCanonicalDeck
-          && typeof SlideNextCanonicalDeck.updateCanonicalNodeLayout === 'function'
-          ? SlideNextCanonicalDeck.updateCanonicalNodeLayout
+        const canonicalTransformApi = typeof SlideNextStudioEditorCanonicalTransform !== 'undefined'
+          ? SlideNextStudioEditorCanonicalTransform
           : null;
         const buildCanonicalLayoutUpdates = transformApi
           && typeof transformApi.buildStudioTransformCanonicalLayoutUpdates === 'function'
           ? transformApi.buildStudioTransformCanonicalLayoutUpdates
           : null;
-        if (!updateCanonicalNodeLayout || !buildCanonicalLayoutUpdates
-          || typeof buildEditorCanonicalDeck !== 'function') {
+        if (!canonicalTransformApi
+          || typeof canonicalTransformApi.buildStudioCanonicalTransformDeck !== 'function') {
           return null;
         }
-        const getElementId = typeof assignEditorElementId === 'function'
-          ? assignEditorElementId
-          : null;
-        const layoutUpdates = buildCanonicalLayoutUpdates(finalizeResult, { getElementId });
-        return updateCanonicalNodeLayout(
-          buildEditorCanonicalDeck(doc),
-          layoutUpdates
-        );
+        return canonicalTransformApi.buildStudioCanonicalTransformDeck(finalizeResult, {
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          buildCanonicalLayoutUpdates,
+          buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+            ? () => buildEditorCanonicalDeck(doc)
+            : null,
+          getElementId: typeof assignEditorElementId === 'function'
+            ? assignEditorElementId
+            : null
+        });
       };
       const finalizeTransformSession = createEditorTransformSessionFinalizer(transformApi, {
         onSessionEnd: () => {

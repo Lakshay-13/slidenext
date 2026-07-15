@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 
 const selection = require('../shared/studio-editor-selection.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalTransform = require('../shared/studio-editor-canonical-transform.js');
 const deckView = require('../shared/studio-deck-view.js');
 const history = require('../shared/studio-history.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
@@ -32,6 +33,7 @@ function loadTransformSessionFinalizer(fileContent, context) {
     createStudioTransformSessionFinalizer: transformState.createStudioTransformSessionFinalizer,
     ...(context.SlideNextStudioEditorTransform || {})
   };
+  context.SlideNextStudioEditorCanonicalTransform = canonicalTransform;
   vm.runInContext(helperSource, context);
 }
 
