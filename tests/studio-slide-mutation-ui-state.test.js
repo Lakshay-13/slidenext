@@ -80,6 +80,15 @@ function loadRestoreSelectionAfterPreservedSlideMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadRestoreCommittedSelectionByIdsOnActiveSlide(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc(), options = {}) {',
+    '\n\n    function restoreSelectionAfterPreservedSlideMutation(selectedIds, doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadResolveCurrentStudioInsertionActionState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -306,6 +315,57 @@ test('restoreSelectionAfterPreservedSlideMutation fails closed when the shared s
 
   assert.equal(context.restoreSelectionAfterPreservedSlideMutation(['node-1'], { id: 'doc' }), false);
   assert.equal(context.preserveSelectionOnNextActiveSlideSync, false);
+});
+
+test('restoreCommittedSelectionByIdsOnActiveSlide delegates to shared selection', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { id: 'doc' };
+  const selectionIds = ['node-1'];
+  let delegatedOptions = null;
+  const context = {
+    SlideNextStudioEditorSelection: {
+      restoreCommittedStudioSelectionByIdsOnActiveSlide(ids, doc, options) {
+        delegatedOptions = { ids, doc, options };
+        return { restored: true };
+      }
+    },
+    getEditorSelectionOptions(options) {
+      return { selectionOptions: true, doc: options.doc };
+    },
+    applyEditorSelectionState() {},
+    syncSelectionOverlay() {},
+    hideDragHud() {},
+    syncInspectorForSelection() {},
+    updateLayersList() {}
+  };
+
+  vm.createContext(context);
+  loadRestoreCommittedSelectionByIdsOnActiveSlide(fileContent, context);
+
+  assert.equal(context.restoreCommittedSelectionByIdsOnActiveSlide(selectionIds, iframeDoc), true);
+  assert.deepEqual(delegatedOptions.ids, selectionIds);
+  assert.equal(delegatedOptions.doc, iframeDoc);
+  assert.deepEqual(delegatedOptions.options.selectionOptions, true);
+  assert.equal(delegatedOptions.options.doc, iframeDoc);
+});
+
+test('restoreCommittedSelectionByIdsOnActiveSlide fails closed when the shared selection API is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    SlideNextStudioEditorSelection: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(
+    extractFunctionSource(
+      fileContent,
+      'function restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc(), options = {}) {',
+      '\n\n    function restoreSelectionAfterPreservedSlideMutation(selectedIds, doc = getIframeDoc()) {'
+    ),
+    context
+  );
+
+  assert.equal(context.restoreCommittedSelectionByIdsOnActiveSlide(['node-1'], { id: 'doc' }), false);
 });
 
 test('restoreDeckViewAfterSlideMutation delegates slide restore callbacks through shared selection and navigation helpers', () => {

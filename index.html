@@ -3948,7 +3948,11 @@
     }
 
     function restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc(), options = {}) {
-      const nextSelectionState = SlideNextStudioEditorSelection.restoreCommittedStudioSelectionByIdsOnActiveSlide(
+      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
+        ? SlideNextStudioEditorSelection
+        : null;
+      if (!selectionApi || typeof selectionApi.restoreCommittedStudioSelectionByIdsOnActiveSlide !== 'function') return false;
+      const nextSelectionState = selectionApi.restoreCommittedStudioSelectionByIdsOnActiveSlide(
         selectedIds,
         doc,
         {
