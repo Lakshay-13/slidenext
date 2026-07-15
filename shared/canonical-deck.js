@@ -142,6 +142,20 @@
     };
   }
 
+  function normalizeCanonicalInlineScriptIds(scripts, idPrefix, usedIds) {
+    return (Array.isArray(scripts) ? scripts : []).map((script, scriptIndex) => {
+      const normalizedScript = createCanonicalInlineScript(script, scriptIndex, { idPrefix });
+      return {
+        ...normalizedScript,
+        id: createUniqueCanonicalId(
+          normalizedScript.id,
+          `${idPrefix}-${scriptIndex + 1}`,
+          usedIds
+        )
+      };
+    });
+  }
+
   function createCanonicalDeck(seed = {}) {
     const deck = asPlainObject(seed);
     const metadata = asPlainObject(deck.metadata);
@@ -160,6 +174,7 @@
     const assetIds = new Set();
     const slideIds = new Set();
     const nodeIds = new Set();
+    const inlineScriptIds = new Set();
 
     return {
       kind: DECK_KIND,
@@ -210,16 +225,16 @@
         bodyScaffoldHtml: normalizeString(source.bodyScaffoldHtml),
         htmlAttributes: asPlainObject(source.htmlAttributes),
         bodyAttributes: asPlainObject(source.bodyAttributes),
-        headInlineScripts: Array.isArray(source.headInlineScripts)
-          ? source.headInlineScripts.map((script, scriptIndex) => createCanonicalInlineScript(script, scriptIndex, {
-            idPrefix: 'head-inline-script'
-          }))
-          : [],
-        bodyInlineScripts: Array.isArray(source.bodyInlineScripts)
-          ? source.bodyInlineScripts.map((script, scriptIndex) => createCanonicalInlineScript(script, scriptIndex, {
-            idPrefix: 'body-inline-script'
-          }))
-          : []
+        headInlineScripts: normalizeCanonicalInlineScriptIds(
+          source.headInlineScripts,
+          'head-inline-script',
+          inlineScriptIds
+        ),
+        bodyInlineScripts: normalizeCanonicalInlineScriptIds(
+          source.bodyInlineScripts,
+          'body-inline-script',
+          inlineScriptIds
+        )
       }
     };
   }
@@ -228,6 +243,7 @@
     const assetIds = new Set();
     const slideIds = new Set();
     const nodeIds = new Set();
+    const inlineScriptIds = new Set();
     const registerId = (value, usedIds) => {
       if (typeof value !== 'string' || !value.trim() || usedIds.has(value)) {
         return false;
@@ -243,6 +259,12 @@
           && hasUniqueNodeIds(node.children);
       });
     };
+    const hasUniqueInlineScriptIds = (scripts) => {
+      if (!Array.isArray(scripts)) return true;
+      return scripts.every((script) => {
+        return !!script && registerId(script.id, inlineScriptIds);
+      });
+    };
 
     if (Array.isArray(deck.assets) && !deck.assets.every((asset) => {
       return !!asset && registerId(asset.id, assetIds);
@@ -250,6 +272,11 @@
       return false;
     }
     if (!Array.isArray(deck.slides)) return false;
+    if (deck.source && typeof deck.source === 'object'
+      && (!hasUniqueInlineScriptIds(deck.source.headInlineScripts)
+        || !hasUniqueInlineScriptIds(deck.source.bodyInlineScripts))) {
+      return false;
+    }
     return deck.slides.every((slide) => {
       return !!slide
         && registerId(slide.id, slideIds)

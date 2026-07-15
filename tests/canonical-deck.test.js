@@ -41,6 +41,45 @@ test('createCanonicalDeck repairs duplicate asset ids without changing asset ord
   ]);
 });
 
+test('createCanonicalDeck repairs duplicate inline script ids across source locations', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    source: {
+      headInlineScripts: [
+        { id: 'boot', content: 'window.headOne = true;' },
+        { id: 'boot', content: 'window.headTwo = true;' },
+        { id: ' ', content: 'window.headThree = true;' }
+      ],
+      bodyInlineScripts: [
+        { id: 'boot', content: 'window.bodyOne = true;' },
+        { content: 'window.bodyTwo = true;' }
+      ]
+    }
+  });
+
+  assert.deepEqual(deck.source.headInlineScripts.map((script) => script.id), [
+    'boot',
+    'boot-2',
+    'head-inline-script-3'
+  ]);
+  assert.deepEqual(deck.source.bodyInlineScripts.map((script) => script.id), [
+    'boot-3',
+    'body-inline-script-2'
+  ]);
+  assert.equal(canonicalDeck.isCanonicalDeck(deck), true);
+});
+
+test('isCanonicalDeck rejects duplicate inline script ids across source locations', () => {
+  assert.equal(canonicalDeck.isCanonicalDeck({
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    source: {
+      headInlineScripts: [{ id: 'boot' }],
+      bodyInlineScripts: [{ id: 'boot' }]
+    },
+    slides: [{ id: 'slide-1', nodes: [] }]
+  }), false);
+});
+
 test('isCanonicalDeck rejects malformed identity fields and accepts repaired decks', () => {
   const malformedDeck = {
     kind: 'slidenext.deck',
