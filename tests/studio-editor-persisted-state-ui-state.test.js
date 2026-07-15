@@ -571,41 +571,24 @@ test('applyCurrentStudioPersistedDeckState reuses the shared persisted-state app
   }]);
 });
 
-test('applyCurrentStudioPersistedDeckState reuses the shared persisted-state helper when available', () => {
+test('applyCurrentStudioPersistedDeckState returns the state without partial writes when the shared applier is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const calls = [];
+  const nextState = {
+    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] }
+  };
   const context = {
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    SlideNextStudioEditorPersistence: {
-      applyStudioPersistedDeckState(nextState, options = {}) {
-        calls.push({
-          nextState,
-          currentPresentationUrl: options.currentPresentationUrl,
-          hasUpdatePersistedDeckState: typeof options.updatePersistedDeckState === 'function',
-          hasSetCurrentPresentationCanonicalDeck: typeof options.setCurrentPresentationCanonicalDeck === 'function'
-        });
-        return nextState;
-      }
-    },
+    SlideNextStudioEditorPersistence: {},
     updateEditorPersistedDeckState() {
-      throw new Error('updateEditorPersistedDeckState should be delegated through the shared helper');
+      throw new Error('updateEditorPersistedDeckState should not run without the shared applier');
     },
     setCurrentPresentationCanonicalDeck() {
-      throw new Error('setCurrentPresentationCanonicalDeck should be delegated through the shared helper');
+      throw new Error('setCurrentPresentationCanonicalDeck should not run without the shared applier');
     }
   };
 
   vm.createContext(context);
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
 
-  const nextState = {
-    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] }
-  };
   assert.equal(context.applyCurrentStudioPersistedDeckState(nextState), nextState);
-  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
-    nextState,
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    hasUpdatePersistedDeckState: true,
-    hasSetCurrentPresentationCanonicalDeck: true
-  }]);
 });

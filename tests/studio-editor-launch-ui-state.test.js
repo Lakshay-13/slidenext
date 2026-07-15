@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const deckContext = require('../shared/studio-deck-context.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
+const studioPersistence = require('../shared/studio-editor-persistence.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -1141,9 +1142,15 @@ test('applyCurrentPresentationMetadata refreshes the persisted canonical baselin
       }
     },
     currentPresentationMetadata: null,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    generateThumbnails() {},
     getIframeDoc() {
       return { documentElement: {} };
     },
+    setCurrentPresentationCanonicalDeck() {},
+    syncStudioChromeToActiveSlide() {},
+    updateDeckReadyToolbarActionState() {},
+    SlideNextStudioEditorPersistence: studioPersistence,
     updateEditorPersistedDeckStateCalls: [],
     updateEditorPersistedDeckState(nextState) {
       context.updateEditorPersistedDeckStateCalls.push(nextState);
@@ -1197,6 +1204,7 @@ test('applyCurrentPresentationMetadata refreshes fallback deck chrome from store
       }
     },
     currentPresentationMetadata: null,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     generateThumbnails() {
       callLog.push('generateThumbnails');
     },
@@ -1210,6 +1218,8 @@ test('applyCurrentPresentationMetadata refreshes fallback deck chrome from store
     updateDeckReadyToolbarActionState(nextDoc) {
       callLog.push(['updateDeckReadyToolbarActionState', nextDoc]);
     },
+    setCurrentPresentationCanonicalDeck() {},
+    SlideNextStudioEditorPersistence: studioPersistence,
     updateEditorPersistedDeckState(nextState) {
       callLog.push(['updateEditorPersistedDeckState', nextState]);
     },
@@ -1368,7 +1378,9 @@ test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline
       return { documentElement: {} };
     },
     lastPersistedCanonicalDeck: null,
+    setCurrentPresentationCanonicalDeck() {},
     syncStudioChromeToActiveSlide() {},
+    SlideNextStudioEditorPersistence: studioPersistence,
     updateDeckReadyToolbarActionState() {},
     updateEditorPersistedDeckState(nextState) {
       if (Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck')) {

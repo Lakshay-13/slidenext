@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const studioHistory = require('../shared/studio-history.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const studioPersistence = require('../shared/studio-editor-persistence.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -1310,6 +1311,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
       };
     },
     currentSlideIndex: 2,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     generateThumbnails() {
       callLog.push(['generateThumbnails']);
     },
@@ -1346,6 +1348,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
     setupIframeDragging(doc) {
       callLog.push(['setupIframeDragging', doc]);
     },
+    SlideNextStudioEditorPersistence: studioPersistence,
     SlideNextStudioHistory: {
       normalizeStudioHistoryEntry(entry) {
         callLog.push(['normalizeStudioHistoryEntry', entry]);
@@ -1485,6 +1488,7 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
       return null;
     },
     currentSlideIndex: 0,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     generateThumbnails() {},
     getIframeDoc() {
       return iframeDoc;
@@ -1508,6 +1512,7 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
     setActiveSlide() {},
     setActiveSlideById() {},
     setupIframeDragging() {},
+    SlideNextStudioEditorPersistence: studioPersistence,
     SlideNextStudioHistory: {
       normalizeStudioHistoryEntry(entry) {
         return entry;
@@ -1594,6 +1599,7 @@ test('restoreFrameFromHistoryEntry applies a valid transaction without replacing
       return null;
     },
     currentSlideIndex: 0,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     getElementByEditorId(editorId, doc) {
       return doc.querySelector(`[data-editor-id="${editorId}"]`);
     },
@@ -1612,6 +1618,7 @@ test('restoreFrameFromHistoryEntry applies a valid transaction without replacing
     syncSelectionOverlay() {
       callLog.push(['syncSelectionOverlay']);
     },
+    SlideNextStudioEditorPersistence: studioPersistence,
     updateEditorPersistedDeckState(nextState) {
       callLog.push(['updateEditorPersistedDeckState', nextState]);
     }

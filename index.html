@@ -3644,39 +3644,12 @@
       )
         ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateApplier
         : null;
-      if (createStudioPersistedDeckStateApplier) {
-        return createStudioPersistedDeckStateApplier({
-          currentPresentationUrl,
-          updatePersistedDeckState: updateEditorPersistedDeckState,
-          setCurrentPresentationCanonicalDeck
-        })(nextState, options);
-      }
-
-      const applyStudioPersistedDeckState = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.applyStudioPersistedDeckState === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.applyStudioPersistedDeckState
-        : null;
-      if (applyStudioPersistedDeckState) {
-        return applyStudioPersistedDeckState(nextState, {
-          ...options,
-          currentPresentationUrl,
-          updatePersistedDeckState: updateEditorPersistedDeckState,
-          setCurrentPresentationCanonicalDeck
-        });
-      }
-
-      updateEditorPersistedDeckState(nextState);
-      if (!Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck') || options.syncPresentationMetadata === false) {
-        return nextState;
-      }
-      const presentationUrl = Object.prototype.hasOwnProperty.call(options, 'presentationUrl')
-        ? options.presentationUrl
-        : (typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '');
-      setCurrentPresentationCanonicalDeck(nextState.canonicalDeck, presentationUrl);
-      return nextState;
+      if (!createStudioPersistedDeckStateApplier) return nextState;
+      return createStudioPersistedDeckStateApplier({
+        currentPresentationUrl,
+        updatePersistedDeckState: updateEditorPersistedDeckState,
+        setCurrentPresentationCanonicalDeck
+      })(nextState, options);
     }
 
     function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
