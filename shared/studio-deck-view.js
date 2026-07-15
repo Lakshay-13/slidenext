@@ -562,10 +562,8 @@
     return true;
   }
 
-  function applyStudioSlideReorderMutation(container, draggedNode, beforeNode = null, options = {}) {
-    if (!container
-      || !draggedNode
-      || typeof container.insertBefore !== 'function') {
+  function runStudioSlideMutationWithTransaction(container, mutate, options = {}) {
+    if (!container || typeof mutate !== 'function') {
       return {
         didApply: false,
         transaction: null
@@ -588,7 +586,7 @@
         })
       : null;
 
-    container.insertBefore(draggedNode, beforeNode || null);
+    mutate();
 
     return {
       didApply: true,
@@ -596,6 +594,23 @@
         ? markupCapture.createTransaction()
         : null
     };
+  }
+
+  function applyStudioSlideReorderMutation(container, draggedNode, beforeNode = null, options = {}) {
+    if (!container
+      || !draggedNode
+      || typeof container.insertBefore !== 'function') {
+      return {
+        didApply: false,
+        transaction: null
+      };
+    }
+
+    return runStudioSlideMutationWithTransaction(
+      container,
+      () => container.insertBefore(draggedNode, beforeNode || null),
+      options
+    );
   }
 
   function applyStudioSlideInsertionMutation(container, slideNode, options = {}) {
@@ -608,30 +623,11 @@
       };
     }
 
-    const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
-      ? options.createMarkupTransactionCapture
-      : null;
-    const containerElementId = typeof options.containerElementId === 'string'
-      && options.containerElementId.trim()
-      ? options.containerElementId.trim()
-      : 'slides-container';
-    const markupCapture = createMarkupTransactionCapture
-      ? createMarkupTransactionCapture([{
-          element: container,
-          elementId: containerElementId
-        }], {
-          getElementId: options.getElementId
-        })
-      : null;
-
-    container.appendChild(slideNode);
-
-    return {
-      didApply: true,
-      transaction: markupCapture
-        ? markupCapture.createTransaction()
-        : null
-    };
+    return runStudioSlideMutationWithTransaction(
+      container,
+      () => container.appendChild(slideNode),
+      options
+    );
   }
 
   function applyStudioSlideDeletionMutation(container, slideNode, options = {}) {
@@ -644,30 +640,11 @@
       };
     }
 
-    const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
-      ? options.createMarkupTransactionCapture
-      : null;
-    const containerElementId = typeof options.containerElementId === 'string'
-      && options.containerElementId.trim()
-      ? options.containerElementId.trim()
-      : 'slides-container';
-    const markupCapture = createMarkupTransactionCapture
-      ? createMarkupTransactionCapture([{
-          element: container,
-          elementId: containerElementId
-        }], {
-          getElementId: options.getElementId
-        })
-      : null;
-
-    slideNode.remove();
-
-    return {
-      didApply: true,
-      transaction: markupCapture
-        ? markupCapture.createTransaction()
-        : null
-    };
+    return runStudioSlideMutationWithTransaction(
+      container,
+      () => slideNode.remove(),
+      options
+    );
   }
 
   function syncStudioActiveSlideView(doc, options = {}) {
