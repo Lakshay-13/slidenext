@@ -459,7 +459,7 @@ test('insertElement no-ops when no active slide is available or the element type
   ]);
 });
 
-test('insertElement preserves the fallback insertion path when the shared apply helper is unavailable', () => {
+test('insertElement fails closed when the shared insertion apply helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const insertElementSource = extractFunctionSource(
     fileContent,
@@ -494,6 +494,9 @@ test('insertElement preserves the fallback insertion path when the shared apply 
     finalizeInsertedElements(elements, versionLabel, transaction) {
       calls.push(['finalizeInsertedElements', elements, versionLabel, transaction]);
       return true;
+    },
+    updateInsertionActionState() {
+      calls.push(['updateInsertionActionState']);
     }
   };
 
@@ -501,18 +504,6 @@ test('insertElement preserves the fallback insertion path when the shared apply 
   loadElementInsertionHelper(fileContent, context);
   vm.runInContext(insertElementSource, context);
 
-  assert.equal(context.insertElement('h2'), true);
-  assert.deepEqual(calls.map(([name]) => name), [
-    'createStudioInsertedElement',
-    'makeElementsHoverable',
-    'appendChild',
-    'finalizeInsertedElements'
-  ]);
-  assert.equal(calls[0][1], 'h2');
-  assert.equal(calls[0][2].offset, 0);
-  assert.equal(calls[1][1], insertedElement);
-  assert.equal(calls[2][1], insertedElement);
-  assert.equal(calls[3][1][0], insertedElement);
-  assert.equal(calls[3][2], 'Auto: Added H2');
-  assert.equal(calls[3][3], null);
+  assert.equal(context.insertElement('h2'), false);
+  assert.deepEqual(calls, [['updateInsertionActionState']]);
 });

@@ -7296,55 +7296,23 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-
-      if (applyStudioElementInsertion) {
-        const mutation = applyStudioElementInsertion(type, {
-          documentRef: options.documentRef,
-          slide: options.slide,
-          offset: options.offset,
-          prepareElement: typeof options.prepareElement === 'function'
-            ? options.prepareElement
-            : null,
-          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
-          transactionElementId: options.transactionElementId || '',
-          getElementId: options.getElementId
-        });
-        return {
-          element: mutation && mutation.element ? mutation.element : null,
-          transaction: mutation && mutation.transaction ? mutation.transaction : null
-        };
+      if (!applyStudioElementInsertion) {
+        return { element: null, transaction: null };
       }
-
-      const markupCapture = createStudioMarkupTransactionCapture
-        && options.slide
-        && options.transactionElementId
-          ? createStudioMarkupTransactionCapture([{
-              element: options.slide,
-              elementId: options.transactionElementId
-            }], {
-              getElementId: options.getElementId
-            })
-          : null;
-
-      const newEl = insertionApi && typeof insertionApi.createStudioInsertedElement === 'function'
-        ? insertionApi.createStudioInsertedElement(type, {
-            documentRef: options.documentRef,
-            offset: options.offset
-          })
-        : null;
-
-      if (newEl && options.slide && typeof options.slide.appendChild === 'function') {
-        if (typeof options.prepareElement === 'function') {
-          options.prepareElement(newEl);
-        }
-        options.slide.appendChild(newEl);
-      }
-
+      const mutation = applyStudioElementInsertion(type, {
+        documentRef: options.documentRef,
+        slide: options.slide,
+        offset: options.offset,
+        prepareElement: typeof options.prepareElement === 'function'
+          ? options.prepareElement
+          : null,
+        createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+        transactionElementId: options.transactionElementId || '',
+        getElementId: options.getElementId
+      });
       return {
-        element: newEl,
-        transaction: newEl && markupCapture
-          ? markupCapture.createTransaction()
-          : null
+        element: mutation && mutation.element ? mutation.element : null,
+        transaction: mutation && mutation.transaction ? mutation.transaction : null
       };
     }
 

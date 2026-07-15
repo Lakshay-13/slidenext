@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const studioInsertion = require('../shared/studio-editor-insertion.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -43,6 +44,49 @@ function loadResolveCurrentStudioInsertionActionState(fileContent, context) {
   );
   vm.runInContext(helperSource, context);
 }
+
+function loadElementInsertionMutationHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorElementInsertionWithTransaction(type, options = {}) {',
+    'function insertElement(type) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+test('applyEditorElementInsertionWithTransaction delegates element creation and transaction capture to the shared insertion module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slide = { appendChild() {} };
+  const calls = [];
+  const element = { id: 'inserted-element' };
+  const context = {
+    SlideNextStudioEditorInsertion: {
+      ...studioInsertion,
+      applyStudioElementInsertion(type, options) {
+        calls.push([type, options]);
+        return { element, transaction: { type: 'markup' } };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadElementInsertionMutationHelper(fileContent, context);
+
+  const result = context.applyEditorElementInsertionWithTransaction('h2', {
+    documentRef: { id: 'document' },
+    slide,
+    offset: 15,
+    transactionElementId: 'slide:slide-1'
+  });
+
+  assert.equal(result.element, element);
+  assert.deepEqual(result.transaction, { type: 'markup' });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'h2');
+  assert.equal(calls[0][1].slide, slide);
+  assert.equal(calls[0][1].offset, 15);
+  assert.equal(calls[0][1].transactionElementId, 'slide:slide-1');
+});
 
 test('resolveCurrentStudioInsertionActionState reports add-slide and insertion readiness from the live deck document', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
