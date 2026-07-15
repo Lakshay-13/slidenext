@@ -1167,6 +1167,7 @@
   <script src="/shared/studio-deck-view.js"></script>
   <script src="/shared/studio-preview.js"></script>
   <script src="/shared/studio-pdf-export.js"></script>
+  <script src="/shared/studio-pptx-export.js"></script>
   <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/studio-version-actions.js"></script>
   <script src="/shared/studio-version-history.js"></script>
@@ -10152,34 +10153,23 @@
       setStudioAutoSaveStatus('exporting');
 
       try {
-        const response = await fetch('/api/export/pptx', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            canonicalDeck,
-            sourcePath: currentPresentationUrl,
-            filename: `${currentTitle || 'slidenext-presentation'}.pptx`
-          })
-        });
-        if (!response.ok) {
+        const exportService = typeof SlideNextStudioPptxExport !== 'undefined'
+          ? SlideNextStudioPptxExport
+          : null;
+        if (!exportService || typeof exportService.exportStudioPptx !== 'function') {
           setStudioAutoSaveStatus('export-failed');
           return false;
         }
 
-        const blob = await response.blob();
-        const contentDisposition = response.headers && response.headers.get('Content-Disposition');
-        const filenameMatch = contentDisposition && contentDisposition.match(/filename="([^"]+)"/i);
-        const filename = filenameMatch
-          ? filenameMatch[1]
-          : `${currentTitle || 'slidenext-presentation'}.pptx`;
-        const downloadUrl = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = downloadUrl;
-        anchor.download = filename;
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-        URL.revokeObjectURL(downloadUrl);
+        const result = await exportService.exportStudioPptx({
+            canonicalDeck,
+            sourcePath: currentPresentationUrl,
+            filename: `${currentTitle || 'slidenext-presentation'}.pptx`
+        });
+        if (!result || !result.success) {
+          setStudioAutoSaveStatus('export-failed');
+          return false;
+        }
         setStudioAutoSaveStatus('exported');
         return true;
       } catch (error) {

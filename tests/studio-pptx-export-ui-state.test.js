@@ -29,14 +29,6 @@ test('exportPptx posts the canonical deck and downloads the server response', as
   const calls = [];
   const statuses = [];
   const button = { disabled: false };
-  const anchor = {
-    click() {
-      calls.push(['click']);
-    },
-    remove() {
-      calls.push(['remove']);
-    }
-  };
   const context = {
     currentPresentationUrl: '/presentations/demo/index.html',
     currentTitle: 'Demo deck',
@@ -54,40 +46,13 @@ test('exportPptx posts the canonical deck and downloads the server response', as
     document: {
       getElementById(id) {
         return id === 'exportPptxBtn' ? button : null;
-      },
-      createElement(tagName) {
-        assert.equal(tagName, 'a');
-        return anchor;
-      },
-      body: {
-        appendChild(node) {
-          calls.push(['appendChild', node]);
-        }
       }
     },
-    URL: {
-      createObjectURL(blob) {
-        calls.push(['createObjectURL', blob]);
-        return 'blob:slidenext';
-      },
-      revokeObjectURL(url) {
-        calls.push(['revokeObjectURL', url]);
+    SlideNextStudioPptxExport: {
+      exportStudioPptx(options) {
+        calls.push(['exportStudioPptx', options]);
+        return Promise.resolve({ success: true, filename: 'Demo_deck.pptx' });
       }
-    },
-    fetch(url, options) {
-      calls.push(['fetch', url, options]);
-      return Promise.resolve({
-        ok: true,
-        headers: {
-          get(name) {
-            assert.equal(name, 'Content-Disposition');
-            return 'attachment; filename="Demo_deck.pptx"';
-          }
-        },
-        blob() {
-          return Promise.resolve({ type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
-        }
-      });
     },
     setStudioAutoSaveStatus(state) {
       statuses.push(state);
@@ -99,9 +64,8 @@ test('exportPptx posts the canonical deck and downloads the server response', as
   assert.equal(await context.exportPptx(), true);
   assert.equal(button.disabled, false);
   assert.deepEqual(statuses, ['exporting', 'exported']);
-  const fetchCall = calls.find(call => call[0] === 'fetch');
-  assert.equal(fetchCall[1], '/api/export/pptx');
-  assert.deepEqual(JSON.parse(fetchCall[2].body), {
+  const exportCall = calls.find(call => call[0] === 'exportStudioPptx');
+  assert.deepEqual(JSON.parse(JSON.stringify(exportCall[1])), {
     canonicalDeck: {
       kind: 'slidenext.deck',
       schemaVersion: 1,
@@ -110,19 +74,12 @@ test('exportPptx posts the canonical deck and downloads the server response', as
     sourcePath: '/presentations/demo/index.html',
     filename: 'Demo deck.pptx'
   });
-  assert.equal(anchor.href, 'blob:slidenext');
-  assert.equal(anchor.download, 'Demo_deck.pptx');
-  assert.deepEqual(calls.filter(call => ['click', 'remove', 'revokeObjectURL'].includes(call[0])), [
-    ['click'],
-    ['remove'],
-    ['revokeObjectURL', 'blob:slidenext']
-  ]);
 });
 
 test('exportPptx skips unavailable decks and reports failed responses', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let buildCalls = 0;
-  let fetchCalls = 0;
+  let exportCalls = 0;
   const statuses = [];
   const button = { disabled: false };
   const context = {
@@ -140,9 +97,11 @@ test('exportPptx skips unavailable decks and reports failed responses', async ()
         return button;
       }
     },
-    fetch() {
-      fetchCalls += 1;
-      return Promise.resolve({ ok: false });
+    SlideNextStudioPptxExport: {
+      exportStudioPptx() {
+        exportCalls += 1;
+        return Promise.resolve({ success: false });
+      }
     },
     setStudioAutoSaveStatus(state) {
       statuses.push(state);
@@ -153,11 +112,11 @@ test('exportPptx skips unavailable decks and reports failed responses', async ()
 
   assert.equal(await context.exportPptx(), false);
   assert.equal(buildCalls, 0);
-  assert.equal(fetchCalls, 0);
+  assert.equal(exportCalls, 0);
 
   context.resolveCurrentStudioDeckReadyActionState = () => ({ canUseDeckActions: true });
   assert.equal(await context.exportPptx(), false);
-  assert.equal(fetchCalls, 1);
+  assert.equal(exportCalls, 1);
   assert.deepEqual(statuses, ['exporting', 'export-failed']);
   assert.equal(button.disabled, false);
 
