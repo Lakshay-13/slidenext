@@ -829,6 +829,7 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
   };
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorSlideCommands: slideCommands,
     SlideNextStudioDeckView: {
       restoreStudioDeckViewAfterSlideMutation(payload) {
         restorePayload = payload;
@@ -1312,6 +1313,7 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
   let restorePayload = null;
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorSlideCommands: slideCommands,
     SlideNextStudioDeckView: {
       restoreStudioDeckViewAfterSlideMutation(payload) {
         restorePayload = payload;
@@ -1451,6 +1453,7 @@ test('deleteSlideNode delegates slide removal and transaction capture to the sha
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideCommands: slideCommands,
     SlideNextStudioDeckView: {
       applyStudioSlideDeletionMutation(...args) {
         calls.push(['applyStudioSlideDeletionMutation', ...args]);
@@ -1516,6 +1519,7 @@ test('deleteSlideNode no-ops when the iframe document is unavailable', () => {
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideCommands: slideCommands,
     getIframeDoc() {
       calls.push(['getIframeDoc']);
       return null;
@@ -1556,6 +1560,7 @@ test('deleteSlideNode no-ops when the requested slide index is unavailable', () 
     }
   };
   const context = {
+    SlideNextStudioEditorSlideCommands: slideCommands,
     getIframeDoc() {
       calls.push(['getIframeDoc']);
       return iframeDoc;
@@ -1602,6 +1607,7 @@ test('deleteSlideNode refuses to remove the final remaining slide', () => {
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideCommands: slideCommands,
     alert(message) {
       alerts.push(message);
     },

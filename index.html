@@ -3281,20 +3281,15 @@
 
     // Delete Active Slide Node
     function deleteSlideNode(idx) {
-      const iframeDoc = getIframeDoc();
-      if (!iframeDoc) return false;
-      const container = iframeDoc.getElementById('slidesContainer');
-      if (!container) return false;
+      const slideCommands = typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+        ? SlideNextStudioEditorSlideCommands
+        : null;
+      const deleteStudioSlideNode = slideCommands
+        && typeof slideCommands.deleteStudioSlideNode === 'function'
+        ? slideCommands.deleteStudioSlideNode
+        : null;
+      if (!deleteStudioSlideNode) return false;
 
-      const slides = getSlides(iframeDoc);
-      if (slides.length <= 1) {
-        alert("Action aborted: presentation requires at least one slide.");
-        return false;
-      }
-      const deletedSlide = slides[idx];
-      if (!deletedSlide) return false;
-      const slideMutationState = captureSlideMutationRestoreState(iframeDoc);
-      const deletedSlideId = getEditorSlideId(deletedSlide);
       const removeCanonicalSlide = (
         typeof SlideNextCanonicalDeck !== 'undefined'
         && SlideNextCanonicalDeck
@@ -3302,30 +3297,35 @@
       )
         ? SlideNextCanonicalDeck.removeCanonicalSlide
         : null;
-      const canonicalDeckBeforeDeletion = removeCanonicalSlide
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(iframeDoc)
-        : null;
-      const canonicalDeckAfterDeletion = removeCanonicalSlide
-        ? removeCanonicalSlide(canonicalDeckBeforeDeletion, deletedSlideId)
-        : null;
-      const mutation = applyEditorSlideDeletionWithTransaction(container, deletedSlide);
-      if (!mutation.didApply) return false;
-      const transaction = mutation.transaction;
-      
-      generateThumbnails();
-      const remainingSlides = getSlides(iframeDoc);
-      restoreDeckViewAfterSlideMutation(iframeDoc, slideMutationState.preservedSelectionIds, {
-        preservedActiveSlideId: slideMutationState.preservedActiveSlideId,
-        removedSlideId: deletedSlideId,
-        fallbackIndex: remainingSlides.length === 0 ? 0 : Math.max(0, Math.min(idx - 1, remainingSlides.length - 1)),
+
+      return deleteStudioSlideNode(idx, {
+        getIframeDoc,
+        getSlideContainer: (doc) => doc && typeof doc.getElementById === 'function'
+          ? doc.getElementById('slidesContainer')
+          : null,
+        getSlides: typeof getSlides === 'function' ? getSlides : () => [],
+        alert: typeof alert === 'function' ? alert : null,
+        captureSlideMutationState: typeof captureSlideMutationRestoreState === 'function'
+          ? captureSlideMutationRestoreState
+          : null,
+        getSlideId: typeof getEditorSlideId === 'function'
+          ? getEditorSlideId
+          : (slide) => slide && slide.id || '',
+        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck
+          : null,
+        removeCanonicalSlide,
+        applyDeletion: typeof applyEditorSlideDeletionWithTransaction === 'function'
+          ? applyEditorSlideDeletionWithTransaction
+          : () => ({ didApply: false, transaction: null }),
+        generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
+        restoreDeckViewAfterSlideMutation: typeof restoreDeckViewAfterSlideMutation === 'function'
+          ? restoreDeckViewAfterSlideMutation
+          : null,
+        finalizeMutation: typeof finalizeSlideMutationPersistence === 'function'
+          ? finalizeSlideMutationPersistence
+          : null
       });
-      if (canonicalDeckAfterDeletion) {
-        finalizeSlideMutationPersistence('Auto: Deleted Slide', transaction, canonicalDeckAfterDeletion);
-      } else {
-        finalizeSlideMutationPersistence('Auto: Deleted Slide', transaction);
-      }
-      return true;
     }
 
     function getIframeDoc() {

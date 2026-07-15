@@ -121,8 +121,87 @@
     return true;
   }
 
+  function deleteStudioSlideNode(index, options = {}) {
+    const getIframeDoc = typeof options.getIframeDoc === 'function'
+      ? options.getIframeDoc
+      : () => null;
+    const iframeDoc = getIframeDoc();
+    if (!iframeDoc) return false;
+
+    const getSlideContainer = typeof options.getSlideContainer === 'function'
+      ? options.getSlideContainer
+      : (doc) => doc && typeof doc.getElementById === 'function'
+        ? doc.getElementById('slidesContainer')
+        : null;
+    const container = getSlideContainer(iframeDoc);
+    if (!container) return false;
+
+    const getSlides = typeof options.getSlides === 'function' ? options.getSlides : () => [];
+    const slides = getSlides(iframeDoc);
+    if (slides.length <= 1) {
+      if (typeof options.alert === 'function') {
+        options.alert('Action aborted: presentation requires at least one slide.');
+      }
+      return false;
+    }
+    const deletedSlide = slides[index];
+    if (!deletedSlide) return false;
+
+    const captureSlideMutationState = typeof options.captureSlideMutationState === 'function'
+      ? options.captureSlideMutationState
+      : () => ({ preservedActiveSlideId: '', preservedSelectionIds: [] });
+    const slideMutationState = captureSlideMutationState(iframeDoc);
+    const getSlideId = typeof options.getSlideId === 'function'
+      ? options.getSlideId
+      : (slide) => slide && slide.id || '';
+    const deletedSlideId = getSlideId(deletedSlide);
+    const removeCanonicalSlide = typeof options.removeCanonicalSlide === 'function'
+      ? options.removeCanonicalSlide
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const canonicalDeckBeforeDeletion = removeCanonicalSlide && buildCanonicalDeck
+      ? buildCanonicalDeck(iframeDoc)
+      : null;
+    const canonicalDeckAfterDeletion = removeCanonicalSlide
+      ? removeCanonicalSlide(canonicalDeckBeforeDeletion, deletedSlideId)
+      : null;
+
+    const applyDeletion = typeof options.applyDeletion === 'function'
+      ? options.applyDeletion
+      : () => ({ didApply: false, transaction: null });
+    const mutation = applyDeletion(container, deletedSlide);
+    if (!mutation || !mutation.didApply) return false;
+
+    if (typeof options.generateThumbnails === 'function') {
+      options.generateThumbnails();
+    }
+    const remainingSlides = getSlides(iframeDoc);
+    if (typeof options.restoreDeckViewAfterSlideMutation === 'function') {
+      options.restoreDeckViewAfterSlideMutation(iframeDoc, slideMutationState.preservedSelectionIds, {
+        preservedActiveSlideId: slideMutationState.preservedActiveSlideId,
+        removedSlideId: deletedSlideId,
+        fallbackIndex: remainingSlides.length === 0
+          ? 0
+          : Math.max(0, Math.min(index - 1, remainingSlides.length - 1))
+      });
+    }
+
+    const finalizeMutation = typeof options.finalizeMutation === 'function'
+      ? options.finalizeMutation
+      : () => {};
+    if (canonicalDeckAfterDeletion) {
+      finalizeMutation('Auto: Deleted Slide', mutation.transaction, canonicalDeckAfterDeletion);
+    } else {
+      finalizeMutation('Auto: Deleted Slide', mutation.transaction);
+    }
+    return true;
+  }
+
   return {
     prepareStudioSlideDuplication,
-    addStudioSlideNode
+    addStudioSlideNode,
+    deleteStudioSlideNode
   };
 });

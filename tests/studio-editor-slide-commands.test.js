@@ -173,3 +173,113 @@ test('addStudioSlideNode stops before history when slide creation is unavailable
   }), false);
   assert.deepEqual(calls, ['createBlankSlide']);
 });
+
+test('deleteStudioSlideNode preserves view state, canonical removal, and mutation lifecycle ordering', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const firstSlide = { id: 'slide-1' };
+  const deletedSlide = { id: 'slide-2' };
+  let slides = [firstSlide, deletedSlide];
+  const calls = [];
+
+  const result = slideCommands.deleteStudioSlideNode(1, {
+    getIframeDoc() {
+      calls.push('getIframeDoc');
+      return doc;
+    },
+    getSlideContainer(sourceDoc) {
+      assert.equal(sourceDoc, doc);
+      calls.push('getSlideContainer');
+      return container;
+    },
+    getSlides(sourceDoc) {
+      assert.equal(sourceDoc, doc);
+      calls.push('getSlides');
+      return slides;
+    },
+    captureSlideMutationState(sourceDoc) {
+      assert.equal(sourceDoc, doc);
+      calls.push('captureSlideMutationState');
+      return {
+        preservedActiveSlideId: 'slide-2',
+        preservedSelectionIds: ['element-1']
+      };
+    },
+    getSlideId(slide) {
+      assert.equal(slide, deletedSlide);
+      calls.push('getSlideId');
+      return slide.id;
+    },
+    buildCanonicalDeck(sourceDoc) {
+      assert.equal(sourceDoc, doc);
+      calls.push('buildCanonicalDeck');
+      return { slides: [{ id: 'slide-1' }, { id: 'slide-2' }] };
+    },
+    removeCanonicalSlide(deck, slideId) {
+      assert.deepEqual(deck.slides.map((slide) => slide.id), ['slide-1', 'slide-2']);
+      assert.equal(slideId, 'slide-2');
+      calls.push('removeCanonicalSlide');
+      return { slides: [deck.slides[0]] };
+    },
+    applyDeletion(sourceContainer, slide) {
+      assert.equal(sourceContainer, container);
+      assert.equal(slide, deletedSlide);
+      slides = [firstSlide];
+      calls.push('applyDeletion');
+      return { didApply: true, transaction: { type: 'markup' } };
+    },
+    generateThumbnails() {
+      calls.push('generateThumbnails');
+    },
+    restoreDeckViewAfterSlideMutation(sourceDoc, selectionIds, restoreOptions) {
+      assert.equal(sourceDoc, doc);
+      assert.deepEqual(selectionIds, ['element-1']);
+      assert.deepEqual(restoreOptions, {
+        preservedActiveSlideId: 'slide-2',
+        removedSlideId: 'slide-2',
+        fallbackIndex: 0
+      });
+      calls.push('restoreDeckViewAfterSlideMutation');
+    },
+    finalizeMutation(label, transaction, canonicalDeck) {
+      assert.equal(label, 'Auto: Deleted Slide');
+      assert.deepEqual(transaction, { type: 'markup' });
+      assert.deepEqual(canonicalDeck.slides.map((slide) => slide.id), ['slide-1']);
+      calls.push('finalizeMutation');
+    }
+  });
+
+  assert.equal(result, true);
+  assert.deepEqual(calls, [
+    'getIframeDoc',
+    'getSlideContainer',
+    'getSlides',
+    'captureSlideMutationState',
+    'getSlideId',
+    'buildCanonicalDeck',
+    'removeCanonicalSlide',
+    'applyDeletion',
+    'generateThumbnails',
+    'getSlides',
+    'restoreDeckViewAfterSlideMutation',
+    'finalizeMutation'
+  ]);
+});
+
+test('deleteStudioSlideNode rejects deleting the final slide without mutation', () => {
+  const calls = [];
+
+  assert.equal(slideCommands.deleteStudioSlideNode(0, {
+    getIframeDoc: () => ({}),
+    getSlideContainer: () => ({}),
+    getSlides: () => [{ id: 'slide-1' }],
+    alert(message) {
+      calls.push(message);
+    },
+    applyDeletion() {
+      calls.push('applyDeletion');
+      return { didApply: true };
+    }
+  }), false);
+  assert.deepEqual(calls, ['Action aborted: presentation requires at least one slide.']);
+});
