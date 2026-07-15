@@ -43,6 +43,15 @@ function loadRestoreDeckViewAfterSlideMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadApplyEditorSlideInsertionWithTransaction(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorSlideInsertionWithTransaction(container, slideNode, options = {}) {',
+    '\n\n    // Add Blank Slide Node'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadRestoreSelectionAfterPreservedSlideMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -371,6 +380,7 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
+  loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
   vm.runInContext(addSlideNodeSource, context);
 
   const result = context.addSlideNode();
@@ -475,6 +485,7 @@ test('addSlideNode delegates slide insertion and transaction capture to the shar
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
+  loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
   vm.runInContext(addSlideNodeSource, context);
 
   assert.equal(context.addSlideNode(), true);
@@ -513,6 +524,7 @@ test('addSlideNode no-ops when insertion state or the iframe document disallows 
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
+  loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
   vm.runInContext(addSlideNodeSource, context);
 
   assert.equal(context.addSlideNode(), false);
@@ -603,6 +615,7 @@ test('addSlideNode skips history when blank slide creation fails', () => {
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
+  loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
   vm.runInContext(addSlideNodeSource, context);
 
   assert.equal(context.addSlideNode(), false);

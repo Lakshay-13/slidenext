@@ -2856,13 +2856,21 @@
       return SlideNextStudioDeckView.restoreStudioDeckViewAfterSlideMutation(restoreOptions);
     }
 
-    // Add Blank Slide Node
-    function addSlideNode() {
-      const iframeDoc = getIframeDoc();
-      if (!resolveCurrentStudioInsertionActionState(iframeDoc).canAddSlide) return false;
-      if (!iframeDoc) return false;
-      const container = iframeDoc.getElementById('slidesContainer');
-      if (!container) return false;
+    function applyEditorSlideInsertionWithTransaction(container, slideNode, options = {}) {
+      if (!container || !slideNode) {
+        return {
+          didApply: false,
+          transaction: null
+        };
+      }
+
+      const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
+        : null;
+      const applyStudioSlideInsertionMutation = deckViewApi
+        && typeof deckViewApi.applyStudioSlideInsertionMutation === 'function'
+        ? deckViewApi.applyStudioSlideInsertionMutation
+        : null;
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -2870,7 +2878,54 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      
+      const containerElementId = typeof options.containerElementId === 'string'
+        && options.containerElementId.trim()
+        ? options.containerElementId.trim()
+        : 'slides-container';
+
+      if (applyStudioSlideInsertionMutation) {
+        const mutation = applyStudioSlideInsertionMutation(container, slideNode, {
+          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+          containerElementId,
+          getElementId: options.getElementId
+        });
+        return {
+          didApply: !!(mutation && mutation.didApply),
+          transaction: mutation && mutation.transaction ? mutation.transaction : null
+        };
+      }
+
+      if (typeof container.appendChild !== 'function') {
+        return {
+          didApply: false,
+          transaction: null
+        };
+      }
+
+      const markupCapture = createStudioMarkupTransactionCapture
+        ? createStudioMarkupTransactionCapture([{
+            element: container,
+            elementId: containerElementId
+          }], {
+            getElementId: options.getElementId
+          })
+        : null;
+      container.appendChild(slideNode);
+      return {
+        didApply: true,
+        transaction: markupCapture
+          ? markupCapture.createTransaction()
+          : null
+      };
+    }
+
+    // Add Blank Slide Node
+    function addSlideNode() {
+      const iframeDoc = getIframeDoc();
+      if (!resolveCurrentStudioInsertionActionState(iframeDoc).canAddSlide) return false;
+      if (!iframeDoc) return false;
+      const container = iframeDoc.getElementById('slidesContainer');
+      if (!container) return false;
       const newIndex = getSlides(iframeDoc).length;
       const newSlide = SlideNextStudioEditorDom.createStudioBlankSlide(iframeDoc, {
         ...getEditorDomOptions(),
@@ -2913,32 +2968,9 @@
         : null;
 
       saveHistoryState();
-      const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
-        : null;
-      const applyStudioSlideInsertionMutation = deckViewApi
-        && typeof deckViewApi.applyStudioSlideInsertionMutation === 'function'
-        ? deckViewApi.applyStudioSlideInsertionMutation
-        : null;
-      let transaction = null;
-      if (applyStudioSlideInsertionMutation) {
-        const mutation = applyStudioSlideInsertionMutation(container, newSlide, {
-          createMarkupTransactionCapture: createStudioMarkupTransactionCapture
-        });
-        if (!mutation.didApply) return false;
-        transaction = mutation.transaction;
-      } else {
-        const markupCapture = createStudioMarkupTransactionCapture
-          ? createStudioMarkupTransactionCapture([{
-              element: container,
-              elementId: 'slides-container'
-            }])
-          : null;
-        container.appendChild(newSlide);
-        transaction = markupCapture
-          ? markupCapture.createTransaction()
-          : null;
-      }
+      const mutation = applyEditorSlideInsertionWithTransaction(container, newSlide);
+      if (!mutation.didApply) return false;
+      const transaction = mutation.transaction;
       
       // Update UI
       generateThumbnails();
