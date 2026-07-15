@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const canonicalWallpaper = require('../shared/studio-editor-canonical-wallpaper.js');
 const studioWallpaperView = require('../shared/studio-editor-wallpaper-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -36,6 +37,7 @@ function loadApplyEditorWallpaperMutationWithTransaction(fileContent, context) {
     ...studioWallpaperView,
     ...(context.SlideNextStudioEditorWallpaperView || {})
   };
+  context.SlideNextStudioEditorCanonicalWallpaper = canonicalWallpaper;
   vm.runInContext(helperSource, context);
 }
 

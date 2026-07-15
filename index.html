@@ -1158,6 +1158,7 @@
   <script src="/shared/studio-editor-visibility-state.js"></script>
   <script src="/shared/studio-editor-transform.js"></script>
   <script src="/shared/studio-editor-canonical-transform.js"></script>
+  <script src="/shared/studio-editor-canonical-wallpaper.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
@@ -6948,19 +6949,21 @@
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
-      const updateCanonicalSlideBackground = canonicalDeckApi
-        && typeof canonicalDeckApi.updateCanonicalSlideBackground === 'function'
-        ? canonicalDeckApi.updateCanonicalSlideBackground
+      const canonicalWallpaperApi = typeof SlideNextStudioEditorCanonicalWallpaper !== 'undefined'
+        ? SlideNextStudioEditorCanonicalWallpaper
         : null;
-      const slideIds = updateCanonicalSlideBackground
-        ? sourceSlides.map(getSlideId).filter(Boolean)
-        : [];
-      const canonicalDeckBeforeMutation = updateCanonicalSlideBackground
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck()
+      const buildCanonicalWallpaperDeck = canonicalWallpaperApi
+        && typeof canonicalWallpaperApi.buildStudioCanonicalWallpaperDeck === 'function'
+        ? canonicalWallpaperApi.buildStudioCanonicalWallpaperDeck
         : null;
-      const canonicalDeck = updateCanonicalSlideBackground
-        ? updateCanonicalSlideBackground(canonicalDeckBeforeMutation, slideIds, background)
+      const canonicalDeck = buildCanonicalWallpaperDeck
+        ? buildCanonicalWallpaperDeck(sourceSlides, background, {
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? () => buildEditorCanonicalDeck()
+              : null,
+            getSlideId
+          })
         : null;
       if (!applyStudioWallpaperToSlides) {
         return {
