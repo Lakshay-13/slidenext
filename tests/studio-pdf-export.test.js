@@ -193,11 +193,15 @@ test('openStudioPdfPrintWindow reports print-dialog failures', () => {
 
 test('openStudioPdfPrintWindow reports a print-window load timeout', async () => {
   let printErrors = 0;
+  let closeCalls = 0;
   const printWindow = {
     document: {
       open() {},
       write() {},
       close() {}
+    },
+    close() {
+      closeCalls += 1;
     },
     addEventListener(type) {
       assert.equal(type, 'load');
@@ -218,6 +222,7 @@ test('openStudioPdfPrintWindow reports a print-window load timeout', async () =>
 
   await new Promise((resolve) => setTimeout(resolve, 30));
   assert.equal(printErrors, 1);
+  assert.equal(closeCalls, 1);
 });
 
 test('openStudioPdfPrintWindow returns false when popup or html input is unavailable', () => {

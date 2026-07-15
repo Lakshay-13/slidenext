@@ -189,12 +189,19 @@
         loadTimeoutId = null;
       }
     };
+    const closePrintWindow = () => {
+      if (typeof printWindow.close === 'function') {
+        printWindow.close();
+      }
+    };
     const reportPrintSuccess = () => {
       if (typeof options.onPrint === 'function') {
         options.onPrint();
       }
     };
     const reportPrintFailure = (error) => {
+      clearLoadTimeout();
+      closePrintWindow();
       if (typeof options.onError === 'function') {
         options.onError(error);
       }
