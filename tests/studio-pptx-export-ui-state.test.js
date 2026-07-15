@@ -27,6 +27,7 @@ function loadExportPptx(fileContent, context) {
 test('exportPptx posts the canonical deck and downloads the server response', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
+  const statuses = [];
   const button = { disabled: false };
   const anchor = {
     click() {
@@ -88,8 +89,8 @@ test('exportPptx posts the canonical deck and downloads the server response', as
         }
       });
     },
-    setStudioAutoSaveStatus() {
-      throw new Error('successful export should not change save status');
+    setStudioAutoSaveStatus(state) {
+      statuses.push(state);
     }
   };
 
@@ -97,6 +98,7 @@ test('exportPptx posts the canonical deck and downloads the server response', as
 
   assert.equal(await context.exportPptx(), true);
   assert.equal(button.disabled, false);
+  assert.deepEqual(statuses, ['exporting', 'exported']);
   const fetchCall = calls.find(call => call[0] === 'fetch');
   assert.equal(fetchCall[1], '/api/export/pptx');
   assert.deepEqual(JSON.parse(fetchCall[2].body), {
@@ -156,6 +158,12 @@ test('exportPptx skips unavailable decks and reports failed responses', async ()
   context.resolveCurrentStudioDeckReadyActionState = () => ({ canUseDeckActions: true });
   assert.equal(await context.exportPptx(), false);
   assert.equal(fetchCalls, 1);
-  assert.deepEqual(statuses, ['network-error']);
+  assert.deepEqual(statuses, ['exporting', 'export-failed']);
   assert.equal(button.disabled, false);
+
+  context.buildEditorCanonicalDeck = () => {
+    throw new Error('canonical deck unavailable');
+  };
+  assert.equal(await context.exportPptx(), false);
+  assert.deepEqual(statuses, ['exporting', 'export-failed', 'export-failed']);
 });

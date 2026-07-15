@@ -9293,6 +9293,21 @@
         return;
       }
 
+      if (state === 'exporting') {
+        statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Exporting PPTX...</span>`;
+        return;
+      }
+
+      if (state === 'export-failed') {
+        statusEl.innerHTML = `<span class="text-rose-400">PPTX Export Failed</span>`;
+        return;
+      }
+
+      if (state === 'exported') {
+        statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> PPTX Exported</span>`;
+        return;
+      }
+
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
     }
 
@@ -10123,11 +10138,18 @@
       const actionState = resolveCurrentStudioDeckReadyActionState();
       if (!actionState.canUseDeckActions) return false;
 
-      const canonicalDeck = buildEditorCanonicalDeck();
+      let canonicalDeck;
+      try {
+        canonicalDeck = buildEditorCanonicalDeck();
+      } catch (error) {
+        setStudioAutoSaveStatus('export-failed');
+        return false;
+      }
       if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return false;
 
       const exportButton = document.getElementById('exportPptxBtn');
       if (exportButton) exportButton.disabled = true;
+      setStudioAutoSaveStatus('exporting');
 
       try {
         const response = await fetch('/api/export/pptx', {
@@ -10140,7 +10162,7 @@
           })
         });
         if (!response.ok) {
-          setStudioAutoSaveStatus('network-error');
+          setStudioAutoSaveStatus('export-failed');
           return false;
         }
 
@@ -10158,9 +10180,10 @@
         anchor.click();
         anchor.remove();
         URL.revokeObjectURL(downloadUrl);
+        setStudioAutoSaveStatus('exported');
         return true;
       } catch (error) {
-        setStudioAutoSaveStatus('network-error');
+        setStudioAutoSaveStatus('export-failed');
         return false;
       } finally {
         if (exportButton) {
