@@ -3925,12 +3925,21 @@
     }
 
     function applyEditorSelectionState(nextState = {}) {
-      const normalizedSelectionState = SlideNextStudioEditorSelection.normalizeStudioSelectionState(
+      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
+        ? SlideNextStudioEditorSelection
+        : null;
+      if (!selectionApi || typeof selectionApi.normalizeStudioSelectionState !== 'function') {
+        selectedElements = [];
+        selectedElement = null;
+        return false;
+      }
+      const normalizedSelectionState = selectionApi.normalizeStudioSelectionState(
         nextState,
         getEditorSelectionOptions()
       );
       selectedElements = normalizedSelectionState.selectedElements;
       selectedElement = normalizedSelectionState.selectedElement;
+      return true;
     }
 
     function commitEditorSelectionState(nextSelectionState, options = {}) {

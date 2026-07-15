@@ -180,6 +180,28 @@ test('applyEditorSelectionState keeps only connected selections on the active sl
   assert.equal(context.selectedElement, null);
 });
 
+test('applyEditorSelectionState clears local selection when the shared selection API is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyEditorSelectionStateSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorSelectionState(nextState = {}) {',
+    '\n\n    function commitEditorSelectionState(nextSelectionState, options = {}) {'
+  );
+  const staleElement = { id: 'stale' };
+  const context = {
+    selectedElements: [staleElement],
+    selectedElement: staleElement,
+    SlideNextStudioEditorSelection: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyEditorSelectionStateSource, context);
+
+  assert.equal(context.applyEditorSelectionState({ selectedElements: [staleElement] }), false);
+  assert.equal(context.selectedElements.length, 0);
+  assert.equal(context.selectedElement, null);
+});
+
 test('getLiveSelectedElements keeps only connected selections on the active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorSelectionOptionsSource = extractFunctionSource(
