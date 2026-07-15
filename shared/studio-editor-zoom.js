@@ -17,6 +17,24 @@
     return [...STUDIO_ZOOM_OPTIONS];
   }
 
+  function resolveStudioZoomStep(options = {}) {
+    const currentValue = options.currentValue;
+    const direction = options.direction === 'out' ? 'out' : 'in';
+    const zoomFactor = Number.isFinite(options.zoomFactor) ? options.zoomFactor : 1;
+    if (currentValue === 'fit') {
+      if (direction === 'in') {
+        return STUDIO_ZOOM_OPTIONS.find((option) => option > zoomFactor) || 1.5;
+      }
+      return [...STUDIO_ZOOM_OPTIONS].reverse().find((option) => option < zoomFactor) || 0.25;
+    }
+
+    const index = STUDIO_ZOOM_OPTIONS.indexOf(Number.parseFloat(currentValue));
+    if (index === -1) return 1.0;
+    return direction === 'in'
+      ? STUDIO_ZOOM_OPTIONS[Math.min(STUDIO_ZOOM_OPTIONS.length - 1, index + 1)]
+      : STUDIO_ZOOM_OPTIONS[Math.max(0, index - 1)];
+  }
+
   function applyStudioZoom(options = {}) {
     const documentRef = options.documentRef;
     const stage = documentRef && documentRef.getElementById('canvasStage');
@@ -55,5 +73,5 @@
     return { didApply: true, zoomFactor };
   }
 
-  return { getStudioZoomOptions, applyStudioZoom };
+  return { getStudioZoomOptions, resolveStudioZoomStep, applyStudioZoom };
 });

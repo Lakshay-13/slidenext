@@ -6743,14 +6743,15 @@
         ? zoomView.getStudioZoomOptions()
         : [];
       let nextVal;
-      
-      if (select.value === 'fit') {
-        nextVal = zoomOptions.find(opt => opt > zoomFactor) || 1.5;
+      if (zoomView && typeof zoomView.resolveStudioZoomStep === 'function') {
+        nextVal = zoomView.resolveStudioZoomStep({
+          currentValue: select.value,
+          direction: 'in',
+          zoomFactor
+        });
       } else {
-        const idx = zoomOptions.indexOf(parseFloat(select.value));
-        nextVal = idx === -1 ? 1.0 : zoomOptions[Math.min(zoomOptions.length - 1, idx + 1)];
+        nextVal = zoomOptions.length > 0 ? zoomOptions[0] : 1.0;
       }
-      
       applyZoom(nextVal.toString());
       return true;
     }
@@ -6766,14 +6767,15 @@
         ? zoomView.getStudioZoomOptions()
         : [];
       let nextVal;
-      
-      if (select.value === 'fit') {
-        nextVal = [...zoomOptions].reverse().find(opt => opt < zoomFactor) || 0.25;
+      if (zoomView && typeof zoomView.resolveStudioZoomStep === 'function') {
+        nextVal = zoomView.resolveStudioZoomStep({
+          currentValue: select.value,
+          direction: 'out',
+          zoomFactor
+        });
       } else {
-        const idx = zoomOptions.indexOf(parseFloat(select.value));
-        nextVal = idx === -1 ? 1.0 : zoomOptions[Math.max(0, idx - 1)];
+        nextVal = zoomOptions.length > 0 ? zoomOptions[zoomOptions.length - 1] : 1.0;
       }
-      
       applyZoom(nextVal.toString());
       return true;
     }

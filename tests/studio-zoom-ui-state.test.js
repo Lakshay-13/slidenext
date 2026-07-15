@@ -24,6 +24,31 @@ test('shared zoom view owns an isolated ordered zoom scale list', () => {
   assert.equal(zoomView.getStudioZoomOptions()[0], 0.25);
 });
 
+test('shared zoom view resolves fit, unknown, and boundary steps deterministically', () => {
+  assert.equal(zoomView.resolveStudioZoomStep({
+    currentValue: 'fit',
+    direction: 'in',
+    zoomFactor: 1
+  }), 1.05);
+  assert.equal(zoomView.resolveStudioZoomStep({
+    currentValue: 'fit',
+    direction: 'out',
+    zoomFactor: 1
+  }), 0.95);
+  assert.equal(zoomView.resolveStudioZoomStep({
+    currentValue: 'not-a-scale',
+    direction: 'in'
+  }), 1);
+  assert.equal(zoomView.resolveStudioZoomStep({
+    currentValue: '1.5',
+    direction: 'in'
+  }), 1.5);
+  assert.equal(zoomView.resolveStudioZoomStep({
+    currentValue: '0.25',
+    direction: 'out'
+  }), 0.25);
+});
+
 test('applyZoom tolerates a missing zoom select while fitting the canvas', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyZoomSource = extractFunctionSource(
