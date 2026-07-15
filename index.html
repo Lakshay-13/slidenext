@@ -7555,45 +7555,55 @@
     let undoDebounceTimer = null;
     let pendingEditorCanonicalDeck = null;
     function saveHistoryState(debounce = false, transaction = null) {
-      const createStudioHistorySaveHandler = SlideNextStudioHistory
-        && typeof SlideNextStudioHistory.createStudioHistorySaveHandler === 'function'
-        ? SlideNextStudioHistory.createStudioHistorySaveHandler
-        : null;
-      if (!createStudioHistorySaveHandler) {
+      if (!saveHistoryState.historyHandler) {
+        const createStudioHistorySaveHandler = SlideNextStudioHistory
+          && typeof SlideNextStudioHistory.createStudioHistorySaveHandler === 'function'
+          ? SlideNextStudioHistory.createStudioHistorySaveHandler
+          : null;
+        if (!createStudioHistorySaveHandler) {
+          return { didCapture: false, nextTimer: undoDebounceTimer };
+        }
+        saveHistoryState.historyHandler = createStudioHistorySaveHandler({
+          transactionApi: (
+            typeof SlideNextStudioEditorTransaction !== 'undefined'
+            && SlideNextStudioEditorTransaction
+          )
+            ? SlideNextStudioEditorTransaction
+            : null,
+          getPendingTransaction: () => pendingEditorTransaction,
+          setPendingTransaction(nextTransaction) {
+            pendingEditorTransaction = nextTransaction;
+          },
+          setPendingCanonicalDeck(nextCanonicalDeck) {
+            pendingEditorCanonicalDeck = nextCanonicalDeck;
+          },
+          setLiveCanonicalDeck(nextCanonicalDeck) {
+            if (typeof setEditorLiveCanonicalDeck !== 'function') return;
+            const liveEditorDoc = typeof getIframeDoc === 'function' ? getIframeDoc() : null;
+            const liveSessionToken = typeof studioEditorSessionToken !== 'undefined'
+              ? studioEditorSessionToken
+              : null;
+            setEditorLiveCanonicalDeck(nextCanonicalDeck, liveEditorDoc, liveSessionToken);
+          },
+          getTimer: () => undoDebounceTimer,
+          setTimer(nextTimer) {
+            undoDebounceTimer = nextTimer;
+          },
+          captureState,
+          scheduleOptions: {
+            clearScheduledCapture: clearTimeout,
+            scheduleCapture: (callback, delayMs) => setTimeout(callback, delayMs)
+          }
+        });
+      }
+      if (typeof saveHistoryState.historyHandler !== 'function') {
         return { didCapture: false, nextTimer: undoDebounceTimer };
       }
-      return createStudioHistorySaveHandler({
-        transactionApi: (
-          typeof SlideNextStudioEditorTransaction !== 'undefined'
-          && SlideNextStudioEditorTransaction
-        )
-          ? SlideNextStudioEditorTransaction
-          : null,
-        getPendingTransaction: () => pendingEditorTransaction,
-        setPendingTransaction(nextTransaction) {
-          pendingEditorTransaction = nextTransaction;
-        },
-        setPendingCanonicalDeck(nextCanonicalDeck) {
-          pendingEditorCanonicalDeck = nextCanonicalDeck;
-        },
-        setLiveCanonicalDeck(nextCanonicalDeck) {
-          if (typeof setEditorLiveCanonicalDeck !== 'function') return;
-          const liveEditorDoc = typeof getIframeDoc === 'function' ? getIframeDoc() : null;
-          const liveSessionToken = typeof studioEditorSessionToken !== 'undefined'
-            ? studioEditorSessionToken
-            : null;
-          setEditorLiveCanonicalDeck(nextCanonicalDeck, liveEditorDoc, liveSessionToken);
-        },
-        getTimer: () => undoDebounceTimer,
-        setTimer(nextTimer) {
-          undoDebounceTimer = nextTimer;
-        },
-        captureState,
-        scheduleOptions: {
-          clearScheduledCapture: clearTimeout,
-          scheduleCapture: (callback, delayMs) => setTimeout(callback, delayMs)
-        }
-      })(debounce, transaction, arguments.length > 2 ? arguments[2] : null);
+      return saveHistoryState.historyHandler(
+        debounce,
+        transaction,
+        ...(arguments.length > 2 ? [arguments[2]] : [])
+      );
     }
 
     function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {

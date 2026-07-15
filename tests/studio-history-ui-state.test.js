@@ -1055,10 +1055,12 @@ test('saveHistoryState delegates transaction scheduling to the shared history sa
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   const delegatedCalls = [];
+  let handlerCreateCalls = 0;
   let capturedHandlerOptions = null;
   const context = {
     SlideNextStudioHistory: {
       createStudioHistorySaveHandler(options) {
+        handlerCreateCalls += 1;
         capturedHandlerOptions = options;
         return (debounce, transaction, canonicalDeck) => {
           options.setLiveCanonicalDeck(canonicalDeck);
@@ -1087,7 +1089,10 @@ test('saveHistoryState delegates transaction scheduling to the shared history sa
   const transaction = { kind: 'slidenext.editor.transaction' };
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   assert.deepEqual(context.saveHistoryState(true, transaction, canonicalDeck), { didCapture: true });
-  assert.deepEqual(delegatedCalls, [[true, transaction]]);
+  assert.equal(handlerCreateCalls, 1);
+  assert.deepEqual(context.saveHistoryState(false, transaction, canonicalDeck), { didCapture: true });
+  assert.equal(handlerCreateCalls, 1);
+  assert.deepEqual(delegatedCalls, [[true, transaction], [false, transaction]]);
   assert.equal(context.pendingEditorCanonicalDeck, canonicalDeck);
   assert.deepEqual(context.liveCanonicalArgs, [canonicalDeck, null, null]);
   assert.equal(capturedHandlerOptions.transactionApi, context.SlideNextStudioEditorTransaction);
