@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const thumbnailView = require('../shared/studio-editor-thumbnail-view.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
@@ -73,6 +74,7 @@ test('generateThumbnails hides the slide delete affordance when only one slide r
   let getIframeDocCalls = 0;
 
   const context = {
+    SlideNextStudioEditorThumbnailView: thumbnailView,
     buildEditorDeckSnapshot() {
       return deckSnapshotRef.current;
     },
@@ -146,6 +148,7 @@ test('generateThumbnails renders a read-only canonical fallback when the editor 
   let setupDragAndDropCalls = 0;
 
   const context = {
+    SlideNextStudioEditorThumbnailView: thumbnailView,
     buildEditorDeckSnapshot() {
       return {
         activeSlideId: 'slide-2',
@@ -218,6 +221,7 @@ test('generateThumbnails tolerates missing organizer chrome nodes', () => {
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorThumbnailView: thumbnailView,
     buildEditorDeckSnapshot() {
       return {
         activeSlideId: 'slide-1',

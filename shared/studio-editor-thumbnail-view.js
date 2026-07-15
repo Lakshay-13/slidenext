@@ -1,0 +1,80 @@
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) {
+    module.exports = api;
+  }
+  if (root) {
+    root.SlideNextStudioEditorThumbnailView = api;
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function renderStudioThumbnailList(options = {}) {
+    const documentRef = options.documentRef;
+    const listContainer = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('thumbnailsList')
+      : null;
+    if (listContainer) {
+      listContainer.innerHTML = '';
+    }
+
+    const deckSnapshot = options.deckSnapshot || {};
+    const slides = Array.isArray(deckSnapshot.slides) ? deckSnapshot.slides : [];
+    const activeSlideIndex = typeof options.getActiveSlideIndex === 'function'
+      ? options.getActiveSlideIndex()
+      : (Number.isInteger(options.activeSlideIndex) ? options.activeSlideIndex : 0);
+    const visibleIndex = slides.length === 0 ? 0 : activeSlideIndex + 1;
+    const slideCountLabel = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('slideCountLabel')
+      : null;
+    if (slideCountLabel) {
+      slideCountLabel.textContent = `${visibleIndex} / ${slides.length}`;
+    }
+    if (!listContainer || !documentRef || typeof documentRef.createElement !== 'function') {
+      return false;
+    }
+
+    const canMutateSlides = !!options.canMutateSlides;
+    const canDeleteSlides = !!options.canDeleteSlides && slides.length > 1;
+    const onSelectSlide = typeof options.onSelectSlide === 'function'
+      ? options.onSelectSlide
+      : () => {};
+    const setupDragAndDropThumbnail = typeof options.setupDragAndDropThumbnail === 'function'
+      ? options.setupDragAndDropThumbnail
+      : () => {};
+
+    slides.forEach((slide) => {
+      const isActive = slide.id === deckSnapshot.activeSlideId;
+      const thumbCard = documentRef.createElement('div');
+      thumbCard.className = `glass-card p-3 border ${canMutateSlides ? 'cursor-pointer' : 'cursor-default'} relative group flex items-start gap-3 select-none transition-all ${
+        isActive ? 'border-[#7028d0] bg-[#7028d0]/5 shadow-[0_0_15px_rgba(112,40,208,0.1)]' : 'border-white/5 bg-[#0a0a0a]/40 hover:border-white/20'
+      }`;
+      thumbCard.draggable = canMutateSlides;
+      thumbCard.dataset.index = slide.index;
+      thumbCard.dataset.slideId = slide.id;
+
+      thumbCard.innerHTML = `
+          <div class="w-6 h-6 rounded-lg bg-zinc-900 border border-white/5 flex items-center justify-center font-mono text-xs text-[#7028d0] font-bold">
+            ${String(slide.index + 1).padStart(2, '0')}
+          </div>
+          <div class="flex-grow overflow-hidden">
+            <h4 class="text-xs font-semibold text-white truncate font-sans">${slide.title}</h4>
+            <p class="text-[10px] text-zinc-500 font-mono uppercase mt-0.5">${slide.backgroundLabel}</p>
+          </div>
+          ${canDeleteSlides && canMutateSlides ? `
+            <button onclick="event.stopPropagation(); deleteSlideNodeById('${slide.id}')" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-500/20 text-zinc-500 hover:text-rose-400 rounded transition-all absolute right-2 top-2.5" title="Delete Slide">
+              <span class="material-symbols-outlined text-[15px]">delete</span>
+            </button>
+          ` : ''}
+        `;
+
+      if (canMutateSlides) {
+        thumbCard.addEventListener('click', () => onSelectSlide(slide.id));
+        setupDragAndDropThumbnail(thumbCard);
+      }
+
+      listContainer.appendChild(thumbCard);
+    });
+    return true;
+  }
+
+  return { renderStudioThumbnailList };
+});
