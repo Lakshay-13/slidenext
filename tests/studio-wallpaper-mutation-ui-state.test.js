@@ -258,6 +258,51 @@ test('applyPresetWallpaper records a slide-scoped background style transaction',
   ]);
 });
 
+test('applyPresetWallpaper delegates the active-slide mutation to the shared wallpaper view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyPresetWallpaperSource = extractFunctionSource(
+    fileContent,
+    'function applyPresetWallpaper(val, isCustomInput = false) {',
+    '\n\n    function setCustomGradientType(type) {'
+  );
+
+  const iframeDoc = { id: 'doc' };
+  const activeSlide = { style: { background: '' } };
+  let delegatedArgs = null;
+  let finalizedArgs = null;
+  const context = {
+    SlideNextStudioEditorWallpaperView: {
+      applyStudioWallpaperToSlides(slides, background, options) {
+        delegatedArgs = { slides, background, options };
+        return { didChange: true, transaction: { type: 'style' } };
+      }
+    },
+    getActiveSlide() {
+      return activeSlide;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    resolveCurrentStudioWallpaperActionState() {
+      return { canUseWallpaperControls: true, activeSlide };
+    },
+    finalizeWallpaperMutation(...args) {
+      finalizedArgs = args;
+    },
+    hasPendingCustomWallpaperVersion: false
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyPresetWallpaperSource, context);
+
+  assert.equal(context.applyPresetWallpaper('#ffffff'), true);
+  assert.equal(delegatedArgs.slides[0], activeSlide);
+  assert.equal(delegatedArgs.background, '#ffffff');
+  assert.equal(typeof delegatedArgs.options.getSlideId, 'function');
+  assert.equal(finalizedArgs[0], 'Auto: Changed Background');
+  assert.deepEqual(JSON.parse(JSON.stringify(finalizedArgs[1])), { type: 'style' });
+});
+
 test('applyPresetWallpaper exits cleanly when the shared iframe accessor has no active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyPresetWallpaperSource = extractFunctionSource(

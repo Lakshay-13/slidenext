@@ -6282,17 +6282,34 @@
       const activeSlideId = typeof getEditorSlideId === 'function'
         ? getEditorSlideId(activeSlide)
         : '';
-      const previousBackground = activeSlide.style.background;
-
-      activeSlide.style.background = val;
-      const transaction = createStudioStyleTransaction && activeSlideId
-        ? createStudioStyleTransaction([{
-            element: activeSlide,
-            elementId: `slide:${activeSlideId}`,
-            before: { background: previousBackground },
-            after: { background: activeSlide.style.background }
-          }])
+      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+        ? SlideNextStudioEditorWallpaperView
         : null;
+      const applyStudioWallpaperToSlides = wallpaperView
+        && typeof wallpaperView.applyStudioWallpaperToSlides === 'function'
+        ? wallpaperView.applyStudioWallpaperToSlides
+        : null;
+      let transaction = null;
+
+      if (applyStudioWallpaperToSlides) {
+        const mutation = applyStudioWallpaperToSlides([activeSlide], val, {
+          createStyleTransaction: createStudioStyleTransaction,
+          getSlideId: () => activeSlideId
+        });
+        if (!mutation || !mutation.didChange) return false;
+        transaction = mutation.transaction;
+      } else {
+        const previousBackground = activeSlide.style.background;
+        activeSlide.style.background = val;
+        transaction = createStudioStyleTransaction && activeSlideId
+          ? createStudioStyleTransaction([{
+              element: activeSlide,
+              elementId: `slide:${activeSlideId}`,
+              before: { background: previousBackground },
+              after: { background: activeSlide.style.background }
+            }])
+          : null;
+      }
       hasPendingCustomWallpaperVersion = !!isCustomInput;
       finalizeWallpaperMutation(isCustomInput ? '' : 'Auto: Changed Background', transaction);
       return true;
