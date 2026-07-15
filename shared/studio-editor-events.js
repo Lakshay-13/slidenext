@@ -301,9 +301,15 @@
     });
   }
 
-  function attachStudioMarqueePointerHandlers(doc, handlers) {
+  function attachStudioPointerHandlers(doc, handlers, options = {}) {
     const body = doc && doc.body;
     if (!body || typeof body.addEventListener !== 'function' || !handlers) return false;
+
+    if (options.preventNativeDrag && typeof doc.addEventListener === 'function') {
+      doc.addEventListener('dragstart', (event) => {
+        if (event && typeof event.preventDefault === 'function') event.preventDefault();
+      }, true);
+    }
 
     [
       ['pointerdown', handlers.handlePointerDown],
@@ -321,6 +327,10 @@
       frameWindow.addEventListener('blur', handlers.handleWindowBlur, true);
     }
     return true;
+  }
+
+  function attachStudioMarqueePointerHandlers(doc, handlers) {
+    return attachStudioPointerHandlers(doc, handlers);
   }
 
   function createStudioFrameKeydownHandler(options = {}) {
@@ -588,6 +598,7 @@
     createStudioFrameClickHandler,
     createStudioMarqueePointerHandlers,
     createStudioMarqueeSelectionHandlers,
+    attachStudioPointerHandlers,
     attachStudioMarqueePointerHandlers,
     createStudioFrameKeydownHandler,
     createStudioGlobalKeydownHandler

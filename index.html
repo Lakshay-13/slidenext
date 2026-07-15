@@ -6259,9 +6259,19 @@
         triggerAutoSave,
         triggerAutoVersion
       });
+      const editorEventsApi = typeof SlideNextStudioEditorEvents !== 'undefined'
+        ? SlideNextStudioEditorEvents
+        : null;
+      const attachSharedStudioPointerHandlers = editorEventsApi
+        && typeof editorEventsApi.attachStudioPointerHandlers === 'function'
+        ? editorEventsApi.attachStudioPointerHandlers
+        : null;
       const attachStudioPointerHandlers = (handlers, attachHandlers, options = {}) => {
         if (typeof attachHandlers === 'function') {
           return attachHandlers(doc, handlers);
+        }
+        if (attachSharedStudioPointerHandlers) {
+          return attachSharedStudioPointerHandlers(doc, handlers, options);
         }
         const body = doc && doc.body;
         if (!body || typeof body.addEventListener !== 'function' || !handlers) return false;

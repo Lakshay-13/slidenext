@@ -86,6 +86,42 @@ test('attachStudioMarqueePointerHandlers binds the shared marquee lifecycle', ()
   });
 });
 
+test('attachStudioPointerHandlers optionally prevents native drag while binding shared pointer events', () => {
+  const documentListeners = new Map();
+  const bodyListeners = new Map();
+  const windowListeners = new Map();
+  const doc = {
+    addEventListener(type, handler, capture) {
+      documentListeners.set(type, { handler, capture });
+    },
+    body: {
+      addEventListener(type, handler, capture) {
+        bodyListeners.set(type, { handler, capture });
+      }
+    },
+    defaultView: {
+      addEventListener(type, handler, capture) {
+        windowListeners.set(type, { handler, capture });
+      }
+    }
+  };
+  const handlers = {
+    handlePointerDown() {},
+    handlePointerMove() {},
+    handlePointerUp() {},
+    handlePointerCancel() {},
+    handleWindowBlur() {}
+  };
+
+  assert.equal(events.attachStudioPointerHandlers(doc, handlers, { preventNativeDrag: true }), true);
+  assert.equal(documentListeners.get('dragstart').capture, true);
+  assert.equal(bodyListeners.get('pointerdown').handler, handlers.handlePointerDown);
+  assert.deepEqual(windowListeners.get('blur'), {
+    handler: handlers.handleWindowBlur,
+    capture: true
+  });
+});
+
 test('attachStudioMarqueePointerHandlers tolerates missing editor frame targets', () => {
   assert.equal(events.attachStudioMarqueePointerHandlers(null, {}), false);
   assert.equal(events.attachStudioMarqueePointerHandlers({ body: {} }, {}), false);
