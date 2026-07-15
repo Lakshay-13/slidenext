@@ -160,6 +160,9 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc && nextDoc.querySelector('.slide-active');
       },
+      resolveStudioLiveActiveSlideId(nextDoc, options) {
+        return nextDoc && nextDoc.querySelector('.slide-active') && options.getActiveSlideId(nextDoc);
+      },
       buildStudioSourceHtml(doc, options) {
         calls.push({
           doc,
@@ -491,6 +494,9 @@ test('buildEditorSourceHtml prefers the live active slide when the editor frame 
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc && nextDoc.querySelector('.slide-active');
       },
+      resolveStudioLiveActiveSlideId(nextDoc, options) {
+        return nextDoc && nextDoc.querySelector('.slide-active') && options.getActiveSlideId(nextDoc);
+      },
       buildStudioSourceHtml(doc, options) {
         calls.push({ doc, options });
         return '<html>source</html>';
@@ -556,6 +562,9 @@ test('buildEditorSourceHtml reuses the resolved live canonical deck when source 
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc.querySelector('.slide-active');
+      },
+      resolveStudioLiveActiveSlideId(nextDoc, options) {
+        return nextDoc && nextDoc.querySelector('.slide-active') && options.getActiveSlideId(nextDoc);
       },
       buildStudioSourceHtml(doc, options) {
         assert.equal(options.buildCanonicalDeck(doc), canonicalDeck);

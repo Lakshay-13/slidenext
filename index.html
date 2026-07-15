@@ -1639,12 +1639,7 @@
           getActiveSlideId: (nextDoc) => getActiveSlideId(nextDoc)
         });
       }
-
-      const activeSlide = resolveEditorLiveActiveSlide(doc);
-      if (!activeSlide) {
-        return '';
-      }
-      return getActiveSlideId(doc);
+      return '';
     }
 
     function buildEditorDeckRenderOptions(doc = getIframeDoc(), canonicalDeck = null, options = {}) {
