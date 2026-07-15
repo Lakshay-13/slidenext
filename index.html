@@ -3776,31 +3776,25 @@
         && typeof SlideNextStudioDeckSnapshot.createStudioDeckSnapshotBuildOptions === 'function'
         ? SlideNextStudioDeckSnapshot.createStudioDeckSnapshotBuildOptions
         : null;
+      const buildStudioDeckSnapshot = (
+        typeof SlideNextStudioDeckSnapshot !== 'undefined'
+        && SlideNextStudioDeckSnapshot
+      )
+        && typeof SlideNextStudioDeckSnapshot.buildStudioDeckSnapshot === 'function'
+        ? SlideNextStudioDeckSnapshot.buildStudioDeckSnapshot
+        : null;
+      if (!createStudioDeckSnapshotBuildOptions || !buildStudioDeckSnapshot) {
+        return null;
+      }
       const deckViewStateOptions = createEditorCanonicalDeckViewStateOptions();
-      const snapshotBuildOptions = createStudioDeckSnapshotBuildOptions
-        ? createStudioDeckSnapshotBuildOptions(doc, {
-            ...deckViewStateOptions,
-            resolveFallbackActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
-              sourceDoc,
-              canonicalDeck
-            )
-          })
-        : (() => {
-            const {
-              resolveCanonicalDeck,
-              liveActiveSlideId,
-              resolvedCanonicalDeck
-            } = resolveEditorCanonicalDeckViewState(doc);
-            const liveActiveSlide = liveActiveSlideId ? resolveEditorLiveActiveSlide(doc) : null;
-            return {
-              buildCanonicalDeck: doc
-                ? (resolvedCanonicalDeck ? () => resolvedCanonicalDeck : resolveCanonicalDeck)
-                : () => resolvedCanonicalDeck,
-              fallbackActiveSlideId: liveActiveSlideId || resolveEditorFallbackActiveSlideId(doc, resolvedCanonicalDeck),
-              getActiveSlide: () => liveActiveSlide
-            };
-          })();
-      return SlideNextStudioDeckSnapshot.buildStudioDeckSnapshot(doc, {
+      const snapshotBuildOptions = createStudioDeckSnapshotBuildOptions(doc, {
+        ...deckViewStateOptions,
+        resolveFallbackActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
+          sourceDoc,
+          canonicalDeck
+        )
+      });
+      return buildStudioDeckSnapshot(doc, {
         includeLayers: !!options.includeLayers,
         ...snapshotBuildOptions,
         buildDomSnapshot: (sourceDoc) => buildEditorDeckSnapshotFromDom(sourceDoc, options),

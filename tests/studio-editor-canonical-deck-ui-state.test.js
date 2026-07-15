@@ -2889,7 +2889,7 @@ test('buildEditorDeckSnapshot reuses the shared snapshot builder when available'
   assert.equal(typeof delegatedArgs.buildSlideLayerSnapshot, 'function');
 });
 
-test('buildEditorDeckSnapshot prefers the current session active slide fallback when the iframe is unavailable', () => {
+test('buildEditorDeckSnapshot fails closed when the shared snapshot build-options helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
     fileContent,
@@ -2979,16 +2979,12 @@ test('buildEditorDeckSnapshot prefers the current session active slide fallback 
 
   const result = context.buildEditorDeckSnapshot();
 
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].nextDoc, iframeDoc);
-  assert.equal(calls[0].canonicalDeck, canonicalDeck);
-  assert.equal(calls[0].options.fallbackActiveSlideId, 'slide-2');
-  assert.equal(buildEditorCanonicalDeckCalls, 1);
-  assert.equal(result.activeSlideId, 'slide-2');
-  assert.equal(result.activeSlideIndex, 1);
+  assert.equal(result, null);
+  assert.equal(calls.length, 0);
+  assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
-test('buildEditorDeckSnapshot falls back to the current session slide when live active slide state is unavailable', () => {
+test('buildEditorDeckSnapshot does not reconstruct local snapshot options when shared helpers are unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
     fileContent,
@@ -3095,11 +3091,7 @@ test('buildEditorDeckSnapshot falls back to the current session slide when live 
 
   const result = context.buildEditorDeckSnapshot();
 
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].nextDoc, iframeDoc);
-  assert.equal(calls[0].canonicalDeck, canonicalDeck);
-  assert.equal(calls[0].options.fallbackActiveSlideId, 'slide-2');
-  assert.equal(buildEditorCanonicalDeckCalls, 1);
-  assert.equal(result.activeSlideId, 'slide-2');
-  assert.equal(result.activeSlideIndex, 1);
+  assert.equal(result, null);
+  assert.equal(calls.length, 0);
+  assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
