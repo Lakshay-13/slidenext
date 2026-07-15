@@ -43,3 +43,40 @@ test('version view helpers safely skip missing chrome', () => {
   assert.equal(versionView.resetStudioRenameVersionButton(), false);
   assert.equal(versionView.setStudioRenameVersionButtonBusy(), false);
 });
+
+test('renderStudioVersionsList renders version labels, timestamps, and actions', () => {
+  const list = { innerHTML: '' };
+  assert.equal(versionView.renderStudioVersionsList({
+    documentRef: {
+      getElementById(id) {
+        return id === 'versionsList' ? list : null;
+      }
+    },
+    baseName: 'deck',
+    versions: [{
+      filename: 'index_20260101_120000_Auto.html',
+      createdAt: '2026-01-01T12:00:00.000Z'
+    }],
+    deriveVersionDisplayLabel(filename, baseName) {
+      assert.equal(baseName, 'deck');
+      return `Readable ${filename}`;
+    }
+  }), true);
+  assert.match(list.innerHTML, /Readable index_20260101_120000_Auto\.html/);
+  assert.match(list.innerHTML, /restoreVersion\('index_20260101_120000_Auto\.html'\)/);
+  assert.match(list.innerHTML, /promptRenameVersion/);
+  assert.match(list.innerHTML, /deleteVersion/);
+});
+
+test('renderStudioVersionsList renders the empty state and tolerates missing chrome', () => {
+  const list = { innerHTML: '' };
+  assert.equal(versionView.renderStudioVersionsList({
+    documentRef: {
+      getElementById() {
+        return list;
+      }
+    }
+  }), true);
+  assert.match(list.innerHTML, /No versions saved yet/);
+  assert.equal(versionView.renderStudioVersionsList(), false);
+});
