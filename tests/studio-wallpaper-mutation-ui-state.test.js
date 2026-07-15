@@ -101,6 +101,34 @@ test('finalizeWallpaperMutation reuses the shared deck mutation lifecycle when a
   assert.equal(delegated.options.transaction.id, transaction.id);
 });
 
+test('finalizeWallpaperMutation delegates its lifecycle adapter to shared mutation state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const transaction = { id: 'wallpaper-tx-shared' };
+  let delegatedOptions = null;
+  const context = {
+    SlideNextStudioEditorMutation: {
+      finalizeStudioWallpaperMutation(options) {
+        delegatedOptions = options;
+        return 'shared-wallpaper';
+      }
+    },
+    finalizeEditorDeckMutation() {},
+    generateThumbnails() {},
+    saveHistoryState() {},
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
+
+  assert.equal(context.finalizeWallpaperMutation('Auto: Changed Background', transaction), 'shared-wallpaper');
+  assert.equal(delegatedOptions.versionLabel, 'Auto: Changed Background');
+  assert.equal(delegatedOptions.transaction, transaction);
+  assert.equal(delegatedOptions.finalizeMutation, context.finalizeEditorDeckMutation);
+  assert.equal(delegatedOptions.generateThumbnails, context.generateThumbnails);
+});
+
 test('flushPendingWallpaperVersion commits a custom wallpaper version only when a real custom mutation is pending', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyPresetWallpaperSource = extractFunctionSource(

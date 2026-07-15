@@ -163,6 +163,27 @@
     return versionLabel;
   }
 
+  function finalizeStudioWallpaperMutation(options = {}) {
+    const versionLabel = options.versionLabel || '';
+    const transaction = options.transaction || null;
+    if (typeof options.finalizeMutation === 'function') {
+      return options.finalizeMutation(versionLabel, { transaction });
+    }
+    if (typeof options.generateThumbnails === 'function') {
+      options.generateThumbnails();
+    }
+    if (typeof options.saveHistoryState === 'function') {
+      options.saveHistoryState(false, transaction);
+    }
+    if (typeof options.triggerAutoSave === 'function') {
+      options.triggerAutoSave();
+    }
+    if (versionLabel && typeof options.triggerAutoVersion === 'function') {
+      options.triggerAutoVersion(versionLabel);
+    }
+    return versionLabel;
+  }
+
   return {
     createStudioMutationFinalizer,
     finalizeStudioMutation,
@@ -170,6 +191,7 @@
     finalizeStudioInsertedElements,
     finalizeStudioSlideMutation,
     createStudioSlideMutationPersistenceFinalizer,
-    finalizeStudioLayerOrderMutation
+    finalizeStudioLayerOrderMutation,
+    finalizeStudioWallpaperMutation
   };
 });

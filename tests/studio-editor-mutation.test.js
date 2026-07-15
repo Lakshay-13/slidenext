@@ -334,3 +334,41 @@ test('finalizeStudioLayerOrderMutation falls back to layer persistence ordering'
     ['version', 'Auto: Layer Order']
   ]);
 });
+
+test('finalizeStudioWallpaperMutation delegates or preserves wallpaper persistence ordering', () => {
+  const transaction = { id: 'tx-wallpaper' };
+  const delegatedCalls = [];
+  assert.equal(mutation.finalizeStudioWallpaperMutation({
+    versionLabel: 'Auto: Background',
+    transaction,
+    finalizeMutation(label, options) {
+      delegatedCalls.push([label, options]);
+      return 'delegated';
+    }
+  }), 'delegated');
+  assert.deepEqual(delegatedCalls, [['Auto: Background', { transaction }]]);
+
+  const fallbackCalls = [];
+  assert.equal(mutation.finalizeStudioWallpaperMutation({
+    versionLabel: 'Auto: Background',
+    transaction,
+    generateThumbnails() {
+      fallbackCalls.push('thumbnails');
+    },
+    saveHistoryState(...args) {
+      fallbackCalls.push(['history', ...args]);
+    },
+    triggerAutoSave() {
+      fallbackCalls.push('save');
+    },
+    triggerAutoVersion(label) {
+      fallbackCalls.push(['version', label]);
+    }
+  }), 'Auto: Background');
+  assert.deepEqual(fallbackCalls, [
+    'thumbnails',
+    ['history', false, transaction],
+    'save',
+    ['version', 'Auto: Background']
+  ]);
+});
