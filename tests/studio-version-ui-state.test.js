@@ -8,6 +8,7 @@ const modalVisibility = require('../shared/studio-modal-visibility.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const versionActions = require('../shared/studio-version-actions.js');
 const versionHistory = require('../shared/studio-version-history.js');
+const versionView = require('../shared/studio-version-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -81,6 +82,7 @@ function loadApplyCurrentStudioRestoreVersionSuccess(fileContent, context) {
 }
 
 function loadHideCurrentStudioVersionsDropdown(fileContent, context) {
+  context.SlideNextStudioVersionView ??= versionView;
   const helperSource = extractFunctionSource(
     fileContent,
     'function hideCurrentStudioVersionsDropdown() {',
@@ -126,6 +128,7 @@ function loadCreateCurrentStudioVersionRequestOptions(fileContent, context) {
 }
 
 function loadResetCurrentStudioRenameVersionButtonState(fileContent, context) {
+  context.SlideNextStudioVersionView ??= versionView;
   const helperSource = extractFunctionSource(
     fileContent,
     "function resetCurrentStudioRenameVersionButtonState(button = document.getElementById('confirmRenameVersionBtn')) {",
@@ -135,6 +138,7 @@ function loadResetCurrentStudioRenameVersionButtonState(fileContent, context) {
 }
 
 function loadSetCurrentStudioRenameVersionButtonBusyState(fileContent, context) {
+  context.SlideNextStudioVersionView ??= versionView;
   const helperSource = extractFunctionSource(
     fileContent,
     "function setCurrentStudioRenameVersionButtonBusyState(button = document.getElementById('confirmRenameVersionBtn')) {",

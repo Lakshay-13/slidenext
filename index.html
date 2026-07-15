@@ -1175,6 +1175,7 @@
   <script src="/shared/studio-pptx-export.js"></script>
   <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/studio-version-actions.js"></script>
+  <script src="/shared/studio-version-view.js"></script>
   <script src="/shared/studio-version-history.js"></script>
   <script src="/shared/version-backup-utils.js"></script>
   <script>
@@ -8614,10 +8615,13 @@
     }
 
     function hideCurrentStudioVersionsDropdown() {
-      const versionsDropdown = document.getElementById('versionsDropdown');
-      if (versionsDropdown) {
-        versionsDropdown.classList.add('hidden');
-      }
+      const versionView = typeof SlideNextStudioVersionView !== 'undefined'
+        ? SlideNextStudioVersionView
+        : null;
+      if (!versionView || typeof versionView.hideStudioVersionsDropdown !== 'function') return false;
+      return versionView.hideStudioVersionsDropdown({
+        documentRef: document
+      });
     }
 
     function resetStudioVersionUiState(options = {}) {
@@ -9700,19 +9704,19 @@
     }
 
     function resetCurrentStudioRenameVersionButtonState(button = document.getElementById('confirmRenameVersionBtn')) {
-      if (!button) {
-        return;
-      }
-      button.disabled = false;
-      button.textContent = 'Rename';
+      const versionView = typeof SlideNextStudioVersionView !== 'undefined'
+        ? SlideNextStudioVersionView
+        : null;
+      if (!versionView || typeof versionView.resetStudioRenameVersionButton !== 'function') return false;
+      return versionView.resetStudioRenameVersionButton(button);
     }
 
     function setCurrentStudioRenameVersionButtonBusyState(button = document.getElementById('confirmRenameVersionBtn')) {
-      if (!button) {
-        return;
-      }
-      button.disabled = true;
-      button.textContent = 'Renaming...';
+      const versionView = typeof SlideNextStudioVersionView !== 'undefined'
+        ? SlideNextStudioVersionView
+        : null;
+      if (!versionView || typeof versionView.setStudioRenameVersionButtonBusy !== 'function') return false;
+      return versionView.setStudioRenameVersionButtonBusy(button);
     }
     
     async function submitRenameVersion() {
