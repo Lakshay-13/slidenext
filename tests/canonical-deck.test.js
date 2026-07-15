@@ -134,3 +134,40 @@ test('updateCanonicalNodeVisibility returns null for no-op or invalid patches', 
   assert.equal(canonicalDeck.updateCanonicalNodeVisibility(deck, ['missing'], { hidden: false }), null);
   assert.equal(canonicalDeck.updateCanonicalNodeVisibility(deck, ['node-1'], { color: true }), null);
 });
+
+test('updateCanonicalSlideBackground immutably updates selected slide backgrounds', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      layout: { background: { color: '#ffffff', style: 'white' } }
+    }, {
+      id: 'slide-2',
+      layout: { background: { color: '#000000', style: 'black' } }
+    }]
+  });
+
+  const updatedDeck = canonicalDeck.updateCanonicalSlideBackground(
+    sourceDeck,
+    ['slide-1', 'slide-2'],
+    'linear-gradient(red, blue)'
+  );
+
+  assert.ok(canonicalDeck.isCanonicalDeck(updatedDeck));
+  assert.equal(sourceDeck.slides[0].layout.background.style, 'white');
+  assert.equal(updatedDeck.slides[0].layout.background.style, 'linear-gradient(red, blue)');
+  assert.equal(updatedDeck.slides[1].layout.background.style, 'linear-gradient(red, blue)');
+  assert.equal(updatedDeck.slides[0].layout.background.color, '#ffffff');
+});
+
+test('updateCanonicalSlideBackground returns null for no-op or unknown slide ids', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      layout: { background: { style: 'white' } }
+    }]
+  });
+
+  assert.equal(canonicalDeck.updateCanonicalSlideBackground(deck, ['slide-1'], 'white'), null);
+  assert.equal(canonicalDeck.updateCanonicalSlideBackground(deck, ['missing'], 'black'), null);
+  assert.equal(canonicalDeck.updateCanonicalSlideBackground(deck, [], 'black'), null);
+});
