@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -432,6 +433,99 @@ test('groupSelectedElements delegates wrapper mutation to the shared group modul
   assert.equal(calls[1][1].selectedElements[0], group);
   assert.equal(calls[2][1], 'Auto: Grouped Elements');
   assert.deepEqual(calls[2][2].transaction, { type: 'markup' });
+});
+
+test('groupSelectedElements forwards a canonical tree sidecar for grouped nodes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function groupSelectedElements() {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const sourceDeck = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1' }, { id: 'node-2' }, { id: 'after' }]
+    }]
+  });
+  const slide = {
+    id: 'slide-1',
+    getBoundingClientRect() {
+      return { left: 0, top: 0, right: 500, bottom: 400 };
+    }
+  };
+  const first = { dataset: { editorId: 'node-1' } };
+  const second = { dataset: { editorId: 'node-2' } };
+  const group = { dataset: { editorId: 'group-1' } };
+  const doc = { id: 'iframe-doc' };
+  let finalized = null;
+  const context = {
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextDeckImport: {
+      importElementToCanonicalNode(element, options) {
+        assert.equal(element, group);
+        assert.equal(options.getNodeId(element), 'group-1');
+        return {
+          id: 'group-1',
+          tagName: 'div',
+          children: [{ id: 'node-1' }, { id: 'node-2' }]
+        };
+      }
+    },
+    SlideNextStudioEditorGroup: {
+      applyStudioGroupMutation(options) {
+        assert.equal(options.documentRef, doc);
+        return { didApply: true, group, transaction: { id: 'tx-group' } };
+      }
+    },
+    buildEditorCanonicalDeck(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return sourceDeck;
+    },
+    buildGroupSelectionActionState() {
+      return {
+        canGroup: true,
+        slide,
+        parent: slide,
+        selection: [first, second],
+        groupPlan: { bounds: {}, nextItems: [] }
+      };
+    },
+    assignEditorElementId(element) {
+      return element && element.dataset && element.dataset.editorId;
+    },
+    commitEditorSelectionState() {},
+    finalizeEditorDeckMutation(label, options) {
+      finalized = { label, options };
+    },
+    getEditorSlideId(currentSlide) {
+      assert.equal(currentSlide, slide);
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getNormalizedSlideLayerOrder() {
+      return [first, second];
+    },
+    getRectOnSlide(rect) {
+      return rect;
+    },
+    getSlideMetrics() {
+      return { scaleX: 1 };
+    }
+  };
+
+  vm.createContext(context);
+  loadGroupMutationHelper(fileContent, context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.groupSelectedElements(), true);
+  assert.equal(finalized.label, 'Auto: Grouped Elements');
+  assert.deepEqual(finalized.options.transaction, { id: 'tx-group' });
+  assert.deepEqual(finalized.options.canonicalDeck.slides[0].nodes.map((node) => node.id), ['group-1', 'after']);
+  assert.deepEqual(finalized.options.canonicalDeck.slides[0].nodes[0].children.map((node) => node.id), ['node-1', 'node-2']);
+  assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'node-2', 'after']);
 });
 
 test('ungroupSelectedElements restores child positions, removes the wrapper, and records one mutation', () => {

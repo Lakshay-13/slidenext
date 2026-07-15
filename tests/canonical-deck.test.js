@@ -120,6 +120,59 @@ test('appendCanonicalNode rejects missing slides and duplicate node ids', () => 
   assert.equal(canonicalDeck.appendCanonicalNode(deck, 'slide-1', null), null);
 });
 
+test('groupCanonicalNodes replaces selected siblings with an immutable group node', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [
+        { id: 'before' },
+        { id: 'node-1' },
+        { id: 'node-2' },
+        { id: 'after' }
+      ]
+    }]
+  });
+
+  const groupedDeck = canonicalDeck.groupCanonicalNodes(
+    sourceDeck,
+    'slide-1',
+    '',
+    ['node-1', 'node-2'],
+    {
+      id: 'group-1',
+      tagName: 'div',
+      children: [{ id: 'node-1' }, { id: 'node-2' }]
+    }
+  );
+
+  assert.deepEqual(groupedDeck.slides[0].nodes.map((node) => node.id), ['before', 'group-1', 'after']);
+  assert.deepEqual(groupedDeck.slides[0].nodes[1].children.map((node) => node.id), ['node-1', 'node-2']);
+  assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['before', 'node-1', 'node-2', 'after']);
+});
+
+test('groupCanonicalNodes preserves a nested parent and rejects incomplete groups', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'parent-1',
+        children: [{ id: 'node-1' }, { id: 'node-2' }, { id: 'node-3' }]
+      }]
+    }]
+  });
+  const group = { id: 'group-1', children: [{ id: 'node-1' }, { id: 'node-2' }] };
+
+  const groupedDeck = canonicalDeck.groupCanonicalNodes(deck, 'slide-1', 'parent-1', ['node-1', 'node-2'], group);
+
+  assert.deepEqual(groupedDeck.slides[0].nodes[0].children.map((node) => node.id), ['group-1', 'node-3']);
+  assert.equal(canonicalDeck.groupCanonicalNodes(deck, 'slide-1', 'parent-1', ['node-1'], group), null);
+  assert.equal(canonicalDeck.groupCanonicalNodes(deck, 'slide-1', 'missing', ['node-1', 'node-2'], group), null);
+  assert.equal(canonicalDeck.groupCanonicalNodes(deck, 'slide-1', 'parent-1', ['node-1', 'node-2'], {
+    id: 'node-1',
+    children: [{ id: 'node-1' }, { id: 'node-2' }]
+  }), null);
+});
+
 test('removeCanonicalNodes immutably removes top-level and nested nodes by id', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{

@@ -308,6 +308,110 @@
     });
   }
 
+  function groupCanonicalNodes(deckLike, slideId, parentNodeId = '', nodeIds = [], groupNodeLike = {}) {
+    if (!deckLike || typeof deckLike !== 'object' || !groupNodeLike || typeof groupNodeLike !== 'object') {
+      return null;
+    }
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedSlideId = normalizeString(slideId).trim();
+    const normalizedParentNodeId = normalizeString(parentNodeId).trim();
+    const normalizedNodeIds = new Set(normalizeStringArray(nodeIds).map((id) => id.trim()));
+    if (!isCanonicalDeck(deck) || !normalizedSlideId || normalizedNodeIds.size < 2) {
+      return null;
+    }
+
+    const slideIndex = deck.slides.findIndex((slide) => slide && slide.id === normalizedSlideId);
+    if (slideIndex < 0) {
+      return null;
+    }
+
+    const groupNode = createCanonicalNode(groupNodeLike, 0);
+    const groupChildIds = new Set(groupNode.children.map((child) => child && child.id));
+    if (!groupNode.id
+      || groupChildIds.size !== normalizedNodeIds.size
+      || [...normalizedNodeIds].some((id) => !groupChildIds.has(id))) {
+      return null;
+    }
+
+    const existingNodeIds = new Set();
+    function collectNodeIds(nodes = []) {
+      nodes.forEach((node) => {
+        if (!node || typeof node !== 'object') return;
+        if (typeof node.id === 'string' && node.id.trim()) {
+          existingNodeIds.add(node.id);
+        }
+        collectNodeIds(Array.isArray(node.children) ? node.children : []);
+      });
+    }
+    collectNodeIds(deck.slides.map((slide) => slide.nodes).flat());
+    if (existingNodeIds.has(groupNode.id)) {
+      return null;
+    }
+
+    function groupNodes(nodes = []) {
+      const selectedIndices = nodes
+        .map((node, index) => normalizedNodeIds.has(node && node.id) ? index : -1)
+        .filter((index) => index >= 0);
+      if (selectedIndices.length !== normalizedNodeIds.size) {
+        return null;
+      }
+
+      const firstSelectedIndex = selectedIndices[0];
+      const retainedBeforeGroup = nodes
+        .slice(0, firstSelectedIndex)
+        .filter((node) => !normalizedNodeIds.has(node && node.id));
+      const nextNodes = nodes.filter((node) => !normalizedNodeIds.has(node && node.id));
+      nextNodes.splice(retainedBeforeGroup.length, 0, groupNode);
+      return nextNodes;
+    }
+
+    let didGroup = false;
+    function updateParentNode(nodes = []) {
+      return nodes.map((node, index) => {
+        if (!node || typeof node !== 'object') return node;
+        if (node.id === normalizedParentNodeId) {
+          const nextChildren = groupNodes(Array.isArray(node.children) ? node.children : []);
+          if (!nextChildren) return node;
+          didGroup = true;
+          return createCanonicalNode({
+            ...node,
+            children: nextChildren
+          }, index);
+        }
+
+        if (!Array.isArray(node.children) || node.children.length === 0) {
+          return node;
+        }
+        const nextChildren = updateParentNode(node.children);
+        if (nextChildren.some((child, childIndex) => child !== node.children[childIndex])) {
+          didGroup = true;
+          return createCanonicalNode({
+            ...node,
+            children: nextChildren
+          }, index);
+        }
+        return node;
+      });
+    }
+
+    const slide = deck.slides[slideIndex];
+    const nextNodes = normalizedParentNodeId
+      ? updateParentNode(slide.nodes)
+      : groupNodes(slide.nodes);
+    if (!nextNodes || (normalizedParentNodeId && !didGroup)) {
+      return null;
+    }
+
+    return createCanonicalDeck({
+      ...deck,
+      slides: deck.slides.map((candidate, index) => index === slideIndex
+        ? { ...candidate, nodes: nextNodes }
+        : candidate)
+    });
+  }
+
   function removeCanonicalNodes(deckLike, nodeIds = []) {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -801,6 +905,7 @@
     removeCanonicalSlide,
     appendCanonicalSlide,
     appendCanonicalNode,
+    groupCanonicalNodes,
     removeCanonicalNodes,
     updateCanonicalNodeVisibility,
     updateCanonicalNodeLayout,

@@ -6843,6 +6843,40 @@
       const selectedSet = new Set(groupActionState.selection);
       const orderedSelection = getNormalizedSlideLayerOrder(slide)
         .filter((element) => selectedSet.has(element));
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const groupCanonicalNodes = canonicalDeckApi
+        && typeof canonicalDeckApi.groupCanonicalNodes === 'function'
+        ? canonicalDeckApi.groupCanonicalNodes
+        : null;
+      const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
+        ? SlideNextDeckImport
+        : null;
+      const importElementToCanonicalNode = deckImportApi
+        && typeof deckImportApi.importElementToCanonicalNode === 'function'
+        ? deckImportApi.importElementToCanonicalNode
+        : null;
+      let canonicalDeckBeforeGrouping = null;
+      let canonicalSlideId = '';
+      let canonicalParentId = '';
+      let canonicalSelectedNodeIds = [];
+      if (groupCanonicalNodes
+        && importElementToCanonicalNode
+        && typeof buildEditorCanonicalDeck === 'function') {
+        canonicalSlideId = typeof getEditorSlideId === 'function'
+          ? getEditorSlideId(slide)
+          : slide && slide.id;
+        canonicalParentId = parent === slide ? '' : getGroupElementId(parent);
+        canonicalSelectedNodeIds = orderedSelection
+          .map((element) => getGroupElementId(element))
+          .filter(Boolean);
+        if (parent === slide || canonicalParentId) {
+          canonicalDeckBeforeGrouping = buildEditorCanonicalDeck(doc);
+        } else {
+          canonicalSelectedNodeIds = [];
+        }
+      }
       const mutation = applyEditorGroupMutationWithTransaction({
         documentRef: doc,
         parent,
@@ -6858,6 +6892,27 @@
           : null
       });
       if (!mutation.didApply) return false;
+      let canonicalDeck = null;
+      if (canonicalDeckBeforeGrouping
+        && canonicalSlideId
+        && canonicalSelectedNodeIds.length > 1) {
+        const canonicalGroupNode = importElementToCanonicalNode(mutation.group, {
+          getNodeId: (element) => {
+            if (element && element.dataset && typeof assignEditorElementId === 'function') {
+              const assignedId = assignEditorElementId(element);
+              if (assignedId) return assignedId;
+            }
+            return element && element.dataset && element.dataset.editorId;
+          }
+        });
+        canonicalDeck = groupCanonicalNodes(
+          canonicalDeckBeforeGrouping,
+          canonicalSlideId,
+          canonicalParentId,
+          canonicalSelectedNodeIds,
+          canonicalGroupNode
+        );
+      }
       commitEditorSelectionState({
         selectedElements: [mutation.group]
       });
@@ -6865,7 +6920,8 @@
         syncSelectionOverlay: true,
         refreshThumbnails: false,
         debounceHistory: true,
-        transaction: mutation.transaction
+        transaction: mutation.transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
       });
       return true;
     }
