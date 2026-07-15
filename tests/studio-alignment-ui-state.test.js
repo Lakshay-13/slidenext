@@ -202,6 +202,74 @@ test('distributeSelectedElements writes distribution positions and records one m
   assert.equal(calls[1][1], 'Auto: Distributed horizontal');
 });
 
+test('distributeSelectedElements forwards an immutable canonical layout sidecar', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function distributeSelectedElements(axis = \'\') {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const first = { dataset: { editorId: 'node-1' }, style: {} };
+  const second = { dataset: { editorId: 'node-2' }, style: {} };
+  const third = { dataset: { editorId: 'node-3' }, style: {} };
+  const canonicalDeckBefore = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [
+        { id: 'node-1', layout: { mode: 'absolute', x: 10, y: 20 } },
+        { id: 'node-2', layout: { mode: 'absolute', x: 40, y: 50 } },
+        { id: 'node-3', layout: { mode: 'absolute', x: 80, y: 90 } }
+      ]
+    }]
+  });
+  let finalized = null;
+  const context = {
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorAlignment: {
+      buildStudioDistributedLayout() {
+        return {
+          didChange: true,
+          nextItems: [
+            { element: first, nextLeft: 10, nextTop: 20, nextAbsLeft: 10, nextAbsTop: 20 },
+            { element: second, nextLeft: 50, nextTop: 60, nextAbsLeft: 50, nextAbsTop: 60 },
+            { element: third, nextLeft: 90, nextTop: 100, nextAbsLeft: 90, nextAbsTop: 100 }
+          ]
+        };
+      }
+    },
+    assignEditorElementId(element) {
+      return element.dataset.editorId;
+    },
+    buildAlignmentActionState() {
+      return {
+        alignmentActionState: {
+          canAlign: true,
+          selection: [{ element: first }, { element: second }, { element: third }]
+        }
+      };
+    },
+    buildEditorCanonicalDeck() {
+      return canonicalDeckBefore;
+    },
+    finalizeEditorDeckMutation(label, options) {
+      finalized = { label, options };
+    },
+    updateAlignmentActionState() {}
+  };
+
+  vm.createContext(context);
+  loadPositionMutationHelper(fileContent, context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.distributeSelectedElements('horizontal'), true);
+  assert.equal(first.style.left, '10px');
+  assert.equal(second.style.left, '50px');
+  assert.equal(canonicalDeckBefore.slides[0].nodes[1].layout.x, 40);
+  assert.equal(finalized.label, 'Auto: Distributed horizontal');
+  assert.equal(finalized.options.canonicalDeck.slides[0].nodes[1].layout.x, 50);
+  assert.equal(finalized.options.canonicalDeck.slides[0].nodes[2].layout.y, 100);
+});
+
 test('alignSelectedElements writes aligned parent-relative positions and records one mutation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
