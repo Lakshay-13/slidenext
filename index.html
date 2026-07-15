@@ -4822,22 +4822,23 @@
     }
 
     function updateAlignmentActionState(doc = getIframeDoc()) {
-      const alignmentState = buildAlignmentActionState(doc);
-      const alignmentActionState = alignmentState.alignmentActionState;
+      const motionActionState = buildMotionSelectionActionState(doc);
       const syncStudioAlignmentToolbarState = (
         SlideNextStudioEditorAlignment
         && typeof SlideNextStudioEditorAlignment.syncStudioAlignmentToolbarState === 'function'
       )
         ? SlideNextStudioEditorAlignment.syncStudioAlignmentToolbarState
         : null;
-      if (syncStudioAlignmentToolbarState && Array.isArray(alignmentState.nudgeLayoutItems)) {
+      if (syncStudioAlignmentToolbarState && Array.isArray(motionActionState.nudgeLayoutItems)) {
         return syncStudioAlignmentToolbarState({
           documentRef: document,
-          items: alignmentState.nudgeLayoutItems,
+          items: motionActionState.nudgeLayoutItems,
           isLocked: isElementLocked,
-          canMutateDeck: () => !!alignmentState.slide && alignmentState.canNudge
+          canMutateDeck: () => !!motionActionState.slide && motionActionState.canNudge
         });
       }
+      const alignmentState = buildAlignmentActionState(doc);
+      const alignmentActionState = alignmentState.alignmentActionState;
       return SlideNextStudioEditorAlignment.renderStudioAlignmentToolbarState({
         documentRef: document,
         canAlign: alignmentActionState.canAlign,

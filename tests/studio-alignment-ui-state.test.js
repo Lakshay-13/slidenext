@@ -73,8 +73,15 @@ test('updateAlignmentActionState enables all positional controls only when align
   const controls = Object.fromEntries(ids.map((id) => [id, { disabled: true }]));
   const context = {
     SlideNextStudioEditorAlignment: studioAlignment,
-    buildAlignmentActionState() {
-      return { alignmentActionState: { canAlign: true, selection: [{}, {}, {}] } };
+    buildMotionSelectionActionState() {
+      return {
+        slide: { id: 'slide-1' },
+        canNudge: true,
+        nudgeLayoutItems: [{}, {}, {}]
+      };
+    },
+    isElementLocked() {
+      return false;
     },
     document: {
       getElementById(id) {
@@ -99,6 +106,7 @@ test('updateAlignmentActionState delegates toolbar state assembly to the shared 
   const slide = { id: 'slide-1' };
   const layoutItems = [{ element: {} }, { element: {} }];
   const calls = [];
+  const doc = { id: 'doc' };
   const context = {
     SlideNextStudioEditorAlignment: {
       syncStudioAlignmentToolbarState(options) {
@@ -106,15 +114,12 @@ test('updateAlignmentActionState delegates toolbar state assembly to the shared 
         return 'delegated';
       }
     },
-    buildAlignmentActionState() {
+    buildMotionSelectionActionState(currentDoc) {
+      assert.equal(currentDoc, doc);
       return {
         slide,
         canNudge: true,
-        nudgeLayoutItems: layoutItems,
-        alignmentActionState: {
-          selection: layoutItems,
-          canAlign: true
-        }
+        nudgeLayoutItems: layoutItems
       };
     },
     document: {},
@@ -124,7 +129,6 @@ test('updateAlignmentActionState delegates toolbar state assembly to the shared 
   vm.createContext(context);
   vm.runInContext(source, context);
 
-  const doc = { id: 'doc' };
   assert.equal(context.updateAlignmentActionState(doc), 'delegated');
   assert.equal(calls.length, 1);
   assert.equal(calls[0].documentRef, context.document);
