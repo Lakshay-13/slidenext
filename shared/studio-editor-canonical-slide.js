@@ -7,6 +7,25 @@
     root.SlideNextStudioEditorCanonicalSlide = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function buildStudioCanonicalDuplicateSlideBaseline(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const insertCanonicalSlide = canonicalDeckApi
+      && typeof canonicalDeckApi.insertCanonicalSlide === 'function'
+      ? canonicalDeckApi.insertCanonicalSlide
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+
+    if (!insertCanonicalSlide || !buildCanonicalDeck) {
+      return null;
+    }
+
+    return buildCanonicalDeck(options.sourceDocument);
+  }
+
   function buildStudioCanonicalDuplicateSlideDeck(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -18,12 +37,9 @@
     const importSlideToCanonicalSlide = typeof options.importSlideToCanonicalSlide === 'function'
       ? options.importSlideToCanonicalSlide
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
-      : (buildCanonicalDeck ? buildCanonicalDeck(options.sourceDocument) : null);
+      : buildStudioCanonicalDuplicateSlideBaseline(options);
     const duplicateSlide = options.duplicateSlide;
     const insertionIndex = Number.isInteger(options.insertionIndex) ? options.insertionIndex : -1;
     const duplicateSlideId = typeof options.duplicateSlideId === 'string' ? options.duplicateSlideId : '';
@@ -151,6 +167,7 @@
   return {
     buildStudioCanonicalAddSlideDeck,
     buildStudioCanonicalDeleteSlideDeck,
+    buildStudioCanonicalDuplicateSlideBaseline,
     buildStudioCanonicalDuplicateSlideDeck,
     buildStudioCanonicalReorderSlideDeck
   };
