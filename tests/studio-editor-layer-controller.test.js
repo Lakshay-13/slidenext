@@ -260,6 +260,7 @@ test('changeStudioLayerZIndexByRef finalizes successful reorders and syncs selec
   const row = { id: 'row-1' };
   const target = { id: 'node-1' };
   const transaction = { id: 'tx-1' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   const calls = [];
   const event = {
     currentTarget: {
@@ -290,6 +291,7 @@ test('changeStudioLayerZIndexByRef finalizes successful reorders and syncs selec
     reorderSlideLayers(action, elements, options) {
       calls.push(['reorderSlideLayers', action, elements]);
       options.onTransaction(transaction);
+      options.onCanonicalDeck(canonicalDeck);
       return true;
     },
     liveSelectionApi: {
@@ -321,12 +323,13 @@ test('changeStudioLayerZIndexByRef finalizes successful reorders and syncs selec
   assert.equal(calls[5][1], 'backward');
   assert.deepEqual(calls[5][2], [target]);
   assert.equal(calls[7][1], target);
-  assert.deepEqual(calls[8][2], { transaction });
+  assert.deepEqual(calls[8][2], { transaction, canonicalDeck });
 });
 
 test('arrangeStudioElementLayer refreshes no-ops and finalizes successful reorders', () => {
   const selectedElements = [{ id: 'node-1' }, { id: 'node-2' }];
   const transaction = { id: 'tx-arrange' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   const calls = [];
 
   assert.equal(layerController.arrangeStudioElementLayer({
@@ -354,6 +357,7 @@ test('arrangeStudioElementLayer refreshes no-ops and finalizes successful reorde
     reorderSlideLayers(action, elements, options) {
       calls.push(['reorderSlideLayers', action, elements]);
       options.onTransaction(transaction);
+      options.onCanonicalDeck(canonicalDeck);
       return true;
     },
     syncLayerOrderZIndexInput(element) {
@@ -373,7 +377,7 @@ test('arrangeStudioElementLayer refreshes no-ops and finalizes successful reorde
     'syncLayerOrderZIndexInput',
     'finalizeLayerOrderMutation'
   ]);
-  assert.deepEqual(calls[6][2], { transaction });
+  assert.deepEqual(calls[6][2], { transaction, canonicalDeck });
 });
 
 test('refreshStudioLayerOrderUi preserves layer refresh ordering and result values', () => {

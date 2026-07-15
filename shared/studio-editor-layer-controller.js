@@ -136,11 +136,15 @@
     }
 
     let transaction = null;
+    let canonicalDeck = null;
     const reorderSlideLayers = options.reorderSlideLayers;
     const didChange = typeof reorderSlideLayers === 'function'
       ? reorderSlideLayers(options.action, [element], {
         onTransaction(nextTransaction) {
           transaction = nextTransaction;
+        },
+        onCanonicalDeck(nextCanonicalDeck) {
+          canonicalDeck = nextCanonicalDeck;
         }
       })
       : false;
@@ -156,7 +160,10 @@
       options.syncLayerOrderZIndexInput(element);
     }
     if (typeof options.finalizeLayerOrderMutation === 'function') {
-      options.finalizeLayerOrderMutation('Auto: Rearranged Layers', { transaction });
+      options.finalizeLayerOrderMutation('Auto: Rearranged Layers', {
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
     }
     return true;
   }
@@ -178,10 +185,14 @@
     }
 
     let transaction = null;
+    let canonicalDeck = null;
     const didChange = typeof options.reorderSlideLayers === 'function'
       ? options.reorderSlideLayers(options.action, targets, {
         onTransaction(nextTransaction) {
           transaction = nextTransaction;
+        },
+        onCanonicalDeck(nextCanonicalDeck) {
+          canonicalDeck = nextCanonicalDeck;
         }
       })
       : false;
@@ -192,7 +203,10 @@
       options.syncLayerOrderZIndexInput(targets[0]);
     }
     if (typeof options.finalizeLayerOrderMutation === 'function') {
-      options.finalizeLayerOrderMutation('Auto: Rearranged Layers', { transaction });
+      options.finalizeLayerOrderMutation('Auto: Rearranged Layers', {
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
     }
     return true;
   }

@@ -133,12 +133,14 @@
   function finalizeStudioLayerOrderMutation(options = {}) {
     const versionLabel = options.versionLabel || '';
     const transaction = options.transaction || null;
+    const hasCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck');
     const finalizeMutation = options.finalizeMutation;
     if (typeof finalizeMutation === 'function') {
       const result = finalizeMutation(versionLabel, {
         refreshThumbnails: false,
         refreshLayersList: true,
-        transaction
+        transaction,
+        ...(hasCanonicalDeck ? { canonicalDeck: options.canonicalDeck } : {})
       });
       if (typeof options.updateLayerOrderActionState === 'function') {
         options.updateLayerOrderActionState();
@@ -147,7 +149,11 @@
     }
 
     if (typeof options.saveHistoryState === 'function') {
-      options.saveHistoryState(false, transaction);
+      if (hasCanonicalDeck) {
+        options.saveHistoryState(false, transaction, options.canonicalDeck);
+      } else {
+        options.saveHistoryState(false, transaction);
+      }
     }
     if (typeof options.triggerAutoSave === 'function') {
       options.triggerAutoSave();

@@ -4251,6 +4251,17 @@
     function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {
       const slide = getActiveSlide();
       if (!slide) return false;
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const updateCanonicalNodeLayout = canonicalDeckApi
+        && typeof canonicalDeckApi.updateCanonicalNodeLayout === 'function'
+        ? canonicalDeckApi.updateCanonicalNodeLayout
+        : null;
+      const canonicalDeckBefore = updateCanonicalNodeLayout
+        && typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck()
+        : null;
       const initialOrder = getNormalizedSlideLayerOrder(slide);
       const reorderResult = SlideNextStudioEditorLayerOrder.buildStudioLayerOrderMutationPlan(targetElements, action, {
         orderedElements: initialOrder,
@@ -4276,8 +4287,23 @@
         }
       );
       if (!mutation.didApply) return false;
+      const canonicalNodeLayouts = updateCanonicalNodeLayout
+        ? initialOrder.map((element) => {
+            const elementId = getLayerOrderElementId(element);
+            const zIndex = element && element.style ? Number(element.style.zIndex) : NaN;
+            return elementId && Number.isFinite(zIndex)
+              ? { id: elementId, layout: { zIndex } }
+              : null;
+          }).filter(Boolean)
+        : [];
+      const canonicalDeck = updateCanonicalNodeLayout
+        ? updateCanonicalNodeLayout(canonicalDeckBefore, canonicalNodeLayouts)
+        : null;
       if (typeof options.onTransaction === 'function') {
         options.onTransaction(mutation.transaction);
+      }
+      if (typeof options.onCanonicalDeck === 'function') {
+        options.onCanonicalDeck(canonicalDeck);
       }
       return true;
     }
@@ -7201,6 +7227,7 @@
         return mutationApi.finalizeStudioLayerOrderMutation({
           versionLabel,
           transaction: options.transaction || null,
+          ...(options.canonicalDeck ? { canonicalDeck: options.canonicalDeck } : {}),
           finalizeMutation: typeof finalizeEditorDeckMutation === 'function'
             ? finalizeEditorDeckMutation
             : null,
@@ -7215,12 +7242,17 @@
         const result = finalizeEditorDeckMutation(versionLabel, {
           refreshThumbnails: false,
           refreshLayersList: true,
-          transaction: options.transaction || null
+          transaction: options.transaction || null,
+          ...(options.canonicalDeck ? { canonicalDeck: options.canonicalDeck } : {})
         });
         updateLayerOrderActionState();
         return result;
       }
-      saveHistoryState(false, options.transaction || null);
+      if (options.canonicalDeck) {
+        saveHistoryState(false, options.transaction || null, options.canonicalDeck);
+      } else {
+        saveHistoryState(false, options.transaction || null);
+      }
       triggerAutoSave();
       updateLayersList();
       updateLayerOrderActionState();
@@ -7292,16 +7324,23 @@
         return refreshLayerOrderUi();
       }
       let transaction = null;
+      let canonicalDeck = null;
       const didChange = reorderSlideLayers(action, targets, {
         onTransaction(nextTransaction) {
           transaction = nextTransaction;
+        },
+        onCanonicalDeck(nextCanonicalDeck) {
+          canonicalDeck = nextCanonicalDeck;
         }
       });
       if (!didChange) {
         return refreshLayerOrderUi();
       }
       syncLayerOrderZIndexInput(targets[0]);
-      finalizeLayerOrderMutation('Auto: Rearranged Layers', { transaction });
+      finalizeLayerOrderMutation('Auto: Rearranged Layers', {
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
       return true;
     }
 
@@ -10888,9 +10927,13 @@
         return;
       }
       let transaction = null;
+      let canonicalDeck = null;
       const didChange = reorderSlideLayers(action, [el], {
         onTransaction(nextTransaction) {
           transaction = nextTransaction;
+        },
+        onCanonicalDeck(nextCanonicalDeck) {
+          canonicalDeck = nextCanonicalDeck;
         }
       });
       if (!didChange) {
@@ -10903,7 +10946,10 @@
         syncLayerOrderZIndexInput(el);
       }
 
-      finalizeLayerOrderMutation('Auto: Rearranged Layers', { transaction });
+      finalizeLayerOrderMutation('Auto: Rearranged Layers', {
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
     }
 
     // Presentation Live Preview from workspace

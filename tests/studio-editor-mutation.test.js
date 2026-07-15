@@ -304,10 +304,12 @@ test('createStudioSlideMutationPersistenceFinalizer forwards canonical deck over
 test('finalizeStudioLayerOrderMutation preserves layer UI ordering around shared persistence', () => {
   const calls = [];
   const transaction = { id: 'tx-layer-order' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
 
   assert.equal(mutation.finalizeStudioLayerOrderMutation({
     versionLabel: 'Auto: Layer Order',
     transaction,
+    canonicalDeck,
     finalizeMutation(label, options) {
       calls.push(['finalize', label, options]);
       return 'delegated';
@@ -321,10 +323,27 @@ test('finalizeStudioLayerOrderMutation preserves layer UI ordering around shared
     ['finalize', 'Auto: Layer Order', {
       refreshThumbnails: false,
       refreshLayersList: true,
-      transaction
+      transaction,
+      canonicalDeck
     }],
     'layer-controls'
   ]);
+});
+
+test('finalizeStudioLayerOrderMutation forwards canonical decks to fallback history persistence', () => {
+  const calls = [];
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+
+  mutation.finalizeStudioLayerOrderMutation({
+    versionLabel: 'Auto: Layer Order',
+    transaction: { id: 'tx-layer-order-fallback' },
+    canonicalDeck,
+    saveHistoryState(...args) {
+      calls.push(args);
+    }
+  });
+
+  assert.deepEqual(calls, [[false, { id: 'tx-layer-order-fallback' }, canonicalDeck]]);
 });
 
 test('finalizeStudioLayerOrderMutation falls back to layer persistence ordering', () => {

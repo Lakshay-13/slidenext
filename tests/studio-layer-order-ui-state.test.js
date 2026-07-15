@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const canonicalDeck = require('../shared/canonical-deck.js');
 const layerOrder = require('../shared/studio-editor-layer-order.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 
@@ -205,6 +206,73 @@ test('reorderSlideLayers forwards a reversible z-index transaction', () => {
   }]);
 });
 
+test('reorderSlideLayers forwards canonical z-index updates after applying layer order', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const first = {
+    isConnected: true,
+    dataset: { editorId: 'node-1' },
+    style: { zIndex: '0' }
+  };
+  const second = {
+    isConnected: true,
+    dataset: { editorId: 'node-2' },
+    style: { zIndex: '1' }
+  };
+  const slide = { id: 'slide-1' };
+  slide.contains = (element) => element === first || element === second;
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [
+        { id: 'node-1', layout: { zIndex: 0 } },
+        { id: 'node-2', layout: { zIndex: 1 } }
+      ]
+    }]
+  });
+  let nextCanonicalDeck = null;
+  const context = {
+    selectedElements: [first],
+    SlideNextCanonicalDeck: canonicalDeck,
+    SlideNextStudioEditorLayerOrder: layerOrder,
+    SlideNextStudioEditorTransaction: studioTransaction,
+    getActiveSlide() {
+      return slide;
+    },
+    getNormalizedSlideLayerOrder() {
+      return [first, second];
+    },
+    buildEditorCanonicalDeck() {
+      return sourceDeck;
+    },
+    isElementLocked() {
+      return false;
+    },
+    assignEditorElementId(element) {
+      return element.dataset.editorId;
+    },
+    applySlideLayerOrder(currentSlide, orderedElements) {
+      assert.equal(currentSlide, slide);
+      orderedElements.forEach((element, index) => {
+        element.style.zIndex = String(index);
+      });
+      return orderedElements;
+    }
+  };
+
+  vm.createContext(context);
+  loadLayerOrderMutationHelper(fileContent, context);
+  loadReorderSlideLayers(fileContent, context);
+
+  assert.equal(context.reorderSlideLayers('front', [first], {
+    onCanonicalDeck(deck) {
+      nextCanonicalDeck = deck;
+    }
+  }), true);
+  assert.equal(nextCanonicalDeck.slides[0].nodes[0].layout.zIndex, 1);
+  assert.equal(nextCanonicalDeck.slides[0].nodes[1].layout.zIndex, 0);
+  assert.equal(sourceDeck.slides[0].nodes[0].layout.zIndex, 0);
+});
+
 test('finalizeLayerOrderMutation refreshes layer chrome before versioning', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
@@ -244,6 +312,7 @@ test('finalizeLayerOrderMutation refreshes layer chrome before versioning', () =
 test('finalizeLayerOrderMutation reuses the shared deck mutation lifecycle when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const transaction = { id: 'layer-order-tx' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   let delegatedOptions = null;
   const calls = [];
   const context = {
@@ -263,17 +332,22 @@ test('finalizeLayerOrderMutation reuses the shared deck mutation lifecycle when 
   vm.createContext(context);
   loadFinalizeLayerOrderMutation(fileContent, context);
 
-  assert.equal(context.finalizeLayerOrderMutation('Auto: Layer Order', { transaction }), 'delegated');
+  assert.equal(context.finalizeLayerOrderMutation('Auto: Layer Order', {
+    transaction,
+    canonicalDeck
+  }), 'delegated');
   assert.equal(delegatedOptions.label, 'Auto: Layer Order');
   assert.equal(delegatedOptions.options.refreshThumbnails, false);
   assert.equal(delegatedOptions.options.refreshLayersList, true);
   assert.equal(delegatedOptions.options.transaction.id, transaction.id);
+  assert.equal(delegatedOptions.options.canonicalDeck, canonicalDeck);
   assert.deepEqual(calls, ['updateLayerOrderActionState']);
 });
 
 test('finalizeLayerOrderMutation delegates its lifecycle adapter to shared mutation state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const transaction = { id: 'layer-order-tx' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   let delegatedOptions = null;
   const context = {
     SlideNextStudioEditorMutation: {
@@ -293,9 +367,13 @@ test('finalizeLayerOrderMutation delegates its lifecycle adapter to shared mutat
   vm.createContext(context);
   loadFinalizeLayerOrderMutation(fileContent, context);
 
-  assert.equal(context.finalizeLayerOrderMutation('Auto: Layer Order', { transaction }), 'shared-layer-order');
+  assert.equal(context.finalizeLayerOrderMutation('Auto: Layer Order', {
+    transaction,
+    canonicalDeck
+  }), 'shared-layer-order');
   assert.equal(delegatedOptions.versionLabel, 'Auto: Layer Order');
   assert.equal(delegatedOptions.transaction.id, transaction.id);
+  assert.equal(delegatedOptions.canonicalDeck, canonicalDeck);
   assert.equal(delegatedOptions.finalizeMutation, context.finalizeEditorDeckMutation);
   assert.equal(delegatedOptions.updateLayerOrderActionState, context.updateLayerOrderActionState);
 });
