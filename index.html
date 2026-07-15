@@ -4284,6 +4284,20 @@
 
     // Click Selection highlights
     function selectElement(el, options = {}) {
+      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
+        ? SlideNextStudioEditorSelection
+        : null;
+      if (selectionApi && typeof selectionApi.selectStudioElement === 'function') {
+        return selectionApi.selectStudioElement({
+          element: el,
+          selectedElements,
+          additive: options.additive,
+          toggle: options.toggle,
+          resolveEditableTarget,
+          getSelectionOptions: getEditorSelectionOptions,
+          commitSelectionState: commitEditorSelectionState
+        });
+      }
       const target = resolveEditableTarget(el);
       if (!target) return;
       const nextSelectionState = SlideNextStudioEditorSelection.updateStudioSelection(

@@ -177,6 +177,29 @@
     }, options);
   }
 
+  function selectStudioElement(options = {}) {
+    const resolveEditableTarget = typeof options.resolveEditableTarget === 'function'
+      ? options.resolveEditableTarget
+      : (element) => element;
+    const target = resolveEditableTarget(options.element);
+    if (!target) return false;
+    const getSelectionOptions = typeof options.getSelectionOptions === 'function'
+      ? options.getSelectionOptions
+      : () => ({});
+    const nextSelectionState = updateStudioSelection(
+      Array.isArray(options.selectedElements) ? options.selectedElements : [],
+      target,
+      {
+        ...getSelectionOptions(),
+        additive: !!options.additive,
+        toggle: !!options.toggle
+      }
+    );
+    if (typeof options.commitSelectionState !== 'function') return false;
+    options.commitSelectionState(nextSelectionState);
+    return true;
+  }
+
   function commitStudioSelectionState(nextSelectionState = {}, options = {}) {
     const normalizedSelectionState = normalizeStudioSelectionState(nextSelectionState, options);
     const selectedElements = normalizedSelectionState.selectedElements;
@@ -276,6 +299,7 @@
     updateStudioSelection,
     clearStudioSelection,
     selectAllStudioElements,
+    selectStudioElement,
     commitStudioSelectionState,
     syncStudioSelectionUi,
     syncStudioSelectionUiAfterMutation,
