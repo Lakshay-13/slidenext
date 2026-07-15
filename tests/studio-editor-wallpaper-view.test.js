@@ -128,3 +128,46 @@ test('syncStudioWallpaperTabChrome selects the matching wallpaper panel', () => 
   assert.equal(elements.wpPanelPresets.classList.contains('hidden'), false);
   assert.equal(elements.wpPanelCustom.classList.contains('hidden'), true);
 });
+
+test('syncStudioCustomGradientControls updates linear gradient inputs and chrome', () => {
+  const classList = () => ({
+    values: new Set(),
+    add(value) {
+      this.values.add(value);
+    },
+    remove(value) {
+      this.values.delete(value);
+    },
+    contains(value) {
+      return this.values.has(value);
+    }
+  });
+  const elements = {
+    cgLinearBtn: { className: '' },
+    cgRadialBtn: { className: '' },
+    cgAngleGroup: { classList: classList() },
+    cgColor1: { value: '' },
+    cgColor2: { value: '' },
+    cgAngle: { value: '' },
+    cgAngleVal: { textContent: '' }
+  };
+  const result = wallpaperView.syncStudioCustomGradientControls({
+    documentRef: {
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    },
+    activeSlide: {
+      style: {
+        background: 'linear-gradient(210deg, #112233 0%, #445566 100%)'
+      }
+    }
+  });
+
+  assert.deepEqual(result, { didApply: true, gradientType: 'linear' });
+  assert.equal(elements.cgColor1.value, '#112233');
+  assert.equal(elements.cgColor2.value, '#445566');
+  assert.equal(elements.cgAngle.value, '210');
+  assert.equal(elements.cgAngleVal.textContent, '210°');
+  assert.equal(elements.cgAngleGroup.classList.contains('hidden'), false);
+});

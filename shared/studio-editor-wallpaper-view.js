@@ -149,6 +149,58 @@
     return { didApply: true, wallpaperTab: nextTab };
   }
 
+  function syncStudioCustomGradientTypeChrome(options = {}) {
+    const documentRef = options.documentRef;
+    const linearBtn = documentRef && documentRef.getElementById('cgLinearBtn');
+    const radialBtn = documentRef && documentRef.getElementById('cgRadialBtn');
+    const angleGroup = documentRef && documentRef.getElementById('cgAngleGroup');
+    if (!linearBtn || !radialBtn || !angleGroup) return false;
+
+    const type = options.gradientType;
+    const activeButtonClass = 'py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
+    const inactiveButtonClass = 'py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
+    if (type === 'linear') {
+      linearBtn.className = activeButtonClass;
+      radialBtn.className = inactiveButtonClass;
+      angleGroup.classList.remove('hidden');
+    } else {
+      radialBtn.className = activeButtonClass;
+      linearBtn.className = inactiveButtonClass;
+      angleGroup.classList.add('hidden');
+    }
+    return true;
+  }
+
+  function syncStudioCustomGradientControls(options = {}) {
+    const documentRef = options.documentRef;
+    const color1Input = documentRef && documentRef.getElementById('cgColor1');
+    const color2Input = documentRef && documentRef.getElementById('cgColor2');
+    const angleInput = documentRef && documentRef.getElementById('cgAngle');
+    const angleLabel = documentRef && documentRef.getElementById('cgAngleVal');
+    const activeSlide = options.activeSlide;
+    if (!color1Input || !color2Input || !angleInput || !angleLabel || !activeSlide || !activeSlide.style) {
+      return { didApply: false, gradientType: '' };
+    }
+
+    const gradientControls = resolveStudioActiveSlideGradientControls(activeSlide, options);
+    if (!gradientControls || !syncStudioCustomGradientTypeChrome({
+      documentRef,
+      gradientType: gradientControls.gradientType
+    })) {
+      return { didApply: false, gradientType: '' };
+    }
+    color1Input.value = gradientControls.color1Value;
+    color2Input.value = gradientControls.color2Value;
+    if (gradientControls.gradientType === 'linear') {
+      angleInput.value = gradientControls.angleValue;
+      angleLabel.textContent = `${gradientControls.angleValue}°`;
+    }
+    return {
+      didApply: true,
+      gradientType: gradientControls.gradientType
+    };
+  }
+
   function resolveStudioActiveSlideGradientControls(activeSlide, options = {}) {
     const background = resolveStudioActiveSlideGradientBackground(activeSlide);
     if (!background) return null;
@@ -205,6 +257,8 @@
     resolveStudioActiveSlideGradientBackground,
     syncStudioSolidWallpaperControl,
     syncStudioWallpaperTabChrome,
+    syncStudioCustomGradientTypeChrome,
+    syncStudioCustomGradientControls,
     resolveStudioActiveSlideGradientControls
   };
 });
