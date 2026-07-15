@@ -19,6 +19,27 @@
     borderColor: 'Auto: Changed Border Color',
     opacity: 'Auto: Changed Opacity'
   };
+  const STUDIO_STYLE_TOOLBAR_CONTROL_CONFIGS = [
+    ['elTextContent', 'text', ''],
+    ['elImageSrc', 'src', ''],
+    ['elFontSize', 'size', '16'],
+    ['elFontFamily', 'family', "'Geist', sans-serif"],
+    ['elFontWeight', 'weight', '400'],
+    ['alignLeftBtn', 'align', 'left'],
+    ['alignCenterBtn', 'align', 'center'],
+    ['alignRightBtn', 'align', 'right'],
+    ['alignJustifyBtn', 'align', 'justify'],
+    ['elTextColor', 'color', '#ffffff'],
+    ['elOpacity', 'opacity', '100'],
+    ['elBorderStyle', 'borderStyle', 'none'],
+    ['elBorderWidth', 'borderWidth', '0'],
+    ['elBorderRadius', 'borderRadius', '0'],
+    ['elBorderColor', 'borderColor', '#ffffff']
+  ];
+
+  function getStudioStyleToolbarControlConfigs() {
+    return STUDIO_STYLE_TOOLBAR_CONTROL_CONFIGS.map((config) => config.slice());
+  }
 
   function getStudioStyleSelection(elements = [], options = {}) {
     const selection = Array.isArray(elements) ? elements : [];
@@ -433,6 +454,7 @@
   return {
     DEFAULT_STUDIO_EDITOR_STYLE_ID,
     STUDIO_STYLE_VERSION_LABELS,
+    getStudioStyleToolbarControlConfigs,
     getStudioStyleSelection,
     buildStudioStyleMutationPlan,
     buildStudioStyleToolbarState,

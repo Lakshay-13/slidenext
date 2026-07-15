@@ -4679,23 +4679,15 @@
     }
 
     function updateStyleActionState(doc = getIframeDoc()) {
-      const controlConfigs = [
-        ['elTextContent', 'text', ''],
-        ['elImageSrc', 'src', ''],
-        ['elFontSize', 'size', '16'],
-        ['elFontFamily', 'family', "'Geist', sans-serif"],
-        ['elFontWeight', 'weight', '400'],
-        ['alignLeftBtn', 'align', 'left'],
-        ['alignCenterBtn', 'align', 'center'],
-        ['alignRightBtn', 'align', 'right'],
-        ['alignJustifyBtn', 'align', 'justify'],
-        ['elTextColor', 'color', '#ffffff'],
-        ['elOpacity', 'opacity', '100'],
-        ['elBorderStyle', 'borderStyle', 'none'],
-        ['elBorderWidth', 'borderWidth', '0'],
-        ['elBorderRadius', 'borderRadius', '0'],
-        ['elBorderColor', 'borderColor', '#ffffff']
-      ];
+      const getStyleToolbarControlConfigs = (
+        SlideNextStudioEditorStyle
+        && typeof SlideNextStudioEditorStyle.getStudioStyleToolbarControlConfigs === 'function'
+      )
+        ? SlideNextStudioEditorStyle.getStudioStyleToolbarControlConfigs
+        : null;
+      const controlConfigs = getStyleToolbarControlConfigs
+        ? getStyleToolbarControlConfigs()
+        : [];
       const syncStudioStyleToolbarState = (
         SlideNextStudioEditorStyle
         && typeof SlideNextStudioEditorStyle.syncStudioStyleToolbarState === 'function'

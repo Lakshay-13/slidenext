@@ -51,6 +51,29 @@ function getDisabledStates(controls) {
   return Object.fromEntries(Object.entries(controls).map(([id, control]) => [id, control.disabled]));
 }
 
+test('shared style view owns stable style toolbar control metadata', () => {
+  const configs = styleState.getStudioStyleToolbarControlConfigs();
+  assert.deepEqual(configs, [
+    ['elTextContent', 'text', ''],
+    ['elImageSrc', 'src', ''],
+    ['elFontSize', 'size', '16'],
+    ['elFontFamily', 'family', "'Geist', sans-serif"],
+    ['elFontWeight', 'weight', '400'],
+    ['alignLeftBtn', 'align', 'left'],
+    ['alignCenterBtn', 'align', 'center'],
+    ['alignRightBtn', 'align', 'right'],
+    ['alignJustifyBtn', 'align', 'justify'],
+    ['elTextColor', 'color', '#ffffff'],
+    ['elOpacity', 'opacity', '100'],
+    ['elBorderStyle', 'borderStyle', 'none'],
+    ['elBorderWidth', 'borderWidth', '0'],
+    ['elBorderRadius', 'borderRadius', '0'],
+    ['elBorderColor', 'borderColor', '#ffffff']
+  ]);
+  configs[0][2] = 'mutated';
+  assert.equal(styleState.getStudioStyleToolbarControlConfigs()[0][2], '');
+});
+
 test('finalizeEditorDeckMutation refreshes requested editor chrome before persisting', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
@@ -240,6 +263,9 @@ test('updateStyleActionState reuses the shared style toolbar helper when availab
   const context = {
     selectedElements: [{ isConnected: true, locked: false }],
     SlideNextStudioEditorStyle: {
+      getStudioStyleToolbarControlConfigs() {
+        return styleState.getStudioStyleToolbarControlConfigs();
+      },
       buildStudioStyleMutationPlan() {
         throw new Error('buildStudioStyleMutationPlan should not be used when shared toolbar helper exists');
       },
@@ -317,6 +343,9 @@ test('updateStyleActionState delegates toolbar state assembly to the shared styl
   const context = {
     selectedElements: [selectedElement],
     SlideNextStudioEditorStyle: {
+      getStudioStyleToolbarControlConfigs() {
+        return styleState.getStudioStyleToolbarControlConfigs();
+      },
       syncStudioStyleToolbarState(options) {
         calls.push(options);
         return 'delegated';
