@@ -90,6 +90,53 @@ test('syncStudioThumbnailList derives the slide-delete affordance from snapshot 
   assert.match(thumbnailsList.children[0].innerHTML, /deleteSlideNodeById/);
 });
 
+test('syncStudioEditorThumbnails assembles the live editor snapshot before rendering', () => {
+  const thumbnailsList = createListContainer();
+  const slideCountLabel = { textContent: '' };
+  const documentRef = {
+    getElementById(id) {
+      if (id === 'thumbnailsList') return thumbnailsList;
+      if (id === 'slideCountLabel') return slideCountLabel;
+      return null;
+    },
+    createElement() {
+      return createThumbCard();
+    }
+  };
+  const iframeDoc = { id: 'iframe-doc' };
+  const deckSnapshot = {
+    activeSlideId: 'slide-2',
+    slides: [
+      { id: 'slide-1', index: 0, title: 'First', backgroundLabel: 'Solid' },
+      { id: 'slide-2', index: 1, title: 'Second', backgroundLabel: 'Gradient' }
+    ]
+  };
+  const activeIndexCalls = [];
+
+  assert.equal(thumbnailView.syncStudioEditorThumbnails({
+    documentRef,
+    getDocument() {
+      return iframeDoc;
+    },
+    buildDeckSnapshot(doc) {
+      assert.equal(doc, iframeDoc);
+      return deckSnapshot;
+    },
+    getActiveSlideIndex(doc, snapshot) {
+      activeIndexCalls.push([doc, snapshot]);
+      return 1;
+    },
+    onSelectSlide() {},
+    setupDragAndDropThumbnail() {}
+  }), true);
+
+  assert.deepEqual(activeIndexCalls, [[iframeDoc, deckSnapshot]]);
+  assert.equal(slideCountLabel.textContent, '2 / 2');
+  assert.equal(thumbnailsList.children.length, 2);
+  assert.equal(thumbnailsList.children[1].draggable, true);
+  assert.match(thumbnailsList.children[1].innerHTML, /deleteSlideNodeById/);
+});
+
 test('attachStudioThumbnailDragAndDrop preserves thumbnail drag state and reorder behavior', () => {
   const card = createThumbCard();
   card.dataset.slideId = 'slide-2';

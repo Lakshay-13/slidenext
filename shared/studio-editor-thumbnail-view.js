@@ -96,6 +96,30 @@
     });
   }
 
+  function syncStudioEditorThumbnails(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const buildDeckSnapshot = typeof options.buildDeckSnapshot === 'function'
+      ? options.buildDeckSnapshot
+      : () => ({ slides: [] });
+    const iframeDoc = getDocument();
+    const deckSnapshot = buildDeckSnapshot(iframeDoc) || { slides: [] };
+    const slides = Array.isArray(deckSnapshot.slides) ? deckSnapshot.slides : [];
+    const getActiveSlideIndex = typeof options.getActiveSlideIndex === 'function'
+      ? () => options.getActiveSlideIndex(iframeDoc, deckSnapshot)
+      : () => (slides.length === 0 ? 0 : 0);
+
+    return syncStudioThumbnailList({
+      ...options,
+      deckSnapshot,
+      getActiveSlideIndex,
+      canMutateSlides: Object.prototype.hasOwnProperty.call(options, 'canMutateSlides')
+        ? !!options.canMutateSlides
+        : !!iframeDoc
+    });
+  }
+
   function attachStudioThumbnailDragAndDrop(card, options = {}) {
     if (!card || typeof card.addEventListener !== 'function') return false;
 
@@ -151,6 +175,7 @@
     setStudioThumbnailSlideCount,
     renderStudioThumbnailList,
     syncStudioThumbnailList,
+    syncStudioEditorThumbnails,
     attachStudioThumbnailDragAndDrop
   };
 });

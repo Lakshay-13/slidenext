@@ -2399,12 +2399,27 @@
 
     // Render visual Slide Organizer thumbnails
     function generateThumbnails() {
-      const iframeDoc = getIframeDoc();
-      const deckSnapshot = buildEditorDeckSnapshot(iframeDoc);
       const thumbnailView = typeof SlideNextStudioEditorThumbnailView !== 'undefined'
         ? SlideNextStudioEditorThumbnailView
         : null;
       if (!thumbnailView) return false;
+      if (typeof thumbnailView.syncStudioEditorThumbnails === 'function') {
+        return thumbnailView.syncStudioEditorThumbnails({
+          documentRef: document,
+          getDocument: getIframeDoc,
+          buildDeckSnapshot: buildEditorDeckSnapshot,
+          getActiveSlideIndex: (iframeDoc, deckSnapshot) => (
+            deckSnapshot.slides.length === 0 ? 0 : getStudioActiveSlideIndex(iframeDoc)
+          ),
+          onSelectSlide: (slideId) => {
+            setActiveSlideById(slideId, undefined, { captureHistory: true });
+          },
+          setupDragAndDropThumbnail
+        });
+      }
+
+      const iframeDoc = getIframeDoc();
+      const deckSnapshot = buildEditorDeckSnapshot(iframeDoc);
       const options = {
         documentRef: document,
         deckSnapshot,
