@@ -4696,6 +4696,13 @@
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!visibilityMutationPlan.didChange) return false;
+      const applyStudioVisibilityMutation = (
+        typeof SlideNextStudioEditorVisibilityState !== 'undefined'
+        && SlideNextStudioEditorVisibilityState
+        && typeof SlideNextStudioEditorVisibilityState.applyStudioVisibilityMutation === 'function'
+      )
+        ? SlideNextStudioEditorVisibilityState.applyStudioVisibilityMutation
+        : null;
       const createStudioVisibilityTransaction = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -4703,13 +4710,35 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioVisibilityTransaction
         : null;
+      const getVisibilityElementId = (element) => {
+        if (typeof assignEditorElementId === 'function') {
+          return assignEditorElementId(element);
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
+      if (applyStudioVisibilityMutation) {
+        const mutation = applyStudioVisibilityMutation(
+          visibilityMutationPlan.selection,
+          visibilityMutationPlan.shouldHide,
+          {
+            isHidden: isElementHidden,
+            setHidden: setElementHiddenState,
+            getVisibilityState: SlideNextStudioElementState.getStudioElementVisibilityState,
+            createVisibilityTransaction: createStudioVisibilityTransaction,
+            getElementId: getVisibilityElementId
+          }
+        );
+        if (!mutation.didApply) return false;
+        return finalizeSelectionToggleMutation(visibilityMutationPlan.versionLabel, {
+          ...options,
+          transaction: mutation.transaction
+        });
+      }
       const visibilityTransactionItems = createStudioVisibilityTransaction
         ? visibilityMutationPlan.selection
             .filter((el) => el && el.isConnected && isElementHidden(el) !== visibilityMutationPlan.shouldHide)
             .map((el) => {
-              if (typeof assignEditorElementId === 'function') {
-                assignEditorElementId(el);
-              }
+              getVisibilityElementId(el);
               return {
                 element: el,
                 before: SlideNextStudioElementState.getStudioElementVisibilityState(el)

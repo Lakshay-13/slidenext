@@ -2,6 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const visibilityState = require('../shared/studio-editor-visibility-state.js');
+const elementState = require('../shared/studio-element-state.js');
+const transactionState = require('../shared/studio-editor-transaction.js');
 
 test('getStudioVisibilitySelection ignores disconnected stale selections', () => {
   assert.deepEqual(visibilityState.getStudioVisibilitySelection([
@@ -150,4 +152,27 @@ test('buildStudioVisibilityMutationPlan derives the next visibility toggle from 
     didChange: false,
     versionLabel: ''
   });
+});
+
+test('applyStudioVisibilityMutation applies live visibility changes and creates an optional transaction', () => {
+  const element = {
+    isConnected: true,
+    dataset: { editorId: 'node-1' },
+    style: { display: '' },
+    hidden: false
+  };
+  const result = visibilityState.applyStudioVisibilityMutation([element], true, {
+    isHidden: elementState.isStudioElementHidden,
+    setHidden: elementState.setStudioElementHiddenState,
+    getVisibilityState: elementState.getStudioElementVisibilityState,
+    createVisibilityTransaction: transactionState.createStudioVisibilityTransaction,
+    getElementId: (target) => target.dataset.editorId
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.changedCount, 1);
+  assert.equal(element.hidden, true);
+  assert.deepEqual(result.transaction.operations[0].elementId, 'node-1');
+  assert.equal(result.transaction.operations[0].before.hidden, false);
+  assert.equal(result.transaction.operations[0].after.hidden, true);
 });

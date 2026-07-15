@@ -84,11 +84,71 @@
     };
   }
 
+  function applyStudioVisibilityMutation(elements = [], shouldHide = false, options = {}) {
+    const selection = Array.isArray(elements) ? elements : [];
+    const isHidden = typeof options.isHidden === 'function'
+      ? options.isHidden
+      : (element) => !!(element && element.hidden);
+    const setHidden = typeof options.setHidden === 'function'
+      ? options.setHidden
+      : (element, hidden) => {
+          if (!element) return;
+          element.hidden = hidden;
+        };
+    const getVisibilityState = typeof options.getVisibilityState === 'function'
+      ? options.getVisibilityState
+      : () => null;
+    const createVisibilityTransaction = typeof options.createVisibilityTransaction === 'function'
+      ? options.createVisibilityTransaction
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const visibilityTransactionItems = createVisibilityTransaction
+      ? selection
+          .filter((element) => element && element.isConnected && isHidden(element) !== shouldHide)
+          .map((element) => ({
+            element,
+            elementId: getElementId(element),
+            before: getVisibilityState(element)
+          }))
+      : [];
+    let changedCount = 0;
+
+    selection.forEach((element) => {
+      if (!element || !element.isConnected || isHidden(element) === shouldHide) return;
+      setHidden(element, shouldHide);
+      changedCount += 1;
+    });
+
+    if (changedCount === 0) {
+      return {
+        didApply: false,
+        changedCount: 0,
+        transaction: null
+      };
+    }
+
+    visibilityTransactionItems.forEach((item) => {
+      item.after = getVisibilityState(item.element);
+    });
+    const transaction = createVisibilityTransaction
+      ? createVisibilityTransaction(visibilityTransactionItems, { getElementId })
+      : null;
+
+    return {
+      didApply: true,
+      changedCount,
+      transaction
+    };
+  }
+
   return {
     getStudioVisibilitySelection,
     buildStudioVisibilityActionState,
     buildStudioVisibilityToolbarState,
     renderStudioVisibilityToolbarState,
-    buildStudioVisibilityMutationPlan
+    buildStudioVisibilityMutationPlan,
+    applyStudioVisibilityMutation
   };
 });

@@ -541,3 +541,64 @@ test('toggleSelectedElementsVisibility can skip temporary selection UI sync when
     ['triggerAutoVersion', 'Auto: Hid Element']
   ]);
 });
+
+test('toggleSelectedElementsVisibility delegates visibility application to the shared visibility module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toggleSelectedElementsVisibilitySource = extractFunctionSource(
+    fileContent,
+    'function toggleSelectedElementsVisibility(options = {}) {',
+    '\n\n    // Helper: RGB to hex converters'
+  );
+  const liveTarget = { isConnected: true, dataset: {} };
+  const calls = [];
+  const context = {
+    selectedElements: [liveTarget],
+    SlideNextStudioEditorVisibilityState: {
+      buildStudioVisibilityMutationPlan() {
+        return {
+          didChange: true,
+          selection: [liveTarget],
+          shouldHide: true,
+          versionLabel: 'Auto: Hid Element'
+        };
+      },
+      applyStudioVisibilityMutation(selection, shouldHide, options) {
+        calls.push(['applyStudioVisibilityMutation', selection, shouldHide, options]);
+        return { didApply: true, transaction: { type: 'visibility' } };
+      }
+    },
+    SlideNextStudioElementState: {
+      getStudioElementVisibilityState() {
+        return {};
+      }
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      return {};
+    },
+    isElementHidden() {
+      return false;
+    },
+    setElementHiddenState() {},
+    syncSelectionUiAfterMutation() {},
+    finalizeEditorDeckMutation(label, options) {
+      calls.push(['finalizeEditorDeckMutation', label, options]);
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeSelectionToggleMutation(fileContent, context);
+  vm.runInContext(toggleSelectedElementsVisibilitySource, context);
+
+  assert.equal(context.toggleSelectedElementsVisibility(), true);
+  assert.equal(calls[0][0], 'applyStudioVisibilityMutation');
+  assert.equal(calls[0][1][0], liveTarget);
+  assert.equal(calls[0][2], true);
+  assert.equal(typeof calls[0][3].getVisibilityState, 'function');
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[1])), ['finalizeEditorDeckMutation', 'Auto: Hid Element', {
+    refreshThumbnails: false,
+    transaction: { type: 'visibility' }
+  }]);
+});
