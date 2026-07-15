@@ -218,3 +218,69 @@ test('applyStudioGroupMutation wraps ordered children and captures the parent ma
     }]
   });
 });
+
+test('applyStudioUngroupMutation restores child positions and captures the parent markup transaction', () => {
+  const child = {
+    style: {},
+    getBoundingClientRect() {
+      return { left: 110, top: 135, right: 190, bottom: 175 };
+    }
+  };
+  const parent = {
+    dataset: { editorId: 'parent-2' },
+    innerHTML: '<div data-editor-id="group-1"><div data-editor-id="child-1"></div></div>',
+    getBoundingClientRect() {
+      return { left: 0, top: 0, right: 500, bottom: 400 };
+    },
+    insertBefore(element) {
+      element.parentElement = this;
+      this.innerHTML = '<div data-editor-id="child-1"></div>';
+      return element;
+    }
+  };
+  const groupNode = {
+    children: [child],
+    parentElement: parent,
+    getBoundingClientRect() {
+      return { left: 100, top: 120, right: 380, bottom: 280 };
+    },
+    remove() {
+      this.removed = true;
+      parent.innerHTML = '<div data-editor-id="child-1"></div>';
+    }
+  };
+
+  const result = group.applyStudioUngroupMutation({
+    groups: [groupNode],
+    slideMetrics: { scaleX: 1 },
+    getRectOnSlide: (rect) => rect,
+    getElementId(element) {
+      return element.dataset && element.dataset.editorId;
+    },
+    createMarkupTransactionCapture(items, options) {
+      return studioTransaction.createStudioMarkupTransactionCapture(items, options);
+    }
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.restoredElements.length, 1);
+  assert.equal(result.restoredElements[0], child);
+  assert.deepEqual(child.style, {
+    position: 'absolute',
+    margin: '0',
+    left: '110px',
+    top: '135px'
+  });
+  assert.equal(child.parentElement, parent);
+  assert.equal(groupNode.removed, true);
+  assert.deepEqual(result.transaction, {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'markup',
+      elementId: 'parent-2',
+      before: '<div data-editor-id="group-1"><div data-editor-id="child-1"></div></div>',
+      after: '<div data-editor-id="child-1"></div>'
+    }]
+  });
+});

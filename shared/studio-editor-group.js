@@ -211,11 +211,105 @@
     };
   }
 
+  function applyStudioUngroupMutation(options = {}) {
+    const groups = Array.isArray(options.groups) ? options.groups : [];
+    const getRectOnSlide = typeof options.getRectOnSlide === 'function'
+      ? options.getRectOnSlide
+      : (rect) => rect;
+    const slideMetrics = options.slideMetrics || {};
+    const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
+      ? options.createMarkupTransactionCapture
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    if (groups.length === 0) {
+      return {
+        didApply: false,
+        restoredElements: [],
+        transaction: null
+      };
+    }
+
+    const markupCaptureTargets = [];
+    if (createMarkupTransactionCapture) {
+      const parentSet = new Set();
+      groups.forEach((group) => {
+        const parent = group && group.parentElement;
+        if (!parent || parentSet.has(parent)) return;
+        parentSet.add(parent);
+        markupCaptureTargets.push({
+          element: parent,
+          elementId: getElementId(parent)
+        });
+      });
+    }
+    const markupCapture = createMarkupTransactionCapture
+      ? createMarkupTransactionCapture(markupCaptureTargets, { getElementId })
+      : null;
+    const restoredElements = [];
+
+    groups.forEach((group) => {
+      const parent = group && group.parentElement;
+      if (!parent
+        || typeof parent.insertBefore !== 'function'
+        || typeof group.getBoundingClientRect !== 'function') {
+        return;
+      }
+      const groupBounds = getRectOnSlide(group.getBoundingClientRect(), slideMetrics);
+      const parentBounds = typeof parent.getBoundingClientRect === 'function'
+        ? getRectOnSlide(parent.getBoundingClientRect(), slideMetrics)
+        : null;
+      if (!parentBounds) return;
+      const children = Array.from(group.children || []);
+      const childItems = children.map((element) => {
+        const childBounds = typeof element.getBoundingClientRect === 'function'
+          ? getRectOnSlide(element.getBoundingClientRect(), slideMetrics)
+          : null;
+        if (!childBounds) return null;
+        return {
+          element,
+          relativeLeft: childBounds.left - groupBounds.left,
+          relativeTop: childBounds.top - groupBounds.top,
+          parentLeft: parentBounds.left,
+          parentTop: parentBounds.top
+        };
+      });
+      if (childItems.some((item) => !item)) return;
+      const ungroupPlan = buildStudioUngroupedLayout(groupBounds, childItems);
+      if (!ungroupPlan.canUngroup) return;
+
+      const itemByElement = new Map(ungroupPlan.nextItems.map((item) => [item.element, item]));
+      children.forEach((element) => {
+        const item = itemByElement.get(element);
+        if (!item) return;
+        element.style.position = 'absolute';
+        element.style.margin = '0';
+        element.style.left = `${item.nextLeft}px`;
+        element.style.top = `${item.nextTop}px`;
+        parent.insertBefore(element, group);
+        restoredElements.push(element);
+      });
+      if (typeof group.remove === 'function') {
+        group.remove();
+      }
+    });
+
+    return {
+      didApply: restoredElements.length > 0,
+      restoredElements,
+      transaction: restoredElements.length > 0 && markupCapture
+        ? markupCapture.createTransaction()
+        : null
+    };
+  }
+
   return {
     getStudioGroupableSelection,
     buildStudioGroupPlan,
     renderStudioGroupToolbarState,
     buildStudioUngroupedLayout,
-    applyStudioGroupMutation
+    applyStudioGroupMutation,
+    applyStudioUngroupMutation
   };
 });

@@ -5642,6 +5642,13 @@
       }
 
       const doc = getIframeDoc();
+      const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
+        ? SlideNextStudioEditorGroup
+        : null;
+      const applyStudioUngroupMutation = groupApi
+        && typeof groupApi.applyStudioUngroupMutation === 'function'
+        ? groupApi.applyStudioUngroupMutation
+        : null;
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -5649,6 +5656,35 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
+      const slideMetrics = getSlideMetrics(ungroupActionState.slide);
+
+      if (applyStudioUngroupMutation) {
+        const getUngroupElementId = (element) => {
+          if (typeof assignEditorElementId === 'function') {
+            return assignEditorElementId(element);
+          }
+          return element && element.dataset && element.dataset.editorId;
+        };
+        const mutation = applyStudioUngroupMutation({
+          groups: ungroupActionState.groups,
+          slideMetrics,
+          getRectOnSlide,
+          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+          getElementId: getUngroupElementId
+        });
+        if (!mutation.didApply) return false;
+        commitEditorSelectionState({
+          selectedElements: mutation.restoredElements
+        });
+        finalizeEditorDeckMutation('Auto: Ungrouped Elements', {
+          syncSelectionOverlay: true,
+          refreshThumbnails: false,
+          debounceHistory: true,
+          transaction: mutation.transaction
+        });
+        return true;
+      }
+
       const markupCaptureTargets = [];
       if (createStudioMarkupTransactionCapture) {
         const parentSet = new Set();
@@ -5665,7 +5701,6 @@
       const markupCapture = createStudioMarkupTransactionCapture
         ? createStudioMarkupTransactionCapture(markupCaptureTargets)
         : null;
-      const slideMetrics = getSlideMetrics(ungroupActionState.slide);
       const restoredElements = [];
       ungroupActionState.groups.forEach((group) => {
         const parent = group.parentElement;

@@ -396,3 +396,62 @@ test('ungroupSelectedElements restores child positions, removes the wrapper, and
     }]
   });
 });
+
+test('ungroupSelectedElements delegates wrapper removal to the shared group module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function ungroupSelectedElements() {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const calls = [];
+  const slide = { id: 'slide-1' };
+  const child = { id: 'child-1' };
+  const group = { id: 'group-1', parentElement: { id: 'parent-1' } };
+  const context = {
+    buildUngroupSelectionActionState() {
+      return {
+        canUngroup: true,
+        slide,
+        groups: [group]
+      };
+    },
+    SlideNextStudioEditorGroup: {
+      applyStudioUngroupMutation(options) {
+        calls.push(['applyStudioUngroupMutation', options]);
+        return {
+          didApply: true,
+          restoredElements: [child],
+          transaction: { type: 'markup' }
+        };
+      }
+    },
+    getIframeDoc() {
+      return { id: 'doc' };
+    },
+    getSlideMetrics() {
+      return { scaleX: 1 };
+    },
+    getRectOnSlide(rect) {
+      return rect;
+    },
+    commitEditorSelectionState(state) {
+      calls.push(['commitEditorSelectionState', state]);
+    },
+    finalizeEditorDeckMutation(label, options) {
+      calls.push(['finalizeEditorDeckMutation', label, options]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.ungroupSelectedElements(), true);
+  assert.equal(calls[0][0], 'applyStudioUngroupMutation');
+  assert.deepEqual(calls[0][1].groups, [group]);
+  assert.equal(calls[1][0], 'commitEditorSelectionState');
+  assert.equal(calls[1][1].selectedElements.length, 1);
+  assert.equal(calls[1][1].selectedElements[0], child);
+  assert.equal(calls[2][1], 'Auto: Ungrouped Elements');
+  assert.deepEqual(calls[2][2].transaction, { type: 'markup' });
+});
