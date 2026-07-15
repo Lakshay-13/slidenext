@@ -20,6 +20,7 @@ test('setStudioAutoSaveStatus renders loading, export, failure, and saved states
     ['exporting', 'Exporting PPTX'],
     ['export-failed', 'PPTX Export Failed'],
     ['exported', 'PPTX Exported'],
+    ['exported-with-warnings', 'PPTX Exported with warnings'],
     ['exporting-pdf', 'Exporting PDF'],
     ['pdf-export-failed', 'PDF Export Failed'],
     ['pdf-exported', 'PDF Export Ready'],

@@ -9973,7 +9973,7 @@
           setStudioAutoSaveStatus('export-failed');
           return false;
         }
-        setStudioAutoSaveStatus('exported');
+        setStudioAutoSaveStatus(result.warningCount > 0 ? 'exported-with-warnings' : 'exported');
         return true;
       } catch (error) {
         setStudioAutoSaveStatus('export-failed');
