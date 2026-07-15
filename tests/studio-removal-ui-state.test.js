@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const canonicalDeck = require('../shared/canonical-deck.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const removalState = require('../shared/studio-editor-removal.js');
 
@@ -446,6 +447,7 @@ test('removeSelectedElement returns true after removing live targets and persist
   );
 
   const liveTarget = {
+    dataset: { editorId: 'node-1' },
     isConnected: true,
     removeCalls: 0,
     remove() {
@@ -453,9 +455,16 @@ test('removeSelectedElement returns true after removing live targets and persist
       this.isConnected = false;
     }
   };
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', text: 'Removed' }]
+    }]
+  });
   const calls = [];
   const context = {
     selectedElements: [liveTarget],
+    SlideNextCanonicalDeck: canonicalDeck,
     SlideNextStudioEditorRemoval: {
       buildStudioRemovalActionState() {
         calls.push(['buildStudioRemovalActionState']);
@@ -480,12 +489,18 @@ test('removeSelectedElement returns true after removing live targets and persist
       calls.push(['getIframeDoc']);
       return { label: 'iframe-doc' };
     },
+    buildEditorCanonicalDeck() {
+      return sourceDeck;
+    },
+    assignEditorElementId(element) {
+      return element.dataset.editorId;
+    },
     isElementLocked() {
       calls.push(['isElementLocked']);
       return false;
     },
-    saveHistoryState() {
-      calls.push(['saveHistoryState']);
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
     },
     triggerAutoSave() {
       calls.push(['triggerAutoSave']);
@@ -516,7 +531,13 @@ test('removeSelectedElement returns true after removing live targets and persist
     ['deselectElement'],
     ['updateLayersList'],
     ['generateThumbnails'],
-    ['saveHistoryState'],
+    ['saveHistoryState', false, null, {
+      ...sourceDeck,
+      slides: [{
+        ...sourceDeck.slides[0],
+        nodes: []
+      }]
+    }],
     ['triggerAutoSave'],
     ['triggerAutoVersion', 'Auto: Deleted Element']
   ]);

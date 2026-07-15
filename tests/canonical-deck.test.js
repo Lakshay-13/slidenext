@@ -90,6 +90,36 @@ test('appendCanonicalSlide rejects invalid deck or slide input', () => {
   assert.equal(canonicalDeck.appendCanonicalSlide(deck, null), null);
 });
 
+test('removeCanonicalNodes immutably removes top-level and nested nodes by id', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'node-1',
+        children: [{ id: 'child-1' }, { id: 'child-2' }]
+      }, { id: 'node-2' }]
+    }]
+  });
+
+  const updatedDeck = canonicalDeck.removeCanonicalNodes(sourceDeck, ['node-2', 'child-1']);
+
+  assert.ok(canonicalDeck.isCanonicalDeck(updatedDeck));
+  assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'node-2']);
+  assert.deepEqual(sourceDeck.slides[0].nodes[0].children.map((node) => node.id), ['child-1', 'child-2']);
+  assert.deepEqual(updatedDeck.slides[0].nodes.map((node) => node.id), ['node-1']);
+  assert.deepEqual(updatedDeck.slides[0].nodes[0].children.map((node) => node.id), ['child-2']);
+});
+
+test('removeCanonicalNodes returns null for no-op or invalid node ids', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1' }] }]
+  });
+
+  assert.equal(canonicalDeck.removeCanonicalNodes(deck, ['missing']), null);
+  assert.equal(canonicalDeck.removeCanonicalNodes(deck, []), null);
+  assert.equal(canonicalDeck.removeCanonicalNodes(null, ['node-1']), null);
+});
+
 test('updateCanonicalNodeVisibility immutably updates nested node visibility by id', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{

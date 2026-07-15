@@ -264,6 +264,56 @@
     });
   }
 
+  function removeCanonicalNodes(deckLike, nodeIds = []) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedIds = new Set(normalizeStringArray(nodeIds).map((id) => id.trim()));
+    if (!isCanonicalDeck(deck) || normalizedIds.size === 0) {
+      return null;
+    }
+
+    let didChange = false;
+    function removeNodes(nodes = []) {
+      const nextNodes = [];
+      nodes.forEach((node, index) => {
+        if (!node || typeof node !== 'object') {
+          nextNodes.push(node);
+          return;
+        }
+        if (normalizedIds.has(node.id)) {
+          didChange = true;
+          return;
+        }
+
+        let nextNode = node;
+        const currentChildren = Array.isArray(node.children) ? node.children : [];
+        if (currentChildren.length > 0) {
+          const nextChildren = removeNodes(currentChildren);
+          if (nextChildren.length !== currentChildren.length
+            || nextChildren.some((child, childIndex) => child !== currentChildren[childIndex])) {
+            nextNode = createCanonicalNode({
+              ...node,
+              children: nextChildren
+            }, index);
+          }
+        }
+        nextNodes.push(nextNode);
+      });
+      return nextNodes;
+    }
+
+    const nextSlides = deck.slides.map((slide) => ({
+      ...slide,
+      nodes: removeNodes(Array.isArray(slide.nodes) ? slide.nodes : [])
+    }));
+    if (!didChange) return null;
+    return createCanonicalDeck({
+      ...deck,
+      slides: nextSlides
+    });
+  }
+
   function updateCanonicalNodeVisibility(deckLike, nodeIds = [], visibilityPatch = {}) {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -706,6 +756,7 @@
     reorderCanonicalSlides,
     removeCanonicalSlide,
     appendCanonicalSlide,
+    removeCanonicalNodes,
     updateCanonicalNodeVisibility,
     updateCanonicalNodeLayout,
     updateCanonicalNodeText,

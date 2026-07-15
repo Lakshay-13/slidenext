@@ -5988,6 +5988,20 @@
         }
         return element && element.dataset && element.dataset.editorId;
       };
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const removeCanonicalNodes = canonicalDeckApi
+        && typeof canonicalDeckApi.removeCanonicalNodes === 'function'
+        ? canonicalDeckApi.removeCanonicalNodes
+        : null;
+      const canonicalDeckBeforeRemoval = removeCanonicalNodes
+        && typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(doc)
+        : null;
+      const removalElementIds = removalActionState.selection
+        .map((element) => element && element.dataset ? getRemovalElementId(element) : '')
+        .filter(Boolean);
       const mutation = applyEditorRemovalMutationWithTransaction(removalActionState.selection, {
         getElementId: getRemovalElementId,
         removeElement(element) {
@@ -5995,9 +6009,13 @@
         }
       });
       if (!mutation.didRemove) return finalizeRemovalActionResult(false, doc);
+      const canonicalDeck = removeCanonicalNodes
+        ? removeCanonicalNodes(canonicalDeckBeforeRemoval, removalElementIds)
+        : null;
       deselectElement();
       finalizeEditorDeckMutation('Auto: Deleted Element', {
-        transaction: mutation.transaction
+        transaction: mutation.transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
       });
       return true;
     }
