@@ -50,3 +50,31 @@ test('toggleGridSnap updates the button state and toggles the editor grid prefer
   assert.equal(button.textContent, 'Grid Snap: On');
   assert.equal(button.attributes['aria-pressed'], 'true');
 });
+
+test('updateGridSnapActionState delegates rendering to the shared grid snap coordinator', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateGridSnapActionState() {',
+    '\n\n    function toggleGridSnap() {'
+  );
+  const calls = [];
+  const context = {
+    document: {},
+    isGridSnapEnabled: true,
+    SlideNextStudioEditorGridSnapView: {
+      syncStudioGridSnapState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateGridSnapActionState(), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.equal(calls[0].isEnabled, true);
+});

@@ -29,3 +29,25 @@ test('renderStudioGridSnapState updates text and pressed state', () => {
 test('renderStudioGridSnapState safely skips missing toolbar chrome', () => {
   assert.equal(gridSnapView.renderStudioGridSnapState(), false);
 });
+
+test('syncStudioGridSnapState delegates grid snap state rendering', () => {
+  const button = {
+    textContent: '',
+    attributes: {},
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    }
+  };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'toggleGridSnapBtn' ? button : null;
+    }
+  };
+
+  assert.equal(gridSnapView.syncStudioGridSnapState({
+    documentRef,
+    isEnabled: true
+  }), true);
+  assert.equal(button.textContent, 'Grid Snap: On');
+  assert.equal(button.attributes['aria-pressed'], 'true');
+});

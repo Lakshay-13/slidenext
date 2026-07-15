@@ -20,5 +20,12 @@
     return true;
   }
 
-  return { renderStudioGridSnapState };
+  function syncStudioGridSnapState(options = {}) {
+    return renderStudioGridSnapState({
+      documentRef: options.documentRef,
+      isEnabled: options.isEnabled
+    });
+  }
+
+  return { renderStudioGridSnapState, syncStudioGridSnapState };
 });
