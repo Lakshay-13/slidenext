@@ -5832,13 +5832,6 @@
       const nudgeApi = typeof SlideNextStudioEditorNudge !== 'undefined'
         ? SlideNextStudioEditorNudge
         : null;
-      const createStudioPositionTransaction = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioPositionTransaction === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioPositionTransaction
-        : null;
       const getNudgeElementId = (element) => {
         if (typeof assignEditorElementId === 'function') {
           return assignEditorElementId(element);
@@ -5849,39 +5842,25 @@
         && typeof nudgeApi.applyStudioNudgedLayout === 'function'
         ? nudgeApi.applyStudioNudgedLayout
         : null;
-      let transaction = null;
-      if (applyStudioNudgedLayout) {
-        const mutation = applyStudioNudgedLayout(nudgeResult.nextItems, {
-          createPositionTransaction: createStudioPositionTransaction,
-          getElementId: getNudgeElementId
-        });
-        if (!mutation.didApply) return false;
-        transaction = mutation.transaction;
-      } else {
-        transaction = createStudioPositionTransaction
-          ? createStudioPositionTransaction(nudgeResult.nextItems, {
-              getElementId: getNudgeElementId
-            })
-          : null;
-        nudgeResult.nextItems.forEach((item) => {
-          item.element.style.left = `${item.nextLeft}px`;
-          item.element.style.top = `${item.nextTop}px`;
-        });
-      }
+      const mutation = applyEditorPositionLayoutWithTransaction(nudgeResult.nextItems, {
+        getElementId: getNudgeElementId,
+        applyLayout: applyStudioNudgedLayout
+      });
+      if (!mutation.didApply) return false;
       finalizeEditorDeckMutation('Auto: Nudged Element', {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
         debounceHistory: true,
-        transaction
+        transaction: mutation.transaction
       });
       return true;
     }
 
-    function applyEditorAlignmentLayoutWithTransaction(nextItems, options = {}) {
+    function applyEditorPositionLayoutWithTransaction(nextItems, options = {}) {
       const alignmentApi = typeof SlideNextStudioEditorAlignment !== 'undefined'
         ? SlideNextStudioEditorAlignment
         : null;
-      const applyStudioAlignmentLayout = alignmentApi
+      const defaultApplyLayout = alignmentApi
         && typeof alignmentApi.applyStudioAlignmentLayout === 'function'
         ? alignmentApi.applyStudioAlignmentLayout
         : null;
@@ -5900,8 +5879,11 @@
             }
             return element && element.dataset && element.dataset.editorId;
           };
-      if (applyStudioAlignmentLayout) {
-        const mutation = applyStudioAlignmentLayout(nextItems, {
+      const applyLayout = Object.prototype.hasOwnProperty.call(options, 'applyLayout')
+        ? options.applyLayout
+        : defaultApplyLayout;
+      if (typeof applyLayout === 'function') {
+        const mutation = applyLayout(nextItems, {
           createPositionTransaction: createStudioPositionTransaction,
           getElementId
         });
@@ -5942,7 +5924,7 @@
         }
         return element && element.dataset && element.dataset.editorId;
       };
-      const mutation = applyEditorAlignmentLayoutWithTransaction(alignmentResult.nextItems, {
+      const mutation = applyEditorPositionLayoutWithTransaction(alignmentResult.nextItems, {
         getElementId: getAlignmentElementId
       });
       if (!mutation.didApply) return false;
@@ -5974,7 +5956,7 @@
         }
         return element && element.dataset && element.dataset.editorId;
       };
-      const mutation = applyEditorAlignmentLayoutWithTransaction(distributionResult.nextItems, {
+      const mutation = applyEditorPositionLayoutWithTransaction(distributionResult.nextItems, {
         getElementId: getDistributionElementId
       });
       if (!mutation.didApply) return false;

@@ -16,10 +16,10 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
-function loadAlignmentMutationHelper(fileContent, context) {
+function loadPositionMutationHelper(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function applyEditorAlignmentLayoutWithTransaction(nextItems, options = {}) {',
+    'function applyEditorPositionLayoutWithTransaction(nextItems, options = {}) {',
     'function alignSelectedElements(action = \'\') {'
   );
   vm.runInContext(helperSource, context);
@@ -187,7 +187,7 @@ test('distributeSelectedElements writes distribution positions and records one m
     }
   };
   vm.createContext(context);
-  loadAlignmentMutationHelper(fileContent, context);
+  loadPositionMutationHelper(fileContent, context);
   vm.runInContext(source, context);
 
   assert.equal(context.distributeSelectedElements('horizontal'), true);
@@ -240,7 +240,7 @@ test('alignSelectedElements writes aligned parent-relative positions and records
     }
   };
   vm.createContext(context);
-  loadAlignmentMutationHelper(fileContent, context);
+  loadPositionMutationHelper(fileContent, context);
   vm.runInContext(source, context);
 
   assert.equal(context.alignSelectedElements('middle'), true);
@@ -296,7 +296,7 @@ test('alignSelectedElements forwards a reversible position transaction', () => {
   };
 
   vm.createContext(context);
-  loadAlignmentMutationHelper(fileContent, context);
+  loadPositionMutationHelper(fileContent, context);
   vm.runInContext(source, context);
 
   assert.equal(context.alignSelectedElements('middle'), true);
@@ -365,7 +365,7 @@ test('alignSelectedElements delegates position application to the shared alignme
   };
 
   vm.createContext(context);
-  loadAlignmentMutationHelper(fileContent, context);
+  loadPositionMutationHelper(fileContent, context);
   vm.runInContext(source, context);
 
   assert.equal(context.alignSelectedElements('middle'), true);
@@ -421,7 +421,7 @@ test('distributeSelectedElements delegates position application to the shared al
   };
 
   vm.createContext(context);
-  loadAlignmentMutationHelper(fileContent, context);
+  loadPositionMutationHelper(fileContent, context);
   vm.runInContext(source, context);
 
   assert.equal(context.distributeSelectedElements('horizontal'), true);

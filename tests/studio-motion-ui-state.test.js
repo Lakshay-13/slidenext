@@ -34,6 +34,15 @@ function loadBuildMotionSelectionActionState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadPositionMutationHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorPositionLayoutWithTransaction(nextItems, options = {}) {',
+    'function alignSelectedElements(action = \'\') {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function createControls() {
   return {
     nudgeSelectionUpBtn: { disabled: true },
@@ -402,6 +411,7 @@ test('nudgeSelectedElements returns false and refreshes motion controls when sel
   vm.createContext(context);
   loadBuildMotionSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadPositionMutationHelper(fileContent, context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
   assert.equal(context.nudgeSelectedElements(1, 0), false);
@@ -449,6 +459,7 @@ test('nudgeSelectedElements returns false and refreshes motion controls when nud
   vm.createContext(context);
   loadBuildMotionSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadPositionMutationHelper(fileContent, context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
   assert.equal(context.nudgeSelectedElements(1, 0), false);
@@ -552,6 +563,7 @@ test('nudgeSelectedElements persists the moved selection through the shared muta
   vm.createContext(context);
   loadBuildMotionSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadPositionMutationHelper(fileContent, context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
   assert.equal(context.nudgeSelectedElements(5, -3), true);
@@ -620,6 +632,7 @@ test('nudgeSelectedElements delegates position application to the shared nudge m
   };
 
   vm.createContext(context);
+  loadPositionMutationHelper(fileContent, context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
   assert.equal(context.nudgeSelectedElements(1, 1), true);
@@ -674,6 +687,7 @@ test('nudgeSelectedElements forwards a reversible style transaction to history',
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadPositionMutationHelper(fileContent, context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
   assert.equal(context.nudgeSelectedElements(1, 1), true);
