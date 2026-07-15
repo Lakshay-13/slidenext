@@ -46,8 +46,17 @@
     return true;
   }
 
+  function syncStudioDeckReadyToolbarActionState(options = {}) {
+    const actionState = options.actionState || resolveStudioDeckReadyActionState(options);
+    return renderStudioDeckReadyToolbarActionState({
+      documentRef: options.documentRef,
+      actionState
+    });
+  }
+
   return {
     resolveStudioDeckReadyActionState,
-    renderStudioDeckReadyToolbarActionState
+    renderStudioDeckReadyToolbarActionState,
+    syncStudioDeckReadyToolbarActionState
   };
 });

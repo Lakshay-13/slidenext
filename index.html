@@ -9352,6 +9352,12 @@
       const deckReadyView = typeof SlideNextStudioDeckReady !== 'undefined'
         ? SlideNextStudioDeckReady
         : null;
+      if (deckReadyView && typeof deckReadyView.syncStudioDeckReadyToolbarActionState === 'function') {
+        return deckReadyView.syncStudioDeckReadyToolbarActionState({
+          documentRef: document,
+          actionState
+        });
+      }
       if (!deckReadyView || typeof deckReadyView.renderStudioDeckReadyToolbarActionState !== 'function') return false;
       return deckReadyView.renderStudioDeckReadyToolbarActionState({
         documentRef: document,

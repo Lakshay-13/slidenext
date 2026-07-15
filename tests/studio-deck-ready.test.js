@@ -121,3 +121,34 @@ test('renderStudioDeckReadyToolbarActionState applies readiness to all deck tool
   assert.equal(buttons.exportPdfBtn.disabled, false);
   assert.equal(buttons.exportPptxBtn.disabled, false);
 });
+
+test('syncStudioDeckReadyToolbarActionState resolves and renders deck toolbar readiness in one shared operation', () => {
+  const ids = [
+    'studioSaveBtn',
+    'openSourceViewBtn',
+    'studioVersionBtn',
+    'launchPreviewBtn',
+    'exportPdfBtn',
+    'exportPptxBtn'
+  ];
+  const buttons = Object.fromEntries(ids.map((id) => [id, { disabled: false }]));
+
+  assert.equal(deckReady.syncStudioDeckReadyToolbarActionState({
+    documentRef: {
+      getElementById(id) {
+        return buttons[id] || null;
+      }
+    },
+    doc: null,
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    persistedDeckStateWithContent: { cleanHtml: '<html>persisted</html>' },
+    storedCanonicalDeck: null,
+    saveButtonState: 'saving-version'
+  }), true);
+  assert.equal(buttons.studioSaveBtn.disabled, true);
+  assert.equal(buttons.openSourceViewBtn.disabled, false);
+  assert.equal(buttons.studioVersionBtn.disabled, false);
+  assert.equal(buttons.launchPreviewBtn.disabled, false);
+  assert.equal(buttons.exportPdfBtn.disabled, false);
+  assert.equal(buttons.exportPptxBtn.disabled, false);
+});

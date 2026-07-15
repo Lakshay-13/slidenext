@@ -459,3 +459,43 @@ test('resolveCurrentStudioDeckReadyActionState reuses the shared deck-ready help
     saveButtonState: 'saving-version'
   }]);
 });
+
+test('updateDeckReadyToolbarActionState delegates toolbar rendering to the shared deck-ready coordinator', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateDeckReadyToolbarActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {',
+    '\n\n    function resetStudioSaveButtonState() {'
+  );
+  const doc = { documentElement: {} };
+  const actionState = {
+    canUseSaveButton: true,
+    canUseDeckActions: true,
+    canLaunchPreview: true
+  };
+  const calls = [];
+  const context = {
+    resolveCurrentStudioDeckReadyActionState(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return actionState;
+    },
+    SlideNextStudioDeckReady: {
+      syncStudioDeckReadyToolbarActionState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateDeckReadyToolbarActionStateSource, context);
+
+  assert.equal(context.updateDeckReadyToolbarActionState(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.deepEqual(calls[0].actionState, actionState);
+});
