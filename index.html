@@ -1127,6 +1127,7 @@
   </div>
   </div>  <!-- Logic scripts -->
   <script src="/shared/canonical-deck.js"></script>
+  <script src="/shared/studio-editor-canonical-state.js"></script>
   <script src="/shared/presentation-metadata.js"></script>
   <script src="/shared/deck-import.js"></script>
   <script src="/shared/deck-loader.js"></script>
@@ -1210,6 +1211,19 @@
     let presentationLibraryData = [];
     let presentationLibraryLoadToken = 0;
     let studioEditorSessionToken = 0;
+    const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+      && SlideNextStudioEditorCanonicalState
+      && typeof SlideNextStudioEditorCanonicalState.createStudioEditorCanonicalState === 'function'
+      ? SlideNextStudioEditorCanonicalState.createStudioEditorCanonicalState({
+          isCanonicalDeck: (value) => (
+            typeof SlideNextCanonicalDeck !== 'undefined'
+            && SlideNextCanonicalDeck
+            && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
+              ? SlideNextCanonicalDeck.isCanonicalDeck(value)
+              : !!(value && typeof value === 'object' && Array.isArray(value.slides))
+          )
+        })
+      : null;
     let isDraggingElement = false;
     let suppressNextFrameClick = false;
     let zoomFactor = 1.0;
@@ -2167,6 +2181,9 @@
 
     function launchStudioEditor(url, title, category) {
       const editorSessionToken = ++studioEditorSessionToken;
+      if (typeof resetEditorLiveCanonicalDeck === 'function') {
+        resetEditorLiveCanonicalDeck();
+      }
       updateCurrentPresentationSessionState({
         presentationUrl: url,
         presentationTitle: title,
@@ -2258,6 +2275,9 @@
       const editor = document.getElementById('studioEditor');
       const iframe = getStudioFrame();
       studioEditorSessionToken += 1;
+      if (typeof resetEditorLiveCanonicalDeck === 'function') {
+        resetEditorLiveCanonicalDeck();
+      }
       teardownDeckActiveSlideSync();
       updateCurrentPresentationSessionState({
         presentationUrl: '',
@@ -2311,6 +2331,9 @@
 
     // Initialize Frame Hooks
     function initStudioFrame() {
+      if (typeof resetEditorLiveCanonicalDeck === 'function') {
+        resetEditorLiveCanonicalDeck();
+      }
       const iframeDoc = getIframeDoc();
       if (!iframeDoc) return;
       
@@ -2373,9 +2396,10 @@
         observeDeckActiveSlideState,
         captureInitialHistoryState: () => {
           saveHistoryState(false);
+          const initialPersistedDeckState = captureEditorPersistableDeckState(iframeDoc);
           applyCurrentStudioPersistenceSuccess(
             SlideNextStudioEditorPersistence.createStudioPersistedDeckStateActionContext(
-              captureEditorPersistableDeckState(iframeDoc),
+              initialPersistedDeckState,
               currentPresentationUrl,
               {
                 sessionToken: studioEditorSessionToken
@@ -2385,6 +2409,13 @@
               presentationUrl: currentPresentationUrl
             }
           );
+          if (typeof setEditorLiveCanonicalDeck === 'function') {
+            setEditorLiveCanonicalDeck(
+              initialPersistedDeckState && initialPersistedDeckState.canonicalDeck,
+              iframeDoc,
+              studioEditorSessionToken
+            );
+          }
         }
       });
       updateDeckReadyToolbarActionState();
@@ -3670,6 +3701,32 @@
       applyCurrentPresentationMetadata(nextPresentationMetadata);
     }
 
+    function resetEditorLiveCanonicalDeck() {
+      if (studioEditorCanonicalState && typeof studioEditorCanonicalState.reset === 'function') {
+        studioEditorCanonicalState.reset();
+      }
+    }
+
+    function setEditorLiveCanonicalDeck(canonicalDeck, doc = null, sessionToken = null) {
+      if (!studioEditorCanonicalState || typeof studioEditorCanonicalState.set !== 'function') {
+        return null;
+      }
+      return studioEditorCanonicalState.set(canonicalDeck, {
+        documentRef: doc,
+        sessionToken
+      });
+    }
+
+    function resolveEditorLiveCanonicalDeck(doc = null, sessionToken = null) {
+      if (!studioEditorCanonicalState || typeof studioEditorCanonicalState.resolve !== 'function') {
+        return null;
+      }
+      return studioEditorCanonicalState.resolve({
+        documentRef: doc,
+        sessionToken
+      });
+    }
+
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
       const options = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
         ? arguments[1]
@@ -3680,6 +3737,14 @@
         : null;
       if (canonicalDeckOverride && Array.isArray(canonicalDeckOverride.slides)) {
         return canonicalDeckOverride;
+      }
+      if (options.preferLiveCanonicalDeck !== false && doc) {
+        const liveCanonicalDeck = typeof resolveEditorLiveCanonicalDeck === 'function'
+          ? resolveEditorLiveCanonicalDeck(doc, studioEditorSessionToken)
+          : null;
+        if (liveCanonicalDeck) {
+          return liveCanonicalDeck;
+        }
       }
       const buildStudioCanonicalDeck = SlideNextStudioDeckContext
         && typeof SlideNextStudioDeckContext.buildStudioCanonicalDeck === 'function'
@@ -8173,7 +8238,19 @@
     let undoDebounceTimer = null;
     let pendingEditorCanonicalDeck = null;
     function saveHistoryState(debounce = false, transaction = null) {
-      const canonicalDeck = arguments.length > 2 ? arguments[2] : null;
+      const hasCanonicalDeck = arguments.length > 2;
+      const canonicalDeck = hasCanonicalDeck ? arguments[2] : null;
+      if (typeof setEditorLiveCanonicalDeck === 'function') {
+        const liveEditorDoc = typeof getIframeDoc === 'function' ? getIframeDoc() : null;
+        const liveSessionToken = typeof studioEditorSessionToken !== 'undefined'
+          ? studioEditorSessionToken
+          : null;
+        setEditorLiveCanonicalDeck(
+          hasCanonicalDeck ? canonicalDeck : null,
+          liveEditorDoc,
+          liveSessionToken
+        );
+      }
       if (typeof pendingEditorCanonicalDeck !== 'undefined') {
         pendingEditorCanonicalDeck = canonicalDeck;
       }
@@ -8575,6 +8652,9 @@
           syncSelectionOverlay();
           const restoredPlaybackState = capturePersistedDeckPlaybackState(iframeDoc, historyEntry.canonicalDeck);
           applyCurrentStudioPersistedDeckState({ playbackState: restoredPlaybackState });
+          if (typeof setEditorLiveCanonicalDeck === 'function') {
+            setEditorLiveCanonicalDeck(historyEntry.canonicalDeck, iframeDoc, studioEditorSessionToken);
+          }
           setCurrentPresentationCanonicalDeck(
             Object.prototype.hasOwnProperty.call(historyEntry, 'canonicalDeck')
               ? historyEntry.canonicalDeck
@@ -8622,6 +8702,9 @@
       });
       const restoredPlaybackState = capturePersistedDeckPlaybackState(iframeDoc, historyEntry.canonicalDeck);
       applyCurrentStudioPersistedDeckState({ playbackState: restoredPlaybackState });
+      if (typeof setEditorLiveCanonicalDeck === 'function') {
+        setEditorLiveCanonicalDeck(historyEntry.canonicalDeck, iframeDoc, studioEditorSessionToken);
+      }
       setCurrentPresentationCanonicalDeck(
         Object.prototype.hasOwnProperty.call(historyEntry, 'canonicalDeck')
           ? historyEntry.canonicalDeck
