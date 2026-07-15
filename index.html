@@ -2312,9 +2312,6 @@
           clickHandler: frameClickHandler,
           keydownHandler: frameKeydownHandler
         });
-      } else {
-        iframeDoc.addEventListener('click', frameClickHandler, true);
-        iframeDoc.addEventListener('keydown', frameKeydownHandler, true);
       }
 
       SlideNextStudioFrameBootstrap.runStudioFrameBootstrap(iframeDoc, {

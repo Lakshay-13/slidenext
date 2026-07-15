@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const editorEvents = require('../shared/studio-editor-events.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const themeView = require('../shared/studio-theme-view.js');
 
@@ -731,6 +732,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
       calls.makeElementsHoverable += 1;
     },
     SlideNextStudioEditorEvents: {
+      attachStudioFrameInteractionHandlers: editorEvents.attachStudioFrameInteractionHandlers,
       createStudioFrameClickHandler() {
         calls.clickHandlerFactory += 1;
         return function clickHandler() {};
@@ -860,6 +862,7 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
     },
     makeElementsHoverable() {},
     SlideNextStudioEditorEvents: {
+      attachStudioFrameInteractionHandlers: editorEvents.attachStudioFrameInteractionHandlers,
       createStudioFrameClickHandler() {
         return function clickHandler() {};
       },
