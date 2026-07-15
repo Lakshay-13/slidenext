@@ -42,6 +42,68 @@ test('resolveStudioLayerRowElement returns null for stale or incomplete rows', (
   assert.deepEqual(calls, []);
 });
 
+test('selectStudioLayerElementByRef refreshes stale rows and preserves selection modifiers', () => {
+  const row = { id: 'row-1' };
+  const target = { id: 'node-1' };
+  const calls = [];
+  const createEvent = (shiftKey) => ({
+    currentTarget: {
+      closest(selector) {
+        calls.push(['closest', selector]);
+        return row;
+      }
+    },
+    preventDefault() {
+      calls.push(['preventDefault']);
+    },
+    stopPropagation() {
+      calls.push(['stopPropagation']);
+    },
+    shiftKey
+  });
+
+  assert.equal(layerController.selectStudioLayerElementByRef({
+    event: createEvent(false),
+    resolveLayerRowElement(currentRow) {
+      calls.push(['resolveLayerRowElement', currentRow]);
+      return null;
+    },
+    updateLayersList() {
+      calls.push(['updateLayersList']);
+    },
+    selectElement() {
+      calls.push(['selectElement']);
+    }
+  }), false);
+
+  assert.equal(layerController.selectStudioLayerElementByRef({
+    event: createEvent(true),
+    resolveLayerRowElement(currentRow) {
+      calls.push(['resolveLayerRowElement', currentRow]);
+      return target;
+    },
+    selectElement(nextTarget, options) {
+      calls.push(['selectElement', nextTarget, options]);
+    }
+  }), true);
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'preventDefault',
+    'stopPropagation',
+    'closest',
+    'resolveLayerRowElement',
+    'updateLayersList',
+    'preventDefault',
+    'stopPropagation',
+    'closest',
+    'resolveLayerRowElement',
+    'selectElement'
+  ]);
+  assert.equal(calls[8][1], row);
+  assert.equal(calls[9][1], target);
+  assert.deepEqual(calls[9][2], { additive: true, toggle: true });
+});
+
 test('syncStudioLayerList assembles live layer action state before shared rendering', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const activeSlide = { id: 'slide-1' };

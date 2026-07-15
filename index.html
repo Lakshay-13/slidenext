@@ -9856,6 +9856,17 @@
     }
 
     function selectLayerElementByRef(event) {
+      const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
+        ? SlideNextStudioEditorLayerController
+        : null;
+      if (layerController && typeof layerController.selectStudioLayerElementByRef === 'function') {
+        return layerController.selectStudioLayerElementByRef({
+          event,
+          resolveLayerRowElement,
+          selectElement,
+          updateLayersList
+        });
+      }
       event.preventDefault();
       event.stopPropagation();
       const parentRow = event.currentTarget.closest('[class*="border"]');

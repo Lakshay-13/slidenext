@@ -19,6 +19,34 @@
     return getElementByEditorId(editorId);
   }
 
+  function selectStudioLayerElementByRef(options = {}) {
+    const event = options.event;
+    if (!event) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    const currentTarget = event.currentTarget;
+    const parentRow = currentTarget && typeof currentTarget.closest === 'function'
+      ? currentTarget.closest('[class*="border"]')
+      : null;
+    const resolveLayerRowElement = typeof options.resolveLayerRowElement === 'function'
+      ? options.resolveLayerRowElement
+      : (row) => resolveStudioLayerRowElement({
+        row,
+        getElementByEditorId: options.getElementByEditorId
+      });
+    const target = resolveLayerRowElement(parentRow);
+    if (!target) {
+      if (typeof options.updateLayersList === 'function') options.updateLayersList();
+      return false;
+    }
+    if (typeof options.selectElement !== 'function') return false;
+    options.selectElement(target, {
+      additive: event.shiftKey,
+      toggle: event.shiftKey
+    });
+    return true;
+  }
+
   function syncStudioLayerList(options = {}) {
     const documentRef = options.documentRef;
     const iframeDoc = options.iframeDoc || null;
@@ -98,6 +126,7 @@
 
   return {
     resolveStudioLayerRowElement,
+    selectStudioLayerElementByRef,
     syncStudioLayerList
   };
 });
