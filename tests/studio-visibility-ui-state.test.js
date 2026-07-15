@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalVisibility = require('../shared/studio-editor-canonical-visibility.js');
 const studioElementState = require('../shared/studio-element-state.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const visibilityState = require('../shared/studio-editor-visibility-state.js');
@@ -532,6 +533,7 @@ test('toggleSelectedElementsVisibility forwards an immutable canonical visibilit
   const context = {
     selectedElements: [liveTarget],
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalVisibility: canonicalVisibility,
     SlideNextStudioEditorVisibilityState: {
       applyStudioVisibilityWithTransaction: visibilityState.applyStudioVisibilityWithTransaction,
       buildStudioVisibilityMutationPlan() {

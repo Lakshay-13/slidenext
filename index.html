@@ -1159,6 +1159,7 @@
   <script src="/shared/studio-editor-transform.js"></script>
   <script src="/shared/studio-editor-canonical-transform.js"></script>
   <script src="/shared/studio-editor-canonical-wallpaper.js"></script>
+  <script src="/shared/studio-editor-canonical-visibility.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
@@ -4916,22 +4917,21 @@
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
-      const canonicalNodeIds = lockMutationPlan.selection
-        .map(getLockElementId)
-        .filter(Boolean);
-      const canUpdateCanonicalVisibility = canonicalDeckApi
-        && typeof canonicalDeckApi.updateCanonicalNodeVisibility === 'function';
-      const canonicalDeckBeforeMutation = canUpdateCanonicalVisibility
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(doc)
+      const canonicalVisibilityApi = typeof SlideNextStudioEditorCanonicalVisibility !== 'undefined'
+        ? SlideNextStudioEditorCanonicalVisibility
         : null;
-      const canonicalDeck = canonicalDeckApi
-        && canUpdateCanonicalVisibility
-        ? canonicalDeckApi.updateCanonicalNodeVisibility(
-            canonicalDeckBeforeMutation,
-            canonicalNodeIds,
-            { locked: lockMutationPlan.shouldLock }
-          )
+      const buildCanonicalVisibilityDeck = canonicalVisibilityApi
+        && typeof canonicalVisibilityApi.buildStudioCanonicalVisibilityDeck === 'function'
+        ? canonicalVisibilityApi.buildStudioCanonicalVisibilityDeck
+        : null;
+      const canonicalDeck = buildCanonicalVisibilityDeck
+        ? buildCanonicalVisibilityDeck(lockMutationPlan.selection, { locked: lockMutationPlan.shouldLock }, {
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? () => buildEditorCanonicalDeck(doc)
+              : null,
+            getElementId: getLockElementId
+          })
         : null;
       const mutation = applyEditorLockMutationWithTransaction(lockMutationPlan.selection, lockMutationPlan.shouldLock, {
         isLocked: isElementLocked,
@@ -5026,20 +5026,24 @@
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
-      const canonicalNodeIds = visibilityMutationPlan.selection
-        .map(getVisibilityElementId)
-        .filter(Boolean);
-      const canUpdateCanonicalVisibility = canonicalDeckApi
-        && typeof canonicalDeckApi.updateCanonicalNodeVisibility === 'function';
-      const canonicalDeckBeforeMutation = canUpdateCanonicalVisibility
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(doc)
+      const canonicalVisibilityApi = typeof SlideNextStudioEditorCanonicalVisibility !== 'undefined'
+        ? SlideNextStudioEditorCanonicalVisibility
         : null;
-      const canonicalDeck = canUpdateCanonicalVisibility
-        ? canonicalDeckApi.updateCanonicalNodeVisibility(
-            canonicalDeckBeforeMutation,
-            canonicalNodeIds,
-            { hidden: visibilityMutationPlan.shouldHide }
+      const buildCanonicalVisibilityDeck = canonicalVisibilityApi
+        && typeof canonicalVisibilityApi.buildStudioCanonicalVisibilityDeck === 'function'
+        ? canonicalVisibilityApi.buildStudioCanonicalVisibilityDeck
+        : null;
+      const canonicalDeck = buildCanonicalVisibilityDeck
+        ? buildCanonicalVisibilityDeck(
+            visibilityMutationPlan.selection,
+            { hidden: visibilityMutationPlan.shouldHide },
+            {
+              canonicalDeckApi,
+              buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+                ? () => buildEditorCanonicalDeck(doc)
+                : null,
+              getElementId: getVisibilityElementId
+            }
           )
         : null;
       const mutation = applyEditorVisibilityMutationWithTransaction(

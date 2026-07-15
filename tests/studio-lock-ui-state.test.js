@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalVisibility = require('../shared/studio-editor-canonical-visibility.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const lockState = require('../shared/studio-editor-lock-state.js');
 
@@ -573,6 +574,7 @@ test('toggleSelectedElementsLockState forwards an immutable canonical visibility
   const context = {
     selectedElements: [liveTarget],
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalVisibility: canonicalVisibility,
     SlideNextStudioEditorTransaction: studioTransaction,
     SlideNextStudioEditorLockState: {
       applyStudioLockWithTransaction: lockState.applyStudioLockWithTransaction,
