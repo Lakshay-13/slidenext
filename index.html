@@ -4671,6 +4671,27 @@
       const slide = getActiveSlide(doc);
       const canMutateDeck = () => !!slide;
       const orderedElements = slide ? getNormalizedSlideLayerOrder(slide) : [];
+      const syncStudioLayerOrderToolbarState = (
+        SlideNextStudioEditorLayerOrder
+        && typeof SlideNextStudioEditorLayerOrder.syncStudioLayerOrderToolbarState === 'function'
+      )
+        ? SlideNextStudioEditorLayerOrder.syncStudioLayerOrderToolbarState
+        : null;
+      if (syncStudioLayerOrderToolbarState) {
+        return syncStudioLayerOrderToolbarState({
+          documentRef: document,
+          elements: selectedElements,
+          orderedElements,
+          isLocked: isElementLocked,
+          canMutateDeck,
+          buildZIndexMutationPlan(elements) {
+            return SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(elements, 'zIndex', '', {
+              isLocked: isElementLocked,
+              canMutateDeck
+            });
+          }
+        });
+      }
       const buildStudioLayerOrderToolbarState = (
         SlideNextStudioEditorLayerOrder
         && typeof SlideNextStudioEditorLayerOrder.buildStudioLayerOrderToolbarState === 'function'

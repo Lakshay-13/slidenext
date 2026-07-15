@@ -108,6 +108,39 @@
     return true;
   }
 
+  function syncStudioLayerOrderToolbarState(options = {}) {
+    const canMutateDeck = typeof options.canMutateDeck === 'function'
+      ? options.canMutateDeck
+      : () => true;
+    const actionState = buildStudioLayerOrderToolbarState(options.elements, {
+      orderedElements: options.orderedElements,
+      isLocked: options.isLocked,
+      canMutateDeck,
+      buildZIndexMutationPlan: options.buildZIndexMutationPlan
+    });
+    let zIndexCanApply;
+    const zIndexInput = options.documentRef && typeof options.documentRef.getElementById === 'function'
+      ? options.documentRef.getElementById('elZIndex')
+      : null;
+    if (zIndexInput) {
+      const controlStates = actionState.controlStates || null;
+      if (controlStates && Object.prototype.hasOwnProperty.call(controlStates, 'elZIndex')) {
+        zIndexCanApply = !!controlStates.elZIndex;
+      } else if (typeof options.buildZIndexMutationPlan === 'function') {
+        const zIndexMutationPlan = options.buildZIndexMutationPlan(options.elements, {
+          canMutateDeck,
+          orderedElements: options.orderedElements
+        });
+        zIndexCanApply = !!(zIndexMutationPlan && zIndexMutationPlan.canApply);
+      }
+    }
+    return renderStudioLayerOrderToolbarState({
+      documentRef: options.documentRef,
+      actionState,
+      zIndexCanApply
+    });
+  }
+
   function buildStudioLayerOrderMutationPlan(targetElements = [], action, options = {}) {
     const orderedElements = Array.isArray(options.orderedElements) ? options.orderedElements : [];
     const actionState = buildStudioLayerOrderActionState(targetElements, {
@@ -243,6 +276,7 @@
     buildStudioLayerOrderActionState,
     buildStudioLayerOrderToolbarState,
     renderStudioLayerOrderToolbarState,
+    syncStudioLayerOrderToolbarState,
     buildStudioLayerOrderMutationPlan,
     buildStudioReorderedLayerOrder,
     applyStudioLayerOrderMutation

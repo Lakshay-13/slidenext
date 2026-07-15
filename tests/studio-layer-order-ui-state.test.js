@@ -500,6 +500,55 @@ test('updateLayerOrderActionState reuses the shared layer-order toolbar helper w
   }]);
 });
 
+test('updateLayerOrderActionState delegates toolbar state assembly to the shared layer-order view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateLayerOrderActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateLayerOrderActionState(doc = getIframeDoc()) {',
+    '\n\n    function toggleSelectedElementsLockState() {'
+  );
+  const selectedElement = { id: 'selected', isConnected: true, locked: false };
+  const activeSlide = { id: 'slide-1' };
+  const calls = [];
+  const context = {
+    selectedElements: [selectedElement],
+    SlideNextStudioEditorLayerOrder: {
+      syncStudioLayerOrderToolbarState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    SlideNextStudioEditorStyle: {
+      buildStudioStyleMutationPlan() {
+        return { canApply: true };
+      }
+    },
+    document: {},
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getNormalizedSlideLayerOrder(slide) {
+      return slide === activeSlide ? [selectedElement] : [];
+    },
+    isElementLocked(element) {
+      return !!element.locked;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateLayerOrderActionStateSource, context);
+
+  const doc = { activeSlide };
+  assert.equal(context.updateLayerOrderActionState(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.deepEqual(calls[0].elements, [selectedElement]);
+  assert.deepEqual(calls[0].orderedElements, [selectedElement]);
+  assert.equal(calls[0].isLocked(selectedElement), false);
+  assert.equal(calls[0].canMutateDeck(), true);
+  assert.equal(calls[0].buildZIndexMutationPlan([selectedElement]).canApply, true);
+});
+
 test('arrangeElementLayer returns false when there is no live reorder target or no layer change', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const arrangeElementLayerSource = extractFunctionSource(

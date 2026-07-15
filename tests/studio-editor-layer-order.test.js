@@ -145,6 +145,36 @@ test('renderStudioLayerOrderToolbarState applies arrangement and z-index control
   assert.equal(buttons.elZIndex.disabled, false);
 });
 
+test('syncStudioLayerOrderToolbarState builds and renders layer controls in one shared operation', () => {
+  const element = { id: 'element-1', isConnected: true, locked: false };
+  const controls = {
+    arrangeLayerFrontBtn: { disabled: true },
+    arrangeLayerBackBtn: { disabled: true },
+    arrangeLayerForwardBtn: { disabled: true },
+    arrangeLayerBackwardBtn: { disabled: true },
+    elZIndex: { disabled: true }
+  };
+  const orderedElements = [element];
+
+  assert.equal(layerOrder.syncStudioLayerOrderToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return controls[id] || null;
+      }
+    },
+    elements: [element],
+    orderedElements,
+    isLocked: (target) => !!target.locked,
+    canMutateDeck: () => true,
+    buildZIndexMutationPlan(targets) {
+      assert.deepEqual(targets, [element]);
+      return { canApply: true };
+    }
+  }), true);
+  assert.equal(controls.elZIndex.disabled, false);
+  assert.equal(controls.arrangeLayerFrontBtn.disabled, true);
+});
+
 test('buildStudioLayerOrderToolbarState can include shared z-index control enablement', () => {
   const first = { id: 'first', isConnected: true, locked: false };
   const orderedElements = [first];
