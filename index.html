@@ -4313,6 +4313,15 @@
     }
 
     function deselectElement() {
+      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
+        ? SlideNextStudioEditorSelection
+        : null;
+      if (selectionApi && typeof selectionApi.deselectStudioElement === 'function') {
+        return selectionApi.deselectStudioElement({
+          hideDragHud,
+          commitSelectionState: commitEditorSelectionState
+        });
+      }
       const nextSelectionState = SlideNextStudioEditorSelection.clearStudioSelection();
       commitEditorSelectionState(nextSelectionState, {
         hideDragHud,

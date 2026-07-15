@@ -200,6 +200,15 @@
     return true;
   }
 
+  function deselectStudioElement(options = {}) {
+    if (typeof options.commitSelectionState !== 'function') return false;
+    options.commitSelectionState(clearStudioSelection(), {
+      hideDragHud: options.hideDragHud,
+      hideDragHudOnClear: true
+    });
+    return true;
+  }
+
   function commitStudioSelectionState(nextSelectionState = {}, options = {}) {
     const normalizedSelectionState = normalizeStudioSelectionState(nextSelectionState, options);
     const selectedElements = normalizedSelectionState.selectedElements;
@@ -300,6 +309,7 @@
     clearStudioSelection,
     selectAllStudioElements,
     selectStudioElement,
+    deselectStudioElement,
     commitStudioSelectionState,
     syncStudioSelectionUi,
     syncStudioSelectionUiAfterMutation,

@@ -79,3 +79,22 @@ test('selectStudioElement skips commit when the target is not editable', () => {
   }), false);
   assert.deepEqual(calls, ['resolveEditableTarget']);
 });
+
+test('deselectStudioElement clears selection and hides the drag HUD on clear', () => {
+  const calls = [];
+  const hideDragHud = () => {};
+
+  assert.equal(studioSelection.deselectStudioElement({
+    hideDragHud,
+    commitSelectionState(nextSelectionState, options) {
+      calls.push([nextSelectionState, options]);
+    }
+  }), true);
+
+  assert.deepEqual(calls[0][0], {
+    selectedElements: [],
+    selectedElement: null
+  });
+  assert.equal(calls[0][1].hideDragHud, hideDragHud);
+  assert.equal(calls[0][1].hideDragHudOnClear, true);
+});
