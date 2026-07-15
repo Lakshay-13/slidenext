@@ -5,7 +5,6 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const canonicalDeckModel = require('../shared/canonical-deck.js');
-const presentationMetadata = require('../shared/presentation-metadata.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorSession = require('../shared/studio-editor-session.js');
 
@@ -112,7 +111,7 @@ test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata up
   });
 });
 
-test('setCurrentPresentationCanonicalDeck falls back to the shared presentation metadata helpers when the deck context updater is unavailable', () => {
+test('setCurrentPresentationCanonicalDeck fails closed when the deck context updater is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
     fileContent,
@@ -120,24 +119,17 @@ test('setCurrentPresentationCanonicalDeck falls back to the shared presentation 
     '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
   );
 
+  let applyCalls = 0;
   const context = {
     SlideNextStudioDeckContext: {},
-    SlideNextPresentationMetadata: presentationMetadata,
-    SlideNextCanonicalDeck: canonicalDeckModel,
     applyCurrentPresentationMetadata(metadata) {
+      applyCalls += 1;
       context.currentPresentationMetadata = metadata;
       return metadata;
     },
     currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
     currentTitle: 'Project Onboarding',
-    currentPresentationMetadata: null,
-    buildCurrentPresentationMetadataSeed(presentationUrl, presentationTitle) {
-      return {
-        id: 'onboarding-presentation',
-        title: presentationTitle,
-        sourcePath: presentationUrl
-      };
-    }
+    currentPresentationMetadata: null
   };
 
   vm.createContext(context);
@@ -155,22 +147,8 @@ test('setCurrentPresentationCanonicalDeck falls back to the shared presentation 
     ]
   });
 
-  assert.deepEqual(context.currentPresentationMetadata, {
-    id: 'onboarding-presentation',
-    title: 'Project Onboarding',
-    sourcePath: 'presentations/onboarding-presentation/index.html',
-    canonicalDeck: canonicalDeckModel.createCanonicalDeck({
-      metadata: {
-        title: 'Project Onboarding'
-      },
-      slides: [
-        {
-          id: 'slide-1',
-          nodes: []
-        }
-      ]
-    })
-  });
+  assert.equal(applyCalls, 0);
+  assert.equal(context.currentPresentationMetadata, null);
 });
 
 test('setCurrentPresentationCanonicalDeck ignores malformed deck-like metadata updates for the active presentation', () => {

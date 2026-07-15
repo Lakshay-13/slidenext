@@ -3648,78 +3648,18 @@
         && typeof SlideNextStudioDeckContext.applyStudioPresentationMetadataCanonicalDeckUpdate === 'function'
         ? SlideNextStudioDeckContext.applyStudioPresentationMetadataCanonicalDeckUpdate
         : null;
-      if (applyStudioPresentationMetadataCanonicalDeckUpdate) {
-        applyStudioPresentationMetadataCanonicalDeckUpdate(
-          canonicalDeck,
-          {
-            currentPresentationMetadata,
-            currentPresentationUrl,
-            presentationUrl,
-            presentationTitle,
-            buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
-            applyPresentationMetadata: applyCurrentPresentationMetadata
-          }
-        );
-        return;
-      }
-
-      const resolveStudioPresentationMetadataCanonicalDeckUpdate = SlideNextStudioDeckContext
-        && typeof SlideNextStudioDeckContext.resolveStudioPresentationMetadataCanonicalDeckUpdate === 'function'
-        ? SlideNextStudioDeckContext.resolveStudioPresentationMetadataCanonicalDeckUpdate
-        : null;
-      const nextPresentationMetadata = resolveStudioPresentationMetadataCanonicalDeckUpdate
-        ? resolveStudioPresentationMetadataCanonicalDeckUpdate(
-            canonicalDeck,
-            {
-              currentPresentationMetadata,
-              currentPresentationUrl,
-              presentationUrl,
-              presentationTitle,
-              buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed
-            }
-          )
-        : (() => {
-            const mergePresentationCanonicalDeck = (
-              typeof SlideNextPresentationMetadata !== 'undefined'
-              && SlideNextPresentationMetadata
-              && typeof SlideNextPresentationMetadata.mergePresentationCanonicalDeck === 'function'
-            )
-              ? SlideNextPresentationMetadata.mergePresentationCanonicalDeck
-              : null;
-            if (!canonicalDeck || presentationUrl !== currentPresentationUrl || !mergePresentationCanonicalDeck) {
-              return null;
-            }
-
-            const createCanonicalDeck = (
-              typeof SlideNextCanonicalDeck !== 'undefined'
-              && SlideNextCanonicalDeck
-              && typeof SlideNextCanonicalDeck.createCanonicalDeck === 'function'
-            )
-              ? SlideNextCanonicalDeck.createCanonicalDeck
-              : null;
-            const isCanonicalDeck = (
-              typeof SlideNextCanonicalDeck !== 'undefined'
-              && SlideNextCanonicalDeck
-              && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-            )
-              ? SlideNextCanonicalDeck.isCanonicalDeck
-              : null;
-            const mergedPresentationMetadata = mergePresentationCanonicalDeck(
-              currentPresentationMetadata || buildCurrentPresentationMetadataSeed(presentationUrl, presentationTitle),
-              canonicalDeck,
-              {
-                createCanonicalDeck,
-                isCanonicalDeck
-              }
-            );
-            return mergedPresentationMetadata && mergedPresentationMetadata.canonicalDeck
-              ? mergedPresentationMetadata
-              : null;
-          })();
-      if (!nextPresentationMetadata) {
-        return;
-      }
-      applyCurrentPresentationMetadata(nextPresentationMetadata);
+      if (!applyStudioPresentationMetadataCanonicalDeckUpdate) return;
+      applyStudioPresentationMetadataCanonicalDeckUpdate(
+        canonicalDeck,
+        {
+          currentPresentationMetadata,
+          currentPresentationUrl,
+          presentationUrl,
+          presentationTitle,
+          buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
+          applyPresentationMetadata: applyCurrentPresentationMetadata
+        }
+      );
     }
 
     function resetEditorLiveCanonicalDeck() {
