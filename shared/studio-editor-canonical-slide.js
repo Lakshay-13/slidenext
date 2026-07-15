@@ -160,7 +160,7 @@
     return removeCanonicalSlide(canonicalDeckBeforeMutation, slideId);
   }
 
-  function buildStudioCanonicalReorderSlideDeck(options = {}) {
+  function buildStudioCanonicalReorderSlideBaseline(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
       : null;
@@ -171,11 +171,25 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+
+    if (!reorderCanonicalSlides || !buildCanonicalDeck) {
+      return null;
+    }
+
+    return buildCanonicalDeck(options.sourceDocument);
+  }
+
+  function buildStudioCanonicalReorderSlideDeck(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const reorderCanonicalSlides = canonicalDeckApi
+      && typeof canonicalDeckApi.reorderCanonicalSlides === 'function'
+      ? canonicalDeckApi.reorderCanonicalSlides
+      : null;
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
-      : (reorderCanonicalSlides && buildCanonicalDeck
-        ? buildCanonicalDeck(options.sourceDocument)
-        : null);
+      : buildStudioCanonicalReorderSlideBaseline(options);
     const getSlideId = typeof options.getSlideId === 'function'
       ? options.getSlideId
       : (slide) => slide && slide.id || '';
@@ -199,6 +213,7 @@
     buildStudioCanonicalDeleteSlideDeck,
     buildStudioCanonicalDuplicateSlideBaseline,
     buildStudioCanonicalDuplicateSlideDeck,
+    buildStudioCanonicalReorderSlideBaseline,
     buildStudioCanonicalReorderSlideDeck
   };
 });
