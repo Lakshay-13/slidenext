@@ -366,18 +366,21 @@
   }
 
   function buildStudioDeckHtml(doc, options = {}) {
+    const deckHtmlOptions = options.deckHtmlOptions && typeof options.deckHtmlOptions === 'object'
+      ? options.deckHtmlOptions
+      : doc;
     const canonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck(doc)
       : null;
     if (isCanonicalDeckLike(canonicalDeck) && typeof options.buildCanonicalHtml === 'function') {
-      return options.buildCanonicalHtml(canonicalDeck, doc);
+      return options.buildCanonicalHtml(canonicalDeck, deckHtmlOptions);
     }
 
     const fallbackHtml = typeof options.buildFallbackHtml === 'function'
       ? options.buildFallbackHtml(doc)
       : '';
     return typeof options.transformFallbackHtml === 'function'
-      ? options.transformFallbackHtml(fallbackHtml, doc)
+      ? options.transformFallbackHtml(fallbackHtml, deckHtmlOptions)
       : fallbackHtml;
   }
 

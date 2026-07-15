@@ -1003,6 +1003,42 @@ test('buildStudioDeckViewHtml falls back to deck html orchestration when no shar
   ]);
 });
 
+test('buildStudioDeckViewHtml forwards deck html options through canonical fallback orchestration', () => {
+  const deckHtmlOptions = {
+    renderOptions: {
+      activeSlideId: 'slide-2'
+    }
+  };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-2', nodes: [] }]
+  };
+  let receivedOptions = null;
+
+  const result = deckView.buildStudioDeckViewHtml(
+    { label: 'doc' },
+    {
+      buildViewOptions() {
+        return {
+          deckHtmlOptions,
+          buildCanonicalDeck() {
+            return canonicalDeck;
+          }
+        };
+      },
+      buildCanonicalHtml(nextCanonicalDeck, nextDeckHtmlOptions) {
+        assert.equal(nextCanonicalDeck, canonicalDeck);
+        receivedOptions = nextDeckHtmlOptions;
+        return '<html>canonical</html>';
+      }
+    }
+  );
+
+  assert.equal(result, '<html>canonical</html>');
+  assert.equal(receivedOptions, deckHtmlOptions);
+});
+
 test('buildStudioPreviewHtml falls back when the canonical deck is malformed', () => {
   const result = deckView.buildStudioPreviewHtml(
     { label: 'doc' },
