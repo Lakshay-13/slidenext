@@ -346,7 +346,10 @@
       }
     } else if (imageNode) {
       const source = resolveImageSource(node, context.deck, context.options);
-      if (source && bounds) {
+      const missingAsset = context.diagnostics
+        && Array.isArray(context.diagnostics.missingAssets)
+        && context.diagnostics.missingAssets.includes(node.id);
+      if (source && bounds && !missingAsset) {
         const imageOptions = source.startsWith('data:')
           ? { data: source, ...bounds }
           : { path: source, ...bounds };

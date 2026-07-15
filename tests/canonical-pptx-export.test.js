@@ -181,6 +181,25 @@ test('preflightCanonicalPptxExport checks non-empty image paths when an asset re
   assert.match(report.diagnostics.warnings.join('\n'), /missing image asset/);
 });
 
+test('createCanonicalPptxExport skips missing image files after preflight', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'image-1',
+        type: 'image',
+        attributes: { src: '/deck/images/missing.png' },
+        layout: { x: 0, y: 0, width: 100, height: 100 }
+      }]
+    }]
+  }, {
+    PptxGenJS: FakePptx,
+    assetExists: () => false
+  });
+
+  assert.deepEqual(result.diagnostics.missingAssets, ['image-1']);
+  assert.deepEqual(result.pptx.slides[0].calls, []);
+});
+
 test('normalizeHexColor handles short hex and rgb values', () => {
   assert.equal(pptxExport.normalizeHexColor('#abc'), 'AABBCC');
   assert.equal(pptxExport.normalizeHexColor('rgb(1, 2, 3)'), '010203');
