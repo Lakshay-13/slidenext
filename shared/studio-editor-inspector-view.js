@@ -158,10 +158,44 @@
     return true;
   }
 
+  function syncStudioInspectorSelection(options = {}) {
+    const documentRef = options.documentRef;
+    const selectionState = options.selectionState || {};
+    const selectionSummary = renderStudioInspectorSelectionSummary({
+      documentRef,
+      selectionState
+    });
+    if (!selectionSummary.hasSelection || !selectionSummary.primaryElement) return false;
+
+    const primaryElement = selectionSummary.primaryElement;
+    const computedStyles = options.computedStyles
+      || primaryElement.ownerDocument.defaultView.getComputedStyle(primaryElement);
+    syncStudioInspectorContentControls({
+      documentRef,
+      primaryElement,
+      isMulti: selectionSummary.isMulti
+    });
+    syncStudioInspectorTypographyControls({
+      documentRef,
+      primaryElement,
+      computedStyles,
+      rgbToHex: options.rgbToHex,
+      highlightAlignButton: options.highlightAlignButton
+    });
+    syncStudioInspectorBorderControls({
+      documentRef,
+      selection: selectionState.selection,
+      computedStyles,
+      rgbToHex: options.rgbToHex
+    });
+    return true;
+  }
+
   return {
     renderStudioInspectorSelectionSummary,
     syncStudioInspectorContentControls,
     syncStudioInspectorTypographyControls,
-    syncStudioInspectorBorderControls
+    syncStudioInspectorBorderControls,
+    syncStudioInspectorSelection
   };
 });

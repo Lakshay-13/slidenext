@@ -190,3 +190,63 @@ test('syncStudioInspectorBorderControls applies border values for shape-like sel
   assert.equal(nodes.elBorderColor.value, '#010203');
   assert.equal(classList.contains('hidden'), false);
 });
+
+test('syncStudioInspectorSelection coordinates summary, computed styles, and inspector controls', () => {
+  const calls = [];
+  const primaryElement = {
+    tagName: 'DIV',
+    innerText: 'Title',
+    style: { zIndex: '3' },
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle(element) {
+          calls.push(['getComputedStyle', element]);
+          return {
+            fontSize: '20px',
+            fontFamily: "'Geist', sans-serif",
+            fontWeight: '700',
+            color: 'rgb(1, 2, 3)',
+            textAlign: 'center',
+            opacity: '0.8',
+            borderStyle: 'solid',
+            borderWidth: '1px',
+            borderRadius: '4px',
+            borderColor: 'rgb(1, 2, 3)'
+          };
+        }
+      }
+    },
+    classList: {
+      contains() {
+        return true;
+      }
+    }
+  };
+  const selectionState = {
+    hasSelection: true,
+    count: 1,
+    primaryElement,
+    selection: [primaryElement]
+  };
+  const documentRef = {
+    getElementById() {
+      return null;
+    }
+  };
+
+  assert.equal(inspectorView.syncStudioInspectorSelection({
+    documentRef,
+    selectionState,
+    rgbToHex(value) {
+      calls.push(['rgbToHex', value]);
+      return '#010203';
+    },
+    highlightAlignButton(value) {
+      calls.push(['highlightAlignButton', value]);
+    }
+  }), true);
+  assert.deepEqual(calls, [
+    ['getComputedStyle', primaryElement],
+    ['highlightAlignButton', 'center']
+  ]);
+});

@@ -17,6 +17,57 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+test('syncInspectorForSelection delegates inspector control synchronization to the shared view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncInspectorForSelectionSource = extractFunctionSource(
+    fileContent,
+    'function syncInspectorForSelection() {',
+    '\n\n    // Click Selection highlights'
+  );
+  const selectedElement = { id: 'element-1' };
+  const selectionState = {
+    hasSelection: true,
+    count: 1,
+    primaryElement: selectedElement,
+    selection: [selectedElement]
+  };
+  let delegatedOptions = null;
+  const context = {
+    SlideNextStudioEditorInspectorView: {
+      syncStudioInspectorSelection(options) {
+        delegatedOptions = options;
+        return true;
+      }
+    },
+    SlideNextStudioEditorLiveSelection: {
+      buildStudioLiveSelectionState(elements) {
+        assert.deepEqual(elements, [selectedElement]);
+        return selectionState;
+      }
+    },
+    document: {},
+    highlightAlignButton() {},
+    rgbToHex() {},
+    selectedElements: [selectedElement],
+    updateClipboardActionState() {},
+    updateLayerOrderActionState() {},
+    updateLockActionState() {},
+    updateMotionActionState() {},
+    updateRemovalActionState() {},
+    updateStyleActionState() {},
+    updateVisibilityActionState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncInspectorForSelectionSource, context);
+
+  assert.equal(context.syncInspectorForSelection(), true);
+  assert.equal(delegatedOptions.documentRef, context.document);
+  assert.equal(delegatedOptions.selectionState, selectionState);
+  assert.equal(delegatedOptions.rgbToHex, context.rgbToHex);
+  assert.equal(delegatedOptions.highlightAlignButton, context.highlightAlignButton);
+});
+
 test('syncInspectorForSelection tolerates missing inspector chrome when no selection is active', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const syncInspectorForSelectionSource = extractFunctionSource(

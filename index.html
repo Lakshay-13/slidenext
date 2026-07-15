@@ -4218,6 +4218,14 @@
       const inspectorView = typeof SlideNextStudioEditorInspectorView !== 'undefined'
         ? SlideNextStudioEditorInspectorView
         : null;
+      if (inspectorView && typeof inspectorView.syncStudioInspectorSelection === 'function') {
+        return inspectorView.syncStudioInspectorSelection({
+          documentRef: document,
+          selectionState: liveSelectionState,
+          rgbToHex,
+          highlightAlignButton
+        });
+      }
       if (!inspectorView || typeof inspectorView.renderStudioInspectorSelectionSummary !== 'function') return false;
       const selectionSummary = inspectorView.renderStudioInspectorSelectionSummary({
         documentRef: document,
