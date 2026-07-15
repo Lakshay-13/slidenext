@@ -2916,33 +2916,53 @@
     }
 
     function createEditorSlideMutationRestoreStateCapturer(options = {}) {
+      const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
+        ? SlideNextStudioEditorMutation
+        : null;
+      const createStudioSlideMutationRestoreStateCapturer = mutationApi
+        && typeof mutationApi.createStudioSlideMutationRestoreStateCapturer === 'function'
+        ? mutationApi.createStudioSlideMutationRestoreStateCapturer
+        : null;
       const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
         ? SlideNextStudioDeckView
         : null;
-      const saveHistory = typeof options.saveHistoryState === 'function'
+      const saveHistoryState = typeof options.saveHistoryState === 'function'
         ? options.saveHistoryState
         : () => {};
-      const readActiveSlideId = typeof options.getActiveSlideId === 'function'
+      const getActiveSlideId = typeof options.getActiveSlideId === 'function'
         ? options.getActiveSlideId
         : () => '';
-      const readSelectedElementIds = typeof options.getSelectedElementIds === 'function'
+      const getCommittedSelectedElementIds = typeof options.getSelectedElementIds === 'function'
         ? options.getSelectedElementIds
         : () => [];
+      const captureStudioDeckViewBeforeSlideMutation = deckViewApi
+        && typeof deckViewApi.captureStudioDeckViewBeforeSlideMutation === 'function'
+        ? deckViewApi.captureStudioDeckViewBeforeSlideMutation
+        : null;
 
-      if (deckViewApi && typeof deckViewApi.captureStudioDeckViewBeforeSlideMutation === 'function') {
-        return (iframeDoc) => deckViewApi.captureStudioDeckViewBeforeSlideMutation({
+      if (createStudioSlideMutationRestoreStateCapturer) {
+        return createStudioSlideMutationRestoreStateCapturer({
+          captureStudioDeckViewBeforeSlideMutation,
+          saveHistoryState,
+          getActiveSlideId,
+          getCommittedSelectedElementIds
+        });
+      }
+
+      if (captureStudioDeckViewBeforeSlideMutation) {
+        return (iframeDoc) => captureStudioDeckViewBeforeSlideMutation({
           doc: iframeDoc,
-          saveHistoryState: saveHistory,
-          getActiveSlideId: readActiveSlideId,
-          getCommittedSelectedElementIds: readSelectedElementIds
+          saveHistoryState,
+          getActiveSlideId,
+          getCommittedSelectedElementIds
         });
       }
 
       return (iframeDoc) => {
-        saveHistory();
+        saveHistoryState();
         return {
-          preservedActiveSlideId: readActiveSlideId(iframeDoc),
-          preservedSelectionIds: readSelectedElementIds(iframeDoc)
+          preservedActiveSlideId: getActiveSlideId(iframeDoc),
+          preservedSelectionIds: getCommittedSelectedElementIds(iframeDoc)
         };
       };
     }

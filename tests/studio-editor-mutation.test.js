@@ -348,6 +348,54 @@ test('createStudioSlideMutationPersistenceFinalizer forwards canonical deck over
   assert.deepEqual(historyArgs, [false, null, canonicalDeck]);
 });
 
+test('createStudioSlideMutationRestoreStateCapturer preserves view state after saving history', () => {
+  const iframeDoc = { id: 'editor-doc' };
+  const calls = [];
+  const captureState = mutation.createStudioSlideMutationRestoreStateCapturer({
+    saveHistoryState() {
+      calls.push(['saveHistoryState']);
+    },
+    getActiveSlideId(doc) {
+      calls.push(['getActiveSlideId', doc]);
+      return 'slide-3';
+    },
+    getCommittedSelectedElementIds(doc) {
+      calls.push(['getCommittedSelectedElementIds', doc]);
+      return ['element-1'];
+    }
+  });
+
+  assert.deepEqual(captureState(iframeDoc), {
+    preservedActiveSlideId: 'slide-3',
+    preservedSelectionIds: ['element-1']
+  });
+  assert.deepEqual(calls, [
+    ['saveHistoryState'],
+    ['getActiveSlideId', iframeDoc],
+    ['getCommittedSelectedElementIds', iframeDoc]
+  ]);
+});
+
+test('createStudioSlideMutationRestoreStateCapturer delegates to shared deck-view capture', () => {
+  const iframeDoc = { id: 'editor-doc' };
+  let delegatedOptions = null;
+  const captureState = mutation.createStudioSlideMutationRestoreStateCapturer({
+    captureStudioDeckViewBeforeSlideMutation(options) {
+      delegatedOptions = options;
+      return { preservedActiveSlideId: 'slide-4', preservedSelectionIds: ['element-4'] };
+    },
+    saveHistoryState() {},
+    getActiveSlideId() {},
+    getCommittedSelectedElementIds() {}
+  });
+
+  assert.deepEqual(captureState(iframeDoc), {
+    preservedActiveSlideId: 'slide-4',
+    preservedSelectionIds: ['element-4']
+  });
+  assert.equal(delegatedOptions.doc, iframeDoc);
+});
+
 test('finalizeStudioLayerOrderMutation preserves layer UI ordering around shared persistence', () => {
   const calls = [];
   const transaction = { id: 'tx-layer-order' };

@@ -213,6 +213,44 @@ test('captureSlideMutationRestoreState delegates the snapshot to the shared deck
   assert.equal(calls[0][1].getCommittedSelectedElementIds, context.getCommittedSelectedElementIds);
 });
 
+test('createEditorSlideMutationRestoreStateCapturer delegates construction to the shared mutation module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const delegatedOptions = [];
+  const context = {
+    SlideNextStudioEditorMutation: {
+      createStudioSlideMutationRestoreStateCapturer(options) {
+        delegatedOptions.push(options);
+        return () => ({ preservedActiveSlideId: 'slide-5', preservedSelectionIds: ['node-5'] });
+      }
+    },
+    SlideNextStudioDeckView: {
+      captureStudioDeckViewBeforeSlideMutation() {}
+    },
+    getActiveSlideId() {},
+    getCommittedSelectedElementIds() {},
+    saveHistoryState() {}
+  };
+
+  vm.createContext(context);
+  loadCaptureSlideMutationRestoreState(fileContent, context);
+
+  const captureState = context.createEditorSlideMutationRestoreStateCapturer({
+    saveHistoryState: context.saveHistoryState,
+    getActiveSlideId: context.getActiveSlideId,
+    getSelectedElementIds: context.getCommittedSelectedElementIds
+  });
+
+  assert.deepEqual(captureState({ id: 'doc' }), {
+    preservedActiveSlideId: 'slide-5',
+    preservedSelectionIds: ['node-5']
+  });
+  assert.equal(delegatedOptions.length, 1);
+  assert.equal(delegatedOptions[0].saveHistoryState, context.saveHistoryState);
+  assert.equal(delegatedOptions[0].getActiveSlideId, context.getActiveSlideId);
+  assert.equal(delegatedOptions[0].getCommittedSelectedElementIds, context.getCommittedSelectedElementIds);
+  assert.equal(typeof delegatedOptions[0].captureStudioDeckViewBeforeSlideMutation, 'function');
+});
+
 test('restoreSelectionAfterPreservedSlideMutation delegates preservation ordering to shared selection', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { id: 'doc' };
