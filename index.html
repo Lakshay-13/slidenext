@@ -6091,6 +6091,10 @@
         && typeof canonicalLayoutApi.buildStudioCanonicalLayoutDeck === 'function'
         ? canonicalLayoutApi.buildStudioCanonicalLayoutDeck
         : null;
+      const buildCanonicalLayoutBaseline = canonicalLayoutApi
+        && typeof canonicalLayoutApi.buildStudioCanonicalLayoutBaseline === 'function'
+        ? canonicalLayoutApi.buildStudioCanonicalLayoutBaseline
+        : null;
       const canonicalNodeLayouts = buildCanonicalLayoutDeck
         && Array.isArray(distributionResult.nextItems)
         ? distributionResult.nextItems.map((item) => {
@@ -6107,9 +6111,14 @@
             };
           }).filter(Boolean)
         : [];
-      const canonicalDeckBeforeDistribution = buildCanonicalLayoutDeck
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck()
+      const canonicalDeckBeforeDistribution = buildCanonicalLayoutBaseline
+        ? buildCanonicalLayoutBaseline({
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+            sourceDocument: typeof getIframeDoc === 'function' ? getIframeDoc() : null
+          })
         : null;
       const canonicalDeck = buildCanonicalLayoutDeck
         ? buildCanonicalLayoutDeck(canonicalNodeLayouts, {
