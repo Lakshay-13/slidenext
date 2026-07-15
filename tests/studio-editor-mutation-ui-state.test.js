@@ -71,6 +71,7 @@ test('finalizeEditorDeckMutation supplies the canonical deck builder to shared m
   const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
   let capturedMutationOptions = null;
   let capturedBuildCanonicalDeck = null;
+  let buildCanonicalDeckOptions = null;
   const context = {
     SlideNextStudioEditorMutation: {
       finalizeStudioMutation(options) {
@@ -79,7 +80,8 @@ test('finalizeEditorDeckMutation supplies the canonical deck builder to shared m
         return options.versionLabel;
       }
     },
-    buildEditorCanonicalDeck() {
+    buildEditorCanonicalDeck(_sourceDoc, options) {
+      buildCanonicalDeckOptions = options;
       return canonicalDeck;
     },
     syncSelectionOverlay() {},
@@ -98,4 +100,5 @@ test('finalizeEditorDeckMutation supplies the canonical deck builder to shared m
   }), 'Auto: Styled Element');
   assert.equal(capturedMutationOptions.canonicalDeck, undefined);
   assert.equal(capturedBuildCanonicalDeck(), canonicalDeck);
+  assert.equal(buildCanonicalDeckOptions.preferLiveCanonicalDeck, false);
 });

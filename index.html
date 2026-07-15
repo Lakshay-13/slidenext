@@ -5641,7 +5641,11 @@
           versionLabel,
           mutationOptions: options,
           ...(typeof buildEditorCanonicalDeck === 'function'
-            ? { buildCanonicalDeck: buildEditorCanonicalDeck }
+            ? {
+                buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+                  preferLiveCanonicalDeck: false
+                })
+              }
             : {}),
           syncSelectionOverlay,
           generateThumbnails,
@@ -5661,7 +5665,11 @@
       if (createStudioMutationFinalizer) {
         return createStudioMutationFinalizer({
           ...(typeof buildEditorCanonicalDeck === 'function'
-            ? { buildCanonicalDeck: buildEditorCanonicalDeck }
+            ? {
+                buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+                  preferLiveCanonicalDeck: false
+                })
+              }
             : {}),
           syncSelectionOverlay,
           generateThumbnails,
@@ -5675,7 +5683,9 @@
         || typeof buildEditorCanonicalDeck !== 'function'
         ? options
         : (() => {
-            const canonicalDeck = buildEditorCanonicalDeck();
+            const canonicalDeck = buildEditorCanonicalDeck(undefined, {
+              preferLiveCanonicalDeck: false
+            });
             return canonicalDeck ? { ...options, canonicalDeck } : options;
           })();
       if (mutationOptions.syncSelectionOverlay) {
