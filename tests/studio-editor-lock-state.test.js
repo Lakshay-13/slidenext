@@ -205,3 +205,42 @@ test('applyStudioLockMutation applies live lock changes and creates an optional 
     after: 'true'
   });
 });
+
+test('applyStudioLockWithTransaction delegates lock mutation dependencies', () => {
+  const selection = [{ id: 'node-1' }];
+  const calls = [];
+  const result = lockState.applyStudioLockWithTransaction(selection, true, {
+    applyStudioLockMutation(...args) {
+      calls.push(args);
+      return { didApply: true, transaction: { type: 'dataset' } };
+    },
+    createStudioDatasetTransaction() {},
+    isLocked() {},
+    setLocked() {},
+    getElementId() {}
+  });
+
+  assert.deepEqual(result, { didApply: true, transaction: { type: 'dataset' } });
+  assert.deepEqual(calls[0].slice(0, 2), [selection, true]);
+});
+
+test('applyStudioLockWithTransaction preserves fallback dataset mutation and transaction capture', () => {
+  const element = {
+    isConnected: true,
+    dataset: { editorId: 'node-1' }
+  };
+  const result = lockState.applyStudioLockWithTransaction([element], true, {
+    isLocked: (target) => target.dataset.editorLocked === 'true',
+    setLocked: (target, shouldLock) => {
+      if (shouldLock) target.dataset.editorLocked = 'true';
+    },
+    createStudioDatasetTransaction(items) {
+      return { items };
+    },
+    getElementId: (target) => target.dataset.editorId
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(element.dataset.editorLocked, 'true');
+  assert.equal(result.transaction.items[0].property, 'editorLocked');
+});

@@ -149,6 +149,66 @@
     };
   }
 
+  function applyStudioLockWithTransaction(elements = [], shouldLock = false, options = {}) {
+    const applyStudioLockMutation = typeof options.applyStudioLockMutation === 'function'
+      ? options.applyStudioLockMutation
+      : null;
+    const createStudioDatasetTransaction = typeof options.createStudioDatasetTransaction === 'function'
+      ? options.createStudioDatasetTransaction
+      : null;
+    const isLocked = typeof options.isLocked === 'function'
+      ? options.isLocked
+      : () => false;
+    const setLocked = typeof options.setLocked === 'function'
+      ? options.setLocked
+      : () => {};
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+
+    if (applyStudioLockMutation) {
+      const mutation = applyStudioLockMutation(elements, shouldLock, {
+        isLocked,
+        setLocked,
+        createDatasetTransaction: createStudioDatasetTransaction,
+        getElementId
+      });
+      return mutation && typeof mutation === 'object'
+        ? mutation
+        : { didApply: false, transaction: null };
+    }
+
+    const selection = Array.isArray(elements) ? elements : [];
+    const transactionItems = createStudioDatasetTransaction
+      ? selection
+          .filter((element) => element && element.isConnected && isLocked(element) !== shouldLock)
+          .map((element) => {
+            getElementId(element);
+            return {
+              element,
+              property: 'editorLocked',
+              before: element.dataset && element.dataset.editorLocked
+                ? element.dataset.editorLocked
+                : '',
+              after: shouldLock ? 'true' : ''
+            };
+          })
+      : [];
+    const transaction = createStudioDatasetTransaction
+      ? createStudioDatasetTransaction(transactionItems)
+      : null;
+    let changedCount = 0;
+    selection.forEach((element) => {
+      if (!element || !element.isConnected || isLocked(element) === shouldLock) return;
+      setLocked(element, shouldLock);
+      changedCount += 1;
+    });
+    return {
+      didApply: changedCount > 0,
+      transaction: changedCount > 0 ? transaction : null
+    };
+  }
+
   return {
     getStudioLockSelection,
     buildStudioLockActionState,
@@ -156,6 +216,7 @@
     renderStudioLockToolbarState,
     syncStudioLockToolbarState,
     buildStudioLockMutationPlan,
-    applyStudioLockMutation
+    applyStudioLockMutation,
+    applyStudioLockWithTransaction
   };
 });

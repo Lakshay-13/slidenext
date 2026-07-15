@@ -5394,6 +5394,16 @@
       const lockApi = typeof SlideNextStudioEditorLockState !== 'undefined'
         ? SlideNextStudioEditorLockState
         : null;
+      const applyStudioLockWithTransaction = lockApi
+        && typeof lockApi.applyStudioLockWithTransaction === 'function'
+        ? lockApi.applyStudioLockWithTransaction
+        : null;
+      if (!applyStudioLockWithTransaction) {
+        return {
+          didApply: false,
+          transaction: null
+        };
+      }
       const applyStudioLockMutation = lockApi
         && typeof lockApi.applyStudioLockMutation === 'function'
         ? lockApi.applyStudioLockMutation
@@ -5424,46 +5434,13 @@
             }
             return element && element.dataset && element.dataset.editorId;
           };
-      if (applyStudioLockMutation) {
-        const mutation = applyStudioLockMutation(selection, shouldLock, {
-          isLocked,
-          setLocked,
-          createDatasetTransaction: createStudioDatasetTransaction,
-          getElementId
-        });
-        return mutation && typeof mutation === 'object'
-          ? mutation
-          : { didApply: false, transaction: null };
-      }
-
-      const transactionItems = createStudioDatasetTransaction
-        ? selection
-            .filter((element) => element && element.isConnected && isLocked(element) !== shouldLock)
-            .map((element) => {
-              getElementId(element);
-              return {
-                element,
-                property: 'editorLocked',
-                before: element.dataset && element.dataset.editorLocked
-                  ? element.dataset.editorLocked
-                  : '',
-                after: shouldLock ? 'true' : ''
-              };
-            })
-        : [];
-      const transaction = createStudioDatasetTransaction
-        ? createStudioDatasetTransaction(transactionItems)
-        : null;
-      let changedCount = 0;
-      selection.forEach((element) => {
-        if (!element || !element.isConnected || isLocked(element) === shouldLock) return;
-        setLocked(element, shouldLock);
-        changedCount += 1;
+      return applyStudioLockWithTransaction(selection, shouldLock, {
+        applyStudioLockMutation,
+        createStudioDatasetTransaction,
+        isLocked,
+        setLocked,
+        getElementId
       });
-      return {
-        didApply: changedCount > 0,
-        transaction: changedCount > 0 ? transaction : null
-      };
     }
 
     function toggleSelectedElementsLockState() {

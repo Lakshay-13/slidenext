@@ -288,6 +288,7 @@ test('toggleSelectedElementsLockState returns false and skips persistence when p
   const context = {
     selectedElements: [disconnectedTarget],
     SlideNextStudioEditorLockState: {
+      applyStudioLockWithTransaction: lockState.applyStudioLockWithTransaction,
       buildStudioLockMutationPlan() {
         calls.push(['buildStudioLockMutationPlan']);
         return {
@@ -370,6 +371,7 @@ test('toggleSelectedElementsLockState returns true after locking live targets an
   const context = {
     selectedElements: [liveTarget],
     SlideNextStudioEditorLockState: {
+      applyStudioLockWithTransaction: lockState.applyStudioLockWithTransaction,
       buildStudioLockMutationPlan() {
         calls.push(['buildStudioLockMutationPlan']);
         return {
@@ -462,6 +464,7 @@ test('toggleSelectedElementsLockState captures a reversible dataset transaction'
     selectedElements: [liveTarget],
     SlideNextStudioEditorTransaction: studioTransaction,
     SlideNextStudioEditorLockState: {
+      applyStudioLockWithTransaction: lockState.applyStudioLockWithTransaction,
       buildStudioLockMutationPlan() {
         return {
           didChange: true,
@@ -554,6 +557,7 @@ test('toggleSelectedElementsLockState forwards an immutable canonical visibility
     SlideNextCanonicalDeck: canonicalDeckModel,
     SlideNextStudioEditorTransaction: studioTransaction,
     SlideNextStudioEditorLockState: {
+      applyStudioLockWithTransaction: lockState.applyStudioLockWithTransaction,
       buildStudioLockMutationPlan() {
         return {
           didChange: true,
@@ -621,8 +625,8 @@ test('toggleSelectedElementsLockState delegates lock application to the shared l
           versionLabel: 'Auto: Locked Element'
         };
       },
-      applyStudioLockMutation(selection, shouldLock, options) {
-        calls.push(['applyStudioLockMutation', selection, shouldLock, options]);
+      applyStudioLockWithTransaction(selection, shouldLock, options) {
+        calls.push(['applyStudioLockWithTransaction', selection, shouldLock, options]);
         return { didApply: true, transaction: { type: 'dataset' } };
       }
     },
@@ -650,7 +654,7 @@ test('toggleSelectedElementsLockState delegates lock application to the shared l
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
   assert.equal(context.toggleSelectedElementsLockState(), true);
-  assert.equal(calls[0][0], 'applyStudioLockMutation');
+  assert.equal(calls[0][0], 'applyStudioLockWithTransaction');
   assert.equal(calls[0][1][0], liveTarget);
   assert.equal(calls[0][2], true);
   assert.equal(typeof calls[0][3].getElementId, 'function');
