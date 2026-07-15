@@ -3626,40 +3626,12 @@
         });
       }
 
-      const isCanonicalDeck = (
-        typeof SlideNextCanonicalDeck !== 'undefined'
-        && SlideNextCanonicalDeck
-        && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-      )
-        ? SlideNextCanonicalDeck.isCanonicalDeck
-        : null;
       const storedCanonicalDeck = resolveEditorStoredCanonicalBaseline({
         currentPresentationMetadata,
         persistedCanonicalDeck: lastPersistedCanonicalDeck
       });
       if (!doc && storedCanonicalDeck) {
         return storedCanonicalDeck;
-      }
-
-      const buildCanonicalDeckFromDocument = (
-        typeof SlideNextDeckLoader !== 'undefined'
-        && SlideNextDeckLoader
-        && typeof SlideNextDeckLoader.buildCanonicalDeckFromDocument === 'function'
-      )
-        ? SlideNextDeckLoader.buildCanonicalDeckFromDocument
-        : null;
-      if (!buildCanonicalDeckFromDocument) {
-        return storedCanonicalDeck || null;
-      }
-
-      const canonicalDeck = buildCanonicalDeckFromDocument(doc, {
-        presentationMetadata: currentPresentationMetadata || buildCurrentPresentationMetadataSeed(currentPresentationUrl, currentTitle),
-        sourcePath: currentPresentationUrl,
-        getSlideId: getEditorSlideId,
-        getNodeId: assignEditorElementId
-      });
-      if (canonicalDeck && (!isCanonicalDeck || isCanonicalDeck(canonicalDeck))) {
-        return canonicalDeck;
       }
 
       return storedCanonicalDeck || null;

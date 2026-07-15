@@ -332,7 +332,7 @@ test('buildEditorCanonicalDeck always requests a fresh DOM-derived canonical dec
   assert.equal(typeof calls[0].options.getNodeId, 'function');
 });
 
-test('buildEditorCanonicalDeck falls back to the shared deck loader when the deck context builder is unavailable', () => {
+test('buildEditorCanonicalDeck fails closed when the shared canonical builder is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorCanonicalDeckSource = extractFunctionSource(
     fileContent,
@@ -341,27 +341,17 @@ test('buildEditorCanonicalDeck falls back to the shared deck loader when the dec
   );
 
   const doc = { label: 'iframe-doc' };
-  const canonicalDeck = {
-    kind: 'slidenext.deck',
-    schemaVersion: 1,
-    slides: []
-  };
   const currentPresentationMetadata = {
     id: 'deck-1',
     title: 'Project Onboarding',
     sourcePath: '/presentations/onboarding-presentation/index.html'
   };
-  const calls = [];
   const context = {
     SlideNextStudioDeckContext: {},
     SlideNextDeckLoader: {
-      buildCanonicalDeckFromDocument(nextDoc, options) {
-        calls.push({ nextDoc, options });
-        return canonicalDeck;
+      buildCanonicalDeckFromDocument() {
+        throw new Error('buildCanonicalDeckFromDocument should remain owned by the shared canonical builder');
       }
-    },
-    SlideNextCanonicalDeck: {
-      isCanonicalDeck: (deck) => deck === canonicalDeck
     },
     currentPresentationMetadata,
     lastPersistedCanonicalDeck: null,
@@ -384,13 +374,7 @@ test('buildEditorCanonicalDeck falls back to the shared deck loader when the dec
 
   const result = context.buildEditorCanonicalDeck();
 
-  assert.equal(result, canonicalDeck);
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].nextDoc, doc);
-  assert.equal(calls[0].options.presentationMetadata, currentPresentationMetadata);
-  assert.equal(calls[0].options.sourcePath, '/presentations/onboarding-presentation/index.html');
-  assert.equal(typeof calls[0].options.getSlideId, 'function');
-  assert.equal(typeof calls[0].options.getNodeId, 'function');
+  assert.equal(result, null);
 });
 
 test('buildEditorCanonicalDeck reuses the shared stored canonical baseline when the deck context builder is unavailable', () => {
