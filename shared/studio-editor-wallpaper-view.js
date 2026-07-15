@@ -88,6 +88,21 @@
     return '';
   }
 
+  function syncStudioSolidWallpaperControl(options = {}) {
+    const documentRef = options.documentRef;
+    const solidWallpaperColorInput = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('wallpaperCustomColor')
+      : null;
+    const activeSlide = options.activeSlide;
+    if (!solidWallpaperColorInput || !activeSlide || !activeSlide.style) return false;
+
+    const solidColor = resolveStudioActiveSlideSolidWallpaperColor(activeSlide);
+    if (!solidColor) return false;
+
+    solidWallpaperColorInput.value = normalizeStudioWallpaperColor(solidColor, options);
+    return true;
+  }
+
   function resolveStudioActiveSlideGradientControls(activeSlide, options = {}) {
     const background = resolveStudioActiveSlideGradientBackground(activeSlide);
     if (!background) return null;
@@ -142,6 +157,7 @@
     extractStudioGradientStopColor,
     resolveStudioActiveSlideSolidWallpaperColor,
     resolveStudioActiveSlideGradientBackground,
+    syncStudioSolidWallpaperControl,
     resolveStudioActiveSlideGradientControls
   };
 });

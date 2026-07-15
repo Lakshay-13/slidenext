@@ -61,3 +61,28 @@ test('resolveStudioActiveSlideGradientControls rejects unsupported gradient layo
     null
   );
 });
+
+test('syncStudioSolidWallpaperControl updates the picker through the provided color converter', () => {
+  const colorInput = { value: '#000000' };
+  const activeSlide = {
+    style: {
+      backgroundColor: 'rgb(17, 34, 51)'
+    }
+  };
+  const calls = [];
+
+  assert.equal(wallpaperView.syncStudioSolidWallpaperControl({
+    documentRef: {
+      getElementById(id) {
+        return id === 'wallpaperCustomColor' ? colorInput : null;
+      }
+    },
+    activeSlide,
+    rgbToHex(value) {
+      calls.push(value);
+      return '#112233';
+    }
+  }), true);
+  assert.deepEqual(calls, ['rgb(17, 34, 51)']);
+  assert.equal(colorInput.value, '#112233');
+});

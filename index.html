@@ -2610,22 +2610,18 @@
         : () => '';
       const resolveActiveSlideGradientControls = wallpaperView
         && typeof wallpaperView.resolveStudioActiveSlideGradientControls === 'function'
-        ? (activeSlide) => wallpaperView.resolveStudioActiveSlideGradientControls(activeSlide, { rgbToHex })
+        ? (activeSlide) => wallpaperView.resolveStudioActiveSlideGradientControls(activeSlide, {
+            rgbToHex: typeof rgbToHex === 'function' ? rgbToHex : null
+          })
         : () => null;
-      const syncSolidWallpaperControlToActiveSlide = (activeSlide) => {
-        const solidWallpaperColorInput = document.getElementById('wallpaperCustomColor');
-        if (!solidWallpaperColorInput || !activeSlide || !activeSlide.style) {
-          return false;
-        }
-
-        const solidColor = resolveActiveSlideSolidWallpaperColor(activeSlide);
-        if (!solidColor) {
-          return false;
-        }
-
-        solidWallpaperColorInput.value = wallpaperView.normalizeStudioWallpaperColor(solidColor, { rgbToHex });
-        return true;
-      };
+      const syncSolidWallpaperControlToActiveSlide = wallpaperView
+        && typeof wallpaperView.syncStudioSolidWallpaperControl === 'function'
+        ? (activeSlide) => wallpaperView.syncStudioSolidWallpaperControl({
+            documentRef: document,
+            activeSlide,
+            rgbToHex: typeof rgbToHex === 'function' ? rgbToHex : null
+          })
+        : () => false;
       const syncWallpaperTabChromeToActiveSlide = (activeSlide, options = {}) => {
         const solidTab = document.getElementById('wpTabSolid');
         const presetsTab = document.getElementById('wpTabPresets');
