@@ -1164,6 +1164,7 @@
   <script src="/shared/studio-editor-canonical-group.js"></script>
   <script src="/shared/studio-editor-canonical-removal.js"></script>
   <script src="/shared/studio-editor-canonical-insertion.js"></script>
+  <script src="/shared/studio-editor-canonical-slide.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
@@ -3008,12 +3009,12 @@
       const duplicateSlideId = duplicatePreparation.slideId;
 
       const insertionIndex = sourceIndex + 1;
-      const insertCanonicalSlide = (
-        typeof SlideNextCanonicalDeck !== 'undefined'
-        && SlideNextCanonicalDeck
-        && typeof SlideNextCanonicalDeck.insertCanonicalSlide === 'function'
-      )
-        ? SlideNextCanonicalDeck.insertCanonicalSlide
+      const canonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
+        ? SlideNextStudioEditorCanonicalSlide
+        : null;
+      const buildCanonicalDuplicateSlideDeck = canonicalSlideApi
+        && typeof canonicalSlideApi.buildStudioCanonicalDuplicateSlideDeck === 'function'
+        ? canonicalSlideApi.buildStudioCanonicalDuplicateSlideDeck
         : null;
       const importSlideToCanonicalSlide = (
         typeof SlideNextDeckImport !== 'undefined'
@@ -3022,20 +3023,26 @@
       )
         ? SlideNextDeckImport.importSlideToCanonicalSlide
         : null;
-      const canonicalDeckBeforeDuplication = insertCanonicalSlide
+      const canonicalDeckBeforeDuplication = buildCanonicalDuplicateSlideDeck
+        && typeof SlideNextCanonicalDeck !== 'undefined'
+        && SlideNextCanonicalDeck
+        && typeof SlideNextCanonicalDeck.insertCanonicalSlide === 'function'
         && typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(iframeDoc)
         : null;
-      const canonicalSlide = importSlideToCanonicalSlide
-        ? importSlideToCanonicalSlide(duplicateSlide, insertionIndex, {
+      const canonicalDeckAfterDuplication = buildCanonicalDuplicateSlideDeck
+        ? buildCanonicalDuplicateSlideDeck({
+            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+              ? SlideNextCanonicalDeck
+              : null,
+            canonicalDeckBeforeMutation: canonicalDeckBeforeDuplication,
+            importSlideToCanonicalSlide,
+            duplicateSlide,
+            duplicateSlideId,
+            insertionIndex,
+            title: `Slide ${insertionIndex + 1}`,
             getSlideId: () => duplicateSlideId
           })
-        : {
-            id: duplicateSlideId,
-            title: `Slide ${insertionIndex + 1}`
-          };
-      const canonicalDeckAfterDuplication = insertCanonicalSlide
-        ? insertCanonicalSlide(canonicalDeckBeforeDuplication, canonicalSlide, insertionIndex)
         : null;
 
       saveHistoryState();

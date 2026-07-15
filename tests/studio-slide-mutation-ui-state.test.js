@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalSlide = require('../shared/studio-editor-canonical-slide.js');
 const slideCommands = require('../shared/studio-editor-slide-commands.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -812,6 +813,7 @@ test('duplicateSlideNode clones the active slide, inserts it next to the source,
   const calls = [];
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalSlide: canonicalSlide,
     SlideNextDeckImport: {
       importSlideToCanonicalSlide(slide, index, options) {
         calls.push(['importSlideToCanonicalSlide', slide, index]);
