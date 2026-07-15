@@ -88,6 +88,51 @@ test('selectElement fails closed when the shared selection module is unavailable
   assert.equal(context.selectElement({ id: 'raw-node' }), false);
 });
 
+test('deselectElement delegates selection clearing to the shared selection module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const deselectElementSource = extractFunctionSource(
+    fileContent,
+    'function deselectElement() {',
+    '\n\n    function selectAllElementsOnActiveSlide() {'
+  );
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorSelection: {
+      deselectStudioElement(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    hideDragHud() {},
+    commitEditorSelectionState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(deselectElementSource, context);
+
+  assert.equal(context.deselectElement(), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(typeof calls[0].hideDragHud, 'function');
+  assert.equal(typeof calls[0].commitSelectionState, 'function');
+});
+
+test('deselectElement fails closed when the shared selection module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const deselectElementSource = extractFunctionSource(
+    fileContent,
+    'function deselectElement() {',
+    '\n\n    function selectAllElementsOnActiveSlide() {'
+  );
+
+  const context = {
+    SlideNextStudioEditorSelection: null
+  };
+  vm.createContext(context);
+  vm.runInContext(deselectElementSource, context);
+
+  assert.equal(context.deselectElement(), false);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
