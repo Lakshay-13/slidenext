@@ -79,10 +79,13 @@
         }
       }
 
-      const storedCanonicalDeck = resolveStoredCanonicalBaseline({
+      const storedCanonicalDeckCandidate = resolveStoredCanonicalBaseline({
         currentPresentationMetadata: presentationMetadata,
         persistedCanonicalDeck: readPersistedCanonicalDeck()
       });
+      const storedCanonicalDeck = isCanonicalDeck(storedCanonicalDeckCandidate)
+        ? storedCanonicalDeckCandidate
+        : null;
       if (!doc && storedCanonicalDeck) {
         return storedCanonicalDeck;
       }

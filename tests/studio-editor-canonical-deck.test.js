@@ -78,6 +78,24 @@ test('canonical deck builder rejects invalid DOM adapter output before using the
   assert.equal(builder({ id: 'document' }), storedDeck);
 });
 
+test('canonical deck builder does not return an invalid stored baseline', () => {
+  const invalidStoredDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    isCanonicalDeck(value) {
+      return !!value
+        && value.kind === 'slidenext.deck'
+        && value.metadata
+        && typeof value.metadata.id === 'string'
+        && value.metadata.id.trim() !== '';
+    },
+    resolveStoredCanonicalBaseline() {
+      return invalidStoredDeck;
+    }
+  });
+
+  assert.equal(builder(null), null);
+});
+
 test('canonical deck builder can rebuild from a document or return the stored model without one', () => {
   const storedDeck = createDeck('stored');
   const importedDeck = createDeck('imported');
