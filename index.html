@@ -5122,6 +5122,28 @@
     }
 
     function updateLayerOrderActionState(doc = getIframeDoc()) {
+      const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
+        ? SlideNextStudioEditorLayerController
+        : null;
+      const layerOrderApi = typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+        ? SlideNextStudioEditorLayerOrder
+        : null;
+      const styleApi = typeof SlideNextStudioEditorStyle !== 'undefined'
+        ? SlideNextStudioEditorStyle
+        : null;
+      if (layerController && typeof layerController.syncStudioLayerOrderActionState === 'function') {
+        return layerController.syncStudioLayerOrderActionState({
+          documentRef: document,
+          doc,
+          selectedElements,
+          layerOrderApi,
+          styleApi,
+          getActiveSlide,
+          getNormalizedSlideLayerOrder,
+          isLocked: isElementLocked,
+          buildLayerOrderSelectionActionState
+        });
+      }
       const slide = getActiveSlide(doc);
       const canMutateDeck = () => !!slide;
       const orderedElements = slide ? getNormalizedSlideLayerOrder(slide) : [];

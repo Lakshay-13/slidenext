@@ -643,6 +643,47 @@ test('updateLayerOrderActionState delegates toolbar state assembly to the shared
   assert.equal(calls[0].buildZIndexMutationPlan([selectedElement]).canApply, true);
 });
 
+test('updateLayerOrderActionState delegates state assembly to the shared layer controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectedElement = { id: 'selected', isConnected: true };
+  const activeSlide = { id: 'slide-1' };
+  let delegatedOptions = null;
+  const context = {
+    selectedElements: [selectedElement],
+    SlideNextStudioEditorLayerController: {
+      syncStudioLayerOrderActionState(options) {
+        delegatedOptions = options;
+        return 'shared-layer-controller';
+      }
+    },
+    document: {},
+    getActiveSlide() {
+      return activeSlide;
+    },
+    getNormalizedSlideLayerOrder() {
+      return [selectedElement];
+    },
+    isElementLocked() {},
+    buildLayerOrderSelectionActionState() {}
+  };
+
+  vm.createContext(context);
+  const updateLayerOrderActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateLayerOrderActionState(doc = getIframeDoc()) {',
+    '\n\n    function toggleSelectedElementsLockState() {'
+  );
+  vm.runInContext(updateLayerOrderActionStateSource, context);
+
+  const doc = { id: 'iframe-doc' };
+  assert.equal(context.updateLayerOrderActionState(doc), 'shared-layer-controller');
+  assert.equal(delegatedOptions.documentRef, context.document);
+  assert.equal(delegatedOptions.doc, doc);
+  assert.deepEqual(delegatedOptions.selectedElements, [selectedElement]);
+  assert.equal(delegatedOptions.getActiveSlide, context.getActiveSlide);
+  assert.equal(delegatedOptions.buildLayerOrderSelectionActionState, context.buildLayerOrderSelectionActionState);
+});
+
 test('arrangeElementLayer returns false when there is no live reorder target or no layer change', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const arrangeElementLayerSource = extractFunctionSource(

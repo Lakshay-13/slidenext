@@ -398,6 +398,48 @@ test('refreshStudioLayerOrderUi preserves layer refresh ordering and result valu
   assert.deepEqual(calls, ['layers', 'controls', 'controls']);
 });
 
+test('syncStudioLayerOrderActionState composes active slide state for shared toolbar rendering', () => {
+  const documentRef = { id: 'document' };
+  const doc = { id: 'iframe-doc' };
+  const slide = { id: 'slide-1' };
+  const selectedElements = [{ id: 'node-1' }];
+  const orderedElements = [{ id: 'node-1' }, { id: 'node-2' }];
+  let delegatedOptions = null;
+
+  assert.equal(layerController.syncStudioLayerOrderActionState({
+    documentRef,
+    doc,
+    selectedElements,
+    layerOrderApi: {
+      syncStudioLayerOrderToolbarState(options) {
+        delegatedOptions = options;
+        return 'shared-toolbar';
+      }
+    },
+    styleApi: {
+      buildStudioStyleMutationPlan() {
+        return { canApply: true };
+      }
+    },
+    getActiveSlide(nextDoc) {
+      assert.equal(nextDoc, doc);
+      return slide;
+    },
+    getNormalizedSlideLayerOrder(nextSlide) {
+      assert.equal(nextSlide, slide);
+      return orderedElements;
+    },
+    isLocked() {}
+  }), 'shared-toolbar');
+
+  assert.equal(delegatedOptions.documentRef, documentRef);
+  assert.deepEqual(delegatedOptions.elements, selectedElements);
+  assert.deepEqual(delegatedOptions.orderedElements, orderedElements);
+  assert.equal(delegatedOptions.canMutateDeck(), true);
+  assert.equal(typeof delegatedOptions.isLocked, 'function');
+  assert.equal(delegatedOptions.buildZIndexMutationPlan(selectedElements).canApply, true);
+});
+
 test('syncStudioLayerList assembles live layer action state before shared rendering', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const activeSlide = { id: 'slide-1' };

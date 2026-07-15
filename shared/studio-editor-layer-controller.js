@@ -207,6 +207,96 @@
     return options.result === undefined ? false : options.result;
   }
 
+  function syncStudioLayerOrderActionState(options = {}) {
+    const documentRef = options.documentRef;
+    const selectedElements = Array.isArray(options.selectedElements)
+      ? options.selectedElements
+      : [];
+    const layerOrderApi = options.layerOrderApi && typeof options.layerOrderApi === 'object'
+      ? options.layerOrderApi
+      : null;
+    const styleApi = options.styleApi && typeof options.styleApi === 'object'
+      ? options.styleApi
+      : null;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getNormalizedSlideLayerOrder = typeof options.getNormalizedSlideLayerOrder === 'function'
+      ? options.getNormalizedSlideLayerOrder
+      : () => [];
+    const slide = getActiveSlide(options.doc);
+    const orderedElements = slide ? getNormalizedSlideLayerOrder(slide) : [];
+    const canMutateDeck = () => !!slide;
+    const isLocked = typeof options.isLocked === 'function'
+      ? options.isLocked
+      : () => false;
+    const buildZIndexMutationPlan = typeof options.buildZIndexMutationPlan === 'function'
+      ? options.buildZIndexMutationPlan
+      : (elements) => {
+          if (!styleApi || typeof styleApi.buildStudioStyleMutationPlan !== 'function') {
+            return { canApply: false };
+          }
+          return styleApi.buildStudioStyleMutationPlan(elements, 'zIndex', '', {
+            isLocked,
+            canMutateDeck
+          });
+        };
+    const syncToolbar = layerOrderApi
+      && typeof layerOrderApi.syncStudioLayerOrderToolbarState === 'function'
+      ? layerOrderApi.syncStudioLayerOrderToolbarState
+      : null;
+    if (syncToolbar) {
+      return syncToolbar({
+        documentRef,
+        elements: selectedElements,
+        orderedElements,
+        isLocked,
+        canMutateDeck,
+        buildZIndexMutationPlan
+      });
+    }
+
+    const buildToolbarState = layerOrderApi
+      && typeof layerOrderApi.buildStudioLayerOrderToolbarState === 'function'
+      ? layerOrderApi.buildStudioLayerOrderToolbarState
+      : null;
+    const buildSelectionState = typeof options.buildLayerOrderSelectionActionState === 'function'
+      ? options.buildLayerOrderSelectionActionState
+      : () => ({});
+    const layerOrderActionState = buildToolbarState
+      ? buildToolbarState(selectedElements, {
+          orderedElements,
+          isLocked,
+          canMutateDeck,
+          buildZIndexMutationPlan
+        })
+      : buildSelectionState(selectedElements, {
+          slide,
+          orderedElements,
+          canMutateDeck
+        });
+    let zIndexCanApply;
+    const zIndexInput = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('elZIndex')
+      : null;
+    if (zIndexInput) {
+      const controlStates = layerOrderActionState.controlStates || null;
+      if (controlStates && Object.prototype.hasOwnProperty.call(controlStates, 'elZIndex')) {
+        zIndexCanApply = !!controlStates.elZIndex;
+      } else {
+        zIndexCanApply = !!buildZIndexMutationPlan(selectedElements).canApply;
+      }
+    }
+    if (!layerOrderApi || typeof layerOrderApi.renderStudioLayerOrderToolbarState !== 'function') {
+      return false;
+    }
+    return layerOrderApi.renderStudioLayerOrderToolbarState({
+      documentRef,
+      actionState: layerOrderActionState,
+      zIndexCanApply
+    });
+  }
+
   function syncStudioLayerList(options = {}) {
     const documentRef = options.documentRef;
     const iframeDoc = options.iframeDoc || null;
@@ -288,6 +378,7 @@
     arrangeStudioElementLayer,
     changeStudioLayerZIndexByRef,
     refreshStudioLayerOrderUi,
+    syncStudioLayerOrderActionState,
     resolveStudioLayerRowElement,
     selectStudioLayerElementByRef,
     toggleStudioLayerVisibilityByRef,
