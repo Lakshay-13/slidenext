@@ -5256,15 +5256,23 @@
     // Apply styles immediately to active selected elements
     function applySelectedElementStyle(prop, val) {
       const doc = getIframeDoc();
-      const styleMutationPlan = SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(selectedElements, prop, val, {
+      const styleApi = SlideNextStudioEditorStyle;
+      const finalizeStyleActionResult = (result) => {
+        if (styleApi && typeof styleApi.finalizeStudioStyleActionResult === 'function') {
+          return styleApi.finalizeStudioStyleActionResult(result, {
+            syncInspectorForSelection
+          });
+        }
+        syncInspectorForSelection();
+        return result;
+      };
+      const styleMutationPlan = styleApi.buildStudioStyleMutationPlan(selectedElements, prop, val, {
         isLocked: isElementLocked,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!styleMutationPlan.canApply) {
-        syncInspectorForSelection();
-        return false;
+        return finalizeStyleActionResult(false);
       }
-      const styleApi = SlideNextStudioEditorStyle;
       const createStyleTransaction = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -5366,8 +5374,7 @@
         }
       }
       if (!styleMutationResult.didApply) {
-        syncInspectorForSelection();
-        return false;
+        return finalizeStyleActionResult(false);
       }
 
       if (prop === 'align') {

@@ -134,6 +134,13 @@
     return true;
   }
 
+  function finalizeStudioStyleActionResult(result, options = {}) {
+    if (!result && typeof options.syncInspectorForSelection === 'function') {
+      options.syncInspectorForSelection();
+    }
+    return result;
+  }
+
   function normalizeStudioStyleMutationValue(prop, value) {
     if (prop === 'opacity') {
       const displayValue = `${Math.max(10, Math.min(100, parseInt(value, 10) || 100))}`;
@@ -480,6 +487,7 @@
     renderStudioStyleToolbarState,
     syncStudioStyleToolbarState,
     syncStudioStyleFeedbackLabel,
+    finalizeStudioStyleActionResult,
     normalizeStudioStyleMutationValue,
     applyStudioStyleMutation,
     applyStudioStyleMutationWithTransaction,

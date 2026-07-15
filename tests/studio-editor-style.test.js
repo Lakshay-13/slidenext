@@ -172,6 +172,22 @@ test('syncStudioStyleFeedbackLabel renders numeric inspector feedback with the c
   }), false);
 });
 
+test('finalizeStudioStyleActionResult refreshes the inspector only for unsuccessful results', () => {
+  const calls = [];
+
+  assert.equal(styleState.finalizeStudioStyleActionResult(false, {
+    syncInspectorForSelection() {
+      calls.push('syncInspectorForSelection');
+    }
+  }), false);
+  assert.equal(styleState.finalizeStudioStyleActionResult(true, {
+    syncInspectorForSelection() {
+      calls.push('unexpected-success-refresh');
+    }
+  }), true);
+  assert.deepEqual(calls, ['syncInspectorForSelection']);
+});
+
 test('applyStudioStyleMutation applies shared style properties across the live selection', () => {
   const first = createElement('div');
   const second = createElement('p');

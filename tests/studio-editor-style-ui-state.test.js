@@ -495,6 +495,43 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
   ]);
 });
 
+test('applySelectedElementStyle delegates unsuccessful result refresh to the shared style module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applySelectedElementStyleSource = extractFunctionSource(
+    fileContent,
+    'function applySelectedElementStyle(prop, val) {',
+    '\n\n    // Delete active selection'
+  );
+  const calls = [];
+  const context = {
+    selectedElements: [],
+    SlideNextStudioEditorStyle: {
+      buildStudioStyleMutationPlan() {
+        return { canApply: false };
+      },
+      finalizeStudioStyleActionResult(result, options) {
+        calls.push({ result, options });
+        return 'delegated';
+      }
+    },
+    getIframeDoc() {
+      return null;
+    },
+    isElementLocked() {
+      return false;
+    },
+    syncInspectorForSelection() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applySelectedElementStyleSource, context);
+
+  assert.equal(context.applySelectedElementStyle('color', '#fff'), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].result, false);
+  assert.equal(calls[0].options.syncInspectorForSelection, context.syncInspectorForSelection);
+});
+
 test('applySelectedElementStyle delegates mutation and transaction assembly to the shared style module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(
