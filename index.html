@@ -7876,88 +7876,45 @@
     let undoDebounceTimer = null;
     let pendingEditorCanonicalDeck = null;
     function saveHistoryState(debounce = false, transaction = null) {
-      const hasCanonicalDeck = arguments.length > 2;
-      const canonicalDeck = hasCanonicalDeck ? arguments[2] : null;
       const createStudioHistorySaveHandler = SlideNextStudioHistory
         && typeof SlideNextStudioHistory.createStudioHistorySaveHandler === 'function'
         ? SlideNextStudioHistory.createStudioHistorySaveHandler
         : null;
-      if (createStudioHistorySaveHandler) {
-        return createStudioHistorySaveHandler({
-          transactionApi: (
-            typeof SlideNextStudioEditorTransaction !== 'undefined'
-            && SlideNextStudioEditorTransaction
-          )
-            ? SlideNextStudioEditorTransaction
-            : null,
-          getPendingTransaction: () => pendingEditorTransaction,
-          setPendingTransaction(nextTransaction) {
-            pendingEditorTransaction = nextTransaction;
-          },
-          setPendingCanonicalDeck(nextCanonicalDeck) {
-            pendingEditorCanonicalDeck = nextCanonicalDeck;
-          },
-          setLiveCanonicalDeck(nextCanonicalDeck) {
-            if (typeof setEditorLiveCanonicalDeck !== 'function') return;
-            const liveEditorDoc = typeof getIframeDoc === 'function' ? getIframeDoc() : null;
-            const liveSessionToken = typeof studioEditorSessionToken !== 'undefined'
-              ? studioEditorSessionToken
-              : null;
-            setEditorLiveCanonicalDeck(nextCanonicalDeck, liveEditorDoc, liveSessionToken);
-          },
-          getTimer: () => undoDebounceTimer,
-          setTimer(nextTimer) {
-            undoDebounceTimer = nextTimer;
-          },
-          captureState,
-          scheduleOptions: {
-            clearScheduledCapture: clearTimeout,
-            scheduleCapture: (callback, delayMs) => setTimeout(callback, delayMs)
-          }
-        })(debounce, transaction, canonicalDeck);
+      if (!createStudioHistorySaveHandler) {
+        return { didCapture: false, nextTimer: undoDebounceTimer };
       }
-
-      if (typeof pendingEditorCanonicalDeck !== 'undefined') {
-        pendingEditorCanonicalDeck = canonicalDeck;
-      }
-      if (typeof setEditorLiveCanonicalDeck === 'function') {
-        const liveEditorDoc = typeof getIframeDoc === 'function' ? getIframeDoc() : null;
-        const liveSessionToken = typeof studioEditorSessionToken !== 'undefined'
-          ? studioEditorSessionToken
-          : null;
-        setEditorLiveCanonicalDeck(
-          hasCanonicalDeck ? canonicalDeck : null,
-          liveEditorDoc,
-          liveSessionToken
-        );
-      }
-      const transactionApi = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-      )
-        ? SlideNextStudioEditorTransaction
-        : null;
-      const normalizedTransaction = transactionApi
-        && typeof transactionApi.normalizeStudioEditorTransaction === 'function'
-        ? transactionApi.normalizeStudioEditorTransaction(transaction)
-        : transaction;
-      if (normalizedTransaction) {
-        pendingEditorTransaction = transactionApi
-          && typeof transactionApi.mergeStudioEditorTransactions === 'function'
-          ? transactionApi.mergeStudioEditorTransactions(pendingEditorTransaction, normalizedTransaction)
-          : transactionApi
-            && typeof transactionApi.mergeStudioStyleTransactions === 'function'
-              ? transactionApi.mergeStudioStyleTransactions(pendingEditorTransaction, normalizedTransaction)
-          : normalizedTransaction;
-      } else {
-        pendingEditorTransaction = null;
-      }
-      const nextCaptureState = SlideNextStudioHistory.scheduleStudioHistoryCapture(
-        undoDebounceTimer,
-        debounce,
-        captureState
-      );
-      undoDebounceTimer = nextCaptureState.nextTimer;
+      return createStudioHistorySaveHandler({
+        transactionApi: (
+          typeof SlideNextStudioEditorTransaction !== 'undefined'
+          && SlideNextStudioEditorTransaction
+        )
+          ? SlideNextStudioEditorTransaction
+          : null,
+        getPendingTransaction: () => pendingEditorTransaction,
+        setPendingTransaction(nextTransaction) {
+          pendingEditorTransaction = nextTransaction;
+        },
+        setPendingCanonicalDeck(nextCanonicalDeck) {
+          pendingEditorCanonicalDeck = nextCanonicalDeck;
+        },
+        setLiveCanonicalDeck(nextCanonicalDeck) {
+          if (typeof setEditorLiveCanonicalDeck !== 'function') return;
+          const liveEditorDoc = typeof getIframeDoc === 'function' ? getIframeDoc() : null;
+          const liveSessionToken = typeof studioEditorSessionToken !== 'undefined'
+            ? studioEditorSessionToken
+            : null;
+          setEditorLiveCanonicalDeck(nextCanonicalDeck, liveEditorDoc, liveSessionToken);
+        },
+        getTimer: () => undoDebounceTimer,
+        setTimer(nextTimer) {
+          undoDebounceTimer = nextTimer;
+        },
+        captureState,
+        scheduleOptions: {
+          clearScheduledCapture: clearTimeout,
+          scheduleCapture: (callback, delayMs) => setTimeout(callback, delayMs)
+        }
+      })(debounce, transaction, arguments.length > 2 ? arguments[2] : null);
     }
 
     function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {

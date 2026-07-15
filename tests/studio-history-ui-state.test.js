@@ -16,6 +16,19 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadSaveHistoryState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function saveHistoryState(debounce = false, transaction = null) {',
+    '\n\n    function buildHistoryFrameHtml('
+  );
+  context.SlideNextStudioHistory = {
+    ...studioHistory,
+    ...(context.SlideNextStudioHistory || {})
+  };
+  vm.runInContext(helperSource, context);
+}
+
 function loadResolveEditorMetadataPersistenceOptions(fileContent, context) {
   const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
     fileContent,
@@ -1005,11 +1018,6 @@ test('captureState reads the live frame through the shared iframe accessor befor
 
 test('saveHistoryState delegates transaction scheduling to the shared history save handler', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const saveHistoryStateSource = extractFunctionSource(
-    fileContent,
-    'function saveHistoryState(debounce = false, transaction = null) {',
-    '\n\n    function buildHistoryFrameHtml('
-  );
 
   const delegatedCalls = [];
   let capturedHandlerOptions = null;
@@ -1039,7 +1047,7 @@ test('saveHistoryState delegates transaction scheduling to the shared history sa
   };
 
   vm.createContext(context);
-  vm.runInContext(saveHistoryStateSource, context);
+  loadSaveHistoryState(fileContent, context);
 
   const transaction = { kind: 'slidenext.editor.transaction' };
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
@@ -1057,13 +1065,8 @@ test('saveHistoryState delegates transaction scheduling to the shared history sa
   assert.equal(capturedHandlerOptions.captureState, context.captureState);
 });
 
-test('saveHistoryState preserves canonical sidecars in its legacy fallback', () => {
+test('saveHistoryState preserves canonical sidecars through the shared handler', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const saveHistoryStateSource = extractFunctionSource(
-    fileContent,
-    'function saveHistoryState(debounce = false, transaction = null) {',
-    '\n\n    function buildHistoryFrameHtml('
-  );
 
   let liveCanonicalArgs = null;
   const context = {
@@ -1077,6 +1080,8 @@ test('saveHistoryState preserves canonical sidecars in its legacy fallback', () 
     pendingEditorCanonicalDeck: null,
     pendingEditorTransaction: null,
     undoDebounceTimer: null,
+    clearTimeout() {},
+    setTimeout() {},
     captureState() {},
     getIframeDoc() {
       return null;
@@ -1087,7 +1092,7 @@ test('saveHistoryState preserves canonical sidecars in its legacy fallback', () 
   };
 
   vm.createContext(context);
-  vm.runInContext(saveHistoryStateSource, context);
+  loadSaveHistoryState(fileContent, context);
 
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   context.saveHistoryState(false, { id: 'legacy-transaction' }, canonicalDeck);
