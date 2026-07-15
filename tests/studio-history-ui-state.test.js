@@ -227,7 +227,7 @@ test('editorRedo reuses the shared history step runner when available', () => {
   assert.equal(delegatedArgs.triggerAutoSave, context.triggerAutoSave);
 });
 
-test('createHistoryEntry attaches the current canonical deck sidecar and live editor state to history entries', () => {
+test('createHistoryEntry fails closed when the shared history entry builder is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createHistoryEntrySource = extractFunctionSource(
     fileContent,
@@ -282,24 +282,8 @@ test('createHistoryEntry attaches the current canonical deck sidecar and live ed
 
   const entry = context.createHistoryEntry();
 
-  assert.deepEqual(calls.map(([name]) => name), [
-    'getIframeDoc',
-    'buildEditorCanonicalDeck',
-    'getEditorHistoryOptions',
-    'createStudioHistoryEntry',
-    'getActiveSlideId',
-    'getCommittedSelectedEditorElementIds'
-  ]);
-  assert.equal(calls[1][1], iframeDoc);
-  assert.equal(calls[3][1], iframeDoc);
-  assert.equal(calls[3][2].buildHistoryHtml, context.buildHistoryFrameHtml);
-  assert.equal(calls[3][2].canonicalDeck, canonicalDeck);
-  assert.deepEqual(entry, {
-    html: '<html></html>',
-    activeSlideId: 'slide-2',
-    selectedElementIds: ['node-1', 'node-2'],
-    canonicalDeck
-  });
+  assert.deepEqual(calls, []);
+  assert.equal(entry, null);
 });
 
 test('createHistoryEntry captures a model-only history entry when the editor frame is unavailable', () => {
@@ -339,15 +323,7 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
         calls.push(['buildStudioHistoryFrameHtml', doc, options]);
         return '';
       },
-      createStudioHistoryEntry(doc, options) {
-        calls.push(['createStudioHistoryEntry', doc, options]);
-        return {
-          html: options.buildHistoryHtml(doc, options),
-          activeSlideId: options.activeSlideId,
-          selectedElementIds: options.selectedElementIds,
-          canonicalDeck: options.canonicalDeck
-        };
-      }
+      buildStudioHistoryEntry: studioHistory.buildStudioHistoryEntry
     },
     getActiveSlideId() {
       throw new Error('getActiveSlideId should not run without a live editor frame');
@@ -399,15 +375,11 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
     'buildEditorCanonicalDeck',
     'getEditorHistoryOptions',
     'getPersistedActiveSlideId',
-    'createStudioHistoryEntry',
     'getEditorHistoryOptions',
     'buildStudioHistoryFrameHtml'
   ]);
   assert.equal(calls[1][1], null);
-  assert.equal(calls[4][1], null);
-  assert.equal(calls[4][2].activeSlideId, 'slide-2');
-  assert.equal(Array.isArray(calls[4][2].selectedElementIds), true);
-  assert.equal(calls[4][2].selectedElementIds.length, 0);
+  assert.equal(calls[5][1], null);
   assert.equal(entry.html, '');
   assert.equal(entry.activeSlideId, 'slide-2');
   assert.equal(Array.isArray(entry.selectedElementIds), true);

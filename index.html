@@ -7540,25 +7540,7 @@
             : null
         });
       }
-
-      const nextDoc = doc || getIframeDoc();
-      const canonicalDeck = historyCanonicalDeckBuilder(nextDoc);
-      const historyOptions = getEditorHistoryOptions();
-      const activeSlideId = nextDoc
-        ? ''
-        : resolveEditorFallbackActiveSlideId(nextDoc, canonicalDeck);
-      return SlideNextStudioHistory.createStudioHistoryEntry(nextDoc, {
-        ...historyOptions,
-        getActiveSlideId,
-        getSelectedElementIds: getCommittedSelectedEditorElementIds,
-        activeSlideId,
-        selectedElementIds: [],
-        buildHistoryHtml: buildHistoryFrameHtml,
-        canonicalDeck,
-        transaction: typeof pendingEditorTransaction !== 'undefined'
-          ? pendingEditorTransaction
-          : null
-      });
+      return null;
     }
 
     function updateEditorPersistedDeckState(nextState = {}) {
