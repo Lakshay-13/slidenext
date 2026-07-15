@@ -1152,6 +1152,7 @@
   <script src="/shared/studio-editor-status-view.js"></script>
   <script src="/shared/studio-editor-grid-snap-view.js"></script>
   <script src="/shared/studio-editor-wallpaper-view.js"></script>
+  <script src="/shared/studio-editor-active-slide-view.js"></script>
   <script src="/shared/studio-editor-mutation.js"></script>
   <script src="/shared/studio-editor-transaction.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
@@ -2595,135 +2596,115 @@
     }
 
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
-      const previousIndex = currentSlideIndex;
-      const preserveSelection = !!options.preserveSelection || preserveSelectionOnNextActiveSlideSync;
       const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
         ? SlideNextStudioEditorWallpaperView
         : null;
-      const syncSolidWallpaperControlToActiveSlide = wallpaperView
-        && typeof wallpaperView.syncStudioSolidWallpaperControl === 'function'
-        ? (activeSlide) => wallpaperView.syncStudioSolidWallpaperControl({
+      const activeSlideView = typeof SlideNextStudioEditorActiveSlideView !== 'undefined'
+        ? SlideNextStudioEditorActiveSlideView
+        : null;
+      if (!activeSlideView || typeof activeSlideView.syncStudioActiveSlideChrome !== 'function') return false;
+
+      return activeSlideView.syncStudioActiveSlideChrome(doc, {
+        ...options,
+        getCurrentSlideIndex: () => currentSlideIndex,
+        getPreserveSelectionOnNextActiveSlideSync: () => preserveSelectionOnNextActiveSlideSync,
+        setPreserveSelectionOnNextActiveSlideSync: (nextValue) => {
+          preserveSelectionOnNextActiveSlideSync = !!nextValue;
+        },
+        updateCurrentPresentationSessionState: (...args) => (
+          typeof updateCurrentPresentationSessionState === 'function'
+            ? updateCurrentPresentationSessionState(...args)
+            : undefined
+        ),
+        updateActiveThumbnailCardState: (...args) => (
+          typeof updateActiveThumbnailCardState === 'function'
+            ? updateActiveThumbnailCardState(...args)
+            : undefined
+        ),
+        setSlideCountLabel: (label) => {
+          const slideCountLabel = document.getElementById('slideCountLabel');
+          if (slideCountLabel) slideCountLabel.textContent = label;
+        },
+        refreshActionStateChrome: (nextDoc) => {
+          updateInsertionActionState(nextDoc);
+          updateZoomActionState(nextDoc);
+          updateWallpaperActionState(nextDoc);
+        },
+        syncSelectionChrome: (preserveSelection) => {
+          if (!preserveSelection) {
+            deselectElement();
+          } else {
+            updateLayersList();
+          }
+        },
+        buildEditorDeckSnapshot: (sourceDoc) => (
+          typeof buildEditorDeckSnapshot === 'function'
+            ? buildEditorDeckSnapshot(sourceDoc)
+            : { slides: [] }
+        ),
+        resolveStudioActiveSlideIndex: (deckSnapshot, fallbackIndex) => (
+          SlideNextStudioDeckSnapshot.resolveStudioActiveSlideIndex(deckSnapshot, fallbackIndex)
+        ),
+        saveHistoryState: (...args) => (
+          typeof saveHistoryState === 'function' ? saveHistoryState(...args) : undefined
+        ),
+        syncStudioActiveSlideView: (nextDoc, viewOptions) => (
+          SlideNextStudioDeckView.syncStudioActiveSlideView(nextDoc, viewOptions)
+        ),
+        getSlides: (...args) => (
+          typeof getSlides === 'function' ? getSlides(...args) : []
+        ),
+        deselectElement: (...args) => (
+          typeof deselectElement === 'function' ? deselectElement(...args) : undefined
+        ),
+        applyViewportTransform: (nextDoc, activeIndex) => {
+          const container = nextDoc.getElementById('slidesContainer');
+          if (container) container.style.transform = `translateX(-${activeIndex * 100}vw)`;
+        },
+        pruneEditorChromeNodes: (...args) => (
+          typeof pruneEditorChromeNodes === 'function' ? pruneEditorChromeNodes(...args) : undefined
+        ),
+        getSlideId: (...args) => (
+          typeof getEditorSlideId === 'function' ? getEditorSlideId(...args) : ''
+        ),
+        updateIframeNavigationUI: (...args) => (
+          typeof updateIframeNavigationUI === 'function' ? updateIframeNavigationUI(...args) : undefined
+        ),
+        getActiveSlide: (...args) => (
+          typeof getActiveSlide === 'function' ? getActiveSlide(...args) : null
+        ),
+        syncCustomGradientControls: (activeSlide) => {
+          if (!wallpaperView || typeof wallpaperView.syncStudioCustomGradientControls !== 'function') return false;
+          const result = wallpaperView.syncStudioCustomGradientControls({
             documentRef: document,
             activeSlide,
             rgbToHex: typeof rgbToHex === 'function' ? rgbToHex : null
-          })
-        : () => false;
-      const syncWallpaperTabChromeToActiveSlide = (activeSlide, options = {}) => {
-        if (!wallpaperView || typeof wallpaperView.syncStudioWallpaperTabChrome !== 'function') return false;
-        const result = wallpaperView.syncStudioWallpaperTabChrome({
-          documentRef: document,
-          activeSlide,
-          wallpaperTab: typeof wallpaperTab === 'string' ? wallpaperTab : '',
-          didSyncCustomGradientControls: options.didSyncCustomGradientControls
-        });
-        if (!result.didApply) return false;
-        wallpaperTab = result.wallpaperTab;
-        return true;
-      };
-      const syncCustomGradientControlsToActiveSlide = (activeSlide) => {
-        if (!wallpaperView || typeof wallpaperView.syncStudioCustomGradientControls !== 'function') return false;
-        const result = wallpaperView.syncStudioCustomGradientControls({
-          documentRef: document,
-          activeSlide,
-          rgbToHex: typeof rgbToHex === 'function' ? rgbToHex : null
-        });
-        if (!result.didApply) return false;
-        customGradientType = result.gradientType;
-        return true;
-      };
-      const setSlideCountLabel = (label) => {
-        const slideCountLabel = document.getElementById('slideCountLabel');
-        if (slideCountLabel) {
-          slideCountLabel.textContent = label;
-        }
-      };
-      const refreshLayersList = () => {
-        updateLayersList();
-      };
-      const refreshActionStateChrome = (nextDoc = doc) => {
-        updateInsertionActionState(nextDoc);
-        updateZoomActionState(nextDoc);
-        updateWallpaperActionState(nextDoc);
-      };
-      const syncSelectionChrome = () => {
-        if (!preserveSelection) {
-          deselectElement();
-          return;
-        }
-        refreshLayersList();
-      };
-      const syncToDeckSnapshotFallback = (deckSnapshot) => {
-        const slideCount = Array.isArray(deckSnapshot.slides) ? deckSnapshot.slides.length : 0;
-        if (slideCount === 0) {
-          updateCurrentPresentationSessionState({ slideIndex: 0 });
-          updateActiveThumbnailCardState('');
-          setSlideCountLabel('0 / 0');
-          refreshActionStateChrome(doc);
-          syncSelectionChrome();
-          preserveSelectionOnNextActiveSlideSync = false;
-          return false;
-        }
-
-        const activeIndex = SlideNextStudioDeckSnapshot.resolveStudioActiveSlideIndex(deckSnapshot, currentSlideIndex);
-        const activeSlideSnapshot = deckSnapshot.slides[activeIndex] || null;
-        const activeSlideId = activeSlideSnapshot ? activeSlideSnapshot.id : '';
-
-        updateCurrentPresentationSessionState({ slideIndex: activeIndex });
-        updateActiveThumbnailCardState(activeSlideId);
-        setSlideCountLabel(`${activeIndex + 1} / ${slideCount}`);
-        refreshActionStateChrome(doc);
-        syncSelectionChrome();
-        preserveSelectionOnNextActiveSlideSync = false;
-        if (options.captureHistory && activeSlideSnapshot && previousIndex !== currentSlideIndex) {
-          saveHistoryState(false);
-        }
-        return !!activeSlideSnapshot;
-      };
-
-      if (!doc) {
-        const deckSnapshot = buildEditorDeckSnapshot(doc);
-        return syncToDeckSnapshotFallback(deckSnapshot);
-      }
-
-      const nextViewState = SlideNextStudioDeckView.syncStudioActiveSlideView(doc, {
-        normalizeViewport: options.normalizeViewport,
-        preserveSelection,
-        getSlides,
-        setCurrentSlideIndex: (nextIndex) => {
-          updateCurrentPresentationSessionState({ slideIndex: nextIndex });
+          });
+          if (!result.didApply) return false;
+          customGradientType = result.gradientType;
+          return true;
         },
-        updateActiveThumbnailCardState,
-        setSlideCountLabel: (label) => {
-          setSlideCountLabel(label);
+        syncWallpaperTabChrome: (activeSlide, wallpaperOptions = {}) => {
+          if (!wallpaperView || typeof wallpaperView.syncStudioWallpaperTabChrome !== 'function') return false;
+          const result = wallpaperView.syncStudioWallpaperTabChrome({
+            documentRef: document,
+            activeSlide,
+            wallpaperTab: typeof wallpaperTab === 'string' ? wallpaperTab : '',
+            didSyncCustomGradientControls: wallpaperOptions.didSyncCustomGradientControls
+          });
+          if (!result.didApply) return false;
+          wallpaperTab = result.wallpaperTab;
+          return true;
         },
-        deselectElement,
-        applyViewportTransform: (nextDoc, activeIndex) => {
-          const container = nextDoc.getElementById('slidesContainer');
-          if (container) {
-            container.style.transform = `translateX(-${activeIndex * 100}vw)`;
-          }
-        },
-        pruneEditorChromeNodes,
-        getSlideId: getEditorSlideId,
-        updateIframeNavigationUI
+        syncSolidWallpaperControl: (activeSlide) => {
+          if (!wallpaperView || typeof wallpaperView.syncStudioSolidWallpaperControl !== 'function') return false;
+          return wallpaperView.syncStudioSolidWallpaperControl({
+            documentRef: document,
+            activeSlide,
+            rgbToHex: typeof rgbToHex === 'function' ? rgbToHex : null
+          });
+        }
       });
-      if (!nextViewState.didSync) {
-        const deckSnapshot = buildEditorDeckSnapshot(doc);
-        return syncToDeckSnapshotFallback(deckSnapshot);
-      }
-      const activeSlide = getActiveSlide(doc);
-      const didSyncCustomGradientControls = syncCustomGradientControlsToActiveSlide(activeSlide);
-      syncWallpaperTabChromeToActiveSlide(activeSlide, {
-        didSyncCustomGradientControls
-      });
-      syncSolidWallpaperControlToActiveSlide(activeSlide);
-      refreshActionStateChrome(doc);
-      syncSelectionChrome();
-      preserveSelectionOnNextActiveSlideSync = false;
-      if (options.captureHistory && nextViewState.didSync && previousIndex !== currentSlideIndex) {
-        saveHistoryState(false);
-      }
-      return nextViewState.didSync;
     }
 
     function bindDeckNavigationSync(doc = getIframeDoc()) {
