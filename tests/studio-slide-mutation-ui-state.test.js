@@ -1175,6 +1175,79 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
   assert.equal(calls[14][1], 0);
 });
 
+test('deleteSlideNode delegates slide removal and transaction capture to the shared deck view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const deleteSlideNodeSource = extractFunctionSource(
+    fileContent,
+    'function deleteSlideNode(idx) {',
+    '\n\n    function getIframeDoc() {'
+  );
+  const firstSlide = { id: 'slide-1' };
+  const deletedSlide = { id: 'slide-2' };
+  const slides = [firstSlide, deletedSlide];
+  const slidesContainer = { id: 'slides-container' };
+  const iframeDoc = {
+    getElementById(id) {
+      assert.equal(id, 'slidesContainer');
+      return slidesContainer;
+    }
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      applyStudioSlideDeletionMutation(...args) {
+        calls.push(['applyStudioSlideDeletionMutation', ...args]);
+        return {
+          didApply: true,
+          transaction: { type: 'markup' }
+        };
+      }
+    },
+    captureSlideMutationRestoreState(doc) {
+      calls.push(['captureSlideMutationRestoreState', doc]);
+      return {
+        preservedActiveSlideId: 'slide-2',
+        preservedSelectionIds: []
+      };
+    },
+    finalizeSlideMutationPersistence(...args) {
+      calls.push(['finalizeSlideMutationPersistence', ...args]);
+    },
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    getEditorSlideId(slide) {
+      return slide.id;
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    getSlides() {
+      calls.push(['getSlides']);
+      return slides;
+    },
+    restoreDeckViewAfterSlideMutation(...args) {
+      calls.push(['restoreDeckViewAfterSlideMutation', ...args]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(deleteSlideNodeSource, context);
+
+  assert.equal(context.deleteSlideNode(1), true);
+  const delegation = calls.find(([name]) => name === 'applyStudioSlideDeletionMutation');
+  assert.equal(delegation[1], slidesContainer);
+  assert.equal(delegation[2], deletedSlide);
+  assert.equal(delegation[3].createMarkupTransactionCapture, null);
+  const finalize = calls.find(([name]) => name === 'finalizeSlideMutationPersistence');
+  assert.deepEqual(finalize, [
+    'finalizeSlideMutationPersistence',
+    'Auto: Deleted Slide',
+    { type: 'markup' }
+  ]);
+});
+
 test('deleteSlideNode no-ops when the iframe document is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const deleteSlideNodeSource = extractFunctionSource(

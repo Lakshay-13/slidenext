@@ -2870,12 +2870,6 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const markupCapture = createStudioMarkupTransactionCapture
-        ? createStudioMarkupTransactionCapture([{
-            element: container,
-            elementId: 'slides-container'
-          }])
-        : null;
       
       const slides = getSlides(iframeDoc);
       if (slides.length <= 1) {
@@ -2900,8 +2894,32 @@
       const canonicalDeckAfterDeletion = removeCanonicalSlide
         ? removeCanonicalSlide(canonicalDeckBeforeDeletion, deletedSlideId)
         : null;
-      
-      deletedSlide.remove();
+      const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
+        : null;
+      const applyStudioSlideDeletionMutation = deckViewApi
+        && typeof deckViewApi.applyStudioSlideDeletionMutation === 'function'
+        ? deckViewApi.applyStudioSlideDeletionMutation
+        : null;
+      let transaction = null;
+      if (applyStudioSlideDeletionMutation) {
+        const mutation = applyStudioSlideDeletionMutation(container, deletedSlide, {
+          createMarkupTransactionCapture: createStudioMarkupTransactionCapture
+        });
+        if (!mutation.didApply) return false;
+        transaction = mutation.transaction;
+      } else {
+        const markupCapture = createStudioMarkupTransactionCapture
+          ? createStudioMarkupTransactionCapture([{
+              element: container,
+              elementId: 'slides-container'
+            }])
+          : null;
+        deletedSlide.remove();
+        transaction = markupCapture
+          ? markupCapture.createTransaction()
+          : null;
+      }
       
       generateThumbnails();
       const remainingSlides = getSlides(iframeDoc);
@@ -2910,9 +2928,6 @@
         removedSlideId: deletedSlideId,
         fallbackIndex: remainingSlides.length === 0 ? 0 : Math.max(0, Math.min(idx - 1, remainingSlides.length - 1)),
       });
-      const transaction = markupCapture
-        ? markupCapture.createTransaction()
-        : null;
       if (canonicalDeckAfterDeletion) {
         finalizeSlideMutationPersistence('Auto: Deleted Slide', transaction, canonicalDeckAfterDeletion);
       } else {

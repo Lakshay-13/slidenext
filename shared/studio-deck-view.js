@@ -527,6 +527,42 @@
     };
   }
 
+  function applyStudioSlideDeletionMutation(container, slideNode, options = {}) {
+    if (!container
+      || !slideNode
+      || typeof slideNode.remove !== 'function') {
+      return {
+        didApply: false,
+        transaction: null
+      };
+    }
+
+    const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
+      ? options.createMarkupTransactionCapture
+      : null;
+    const containerElementId = typeof options.containerElementId === 'string'
+      && options.containerElementId.trim()
+      ? options.containerElementId.trim()
+      : 'slides-container';
+    const markupCapture = createMarkupTransactionCapture
+      ? createMarkupTransactionCapture([{
+          element: container,
+          elementId: containerElementId
+        }], {
+          getElementId: options.getElementId
+        })
+      : null;
+
+    slideNode.remove();
+
+    return {
+      didApply: true,
+      transaction: markupCapture
+        ? markupCapture.createTransaction()
+        : null
+    };
+  }
+
   function syncStudioActiveSlideView(doc, options = {}) {
     const getSlides = typeof options.getSlides === 'function'
       ? options.getSlides
@@ -878,6 +914,7 @@
     updateStudioDeckActiveThumbnailCardState,
     applyStudioSlideReorderMutation,
     applyStudioSlideInsertionMutation,
+    applyStudioSlideDeletionMutation,
     syncStudioActiveSlideView,
     setStudioDeckActiveSlide,
     setStudioDeckActiveSlideById,
