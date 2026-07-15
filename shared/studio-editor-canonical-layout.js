@@ -30,12 +30,9 @@
       && typeof canonicalDeckApi.updateCanonicalNodeLayout === 'function'
       ? canonicalDeckApi.updateCanonicalNodeLayout
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
-      : (buildCanonicalDeck ? buildCanonicalDeck() : null);
+      : buildStudioCanonicalLayoutBaseline(options);
 
     if (!updateCanonicalNodeLayout) {
       return null;
