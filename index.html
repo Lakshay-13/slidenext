@@ -5689,6 +5689,10 @@
 
     function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {
       const canonicalDeck = arguments.length > 3 ? arguments[3] : null;
+      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
+        ? SlideNextStudioEditorSelection
+        : null;
+      if (!selectionApi || typeof selectionApi.selectAllStudioElements !== 'function') return false;
       const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
         ? SlideNextStudioEditorMutation
         : null;
@@ -5698,13 +5702,13 @@
           versionLabel,
           transaction,
           ...(canonicalDeck ? { canonicalDeck } : {}),
-          selectAllElements: SlideNextStudioEditorSelection.selectAllStudioElements,
+          selectAllElements: selectionApi.selectAllStudioElements,
           commitSelectionState: commitEditorSelectionState,
           finalizeMutation: finalizeEditorDeckMutation
         });
       }
       if (!insertedElements || insertedElements.length === 0) return false;
-      const nextSelectionState = SlideNextStudioEditorSelection.selectAllStudioElements(insertedElements);
+      const nextSelectionState = selectionApi.selectAllStudioElements(insertedElements);
       commitEditorSelectionState(nextSelectionState);
       finalizeEditorDeckMutation(versionLabel, {
         transaction,

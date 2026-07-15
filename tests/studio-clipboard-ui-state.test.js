@@ -274,6 +274,28 @@ test('finalizeInsertedElements commits the new selection and delegates persisten
   ]);
 });
 
+test('finalizeInsertedElements fails closed when shared selection is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const finalizeInsertedElementsSource = extractFunctionSource(
+    fileContent,
+    'function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {',
+    '\n\n    function copySelectedElements() {'
+  );
+  let finalized = false;
+  const context = {
+    SlideNextStudioEditorSelection: null,
+    finalizeEditorDeckMutation() {
+      finalized = true;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(finalizeInsertedElementsSource, context);
+
+  assert.equal(context.finalizeInsertedElements([{ id: 'node-1' }], 'Auto: Pasted Element'), false);
+  assert.equal(finalized, false);
+});
+
 test('finalizeInsertedElements delegates selection and persistence ordering to shared mutation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const finalizeInsertedElementsSource = extractFunctionSource(
