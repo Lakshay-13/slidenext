@@ -229,6 +229,7 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   };
   const calls = [];
   const context = {
+    SlideNextCanonicalDeck: canonicalDeckModel,
     assignEditorSlideId() {},
     document: {
       getElementById(id) {
@@ -248,6 +249,11 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
     },
     getActiveSlide() {
       return null;
+    },
+    buildEditorCanonicalDeck() {
+      return canonicalDeckModel.createCanonicalDeck({
+        slides: [{ id: 'slide-1' }]
+      });
     },
     getIframeDoc() {
       calls.push(['getIframeDoc']);
@@ -316,8 +322,9 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
       elementId: 'slides-container',
       before: '<section data-slide-id="slide-1"></section>',
       after: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section>'
-    }]
+      }]
   });
+  assert.deepEqual(calls[7][3].slides.map((slide) => slide.id), ['slide-1', 'slide-2']);
 });
 
 test('addSlideNode no-ops when insertion state or the iframe document disallows adding slides', () => {

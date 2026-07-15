@@ -2771,6 +2771,39 @@
       });
       if (!newSlide) return false;
 
+      const appendCanonicalSlide = (
+        typeof SlideNextCanonicalDeck !== 'undefined'
+        && SlideNextCanonicalDeck
+        && typeof SlideNextCanonicalDeck.appendCanonicalSlide === 'function'
+      )
+        ? SlideNextCanonicalDeck.appendCanonicalSlide
+        : null;
+      const newSlideId = typeof getEditorSlideId === 'function'
+        ? getEditorSlideId(newSlide)
+        : (newSlide.id || '');
+      const importSlideToCanonicalSlide = (
+        typeof SlideNextDeckImport !== 'undefined'
+        && SlideNextDeckImport
+        && typeof SlideNextDeckImport.importSlideToCanonicalSlide === 'function'
+      )
+        ? SlideNextDeckImport.importSlideToCanonicalSlide
+        : null;
+      const canonicalDeckBeforeAddition = appendCanonicalSlide
+        && typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(iframeDoc)
+        : null;
+      const canonicalSlide = importSlideToCanonicalSlide && newSlideId
+        ? importSlideToCanonicalSlide(newSlide, newIndex, {
+            getSlideId: () => newSlideId
+          })
+        : {
+            id: newSlideId,
+            title: `Slide ${newIndex + 1}`
+          };
+      const canonicalDeckAfterAddition = appendCanonicalSlide
+        ? appendCanonicalSlide(canonicalDeckBeforeAddition, canonicalSlide)
+        : null;
+
       saveHistoryState();
       
       container.appendChild(newSlide);
@@ -2781,7 +2814,11 @@
       const transaction = markupCapture
         ? markupCapture.createTransaction()
         : null;
-      finalizeSlideMutationPersistence('Auto: Added Slide', transaction);
+      if (canonicalDeckAfterAddition) {
+        finalizeSlideMutationPersistence('Auto: Added Slide', transaction, canonicalDeckAfterAddition);
+      } else {
+        finalizeSlideMutationPersistence('Auto: Added Slide', transaction);
+      }
       return true;
     }
 

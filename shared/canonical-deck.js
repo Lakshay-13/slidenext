@@ -244,6 +244,26 @@
     });
   }
 
+  function appendCanonicalSlide(deckLike, slideLike = {}) {
+    if (!deckLike || typeof deckLike !== 'object') {
+      return null;
+    }
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    if (!isCanonicalDeck(deck) || !slideLike || typeof slideLike !== 'object') {
+      return null;
+    }
+
+    return createCanonicalDeck({
+      ...deck,
+      slides: [
+        ...deck.slides,
+        createCanonicalSlide(slideLike, deck.slides.length)
+      ]
+    });
+  }
+
   return {
     DECK_KIND,
     DECK_SCHEMA_VERSION,
@@ -256,6 +276,7 @@
     createCanonicalDeck,
     isCanonicalDeck,
     reorderCanonicalSlides,
-    removeCanonicalSlide
+    removeCanonicalSlide,
+    appendCanonicalSlide
   };
 });
