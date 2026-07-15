@@ -6002,6 +6002,34 @@
     // 5. Undo/Redo Engine
     let undoDebounceTimer = null;
     function saveHistoryState(debounce = false, transaction = null) {
+      const createStudioHistorySaveHandler = SlideNextStudioHistory
+        && typeof SlideNextStudioHistory.createStudioHistorySaveHandler === 'function'
+        ? SlideNextStudioHistory.createStudioHistorySaveHandler
+        : null;
+      if (createStudioHistorySaveHandler) {
+        return createStudioHistorySaveHandler({
+          transactionApi: (
+            typeof SlideNextStudioEditorTransaction !== 'undefined'
+            && SlideNextStudioEditorTransaction
+          )
+            ? SlideNextStudioEditorTransaction
+            : null,
+          getPendingTransaction: () => pendingEditorTransaction,
+          setPendingTransaction(nextTransaction) {
+            pendingEditorTransaction = nextTransaction;
+          },
+          getTimer: () => undoDebounceTimer,
+          setTimer(nextTimer) {
+            undoDebounceTimer = nextTimer;
+          },
+          captureState,
+          scheduleOptions: {
+            clearScheduledCapture: clearTimeout,
+            scheduleCapture: (callback, delayMs) => setTimeout(callback, delayMs)
+          }
+        })(debounce, transaction);
+      }
+
       const transactionApi = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction

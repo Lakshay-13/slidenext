@@ -544,6 +544,62 @@
     };
   }
 
+  function createStudioHistorySaveHandler(options = {}) {
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const getPendingTransaction = typeof options.getPendingTransaction === 'function'
+      ? options.getPendingTransaction
+      : () => null;
+    const setPendingTransaction = typeof options.setPendingTransaction === 'function'
+      ? options.setPendingTransaction
+      : () => {};
+    const getTimer = typeof options.getTimer === 'function'
+      ? options.getTimer
+      : () => null;
+    const setTimer = typeof options.setTimer === 'function'
+      ? options.setTimer
+      : () => {};
+    const captureState = typeof options.captureState === 'function'
+      ? options.captureState
+      : () => {};
+    const scheduleCapture = typeof options.scheduleCapture === 'function'
+      ? options.scheduleCapture
+      : scheduleStudioHistoryCapture;
+    const scheduleOptions = options.scheduleOptions && typeof options.scheduleOptions === 'object'
+      ? options.scheduleOptions
+      : {};
+
+    return function saveHistoryState(debounce = false, transaction = null) {
+      const normalizedTransaction = transactionApi
+        && typeof transactionApi.normalizeStudioEditorTransaction === 'function'
+        ? transactionApi.normalizeStudioEditorTransaction(transaction)
+        : transaction;
+      if (normalizedTransaction) {
+        const pendingTransaction = getPendingTransaction();
+        const mergedTransaction = transactionApi
+          && typeof transactionApi.mergeStudioEditorTransactions === 'function'
+          ? transactionApi.mergeStudioEditorTransactions(pendingTransaction, normalizedTransaction)
+          : transactionApi
+            && typeof transactionApi.mergeStudioStyleTransactions === 'function'
+              ? transactionApi.mergeStudioStyleTransactions(pendingTransaction, normalizedTransaction)
+              : normalizedTransaction;
+        setPendingTransaction(mergedTransaction);
+      } else {
+        setPendingTransaction(null);
+      }
+
+      const nextCaptureState = scheduleCapture(
+        getTimer(),
+        debounce,
+        captureState,
+        scheduleOptions
+      );
+      setTimer(nextCaptureState.nextTimer);
+      return nextCaptureState;
+    };
+  }
+
   function restoreStudioHistoryActiveSlide(historyEntry, options = {}) {
     const restoreActiveSlideById = typeof options.restoreActiveSlideById === 'function'
       ? options.restoreActiveSlideById
@@ -687,6 +743,7 @@
     getStudioHistoryButtonState,
     createStudioHistoryButtonUpdater,
     scheduleStudioHistoryCapture,
+    createStudioHistorySaveHandler,
     restoreStudioHistoryActiveSlide,
     restoreStudioHistorySelectionState,
     restoreStudioHistoryFrameSetup,

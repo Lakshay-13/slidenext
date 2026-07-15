@@ -457,6 +457,91 @@ test('createStudioHistoryStateCapturer updates history stacks only when a new en
   ]);
 });
 
+test('createStudioHistorySaveHandler merges transactions and schedules history capture', () => {
+  const transactionCalls = [];
+  const transactionApi = {
+    normalizeStudioEditorTransaction(transaction) {
+      transactionCalls.push(['normalize', transaction]);
+      return { ...transaction, normalized: true };
+    },
+    mergeStudioEditorTransactions(first, second) {
+      transactionCalls.push(['merge', first, second]);
+      return { first, second, merged: true };
+    }
+  };
+  const scheduledCalls = [];
+  let pendingTransaction = { id: 'pending' };
+  let timer = 'old-timer';
+  let captureCalls = 0;
+  const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
+    transactionApi,
+    getPendingTransaction() {
+      return pendingTransaction;
+    },
+    setPendingTransaction(nextTransaction) {
+      pendingTransaction = nextTransaction;
+    },
+    getTimer() {
+      return timer;
+    },
+    setTimer(nextTimer) {
+      timer = nextTimer;
+    },
+    captureState() {
+      captureCalls += 1;
+    },
+    scheduleCapture(currentTimer, debounce, captureState, options) {
+      scheduledCalls.push([currentTimer, debounce, captureState, options]);
+      captureState();
+      return { nextTimer: 'new-timer', didCapture: true };
+    }
+  });
+
+  const result = saveHistoryState(false, { id: 'next' });
+
+  assert.deepEqual(result, { nextTimer: 'new-timer', didCapture: true });
+  assert.equal(timer, 'new-timer');
+  assert.equal(captureCalls, 1);
+  assert.deepEqual(pendingTransaction, {
+    first: { id: 'pending' },
+    second: { id: 'next', normalized: true },
+    merged: true
+  });
+  assert.deepEqual(transactionCalls, [
+    ['normalize', { id: 'next' }],
+    ['merge', { id: 'pending' }, { id: 'next', normalized: true }]
+  ]);
+  assert.equal(scheduledCalls[0][0], 'old-timer');
+  assert.equal(scheduledCalls[0][1], false);
+});
+
+test('createStudioHistorySaveHandler clears pending transactions when no transaction is provided', () => {
+  let pendingTransaction = { id: 'pending' };
+  let scheduledCapture = false;
+  const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
+    getPendingTransaction() {
+      return pendingTransaction;
+    },
+    setPendingTransaction(nextTransaction) {
+      pendingTransaction = nextTransaction;
+    },
+    getTimer() {
+      return null;
+    },
+    setTimer() {},
+    captureState() {},
+    scheduleCapture() {
+      scheduledCapture = true;
+      return { nextTimer: null, didCapture: true };
+    }
+  });
+
+  saveHistoryState();
+
+  assert.equal(pendingTransaction, null);
+  assert.equal(scheduledCapture, true);
+});
+
 test('createStudioHistoryStateCapturer leaves history state unchanged when no entry is available or capture is skipped', () => {
   const missingEntryCapturer = studioHistory.createStudioHistoryStateCapturer({
     createHistoryEntry() {

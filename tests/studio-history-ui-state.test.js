@@ -1024,6 +1024,48 @@ test('captureState reads the live frame through the shared iframe accessor befor
   ]);
 });
 
+test('saveHistoryState delegates transaction scheduling to the shared history save handler', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const saveHistoryStateSource = extractFunctionSource(
+    fileContent,
+    'function saveHistoryState(debounce = false, transaction = null) {',
+    '\n\n    function buildHistoryFrameHtml('
+  );
+
+  const delegatedCalls = [];
+  let capturedHandlerOptions = null;
+  const context = {
+    SlideNextStudioHistory: {
+      createStudioHistorySaveHandler(options) {
+        capturedHandlerOptions = options;
+        return (debounce, transaction) => {
+          delegatedCalls.push([debounce, transaction]);
+          return { didCapture: true };
+        };
+      }
+    },
+    SlideNextStudioEditorTransaction: {},
+    pendingEditorTransaction: null,
+    undoDebounceTimer: null,
+    clearTimeout() {},
+    setTimeout() {},
+    captureState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(saveHistoryStateSource, context);
+
+  const transaction = { kind: 'slidenext.editor.transaction' };
+  assert.deepEqual(context.saveHistoryState(true, transaction), { didCapture: true });
+  assert.deepEqual(delegatedCalls, [[true, transaction]]);
+  assert.equal(capturedHandlerOptions.transactionApi, context.SlideNextStudioEditorTransaction);
+  assert.equal(typeof capturedHandlerOptions.getPendingTransaction, 'function');
+  assert.equal(typeof capturedHandlerOptions.setPendingTransaction, 'function');
+  assert.equal(typeof capturedHandlerOptions.getTimer, 'function');
+  assert.equal(typeof capturedHandlerOptions.setTimer, 'function');
+  assert.equal(capturedHandlerOptions.captureState, context.captureState);
+});
+
 test('captureState skips history capture when no history entry can be created', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const captureStateSource = extractFunctionSource(
