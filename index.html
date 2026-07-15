@@ -6181,6 +6181,10 @@
         && typeof canonicalGroupApi.buildStudioCanonicalGroupDeck === 'function'
         ? canonicalGroupApi.buildStudioCanonicalGroupDeck
         : null;
+      const buildCanonicalGroupBaseline = canonicalGroupApi
+        && typeof canonicalGroupApi.buildStudioCanonicalGroupBaseline === 'function'
+        ? canonicalGroupApi.buildStudioCanonicalGroupBaseline
+        : null;
       const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
         ? SlideNextDeckImport
         : null;
@@ -6205,7 +6209,15 @@
           .map((element) => getGroupElementId(element))
           .filter(Boolean);
         if (parent === slide || canonicalParentId) {
-          canonicalDeckBeforeGrouping = buildEditorCanonicalDeck(doc);
+          canonicalDeckBeforeGrouping = buildCanonicalGroupBaseline
+            ? buildCanonicalGroupBaseline({
+                canonicalDeckApi,
+                buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+                  ? buildEditorCanonicalDeck
+                  : null,
+                sourceDocument: doc
+              })
+            : null;
         } else {
           canonicalSelectedNodeIds = [];
         }

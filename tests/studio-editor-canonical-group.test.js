@@ -47,6 +47,23 @@ test('buildStudioCanonicalGroupDeck fails closed when grouping dependencies are 
   }), null);
 });
 
+test('buildStudioCanonicalGroupBaseline builds from the source document', () => {
+  const sourceDeck = createSourceDeck();
+  const sourceDocument = { id: 'editor-doc' };
+  let builtFromDocument = null;
+  const result = canonicalGroup.buildStudioCanonicalGroupBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtFromDocument = documentRef;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(builtFromDocument, sourceDocument);
+  assert.equal(result, sourceDeck);
+});
+
 test('buildStudioCanonicalUngroupDeck restores imported children without mutating the source', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{

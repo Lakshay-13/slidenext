@@ -7,6 +7,21 @@
     root.SlideNextStudioEditorCanonicalGroup = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function buildStudioCanonicalGroupBaseline(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const groupCanonicalNodes = canonicalDeckApi
+      && typeof canonicalDeckApi.groupCanonicalNodes === 'function'
+      ? canonicalDeckApi.groupCanonicalNodes
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    if (!groupCanonicalNodes || !buildCanonicalDeck) return null;
+    return buildCanonicalDeck(options.sourceDocument);
+  }
+
   function buildStudioCanonicalGroupDeck(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -103,6 +118,7 @@
   }
 
   return {
+    buildStudioCanonicalGroupBaseline,
     buildStudioCanonicalGroupDeck,
     buildStudioCanonicalUngroupDeck
   };
