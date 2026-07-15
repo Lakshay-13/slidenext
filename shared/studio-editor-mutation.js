@@ -60,8 +60,12 @@
       ? options.triggerAutoVersion
       : () => {};
 
-    return function finalizeStudioSlideMutation(versionLabel, transaction = null) {
-      saveHistoryState(false, transaction);
+    return function finalizeStudioSlideMutation(versionLabel, transaction = null, canonicalDeck = null) {
+      if (canonicalDeck) {
+        saveHistoryState(false, transaction, canonicalDeck);
+      } else {
+        saveHistoryState(false, transaction);
+      }
       triggerAutoSave();
       if (versionLabel) {
         triggerAutoVersion(versionLabel);

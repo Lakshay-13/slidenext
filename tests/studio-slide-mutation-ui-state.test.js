@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -490,6 +491,7 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
     }
   };
   const context = {
+    SlideNextCanonicalDeck: canonicalDeckModel,
     SlideNextStudioDeckView: {
       restoreStudioDeckViewAfterSlideMutation(payload) {
         restorePayload = payload;
@@ -507,6 +509,18 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
     getCommittedSelectedEditorElementIds(doc) {
       calls.push(['getCommittedSelectedEditorElementIds', doc]);
       return selectionIds;
+    },
+    getEditorSlideId(slide) {
+      return slide.id;
+    },
+    buildEditorCanonicalDeck() {
+      return canonicalDeckModel.createCanonicalDeck({
+        slides: [
+          { id: 'slide-1' },
+          { id: 'slide-2' },
+          { id: 'slide-3' }
+        ]
+      });
     },
     getIframeDoc() {
       calls.push(['getIframeDoc']);
@@ -575,6 +589,7 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
       after: '<section data-slide-id="slide-2"></section><section data-slide-id="slide-3"></section><section data-slide-id="slide-1"></section>'
     }]
   });
+  assert.deepEqual(calls[9][3].slides.map((slide) => slide.id), ['slide-2', 'slide-3', 'slide-1']);
   assert.equal(restorePayload.preservedActiveSlideId, 'slide-2');
   assert.equal(restorePayload.fallbackIndex, 2);
 

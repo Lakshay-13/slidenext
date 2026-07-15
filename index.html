@@ -2457,6 +2457,26 @@
       const targetNode = slides[toIdx];
       if (!draggedNode || !targetNode) return false;
       if (fromIdx === toIdx) return false;
+      const reorderCanonicalSlides = (
+        typeof SlideNextCanonicalDeck !== 'undefined'
+        && SlideNextCanonicalDeck
+        && typeof SlideNextCanonicalDeck.reorderCanonicalSlides === 'function'
+      )
+        ? SlideNextCanonicalDeck.reorderCanonicalSlides
+        : null;
+      const sourceSlideId = typeof getEditorSlideId === 'function'
+        ? getEditorSlideId(draggedNode)
+        : '';
+      const targetSlideId = typeof getEditorSlideId === 'function'
+        ? getEditorSlideId(targetNode)
+        : '';
+      const canonicalDeckBeforeReorder = reorderCanonicalSlides
+        && typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(iframeDoc)
+        : null;
+      const canonicalDeckAfterReorder = reorderCanonicalSlides
+        ? reorderCanonicalSlides(canonicalDeckBeforeReorder, sourceSlideId, targetSlideId)
+        : null;
       const slideMutationState = captureSlideMutationRestoreState(iframeDoc);
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
@@ -2487,7 +2507,11 @@
       const transaction = markupCapture
         ? markupCapture.createTransaction()
         : null;
-      finalizeSlideMutationPersistence('Auto: Reordered Slides', transaction);
+      if (canonicalDeckAfterReorder) {
+        finalizeSlideMutationPersistence('Auto: Reordered Slides', transaction, canonicalDeckAfterReorder);
+      } else {
+        finalizeSlideMutationPersistence('Auto: Reordered Slides', transaction);
+      }
       return true;
     }
 
@@ -2664,6 +2688,7 @@
     }
 
     function finalizeSlideMutationPersistence(versionLabel, transaction = null) {
+      const canonicalDeck = arguments.length > 2 ? arguments[2] : null;
       const createStudioSlideMutationPersistenceFinalizer = (
         typeof SlideNextStudioEditorMutation !== 'undefined'
         && SlideNextStudioEditorMutation
@@ -2676,10 +2701,14 @@
           saveHistoryState,
           triggerAutoSave,
           triggerAutoVersion
-        })(versionLabel, transaction);
+        })(versionLabel, transaction, canonicalDeck);
       }
 
-      saveHistoryState(false, transaction);
+      if (canonicalDeck) {
+        saveHistoryState(false, transaction, canonicalDeck);
+      } else {
+        saveHistoryState(false, transaction);
+      }
       triggerAutoSave();
       if (versionLabel) {
         triggerAutoVersion(versionLabel);
@@ -3299,6 +3328,16 @@
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
+      const options = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
+        ? arguments[1]
+        : {};
+      const canonicalDeckOverride = options && typeof options === 'object'
+        && Object.prototype.hasOwnProperty.call(options, 'canonicalDeckOverride')
+        ? options.canonicalDeckOverride
+        : null;
+      if (canonicalDeckOverride && Array.isArray(canonicalDeckOverride.slides)) {
+        return canonicalDeckOverride;
+      }
       const buildStudioCanonicalDeck = SlideNextStudioDeckContext
         && typeof SlideNextStudioDeckContext.buildStudioCanonicalDeck === 'function'
         ? SlideNextStudioDeckContext.buildStudioCanonicalDeck
@@ -6098,7 +6137,12 @@
 
     // 5. Undo/Redo Engine
     let undoDebounceTimer = null;
+    let pendingEditorCanonicalDeck = null;
     function saveHistoryState(debounce = false, transaction = null) {
+      const canonicalDeck = arguments.length > 2 ? arguments[2] : null;
+      if (typeof pendingEditorCanonicalDeck !== 'undefined') {
+        pendingEditorCanonicalDeck = canonicalDeck;
+      }
       const createStudioHistorySaveHandler = SlideNextStudioHistory
         && typeof SlideNextStudioHistory.createStudioHistorySaveHandler === 'function'
         ? SlideNextStudioHistory.createStudioHistorySaveHandler
@@ -6179,6 +6223,15 @@
     }
 
     function createHistoryEntry(doc) {
+      const pendingCanonicalDeck = typeof pendingEditorCanonicalDeck !== 'undefined'
+        ? pendingEditorCanonicalDeck
+        : null;
+      const buildHistoryCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+        canonicalDeckOverride: pendingCanonicalDeck
+      });
+      const historyCanonicalDeckBuilder = pendingCanonicalDeck
+        ? buildHistoryCanonicalDeck
+        : buildEditorCanonicalDeck;
       const buildStudioHistoryEntry = SlideNextStudioHistory
         && typeof SlideNextStudioHistory.buildStudioHistoryEntry === 'function'
         ? SlideNextStudioHistory.buildStudioHistoryEntry
@@ -6186,7 +6239,7 @@
       if (buildStudioHistoryEntry) {
         return buildStudioHistoryEntry(doc, {
           getDocument: getIframeDoc,
-          buildCanonicalDeck: buildEditorCanonicalDeck,
+          buildCanonicalDeck: historyCanonicalDeckBuilder,
           getHistoryOptions: getEditorHistoryOptions,
           resolveFallbackActiveSlideId: resolveEditorFallbackActiveSlideId,
           buildHistoryHtml: buildHistoryFrameHtml,
@@ -6199,7 +6252,7 @@
       }
 
       const nextDoc = doc || getIframeDoc();
-      const canonicalDeck = buildEditorCanonicalDeck(nextDoc);
+      const canonicalDeck = historyCanonicalDeckBuilder(nextDoc);
       const historyOptions = getEditorHistoryOptions();
       const activeSlideId = nextDoc
         ? ''
@@ -6304,6 +6357,9 @@
       const clearPendingTransaction = () => {
         if (typeof pendingEditorTransaction !== 'undefined') {
           pendingEditorTransaction = null;
+        }
+        if (typeof pendingEditorCanonicalDeck !== 'undefined') {
+          pendingEditorCanonicalDeck = null;
         }
       };
       const createStudioHistoryStateCapturer = SlideNextStudioHistory

@@ -122,3 +122,17 @@ test('createStudioSlideMutationPersistenceFinalizer skips empty version labels',
   assert.equal(finalizeSlideMutation(''), '');
   assert.deepEqual(calls, ['history', 'save']);
 });
+
+test('createStudioSlideMutationPersistenceFinalizer forwards canonical deck overrides', () => {
+  const canonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+  let historyArgs = null;
+  const finalizeSlideMutation = mutation.createStudioSlideMutationPersistenceFinalizer({
+    saveHistoryState(...args) {
+      historyArgs = args;
+    }
+  });
+
+  finalizeSlideMutation('', null, canonicalDeck);
+
+  assert.deepEqual(historyArgs, [false, null, canonicalDeck]);
+});

@@ -196,6 +196,34 @@
       && Array.isArray(value.slides);
   }
 
+  function reorderCanonicalSlides(deckLike, sourceSlideId, targetSlideId) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const sourceId = normalizeString(sourceSlideId).trim();
+    const targetId = normalizeString(targetSlideId).trim();
+    if (!isCanonicalDeck(deck) || !sourceId || !targetId || sourceId === targetId) {
+      return null;
+    }
+
+    const sourceIndex = deck.slides.findIndex((slide) => slide && slide.id === sourceId);
+    const targetIndex = deck.slides.findIndex((slide) => slide && slide.id === targetId);
+    if (sourceIndex < 0 || targetIndex < 0) {
+      return null;
+    }
+
+    const nextSlides = [...deck.slides];
+    const [sourceSlide] = nextSlides.splice(sourceIndex, 1);
+    const nextTargetIndex = nextSlides.findIndex((slide) => slide && slide.id === targetId);
+    const insertIndex = sourceIndex < targetIndex ? nextTargetIndex + 1 : nextTargetIndex;
+    nextSlides.splice(insertIndex, 0, sourceSlide);
+
+    return createCanonicalDeck({
+      ...deck,
+      slides: nextSlides
+    });
+  }
+
   return {
     DECK_KIND,
     DECK_SCHEMA_VERSION,
@@ -206,6 +234,7 @@
     createCanonicalSlide,
     createCanonicalInlineScript,
     createCanonicalDeck,
-    isCanonicalDeck
+    isCanonicalDeck,
+    reorderCanonicalSlides
   };
 });
