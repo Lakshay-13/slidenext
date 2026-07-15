@@ -171,6 +171,16 @@ test('buildStudioHistoryEntry resolves live editor history state before delegati
     schemaVersion: 1,
     slides: [{ id: 'slide-1', nodes: [] }]
   };
+  const transaction = {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'style',
+      elementId: 'node-1',
+      before: { left: '0px' },
+      after: { left: '10px' }
+    }]
+  };
   const calls = [];
 
   const entry = studioHistory.buildStudioHistoryEntry(undefined, {
@@ -197,7 +207,8 @@ test('buildStudioHistoryEntry resolves live editor history state before delegati
     getSelectedElementIds(nextDoc) {
       calls.push(['getSelectedElementIds', nextDoc]);
       return ['node-1'];
-    }
+    },
+    transaction
   });
 
   assert.deepEqual(calls, [
@@ -205,14 +216,50 @@ test('buildStudioHistoryEntry resolves live editor history state before delegati
     ['buildCanonicalDeck', doc],
     ['getHistoryOptions'],
     ['getActiveSlideId', doc],
-    ['getSelectedElementIds', doc],
-    ['buildHistoryHtml', doc]
+    ['getSelectedElementIds', doc]
   ]);
   assert.deepEqual(entry, {
     html: '',
     activeSlideId: 'slide-1',
     selectedElementIds: ['node-1'],
-    canonicalDeck
+    canonicalDeck,
+    transaction
+  });
+});
+
+test('buildStudioHistoryEntry keeps model-only transaction metadata', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const transaction = {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'markup',
+      elementId: 'slide:slide-1',
+      before: '<p>Before</p>',
+      after: '<p>After</p>'
+    }]
+  };
+
+  const entry = studioHistory.buildStudioHistoryEntry(null, {
+    buildCanonicalDeck() {
+      return canonicalDeck;
+    },
+    resolveFallbackActiveSlideId() {
+      return 'slide-1';
+    },
+    transaction
+  });
+
+  assert.deepEqual(entry, {
+    html: '',
+    activeSlideId: 'slide-1',
+    selectedElementIds: [],
+    canonicalDeck,
+    transaction
   });
 });
 

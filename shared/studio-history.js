@@ -150,7 +150,8 @@
       activeSlideId: nextDoc ? '' : resolveFallbackActiveSlideId(nextDoc, canonicalDeck),
       selectedElementIds: [],
       buildHistoryHtml: options.buildHistoryHtml,
-      canonicalDeck
+      canonicalDeck,
+      transaction: options.transaction
     });
   }
 
