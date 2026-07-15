@@ -164,6 +164,16 @@ test('createStudioHistoryEntry can capture a model-only history entry without a 
   });
 });
 
+test('createStudioHistoryEntry normalizes duplicate model-only selection ids', () => {
+  const entry = studioHistory.createStudioHistoryEntry(null, {
+    activeSlideId: 'slide-1',
+    selectedElementIds: [' node-1 ', 'node-1', '', 'node-2', 'node-2'],
+    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] }
+  });
+
+  assert.deepEqual(entry.selectedElementIds, ['node-1', 'node-2']);
+});
+
 test('buildStudioHistoryEntry resolves live editor history state before delegating to entry creation', () => {
   const doc = { id: 'doc' };
   const canonicalDeck = {

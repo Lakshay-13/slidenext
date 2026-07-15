@@ -18,6 +18,19 @@
     return htmlMatch ? htmlMatch[1] : withoutDocType;
   }
 
+  function normalizeStudioHistoryIdList(values = []) {
+    const seenIds = new Set();
+    if (!Array.isArray(values)) return [];
+
+    return values.reduce((ids, value) => {
+      const id = typeof value === 'string' ? value.trim() : value;
+      if (!id || seenIds.has(id)) return ids;
+      seenIds.add(id);
+      ids.push(id);
+      return ids;
+    }, []);
+  }
+
   function resolveStudioHistoryFrameHtml(historyEntry, options = {}) {
     const html = historyEntry && typeof historyEntry.html === 'string' ? historyEntry.html : '';
     if (html) {
@@ -171,7 +184,7 @@
       : (typeof options.activeSlideId === 'string' ? options.activeSlideId : '');
     const selectedElementIds = doc
       ? getSelectedElementIds(doc)
-      : (Array.isArray(options.selectedElementIds) ? options.selectedElementIds.filter(Boolean) : []);
+      : normalizeStudioHistoryIdList(options.selectedElementIds);
     const canonicalDeck = options.canonicalDeck && typeof options.canonicalDeck === 'object'
       ? options.canonicalDeck
       : null;
@@ -216,7 +229,7 @@
     const normalizedEntry = {
       html: normalizeStudioHistoryFrameHtml(entry.html || ''),
       activeSlideId: entry.activeSlideId || '',
-      selectedElementIds: Array.isArray(entry.selectedElementIds) ? entry.selectedElementIds.filter(Boolean) : [],
+      selectedElementIds: normalizeStudioHistoryIdList(entry.selectedElementIds),
       canonicalDeck: entry.canonicalDeck && typeof entry.canonicalDeck === 'object'
         ? entry.canonicalDeck
         : null
