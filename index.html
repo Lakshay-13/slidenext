@@ -2814,6 +2814,20 @@
       if (!deletedSlide) return false;
       const slideMutationState = captureSlideMutationRestoreState(iframeDoc);
       const deletedSlideId = getEditorSlideId(deletedSlide);
+      const removeCanonicalSlide = (
+        typeof SlideNextCanonicalDeck !== 'undefined'
+        && SlideNextCanonicalDeck
+        && typeof SlideNextCanonicalDeck.removeCanonicalSlide === 'function'
+      )
+        ? SlideNextCanonicalDeck.removeCanonicalSlide
+        : null;
+      const canonicalDeckBeforeDeletion = removeCanonicalSlide
+        && typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(iframeDoc)
+        : null;
+      const canonicalDeckAfterDeletion = removeCanonicalSlide
+        ? removeCanonicalSlide(canonicalDeckBeforeDeletion, deletedSlideId)
+        : null;
       
       deletedSlide.remove();
       
@@ -2827,7 +2841,11 @@
       const transaction = markupCapture
         ? markupCapture.createTransaction()
         : null;
-      finalizeSlideMutationPersistence('Auto: Deleted Slide', transaction);
+      if (canonicalDeckAfterDeletion) {
+        finalizeSlideMutationPersistence('Auto: Deleted Slide', transaction, canonicalDeckAfterDeletion);
+      } else {
+        finalizeSlideMutationPersistence('Auto: Deleted Slide', transaction);
+      }
       return true;
     }
 

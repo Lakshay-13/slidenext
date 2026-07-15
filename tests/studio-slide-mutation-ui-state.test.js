@@ -902,6 +902,7 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
   const calls = [];
   let restorePayload = null;
   const context = {
+    SlideNextCanonicalDeck: canonicalDeckModel,
     SlideNextStudioDeckView: {
       restoreStudioDeckViewAfterSlideMutation(payload) {
         restorePayload = payload;
@@ -920,6 +921,14 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
     getEditorSlideId(slide) {
       calls.push(['getEditorSlideId', slide]);
       return slide.id;
+    },
+    buildEditorCanonicalDeck() {
+      return canonicalDeckModel.createCanonicalDeck({
+        slides: [
+          { id: 'slide-1' },
+          { id: 'slide-2' }
+        ]
+      });
     },
     getIframeDoc() {
       calls.push(['getIframeDoc']);
@@ -989,8 +998,9 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
       elementId: 'slides-container',
       before: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section>',
       after: '<section data-slide-id="slide-1"></section>'
-    }]
+      }]
   });
+  assert.deepEqual(calls[9][3].slides.map((slide) => slide.id), ['slide-1']);
   assert.equal(restorePayload.preservedActiveSlideId, 'slide-2');
   assert.equal(restorePayload.removedSlideId, 'slide-2');
   assert.equal(restorePayload.fallbackIndex, 0);

@@ -39,3 +39,27 @@ test('reorderCanonicalSlides rejects missing and unchanged slide ids', () => {
   assert.equal(canonicalDeck.reorderCanonicalSlides(deck, 'missing', 'slide-1'), null);
   assert.equal(canonicalDeck.reorderCanonicalSlides(deck, 'slide-1', 'missing'), null);
 });
+
+test('removeCanonicalSlide removes a slide without mutating the source deck', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    metadata: { title: 'Deck' },
+    slides: [
+      { id: 'slide-1' },
+      { id: 'slide-2' },
+      { id: 'slide-3' }
+    ]
+  });
+
+  const reducedDeck = canonicalDeck.removeCanonicalSlide(sourceDeck, 'slide-2');
+
+  assert.deepEqual(reducedDeck.slides.map((slide) => slide.id), ['slide-1', 'slide-3']);
+  assert.deepEqual(sourceDeck.slides.map((slide) => slide.id), ['slide-1', 'slide-2', 'slide-3']);
+  assert.equal(reducedDeck.metadata.title, 'Deck');
+});
+
+test('removeCanonicalSlide preserves the minimum one-slide deck invariant', () => {
+  const deck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+
+  assert.equal(canonicalDeck.removeCanonicalSlide(deck, 'slide-1'), null);
+  assert.equal(canonicalDeck.removeCanonicalSlide({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }] }, 'missing'), null);
+});

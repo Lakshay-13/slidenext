@@ -224,6 +224,26 @@
     });
   }
 
+  function removeCanonicalSlide(deckLike, slideId) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedSlideId = normalizeString(slideId).trim();
+    if (!isCanonicalDeck(deck) || deck.slides.length <= 1 || !normalizedSlideId) {
+      return null;
+    }
+
+    const slideIndex = deck.slides.findIndex((slide) => slide && slide.id === normalizedSlideId);
+    if (slideIndex < 0) {
+      return null;
+    }
+
+    return createCanonicalDeck({
+      ...deck,
+      slides: deck.slides.filter((_slide, index) => index !== slideIndex)
+    });
+  }
+
   return {
     DECK_KIND,
     DECK_SCHEMA_VERSION,
@@ -235,6 +255,7 @@
     createCanonicalInlineScript,
     createCanonicalDeck,
     isCanonicalDeck,
-    reorderCanonicalSlides
+    reorderCanonicalSlides,
+    removeCanonicalSlide
   };
 });
