@@ -1696,16 +1696,7 @@
         });
       }
 
-      const resolveCanonicalDeckBuilder = buildCanonicalDeck;
-      let didResolveCanonicalDeck = false;
-      let resolvedCanonicalDeck = null;
-      return function resolveCanonicalDeck(sourceDoc = doc) {
-        if (!didResolveCanonicalDeck) {
-          resolvedCanonicalDeck = resolveCanonicalDeckBuilder(sourceDoc);
-          didResolveCanonicalDeck = true;
-        }
-        return resolvedCanonicalDeck;
-      };
+      return () => null;
     }
 
     function createEditorCanonicalDeckViewStateOptions(options = {}) {

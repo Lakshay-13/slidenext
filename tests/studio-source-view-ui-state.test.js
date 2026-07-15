@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const preview = require('../shared/studio-preview.js');
+const deckView = require('../shared/studio-deck-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -155,6 +156,7 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
     SlideNextStudioDeckView: {
+      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       buildStudioSourceHtml(doc, options) {
         calls.push({
           doc,
@@ -227,7 +229,9 @@ test('buildEditorSourceHtml falls back to the shared deck html source builder wh
   };
   const calls = [];
   const context = {
-    SlideNextStudioDeckView: {},
+    SlideNextStudioDeckView: {
+      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver
+    },
     SlideNextDeckHtml: {
       buildDeckSourceHtml(nextCanonicalDeck, options) {
         calls.push({ nextCanonicalDeck, options });
@@ -480,6 +484,7 @@ test('buildEditorSourceHtml prefers the live active slide when the editor frame 
   const calls = [];
   const context = {
     SlideNextStudioDeckView: {
+      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       buildStudioSourceHtml(doc, options) {
         calls.push({ doc, options });
         return '<html>source</html>';
@@ -542,6 +547,7 @@ test('buildEditorSourceHtml reuses the resolved live canonical deck when source 
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
     SlideNextStudioDeckView: {
+      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       buildStudioSourceHtml(doc, options) {
         assert.equal(options.buildCanonicalDeck(doc), canonicalDeck);
         return options.buildFallbackHtml(doc);
@@ -609,6 +615,7 @@ test('buildEditorSourceHtml falls back to the current session slide when live ac
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
     SlideNextStudioDeckView: {
+      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       buildStudioSourceHtml(doc, options) {
         assert.equal(options.buildCanonicalDeck(doc), canonicalDeck);
         return options.deckHtmlOptions.renderOptions.activeSlideId;

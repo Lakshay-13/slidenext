@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
+const deckView = require('../shared/studio-deck-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -4283,6 +4284,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
       }
     },
     SlideNextStudioDeckView: {
+      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       buildStudioSourceHtml(nextDoc, options) {
         calls.push([nextDoc, options]);
         return '<html>canonical-source</html>';
@@ -4499,6 +4501,9 @@ test('buildPersistableDeckHtml reuses buildEditorSourceDeckHtml when rendering c
     SlideNextStudioEditorPersistence: {
       ...editorPersistence
     },
+    SlideNextStudioDeckView: {
+      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver
+    },
     createEditorDeckViewBuildOptions(nextDoc, options) {
       assert.equal(nextDoc, null);
       assert.equal(options.buildCanonicalDeck(), canonicalDeck);
@@ -4590,6 +4595,9 @@ test('buildPersistableDeckHtml reuses the local persistable source deck html ren
     },
     SlideNextStudioEditorPersistence: {
       ...editorPersistence
+    },
+    SlideNextStudioDeckView: {
+      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver
     },
     createEditorDeckViewBuildOptions(nextDoc, options) {
       return {
@@ -4686,6 +4694,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
       }
     },
     SlideNextStudioDeckView: {
+      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       buildStudioSourceHtml(nextDoc, options) {
         calls.push([nextDoc, options]);
         return '<html>canonical-source</html>';

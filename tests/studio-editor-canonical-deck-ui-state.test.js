@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const presentationMetadata = require('../shared/presentation-metadata.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
+const deckView = require('../shared/studio-deck-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -1946,6 +1947,7 @@ test('createEditorCanonicalDeckResolverWithBuilder caches the first canonical de
   };
   const calls = [];
   const context = {
+    SlideNextStudioDeckView: deckView,
     buildEditorCanonicalDeck(nextDoc) {
       calls.push(['buildEditorCanonicalDeck', nextDoc]);
       return canonicalDeck;
@@ -1968,6 +1970,31 @@ test('createEditorCanonicalDeckResolverWithBuilder caches the first canonical de
   assert.deepEqual(calls, [
     ['buildCanonicalDeck', iframeDoc]
   ]);
+});
+
+test('createEditorCanonicalDeckResolverWithBuilder fails closed when the shared helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {',
+    '\n\n    function createEditorCanonicalDeckViewStateOptions(options = {}) {'
+  );
+  let buildCalls = 0;
+  const context = {};
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  const resolveCanonicalDeck = context.createEditorCanonicalDeckResolverWithBuilder(
+    { label: 'iframe-doc' },
+    () => {
+      buildCalls += 1;
+      return { kind: 'slidenext.deck', slides: [] };
+    }
+  );
+
+  assert.equal(resolveCanonicalDeck(), null);
+  assert.equal(buildCalls, 0);
 });
 
 test('createEditorCanonicalDeckResolverWithBuilder reuses the shared canonical resolver when available', () => {
@@ -2026,6 +2053,7 @@ test('resolveEditorCanonicalDeckViewState reuses the local deck view state optio
   const calls = [];
   const customBuildCanonicalDeck = () => canonicalDeck;
   const context = {
+    SlideNextStudioDeckView: deckView,
     createEditorCanonicalDeckViewStateOptions(options = {}) {
       calls.push([
         'createEditorCanonicalDeckViewStateOptions',
@@ -3082,6 +3110,7 @@ test('buildEditorDeckSnapshot prefers the current session active slide fallback 
         };
       }
     },
+    SlideNextStudioDeckView: deckView,
     buildEditorCanonicalDeck() {
       buildEditorCanonicalDeckCalls += 1;
       return canonicalDeck;
@@ -3179,6 +3208,7 @@ test('buildEditorDeckSnapshot falls back to the current session slide when live 
         };
       }
     },
+    SlideNextStudioDeckView: deckView,
     SlideNextStudioEditorPersistence: {
       resolveStudioCanonicalDeckOverride(options) {
         const hasValidCanonicalDeck = options.isCanonicalDeck
