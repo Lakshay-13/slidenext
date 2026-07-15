@@ -25,6 +25,39 @@ test('buildStudioNudgeSelectionState filters stale selections and requires unloc
   });
 });
 
+test('buildStudioNudgedLayout clamps a multi-selection as one group', () => {
+  const result = nudge.buildStudioNudgedLayout([
+    {
+      id: 'first',
+      absLeft: 100,
+      absTop: 40,
+      width: 100,
+      height: 50,
+      parentLeft: 0,
+      parentTop: 0
+    },
+    {
+      id: 'second',
+      absLeft: 300,
+      absTop: 40,
+      width: 100,
+      height: 50,
+      parentLeft: 0,
+      parentTop: 0
+    }
+  ], { dx: 200, dy: 10 }, { width: 500, height: 200 });
+
+  assert.deepEqual(result.nextItems.map((item) => ({
+    id: item.id,
+    nextAbsLeft: item.nextAbsLeft,
+    nextTop: item.nextTop
+  })), [
+    { id: 'first', nextAbsLeft: 200, nextTop: 50 },
+    { id: 'second', nextAbsLeft: 400, nextTop: 50 }
+  ]);
+  assert.equal(result.didChange, true);
+});
+
 test('buildStudioNudgedLayout offsets item positions and preserves parent-relative coordinates', () => {
   const result = nudge.buildStudioNudgedLayout([
     {

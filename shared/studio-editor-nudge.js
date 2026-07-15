@@ -119,6 +119,28 @@
     const slideWidth = Number.isFinite(slideBounds.width) ? slideBounds.width : 0;
     const slideHeight = Number.isFinite(slideBounds.height) ? slideBounds.height : 0;
     let didChange = false;
+    const selectionBounds = layoutItems.reduce((bounds, item) => {
+      const absLeft = Number.isFinite(item.absLeft) ? item.absLeft : 0;
+      const absTop = Number.isFinite(item.absTop) ? item.absTop : 0;
+      const width = Number.isFinite(item.width) ? item.width : 0;
+      const height = Number.isFinite(item.height) ? item.height : 0;
+      return {
+        left: Math.min(bounds.left, absLeft),
+        top: Math.min(bounds.top, absTop),
+        right: Math.max(bounds.right, absLeft + width),
+        bottom: Math.max(bounds.bottom, absTop + height)
+      };
+    }, { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity });
+    const clampGroupDelta = (value, minDelta, maxDelta) => {
+      if (minDelta > maxDelta) return 0;
+      return clampStudioNudgeValue(value, minDelta, maxDelta);
+    };
+    const boundedDx = layoutItems.length > 0
+      ? clampGroupDelta(dx, -selectionBounds.left, slideWidth - selectionBounds.right)
+      : dx;
+    const boundedDy = layoutItems.length > 0
+      ? clampGroupDelta(dy, -selectionBounds.top, slideHeight - selectionBounds.bottom)
+      : dy;
 
     const nextItems = layoutItems.map((item) => {
       const absLeft = Number.isFinite(item.absLeft) ? item.absLeft : 0;
@@ -127,8 +149,8 @@
       const height = Number.isFinite(item.height) ? item.height : 0;
       const parentLeft = Number.isFinite(item.parentLeft) ? item.parentLeft : 0;
       const parentTop = Number.isFinite(item.parentTop) ? item.parentTop : 0;
-      const nextAbsLeft = clampStudioNudgeValue(absLeft + dx, 0, Math.max(0, slideWidth - width));
-      const nextAbsTop = clampStudioNudgeValue(absTop + dy, 0, Math.max(0, slideHeight - height));
+      const nextAbsLeft = absLeft + boundedDx;
+      const nextAbsTop = absTop + boundedDy;
       if (nextAbsLeft !== absLeft || nextAbsTop !== absTop) {
         didChange = true;
       }
