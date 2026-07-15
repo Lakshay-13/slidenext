@@ -397,3 +397,26 @@ test('finalizeStudioWallpaperMutation delegates or preserves wallpaper persisten
     ['version', 'Auto: Background']
   ]);
 });
+
+test('finalizeStudioWallpaperMutation forwards an optional canonical deck sidecar', () => {
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  let delegatedOptions = null;
+
+  assert.equal(mutation.finalizeStudioWallpaperMutation({
+    versionLabel: 'Auto: Background',
+    transaction: { id: 'tx-wallpaper-canonical' },
+    canonicalDeck,
+    finalizeMutation(label, options) {
+      delegatedOptions = { label, options };
+      return 'delegated';
+    }
+  }), 'delegated');
+
+  assert.deepEqual(delegatedOptions, {
+    label: 'Auto: Background',
+    options: {
+      transaction: { id: 'tx-wallpaper-canonical' },
+      canonicalDeck
+    }
+  });
+});

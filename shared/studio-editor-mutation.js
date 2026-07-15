@@ -167,8 +167,12 @@
   function finalizeStudioWallpaperMutation(options = {}) {
     const versionLabel = options.versionLabel || '';
     const transaction = options.transaction || null;
+    const canonicalDeck = options.canonicalDeck || null;
     if (typeof options.finalizeMutation === 'function') {
-      return options.finalizeMutation(versionLabel, { transaction });
+      return options.finalizeMutation(versionLabel, {
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
     }
     if (typeof options.generateThumbnails === 'function') {
       options.generateThumbnails();

@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -18,7 +19,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 function loadFinalizeWallpaperMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function finalizeWallpaperMutation(versionLabel = \'\', transaction = null) {',
+    'function finalizeWallpaperMutation(versionLabel = \'\', transaction = null, canonicalDeck = null) {',
     '\n\n    function applyPresetWallpaper(val, isCustomInput = false) {'
   );
   vm.runInContext(helperSource, context);
@@ -99,6 +100,67 @@ test('finalizeWallpaperMutation reuses the shared deck mutation lifecycle when a
   assert.equal(context.finalizeWallpaperMutation('Auto: Changed Background', transaction), 'delegated');
   assert.equal(delegated.label, 'Auto: Changed Background');
   assert.equal(delegated.options.transaction.id, transaction.id);
+});
+
+test('finalizeWallpaperMutation forwards an optional canonical wallpaper sidecar', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const transaction = { id: 'wallpaper-tx-canonical' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  let delegated = null;
+  const context = {
+    finalizeEditorDeckMutation(label, options) {
+      delegated = { label, options };
+      return 'delegated';
+    },
+    generateThumbnails() {},
+    saveHistoryState() {},
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
+
+  assert.equal(context.finalizeWallpaperMutation('Auto: Changed Background', transaction, canonicalDeck), 'delegated');
+  assert.deepEqual(JSON.parse(JSON.stringify(delegated)), JSON.parse(JSON.stringify({
+    label: 'Auto: Changed Background',
+    options: { transaction, canonicalDeck }
+  })));
+});
+
+test('applyEditorWallpaperSlidesMutationWithTransaction returns an immutable canonical background sidecar', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const sourceSlide = {
+    style: {
+      background: 'white'
+    }
+  };
+  const canonicalDeckBefore = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      layout: { background: { color: '#ffffff', style: 'white' } }
+    }]
+  });
+  const context = {
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    buildEditorCanonicalDeck() {
+      return canonicalDeckBefore;
+    }
+  };
+
+  vm.createContext(context);
+  loadApplyEditorWallpaperMutationWithTransaction(fileContent, context);
+
+  const mutation = context.applyEditorWallpaperSlidesMutationWithTransaction(
+    [sourceSlide],
+    'black',
+    { getSlideId: () => 'slide-1' }
+  );
+
+  assert.equal(mutation.didChange, true);
+  assert.equal(sourceSlide.style.background, 'black');
+  assert.equal(canonicalDeckBefore.slides[0].layout.background.style, 'white');
+  assert.equal(mutation.canonicalDeck.slides[0].layout.background.style, 'black');
 });
 
 test('finalizeWallpaperMutation delegates its lifecycle adapter to shared mutation state', () => {

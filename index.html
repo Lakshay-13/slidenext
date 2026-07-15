@@ -7206,7 +7206,7 @@
       });
     }
 
-    function finalizeWallpaperMutation(versionLabel = '', transaction = null) {
+    function finalizeWallpaperMutation(versionLabel = '', transaction = null, canonicalDeck = null) {
       const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
         ? SlideNextStudioEditorMutation
         : null;
@@ -7214,6 +7214,7 @@
         return mutationApi.finalizeStudioWallpaperMutation({
           versionLabel,
           transaction,
+          ...(canonicalDeck ? { canonicalDeck } : {}),
           finalizeMutation: typeof finalizeEditorDeckMutation === 'function'
             ? finalizeEditorDeckMutation
             : null,
@@ -7225,7 +7226,8 @@
       }
       if (typeof finalizeEditorDeckMutation === 'function') {
         return finalizeEditorDeckMutation(versionLabel, {
-          transaction
+          transaction,
+          ...(canonicalDeck ? { canonicalDeck } : {})
         });
       }
       generateThumbnails();
@@ -7274,6 +7276,23 @@
             if (typeof getEditorSlideId === 'function') return getEditorSlideId(slide);
             return '';
           };
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const updateCanonicalSlideBackground = canonicalDeckApi
+        && typeof canonicalDeckApi.updateCanonicalSlideBackground === 'function'
+        ? canonicalDeckApi.updateCanonicalSlideBackground
+        : null;
+      const slideIds = updateCanonicalSlideBackground
+        ? sourceSlides.map(getSlideId).filter(Boolean)
+        : [];
+      const canonicalDeckBeforeMutation = updateCanonicalSlideBackground
+        && typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck()
+        : null;
+      const canonicalDeck = updateCanonicalSlideBackground
+        ? updateCanonicalSlideBackground(canonicalDeckBeforeMutation, slideIds, background)
+        : null;
 
       if (applyStudioWallpaperToSlides) {
         const mutation = applyStudioWallpaperToSlides(sourceSlides, background, {
@@ -7283,7 +7302,8 @@
         return mutation && typeof mutation === 'object'
           ? {
               didChange: !!mutation.didChange,
-              transaction: mutation.transaction || null
+              transaction: mutation.transaction || null,
+              ...(mutation.didChange && canonicalDeck ? { canonicalDeck } : {})
             }
           : {
               didChange: false,
@@ -7322,6 +7342,7 @@
       return {
         didChange: true,
         changedCount,
+        ...(canonicalDeck ? { canonicalDeck } : {}),
         transaction: createStudioStyleTransaction
           ? createStudioStyleTransaction(transactionItems)
           : null
@@ -7349,7 +7370,12 @@
       });
       if (!mutation.didChange) return false;
       hasPendingCustomWallpaperVersion = !!isCustomInput;
-      finalizeWallpaperMutation(isCustomInput ? '' : 'Auto: Changed Background', mutation.transaction);
+      const versionLabel = isCustomInput ? '' : 'Auto: Changed Background';
+      if (mutation.canonicalDeck) {
+        finalizeWallpaperMutation(versionLabel, mutation.transaction, mutation.canonicalDeck);
+      } else {
+        finalizeWallpaperMutation(versionLabel, mutation.transaction);
+      }
       return true;
     }
 
@@ -7454,7 +7480,15 @@
           : ''
       });
       if (!mutation.didChange) return false;
-      finalizeWallpaperMutation('Auto: Applied Background to All Slides', mutation.transaction);
+      if (mutation.canonicalDeck) {
+        finalizeWallpaperMutation(
+          'Auto: Applied Background to All Slides',
+          mutation.transaction,
+          mutation.canonicalDeck
+        );
+      } else {
+        finalizeWallpaperMutation('Auto: Applied Background to All Slides', mutation.transaction);
+      }
       
       alert("Successfully applied active background paint to all slides in the deck.");
       return true;
