@@ -2382,9 +2382,7 @@
 
     // Apply hoverable tags to editable nodes
     function makeElementsHoverable(root) {
-      ensureEditorElementIds(root).forEach(el => {
-        el.classList.add('editor-hoverable');
-      });
+      return SlideNextStudioEditorDom.makeStudioElementsHoverable(root, getEditorDomOptions());
     }
 
     // Render visual Slide Organizer thumbnails

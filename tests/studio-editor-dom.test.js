@@ -93,3 +93,43 @@ test('getStudioClosestPositionedAncestor falls back to body when no positioned p
   assert.equal(domState.getStudioClosestPositionedAncestor(element), body);
   assert.equal(domState.getStudioClosestPositionedAncestor(null), null);
 });
+
+test('makeStudioElementsHoverable assigns ids and adds the editor hover class', () => {
+  const classNames = new Set();
+  const element = {
+    nodeType: 1,
+    classList: {
+      contains(value) {
+        return classNames.has(value);
+      },
+      add(value) {
+        classNames.add(value);
+      }
+    },
+    matches(selector) {
+      return selector === '.editable';
+    },
+    getAttribute() {
+      return '';
+    },
+    setAttribute(name, value) {
+      assert.equal(name, 'data-editor-id');
+      assert.match(value, /^el-/);
+    }
+  };
+  const root = {
+    querySelectorAll(selector) {
+      assert.equal(selector, '.editable');
+      return [element];
+    }
+  };
+
+  const result = domState.makeStudioElementsHoverable(root, {
+    selectableSelector: '.editable',
+    isEligibleEditableElement: () => true,
+    now: () => 123
+  });
+
+  assert.deepEqual(result, [element]);
+  assert.equal(classNames.has('editor-hoverable'), true);
+});

@@ -211,6 +211,16 @@
     return editableElements;
   }
 
+  function makeStudioElementsHoverable(rootNode, options = {}) {
+    const editableElements = ensureStudioElementIds(rootNode, options);
+    editableElements.forEach((element) => {
+      if (element.classList && typeof element.classList.add === 'function') {
+        element.classList.add('editor-hoverable');
+      }
+    });
+    return editableElements;
+  }
+
   function getElementByEditorId(editorId, doc, options = {}) {
     if (!editorId || !doc) return null;
     const attrName = options.elementAttrName || 'data-editor-id';
@@ -340,6 +350,7 @@
     createStudioElementId,
     assignStudioElementId,
     ensureStudioElementIds,
+    makeStudioElementsHoverable,
     getElementByEditorId,
     getStudioSlideEditableElements,
     getNormalizedStudioSlideLayerOrder,
