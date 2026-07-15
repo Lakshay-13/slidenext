@@ -253,16 +253,17 @@ test('updateZoomActionState delegates toolbar rendering to the shared deck view'
     '\n\n    function updateWallpaperActionState(doc = getIframeDoc()) {'
   );
   const doc = { activeSlide: {} };
-  const actionState = { canUseZoomControls: true };
   const calls = [];
   const context = {
-    resolveCurrentStudioZoomActionState(currentDoc) {
+    getActiveSlide(currentDoc) {
       assert.equal(currentDoc, doc);
-      return actionState;
+      return currentDoc.activeSlide;
     },
     SlideNextStudioDeckView: {
       syncStudioZoomToolbarActionState(options) {
         calls.push(options);
+        assert.equal(options.doc, doc);
+        assert.equal(options.getActiveSlide(doc), doc.activeSlide);
         return 'delegated';
       }
     },
@@ -278,7 +279,8 @@ test('updateZoomActionState delegates toolbar rendering to the shared deck view'
   assert.equal(context.updateZoomActionState(doc), 'delegated');
   assert.equal(calls.length, 1);
   assert.equal(calls[0].documentRef, context.document);
-  assert.deepEqual(calls[0].actionState, actionState);
+  assert.equal(calls[0].doc, doc);
+  assert.equal(calls[0].getActiveSlide, context.getActiveSlide);
 });
 
 test('zoom helpers no-op safely when zoom readiness is disabled and still tolerate a missing zoom select', () => {

@@ -9200,17 +9200,18 @@
     }
 
     function updateZoomActionState(doc = getIframeDoc()) {
-      const actionState = resolveCurrentStudioZoomActionState(doc);
       const deckView = typeof SlideNextStudioDeckView !== 'undefined'
         ? SlideNextStudioDeckView
         : null;
       if (deckView && typeof deckView.syncStudioZoomToolbarActionState === 'function') {
         return deckView.syncStudioZoomToolbarActionState({
           documentRef: document,
-          actionState
+          doc,
+          getActiveSlide
         });
       }
 
+      const actionState = resolveCurrentStudioZoomActionState(doc);
       [
         'zoomOutBtn',
         'zoomSelect',
