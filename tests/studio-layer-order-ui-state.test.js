@@ -547,8 +547,8 @@ test('reorderSlideLayers delegates order application to the shared layer-order m
           nextOrder: [second, first]
         };
       },
-      applyStudioLayerOrderMutation(currentSlide, initialOrder, nextOrder, options) {
-        calls.push(['applyStudioLayerOrderMutation', currentSlide, initialOrder, nextOrder, options]);
+      applyStudioLayerOrderWithTransaction(currentSlide, initialOrder, nextOrder, options) {
+        calls.push(['applyStudioLayerOrderWithTransaction', currentSlide, initialOrder, nextOrder, options]);
         return { didApply: true, transaction: { type: 'style' } };
       }
     },
@@ -575,9 +575,44 @@ test('reorderSlideLayers delegates order application to the shared layer-order m
       captured = transaction;
     }
   }), true);
-  assert.equal(calls[0][0], 'applyStudioLayerOrderMutation');
+  assert.equal(calls[0][0], 'applyStudioLayerOrderWithTransaction');
   assert.equal(calls[0][1], slide);
   assert.deepEqual(captured, { type: 'style' });
+});
+
+test('applyEditorLayerOrderMutationWithTransaction delegates to the shared transaction adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slide = { id: 'slide-1' };
+  const initialOrder = [{ id: 'node-1' }];
+  const nextOrder = [{ id: 'node-2' }];
+  let delegatedOptions = null;
+  const context = {
+    SlideNextStudioEditorLayerOrder: {
+      applyStudioLayerOrderWithTransaction(currentSlide, currentInitialOrder, currentNextOrder, options) {
+        delegatedOptions = { currentSlide, currentInitialOrder, currentNextOrder, options };
+        return { didApply: true, transaction: { type: 'style' } };
+      }
+    },
+    SlideNextStudioEditorTransaction: {
+      createStudioStyleTransaction() {}
+    },
+    applySlideLayerOrder() {},
+    assignEditorElementId() {
+      return 'assigned-node';
+    }
+  };
+
+  vm.createContext(context);
+  loadLayerOrderMutationHelper(fileContent, context);
+
+  const result = context.applyEditorLayerOrderMutationWithTransaction(slide, initialOrder, nextOrder);
+
+  assert.deepEqual(result, { didApply: true, transaction: { type: 'style' } });
+  assert.equal(delegatedOptions.currentSlide, slide);
+  assert.equal(delegatedOptions.currentInitialOrder, initialOrder);
+  assert.equal(delegatedOptions.currentNextOrder, nextOrder);
+  assert.equal(typeof delegatedOptions.options.getElementId, 'function');
+  assert.equal(typeof delegatedOptions.options.applyLayerOrder, 'function');
 });
 
 test('updateLayerOrderActionState reuses the shared layer-order toolbar helper when available', () => {

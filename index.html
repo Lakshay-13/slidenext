@@ -4315,6 +4315,16 @@
       const layerOrderApi = typeof SlideNextStudioEditorLayerOrder !== 'undefined'
         ? SlideNextStudioEditorLayerOrder
         : null;
+      const applyStudioLayerOrderWithTransaction = layerOrderApi
+        && typeof layerOrderApi.applyStudioLayerOrderWithTransaction === 'function'
+        ? layerOrderApi.applyStudioLayerOrderWithTransaction
+        : null;
+      if (!applyStudioLayerOrderWithTransaction) {
+        return {
+          didApply: false,
+          transaction: null
+        };
+      }
       const applyStudioLayerOrderMutation = layerOrderApi
         && typeof layerOrderApi.applyStudioLayerOrderMutation === 'function'
         ? layerOrderApi.applyStudioLayerOrderMutation
@@ -4338,39 +4348,12 @@
       const applyLayerOrder = typeof options.applyLayerOrder === 'function'
         ? options.applyLayerOrder
         : applySlideLayerOrder;
-      if (applyStudioLayerOrderMutation) {
-        const mutation = applyStudioLayerOrderMutation(slide, initialOrder, nextOrder, {
-          applyLayerOrder,
-          createStyleTransaction: createStudioStyleTransaction,
-          getElementId
-        });
-        return mutation && typeof mutation === 'object'
-          ? mutation
-          : { didApply: false, transaction: null };
-      }
-      const transactionItems = createStudioStyleTransaction
-        ? initialOrder.map((element) => ({
-            element,
-            elementId: getElementId(element),
-            before: {
-              zIndex: element && element.style ? element.style.zIndex : ''
-            }
-          }))
-        : [];
-      if (typeof applyLayerOrder === 'function') {
-        applyLayerOrder(slide, nextOrder);
-      }
-      transactionItems.forEach((item) => {
-        item.after = {
-          zIndex: item.element && item.element.style ? item.element.style.zIndex : ''
-        };
+      return applyStudioLayerOrderWithTransaction(slide, initialOrder, nextOrder, {
+        applyStudioLayerOrderMutation,
+        createStudioStyleTransaction,
+        getElementId,
+        applyLayerOrder
       });
-      return {
-        didApply: true,
-        transaction: createStudioStyleTransaction
-          ? createStudioStyleTransaction(transactionItems, { getElementId })
-          : null
-      };
     }
 
     function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {

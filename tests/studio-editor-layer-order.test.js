@@ -328,3 +328,48 @@ test('applyStudioLayerOrderMutation applies the next order and creates an option
   assert.deepEqual(result.transaction.operations[0].before, { zIndex: '0' });
   assert.deepEqual(result.transaction.operations[0].after, { zIndex: '1' });
 });
+
+test('applyStudioLayerOrderWithTransaction delegates mutation dependencies', () => {
+  const slide = { id: 'slide-1' };
+  const initialOrder = [{ id: 'node-1' }];
+  const nextOrder = [{ id: 'node-2' }];
+  const calls = [];
+  const result = layerOrder.applyStudioLayerOrderWithTransaction(slide, initialOrder, nextOrder, {
+    applyStudioLayerOrderMutation(...args) {
+      calls.push(args);
+      return { didApply: true, transaction: { id: 'tx-layer' } };
+    },
+    createStudioStyleTransaction() {},
+    getElementId() {},
+    applyLayerOrder() {}
+  });
+
+  assert.deepEqual(result, { didApply: true, transaction: { id: 'tx-layer' } });
+  assert.deepEqual(calls[0].slice(0, 3), [slide, initialOrder, nextOrder]);
+});
+
+test('applyStudioLayerOrderWithTransaction preserves fallback style transaction capture', () => {
+  const first = { dataset: { editorId: 'node-1' }, style: { zIndex: '0' } };
+  const second = { dataset: { editorId: 'node-2' }, style: { zIndex: '1' } };
+  const transaction = { type: 'style' };
+  const result = layerOrder.applyStudioLayerOrderWithTransaction(
+    { id: 'slide-1' },
+    [first, second],
+    [second, first],
+    {
+      applyLayerOrder(_slide, nextOrder) {
+        nextOrder.forEach((element, index) => {
+          element.style.zIndex = `${index}`;
+        });
+      },
+      createStudioStyleTransaction(items) {
+        return transaction;
+      }
+    }
+  );
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.transaction, transaction);
+  assert.equal(first.style.zIndex, '1');
+  assert.equal(second.style.zIndex, '0');
+});

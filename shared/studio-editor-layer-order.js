@@ -282,6 +282,56 @@
     };
   }
 
+  function applyStudioLayerOrderWithTransaction(slide, initialOrder = [], nextOrder = [], options = {}) {
+    const applyStudioLayerOrderMutation = typeof options.applyStudioLayerOrderMutation === 'function'
+      ? options.applyStudioLayerOrderMutation
+      : null;
+    const createStudioStyleTransaction = typeof options.createStudioStyleTransaction === 'function'
+      ? options.createStudioStyleTransaction
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const applyLayerOrder = typeof options.applyLayerOrder === 'function'
+      ? options.applyLayerOrder
+      : null;
+
+    if (applyStudioLayerOrderMutation) {
+      const mutation = applyStudioLayerOrderMutation(slide, initialOrder, nextOrder, {
+        applyLayerOrder,
+        createStyleTransaction: createStudioStyleTransaction,
+        getElementId
+      });
+      return mutation && typeof mutation === 'object'
+        ? mutation
+        : { didApply: false, transaction: null };
+    }
+
+    const transactionItems = createStudioStyleTransaction
+      ? initialOrder.map((element) => ({
+          element,
+          elementId: getElementId(element),
+          before: {
+            zIndex: element && element.style ? element.style.zIndex : ''
+          }
+        }))
+      : [];
+    if (applyLayerOrder) {
+      applyLayerOrder(slide, nextOrder);
+    }
+    transactionItems.forEach((item) => {
+      item.after = {
+        zIndex: item.element && item.element.style ? item.element.style.zIndex : ''
+      };
+    });
+    return {
+      didApply: true,
+      transaction: createStudioStyleTransaction
+        ? createStudioStyleTransaction(transactionItems, { getElementId })
+        : null
+    };
+  }
+
   return {
     getStudioLayerOrderSelection,
     buildStudioLayerOrderActionState,
@@ -291,6 +341,7 @@
     syncStudioLayerOrderToolbarState,
     buildStudioLayerOrderMutationPlan,
     buildStudioReorderedLayerOrder,
-    applyStudioLayerOrderMutation
+    applyStudioLayerOrderMutation,
+    applyStudioLayerOrderWithTransaction
   };
 });
