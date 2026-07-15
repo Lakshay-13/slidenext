@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 const studioElementState = require('../shared/studio-element-state.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const visibilityState = require('../shared/studio-editor-visibility-state.js');
@@ -506,6 +507,71 @@ test('toggleSelectedElementsVisibility captures a reversible visibility transact
       }
     }
   });
+});
+
+test('toggleSelectedElementsVisibility forwards an immutable canonical visibility sidecar', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toggleSelectedElementsVisibilitySource = extractFunctionSource(
+    fileContent,
+    'function toggleSelectedElementsVisibility(options = {}) {',
+    '\n\n    // Helper: RGB to hex converters'
+  );
+  const liveTarget = { isConnected: true, dataset: {} };
+  const canonicalDeckBefore = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', visibility: { hidden: false } }]
+    }]
+  });
+  let finalized = null;
+  const context = {
+    selectedElements: [liveTarget],
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorVisibilityState: {
+      buildStudioVisibilityMutationPlan() {
+        return {
+          didChange: true,
+          selection: [liveTarget],
+          shouldHide: true,
+          versionLabel: 'Auto: Hid Element'
+        };
+      },
+      applyStudioVisibilityMutation() {
+        return { didApply: true, transaction: { id: 'tx-visibility' } };
+      }
+    },
+    assignEditorElementId(element) {
+      element.dataset.editorId = 'node-1';
+      return 'node-1';
+    },
+    buildEditorCanonicalDeck() {
+      return canonicalDeckBefore;
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      return { id: 'iframe-doc' };
+    },
+    isElementHidden() {
+      return false;
+    },
+    setElementHiddenState() {},
+    syncSelectionUiAfterMutation() {},
+    finalizeEditorDeckMutation(versionLabel, options) {
+      finalized = { versionLabel, options };
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeSelectionToggleMutation(fileContent, context);
+  loadVisibilityMutationHelper(fileContent, context);
+  vm.runInContext(toggleSelectedElementsVisibilitySource, context);
+
+  assert.equal(context.toggleSelectedElementsVisibility(), true);
+  assert.equal(canonicalDeckBefore.slides[0].nodes[0].visibility.hidden, false);
+  assert.equal(finalized.options.canonicalDeck.slides[0].nodes[0].visibility.hidden, true);
+  assert.deepEqual(finalized.options.transaction, { id: 'tx-visibility' });
 });
 
 test('toggleSelectedElementsVisibility can skip temporary selection UI sync when requested', () => {

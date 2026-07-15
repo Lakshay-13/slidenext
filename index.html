@@ -5478,6 +5478,25 @@
         }
         return element && element.dataset && element.dataset.editorId;
       };
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const canonicalNodeIds = visibilityMutationPlan.selection
+        .map(getVisibilityElementId)
+        .filter(Boolean);
+      const canUpdateCanonicalVisibility = canonicalDeckApi
+        && typeof canonicalDeckApi.updateCanonicalNodeVisibility === 'function';
+      const canonicalDeckBeforeMutation = canUpdateCanonicalVisibility
+        && typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(doc)
+        : null;
+      const canonicalDeck = canUpdateCanonicalVisibility
+        ? canonicalDeckApi.updateCanonicalNodeVisibility(
+            canonicalDeckBeforeMutation,
+            canonicalNodeIds,
+            { hidden: visibilityMutationPlan.shouldHide }
+          )
+        : null;
       const mutation = applyEditorVisibilityMutationWithTransaction(
         visibilityMutationPlan.selection,
         visibilityMutationPlan.shouldHide,
@@ -5497,7 +5516,8 @@
       if (!mutation.didApply) return false;
       return finalizeSelectionToggleMutation(visibilityMutationPlan.versionLabel, {
         ...options,
-        transaction: mutation.transaction
+        transaction: mutation.transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
       });
     }
 
