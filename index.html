@@ -5539,93 +5539,64 @@
         return;
       }
 
-      let session = null;
+      const createStudioTransformFallbackPointerHandlers = typeof transformApi.createStudioTransformFallbackPointerHandlers === 'function'
+        ? transformApi.createStudioTransformFallbackPointerHandlers
+        : null;
+      if (!createStudioTransformFallbackPointerHandlers) return;
 
-      const finalizeDragSession = () => {
-        if (!session) return;
-        const finalizeResult = SlideNextStudioEditorTransform.finalizeStudioTransformSession(session);
-        const completionPlan = SlideNextStudioEditorTransform.buildStudioTransformCompletionPlan(finalizeResult);
-        session = null;
-        isDraggingElement = false;
-        hideGuides();
-        hideDragHud();
-        syncSelectionOverlay();
-        syncInspectorForSelection();
-        if (completionPlan.shouldPersist) {
-          const transaction = buildTransformTransaction(finalizeResult);
-          saveHistoryState(false, transaction);
-          triggerAutoSave();
-          triggerAutoVersion(completionPlan.versionLabel);
+      const fallbackTransformHandlers = createStudioTransformFallbackPointerHandlers({
+        getActiveSlide: () => getActiveSlide(doc),
+        getSelectionState: getTransformSelectionState,
+        selectElement,
+        resolveEditableTarget,
+        getSlideMetrics,
+        getPointerOnSlide,
+        getSelectionBounds,
+        ensureOverlay: (slide) => ensureSelectionOverlay(doc, slide),
+        itemOptions: {
+          getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+          getRectOnSlide
+        },
+        captureTarget: doc.body,
+        dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
+        minSizePx: MIN_ELEMENT_SIZE_PX,
+        dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX,
+        onSessionStart: (startBounds) => {
+          updateDragHud(startBounds);
+          isDraggingElement = true;
+        },
+        onSessionFrame: (bounds) => {
+          syncSelectionOverlay();
+          updateDragHud(bounds);
+        },
+        onSessionFinalize: (finalizeResult, completionPlan) => {
+          isDraggingElement = false;
+          hideGuides();
+          hideDragHud();
+          syncSelectionOverlay();
+          syncInspectorForSelection();
+          if (completionPlan.shouldPersist) {
+            const transaction = buildTransformTransaction(finalizeResult);
+            saveHistoryState(false, transaction);
+            triggerAutoSave();
+            triggerAutoVersion(completionPlan.versionLabel);
+          }
         }
-      };
+      });
 
-      doc.addEventListener('dragstart', (e) => {
-        e.preventDefault();
-      }, true);
-
-      doc.body.addEventListener('pointerdown', (e) => {
-        const slide = getActiveSlide(doc);
-        const transformSessionStart = SlideNextStudioEditorTransform.resolveStudioTransformSessionStart({
-          slide,
-          event: e,
-          getSelectionState: getTransformSelectionState,
-          selectElement,
-          resolveEditableTarget,
-          getSlideMetrics,
-          getPointerOnSlide,
-          getSelectionBounds,
-          ensureOverlay: () => ensureSelectionOverlay(doc, slide),
-          itemOptions: {
-            getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
-            getRectOnSlide
-          },
-          captureTarget: doc.body
-        });
-        if (!transformSessionStart) return;
-
-        session = transformSessionStart.session;
-
-        updateDragHud(transformSessionStart.startBounds);
-        isDraggingElement = true;
-        e.preventDefault();
-        e.stopPropagation();
-      }, true);
-
-      doc.body.addEventListener('pointermove', (e) => {
-        if (!SlideNextStudioEditorTransform.shouldHandleStudioTransformPointerEvent(session, e)) return;
-        const pointer = getPointerOnSlide(e, session.slideMetrics);
-        const transformFrameState = SlideNextStudioEditorTransform.buildStudioTransformFrameState(session, {
-          pointer,
-          clientX: e.clientX,
-          clientY: e.clientY,
-          dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
-          minSizePx: MIN_ELEMENT_SIZE_PX,
-          dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX
-        });
-        if (!transformFrameState.isActive) return;
-        const bounds = transformFrameState.bounds;
-
-        SlideNextStudioEditorTransform.applyStudioTransformBounds(session, bounds, {
-          minSizePx: MIN_ELEMENT_SIZE_PX
-        });
-        syncSelectionOverlay();
-        updateDragHud(bounds);
-        e.preventDefault();
-      }, true);
-
-      doc.body.addEventListener('pointerup', (e) => {
-        if (!SlideNextStudioEditorTransform.shouldHandleStudioTransformPointerEvent(session, e)) return;
-        finalizeDragSession();
-      }, true);
-
-      doc.body.addEventListener('pointercancel', (e) => {
-        if (!SlideNextStudioEditorTransform.shouldHandleStudioTransformPointerEvent(session, e)) return;
-        finalizeDragSession();
-      }, true);
-
-      doc.defaultView?.addEventListener('blur', () => {
-        finalizeDragSession();
-      }, true);
+      const attachStudioTransformPointerHandlers = typeof transformApi.attachStudioTransformPointerHandlers === 'function'
+        ? transformApi.attachStudioTransformPointerHandlers
+        : null;
+      if (attachStudioTransformPointerHandlers) {
+        attachStudioTransformPointerHandlers(doc, fallbackTransformHandlers);
+      } else {
+        doc.addEventListener('dragstart', (e) => e.preventDefault(), true);
+        doc.body.addEventListener('pointerdown', fallbackTransformHandlers.handlePointerDown, true);
+        doc.body.addEventListener('pointermove', fallbackTransformHandlers.handlePointerMove, true);
+        doc.body.addEventListener('pointerup', fallbackTransformHandlers.handlePointerUp, true);
+        doc.body.addEventListener('pointercancel', fallbackTransformHandlers.handlePointerCancel, true);
+        doc.defaultView?.addEventListener('blur', fallbackTransformHandlers.handleWindowBlur, true);
+      }
     }
 
     // Insert New elements (perfectly centered on native 1080p slide)

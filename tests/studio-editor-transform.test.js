@@ -137,6 +137,82 @@ test('attachStudioTransformPointerHandlers tolerates missing editor frame target
   assert.equal(transformState.attachStudioTransformPointerHandlers({ body: {} }, {}), false);
 });
 
+test('createStudioTransformFallbackPointerHandlers coordinates the legacy pointer lifecycle', () => {
+  const calls = [];
+  let activeSession = null;
+  const session = { pointerId: 7, slideMetrics: { logicalWidth: 1920 } };
+  const handlers = transformState.createStudioTransformFallbackPointerHandlers({
+    getActiveSlide() {
+      calls.push('getActiveSlide');
+      return { id: 'slide-1' };
+    },
+    resolveTransformSessionStart(options) {
+      calls.push(['resolveStart', options.slide]);
+      return {
+        session,
+        startBounds: { left: 10, top: 20 }
+      };
+    },
+    shouldHandlePointerEvent(nextSession, event) {
+      return nextSession === activeSession && event.pointerId === 7;
+    },
+    getPointerOnSlide() {
+      return { x: 30, y: 40 };
+    },
+    buildTransformFrameState(nextSession, options) {
+      calls.push(['frame', nextSession, options]);
+      return { isActive: true, bounds: { left: 12, top: 22 } };
+    },
+    applyTransformBounds(nextSession, bounds) {
+      calls.push(['apply', nextSession, bounds]);
+    },
+    finalizeTransformSession(nextSession) {
+      calls.push(['finalize', nextSession]);
+      return { id: 'finalize-result' };
+    },
+    buildCompletionPlan(result) {
+      calls.push(['completion', result]);
+      return { shouldPersist: true, versionLabel: 'Auto: Moved Element' };
+    },
+    onSessionStart(bounds) {
+      calls.push(['start', bounds]);
+    },
+    onSessionFrame(bounds) {
+      calls.push(['session-frame', bounds]);
+    },
+    onSessionFinalize(result, completionPlan) {
+      calls.push(['session-finalize', result, completionPlan]);
+    }
+  });
+
+  assert.equal(handlers.handlePointerDown({ pointerId: 7 }), true);
+  activeSession = session;
+  assert.equal(handlers.handlePointerMove({ pointerId: 7, clientX: 30, clientY: 40 }), true);
+  assert.equal(handlers.handlePointerUp({ pointerId: 7 }), true);
+  assert.deepEqual(calls, [
+    'getActiveSlide',
+    ['resolveStart', { id: 'slide-1' }],
+    ['start', { left: 10, top: 20 }],
+    ['frame', session, {
+      pointer: { x: 30, y: 40 },
+      clientX: 30,
+      clientY: 40,
+      dragStartThresholdPx: 0,
+      minSizePx: 0,
+      dragOverflowMarginPx: 0
+    }],
+    ['apply', session, { left: 12, top: 22 }],
+    ['session-frame', { left: 12, top: 22 }],
+    ['finalize', session],
+    ['completion', { id: 'finalize-result' }],
+    ['session-finalize', { id: 'finalize-result' }, {
+      shouldPersist: true,
+      versionLabel: 'Auto: Moved Element'
+    }]
+  ]);
+  assert.equal(handlers.getSession(), null);
+});
+
 test('canStudioTransformSelection allows connected unlocked freeform selections', () => {
   assert.equal(transformState.canStudioTransformSelection([
     { id: 1, isConnected: true },

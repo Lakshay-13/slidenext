@@ -1269,6 +1269,151 @@
     };
   }
 
+  function createStudioTransformFallbackPointerHandlers(options = {}) {
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getSelectionState = typeof options.getSelectionState === 'function'
+      ? options.getSelectionState
+      : () => ({ selection: [], canTransform: false });
+    const selectElement = typeof options.selectElement === 'function'
+      ? options.selectElement
+      : () => {};
+    const resolveEditableTarget = typeof options.resolveEditableTarget === 'function'
+      ? options.resolveEditableTarget
+      : () => null;
+    const getSlideMetrics = typeof options.getSlideMetrics === 'function'
+      ? options.getSlideMetrics
+      : () => null;
+    const getPointerOnSlide = typeof options.getPointerOnSlide === 'function'
+      ? options.getPointerOnSlide
+      : getStudioPointerOnSlide;
+    const getSelectionBounds = typeof options.getSelectionBounds === 'function'
+      ? options.getSelectionBounds
+      : () => null;
+    const ensureOverlay = typeof options.ensureOverlay === 'function'
+      ? options.ensureOverlay
+      : () => null;
+    const resolveTransformSessionStart = typeof options.resolveTransformSessionStart === 'function'
+      ? options.resolveTransformSessionStart
+      : resolveStudioTransformSessionStart;
+    const shouldHandlePointerEvent = typeof options.shouldHandlePointerEvent === 'function'
+      ? options.shouldHandlePointerEvent
+      : shouldHandleStudioTransformPointerEvent;
+    const buildTransformFrameState = typeof options.buildTransformFrameState === 'function'
+      ? options.buildTransformFrameState
+      : buildStudioTransformFrameState;
+    const applyTransformBounds = typeof options.applyTransformBounds === 'function'
+      ? options.applyTransformBounds
+      : applyStudioTransformBounds;
+    const finalizeTransformSession = typeof options.finalizeTransformSession === 'function'
+      ? options.finalizeTransformSession
+      : finalizeStudioTransformSession;
+    const buildCompletionPlan = typeof options.buildCompletionPlan === 'function'
+      ? options.buildCompletionPlan
+      : buildStudioTransformCompletionPlan;
+    const itemOptions = options.itemOptions && typeof options.itemOptions === 'object'
+      ? options.itemOptions
+      : {};
+    const dragStartThresholdPx = Number.isFinite(options.dragStartThresholdPx)
+      ? options.dragStartThresholdPx
+      : 0;
+    const minSizePx = Number.isFinite(options.minSizePx) ? options.minSizePx : 0;
+    const dragOverflowMarginPx = Number.isFinite(options.dragOverflowMarginPx)
+      ? options.dragOverflowMarginPx
+      : 0;
+    let session = null;
+
+    function finalizeSession() {
+      if (!session) return null;
+
+      const finalizedSession = session;
+      const finalizeResult = finalizeTransformSession(finalizedSession);
+      const completionPlan = buildCompletionPlan(finalizeResult);
+      session = null;
+      if (typeof options.onSessionFinalize === 'function') {
+        options.onSessionFinalize(finalizeResult, completionPlan);
+      }
+      return {
+        finalizeResult,
+        completionPlan
+      };
+    }
+
+    function handlePointerDown(event = {}) {
+      const slide = getActiveSlide();
+      const transformSessionStart = resolveTransformSessionStart({
+        slide,
+        event,
+        getSelectionState,
+        selectElement,
+        resolveEditableTarget,
+        getSlideMetrics,
+        getPointerOnSlide,
+        getSelectionBounds,
+        ensureOverlay: (nextSlide) => ensureOverlay(nextSlide),
+        itemOptions,
+        captureTarget: options.captureTarget || null
+      });
+      if (!transformSessionStart) return false;
+
+      session = transformSessionStart.session;
+      if (typeof options.onSessionStart === 'function') {
+        options.onSessionStart(transformSessionStart.startBounds, transformSessionStart);
+      }
+      if (typeof event.preventDefault === 'function') event.preventDefault();
+      if (typeof event.stopPropagation === 'function') event.stopPropagation();
+      return true;
+    }
+
+    function handlePointerMove(event = {}) {
+      if (!shouldHandlePointerEvent(session, event)) return false;
+
+      const pointer = getPointerOnSlide(event, session.slideMetrics);
+      const transformFrameState = buildTransformFrameState(session, {
+        pointer,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        dragStartThresholdPx,
+        minSizePx,
+        dragOverflowMarginPx
+      });
+      if (!transformFrameState.isActive) return false;
+
+      const bounds = transformFrameState.bounds;
+      applyTransformBounds(session, bounds, { minSizePx });
+      if (typeof options.onSessionFrame === 'function') {
+        options.onSessionFrame(bounds, transformFrameState);
+      }
+      if (typeof event.preventDefault === 'function') event.preventDefault();
+      return true;
+    }
+
+    function handlePointerUp(event = {}) {
+      if (!shouldHandlePointerEvent(session, event)) return false;
+      finalizeSession();
+      return true;
+    }
+
+    function handlePointerCancel(event = {}) {
+      return handlePointerUp(event);
+    }
+
+    function handleWindowBlur() {
+      finalizeSession();
+    }
+
+    return {
+      handlePointerDown,
+      handlePointerMove,
+      handlePointerUp,
+      handlePointerCancel,
+      handleWindowBlur,
+      finalizeSession,
+      getSession: () => session
+    };
+  }
+
   return {
     getStudioTransformSelection,
     getStudioSlideMetrics,
@@ -1309,6 +1454,7 @@
     buildStudioTransformFrameState,
     buildStudioTransformStartState,
     createStudioTransformPointerHandlers,
+    createStudioTransformFallbackPointerHandlers,
     snapStudioTransformBounds
   };
 });

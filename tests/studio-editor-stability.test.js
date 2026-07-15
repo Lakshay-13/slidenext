@@ -575,7 +575,7 @@ test('restoreStudioHistorySelectionState uses committed-selection restore callba
   });
 });
 
-test('setupIframeDragging finalizes drag sessions without redundantly refreshing the layer list', () => {
+test('setupIframeDragging delegates the fallback drag lifecycle without redundantly refreshing the layer list', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setupIframeDraggingSource = extractFunctionSource(
     fileContent,
@@ -586,6 +586,7 @@ test('setupIframeDragging finalizes drag sessions without redundantly refreshing
   const calls = [];
   const bodyListeners = new Map();
   const windowListeners = new Map();
+  let fallbackOptions = null;
   const slide = { id: 'slide-1' };
   const doc = {
     addEventListener(type, handler) {
@@ -613,6 +614,25 @@ test('setupIframeDragging finalizes drag sessions without redundantly refreshing
       }
     },
     SlideNextStudioEditorTransform: {
+      createStudioTransformFallbackPointerHandlers(options) {
+        fallbackOptions = options;
+        return {
+          handlePointerDown(event) {
+            calls.push(['fallbackPointerDown', event]);
+            options.onSessionStart({ left: 0, top: 0, width: 100, height: 60 });
+          },
+          handlePointerMove() {},
+          handlePointerUp(event) {
+            calls.push(['fallbackPointerUp', event]);
+            options.onSessionFinalize(
+              { id: 'finalize-result' },
+              { shouldPersist: true, versionLabel: 'Auto: Moved Element' }
+            );
+          },
+          handlePointerCancel() {},
+          handleWindowBlur() {}
+        };
+      },
       resolveStudioTransformSessionStart() {
         return {
           session: { slideMetrics: { logicalWidth: 1920, logicalHeight: 1080 } },
@@ -710,12 +730,13 @@ test('setupIframeDragging finalizes drag sessions without redundantly refreshing
   bodyListeners.get('pointerup')({});
 
   assert.equal(typeof windowListeners.get('blur'), 'function');
+  assert.equal(typeof fallbackOptions.onSessionStart, 'function');
+  assert.equal(typeof fallbackOptions.onSessionFinalize, 'function');
   assert.deepEqual(calls.map(([name]) => name), [
     'doc.addEventListener',
-    'getActiveSlide',
+    'fallbackPointerDown',
     'updateDragHud',
-    'finalizeStudioTransformSession',
-    'buildStudioTransformCompletionPlan',
+    'fallbackPointerUp',
     'hideGuides',
     'hideDragHud',
     'syncSelectionOverlay',
@@ -727,9 +748,8 @@ test('setupIframeDragging finalizes drag sessions without redundantly refreshing
   assert.equal(context.isDraggingElement, false);
   assert.equal(calls.some(([name]) => name === 'updateLayersList'), false);
   assert.equal(calls[0][1], 'dragstart');
-  assert.equal(calls[1][1], doc);
   assert.deepEqual(calls[2][1], { left: 0, top: 0, width: 100, height: 60 });
-  assert.equal(calls[11][1], 'Auto: Moved Element');
+  assert.equal(calls[10][1], 'Auto: Moved Element');
 });
 
 test('setupIframeDragging delegates pointer binding to the shared transform handlers', () => {
