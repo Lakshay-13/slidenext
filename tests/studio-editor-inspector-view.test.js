@@ -72,3 +72,36 @@ test('renderStudioInspectorSelectionSummary shows element inspector and selectio
   assert.equal(nodes.slideInspectorPanel.classList.contains('hidden'), true);
   assert.equal(nodes.elementInspectorPanel.classList.contains('hidden'), false);
 });
+
+test('syncStudioInspectorContentControls switches between image and text controls', () => {
+  const classLists = {
+    imageGroup: createClassList(),
+    textGroup: createClassList()
+  };
+  const nodes = {
+    elTextContent: { value: '' },
+    inspectorImageGroup: { classList: classLists.imageGroup },
+    elImageSrc: { value: '' },
+    inspectorTextContentGroup: { classList: classLists.textGroup }
+  };
+  const image = {
+    tagName: 'IMG',
+    innerText: '',
+    textContent: 'Caption',
+    src: '/image.png'
+  };
+
+  assert.equal(inspectorView.syncStudioInspectorContentControls({
+    documentRef: {
+      getElementById(id) {
+        return nodes[id] || null;
+      }
+    },
+    primaryElement: image,
+    isMulti: false
+  }), true);
+  assert.equal(nodes.elTextContent.value, 'Caption');
+  assert.equal(nodes.elImageSrc.value, '/image.png');
+  assert.equal(classLists.imageGroup.contains('hidden'), false);
+  assert.equal(classLists.textGroup.contains('hidden'), true);
+});

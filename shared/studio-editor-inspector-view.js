@@ -54,5 +54,33 @@
     };
   }
 
-  return { renderStudioInspectorSelectionSummary };
+  function syncStudioInspectorContentControls(options = {}) {
+    const documentRef = options.documentRef;
+    const primaryElement = options.primaryElement;
+    if (!documentRef || !primaryElement || typeof documentRef.getElementById !== 'function') return false;
+    const isMulti = !!options.isMulti;
+    const textContentInput = documentRef.getElementById('elTextContent');
+    if (textContentInput) {
+      textContentInput.value = primaryElement.innerText || primaryElement.textContent || '';
+    }
+
+    const imageGroup = documentRef.getElementById('inspectorImageGroup');
+    const imageSrcInput = documentRef.getElementById('elImageSrc');
+    const textContentGroup = documentRef.getElementById('inspectorTextContentGroup');
+    const isImage = !isMulti && primaryElement.tagName.toLowerCase() === 'img';
+    if (isImage) {
+      if (imageGroup) imageGroup.classList.remove('hidden');
+      if (imageSrcInput) imageSrcInput.value = primaryElement.src || '';
+      if (textContentGroup) textContentGroup.classList.add('hidden');
+    } else {
+      if (imageGroup) imageGroup.classList.add('hidden');
+      if (textContentGroup) textContentGroup.classList.toggle('hidden', isMulti);
+    }
+    return true;
+  }
+
+  return {
+    renderStudioInspectorSelectionSummary,
+    syncStudioInspectorContentControls
+  };
 });

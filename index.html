@@ -4023,35 +4023,11 @@
 
       const el = selectionSummary.primaryElement;
       const isMulti = selectionSummary.isMulti;
-
-      const textVal = el.innerText || el.textContent || '';
-      const textContentInput = document.getElementById('elTextContent');
-      if (textContentInput) {
-        textContentInput.value = textVal;
-      }
-
-      const imageGroup = document.getElementById('inspectorImageGroup');
-      const imageSrcInput = document.getElementById('elImageSrc');
-      const textContentGroup = document.getElementById('inspectorTextContentGroup');
-
-      if (!isMulti && el.tagName.toLowerCase() === 'img') {
-        if (imageGroup) {
-          imageGroup.classList.remove('hidden');
-        }
-        if (imageSrcInput) {
-          imageSrcInput.value = el.src || '';
-        }
-        if (textContentGroup) {
-          textContentGroup.classList.add('hidden');
-        }
-      } else {
-        if (imageGroup) {
-          imageGroup.classList.add('hidden');
-        }
-        if (textContentGroup) {
-          textContentGroup.classList.toggle('hidden', isMulti);
-        }
-      }
+      inspectorView.syncStudioInspectorContentControls({
+        documentRef: document,
+        primaryElement: el,
+        isMulti
+      });
 
       const computedStyles = el.ownerDocument.defaultView.getComputedStyle(el);
       const fSize = parseInt(computedStyles.fontSize) || 16;
