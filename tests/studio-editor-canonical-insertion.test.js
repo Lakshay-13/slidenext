@@ -31,3 +31,28 @@ test('buildStudioCanonicalInsertionDeck fails closed when insertion dependencies
     slideId: 'slide-1'
   }), null);
 });
+
+test('buildStudioCanonicalInsertionDeck builds the baseline from the source document when needed', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const sourceDocument = { id: 'editor-doc' };
+  let builtFromDocument = null;
+  const result = canonicalInsertion.buildStudioCanonicalInsertionDeck(
+    { dataset: { editorId: 'inserted' } },
+    {
+      canonicalDeckApi: canonicalDeck,
+      buildCanonicalDeck(documentRef) {
+        builtFromDocument = documentRef;
+        return sourceDeck;
+      },
+      sourceDocument,
+      slideId: 'slide-1',
+      importElementToCanonicalNode(element, options) {
+        return { id: options.getNodeId(element), text: 'Inserted' };
+      },
+      getNodeId: (node) => node.dataset.editorId
+    }
+  );
+
+  assert.equal(builtFromDocument, sourceDocument);
+  assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['inserted']);
+});

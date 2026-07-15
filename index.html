@@ -5687,21 +5687,17 @@
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
         ? deckImportApi.importElementToCanonicalNode
         : null;
-      let canonicalDeckBeforePaste = null;
       let canonicalSlideId = '';
+      let canonicalSourceDocument = null;
       if (buildCanonicalInsertionDeck
-        && canonicalDeckApi
-        && typeof canonicalDeckApi.appendCanonicalNode === 'function'
-        && importElementToCanonicalNode
-        && typeof buildEditorCanonicalDeck === 'function'
         && typeof getIframeDoc === 'function'
         && typeof getActiveSlide === 'function') {
         const doc = getIframeDoc();
+        canonicalSourceDocument = doc;
         const activeSlide = getActiveSlide(doc);
         canonicalSlideId = typeof getEditorSlideId === 'function'
           ? getEditorSlideId(activeSlide)
           : activeSlide && activeSlide.id;
-        canonicalDeckBeforePaste = buildEditorCanonicalDeck(doc);
       }
       let transaction = null;
       const pasted = insertClipboardPayload(pastePlan.items, pastePlan.nextPasteCount, {
@@ -5710,16 +5706,19 @@
         }
       });
       let canonicalDeck = null;
-      if (canonicalDeckBeforePaste && canonicalSlideId) {
-        let nextCanonicalDeck = canonicalDeckBeforePaste;
+      if (canonicalSourceDocument && canonicalSlideId) {
+        let nextCanonicalDeck = null;
         let didAppendAll = true;
         pasted.forEach((element) => {
           if (!didAppendAll) return;
-          const appendedDeck = buildCanonicalInsertionDeck(element, {
+          const insertionOptions = {
             canonicalDeckApi,
-            canonicalDeckBeforeMutation: nextCanonicalDeck,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
             importElementToCanonicalNode,
             slideId: canonicalSlideId,
+            sourceDocument: canonicalSourceDocument,
             getNodeId: (node) => {
               if (node && node.dataset && typeof assignEditorElementId === 'function') {
                 const assignedId = assignEditorElementId(node);
@@ -5727,7 +5726,11 @@
               }
               return node && node.dataset && node.dataset.editorId;
             }
-          });
+          };
+          if (nextCanonicalDeck) {
+            insertionOptions.canonicalDeckBeforeMutation = nextCanonicalDeck;
+          }
+          const appendedDeck = buildCanonicalInsertionDeck(element, insertionOptions);
           if (!appendedDeck) {
             didAppendAll = false;
             return;
@@ -5768,21 +5771,17 @@
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
         ? deckImportApi.importElementToCanonicalNode
         : null;
-      let canonicalDeckBeforeDuplication = null;
       let canonicalSlideId = '';
+      let canonicalSourceDocument = null;
       if (buildCanonicalInsertionDeck
-        && canonicalDeckApi
-        && typeof canonicalDeckApi.appendCanonicalNode === 'function'
-        && importElementToCanonicalNode
-        && typeof buildEditorCanonicalDeck === 'function'
         && typeof getIframeDoc === 'function'
         && typeof getActiveSlide === 'function') {
         const doc = getIframeDoc();
+        canonicalSourceDocument = doc;
         const activeSlide = getActiveSlide(doc);
         canonicalSlideId = typeof getEditorSlideId === 'function'
           ? getEditorSlideId(activeSlide)
           : activeSlide && activeSlide.id;
-        canonicalDeckBeforeDuplication = buildEditorCanonicalDeck(doc);
       }
       let transaction = null;
       const duplicates = insertClipboardPayload(clipboardActionState.payloadItems, 1, {
@@ -5792,16 +5791,19 @@
       });
       if (duplicates.length === 0) return finalizeClipboardActionResult(false);
       let canonicalDeck = null;
-      if (canonicalDeckBeforeDuplication && canonicalSlideId) {
-        let nextCanonicalDeck = canonicalDeckBeforeDuplication;
+      if (canonicalSourceDocument && canonicalSlideId) {
+        let nextCanonicalDeck = null;
         let didAppendAll = true;
         duplicates.forEach((element) => {
           if (!didAppendAll) return;
-          const appendedDeck = buildCanonicalInsertionDeck(element, {
+          const insertionOptions = {
             canonicalDeckApi,
-            canonicalDeckBeforeMutation: nextCanonicalDeck,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
             importElementToCanonicalNode,
             slideId: canonicalSlideId,
+            sourceDocument: canonicalSourceDocument,
             getNodeId: (node) => {
               if (node && node.dataset && typeof assignEditorElementId === 'function') {
                 const assignedId = assignEditorElementId(node);
@@ -5809,7 +5811,11 @@
               }
               return node && node.dataset && node.dataset.editorId;
             }
-          });
+          };
+          if (nextCanonicalDeck) {
+            insertionOptions.canonicalDeckBeforeMutation = nextCanonicalDeck;
+          }
+          const appendedDeck = buildCanonicalInsertionDeck(element, insertionOptions);
           if (!appendedDeck) {
             didAppendAll = false;
             return;

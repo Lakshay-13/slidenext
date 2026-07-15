@@ -23,7 +23,7 @@
       : null;
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
-      : (buildCanonicalDeck ? buildCanonicalDeck() : null);
+      : (buildCanonicalDeck ? buildCanonicalDeck(options.sourceDocument) : null);
     const slideId = typeof options.slideId === 'string' ? options.slideId : '';
     const getNodeId = typeof options.getNodeId === 'function'
       ? options.getNodeId
