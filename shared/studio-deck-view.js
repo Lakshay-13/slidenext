@@ -787,6 +787,28 @@
     return true;
   }
 
+  function resetStudioDeckSidebarUiState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+
+    const isLoading = !!options.isLoading;
+    const slideCountLabel = documentRef.getElementById('slideCountLabel');
+    if (slideCountLabel) {
+      slideCountLabel.textContent = '0 / 0';
+    }
+
+    const thumbnailsList = documentRef.getElementById('thumbnailsList');
+    if (thumbnailsList) {
+      thumbnailsList.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-6">${isLoading ? 'Loading slides...' : 'No slides loaded'}</p>`;
+    }
+
+    const slideLayersList = documentRef.getElementById('slideLayersList');
+    if (slideLayersList) {
+      slideLayersList.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-2">${isLoading ? 'Loading layers...' : 'No active slide'}</p>`;
+    }
+    return true;
+  }
+
   function setStudioDeckActiveSlideById(slideId, options = {}) {
     const doc = options.doc || null;
     const getSlideIndexById = typeof options.getSlideIndexById === 'function'
@@ -1007,6 +1029,7 @@
     observeStudioDeckActiveSlideState,
     bindStudioDeckNavigationSync,
     updateStudioDeckActiveThumbnailCardState,
+    resetStudioDeckSidebarUiState,
     applyStudioSlideReorderMutation,
     applyStudioSlideInsertionMutation,
     applyStudioSlideDeletionMutation,

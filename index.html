@@ -8864,19 +8864,14 @@
       hasPendingCustomWallpaperVersion = false;
       wallpaperTab = 'solid';
       customGradientType = 'linear';
-      const slideCountLabel = document.getElementById('slideCountLabel');
-      if (slideCountLabel) {
-        slideCountLabel.textContent = '0 / 0';
-      }
-
-      const thumbnailsList = document.getElementById('thumbnailsList');
-      if (thumbnailsList) {
-        thumbnailsList.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-6">${isLoading ? 'Loading slides...' : 'No slides loaded'}</p>`;
-      }
-
-      const slideLayersList = document.getElementById('slideLayersList');
-      if (slideLayersList) {
-        slideLayersList.innerHTML = `<p class="text-[10px] text-zinc-500 font-mono text-center py-2">${isLoading ? 'Loading layers...' : 'No active slide'}</p>`;
+      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
+        : null;
+      if (deckView && typeof deckView.resetStudioDeckSidebarUiState === 'function') {
+        deckView.resetStudioDeckSidebarUiState({
+          documentRef: document,
+          isLoading
+        });
       }
 
       const inspectorTargetLabel = document.getElementById('inspectorTargetLabel');

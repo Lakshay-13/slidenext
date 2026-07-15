@@ -4,6 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const deckView = require('../shared/studio-deck-view.js');
+
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
@@ -141,6 +143,7 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
 
   const context = {
     document: documentStub,
+    SlideNextStudioDeckView: deckView,
     hasPendingCustomWallpaperVersion: true,
     wallpaperTab: 'custom',
     customGradientType: 'radial'
