@@ -35,6 +35,59 @@ function loadTransformSessionFinalizer(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+test('selectElement delegates selection orchestration to the shared selection module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectElementSource = extractFunctionSource(
+    fileContent,
+    'function selectElement(el, options = {}) {',
+    '\n\n    function deselectElement() {'
+  );
+  const selectedElements = [{ id: 'node-1' }];
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorSelection: {
+      selectStudioElement(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    selectedElements,
+    resolveEditableTarget() {},
+    getEditorSelectionOptions() {
+      return { marker: 'selection-options' };
+    },
+    commitEditorSelectionState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(selectElementSource, context);
+
+  assert.equal(context.selectElement({ id: 'raw-node' }, { additive: true, toggle: false }), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].element.id, 'raw-node');
+  assert.equal(calls[0].selectedElements, selectedElements);
+  assert.equal(calls[0].additive, true);
+  assert.equal(calls[0].toggle, false);
+});
+
+test('selectElement fails closed when the shared selection module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectElementSource = extractFunctionSource(
+    fileContent,
+    'function selectElement(el, options = {}) {',
+    '\n\n    function deselectElement() {'
+  );
+
+  const context = {
+    selectedElements: [],
+    SlideNextStudioEditorSelection: null
+  };
+  vm.createContext(context);
+  vm.runInContext(selectElementSource, context);
+
+  assert.equal(context.selectElement({ id: 'raw-node' }), false);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

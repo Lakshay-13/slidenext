@@ -4184,29 +4184,16 @@
       const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
         ? SlideNextStudioEditorSelection
         : null;
-      if (selectionApi && typeof selectionApi.selectStudioElement === 'function') {
-        return selectionApi.selectStudioElement({
-          element: el,
-          selectedElements,
-          additive: options.additive,
-          toggle: options.toggle,
-          resolveEditableTarget,
-          getSelectionOptions: getEditorSelectionOptions,
-          commitSelectionState: commitEditorSelectionState
-        });
-      }
-      const target = resolveEditableTarget(el);
-      if (!target) return;
-      const nextSelectionState = SlideNextStudioEditorSelection.updateStudioSelection(
+      if (!selectionApi || typeof selectionApi.selectStudioElement !== 'function') return false;
+      return selectionApi.selectStudioElement({
+        element: el,
         selectedElements,
-        target,
-        {
-          ...getEditorSelectionOptions(),
-          additive: !!options.additive,
-          toggle: !!options.toggle
-        }
-      );
-      commitEditorSelectionState(nextSelectionState);
+        additive: options.additive,
+        toggle: options.toggle,
+        resolveEditableTarget,
+        getSelectionOptions: getEditorSelectionOptions,
+        commitSelectionState: commitEditorSelectionState
+      });
     }
 
     function deselectElement() {
