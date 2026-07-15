@@ -143,10 +143,6 @@
       return false;
     }
 
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-
     let didPrint = false;
     const print = () => {
       if (didPrint) return;
@@ -164,7 +160,13 @@
 
     if (typeof printWindow.addEventListener === 'function') {
       printWindow.addEventListener('load', waitForResources, { once: true });
-    } else {
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    if (typeof printWindow.addEventListener !== 'function') {
       waitForResources();
     }
     return true;

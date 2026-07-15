@@ -66,19 +66,26 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
   let printCalls = 0;
   let focusCalls = 0;
   let loadHandler = null;
+  const events = [];
   const printWindow = {
     document: {
-      open() {},
+      open() {
+        events.push('open');
+      },
       write(html) {
+        events.push('write');
         writtenHtml = html;
       },
-      close() {},
+      close() {
+        events.push('close');
+      },
       fonts: {
         ready: Promise.resolve()
       }
     },
     addEventListener(type, handler) {
       assert.equal(type, 'load');
+      events.push('listen');
       loadHandler = handler;
     },
     focus() {
@@ -96,6 +103,7 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
     }
   }), true);
   assert.match(writtenHtml, /data-slidenext-pdf-print="true"/);
+  assert.deepEqual(events, ['listen', 'open', 'write', 'close']);
   assert.equal(printCalls, 0);
   assert.equal(typeof loadHandler, 'function');
 
