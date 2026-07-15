@@ -86,3 +86,45 @@ test('syncStudioSolidWallpaperControl updates the picker through the provided co
   assert.deepEqual(calls, ['rgb(17, 34, 51)']);
   assert.equal(colorInput.value, '#112233');
 });
+
+test('syncStudioWallpaperTabChrome selects the matching wallpaper panel', () => {
+  const classList = () => ({
+    values: new Set(),
+    add(value) {
+      this.values.add(value);
+    },
+    remove(value) {
+      this.values.delete(value);
+    },
+    contains(value) {
+      return this.values.has(value);
+    }
+  });
+  const elements = {
+    wpTabSolid: { className: '' },
+    wpTabPresets: { className: '' },
+    wpTabCustom: { className: '' },
+    wpPanelSolid: { classList: classList() },
+    wpPanelPresets: { classList: classList() },
+    wpPanelCustom: { classList: classList() }
+  };
+  const result = wallpaperView.syncStudioWallpaperTabChrome({
+    documentRef: {
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    },
+    activeSlide: {
+      style: {
+        background: 'linear-gradient(135deg, #112233 0%, #445566 100%)'
+      }
+    },
+    didSyncCustomGradientControls: false
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.wallpaperTab, 'presets');
+  assert.equal(elements.wpPanelSolid.classList.contains('hidden'), true);
+  assert.equal(elements.wpPanelPresets.classList.contains('hidden'), false);
+  assert.equal(elements.wpPanelCustom.classList.contains('hidden'), true);
+});

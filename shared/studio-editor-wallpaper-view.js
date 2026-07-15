@@ -103,6 +103,52 @@
     return true;
   }
 
+  function syncStudioWallpaperTabChrome(options = {}) {
+    const documentRef = options.documentRef;
+    const solidTab = documentRef && documentRef.getElementById('wpTabSolid');
+    const presetsTab = documentRef && documentRef.getElementById('wpTabPresets');
+    const customTab = documentRef && documentRef.getElementById('wpTabCustom');
+    const solidPanel = documentRef && documentRef.getElementById('wpPanelSolid');
+    const presetsPanel = documentRef && documentRef.getElementById('wpPanelPresets');
+    const customPanel = documentRef && documentRef.getElementById('wpPanelCustom');
+    if (!solidTab || !presetsTab || !customTab || !solidPanel || !presetsPanel || !customPanel) {
+      return { didApply: false, wallpaperTab: options.wallpaperTab };
+    }
+
+    const activeSlide = options.activeSlide;
+    const hasGradientBackground = !!resolveStudioActiveSlideGradientBackground(activeSlide);
+    const nextTab = options.didSyncCustomGradientControls
+      ? 'custom'
+      : hasGradientBackground
+        ? 'presets'
+        : resolveStudioActiveSlideSolidWallpaperColor(activeSlide)
+          ? 'solid'
+          : '';
+    if (!nextTab) {
+      return { didApply: false, wallpaperTab: options.wallpaperTab };
+    }
+
+    const inactiveTabClass = 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
+    const activeTabClass = 'py-1 text-center text-[10px] font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
+    solidTab.className = nextTab === 'solid' ? activeTabClass : inactiveTabClass;
+    presetsTab.className = nextTab === 'presets' ? activeTabClass : inactiveTabClass;
+    customTab.className = nextTab === 'custom' ? activeTabClass : inactiveTabClass;
+    if (nextTab === 'solid') {
+      solidPanel.classList.remove('hidden');
+      presetsPanel.classList.add('hidden');
+      customPanel.classList.add('hidden');
+    } else if (nextTab === 'presets') {
+      solidPanel.classList.add('hidden');
+      presetsPanel.classList.remove('hidden');
+      customPanel.classList.add('hidden');
+    } else {
+      solidPanel.classList.add('hidden');
+      presetsPanel.classList.add('hidden');
+      customPanel.classList.remove('hidden');
+    }
+    return { didApply: true, wallpaperTab: nextTab };
+  }
+
   function resolveStudioActiveSlideGradientControls(activeSlide, options = {}) {
     const background = resolveStudioActiveSlideGradientBackground(activeSlide);
     if (!background) return null;
@@ -158,6 +204,7 @@
     resolveStudioActiveSlideSolidWallpaperColor,
     resolveStudioActiveSlideGradientBackground,
     syncStudioSolidWallpaperControl,
+    syncStudioWallpaperTabChrome,
     resolveStudioActiveSlideGradientControls
   };
 });

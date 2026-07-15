@@ -2623,47 +2623,15 @@
           })
         : () => false;
       const syncWallpaperTabChromeToActiveSlide = (activeSlide, options = {}) => {
-        const solidTab = document.getElementById('wpTabSolid');
-        const presetsTab = document.getElementById('wpTabPresets');
-        const customTab = document.getElementById('wpTabCustom');
-        const solidPanel = document.getElementById('wpPanelSolid');
-        const presetsPanel = document.getElementById('wpPanelPresets');
-        const customPanel = document.getElementById('wpPanelCustom');
-        if (!solidTab || !presetsTab || !customTab || !solidPanel || !presetsPanel || !customPanel) {
-          return false;
-        }
-
-        const hasGradientBackground = !!resolveActiveSlideGradientBackground(activeSlide);
-        const nextTab = options.didSyncCustomGradientControls
-          ? 'custom'
-          : hasGradientBackground
-            ? 'presets'
-            : resolveActiveSlideSolidWallpaperColor(activeSlide)
-            ? 'solid'
-            : '';
-        if (!nextTab) {
-          return false;
-        }
-
-        wallpaperTab = nextTab;
-        const inactiveTabClass = 'py-1 text-center text-[10px] font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
-        const activeTabClass = 'py-1 text-center text-[10px] font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
-        solidTab.className = nextTab === 'solid' ? activeTabClass : inactiveTabClass;
-        presetsTab.className = nextTab === 'presets' ? activeTabClass : inactiveTabClass;
-        customTab.className = nextTab === 'custom' ? activeTabClass : inactiveTabClass;
-        if (nextTab === 'solid') {
-          solidPanel.classList.remove('hidden');
-          presetsPanel.classList.add('hidden');
-          customPanel.classList.add('hidden');
-        } else if (nextTab === 'presets') {
-          solidPanel.classList.add('hidden');
-          presetsPanel.classList.remove('hidden');
-          customPanel.classList.add('hidden');
-        } else {
-          solidPanel.classList.add('hidden');
-          presetsPanel.classList.add('hidden');
-          customPanel.classList.remove('hidden');
-        }
+        if (!wallpaperView || typeof wallpaperView.syncStudioWallpaperTabChrome !== 'function') return false;
+        const result = wallpaperView.syncStudioWallpaperTabChrome({
+          documentRef: document,
+          activeSlide,
+          wallpaperTab: typeof wallpaperTab === 'string' ? wallpaperTab : '',
+          didSyncCustomGradientControls: options.didSyncCustomGradientControls
+        });
+        if (!result.didApply) return false;
+        wallpaperTab = result.wallpaperTab;
         return true;
       };
       const syncCustomGradientTypeChrome = (type) => {
