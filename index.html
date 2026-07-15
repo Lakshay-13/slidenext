@@ -1171,6 +1171,7 @@
   <script src="/shared/studio-editor-mutation.js"></script>
   <script src="/shared/studio-editor-transaction.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
+  <script src="/shared/studio-editor-slide-commands.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-interactions.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
@@ -3155,15 +3156,23 @@
         return false;
       }
 
-      const duplicateSlide = sourceSlide.cloneNode(true);
-      if (!duplicateSlide) return false;
-      sanitizeDuplicatedSubtree(duplicateSlide);
-      if (duplicateSlide.classList && typeof duplicateSlide.classList.remove === 'function') {
-        duplicateSlide.classList.remove('slide-active');
-      }
-      const duplicateSlideId = assignEditorSlideId(duplicateSlide, { forceNew: true });
-      if (!duplicateSlideId) return false;
-      makeElementsHoverable(duplicateSlide);
+      const slideCommands = typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+        ? SlideNextStudioEditorSlideCommands
+        : null;
+      const prepareStudioSlideDuplication = slideCommands
+        && typeof slideCommands.prepareStudioSlideDuplication === 'function'
+        ? slideCommands.prepareStudioSlideDuplication
+        : null;
+      const duplicatePreparation = prepareStudioSlideDuplication
+        ? prepareStudioSlideDuplication(sourceSlide, {
+            sanitizeDuplicatedSubtree,
+            assignSlideId: assignEditorSlideId,
+            makeElementsHoverable
+          })
+        : null;
+      if (!duplicatePreparation) return false;
+      const duplicateSlide = duplicatePreparation.slide;
+      const duplicateSlideId = duplicatePreparation.slideId;
 
       const insertionIndex = sourceIndex + 1;
       const insertCanonicalSlide = (

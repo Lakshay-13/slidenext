@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const slideCommands = require('../shared/studio-editor-slide-commands.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -698,6 +699,7 @@ test('duplicateSlideNode clones the active slide, inserts it next to the source,
         return { id: options.getSlideId(), title: 'Source' };
       }
     },
+    SlideNextStudioEditorSlideCommands: slideCommands,
     SlideNextStudioEditorTransaction: studioTransaction,
     assignEditorSlideId(slide, options) {
       assert.equal(slide, duplicateSlide);
