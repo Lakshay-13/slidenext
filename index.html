@@ -5990,6 +5990,13 @@
         && typeof removalApi.removeStudioElements === 'function'
         ? removalApi.removeStudioElements
         : null;
+      if (!removeStudioElements) {
+        return {
+          didRemove: false,
+          removedCount: 0,
+          transaction: null
+        };
+      }
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -6013,45 +6020,14 @@
               element.remove();
             }
           };
-      if (removeStudioElements) {
-        const mutation = removeStudioElements(selection, {
-          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
-          getElementId,
-          removeElement
-        });
-        return mutation && typeof mutation === 'object'
-          ? mutation
-          : { didRemove: false, removedCount: 0, transaction: null };
-      }
-
-      const markupCaptureTargets = [];
-      if (createStudioMarkupTransactionCapture) {
-        const parentSet = new Set();
-        selection.forEach((element) => {
-          if (!element || !element.isConnected || !element.parentElement || parentSet.has(element.parentElement)) return;
-          parentSet.add(element.parentElement);
-          markupCaptureTargets.push({
-            element: element.parentElement,
-            elementId: getElementId(element.parentElement)
-          });
-        });
-      }
-      const markupCapture = createStudioMarkupTransactionCapture
-        ? createStudioMarkupTransactionCapture(markupCaptureTargets, { getElementId })
-        : null;
-      let removedCount = 0;
-      selection.forEach((element) => {
-        if (!element || !element.isConnected) return;
-        removeElement(element);
-        removedCount += 1;
+      const mutation = removeStudioElements(selection, {
+        createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+        getElementId,
+        removeElement
       });
-      return {
-        didRemove: removedCount > 0,
-        removedCount,
-        transaction: removedCount > 0 && markupCapture
-          ? markupCapture.createTransaction()
-          : null
-      };
+      return mutation && typeof mutation === 'object'
+        ? mutation
+        : { didRemove: false, removedCount: 0, transaction: null };
     }
 
     // Delete active selection

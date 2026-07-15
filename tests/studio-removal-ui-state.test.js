@@ -326,6 +326,7 @@ test('removeSelectedElement returns false and skips persistence when planned tar
   const context = {
     selectedElements: [disconnectedTarget],
     SlideNextStudioEditorRemoval: {
+      removeStudioElements: removalState.removeStudioElements,
       buildStudioRemovalActionState() {
         calls.push(['buildStudioRemovalActionState']);
         return {
@@ -466,6 +467,7 @@ test('removeSelectedElement returns true after removing live targets and persist
     selectedElements: [liveTarget],
     SlideNextCanonicalDeck: canonicalDeck,
     SlideNextStudioEditorRemoval: {
+      removeStudioElements: removalState.removeStudioElements,
       buildStudioRemovalActionState() {
         calls.push(['buildStudioRemovalActionState']);
         return {
@@ -567,6 +569,7 @@ test('removeSelectedElement captures a scoped parent markup transaction', () => 
     selectedElements: [liveTarget],
     SlideNextStudioEditorTransaction: studioTransaction,
     SlideNextStudioEditorRemoval: {
+      removeStudioElements: removalState.removeStudioElements,
       buildStudioRemovalActionState() {
         return {
           canRemove: true,
