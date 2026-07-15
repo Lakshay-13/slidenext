@@ -6015,6 +6015,14 @@
         updateInsertionActionState(iframeDoc);
         return false;
       }
+      const insertionApi = typeof SlideNextStudioEditorInsertion !== 'undefined'
+        ? SlideNextStudioEditorInsertion
+        : null;
+      const applyStudioElementInsertion = insertionApi
+        && typeof insertionApi.applyStudioElementInsertion === 'function'
+        ? insertionApi.applyStudioElementInsertion
+        : null;
+      const offset = (activeSlide.children.length * 15) % 150;
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -6025,30 +6033,45 @@
       const activeSlideId = typeof getEditorSlideId === 'function'
         ? getEditorSlideId(activeSlide)
         : '';
-      const markupCapture = createStudioMarkupTransactionCapture && activeSlideId
-        ? createStudioMarkupTransactionCapture([{
-            element: activeSlide,
-            elementId: `slide:${activeSlideId}`
-          }])
-        : null;
+      let newEl = null;
+      let transaction = null;
 
-      const offset = (activeSlide.children.length * 15) % 150;
-      const insertionApi = typeof SlideNextStudioEditorInsertion !== 'undefined'
-        ? SlideNextStudioEditorInsertion
-        : null;
-      const newEl = insertionApi && typeof insertionApi.createStudioInsertedElement === 'function'
-        ? insertionApi.createStudioInsertedElement(type, { documentRef: iframeDoc, offset })
-        : null;
+      if (applyStudioElementInsertion) {
+        const mutation = applyStudioElementInsertion(type, {
+          documentRef: iframeDoc,
+          slide: activeSlide,
+          offset,
+          prepareElement: typeof makeElementsHoverable === 'function'
+            ? makeElementsHoverable
+            : null,
+          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+          transactionElementId: activeSlideId ? `slide:${activeSlideId}` : ''
+        });
+        newEl = mutation.element;
+        transaction = mutation.transaction;
+      } else {
+        const markupCapture = createStudioMarkupTransactionCapture && activeSlideId
+          ? createStudioMarkupTransactionCapture([{
+              element: activeSlide,
+              elementId: `slide:${activeSlideId}`
+            }])
+          : null;
+        newEl = insertionApi && typeof insertionApi.createStudioInsertedElement === 'function'
+          ? insertionApi.createStudioInsertedElement(type, { documentRef: iframeDoc, offset })
+          : null;
+
+        if (newEl) {
+          makeElementsHoverable(newEl);
+          activeSlide.appendChild(newEl);
+          transaction = markupCapture
+            ? markupCapture.createTransaction()
+            : null;
+        }
+      }
       
       if (newEl) {
-        makeElementsHoverable(newEl);
-        activeSlide.appendChild(newEl);
-        
         selectElement(newEl);
         generateThumbnails();
-        const transaction = markupCapture
-          ? markupCapture.createTransaction()
-          : null;
         if (transaction) {
           saveHistoryState(false, transaction);
         } else {

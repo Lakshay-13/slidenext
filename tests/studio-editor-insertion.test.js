@@ -53,3 +53,47 @@ test('createStudioInsertedElement returns null for unsupported types or missing 
   assert.equal(insertion.createStudioInsertedElement('unknown', { documentRef: createDocument() }), null);
   assert.equal(insertion.createStudioInsertedElement('h2'), null);
 });
+
+test('applyStudioElementInsertion prepares, appends, and captures the inserted element mutation', () => {
+  const documentRef = createDocument();
+  const calls = [];
+  const slide = {
+    innerHTML: '<p>Before</p>',
+    appendChild(element) {
+      calls.push(['appendChild', element]);
+      this.innerHTML += '<h2>New Heading</h2>';
+      return element;
+    }
+  };
+  const transactionCapture = {
+    createTransaction() {
+      calls.push(['createTransaction']);
+      return { kind: 'test.transaction' };
+    }
+  };
+
+  const result = insertion.applyStudioElementInsertion('h2', {
+    documentRef,
+    slide,
+    offset: 15,
+    prepareElement(element) {
+      calls.push(['prepareElement', element]);
+    },
+    transactionElementId: 'slide:slide-1',
+    createMarkupTransactionCapture(items, options) {
+      calls.push(['capture', items, options]);
+      assert.equal(items[0].element, slide);
+      assert.equal(items[0].elementId, 'slide:slide-1');
+      return transactionCapture;
+    }
+  });
+
+  assert.equal(result.element.tagName, 'H2');
+  assert.deepEqual(result.transaction, { kind: 'test.transaction' });
+  assert.deepEqual(calls.map(([name]) => name), [
+    'prepareElement',
+    'capture',
+    'appendChild',
+    'createTransaction'
+  ]);
+});

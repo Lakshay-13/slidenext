@@ -120,5 +120,61 @@ function trainEpoch(model, data) {
     return element;
   }
 
-  return { createStudioInsertedElement };
+  function applyStudioElementInsertion(type, options = {}) {
+    const slide = options.slide || null;
+    const documentRef = options.documentRef;
+    if (!slide || typeof slide.appendChild !== 'function') {
+      return {
+        element: null,
+        transaction: null
+      };
+    }
+
+    const element = createStudioInsertedElement(type, {
+      documentRef,
+      offset: options.offset
+    });
+    if (!element) {
+      return {
+        element: null,
+        transaction: null
+      };
+    }
+
+    const prepareElement = typeof options.prepareElement === 'function'
+      ? options.prepareElement
+      : null;
+    if (prepareElement) {
+      prepareElement(element);
+    }
+
+    const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
+      ? options.createMarkupTransactionCapture
+      : null;
+    const transactionElementId = typeof options.transactionElementId === 'string'
+      ? options.transactionElementId.trim()
+      : '';
+    const markupCapture = createMarkupTransactionCapture && transactionElementId
+      ? createMarkupTransactionCapture([{
+          element: slide,
+          elementId: transactionElementId
+        }], {
+          getElementId: options.getElementId
+        })
+      : null;
+
+    slide.appendChild(element);
+
+    return {
+      element,
+      transaction: markupCapture
+        ? markupCapture.createTransaction()
+        : null
+    };
+  }
+
+  return {
+    createStudioInsertedElement,
+    applyStudioElementInsertion
+  };
 });
