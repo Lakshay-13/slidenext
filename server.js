@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
 const {
   buildVersionBackupRegex,
@@ -99,7 +100,11 @@ app.post('/api/export/pptx', async (req, res) => {
 
   try {
     const result = canonicalPptxExport.createCanonicalPptxExport(canonicalDeck, {
-      assetBaseDir: resolvePptxAssetBaseDir(sourcePath || canonicalDeck.metadata?.sourcePath)
+      assetBaseDir: resolvePptxAssetBaseDir(sourcePath || canonicalDeck.metadata?.sourcePath),
+      assetExists(assetSource) {
+        if (/^(data:|https?:\/\/)/i.test(assetSource)) return true;
+        return !assetSource.startsWith(workspaceDir) || fsSync.existsSync(assetSource);
+      }
     });
     if (!result.pptx || typeof result.pptx.write !== 'function') {
       return res.status(500).json({ error: 'PPTX exporter is unavailable' });

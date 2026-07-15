@@ -159,6 +159,28 @@ test('createCanonicalPptxExport reports missing geometry and image assets withou
   assert.equal(result.pptx.slides[0].calls.length, 0);
 });
 
+test('preflightCanonicalPptxExport checks non-empty image paths when an asset resolver is provided', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    assets: [{ id: 'asset-1', src: 'images/missing.png' }],
+    slides: [{
+      nodes: [{
+        id: 'image-1',
+        type: 'image',
+        attributes: { 'data-asset-id': 'asset-1' },
+        layout: { x: 0, y: 0, width: 100, height: 100 }
+      }]
+    }]
+  }, {
+    assetBaseDir: '/deck',
+    assetExists(source) {
+      return source !== '/deck/images/missing.png';
+    }
+  });
+
+  assert.deepEqual(report.diagnostics.missingAssets, ['image-1']);
+  assert.match(report.diagnostics.warnings.join('\n'), /missing image asset/);
+});
+
 test('normalizeHexColor handles short hex and rgb values', () => {
   assert.equal(pptxExport.normalizeHexColor('#abc'), 'AABBCC');
   assert.equal(pptxExport.normalizeHexColor('rgb(1, 2, 3)'), '010203');

@@ -42,6 +42,7 @@
       sourceWidth: finitePositive(source.sourceWidth, null),
       sourceHeight: finitePositive(source.sourceHeight, null),
       assetBaseDir: typeof source.assetBaseDir === 'string' ? source.assetBaseDir : '',
+      assetExists: typeof source.assetExists === 'function' ? source.assetExists : null,
       availableFonts: Array.isArray(source.availableFonts)
         ? source.availableFonts.filter(font => typeof font === 'string' && font.trim())
         : []
@@ -290,8 +291,18 @@
       }
 
       if (type === 'image' || node.tagName === 'img') {
-        if (!resolveImageSource(node, deck, normalizedOptions)) {
+        const imageSource = resolveImageSource(node, deck, normalizedOptions);
+        let hasMissingAsset = !imageSource;
+        if (!hasMissingAsset && normalizedOptions.assetExists) {
+          try {
+            hasMissingAsset = !normalizedOptions.assetExists(imageSource, node, deck);
+          } catch (err) {
+            hasMissingAsset = true;
+          }
+        }
+        if (hasMissingAsset) {
           diagnostics.missingAssets.push(nodeId);
+          diagnostics.warnings.push(`Node ${nodeId} references a missing image asset`);
         }
       }
 
