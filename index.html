@@ -7059,6 +7059,16 @@
     }
 
     function refreshLayerOrderUi(options = {}) {
+      const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
+        ? SlideNextStudioEditorLayerController
+        : null;
+      if (layerController && typeof layerController.refreshStudioLayerOrderUi === 'function') {
+        return layerController.refreshStudioLayerOrderUi({
+          ...options,
+          updateLayersList,
+          updateLayerOrderActionState
+        });
+      }
       if (options.refreshLayersList) {
         updateLayersList();
       }

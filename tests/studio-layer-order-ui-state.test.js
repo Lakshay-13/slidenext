@@ -348,6 +348,30 @@ test('refreshLayerOrderUi refreshes layer state and optionally the layer list', 
   ]);
 });
 
+test('refreshLayerOrderUi delegates its refresh contract to the shared layer controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let delegatedOptions = null;
+  const context = {
+    SlideNextStudioEditorLayerController: {
+      refreshStudioLayerOrderUi(options) {
+        delegatedOptions = options;
+        return 'shared-refresh';
+      }
+    },
+    updateLayersList() {},
+    updateLayerOrderActionState() {}
+  };
+
+  vm.createContext(context);
+  loadRefreshLayerOrderUi(fileContent, context);
+
+  assert.equal(context.refreshLayerOrderUi({ refreshLayersList: true, result: null }), 'shared-refresh');
+  assert.equal(delegatedOptions.refreshLayersList, true);
+  assert.equal(delegatedOptions.result, null);
+  assert.equal(delegatedOptions.updateLayersList, context.updateLayersList);
+  assert.equal(delegatedOptions.updateLayerOrderActionState, context.updateLayerOrderActionState);
+});
+
 test('updateLayerOrderActionState enables layer order controls only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateLayerOrderActionStateSource = extractFunctionSource(

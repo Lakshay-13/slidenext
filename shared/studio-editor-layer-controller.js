@@ -197,6 +197,16 @@
     return true;
   }
 
+  function refreshStudioLayerOrderUi(options = {}) {
+    if (options.refreshLayersList && typeof options.updateLayersList === 'function') {
+      options.updateLayersList();
+    }
+    if (typeof options.updateLayerOrderActionState === 'function') {
+      options.updateLayerOrderActionState();
+    }
+    return options.result === undefined ? false : options.result;
+  }
+
   function syncStudioLayerList(options = {}) {
     const documentRef = options.documentRef;
     const iframeDoc = options.iframeDoc || null;
@@ -277,6 +287,7 @@
   return {
     arrangeStudioElementLayer,
     changeStudioLayerZIndexByRef,
+    refreshStudioLayerOrderUi,
     resolveStudioLayerRowElement,
     selectStudioLayerElementByRef,
     toggleStudioLayerVisibilityByRef,

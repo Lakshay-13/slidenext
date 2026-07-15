@@ -376,6 +376,28 @@ test('arrangeStudioElementLayer refreshes no-ops and finalizes successful reorde
   assert.deepEqual(calls[6][2], { transaction });
 });
 
+test('refreshStudioLayerOrderUi preserves layer refresh ordering and result values', () => {
+  const calls = [];
+  assert.equal(layerController.refreshStudioLayerOrderUi({
+    refreshLayersList: true,
+    updateLayersList() {
+      calls.push('layers');
+    },
+    updateLayerOrderActionState() {
+      calls.push('controls');
+    },
+    result: true
+  }), true);
+  assert.deepEqual(calls, ['layers', 'controls']);
+
+  assert.equal(layerController.refreshStudioLayerOrderUi({
+    updateLayerOrderActionState() {
+      calls.push('controls');
+    }
+  }), false);
+  assert.deepEqual(calls, ['layers', 'controls', 'controls']);
+});
+
 test('syncStudioLayerList assembles live layer action state before shared rendering', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const activeSlide = { id: 'slide-1' };
