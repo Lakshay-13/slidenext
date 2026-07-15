@@ -138,3 +138,30 @@ test('normalizeHexColor handles short hex and rgb values', () => {
   assert.equal(pptxExport.normalizeHexColor('rgb(1, 2, 3)'), '010203');
   assert.equal(pptxExport.normalizeHexColor('transparent'), '');
 });
+
+test('preflightCanonicalPptxExport reports export fidelity risks', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    layout: { size: { width: 100, height: 100, unit: 'px' } },
+    slides: [{
+      nodes: [{
+        id: 'risk-1',
+        type: 'text',
+        text: 'Risk',
+        style: 'transform: rotate(2deg); font-family: Custom Sans;',
+        layout: { x: 90, y: 90, width: 20, height: 20 }
+      }]
+    }]
+  }, { availableFonts: [] });
+
+  assert.deepEqual(report.diagnostics.overflowNodes.map(node => node.id), ['risk-1']);
+  assert.deepEqual(report.diagnostics.unsupportedStyles, [{
+    id: 'risk-1',
+    properties: ['transform']
+  }]);
+  assert.deepEqual(report.diagnostics.fontSubstitutionRisks, [{
+    id: 'risk-1',
+    fontFamily: 'Custom Sans'
+  }]);
+  assert.match(report.diagnostics.warnings.join('\n'), /extends beyond slide bounds/);
+  assert.match(report.diagnostics.warnings.join('\n'), /unsupported CSS: transform/);
+});

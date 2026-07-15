@@ -11,6 +11,17 @@
   const DEFAULT_PPTX_HEIGHT = 7.5;
   const DEFAULT_SOURCE_WIDTH = 1920;
   const DEFAULT_SOURCE_HEIGHT = 1080;
+  const UNSUPPORTED_NODE_TYPES = new Set(['table', 'vector', 'video', 'audio', 'embed', 'script']);
+  const UNSUPPORTED_STYLE_PROPERTIES = new Set([
+    'backdrop-filter',
+    'box-shadow',
+    'clip-path',
+    'filter',
+    'mask',
+    'mix-blend-mode',
+    'text-shadow',
+    'transform'
+  ]);
 
   function asObject(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
@@ -30,7 +41,10 @@
       pageHeight: finitePositive(source.pageHeight, DEFAULT_PPTX_HEIGHT),
       sourceWidth: finitePositive(source.sourceWidth, null),
       sourceHeight: finitePositive(source.sourceHeight, null),
-      assetBaseDir: typeof source.assetBaseDir === 'string' ? source.assetBaseDir : ''
+      assetBaseDir: typeof source.assetBaseDir === 'string' ? source.assetBaseDir : '',
+      availableFonts: Array.isArray(source.availableFonts)
+        ? source.availableFonts.filter(font => typeof font === 'string' && font.trim())
+        : []
     };
   }
 
@@ -94,7 +108,6 @@
     const width = Number.isFinite(layout.width) ? layout.width : null;
     const height = Number.isFinite(layout.height) ? layout.height : null;
     if ([x, y, width, height].some(value => value === null) || width <= 0 || height <= 0) {
-      context.diagnostics.warnings.push(`Node ${node.id || 'unknown'} has no exportable bounds`);
       return null;
     }
     return {
@@ -170,14 +183,100 @@
     return shapeTypes[name] || name;
   }
 
-  function addUnsupported(node, context, reason) {
-    context.diagnostics.unsupportedNodes.push({
-      id: node.id || '',
-      type: node.type || '',
-      tagName: node.tagName || '',
-      reason
+  function createExportDiagnostics() {
+    return {
+      warnings: [],
+      unsupportedNodes: [],
+      unsupportedStyles: [],
+      overflowNodes: [],
+      fontSubstitutionRisks: [],
+      missingAssets: []
+    };
+  }
+
+  function getSourceSize(deck, options) {
+    return {
+      width: finitePositive(options.sourceWidth, finitePositive(deck.layout.size.width, DEFAULT_SOURCE_WIDTH)),
+      height: finitePositive(options.sourceHeight, finitePositive(deck.layout.size.height, DEFAULT_SOURCE_HEIGHT))
+    };
+  }
+
+  function preflightCanonicalPptxExport(deckSeed, options = {}) {
+    const deck = canonicalDeck.createCanonicalDeck(deckSeed);
+    const normalizedOptions = normalizePptxExportOptions(options);
+    const sourceSize = getSourceSize(deck, normalizedOptions);
+    const diagnostics = createExportDiagnostics();
+
+    function visit(node) {
+      if (!node || node.visibility?.hidden) return;
+      const nodeId = node.id || 'unknown';
+      const bounds = asObject(node.layout);
+      const hasBounds = [bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite)
+        && bounds.width > 0
+        && bounds.height > 0;
+      if (!hasBounds) {
+        diagnostics.warnings.push(`Node ${nodeId} has no exportable bounds`);
+      } else if (
+        bounds.x < 0
+        || bounds.y < 0
+        || bounds.x + bounds.width > sourceSize.width
+        || bounds.y + bounds.height > sourceSize.height
+      ) {
+        diagnostics.overflowNodes.push({
+          id: nodeId,
+          x: bounds.x,
+          y: bounds.y,
+          width: bounds.width,
+          height: bounds.height
+        });
+        diagnostics.warnings.push(`Node ${nodeId} extends beyond slide bounds`);
+      }
+
+      const type = typeof node.type === 'string' ? node.type.toLowerCase() : '';
+      if (UNSUPPORTED_NODE_TYPES.has(type)) {
+        diagnostics.unsupportedNodes.push({
+          id: nodeId,
+          type,
+          tagName: node.tagName || '',
+          reason: `node type ${type}`
+        });
+        diagnostics.warnings.push(`Node ${nodeId} is not fully supported: node type ${type}`);
+      }
+
+      const style = nodeStyle(node);
+      const unsupportedProperties = Object.keys(style).filter(property => UNSUPPORTED_STYLE_PROPERTIES.has(property));
+      if (unsupportedProperties.length > 0) {
+        diagnostics.unsupportedStyles.push({ id: nodeId, properties: unsupportedProperties });
+        diagnostics.warnings.push(`Node ${nodeId} uses unsupported CSS: ${unsupportedProperties.join(', ')}`);
+      }
+
+      const fontFamily = style['font-family'];
+      if (fontFamily) {
+        const primaryFont = fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
+        if (!normalizedOptions.availableFonts.includes(primaryFont)) {
+          diagnostics.fontSubstitutionRisks.push({ id: nodeId, fontFamily: primaryFont });
+          diagnostics.warnings.push(`Node ${nodeId} may substitute font ${primaryFont}`);
+        }
+      }
+
+      if (type === 'image' || node.tagName === 'img') {
+        if (!resolveImageSource(node, deck, normalizedOptions)) {
+          diagnostics.missingAssets.push(nodeId);
+        }
+      }
+
+      (Array.isArray(node.children) ? node.children : []).forEach(visit);
+    }
+
+    deck.slides.forEach(slide => {
+      const background = asObject(slide.layout).background || {};
+      if (background.image) {
+        diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} background image was not exported`);
+      }
+      slide.nodes.forEach(visit);
     });
-    context.diagnostics.warnings.push(`Node ${node.id || 'unknown'} is not fully supported: ${reason}`);
+
+    return { deck, options: normalizedOptions, sourceSize, diagnostics };
   }
 
   function renderNode(node, context) {
@@ -188,13 +287,10 @@
     const bounds = getNodeBounds(node, context);
     const imageNode = type === 'image' || tagName === 'img';
     const shapeNode = type === 'shape' || node.classes?.includes('editor-shape');
-    const unsupportedType = ['table', 'vector', 'video', 'audio', 'embed', 'script'].includes(type);
 
     if (imageNode) {
       const source = resolveImageSource(node, context.deck, context.options);
-      if (!source) {
-        context.diagnostics.missingAssets.push(node.id || 'unknown');
-      } else if (bounds) {
+      if (source && bounds) {
         const imageOptions = source.startsWith('data:')
           ? { data: source, ...bounds }
           : { path: source, ...bounds };
@@ -202,9 +298,7 @@
       }
     } else if (shapeNode) {
       if (bounds) context.slide.addShape(getShapeType(context.pptx, 'rect'), shapeOptions(node, bounds));
-    } else if (unsupportedType) {
-      addUnsupported(node, context, `node type ${type}`);
-    } else if (getNodeText(node) && children.length === 0) {
+    } else if (!UNSUPPORTED_NODE_TYPES.has(type) && getNodeText(node) && children.length === 0) {
       if (bounds) context.slide.addText(getNodeText(node), textOptions(node, bounds));
     }
 
@@ -215,21 +309,13 @@
     const background = asObject(slide.layout).background || {};
     const color = normalizeHexColor(background.color);
     if (color) context.slide.background = { color };
-    if (background.image) {
-      context.diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} background image was not exported`);
-    }
     if (slide.notes && typeof context.slide.addNotes === 'function') context.slide.addNotes(slide.notes);
     slide.nodes.forEach(node => renderNode(node, context));
   }
 
   function createCanonicalPptxExport(deckSeed, options = {}) {
-    const deck = canonicalDeck.createCanonicalDeck(deckSeed);
-    const normalizedOptions = normalizePptxExportOptions(options);
-    const diagnostics = {
-      warnings: [],
-      unsupportedNodes: [],
-      missingAssets: []
-    };
+    const preflight = preflightCanonicalPptxExport(deckSeed, options);
+    const { deck, options: normalizedOptions, sourceSize, diagnostics } = preflight;
     const PptxGenJS = normalizedOptions.PptxGenJS;
     const pptx = normalizedOptions.pptx || (typeof PptxGenJS === 'function' ? new PptxGenJS() : null);
     if (!pptx) {
@@ -240,21 +326,13 @@
     pptx.layout = normalizedOptions.layout;
     if (deck.metadata.title) pptx.title = deck.metadata.title;
     if (deck.metadata.description) pptx.subject = deck.metadata.description;
-    const sourceWidth = finitePositive(
-      normalizedOptions.sourceWidth,
-      finitePositive(deck.layout.size.width, DEFAULT_SOURCE_WIDTH)
-    );
-    const sourceHeight = finitePositive(
-      normalizedOptions.sourceHeight,
-      finitePositive(deck.layout.size.height, DEFAULT_SOURCE_HEIGHT)
-    );
     const contextBase = {
       deck,
       pptx,
       options: normalizedOptions,
       diagnostics,
-      scaleX: normalizedOptions.pageWidth / sourceWidth,
-      scaleY: normalizedOptions.pageHeight / sourceHeight
+      scaleX: normalizedOptions.pageWidth / sourceSize.width,
+      scaleY: normalizedOptions.pageHeight / sourceSize.height
     };
 
     deck.slides.forEach(slide => {
@@ -281,6 +359,7 @@
     DEFAULT_SOURCE_HEIGHT,
     normalizePptxExportOptions,
     normalizeHexColor,
+    preflightCanonicalPptxExport,
     createCanonicalPptxExport
   };
 });
