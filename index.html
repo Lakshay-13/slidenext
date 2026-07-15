@@ -3652,24 +3652,28 @@
     }
 
     function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {
-      const createStudioPersistedActiveSlideIdReader = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioPersistedActiveSlideIdReader === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.createStudioPersistedActiveSlideIdReader
-        : null;
-      if (!createStudioPersistedActiveSlideIdReader) return '';
-      return createStudioPersistedActiveSlideIdReader({
-        getPlaybackState: () => persistedDeckPlaybackState,
-        resolvePersistedDeckActiveSlideId: (
-          typeof SlideNextDeckPersistence !== 'undefined'
-          && SlideNextDeckPersistence
-          && typeof SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId === 'function'
+      if (typeof getPersistedActiveSlideId.reader !== 'function') {
+        const createStudioPersistedActiveSlideIdReader = (
+          typeof SlideNextStudioEditorPersistence !== 'undefined'
+          && SlideNextStudioEditorPersistence
+          && typeof SlideNextStudioEditorPersistence.createStudioPersistedActiveSlideIdReader === 'function'
         )
-          ? SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId
-          : null
-      })(playbackState);
+          ? SlideNextStudioEditorPersistence.createStudioPersistedActiveSlideIdReader
+          : null;
+        if (!createStudioPersistedActiveSlideIdReader) return '';
+        getPersistedActiveSlideId.reader = createStudioPersistedActiveSlideIdReader({
+          getPlaybackState: () => persistedDeckPlaybackState,
+          resolvePersistedDeckActiveSlideId: (
+            typeof SlideNextDeckPersistence !== 'undefined'
+            && SlideNextDeckPersistence
+            && typeof SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId === 'function'
+          )
+            ? SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId
+            : null
+        });
+      }
+      if (typeof getPersistedActiveSlideId.reader !== 'function') return '';
+      return getPersistedActiveSlideId.reader(playbackState);
     }
 
     function getCurrentEditorPersistedDeckState() {

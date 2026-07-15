@@ -1637,6 +1637,7 @@ test('getPersistedActiveSlideId reuses the shared editor persistence helper when
   );
 
   let delegatedArgs = null;
+  let readerCreateCalls = 0;
   const context = {
     SlideNextDeckPersistence: {
       resolvePersistedDeckActiveSlideId() {
@@ -1645,6 +1646,7 @@ test('getPersistedActiveSlideId reuses the shared editor persistence helper when
     },
     SlideNextStudioEditorPersistence: {
       createStudioPersistedActiveSlideIdReader(options = {}) {
+        readerCreateCalls += 1;
         delegatedArgs = options;
         return (playbackState) => playbackState && playbackState.activeSlideIds
           ? playbackState.activeSlideIds[0]
@@ -1661,8 +1663,11 @@ test('getPersistedActiveSlideId reuses the shared editor persistence helper when
   vm.runInContext(getPersistedActiveSlideIdSource, context);
 
   const result = context.getPersistedActiveSlideId();
+  const explicitResult = context.getPersistedActiveSlideId({ activeSlideIds: ['slide-3'] });
 
   assert.equal(result, 'slide-2');
+  assert.equal(explicitResult, 'slide-3');
+  assert.equal(readerCreateCalls, 1);
   assert.equal(typeof delegatedArgs.getPlaybackState, 'function');
   assert.equal(delegatedArgs.resolvePersistedDeckActiveSlideId, context.SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId);
 });
