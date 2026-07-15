@@ -692,6 +692,46 @@ test('setCustomGradientType exits cleanly when the gradient chrome is unavailabl
   ]);
 });
 
+test('setCustomGradientType delegates chrome synchronization to the shared wallpaper view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setCustomGradientTypeSource = extractFunctionSource(
+    fileContent,
+    'function setCustomGradientType(type) {',
+    '\n\n    // Build background CSS based on custom stops'
+  );
+
+  let syncOptions = null;
+  const context = {
+    SlideNextStudioEditorWallpaperView: {
+      syncStudioCustomGradientTypeChrome(options) {
+        syncOptions = options;
+        return true;
+      }
+    },
+    applyCustomGradient() {
+      return true;
+    },
+    customGradientType: 'linear',
+    document: {
+      getElementById(id) {
+        if (id === 'cgAngleGroup') return { classList: {} };
+        return { className: '' };
+      }
+    },
+    resolveCurrentStudioWallpaperActionState() {
+      return { canUseWallpaperControls: true };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setCustomGradientTypeSource, context);
+
+  assert.equal(context.setCustomGradientType('radial'), true);
+  assert.equal(syncOptions.documentRef, context.document);
+  assert.equal(syncOptions.gradientType, 'radial');
+  assert.equal(context.customGradientType, 'radial');
+});
+
 test('updateCustomGradientAngle exits cleanly when the angle label is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateCustomGradientAngleSource = extractFunctionSource(

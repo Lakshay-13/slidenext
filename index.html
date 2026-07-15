@@ -5955,6 +5955,20 @@
         return false;
       }
 
+      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+        ? SlideNextStudioEditorWallpaperView
+        : null;
+      if (wallpaperView && typeof wallpaperView.syncStudioCustomGradientTypeChrome === 'function') {
+        if (!wallpaperView.syncStudioCustomGradientTypeChrome({
+          documentRef: document,
+          gradientType: type
+        })) {
+          return false;
+        }
+        customGradientType = type;
+        return applyCustomGradient();
+      }
+
       customGradientType = type;
       
       if (type === 'linear') {
