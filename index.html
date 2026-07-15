@@ -6175,6 +6175,12 @@
         && typeof clipboardApi.applyStudioClipboardInsertion === 'function'
         ? clipboardApi.applyStudioClipboardInsertion
         : null;
+      if (!applyStudioClipboardInsertion) {
+        return {
+          inserted: [],
+          transaction: null
+        };
+      }
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -6191,62 +6197,14 @@
             }
             return element && element.dataset && element.dataset.editorId;
           };
-      if (applyStudioClipboardInsertion) {
-        const mutation = applyStudioClipboardInsertion(insertionPlans, {
-          slide,
-          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
-          getElementId
-        });
-        return mutation && typeof mutation === 'object'
-          ? mutation
-          : { inserted: [], transaction: null };
-      }
-
-      const markupCaptureTargets = [];
-      if (createStudioMarkupTransactionCapture) {
-        const parentSet = new Set();
-        insertionPlans.forEach(({ insertionTarget }) => {
-          const parent = insertionTarget.mode === 'absolute'
-            ? (insertionTarget.parent || slide)
-            : insertionTarget.mode === 'after-source' && insertionTarget.anchor
-              ? insertionTarget.anchor.parentElement || slide
-              : slide;
-          if (!parent || parentSet.has(parent)) return;
-          parentSet.add(parent);
-          markupCaptureTargets.push({
-            element: parent,
-            elementId: getElementId(parent)
-          });
-        });
-      }
-      const markupCapture = createStudioMarkupTransactionCapture
-        ? createStudioMarkupTransactionCapture(markupCaptureTargets, { getElementId })
-        : null;
-      const inserted = [];
-
-      insertionPlans.forEach(({ clone, insertionTarget, absolutePlacement }) => {
-        if (insertionTarget.mode === 'absolute' && absolutePlacement) {
-          const parent = insertionTarget.parent || slide;
-          clone.style.position = 'absolute';
-          clone.style.margin = '0';
-          clone.style.left = `${absolutePlacement.nextLeft}px`;
-          clone.style.top = `${absolutePlacement.nextTop}px`;
-          parent.appendChild(clone);
-        } else if (insertionTarget.mode === 'after-source' && insertionTarget.anchor) {
-          insertionTarget.anchor.insertAdjacentElement('afterend', clone);
-        } else {
-          slide.appendChild(clone);
-        }
-
-        inserted.push(clone);
+      const mutation = applyStudioClipboardInsertion(insertionPlans, {
+        slide,
+        createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+        getElementId
       });
-
-      return {
-        inserted,
-        transaction: markupCapture
-          ? markupCapture.createTransaction()
-          : null
-      };
+      return mutation && typeof mutation === 'object'
+        ? mutation
+        : { inserted: [], transaction: null };
     }
 
     function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {

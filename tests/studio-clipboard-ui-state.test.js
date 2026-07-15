@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const clipboardState = require('../shared/studio-editor-clipboard.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -515,6 +516,7 @@ test('insertClipboardPayload captures each insertion parent once through the sha
     DUPLICATE_OFFSET_PX: 24,
     SlideNextStudioEditorTransaction: studioTransaction,
     SlideNextStudioEditorClipboard: {
+      applyStudioClipboardInsertion: clipboardState.applyStudioClipboardInsertion,
       buildStudioClipboardInsertionPlan() {
         return [
           {
