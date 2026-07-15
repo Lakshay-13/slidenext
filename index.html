@@ -3968,7 +3968,11 @@
     }
 
     function restoreSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc()) {
-      const nextSelectionState = SlideNextStudioEditorSelection.restoreStudioSelectionByIdsOnActiveSlide(
+      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
+        ? SlideNextStudioEditorSelection
+        : null;
+      if (!selectionApi || typeof selectionApi.restoreStudioSelectionByIdsOnActiveSlide !== 'function') return false;
+      const nextSelectionState = selectionApi.restoreStudioSelectionByIdsOnActiveSlide(
         selectedIds,
         doc,
         getEditorSelectionOptions({ doc })

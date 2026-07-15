@@ -54,6 +54,59 @@ function loadCommitEditorSelectionState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadRestoreSelectionByIdsOnActiveSlide(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function restoreSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc()) {',
+    '\n\n    function restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc(), options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+test('restoreSelectionByIdsOnActiveSlide delegates to shared selection', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { id: 'doc' };
+  const selectedIds = ['node-1'];
+  const nextSelectionState = { restored: true, selectedElements: [{ id: 'node-1' }] };
+  let delegatedArgs = null;
+  let appliedState = null;
+  const context = {
+    SlideNextStudioEditorSelection: {
+      restoreStudioSelectionByIdsOnActiveSlide(...args) {
+        delegatedArgs = args;
+        return nextSelectionState;
+      }
+    },
+    getEditorSelectionOptions(options) {
+      return { doc: options.doc, selectionOptions: true };
+    },
+    applyEditorSelectionState(nextState) {
+      appliedState = nextState;
+    }
+  };
+
+  vm.createContext(context);
+  loadRestoreSelectionByIdsOnActiveSlide(fileContent, context);
+
+  assert.equal(context.restoreSelectionByIdsOnActiveSlide(selectedIds, iframeDoc), true);
+  assert.equal(delegatedArgs[0], selectedIds);
+  assert.equal(delegatedArgs[1], iframeDoc);
+  assert.deepEqual(delegatedArgs[2], { doc: iframeDoc, selectionOptions: true });
+  assert.equal(appliedState, nextSelectionState);
+});
+
+test('restoreSelectionByIdsOnActiveSlide fails closed when shared selection is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    SlideNextStudioEditorSelection: null
+  };
+
+  vm.createContext(context);
+  loadRestoreSelectionByIdsOnActiveSlide(fileContent, context);
+
+  assert.equal(context.restoreSelectionByIdsOnActiveSlide(['node-1'], { id: 'doc' }), false);
+});
+
 test('commitEditorSelectionState delegates to the shared selection commit helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const nextSelectionState = { selectedElements: [{ id: 'node-1' }] };
