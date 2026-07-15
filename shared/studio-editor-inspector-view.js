@@ -54,6 +54,56 @@
     };
   }
 
+  function resetStudioInspectorUiState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+
+    renderStudioInspectorSelectionSummary({
+      documentRef,
+      selectionState: { hasSelection: false }
+    });
+
+    const textContentGroup = documentRef.getElementById('inspectorTextContentGroup');
+    if (textContentGroup) textContentGroup.classList.remove('hidden');
+    const imageGroup = documentRef.getElementById('inspectorImageGroup');
+    if (imageGroup) imageGroup.classList.add('hidden');
+    const borderGroup = documentRef.getElementById('inspectorBorderGroup');
+    if (borderGroup) borderGroup.classList.add('hidden');
+
+    const lockIcon = documentRef.getElementById('toggleLockSelectionIcon');
+    if (lockIcon) lockIcon.textContent = 'lock';
+    const lockLabel = documentRef.getElementById('toggleLockSelectionLabel');
+    if (lockLabel) lockLabel.textContent = 'Lock Selected';
+    const visibilityIcon = documentRef.getElementById('toggleVisibilitySelectionIcon');
+    if (visibilityIcon) visibilityIcon.textContent = 'visibility_off';
+    const visibilityLabel = documentRef.getElementById('toggleVisibilitySelectionLabel');
+    if (visibilityLabel) visibilityLabel.textContent = 'Hide Selected';
+
+    const defaults = [
+      ['elTextContent', ''],
+      ['elImageSrc', ''],
+      ['elFontSize', '16'],
+      ['fontSizeVal', '16px', 'textContent'],
+      ['elFontFamily', "'Geist', sans-serif"],
+      ['elFontWeight', '400'],
+      ['elTextColor', '#ffffff'],
+      ['elZIndex', '0'],
+      ['elOpacity', '100'],
+      ['opacityVal', '100%', 'textContent'],
+      ['elBorderStyle', 'none'],
+      ['elBorderWidth', '0'],
+      ['borderWidthVal', '0px', 'textContent'],
+      ['elBorderRadius', '0'],
+      ['borderRadiusVal', '0px', 'textContent'],
+      ['elBorderColor', '#ffffff']
+    ];
+    defaults.forEach(([id, value, property = 'value']) => {
+      const control = documentRef.getElementById(id);
+      if (control) control[property] = value;
+    });
+    return true;
+  }
+
   function syncStudioInspectorContentControls(options = {}) {
     const documentRef = options.documentRef;
     const primaryElement = options.primaryElement;
@@ -193,6 +243,7 @@
 
   return {
     renderStudioInspectorSelectionSummary,
+    resetStudioInspectorUiState,
     syncStudioInspectorContentControls,
     syncStudioInspectorTypographyControls,
     syncStudioInspectorBorderControls,

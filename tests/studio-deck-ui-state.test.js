@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const deckView = require('../shared/studio-deck-view.js');
+const inspectorView = require('../shared/studio-editor-inspector-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -144,6 +145,7 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
   const context = {
     document: documentStub,
     SlideNextStudioDeckView: deckView,
+    SlideNextStudioEditorInspectorView: inspectorView,
     hasPendingCustomWallpaperVersion: true,
     wallpaperTab: 'custom',
     customGradientType: 'radial'
