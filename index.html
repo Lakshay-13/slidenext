@@ -7645,60 +7645,26 @@
       const canonicalDeck = updateCanonicalSlideBackground
         ? updateCanonicalSlideBackground(canonicalDeckBeforeMutation, slideIds, background)
         : null;
-
-      if (applyStudioWallpaperToSlides) {
-        const mutation = applyStudioWallpaperToSlides(sourceSlides, background, {
-          createStyleTransaction: createStudioStyleTransaction,
-          getSlideId
-        });
-        return mutation && typeof mutation === 'object'
-          ? {
-              didChange: !!mutation.didChange,
-              transaction: mutation.transaction || null,
-              ...(mutation.didChange && canonicalDeck ? { canonicalDeck } : {})
-            }
-          : {
-              didChange: false,
-              transaction: null
-          };
-      }
-
-      const transactionItems = createStudioStyleTransaction
-        ? sourceSlides.reduce((items, slide) => {
-            const slideId = getSlideId(slide);
-            if (!slideId || !slide || !slide.style) return items;
-            items.push({
-              element: slide,
-              elementId: `slide:${slideId}`,
-              before: { background: slide.style.background }
-            });
-            return items;
-          }, [])
-        : [];
-      let changedCount = 0;
-      sourceSlides.forEach((slide) => {
-        if (!slide || !slide.style || slide.style.background === background) return;
-        slide.style.background = background;
-        changedCount += 1;
-      });
-      if (changedCount === 0) {
+      if (!applyStudioWallpaperToSlides) {
         return {
           didChange: false,
           transaction: null
         };
       }
-
-      transactionItems.forEach((item) => {
-        item.after = { background: item.element.style.background };
+      const mutation = applyStudioWallpaperToSlides(sourceSlides, background, {
+        createStyleTransaction: createStudioStyleTransaction,
+        getSlideId
       });
-      return {
-        didChange: true,
-        changedCount,
-        ...(canonicalDeck ? { canonicalDeck } : {}),
-        transaction: createStudioStyleTransaction
-          ? createStudioStyleTransaction(transactionItems)
-          : null
-      };
+      return mutation && typeof mutation === 'object'
+        ? {
+            didChange: !!mutation.didChange,
+            transaction: mutation.transaction || null,
+            ...(mutation.didChange && canonicalDeck ? { canonicalDeck } : {})
+          }
+        : {
+            didChange: false,
+            transaction: null
+          };
     }
 
     function applyEditorWallpaperMutationWithTransaction(activeSlide, background, options = {}) {

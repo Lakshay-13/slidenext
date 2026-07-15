@@ -160,7 +160,9 @@
     return {
       didChange: true,
       changedCount,
-      transaction: createStyleTransaction(transactionItems)
+      transaction: createStyleTransaction
+        ? createStyleTransaction(transactionItems)
+        : null
     };
   }
 
