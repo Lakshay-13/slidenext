@@ -2872,23 +2872,49 @@
       })(versionLabel, transaction, canonicalDeck);
     }
 
-    function captureSlideMutationRestoreState(iframeDoc) {
+    function createEditorSlideMutationRestoreStateCapturer(options = {}) {
       const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
         ? SlideNextStudioDeckView
         : null;
+      const saveHistory = typeof options.saveHistoryState === 'function'
+        ? options.saveHistoryState
+        : () => {};
+      const readActiveSlideId = typeof options.getActiveSlideId === 'function'
+        ? options.getActiveSlideId
+        : () => '';
+      const readSelectedElementIds = typeof options.getSelectedElementIds === 'function'
+        ? options.getSelectedElementIds
+        : () => [];
+
       if (deckViewApi && typeof deckViewApi.captureStudioDeckViewBeforeSlideMutation === 'function') {
-        return deckViewApi.captureStudioDeckViewBeforeSlideMutation({
+        return (iframeDoc) => deckViewApi.captureStudioDeckViewBeforeSlideMutation({
           doc: iframeDoc,
-          saveHistoryState,
-          getActiveSlideId,
-          getCommittedSelectedElementIds
+          saveHistoryState: saveHistory,
+          getActiveSlideId: readActiveSlideId,
+          getCommittedSelectedElementIds: readSelectedElementIds
         });
       }
-      saveHistoryState();
-      return {
-        preservedActiveSlideId: getActiveSlideId(iframeDoc),
-        preservedSelectionIds: getCommittedSelectedEditorElementIds(iframeDoc)
+
+      return (iframeDoc) => {
+        saveHistory();
+        return {
+          preservedActiveSlideId: readActiveSlideId(iframeDoc),
+          preservedSelectionIds: readSelectedElementIds(iframeDoc)
+        };
       };
+    }
+
+    function captureSlideMutationRestoreState(iframeDoc) {
+      const getCommittedSelectionIds = typeof getCommittedSelectedEditorElementIds === 'function'
+        ? getCommittedSelectedEditorElementIds
+        : typeof getCommittedSelectedElementIds === 'function'
+          ? getCommittedSelectedElementIds
+          : () => [];
+      return createEditorSlideMutationRestoreStateCapturer({
+        saveHistoryState,
+        getActiveSlideId,
+        getSelectedElementIds: getCommittedSelectionIds
+      })(iframeDoc);
     }
 
     function restoreDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, options = {}) {

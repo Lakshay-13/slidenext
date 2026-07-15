@@ -28,7 +28,7 @@ function loadFinalizeSlideMutationPersistence(fileContent, context) {
 function loadCaptureSlideMutationRestoreState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function captureSlideMutationRestoreState(iframeDoc) {',
+    'function createEditorSlideMutationRestoreStateCapturer(options = {}) {',
     '\n\n    function restoreDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, options = {}) {'
   );
   vm.runInContext(helperSource, context);
