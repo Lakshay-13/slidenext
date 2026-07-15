@@ -980,14 +980,7 @@ test('captureState reads the live frame through the shared iframe accessor befor
     },
     redoStack: ['redo-entry'],
     SlideNextStudioHistory: {
-      captureStudioHistoryState(undoStack, redoStack, nextHistoryEntry, options) {
-        capturedCalls.push(['captureStudioHistoryState', undoStack, redoStack, nextHistoryEntry, options]);
-        return {
-          didCapture: true,
-          undoStack: ['undo-entry'],
-          redoStack: []
-        };
-      }
+      createStudioHistoryStateCapturer: studioHistory.createStudioHistoryStateCapturer
     },
     undoStack: [],
     updateHistoryButtons() {
@@ -1001,12 +994,16 @@ test('captureState reads the live frame through the shared iframe accessor befor
   context.captureState();
 
   assert.equal(context.undoStack.length, 1);
-  assert.equal(context.undoStack[0], 'undo-entry');
+  assert.deepEqual(context.undoStack[0], {
+    html: '',
+    activeSlideId: '',
+    selectedElementIds: [],
+    canonicalDeck: null
+  });
   assert.equal(context.redoStack.length, 0);
   assert.deepEqual(capturedCalls, [
     ['createHistoryEntry', undefined],
     ['getEditorHistoryStackOptions'],
-    ['captureStudioHistoryState', [], ['redo-entry'], historyEntry, { limit: 50 }],
     ['updateHistoryButtons']
   ]);
 });
@@ -1096,7 +1093,7 @@ test('saveHistoryState preserves canonical sidecars through the shared handler',
   assert.deepEqual(liveCanonicalArgs, [canonicalDeck, null, null]);
 });
 
-test('captureState skips history capture when no history entry can be created', () => {
+test('captureState fails closed when the shared history state capturer is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const captureStateSource = extractFunctionSource(
     fileContent,
@@ -1125,9 +1122,15 @@ test('captureState skips history capture when no history entry can be created', 
   vm.createContext(context);
   vm.runInContext(captureStateSource, context);
 
-  context.captureState();
+  const result = context.captureState();
 
-  assert.equal(createHistoryEntryCalls, 1);
+  assert.equal(createHistoryEntryCalls, 0);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    didCapture: false,
+    undoStack: ['undo-entry'],
+    redoStack: ['redo-entry'],
+    historyEntry: null
+  });
   assert.deepEqual(context.undoStack, ['undo-entry']);
   assert.deepEqual(context.redoStack, ['redo-entry']);
 });
@@ -1158,14 +1161,7 @@ test('captureState can store a persisted baseline history entry without a live f
     },
     redoStack: ['redo-entry'],
     SlideNextStudioHistory: {
-      captureStudioHistoryState(undoStack, redoStack, nextHistoryEntry, options) {
-        capturedCalls.push(['captureStudioHistoryState', undoStack, redoStack, nextHistoryEntry, options]);
-        return {
-          didCapture: true,
-          undoStack: ['undo-entry'],
-          redoStack: []
-        };
-      }
+      createStudioHistoryStateCapturer: studioHistory.createStudioHistoryStateCapturer
     },
     undoStack: [],
     updateHistoryButtons() {
@@ -1179,12 +1175,14 @@ test('captureState can store a persisted baseline history entry without a live f
   context.captureState();
 
   assert.equal(context.undoStack.length, 1);
-  assert.equal(context.undoStack[0], 'undo-entry');
+  assert.deepEqual(context.undoStack[0], {
+    ...historyEntry,
+    html: 'persisted-baseline'
+  });
   assert.equal(context.redoStack.length, 0);
   assert.deepEqual(capturedCalls, [
     ['createHistoryEntry'],
     ['getEditorHistoryStackOptions'],
-    ['captureStudioHistoryState', [], ['redo-entry'], historyEntry, { limit: 50 }],
     ['updateHistoryButtons']
   ]);
 });

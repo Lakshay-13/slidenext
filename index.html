@@ -7589,45 +7589,29 @@
         && typeof SlideNextStudioHistory.createStudioHistoryStateCapturer === 'function'
         ? SlideNextStudioHistory.createStudioHistoryStateCapturer
         : null;
-      if (createStudioHistoryStateCapturer) {
-        const captureResult = createStudioHistoryStateCapturer({
-          createHistoryEntry,
-          getUndoStack: () => undoStack,
-          getRedoStack: () => redoStack,
-          getHistoryStateOptions: getEditorHistoryStackOptions,
-          setUndoStack(nextUndoStack) {
-            undoStack = nextUndoStack;
-          },
-          setRedoStack(nextRedoStack) {
-            redoStack = nextRedoStack;
-          },
-          updateHistoryButtons,
-          afterCapture: clearPendingTransaction
-        })();
-        return captureResult;
-      }
-
-      const historyEntry = createHistoryEntry();
-      if (!historyEntry) {
+      if (!createStudioHistoryStateCapturer) {
         clearPendingTransaction();
-        return;
+        return {
+          didCapture: false,
+          undoStack,
+          redoStack,
+          historyEntry: null
+        };
       }
-
-      const nextHistoryState = SlideNextStudioHistory.captureStudioHistoryState(
-        undoStack,
-        redoStack,
-        historyEntry,
-        getEditorHistoryStackOptions()
-      );
-      if (!nextHistoryState.didCapture) {
-        clearPendingTransaction();
-        return;
-      }
-
-      undoStack = nextHistoryState.undoStack;
-      redoStack = nextHistoryState.redoStack;
-      updateHistoryButtons();
-      clearPendingTransaction();
+      return createStudioHistoryStateCapturer({
+        createHistoryEntry,
+        getUndoStack: () => undoStack,
+        getRedoStack: () => redoStack,
+        getHistoryStateOptions: getEditorHistoryStackOptions,
+        setUndoStack(nextUndoStack) {
+          undoStack = nextUndoStack;
+        },
+        setRedoStack(nextRedoStack) {
+          redoStack = nextRedoStack;
+        },
+        updateHistoryButtons,
+        afterCapture: clearPendingTransaction
+      })();
     }
 
     function updateHistoryButtons() {
