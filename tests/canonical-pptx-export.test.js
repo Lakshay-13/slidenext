@@ -20,6 +20,10 @@ class FakeSlide {
     this.calls.push({ type: 'shape', shapeType: type, options });
   }
 
+  addTable(rows, options) {
+    this.calls.push({ type: 'table', rows, options });
+  }
+
   addNotes(notes) {
     this.calls.push({ type: 'notes', notes });
   }
@@ -82,6 +86,24 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
           layout: { x: 0, y: 0, width: 100, height: 50 }
         },
         {
+          id: 'table-2',
+          type: 'table',
+          layout: { x: 0, y: 200, width: 400, height: 150 },
+          children: [{
+            tagName: 'tr',
+            children: [
+              { tagName: 'th', text: 'Name' },
+              { tagName: 'th', text: 'Value' }
+            ]
+          }, {
+            tagName: 'tr',
+            children: [
+              { tagName: 'td', text: 'Alpha' },
+              { tagName: 'td', text: '42' }
+            ]
+          }]
+        },
+        {
           id: 'hidden-1',
           type: 'text',
           text: 'Do not export',
@@ -98,7 +120,7 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
   assert.equal(result.pptx.subject, 'Export smoke test');
   assert.deepEqual(result.pptx.slides[0].background, { color: 'AABBCC' });
   assert.deepEqual(result.pptx.slides[0].calls.map(call => call.type), [
-    'notes', 'text', 'shape', 'image'
+    'notes', 'text', 'shape', 'image', 'table'
   ]);
 
   const textCall = result.pptx.slides[0].calls[1];
@@ -109,6 +131,10 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
 
   const imageCall = result.pptx.slides[0].calls[3];
   assert.equal(imageCall.options.data, 'data:image/png;base64,AAAA');
+  assert.deepEqual(result.pptx.slides[0].calls[4].rows, [
+    ['Name', 'Value'],
+    ['Alpha', '42']
+  ]);
   assert.equal(result.diagnostics.unsupportedNodes[0].id, 'table-1');
   assert.deepEqual(result.diagnostics.missingAssets, []);
 });

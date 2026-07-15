@@ -11,7 +11,7 @@
   const DEFAULT_PPTX_HEIGHT = 7.5;
   const DEFAULT_SOURCE_WIDTH = 1920;
   const DEFAULT_SOURCE_HEIGHT = 1080;
-  const UNSUPPORTED_NODE_TYPES = new Set(['table', 'vector', 'video', 'audio', 'embed', 'script']);
+  const UNSUPPORTED_NODE_TYPES = new Set(['vector', 'video', 'audio', 'embed', 'script']);
   const UNSUPPORTED_STYLE_PROPERTIES = new Set([
     'backdrop-filter',
     'box-shadow',
@@ -99,6 +99,25 @@
   function getNodeText(node) {
     const text = typeof node.text === 'string' ? node.text.trim() : '';
     return text || stripHtml(node.html);
+  }
+
+  function getNestedNodeText(node) {
+    const directText = getNodeText(node);
+    if (directText) return directText;
+    return (Array.isArray(node.children) ? node.children : [])
+      .map(getNestedNodeText)
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+  }
+
+  function getCanonicalTableRows(node) {
+    return (Array.isArray(node.children) ? node.children : [])
+      .filter(row => row && row.tagName === 'tr')
+      .map(row => (Array.isArray(row.children) ? row.children : [])
+        .filter(cell => cell && (cell.tagName === 'td' || cell.tagName === 'th'))
+        .map(getNestedNodeText))
+      .filter(row => row.length > 0);
   }
 
   function getNodeBounds(node, context) {
@@ -242,6 +261,17 @@
         });
         diagnostics.warnings.push(`Node ${nodeId} is not fully supported: node type ${type}`);
       }
+      if (type === 'table' || node.tagName === 'table') {
+        if (getCanonicalTableRows(node).length === 0) {
+          diagnostics.unsupportedNodes.push({
+            id: nodeId,
+            type: 'table',
+            tagName: node.tagName || '',
+            reason: 'table has no exportable rows'
+          });
+          diagnostics.warnings.push(`Node ${nodeId} is not fully supported: table has no exportable rows`);
+        }
+      }
 
       const style = nodeStyle(node);
       const unsupportedProperties = Object.keys(style).filter(property => UNSUPPORTED_STYLE_PROPERTIES.has(property));
@@ -265,7 +295,8 @@
         }
       }
 
-      (Array.isArray(node.children) ? node.children : []).forEach(visit);
+      const childNodes = type === 'table' || node.tagName === 'table' ? [] : node.children;
+      (Array.isArray(childNodes) ? childNodes : []).forEach(visit);
     }
 
     deck.slides.forEach(slide => {
@@ -287,8 +318,22 @@
     const bounds = getNodeBounds(node, context);
     const imageNode = type === 'image' || tagName === 'img';
     const shapeNode = type === 'shape' || node.classes?.includes('editor-shape');
+    const tableNode = type === 'table' || tagName === 'table';
 
-    if (imageNode) {
+    if (tableNode) {
+      const rows = getCanonicalTableRows(node);
+      if (rows.length > 0 && bounds && typeof context.slide.addTable === 'function') {
+        context.slide.addTable(rows, {
+          ...bounds,
+          border: { type: 'solid', color: 'D1D5DB', pt: 0.75 },
+          color: '000000',
+          fill: 'FFFFFF',
+          fontFace: 'Aptos',
+          fontSize: 11,
+          margin: 0.04
+        });
+      }
+    } else if (imageNode) {
       const source = resolveImageSource(node, context.deck, context.options);
       if (source && bounds) {
         const imageOptions = source.startsWith('data:')
