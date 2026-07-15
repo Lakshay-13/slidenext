@@ -86,11 +86,64 @@
     };
   }
 
+  function applyStudioLockMutation(elements = [], shouldLock = false, options = {}) {
+    const selection = Array.isArray(elements) ? elements : [];
+    const isLocked = typeof options.isLocked === 'function'
+      ? options.isLocked
+      : (element) => !!(element && element.dataset && element.dataset.editorLocked === 'true');
+    const setLocked = typeof options.setLocked === 'function'
+      ? options.setLocked
+      : (element, locked) => {
+          if (!element || !element.dataset) return;
+          if (locked) {
+            element.dataset.editorLocked = 'true';
+          } else {
+            delete element.dataset.editorLocked;
+          }
+        };
+    const createDatasetTransaction = typeof options.createDatasetTransaction === 'function'
+      ? options.createDatasetTransaction
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const transactionItems = createDatasetTransaction
+      ? selection
+          .filter((element) => element && element.isConnected && isLocked(element) !== shouldLock)
+          .map((element) => ({
+            element,
+            elementId: getElementId(element),
+            property: 'editorLocked',
+            before: element.dataset && element.dataset.editorLocked
+              ? element.dataset.editorLocked
+              : '',
+            after: shouldLock ? 'true' : ''
+          }))
+      : [];
+    const transaction = createDatasetTransaction
+      ? createDatasetTransaction(transactionItems, { getElementId })
+      : null;
+    let changedCount = 0;
+
+    selection.forEach((element) => {
+      if (!element || !element.isConnected || isLocked(element) === shouldLock) return;
+      setLocked(element, shouldLock);
+      changedCount += 1;
+    });
+
+    return {
+      didApply: changedCount > 0,
+      changedCount,
+      transaction: changedCount > 0 ? transaction : null
+    };
+  }
+
   return {
     getStudioLockSelection,
     buildStudioLockActionState,
     buildStudioLockToolbarState,
     renderStudioLockToolbarState,
-    buildStudioLockMutationPlan
+    buildStudioLockMutationPlan,
+    applyStudioLockMutation
   };
 });

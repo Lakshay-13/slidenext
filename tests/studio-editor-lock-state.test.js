@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const lockState = require('../shared/studio-editor-lock-state.js');
+const transactionState = require('../shared/studio-editor-transaction.js');
 
 test('getStudioLockSelection ignores disconnected stale selections', () => {
   assert.deepEqual(lockState.getStudioLockSelection([
@@ -156,4 +157,26 @@ test('renderStudioLockToolbarState applies lock button, icon, and label chrome',
   assert.equal(nodes.toggleLockSelectionBtn.disabled, false);
   assert.equal(nodes.toggleLockSelectionIcon.textContent, 'lock_open');
   assert.equal(nodes.toggleLockSelectionLabel.textContent, 'Unlock Selected');
+});
+
+test('applyStudioLockMutation applies live lock changes and creates an optional dataset transaction', () => {
+  const element = {
+    isConnected: true,
+    dataset: { editorId: 'node-1' }
+  };
+  const result = lockState.applyStudioLockMutation([element], true, {
+    createDatasetTransaction: transactionState.createStudioDatasetTransaction,
+    getElementId: (target) => target.dataset.editorId
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.changedCount, 1);
+  assert.equal(element.dataset.editorLocked, 'true');
+  assert.deepEqual(result.transaction.operations[0], {
+    type: 'dataset',
+    elementId: 'node-1',
+    property: 'editorLocked',
+    before: '',
+    after: 'true'
+  });
 });

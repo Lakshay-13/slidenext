@@ -479,3 +479,61 @@ test('toggleSelectedElementsLockState captures a reversible dataset transaction'
     }
   });
 });
+
+test('toggleSelectedElementsLockState delegates lock application to the shared lock module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toggleSelectedElementsLockStateSource = extractFunctionSource(
+    fileContent,
+    'function toggleSelectedElementsLockState() {',
+    '\n\n    function toggleSelectedElementsVisibility(options = {}) {'
+  );
+  const liveTarget = { isConnected: true, dataset: {} };
+  const calls = [];
+  const context = {
+    selectedElements: [liveTarget],
+    SlideNextStudioEditorLockState: {
+      buildStudioLockMutationPlan() {
+        return {
+          didChange: true,
+          selection: [liveTarget],
+          shouldLock: true,
+          versionLabel: 'Auto: Locked Element'
+        };
+      },
+      applyStudioLockMutation(selection, shouldLock, options) {
+        calls.push(['applyStudioLockMutation', selection, shouldLock, options]);
+        return { didApply: true, transaction: { type: 'dataset' } };
+      }
+    },
+    SlideNextStudioElementState: {
+      setStudioElementLockedState() {}
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      return {};
+    },
+    isElementLocked() {
+      return false;
+    },
+    syncSelectionUiAfterMutation() {},
+    finalizeEditorDeckMutation(label, options) {
+      calls.push(['finalizeEditorDeckMutation', label, options]);
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeSelectionToggleMutation(fileContent, context);
+  vm.runInContext(toggleSelectedElementsLockStateSource, context);
+
+  assert.equal(context.toggleSelectedElementsLockState(), true);
+  assert.equal(calls[0][0], 'applyStudioLockMutation');
+  assert.equal(calls[0][1][0], liveTarget);
+  assert.equal(calls[0][2], true);
+  assert.equal(typeof calls[0][3].getElementId, 'function');
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[1])), ['finalizeEditorDeckMutation', 'Auto: Locked Element', {
+    refreshThumbnails: false,
+    transaction: { type: 'dataset' }
+  }]);
+});

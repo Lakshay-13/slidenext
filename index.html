@@ -4628,6 +4628,13 @@
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!lockMutationPlan.didChange) return false;
+      const applyStudioLockMutation = (
+        typeof SlideNextStudioEditorLockState !== 'undefined'
+        && SlideNextStudioEditorLockState
+        && typeof SlideNextStudioEditorLockState.applyStudioLockMutation === 'function'
+      )
+        ? SlideNextStudioEditorLockState.applyStudioLockMutation
+        : null;
       const createStudioDatasetTransaction = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -4635,13 +4642,29 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioDatasetTransaction
         : null;
+      const getLockElementId = (element) => {
+        if (typeof assignEditorElementId === 'function') {
+          return assignEditorElementId(element);
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
+      if (applyStudioLockMutation) {
+        const mutation = applyStudioLockMutation(lockMutationPlan.selection, lockMutationPlan.shouldLock, {
+          isLocked: isElementLocked,
+          setLocked: SlideNextStudioElementState.setStudioElementLockedState,
+          createDatasetTransaction: createStudioDatasetTransaction,
+          getElementId: getLockElementId
+        });
+        if (!mutation.didApply) return false;
+        return finalizeSelectionToggleMutation(lockMutationPlan.versionLabel, {
+          transaction: mutation.transaction
+        });
+      }
       const transactionItems = createStudioDatasetTransaction
         ? lockMutationPlan.selection
             .filter((el) => el && el.isConnected && isElementLocked(el) !== lockMutationPlan.shouldLock)
             .map((el) => {
-              if (typeof assignEditorElementId === 'function') {
-                assignEditorElementId(el);
-              }
+              getLockElementId(el);
               return {
                 element: el,
                 property: 'editorLocked',
