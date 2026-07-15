@@ -41,6 +41,24 @@ test('applyStudioSlideReorderMutation moves a slide node and captures the contai
   });
 });
 
+test('syncStudioDeckActiveThumbnailCardState resolves thumbnail cards from the document', () => {
+  const activeCard = { dataset: { slideId: 'slide-2' }, className: '' };
+  const inactiveCard = { dataset: { slideId: 'slide-1' }, className: '' };
+  const documentRef = {
+    querySelectorAll(selector) {
+      assert.equal(selector, '#thumbnailsList > div');
+      return [activeCard, inactiveCard];
+    }
+  };
+
+  assert.equal(deckView.syncStudioDeckActiveThumbnailCardState({
+    documentRef,
+    activeSlideId: 'slide-2'
+  }), true);
+  assert.match(activeCard.className, /border-\[#7028d0\]/);
+  assert.match(inactiveCard.className, /border-white\/5/);
+});
+
 test('applyStudioSlideInsertionMutation appends a slide node and captures the container markup transaction', () => {
   const slideNode = { id: 'slide-2' };
   const container = {

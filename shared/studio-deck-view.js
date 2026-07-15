@@ -550,6 +550,18 @@
     });
   }
 
+  function syncStudioDeckActiveThumbnailCardState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.querySelectorAll !== 'function') return false;
+
+    updateStudioDeckActiveThumbnailCardState(
+      documentRef.querySelectorAll('#thumbnailsList > div'),
+      options.activeSlideId,
+      options
+    );
+    return true;
+  }
+
   function applyStudioSlideReorderMutation(container, draggedNode, beforeNode = null, options = {}) {
     if (!container
       || !draggedNode
@@ -1029,6 +1041,7 @@
     observeStudioDeckActiveSlideState,
     bindStudioDeckNavigationSync,
     updateStudioDeckActiveThumbnailCardState,
+    syncStudioDeckActiveThumbnailCardState,
     resetStudioDeckSidebarUiState,
     applyStudioSlideReorderMutation,
     applyStudioSlideInsertionMutation,
