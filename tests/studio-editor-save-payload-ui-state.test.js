@@ -1950,6 +1950,9 @@ test('resolveEditorMetadataPersistenceOptions prefers the shared merged persiste
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorPersistence: {
+      resolveStudioMetadataPersistenceOptions: editorPersistence.resolveStudioMetadataPersistenceOptions
+    },
     SlideNextDeckLoader: {
       resolveMergedPresentationPersistenceOptions(metadata, explicitOptions) {
         calls.push(['resolveMergedPresentationPersistenceOptions', metadata, explicitOptions]);
@@ -2001,6 +2004,9 @@ test('resolveEditorMetadataPersistenceOptions merges explicit persistence option
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorPersistence: {
+      resolveStudioMetadataPersistenceOptions: editorPersistence.resolveStudioMetadataPersistenceOptions
+    },
     SlideNextDeckLoader: {
       resolvePresentationPersistenceOptions(metadata) {
         calls.push(['resolvePresentationPersistenceOptions', metadata]);
@@ -2045,6 +2051,40 @@ test('resolveEditorMetadataPersistenceOptions merges explicit persistence option
         { transientClassNames: ['revealed'] }
       ]
     ]
+  );
+});
+
+test('resolveEditorMetadataPersistenceOptions fails closed when the shared helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+
+  const context = {
+    currentPresentationMetadata: {
+      persistence: {
+        emptyContainerIds: ['pixelMatrix']
+      }
+    },
+    SlideNextDeckLoader: {
+      resolveMergedPresentationPersistenceOptions() {
+        throw new Error('page-local persistence fallback should not run');
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveEditorMetadataPersistenceOptions({
+      persistenceOptions: {
+        transientClassNames: ['revealed']
+      }
+    }))),
+    {}
   );
 });
 

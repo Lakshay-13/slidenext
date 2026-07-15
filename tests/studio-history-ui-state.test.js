@@ -31,6 +31,7 @@ function loadSaveHistoryState(fileContent, context) {
 }
 
 function loadResolveEditorMetadataPersistenceOptions(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= studioPersistence;
   const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
     fileContent,
     'function resolveEditorMetadataPersistenceOptions(options = {}) {',

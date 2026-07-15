@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const liveSelection = require('../shared/studio-editor-live-selection.js');
 const selection = require('../shared/studio-editor-selection.js');
+const studioPersistence = require('../shared/studio-editor-persistence.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -155,6 +156,7 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay', 'editorGuidesLayer'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextStudioEditorPersistence: studioPersistence,
     SlideNextDeckLoader: {
       resolvePresentationPersistenceOptions(metadata) {
         assert.equal(metadata, context.currentPresentationMetadata);
@@ -238,6 +240,7 @@ test('getEditorHistoryOptions threads sanitizer overrides and explicit persisten
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextStudioEditorPersistence: studioPersistence,
     SlideNextDeckLoader: {
       resolvePresentationPersistenceOptions(metadata) {
         assert.equal(metadata, context.currentPresentationMetadata);
@@ -338,6 +341,7 @@ test('getEditorHistoryOptions prefers the shared merged persistence resolver for
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextStudioEditorPersistence: studioPersistence,
     SlideNextDeckLoader: {
       resolveMergedPresentationPersistenceOptions(metadata, explicitOptions) {
         calls.push(['resolveMergedPresentationPersistenceOptions', metadata, explicitOptions]);
