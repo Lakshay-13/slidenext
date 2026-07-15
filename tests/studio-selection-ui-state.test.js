@@ -27,6 +27,55 @@ function loadGetCommittedSelectedEditorElementIds(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadGetSelectedEditorElementIds(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function getSelectedEditorElementIds(elements = selectedElements) {',
+    '\n\n    function getCommittedSelectedEditorElementIds(doc = getIframeDoc()) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+test('getSelectedEditorElementIds delegates to shared selection', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectedElements = [{ id: 'node-1' }];
+  let delegatedArgs = null;
+  const context = {
+    selectedElements,
+    SlideNextStudioEditorSelection: {
+      getStudioSelectedElementIds(...args) {
+        delegatedArgs = args;
+        return ['node-1'];
+      }
+    },
+    getEditorSelectionOptions() {
+      return { selectionOptions: true };
+    }
+  };
+
+  vm.createContext(context);
+  loadGetSelectedEditorElementIds(fileContent, context);
+
+  const result = context.getSelectedEditorElementIds();
+  assert.equal(result.length, 1);
+  assert.equal(result[0], 'node-1');
+  assert.equal(delegatedArgs[0], selectedElements);
+  assert.deepEqual(delegatedArgs[1], { selectionOptions: true });
+});
+
+test('getSelectedEditorElementIds fails closed when the shared selection API is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    selectedElements: [{ id: 'node-1' }],
+    SlideNextStudioEditorSelection: null
+  };
+
+  vm.createContext(context);
+  loadGetSelectedEditorElementIds(fileContent, context);
+
+  assert.equal(context.getSelectedEditorElementIds().length, 0);
+});
+
 test('getCommittedSelectedEditorElementIds delegates to shared selection', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { id: 'doc' };

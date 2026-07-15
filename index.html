@@ -3704,7 +3704,11 @@
     }
 
     function getSelectedEditorElementIds(elements = selectedElements) {
-      return SlideNextStudioEditorSelection.getStudioSelectedElementIds(elements, getEditorSelectionOptions());
+      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
+        ? SlideNextStudioEditorSelection
+        : null;
+      if (!selectionApi || typeof selectionApi.getStudioSelectedElementIds !== 'function') return [];
+      return selectionApi.getStudioSelectedElementIds(elements, getEditorSelectionOptions());
     }
 
     function getCommittedSelectedEditorElementIds(doc = getIframeDoc()) {
