@@ -6306,6 +6306,72 @@
         }
         return true;
       };
+      const buildStudioTransformInteractionOptions = (overrides = {}) => ({
+        getActiveSlide: () => getActiveSlide(doc),
+        getSelectionState: getTransformSelectionState,
+        selectElement,
+        resolveEditableTarget,
+        getSlideMetrics,
+        getPointerOnSlide,
+        getSelectionBounds,
+        ensureOverlay: (slide) => ensureSelectionOverlay(doc, slide),
+        itemOptions: {
+          getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+          getRectOnSlide
+        },
+        captureTarget: doc.body,
+        dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
+        minSizePx: MIN_ELEMENT_SIZE_PX,
+        dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX,
+        snapDistancePx: SNAP_THRESHOLD_PX,
+        getGridSizePx: () => isGridSnapEnabled ? GRID_SNAP_SIZE_PX : null,
+        onSessionStart: (startBounds) => {
+          updateDragHud(startBounds);
+          isDraggingElement = true;
+        },
+        onSessionFrame: (bounds, frameState) => {
+          renderGuides(frameState.guides || []);
+          syncSelectionOverlay();
+          updateDragHud(bounds);
+        },
+        onSessionFinalize: finalizeTransformSession,
+        ...overrides
+      });
+      const buildStudioMarqueeInteractionOptions = (overrides = {}) => ({
+        getActiveSlide: () => getActiveSlide(doc),
+        resolveEditableTarget,
+        shouldIgnoreTarget: (target) => !!(target && (target.closest('.editor-resize-handle') || target.closest('#editorSelectionOverlay'))),
+        getSlideMetrics,
+        getPointerOnSlide,
+        getMarqueeElements: (slide) => getNormalizedSlideLayerOrder(slide),
+        getMarqueeSelection: (elements, rect, session) => SlideNextStudioEditorSelectionBounds.getStudioMarqueeSelection(elements, rect, {
+          isHidden: isElementHidden,
+          getElementBounds: (element) => getRectOnSlide(element.getBoundingClientRect(), session.slideMetrics)
+        }),
+        getSelectedElements: () => getLiveSelectedElements(selectedElements, doc),
+        captureTarget: doc.body,
+        dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
+        onSessionStart: () => {
+          isDraggingElement = true;
+          hideGuides();
+          hideDragHud();
+        },
+        onSessionFrame: (rect) => {
+          renderMarqueeSelection(rect);
+        },
+        onSelectionSessionFinalize: () => {
+          isDraggingElement = false;
+          hideGuides();
+          hideDragHud();
+          clearMarqueeSelection();
+        },
+        commitSelectionState: commitEditorSelectionState,
+        syncSelectionOverlay,
+        setSuppressNextFrameClick: (nextValue) => {
+          suppressNextFrameClick = !!nextValue;
+        },
+        ...overrides
+      });
       const interactionApi = typeof SlideNextStudioEditorInteractions !== 'undefined'
         ? SlideNextStudioEditorInteractions
         : null;
@@ -6315,70 +6381,8 @@
         : null;
       if (attachStudioEditorInteractionHandlers) {
         const didAttachInteractions = attachStudioEditorInteractionHandlers(doc, {
-          transformOptions: {
-            getActiveSlide: () => getActiveSlide(doc),
-            getSelectionState: getTransformSelectionState,
-            selectElement,
-            resolveEditableTarget,
-            getSlideMetrics,
-            getPointerOnSlide,
-            getSelectionBounds,
-            ensureOverlay: (slide) => ensureSelectionOverlay(doc, slide),
-            itemOptions: {
-              getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
-              getRectOnSlide
-            },
-            captureTarget: doc.body,
-            dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
-            minSizePx: MIN_ELEMENT_SIZE_PX,
-            dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX,
-            snapDistancePx: SNAP_THRESHOLD_PX,
-            getGridSizePx: () => isGridSnapEnabled ? GRID_SNAP_SIZE_PX : null,
-            onSessionStart: (startBounds) => {
-              updateDragHud(startBounds);
-              isDraggingElement = true;
-            },
-            onSessionFrame: (bounds, frameState) => {
-              renderGuides(frameState.guides || []);
-              syncSelectionOverlay();
-              updateDragHud(bounds);
-            },
-            onSessionFinalize: finalizeTransformSession
-          },
-          marqueeOptions: {
-            getActiveSlide: () => getActiveSlide(doc),
-            resolveEditableTarget,
-            shouldIgnoreTarget: (target) => !!(target && (target.closest('.editor-resize-handle') || target.closest('#editorSelectionOverlay'))),
-            getSlideMetrics,
-            getPointerOnSlide,
-            getMarqueeElements: (slide) => getNormalizedSlideLayerOrder(slide),
-            getMarqueeSelection: (elements, rect, session) => SlideNextStudioEditorSelectionBounds.getStudioMarqueeSelection(elements, rect, {
-              isHidden: isElementHidden,
-              getElementBounds: (element) => getRectOnSlide(element.getBoundingClientRect(), session.slideMetrics)
-            }),
-            getSelectedElements: () => getLiveSelectedElements(selectedElements, doc),
-            captureTarget: doc.body,
-            dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
-            onSessionStart: () => {
-              isDraggingElement = true;
-              hideGuides();
-              hideDragHud();
-            },
-            onSessionFrame: (rect) => {
-              renderMarqueeSelection(rect);
-            },
-            onSelectionSessionFinalize: () => {
-              isDraggingElement = false;
-              hideGuides();
-              hideDragHud();
-              clearMarqueeSelection();
-            },
-            commitSelectionState: commitEditorSelectionState,
-            syncSelectionOverlay,
-            setSuppressNextFrameClick: (nextValue) => {
-              suppressNextFrameClick = !!nextValue;
-            }
-          }
+          transformOptions: buildStudioTransformInteractionOptions(),
+          marqueeOptions: buildStudioMarqueeInteractionOptions()
         });
         if (didAttachInteractions) return;
       }
@@ -6390,36 +6394,9 @@
         ? SlideNextStudioEditorTransform.createStudioTransformPointerHandlers
         : null;
       if (createStudioTransformPointerHandlers) {
-        const transformHandlers = createStudioTransformPointerHandlers({
-          getActiveSlide: () => getActiveSlide(doc),
-          getSelectionState: getTransformSelectionState,
-          selectElement,
-          resolveEditableTarget,
-          getSlideMetrics,
-          getPointerOnSlide,
-          getSelectionBounds,
-          ensureOverlay: (slide) => ensureSelectionOverlay(doc, slide),
-          itemOptions: {
-            getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
-            getRectOnSlide
-          },
-          captureTarget: doc.body,
-          dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
-          minSizePx: MIN_ELEMENT_SIZE_PX,
-          dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX,
-          snapDistancePx: SNAP_THRESHOLD_PX,
-          getGridSizePx: () => isGridSnapEnabled ? GRID_SNAP_SIZE_PX : null,
-          onSessionStart: (startBounds) => {
-            updateDragHud(startBounds);
-            isDraggingElement = true;
-          },
-          onSessionFrame: (bounds, frameState) => {
-            renderGuides(frameState.guides || []);
-            syncSelectionOverlay();
-            updateDragHud(bounds);
-          },
-          onSessionFinalize: finalizeTransformSession
-        });
+        const transformHandlers = createStudioTransformPointerHandlers(
+          buildStudioTransformInteractionOptions()
+        );
 
         const attachStudioTransformPointerHandlers = typeof transformApi.attachStudioTransformPointerHandlers === 'function'
           ? transformApi.attachStudioTransformPointerHandlers
@@ -6443,64 +6420,40 @@
           ? SlideNextStudioEditorEvents.createStudioMarqueePointerHandlers
           : null;
         if (createStudioMarqueeSelectionHandlers || createStudioMarqueePointerHandlers) {
-          const marqueeHandlers = (createStudioMarqueeSelectionHandlers || createStudioMarqueePointerHandlers)({
-            getActiveSlide: () => getActiveSlide(doc),
-            resolveEditableTarget,
-            shouldIgnoreTarget: (target) => !!(target && (target.closest('.editor-resize-handle') || target.closest('#editorSelectionOverlay'))),
-            getSlideMetrics,
-            getPointerOnSlide,
-            getMarqueeElements: (slide) => getNormalizedSlideLayerOrder(slide),
-            getMarqueeSelection: (elements, rect, session) => SlideNextStudioEditorSelectionBounds.getStudioMarqueeSelection(elements, rect, {
-              isHidden: isElementHidden,
-              getElementBounds: (element) => getRectOnSlide(element.getBoundingClientRect(), session.slideMetrics)
-            }),
-            getSelectedElements: () => getLiveSelectedElements(selectedElements, doc),
-            captureTarget: doc.body,
-            dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
-            onSessionStart: () => {
-              isDraggingElement = true;
-              hideGuides();
-              hideDragHud();
-            },
-            onSessionFrame: (rect) => {
-              renderMarqueeSelection(rect);
-            },
-            onSelectionSessionFinalize: createStudioMarqueeSelectionHandlers
-              ? () => {
-                  isDraggingElement = false;
-                  hideGuides();
-                  hideDragHud();
-                  clearMarqueeSelection();
-                }
-              : undefined,
-            commitSelectionState: commitEditorSelectionState,
-            syncSelectionOverlay,
-            setSuppressNextFrameClick: (nextValue) => {
-              suppressNextFrameClick = !!nextValue;
-            },
-            onSessionFinalize: createStudioMarqueeSelectionHandlers
-              ? undefined
-              : (result, session) => {
-              isDraggingElement = false;
-              hideGuides();
-              hideDragHud();
-              clearMarqueeSelection();
-              if (result.cancelled || !result.didSelect) {
-                syncSelectionOverlay();
-                return;
-              }
+          const marqueeHandlers = (createStudioMarqueeSelectionHandlers || createStudioMarqueePointerHandlers)(
+            buildStudioMarqueeInteractionOptions({
+              onSelectionSessionFinalize: createStudioMarqueeSelectionHandlers
+                ? () => {
+                    isDraggingElement = false;
+                    hideGuides();
+                    hideDragHud();
+                    clearMarqueeSelection();
+                  }
+                : undefined,
+              onSessionFinalize: createStudioMarqueeSelectionHandlers
+                ? undefined
+                : (result, session) => {
+                    isDraggingElement = false;
+                    hideGuides();
+                    hideDragHud();
+                    clearMarqueeSelection();
+                    if (result.cancelled || !result.didSelect) {
+                      syncSelectionOverlay();
+                      return;
+                    }
 
-              const previousSelection = result.additive ? session.previousSelection : [];
-              const nextSelection = Array.from(new Set([
-                ...previousSelection,
-                ...(result.selection || [])
-              ]));
-              commitEditorSelectionState({
-                selectedElements: nextSelection
-              });
-              suppressNextFrameClick = true;
-              }
-          });
+                    const previousSelection = result.additive ? session.previousSelection : [];
+                    const nextSelection = Array.from(new Set([
+                      ...previousSelection,
+                      ...(result.selection || [])
+                    ]));
+                    commitEditorSelectionState({
+                      selectedElements: nextSelection
+                    });
+                    suppressNextFrameClick = true;
+                  }
+            })
+          );
           const attachStudioMarqueePointerHandlers = typeof SlideNextStudioEditorEvents.attachStudioMarqueePointerHandlers === 'function'
             ? SlideNextStudioEditorEvents.attachStudioMarqueePointerHandlers
             : null;
@@ -6514,33 +6467,14 @@
         : null;
       if (!createStudioTransformFallbackPointerHandlers) return;
 
-      const fallbackTransformHandlers = createStudioTransformFallbackPointerHandlers({
-        getActiveSlide: () => getActiveSlide(doc),
-        getSelectionState: getTransformSelectionState,
-        selectElement,
-        resolveEditableTarget,
-        getSlideMetrics,
-        getPointerOnSlide,
-        getSelectionBounds,
-        ensureOverlay: (slide) => ensureSelectionOverlay(doc, slide),
-        itemOptions: {
-          getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
-          getRectOnSlide
-        },
-        captureTarget: doc.body,
-        dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
-        minSizePx: MIN_ELEMENT_SIZE_PX,
-        dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX,
-        onSessionStart: (startBounds) => {
-          updateDragHud(startBounds);
-          isDraggingElement = true;
-        },
-        onSessionFrame: (bounds) => {
-          syncSelectionOverlay();
-          updateDragHud(bounds);
-        },
-        onSessionFinalize: finalizeTransformSession
-      });
+      const fallbackTransformHandlers = createStudioTransformFallbackPointerHandlers(
+        buildStudioTransformInteractionOptions({
+          onSessionFrame: (bounds) => {
+            syncSelectionOverlay();
+            updateDragHud(bounds);
+          }
+        })
+      );
 
       const attachStudioTransformPointerHandlers = typeof transformApi.attachStudioTransformPointerHandlers === 'function'
         ? transformApi.attachStudioTransformPointerHandlers
