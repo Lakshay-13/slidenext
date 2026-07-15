@@ -49,6 +49,11 @@
     };
   }
 
+  function finalizeStudioMutation(options = {}) {
+    const mutationFinalizer = createStudioMutationFinalizer(options);
+    return mutationFinalizer(options.versionLabel, options.mutationOptions || {});
+  }
+
   function createStudioSlideMutationPersistenceFinalizer(options = {}) {
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
@@ -76,6 +81,7 @@
 
   return {
     createStudioMutationFinalizer,
+    finalizeStudioMutation,
     createStudioSlideMutationPersistenceFinalizer
   };
 });

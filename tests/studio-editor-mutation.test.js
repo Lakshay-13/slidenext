@@ -82,6 +82,33 @@ test('createStudioMutationFinalizer forwards optional history transactions', () 
   assert.deepEqual(historyArgs, [true, transaction]);
 });
 
+test('finalizeStudioMutation delegates version and mutation options to the shared finalizer', () => {
+  const calls = [];
+  const result = mutation.finalizeStudioMutation({
+    versionLabel: 'Auto: Updated Element',
+    mutationOptions: {
+      refreshThumbnails: false,
+      transaction: { id: 'tx-1' }
+    },
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    },
+    triggerAutoSave() {
+      calls.push(['save']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    }
+  });
+
+  assert.equal(result, 'Auto: Updated Element');
+  assert.deepEqual(calls, [
+    ['history', false, { id: 'tx-1' }],
+    ['save'],
+    ['version', 'Auto: Updated Element']
+  ]);
+});
+
 test('createStudioSlideMutationPersistenceFinalizer preserves slide persistence ordering', () => {
   const calls = [];
   const finalizeSlideMutation = mutation.createStudioSlideMutationPersistenceFinalizer({

@@ -5112,6 +5112,21 @@
     }
 
     function finalizeEditorDeckMutation(versionLabel, options = {}) {
+      const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
+        ? SlideNextStudioEditorMutation
+        : null;
+      if (mutationApi && typeof mutationApi.finalizeStudioMutation === 'function') {
+        return mutationApi.finalizeStudioMutation({
+          versionLabel,
+          mutationOptions: options,
+          syncSelectionOverlay,
+          generateThumbnails,
+          updateLayersList,
+          saveHistoryState,
+          triggerAutoSave,
+          triggerAutoVersion
+        });
+      }
       const createStudioMutationFinalizer = (
         typeof SlideNextStudioEditorMutation !== 'undefined'
         && SlideNextStudioEditorMutation
