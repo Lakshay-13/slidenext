@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const group = require('../shared/studio-editor-group.js');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 function buildItems() {
   return [
@@ -130,4 +131,90 @@ test('renderStudioGroupToolbarState applies group and ungroup readiness', () => 
   }), true);
   assert.equal(buttons.groupSelectionBtn.disabled, false);
   assert.equal(buttons.ungroupSelectionBtn.disabled, true);
+});
+
+test('applyStudioGroupMutation wraps ordered children and captures the parent markup transaction', () => {
+  const first = { style: {}, parentElement: null };
+  const second = { style: {}, parentElement: null };
+  const groupChildren = [];
+  const groupNode = {
+    style: {},
+    setAttribute(name, value) {
+      this[name] = value;
+    },
+    appendChild(child) {
+      groupChildren.push(child);
+      child.parentElement = this;
+      return child;
+    }
+  };
+  const parent = {
+    dataset: { editorId: 'parent-1' },
+    innerHTML: '<div data-editor-id="first"></div><div data-editor-id="second"></div>',
+    insertBefore(groupNode, firstChild) {
+      assert.equal(firstChild, first);
+      this.innerHTML = '<div data-editor-id="group-1"></div>';
+      groupNode.parentElement = this;
+      return groupNode;
+    },
+    appendChild(child) {
+      child.parentElement = this;
+      return child;
+    }
+  };
+  first.parentElement = parent;
+  second.parentElement = parent;
+
+  const result = group.applyStudioGroupMutation({
+    documentRef: {
+      createElement() {
+        return groupNode;
+      }
+    },
+    parent,
+    parentBounds: { left: 0, top: 0 },
+    orderedSelection: [first, second],
+    groupPlan: {
+      bounds: { left: 100, top: 120, width: 280, height: 160 },
+      nextItems: [
+        { element: first, nextLeft: 0, nextTop: 0 },
+        { element: second, nextLeft: 160, nextTop: 100 }
+      ]
+    },
+    getElementId(element) {
+      return element.dataset && element.dataset.editorId;
+    },
+    assignElementId(element) {
+      element.editorId = 'group-1';
+    },
+    prepareGroup() {},
+    createMarkupTransactionCapture(items, options) {
+      return studioTransaction.createStudioMarkupTransactionCapture(items, options);
+    }
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.group, groupNode);
+  assert.deepEqual(groupNode.style, {
+    position: 'absolute',
+    left: '100px',
+    top: '120px',
+    width: '280px',
+    height: '160px',
+    overflow: 'visible',
+    boxSizing: 'border-box'
+  });
+  assert.equal(groupNode['data-editor-group'], 'true');
+  assert.equal(first.parentElement, groupNode);
+  assert.equal(second.parentElement, groupNode);
+  assert.deepEqual(result.transaction, {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'markup',
+      elementId: 'parent-1',
+      before: '<div data-editor-id="first"></div><div data-editor-id="second"></div>',
+      after: '<div data-editor-id="group-1"></div>'
+    }]
+  });
 });

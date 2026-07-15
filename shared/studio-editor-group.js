@@ -110,10 +110,112 @@
     };
   }
 
+  function applyStudioGroupMutation(options = {}) {
+    const documentRef = options.documentRef;
+    const parent = options.parent || null;
+    const groupPlan = options.groupPlan || null;
+    const parentBounds = options.parentBounds || {};
+    const orderedSelection = Array.isArray(options.orderedSelection)
+      ? options.orderedSelection
+      : [];
+    if (!documentRef
+      || typeof documentRef.createElement !== 'function'
+      || !parent
+      || typeof parent.appendChild !== 'function'
+      || !groupPlan
+      || !groupPlan.bounds
+      || !Number.isFinite(parentBounds.left)
+      || !Number.isFinite(parentBounds.top)
+      || !Array.isArray(groupPlan.nextItems)
+      || orderedSelection.length === 0) {
+      return {
+        didApply: false,
+        group: null,
+        transaction: null
+      };
+    }
+
+    const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
+      ? options.createMarkupTransactionCapture
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const markupCapture = createMarkupTransactionCapture
+      ? createMarkupTransactionCapture([{
+          element: parent,
+          elementId: getElementId(parent)
+        }], { getElementId })
+      : null;
+
+    const group = documentRef.createElement('div');
+    if (!group || typeof group.appendChild !== 'function') {
+      return {
+        didApply: false,
+        group: null,
+        transaction: null
+      };
+    }
+    group.className = 'editor-group editor-hoverable';
+    if (typeof group.setAttribute === 'function') {
+      group.setAttribute('data-editor-group', 'true');
+    }
+    group.style.position = 'absolute';
+    group.style.left = `${groupPlan.bounds.left - parentBounds.left}px`;
+    group.style.top = `${groupPlan.bounds.top - parentBounds.top}px`;
+    group.style.width = `${groupPlan.bounds.width}px`;
+    group.style.height = `${groupPlan.bounds.height}px`;
+    group.style.overflow = 'visible';
+    group.style.boxSizing = 'border-box';
+
+    const assignElementId = typeof options.assignElementId === 'function'
+      ? options.assignElementId
+      : null;
+    if (assignElementId) {
+      assignElementId(group);
+    }
+
+    const itemByElement = new Map(groupPlan.nextItems.map((item) => [item.element, item]));
+    const firstElement = orderedSelection[0];
+    if (firstElement
+      && firstElement.parentElement === parent
+      && typeof parent.insertBefore === 'function') {
+      parent.insertBefore(group, firstElement);
+    } else {
+      parent.appendChild(group);
+    }
+
+    orderedSelection.forEach((element) => {
+      const item = itemByElement.get(element);
+      if (!item) return;
+      element.style.position = 'absolute';
+      element.style.margin = '0';
+      element.style.left = `${item.nextLeft}px`;
+      element.style.top = `${item.nextTop}px`;
+      group.appendChild(element);
+    });
+
+    const prepareGroup = typeof options.prepareGroup === 'function'
+      ? options.prepareGroup
+      : null;
+    if (prepareGroup) {
+      prepareGroup(group);
+    }
+
+    return {
+      didApply: true,
+      group,
+      transaction: markupCapture
+        ? markupCapture.createTransaction()
+        : null
+    };
+  }
+
   return {
     getStudioGroupableSelection,
     buildStudioGroupPlan,
     renderStudioGroupToolbarState,
-    buildStudioUngroupedLayout
+    buildStudioUngroupedLayout,
+    applyStudioGroupMutation
   };
 });

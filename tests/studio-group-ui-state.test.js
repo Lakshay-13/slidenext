@@ -213,6 +213,82 @@ test('groupSelectedElements wraps selected children with relative coordinates an
   });
 });
 
+test('groupSelectedElements delegates wrapper mutation to the shared group module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function groupSelectedElements() {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const calls = [];
+  const slide = { id: 'slide-1' };
+  const parent = {
+    id: 'parent-1',
+    getBoundingClientRect() {
+      return { left: 0, top: 0, right: 500, bottom: 400 };
+    }
+  };
+  const first = { id: 'first' };
+  const second = { id: 'second' };
+  const group = { id: 'group-1' };
+  const context = {
+    buildGroupSelectionActionState() {
+      return {
+        canGroup: true,
+        slide,
+        parent,
+        selection: [first, second],
+        groupPlan: {
+          bounds: { left: 10, top: 20, width: 100, height: 80 },
+          nextItems: []
+        }
+      };
+    },
+    SlideNextStudioEditorGroup: {
+      applyStudioGroupMutation(options) {
+        calls.push(['applyStudioGroupMutation', options]);
+        return {
+          didApply: true,
+          group,
+          transaction: { type: 'markup' }
+        };
+      }
+    },
+    getIframeDoc() {
+      return { id: 'doc' };
+    },
+    getSlideMetrics() {
+      return { scaleX: 1 };
+    },
+    getRectOnSlide(rect) {
+      return rect;
+    },
+    getNormalizedSlideLayerOrder() {
+      return [first, second];
+    },
+    commitEditorSelectionState(state) {
+      calls.push(['commitEditorSelectionState', state]);
+    },
+    finalizeEditorDeckMutation(label, options) {
+      calls.push(['finalizeEditorDeckMutation', label, options]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.groupSelectedElements(), true);
+  assert.equal(calls[0][0], 'applyStudioGroupMutation');
+  assert.equal(calls[0][1].documentRef.id, 'doc');
+  assert.equal(calls[0][1].parent, parent);
+  assert.deepEqual(calls[0][1].orderedSelection, [first, second]);
+  assert.equal(calls[1][0], 'commitEditorSelectionState');
+  assert.equal(calls[1][1].selectedElements.length, 1);
+  assert.equal(calls[1][1].selectedElements[0], group);
+  assert.equal(calls[2][1], 'Auto: Grouped Elements');
+  assert.deepEqual(calls[2][2].transaction, { type: 'markup' });
+});
+
 test('ungroupSelectedElements restores child positions, removes the wrapper, and records one mutation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(

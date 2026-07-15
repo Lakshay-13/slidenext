@@ -5543,6 +5543,52 @@
         : null;
       const slideMetrics = getSlideMetrics(slide);
       const parentBounds = getRectOnSlide(parent.getBoundingClientRect(), slideMetrics);
+      const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
+        ? SlideNextStudioEditorGroup
+        : null;
+      const applyStudioGroupMutation = groupApi
+        && typeof groupApi.applyStudioGroupMutation === 'function'
+        ? groupApi.applyStudioGroupMutation
+        : null;
+      const getGroupElementId = (element) => {
+        if (typeof assignEditorElementId === 'function') {
+          return assignEditorElementId(element);
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
+      const selectedSet = new Set(groupActionState.selection);
+      const orderedSelection = getNormalizedSlideLayerOrder(slide)
+        .filter((element) => selectedSet.has(element));
+
+      if (applyStudioGroupMutation) {
+        const mutation = applyStudioGroupMutation({
+          documentRef: doc,
+          parent,
+          groupPlan,
+          parentBounds,
+          orderedSelection,
+          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+          getElementId: getGroupElementId,
+          assignElementId: typeof assignEditorElementId === 'function'
+            ? assignEditorElementId
+            : null,
+          prepareGroup: typeof makeElementsHoverable === 'function'
+            ? makeElementsHoverable
+            : null
+        });
+        if (!mutation.didApply) return false;
+        commitEditorSelectionState({
+          selectedElements: [mutation.group]
+        });
+        finalizeEditorDeckMutation('Auto: Grouped Elements', {
+          syncSelectionOverlay: true,
+          refreshThumbnails: false,
+          debounceHistory: true,
+          transaction: mutation.transaction
+        });
+        return true;
+      }
+
       const group = doc.createElement('div');
       group.className = 'editor-group editor-hoverable';
       group.setAttribute('data-editor-group', 'true');
@@ -5556,9 +5602,6 @@
       assignEditorElementId(group);
 
       const itemByElement = new Map(groupPlan.nextItems.map((item) => [item.element, item]));
-      const selectedSet = new Set(groupActionState.selection);
-      const orderedSelection = getNormalizedSlideLayerOrder(slide)
-        .filter((element) => selectedSet.has(element));
       const firstElement = orderedSelection[0];
       if (firstElement && firstElement.parentElement === parent) {
         parent.insertBefore(group, firstElement);
