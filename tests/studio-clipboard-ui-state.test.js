@@ -425,6 +425,66 @@ test('insertClipboardPayload captures each insertion parent once through the sha
   });
 });
 
+test('insertClipboardPayload delegates insertion application to the shared clipboard module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const insertClipboardPayloadSource = extractFunctionSource(
+    fileContent,
+    'function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {',
+    '\n\n    function buildClipboardSelectionMutationPlan'
+  );
+  const doc = { id: 'iframe-doc' };
+  const slide = { contains() { return true; } };
+  const inserted = [{ id: 'clone-1' }];
+  let capturedTransaction = null;
+  const calls = [];
+  const context = {
+    DUPLICATE_OFFSET_PX: 24,
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardInsertionPlan() {
+        return [{
+          clone: { id: 'plan-clone', style: {} },
+          insertionTarget: { mode: 'append-to-slide' },
+          absolutePlacement: null
+        }];
+      },
+      applyStudioClipboardInsertion(plans, options) {
+        calls.push(['applyStudioClipboardInsertion', plans, options]);
+        return { inserted, transaction: { type: 'markup' } };
+      }
+    },
+    getActiveSlide(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return slide;
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getRectOnSlide(rect) {
+      return rect;
+    },
+    getSlideMetrics() {
+      return { logicalWidth: 500, logicalHeight: 400 };
+    },
+    makeElementsHoverable() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(insertClipboardPayloadSource, context);
+
+  const result = context.insertClipboardPayload([{ id: 'source-1' }], 1, {
+    onTransaction(transaction) {
+      capturedTransaction = transaction;
+    }
+  });
+
+  assert.deepEqual(result, inserted);
+  assert.equal(calls[0][0], 'applyStudioClipboardInsertion');
+  assert.equal(calls[0][1].length, 1);
+  assert.equal(calls[0][2].slide, slide);
+  assert.equal(typeof calls[0][2].getElementId, 'function');
+  assert.deepEqual(capturedTransaction, { type: 'markup' });
+});
+
 test('updateClipboardActionState enables paste on a live slide and enables copy only when clipboard payloads can be built', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);

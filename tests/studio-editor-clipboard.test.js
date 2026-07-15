@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const clipboardState = require('../shared/studio-editor-clipboard.js');
+const transactionState = require('../shared/studio-editor-transaction.js');
 
 function createClassList() {
   const values = new Set();
@@ -550,4 +551,56 @@ test('buildStudioClipboardAbsolutePlacement offsets and clamps absolute insertio
     nextLeft: 1760,
     nextTop: 1000
   });
+});
+
+test('applyStudioClipboardInsertion applies insertion modes and captures parent markup once', () => {
+  const slide = {
+    dataset: { editorId: 'slide-1' },
+    innerHTML: '<div data-editor-id="source"></div>',
+    appendChild(element) {
+      this.innerHTML += `<div>${element.id}</div>`;
+    }
+  };
+  const afterSourceAnchor = {
+    parentElement: slide,
+    insertAdjacentElement(position, element) {
+      assert.equal(position, 'afterend');
+      slide.appendChild(element);
+    }
+  };
+  const absoluteClone = { id: 'absolute', style: {} };
+  const afterSourceClone = { id: 'after-source', style: {} };
+  const appendedClone = { id: 'appended', style: {} };
+  const result = clipboardState.applyStudioClipboardInsertion([
+    {
+      clone: absoluteClone,
+      insertionTarget: { mode: 'absolute', parent: slide },
+      absolutePlacement: { nextLeft: 10, nextTop: 20 }
+    },
+    {
+      clone: afterSourceClone,
+      insertionTarget: { mode: 'after-source', anchor: afterSourceAnchor },
+      absolutePlacement: null
+    },
+    {
+      clone: appendedClone,
+      insertionTarget: { mode: 'append-to-slide' },
+      absolutePlacement: null
+    }
+  ], {
+    slide,
+    createMarkupTransactionCapture: transactionState.createStudioMarkupTransactionCapture,
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.deepEqual(result.inserted, [absoluteClone, afterSourceClone, appendedClone]);
+  assert.deepEqual(absoluteClone.style, {
+    position: 'absolute',
+    margin: '0',
+    left: '10px',
+    top: '20px'
+  });
+  assert.equal(result.transaction.operations[0].elementId, 'slide-1');
+  assert.equal(result.transaction.operations[0].before, '<div data-editor-id="source"></div>');
+  assert.equal(result.transaction.operations[0].after, '<div data-editor-id="source"></div><div>absolute</div><div>after-source</div><div>appended</div>');
 });

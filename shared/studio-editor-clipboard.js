@@ -321,6 +321,73 @@
     };
   }
 
+  function applyStudioClipboardInsertion(insertionPlans = [], options = {}) {
+    const plans = Array.isArray(insertionPlans) ? insertionPlans : [];
+    const slide = options.slide || null;
+    const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
+      ? options.createMarkupTransactionCapture
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    if (!slide || plans.length === 0) {
+      return {
+        inserted: [],
+        transaction: null
+      };
+    }
+
+    const getInsertionParent = (insertionTarget = {}) => {
+      if (insertionTarget.mode === 'absolute') {
+        return insertionTarget.parent || slide;
+      }
+      if (insertionTarget.mode === 'after-source' && insertionTarget.anchor) {
+        return insertionTarget.anchor.parentElement || slide;
+      }
+      return slide;
+    };
+    const markupCaptureTargets = [];
+    if (createMarkupTransactionCapture) {
+      const parentSet = new Set();
+      plans.forEach(({ insertionTarget }) => {
+        const parent = getInsertionParent(insertionTarget);
+        if (!parent || parentSet.has(parent)) return;
+        parentSet.add(parent);
+        markupCaptureTargets.push({
+          element: parent,
+          elementId: getElementId(parent)
+        });
+      });
+    }
+    const markupCapture = createMarkupTransactionCapture
+      ? createMarkupTransactionCapture(markupCaptureTargets, { getElementId })
+      : null;
+    const inserted = [];
+
+    plans.forEach(({ clone, insertionTarget, absolutePlacement }) => {
+      if (insertionTarget.mode === 'absolute' && absolutePlacement) {
+        const parent = insertionTarget.parent || slide;
+        clone.style.position = 'absolute';
+        clone.style.margin = '0';
+        clone.style.left = `${absolutePlacement.nextLeft}px`;
+        clone.style.top = `${absolutePlacement.nextTop}px`;
+        parent.appendChild(clone);
+      } else if (insertionTarget.mode === 'after-source' && insertionTarget.anchor) {
+        insertionTarget.anchor.insertAdjacentElement('afterend', clone);
+      } else {
+        slide.appendChild(clone);
+      }
+      inserted.push(clone);
+    });
+
+    return {
+      inserted,
+      transaction: markupCapture
+        ? markupCapture.createTransaction()
+        : null
+    };
+  }
+
   return {
     hasStudioClipboardItems,
     createStudioClipboardState,
@@ -336,6 +403,7 @@
     buildStudioClipboardPayloadItems,
     buildStudioClipboardInsertionPlan,
     resolveStudioClipboardInsertionTarget,
-    buildStudioClipboardAbsolutePlacement
+    buildStudioClipboardAbsolutePlacement,
+    applyStudioClipboardInsertion
   };
 });

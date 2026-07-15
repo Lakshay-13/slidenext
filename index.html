@@ -5146,6 +5146,13 @@
       });
       if (insertionPlans.length !== items.length) return [];
 
+      const applyStudioClipboardInsertion = (
+        typeof SlideNextStudioEditorClipboard !== 'undefined'
+        && SlideNextStudioEditorClipboard
+        && typeof SlideNextStudioEditorClipboard.applyStudioClipboardInsertion === 'function'
+      )
+        ? SlideNextStudioEditorClipboard.applyStudioClipboardInsertion
+        : null;
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -5153,6 +5160,23 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
+      const getClipboardElementId = (element) => {
+        if (typeof assignEditorElementId === 'function') {
+          return assignEditorElementId(element);
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
+      if (applyStudioClipboardInsertion) {
+        const mutation = applyStudioClipboardInsertion(insertionPlans, {
+          slide,
+          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+          getElementId: getClipboardElementId
+        });
+        if (typeof options.onTransaction === 'function') {
+          options.onTransaction(mutation.transaction);
+        }
+        return mutation.inserted;
+      }
       const markupCaptureTargets = [];
       if (createStudioMarkupTransactionCapture) {
         const parentSet = new Set();
@@ -5164,9 +5188,7 @@
               : slide;
           if (!parent || parentSet.has(parent)) return;
           parentSet.add(parent);
-          if (typeof assignEditorElementId === 'function') {
-            assignEditorElementId(parent);
-          }
+          getClipboardElementId(parent);
           markupCaptureTargets.push({ element: parent });
         });
       }
