@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const exportActions = require('../shared/studio-editor-export-actions.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -14,13 +15,19 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
-test('exportPdf delegates a ready deck to the shared browser print exporter', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+function loadExportPdfAction(fileContent, context) {
   const exportPdfSource = extractFunctionSource(
     fileContent,
     'function exportPdf() {',
     '\n\n    function launchPreview() {'
   );
+  context.SlideNextStudioEditorExportActions = exportActions;
+  vm.createContext(context);
+  vm.runInContext(exportPdfSource, context);
+}
+
+test('exportPdf delegates a ready deck to the shared browser print exporter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
   const statusCalls = [];
   const exportButton = { disabled: false };
@@ -49,8 +56,7 @@ test('exportPdf delegates a ready deck to the shared browser print exporter', ()
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(exportPdfSource, context);
+  loadExportPdfAction(fileContent, context);
 
   assert.equal(context.exportPdf(), true);
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
@@ -65,11 +71,6 @@ test('exportPdf delegates a ready deck to the shared browser print exporter', ()
 
 test('exportPdf forwards canonical layout dimensions when the shared resolver is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const exportPdfSource = extractFunctionSource(
-    fileContent,
-    'function exportPdf() {',
-    '\n\n    function launchPreview() {'
-  );
   const calls = [];
   let canonicalDeckBuilds = 0;
   const context = {
@@ -95,8 +96,7 @@ test('exportPdf forwards canonical layout dimensions when the shared resolver is
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(exportPdfSource, context);
+  loadExportPdfAction(fileContent, context);
 
   assert.equal(context.exportPdf(), true);
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
@@ -114,11 +114,6 @@ test('exportPdf forwards canonical layout dimensions when the shared resolver is
 
 test('exportPdf skips preview generation when deck actions are unavailable or preview html is empty', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const exportPdfSource = extractFunctionSource(
-    fileContent,
-    'function exportPdf() {',
-    '\n\n    function launchPreview() {'
-  );
   let buildCalls = 0;
   const context = {
     SlideNextStudioPdfExport: {
@@ -135,8 +130,7 @@ test('exportPdf skips preview generation when deck actions are unavailable or pr
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(exportPdfSource, context);
+  loadExportPdfAction(fileContent, context);
 
   assert.equal(context.exportPdf(), false);
   assert.equal(buildCalls, 0);
@@ -148,11 +142,6 @@ test('exportPdf skips preview generation when deck actions are unavailable or pr
 
 test('exportPdf reports popup failures and restores the export button', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const exportPdfSource = extractFunctionSource(
-    fileContent,
-    'function exportPdf() {',
-    '\n\n    function launchPreview() {'
-  );
   const statusCalls = [];
   const exportButton = { disabled: false };
   const context = {
@@ -177,8 +166,7 @@ test('exportPdf reports popup failures and restores the export button', () => {
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(exportPdfSource, context);
+  loadExportPdfAction(fileContent, context);
 
   assert.equal(context.exportPdf(), false);
   assert.deepEqual(statusCalls, ['exporting-pdf', 'pdf-export-failed']);

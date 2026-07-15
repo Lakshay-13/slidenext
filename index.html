@@ -1202,6 +1202,7 @@
   <script src="/shared/studio-preview.js"></script>
   <script src="/shared/studio-pdf-export.js"></script>
   <script src="/shared/studio-pptx-export.js"></script>
+  <script src="/shared/studio-editor-export-actions.js"></script>
   <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/studio-version-actions.js"></script>
   <script src="/shared/studio-version-view.js"></script>
@@ -10586,63 +10587,28 @@
     }
 
     function exportPdf() {
-      const actionState = resolveCurrentStudioDeckReadyActionState();
-      if (!actionState.canUseDeckActions) return false;
-      const pdfExport = typeof SlideNextStudioPdfExport !== 'undefined'
-        ? SlideNextStudioPdfExport
+      const exportActions = typeof SlideNextStudioEditorExportActions !== 'undefined'
+        ? SlideNextStudioEditorExportActions
         : null;
-      const setPdfExportStatus = (state) => {
-        if (typeof setStudioAutoSaveStatus === 'function') {
-          setStudioAutoSaveStatus(state);
-        }
-      };
-      const failPdfExport = () => {
-        setPdfExportStatus('pdf-export-failed');
-        return false;
-      };
-      if (!pdfExport || typeof pdfExport.openStudioPdfPrintWindow !== 'function') {
-        return failPdfExport();
-      }
-      const html = buildEditorPreviewHtml();
-      if (!html) return failPdfExport();
-
-      let canonicalDeck = null;
-      if (typeof buildEditorCanonicalDeck === 'function') {
-        try {
-          canonicalDeck = buildEditorCanonicalDeck();
-        } catch (error) {
-          canonicalDeck = null;
-        }
-      }
-
-      const exportButton = typeof document !== 'undefined'
-        ? document.getElementById('exportPdfBtn')
+      const createStudioPdfExportAction = exportActions
+        && typeof exportActions.createStudioPdfExportAction === 'function'
+        ? exportActions.createStudioPdfExportAction
         : null;
-      if (exportButton) exportButton.disabled = true;
-      setPdfExportStatus('exporting-pdf');
-      try {
-        let pageDimensions = {};
-        if (
-          typeof buildEditorCanonicalDeck === 'function'
-          && typeof pdfExport.resolveStudioPdfPageDimensions === 'function'
-        ) {
-          pageDimensions = pdfExport.resolveStudioPdfPageDimensions(canonicalDeck);
-        }
-        const didOpenPrintFlow = pdfExport.openStudioPdfPrintWindow({
-          html,
-          ...pageDimensions,
-          onPrint: () => setPdfExportStatus('pdf-exported'),
-          onError: () => setPdfExportStatus('pdf-export-failed')
-        });
-        if (!didOpenPrintFlow) return failPdfExport();
-        return true;
-      } catch (error) {
-        return failPdfExport();
-      } finally {
-        if (exportButton) {
-          exportButton.disabled = !resolveCurrentStudioDeckReadyActionState().canUseDeckActions;
-        }
-      }
+      if (!createStudioPdfExportAction) return false;
+      return createStudioPdfExportAction({
+        resolveReadyState: resolveCurrentStudioDeckReadyActionState,
+        buildPreviewHtml: buildEditorPreviewHtml,
+        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck
+          : null,
+        pdfExport: typeof SlideNextStudioPdfExport !== 'undefined'
+          ? SlideNextStudioPdfExport
+          : null,
+        documentRef: typeof document !== 'undefined' ? document : null,
+        setStatus: typeof setStudioAutoSaveStatus === 'function'
+          ? setStudioAutoSaveStatus
+          : null
+      })();
     }
 
     function launchPreview() {
