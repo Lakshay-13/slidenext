@@ -93,6 +93,50 @@ test('buildStudioTransformStyleTransaction returns null without a transaction-re
   }), null);
 });
 
+test('attachStudioTransformPointerHandlers binds the shared pointer lifecycle', () => {
+  const documentListeners = new Map();
+  const bodyListeners = new Map();
+  const windowListeners = new Map();
+  const doc = {
+    addEventListener(type, handler, capture) {
+      documentListeners.set(type, { handler, capture });
+    },
+    body: {
+      addEventListener(type, handler, capture) {
+        bodyListeners.set(type, { handler, capture });
+      }
+    },
+    defaultView: {
+      addEventListener(type, handler, capture) {
+        windowListeners.set(type, { handler, capture });
+      }
+    }
+  };
+  const handlers = {
+    handlePointerDown() {},
+    handlePointerMove() {},
+    handlePointerUp() {},
+    handlePointerCancel() {},
+    handleWindowBlur() {}
+  };
+
+  assert.equal(transformState.attachStudioTransformPointerHandlers(doc, handlers), true);
+  assert.equal(documentListeners.get('dragstart').capture, true);
+  assert.equal(bodyListeners.get('pointerdown').handler, handlers.handlePointerDown);
+  assert.equal(bodyListeners.get('pointermove').handler, handlers.handlePointerMove);
+  assert.equal(bodyListeners.get('pointerup').handler, handlers.handlePointerUp);
+  assert.equal(bodyListeners.get('pointercancel').handler, handlers.handlePointerCancel);
+  assert.deepEqual(windowListeners.get('blur'), {
+    handler: handlers.handleWindowBlur,
+    capture: true
+  });
+});
+
+test('attachStudioTransformPointerHandlers tolerates missing editor frame targets', () => {
+  assert.equal(transformState.attachStudioTransformPointerHandlers(null, {}), false);
+  assert.equal(transformState.attachStudioTransformPointerHandlers({ body: {} }, {}), false);
+});
+
 test('canStudioTransformSelection allows connected unlocked freeform selections', () => {
   assert.equal(transformState.canStudioTransformSelection([
     { id: 1, isConnected: true },

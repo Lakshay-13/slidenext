@@ -777,6 +777,7 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
     },
     SlideNextStudioEditorTransform: {
       buildStudioTransformStyleTransaction: transformState.buildStudioTransformStyleTransaction,
+      attachStudioTransformPointerHandlers: transformState.attachStudioTransformPointerHandlers,
       createStudioTransformPointerHandlers(options) {
         delegatedOptions = options;
         return transformHandlers;

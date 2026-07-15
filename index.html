@@ -5350,13 +5350,13 @@
 
     // Element dragging + resize on an open canvas
     function setupIframeDragging(doc) {
+      const transformApi = (
+        typeof SlideNextStudioEditorTransform !== 'undefined'
+        && SlideNextStudioEditorTransform
+      )
+        ? SlideNextStudioEditorTransform
+        : null;
       const buildTransformTransaction = (finalizeResult) => {
-        const transformApi = (
-          typeof SlideNextStudioEditorTransform !== 'undefined'
-          && SlideNextStudioEditorTransform
-        )
-          ? SlideNextStudioEditorTransform
-          : null;
         if (!transformApi || typeof transformApi.buildStudioTransformStyleTransaction !== 'function') {
           return null;
         }
@@ -5424,14 +5424,21 @@
           }
         });
 
-        doc.addEventListener('dragstart', (e) => {
-          e.preventDefault();
-        }, true);
-        doc.body.addEventListener('pointerdown', transformHandlers.handlePointerDown, true);
-        doc.body.addEventListener('pointermove', transformHandlers.handlePointerMove, true);
-        doc.body.addEventListener('pointerup', transformHandlers.handlePointerUp, true);
-        doc.body.addEventListener('pointercancel', transformHandlers.handlePointerCancel, true);
-        doc.defaultView?.addEventListener('blur', transformHandlers.handleWindowBlur, true);
+        const attachStudioTransformPointerHandlers = typeof transformApi.attachStudioTransformPointerHandlers === 'function'
+          ? transformApi.attachStudioTransformPointerHandlers
+          : null;
+        if (attachStudioTransformPointerHandlers) {
+          attachStudioTransformPointerHandlers(doc, transformHandlers);
+        } else {
+          doc.addEventListener('dragstart', (e) => {
+            e.preventDefault();
+          }, true);
+          doc.body.addEventListener('pointerdown', transformHandlers.handlePointerDown, true);
+          doc.body.addEventListener('pointermove', transformHandlers.handlePointerMove, true);
+          doc.body.addEventListener('pointerup', transformHandlers.handlePointerUp, true);
+          doc.body.addEventListener('pointercancel', transformHandlers.handlePointerCancel, true);
+          doc.defaultView?.addEventListener('blur', transformHandlers.handleWindowBlur, true);
+        }
 
         const createStudioMarqueePointerHandlers = (
           typeof SlideNextStudioEditorEvents !== 'undefined'
