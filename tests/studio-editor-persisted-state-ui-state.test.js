@@ -94,6 +94,28 @@ test('getCurrentEditorPersistedDeckState returns an empty state when shared pers
   );
 });
 
+test('getCurrentEditorPersistedDeckState.resolveWithContent returns null without a shared content resolver', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    lastPersistedDeckHtml: '<html>persisted</html>',
+    lastPersistedCanonicalDeck: null,
+    persistedDeckPlaybackState: null,
+    SlideNextStudioEditorPersistence: {}
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+
+  assert.equal(
+    context.getCurrentEditorPersistedDeckState.resolveWithContent({
+      cleanHtml: '<html>input</html>',
+      canonicalDeck: null,
+      playbackState: null
+    }),
+    null
+  );
+});
+
 test('getCurrentEditorPersistedDeckState reuses the shared persisted snapshot helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 

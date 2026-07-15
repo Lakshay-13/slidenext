@@ -4083,12 +4083,8 @@
         && typeof SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent === 'function'
       )
         ? SlideNextStudioEditorPersistence.resolveStudioPersistableDeckStateWithContent
-        : (nextPersistedDeckState = {}) => {
-            const nextCleanHtml = nextPersistedDeckState && typeof nextPersistedDeckState.cleanHtml === 'string'
-              ? nextPersistedDeckState.cleanHtml
-              : '';
-            return nextCleanHtml ? nextPersistedDeckState : null;
-          };
+        : null;
+      if (!resolveStudioPersistableDeckStateWithContent) return null;
       return resolveStudioPersistableDeckStateWithContent(persistedDeckState);
     };
 
