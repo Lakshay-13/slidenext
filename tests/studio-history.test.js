@@ -471,6 +471,7 @@ test('createStudioHistorySaveHandler merges transactions and schedules history c
   };
   const scheduledCalls = [];
   let pendingTransaction = { id: 'pending' };
+  let pendingCanonicalDeck = null;
   let timer = 'old-timer';
   let captureCalls = 0;
   const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
@@ -480,6 +481,9 @@ test('createStudioHistorySaveHandler merges transactions and schedules history c
     },
     setPendingTransaction(nextTransaction) {
       pendingTransaction = nextTransaction;
+    },
+    setPendingCanonicalDeck(nextCanonicalDeck) {
+      pendingCanonicalDeck = nextCanonicalDeck;
     },
     getTimer() {
       return timer;
@@ -497,7 +501,8 @@ test('createStudioHistorySaveHandler merges transactions and schedules history c
     }
   });
 
-  const result = saveHistoryState(false, { id: 'next' });
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const result = saveHistoryState(false, { id: 'next' }, canonicalDeck);
 
   assert.deepEqual(result, { nextTimer: 'new-timer', didCapture: true });
   assert.equal(timer, 'new-timer');
@@ -507,6 +512,7 @@ test('createStudioHistorySaveHandler merges transactions and schedules history c
     second: { id: 'next', normalized: true },
     merged: true
   });
+  assert.equal(pendingCanonicalDeck, canonicalDeck);
   assert.deepEqual(transactionCalls, [
     ['normalize', { id: 'next' }],
     ['merge', { id: 'pending' }, { id: 'next', normalized: true }]
@@ -517,6 +523,7 @@ test('createStudioHistorySaveHandler merges transactions and schedules history c
 
 test('createStudioHistorySaveHandler clears pending transactions when no transaction is provided', () => {
   let pendingTransaction = { id: 'pending' };
+  let pendingCanonicalDeck = { kind: 'slidenext.deck', slides: [] };
   let scheduledCapture = false;
   const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
     getPendingTransaction() {
@@ -524,6 +531,9 @@ test('createStudioHistorySaveHandler clears pending transactions when no transac
     },
     setPendingTransaction(nextTransaction) {
       pendingTransaction = nextTransaction;
+    },
+    setPendingCanonicalDeck(nextCanonicalDeck) {
+      pendingCanonicalDeck = nextCanonicalDeck;
     },
     getTimer() {
       return null;
@@ -539,6 +549,7 @@ test('createStudioHistorySaveHandler clears pending transactions when no transac
   saveHistoryState();
 
   assert.equal(pendingTransaction, null);
+  assert.equal(pendingCanonicalDeck, null);
   assert.equal(scheduledCapture, true);
 });
 

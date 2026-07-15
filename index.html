@@ -8309,9 +8309,6 @@
           liveSessionToken
         );
       }
-      if (typeof pendingEditorCanonicalDeck !== 'undefined') {
-        pendingEditorCanonicalDeck = canonicalDeck;
-      }
       const createStudioHistorySaveHandler = SlideNextStudioHistory
         && typeof SlideNextStudioHistory.createStudioHistorySaveHandler === 'function'
         ? SlideNextStudioHistory.createStudioHistorySaveHandler
@@ -8328,6 +8325,9 @@
           setPendingTransaction(nextTransaction) {
             pendingEditorTransaction = nextTransaction;
           },
+          setPendingCanonicalDeck(nextCanonicalDeck) {
+            pendingEditorCanonicalDeck = nextCanonicalDeck;
+          },
           getTimer: () => undoDebounceTimer,
           setTimer(nextTimer) {
             undoDebounceTimer = nextTimer;
@@ -8337,9 +8337,12 @@
             clearScheduledCapture: clearTimeout,
             scheduleCapture: (callback, delayMs) => setTimeout(callback, delayMs)
           }
-        })(debounce, transaction);
+        })(debounce, transaction, canonicalDeck);
       }
 
+      if (typeof pendingEditorCanonicalDeck !== 'undefined') {
+        pendingEditorCanonicalDeck = canonicalDeck;
+      }
       const transactionApi = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction

@@ -1017,7 +1017,8 @@ test('saveHistoryState delegates transaction scheduling to the shared history sa
     SlideNextStudioHistory: {
       createStudioHistorySaveHandler(options) {
         capturedHandlerOptions = options;
-        return (debounce, transaction) => {
+        return (debounce, transaction, canonicalDeck) => {
+          options.setPendingCanonicalDeck(canonicalDeck);
           delegatedCalls.push([debounce, transaction]);
           return { didCapture: true };
         };
@@ -1028,21 +1029,60 @@ test('saveHistoryState delegates transaction scheduling to the shared history sa
     undoDebounceTimer: null,
     clearTimeout() {},
     setTimeout() {},
-    captureState() {}
+    captureState() {},
+    pendingEditorCanonicalDeck: null
   };
 
   vm.createContext(context);
   vm.runInContext(saveHistoryStateSource, context);
 
   const transaction = { kind: 'slidenext.editor.transaction' };
-  assert.deepEqual(context.saveHistoryState(true, transaction), { didCapture: true });
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  assert.deepEqual(context.saveHistoryState(true, transaction, canonicalDeck), { didCapture: true });
   assert.deepEqual(delegatedCalls, [[true, transaction]]);
+  assert.equal(context.pendingEditorCanonicalDeck, canonicalDeck);
   assert.equal(capturedHandlerOptions.transactionApi, context.SlideNextStudioEditorTransaction);
   assert.equal(typeof capturedHandlerOptions.getPendingTransaction, 'function');
   assert.equal(typeof capturedHandlerOptions.setPendingTransaction, 'function');
+  assert.equal(typeof capturedHandlerOptions.setPendingCanonicalDeck, 'function');
   assert.equal(typeof capturedHandlerOptions.getTimer, 'function');
   assert.equal(typeof capturedHandlerOptions.setTimer, 'function');
   assert.equal(capturedHandlerOptions.captureState, context.captureState);
+});
+
+test('saveHistoryState preserves canonical sidecars in its legacy fallback', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const saveHistoryStateSource = extractFunctionSource(
+    fileContent,
+    'function saveHistoryState(debounce = false, transaction = null) {',
+    '\n\n    function buildHistoryFrameHtml('
+  );
+
+  const context = {
+    SlideNextStudioHistory: {
+      scheduleStudioHistoryCapture(timer, debounce, captureState) {
+        captureState();
+        return { nextTimer: timer };
+      }
+    },
+    SlideNextStudioEditorTransaction: {},
+    pendingEditorCanonicalDeck: null,
+    pendingEditorTransaction: null,
+    undoDebounceTimer: null,
+    captureState() {},
+    getIframeDoc() {
+      return null;
+    },
+    setEditorLiveCanonicalDeck() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(saveHistoryStateSource, context);
+
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  context.saveHistoryState(false, { id: 'legacy-transaction' }, canonicalDeck);
+
+  assert.equal(context.pendingEditorCanonicalDeck, canonicalDeck);
 });
 
 test('captureState skips history capture when no history entry can be created', () => {

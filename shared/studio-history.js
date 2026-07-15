@@ -566,6 +566,9 @@
     const setPendingTransaction = typeof options.setPendingTransaction === 'function'
       ? options.setPendingTransaction
       : () => {};
+    const setPendingCanonicalDeck = typeof options.setPendingCanonicalDeck === 'function'
+      ? options.setPendingCanonicalDeck
+      : () => {};
     const getTimer = typeof options.getTimer === 'function'
       ? options.getTimer
       : () => null;
@@ -582,7 +585,8 @@
       ? options.scheduleOptions
       : {};
 
-    return function saveHistoryState(debounce = false, transaction = null) {
+    return function saveHistoryState(debounce = false, transaction = null, canonicalDeck = null) {
+      setPendingCanonicalDeck(arguments.length > 2 ? canonicalDeck : null);
       const normalizedTransaction = transactionApi
         && typeof transactionApi.normalizeStudioEditorTransaction === 'function'
         ? transactionApi.normalizeStudioEditorTransaction(transaction)
