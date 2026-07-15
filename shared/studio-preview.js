@@ -248,6 +248,67 @@
     });
   }
 
+  function syncStudioFullscreenIcon(options = {}) {
+    const documentRef = resolvePreviewDocument(options);
+    const fullscreenIconEl = options.fullscreenIconEl || resolvePreviewDocumentElement(documentRef, 'fsIcon');
+    if (!fullscreenIconEl) return false;
+    fullscreenIconEl.textContent = documentRef && documentRef.fullscreenElement
+      ? 'fullscreen_exit'
+      : 'fullscreen';
+    return true;
+  }
+
+  function toggleStudioPresentationFullscreen(options = {}) {
+    const documentRef = resolvePreviewDocument(options);
+    const modalEl = options.modalEl || resolvePreviewDocumentElement(documentRef, 'presentationModal');
+    const fullscreenIconEl = options.fullscreenIconEl || resolvePreviewDocumentElement(documentRef, 'fsIcon');
+    if (!documentRef || !modalEl) return false;
+
+    const consoleRef = options.consoleRef || (root && root.console);
+    const reportRequestFailure = (error) => {
+      if (consoleRef && typeof consoleRef.error === 'function') {
+        consoleRef.error('Fullscreen request failed:', error);
+      }
+    };
+
+    if (!documentRef.fullscreenElement) {
+      if (typeof modalEl.requestFullscreen !== 'function') return false;
+      let requestResult;
+      try {
+        requestResult = modalEl.requestFullscreen();
+      } catch (error) {
+        reportRequestFailure(error);
+        return false;
+      }
+      if (requestResult && typeof requestResult.then === 'function') {
+        requestResult
+          .then(() => {
+            if (fullscreenIconEl) fullscreenIconEl.textContent = 'fullscreen_exit';
+          })
+          .catch(reportRequestFailure);
+      } else if (fullscreenIconEl) {
+        fullscreenIconEl.textContent = 'fullscreen_exit';
+      }
+      return true;
+    }
+
+    if (typeof documentRef.exitFullscreen !== 'function') return false;
+    let exitResult;
+    try {
+      exitResult = documentRef.exitFullscreen();
+    } catch (error) {
+      return false;
+    }
+    if (exitResult && typeof exitResult.then === 'function') {
+      exitResult.then(() => {
+        if (fullscreenIconEl) fullscreenIconEl.textContent = 'fullscreen';
+      });
+    } else if (fullscreenIconEl) {
+      fullscreenIconEl.textContent = 'fullscreen';
+    }
+    return true;
+  }
+
   function openSourceViewModal(options = {}) {
     const {
       modalEl,
@@ -395,6 +456,8 @@
     closePresentationModal,
     resetPresentationModal,
     resetStudioPresentationUiState,
+    syncStudioFullscreenIcon,
+    toggleStudioPresentationFullscreen,
     openSourceViewModal,
     openStudioSourceView,
     closeSourceViewModal,

@@ -2071,32 +2071,23 @@
     }
 
     function toggleIframeFullscreen() {
-      const modal = document.getElementById('presentationModal');
-      const fsIcon = document.getElementById('fsIcon');
-      
-      if (!document.fullscreenElement) {
-        modal.requestFullscreen().then(() => {
-          fsIcon.textContent = 'fullscreen_exit';
-        }).catch(err => {
-          console.error('Fullscreen request failed:', err);
-        });
-      } else {
-        document.exitFullscreen().then(() => {
-          fsIcon.textContent = 'fullscreen';
-        });
-      }
+      const previewApi = typeof SlideNextStudioPreview !== 'undefined'
+        ? SlideNextStudioPreview
+        : null;
+      if (!previewApi || typeof previewApi.toggleStudioPresentationFullscreen !== 'function') return false;
+      return previewApi.toggleStudioPresentationFullscreen({
+        document,
+        consoleRef: console
+      });
     }
 
     // Sync fullscreen button icon when native fullscreen changes (e.g. Esc press)
     document.addEventListener('fullscreenchange', () => {
-      const fsIcon = document.getElementById('fsIcon');
-      if (fsIcon) {
-        if (document.fullscreenElement) {
-          fsIcon.textContent = 'fullscreen_exit';
-        } else {
-          fsIcon.textContent = 'fullscreen';
-        }
-      }
+      const previewApi = typeof SlideNextStudioPreview !== 'undefined'
+        ? SlideNextStudioPreview
+        : null;
+      if (!previewApi || typeof previewApi.syncStudioFullscreenIcon !== 'function') return;
+      previewApi.syncStudioFullscreenIcon({ document });
     });
 
     // 3. Studio Presentation Workspace Mode

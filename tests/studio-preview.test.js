@@ -366,6 +366,68 @@ test('resetStudioPresentationUiState resolves preview chrome from the document a
   assert.equal(fullscreenIconEl.textContent, 'fullscreen');
 });
 
+test('syncStudioFullscreenIcon reflects the current fullscreen document state', () => {
+  const fullscreenIconEl = { textContent: '' };
+  const documentStub = {
+    fullscreenElement: { id: 'presentationModal' },
+    getElementById() {
+      return null;
+    }
+  };
+
+  assert.equal(preview.syncStudioFullscreenIcon({
+    document: documentStub,
+    fullscreenIconEl
+  }), true);
+  assert.equal(fullscreenIconEl.textContent, 'fullscreen_exit');
+
+  documentStub.fullscreenElement = null;
+  preview.syncStudioFullscreenIcon({ document: documentStub, fullscreenIconEl });
+  assert.equal(fullscreenIconEl.textContent, 'fullscreen');
+});
+
+test('toggleStudioPresentationFullscreen enters and exits fullscreen while updating the icon', async () => {
+  const fullscreenIconEl = { textContent: 'fullscreen' };
+  let requestFullscreenCalls = 0;
+  let exitFullscreenCalls = 0;
+  const modalEl = {
+    requestFullscreen() {
+      requestFullscreenCalls += 1;
+      return Promise.resolve();
+    }
+  };
+  const documentStub = {
+    fullscreenElement: null,
+    getElementById() {
+      return null;
+    },
+    exitFullscreen() {
+      exitFullscreenCalls += 1;
+      this.fullscreenElement = null;
+      return Promise.resolve();
+    }
+  };
+
+  assert.equal(preview.toggleStudioPresentationFullscreen({
+    document: documentStub,
+    modalEl,
+    fullscreenIconEl
+  }), true);
+  await Promise.resolve();
+  assert.equal(requestFullscreenCalls, 1);
+  assert.equal(fullscreenIconEl.textContent, 'fullscreen_exit');
+
+  documentStub.fullscreenElement = modalEl;
+  assert.equal(preview.toggleStudioPresentationFullscreen({
+    document: documentStub,
+    modalEl,
+    fullscreenIconEl
+  }), true);
+  await Promise.resolve();
+  assert.equal(exitFullscreenCalls, 1);
+  assert.equal(fullscreenIconEl.textContent, 'fullscreen');
+});
+
 test('openStudioSourceView skips lazy source generation when the source view button is disabled', () => {
   let resolveSourceHtmlCalls = 0;
   const documentStub = {
