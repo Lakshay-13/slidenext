@@ -9,7 +9,14 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const STUDIO_RESIZE_WIDTH_TAGS = new Set(['img', 'table', 'pre', 'code', 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
   const STUDIO_RESIZE_HEIGHT_TAGS = new Set(['img', 'table', 'pre', 'code', 'div']);
+  const DEFAULT_DRAG_START_THRESHOLD_PX = 4;
   const STUDIO_TRANSFORM_MOVED_VERSION_LABEL = 'Auto: Moved Element';
+
+  function normalizeStudioTransformDragStartThreshold(value) {
+    return Number.isFinite(value)
+      ? Math.max(0, value)
+      : DEFAULT_DRAG_START_THRESHOLD_PX;
+  }
 
   function getStudioSlideMetrics(slide) {
     if (!slide || typeof slide.getBoundingClientRect !== 'function') {
@@ -677,7 +684,7 @@
     }
 
     const moveDistanceScreen = Number.isFinite(options.moveDistanceScreen) ? options.moveDistanceScreen : 0;
-    const dragStartThresholdPx = Number.isFinite(options.dragStartThresholdPx) ? options.dragStartThresholdPx : 0;
+    const dragStartThresholdPx = normalizeStudioTransformDragStartThreshold(options.dragStartThresholdPx);
     let didMaterialize = false;
 
     if (!session.materialized && moveDistanceScreen >= dragStartThresholdPx) {
@@ -1195,7 +1202,7 @@
     const motionState = buildStudioTransformMotionState(session, options);
     const progressResult = progressStudioTransformSession(session, {
       moveDistanceScreen: motionState.moveDistanceScreen,
-      dragStartThresholdPx: Number.isFinite(options.dragStartThresholdPx) ? options.dragStartThresholdPx : 0
+      dragStartThresholdPx: normalizeStudioTransformDragStartThreshold(options.dragStartThresholdPx)
     });
 
     if (!progressResult.isActive) {
@@ -1332,9 +1339,7 @@
     const itemOptions = options.itemOptions && typeof options.itemOptions === 'object'
       ? options.itemOptions
       : {};
-    const dragStartThresholdPx = Number.isFinite(options.dragStartThresholdPx)
-      ? options.dragStartThresholdPx
-      : 0;
+    const dragStartThresholdPx = normalizeStudioTransformDragStartThreshold(options.dragStartThresholdPx);
     const minSizePx = Number.isFinite(options.minSizePx) ? options.minSizePx : 0;
     const dragOverflowMarginPx = Number.isFinite(options.dragOverflowMarginPx)
       ? options.dragOverflowMarginPx
@@ -1502,9 +1507,7 @@
     const itemOptions = options.itemOptions && typeof options.itemOptions === 'object'
       ? options.itemOptions
       : {};
-    const dragStartThresholdPx = Number.isFinite(options.dragStartThresholdPx)
-      ? options.dragStartThresholdPx
-      : 0;
+    const dragStartThresholdPx = normalizeStudioTransformDragStartThreshold(options.dragStartThresholdPx);
     const minSizePx = Number.isFinite(options.minSizePx) ? options.minSizePx : 0;
     const dragOverflowMarginPx = Number.isFinite(options.dragOverflowMarginPx)
       ? options.dragOverflowMarginPx
@@ -1616,6 +1619,8 @@
     canStudioTransformSelection,
     isStudioFreeformPositioned,
     buildStudioTransformSizingLockState,
+    DEFAULT_DRAG_START_THRESHOLD_PX,
+    normalizeStudioTransformDragStartThreshold,
     STUDIO_RESIZE_WIDTH_TAGS,
     STUDIO_RESIZE_HEIGHT_TAGS,
     shouldStudioResizeWidth,

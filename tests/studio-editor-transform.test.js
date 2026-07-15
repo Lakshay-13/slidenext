@@ -284,7 +284,7 @@ test('createStudioTransformFallbackPointerHandlers coordinates the legacy pointe
       pointer: { x: 30, y: 40 },
       clientX: 30,
       clientY: 40,
-      dragStartThresholdPx: 0,
+      dragStartThresholdPx: 4,
       minSizePx: 0,
       dragOverflowMarginPx: 0
     }],
@@ -1194,6 +1194,21 @@ test('progressStudioTransformSession applies drag threshold gating before contin
     didMove: false,
     session: null
   });
+});
+
+test('normalizeStudioTransformDragStartThreshold provides a safe shared default', () => {
+  assert.equal(transformState.DEFAULT_DRAG_START_THRESHOLD_PX, 4);
+  assert.equal(transformState.normalizeStudioTransformDragStartThreshold(), 4);
+  assert.equal(transformState.normalizeStudioTransformDragStartThreshold(0), 0);
+  assert.equal(transformState.normalizeStudioTransformDragStartThreshold(-2), 0);
+
+  const session = { materialized: false, items: [] };
+  assert.equal(transformState.progressStudioTransformSession(session, {
+    moveDistanceScreen: 3
+  }).isActive, false);
+  assert.equal(transformState.progressStudioTransformSession(session, {
+    moveDistanceScreen: 4
+  }).isActive, true);
 });
 
 test('cleanupStudioTransformSession releases pointer capture and clears drag state', () => {

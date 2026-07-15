@@ -1280,7 +1280,12 @@
     let deckActiveSlideSyncTimer = null;
     let preserveSelectionOnNextActiveSlideSync = false;
     let isGridSnapEnabled = false;
-    const DRAG_START_THRESHOLD_PX = 4;
+    const DRAG_START_THRESHOLD_PX = (
+      typeof SlideNextStudioEditorTransform !== 'undefined'
+      && Number.isFinite(SlideNextStudioEditorTransform.DEFAULT_DRAG_START_THRESHOLD_PX)
+    )
+      ? SlideNextStudioEditorTransform.DEFAULT_DRAG_START_THRESHOLD_PX
+      : 4;
     const SNAP_THRESHOLD_PX = 12;
     const GRID_SNAP_SIZE_PX = 20;
     const DUPLICATE_OFFSET_PX = 24;
