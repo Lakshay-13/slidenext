@@ -90,12 +90,9 @@
     const importElementToCanonicalNode = typeof options.importElementToCanonicalNode === 'function'
       ? options.importElementToCanonicalNode
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
-      : (buildCanonicalDeck ? buildCanonicalDeck() : null);
+      : buildStudioCanonicalUngroupBaseline(options);
     const groupTargets = Array.isArray(options.groupTargets) ? options.groupTargets : [];
     const restoredGroups = Array.isArray(options.restoredGroups) ? options.restoredGroups : [];
     const getElementId = typeof options.getElementId === 'function'
