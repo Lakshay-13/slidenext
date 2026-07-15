@@ -227,3 +227,42 @@ test('updateInsertionActionState enables deck-ready insert controls only when th
     insertCodeBtn: false
   });
 });
+
+test('updateInsertionActionState delegates toolbar rendering to the shared deck view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateInsertionActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateInsertionActionState(doc = getIframeDoc()) {',
+    '\n\n    function resolveCurrentStudioZoomActionState(doc = getIframeDoc()) {'
+  );
+  const doc = { activeSlide: {} };
+  const actionState = {
+    canAddSlide: true,
+    canInsertElements: true
+  };
+  const calls = [];
+  const context = {
+    resolveCurrentStudioInsertionActionState(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return actionState;
+    },
+    SlideNextStudioDeckView: {
+      syncStudioInsertionToolbarActionState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateInsertionActionStateSource, context);
+
+  assert.equal(context.updateInsertionActionState(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.deepEqual(calls[0].actionState, actionState);
+});

@@ -464,6 +464,46 @@ test('resolveStudioInsertionActionState derives slide insertion readiness from t
   );
 });
 
+test('syncStudioInsertionToolbarActionState resolves and renders insertion controls in one shared operation', () => {
+  const controls = {
+    addSlideBtn: { disabled: true },
+    toolbarInsertHeadingBtn: { disabled: true },
+    toolbarInsertParagraphBtn: { disabled: true },
+    toolbarInsertImageBtn: { disabled: true },
+    toolbarInsertShapeBtn: { disabled: true },
+    insertHeadingBtn: { disabled: true },
+    insertParagraphBtn: { disabled: true },
+    insertImageBtn: { disabled: true },
+    insertShapeBtn: { disabled: true },
+    insertTableBtn: { disabled: true },
+    insertCodeBtn: { disabled: true }
+  };
+
+  assert.equal(deckView.syncStudioInsertionToolbarActionState({
+    documentRef: {
+      getElementById(id) {
+        return controls[id] || null;
+      }
+    },
+    doc: {
+      activeSlide: {},
+      getElementById(id) {
+        return id === 'slidesContainer' ? {} : null;
+      }
+    },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getSlideContainer(doc) {
+      return doc && typeof doc.getElementById === 'function'
+        ? doc.getElementById('slidesContainer')
+        : null;
+    }
+  }), true);
+  assert.equal(controls.addSlideBtn.disabled, false);
+  assert.equal(controls.insertCodeBtn.disabled, false);
+});
+
 test('resolveStudioWallpaperActionState derives wallpaper readiness from the active slide resolver', () => {
   assert.deepEqual(
     deckView.resolveStudioWallpaperActionState(null),

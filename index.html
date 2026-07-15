@@ -9198,6 +9198,15 @@
 
     function updateInsertionActionState(doc = getIframeDoc()) {
       const actionState = resolveCurrentStudioInsertionActionState(doc);
+      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
+        : null;
+      if (deckView && typeof deckView.syncStudioInsertionToolbarActionState === 'function') {
+        return deckView.syncStudioInsertionToolbarActionState({
+          documentRef: document,
+          actionState
+        });
+      }
 
       const addSlideBtn = document.getElementById('addSlideBtn');
       if (addSlideBtn) {

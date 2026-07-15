@@ -206,6 +206,40 @@
     };
   }
 
+  function renderStudioInsertionToolbarActionState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    const addSlideButton = documentRef.getElementById('addSlideBtn');
+    if (addSlideButton) addSlideButton.disabled = !options.canAddSlide;
+    [
+      'toolbarInsertHeadingBtn',
+      'toolbarInsertParagraphBtn',
+      'toolbarInsertImageBtn',
+      'toolbarInsertShapeBtn',
+      'insertHeadingBtn',
+      'insertParagraphBtn',
+      'insertImageBtn',
+      'insertShapeBtn',
+      'insertTableBtn',
+      'insertCodeBtn'
+    ].forEach((id) => {
+      const control = documentRef.getElementById(id);
+      if (control) control.disabled = !options.canInsertElements;
+    });
+    return true;
+  }
+
+  function syncStudioInsertionToolbarActionState(options = {}) {
+    const actionState = options.actionState || resolveStudioInsertionActionState(options.doc, {
+      getActiveSlide: options.getActiveSlide,
+      getSlideContainer: options.getSlideContainer
+    });
+    return renderStudioInsertionToolbarActionState({
+      documentRef: options.documentRef,
+      ...actionState
+    });
+  }
+
   function resolveStudioWallpaperActionState(doc, options = {}) {
     const getActiveSlide = typeof options.getActiveSlide === 'function'
       ? options.getActiveSlide
@@ -991,6 +1025,8 @@
     renderStudioZoomToolbarActionState,
     syncStudioZoomToolbarActionState,
     resolveStudioInsertionActionState,
+    renderStudioInsertionToolbarActionState,
+    syncStudioInsertionToolbarActionState,
     resolveStudioWallpaperActionState,
     renderStudioWallpaperToolbarActionState,
     syncStudioWallpaperToolbarActionState,
