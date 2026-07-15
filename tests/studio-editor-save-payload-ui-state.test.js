@@ -1141,6 +1141,7 @@ test('resolveEditorPersistedDeckStateWithContent reuses the shared persisted-sta
     lastPersistedDeckHtml: '<html>persisted-baseline</html>',
     persistedDeckPlaybackState: null,
     SlideNextStudioEditorPersistence: {
+      ...editorPersistence,
       createStudioPersistedDeckStateContentResolver(options = {}) {
         delegatedArgs = options;
         return (persistedDeckState) => persistedDeckState;

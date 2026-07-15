@@ -72,6 +72,28 @@ test('getCurrentEditorPersistedDeckState returns the current persisted html, can
   );
 });
 
+test('getCurrentEditorPersistedDeckState returns an empty state when shared persistence is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    lastPersistedDeckHtml: '<html>persisted</html>',
+    lastPersistedCanonicalDeck: { id: 'persisted-deck' },
+    persistedDeckPlaybackState: { activeSlideIds: ['slide-2'] },
+    SlideNextStudioEditorPersistence: {}
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState())),
+    {
+      cleanHtml: '',
+      canonicalDeck: null,
+      playbackState: null
+    }
+  );
+});
+
 test('getCurrentEditorPersistedDeckState reuses the shared persisted snapshot helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
@@ -165,7 +187,7 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent prefers the shared p
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
 
   assert.deepEqual(
-    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState.resolveWithContent())),
+    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState))),
     persistedDeckState
   );
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [persistedDeckState]);
@@ -198,7 +220,7 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent reuses the shared pe
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
 
   assert.deepEqual(
-    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState.resolveWithContent())),
+    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState))),
     persistedDeckState
   );
   assert.equal(typeof delegatedArgs.getPersistedDeckHtml, 'function');
@@ -236,7 +258,7 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent reuses the shared pe
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
 
   assert.deepEqual(
-    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState.resolveWithContent())),
+    JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState.resolveWithContent(persistedDeckState))),
     persistedDeckState
   );
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{

@@ -224,6 +224,7 @@ test('updateDeckReadyToolbarActionState prefers the shared persisted-content res
       }
     },
     SlideNextStudioEditorPersistence: {
+      createStudioPersistedDeckStateReader: editorPersistence.createStudioPersistedDeckStateReader,
       resolveStudioPersistableDeckStateWithContent(persistedDeckState) {
         calls.push(persistedDeckState);
         return persistedDeckState;
