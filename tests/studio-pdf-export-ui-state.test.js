@@ -63,6 +63,52 @@ test('exportPdf delegates a ready deck to the shared browser print exporter', ()
   assert.equal(exportButton.disabled, false);
 });
 
+test('exportPdf forwards canonical layout dimensions when the shared resolver is available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const exportPdfSource = extractFunctionSource(
+    fileContent,
+    'function exportPdf() {',
+    '\n\n    function launchPreview() {'
+  );
+  const calls = [];
+  const context = {
+    SlideNextStudioPdfExport: {
+      resolveStudioPdfPageDimensions(deck) {
+        calls.push(['resolveStudioPdfPageDimensions', deck]);
+        return { pageWidth: '1280px', pageHeight: '720px' };
+      },
+      openStudioPdfPrintWindow(options) {
+        calls.push(['openStudioPdfPrintWindow', options]);
+        return true;
+      }
+    },
+    buildEditorCanonicalDeck() {
+      return { layout: { size: { width: 1280, height: 720, unit: 'px' } } };
+    },
+    buildEditorPreviewHtml() {
+      return '<html><body><div class="slide">A</div></body></html>';
+    },
+    resolveCurrentStudioDeckReadyActionState() {
+      return { canUseDeckActions: true };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(exportPdfSource, context);
+
+  assert.equal(context.exportPdf(), true);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
+    ['resolveStudioPdfPageDimensions', {
+      layout: { size: { width: 1280, height: 720, unit: 'px' } }
+    }],
+    ['openStudioPdfPrintWindow', {
+      html: '<html><body><div class="slide">A</div></body></html>',
+      pageWidth: '1280px',
+      pageHeight: '720px'
+    }]
+  ]);
+});
+
 test('exportPdf skips preview generation when deck actions are unavailable or preview html is empty', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const exportPdfSource = extractFunctionSource(

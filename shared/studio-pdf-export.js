@@ -18,6 +18,23 @@
     return value.trim();
   }
 
+  function resolveStudioPdfPageDimensions(canonicalDeck) {
+    const layout = canonicalDeck && typeof canonicalDeck === 'object'
+      ? canonicalDeck.layout
+      : null;
+    const size = layout && typeof layout === 'object' ? layout.size : null;
+    const width = size && Number.isFinite(size.width) ? size.width : null;
+    const height = size && Number.isFinite(size.height) ? size.height : null;
+    const unit = size && typeof size.unit === 'string' ? size.unit.trim() : '';
+    if (!(width > 0) || !(height > 0) || !/^(?:in|cm|mm|px|pt)$/.test(unit)) {
+      return {};
+    }
+    return {
+      pageWidth: `${width}${unit}`,
+      pageHeight: `${height}${unit}`
+    };
+  }
+
   function buildStudioPdfPrintStyles(options = {}) {
     const pageWidth = normalizeDimension(options.pageWidth, DEFAULT_PAGE_WIDTH);
     const pageHeight = normalizeDimension(options.pageHeight, DEFAULT_PAGE_HEIGHT);
@@ -242,6 +259,7 @@
     DEFAULT_PAGE_HEIGHT,
     DEFAULT_LOAD_TIMEOUT_MS,
     normalizeDimension,
+    resolveStudioPdfPageDimensions,
     buildStudioPdfPrintStyles,
     buildStudioPdfPrintHtml,
     waitForStudioPdfPrintResources,

@@ -10342,8 +10342,20 @@
       if (exportButton) exportButton.disabled = true;
       setPdfExportStatus('exporting-pdf');
       try {
+        let pageDimensions = {};
+        if (
+          typeof buildEditorCanonicalDeck === 'function'
+          && typeof pdfExport.resolveStudioPdfPageDimensions === 'function'
+        ) {
+          try {
+            pageDimensions = pdfExport.resolveStudioPdfPageDimensions(buildEditorCanonicalDeck());
+          } catch (error) {
+            pageDimensions = {};
+          }
+        }
         const didOpenPrintFlow = pdfExport.openStudioPdfPrintWindow({
           html,
+          ...pageDimensions,
           onPrint: () => setPdfExportStatus('pdf-exported'),
           onError: () => setPdfExportStatus('pdf-export-failed')
         });

@@ -34,6 +34,27 @@ test('buildStudioPdfPrintHtml preserves legacy html fallback and supports safe d
   assert.equal(pdfExport.normalizeDimension('javascript:alert(1)', '16in'), '16in');
 });
 
+test('resolveStudioPdfPageDimensions maps valid canonical layout sizes and rejects unsafe values', () => {
+  assert.deepEqual(
+    pdfExport.resolveStudioPdfPageDimensions({
+      layout: { size: { width: 1280, height: 720, unit: 'px' } }
+    }),
+    { pageWidth: '1280px', pageHeight: '720px' }
+  );
+  assert.deepEqual(
+    pdfExport.resolveStudioPdfPageDimensions({
+      layout: { size: { width: 0, height: 720, unit: 'px' } }
+    }),
+    {}
+  );
+  assert.deepEqual(
+    pdfExport.resolveStudioPdfPageDimensions({
+      layout: { size: { width: 1280, height: 720, unit: 'url(javascript:alert(1))' } }
+    }),
+    {}
+  );
+});
+
 test('waitForStudioPdfPrintResources waits for fonts and image load or error', async () => {
   let resolveFonts;
   const imageHandlers = {};
