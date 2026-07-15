@@ -87,6 +87,33 @@ test('syncStudioSolidWallpaperControl updates the picker through the provided co
   assert.equal(colorInput.value, '#112233');
 });
 
+test('renderStudioWallpaperPresets renders both preset collections into their containers', () => {
+  const elements = {
+    wallpaperSolidsList: { innerHTML: '' },
+    wallpaperGradientsList: { innerHTML: '' }
+  };
+
+  assert.equal(wallpaperView.renderStudioWallpaperPresets({
+    documentRef: {
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    },
+    presetData: {
+      solid: [{ name: 'Obsidian', value: '#050505' }],
+      gradient: [{ name: 'Deep Sea', value: 'linear-gradient(135deg, #0a1128 0%, #000000 100%)' }]
+    }
+  }), true);
+  assert.match(elements.wallpaperSolidsList.innerHTML, /applyPresetWallpaper\('#050505'\)/);
+  assert.match(elements.wallpaperSolidsList.innerHTML, /title="Obsidian"/);
+  assert.match(elements.wallpaperGradientsList.innerHTML, /Deep Sea/);
+  assert.match(elements.wallpaperGradientsList.innerHTML, /linear-gradient/);
+});
+
+test('renderStudioWallpaperPresets tolerates missing wallpaper containers', () => {
+  assert.equal(wallpaperView.renderStudioWallpaperPresets({ documentRef: null }), false);
+});
+
 test('syncStudioWallpaperTabChrome selects the matching wallpaper panel', () => {
   const classList = () => ({
     values: new Set(),

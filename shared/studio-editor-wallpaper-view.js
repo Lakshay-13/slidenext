@@ -103,6 +103,28 @@
     return true;
   }
 
+  function renderStudioWallpaperPresets(options = {}) {
+    const documentRef = options.documentRef;
+    const solidsContainer = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('wallpaperSolidsList')
+      : null;
+    const gradientsContainer = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('wallpaperGradientsList')
+      : null;
+    if (!solidsContainer || !gradientsContainer) return false;
+
+    const presetData = options.presetData || {};
+    const renderPresets = (presets) => (Array.isArray(presets) ? presets : []).map((preset) => `
+        <button onclick="applyPresetWallpaper('${preset.value}')" class="h-8 rounded border border-white/10 hover:border-[#7028d0]/50 hover:scale-105 active:scale-95 transition-all relative overflow-hidden group disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/10 disabled:hover:scale-100 disabled:active:scale-100" title="${preset.name}" style="background: ${preset.value};">
+          <span class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100"></span>
+        </button>
+      `).join('');
+
+    solidsContainer.innerHTML = renderPresets(presetData.solid);
+    gradientsContainer.innerHTML = renderPresets(presetData.gradient);
+    return true;
+  }
+
   function syncStudioWallpaperTabChrome(options = {}) {
     const documentRef = options.documentRef;
     const solidTab = documentRef && documentRef.getElementById('wpTabSolid');
@@ -254,6 +276,7 @@
     splitStudioGradientSegments,
     extractStudioGradientStopColor,
     resolveStudioActiveSlideSolidWallpaperColor,
+    renderStudioWallpaperPresets,
     resolveStudioActiveSlideGradientBackground,
     syncStudioSolidWallpaperControl,
     syncStudioWallpaperTabChrome,
