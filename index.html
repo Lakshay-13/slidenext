@@ -4256,7 +4256,11 @@
     }
 
     function getLiveSelectedElements(elements = selectedElements, doc = getIframeDoc()) {
-      return SlideNextStudioEditorLiveSelection.getStudioLiveSelection(
+      const liveSelectionApi = typeof SlideNextStudioEditorLiveSelection !== 'undefined'
+        ? SlideNextStudioEditorLiveSelection
+        : null;
+      if (!liveSelectionApi || typeof liveSelectionApi.getStudioLiveSelection !== 'function') return [];
+      return liveSelectionApi.getStudioLiveSelection(
         elements,
         getEditorSelectionOptions({ doc })
       );

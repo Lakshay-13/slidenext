@@ -371,6 +371,24 @@ test('getLiveSelectedElements keeps only connected selections on the active slid
   assert.deepEqual(context.getLiveSelectedElements([offSlideElement, activeElement], null), []);
 });
 
+test('getLiveSelectedElements fails closed when live-selection filtering is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getLiveSelectedElementsSource = extractFunctionSource(
+    fileContent,
+    'function getLiveSelectedElements(elements = selectedElements, doc = getIframeDoc()) {',
+    '\n\n    function getTransformSelectionState(elements = selectedElements) {'
+  );
+  const context = {
+    selectedElements: [{ id: 'stale' }],
+    SlideNextStudioEditorLiveSelection: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getLiveSelectedElementsSource, context);
+
+  assert.equal(context.getLiveSelectedElements([], { id: 'doc' }).length, 0);
+});
+
 test('getEditorHistoryOptions includes editor runtime attr names for sanitized history snapshots', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
