@@ -43,6 +43,15 @@ function loadFinalizeEditorDeckMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadRemovalMutationHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorRemovalMutationWithTransaction(selection, options = {}) {',
+    '\n\n    // Delete active selection'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('buildRemovalSelectionActionState reuses the current selection and live slide guard', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selection = [{ id: 'selected' }];
@@ -364,6 +373,7 @@ test('removeSelectedElement returns false and skips persistence when planned tar
   loadBuildRemovalSelectionActionState(fileContent, context);
   loadFinalizeRemovalActionResult(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadRemovalMutationHelper(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 
   assert.equal(context.removeSelectedElement(), false);
@@ -416,6 +426,7 @@ test('removeSelectedElement returns false and refreshes removal controls when de
   loadBuildRemovalSelectionActionState(fileContent, context);
   loadFinalizeRemovalActionResult(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadRemovalMutationHelper(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 
   assert.equal(context.removeSelectedElement(), false);
@@ -494,6 +505,7 @@ test('removeSelectedElement returns true after removing live targets and persist
   loadBuildRemovalSelectionActionState(fileContent, context);
   loadFinalizeRemovalActionResult(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadRemovalMutationHelper(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 
   assert.equal(context.removeSelectedElement(), true);
@@ -561,6 +573,7 @@ test('removeSelectedElement captures a scoped parent markup transaction', () => 
 
   vm.createContext(context);
   loadBuildRemovalSelectionActionState(fileContent, context);
+  loadRemovalMutationHelper(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 
   assert.equal(context.removeSelectedElement(), true);
@@ -624,6 +637,7 @@ test('removeSelectedElement delegates removal and markup capture to the shared r
 
   vm.createContext(context);
   loadBuildRemovalSelectionActionState(fileContent, context);
+  loadRemovalMutationHelper(fileContent, context);
   vm.runInContext(removeSelectedElementSource, context);
 
   assert.equal(context.removeSelectedElement(), true);

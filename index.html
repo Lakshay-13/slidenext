@@ -5551,17 +5551,13 @@
       return true;
     }
 
-    // Delete active selection
-    function removeSelectedElement() {
-      const doc = getIframeDoc();
-      const removalActionState = buildRemovalSelectionActionState(doc);
-      if (!removalActionState.canRemove) return finalizeRemovalActionResult(false, doc);
-      const removeStudioElements = (
-        typeof SlideNextStudioEditorRemoval !== 'undefined'
-        && SlideNextStudioEditorRemoval
-        && typeof SlideNextStudioEditorRemoval.removeStudioElements === 'function'
-      )
-        ? SlideNextStudioEditorRemoval.removeStudioElements
+    function applyEditorRemovalMutationWithTransaction(selection, options = {}) {
+      const removalApi = typeof SlideNextStudioEditorRemoval !== 'undefined'
+        ? SlideNextStudioEditorRemoval
+        : null;
+      const removeStudioElements = removalApi
+        && typeof removalApi.removeStudioElements === 'function'
+        ? removalApi.removeStudioElements
         : null;
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
@@ -5570,54 +5566,85 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const getRemovalElementId = (element) => {
-        if (typeof assignEditorElementId === 'function') {
-          return assignEditorElementId(element);
-        }
-        return element && element.dataset && element.dataset.editorId;
-      };
+      const getElementId = typeof options.getElementId === 'function'
+        ? options.getElementId
+        : (element) => {
+            if (typeof assignEditorElementId === 'function') {
+              const assignedId = assignEditorElementId(element);
+              if (assignedId) return assignedId;
+            }
+            return element && element.dataset && element.dataset.editorId;
+          };
+      const removeElement = typeof options.removeElement === 'function'
+        ? options.removeElement
+        : (element) => {
+            if (element && typeof element.remove === 'function') {
+              element.remove();
+            }
+          };
       if (removeStudioElements) {
-        const mutation = removeStudioElements(removalActionState.selection, {
+        const mutation = removeStudioElements(selection, {
           createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
-          getElementId: getRemovalElementId,
-          removeElement(element) {
-            element.remove();
-          }
+          getElementId,
+          removeElement
         });
-        if (!mutation.didRemove) return finalizeRemovalActionResult(false, doc);
-        deselectElement();
-        finalizeEditorDeckMutation('Auto: Deleted Element', {
-          transaction: mutation.transaction
-        });
-        return true;
+        return mutation && typeof mutation === 'object'
+          ? mutation
+          : { didRemove: false, removedCount: 0, transaction: null };
       }
+
       const markupCaptureTargets = [];
       if (createStudioMarkupTransactionCapture) {
         const parentSet = new Set();
-        removalActionState.selection.forEach((el) => {
-          if (!el || !el.isConnected || !el.parentElement || parentSet.has(el.parentElement)) return;
-          parentSet.add(el.parentElement);
-          getRemovalElementId(el.parentElement);
-          markupCaptureTargets.push({ element: el.parentElement });
+        selection.forEach((element) => {
+          if (!element || !element.isConnected || !element.parentElement || parentSet.has(element.parentElement)) return;
+          parentSet.add(element.parentElement);
+          markupCaptureTargets.push({
+            element: element.parentElement,
+            elementId: getElementId(element.parentElement)
+          });
         });
       }
       const markupCapture = createStudioMarkupTransactionCapture
-        ? createStudioMarkupTransactionCapture(markupCaptureTargets)
+        ? createStudioMarkupTransactionCapture(markupCaptureTargets, { getElementId })
         : null;
       let removedCount = 0;
-      removalActionState.selection.forEach(el => {
-        if (el && el.isConnected) {
-          el.remove();
-          removedCount += 1;
+      selection.forEach((element) => {
+        if (!element || !element.isConnected) return;
+        removeElement(element);
+        removedCount += 1;
+      });
+      return {
+        didRemove: removedCount > 0,
+        removedCount,
+        transaction: removedCount > 0 && markupCapture
+          ? markupCapture.createTransaction()
+          : null
+      };
+    }
+
+    // Delete active selection
+    function removeSelectedElement() {
+      const doc = getIframeDoc();
+      const removalActionState = buildRemovalSelectionActionState(doc);
+      if (!removalActionState.canRemove) return finalizeRemovalActionResult(false, doc);
+      const getRemovalElementId = (element) => {
+        if (typeof assignEditorElementId === 'function') {
+          const assignedId = assignEditorElementId(element);
+          if (assignedId) return assignedId;
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
+      const mutation = applyEditorRemovalMutationWithTransaction(removalActionState.selection, {
+        getElementId: getRemovalElementId,
+        removeElement(element) {
+          element.remove();
         }
       });
-      if (removedCount === 0) return finalizeRemovalActionResult(false, doc);
-      const transaction = markupCapture
-        ? markupCapture.createTransaction()
-        : null;
+      if (!mutation.didRemove) return finalizeRemovalActionResult(false, doc);
       deselectElement();
       finalizeEditorDeckMutation('Auto: Deleted Element', {
-        transaction
+        transaction: mutation.transaction
       });
       return true;
     }
