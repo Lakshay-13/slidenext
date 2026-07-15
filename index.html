@@ -6124,29 +6124,14 @@
       return true;
     }
 
-    function groupSelectedElements() {
-      const groupActionState = buildGroupSelectionActionState();
-      if (!groupActionState.canGroup) {
-        updateGroupActionState();
-        return false;
-      }
-
-      const doc = getIframeDoc();
-      const { slide, parent, groupPlan } = groupActionState;
-      const createStudioMarkupTransactionCapture = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
-        : null;
-      const markupCapture = createStudioMarkupTransactionCapture && parent
-        ? createStudioMarkupTransactionCapture([{
-            element: parent
-          }])
-        : null;
-      const slideMetrics = getSlideMetrics(slide);
-      const parentBounds = getRectOnSlide(parent.getBoundingClientRect(), slideMetrics);
+    function applyEditorGroupMutationWithTransaction(options = {}) {
+      const documentRef = options.documentRef;
+      const parent = options.parent || null;
+      const groupPlan = options.groupPlan || null;
+      const parentBounds = options.parentBounds || {};
+      const orderedSelection = Array.isArray(options.orderedSelection)
+        ? options.orderedSelection
+        : [];
       const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
         ? SlideNextStudioEditorGroup
         : null;
@@ -6154,48 +6139,65 @@
         && typeof groupApi.applyStudioGroupMutation === 'function'
         ? groupApi.applyStudioGroupMutation
         : null;
-      const getGroupElementId = (element) => {
-        if (typeof assignEditorElementId === 'function') {
-          return assignEditorElementId(element);
-        }
-        return element && element.dataset && element.dataset.editorId;
-      };
-      const selectedSet = new Set(groupActionState.selection);
-      const orderedSelection = getNormalizedSlideLayerOrder(slide)
-        .filter((element) => selectedSet.has(element));
+      const createStudioMarkupTransactionCapture = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
+        : null;
+      const getElementId = typeof options.getElementId === 'function'
+        ? options.getElementId
+        : (element) => {
+            if (typeof assignEditorElementId === 'function') {
+              const assignedId = assignEditorElementId(element);
+              if (assignedId) return assignedId;
+            }
+            return element && element.dataset && element.dataset.editorId;
+          };
+      const assignElementId = typeof options.assignElementId === 'function'
+        ? options.assignElementId
+        : null;
+      const prepareGroup = typeof options.prepareGroup === 'function'
+        ? options.prepareGroup
+        : null;
 
       if (applyStudioGroupMutation) {
         const mutation = applyStudioGroupMutation({
-          documentRef: doc,
+          documentRef,
           parent,
           groupPlan,
           parentBounds,
           orderedSelection,
           createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
-          getElementId: getGroupElementId,
-          assignElementId: typeof assignEditorElementId === 'function'
-            ? assignEditorElementId
-            : null,
-          prepareGroup: typeof makeElementsHoverable === 'function'
-            ? makeElementsHoverable
-            : null
+          getElementId,
+          assignElementId,
+          prepareGroup
         });
-        if (!mutation.didApply) return false;
-        commitEditorSelectionState({
-          selectedElements: [mutation.group]
-        });
-        finalizeEditorDeckMutation('Auto: Grouped Elements', {
-          syncSelectionOverlay: true,
-          refreshThumbnails: false,
-          debounceHistory: true,
-          transaction: mutation.transaction
-        });
-        return true;
+        return mutation && typeof mutation === 'object'
+          ? mutation
+          : { didApply: false, group: null, transaction: null };
       }
 
-      const group = doc.createElement('div');
+      if (!documentRef || typeof documentRef.createElement !== 'function'
+        || !parent || !groupPlan || !groupPlan.bounds || !Array.isArray(groupPlan.nextItems)
+        || orderedSelection.length === 0) {
+        return { didApply: false, group: null, transaction: null };
+      }
+      const markupCapture = createStudioMarkupTransactionCapture
+        ? createStudioMarkupTransactionCapture([{
+            element: parent,
+            elementId: getElementId(parent)
+          }], { getElementId })
+        : null;
+      const group = documentRef.createElement('div');
+      if (!group || !group.style || typeof group.appendChild !== 'function') {
+        return { didApply: false, group: null, transaction: null };
+      }
       group.className = 'editor-group editor-hoverable';
-      group.setAttribute('data-editor-group', 'true');
+      if (typeof group.setAttribute === 'function') {
+        group.setAttribute('data-editor-group', 'true');
+      }
       group.style.position = 'absolute';
       group.style.left = `${groupPlan.bounds.left - parentBounds.left}px`;
       group.style.top = `${groupPlan.bounds.top - parentBounds.top}px`;
@@ -6203,7 +6205,9 @@
       group.style.height = `${groupPlan.bounds.height}px`;
       group.style.overflow = 'visible';
       group.style.boxSizing = 'border-box';
-      assignEditorElementId(group);
+      if (assignElementId) {
+        assignElementId(group);
+      }
 
       const itemByElement = new Map(groupPlan.nextItems.map((item) => [item.element, item]));
       const firstElement = orderedSelection[0];
@@ -6212,7 +6216,6 @@
       } else {
         parent.appendChild(group);
       }
-
       orderedSelection.forEach((element) => {
         const item = itemByElement.get(element);
         if (!item) return;
@@ -6222,18 +6225,62 @@
         element.style.top = `${item.nextTop}px`;
         group.appendChild(element);
       });
-      makeElementsHoverable(group);
-      commitEditorSelectionState({
-        selectedElements: [group]
+      if (prepareGroup) {
+        prepareGroup(group);
+      }
+      return {
+        didApply: true,
+        group,
+        transaction: markupCapture
+          ? markupCapture.createTransaction()
+          : null
+      };
+    }
+
+    function groupSelectedElements() {
+      const groupActionState = buildGroupSelectionActionState();
+      if (!groupActionState.canGroup) {
+        updateGroupActionState();
+        return false;
+      }
+
+      const doc = getIframeDoc();
+      const { slide, parent, groupPlan } = groupActionState;
+      const slideMetrics = getSlideMetrics(slide);
+      const parentBounds = getRectOnSlide(parent.getBoundingClientRect(), slideMetrics);
+      const getGroupElementId = (element) => {
+        if (typeof assignEditorElementId === 'function') {
+          const assignedId = assignEditorElementId(element);
+          if (assignedId) return assignedId;
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
+      const selectedSet = new Set(groupActionState.selection);
+      const orderedSelection = getNormalizedSlideLayerOrder(slide)
+        .filter((element) => selectedSet.has(element));
+      const mutation = applyEditorGroupMutationWithTransaction({
+        documentRef: doc,
+        parent,
+        groupPlan,
+        parentBounds,
+        orderedSelection,
+        getElementId: getGroupElementId,
+        assignElementId: typeof assignEditorElementId === 'function'
+          ? assignEditorElementId
+          : null,
+        prepareGroup: typeof makeElementsHoverable === 'function'
+          ? makeElementsHoverable
+          : null
       });
-      const transaction = markupCapture
-        ? markupCapture.createTransaction()
-        : null;
+      if (!mutation.didApply) return false;
+      commitEditorSelectionState({
+        selectedElements: [mutation.group]
+      });
       finalizeEditorDeckMutation('Auto: Grouped Elements', {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
         debounceHistory: true,
-        transaction
+        transaction: mutation.transaction
       });
       return true;
     }

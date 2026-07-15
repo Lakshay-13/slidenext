@@ -15,6 +15,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadGroupMutationHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorGroupMutationWithTransaction(options = {}) {',
+    'function groupSelectedElements() {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('updateGroupActionState delegates toolbar state assembly to the shared group view', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
@@ -296,6 +305,7 @@ test('groupSelectedElements wraps selected children with relative coordinates an
     }
   };
   vm.createContext(context);
+  loadGroupMutationHelper(fileContent, context);
   vm.runInContext(source, context);
 
   assert.equal(context.groupSelectedElements(), true);
@@ -400,6 +410,7 @@ test('groupSelectedElements delegates wrapper mutation to the shared group modul
   };
 
   vm.createContext(context);
+  loadGroupMutationHelper(fileContent, context);
   vm.runInContext(source, context);
 
   assert.equal(context.groupSelectedElements(), true);
