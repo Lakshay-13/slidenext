@@ -62,6 +62,10 @@
       documentRef,
       selectionState: { hasSelection: false }
     });
+    renderStudioInspectorAlignmentState({
+      documentRef,
+      align: ''
+    });
 
     const textContentGroup = documentRef.getElementById('inspectorTextContentGroup');
     if (textContentGroup) textContentGroup.classList.remove('hidden');

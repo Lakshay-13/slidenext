@@ -95,6 +95,31 @@ test('renderStudioInspectorAlignmentState highlights only the selected alignment
   assert.match(nodes.alignJustifyBtn.className, /hover:bg-white\/5/);
 });
 
+test('resetStudioInspectorUiState clears stale alignment chrome', () => {
+  const inactiveClass = /hover:bg-white\/5/;
+  const nodes = {
+    inspectorTargetLabel: { innerHTML: '' },
+    slideInspectorPanel: { classList: createClassList() },
+    elementInspectorPanel: { classList: createClassList() },
+    alignLeftBtn: { className: 'active' },
+    alignCenterBtn: { className: 'active' },
+    alignRightBtn: { className: 'active' },
+    alignJustifyBtn: { className: 'active' }
+  };
+
+  assert.equal(inspectorView.resetStudioInspectorUiState({
+    documentRef: {
+      getElementById(id) {
+        return nodes[id] || null;
+      }
+    }
+  }), true);
+  assert.match(nodes.alignLeftBtn.className, inactiveClass);
+  assert.match(nodes.alignCenterBtn.className, inactiveClass);
+  assert.match(nodes.alignRightBtn.className, inactiveClass);
+  assert.match(nodes.alignJustifyBtn.className, inactiveClass);
+});
+
 test('syncStudioInspectorContentControls switches between image and text controls', () => {
   const classLists = {
     imageGroup: createClassList(),
