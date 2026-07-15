@@ -8,6 +8,7 @@ const {
   deriveSiblingVersionBackupFilename
 } = require('./shared/version-backup-utils');
 const presentationMetadata = require('./shared/presentation-metadata');
+const canonicalPptxExport = require('./shared/canonical-pptx-export');
 
 const app = express();
 const PORT = 11004;
@@ -69,6 +70,50 @@ app.get('/api/presentations', async (req, res) => {
   } catch (err) {
     console.error('Error reading presentations.json:', err);
     res.status(500).json({ error: 'Failed to read presentations configuration' });
+  }
+});
+
+function resolvePptxAssetBaseDir(sourcePath) {
+  if (typeof sourcePath !== 'string' || !sourcePath.trim()) return '';
+  const normalizedSourcePath = sourcePath.trim().replace(/^[/\\]+/, '');
+  const candidate = path.resolve(workspaceDir, path.dirname(normalizedSourcePath));
+  const workspacePrefix = `${workspaceDir}${path.sep}`;
+  return candidate === workspaceDir || candidate.startsWith(workspacePrefix) ? candidate : '';
+}
+
+function normalizePptxDownloadFilename(filename, title = '') {
+  const fallback = title || 'slidenext-presentation';
+  const baseName = path.basename(typeof filename === 'string' && filename.trim() ? filename : fallback)
+    .replace(/\.pptx$/i, '')
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .replace(/^\.+$/, 'slidenext-presentation');
+  return `${baseName || 'slidenext-presentation'}.pptx`;
+}
+
+// Export any canonical deck without writing generated files into the workspace.
+app.post('/api/export/pptx', async (req, res) => {
+  const { canonicalDeck, filename, sourcePath } = req.body || {};
+  if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) {
+    return res.status(400).json({ error: 'Missing canonicalDeck' });
+  }
+
+  try {
+    const result = canonicalPptxExport.createCanonicalPptxExport(canonicalDeck, {
+      assetBaseDir: resolvePptxAssetBaseDir(sourcePath || canonicalDeck.metadata?.sourcePath)
+    });
+    if (!result.pptx || typeof result.pptx.write !== 'function') {
+      return res.status(500).json({ error: 'PPTX exporter is unavailable' });
+    }
+
+    const buffer = await result.pptx.write({ outputType: 'nodebuffer' });
+    const downloadFilename = normalizePptxDownloadFilename(filename, canonicalDeck.metadata?.title);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+    res.setHeader('X-SlideNext-Pptx-Warning-Count', String(result.diagnostics.warnings.length));
+    return res.send(buffer);
+  } catch (err) {
+    console.error('Error exporting PPTX:', err);
+    return res.status(500).json({ error: `Failed to export PPTX: ${err.message}` });
   }
 });
 
