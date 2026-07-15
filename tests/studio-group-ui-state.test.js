@@ -728,6 +728,7 @@ test('ungroupSelectedElements forwards a canonical tree sidecar for restored chi
   let finalized = null;
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalGroup: canonicalGroup,
     SlideNextDeckImport: {
       importElementToCanonicalNode(element, options) {
         assert.equal(options.getNodeId(element), element.dataset.editorId);

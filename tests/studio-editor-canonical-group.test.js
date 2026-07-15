@@ -46,3 +46,29 @@ test('buildStudioCanonicalGroupDeck fails closed when grouping dependencies are 
     }
   }), null);
 });
+
+test('buildStudioCanonicalUngroupDeck restores imported children without mutating the source', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'group-1', children: [{ id: 'child-1' }, { id: 'child-2' }] }]
+    }]
+  });
+  const group = { dataset: { editorId: 'group-1' } };
+  const result = canonicalGroup.buildStudioCanonicalUngroupDeck({
+    canonicalDeckApi: canonicalDeck,
+    canonicalDeckBeforeMutation: sourceDeck,
+    groupTargets: [{ group, groupId: 'group-1', parentNodeId: '', slideId: 'slide-1' }],
+    restoredGroups: [{ group, restoredElements: [
+      { dataset: { editorId: 'child-1' } },
+      { dataset: { editorId: 'child-2' } }
+    ] }],
+    importElementToCanonicalNode(element, options) {
+      return { id: options.getNodeId(element) };
+    },
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['child-1', 'child-2']);
+  assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['group-1']);
+});

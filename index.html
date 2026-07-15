@@ -6257,9 +6257,12 @@
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
-      const ungroupCanonicalNodes = canonicalDeckApi
-        && typeof canonicalDeckApi.ungroupCanonicalNodes === 'function'
-        ? canonicalDeckApi.ungroupCanonicalNodes
+      const canonicalGroupApi = typeof SlideNextStudioEditorCanonicalGroup !== 'undefined'
+        ? SlideNextStudioEditorCanonicalGroup
+        : null;
+      const buildCanonicalUngroupDeck = canonicalGroupApi
+        && typeof canonicalGroupApi.buildStudioCanonicalUngroupDeck === 'function'
+        ? canonicalGroupApi.buildStudioCanonicalUngroupDeck
         : null;
       const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
         ? SlideNextDeckImport
@@ -6270,7 +6273,9 @@
         : null;
       let canonicalDeckBeforeUngrouping = null;
       let canonicalGroupTargets = [];
-      if (ungroupCanonicalNodes
+      if (buildCanonicalUngroupDeck
+        && canonicalDeckApi
+        && typeof canonicalDeckApi.ungroupCanonicalNodes === 'function'
         && importElementToCanonicalNode
         && typeof buildEditorCanonicalDeck === 'function') {
         const canonicalSlideId = typeof getEditorSlideId === 'function'
@@ -6312,34 +6317,19 @@
       });
       if (!mutation.didApply) return false;
       let canonicalDeck = null;
-      if (canonicalDeckBeforeUngrouping
+      if (buildCanonicalUngroupDeck
+        && canonicalDeckBeforeUngrouping
         && canonicalGroupTargets.length === ungroupActionState.groups.length
         && Array.isArray(mutation.restoredGroups)
         && mutation.restoredGroups.length === canonicalGroupTargets.length) {
-        const canonicalGroupChanges = canonicalGroupTargets.map((target) => {
-          const restoredGroup = mutation.restoredGroups.find((entry) => entry && entry.group === target.group);
-          if (!restoredGroup || !Array.isArray(restoredGroup.restoredElements)) {
-            return null;
-          }
-          const children = restoredGroup.restoredElements.map((element) => importElementToCanonicalNode(element, {
-            getNodeId: getUngroupElementId
-          }));
-          if (children.some((child) => !child)) {
-            return null;
-          }
-          return {
-            groupId: target.groupId,
-            parentNodeId: target.parentNodeId,
-            children
-          };
+        canonicalDeck = buildCanonicalUngroupDeck({
+          canonicalDeckApi,
+          canonicalDeckBeforeMutation: canonicalDeckBeforeUngrouping,
+          importElementToCanonicalNode,
+          groupTargets: canonicalGroupTargets,
+          restoredGroups: mutation.restoredGroups,
+          getElementId: getUngroupElementId
         });
-        if (canonicalGroupChanges.every(Boolean)) {
-          canonicalDeck = ungroupCanonicalNodes(
-            canonicalDeckBeforeUngrouping,
-            canonicalGroupTargets[0].slideId,
-            canonicalGroupChanges
-          );
-        }
       }
       commitEditorSelectionState({
         selectedElements: mutation.restoredElements
