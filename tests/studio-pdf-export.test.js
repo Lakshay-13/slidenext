@@ -61,6 +61,18 @@ test('waitForStudioPdfPrintResources waits for fonts and image load or error', a
   assert.equal(didResolve, true);
 });
 
+test('waitForStudioPdfPrintResources resolves when a resource never settles', async () => {
+  const image = {
+    complete: false,
+    addEventListener() {}
+  };
+
+  const startedAt = Date.now();
+  await pdfExport.waitForStudioPdfPrintResources({ images: [image] }, { timeoutMs: 10 });
+
+  assert.ok(Date.now() - startedAt >= 8);
+});
+
 test('openStudioPdfPrintWindow writes export html and waits for the print window load event', () => {
   let writtenHtml = '';
   let printCalls = 0;

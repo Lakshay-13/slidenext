@@ -98,13 +98,28 @@
     return html.replace(/<html(?:\s[^>]*)?>/i, `$&<head>${styleTag}</head>`);
   }
 
-  function waitForStudioPdfPrintResources(documentRef) {
+  function waitForStudioPdfPrintResources(documentRef, options = {}) {
     if (!documentRef) return Promise.resolve();
+
+    const timeoutMs = Number.isFinite(options.timeoutMs)
+      ? Math.max(0, options.timeoutMs)
+      : 5000;
+    const waitWithTimeout = (resource) => new Promise((resolve) => {
+      let settled = false;
+      const settle = () => {
+        if (settled) return;
+        settled = true;
+        if (timeoutId) clearTimeout(timeoutId);
+        resolve();
+      };
+      const timeoutId = setTimeout(settle, timeoutMs);
+      Promise.resolve(resource).then(settle, settle);
+    });
 
     const waits = [];
     const fontsReady = documentRef.fonts && documentRef.fonts.ready;
     if (fontsReady && typeof fontsReady.then === 'function') {
-      waits.push(fontsReady);
+      waits.push(waitWithTimeout(fontsReady));
     }
 
     const images = documentRef.images && typeof documentRef.images.length === 'number'
@@ -117,8 +132,10 @@
         const settle = () => {
           if (settled) return;
           settled = true;
+          if (timeoutId) clearTimeout(timeoutId);
           resolve();
         };
+        const timeoutId = setTimeout(settle, timeoutMs);
         image.addEventListener('load', settle, { once: true });
         image.addEventListener('error', settle, { once: true });
       }));
@@ -155,7 +172,7 @@
       }
     };
     const waitForResources = () => {
-      waitForStudioPdfPrintResources(printWindow.document).then(print).catch(print);
+      waitForStudioPdfPrintResources(printWindow.document, options).then(print).catch(print);
     };
 
     if (typeof printWindow.addEventListener === 'function') {
