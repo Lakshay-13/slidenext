@@ -9580,13 +9580,21 @@
       const versionView = typeof SlideNextStudioVersionView !== 'undefined'
         ? SlideNextStudioVersionView
         : null;
-      if (!versionView || typeof versionView.renderStudioVersionsList !== 'function') return false;
-      const baseName = SlideNextStudioVersionHistory.deriveStudioVersionDeckBaseName(presentationUrl);
-      return versionView.renderStudioVersionsList({
+      if (!versionView) return false;
+      const options = {
         documentRef: document,
         versions,
-        baseName,
+        presentationUrl,
+        deriveVersionDeckBaseName: SlideNextStudioVersionHistory.deriveStudioVersionDeckBaseName,
         deriveVersionDisplayLabel: VersionBackupUtils.deriveVersionDisplayLabel
+      };
+      if (typeof versionView.syncStudioVersionsList === 'function') {
+        return versionView.syncStudioVersionsList(options);
+      }
+      if (typeof versionView.renderStudioVersionsList !== 'function') return false;
+      return versionView.renderStudioVersionsList({
+        ...options,
+        baseName: SlideNextStudioVersionHistory.deriveStudioVersionDeckBaseName(presentationUrl)
       });
     }
 

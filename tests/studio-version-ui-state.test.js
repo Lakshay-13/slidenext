@@ -1274,6 +1274,47 @@ test('toggleVersionDropdown refreshes version history only when opening the menu
   ]]);
 });
 
+test('renderVersionsList delegates version view input assembly to the shared coordinator', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function renderVersionsList(presentationUrl, versions = []) {',
+    '\n\n    // Fetch versions checklist'
+  );
+  const calls = [];
+  const context = {
+    document: {},
+    SlideNextStudioVersionHistory: {
+      deriveStudioVersionDeckBaseName(url) {
+        calls.push(['deriveStudioVersionDeckBaseName', url]);
+        return 'demo';
+      }
+    },
+    VersionBackupUtils: {
+      deriveVersionDisplayLabel() {
+        return 'label';
+      }
+    },
+    SlideNextStudioVersionView: {
+      syncStudioVersionsList(options) {
+        calls.push(['syncStudioVersionsList', options]);
+        return 'delegated';
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  const versions = [{ filename: 'version.html' }];
+  assert.equal(context.renderVersionsList('/presentations/demo/index.html', versions), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'syncStudioVersionsList');
+  assert.equal(calls[0][1].documentRef, context.document);
+  assert.equal(calls[0][1].presentationUrl, '/presentations/demo/index.html');
+  assert.deepEqual(calls[0][1].versions, versions);
+});
+
 test('promptRenameVersion tolerates a missing rename input', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const promptRenameVersionSource = extractFunctionSource(

@@ -80,3 +80,27 @@ test('renderStudioVersionsList renders the empty state and tolerates missing chr
   assert.match(list.innerHTML, /No versions saved yet/);
   assert.equal(versionView.renderStudioVersionsList(), false);
 });
+
+test('syncStudioVersionsList derives the deck base name before rendering versions', () => {
+  const list = { innerHTML: '' };
+  assert.equal(versionView.syncStudioVersionsList({
+    documentRef: {
+      getElementById(id) {
+        return id === 'versionsList' ? list : null;
+      }
+    },
+    presentationUrl: '/presentations/demo/index.html',
+    deriveVersionDeckBaseName(url) {
+      assert.equal(url, '/presentations/demo/index.html');
+      return 'demo';
+    },
+    versions: [{
+      filename: 'index_20260101_120000_Auto.html',
+      createdAt: '2026-01-01T12:00:00.000Z'
+    }],
+    deriveVersionDisplayLabel(filename, baseName) {
+      return `${baseName}:${filename}`;
+    }
+  }), true);
+  assert.match(list.innerHTML, /demo:index_20260101_120000_Auto\.html/);
+});

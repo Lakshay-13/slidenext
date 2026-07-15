@@ -74,10 +74,24 @@
     return true;
   }
 
+  function syncStudioVersionsList(options = {}) {
+    const deriveVersionDeckBaseName = typeof options.deriveVersionDeckBaseName === 'function'
+      ? options.deriveVersionDeckBaseName
+      : null;
+    const baseName = options.baseName || (deriveVersionDeckBaseName
+      ? deriveVersionDeckBaseName(options.presentationUrl)
+      : '');
+    return renderStudioVersionsList({
+      ...options,
+      baseName
+    });
+  }
+
   return {
     hideStudioVersionsDropdown,
     resetStudioRenameVersionButton,
     setStudioRenameVersionButtonBusy,
-    renderStudioVersionsList
+    renderStudioVersionsList,
+    syncStudioVersionsList
   };
 });
