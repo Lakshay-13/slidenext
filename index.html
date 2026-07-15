@@ -5655,9 +5655,12 @@
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
-      const appendCanonicalNode = canonicalDeckApi
-        && typeof canonicalDeckApi.appendCanonicalNode === 'function'
-        ? canonicalDeckApi.appendCanonicalNode
+      const canonicalInsertionApi = typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
+        ? SlideNextStudioEditorCanonicalInsertion
+        : null;
+      const buildCanonicalInsertionDeck = canonicalInsertionApi
+        && typeof canonicalInsertionApi.buildStudioCanonicalInsertionDeck === 'function'
+        ? canonicalInsertionApi.buildStudioCanonicalInsertionDeck
         : null;
       const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
         ? SlideNextDeckImport
@@ -5668,7 +5671,9 @@
         : null;
       let canonicalDeckBeforePaste = null;
       let canonicalSlideId = '';
-      if (appendCanonicalNode
+      if (buildCanonicalInsertionDeck
+        && canonicalDeckApi
+        && typeof canonicalDeckApi.appendCanonicalNode === 'function'
         && importElementToCanonicalNode
         && typeof buildEditorCanonicalDeck === 'function'
         && typeof getIframeDoc === 'function'
@@ -5692,7 +5697,11 @@
         let didAppendAll = true;
         pasted.forEach((element) => {
           if (!didAppendAll) return;
-          const canonicalNode = importElementToCanonicalNode(element, {
+          const appendedDeck = buildCanonicalInsertionDeck(element, {
+            canonicalDeckApi,
+            canonicalDeckBeforeMutation: nextCanonicalDeck,
+            importElementToCanonicalNode,
+            slideId: canonicalSlideId,
             getNodeId: (node) => {
               if (node && node.dataset && typeof assignEditorElementId === 'function') {
                 const assignedId = assignEditorElementId(node);
@@ -5701,11 +5710,6 @@
               return node && node.dataset && node.dataset.editorId;
             }
           });
-          const appendedDeck = appendCanonicalNode(
-            nextCanonicalDeck,
-            canonicalSlideId,
-            canonicalNode
-          );
           if (!appendedDeck) {
             didAppendAll = false;
             return;

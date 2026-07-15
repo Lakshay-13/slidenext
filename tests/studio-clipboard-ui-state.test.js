@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const clipboardState = require('../shared/studio-editor-clipboard.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -1236,6 +1237,7 @@ test('pasteClipboardElements forwards a canonical deck sidecar for pasted nodes'
   const context = {
     editorClipboard: { items: [{ id: 'clipboard-item' }], pasteCount: 0 },
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalInsertion: canonicalInsertion,
     SlideNextDeckImport: {
       importElementToCanonicalNode(element, options) {
         assert.equal(element, pastedElement);
