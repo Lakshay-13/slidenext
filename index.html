@@ -1161,6 +1161,7 @@
   <script src="/shared/studio-editor-canonical-wallpaper.js"></script>
   <script src="/shared/studio-editor-canonical-visibility.js"></script>
   <script src="/shared/studio-editor-canonical-layout.js"></script>
+  <script src="/shared/studio-editor-canonical-group.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
@@ -6109,9 +6110,12 @@
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
-      const groupCanonicalNodes = canonicalDeckApi
-        && typeof canonicalDeckApi.groupCanonicalNodes === 'function'
-        ? canonicalDeckApi.groupCanonicalNodes
+      const canonicalGroupApi = typeof SlideNextStudioEditorCanonicalGroup !== 'undefined'
+        ? SlideNextStudioEditorCanonicalGroup
+        : null;
+      const buildCanonicalGroupDeck = canonicalGroupApi
+        && typeof canonicalGroupApi.buildStudioCanonicalGroupDeck === 'function'
+        ? canonicalGroupApi.buildStudioCanonicalGroupDeck
         : null;
       const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
         ? SlideNextDeckImport
@@ -6124,7 +6128,9 @@
       let canonicalSlideId = '';
       let canonicalParentId = '';
       let canonicalSelectedNodeIds = [];
-      if (groupCanonicalNodes
+      if (buildCanonicalGroupDeck
+        && canonicalDeckApi
+        && typeof canonicalDeckApi.groupCanonicalNodes === 'function'
         && importElementToCanonicalNode
         && typeof buildEditorCanonicalDeck === 'function') {
         canonicalSlideId = typeof getEditorSlideId === 'function'
@@ -6156,10 +6162,18 @@
       });
       if (!mutation.didApply) return false;
       let canonicalDeck = null;
-      if (canonicalDeckBeforeGrouping
+      if (buildCanonicalGroupDeck
+        && canonicalDeckBeforeGrouping
         && canonicalSlideId
         && canonicalSelectedNodeIds.length > 1) {
-        const canonicalGroupNode = importElementToCanonicalNode(mutation.group, {
+        canonicalDeck = buildCanonicalGroupDeck({
+          canonicalDeckApi,
+          canonicalDeckBeforeMutation: canonicalDeckBeforeGrouping,
+          importElementToCanonicalNode,
+          slideId: canonicalSlideId,
+          parentNodeId: canonicalParentId,
+          nodeIds: canonicalSelectedNodeIds,
+          groupElement: mutation.group,
           getNodeId: (element) => {
             if (element && element.dataset && typeof assignEditorElementId === 'function') {
               const assignedId = assignEditorElementId(element);
@@ -6168,13 +6182,6 @@
             return element && element.dataset && element.dataset.editorId;
           }
         });
-        canonicalDeck = groupCanonicalNodes(
-          canonicalDeckBeforeGrouping,
-          canonicalSlideId,
-          canonicalParentId,
-          canonicalSelectedNodeIds,
-          canonicalGroupNode
-        );
       }
       commitEditorSelectionState({
         selectedElements: [mutation.group]

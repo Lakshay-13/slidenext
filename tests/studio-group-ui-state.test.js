@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioGroup = require('../shared/studio-editor-group.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalGroup = require('../shared/studio-editor-canonical-group.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -470,6 +471,7 @@ test('groupSelectedElements forwards a canonical tree sidecar for grouped nodes'
   let finalized = null;
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalGroup: canonicalGroup,
     SlideNextDeckImport: {
       importElementToCanonicalNode(element, options) {
         assert.equal(element, group);
