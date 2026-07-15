@@ -787,6 +787,33 @@
     return transactionApi.createStudioStyleTransaction(transactionItems);
   }
 
+  function createStudioTransformSessionFinalizer(options = {}) {
+    const onSessionEnd = typeof options.onSessionEnd === 'function'
+      ? options.onSessionEnd
+      : () => {};
+    const buildTransaction = typeof options.buildTransaction === 'function'
+      ? options.buildTransaction
+      : () => null;
+    const saveHistoryState = typeof options.saveHistoryState === 'function'
+      ? options.saveHistoryState
+      : () => {};
+    const triggerAutoSave = typeof options.triggerAutoSave === 'function'
+      ? options.triggerAutoSave
+      : () => {};
+    const triggerAutoVersion = typeof options.triggerAutoVersion === 'function'
+      ? options.triggerAutoVersion
+      : () => {};
+
+    return function finalizeStudioTransformSession(finalizeResult, completionPlan = {}) {
+      onSessionEnd(finalizeResult, completionPlan);
+      if (!completionPlan || !completionPlan.shouldPersist) return;
+      const transaction = buildTransaction(finalizeResult);
+      saveHistoryState(false, transaction);
+      triggerAutoSave();
+      triggerAutoVersion(completionPlan.versionLabel);
+    };
+  }
+
   function attachStudioTransformPointerHandlers(doc, handlers, options = {}) {
     const body = doc && doc.body;
     if (!body || typeof body.addEventListener !== 'function' || !handlers) return false;
@@ -1442,6 +1469,7 @@
     finalizeStudioTransformSession,
     buildStudioTransformCompletionPlan,
     buildStudioTransformStyleTransaction,
+    createStudioTransformSessionFinalizer,
     attachStudioTransformPointerHandlers,
     buildStudioPositionedLayoutItem,
     buildStudioPositionedLayoutItems,

@@ -5445,6 +5445,47 @@
             : null
         });
       };
+      const createTransformSessionFinalizer = transformApi
+        && typeof transformApi.createStudioTransformSessionFinalizer === 'function'
+        ? transformApi.createStudioTransformSessionFinalizer
+        : (options = {}) => {
+            const onSessionEnd = typeof options.onSessionEnd === 'function'
+              ? options.onSessionEnd
+              : () => {};
+            const buildTransaction = typeof options.buildTransaction === 'function'
+              ? options.buildTransaction
+              : () => null;
+            const persistHistory = typeof options.saveHistoryState === 'function'
+              ? options.saveHistoryState
+              : () => {};
+            const persistAutoSave = typeof options.triggerAutoSave === 'function'
+              ? options.triggerAutoSave
+              : () => {};
+            const persistAutoVersion = typeof options.triggerAutoVersion === 'function'
+              ? options.triggerAutoVersion
+              : () => {};
+            return (finalizeResult, completionPlan = {}) => {
+              onSessionEnd(finalizeResult, completionPlan);
+              if (!completionPlan || !completionPlan.shouldPersist) return;
+              const transaction = buildTransaction(finalizeResult);
+              persistHistory(false, transaction);
+              persistAutoSave();
+              persistAutoVersion(completionPlan.versionLabel);
+            };
+          };
+      const finalizeTransformSession = createTransformSessionFinalizer({
+        onSessionEnd: () => {
+          isDraggingElement = false;
+          hideGuides();
+          hideDragHud();
+          syncSelectionOverlay();
+          syncInspectorForSelection();
+        },
+        buildTransaction: buildTransformTransaction,
+        saveHistoryState,
+        triggerAutoSave,
+        triggerAutoVersion
+      });
       const interactionApi = typeof SlideNextStudioEditorInteractions !== 'undefined'
         ? SlideNextStudioEditorInteractions
         : null;
@@ -5482,19 +5523,7 @@
               syncSelectionOverlay();
               updateDragHud(bounds);
             },
-            onSessionFinalize: (finalizeResult, completionPlan) => {
-              isDraggingElement = false;
-              hideGuides();
-              hideDragHud();
-              syncSelectionOverlay();
-              syncInspectorForSelection();
-              if (completionPlan.shouldPersist) {
-                const transaction = buildTransformTransaction(finalizeResult);
-                saveHistoryState(false, transaction);
-                triggerAutoSave();
-                triggerAutoVersion(completionPlan.versionLabel);
-              }
-            }
+            onSessionFinalize: finalizeTransformSession
           },
           marqueeOptions: {
             getActiveSlide: () => getActiveSlide(doc),
@@ -5569,19 +5598,7 @@
             syncSelectionOverlay();
             updateDragHud(bounds);
           },
-          onSessionFinalize: (_finalizeResult, completionPlan) => {
-            isDraggingElement = false;
-            hideGuides();
-            hideDragHud();
-            syncSelectionOverlay();
-            syncInspectorForSelection();
-            if (completionPlan.shouldPersist) {
-              const transaction = buildTransformTransaction(_finalizeResult);
-              saveHistoryState(false, transaction);
-              triggerAutoSave();
-              triggerAutoVersion(completionPlan.versionLabel);
-            }
-          }
+          onSessionFinalize: finalizeTransformSession
         });
 
         const attachStudioTransformPointerHandlers = typeof transformApi.attachStudioTransformPointerHandlers === 'function'
@@ -5719,19 +5736,7 @@
           syncSelectionOverlay();
           updateDragHud(bounds);
         },
-        onSessionFinalize: (finalizeResult, completionPlan) => {
-          isDraggingElement = false;
-          hideGuides();
-          hideDragHud();
-          syncSelectionOverlay();
-          syncInspectorForSelection();
-          if (completionPlan.shouldPersist) {
-            const transaction = buildTransformTransaction(finalizeResult);
-            saveHistoryState(false, transaction);
-            triggerAutoSave();
-            triggerAutoVersion(completionPlan.versionLabel);
-          }
-        }
+        onSessionFinalize: finalizeTransformSession
       });
 
       const attachStudioTransformPointerHandlers = typeof transformApi.attachStudioTransformPointerHandlers === 'function'

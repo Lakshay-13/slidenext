@@ -93,6 +93,42 @@ test('buildStudioTransformStyleTransaction returns null without a transaction-re
   }), null);
 });
 
+test('createStudioTransformSessionFinalizer closes the session before persisting a move', () => {
+  const calls = [];
+  const transaction = { type: 'style' };
+  const finalizeSession = transformState.createStudioTransformSessionFinalizer({
+    onSessionEnd() {
+      calls.push('end');
+    },
+    buildTransaction() {
+      calls.push('transaction');
+      return transaction;
+    },
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    }
+  });
+
+  finalizeSession({ id: 'move' }, {
+    shouldPersist: true,
+    versionLabel: 'Auto: Moved Element'
+  });
+
+  assert.deepEqual(calls, [
+    'end',
+    'transaction',
+    ['history', false, transaction],
+    'save',
+    ['version', 'Auto: Moved Element']
+  ]);
+});
+
 test('attachStudioTransformPointerHandlers binds the shared pointer lifecycle', () => {
   const documentListeners = new Map();
   const bodyListeners = new Map();
