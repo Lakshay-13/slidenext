@@ -169,11 +169,15 @@
       if (!captureTarget || typeof captureTarget.releasePointerCapture !== 'function') {
         return;
       }
-      if (typeof captureTarget.hasPointerCapture === 'function'
-        && !captureTarget.hasPointerCapture(nextSession.pointerId)) {
-        return;
+      try {
+        if (typeof captureTarget.hasPointerCapture === 'function'
+          && !captureTarget.hasPointerCapture(nextSession.pointerId)) {
+          return;
+        }
+        captureTarget.releasePointerCapture(nextSession.pointerId);
+      } catch (_) {
+        // Pointer capture may already be gone when cancellation is delivered.
       }
-      captureTarget.releasePointerCapture(nextSession.pointerId);
     }
 
     function finalizeSession(cancelled = false) {
@@ -227,7 +231,11 @@
 
       if (captureTarget && typeof captureTarget.setPointerCapture === 'function'
         && typeof event.pointerId === 'number') {
-        captureTarget.setPointerCapture(event.pointerId);
+        try {
+          captureTarget.setPointerCapture(event.pointerId);
+        } catch (_) {
+          // Continue without capture; the active session can still be cancelled.
+        }
       }
       if (typeof event.preventDefault === 'function') {
         event.preventDefault();

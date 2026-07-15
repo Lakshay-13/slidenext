@@ -266,6 +266,26 @@ test('createStudioMarqueePointerHandlers cancels without committing an inactive 
   assert.equal(results[1].cancelled, true);
 });
 
+test('createStudioMarqueePointerHandlers tolerates pointer capture API errors', () => {
+  const slide = { contains: () => true };
+  const handler = events.createStudioMarqueePointerHandlers({
+    getActiveSlide: () => slide,
+    captureTarget: {
+      setPointerCapture() {
+        throw new Error('capture unavailable');
+      },
+      releasePointerCapture() {
+        throw new Error('capture already released');
+      }
+    }
+  });
+
+  assert.equal(handler.handlePointerDown(createPointerEvent({ target: slide })), true);
+  assert.notEqual(handler.getSession(), null);
+  assert.equal(handler.handlePointerCancel(createPointerEvent()), true);
+  assert.equal(handler.getSession(), null);
+});
+
 test('createStudioMarqueeSelectionHandlers commits additive selection and syncs cancelled drags', () => {
   const slide = { contains: () => true };
   const commits = [];
