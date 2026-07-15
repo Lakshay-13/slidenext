@@ -56,6 +56,34 @@
           .code-comment { color: #6a737d !important; }
         `;
 
+  function toggleStudioGlobalTheme(options = {}) {
+    const documentRef = options.documentRef;
+    const documentElement = documentRef && documentRef.documentElement;
+    if (!documentElement || !documentElement.classList || typeof documentElement.classList.toggle !== 'function') {
+      return { didApply: false };
+    }
+
+    const isDark = documentElement.classList.toggle('dark');
+    const mode = isDark ? 'dark' : 'light';
+    const localStorageRef = options.localStorageRef;
+    if (localStorageRef && typeof localStorageRef.setItem === 'function') {
+      localStorageRef.setItem('theme', mode);
+    }
+
+    const iconText = isDark ? 'light_mode' : 'dark_mode';
+    ['themeIcon', 'themeIconEditor'].forEach((id) => {
+      const icon = typeof documentRef.getElementById === 'function'
+        ? documentRef.getElementById(id)
+        : null;
+      if (icon) icon.textContent = iconText;
+    });
+
+    if (typeof options.syncIframeTheme === 'function') {
+      options.syncIframeTheme();
+    }
+    return { didApply: true, isDark, mode };
+  }
+
   function syncStudioIframeTheme(options = {}) {
     const iframeDoc = options.iframeDoc;
     if (!iframeDoc || !iframeDoc.documentElement) return false;
@@ -78,5 +106,5 @@
     return true;
   }
 
-  return { syncStudioIframeTheme };
+  return { toggleStudioGlobalTheme, syncStudioIframeTheme };
 });

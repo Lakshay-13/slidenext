@@ -1374,19 +1374,16 @@
 
     // Theme Toggle Functionality
     function toggleGlobalTheme() {
-      const isDark = document.documentElement.classList.toggle('dark');
-      const mode = isDark ? 'dark' : 'light';
-      localStorage.setItem('theme', mode);
-      
-      const themeIcon = document.getElementById('themeIcon');
-      const themeIconEditor = document.getElementById('themeIconEditor');
-      
-      const iconText = isDark ? 'light_mode' : 'dark_mode';
-      if (themeIcon) themeIcon.textContent = iconText;
-      if (themeIconEditor) themeIconEditor.textContent = iconText;
-
-      // Sync active theme to presentation slide iframe
-      syncIframeTheme();
+      const themeView = typeof SlideNextStudioThemeView !== 'undefined'
+        ? SlideNextStudioThemeView
+        : null;
+      if (!themeView || typeof themeView.toggleStudioGlobalTheme !== 'function') return false;
+      const result = themeView.toggleStudioGlobalTheme({
+        documentRef: document,
+        localStorageRef: localStorage,
+        syncIframeTheme
+      });
+      return !!(result && result.didApply);
     }
 
     function syncIframeTheme() {
