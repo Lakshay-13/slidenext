@@ -4782,21 +4782,13 @@
       const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
         ? SlideNextStudioEditorSelection
         : null;
-      if (selectionApi && typeof selectionApi.syncStudioSelectionUiAfterMutation === 'function') {
-        return selectionApi.syncStudioSelectionUiAfterMutation(selectedElements, {
-          refreshSelectionClasses,
-          syncSelectionOverlay,
-          syncInspectorForSelection,
-          updateLayersList
-        });
-      }
-      refreshSelectionClasses();
-      SlideNextStudioEditorSelection.syncStudioSelectionUi(selectedElements, {
+      if (!selectionApi || typeof selectionApi.syncStudioSelectionUiAfterMutation !== 'function') return selectedElements;
+      return selectionApi.syncStudioSelectionUiAfterMutation(selectedElements, {
+        refreshSelectionClasses,
         syncSelectionOverlay,
         syncInspectorForSelection,
         updateLayersList
       });
-      return selectedElements;
     }
 
     function finalizeSelectionToggleMutation(versionLabel, options = {}) {

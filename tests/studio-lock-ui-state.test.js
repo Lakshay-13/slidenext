@@ -60,8 +60,10 @@ test('syncSelectionUiAfterMutation refreshes selection classes before syncing se
   const context = {
     selectedElements,
     SlideNextStudioEditorSelection: {
-      syncStudioSelectionUi(selection, options) {
-        calls.push(['syncStudioSelectionUi', selection, Object.keys(options).sort()]);
+      syncStudioSelectionUiAfterMutation(selection, options) {
+        options.refreshSelectionClasses();
+        calls.push(['syncStudioSelectionUiAfterMutation', selection, Object.keys(options).sort()]);
+        return selection;
       }
     },
     refreshSelectionClasses() {
@@ -80,8 +82,22 @@ test('syncSelectionUiAfterMutation refreshes selection classes before syncing se
   assert.equal(result, selectedElements);
   assert.deepEqual(calls, [
     ['refreshSelectionClasses'],
-    ['syncStudioSelectionUi', selectedElements, ['syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']]
+    ['syncStudioSelectionUiAfterMutation', selectedElements, ['refreshSelectionClasses', 'syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']]
   ]);
+});
+
+test('syncSelectionUiAfterMutation fails closed when the shared selection API is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectedElements = [{ id: 'node-1' }];
+  const context = {
+    selectedElements,
+    SlideNextStudioEditorSelection: null
+  };
+
+  vm.createContext(context);
+  loadSyncSelectionUiAfterMutation(fileContent, context);
+
+  assert.equal(context.syncSelectionUiAfterMutation(), selectedElements);
 });
 
 test('finalizeSelectionToggleMutation syncs selection chrome and delegates persistence without thumbnail refresh', () => {
@@ -383,8 +399,10 @@ test('toggleSelectedElementsLockState returns true after locking live targets an
       }
     },
     SlideNextStudioEditorSelection: {
-      syncStudioSelectionUi(selection, options) {
-        calls.push(['syncStudioSelectionUi', selection, Object.keys(options).sort()]);
+      syncStudioSelectionUiAfterMutation(selection, options) {
+        options.refreshSelectionClasses();
+        calls.push(['syncStudioSelectionUiAfterMutation', selection, Object.keys(options).sort()]);
+        return selection;
       }
     },
     SlideNextStudioElementState: {
@@ -441,7 +459,7 @@ test('toggleSelectedElementsLockState returns true after locking live targets an
     ['isElementLocked', liveTarget],
     ['setStudioElementLockedState', liveTarget, true],
     ['refreshSelectionClasses'],
-    ['syncStudioSelectionUi', [liveTarget], ['syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']],
+    ['syncStudioSelectionUiAfterMutation', [liveTarget], ['refreshSelectionClasses', 'syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']],
     ['saveHistoryState'],
     ['triggerAutoSave'],
     ['triggerAutoVersion', 'Auto: Locked Element']

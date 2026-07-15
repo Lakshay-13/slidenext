@@ -316,8 +316,10 @@ test('toggleSelectedElementsVisibility returns true after hiding live targets an
   const context = {
     selectedElements: [liveTarget],
     SlideNextStudioEditorSelection: {
-      syncStudioSelectionUi(selection, options) {
-        calls.push(['syncStudioSelectionUi', selection, Object.keys(options).sort()]);
+      syncStudioSelectionUiAfterMutation(selection, options) {
+        options.refreshSelectionClasses();
+        calls.push(['syncStudioSelectionUiAfterMutation', selection, Object.keys(options).sort()]);
+        return selection;
       }
     },
     SlideNextStudioEditorVisibilityState: {
@@ -384,7 +386,7 @@ test('toggleSelectedElementsVisibility returns true after hiding live targets an
     ['isElementHidden', liveTarget],
     ['setElementHiddenState', liveTarget, true],
     ['refreshSelectionClasses'],
-    ['syncStudioSelectionUi', [liveTarget], ['syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']],
+    ['syncStudioSelectionUiAfterMutation', [liveTarget], ['refreshSelectionClasses', 'syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']],
     ['saveHistoryState'],
     ['triggerAutoSave'],
     ['triggerAutoVersion', 'Auto: Hid Element']
