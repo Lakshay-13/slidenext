@@ -869,7 +869,7 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
     }
   };
   delegatedOptions.onSessionStart(startBounds);
-  delegatedOptions.onSessionFrame(startBounds, { guides: [] });
+  delegatedOptions.onSessionFrame(startBounds);
   delegatedOptions.onSessionFinalize({
     session: {
       items: [{

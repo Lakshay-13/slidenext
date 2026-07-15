@@ -6329,7 +6329,7 @@
           updateDragHud(startBounds);
           isDraggingElement = true;
         },
-        onSessionFrame: (bounds, frameState) => {
+        onSessionFrame: (bounds, frameState = {}) => {
           renderGuides(frameState.guides || []);
           syncSelectionOverlay();
           updateDragHud(bounds);
