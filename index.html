@@ -2805,20 +2805,31 @@
       });
     }
 
-    function finalizeSlideMutationPersistence(versionLabel, transaction = null) {
-      const canonicalDeck = arguments.length > 2 ? arguments[2] : null;
+    function createEditorSlideMutationPersistenceFinalizer(options = {}) {
       const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
         ? SlideNextStudioEditorMutation
         : null;
+      const saveHistoryState = typeof options.saveHistoryState === 'function'
+        ? options.saveHistoryState
+        : () => {};
+      const triggerAutoSave = typeof options.triggerAutoSave === 'function'
+        ? options.triggerAutoSave
+        : () => {};
+      const triggerAutoVersion = typeof options.triggerAutoVersion === 'function'
+        ? options.triggerAutoVersion
+        : () => {};
+
       if (mutationApi && typeof mutationApi.finalizeStudioSlideMutation === 'function') {
-        return mutationApi.finalizeStudioSlideMutation({
-          versionLabel,
-          transaction,
-          canonicalDeck,
-          saveHistoryState,
-          triggerAutoSave,
-          triggerAutoVersion
-        });
+        return (versionLabel, transaction = null, canonicalDeck = null) => (
+          mutationApi.finalizeStudioSlideMutation({
+            versionLabel,
+            transaction,
+            canonicalDeck,
+            saveHistoryState,
+            triggerAutoSave,
+            triggerAutoVersion
+          })
+        );
       }
       const createStudioSlideMutationPersistenceFinalizer = (
         typeof SlideNextStudioEditorMutation !== 'undefined'
@@ -2828,23 +2839,37 @@
         ? SlideNextStudioEditorMutation.createStudioSlideMutationPersistenceFinalizer
         : null;
       if (createStudioSlideMutationPersistenceFinalizer) {
-        return createStudioSlideMutationPersistenceFinalizer({
+        const finalizeStudioSlideMutation = createStudioSlideMutationPersistenceFinalizer({
           saveHistoryState,
           triggerAutoSave,
           triggerAutoVersion
-        })(versionLabel, transaction, canonicalDeck);
+        });
+        return (versionLabel, transaction = null, canonicalDeck = null) => (
+          finalizeStudioSlideMutation(versionLabel, transaction, canonicalDeck)
+        );
       }
 
-      if (canonicalDeck) {
-        saveHistoryState(false, transaction, canonicalDeck);
-      } else {
-        saveHistoryState(false, transaction);
-      }
-      triggerAutoSave();
-      if (versionLabel) {
-        triggerAutoVersion(versionLabel);
-      }
-      return versionLabel;
+      return (versionLabel, transaction = null, canonicalDeck = null) => {
+        if (canonicalDeck) {
+          saveHistoryState(false, transaction, canonicalDeck);
+        } else {
+          saveHistoryState(false, transaction);
+        }
+        triggerAutoSave();
+        if (versionLabel) {
+          triggerAutoVersion(versionLabel);
+        }
+        return versionLabel;
+      };
+    }
+
+    function finalizeSlideMutationPersistence(versionLabel, transaction = null) {
+      const canonicalDeck = arguments.length > 2 ? arguments[2] : null;
+      return createEditorSlideMutationPersistenceFinalizer({
+        saveHistoryState,
+        triggerAutoSave,
+        triggerAutoVersion
+      })(versionLabel, transaction, canonicalDeck);
     }
 
     function captureSlideMutationRestoreState(iframeDoc) {

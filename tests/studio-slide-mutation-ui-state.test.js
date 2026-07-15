@@ -19,7 +19,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 function loadFinalizeSlideMutationPersistence(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function finalizeSlideMutationPersistence(versionLabel, transaction = null) {',
+    'function createEditorSlideMutationPersistenceFinalizer(options = {}) {',
     '\n\n    function captureSlideMutationRestoreState(iframeDoc) {'
   );
   vm.runInContext(helperSource, context);
