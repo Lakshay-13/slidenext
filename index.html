@@ -1162,6 +1162,7 @@
   <script src="/shared/studio-editor-canonical-visibility.js"></script>
   <script src="/shared/studio-editor-canonical-layout.js"></script>
   <script src="/shared/studio-editor-canonical-group.js"></script>
+  <script src="/shared/studio-editor-canonical-removal.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
@@ -5356,17 +5357,17 @@
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
-      const removeCanonicalNodes = canonicalDeckApi
-        && typeof canonicalDeckApi.removeCanonicalNodes === 'function'
-        ? canonicalDeckApi.removeCanonicalNodes
+      const canonicalRemovalApi = typeof SlideNextStudioEditorCanonicalRemoval !== 'undefined'
+        ? SlideNextStudioEditorCanonicalRemoval
         : null;
-      const canonicalDeckBeforeRemoval = removeCanonicalNodes
+      const buildCanonicalRemovalDeck = canonicalRemovalApi
+        && typeof canonicalRemovalApi.buildStudioCanonicalRemovalDeck === 'function'
+        ? canonicalRemovalApi.buildStudioCanonicalRemovalDeck
+        : null;
+      const canonicalDeckBeforeRemoval = buildCanonicalRemovalDeck
         && typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(doc)
         : null;
-      const removalElementIds = removalActionState.selection
-        .map((element) => element && element.dataset ? getRemovalElementId(element) : '')
-        .filter(Boolean);
       const mutation = applyEditorRemovalMutationWithTransaction(removalActionState.selection, {
         getElementId: getRemovalElementId,
         removeElement(element) {
@@ -5374,8 +5375,12 @@
         }
       });
       if (!mutation.didRemove) return finalizeRemovalActionResult(false, doc);
-      const canonicalDeck = removeCanonicalNodes
-        ? removeCanonicalNodes(canonicalDeckBeforeRemoval, removalElementIds)
+      const canonicalDeck = buildCanonicalRemovalDeck
+        ? buildCanonicalRemovalDeck(removalActionState.selection, {
+            canonicalDeckApi,
+            canonicalDeckBeforeMutation: canonicalDeckBeforeRemoval,
+            getElementId: getRemovalElementId
+          })
         : null;
       deselectElement();
       finalizeEditorDeckMutation('Auto: Deleted Element', {

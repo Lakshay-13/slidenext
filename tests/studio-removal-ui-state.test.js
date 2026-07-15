@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalRemoval = require('../shared/studio-editor-canonical-removal.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const removalState = require('../shared/studio-editor-removal.js');
 
@@ -466,6 +467,7 @@ test('removeSelectedElement returns true after removing live targets and persist
   const context = {
     selectedElements: [liveTarget],
     SlideNextCanonicalDeck: canonicalDeck,
+    SlideNextStudioEditorCanonicalRemoval: canonicalRemoval,
     SlideNextStudioEditorRemoval: {
       removeStudioElements: removalState.removeStudioElements,
       buildStudioRemovalActionState() {
