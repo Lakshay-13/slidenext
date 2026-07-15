@@ -2131,7 +2131,9 @@ test('buildEditorPersistableDeckSanitizerOptions composes metadata cleanup, chro
   const playbackState = {
     activeSlideIds: ['slide-2']
   };
-  const context = {};
+  const context = {
+    SlideNextStudioEditorPersistence: editorPersistence
+  };
 
   vm.createContext(context);
   vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
@@ -2169,6 +2171,30 @@ test('buildEditorPersistableDeckSanitizerOptions composes metadata cleanup, chro
     'getDeckSanitizerOptions',
     'resolveMetadataPersistenceOptions'
   ]);
+});
+
+test('buildEditorPersistableDeckSanitizerOptions fails closed when the shared helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {',
+    '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
+  );
+  const context = {
+    getEditorDeckSanitizerOptions() {
+      throw new Error('page-local sanitizer fallback should not run');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.buildEditorPersistableDeckSanitizerOptions({
+      activeSlideIds: ['slide-2']
+    }))),
+    {}
+  );
 });
 
 test('buildEditorPersistableDeckSanitizerOptions delegates through the shared persistence helper when available', () => {

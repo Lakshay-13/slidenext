@@ -8457,20 +8457,7 @@
         });
       }
 
-      const resolveMetadataPersistenceOptions = typeof options.resolveMetadataPersistenceOptions === 'function'
-        ? options.resolveMetadataPersistenceOptions
-        : () => ({});
-      const deckSanitizerOptions = typeof options.getDeckSanitizerOptions === 'function'
-        ? options.getDeckSanitizerOptions()
-        : getEditorDeckSanitizerOptions();
-      return {
-        ...resolveMetadataPersistenceOptions(),
-        editorChromeNodeIds: deckSanitizerOptions.chromeNodeIds,
-        editorTransientClasses: deckSanitizerOptions.transientClassNames,
-        editorElementIdAttr: deckSanitizerOptions.editorElementIdAttr,
-        editorSlideIdAttr: deckSanitizerOptions.editorSlideIdAttr,
-        persistedDeckPlaybackState: playbackState
-      };
+      return {};
     }
 
     function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {
