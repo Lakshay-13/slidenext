@@ -27,6 +27,15 @@ function loadFinalizeEditorDeckMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadStyleMutationHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorStyleMutationWithTransaction(styleApi, selection, prop, value, options = {}) {',
+    '\n\n    // Apply styles immediately to active selected elements'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function createControlMap() {
   return {
     elTextContent: { disabled: false },
@@ -423,6 +432,7 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadStyleMutationHelper(fileContent, context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), false);
@@ -484,6 +494,7 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadStyleMutationHelper(fileContent, context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), false);
@@ -524,6 +535,7 @@ test('applySelectedElementStyle delegates unsuccessful result refresh to the sha
   };
 
   vm.createContext(context);
+  loadStyleMutationHelper(fileContent, context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), 'delegated');
@@ -582,6 +594,7 @@ test('applySelectedElementStyle delegates mutation and transaction assembly to t
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadStyleMutationHelper(fileContent, context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), true);
@@ -644,6 +657,7 @@ test('applySelectedElementStyle falls back to style-action refresh when inspecto
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadStyleMutationHelper(fileContent, context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), false);
@@ -742,6 +756,7 @@ test('applySelectedElementStyle tolerates missing style feedback labels after su
 
     vm.createContext(context);
     loadFinalizeEditorDeckMutation(fileContent, context);
+    loadStyleMutationHelper(fileContent, context);
     vm.runInContext(applySelectedElementStyleSource, context);
 
     assert.equal(context.applySelectedElementStyle(testCase.prop, testCase.value), true);
@@ -832,6 +847,7 @@ test('applySelectedElementStyle refreshes the layer list when the z-index change
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadStyleMutationHelper(fileContent, context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('zIndex', '9'), true);
@@ -888,6 +904,7 @@ test('applySelectedElementStyle forwards a reversible CSS style transaction', ()
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadStyleMutationHelper(fileContent, context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), true);
@@ -948,6 +965,7 @@ test('applySelectedElementStyle forwards a reversible text property transaction'
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadStyleMutationHelper(fileContent, context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('text', 'After'), true);
