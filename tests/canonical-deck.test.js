@@ -229,6 +229,54 @@ test('updateCanonicalNodeText returns null for no-op or invalid text updates', (
   ]), null);
 });
 
+test('updateCanonicalNodeAttributes immutably updates nested source attributes', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'node-1',
+        html: '<img src="before.png">',
+        attributes: { src: 'before.png', alt: 'Preview' },
+        children: [{
+          id: 'child-1',
+          attributes: { src: 'child-before.png' }
+        }]
+      }]
+    }]
+  });
+
+  const updatedDeck = canonicalDeck.updateCanonicalNodeAttributes(sourceDeck, [
+    { id: 'node-1', attributes: { src: 'after.png' } },
+    { id: 'child-1', attributes: { src: 'child-after.png' } }
+  ]);
+
+  assert.ok(canonicalDeck.isCanonicalDeck(updatedDeck));
+  assert.equal(sourceDeck.slides[0].nodes[0].attributes.src, 'before.png');
+  assert.equal(sourceDeck.slides[0].nodes[0].children[0].attributes.src, 'child-before.png');
+  assert.equal(updatedDeck.slides[0].nodes[0].attributes.src, 'after.png');
+  assert.equal(updatedDeck.slides[0].nodes[0].attributes.alt, 'Preview');
+  assert.equal(updatedDeck.slides[0].nodes[0].children[0].attributes.src, 'child-after.png');
+});
+
+test('updateCanonicalNodeAttributes returns null for no-op or invalid attribute updates', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', attributes: { src: 'same.png' } }]
+    }]
+  });
+
+  assert.equal(canonicalDeck.updateCanonicalNodeAttributes(deck, [
+    { id: 'node-1', attributes: { src: 'same.png' } }
+  ]), null);
+  assert.equal(canonicalDeck.updateCanonicalNodeAttributes(deck, [
+    { id: 'missing', attributes: { src: 'new.png' } }
+  ]), null);
+  assert.equal(canonicalDeck.updateCanonicalNodeAttributes(deck, [
+    { id: 'node-1', attributes: null }
+  ]), null);
+});
+
 test('updateCanonicalSlideBackground immutably updates selected slide backgrounds', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{

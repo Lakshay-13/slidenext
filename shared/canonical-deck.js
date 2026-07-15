@@ -472,6 +472,67 @@
     });
   }
 
+  function updateCanonicalNodeAttributes(deckLike, nodeAttributes = []) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const attributeUpdates = new Map();
+    (Array.isArray(nodeAttributes) ? nodeAttributes : []).forEach((entry) => {
+      const nodeId = normalizeString(entry && entry.id).trim();
+      const patch = asPlainObject(entry && entry.attributes);
+      if (!nodeId || Object.keys(patch).length === 0) return;
+      attributeUpdates.set(nodeId, patch);
+    });
+    if (!isCanonicalDeck(deck) || attributeUpdates.size === 0) {
+      return null;
+    }
+
+    let didChange = false;
+    function updateNodes(nodes = []) {
+      return nodes.map((node, index) => {
+        if (!node || typeof node !== 'object') return node;
+        let nextNode = node;
+        let nodeChanged = false;
+        const currentChildren = Array.isArray(node.children) ? node.children : [];
+        const nextChildren = updateNodes(currentChildren);
+        if (nextChildren.some((child, childIndex) => child !== currentChildren[childIndex])) {
+          nextNode = {
+            ...nextNode,
+            children: nextChildren
+          };
+          nodeChanged = true;
+        }
+
+        const patch = attributeUpdates.get(node.id);
+        if (patch) {
+          const currentAttributes = asPlainObject(node.attributes);
+          const nextAttributes = { ...currentAttributes, ...patch };
+          if (Object.keys(patch).some((key) => currentAttributes[key] !== patch[key])) {
+            nextNode = {
+              ...nextNode,
+              attributes: nextAttributes
+            };
+            nodeChanged = true;
+          }
+        }
+
+        if (!nodeChanged) return node;
+        didChange = true;
+        return createCanonicalNode(nextNode, index);
+      });
+    }
+
+    const nextSlides = deck.slides.map((slide) => ({
+      ...slide,
+      nodes: updateNodes(Array.isArray(slide.nodes) ? slide.nodes : [])
+    }));
+    if (!didChange) return null;
+    return createCanonicalDeck({
+      ...deck,
+      slides: nextSlides
+    });
+  }
+
   function updateCanonicalSlideBackground(deckLike, slideIds = [], background = '') {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -524,6 +585,7 @@
     updateCanonicalNodeVisibility,
     updateCanonicalNodeLayout,
     updateCanonicalNodeText,
+    updateCanonicalNodeAttributes,
     updateCanonicalSlideBackground
   };
 });

@@ -1032,3 +1032,74 @@ test('applySelectedElementStyle forwards a reversible text property transaction'
   }]]);
   assert.equal(sourceDeck.slides[0].nodes[0].text, 'Before');
 });
+
+test('applySelectedElementStyle persists image source edits in the canonical node attributes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applySelectedElementStyleSource = extractFunctionSource(
+    fileContent,
+    'function applySelectedElementStyle(prop, val) {',
+    '\n\n    // Delete active selection'
+  );
+  const element = {
+    dataset: { editorId: 'node-1' },
+    isConnected: true,
+    tagName: 'IMG',
+    style: {},
+    src: 'before.png',
+    getAttribute(name) {
+      return name === 'src' ? this.src : null;
+    }
+  };
+  const sourceDeck = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'node-1',
+        html: '<img src="before.png">',
+        attributes: { src: 'before.png' }
+      }]
+    }]
+  });
+  const historyCalls = [];
+  const context = {
+    SlideNextStudioEditorMutation: studioMutation,
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorStyle: styleState,
+    SlideNextStudioEditorTransaction: studioTransaction,
+    selectedElements: [element],
+    assignEditorElementId() {
+      return 'node-1';
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getIframeDoc() {
+      return {};
+    },
+    buildEditorCanonicalDeck() {
+      return sourceDeck;
+    },
+    isElementLocked() {
+      return false;
+    },
+    syncInspectorForSelection() {},
+    syncSelectionOverlay() {},
+    generateThumbnails() {},
+    updateLayersList() {},
+    saveHistoryState(...args) {
+      historyCalls.push(args);
+    },
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeEditorDeckMutation(fileContent, context);
+  loadStyleMutationHelper(fileContent, context);
+  vm.runInContext(applySelectedElementStyleSource, context);
+
+  assert.equal(context.applySelectedElementStyle('src', 'after.png'), true);
+  assert.equal(element.src, 'after.png');
+  assert.equal(historyCalls[0][2].slides[0].nodes[0].attributes.src, 'after.png');
+  assert.equal(sourceDeck.slides[0].nodes[0].attributes.src, 'before.png');
+});
