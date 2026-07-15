@@ -63,3 +63,28 @@ test('renderStudioLayersList preserves layer labels and action availability', ()
   assert.match(html, /onclick="changeLayerZIndexByRef\(event, 'backward'\)" disabled/);
   assert.equal((html.match(/onclick="selectLayerElementByRef\(event\)"/g) || []).length, 2);
 });
+
+test('renderStudioLayersListInDocument mounts rows and stores stable editor element ids', () => {
+  const rows = [{ dataset: {} }, { dataset: {} }];
+  const listContainer = {
+    children: rows,
+    innerHTML: ''
+  };
+  const result = layerView.renderStudioLayersListInDocument({
+    documentRef: {
+      getElementById(id) {
+        return id === 'slideLayersList' ? listContainer : null;
+      }
+    },
+    activeSlideSnapshot: { id: 'slide-1' },
+    layers: [
+      { id: 'element-1', typeIcon: 'title', displayName: 'Title' },
+      { id: 'element-2', typeIcon: 'image', displayName: 'Image' }
+    ]
+  });
+
+  assert.equal(result, true);
+  assert.match(listContainer.innerHTML, /Title/);
+  assert.equal(rows[0].dataset.editorElementId, 'element-1');
+  assert.equal(rows[1].dataset.editorElementId, 'element-2');
+});

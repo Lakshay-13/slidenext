@@ -56,5 +56,29 @@
     }).join('');
   }
 
-  return { renderStudioLayersList };
+  function renderStudioLayersListInDocument(options = {}) {
+    const documentRef = options.documentRef;
+    const listContainer = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('slideLayersList')
+      : null;
+    if (!listContainer) return false;
+
+    listContainer.innerHTML = renderStudioLayersList(options);
+    const layers = Array.isArray(options.layers) ? options.layers : [];
+    const rows = listContainer.children;
+    if (!rows) return true;
+
+    for (let index = 0; index < rows.length; index += 1) {
+      const layer = layers[index];
+      if (layer && rows[index] && rows[index].dataset) {
+        rows[index].dataset.editorElementId = layer.id;
+      }
+    }
+    return true;
+  }
+
+  return {
+    renderStudioLayersList,
+    renderStudioLayersListInDocument
+  };
 });

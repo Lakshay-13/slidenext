@@ -69,6 +69,63 @@ function hasDisabledAttribute(attrs) {
   return /\sdisabled(?=\s|=|$)/.test(attrs);
 }
 
+test('updateLayersList delegates layer mounting and row identity to the shared layer view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateLayersListSource = extractFunctionSource(
+    fileContent,
+    'function updateLayersList() {',
+    '\n\n    function resolveLayerRowElement(row) {'
+  );
+  const iframeDoc = { id: 'doc' };
+  const activeSlide = { id: 'slide-1' };
+  const listContainer = createListContainer();
+  let delegatedOptions = null;
+  const context = {
+    SlideNextStudioEditorLayerView: {
+      renderStudioLayersListInDocument(options) {
+        delegatedOptions = options;
+        return true;
+      }
+    },
+    buildEditorDeckSnapshot() {
+      return {
+        activeSlideId: 'slide-1',
+        slides: [{ id: 'slide-1', elements: [{ id: 'element-1' }] }]
+      };
+    },
+    document: {
+      getElementById(id) {
+        return id === 'slideLayersList' ? listContainer : null;
+      }
+    },
+    getActiveSlide(doc) {
+      return doc === iframeDoc ? activeSlide : null;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getNormalizedSlideLayerOrder() {
+      return [];
+    },
+    getElementByEditorId() {
+      return null;
+    },
+    buildLayerOrderSelectionActionState() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateLayersListSource, context);
+
+  context.updateLayersList();
+
+  assert.equal(delegatedOptions.documentRef, context.document);
+  assert.equal(delegatedOptions.activeSlideSnapshot.id, 'slide-1');
+  assert.deepEqual(JSON.parse(JSON.stringify(delegatedOptions.layers)), [{ id: 'element-1' }]);
+  assert.equal(typeof delegatedOptions.resolveLayerState, 'function');
+});
+
 test('updateLayersList disables row layer controls when a layer cannot move in that direction', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateLayersListSource = extractFunctionSource(

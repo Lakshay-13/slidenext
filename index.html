@@ -9876,9 +9876,6 @@
 
     // Slide Elements / Layers List Inspector Panel
     function updateLayersList() {
-      const listContainer = document.getElementById('slideLayersList');
-      if (!listContainer) return;
-      
       const iframeDoc = getIframeDoc();
       const activeSlide = getActiveSlide(iframeDoc);
       const orderedLayerElements = activeSlide ? getNormalizedSlideLayerOrder(activeSlide) : [];
@@ -9891,8 +9888,11 @@
       const layerView = typeof SlideNextStudioEditorLayerView !== 'undefined'
         ? SlideNextStudioEditorLayerView
         : null;
-      if (!layerView || typeof layerView.renderStudioLayersList !== 'function') return;
-      listContainer.innerHTML = layerView.renderStudioLayersList({
+      const canRenderLayers = layerView
+        && (typeof layerView.renderStudioLayersListInDocument === 'function'
+          || typeof layerView.renderStudioLayersList === 'function');
+      if (!canRenderLayers) return;
+      const renderOptions = {
         activeSlideSnapshot,
         layers,
         resolveLayerState: (layer) => {
@@ -9911,7 +9911,17 @@
             )
           };
         }
-      });
+      };
+      if (typeof layerView.renderStudioLayersListInDocument === 'function') {
+        return layerView.renderStudioLayersListInDocument({
+          documentRef: document,
+          ...renderOptions
+        });
+      }
+
+      const listContainer = document.getElementById('slideLayersList');
+      if (!listContainer || typeof layerView.renderStudioLayersList !== 'function') return;
+      listContainer.innerHTML = layerView.renderStudioLayersList(renderOptions);
       
       // Store stable editor ids on layer rows so actions can resolve the current DOM element.
       const rows = listContainer.children;
