@@ -103,6 +103,64 @@
     return true;
   }
 
+  function changeStudioLayerZIndexByRef(options = {}) {
+    const event = options.event;
+    if (!event) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    const currentTarget = event.currentTarget;
+    const parentRow = currentTarget && typeof currentTarget.closest === 'function'
+      ? currentTarget.closest('[class*="border"]')
+      : null;
+    const resolveLayerRowElement = typeof options.resolveLayerRowElement === 'function'
+      ? options.resolveLayerRowElement
+      : (row) => resolveStudioLayerRowElement({
+        row,
+        getElementByEditorId: options.getElementByEditorId
+      });
+    const element = resolveLayerRowElement(parentRow);
+    const refreshLayerOrderUi = typeof options.refreshLayerOrderUi === 'function'
+      ? options.refreshLayerOrderUi
+      : null;
+    const refreshAfterNoOp = () => {
+      if (refreshLayerOrderUi) {
+        refreshLayerOrderUi({ refreshLayersList: true, result: null });
+      }
+      return false;
+    };
+    if (!element || typeof options.isElementLocked !== 'function') {
+      return refreshAfterNoOp();
+    }
+    if (options.isElementLocked(element)) {
+      return refreshAfterNoOp();
+    }
+
+    let transaction = null;
+    const reorderSlideLayers = options.reorderSlideLayers;
+    const didChange = typeof reorderSlideLayers === 'function'
+      ? reorderSlideLayers(options.action, [element], {
+        onTransaction(nextTransaction) {
+          transaction = nextTransaction;
+        }
+      })
+      : false;
+    if (!didChange) {
+      return refreshAfterNoOp();
+    }
+
+    const liveSelectionApi = options.liveSelectionApi;
+    if (liveSelectionApi
+      && typeof liveSelectionApi.isStudioLiveSelectedElement === 'function'
+      && liveSelectionApi.isStudioLiveSelectedElement(options.selectedElements, element)
+      && typeof options.syncLayerOrderZIndexInput === 'function') {
+      options.syncLayerOrderZIndexInput(element);
+    }
+    if (typeof options.finalizeLayerOrderMutation === 'function') {
+      options.finalizeLayerOrderMutation('Auto: Rearranged Layers', { transaction });
+    }
+    return true;
+  }
+
   function syncStudioLayerList(options = {}) {
     const documentRef = options.documentRef;
     const iframeDoc = options.iframeDoc || null;
@@ -181,6 +239,7 @@
   }
 
   return {
+    changeStudioLayerZIndexByRef,
     resolveStudioLayerRowElement,
     selectStudioLayerElementByRef,
     toggleStudioLayerVisibilityByRef,

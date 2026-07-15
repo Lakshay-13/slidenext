@@ -206,6 +206,124 @@ test('toggleStudioLayerVisibilityByRef refreshes stale rows without mutating sel
   ]);
 });
 
+test('changeStudioLayerZIndexByRef refreshes locked rows without reordering', () => {
+  const row = { id: 'row-1' };
+  const target = { id: 'node-1' };
+  const calls = [];
+  const event = {
+    currentTarget: {
+      closest(selector) {
+        calls.push(['closest', selector]);
+        return row;
+      }
+    },
+    preventDefault() {
+      calls.push(['preventDefault']);
+    },
+    stopPropagation() {
+      calls.push(['stopPropagation']);
+    }
+  };
+
+  assert.equal(layerController.changeStudioLayerZIndexByRef({
+    event,
+    action: 'forward',
+    resolveLayerRowElement(currentRow) {
+      calls.push(['resolveLayerRowElement', currentRow]);
+      return target;
+    },
+    isElementLocked(element) {
+      calls.push(['isElementLocked', element]);
+      return true;
+    },
+    reorderSlideLayers() {
+      calls.push(['reorderSlideLayers']);
+      return true;
+    },
+    refreshLayerOrderUi(options) {
+      calls.push(['refreshLayerOrderUi', options]);
+    }
+  }), false);
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'preventDefault',
+    'stopPropagation',
+    'closest',
+    'resolveLayerRowElement',
+    'isElementLocked',
+    'refreshLayerOrderUi'
+  ]);
+  assert.deepEqual(calls[5][1], { refreshLayersList: true, result: null });
+});
+
+test('changeStudioLayerZIndexByRef finalizes successful reorders and syncs selected z-index', () => {
+  const row = { id: 'row-1' };
+  const target = { id: 'node-1' };
+  const transaction = { id: 'tx-1' };
+  const calls = [];
+  const event = {
+    currentTarget: {
+      closest(selector) {
+        calls.push(['closest', selector]);
+        return row;
+      }
+    },
+    preventDefault() {
+      calls.push(['preventDefault']);
+    },
+    stopPropagation() {
+      calls.push(['stopPropagation']);
+    }
+  };
+
+  assert.equal(layerController.changeStudioLayerZIndexByRef({
+    event,
+    action: 'backward',
+    resolveLayerRowElement() {
+      calls.push(['resolveLayerRowElement']);
+      return target;
+    },
+    isElementLocked() {
+      calls.push(['isElementLocked']);
+      return false;
+    },
+    reorderSlideLayers(action, elements, options) {
+      calls.push(['reorderSlideLayers', action, elements]);
+      options.onTransaction(transaction);
+      return true;
+    },
+    liveSelectionApi: {
+      isStudioLiveSelectedElement(selection, element) {
+        calls.push(['isStudioLiveSelectedElement', selection, element]);
+        return true;
+      }
+    },
+    selectedElements: [target],
+    syncLayerOrderZIndexInput(element) {
+      calls.push(['syncLayerOrderZIndexInput', element]);
+    },
+    finalizeLayerOrderMutation(label, options) {
+      calls.push(['finalizeLayerOrderMutation', label, options]);
+    }
+  }), true);
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'preventDefault',
+    'stopPropagation',
+    'closest',
+    'resolveLayerRowElement',
+    'isElementLocked',
+    'reorderSlideLayers',
+    'isStudioLiveSelectedElement',
+    'syncLayerOrderZIndexInput',
+    'finalizeLayerOrderMutation'
+  ]);
+  assert.equal(calls[5][1], 'backward');
+  assert.deepEqual(calls[5][2], [target]);
+  assert.equal(calls[7][1], target);
+  assert.deepEqual(calls[8][2], { transaction });
+});
+
 test('syncStudioLayerList assembles live layer action state before shared rendering', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const activeSlide = { id: 'slide-1' };

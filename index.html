@@ -9927,6 +9927,23 @@
     }
     
     function changeLayerZIndexByRef(event, action) {
+      const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
+        ? SlideNextStudioEditorLayerController
+        : null;
+      if (layerController && typeof layerController.changeStudioLayerZIndexByRef === 'function') {
+        return layerController.changeStudioLayerZIndexByRef({
+          event,
+          action,
+          resolveLayerRowElement,
+          refreshLayerOrderUi,
+          isElementLocked,
+          reorderSlideLayers,
+          liveSelectionApi: SlideNextStudioEditorLiveSelection,
+          selectedElements,
+          syncLayerOrderZIndexInput,
+          finalizeLayerOrderMutation
+        });
+      }
       event.preventDefault();
       event.stopPropagation();
       const parentRow = event.currentTarget.closest('[class*="border"]');
