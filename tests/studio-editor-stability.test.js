@@ -930,3 +930,70 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
     }]
   });
 });
+
+test('setupIframeDragging delegates interaction binding to the shared interaction module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setupIframeDraggingSource = extractFunctionSource(
+    fileContent,
+    'function setupIframeDragging(doc) {',
+    '\n\n    // Insert New elements'
+  );
+
+  const doc = { body: {} };
+  let delegatedDoc = null;
+  let delegatedOptions = null;
+  const context = {
+    DRAG_OVERFLOW_MARGIN_PX: 24,
+    DRAG_START_THRESHOLD_PX: 3,
+    MIN_ELEMENT_SIZE_PX: 12,
+    SNAP_THRESHOLD_PX: 12,
+    SlideNextStudioEditorDom: {
+      getStudioClosestPositionedAncestor() {}
+    },
+    SlideNextStudioEditorTransform: {},
+    SlideNextStudioEditorInteractions: {
+      attachStudioEditorInteractionHandlers(nextDoc, options) {
+        delegatedDoc = nextDoc;
+        delegatedOptions = options;
+        return true;
+      }
+    },
+    isGridSnapEnabled: false,
+    getTransformSelectionState() {},
+    selectElement() {},
+    resolveEditableTarget() {},
+    getSlideMetrics() {},
+    getPointerOnSlide() {},
+    getSelectionBounds() {},
+    getRectOnSlide() {},
+    ensureSelectionOverlay() {},
+    renderGuides() {},
+    syncSelectionOverlay() {},
+    updateDragHud() {},
+    hideGuides() {},
+    hideDragHud() {},
+    syncInspectorForSelection() {},
+    saveHistoryState() {},
+    triggerAutoSave() {},
+    triggerAutoVersion() {},
+    getNormalizedSlideLayerOrder() {},
+    isElementHidden() {},
+    renderMarqueeSelection() {},
+    clearMarqueeSelection() {},
+    commitEditorSelectionState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setupIframeDraggingSource, context);
+
+  context.setupIframeDragging(doc);
+
+  assert.equal(delegatedDoc, doc);
+  assert.equal(typeof delegatedOptions.transformOptions.onSessionStart, 'function');
+  assert.equal(typeof delegatedOptions.transformOptions.onSessionFrame, 'function');
+  assert.equal(typeof delegatedOptions.transformOptions.onSessionFinalize, 'function');
+  assert.equal(typeof delegatedOptions.marqueeOptions.onSessionStart, 'function');
+  assert.equal(typeof delegatedOptions.marqueeOptions.onSessionFrame, 'function');
+  assert.equal(typeof delegatedOptions.marqueeOptions.commitSelectionState, 'function');
+  assert.equal(typeof delegatedOptions.marqueeOptions.setSuppressNextFrameClick, 'function');
+});
