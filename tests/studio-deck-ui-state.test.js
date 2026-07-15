@@ -1,23 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
 
-const deckView = require('../shared/studio-deck-view.js');
-const deckReadyView = require('../shared/studio-deck-ready.js');
-const inspectorView = require('../shared/studio-editor-inspector-view.js');
-const wallpaperView = require('../shared/studio-editor-wallpaper-view.js');
-
-const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
-
-function extractFunctionSource(fileContent, startMarker, endMarker) {
-  const start = fileContent.indexOf(startMarker);
-  assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
-  const end = fileContent.indexOf(endMarker, start);
-  assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return fileContent.slice(start, end);
-}
+const editorUiState = require('../shared/studio-editor-ui-state.js');
 
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
@@ -35,13 +19,6 @@ function createClassList(initialValues = []) {
 }
 
 test('resetStudioDeckUiState clears stale sidebar chrome and disables stale inspector controls for loading and idle states', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resetStudioDeckUiStateSource = extractFunctionSource(
-    fileContent,
-    'function resetStudioDeckUiState(options = {}) {',
-    '\n\n    function resetStudioSaveButtonState() {'
-  );
-
   const elements = {
     slideCountLabel: { textContent: '5 / 12' },
     thumbnailsList: { innerHTML: '<div>Old thumbnails</div>' },
@@ -144,24 +121,24 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
     }
   };
 
-  const context = {
-    document: documentStub,
-    SlideNextStudioDeckView: deckView,
-    SlideNextStudioDeckReady: deckReadyView,
-    SlideNextStudioEditorInspectorView: inspectorView,
-    SlideNextStudioEditorWallpaperView: wallpaperView,
+  const localState = {
     hasPendingCustomWallpaperVersion: true,
     wallpaperTab: 'custom',
     customGradientType: 'radial'
   };
 
-  vm.createContext(context);
-  vm.runInContext(resetStudioDeckUiStateSource, context);
-
-  context.resetStudioDeckUiState({ isLoading: true });
-  assert.equal(context.hasPendingCustomWallpaperVersion, false);
-  assert.equal(context.wallpaperTab, 'solid');
-  assert.equal(context.customGradientType, 'linear');
+  assert.equal(editorUiState.resetStudioDeckUiState({
+    documentRef: documentStub,
+    isLoading: true,
+    resetLocalState() {
+      localState.hasPendingCustomWallpaperVersion = false;
+      localState.wallpaperTab = 'solid';
+      localState.customGradientType = 'linear';
+    }
+  }), true);
+  assert.equal(localState.hasPendingCustomWallpaperVersion, false);
+  assert.equal(localState.wallpaperTab, 'solid');
+  assert.equal(localState.customGradientType, 'linear');
   assert.equal(elements.slideCountLabel.textContent, '0 / 0');
   assert.match(elements.thumbnailsList.innerHTML, /Loading slides\.\.\./);
   assert.match(elements.slideLayersList.innerHTML, /Loading layers\.\.\./);
@@ -271,7 +248,7 @@ test('resetStudioDeckUiState clears stale sidebar chrome and disables stale insp
   assert.deepEqual(elements.wallpaperSolidsList.buttons.map((button) => button.disabled), [true, true]);
   assert.deepEqual(elements.wallpaperGradientsList.buttons.map((button) => button.disabled), [true, true]);
 
-  context.resetStudioDeckUiState();
+  editorUiState.resetStudioDeckUiState({ documentRef: documentStub });
   assert.equal(elements.slideCountLabel.textContent, '0 / 0');
   assert.match(elements.thumbnailsList.innerHTML, /No slides loaded/);
   assert.match(elements.slideLayersList.innerHTML, /No active slide/);

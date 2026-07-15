@@ -1179,6 +1179,7 @@
   <script src="/shared/studio-deck-ready.js"></script>
   <script src="/shared/deck-html.js"></script>
   <script src="/shared/studio-deck-view.js"></script>
+  <script src="/shared/studio-editor-ui-state.js"></script>
   <script src="/shared/studio-preview.js"></script>
   <script src="/shared/studio-pdf-export.js"></script>
   <script src="/shared/studio-pptx-export.js"></script>
@@ -8857,46 +8858,19 @@
     }
 
     function resetStudioDeckUiState(options = {}) {
-      const isLoading = !!options.isLoading;
-      hasPendingCustomWallpaperVersion = false;
-      wallpaperTab = 'solid';
-      customGradientType = 'linear';
-      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
+      const editorUiState = typeof SlideNextStudioEditorUiState !== 'undefined'
+        ? SlideNextStudioEditorUiState
         : null;
-      if (deckView && typeof deckView.resetStudioDeckSidebarUiState === 'function') {
-        deckView.resetStudioDeckSidebarUiState({
-          documentRef: document,
-          isLoading
-        });
-      }
-
-      const inspectorView = typeof SlideNextStudioEditorInspectorView !== 'undefined'
-        ? SlideNextStudioEditorInspectorView
-        : null;
-      if (inspectorView && typeof inspectorView.resetStudioInspectorUiState === 'function') {
-        inspectorView.resetStudioInspectorUiState({
-          documentRef: document
-        });
-      }
-
-      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
-        ? SlideNextStudioEditorWallpaperView
-        : null;
-      if (wallpaperView && typeof wallpaperView.resetStudioWallpaperUiState === 'function') {
-        wallpaperView.resetStudioWallpaperUiState({
-          documentRef: document
-        });
-      }
-
-      const deckReadyView = typeof SlideNextStudioDeckReady !== 'undefined'
-        ? SlideNextStudioDeckReady
-        : null;
-      if (deckReadyView && typeof deckReadyView.resetStudioDeckControlState === 'function') {
-        deckReadyView.resetStudioDeckControlState({
-          documentRef: document
-        });
-      }
+      if (!editorUiState || typeof editorUiState.resetStudioDeckUiState !== 'function') return false;
+      return editorUiState.resetStudioDeckUiState({
+        documentRef: document,
+        isLoading: !!options.isLoading,
+        resetLocalState() {
+          hasPendingCustomWallpaperVersion = false;
+          wallpaperTab = 'solid';
+          customGradientType = 'linear';
+        }
+      });
     }
 
     function resolveCurrentStudioInsertionActionState(doc = getIframeDoc()) {
