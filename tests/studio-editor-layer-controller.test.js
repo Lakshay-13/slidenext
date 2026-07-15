@@ -3,6 +3,45 @@ const assert = require('node:assert/strict');
 
 const layerController = require('../shared/studio-editor-layer-controller.js');
 
+test('resolveStudioLayerRowElement resolves live elements from stable row ids', () => {
+  const row = { dataset: { editorElementId: 'node-1' } };
+  const liveElement = { id: 'node-1' };
+  const calls = [];
+
+  assert.equal(layerController.resolveStudioLayerRowElement({
+    row,
+    getElementByEditorId(id) {
+      calls.push(id);
+      return liveElement;
+    }
+  }), liveElement);
+  assert.deepEqual(calls, ['node-1']);
+});
+
+test('resolveStudioLayerRowElement returns null for stale or incomplete rows', () => {
+  const calls = [];
+  const getElementByEditorId = (id) => {
+    calls.push(id);
+    return { id };
+  };
+
+  assert.equal(layerController.resolveStudioLayerRowElement({
+    row: null,
+    getElementByEditorId
+  }), null);
+  assert.equal(layerController.resolveStudioLayerRowElement({
+    row: { dataset: {} },
+    getElementByEditorId
+  }), null);
+  assert.equal(layerController.resolveStudioLayerRowElement({
+    row: { dataset: { editorElementId: 'missing' } },
+    getElementByEditorId() {
+      return null;
+    }
+  }), null);
+  assert.deepEqual(calls, []);
+});
+
 test('syncStudioLayerList assembles live layer action state before shared rendering', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const activeSlide = { id: 'slide-1' };

@@ -9841,6 +9841,15 @@
     }
 
     function resolveLayerRowElement(row) {
+      const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
+        ? SlideNextStudioEditorLayerController
+        : null;
+      if (layerController && typeof layerController.resolveStudioLayerRowElement === 'function') {
+        return layerController.resolveStudioLayerRowElement({
+          row,
+          getElementByEditorId
+        });
+      }
       if (!row) return null;
       const editorId = row.dataset.editorElementId;
       return getElementByEditorId(editorId);

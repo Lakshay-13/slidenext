@@ -10,6 +10,15 @@
     root.SlideNextStudioEditorLayerController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (layerView) {
+  function resolveStudioLayerRowElement(options = {}) {
+    const row = options.row;
+    if (!row) return null;
+    const editorId = row.dataset && row.dataset.editorElementId;
+    const getElementByEditorId = options.getElementByEditorId;
+    if (!editorId || typeof getElementByEditorId !== 'function') return null;
+    return getElementByEditorId(editorId);
+  }
+
   function syncStudioLayerList(options = {}) {
     const documentRef = options.documentRef;
     const iframeDoc = options.iframeDoc || null;
@@ -87,5 +96,8 @@
     return true;
   }
 
-  return { syncStudioLayerList };
+  return {
+    resolveStudioLayerRowElement,
+    syncStudioLayerList
+  };
 });
