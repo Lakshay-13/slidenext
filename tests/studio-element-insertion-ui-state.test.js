@@ -180,6 +180,52 @@ test('insertElement records a slide-scoped markup transaction when adding a head
   ]);
 });
 
+test('insertElement delegates successful insertion finalization to the shared lifecycle helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const insertElementSource = extractFunctionSource(
+    fileContent,
+    'function insertElement(type) {',
+    '\n\n    // Rearrange Selected Element Layers'
+  );
+  const activeSlide = {
+    children: [],
+    appendChild() {}
+  };
+  const iframeDoc = {
+    createElement() {
+      return {
+        tagName: 'H2',
+        style: {},
+        appendChild() {}
+      };
+    }
+  };
+  let finalized = null;
+  const context = {
+    SlideNextStudioEditorInsertion: insertion,
+    getActiveSlide() {
+      return activeSlide;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    makeElementsHoverable() {},
+    finalizeInsertedElements(elements, versionLabel, transaction) {
+      finalized = { elements, versionLabel, transaction };
+      return true;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(insertElementSource, context);
+
+  assert.equal(context.insertElement('h2'), true);
+  assert.equal(finalized.elements.length, 1);
+  assert.equal(finalized.elements[0].tagName, 'H2');
+  assert.equal(finalized.versionLabel, 'Auto: Added H2');
+  assert.equal(finalized.transaction, null);
+});
+
 test('insertElement no-ops when no active slide is available or the element type is unsupported', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const insertElementSource = extractFunctionSource(

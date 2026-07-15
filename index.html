@@ -6567,6 +6567,13 @@
       }
       
       if (newEl) {
+        if (typeof finalizeInsertedElements === 'function') {
+          return finalizeInsertedElements(
+            [newEl],
+            'Auto: Added ' + type.toUpperCase(),
+            transaction
+          );
+        }
         selectElement(newEl);
         generateThumbnails();
         if (transaction) {
