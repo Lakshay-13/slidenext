@@ -163,11 +163,38 @@
     };
   }
 
+  function applyStudioAlignmentLayout(items = [], options = {}) {
+    const nextItems = Array.isArray(items) ? items : [];
+    const createPositionTransaction = typeof options.createPositionTransaction === 'function'
+      ? options.createPositionTransaction
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const transaction = createPositionTransaction
+      ? createPositionTransaction(nextItems, { getElementId })
+      : null;
+    let didApply = false;
+
+    nextItems.forEach((item) => {
+      if (!item || !item.element || !item.element.style) return;
+      item.element.style.left = `${item.nextLeft}px`;
+      item.element.style.top = `${item.nextTop}px`;
+      didApply = true;
+    });
+
+    return {
+      didApply,
+      transaction
+    };
+  }
+
   return {
     getStudioAlignmentSelection,
     buildStudioAlignmentActionState,
     renderStudioAlignmentToolbarState,
     buildStudioAlignedLayout,
-    buildStudioDistributedLayout
+    buildStudioDistributedLayout,
+    applyStudioAlignmentLayout
   };
 });

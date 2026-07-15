@@ -5288,6 +5288,13 @@
       );
       if (!alignmentResult.didChange) return false;
 
+      const applyStudioAlignmentLayout = (
+        typeof SlideNextStudioEditorAlignment !== 'undefined'
+        && SlideNextStudioEditorAlignment
+        && typeof SlideNextStudioEditorAlignment.applyStudioAlignmentLayout === 'function'
+      )
+        ? SlideNextStudioEditorAlignment.applyStudioAlignmentLayout
+        : null;
       const createStudioPositionTransaction = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -5295,21 +5302,31 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioPositionTransaction
         : null;
-      const transaction = createStudioPositionTransaction
-        ? createStudioPositionTransaction(alignmentResult.nextItems, {
-            getElementId(element) {
-              if (typeof assignEditorElementId === 'function') {
-                return assignEditorElementId(element);
-              }
-              return element && element.dataset && element.dataset.editorId;
-            }
-          })
-        : null;
-
-      alignmentResult.nextItems.forEach((item) => {
-        item.element.style.left = `${item.nextLeft}px`;
-        item.element.style.top = `${item.nextTop}px`;
-      });
+      const getAlignmentElementId = (element) => {
+        if (typeof assignEditorElementId === 'function') {
+          return assignEditorElementId(element);
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
+      let transaction = null;
+      if (applyStudioAlignmentLayout) {
+        const mutation = applyStudioAlignmentLayout(alignmentResult.nextItems, {
+          createPositionTransaction: createStudioPositionTransaction,
+          getElementId: getAlignmentElementId
+        });
+        if (!mutation.didApply) return false;
+        transaction = mutation.transaction;
+      } else {
+        transaction = createStudioPositionTransaction
+          ? createStudioPositionTransaction(alignmentResult.nextItems, {
+              getElementId: getAlignmentElementId
+            })
+          : null;
+        alignmentResult.nextItems.forEach((item) => {
+          item.element.style.left = `${item.nextLeft}px`;
+          item.element.style.top = `${item.nextTop}px`;
+        });
+      }
       finalizeEditorDeckMutation(`Auto: Aligned ${action}`, {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
@@ -5332,6 +5349,13 @@
       );
       if (!distributionResult.didChange) return false;
 
+      const applyStudioAlignmentLayout = (
+        typeof SlideNextStudioEditorAlignment !== 'undefined'
+        && SlideNextStudioEditorAlignment
+        && typeof SlideNextStudioEditorAlignment.applyStudioAlignmentLayout === 'function'
+      )
+        ? SlideNextStudioEditorAlignment.applyStudioAlignmentLayout
+        : null;
       const createStudioPositionTransaction = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -5339,21 +5363,31 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioPositionTransaction
         : null;
-      const transaction = createStudioPositionTransaction
-        ? createStudioPositionTransaction(distributionResult.nextItems, {
-            getElementId(element) {
-              if (typeof assignEditorElementId === 'function') {
-                return assignEditorElementId(element);
-              }
-              return element && element.dataset && element.dataset.editorId;
-            }
-          })
-        : null;
-
-      distributionResult.nextItems.forEach((item) => {
-        item.element.style.left = `${item.nextLeft}px`;
-        item.element.style.top = `${item.nextTop}px`;
-      });
+      const getDistributionElementId = (element) => {
+        if (typeof assignEditorElementId === 'function') {
+          return assignEditorElementId(element);
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
+      let transaction = null;
+      if (applyStudioAlignmentLayout) {
+        const mutation = applyStudioAlignmentLayout(distributionResult.nextItems, {
+          createPositionTransaction: createStudioPositionTransaction,
+          getElementId: getDistributionElementId
+        });
+        if (!mutation.didApply) return false;
+        transaction = mutation.transaction;
+      } else {
+        transaction = createStudioPositionTransaction
+          ? createStudioPositionTransaction(distributionResult.nextItems, {
+              getElementId: getDistributionElementId
+            })
+          : null;
+        distributionResult.nextItems.forEach((item) => {
+          item.element.style.left = `${item.nextLeft}px`;
+          item.element.style.top = `${item.nextTop}px`;
+        });
+      }
       finalizeEditorDeckMutation(`Auto: Distributed ${axis}`, {
         syncSelectionOverlay: true,
         refreshThumbnails: false,

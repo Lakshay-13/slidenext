@@ -259,3 +259,112 @@ test('alignSelectedElements forwards a reversible position transaction', () => {
     ]
   });
 });
+
+test('alignSelectedElements delegates position application to the shared alignment module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function alignSelectedElements(action = \'\') {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const first = { style: {} };
+  const second = { style: {} };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorAlignment: {
+      buildStudioAlignedLayout() {
+        return {
+          didChange: true,
+          nextItems: [
+            { element: first, nextLeft: 40, nextTop: 50 },
+            { element: second, nextLeft: 70, nextTop: 80 }
+          ]
+        };
+      },
+      applyStudioAlignmentLayout(items, options) {
+        calls.push(['applyStudioAlignmentLayout', items, options]);
+        items.forEach((item) => {
+          item.element.style.left = `${item.nextLeft}px`;
+          item.element.style.top = `${item.nextTop}px`;
+        });
+        return { didApply: true, transaction: { type: 'position' } };
+      }
+    },
+    buildAlignmentActionState() {
+      return {
+        alignmentActionState: {
+          canAlign: true,
+          selection: [{ element: first }, { element: second }]
+        }
+      };
+    },
+    finalizeEditorDeckMutation(label, options) {
+      calls.push(['finalizeEditorDeckMutation', label, options]);
+    },
+    updateAlignmentActionState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.alignSelectedElements('middle'), true);
+  assert.deepEqual(first.style, { left: '40px', top: '50px' });
+  assert.equal(calls[1][0], 'finalizeEditorDeckMutation');
+  assert.deepEqual(calls[1][2].transaction, { type: 'position' });
+});
+
+test('distributeSelectedElements delegates position application to the shared alignment module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function distributeSelectedElements(axis = \'\') {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const first = { style: {} };
+  const second = { style: {} };
+  const third = { style: {} };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorAlignment: {
+      buildStudioDistributedLayout() {
+        return {
+          didChange: true,
+          nextItems: [
+            { element: first, nextLeft: 10, nextTop: 20 },
+            { element: second, nextLeft: 30, nextTop: 40 },
+            { element: third, nextLeft: 50, nextTop: 60 }
+          ]
+        };
+      },
+      applyStudioAlignmentLayout(items, options) {
+        calls.push(['applyStudioAlignmentLayout', items, options]);
+        items.forEach((item) => {
+          item.element.style.left = `${item.nextLeft}px`;
+          item.element.style.top = `${item.nextTop}px`;
+        });
+        return { didApply: true, transaction: { type: 'position' } };
+      }
+    },
+    buildAlignmentActionState() {
+      return {
+        alignmentActionState: {
+          canAlign: true,
+          selection: [{ element: first }, { element: second }, { element: third }]
+        }
+      };
+    },
+    finalizeEditorDeckMutation(label, options) {
+      calls.push(['finalizeEditorDeckMutation', label, options]);
+    },
+    updateAlignmentActionState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.distributeSelectedElements('horizontal'), true);
+  assert.deepEqual(third.style, { left: '50px', top: '60px' });
+  assert.equal(calls[0][0], 'applyStudioAlignmentLayout');
+  assert.equal(calls[1][0], 'finalizeEditorDeckMutation');
+  assert.deepEqual(calls[1][2].transaction, { type: 'position' });
+});

@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const alignment = require('../shared/studio-editor-alignment.js');
+const transaction = require('../shared/studio-editor-transaction.js');
 
 function buildItems() {
   return [
@@ -165,4 +166,27 @@ test('renderStudioAlignmentToolbarState separates alignment and distribution rea
     selectionCount: 3
   }), true);
   assert.deepEqual(Object.values(buttons).map((button) => button.disabled), ids.map(() => false));
+});
+
+test('applyStudioAlignmentLayout applies positions and creates an optional position transaction', () => {
+  const first = {
+    dataset: { editorId: 'node-1' },
+    style: { left: '10px', top: '20px' }
+  };
+  const second = {
+    dataset: { editorId: 'node-2' },
+    style: { left: '30px', top: '40px' }
+  };
+  const result = alignment.applyStudioAlignmentLayout([
+    { element: first, nextLeft: 100, nextTop: 110 },
+    { element: second, nextLeft: 120, nextTop: 130 }
+  ], {
+    createPositionTransaction: transaction.createStudioPositionTransaction,
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(result.didApply, true);
+  assert.deepEqual(first.style, { left: '100px', top: '110px' });
+  assert.deepEqual(second.style, { left: '120px', top: '130px' });
+  assert.deepEqual(result.transaction.operations.map((operation) => operation.elementId), ['node-1', 'node-2']);
 });
