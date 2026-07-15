@@ -322,6 +322,7 @@ test('updateEditorPersistedDeckState reuses the shared persisted-state updater b
   );
 
   let delegatedArgs = null;
+  let updaterCreateCalls = 0;
   const context = {
     lastPersistedDeckHtml: '<html>old</html>',
     lastPersistedCanonicalDeck: { id: 'old-deck' },
@@ -329,6 +330,7 @@ test('updateEditorPersistedDeckState reuses the shared persisted-state updater b
     SlideNextDeckPersistence: deckPersistence,
     SlideNextStudioEditorPersistence: {
       createStudioPersistedDeckStateUpdater(options = {}) {
+        updaterCreateCalls += 1;
         delegatedArgs = options;
         return (nextState) => nextState;
       }
@@ -347,6 +349,15 @@ test('updateEditorPersistedDeckState reuses the shared persisted-state updater b
       cleanHtml: '<html>new</html>'
     }
   );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.updateEditorPersistedDeckState({
+      cleanHtml: '<html>newer</html>'
+    }))),
+    {
+      cleanHtml: '<html>newer</html>'
+    }
+  );
+  assert.equal(updaterCreateCalls, 1);
   assert.equal(typeof delegatedArgs.resolveCanonicalDeck, 'function');
   assert.equal(typeof delegatedArgs.normalizePlaybackState, 'function');
   assert.equal(typeof delegatedArgs.setPersistedDeckHtml, 'function');

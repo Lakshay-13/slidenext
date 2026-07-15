@@ -7659,36 +7659,40 @@
     }
 
     function updateEditorPersistedDeckState(nextState = {}) {
-      const createStudioPersistedDeckStateUpdater = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateUpdater === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateUpdater
-        : null;
-      if (!createStudioPersistedDeckStateUpdater) return {};
-      return createStudioPersistedDeckStateUpdater({
-        resolveCanonicalDeck(canonicalDeck) {
-          return resolveEditorStoredCanonicalDeck({
-            canonicalDeck
-          }) || null;
-        },
-        normalizePlaybackState(playbackState) {
-          return SlideNextDeckPersistence
-            && typeof SlideNextDeckPersistence.normalizePersistedDeckPlaybackState === 'function'
-            ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(playbackState)
-            : (playbackState || null);
-        },
-        setPersistedDeckHtml(cleanHtml) {
-          lastPersistedDeckHtml = cleanHtml;
-        },
-        setPersistedCanonicalDeck(canonicalDeck) {
-          lastPersistedCanonicalDeck = canonicalDeck;
-        },
-        setPersistedPlaybackState(playbackState) {
-          persistedDeckPlaybackState = playbackState;
-        }
-      })(nextState);
+      if (typeof updateEditorPersistedDeckState.stateUpdater !== 'function') {
+        const createStudioPersistedDeckStateUpdater = (
+          typeof SlideNextStudioEditorPersistence !== 'undefined'
+          && SlideNextStudioEditorPersistence
+          && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateUpdater === 'function'
+        )
+          ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateUpdater
+          : null;
+        if (!createStudioPersistedDeckStateUpdater) return {};
+        updateEditorPersistedDeckState.stateUpdater = createStudioPersistedDeckStateUpdater({
+          resolveCanonicalDeck(canonicalDeck) {
+            return resolveEditorStoredCanonicalDeck({
+              canonicalDeck
+            }) || null;
+          },
+          normalizePlaybackState(playbackState) {
+            return SlideNextDeckPersistence
+              && typeof SlideNextDeckPersistence.normalizePersistedDeckPlaybackState === 'function'
+              ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(playbackState)
+              : (playbackState || null);
+          },
+          setPersistedDeckHtml(cleanHtml) {
+            lastPersistedDeckHtml = cleanHtml;
+          },
+          setPersistedCanonicalDeck(canonicalDeck) {
+            lastPersistedCanonicalDeck = canonicalDeck;
+          },
+          setPersistedPlaybackState(playbackState) {
+            persistedDeckPlaybackState = playbackState;
+          }
+        });
+      }
+      if (typeof updateEditorPersistedDeckState.stateUpdater !== 'function') return {};
+      return updateEditorPersistedDeckState.stateUpdater(nextState);
     }
 
     function captureState() {
