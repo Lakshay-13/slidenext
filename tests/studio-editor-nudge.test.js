@@ -116,6 +116,25 @@ test('buildStudioNudgeActionState derives geometry readiness from the resolved s
   });
 });
 
+test('renderStudioNudgeToolbarState applies the nudge readiness to all directional controls', () => {
+  const buttons = {
+    nudgeSelectionUpBtn: { disabled: true },
+    nudgeSelectionLeftBtn: { disabled: true },
+    nudgeSelectionRightBtn: { disabled: true },
+    nudgeSelectionDownBtn: { disabled: true }
+  };
+
+  assert.equal(nudge.renderStudioNudgeToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return buttons[id] || null;
+      }
+    },
+    canNudge: true
+  }), true);
+  assert.deepEqual(Object.values(buttons).map((button) => button.disabled), [false, false, false, false]);
+});
+
 test('buildStudioNudgedLayout clamps to slide bounds and skips no-op edge nudges', () => {
   assert.deepEqual(nudge.buildStudioNudgedLayout([
     {

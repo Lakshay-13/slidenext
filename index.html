@@ -4381,10 +4381,9 @@
 
     function updateMotionActionState(doc = getIframeDoc()) {
       const motionActionState = buildMotionSelectionActionState(doc);
-      const canNudge = motionActionState.canNudge;
-      ['nudgeSelectionUpBtn', 'nudgeSelectionLeftBtn', 'nudgeSelectionRightBtn', 'nudgeSelectionDownBtn'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) btn.disabled = !canNudge;
+      return SlideNextStudioEditorNudge.renderStudioNudgeToolbarState({
+        documentRef: document,
+        canNudge: motionActionState.canNudge
       });
     }
 

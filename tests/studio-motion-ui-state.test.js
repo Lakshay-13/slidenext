@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const studioNudge = require('../shared/studio-editor-nudge.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -61,6 +62,7 @@ test('buildMotionSelectionActionState resolves nudge geometry from the current d
   const nudgeLayoutItems = [{ element: selectedElement }];
   const calls = [];
   const context = {
+    SlideNextStudioEditorNudge: studioNudge,
     SlideNextStudioEditorDom: {
       getStudioClosestPositionedAncestor() {
         return doc.activeSlide;
@@ -228,6 +230,7 @@ test('updateMotionActionState enables nudge controls only when the iframe has a 
   const activeSlide = { id: 'slide-1' };
   let layoutItems = [];
   const context = {
+    SlideNextStudioEditorNudge: studioNudge,
     SlideNextStudioEditorDom: {
       getStudioClosestPositionedAncestor() {
         return activeSlide;

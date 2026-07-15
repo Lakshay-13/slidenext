@@ -66,6 +66,22 @@
     };
   }
 
+  function renderStudioNudgeToolbarState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    const canNudge = !!options.canNudge;
+    [
+      'nudgeSelectionUpBtn',
+      'nudgeSelectionLeftBtn',
+      'nudgeSelectionRightBtn',
+      'nudgeSelectionDownBtn'
+    ].forEach((id) => {
+      const button = documentRef.getElementById(id);
+      if (button) button.disabled = !canNudge;
+    });
+    return true;
+  }
+
   function clampStudioNudgeValue(value, min, max) {
     return Math.max(min, Math.min(max, value));
   }
@@ -121,6 +137,7 @@
     getStudioNudgeSelection,
     buildStudioNudgeSelectionState,
     buildStudioNudgeActionState,
+    renderStudioNudgeToolbarState,
     buildStudioNudgeDeltaFromKey,
     buildStudioNudgedLayout
   };
