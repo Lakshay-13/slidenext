@@ -150,6 +150,34 @@ test('finalizeStudioSelectionToggleMutation honors skipped selection UI', () => 
   assert.deepEqual(calls, ['finalize']);
 });
 
+test('finalizeStudioInsertedElements selects inserted elements before finalizing persistence', () => {
+  const insertedElements = [{ id: 'node-1' }, { id: 'node-2' }];
+  const nextSelectionState = { selectedElements: insertedElements, selectedElement: insertedElements[0] };
+  const calls = [];
+
+  assert.equal(mutation.finalizeStudioInsertedElements({
+    insertedElements,
+    versionLabel: 'Auto: Pasted Element',
+    transaction: { id: 'tx-insert' },
+    selectAllElements(elements) {
+      calls.push(['selectAllElements', elements]);
+      return nextSelectionState;
+    },
+    commitSelectionState(selectionState) {
+      calls.push(['commitSelectionState', selectionState]);
+    },
+    finalizeMutation(label, options) {
+      calls.push(['finalizeMutation', label, options]);
+    }
+  }), true);
+
+  assert.deepEqual(calls, [
+    ['selectAllElements', insertedElements],
+    ['commitSelectionState', nextSelectionState],
+    ['finalizeMutation', 'Auto: Pasted Element', { transaction: { id: 'tx-insert' } }]
+  ]);
+});
+
 test('finalizeStudioSlideMutation forwards transaction and canonical deck persistence state', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };

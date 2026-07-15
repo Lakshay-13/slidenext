@@ -242,6 +242,41 @@ test('finalizeInsertedElements commits the new selection and delegates persisten
   ]);
 });
 
+test('finalizeInsertedElements delegates selection and persistence ordering to shared mutation', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const finalizeInsertedElementsSource = extractFunctionSource(
+    fileContent,
+    'function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {',
+    '\n\n    function copySelectedElements() {'
+  );
+  const insertedElements = [{ id: 'node-1' }];
+  let delegatedOptions = null;
+  const context = {
+    SlideNextStudioEditorMutation: {
+      finalizeStudioInsertedElements(options) {
+        delegatedOptions = options;
+        return true;
+      }
+    },
+    SlideNextStudioEditorSelection: {
+      selectAllStudioElements() {}
+    },
+    commitEditorSelectionState() {},
+    finalizeEditorDeckMutation() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(finalizeInsertedElementsSource, context);
+
+  assert.equal(context.finalizeInsertedElements(insertedElements, 'Auto: Pasted Element', { id: 'tx-1' }), true);
+  assert.equal(delegatedOptions.insertedElements, insertedElements);
+  assert.equal(delegatedOptions.versionLabel, 'Auto: Pasted Element');
+  assert.deepEqual(delegatedOptions.transaction, { id: 'tx-1' });
+  assert.equal(delegatedOptions.selectAllElements, context.SlideNextStudioEditorSelection.selectAllStudioElements);
+  assert.equal(delegatedOptions.commitSelectionState, context.commitEditorSelectionState);
+  assert.equal(delegatedOptions.finalizeMutation, context.finalizeEditorDeckMutation);
+});
+
 test('duplicateSelectedElements forwards the insertion markup transaction to history', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);

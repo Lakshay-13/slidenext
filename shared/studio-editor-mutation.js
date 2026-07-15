@@ -68,6 +68,27 @@
     return true;
   }
 
+  function finalizeStudioInsertedElements(options = {}) {
+    const insertedElements = options.insertedElements;
+    if (!insertedElements || insertedElements.length === 0) return false;
+    const selectAllElements = typeof options.selectAllElements === 'function'
+      ? options.selectAllElements
+      : () => ({ selectedElements: insertedElements, selectedElement: insertedElements[0] || null });
+    const commitSelectionState = typeof options.commitSelectionState === 'function'
+      ? options.commitSelectionState
+      : () => {};
+    const finalizeMutation = typeof options.finalizeMutation === 'function'
+      ? options.finalizeMutation
+      : () => {};
+
+    const nextSelectionState = selectAllElements(insertedElements);
+    commitSelectionState(nextSelectionState);
+    finalizeMutation(options.versionLabel, {
+      transaction: options.transaction
+    });
+    return true;
+  }
+
   function finalizeStudioSlideMutation(options = {}) {
     const finalizeSlideMutation = createStudioSlideMutationPersistenceFinalizer(options);
     const transaction = Object.prototype.hasOwnProperty.call(options, 'transaction')
@@ -108,6 +129,7 @@
     createStudioMutationFinalizer,
     finalizeStudioMutation,
     finalizeStudioSelectionToggleMutation,
+    finalizeStudioInsertedElements,
     finalizeStudioSlideMutation,
     createStudioSlideMutationPersistenceFinalizer
   };
