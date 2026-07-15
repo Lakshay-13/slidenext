@@ -7752,11 +7752,36 @@
     }
 
     function editorUndo() {
-      const createStudioHistoryStepRunner = SlideNextStudioHistory
-        && typeof SlideNextStudioHistory.createStudioHistoryStepRunner === 'function'
-        ? SlideNextStudioHistory.createStudioHistoryStepRunner
-        : null;
-      if (!createStudioHistoryStepRunner) {
+      if (typeof editorUndo.historyRunner !== 'function') {
+        const createStudioHistoryStepRunner = SlideNextStudioHistory
+          && typeof SlideNextStudioHistory.createStudioHistoryStepRunner === 'function'
+          ? SlideNextStudioHistory.createStudioHistoryStepRunner
+          : null;
+        if (!createStudioHistoryStepRunner) {
+          return {
+            didUndo: false,
+            undoStack,
+            redoStack,
+            restoreEntry: null
+          };
+        }
+        editorUndo.historyRunner = createStudioHistoryStepRunner({
+          stepHistory: SlideNextStudioHistory.stepStudioHistoryUndo,
+          didStepKey: 'didUndo',
+          getUndoStack: () => undoStack,
+          getRedoStack: () => redoStack,
+          setUndoStack(nextUndoStack) {
+            undoStack = nextUndoStack;
+          },
+          setRedoStack(nextRedoStack) {
+            redoStack = nextRedoStack;
+          },
+          restoreHistoryEntry: restoreFrameFromHistoryEntry,
+          updateHistoryButtons,
+          triggerAutoSave
+        });
+      }
+      if (typeof editorUndo.historyRunner !== 'function') {
         return {
           didUndo: false,
           undoStack,
@@ -7764,21 +7789,7 @@
           restoreEntry: null
         };
       }
-      return createStudioHistoryStepRunner({
-        stepHistory: SlideNextStudioHistory.stepStudioHistoryUndo,
-        didStepKey: 'didUndo',
-        getUndoStack: () => undoStack,
-        getRedoStack: () => redoStack,
-        setUndoStack(nextUndoStack) {
-          undoStack = nextUndoStack;
-        },
-        setRedoStack(nextRedoStack) {
-          redoStack = nextRedoStack;
-        },
-        restoreHistoryEntry: restoreFrameFromHistoryEntry,
-        updateHistoryButtons,
-        triggerAutoSave
-      })();
+      return editorUndo.historyRunner();
     }
 
     function editorRedo() {

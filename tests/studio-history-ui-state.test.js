@@ -134,10 +134,12 @@ test('editorUndo reuses the shared history step runner when available', () => {
     restoreEntry: { html: '<html></html>' }
   };
   let delegatedArgs = null;
+  let runnerCreateCalls = 0;
   const context = {
     SlideNextStudioHistory: {
       stepStudioHistoryUndo() {},
       createStudioHistoryStepRunner(options = {}) {
+        runnerCreateCalls += 1;
         delegatedArgs = options;
         return () => stepResult;
       }
@@ -162,6 +164,11 @@ test('editorUndo reuses the shared history step runner when available', () => {
     JSON.parse(JSON.stringify(context.editorUndo())),
     stepResult
   );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.editorUndo())),
+    stepResult
+  );
+  assert.equal(runnerCreateCalls, 1);
   assert.equal(delegatedArgs.stepHistory, context.SlideNextStudioHistory.stepStudioHistoryUndo);
   assert.equal(delegatedArgs.didStepKey, 'didUndo');
   assert.equal(typeof delegatedArgs.getUndoStack, 'function');
