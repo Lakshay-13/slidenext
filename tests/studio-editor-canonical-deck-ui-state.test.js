@@ -1723,7 +1723,7 @@ test('resolveEditorLiveActiveSlideId delegates to the shared deck view helper wh
   assert.equal(delegatedArgs.options.getActiveSlideId(iframeDoc), 'slide-live');
 });
 
-test('resolveEditorLiveActiveSlide prefers the shared editor DOM active slide helper when available', () => {
+test('resolveEditorLiveActiveSlide delegates to the shared editor DOM active slide helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorLiveActiveSlideSource = extractFunctionSource(
     fileContent,
@@ -1734,14 +1734,16 @@ test('resolveEditorLiveActiveSlide prefers the shared editor DOM active slide he
   const iframeDoc = {
     label: 'iframe-doc',
     querySelector() {
-      throw new Error('querySelector should not run when getActiveSlide is available');
+      throw new Error('querySelector should not run when the shared helper is available');
     }
   };
   const activeSlide = { id: 'slide-active-el' };
   const context = {
-    getActiveSlide(nextDoc) {
-      assert.equal(nextDoc, iframeDoc);
-      return activeSlide;
+    SlideNextStudioDeckView: {
+      resolveStudioLiveActiveSlide(nextDoc) {
+        assert.equal(nextDoc, iframeDoc);
+        return activeSlide;
+      }
     },
     getIframeDoc() {
       return iframeDoc;

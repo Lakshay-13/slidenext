@@ -259,6 +259,9 @@ test('buildEditorPreviewHtml falls back to the persisted html baseline when the 
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      resolveStudioLiveActiveSlide(nextDoc) {
+        return nextDoc && nextDoc.querySelector('.slide-active');
+      },
       buildStudioPreviewHtml(doc, options) {
         calls.push({
           doc,
@@ -832,6 +835,9 @@ test('buildEditorPreviewHtml prefers the live active slide when the editor frame
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      resolveStudioLiveActiveSlide(nextDoc) {
+        return nextDoc && nextDoc.querySelector('.slide-active');
+      },
       buildStudioPreviewHtml(doc, options) {
         calls.push({ doc, options });
         return '<html>preview</html>';
@@ -898,6 +904,9 @@ test('buildEditorPreviewHtml reuses the resolved live canonical deck when previe
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      resolveStudioLiveActiveSlide(nextDoc) {
+        return nextDoc.querySelector('.slide-active');
+      },
       buildStudioPreviewHtml(doc, options) {
         assert.equal(options.buildCanonicalDeck(doc), canonicalDeck);
         return options.buildFallbackHtml(doc);

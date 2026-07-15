@@ -1623,10 +1623,7 @@
       if (resolveStudioLiveActiveSlide) {
         return resolveStudioLiveActiveSlide(doc);
       }
-      if (!doc) {
-        return null;
-      }
-      return getActiveSlide(doc);
+      return null;
     }
 
     function resolveEditorLiveActiveSlideId(doc = getIframeDoc()) {
