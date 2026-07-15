@@ -41,6 +41,36 @@ test('applyStudioSlideReorderMutation moves a slide node and captures the contai
   });
 });
 
+test('applyStudioSlideInsertionMutation appends a slide node and captures the container markup transaction', () => {
+  const slideNode = { id: 'slide-2' };
+  const container = {
+    innerHTML: '<section data-slide-id="slide-1"></section>',
+    appendChild(node) {
+      assert.equal(node, slideNode);
+      this.innerHTML = '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section>';
+      return node;
+    }
+  };
+
+  const result = deckView.applyStudioSlideInsertionMutation(container, slideNode, {
+    createMarkupTransactionCapture(items, options) {
+      return studioTransaction.createStudioMarkupTransactionCapture(items, options);
+    }
+  });
+
+  assert.equal(result.didApply, true);
+  assert.deepEqual(result.transaction, {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'markup',
+      elementId: 'slides-container',
+      before: '<section data-slide-id="slide-1"></section>',
+      after: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section>'
+    }]
+  });
+});
+
 test('createStudioCanonicalDeckResolver caches the first canonical deck build for a view session', () => {
   const doc = { label: 'iframe-doc' };
   const calls = [];

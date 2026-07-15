@@ -327,6 +327,86 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   assert.deepEqual(calls[7][3].slides.map((slide) => slide.id), ['slide-1', 'slide-2']);
 });
 
+test('addSlideNode delegates slide insertion and transaction capture to the shared deck view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const addSlideNodeSource = extractFunctionSource(
+    fileContent,
+    'function addSlideNode() {',
+    '\n\n    // Delete Active Slide Node'
+  );
+  const existingSlide = { id: 'slide-1' };
+  const newSlide = { id: 'slide-2' };
+  const slides = [existingSlide];
+  const slidesContainer = { id: 'slides-container' };
+  const iframeDoc = {
+    getElementById(id) {
+      assert.equal(id, 'slidesContainer');
+      return slidesContainer;
+    }
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      applyStudioSlideInsertionMutation(...args) {
+        calls.push(['applyStudioSlideInsertionMutation', ...args]);
+        return {
+          didApply: true,
+          transaction: { type: 'markup' }
+        };
+      }
+    },
+    SlideNextStudioEditorDom: {
+      createStudioBlankSlide() {
+        return newSlide;
+      }
+    },
+    assignEditorSlideId() {},
+    getActiveSlide() {
+      return null;
+    },
+    getEditorDomOptions() {
+      return {};
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    getSlides() {
+      calls.push(['getSlides']);
+      return slides;
+    },
+    makeElementsHoverable() {},
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
+    },
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    setActiveSlide(index) {
+      calls.push(['setActiveSlide', index]);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadResolveCurrentStudioInsertionActionState(fileContent, context);
+  vm.runInContext(addSlideNodeSource, context);
+
+  assert.equal(context.addSlideNode(), true);
+  const delegation = calls.find(([name]) => name === 'applyStudioSlideInsertionMutation');
+  assert.equal(delegation[1], slidesContainer);
+  assert.equal(delegation[2], newSlide);
+  assert.equal(delegation[3].createMarkupTransactionCapture, null);
+  const finalize = calls.find(([name]) => name === 'triggerAutoVersion');
+  assert.equal(finalize[1], 'Auto: Added Slide');
+});
+
 test('addSlideNode no-ops when insertion state or the iframe document disallows adding slides', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const addSlideNodeSource = extractFunctionSource(

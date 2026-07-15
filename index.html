@@ -2776,12 +2776,6 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const markupCapture = createStudioMarkupTransactionCapture
-        ? createStudioMarkupTransactionCapture([{
-            element: container,
-            elementId: 'slides-container'
-          }])
-        : null;
       
       const newIndex = getSlides(iframeDoc).length;
       const newSlide = SlideNextStudioEditorDom.createStudioBlankSlide(iframeDoc, {
@@ -2825,15 +2819,36 @@
         : null;
 
       saveHistoryState();
-      
-      container.appendChild(newSlide);
+      const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
+        : null;
+      const applyStudioSlideInsertionMutation = deckViewApi
+        && typeof deckViewApi.applyStudioSlideInsertionMutation === 'function'
+        ? deckViewApi.applyStudioSlideInsertionMutation
+        : null;
+      let transaction = null;
+      if (applyStudioSlideInsertionMutation) {
+        const mutation = applyStudioSlideInsertionMutation(container, newSlide, {
+          createMarkupTransactionCapture: createStudioMarkupTransactionCapture
+        });
+        if (!mutation.didApply) return false;
+        transaction = mutation.transaction;
+      } else {
+        const markupCapture = createStudioMarkupTransactionCapture
+          ? createStudioMarkupTransactionCapture([{
+              element: container,
+              elementId: 'slides-container'
+            }])
+          : null;
+        container.appendChild(newSlide);
+        transaction = markupCapture
+          ? markupCapture.createTransaction()
+          : null;
+      }
       
       // Update UI
       generateThumbnails();
       setActiveSlide(newIndex);
-      const transaction = markupCapture
-        ? markupCapture.createTransaction()
-        : null;
       if (canonicalDeckAfterAddition) {
         finalizeSlideMutationPersistence('Auto: Added Slide', transaction, canonicalDeckAfterAddition);
       } else {
