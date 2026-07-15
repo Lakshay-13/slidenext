@@ -575,6 +575,9 @@
     const setPendingCanonicalDeck = typeof options.setPendingCanonicalDeck === 'function'
       ? options.setPendingCanonicalDeck
       : () => {};
+    const setLiveCanonicalDeck = typeof options.setLiveCanonicalDeck === 'function'
+      ? options.setLiveCanonicalDeck
+      : () => {};
     const getTimer = typeof options.getTimer === 'function'
       ? options.getTimer
       : () => null;
@@ -592,7 +595,10 @@
       : {};
 
     return function saveHistoryState(debounce = false, transaction = null, canonicalDeck = null) {
-      setPendingCanonicalDeck(arguments.length > 2 ? canonicalDeck : null);
+      const hasCanonicalDeck = arguments.length > 2;
+      const nextCanonicalDeck = hasCanonicalDeck ? canonicalDeck : null;
+      setLiveCanonicalDeck(nextCanonicalDeck);
+      setPendingCanonicalDeck(nextCanonicalDeck);
       const normalizedTransaction = transactionApi
         && typeof transactionApi.normalizeStudioEditorTransaction === 'function'
         ? transactionApi.normalizeStudioEditorTransaction(transaction)

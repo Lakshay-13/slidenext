@@ -472,6 +472,7 @@ test('createStudioHistorySaveHandler merges transactions and schedules history c
   const scheduledCalls = [];
   let pendingTransaction = { id: 'pending' };
   let pendingCanonicalDeck = null;
+  let liveCanonicalDeck = null;
   let timer = 'old-timer';
   let captureCalls = 0;
   const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
@@ -484,6 +485,9 @@ test('createStudioHistorySaveHandler merges transactions and schedules history c
     },
     setPendingCanonicalDeck(nextCanonicalDeck) {
       pendingCanonicalDeck = nextCanonicalDeck;
+    },
+    setLiveCanonicalDeck(nextCanonicalDeck) {
+      liveCanonicalDeck = nextCanonicalDeck;
     },
     getTimer() {
       return timer;
@@ -513,6 +517,7 @@ test('createStudioHistorySaveHandler merges transactions and schedules history c
     merged: true
   });
   assert.equal(pendingCanonicalDeck, canonicalDeck);
+  assert.equal(liveCanonicalDeck, canonicalDeck);
   assert.deepEqual(transactionCalls, [
     ['normalize', { id: 'next' }],
     ['merge', { id: 'pending' }, { id: 'next', normalized: true }]
@@ -524,6 +529,7 @@ test('createStudioHistorySaveHandler merges transactions and schedules history c
 test('createStudioHistorySaveHandler clears pending transactions when no transaction is provided', () => {
   let pendingTransaction = { id: 'pending' };
   let pendingCanonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  let liveCanonicalDeck = { kind: 'slidenext.deck', slides: [] };
   let scheduledCapture = false;
   const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
     getPendingTransaction() {
@@ -534,6 +540,9 @@ test('createStudioHistorySaveHandler clears pending transactions when no transac
     },
     setPendingCanonicalDeck(nextCanonicalDeck) {
       pendingCanonicalDeck = nextCanonicalDeck;
+    },
+    setLiveCanonicalDeck(nextCanonicalDeck) {
+      liveCanonicalDeck = nextCanonicalDeck;
     },
     getTimer() {
       return null;
@@ -550,6 +559,7 @@ test('createStudioHistorySaveHandler clears pending transactions when no transac
 
   assert.equal(pendingTransaction, null);
   assert.equal(pendingCanonicalDeck, null);
+  assert.equal(liveCanonicalDeck, null);
   assert.equal(scheduledCapture, true);
 });
 

@@ -1018,6 +1018,7 @@ test('saveHistoryState delegates transaction scheduling to the shared history sa
       createStudioHistorySaveHandler(options) {
         capturedHandlerOptions = options;
         return (debounce, transaction, canonicalDeck) => {
+          options.setLiveCanonicalDeck(canonicalDeck);
           options.setPendingCanonicalDeck(canonicalDeck);
           delegatedCalls.push([debounce, transaction]);
           return { didCapture: true };
@@ -1030,7 +1031,11 @@ test('saveHistoryState delegates transaction scheduling to the shared history sa
     clearTimeout() {},
     setTimeout() {},
     captureState() {},
-    pendingEditorCanonicalDeck: null
+    pendingEditorCanonicalDeck: null,
+    liveCanonicalArgs: null,
+    setEditorLiveCanonicalDeck(...args) {
+      context.liveCanonicalArgs = args;
+    }
   };
 
   vm.createContext(context);
@@ -1041,10 +1046,12 @@ test('saveHistoryState delegates transaction scheduling to the shared history sa
   assert.deepEqual(context.saveHistoryState(true, transaction, canonicalDeck), { didCapture: true });
   assert.deepEqual(delegatedCalls, [[true, transaction]]);
   assert.equal(context.pendingEditorCanonicalDeck, canonicalDeck);
+  assert.deepEqual(context.liveCanonicalArgs, [canonicalDeck, null, null]);
   assert.equal(capturedHandlerOptions.transactionApi, context.SlideNextStudioEditorTransaction);
   assert.equal(typeof capturedHandlerOptions.getPendingTransaction, 'function');
   assert.equal(typeof capturedHandlerOptions.setPendingTransaction, 'function');
   assert.equal(typeof capturedHandlerOptions.setPendingCanonicalDeck, 'function');
+  assert.equal(typeof capturedHandlerOptions.setLiveCanonicalDeck, 'function');
   assert.equal(typeof capturedHandlerOptions.getTimer, 'function');
   assert.equal(typeof capturedHandlerOptions.setTimer, 'function');
   assert.equal(capturedHandlerOptions.captureState, context.captureState);
@@ -1058,6 +1065,7 @@ test('saveHistoryState preserves canonical sidecars in its legacy fallback', () 
     '\n\n    function buildHistoryFrameHtml('
   );
 
+  let liveCanonicalArgs = null;
   const context = {
     SlideNextStudioHistory: {
       scheduleStudioHistoryCapture(timer, debounce, captureState) {
@@ -1073,7 +1081,9 @@ test('saveHistoryState preserves canonical sidecars in its legacy fallback', () 
     getIframeDoc() {
       return null;
     },
-    setEditorLiveCanonicalDeck() {}
+    setEditorLiveCanonicalDeck(...args) {
+      liveCanonicalArgs = args;
+    }
   };
 
   vm.createContext(context);
@@ -1083,6 +1093,7 @@ test('saveHistoryState preserves canonical sidecars in its legacy fallback', () 
   context.saveHistoryState(false, { id: 'legacy-transaction' }, canonicalDeck);
 
   assert.equal(context.pendingEditorCanonicalDeck, canonicalDeck);
+  assert.deepEqual(liveCanonicalArgs, [canonicalDeck, null, null]);
 });
 
 test('captureState skips history capture when no history entry can be created', () => {

@@ -8298,17 +8298,6 @@
     function saveHistoryState(debounce = false, transaction = null) {
       const hasCanonicalDeck = arguments.length > 2;
       const canonicalDeck = hasCanonicalDeck ? arguments[2] : null;
-      if (typeof setEditorLiveCanonicalDeck === 'function') {
-        const liveEditorDoc = typeof getIframeDoc === 'function' ? getIframeDoc() : null;
-        const liveSessionToken = typeof studioEditorSessionToken !== 'undefined'
-          ? studioEditorSessionToken
-          : null;
-        setEditorLiveCanonicalDeck(
-          hasCanonicalDeck ? canonicalDeck : null,
-          liveEditorDoc,
-          liveSessionToken
-        );
-      }
       const createStudioHistorySaveHandler = SlideNextStudioHistory
         && typeof SlideNextStudioHistory.createStudioHistorySaveHandler === 'function'
         ? SlideNextStudioHistory.createStudioHistorySaveHandler
@@ -8328,6 +8317,14 @@
           setPendingCanonicalDeck(nextCanonicalDeck) {
             pendingEditorCanonicalDeck = nextCanonicalDeck;
           },
+          setLiveCanonicalDeck(nextCanonicalDeck) {
+            if (typeof setEditorLiveCanonicalDeck !== 'function') return;
+            const liveEditorDoc = typeof getIframeDoc === 'function' ? getIframeDoc() : null;
+            const liveSessionToken = typeof studioEditorSessionToken !== 'undefined'
+              ? studioEditorSessionToken
+              : null;
+            setEditorLiveCanonicalDeck(nextCanonicalDeck, liveEditorDoc, liveSessionToken);
+          },
           getTimer: () => undoDebounceTimer,
           setTimer(nextTimer) {
             undoDebounceTimer = nextTimer;
@@ -8342,6 +8339,17 @@
 
       if (typeof pendingEditorCanonicalDeck !== 'undefined') {
         pendingEditorCanonicalDeck = canonicalDeck;
+      }
+      if (typeof setEditorLiveCanonicalDeck === 'function') {
+        const liveEditorDoc = typeof getIframeDoc === 'function' ? getIframeDoc() : null;
+        const liveSessionToken = typeof studioEditorSessionToken !== 'undefined'
+          ? studioEditorSessionToken
+          : null;
+        setEditorLiveCanonicalDeck(
+          hasCanonicalDeck ? canonicalDeck : null,
+          liveEditorDoc,
+          liveSessionToken
+        );
       }
       const transactionApi = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
