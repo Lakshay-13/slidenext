@@ -3936,18 +3936,7 @@
         });
       }
 
-      const nextCanonicalDeck = resolveEditorCanonicalDeckOverride(canonicalDeck, {
-        buildCanonicalDeck: canonicalDeck
-          ? () => buildEditorCanonicalDeck(doc)
-          : null
-      });
-      const canonicalDeckValidator = getEditorCanonicalDeckValidator();
-      const hasValidCanonicalDeck = canonicalDeckValidator
-        ? canonicalDeckValidator(nextCanonicalDeck)
-        : !!(nextCanonicalDeck && Array.isArray(nextCanonicalDeck.slides));
-      return hasValidCanonicalDeck
-        ? nextCanonicalDeck
-        : (nextCanonicalDeck ? buildEditorCanonicalDeck(doc) : null);
+      return null;
     }
 
     function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {

@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const presentationMetadata = require('../shared/presentation-metadata.js');
+const editorPersistence = require('../shared/studio-editor-persistence.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -102,6 +103,10 @@ function loadCreateEditorDeckViewSharedOptions(fileContent, context) {
 }
 
 function loadResolveEditorFallbackCanonicalDeck(fileContent, context) {
+  context.SlideNextStudioEditorPersistence = {
+    ...editorPersistence,
+    ...(context.SlideNextStudioEditorPersistence || {})
+  };
   if (typeof context.resolveEditorFallbackCanonicalDeck === 'function') {
     return;
   }
@@ -1001,7 +1006,7 @@ test('createEditorDeckViewSharedOptions delegates shared option composition thro
   assert.deepEqual(calls[3], ['resolveLiveActiveSlideId', iframeDoc]);
 });
 
-test('resolveEditorFallbackCanonicalDeck reuses the local deck canonical override resolver when available', () => {
+test('resolveEditorFallbackCanonicalDeck uses shared fallback resolution with the local deck override resolver', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
@@ -1028,6 +1033,7 @@ test('resolveEditorFallbackCanonicalDeck reuses the local deck canonical overrid
     return deck === rebuiltCanonicalDeck;
   };
   const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
     resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
       calls.push(['resolveEditorCanonicalDeckOverride', nextCanonicalDeck, options.buildCanonicalDeck]);
       return malformedCanonicalDeck;
@@ -1052,17 +1058,17 @@ test('resolveEditorFallbackCanonicalDeck reuses the local deck canonical overrid
 
   assert.equal(result, rebuiltCanonicalDeck);
   assert.equal(calls.length, 4);
-  assert.equal(calls[0][0], 'resolveEditorCanonicalDeckOverride');
-  assert.equal(calls[0][1], malformedCanonicalDeck);
-  assert.equal(typeof calls[0][2], 'function');
-  assert.deepEqual(calls.slice(1), [
-    ['getEditorCanonicalDeckValidator'],
+  assert.equal(calls[0][0], 'getEditorCanonicalDeckValidator');
+  assert.equal(calls[1][0], 'resolveEditorCanonicalDeckOverride');
+  assert.equal(calls[1][1], malformedCanonicalDeck);
+  assert.equal(typeof calls[1][2], 'function');
+  assert.deepEqual(calls.slice(2), [
     ['isCanonicalDeck', malformedCanonicalDeck],
     ['buildEditorCanonicalDeck', iframeDoc]
   ]);
 });
 
-test('resolveEditorFallbackCanonicalDeck rebuilds malformed canonical deck input through the local deck override helper path', () => {
+test('resolveEditorFallbackCanonicalDeck rebuilds malformed canonical deck input through shared fallback resolution', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
@@ -1085,6 +1091,7 @@ test('resolveEditorFallbackCanonicalDeck rebuilds malformed canonical deck input
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorPersistence: editorPersistence,
     SlideNextCanonicalDeck: {
       isCanonicalDeck(deck) {
         calls.push(['isCanonicalDeck', deck]);
@@ -1121,6 +1128,38 @@ test('resolveEditorFallbackCanonicalDeck rebuilds malformed canonical deck input
     ['isCanonicalDeck', malformedCanonicalDeck],
     ['buildEditorCanonicalDeck', iframeDoc]
   ]);
+});
+
+test('resolveEditorFallbackCanonicalDeck fails closed when the shared helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
+  );
+  const context = {
+    buildEditorCanonicalDeck() {
+      throw new Error('page-local canonical fallback should not run');
+    },
+    resolveEditorCanonicalDeckOverride() {
+      throw new Error('page-local canonical override should not run');
+    },
+    getEditorCanonicalDeckValidator() {
+      throw new Error('page-local canonical validation should not run');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.equal(
+    context.resolveEditorFallbackCanonicalDeck(null, {
+      metadata: {
+        title: 'Broken Deck'
+      }
+    }),
+    null
+  );
 });
 
 test('resolveEditorFallbackCanonicalDeck delegates fallback deck resolution through the shared persistence helper when available', () => {
