@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -88,6 +89,18 @@ test('buildEditorCanonicalDeck prefers the active live model unless DOM rebuild 
       }
     }
   };
+  context.studioEditorCanonicalDeckBuilder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    isCanonicalDeck: context.SlideNextCanonicalDeck.isCanonicalDeck,
+    getCurrentPresentationMetadata: () => context.currentPresentationMetadata,
+    getPersistedCanonicalDeck: () => context.lastPersistedCanonicalDeck,
+    resolveLiveCanonicalDeck: (doc) => context.resolveEditorLiveCanonicalDeck(doc, context.studioEditorSessionToken),
+    buildPresentationMetadataSeed: context.buildCurrentPresentationMetadataSeed,
+    getPresentationUrl: () => context.currentPresentationUrl,
+    getPresentationTitle: () => context.currentTitle,
+    buildStudioCanonicalDeck: (doc, options) => context.SlideNextStudioDeckContext.buildStudioCanonicalDeck(doc, options),
+    getSlideId: context.getEditorSlideId,
+    getNodeId: context.assignEditorElementId
+  });
 
   vm.createContext(context);
   vm.runInContext(buildEditorCanonicalDeckSource, context);

@@ -3526,49 +3526,7 @@
       if (typeof studioEditorCanonicalDeckBuilder === 'function') {
         return studioEditorCanonicalDeckBuilder(doc, options);
       }
-      const canonicalDeckOverride = options && typeof options === 'object'
-        && Object.prototype.hasOwnProperty.call(options, 'canonicalDeckOverride')
-        ? options.canonicalDeckOverride
-        : null;
-      if (canonicalDeckOverride && Array.isArray(canonicalDeckOverride.slides)) {
-        return canonicalDeckOverride;
-      }
-      if (options.preferLiveCanonicalDeck !== false && doc) {
-        const liveCanonicalDeck = typeof resolveEditorLiveCanonicalDeck === 'function'
-          ? resolveEditorLiveCanonicalDeck(doc, studioEditorSessionToken)
-          : null;
-        if (liveCanonicalDeck) {
-          return liveCanonicalDeck;
-        }
-      }
-      const buildStudioCanonicalDeck = SlideNextStudioDeckContext
-        && typeof SlideNextStudioDeckContext.buildStudioCanonicalDeck === 'function'
-        ? SlideNextStudioDeckContext.buildStudioCanonicalDeck
-        : null;
-      if (buildStudioCanonicalDeck) {
-        return buildStudioCanonicalDeck(doc, {
-          currentPresentationMetadata,
-          fallbackStoredPresentationMetadata: {
-            canonicalDeck: lastPersistedCanonicalDeck
-          },
-          buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
-          presentationUrl: currentPresentationUrl,
-          presentationTitle: currentTitle,
-          preferStoredCanonicalDeck: false,
-          getSlideId: getEditorSlideId,
-          getNodeId: assignEditorElementId
-        });
-      }
-
-      const storedCanonicalDeck = resolveEditorStoredCanonicalBaseline({
-        currentPresentationMetadata,
-        persistedCanonicalDeck: lastPersistedCanonicalDeck
-      });
-      if (!doc && storedCanonicalDeck) {
-        return storedCanonicalDeck;
-      }
-
-      return storedCanonicalDeck || null;
+      return null;
     }
 
     function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {

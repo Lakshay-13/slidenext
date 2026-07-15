@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const deckView = require('../shared/studio-deck-view.js');
 
@@ -59,6 +60,38 @@ function loadBuildEditorCanonicalDeck(fileContent, context, helperSource) {
   }
   if (typeof context.resolveEditorStoredCanonicalBaseline !== 'function') {
     loadResolveEditorStoredCanonicalBaseline(fileContent, context);
+  }
+  if (!Object.prototype.hasOwnProperty.call(context, 'studioEditorCanonicalDeckBuilder')) {
+    const deckContext = context.SlideNextStudioDeckContext || {};
+    const deckLoader = context.SlideNextDeckLoader || {};
+    const isCanonicalDeck = context.SlideNextCanonicalDeck
+      && typeof context.SlideNextCanonicalDeck.isCanonicalDeck === 'function'
+      ? context.SlideNextCanonicalDeck.isCanonicalDeck
+      : (value) => !!value && Array.isArray(value.slides);
+    context.studioEditorCanonicalDeckBuilder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+      isCanonicalDeck,
+      getCurrentPresentationMetadata: () => context.currentPresentationMetadata,
+      getPersistedCanonicalDeck: () => context.lastPersistedCanonicalDeck,
+      resolveLiveCanonicalDeck: (doc, options) => typeof context.resolveEditorLiveCanonicalDeck === 'function'
+        ? context.resolveEditorLiveCanonicalDeck(doc, options)
+        : null,
+      resolveStoredCanonicalBaseline: (options) => typeof context.resolveEditorStoredCanonicalBaseline === 'function'
+        ? context.resolveEditorStoredCanonicalBaseline(options)
+        : typeof deckContext.resolveStudioCanonicalBaseline === 'function'
+          ? deckContext.resolveStudioCanonicalBaseline(options)
+          : null,
+      buildPresentationMetadataSeed: context.buildCurrentPresentationMetadataSeed,
+      getPresentationUrl: () => context.currentPresentationUrl,
+      getPresentationTitle: () => context.currentTitle,
+      buildStudioCanonicalDeck: typeof deckContext.buildStudioCanonicalDeck === 'function'
+        ? (doc, options) => deckContext.buildStudioCanonicalDeck(doc, options)
+        : null,
+      buildCanonicalDeckFromDocument: typeof deckLoader.buildCanonicalDeckFromDocument === 'function'
+        ? (doc, options) => deckLoader.buildCanonicalDeckFromDocument(doc, options)
+        : null,
+      getSlideId: context.getEditorSlideId,
+      getNodeId: context.assignEditorElementId
+    });
   }
   vm.runInContext(helperSource, context);
 }
@@ -347,6 +380,7 @@ test('buildEditorCanonicalDeck fails closed when the shared canonical builder is
     sourcePath: '/presentations/onboarding-presentation/index.html'
   };
   const context = {
+    studioEditorCanonicalDeckBuilder: null,
     SlideNextStudioDeckContext: {},
     SlideNextDeckLoader: {
       buildCanonicalDeckFromDocument() {
@@ -742,7 +776,7 @@ test('resolveEditorCanonicalDeckOverride delegates canonical override resolution
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  loadBuildEditorCanonicalDeck(fileContent, context, helperSource);
 
   const result = context.resolveEditorCanonicalDeckOverride(null, {
     buildCanonicalDeck: () => context.buildEditorCanonicalDeck(iframeDoc)
