@@ -645,6 +645,140 @@ test('addSlideNode skips history when blank slide creation fails', () => {
   ]);
 });
 
+test('duplicateSlideNode clones the active slide, inserts it next to the source, and persists canonical order', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const duplicateSlideNodeSource = extractFunctionSource(
+    fileContent,
+    'function duplicateSlideNode() {',
+    '\n\n    function applyEditorSlideDeletionWithTransaction'
+  );
+  const sourceSlide = {
+    classList: {
+      remove(className) {
+        assert.equal(className, 'slide-active');
+      }
+    },
+    cloneNode(deep) {
+      assert.equal(deep, true);
+      return duplicateSlide;
+    }
+  };
+  const targetSlide = { id: 'slide-3' };
+  const duplicateSlide = {
+    classList: {
+      remove(className) {
+        assert.equal(className, 'slide-active');
+      }
+    }
+  };
+  const slides = [sourceSlide, targetSlide];
+  const slidesContainer = {
+    id: 'slides-container',
+    innerHTML: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-3"></section>',
+    insertBefore(node, beforeNode) {
+      assert.equal(node, duplicateSlide);
+      assert.equal(beforeNode, targetSlide);
+      slides.splice(1, 0, node);
+      this.innerHTML = '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section><section data-slide-id="slide-3"></section>';
+      return node;
+    }
+  };
+  const iframeDoc = {
+    getElementById(id) {
+      assert.equal(id, 'slidesContainer');
+      return slidesContainer;
+    }
+  };
+  const calls = [];
+  const context = {
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextDeckImport: {
+      importSlideToCanonicalSlide(slide, index, options) {
+        calls.push(['importSlideToCanonicalSlide', slide, index]);
+        return { id: options.getSlideId(), title: 'Source' };
+      }
+    },
+    SlideNextStudioEditorTransaction: studioTransaction,
+    assignEditorSlideId(slide, options) {
+      assert.equal(slide, duplicateSlide);
+      assert.equal(options.forceNew, true);
+      return 'slide-2';
+    },
+    buildEditorCanonicalDeck() {
+      return canonicalDeckModel.createCanonicalDeck({
+        slides: [{ id: 'slide-1' }, { id: 'slide-3' }]
+      });
+    },
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    getActiveSlide(doc) {
+      assert.equal(doc, iframeDoc);
+      return sourceSlide;
+    },
+    getEditorDomOptions() {
+      return {};
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    getSlides(doc) {
+      assert.equal(doc, iframeDoc);
+      calls.push(['getSlides']);
+      return slides;
+    },
+    makeElementsHoverable(slide) {
+      assert.equal(slide, duplicateSlide);
+      calls.push(['makeElementsHoverable']);
+    },
+    resolveCurrentStudioInsertionActionState() {
+      return { canDuplicateSlide: true };
+    },
+    sanitizeDuplicatedSubtree(slide) {
+      assert.equal(slide, duplicateSlide);
+      calls.push(['sanitizeDuplicatedSubtree']);
+    },
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
+    },
+    setActiveSlide(index) {
+      calls.push(['setActiveSlide', index]);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['triggerAutoVersion', label]);
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
+  loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
+  vm.runInContext(duplicateSlideNodeSource, context);
+
+  assert.equal(context.duplicateSlideNode(), true);
+  assert.deepEqual(slides, [sourceSlide, duplicateSlide, targetSlide]);
+  assert.deepEqual(calls.map(([name]) => name), [
+    'getIframeDoc',
+    'getSlides',
+    'sanitizeDuplicatedSubtree',
+    'makeElementsHoverable',
+    'importSlideToCanonicalSlide',
+    'saveHistoryState',
+    'generateThumbnails',
+    'setActiveSlide',
+    'saveHistoryState',
+    'triggerAutoSave',
+    'triggerAutoVersion'
+  ]);
+  assert.equal(calls[6][0], 'generateThumbnails');
+  assert.equal(calls[7][1], 1);
+  assert.equal(calls[10][1], 'Auto: Duplicated Slide');
+  assert.deepEqual(calls[8][3].slides.map((slide) => slide.id), ['slide-1', 'slide-2', 'slide-3']);
+});
+
 test('reorderSlides uses the shared iframe accessor and restores editor state after moving a slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const reorderSlidesSource = extractFunctionSource(

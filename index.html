@@ -705,11 +705,16 @@
           <!-- Generated dynamically -->
         </div>
 
-        <!-- Add Slide button at bottom -->
+        <!-- Slide actions at bottom -->
         <div class="p-4 border-t border-zinc-200 dark:border-white/5 bg-[#f9fafb] dark:bg-[#070707]">
-          <button id="addSlideBtn" onclick="addSlideNode()" class="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-[#7028d0]/30 text-white rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:border-white/5 disabled:text-white">
+          <div class="grid grid-cols-2 gap-2">
+          <button id="addSlideBtn" onclick="addSlideNode()" class="py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-[#7028d0]/30 text-white rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:border-white/5 disabled:text-white">
             <span class="material-symbols-outlined text-[16px] text-[#7028d0]">add_circle</span> Add New Slide
           </button>
+          <button id="duplicateSlideBtn" onclick="duplicateSlideNode()" disabled class="py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-[#7028d0]/30 text-white rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:border-white/5 disabled:text-white" title="Duplicate active slide">
+            <span class="material-symbols-outlined text-[16px] text-[#7028d0]">content_copy</span> Duplicate
+          </button>
+          </div>
         </div>
       </aside>
 
@@ -3034,6 +3039,7 @@
         const mutation = applyStudioSlideInsertionMutation(container, slideNode, {
           createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
           containerElementId,
+          beforeNode: options.beforeNode,
           getElementId: options.getElementId
         });
         return {
@@ -3042,7 +3048,8 @@
         };
       }
 
-      if (typeof container.appendChild !== 'function') {
+      if (typeof container.appendChild !== 'function'
+        && typeof container.insertBefore !== 'function') {
         return {
           didApply: false,
           transaction: null
@@ -3057,7 +3064,11 @@
             getElementId: options.getElementId
           })
         : null;
-      container.appendChild(slideNode);
+      if (options.beforeNode && typeof container.insertBefore === 'function') {
+        container.insertBefore(slideNode, options.beforeNode);
+      } else {
+        container.appendChild(slideNode);
+      }
       return {
         didApply: true,
         transaction: markupCapture
@@ -3126,6 +3137,78 @@
         finalizeSlideMutationPersistence('Auto: Added Slide', transaction, canonicalDeckAfterAddition);
       } else {
         finalizeSlideMutationPersistence('Auto: Added Slide', transaction);
+      }
+      return true;
+    }
+
+    function duplicateSlideNode() {
+      const iframeDoc = getIframeDoc();
+      const insertionState = resolveCurrentStudioInsertionActionState(iframeDoc);
+      if (!insertionState.canDuplicateSlide || !iframeDoc) return false;
+      const container = iframeDoc.getElementById('slidesContainer');
+      if (!container) return false;
+
+      const slides = getSlides(iframeDoc);
+      const sourceSlide = getActiveSlide(iframeDoc);
+      const sourceIndex = slides.indexOf(sourceSlide);
+      if (!sourceSlide || sourceIndex < 0 || typeof sourceSlide.cloneNode !== 'function') {
+        return false;
+      }
+
+      const duplicateSlide = sourceSlide.cloneNode(true);
+      if (!duplicateSlide) return false;
+      sanitizeDuplicatedSubtree(duplicateSlide);
+      if (duplicateSlide.classList && typeof duplicateSlide.classList.remove === 'function') {
+        duplicateSlide.classList.remove('slide-active');
+      }
+      const duplicateSlideId = assignEditorSlideId(duplicateSlide, { forceNew: true });
+      if (!duplicateSlideId) return false;
+      makeElementsHoverable(duplicateSlide);
+
+      const insertionIndex = sourceIndex + 1;
+      const insertCanonicalSlide = (
+        typeof SlideNextCanonicalDeck !== 'undefined'
+        && SlideNextCanonicalDeck
+        && typeof SlideNextCanonicalDeck.insertCanonicalSlide === 'function'
+      )
+        ? SlideNextCanonicalDeck.insertCanonicalSlide
+        : null;
+      const importSlideToCanonicalSlide = (
+        typeof SlideNextDeckImport !== 'undefined'
+        && SlideNextDeckImport
+        && typeof SlideNextDeckImport.importSlideToCanonicalSlide === 'function'
+      )
+        ? SlideNextDeckImport.importSlideToCanonicalSlide
+        : null;
+      const canonicalDeckBeforeDuplication = insertCanonicalSlide
+        && typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(iframeDoc)
+        : null;
+      const canonicalSlide = importSlideToCanonicalSlide
+        ? importSlideToCanonicalSlide(duplicateSlide, insertionIndex, {
+            getSlideId: () => duplicateSlideId
+          })
+        : {
+            id: duplicateSlideId,
+            title: `Slide ${insertionIndex + 1}`
+          };
+      const canonicalDeckAfterDuplication = insertCanonicalSlide
+        ? insertCanonicalSlide(canonicalDeckBeforeDuplication, canonicalSlide, insertionIndex)
+        : null;
+
+      saveHistoryState();
+      const mutation = applyEditorSlideInsertionWithTransaction(container, duplicateSlide, {
+        beforeNode: slides[insertionIndex] || null
+      });
+      if (!mutation.didApply) return false;
+      const transaction = mutation.transaction;
+
+      generateThumbnails();
+      setActiveSlide(insertionIndex);
+      if (canonicalDeckAfterDuplication) {
+        finalizeSlideMutationPersistence('Auto: Duplicated Slide', transaction, canonicalDeckAfterDuplication);
+      } else {
+        finalizeSlideMutationPersistence('Auto: Duplicated Slide', transaction);
       }
       return true;
     }
@@ -10439,6 +10522,7 @@
       const hasActiveSlide = !!getActiveSlide(doc);
       return {
         canAddSlide: hasSlideContainer,
+        canDuplicateSlide: hasSlideContainer && hasActiveSlide,
         canInsertElements: hasActiveSlide
       };
     }
@@ -10462,6 +10546,10 @@
       const addSlideBtn = document.getElementById('addSlideBtn');
       if (addSlideBtn) {
         addSlideBtn.disabled = !actionState.canAddSlide;
+      }
+      const duplicateSlideBtn = document.getElementById('duplicateSlideBtn');
+      if (duplicateSlideBtn) {
+        duplicateSlideBtn.disabled = !actionState.canDuplicateSlide;
       }
 
       [

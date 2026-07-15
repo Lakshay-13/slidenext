@@ -151,6 +151,30 @@ test('applyStudioSlideInsertionMutation appends a slide node and captures the co
   });
 });
 
+test('applyStudioSlideInsertionMutation inserts before a sibling when requested', () => {
+  const slideNode = { id: 'slide-2' };
+  const beforeNode = { id: 'slide-3' };
+  const container = {
+    innerHTML: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-3"></section>',
+    insertBefore(node, sibling) {
+      assert.equal(node, slideNode);
+      assert.equal(sibling, beforeNode);
+      this.innerHTML = '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section><section data-slide-id="slide-3"></section>';
+      return node;
+    }
+  };
+
+  const result = deckView.applyStudioSlideInsertionMutation(container, slideNode, {
+    beforeNode,
+    createMarkupTransactionCapture(items, options) {
+      return studioTransaction.createStudioMarkupTransactionCapture(items, options);
+    }
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.transaction.operations[0].after, '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section><section data-slide-id="slide-3"></section>');
+});
+
 test('applyStudioSlideDeletionMutation removes a slide node and captures the container markup transaction', () => {
   const slideNode = {
     remove() {
@@ -521,6 +545,7 @@ test('resolveStudioInsertionActionState derives slide insertion readiness from t
     deckView.resolveStudioInsertionActionState(null),
     {
       canAddSlide: false,
+      canDuplicateSlide: false,
       canInsertElements: false
     }
   );
@@ -539,6 +564,7 @@ test('resolveStudioInsertionActionState derives slide insertion readiness from t
     ),
     {
       canAddSlide: true,
+      canDuplicateSlide: true,
       canInsertElements: true
     }
   );
@@ -547,6 +573,7 @@ test('resolveStudioInsertionActionState derives slide insertion readiness from t
 test('syncStudioInsertionToolbarActionState resolves and renders insertion controls in one shared operation', () => {
   const controls = {
     addSlideBtn: { disabled: true },
+    duplicateSlideBtn: { disabled: true },
     toolbarInsertHeadingBtn: { disabled: true },
     toolbarInsertParagraphBtn: { disabled: true },
     toolbarInsertImageBtn: { disabled: true },
@@ -581,6 +608,7 @@ test('syncStudioInsertionToolbarActionState resolves and renders insertion contr
     }
   }), true);
   assert.equal(controls.addSlideBtn.disabled, false);
+  assert.equal(controls.duplicateSlideBtn.disabled, false);
   assert.equal(controls.insertCodeBtn.disabled, false);
 });
 

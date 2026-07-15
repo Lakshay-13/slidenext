@@ -17,6 +17,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 function createControls() {
   return {
     addSlideBtn: { disabled: true },
+    duplicateSlideBtn: { disabled: true },
     toolbarInsertHeadingBtn: { disabled: true },
     toolbarInsertParagraphBtn: { disabled: true },
     toolbarInsertImageBtn: { disabled: true },
@@ -61,6 +62,7 @@ test('resolveCurrentStudioInsertionActionState reports add-slide and insertion r
     JSON.parse(JSON.stringify(context.resolveCurrentStudioInsertionActionState(null))),
     {
       canAddSlide: false,
+      canDuplicateSlide: false,
       canInsertElements: false
     }
   );
@@ -73,6 +75,7 @@ test('resolveCurrentStudioInsertionActionState reports add-slide and insertion r
     }))),
     {
       canAddSlide: true,
+      canDuplicateSlide: false,
       canInsertElements: false
     }
   );
@@ -86,6 +89,7 @@ test('resolveCurrentStudioInsertionActionState reports add-slide and insertion r
     }))),
     {
       canAddSlide: true,
+      canDuplicateSlide: true,
       canInsertElements: true
     }
   );
@@ -112,6 +116,7 @@ test('resolveCurrentStudioInsertionActionState reuses the shared deck-view inser
         });
         return {
           canAddSlide: true,
+          canDuplicateSlide: true,
           canInsertElements: true
         };
       }
@@ -131,6 +136,7 @@ test('resolveCurrentStudioInsertionActionState reuses the shared deck-view inser
     JSON.parse(JSON.stringify(context.resolveCurrentStudioInsertionActionState(doc))),
     {
       canAddSlide: true,
+      canDuplicateSlide: true,
       canInsertElements: true
     }
   );
@@ -175,6 +181,7 @@ test('updateInsertionActionState enables deck-ready insert controls only when th
   context.updateInsertionActionState(null);
   assert.deepEqual(getDisabledStates(controls), {
     addSlideBtn: true,
+    duplicateSlideBtn: true,
     toolbarInsertHeadingBtn: true,
     toolbarInsertParagraphBtn: true,
     toolbarInsertImageBtn: true,
@@ -194,6 +201,7 @@ test('updateInsertionActionState enables deck-ready insert controls only when th
   });
   assert.deepEqual(getDisabledStates(controls), {
     addSlideBtn: false,
+    duplicateSlideBtn: true,
     toolbarInsertHeadingBtn: true,
     toolbarInsertParagraphBtn: true,
     toolbarInsertImageBtn: true,
@@ -215,6 +223,7 @@ test('updateInsertionActionState enables deck-ready insert controls only when th
   context.updateInsertionActionState(readyDoc);
   assert.deepEqual(getDisabledStates(controls), {
     addSlideBtn: false,
+    duplicateSlideBtn: false,
     toolbarInsertHeadingBtn: false,
     toolbarInsertParagraphBtn: false,
     toolbarInsertImageBtn: false,

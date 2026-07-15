@@ -202,6 +202,7 @@
 
     return {
       canAddSlide: !!slideContainer,
+      canDuplicateSlide: !!slideContainer && !!getActiveSlide(doc),
       canInsertElements: !!getActiveSlide(doc)
     };
   }
@@ -211,6 +212,8 @@
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
     const addSlideButton = documentRef.getElementById('addSlideBtn');
     if (addSlideButton) addSlideButton.disabled = !options.canAddSlide;
+    const duplicateSlideButton = documentRef.getElementById('duplicateSlideBtn');
+    if (duplicateSlideButton) duplicateSlideButton.disabled = !options.canDuplicateSlide;
     [
       'toolbarInsertHeadingBtn',
       'toolbarInsertParagraphBtn',
@@ -616,7 +619,7 @@
   function applyStudioSlideInsertionMutation(container, slideNode, options = {}) {
     if (!container
       || !slideNode
-      || typeof container.appendChild !== 'function') {
+      || (typeof container.appendChild !== 'function' && typeof container.insertBefore !== 'function')) {
       return {
         didApply: false,
         transaction: null
@@ -625,7 +628,13 @@
 
     return runStudioSlideMutationWithTransaction(
       container,
-      () => container.appendChild(slideNode),
+      () => {
+        if (options.beforeNode && typeof container.insertBefore === 'function') {
+          container.insertBefore(slideNode, options.beforeNode);
+        } else {
+          container.appendChild(slideNode);
+        }
+      },
       options
     );
   }

@@ -14,6 +14,7 @@
     'studioSaveBtn',
     'studioVersionBtn',
     'addSlideBtn',
+    'duplicateSlideBtn',
     'zoomOutBtn',
     'zoomSelect',
     'zoomInBtn',
