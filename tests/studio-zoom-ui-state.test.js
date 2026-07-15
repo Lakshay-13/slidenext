@@ -56,6 +56,7 @@ test('applyZoom tolerates a missing zoom select while fitting the canvas', () =>
         calls.push(['localStorage.setItem', key, value]);
       }
     },
+    SlideNextStudioEditorZoom: require('../shared/studio-editor-zoom.js'),
     zoomFactor: 1
   };
 

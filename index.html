@@ -1148,6 +1148,7 @@
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-ruler.js"></script>
   <script src="/shared/studio-editor-ruler-view.js"></script>
+  <script src="/shared/studio-editor-zoom.js"></script>
   <script src="/shared/studio-editor-mutation.js"></script>
   <script src="/shared/studio-editor-transaction.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
@@ -6543,37 +6544,18 @@
 
     // 4. Zoom Engine (Center workspace stage)
     function applyZoom(scaleVal) {
-      const stage = document.getElementById('canvasStage');
-      const scroller = document.getElementById('canvasScrollContainer');
-      const wrapper = document.getElementById('canvasWrapper');
-      const select = document.getElementById('zoomSelect');
-      
-      if (!stage || !scroller || !wrapper) return;
-      
-      if (scaleVal === 'fit') {
-        const stageWidth = stage.clientWidth - 48;
-        const stageHeight = stage.clientHeight - 48;
-        const scaleX = stageWidth / 1920;
-        const scaleY = stageHeight / 1080;
-        zoomFactor = Math.min(scaleX, scaleY);
-        zoomFactor = Math.max(0.15, Math.min(1.5, zoomFactor)); // bounds fitting
-        if (select) {
-          select.value = 'fit';
-        }
-      } else {
-        zoomFactor = parseFloat(scaleVal);
-        if (select) {
-          select.value = scaleVal;
-        }
-      }
-      
-      // Store in local storage
-      localStorage.setItem('presentationZoom', scaleVal);
-      
-      // Apply scale
-      scroller.style.width = (1920 * zoomFactor) + 'px';
-      scroller.style.height = (1080 * zoomFactor) + 'px';
-      wrapper.style.transform = `translate(-50%, -50%) scale(${zoomFactor})`;
+      const zoomApi = typeof SlideNextStudioEditorZoom !== 'undefined'
+        ? SlideNextStudioEditorZoom
+        : null;
+      if (!zoomApi || typeof zoomApi.applyStudioZoom !== 'function') return;
+      const result = zoomApi.applyStudioZoom({
+        documentRef: document,
+        localStorageRef: localStorage,
+        scaleVal,
+        zoomFactor
+      });
+      if (!result.didApply) return;
+      zoomFactor = result.zoomFactor;
       if (typeof syncCanvasRulers === 'function') {
         syncCanvasRulers();
       }
