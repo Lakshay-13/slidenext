@@ -659,6 +659,11 @@
           <span>Present</span>
         </button>
 
+        <button id="exportPdfBtn" onclick="exportPdf()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300" title="Export presentation to PDF">
+          <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+          <span>PDF</span>
+        </button>
+
         <button id="openSourceViewBtn" onclick="openSourceViewModal()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
           <span class="material-symbols-outlined text-[16px]">code</span>
           <span>HTML</span>
@@ -1156,6 +1161,7 @@
   <script src="/shared/deck-html.js"></script>
   <script src="/shared/studio-deck-view.js"></script>
   <script src="/shared/studio-preview.js"></script>
+  <script src="/shared/studio-pdf-export.js"></script>
   <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/studio-version-actions.js"></script>
   <script src="/shared/studio-version-history.js"></script>
@@ -8952,6 +8958,7 @@
 
       [
         'launchPreviewBtn',
+        'exportPdfBtn',
         'studioSaveBtn',
         'studioVersionBtn',
         'addSlideBtn',
@@ -9238,6 +9245,11 @@
       const previewBtn = document.getElementById('launchPreviewBtn');
       if (previewBtn) {
         previewBtn.disabled = !actionState.canLaunchPreview;
+      }
+
+      const exportPdfBtn = document.getElementById('exportPdfBtn');
+      if (exportPdfBtn) {
+        exportPdfBtn.disabled = !actionState.canUseDeckActions;
       }
     }
 
@@ -10096,6 +10108,20 @@
     }
 
     // Presentation Live Preview from workspace
+    function exportPdf() {
+      const actionState = resolveCurrentStudioDeckReadyActionState();
+      if (!actionState.canUseDeckActions) return false;
+      const pdfExport = typeof SlideNextStudioPdfExport !== 'undefined'
+        ? SlideNextStudioPdfExport
+        : null;
+      if (!pdfExport || typeof pdfExport.openStudioPdfPrintWindow !== 'function') {
+        return false;
+      }
+      const html = buildEditorPreviewHtml();
+      if (!html) return false;
+      return pdfExport.openStudioPdfPrintWindow({ html });
+    }
+
     function launchPreview() {
       if (!resolveCurrentStudioDeckReadyActionState().canLaunchPreview) return;
       if (!currentPresentationUrl) return;
