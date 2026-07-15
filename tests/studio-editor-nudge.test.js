@@ -163,6 +163,25 @@ test('renderStudioNudgeToolbarState applies the nudge readiness to all direction
   assert.deepEqual(Object.values(buttons).map((button) => button.disabled), [false, false, false, false]);
 });
 
+test('syncStudioNudgeToolbarState builds and renders directional controls in one shared operation', () => {
+  const buttons = {
+    nudgeSelectionUpBtn: { disabled: true },
+    nudgeSelectionLeftBtn: { disabled: true },
+    nudgeSelectionRightBtn: { disabled: true },
+    nudgeSelectionDownBtn: { disabled: true }
+  };
+
+  assert.equal(nudge.syncStudioNudgeToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return buttons[id] || null;
+      }
+    },
+    canNudge: true
+  }), true);
+  assert.deepEqual(Object.values(buttons).map((button) => button.disabled), [false, false, false, false]);
+});
+
 test('buildStudioNudgedLayout clamps to slide bounds and skips no-op edge nudges', () => {
   assert.deepEqual(nudge.buildStudioNudgedLayout([
     {

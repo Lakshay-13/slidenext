@@ -311,6 +311,41 @@ test('updateMotionActionState enables nudge controls only when the iframe has a 
   });
 });
 
+test('updateMotionActionState delegates toolbar state assembly to the shared nudge view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateMotionActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateMotionActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateStyleActionState(doc = getIframeDoc()) {'
+  );
+  const doc = { activeSlide: {} };
+  const calls = [];
+  const context = {
+    buildMotionSelectionActionState(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return { canNudge: true };
+    },
+    SlideNextStudioEditorNudge: {
+      syncStudioNudgeToolbarState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateMotionActionStateSource, context);
+
+  assert.equal(context.updateMotionActionState(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.equal(calls[0].canNudge, true);
+});
+
 test('nudgeSelectedElements returns false and refreshes motion controls when selection geometry cannot be resolved', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const nudgeSelectedElementsSource = extractFunctionSource(

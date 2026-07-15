@@ -82,6 +82,20 @@
     return true;
   }
 
+  function buildStudioNudgeToolbarState(options = {}) {
+    return {
+      canNudge: !!options.canNudge
+    };
+  }
+
+  function syncStudioNudgeToolbarState(options = {}) {
+    const actionState = buildStudioNudgeToolbarState(options);
+    return renderStudioNudgeToolbarState({
+      documentRef: options.documentRef,
+      ...actionState
+    });
+  }
+
   function clampStudioNudgeValue(value, min, max) {
     return Math.max(min, Math.min(max, value));
   }
@@ -162,7 +176,9 @@
     getStudioNudgeSelection,
     buildStudioNudgeSelectionState,
     buildStudioNudgeActionState,
+    buildStudioNudgeToolbarState,
     renderStudioNudgeToolbarState,
+    syncStudioNudgeToolbarState,
     buildStudioNudgeDeltaFromKey,
     buildStudioNudgedLayout,
     applyStudioNudgedLayout

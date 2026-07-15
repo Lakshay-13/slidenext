@@ -4511,6 +4511,19 @@
 
     function updateMotionActionState(doc = getIframeDoc()) {
       const motionActionState = buildMotionSelectionActionState(doc);
+      const syncStudioNudgeToolbarState = (
+        typeof SlideNextStudioEditorNudge !== 'undefined'
+        && SlideNextStudioEditorNudge
+        && typeof SlideNextStudioEditorNudge.syncStudioNudgeToolbarState === 'function'
+      )
+        ? SlideNextStudioEditorNudge.syncStudioNudgeToolbarState
+        : null;
+      if (syncStudioNudgeToolbarState) {
+        return syncStudioNudgeToolbarState({
+          documentRef: document,
+          canNudge: motionActionState.canNudge
+        });
+      }
       return SlideNextStudioEditorNudge.renderStudioNudgeToolbarState({
         documentRef: document,
         canNudge: motionActionState.canNudge
