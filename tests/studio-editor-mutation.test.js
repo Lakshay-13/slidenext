@@ -486,3 +486,22 @@ test('finalizeStudioWallpaperMutation forwards an optional canonical deck sideca
     }
   });
 });
+
+test('finalizeStudioWallpaperMutation preserves a canonical sidecar in the fallback path', () => {
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  let historyArgs = null;
+
+  mutation.finalizeStudioWallpaperMutation({
+    transaction: { id: 'tx-wallpaper-fallback-canonical' },
+    canonicalDeck,
+    saveHistoryState(...args) {
+      historyArgs = args;
+    }
+  });
+
+  assert.deepEqual(historyArgs, [
+    false,
+    { id: 'tx-wallpaper-fallback-canonical' },
+    canonicalDeck
+  ]);
+});

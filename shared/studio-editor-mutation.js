@@ -206,7 +206,11 @@
       options.generateThumbnails();
     }
     if (typeof options.saveHistoryState === 'function') {
-      options.saveHistoryState(false, transaction);
+      if (canonicalDeck) {
+        options.saveHistoryState(false, transaction, canonicalDeck);
+      } else {
+        options.saveHistoryState(false, transaction);
+      }
     }
     if (typeof options.triggerAutoSave === 'function') {
       options.triggerAutoSave();
