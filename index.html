@@ -9670,6 +9670,18 @@
       });
     }
 
+    function setStudioAutoSaveStatusWithWarningCount(state, warningCount = 0) {
+      const statusView = typeof SlideNextStudioEditorStatusView !== 'undefined'
+        ? SlideNextStudioEditorStatusView
+        : null;
+      if (!statusView || typeof statusView.setStudioAutoSaveStatus !== 'function') return false;
+      return statusView.setStudioAutoSaveStatus({
+        documentRef: document,
+        state,
+        warningCount
+      });
+    }
+
     function setStudioSaveButtonState(state) {
       const normalizedState = state === 'saving-version'
         ? 'saving-version'
@@ -10557,8 +10569,10 @@
           ? SlideNextStudioPptxExport
           : null,
         documentRef: typeof document !== 'undefined' ? document : null,
-        setStatus: typeof setStudioAutoSaveStatus === 'function'
-          ? setStudioAutoSaveStatus
+        setStatus: typeof setStudioAutoSaveStatusWithWarningCount === 'function'
+          ? setStudioAutoSaveStatusWithWarningCount
+          : typeof setStudioAutoSaveStatus === 'function'
+            ? setStudioAutoSaveStatus
           : null,
         sourcePath: typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '',
         filename: `${currentTitle || 'slidenext-presentation'}.pptx`
@@ -10584,8 +10598,10 @@
           ? SlideNextStudioPdfExport
           : null,
         documentRef: typeof document !== 'undefined' ? document : null,
-        setStatus: typeof setStudioAutoSaveStatus === 'function'
-          ? setStudioAutoSaveStatus
+        setStatus: typeof setStudioAutoSaveStatusWithWarningCount === 'function'
+          ? setStudioAutoSaveStatusWithWarningCount
+          : typeof setStudioAutoSaveStatus === 'function'
+            ? setStudioAutoSaveStatus
           : null
       })();
     }

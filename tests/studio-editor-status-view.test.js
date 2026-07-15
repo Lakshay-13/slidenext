@@ -35,6 +35,22 @@ test('setStudioAutoSaveStatus safely skips missing status chrome', () => {
   assert.equal(statusView.setStudioAutoSaveStatus({ documentRef: { getElementById() { return null; } } }), false);
 });
 
+test('setStudioAutoSaveStatus surfaces the PPTX warning count when provided', () => {
+  const statusEl = { innerHTML: '' };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'autoSaveStatus' ? statusEl : null;
+    }
+  };
+
+  assert.equal(statusView.setStudioAutoSaveStatus({
+    documentRef,
+    state: 'exported-with-warnings',
+    warningCount: 3
+  }), true);
+  assert.match(statusEl.innerHTML, /PPTX Exported with warnings \(3\)/);
+});
+
 test('setStudioSaveButtonState renders saving and idle version states', () => {
   const saveBtn = { disabled: false, innerHTML: '<span>Save Version</span>' };
   const documentRef = {

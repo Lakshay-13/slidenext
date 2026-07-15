@@ -138,7 +138,10 @@
           setStatus('export-failed');
           return false;
         }
-        setStatus(result.warningCount > 0 ? 'exported-with-warnings' : 'exported');
+        setStatus(
+          result.warningCount > 0 ? 'exported-with-warnings' : 'exported',
+          result.warningCount
+        );
         return true;
       } catch (error) {
         setStatus('export-failed');

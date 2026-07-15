@@ -15,6 +15,9 @@
     if (!statusEl) return false;
 
     const state = options.state;
+    const warningCount = Number.isInteger(options.warningCount) && options.warningCount > 0
+      ? options.warningCount
+      : 0;
     if (state === 'loading') {
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Loading deck...</span>`;
     } else if (state === 'saving') {
@@ -32,7 +35,8 @@
     } else if (state === 'exported') {
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> PPTX Exported</span>`;
     } else if (state === 'exported-with-warnings') {
-      statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> PPTX Exported with warnings</span>`;
+      const warningSuffix = warningCount > 0 ? ` (${warningCount})` : '';
+      statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> PPTX Exported with warnings${warningSuffix}</span>`;
     } else if (state === 'exporting-pdf') {
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Exporting PDF...</span>`;
     } else if (state === 'pdf-export-failed') {

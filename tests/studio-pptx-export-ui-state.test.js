@@ -56,8 +56,8 @@ test('exportPptx posts the canonical deck and downloads the server response', as
         return Promise.resolve({ success: true, filename: 'Demo_deck.pptx', warningCount: 2 });
       }
     },
-    setStudioAutoSaveStatus(state) {
-      statuses.push(state);
+    setStudioAutoSaveStatus(state, warningCount) {
+      statuses.push([state, warningCount]);
     }
   };
 
@@ -65,7 +65,10 @@ test('exportPptx posts the canonical deck and downloads the server response', as
 
   assert.equal(await context.exportPptx(), true);
   assert.equal(button.disabled, false);
-  assert.deepEqual(statuses, ['exporting', 'exported-with-warnings']);
+  assert.deepEqual(statuses, [
+    ['exporting', undefined],
+    ['exported-with-warnings', 2]
+  ]);
   const exportCall = calls.find(call => call[0] === 'exportStudioPptx');
   assert.deepEqual(JSON.parse(JSON.stringify(exportCall[1])), {
     canonicalDeck: {
