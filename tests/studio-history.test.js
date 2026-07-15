@@ -174,6 +174,17 @@ test('createStudioHistoryEntry normalizes duplicate model-only selection ids', (
   assert.deepEqual(entry.selectedElementIds, ['node-1', 'node-2']);
 });
 
+test('createStudioHistoryEntry normalizes duplicate live selection ids', () => {
+  const entry = studioHistory.createStudioHistoryEntry({ id: 'doc' }, {
+    getSelectedElementIds() {
+      return [' node-1 ', 'node-1', '', 'node-2', 'node-2'];
+    },
+    canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] }
+  });
+
+  assert.deepEqual(entry.selectedElementIds, ['node-1', 'node-2']);
+});
+
 test('buildStudioHistoryEntry resolves live editor history state before delegating to entry creation', () => {
   const doc = { id: 'doc' };
   const canonicalDeck = {

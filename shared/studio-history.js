@@ -183,7 +183,7 @@
       ? (getActiveSlideId(doc) || '')
       : (typeof options.activeSlideId === 'string' ? options.activeSlideId : '');
     const selectedElementIds = doc
-      ? getSelectedElementIds(doc)
+      ? normalizeStudioHistoryIdList(getSelectedElementIds(doc))
       : normalizeStudioHistoryIdList(options.selectedElementIds);
     const canonicalDeck = options.canonicalDeck && typeof options.canonicalDeck === 'object'
       ? options.canonicalDeck
