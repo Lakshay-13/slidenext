@@ -24,6 +24,15 @@ function loadGroupMutationHelper(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadUngroupMutationHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorUngroupMutationWithTransaction(options = {}) {',
+    'function ungroupSelectedElements() {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('updateGroupActionState delegates toolbar state assembly to the shared group view', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
@@ -508,6 +517,7 @@ test('ungroupSelectedElements restores child positions, removes the wrapper, and
     }
   };
   vm.createContext(context);
+  loadUngroupMutationHelper(fileContent, context);
   vm.runInContext(source, context);
 
   assert.equal(context.ungroupSelectedElements(), true);
@@ -580,6 +590,7 @@ test('ungroupSelectedElements delegates wrapper removal to the shared group modu
   };
 
   vm.createContext(context);
+  loadUngroupMutationHelper(fileContent, context);
   vm.runInContext(source, context);
 
   assert.equal(context.ungroupSelectedElements(), true);

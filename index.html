@@ -6285,20 +6285,22 @@
       return true;
     }
 
-    function ungroupSelectedElements() {
-      const ungroupActionState = buildUngroupSelectionActionState();
-      if (!ungroupActionState.canUngroup) {
-        updateGroupActionState();
-        return false;
-      }
-
-      const doc = getIframeDoc();
+    function applyEditorUngroupMutationWithTransaction(options = {}) {
+      const groups = Array.isArray(options.groups) ? options.groups : [];
+      const slideMetrics = options.slideMetrics || {};
+      const getRectOnSlide = typeof options.getRectOnSlide === 'function'
+        ? options.getRectOnSlide
+        : (rect) => rect;
       const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
         ? SlideNextStudioEditorGroup
         : null;
       const applyStudioUngroupMutation = groupApi
         && typeof groupApi.applyStudioUngroupMutation === 'function'
         ? groupApi.applyStudioUngroupMutation
+        : null;
+      const buildStudioUngroupedLayout = groupApi
+        && typeof groupApi.buildStudioUngroupedLayout === 'function'
+        ? groupApi.buildStudioUngroupedLayout
         : null;
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
@@ -6307,54 +6309,50 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const slideMetrics = getSlideMetrics(ungroupActionState.slide);
-
+      const getElementId = typeof options.getElementId === 'function'
+        ? options.getElementId
+        : (element) => {
+            if (typeof assignEditorElementId === 'function') {
+              const assignedId = assignEditorElementId(element);
+              if (assignedId) return assignedId;
+            }
+            return element && element.dataset && element.dataset.editorId;
+          };
       if (applyStudioUngroupMutation) {
-        const getUngroupElementId = (element) => {
-          if (typeof assignEditorElementId === 'function') {
-            return assignEditorElementId(element);
-          }
-          return element && element.dataset && element.dataset.editorId;
-        };
         const mutation = applyStudioUngroupMutation({
-          groups: ungroupActionState.groups,
+          groups,
           slideMetrics,
           getRectOnSlide,
           createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
-          getElementId: getUngroupElementId
+          getElementId
         });
-        if (!mutation.didApply) return false;
-        commitEditorSelectionState({
-          selectedElements: mutation.restoredElements
-        });
-        finalizeEditorDeckMutation('Auto: Ungrouped Elements', {
-          syncSelectionOverlay: true,
-          refreshThumbnails: false,
-          debounceHistory: true,
-          transaction: mutation.transaction
-        });
-        return true;
+        return mutation && typeof mutation === 'object'
+          ? mutation
+          : { didApply: false, restoredElements: [], transaction: null };
+      }
+      if (!buildStudioUngroupedLayout || groups.length === 0) {
+        return { didApply: false, restoredElements: [], transaction: null };
       }
 
       const markupCaptureTargets = [];
       if (createStudioMarkupTransactionCapture) {
         const parentSet = new Set();
-        ungroupActionState.groups.forEach((group) => {
+        groups.forEach((group) => {
           const parent = group && group.parentElement;
           if (!parent || parentSet.has(parent)) return;
           parentSet.add(parent);
-          if (typeof assignEditorElementId === 'function') {
-            assignEditorElementId(parent);
-          }
-          markupCaptureTargets.push({ element: parent });
+          markupCaptureTargets.push({
+            element: parent,
+            elementId: getElementId(parent)
+          });
         });
       }
       const markupCapture = createStudioMarkupTransactionCapture
-        ? createStudioMarkupTransactionCapture(markupCaptureTargets)
+        ? createStudioMarkupTransactionCapture(markupCaptureTargets, { getElementId })
         : null;
       const restoredElements = [];
-      ungroupActionState.groups.forEach((group) => {
-        const parent = group.parentElement;
+      groups.forEach((group) => {
+        const parent = group && group.parentElement;
         if (!parent || typeof parent.getBoundingClientRect !== 'function') return;
         const groupBounds = getRectOnSlide(group.getBoundingClientRect(), slideMetrics);
         const parentBounds = getRectOnSlide(parent.getBoundingClientRect(), slideMetrics);
@@ -6368,7 +6366,7 @@
             parentTop: parentBounds.top
           };
         });
-        const ungroupPlan = SlideNextStudioEditorGroup.buildStudioUngroupedLayout(groupBounds, childItems);
+        const ungroupPlan = buildStudioUngroupedLayout(groupBounds, childItems);
         if (!ungroupPlan.canUngroup) return;
 
         const itemByElement = new Map(ungroupPlan.nextItems.map((item) => [item.element, item]));
@@ -6382,21 +6380,51 @@
           parent.insertBefore(element, group);
           restoredElements.push(element);
         });
-        group.remove();
+        if (typeof group.remove === 'function') {
+          group.remove();
+        }
       });
 
-      if (restoredElements.length === 0) return false;
-      const transaction = markupCapture
-        ? markupCapture.createTransaction()
-        : null;
+      return {
+        didApply: restoredElements.length > 0,
+        restoredElements,
+        transaction: restoredElements.length > 0 && markupCapture
+          ? markupCapture.createTransaction()
+          : null
+      };
+    }
+
+    function ungroupSelectedElements() {
+      const ungroupActionState = buildUngroupSelectionActionState();
+      if (!ungroupActionState.canUngroup) {
+        updateGroupActionState();
+        return false;
+      }
+
+      const slideMetrics = getSlideMetrics(ungroupActionState.slide);
+      const getUngroupElementId = (element) => {
+        if (typeof assignEditorElementId === 'function') {
+          const assignedId = assignEditorElementId(element);
+          if (assignedId) return assignedId;
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
+
+      const mutation = applyEditorUngroupMutationWithTransaction({
+        groups: ungroupActionState.groups,
+        slideMetrics,
+        getRectOnSlide,
+        getElementId: getUngroupElementId
+      });
+      if (!mutation.didApply) return false;
       commitEditorSelectionState({
-        selectedElements: restoredElements
+        selectedElements: mutation.restoredElements
       });
       finalizeEditorDeckMutation('Auto: Ungrouped Elements', {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
         debounceHistory: true,
-        transaction
+        transaction: mutation.transaction
       });
       return true;
     }
