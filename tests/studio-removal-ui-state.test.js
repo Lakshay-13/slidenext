@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const removalState = require('../shared/studio-editor-removal.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -105,6 +106,9 @@ test('updateRemovalActionState enables the delete control only when the iframe h
         return {
           canRemove: typeof options.canMutateDeck === 'function' ? options.canMutateDeck() : true
         };
+      },
+      renderStudioRemovalToolbarState(options) {
+        return removalState.renderStudioRemovalToolbarState(options);
       }
     },
     document: {
@@ -170,6 +174,9 @@ test('updateRemovalActionState reuses the shared removal toolbar helper when ava
             removeSelectionBtn: true
           }
         };
+      },
+      renderStudioRemovalToolbarState(options) {
+        return removalState.renderStudioRemovalToolbarState(options);
       }
     },
     document: {

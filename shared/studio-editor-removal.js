@@ -45,9 +45,24 @@
     };
   }
 
+  function renderStudioRemovalToolbarState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    const actionState = options.actionState || {};
+    const buttonStates = actionState.buttonStates || {
+      removeSelectionBtn: actionState.canRemove
+    };
+    Object.entries(buttonStates).forEach(([id, canRun]) => {
+      const button = documentRef.getElementById(id);
+      if (button) button.disabled = !canRun;
+    });
+    return true;
+  }
+
   return {
     getStudioRemovableSelection,
     buildStudioRemovalActionState,
-    buildStudioRemovalToolbarState
+    buildStudioRemovalToolbarState,
+    renderStudioRemovalToolbarState
   };
 });

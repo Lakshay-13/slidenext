@@ -4286,13 +4286,9 @@
           canMutateDeck: () => !!getActiveSlide(doc)
         })
         : buildRemovalSelectionActionState(doc);
-      const buttonStates = removalActionState.buttonStates || {
-        removeSelectionBtn: removalActionState.canRemove
-      };
-
-      Object.entries(buttonStates).forEach(([id, canRun]) => {
-        const btn = document.getElementById(id);
-        if (btn) btn.disabled = !canRun;
+      return SlideNextStudioEditorRemoval.renderStudioRemovalToolbarState({
+        documentRef: document,
+        actionState: removalActionState
       });
     }
 

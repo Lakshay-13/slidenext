@@ -70,3 +70,16 @@ test('buildStudioRemovalToolbarState derives delete button state from the remova
     }
   });
 });
+
+test('renderStudioRemovalToolbarState applies the delete button state', () => {
+  const removeSelectionBtn = { disabled: true };
+  assert.equal(removal.renderStudioRemovalToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return id === 'removeSelectionBtn' ? removeSelectionBtn : null;
+      }
+    },
+    actionState: { canRemove: true }
+  }), true);
+  assert.equal(removeSelectionBtn.disabled, false);
+});
