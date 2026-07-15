@@ -333,6 +333,7 @@
       return {
         didApply: false,
         restoredElements: [],
+        restoredGroups: [],
         transaction: null
       };
     }
@@ -354,6 +355,7 @@
       ? createMarkupTransactionCapture(markupCaptureTargets, { getElementId })
       : null;
     const restoredElements = [];
+    const restoredGroups = [];
 
     groups.forEach((group) => {
       const parent = group && group.parentElement;
@@ -386,6 +388,7 @@
       if (!ungroupPlan.canUngroup) return;
 
       const itemByElement = new Map(ungroupPlan.nextItems.map((item) => [item.element, item]));
+      const restoredGroupElements = [];
       children.forEach((element) => {
         const item = itemByElement.get(element);
         if (!item) return;
@@ -395,15 +398,24 @@
         element.style.top = `${item.nextTop}px`;
         parent.insertBefore(element, group);
         restoredElements.push(element);
+        restoredGroupElements.push(element);
       });
       if (typeof group.remove === 'function') {
         group.remove();
+      }
+      if (restoredGroupElements.length > 0) {
+        restoredGroups.push({
+          group,
+          parent,
+          restoredElements: restoredGroupElements
+        });
       }
     });
 
     return {
       didApply: restoredElements.length > 0,
       restoredElements,
+      restoredGroups,
       transaction: restoredElements.length > 0 && markupCapture
         ? markupCapture.createTransaction()
         : null

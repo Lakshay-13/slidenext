@@ -696,3 +696,80 @@ test('ungroupSelectedElements delegates wrapper removal to the shared group modu
   assert.equal(calls[2][1], 'Auto: Ungrouped Elements');
   assert.deepEqual(calls[2][2].transaction, { type: 'markup' });
 });
+
+test('ungroupSelectedElements forwards a canonical tree sidecar for restored children', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function ungroupSelectedElements() {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const sourceDeck = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'group-1', children: [{ id: 'child-1' }, { id: 'child-2' }] }]
+    }]
+  });
+  const slide = { id: 'slide-1' };
+  const childOne = { dataset: { editorId: 'child-1' } };
+  const childTwo = { dataset: { editorId: 'child-2' } };
+  const group = { dataset: { editorId: 'group-1' }, parentElement: slide };
+  let finalized = null;
+  const context = {
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextDeckImport: {
+      importElementToCanonicalNode(element, options) {
+        assert.equal(options.getNodeId(element), element.dataset.editorId);
+        return { id: element.dataset.editorId, tagName: 'div' };
+      }
+    },
+    SlideNextStudioEditorGroup: {
+      applyStudioUngroupMutation() {
+        return {
+          didApply: true,
+          restoredElements: [childOne, childTwo],
+          restoredGroups: [{ group, parent: slide, restoredElements: [childOne, childTwo] }],
+          transaction: { id: 'tx-ungroup' }
+        };
+      }
+    },
+    assignEditorElementId(element) {
+      return element && element.dataset && element.dataset.editorId;
+    },
+    buildEditorCanonicalDeck() {
+      return sourceDeck;
+    },
+    buildUngroupSelectionActionState() {
+      return { canUngroup: true, slide, groups: [group] };
+    },
+    commitEditorSelectionState() {},
+    finalizeEditorDeckMutation(label, options) {
+      finalized = { label, options };
+    },
+    getEditorSlideId(currentSlide) {
+      assert.equal(currentSlide, slide);
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return { id: 'doc' };
+    },
+    getRectOnSlide(rect) {
+      return rect;
+    },
+    getSlideMetrics() {
+      return { scaleX: 1 };
+    }
+  };
+
+  vm.createContext(context);
+  loadUngroupMutationHelper(fileContent, context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.ungroupSelectedElements(), true);
+  assert.equal(finalized.label, 'Auto: Ungrouped Elements');
+  assert.deepEqual(finalized.options.transaction, { id: 'tx-ungroup' });
+  assert.deepEqual(finalized.options.canonicalDeck.slides[0].nodes.map((node) => node.id), [
+    'child-1', 'child-2'
+  ]);
+  assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['group-1']);
+});

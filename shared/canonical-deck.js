@@ -412,6 +412,125 @@
     });
   }
 
+  function ungroupCanonicalNodes(deckLike, slideId, groupChanges = []) {
+    if (!deckLike || typeof deckLike !== 'object') {
+      return null;
+    }
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedSlideId = normalizeString(slideId).trim();
+    if (!isCanonicalDeck(deck) || !normalizedSlideId || !Array.isArray(groupChanges) || groupChanges.length === 0) {
+      return null;
+    }
+
+    const slideIndex = deck.slides.findIndex((slide) => slide && slide.id === normalizedSlideId);
+    if (slideIndex < 0) {
+      return null;
+    }
+
+    const changesById = new Map();
+    groupChanges.forEach((change, index) => {
+      const groupId = normalizeString(change && (change.groupId || change.id)).trim();
+      const parentNodeId = normalizeString(change && change.parentNodeId).trim();
+      const children = Array.isArray(change && change.children)
+        ? change.children.map((child, childIndex) => createCanonicalNode(child, childIndex))
+        : [];
+      if (!groupId || children.length === 0 || changesById.has(groupId)) {
+        return;
+      }
+      changesById.set(groupId, {
+        groupId,
+        parentNodeId,
+        children
+      });
+    });
+    if (changesById.size !== groupChanges.length) {
+      return null;
+    }
+
+    const locationsById = new Map();
+    function collectLocations(nodes = [], parentNodeId = '') {
+      nodes.forEach((node) => {
+        if (!node || typeof node !== 'object') return;
+        if (typeof node.id === 'string' && node.id.trim()) {
+          if (locationsById.has(node.id)) {
+            locationsById.set(node.id, null);
+          } else {
+            locationsById.set(node.id, { node, parentNodeId });
+          }
+        }
+        collectLocations(Array.isArray(node.children) ? node.children : [], node.id);
+      });
+    }
+    collectLocations(deck.slides[slideIndex].nodes);
+
+    for (const change of changesById.values()) {
+      const location = locationsById.get(change.groupId);
+      if (!location || location.parentNodeId !== change.parentNodeId) {
+        return null;
+      }
+      const existingChildIds = location.node.children.map((child) => child && child.id);
+      const importedChildIds = change.children.map((child) => child && child.id);
+      if (existingChildIds.length !== importedChildIds.length
+        || new Set(existingChildIds).size !== existingChildIds.length
+        || new Set(importedChildIds).size !== importedChildIds.length
+        || existingChildIds.some((id, index) => id !== importedChildIds[index])) {
+        return null;
+      }
+      if (change.parentNodeId && changesById.has(change.parentNodeId)) {
+        return null;
+      }
+    }
+
+    let didChange = false;
+    function replaceGroups(nodes = [], parentNodeId = '') {
+      const nextNodes = [];
+      nodes.forEach((node, index) => {
+        if (!node || typeof node !== 'object') {
+          nextNodes.push(node);
+          return;
+        }
+        const change = changesById.get(node.id);
+        if (change && change.parentNodeId === parentNodeId) {
+          didChange = true;
+          nextNodes.push(...change.children);
+          return;
+        }
+
+        const currentChildren = Array.isArray(node.children) ? node.children : [];
+        if (currentChildren.length === 0) {
+          nextNodes.push(node);
+          return;
+        }
+        const nextChildren = replaceGroups(currentChildren, node.id);
+        if (nextChildren.some((child, childIndex) => child !== currentChildren[childIndex])
+          || nextChildren.length !== currentChildren.length) {
+          nextNodes.push(createCanonicalNode({
+            ...node,
+            children: nextChildren
+          }, index));
+          return;
+        }
+        nextNodes.push(node);
+      });
+      return nextNodes;
+    }
+
+    const slide = deck.slides[slideIndex];
+    const nextNodes = replaceGroups(slide.nodes);
+    if (!didChange) {
+      return null;
+    }
+
+    return createCanonicalDeck({
+      ...deck,
+      slides: deck.slides.map((candidate, index) => index === slideIndex
+        ? { ...candidate, nodes: nextNodes }
+        : candidate)
+    });
+  }
+
   function removeCanonicalNodes(deckLike, nodeIds = []) {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -906,6 +1025,7 @@
     appendCanonicalSlide,
     appendCanonicalNode,
     groupCanonicalNodes,
+    ungroupCanonicalNodes,
     removeCanonicalNodes,
     updateCanonicalNodeVisibility,
     updateCanonicalNodeLayout,

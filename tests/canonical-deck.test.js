@@ -173,6 +173,76 @@ test('groupCanonicalNodes preserves a nested parent and rejects incomplete group
   }), null);
 });
 
+test('ungroupCanonicalNodes replaces multiple top-level groups with their imported children', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [
+        { id: 'before' },
+        { id: 'group-1', children: [{ id: 'node-1' }, { id: 'node-2' }] },
+        { id: 'between' },
+        { id: 'group-2', children: [{ id: 'node-3' }, { id: 'node-4' }] },
+        { id: 'after' }
+      ]
+    }]
+  });
+
+  const ungroupedDeck = canonicalDeck.ungroupCanonicalNodes(sourceDeck, 'slide-1', [
+    {
+      groupId: 'group-1',
+      children: [{ id: 'node-1', layout: { x: 10 } }, { id: 'node-2', layout: { x: 20 } }]
+    },
+    {
+      groupId: 'group-2',
+      children: [{ id: 'node-3' }, { id: 'node-4' }]
+    }
+  ]);
+
+  assert.deepEqual(
+    ungroupedDeck.slides[0].nodes.map((node) => node.id),
+    ['before', 'node-1', 'node-2', 'between', 'node-3', 'node-4', 'after']
+  );
+  assert.equal(ungroupedDeck.slides[0].nodes[1].layout.x, 10);
+  assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), [
+    'before', 'group-1', 'between', 'group-2', 'after'
+  ]);
+});
+
+test('ungroupCanonicalNodes preserves a nested parent and rejects mismatched children', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'parent-1',
+        children: [
+          { id: 'before' },
+          { id: 'group-1', children: [{ id: 'node-1' }, { id: 'node-2' }] },
+          { id: 'after' }
+        ]
+      }]
+    }]
+  });
+
+  const ungroupedDeck = canonicalDeck.ungroupCanonicalNodes(sourceDeck, 'slide-1', [{
+    groupId: 'group-1',
+    parentNodeId: 'parent-1',
+    children: [{ id: 'node-1' }, { id: 'node-2' }]
+  }]);
+
+  assert.deepEqual(ungroupedDeck.slides[0].nodes[0].children.map((node) => node.id), [
+    'before', 'node-1', 'node-2', 'after'
+  ]);
+  assert.equal(canonicalDeck.ungroupCanonicalNodes(sourceDeck, 'slide-1', [{
+    groupId: 'group-1',
+    parentNodeId: 'wrong-parent',
+    children: [{ id: 'node-1' }, { id: 'node-2' }]
+  }]), null);
+  assert.equal(canonicalDeck.ungroupCanonicalNodes(sourceDeck, 'slide-1', [{
+    groupId: 'group-1',
+    children: [{ id: 'node-2' }, { id: 'node-1' }]
+  }]), null);
+});
+
 test('removeCanonicalNodes immutably removes top-level and nested nodes by id', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{

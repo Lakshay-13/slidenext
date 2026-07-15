@@ -361,6 +361,11 @@ test('applyStudioUngroupMutation restores child positions and captures the paren
   assert.equal(result.didApply, true);
   assert.equal(result.restoredElements.length, 1);
   assert.equal(result.restoredElements[0], child);
+  assert.deepEqual(result.restoredGroups, [{
+    group: groupNode,
+    parent,
+    restoredElements: [child]
+  }]);
   assert.deepEqual(child.style, {
     position: 'absolute',
     margin: '0',

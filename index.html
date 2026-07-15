@@ -6969,10 +6969,10 @@
         });
         return mutation && typeof mutation === 'object'
           ? mutation
-          : { didApply: false, restoredElements: [], transaction: null };
+          : { didApply: false, restoredElements: [], restoredGroups: [], transaction: null };
       }
       if (!buildStudioUngroupedLayout || groups.length === 0) {
-        return { didApply: false, restoredElements: [], transaction: null };
+        return { didApply: false, restoredElements: [], restoredGroups: [], transaction: null };
       }
 
       const markupCaptureTargets = [];
@@ -6992,6 +6992,7 @@
         ? createStudioMarkupTransactionCapture(markupCaptureTargets, { getElementId })
         : null;
       const restoredElements = [];
+      const restoredGroups = [];
       groups.forEach((group) => {
         const parent = group && group.parentElement;
         if (!parent || typeof parent.getBoundingClientRect !== 'function') return;
@@ -7011,6 +7012,7 @@
         if (!ungroupPlan.canUngroup) return;
 
         const itemByElement = new Map(ungroupPlan.nextItems.map((item) => [item.element, item]));
+        const restoredGroupElements = [];
         Array.from(group.children || []).forEach((element) => {
           const item = itemByElement.get(element);
           if (!item) return;
@@ -7020,15 +7022,24 @@
           element.style.top = `${item.nextTop}px`;
           parent.insertBefore(element, group);
           restoredElements.push(element);
+          restoredGroupElements.push(element);
         });
         if (typeof group.remove === 'function') {
           group.remove();
+        }
+        if (restoredGroupElements.length > 0) {
+          restoredGroups.push({
+            group,
+            parent,
+            restoredElements: restoredGroupElements
+          });
         }
       });
 
       return {
         didApply: restoredElements.length > 0,
         restoredElements,
+        restoredGroups,
         transaction: restoredElements.length > 0 && markupCapture
           ? markupCapture.createTransaction()
           : null
@@ -7051,6 +7062,56 @@
         return element && element.dataset && element.dataset.editorId;
       };
 
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const ungroupCanonicalNodes = canonicalDeckApi
+        && typeof canonicalDeckApi.ungroupCanonicalNodes === 'function'
+        ? canonicalDeckApi.ungroupCanonicalNodes
+        : null;
+      const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
+        ? SlideNextDeckImport
+        : null;
+      const importElementToCanonicalNode = deckImportApi
+        && typeof deckImportApi.importElementToCanonicalNode === 'function'
+        ? deckImportApi.importElementToCanonicalNode
+        : null;
+      let canonicalDeckBeforeUngrouping = null;
+      let canonicalGroupTargets = [];
+      if (ungroupCanonicalNodes
+        && importElementToCanonicalNode
+        && typeof buildEditorCanonicalDeck === 'function') {
+        const canonicalSlideId = typeof getEditorSlideId === 'function'
+          ? getEditorSlideId(ungroupActionState.slide)
+          : ungroupActionState.slide && ungroupActionState.slide.id;
+        const groupIds = new Set();
+        let canBuildCanonicalSidecar = !!canonicalSlideId;
+        canonicalGroupTargets = ungroupActionState.groups.map((group) => {
+          const parent = group && group.parentElement;
+          const groupId = getUngroupElementId(group);
+          const parentNodeId = parent === ungroupActionState.slide
+            ? ''
+            : getUngroupElementId(parent);
+          if (!groupId || (!parentNodeId && parent !== ungroupActionState.slide) || groupIds.has(groupId)) {
+            canBuildCanonicalSidecar = false;
+          }
+          groupIds.add(groupId);
+          return { group, groupId, parentNodeId };
+        });
+        if (canonicalGroupTargets.some((target) => target.parentNodeId && groupIds.has(target.parentNodeId))) {
+          canBuildCanonicalSidecar = false;
+        }
+        if (canBuildCanonicalSidecar) {
+          canonicalDeckBeforeUngrouping = buildEditorCanonicalDeck();
+          canonicalGroupTargets = canonicalGroupTargets.map((target) => ({
+            ...target,
+            slideId: canonicalSlideId
+          }));
+        } else {
+          canonicalGroupTargets = [];
+        }
+      }
+
       const mutation = applyEditorUngroupMutationWithTransaction({
         groups: ungroupActionState.groups,
         slideMetrics,
@@ -7058,6 +7119,36 @@
         getElementId: getUngroupElementId
       });
       if (!mutation.didApply) return false;
+      let canonicalDeck = null;
+      if (canonicalDeckBeforeUngrouping
+        && canonicalGroupTargets.length === ungroupActionState.groups.length
+        && Array.isArray(mutation.restoredGroups)
+        && mutation.restoredGroups.length === canonicalGroupTargets.length) {
+        const canonicalGroupChanges = canonicalGroupTargets.map((target) => {
+          const restoredGroup = mutation.restoredGroups.find((entry) => entry && entry.group === target.group);
+          if (!restoredGroup || !Array.isArray(restoredGroup.restoredElements)) {
+            return null;
+          }
+          const children = restoredGroup.restoredElements.map((element) => importElementToCanonicalNode(element, {
+            getNodeId: getUngroupElementId
+          }));
+          if (children.some((child) => !child)) {
+            return null;
+          }
+          return {
+            groupId: target.groupId,
+            parentNodeId: target.parentNodeId,
+            children
+          };
+        });
+        if (canonicalGroupChanges.every(Boolean)) {
+          canonicalDeck = ungroupCanonicalNodes(
+            canonicalDeckBeforeUngrouping,
+            canonicalGroupTargets[0].slideId,
+            canonicalGroupChanges
+          );
+        }
+      }
       commitEditorSelectionState({
         selectedElements: mutation.restoredElements
       });
@@ -7065,7 +7156,8 @@
         syncSelectionOverlay: true,
         refreshThumbnails: false,
         debounceHistory: true,
-        transaction: mutation.transaction
+        transaction: mutation.transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
       });
       return true;
     }
