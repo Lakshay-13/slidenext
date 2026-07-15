@@ -10540,50 +10540,29 @@
 
     // Presentation Live Preview from workspace
     async function exportPptx() {
-      const actionState = resolveCurrentStudioDeckReadyActionState();
-      if (!actionState.canUseDeckActions) return false;
-
-      let canonicalDeck;
-      try {
-        canonicalDeck = buildEditorCanonicalDeck();
-      } catch (error) {
-        setStudioAutoSaveStatus('export-failed');
-        return false;
-      }
-      if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return false;
-
-      const exportButton = document.getElementById('exportPptxBtn');
-      if (exportButton) exportButton.disabled = true;
-      setStudioAutoSaveStatus('exporting');
-
-      try {
-        const exportService = typeof SlideNextStudioPptxExport !== 'undefined'
+      const exportActions = typeof SlideNextStudioEditorExportActions !== 'undefined'
+        ? SlideNextStudioEditorExportActions
+        : null;
+      const createStudioPptxExportAction = exportActions
+        && typeof exportActions.createStudioPptxExportAction === 'function'
+        ? exportActions.createStudioPptxExportAction
+        : null;
+      if (!createStudioPptxExportAction) return false;
+      return createStudioPptxExportAction({
+        resolveReadyState: resolveCurrentStudioDeckReadyActionState,
+        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck
+          : null,
+        pptxExport: typeof SlideNextStudioPptxExport !== 'undefined'
           ? SlideNextStudioPptxExport
-          : null;
-        if (!exportService || typeof exportService.exportStudioPptx !== 'function') {
-          setStudioAutoSaveStatus('export-failed');
-          return false;
-        }
-
-        const result = await exportService.exportStudioPptx({
-            canonicalDeck,
-            sourcePath: currentPresentationUrl,
-            filename: `${currentTitle || 'slidenext-presentation'}.pptx`
-        });
-        if (!result || !result.success) {
-          setStudioAutoSaveStatus('export-failed');
-          return false;
-        }
-        setStudioAutoSaveStatus(result.warningCount > 0 ? 'exported-with-warnings' : 'exported');
-        return true;
-      } catch (error) {
-        setStudioAutoSaveStatus('export-failed');
-        return false;
-      } finally {
-        if (exportButton) {
-          exportButton.disabled = !resolveCurrentStudioDeckReadyActionState().canUseDeckActions;
-        }
-      }
+          : null,
+        documentRef: typeof document !== 'undefined' ? document : null,
+        setStatus: typeof setStudioAutoSaveStatus === 'function'
+          ? setStudioAutoSaveStatus
+          : null,
+        sourcePath: typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '',
+        filename: `${currentTitle || 'slidenext-presentation'}.pptx`
+      })();
     }
 
     function exportPdf() {

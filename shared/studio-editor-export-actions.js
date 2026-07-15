@@ -83,7 +83,76 @@
     };
   }
 
+  function createStudioPptxExportAction(options = {}) {
+    const resolveReadyState = typeof options.resolveReadyState === 'function'
+      ? options.resolveReadyState
+      : () => ({ canUseDeckActions: false });
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const pptxExport = options.pptxExport && typeof options.pptxExport === 'object'
+      ? options.pptxExport
+      : null;
+    const documentRef = options.documentRef && typeof options.documentRef === 'object'
+      ? options.documentRef
+      : null;
+    const setStatus = typeof options.setStatus === 'function'
+      ? options.setStatus
+      : () => {};
+    const sourcePath = typeof options.sourcePath === 'string' ? options.sourcePath : '';
+    const filename = typeof options.filename === 'string' && options.filename.trim()
+      ? options.filename
+      : 'slidenext-presentation.pptx';
+
+    return async function exportPptx() {
+      const actionState = resolveReadyState();
+      if (!actionState || !actionState.canUseDeckActions) return false;
+
+      let canonicalDeck;
+      try {
+        canonicalDeck = buildCanonicalDeck ? buildCanonicalDeck() : null;
+      } catch (error) {
+        setStatus('export-failed');
+        return false;
+      }
+      if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return false;
+
+      const exportButton = documentRef && typeof documentRef.getElementById === 'function'
+        ? documentRef.getElementById('exportPptxBtn')
+        : null;
+      if (exportButton) exportButton.disabled = true;
+      setStatus('exporting');
+
+      try {
+        if (!pptxExport || typeof pptxExport.exportStudioPptx !== 'function') {
+          setStatus('export-failed');
+          return false;
+        }
+
+        const result = await pptxExport.exportStudioPptx({
+          canonicalDeck,
+          sourcePath,
+          filename
+        });
+        if (!result || !result.success) {
+          setStatus('export-failed');
+          return false;
+        }
+        setStatus(result.warningCount > 0 ? 'exported-with-warnings' : 'exported');
+        return true;
+      } catch (error) {
+        setStatus('export-failed');
+        return false;
+      } finally {
+        if (exportButton) {
+          exportButton.disabled = !resolveReadyState().canUseDeckActions;
+        }
+      }
+    };
+  }
+
   return {
-    createStudioPdfExportAction
+    createStudioPdfExportAction,
+    createStudioPptxExportAction
   };
 });

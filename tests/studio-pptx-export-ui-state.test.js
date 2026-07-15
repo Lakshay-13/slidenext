@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const exportActions = require('../shared/studio-editor-export-actions.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -20,6 +21,7 @@ function loadExportPptx(fileContent, context) {
     'async function exportPptx() {',
     '\n\n    function exportPdf() {'
   );
+  context.SlideNextStudioEditorExportActions = exportActions;
   vm.createContext(context);
   vm.runInContext(source, context);
 }
