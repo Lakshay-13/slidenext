@@ -27,6 +27,10 @@ function loadTransformSessionFinalizer(fileContent, context) {
     'function createEditorTransformSessionFinalizer(transformApi, options = {}) {',
     '\n\n    // Element dragging + resize on an open canvas'
   );
+  context.SlideNextStudioEditorTransform = {
+    createStudioTransformSessionFinalizer: transformState.createStudioTransformSessionFinalizer,
+    ...(context.SlideNextStudioEditorTransform || {})
+  };
   vm.runInContext(helperSource, context);
 }
 

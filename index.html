@@ -6953,41 +6953,10 @@
       const createTransformSessionFinalizer = transformApi
         && typeof transformApi.createStudioTransformSessionFinalizer === 'function'
         ? transformApi.createStudioTransformSessionFinalizer
-        : (fallbackOptions = {}) => {
-            const onSessionEnd = typeof fallbackOptions.onSessionEnd === 'function'
-              ? fallbackOptions.onSessionEnd
-              : () => {};
-            const buildTransaction = typeof fallbackOptions.buildTransaction === 'function'
-              ? fallbackOptions.buildTransaction
-              : () => null;
-            const persistHistory = typeof fallbackOptions.saveHistoryState === 'function'
-              ? fallbackOptions.saveHistoryState
-              : () => {};
-            const persistAutoSave = typeof fallbackOptions.triggerAutoSave === 'function'
-              ? fallbackOptions.triggerAutoSave
-              : () => {};
-            const persistAutoVersion = typeof fallbackOptions.triggerAutoVersion === 'function'
-              ? fallbackOptions.triggerAutoVersion
-              : () => {};
-            const buildCanonicalDeck = typeof fallbackOptions.buildCanonicalDeck === 'function'
-              ? fallbackOptions.buildCanonicalDeck
-              : null;
-            return (finalizeResult, completionPlan = {}) => {
-              onSessionEnd(finalizeResult, completionPlan);
-              if (!completionPlan || !completionPlan.shouldPersist) return;
-              const transaction = buildTransaction(finalizeResult);
-              const canonicalDeck = buildCanonicalDeck
-                ? buildCanonicalDeck(finalizeResult)
-                : null;
-              if (canonicalDeck) {
-                persistHistory(false, transaction, canonicalDeck);
-              } else {
-                persistHistory(false, transaction);
-              }
-              persistAutoSave();
-              persistAutoVersion(completionPlan.versionLabel);
-            };
-          };
+        : null;
+      if (!createTransformSessionFinalizer) {
+        return () => {};
+      }
       return createTransformSessionFinalizer(options);
     }
 

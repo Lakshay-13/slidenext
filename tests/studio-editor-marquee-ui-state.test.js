@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const editorEvents = require('../shared/studio-editor-events.js');
+const transformState = require('../shared/studio-editor-transform.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -21,6 +22,10 @@ function loadTransformSessionFinalizer(fileContent, context) {
     'function createEditorTransformSessionFinalizer(transformApi, options = {}) {',
     '\n\n    // Element dragging + resize on an open canvas'
   );
+  context.SlideNextStudioEditorTransform = {
+    createStudioTransformSessionFinalizer: transformState.createStudioTransformSessionFinalizer,
+    ...(context.SlideNextStudioEditorTransform || {})
+  };
   vm.runInContext(helperSource, context);
 }
 
