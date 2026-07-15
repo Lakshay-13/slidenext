@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const zoomView = require('../shared/studio-editor-zoom.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
@@ -13,6 +14,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
   return fileContent.slice(start, end);
 }
+
+test('shared zoom view owns an isolated ordered zoom scale list', () => {
+  const options = zoomView.getStudioZoomOptions();
+  assert.equal(options.length, 26);
+  assert.deepEqual(options.slice(0, 3), [0.25, 0.3, 0.35]);
+  assert.deepEqual(options.slice(-3), [1.4, 1.45, 1.5]);
+  options[0] = 99;
+  assert.equal(zoomView.getStudioZoomOptions()[0], 0.25);
+});
 
 test('applyZoom tolerates a missing zoom select while fitting the canvas', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
