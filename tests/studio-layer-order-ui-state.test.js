@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const layerOrder = require('../shared/studio-editor-layer-order.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 
@@ -233,6 +234,7 @@ test('reorderSlideLayers forwards canonical z-index updates after applying layer
   const context = {
     selectedElements: [first],
     SlideNextCanonicalDeck: canonicalDeck,
+    SlideNextStudioEditorCanonicalLayout: canonicalLayout,
     SlideNextStudioEditorLayerOrder: layerOrder,
     SlideNextStudioEditorTransaction: studioTransaction,
     getActiveSlide() {

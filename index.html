@@ -1160,6 +1160,7 @@
   <script src="/shared/studio-editor-canonical-transform.js"></script>
   <script src="/shared/studio-editor-canonical-wallpaper.js"></script>
   <script src="/shared/studio-editor-canonical-visibility.js"></script>
+  <script src="/shared/studio-editor-canonical-layout.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
@@ -3843,11 +3844,14 @@
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
-      const updateCanonicalNodeLayout = canonicalDeckApi
-        && typeof canonicalDeckApi.updateCanonicalNodeLayout === 'function'
-        ? canonicalDeckApi.updateCanonicalNodeLayout
+      const canonicalLayoutApi = typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
+        ? SlideNextStudioEditorCanonicalLayout
         : null;
-      const canonicalDeckBefore = updateCanonicalNodeLayout
+      const buildCanonicalLayoutDeck = canonicalLayoutApi
+        && typeof canonicalLayoutApi.buildStudioCanonicalLayoutDeck === 'function'
+        ? canonicalLayoutApi.buildStudioCanonicalLayoutDeck
+        : null;
+      const canonicalDeckBefore = buildCanonicalLayoutDeck
         && typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck()
         : null;
@@ -3876,7 +3880,7 @@
         }
       );
       if (!mutation.didApply) return false;
-      const canonicalNodeLayouts = updateCanonicalNodeLayout
+      const canonicalNodeLayouts = buildCanonicalLayoutDeck
         ? initialOrder.map((element) => {
             const elementId = getLayerOrderElementId(element);
             const zIndex = element && element.style ? Number(element.style.zIndex) : NaN;
@@ -3885,8 +3889,11 @@
               : null;
           }).filter(Boolean)
         : [];
-      const canonicalDeck = updateCanonicalNodeLayout
-        ? updateCanonicalNodeLayout(canonicalDeckBefore, canonicalNodeLayouts)
+      const canonicalDeck = buildCanonicalLayoutDeck
+        ? buildCanonicalLayoutDeck(canonicalNodeLayouts, {
+            canonicalDeckApi,
+            canonicalDeckBeforeMutation: canonicalDeckBefore
+          })
         : null;
       if (typeof options.onTransaction === 'function') {
         options.onTransaction(mutation.transaction);
