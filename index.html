@@ -3004,7 +3004,14 @@
     }
 
     function applyEditorSlideInsertionWithTransaction(container, slideNode, options = {}) {
-      if (!container || !slideNode) {
+      const slideCommands = typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+        ? SlideNextStudioEditorSlideCommands
+        : null;
+      const applyStudioSlideInsertionWithTransaction = slideCommands
+        && typeof slideCommands.applyStudioSlideInsertionWithTransaction === 'function'
+        ? slideCommands.applyStudioSlideInsertionWithTransaction
+        : null;
+      if (!applyStudioSlideInsertionWithTransaction) {
         return {
           didApply: false,
           transaction: null
@@ -3025,51 +3032,14 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const containerElementId = typeof options.containerElementId === 'string'
-        && options.containerElementId.trim()
-        ? options.containerElementId.trim()
-        : 'slides-container';
 
-      if (applyStudioSlideInsertionMutation) {
-        const mutation = applyStudioSlideInsertionMutation(container, slideNode, {
-          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
-          containerElementId,
-          beforeNode: options.beforeNode,
-          getElementId: options.getElementId
-        });
-        return {
-          didApply: !!(mutation && mutation.didApply),
-          transaction: mutation && mutation.transaction ? mutation.transaction : null
-        };
-      }
-
-      if (typeof container.appendChild !== 'function'
-        && typeof container.insertBefore !== 'function') {
-        return {
-          didApply: false,
-          transaction: null
-        };
-      }
-
-      const markupCapture = createStudioMarkupTransactionCapture
-        ? createStudioMarkupTransactionCapture([{
-            element: container,
-            elementId: containerElementId
-          }], {
-            getElementId: options.getElementId
-          })
-        : null;
-      if (options.beforeNode && typeof container.insertBefore === 'function') {
-        container.insertBefore(slideNode, options.beforeNode);
-      } else {
-        container.appendChild(slideNode);
-      }
-      return {
-        didApply: true,
-        transaction: markupCapture
-          ? markupCapture.createTransaction()
-          : null
-      };
+      return applyStudioSlideInsertionWithTransaction(container, slideNode, {
+        applyStudioSlideInsertionMutation,
+        createStudioMarkupTransactionCapture,
+        containerElementId: options.containerElementId,
+        beforeNode: options.beforeNode,
+        getElementId: options.getElementId
+      });
     }
 
     // Add Blank Slide Node

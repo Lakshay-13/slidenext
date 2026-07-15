@@ -273,10 +273,72 @@
     return true;
   }
 
+  function applyStudioSlideInsertionWithTransaction(container, slideNode, options = {}) {
+    if (!container || !slideNode) {
+      return {
+        didApply: false,
+        transaction: null
+      };
+    }
+
+    const applyStudioSlideInsertionMutation = typeof options.applyStudioSlideInsertionMutation === 'function'
+      ? options.applyStudioSlideInsertionMutation
+      : null;
+    const createStudioMarkupTransactionCapture = typeof options.createStudioMarkupTransactionCapture === 'function'
+      ? options.createStudioMarkupTransactionCapture
+      : null;
+    const containerElementId = typeof options.containerElementId === 'string'
+      && options.containerElementId.trim()
+      ? options.containerElementId.trim()
+      : 'slides-container';
+
+    if (applyStudioSlideInsertionMutation) {
+      const mutation = applyStudioSlideInsertionMutation(container, slideNode, {
+        createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+        containerElementId,
+        beforeNode: options.beforeNode,
+        getElementId: options.getElementId
+      });
+      return {
+        didApply: !!(mutation && mutation.didApply),
+        transaction: mutation && mutation.transaction ? mutation.transaction : null
+      };
+    }
+
+    if (typeof container.appendChild !== 'function'
+      && typeof container.insertBefore !== 'function') {
+      return {
+        didApply: false,
+        transaction: null
+      };
+    }
+
+    const markupCapture = createStudioMarkupTransactionCapture
+      ? createStudioMarkupTransactionCapture([{
+          element: container,
+          elementId: containerElementId
+        }], {
+          getElementId: options.getElementId
+        })
+      : null;
+    if (options.beforeNode && typeof container.insertBefore === 'function') {
+      container.insertBefore(slideNode, options.beforeNode);
+    } else {
+      container.appendChild(slideNode);
+    }
+    return {
+      didApply: true,
+      transaction: markupCapture
+        ? markupCapture.createTransaction()
+        : null
+    };
+  }
+
   return {
     prepareStudioSlideDuplication,
     addStudioSlideNode,
     deleteStudioSlideNode,
-    reorderStudioSlideNodes
+    reorderStudioSlideNodes,
+    applyStudioSlideInsertionWithTransaction
   };
 });

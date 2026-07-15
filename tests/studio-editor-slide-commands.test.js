@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const slideCommands = require('../shared/studio-editor-slide-commands.js');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 test('prepareStudioSlideDuplication sanitizes, re-identifies, and decorates a cloned slide', () => {
   const duplicateSlide = {
@@ -356,4 +357,57 @@ test('reorderStudioSlideNodes preserves insertion target, canonical order, and a
     'restoreDeckViewAfterSlideMutation',
     'finalizeMutation'
   ]);
+});
+
+test('applyStudioSlideInsertionWithTransaction delegates the shared slide mutation and preserves options', () => {
+  const container = { id: 'slides-container' };
+  const slideNode = { id: 'slide-2' };
+  const beforeNode = { id: 'slide-3' };
+  let delegatedOptions = null;
+  const result = slideCommands.applyStudioSlideInsertionWithTransaction(container, slideNode, {
+    applyStudioSlideInsertionMutation(sourceContainer, sourceSlide, options) {
+      assert.equal(sourceContainer, container);
+      assert.equal(sourceSlide, slideNode);
+      delegatedOptions = options;
+      return { didApply: true, transaction: { type: 'markup' } };
+    },
+    createStudioMarkupTransactionCapture() {},
+    containerElementId: 'deck-slides',
+    beforeNode,
+    getElementId() {}
+  });
+
+  assert.deepEqual(result, {
+    didApply: true,
+    transaction: { type: 'markup' }
+  });
+  assert.equal(delegatedOptions.containerElementId, 'deck-slides');
+  assert.equal(delegatedOptions.beforeNode, beforeNode);
+  assert.equal(typeof delegatedOptions.createMarkupTransactionCapture, 'function');
+});
+
+test('applyStudioSlideInsertionWithTransaction uses the fallback insertion and markup transaction', () => {
+  const slideNode = { id: 'slide-2' };
+  const beforeNode = { id: 'slide-3' };
+  const container = {
+    id: 'slides-container',
+    innerHTML: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-3"></section>',
+    insertBefore(node, sibling) {
+      assert.equal(node, slideNode);
+      assert.equal(sibling, beforeNode);
+      this.innerHTML = '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section><section data-slide-id="slide-3"></section>';
+      return node;
+    }
+  };
+
+  const result = slideCommands.applyStudioSlideInsertionWithTransaction(container, slideNode, {
+    beforeNode,
+    createStudioMarkupTransactionCapture(items, options) {
+      return studioTransaction.createStudioMarkupTransactionCapture(items, options);
+    }
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.transaction.operations[0].elementId, 'slides-container');
+  assert.equal(result.transaction.operations[0].after, '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section><section data-slide-id="slide-3"></section>');
 });
