@@ -3509,19 +3509,23 @@
     }
 
     function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {
-      const createStudioPersistedDeckStateApplier = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateApplier === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateApplier
-        : null;
-      if (!createStudioPersistedDeckStateApplier) return nextState;
-      return createStudioPersistedDeckStateApplier({
-        currentPresentationUrl,
-        updatePersistedDeckState: updateEditorPersistedDeckState,
-        setCurrentPresentationCanonicalDeck
-      })(nextState, options);
+      if (typeof applyCurrentStudioPersistedDeckState.stateApplier !== 'function') {
+        const createStudioPersistedDeckStateApplier = (
+          typeof SlideNextStudioEditorPersistence !== 'undefined'
+          && SlideNextStudioEditorPersistence
+          && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateApplier === 'function'
+        )
+          ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateApplier
+          : null;
+        if (!createStudioPersistedDeckStateApplier) return nextState;
+        applyCurrentStudioPersistedDeckState.stateApplier = createStudioPersistedDeckStateApplier({
+          currentPresentationUrl,
+          updatePersistedDeckState: updateEditorPersistedDeckState,
+          setCurrentPresentationCanonicalDeck
+        });
+      }
+      if (typeof applyCurrentStudioPersistedDeckState.stateApplier !== 'function') return nextState;
+      return applyCurrentStudioPersistedDeckState.stateApplier(nextState, options);
     }
 
     function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {

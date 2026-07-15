@@ -524,10 +524,12 @@ test('applyCurrentStudioPersistedDeckState updates persisted baselines together 
 test('applyCurrentStudioPersistedDeckState reuses the shared persisted-state applier builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
+  let applierCreateCalls = 0;
   const context = {
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     SlideNextStudioEditorPersistence: {
       createStudioPersistedDeckStateApplier(options = {}) {
+        applierCreateCalls += 1;
         calls.push({
           currentPresentationUrl: options.currentPresentationUrl,
           hasUpdatePersistedDeckState: typeof options.updatePersistedDeckState === 'function',
@@ -564,6 +566,18 @@ test('applyCurrentStudioPersistedDeckState reuses the shared persisted-state app
       }
     }
   );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.applyCurrentStudioPersistedDeckState(nextState, {
+      presentationUrl: '/presentations/second/index.html'
+    }))),
+    {
+      nextState,
+      nextOptions: {
+        presentationUrl: '/presentations/second/index.html'
+      }
+    }
+  );
+  assert.equal(applierCreateCalls, 1);
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     hasUpdatePersistedDeckState: true,
