@@ -3911,6 +3911,13 @@
         return false;
       }
 
+      const applyStudioLayerOrderMutation = (
+        typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+        && SlideNextStudioEditorLayerOrder
+        && typeof SlideNextStudioEditorLayerOrder.applyStudioLayerOrderMutation === 'function'
+      )
+        ? SlideNextStudioEditorLayerOrder.applyStudioLayerOrderMutation
+        : null;
       const createStudioStyleTransaction = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -3918,11 +3925,27 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
         : null;
+      const getLayerOrderElementId = (element) => {
+        if (typeof assignEditorElementId === 'function') {
+          return assignEditorElementId(element);
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
+      if (applyStudioLayerOrderMutation) {
+        const mutation = applyStudioLayerOrderMutation(slide, initialOrder, reorderResult.nextOrder, {
+          applyLayerOrder: applySlideLayerOrder,
+          createStyleTransaction: createStudioStyleTransaction,
+          getElementId: getLayerOrderElementId
+        });
+        if (!mutation.didApply) return false;
+        if (typeof options.onTransaction === 'function') {
+          options.onTransaction(mutation.transaction);
+        }
+        return true;
+      }
       const transactionItems = createStudioStyleTransaction
         ? initialOrder.map((element) => {
-            if (typeof assignEditorElementId === 'function') {
-              assignEditorElementId(element);
-            }
+            getLayerOrderElementId(element);
             return {
               element,
               before: {

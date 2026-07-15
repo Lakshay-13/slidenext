@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const layerOrder = require('../shared/studio-editor-layer-order.js');
+const transactionState = require('../shared/studio-editor-transaction.js');
 
 test('getStudioLayerOrderSelection filters stale targets and preserves current layer order', () => {
   const stale = { id: 'stale', isConnected: false };
@@ -253,4 +254,31 @@ test('buildStudioReorderedLayerOrder skips stale targets and no-op reorder reque
     didChange: false,
     nextOrder: [first, second]
   });
+});
+
+test('applyStudioLayerOrderMutation applies the next order and creates an optional z-index transaction', () => {
+  const first = {
+    dataset: { editorId: 'node-1' },
+    style: { zIndex: '0' }
+  };
+  const second = {
+    dataset: { editorId: 'node-2' },
+    style: { zIndex: '1' }
+  };
+  const slide = { id: 'slide-1' };
+  const result = layerOrder.applyStudioLayerOrderMutation(slide, [first, second], [second, first], {
+    applyLayerOrder(currentSlide, nextOrder) {
+      assert.equal(currentSlide, slide);
+      nextOrder.forEach((element, index) => {
+        element.style.zIndex = `${index}`;
+      });
+    },
+    createStyleTransaction: transactionState.createStudioStyleTransaction,
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(result.didApply, true);
+  assert.deepEqual(result.transaction.operations.map((operation) => operation.elementId), ['node-1', 'node-2']);
+  assert.deepEqual(result.transaction.operations[0].before, { zIndex: '0' });
+  assert.deepEqual(result.transaction.operations[0].after, { zIndex: '1' });
 });

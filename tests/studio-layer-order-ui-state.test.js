@@ -356,6 +356,58 @@ test('updateLayerOrderActionState enables layer order controls only when the ifr
   });
 });
 
+test('reorderSlideLayers delegates order application to the shared layer-order module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {',
+    '\n\n    function findPreferredDragContainer(el) {'
+  );
+  const first = { isConnected: true, dataset: {}, style: { zIndex: '0' } };
+  const second = { isConnected: true, dataset: {}, style: { zIndex: '1' } };
+  const slide = { contains: () => true };
+  const calls = [];
+  const context = {
+    selectedElements: [first],
+    SlideNextStudioEditorLayerOrder: {
+      buildStudioLayerOrderMutationPlan() {
+        return {
+          didChange: true,
+          nextOrder: [second, first]
+        };
+      },
+      applyStudioLayerOrderMutation(currentSlide, initialOrder, nextOrder, options) {
+        calls.push(['applyStudioLayerOrderMutation', currentSlide, initialOrder, nextOrder, options]);
+        return { didApply: true, transaction: { type: 'style' } };
+      }
+    },
+    getActiveSlide() {
+      return slide;
+    },
+    getNormalizedSlideLayerOrder() {
+      return [first, second];
+    },
+    isElementLocked() {
+      return false;
+    },
+    applySlideLayerOrder() {},
+    finalizeEditorDeckMutation() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  let captured = null;
+  assert.equal(context.reorderSlideLayers('front', [first], {
+    onTransaction(transaction) {
+      captured = transaction;
+    }
+  }), true);
+  assert.equal(calls[0][0], 'applyStudioLayerOrderMutation');
+  assert.equal(calls[0][1], slide);
+  assert.deepEqual(captured, { type: 'style' });
+});
+
 test('updateLayerOrderActionState reuses the shared layer-order toolbar helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateLayerOrderActionStateSource = extractFunctionSource(

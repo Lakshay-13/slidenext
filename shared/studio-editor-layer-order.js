@@ -189,12 +189,62 @@
     };
   }
 
+  function applyStudioLayerOrderMutation(slide, initialOrder = [], nextOrder = [], options = {}) {
+    const previousOrder = Array.isArray(initialOrder) ? initialOrder : [];
+    const resolvedNextOrder = Array.isArray(nextOrder) ? nextOrder : [];
+    const applyLayerOrder = typeof options.applyLayerOrder === 'function'
+      ? options.applyLayerOrder
+      : null;
+    const createStyleTransaction = typeof options.createStyleTransaction === 'function'
+      ? options.createStyleTransaction
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    if (!slide || !applyLayerOrder || previousOrder.length === 0 || resolvedNextOrder.length === 0) {
+      return {
+        didApply: false,
+        transaction: null
+      };
+    }
+
+    const transactionItems = createStyleTransaction
+      ? previousOrder.map((element) => ({
+          element,
+          elementId: getElementId(element),
+          before: {
+            zIndex: element && element.style ? element.style.zIndex : ''
+          }
+        }))
+      : [];
+    const applyResult = applyLayerOrder(slide, resolvedNextOrder);
+    if (applyResult === false) {
+      return {
+        didApply: false,
+        transaction: null
+      };
+    }
+
+    transactionItems.forEach((item) => {
+      item.after = {
+        zIndex: item.element && item.element.style ? item.element.style.zIndex : ''
+      };
+    });
+    return {
+      didApply: true,
+      transaction: createStyleTransaction
+        ? createStyleTransaction(transactionItems, { getElementId })
+        : null
+    };
+  }
+
   return {
     getStudioLayerOrderSelection,
     buildStudioLayerOrderActionState,
     buildStudioLayerOrderToolbarState,
     renderStudioLayerOrderToolbarState,
     buildStudioLayerOrderMutationPlan,
-    buildStudioReorderedLayerOrder
+    buildStudioReorderedLayerOrder,
+    applyStudioLayerOrderMutation
   };
 });
