@@ -4848,15 +4848,6 @@
     }
 
     function updateStyleActionState(doc = getIframeDoc()) {
-      const getStyleToolbarControlConfigs = (
-        SlideNextStudioEditorStyle
-        && typeof SlideNextStudioEditorStyle.getStudioStyleToolbarControlConfigs === 'function'
-      )
-        ? SlideNextStudioEditorStyle.getStudioStyleToolbarControlConfigs
-        : null;
-      const controlConfigs = getStyleToolbarControlConfigs
-        ? getStyleToolbarControlConfigs()
-        : [];
       const syncStudioStyleToolbarState = (
         SlideNextStudioEditorStyle
         && typeof SlideNextStudioEditorStyle.syncStudioStyleToolbarState === 'function'
@@ -4867,11 +4858,19 @@
         return syncStudioStyleToolbarState({
           documentRef: document,
           elements: selectedElements,
-          controlConfigs,
           isLocked: isElementLocked,
           canMutateDeck: () => !!getActiveSlide(doc)
         });
       }
+      const getStyleToolbarControlConfigs = (
+        SlideNextStudioEditorStyle
+        && typeof SlideNextStudioEditorStyle.getStudioStyleToolbarControlConfigs === 'function'
+      )
+        ? SlideNextStudioEditorStyle.getStudioStyleToolbarControlConfigs
+        : null;
+      const controlConfigs = getStyleToolbarControlConfigs
+        ? getStyleToolbarControlConfigs()
+        : [];
       const buildStudioStyleToolbarState = (
         SlideNextStudioEditorStyle
         && typeof SlideNextStudioEditorStyle.buildStudioStyleToolbarState === 'function'

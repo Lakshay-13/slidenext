@@ -344,7 +344,7 @@ test('updateStyleActionState delegates toolbar state assembly to the shared styl
     selectedElements: [selectedElement],
     SlideNextStudioEditorStyle: {
       getStudioStyleToolbarControlConfigs() {
-        return styleState.getStudioStyleToolbarControlConfigs();
+        throw new Error('style control configs should be owned by the shared sync helper');
       },
       syncStudioStyleToolbarState(options) {
         calls.push(options);
@@ -368,7 +368,7 @@ test('updateStyleActionState delegates toolbar state assembly to the shared styl
   assert.equal(calls.length, 1);
   assert.equal(calls[0].documentRef, context.document);
   assert.deepEqual(calls[0].elements, [selectedElement]);
-  assert.equal(calls[0].controlConfigs.length, 15);
+  assert.equal(calls[0].controlConfigs, undefined);
   assert.equal(calls[0].isLocked(selectedElement), false);
   assert.equal(calls[0].canMutateDeck(), true);
 });

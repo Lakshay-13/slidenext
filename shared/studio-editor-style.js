@@ -101,9 +101,12 @@
   }
 
   function syncStudioStyleToolbarState(options = {}) {
+    const controlConfigs = Array.isArray(options.controlConfigs)
+      ? options.controlConfigs
+      : getStudioStyleToolbarControlConfigs();
     const toolbarState = buildStudioStyleToolbarState(
       options.elements,
-      options.controlConfigs,
+      controlConfigs,
       {
         isLocked: options.isLocked,
         canMutateDeck: options.canMutateDeck

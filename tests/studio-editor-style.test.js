@@ -122,6 +122,26 @@ test('syncStudioStyleToolbarState builds and renders control availability in one
   assert.equal(controls.alignCenterBtn.disabled, false);
 });
 
+test('syncStudioStyleToolbarState uses the shared control configuration when none is provided', () => {
+  const controls = {
+    elFontWeight: { disabled: true },
+    alignCenterBtn: { disabled: true }
+  };
+
+  assert.equal(styleState.syncStudioStyleToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return controls[id] || null;
+      }
+    },
+    elements: [{ isConnected: true, locked: false }],
+    isLocked: (element) => !!element.locked,
+    canMutateDeck: () => true
+  }), true);
+  assert.equal(controls.elFontWeight.disabled, false);
+  assert.equal(controls.alignCenterBtn.disabled, false);
+});
+
 test('syncStudioStyleFeedbackLabel renders numeric inspector feedback with the correct unit', () => {
   const labels = {
     fontSizeVal: { textContent: '' },
