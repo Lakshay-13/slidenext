@@ -824,3 +824,36 @@ test('arrangeElementLayer returns true and tolerates a missing z-index input whe
     ['triggerAutoVersion', 'Auto: Rearranged Layers']
   ]);
 });
+
+test('arrangeElementLayer delegates to the shared layer controller when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let delegatedOptions = null;
+  const context = {
+    SlideNextStudioEditorLayerController: {
+      arrangeStudioElementLayer(options) {
+        delegatedOptions = options;
+        return 'shared-arrange';
+      }
+    },
+    getLiveSelectedElements() {},
+    selectionHasLockedElements() {},
+    refreshLayerOrderUi() {},
+    reorderSlideLayers() {},
+    syncLayerOrderZIndexInput() {},
+    finalizeLayerOrderMutation() {}
+  };
+
+  vm.createContext(context);
+  const arrangeElementLayerSource = extractFunctionSource(
+    fileContent,
+    'function arrangeElementLayer(action) {',
+    '\n\n    // Wallpaper / Background styles Tabs'
+  );
+  vm.runInContext(arrangeElementLayerSource, context);
+
+  assert.equal(context.arrangeElementLayer('backward'), 'shared-arrange');
+  assert.equal(delegatedOptions.action, 'backward');
+  assert.equal(delegatedOptions.getSelectedElements, context.getLiveSelectedElements);
+  assert.equal(delegatedOptions.selectionHasLockedElements, context.selectionHasLockedElements);
+  assert.equal(delegatedOptions.finalizeLayerOrderMutation, context.finalizeLayerOrderMutation);
+});

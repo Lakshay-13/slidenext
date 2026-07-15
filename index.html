@@ -7068,6 +7068,20 @@
 
     // Rearrange Selected Element Layers
     function arrangeElementLayer(action) {
+      const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
+        ? SlideNextStudioEditorLayerController
+        : null;
+      if (layerController && typeof layerController.arrangeStudioElementLayer === 'function') {
+        return layerController.arrangeStudioElementLayer({
+          action,
+          getSelectedElements: getLiveSelectedElements,
+          selectionHasLockedElements,
+          refreshLayerOrderUi,
+          reorderSlideLayers,
+          syncLayerOrderZIndexInput,
+          finalizeLayerOrderMutation
+        });
+      }
       const targets = getLiveSelectedElements();
       if (targets.length === 0) {
         return refreshLayerOrderUi();

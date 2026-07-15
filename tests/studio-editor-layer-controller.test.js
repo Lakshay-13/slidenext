@@ -324,6 +324,58 @@ test('changeStudioLayerZIndexByRef finalizes successful reorders and syncs selec
   assert.deepEqual(calls[8][2], { transaction });
 });
 
+test('arrangeStudioElementLayer refreshes no-ops and finalizes successful reorders', () => {
+  const selectedElements = [{ id: 'node-1' }, { id: 'node-2' }];
+  const transaction = { id: 'tx-arrange' };
+  const calls = [];
+
+  assert.equal(layerController.arrangeStudioElementLayer({
+    action: 'front',
+    getSelectedElements() {
+      calls.push(['getSelectedElements']);
+      return [];
+    },
+    refreshLayerOrderUi(options) {
+      calls.push(['refreshLayerOrderUi', options]);
+      return false;
+    }
+  }), false);
+
+  assert.equal(layerController.arrangeStudioElementLayer({
+    action: 'backward',
+    getSelectedElements() {
+      calls.push(['getSelectedElements']);
+      return selectedElements;
+    },
+    selectionHasLockedElements(elements) {
+      calls.push(['selectionHasLockedElements', elements]);
+      return false;
+    },
+    reorderSlideLayers(action, elements, options) {
+      calls.push(['reorderSlideLayers', action, elements]);
+      options.onTransaction(transaction);
+      return true;
+    },
+    syncLayerOrderZIndexInput(element) {
+      calls.push(['syncLayerOrderZIndexInput', element]);
+    },
+    finalizeLayerOrderMutation(label, options) {
+      calls.push(['finalizeLayerOrderMutation', label, options]);
+    }
+  }), true);
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'getSelectedElements',
+    'refreshLayerOrderUi',
+    'getSelectedElements',
+    'selectionHasLockedElements',
+    'reorderSlideLayers',
+    'syncLayerOrderZIndexInput',
+    'finalizeLayerOrderMutation'
+  ]);
+  assert.deepEqual(calls[6][2], { transaction });
+});
+
 test('syncStudioLayerList assembles live layer action state before shared rendering', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const activeSlide = { id: 'slide-1' };

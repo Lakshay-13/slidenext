@@ -161,6 +161,42 @@
     return true;
   }
 
+  function arrangeStudioElementLayer(options = {}) {
+    const getSelectedElements = typeof options.getSelectedElements === 'function'
+      ? options.getSelectedElements
+      : () => [];
+    const refreshLayerOrderUi = typeof options.refreshLayerOrderUi === 'function'
+      ? options.refreshLayerOrderUi
+      : () => false;
+    const targets = getSelectedElements() || [];
+    if (targets.length === 0) {
+      return refreshLayerOrderUi();
+    }
+    if (typeof options.selectionHasLockedElements === 'function'
+      && options.selectionHasLockedElements(targets)) {
+      return refreshLayerOrderUi();
+    }
+
+    let transaction = null;
+    const didChange = typeof options.reorderSlideLayers === 'function'
+      ? options.reorderSlideLayers(options.action, targets, {
+        onTransaction(nextTransaction) {
+          transaction = nextTransaction;
+        }
+      })
+      : false;
+    if (!didChange) {
+      return refreshLayerOrderUi();
+    }
+    if (typeof options.syncLayerOrderZIndexInput === 'function') {
+      options.syncLayerOrderZIndexInput(targets[0]);
+    }
+    if (typeof options.finalizeLayerOrderMutation === 'function') {
+      options.finalizeLayerOrderMutation('Auto: Rearranged Layers', { transaction });
+    }
+    return true;
+  }
+
   function syncStudioLayerList(options = {}) {
     const documentRef = options.documentRef;
     const iframeDoc = options.iframeDoc || null;
@@ -239,6 +275,7 @@
   }
 
   return {
+    arrangeStudioElementLayer,
     changeStudioLayerZIndexByRef,
     resolveStudioLayerRowElement,
     selectStudioLayerElementByRef,
