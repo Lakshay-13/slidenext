@@ -310,6 +310,90 @@ test('insertElement forwards an immutable canonical node sidecar for new element
   assert.deepEqual(canonicalBefore.slides[0].nodes, []);
 });
 
+test('insertElement preserves the canonical sidecar in its legacy persistence fallback', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const insertElementSource = extractFunctionSource(
+    fileContent,
+    'function insertElement(type) {',
+    '\n\n    // Rearrange Selected Element Layers'
+  );
+  const canonicalBefore = canonicalDeckModel.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }]
+  });
+  const activeSlide = {
+    children: [],
+    appendChild() {}
+  };
+  const insertedElement = {
+    tagName: 'H2',
+    dataset: { editorId: 'node-2' },
+    style: {},
+    appendChild() {}
+  };
+  const calls = [];
+  const context = {
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextDeckImport: {
+      importElementToCanonicalNode() {
+        return { id: 'node-2', tagName: 'h2', text: 'New Heading' };
+      }
+    },
+    SlideNextStudioEditorInsertion: {
+      applyStudioElementInsertion(type, options) {
+        options.slide.appendChild(insertedElement);
+        return { element: insertedElement, transaction: { id: 'tx-insert-legacy' } };
+      }
+    },
+    getActiveSlide() {
+      return activeSlide;
+    },
+    getEditorSlideId() {
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return {};
+    },
+    buildEditorCanonicalDeck() {
+      return canonicalBefore;
+    },
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    makeElementsHoverable() {},
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
+    },
+    selectElement() {
+      calls.push(['selectElement']);
+    },
+    triggerAutoSave() {
+      calls.push(['triggerAutoSave']);
+    },
+    triggerAutoVersion() {
+      calls.push(['triggerAutoVersion']);
+    }
+  };
+
+  vm.createContext(context);
+  loadElementInsertionHelper(fileContent, context);
+  vm.runInContext(insertElementSource, context);
+
+  assert.equal(context.insertElement('h2'), true);
+  const saveCall = calls.find(([name]) => name === 'saveHistoryState');
+  assert.equal(saveCall[1], false);
+  assert.deepEqual(saveCall[2], { id: 'tx-insert-legacy' });
+  assert.deepEqual(saveCall[3].slides[0].nodes.map(({ id, tagName, text }) => ({
+    id,
+    tagName,
+    text
+  })), [{
+    id: 'node-2',
+    tagName: 'h2',
+    text: 'New Heading'
+  }]);
+  assert.deepEqual(canonicalBefore.slides[0].nodes, []);
+});
+
 test('insertElement no-ops when no active slide is available or the element type is unsupported', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const insertElementSource = extractFunctionSource(

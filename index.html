@@ -7738,7 +7738,11 @@
         selectElement(newEl);
         generateThumbnails();
         if (transaction) {
-          saveHistoryState(false, transaction);
+          if (canonicalDeck) {
+            saveHistoryState(false, transaction, canonicalDeck);
+          } else {
+            saveHistoryState(false, transaction);
+          }
         } else {
           saveHistoryState();
         }
