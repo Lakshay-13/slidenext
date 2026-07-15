@@ -229,6 +229,7 @@ test('distributeSelectedElements forwards an immutable canonical layout sidecar'
   let finalized = null;
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalLayout: canonicalLayout,
     SlideNextStudioEditorAlignment: {
       buildStudioDistributedLayout() {
         return {
