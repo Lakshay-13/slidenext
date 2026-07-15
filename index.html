@@ -6040,6 +6040,30 @@
       if (!paint) return false;
       
       const slides = getSlides(iframeDoc);
+      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+        ? SlideNextStudioEditorWallpaperView
+        : null;
+      const applyStudioWallpaperToSlides = wallpaperView
+        && typeof wallpaperView.applyStudioWallpaperToSlides === 'function'
+        ? wallpaperView.applyStudioWallpaperToSlides
+        : null;
+      if (applyStudioWallpaperToSlides) {
+        const mutation = applyStudioWallpaperToSlides(slides, paint, {
+          createStyleTransaction: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            && SlideNextStudioEditorTransaction
+            && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
+            ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+            : null,
+          getSlideId: (slide) => typeof getEditorSlideId === 'function'
+            ? getEditorSlideId(slide)
+            : ''
+        });
+        if (!mutation || !mutation.didChange) return false;
+        finalizeWallpaperMutation('Auto: Applied Background to All Slides', mutation.transaction);
+        alert("Successfully applied active background paint to all slides in the deck.");
+        return true;
+      }
+
       const createStudioStyleTransaction = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction

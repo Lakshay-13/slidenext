@@ -114,6 +114,40 @@ test('renderStudioWallpaperPresets tolerates missing wallpaper containers', () =
   assert.equal(wallpaperView.renderStudioWallpaperPresets({ documentRef: null }), false);
 });
 
+test('applyStudioWallpaperToSlides updates changed slides and builds a style transaction', () => {
+  const activeSlide = { style: { background: 'black' } };
+  const siblingSlide = { style: { background: '' } };
+  let transactionItems = null;
+  const result = wallpaperView.applyStudioWallpaperToSlides(
+    [activeSlide, siblingSlide],
+    'linear-gradient(red, blue)',
+    {
+      getSlideId(slide) {
+        return slide === activeSlide ? 'slide-1' : 'slide-2';
+      },
+      createStyleTransaction(items) {
+        transactionItems = items;
+        return { type: 'style', items };
+      }
+    }
+  );
+
+  assert.equal(result.didChange, true);
+  assert.equal(result.changedCount, 2);
+  assert.equal(activeSlide.style.background, 'linear-gradient(red, blue)');
+  assert.equal(siblingSlide.style.background, 'linear-gradient(red, blue)');
+  assert.deepEqual(transactionItems.map((item) => item.elementId), ['slide:slide-1', 'slide:slide-2']);
+  assert.deepEqual(result.transaction, { type: 'style', items: transactionItems });
+});
+
+test('applyStudioWallpaperToSlides reports no change when every slide matches', () => {
+  const slides = [{ style: { background: 'black' } }];
+  assert.deepEqual(
+    wallpaperView.applyStudioWallpaperToSlides(slides, 'black'),
+    { didChange: false, changedCount: 0, transaction: null }
+  );
+});
+
 test('setStudioWallpaperTab applies the requested tab and panel chrome', () => {
   const createClassList = (initialValues = []) => {
     const values = new Set(initialValues);

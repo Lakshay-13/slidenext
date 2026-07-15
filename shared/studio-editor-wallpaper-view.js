@@ -125,6 +125,46 @@
     return true;
   }
 
+  function applyStudioWallpaperToSlides(slides, background, options = {}) {
+    const sourceSlides = Array.isArray(slides) ? slides : [];
+    const createStyleTransaction = typeof options.createStyleTransaction === 'function'
+      ? options.createStyleTransaction
+      : null;
+    const getSlideId = typeof options.getSlideId === 'function'
+      ? options.getSlideId
+      : (slide) => slide && slide.dataset && slide.dataset.slideId;
+    const transactionItems = createStyleTransaction
+      ? sourceSlides.reduce((items, slide) => {
+          const slideId = getSlideId(slide);
+          if (!slideId || !slide || !slide.style) return items;
+          items.push({
+            element: slide,
+            elementId: `slide:${slideId}`,
+            before: { background: slide.style.background }
+          });
+          return items;
+        }, [])
+      : [];
+    let changedCount = 0;
+    sourceSlides.forEach((slide) => {
+      if (!slide || !slide.style || slide.style.background === background) return;
+      slide.style.background = background;
+      changedCount += 1;
+    });
+    if (changedCount === 0) {
+      return { didChange: false, changedCount: 0, transaction: null };
+    }
+
+    transactionItems.forEach((item) => {
+      item.after = { background: item.element.style.background };
+    });
+    return {
+      didChange: true,
+      changedCount,
+      transaction: createStyleTransaction(transactionItems)
+    };
+  }
+
   function setStudioWallpaperTab(options = {}) {
     const documentRef = options.documentRef;
     const solidTab = documentRef && documentRef.getElementById('wpTabSolid');
@@ -317,6 +357,7 @@
     extractStudioGradientStopColor,
     resolveStudioActiveSlideSolidWallpaperColor,
     renderStudioWallpaperPresets,
+    applyStudioWallpaperToSlides,
     setStudioWallpaperTab,
     resolveStudioActiveSlideGradientBackground,
     syncStudioSolidWallpaperControl,

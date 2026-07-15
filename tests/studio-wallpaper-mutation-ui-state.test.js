@@ -424,6 +424,52 @@ test('applyWallpaperToAllSlides uses the shared iframe accessor and propagates t
   ]);
 });
 
+test('applyWallpaperToAllSlides delegates slide mutation to the shared wallpaper view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyWallpaperToAllSlidesSource = extractFunctionSource(
+    fileContent,
+    'function applyWallpaperToAllSlides() {',
+    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+  );
+
+  const iframeDoc = { id: 'doc' };
+  const activeSlide = { style: { background: 'linear-gradient(red, blue)' } };
+  const siblingSlide = { style: { background: '' } };
+  let delegatedArgs = null;
+  let finalizedArgs = null;
+  const context = {
+    SlideNextStudioEditorWallpaperView: {
+      applyStudioWallpaperToSlides(slides, background, options) {
+        delegatedArgs = { slides, background, options };
+        return { didChange: true, transaction: { type: 'style' } };
+      }
+    },
+    alert() {},
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlides() {
+      return [activeSlide, siblingSlide];
+    },
+    resolveCurrentStudioWallpaperActionState() {
+      return { canUseWallpaperControls: true, activeSlide };
+    },
+    finalizeWallpaperMutation(...args) {
+      finalizedArgs = args;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyWallpaperToAllSlidesSource, context);
+
+  assert.equal(context.applyWallpaperToAllSlides(), true);
+  assert.equal(delegatedArgs.background, 'linear-gradient(red, blue)');
+  assert.equal(delegatedArgs.slides.length, 2);
+  assert.equal(typeof delegatedArgs.options.getSlideId, 'function');
+  assert.equal(finalizedArgs[0], 'Auto: Applied Background to All Slides');
+  assert.deepEqual(JSON.parse(JSON.stringify(finalizedArgs[1])), { type: 'style' });
+});
+
 test('applyWallpaperToAllSlides records one style transaction per changed slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyWallpaperToAllSlidesSource = extractFunctionSource(
