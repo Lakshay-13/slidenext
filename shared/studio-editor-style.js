@@ -68,6 +68,17 @@
     };
   }
 
+  function renderStudioStyleToolbarState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    const toolbarState = options.toolbarState || {};
+    Object.entries(toolbarState.controlStates || {}).forEach(([id, canRun]) => {
+      const control = documentRef.getElementById(id);
+      if (control) control.disabled = !canRun;
+    });
+    return true;
+  }
+
   function normalizeStudioStyleMutationValue(prop, value) {
     if (prop === 'opacity') {
       const displayValue = `${Math.max(10, Math.min(100, parseInt(value, 10) || 100))}`;
@@ -331,6 +342,7 @@
     getStudioStyleSelection,
     buildStudioStyleMutationPlan,
     buildStudioStyleToolbarState,
+    renderStudioStyleToolbarState,
     normalizeStudioStyleMutationValue,
     applyStudioStyleMutation,
     getStudioEditorStyleText,

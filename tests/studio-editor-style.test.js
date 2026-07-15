@@ -73,6 +73,29 @@ test('buildStudioStyleToolbarState derives inspector control enablement from sha
   );
 });
 
+test('renderStudioStyleToolbarState applies control availability to inspector inputs', () => {
+  const controls = {
+    elFontSize: { disabled: false },
+    elTextColor: { disabled: false }
+  };
+
+  assert.equal(styleState.renderStudioStyleToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return controls[id] || null;
+      }
+    },
+    toolbarState: {
+      controlStates: {
+        elFontSize: true,
+        elTextColor: false
+      }
+    }
+  }), true);
+  assert.equal(controls.elFontSize.disabled, false);
+  assert.equal(controls.elTextColor.disabled, true);
+});
+
 test('applyStudioStyleMutation applies shared style properties across the live selection', () => {
   const first = createElement('div');
   const second = createElement('p');

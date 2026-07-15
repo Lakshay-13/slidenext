@@ -4517,15 +4517,13 @@
           isLocked: isElementLocked,
           canMutateDeck: () => !!getActiveSlide(doc)
         });
-        Object.entries(toolbarState.controlStates || {}).forEach(([id, canRun]) => {
-          const control = document.getElementById(id);
-          if (control) {
-            control.disabled = !canRun;
-          }
+        return SlideNextStudioEditorStyle.renderStudioStyleToolbarState({
+          documentRef: document,
+          toolbarState
         });
-        return;
       }
 
+      const toolbarState = { controlStates: {} };
       controlConfigs.forEach(([id, prop, value]) => {
         const control = document.getElementById(id);
         if (!control) return;
@@ -4533,7 +4531,11 @@
           isLocked: isElementLocked,
           canMutateDeck: () => !!getActiveSlide(doc)
         });
-        control.disabled = !styleMutationPlan.canApply;
+        toolbarState.controlStates[id] = styleMutationPlan.canApply;
+      });
+      return SlideNextStudioEditorStyle.renderStudioStyleToolbarState({
+        documentRef: document,
+        toolbarState
       });
     }
 

@@ -253,6 +253,9 @@ test('updateStyleActionState reuses the shared style toolbar helper when availab
         return {
           controlStates: Object.fromEntries(controlConfigs.map(([id]) => [id, true]))
         };
+      },
+      renderStudioStyleToolbarState(options) {
+        return styleState.renderStudioStyleToolbarState(options);
       }
     },
     document: {
