@@ -247,6 +247,10 @@ test('createStudioMarqueePointerHandlers cancels without committing an inactive 
   });
 
   assert.equal(handler.handlePointerDown(createPointerEvent({ target: slide })), true);
+  assert.equal(handler.handlePointerMove(createPointerEvent({ pointerId: 2, clientX: 40, clientY: 40 })), false);
+  assert.equal(handler.handlePointerUp(createPointerEvent({ pointerId: 2 })), false);
+  assert.equal(handler.handlePointerMove(createPointerEvent({ pointerId: undefined, clientX: 40, clientY: 40 })), false);
+  assert.notEqual(handler.getSession(), null);
   assert.equal(handler.handlePointerCancel(createPointerEvent({ pointerId: 1 })), true);
   assert.deepEqual(results, [{
     cancelled: true,

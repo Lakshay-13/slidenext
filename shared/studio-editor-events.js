@@ -113,7 +113,8 @@
 
     function isSessionPointer(event = {}) {
       return !!session
-        && (typeof event.pointerId !== 'number' || event.pointerId === session.pointerId);
+        && typeof event.pointerId === 'number'
+        && event.pointerId === session.pointerId;
     }
 
     function buildMarqueeRect(startPointer, pointer) {
