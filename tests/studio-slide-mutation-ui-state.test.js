@@ -963,6 +963,7 @@ test('reorderSlides delegates DOM ordering and transaction capture to the shared
   const iframeDoc = { id: 'doc' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideCommands: slideCommands,
     SlideNextStudioDeckView: {
       applyStudioSlideReorderMutation(...args) {
         calls.push(['applyStudioSlideReorderMutation', ...args]);
@@ -1026,6 +1027,7 @@ test('reorderSlides no-ops when the iframe document is unavailable', () => {
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideCommands: slideCommands,
     getIframeDoc() {
       calls.push(['getIframeDoc']);
       return null;
@@ -1064,6 +1066,7 @@ test('reorderSlides no-ops when the slide container is unavailable', () => {
     }
   };
   const context = {
+    SlideNextStudioEditorSlideCommands: slideCommands,
     getIframeDoc() {
       calls.push(['getIframeDoc']);
       return iframeDoc;
@@ -1105,6 +1108,7 @@ test('reorderSlides no-ops when the requested slide indexes are unavailable', ()
     }
   };
   const context = {
+    SlideNextStudioEditorSlideCommands: slideCommands,
     getIframeDoc() {
       calls.push(['getIframeDoc']);
       return iframeDoc;
@@ -1153,6 +1157,7 @@ test('reorderSlides no-ops when the requested slide indexes are unchanged', () =
     }
   };
   const context = {
+    SlideNextStudioEditorSlideCommands: slideCommands,
     getIframeDoc() {
       calls.push(['getIframeDoc']);
       return iframeDoc;

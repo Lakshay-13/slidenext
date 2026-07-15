@@ -2633,15 +2633,15 @@
 
     // Swap node indices in iframe and re-render
     function reorderSlides(fromIdx, toIdx) {
-      const iframeDoc = getIframeDoc();
-      if (!iframeDoc) return false;
-      const container = iframeDoc.getElementById('slidesContainer');
-      if (!container) return false;
-      const slides = getSlides(iframeDoc);
-      const draggedNode = slides[fromIdx];
-      const targetNode = slides[toIdx];
-      if (!draggedNode || !targetNode) return false;
-      if (fromIdx === toIdx) return false;
+      const slideCommands = typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+        ? SlideNextStudioEditorSlideCommands
+        : null;
+      const reorderStudioSlideNodes = slideCommands
+        && typeof slideCommands.reorderStudioSlideNodes === 'function'
+        ? slideCommands.reorderStudioSlideNodes
+        : null;
+      if (!reorderStudioSlideNodes) return false;
+
       const reorderCanonicalSlides = (
         typeof SlideNextCanonicalDeck !== 'undefined'
         && SlideNextCanonicalDeck
@@ -2649,40 +2649,34 @@
       )
         ? SlideNextCanonicalDeck.reorderCanonicalSlides
         : null;
-      const sourceSlideId = typeof getEditorSlideId === 'function'
-        ? getEditorSlideId(draggedNode)
-        : '';
-      const targetSlideId = typeof getEditorSlideId === 'function'
-        ? getEditorSlideId(targetNode)
-        : '';
-      const canonicalDeckBeforeReorder = reorderCanonicalSlides
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(iframeDoc)
-        : null;
-      const canonicalDeckAfterReorder = reorderCanonicalSlides
-        ? reorderCanonicalSlides(canonicalDeckBeforeReorder, sourceSlideId, targetSlideId)
-        : null;
-      const slideMutationState = captureSlideMutationRestoreState(iframeDoc);
-      const mutation = applyEditorSlideReorderWithTransaction(
-        container,
-        draggedNode,
-        fromIdx < toIdx ? targetNode.nextSibling : targetNode
-      );
-      if (!mutation.didApply) return false;
-      const transaction = mutation.transaction;
-      
-      generateThumbnails();
-      const slideCount = getSlides(iframeDoc).length;
-      restoreDeckViewAfterSlideMutation(iframeDoc, slideMutationState.preservedSelectionIds, {
-        preservedActiveSlideId: slideMutationState.preservedActiveSlideId,
-        fallbackIndex: slideCount === 0 ? 0 : Math.min(toIdx, slideCount - 1),
+
+      return reorderStudioSlideNodes(fromIdx, toIdx, {
+        getIframeDoc,
+        getSlideContainer: (doc) => doc && typeof doc.getElementById === 'function'
+          ? doc.getElementById('slidesContainer')
+          : null,
+        getSlides: typeof getSlides === 'function' ? getSlides : () => [],
+        getSlideId: typeof getEditorSlideId === 'function'
+          ? getEditorSlideId
+          : (slide) => slide && slide.id || '',
+        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck
+          : null,
+        reorderCanonicalSlides,
+        captureSlideMutationState: typeof captureSlideMutationRestoreState === 'function'
+          ? captureSlideMutationRestoreState
+          : null,
+        applyReorder: typeof applyEditorSlideReorderWithTransaction === 'function'
+          ? applyEditorSlideReorderWithTransaction
+          : () => ({ didApply: false, transaction: null }),
+        generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
+        restoreDeckViewAfterSlideMutation: typeof restoreDeckViewAfterSlideMutation === 'function'
+          ? restoreDeckViewAfterSlideMutation
+          : null,
+        finalizeMutation: typeof finalizeSlideMutationPersistence === 'function'
+          ? finalizeSlideMutationPersistence
+          : null
       });
-      if (canonicalDeckAfterReorder) {
-        finalizeSlideMutationPersistence('Auto: Reordered Slides', transaction, canonicalDeckAfterReorder);
-      } else {
-        finalizeSlideMutationPersistence('Auto: Reordered Slides', transaction);
-      }
-      return true;
     }
 
     function updateActiveThumbnailCardState(activeSlideId) {

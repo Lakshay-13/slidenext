@@ -283,3 +283,77 @@ test('deleteStudioSlideNode rejects deleting the final slide without mutation', 
   }), false);
   assert.deepEqual(calls, ['Action aborted: presentation requires at least one slide.']);
 });
+
+test('reorderStudioSlideNodes preserves insertion target, canonical order, and active-view restoration', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const firstSlide = { id: 'slide-1', nextSibling: null };
+  const secondSlide = { id: 'slide-2', nextSibling: null };
+  const thirdSlide = { id: 'slide-3', nextSibling: null };
+  let slides = [firstSlide, secondSlide, thirdSlide];
+  Object.defineProperty(firstSlide, 'nextSibling', { get: () => slides[1] || null });
+  Object.defineProperty(secondSlide, 'nextSibling', { get: () => slides[2] || null });
+  Object.defineProperty(thirdSlide, 'nextSibling', { get: () => null });
+  const calls = [];
+
+  const result = slideCommands.reorderStudioSlideNodes(0, 2, {
+    getIframeDoc: () => doc,
+    getSlideContainer: () => container,
+    getSlides: () => slides,
+    getSlideId: (slide) => slide.id,
+    buildCanonicalDeck() {
+      calls.push('buildCanonicalDeck');
+      return { slides: [{ id: 'slide-1' }, { id: 'slide-2' }, { id: 'slide-3' }] };
+    },
+    reorderCanonicalSlides(deck, sourceId, targetId) {
+      assert.equal(sourceId, 'slide-1');
+      assert.equal(targetId, 'slide-3');
+      calls.push('reorderCanonicalSlides');
+      return { slides: [{ id: 'slide-2' }, { id: 'slide-3' }, { id: 'slide-1' }] };
+    },
+    captureSlideMutationState() {
+      calls.push('captureSlideMutationState');
+      return {
+        preservedActiveSlideId: 'slide-2',
+        preservedSelectionIds: ['element-1']
+      };
+    },
+    applyReorder(sourceContainer, draggedNode, beforeNode) {
+      assert.equal(sourceContainer, container);
+      assert.equal(draggedNode, firstSlide);
+      assert.equal(beforeNode, null);
+      slides = [secondSlide, thirdSlide, firstSlide];
+      calls.push('applyReorder');
+      return { didApply: true, transaction: { type: 'markup' } };
+    },
+    generateThumbnails() {
+      calls.push('generateThumbnails');
+    },
+    restoreDeckViewAfterSlideMutation(sourceDoc, selectionIds, restoreOptions) {
+      assert.equal(sourceDoc, doc);
+      assert.deepEqual(selectionIds, ['element-1']);
+      assert.deepEqual(restoreOptions, {
+        preservedActiveSlideId: 'slide-2',
+        fallbackIndex: 2
+      });
+      calls.push('restoreDeckViewAfterSlideMutation');
+    },
+    finalizeMutation(label, transaction, canonicalDeck) {
+      assert.equal(label, 'Auto: Reordered Slides');
+      assert.deepEqual(transaction, { type: 'markup' });
+      assert.deepEqual(canonicalDeck.slides.map((slide) => slide.id), ['slide-2', 'slide-3', 'slide-1']);
+      calls.push('finalizeMutation');
+    }
+  });
+
+  assert.equal(result, true);
+  assert.deepEqual(calls, [
+    'buildCanonicalDeck',
+    'reorderCanonicalSlides',
+    'captureSlideMutationState',
+    'applyReorder',
+    'generateThumbnails',
+    'restoreDeckViewAfterSlideMutation',
+    'finalizeMutation'
+  ]);
+});
