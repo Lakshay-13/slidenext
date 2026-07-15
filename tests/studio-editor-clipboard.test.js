@@ -193,6 +193,32 @@ test('buildStudioClipboardToolbarState derives clipboard button states from the 
   });
 });
 
+test('renderStudioClipboardToolbarState applies shared clipboard button states', () => {
+  const buttons = {
+    copySelectionBtn: { disabled: true },
+    pasteClipboardBtn: { disabled: true },
+    slidePasteClipboardBtn: { disabled: true }
+  };
+  assert.equal(clipboardState.renderStudioClipboardToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return buttons[id] || null;
+      }
+    },
+    actionState: {
+      buttonStates: {
+        copySelectionBtn: true,
+        pasteClipboardBtn: false,
+        slidePasteClipboardBtn: true
+      }
+    }
+  }), true);
+  assert.equal(buttons.copySelectionBtn.disabled, false);
+  assert.equal(buttons.pasteClipboardBtn.disabled, true);
+  assert.equal(buttons.slidePasteClipboardBtn.disabled, false);
+  assert.equal(clipboardState.renderStudioClipboardToolbarState({ documentRef: null }), false);
+});
+
 test('buildStudioClipboardSelectionMutationPlan combines payload viability with the shared clipboard mutation state', () => {
   assert.deepEqual(clipboardState.buildStudioClipboardSelectionMutationPlan(
     [{ id: 1 }],

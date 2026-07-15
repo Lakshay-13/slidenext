@@ -4856,11 +4856,27 @@
         pasteClipboardBtn: clipboardActionState.canPaste,
         slidePasteClipboardBtn: clipboardActionState.canPaste
       };
+      const renderStudioClipboardToolbarState = (
+        SlideNextStudioEditorClipboard
+        && typeof SlideNextStudioEditorClipboard.renderStudioClipboardToolbarState === 'function'
+      )
+        ? SlideNextStudioEditorClipboard.renderStudioClipboardToolbarState
+        : null;
+      if (renderStudioClipboardToolbarState) {
+        return renderStudioClipboardToolbarState({
+          documentRef: document,
+          actionState: {
+            ...clipboardActionState,
+            buttonStates
+          }
+        });
+      }
 
       Object.entries(buttonStates).forEach(([id, canRun]) => {
-        const btn = document.getElementById(id);
-        if (btn) btn.disabled = !canRun;
+        const button = document.getElementById(id);
+        if (button) button.disabled = !canRun;
       });
+      return true;
     }
 
     function sanitizeDuplicatedSubtree(root) {
