@@ -52,6 +52,15 @@ function loadApplyEditorSlideInsertionWithTransaction(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadApplyEditorSlideDeletionWithTransaction(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorSlideDeletionWithTransaction(container, slideNode, options = {}) {',
+    '\n\n    // Delete Active Slide Node'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadRestoreSelectionAfterPreservedSlideMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -1210,6 +1219,7 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
+  loadApplyEditorSlideDeletionWithTransaction(fileContent, context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   const result = context.deleteSlideNode(1);
@@ -1325,6 +1335,7 @@ test('deleteSlideNode delegates slide removal and transaction capture to the sha
   };
 
   vm.createContext(context);
+  loadApplyEditorSlideDeletionWithTransaction(fileContent, context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   assert.equal(context.deleteSlideNode(1), true);
@@ -1363,6 +1374,7 @@ test('deleteSlideNode no-ops when the iframe document is unavailable', () => {
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
+  loadApplyEditorSlideDeletionWithTransaction(fileContent, context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   assert.equal(context.deleteSlideNode(0), false);
@@ -1406,6 +1418,7 @@ test('deleteSlideNode no-ops when the requested slide index is unavailable', () 
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
+  loadApplyEditorSlideDeletionWithTransaction(fileContent, context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   const result = context.deleteSlideNode(9);
@@ -1454,6 +1467,7 @@ test('deleteSlideNode refuses to remove the final remaining slide', () => {
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
+  loadApplyEditorSlideDeletionWithTransaction(fileContent, context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   const result = context.deleteSlideNode(0);

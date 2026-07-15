@@ -2983,12 +2983,21 @@
       return true;
     }
 
-    // Delete Active Slide Node
-    function deleteSlideNode(idx) {
-      const iframeDoc = getIframeDoc();
-      if (!iframeDoc) return false;
-      const container = iframeDoc.getElementById('slidesContainer');
-      if (!container) return false;
+    function applyEditorSlideDeletionWithTransaction(container, slideNode, options = {}) {
+      if (!container || !slideNode) {
+        return {
+          didApply: false,
+          transaction: null
+        };
+      }
+
+      const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
+        : null;
+      const applyStudioSlideDeletionMutation = deckViewApi
+        && typeof deckViewApi.applyStudioSlideDeletionMutation === 'function'
+        ? deckViewApi.applyStudioSlideDeletionMutation
+        : null;
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -2996,7 +3005,54 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      
+
+      if (applyStudioSlideDeletionMutation) {
+        const mutation = applyStudioSlideDeletionMutation(container, slideNode, {
+          createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+          containerElementId: options.containerElementId,
+          getElementId: options.getElementId
+        });
+        return {
+          didApply: !!(mutation && mutation.didApply),
+          transaction: mutation && mutation.transaction ? mutation.transaction : null
+        };
+      }
+
+      if (typeof slideNode.remove !== 'function') {
+        return {
+          didApply: false,
+          transaction: null
+        };
+      }
+
+      const containerElementId = typeof options.containerElementId === 'string'
+        && options.containerElementId.trim()
+        ? options.containerElementId.trim()
+        : 'slides-container';
+      const markupCapture = createStudioMarkupTransactionCapture
+        ? createStudioMarkupTransactionCapture([{
+            element: container,
+            elementId: containerElementId
+          }], {
+            getElementId: options.getElementId
+          })
+        : null;
+      slideNode.remove();
+      return {
+        didApply: true,
+        transaction: markupCapture
+          ? markupCapture.createTransaction()
+          : null
+      };
+    }
+
+    // Delete Active Slide Node
+    function deleteSlideNode(idx) {
+      const iframeDoc = getIframeDoc();
+      if (!iframeDoc) return false;
+      const container = iframeDoc.getElementById('slidesContainer');
+      if (!container) return false;
+
       const slides = getSlides(iframeDoc);
       if (slides.length <= 1) {
         alert("Action aborted: presentation requires at least one slide.");
@@ -3020,32 +3076,9 @@
       const canonicalDeckAfterDeletion = removeCanonicalSlide
         ? removeCanonicalSlide(canonicalDeckBeforeDeletion, deletedSlideId)
         : null;
-      const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
-        : null;
-      const applyStudioSlideDeletionMutation = deckViewApi
-        && typeof deckViewApi.applyStudioSlideDeletionMutation === 'function'
-        ? deckViewApi.applyStudioSlideDeletionMutation
-        : null;
-      let transaction = null;
-      if (applyStudioSlideDeletionMutation) {
-        const mutation = applyStudioSlideDeletionMutation(container, deletedSlide, {
-          createMarkupTransactionCapture: createStudioMarkupTransactionCapture
-        });
-        if (!mutation.didApply) return false;
-        transaction = mutation.transaction;
-      } else {
-        const markupCapture = createStudioMarkupTransactionCapture
-          ? createStudioMarkupTransactionCapture([{
-              element: container,
-              elementId: 'slides-container'
-            }])
-          : null;
-        deletedSlide.remove();
-        transaction = markupCapture
-          ? markupCapture.createTransaction()
-          : null;
-      }
+      const mutation = applyEditorSlideDeletionWithTransaction(container, deletedSlide);
+      if (!mutation.didApply) return false;
+      const transaction = mutation.transaction;
       
       generateThumbnails();
       const remainingSlides = getSlides(iframeDoc);
