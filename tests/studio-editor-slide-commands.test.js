@@ -83,27 +83,12 @@ test('addStudioSlideNode preserves canonical insertion and mutation lifecycle or
       calls.push('createBlankSlide');
       return newSlide;
     },
-    getSlideId(slide) {
-      assert.equal(slide, newSlide);
-      calls.push('getSlideId');
-      return 'slide-2';
-    },
-    buildCanonicalDeck(sourceDoc) {
-      assert.equal(sourceDoc, doc);
-      calls.push('buildCanonicalDeck');
-      return { slides: [{ id: 'slide-1' }] };
-    },
-    importSlideToCanonicalSlide(slide, index, options) {
-      assert.equal(slide, newSlide);
-      assert.equal(index, 1);
-      calls.push('importSlideToCanonicalSlide');
-      return { id: options.getSlideId(), title: 'New' };
-    },
-    appendCanonicalSlide(deck, slide) {
-      assert.deepEqual(deck.slides.map((item) => item.id), ['slide-1']);
-      assert.equal(slide.id, 'slide-2');
-      calls.push('appendCanonicalSlide');
-      return { slides: [...deck.slides, slide] };
+    buildCanonicalAddSlideDeck(options) {
+      assert.equal(options.sourceDocument, doc);
+      assert.equal(options.newSlide, newSlide);
+      assert.equal(options.insertionIndex, 1);
+      calls.push('buildCanonicalAddSlideDeck');
+      return { slides: [{ id: 'slide-1' }, { id: 'slide-2' }] };
     },
     saveHistoryState() {
       calls.push('saveHistoryState');
@@ -136,10 +121,7 @@ test('addStudioSlideNode preserves canonical insertion and mutation lifecycle or
     'getSlideContainer',
     'getSlides',
     'createBlankSlide',
-    'getSlideId',
-    'buildCanonicalDeck',
-    'importSlideToCanonicalSlide',
-    'appendCanonicalSlide',
+    'buildCanonicalAddSlideDeck',
     'saveHistoryState',
     'applyInsertion',
     'generateThumbnails',

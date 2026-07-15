@@ -66,32 +66,15 @@
     const newSlide = createBlankSlide(iframeDoc, newIndex);
     if (!newSlide) return false;
 
-    const appendCanonicalSlide = typeof options.appendCanonicalSlide === 'function'
-      ? options.appendCanonicalSlide
+    const buildCanonicalAddSlideDeck = typeof options.buildCanonicalAddSlideDeck === 'function'
+      ? options.buildCanonicalAddSlideDeck
       : null;
-    const getSlideId = typeof options.getSlideId === 'function'
-      ? options.getSlideId
-      : () => '';
-    const newSlideId = getSlideId(newSlide) || newSlide.id || '';
-    const importSlideToCanonicalSlide = typeof options.importSlideToCanonicalSlide === 'function'
-      ? options.importSlideToCanonicalSlide
-      : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
-    const canonicalDeckBeforeAddition = appendCanonicalSlide && buildCanonicalDeck
-      ? buildCanonicalDeck(iframeDoc)
-      : null;
-    const canonicalSlide = importSlideToCanonicalSlide && newSlideId
-      ? importSlideToCanonicalSlide(newSlide, newIndex, {
-          getSlideId: () => newSlideId
+    const canonicalDeckAfterAddition = buildCanonicalAddSlideDeck
+      ? buildCanonicalAddSlideDeck({
+          sourceDocument: iframeDoc,
+          newSlide,
+          insertionIndex: newIndex
         })
-      : {
-          id: newSlideId,
-          title: `Slide ${newIndex + 1}`
-        };
-    const canonicalDeckAfterAddition = appendCanonicalSlide
-      ? appendCanonicalSlide(canonicalDeckBeforeAddition, canonicalSlide)
       : null;
 
     const saveHistoryState = typeof options.saveHistoryState === 'function'

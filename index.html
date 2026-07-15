@@ -2929,12 +2929,8 @@
         : null;
       if (!addStudioSlideNode) return false;
 
-      const appendCanonicalSlide = (
-        typeof SlideNextCanonicalDeck !== 'undefined'
-        && SlideNextCanonicalDeck
-        && typeof SlideNextCanonicalDeck.appendCanonicalSlide === 'function'
-      )
-        ? SlideNextCanonicalDeck.appendCanonicalSlide
+      const canonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
+        ? SlideNextStudioEditorCanonicalSlide
         : null;
       const importSlideToCanonicalSlide = (
         typeof SlideNextDeckImport !== 'undefined'
@@ -2942,6 +2938,22 @@
         && typeof SlideNextDeckImport.importSlideToCanonicalSlide === 'function'
       )
         ? SlideNextDeckImport.importSlideToCanonicalSlide
+        : null;
+      const buildCanonicalAddSlideDeck = canonicalSlideApi
+        && typeof canonicalSlideApi.buildStudioCanonicalAddSlideDeck === 'function'
+        ? (options) => canonicalSlideApi.buildStudioCanonicalAddSlideDeck({
+            ...options,
+            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+              ? SlideNextCanonicalDeck
+              : null,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+            getSlideId: typeof getEditorSlideId === 'function'
+              ? getEditorSlideId
+              : (slide) => slide && slide.id || '',
+            importSlideToCanonicalSlide
+          })
         : null;
 
       return addStudioSlideNode({
@@ -2956,14 +2968,7 @@
           assignSlideId: assignEditorSlideId,
           decorateSlide: makeElementsHoverable
         }),
-        getSlideId: typeof getEditorSlideId === 'function'
-          ? getEditorSlideId
-          : (slide) => slide && slide.id || '',
-        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-          ? buildEditorCanonicalDeck
-          : null,
-        appendCanonicalSlide,
-        importSlideToCanonicalSlide,
+        buildCanonicalAddSlideDeck,
         saveHistoryState: typeof saveHistoryState === 'function' ? saveHistoryState : () => {},
         applyInsertion: typeof applyEditorSlideInsertionWithTransaction === 'function'
           ? applyEditorSlideInsertionWithTransaction

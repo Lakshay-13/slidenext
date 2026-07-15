@@ -47,7 +47,55 @@
     return insertCanonicalSlide(canonicalDeckBeforeMutation, canonicalSlide, insertionIndex);
   }
 
+  function buildStudioCanonicalAddSlideDeck(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const appendCanonicalSlide = canonicalDeckApi
+      && typeof canonicalDeckApi.appendCanonicalSlide === 'function'
+      ? canonicalDeckApi.appendCanonicalSlide
+      : null;
+    const importSlideToCanonicalSlide = typeof options.importSlideToCanonicalSlide === 'function'
+      ? options.importSlideToCanonicalSlide
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
+      ? options.canonicalDeckBeforeMutation
+      : (appendCanonicalSlide && buildCanonicalDeck
+        ? buildCanonicalDeck(options.sourceDocument)
+        : null);
+    const newSlide = options.newSlide;
+    const insertionIndex = Number.isInteger(options.insertionIndex) ? options.insertionIndex : -1;
+    const getSlideId = typeof options.getSlideId === 'function'
+      ? options.getSlideId
+      : (slide) => slide && slide.id || '';
+    const newSlideId = getSlideId(newSlide);
+    const title = typeof options.title === 'string' ? options.title : `Slide ${insertionIndex + 1}`;
+
+    if (!appendCanonicalSlide
+      || !canonicalDeckBeforeMutation
+      || !newSlide
+      || insertionIndex < 0
+      || !newSlideId) {
+      return null;
+    }
+
+    const canonicalSlide = importSlideToCanonicalSlide
+      ? importSlideToCanonicalSlide(newSlide, insertionIndex, {
+          getSlideId: () => newSlideId
+        })
+      : {
+          id: newSlideId,
+          title
+        };
+    if (!canonicalSlide) return null;
+    return appendCanonicalSlide(canonicalDeckBeforeMutation, canonicalSlide);
+  }
+
   return {
+    buildStudioCanonicalAddSlideDeck,
     buildStudioCanonicalDuplicateSlideDeck
   };
 });

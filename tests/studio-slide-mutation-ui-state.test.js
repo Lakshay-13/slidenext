@@ -453,6 +453,7 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   const calls = [];
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextStudioEditorCanonicalSlide: canonicalSlide,
     SlideNextStudioEditorSlideCommands: slideCommands,
     assignEditorSlideId() {},
     document: {
