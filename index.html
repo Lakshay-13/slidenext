@@ -664,6 +664,11 @@
           <span>PDF</span>
         </button>
 
+        <button id="exportPptxBtn" onclick="exportPptx()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300" title="Export presentation to PPTX">
+          <span class="material-symbols-outlined text-[16px]">slideshow</span>
+          <span>PPTX</span>
+        </button>
+
         <button id="openSourceViewBtn" onclick="openSourceViewModal()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
           <span class="material-symbols-outlined text-[16px]">code</span>
           <span>HTML</span>
@@ -8959,6 +8964,7 @@
       [
         'launchPreviewBtn',
         'exportPdfBtn',
+        'exportPptxBtn',
         'studioSaveBtn',
         'studioVersionBtn',
         'addSlideBtn',
@@ -9250,6 +9256,11 @@
       const exportPdfBtn = document.getElementById('exportPdfBtn');
       if (exportPdfBtn) {
         exportPdfBtn.disabled = !actionState.canUseDeckActions;
+      }
+
+      const exportPptxBtn = document.getElementById('exportPptxBtn');
+      if (exportPptxBtn) {
+        exportPptxBtn.disabled = !actionState.canUseDeckActions;
       }
     }
 
@@ -10108,6 +10119,56 @@
     }
 
     // Presentation Live Preview from workspace
+    async function exportPptx() {
+      const actionState = resolveCurrentStudioDeckReadyActionState();
+      if (!actionState.canUseDeckActions) return false;
+
+      const canonicalDeck = buildEditorCanonicalDeck();
+      if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return false;
+
+      const exportButton = document.getElementById('exportPptxBtn');
+      if (exportButton) exportButton.disabled = true;
+
+      try {
+        const response = await fetch('/api/export/pptx', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            canonicalDeck,
+            sourcePath: currentPresentationUrl,
+            filename: `${currentTitle || 'slidenext-presentation'}.pptx`
+          })
+        });
+        if (!response.ok) {
+          setStudioAutoSaveStatus('network-error');
+          return false;
+        }
+
+        const blob = await response.blob();
+        const contentDisposition = response.headers && response.headers.get('Content-Disposition');
+        const filenameMatch = contentDisposition && contentDisposition.match(/filename="([^"]+)"/i);
+        const filename = filenameMatch
+          ? filenameMatch[1]
+          : `${currentTitle || 'slidenext-presentation'}.pptx`;
+        const downloadUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = downloadUrl;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(downloadUrl);
+        return true;
+      } catch (error) {
+        setStudioAutoSaveStatus('network-error');
+        return false;
+      } finally {
+        if (exportButton) {
+          exportButton.disabled = !resolveCurrentStudioDeckReadyActionState().canUseDeckActions;
+        }
+      }
+    }
+
     function exportPdf() {
       const actionState = resolveCurrentStudioDeckReadyActionState();
       if (!actionState.canUseDeckActions) return false;
