@@ -3,6 +3,46 @@ const assert = require('node:assert/strict');
 
 const presentationLibraryView = require('../shared/presentation-library-view.js');
 
+function createClassList(initialValues = []) {
+  const values = new Set(initialValues);
+  return {
+    add(...nextValues) {
+      nextValues.forEach(value => values.add(value));
+    },
+    remove(...nextValues) {
+      nextValues.forEach(value => values.delete(value));
+    },
+    contains(value) {
+      return values.has(value);
+    }
+  };
+}
+
+test('setPresentationLibraryLoadingState resets dashboard chrome and returns whether it applied', () => {
+  const loader = { classList: createClassList(['hidden']), innerHTML: '<p>old error</p>' };
+  const categoryTabs = { classList: createClassList() };
+  const presentationsGrid = { classList: createClassList() };
+  const elements = { loader, categoryTabs, presentationsGrid };
+
+  const didApply = presentationLibraryView.setPresentationLibraryLoadingState({
+    documentRef: {
+      getElementById(id) {
+        return elements[id];
+      }
+    }
+  });
+
+  assert.equal(didApply, true);
+  assert.equal(loader.classList.contains('hidden'), false);
+  assert.match(loader.innerHTML, /Loading presentations list/);
+  assert.equal(categoryTabs.classList.contains('hidden'), true);
+  assert.equal(presentationsGrid.classList.contains('hidden'), true);
+});
+
+test('setPresentationLibraryLoadingState safely skips an unavailable document', () => {
+  assert.equal(presentationLibraryView.setPresentationLibraryLoadingState(), false);
+});
+
 test('renderPresentationLibraryCategories renders active and inactive category tabs', () => {
   const container = { innerHTML: '' };
   const markup = presentationLibraryView.renderPresentationLibraryCategories({

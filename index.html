@@ -1444,22 +1444,13 @@
 
     // 1. Fetch Presentations from Backend
     function setPresentationLibraryLoadingState() {
-      const loader = document.getElementById('loader');
-      const categoryTabs = document.getElementById('categoryTabs');
-      const presentationsGrid = document.getElementById('presentationsGrid');
-      if (loader) {
-        loader.innerHTML = `
-          <span class="material-symbols-outlined text-[36px] text-[#7028d0] animate-spin">sync</span>
-          <p class="text-xs text-[#bcc9c6] font-mono mt-2 uppercase tracking-widest">Loading presentations list...</p>
-        `;
-        loader.classList.remove('hidden');
-      }
-      if (categoryTabs) {
-        categoryTabs.classList.add('hidden');
-      }
-      if (presentationsGrid) {
-        presentationsGrid.classList.add('hidden');
-      }
+      const view = typeof SlideNextPresentationLibraryView !== 'undefined'
+        ? SlideNextPresentationLibraryView
+        : null;
+      if (!view || typeof view.setPresentationLibraryLoadingState !== 'function') return false;
+      return view.setPresentationLibraryLoadingState({
+        documentRef: document
+      });
     }
 
     async function loadPresentations() {

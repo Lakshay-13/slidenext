@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const presentationLibraryView = require('../shared/presentation-library-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -85,6 +86,7 @@ test('loadPresentations resets the dashboard to loading state before refreshing 
     document: documentStub,
     presentationLibraryData: [],
     presentationLibraryLoadToken: 0,
+    SlideNextPresentationLibraryView: presentationLibraryView,
     renderCategories(data) {
       renders.push(['categories', data]);
     },
@@ -162,6 +164,7 @@ test('loadPresentations tolerates missing dashboard chrome during success and er
     },
     presentationLibraryData: [],
     presentationLibraryLoadToken: 0,
+    SlideNextPresentationLibraryView: presentationLibraryView,
     renderCategories(data) {
       calls.push(['renderCategories', data]);
     },

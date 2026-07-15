@@ -22,6 +22,25 @@
       : [];
   }
 
+  function setPresentationLibraryLoadingState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+
+    const loader = documentRef.getElementById('loader');
+    const categoryTabs = documentRef.getElementById('categoryTabs');
+    const presentationsGrid = documentRef.getElementById('presentationsGrid');
+    if (loader) {
+      loader.innerHTML = `
+        <span class="material-symbols-outlined text-[36px] text-[#7028d0] animate-spin">sync</span>
+        <p class="text-xs text-[#bcc9c6] font-mono mt-2 uppercase tracking-widest">Loading presentations list...</p>
+      `;
+      loader.classList.remove('hidden');
+    }
+    if (categoryTabs) categoryTabs.classList.add('hidden');
+    if (presentationsGrid) presentationsGrid.classList.add('hidden');
+    return true;
+  }
+
   function renderPresentationLibraryCategories(options = {}) {
     const container = options.container;
     const activeCategory = typeof options.activeCategory === 'string' ? options.activeCategory : 'all';
@@ -78,6 +97,7 @@
   }
 
   return {
+    setPresentationLibraryLoadingState,
     renderPresentationLibraryCategories,
     renderPresentationLibraryGrid
   };
