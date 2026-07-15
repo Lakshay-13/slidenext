@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
+const themeView = require('../shared/studio-theme-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -1030,6 +1031,7 @@ test('syncIframeTheme uses the shared iframe accessor and injects the light them
   };
 
   const context = {
+    SlideNextStudioThemeView: themeView,
     document: {
       documentElement: {
         classList: {
