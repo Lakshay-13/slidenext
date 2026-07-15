@@ -3436,17 +3436,8 @@
       const buildStudioPresentationMetadataSeed = SlideNextStudioDeckContext
         && typeof SlideNextStudioDeckContext.buildStudioPresentationMetadataSeed === 'function'
         ? SlideNextStudioDeckContext.buildStudioPresentationMetadataSeed
-        : (
-            typeof SlideNextDeckLoader !== 'undefined'
-            && SlideNextDeckLoader
-            && typeof SlideNextDeckLoader.buildPresentationMetadataSeed === 'function'
-          )
-          ? SlideNextDeckLoader.buildPresentationMetadataSeed
-          : (nextPresentationUrl = '', nextPresentationTitle = '') => ({
-              id: '',
-              title: nextPresentationTitle || '',
-              sourcePath: nextPresentationUrl || ''
-            });
+        : null;
+      if (!buildStudioPresentationMetadataSeed) return null;
       return buildStudioPresentationMetadataSeed(presentationUrl, presentationTitle);
     }
 

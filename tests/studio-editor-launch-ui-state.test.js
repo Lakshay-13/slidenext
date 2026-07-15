@@ -1013,19 +1013,13 @@ test('loadCurrentPresentationMetadata passes live session getters when delegatin
   assert.equal(capturedOptions.getCurrentSessionToken(), 13);
 });
 
-test('buildCurrentPresentationMetadataSeed falls back to the shared deck loader when the deck context helper is unavailable', () => {
+test('buildCurrentPresentationMetadataSeed fails closed when the deck context helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const calls = [];
   const context = {
     SlideNextStudioDeckContext: {},
     SlideNextDeckLoader: {
-      buildPresentationMetadataSeed(presentationUrl, presentationTitle) {
-        calls.push([presentationUrl, presentationTitle]);
-        return {
-          id: 'onboarding-presentation',
-          title: presentationTitle,
-          sourcePath: presentationUrl
-        };
+      buildPresentationMetadataSeed() {
+        throw new Error('buildPresentationMetadataSeed should remain owned by the shared deck context');
       }
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
@@ -1037,15 +1031,7 @@ test('buildCurrentPresentationMetadataSeed falls back to the shared deck loader 
 
   const metadata = context.buildCurrentPresentationMetadataSeed();
 
-  assert.deepEqual(metadata, {
-    id: 'onboarding-presentation',
-    title: 'Project Onboarding',
-    sourcePath: '/presentations/onboarding-presentation/index.html'
-  });
-  assert.deepEqual(calls, [[
-    '/presentations/onboarding-presentation/index.html',
-    'Project Onboarding'
-  ]]);
+  assert.equal(metadata, null);
 });
 
 test('loadCurrentPresentationMetadata falls back to the shared deck loader when the deck context loader is unavailable', async () => {
