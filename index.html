@@ -1137,6 +1137,7 @@
   <script src="/shared/studio-element-state.js"></script>
   <script src="/shared/studio-editor-live-selection.js"></script>
   <script src="/shared/studio-editor-inspector-view.js"></script>
+  <script src="/shared/studio-editor-inspector-controller.js"></script>
   <script src="/shared/studio-editor-layer-order.js"></script>
   <script src="/shared/studio-editor-layer-view.js"></script>
   <script src="/shared/studio-editor-layer-controller.js"></script>
@@ -4227,19 +4228,36 @@
 
     function syncInspectorForSelection() {
       const liveSelectionState = SlideNextStudioEditorLiveSelection.buildStudioLiveSelectionState(selectedElements);
-      updateClipboardActionState();
-      updateRemovalActionState();
-      updateLockActionState();
-      updateVisibilityActionState();
-      updateMotionActionState();
-      if (typeof updateAlignmentActionState === 'function') {
-        updateAlignmentActionState();
+      const inspectorController = typeof SlideNextStudioEditorInspectorController !== 'undefined'
+        ? SlideNextStudioEditorInspectorController
+        : null;
+      if (inspectorController && typeof inspectorController.syncStudioInspectorActionStates === 'function') {
+        inspectorController.syncStudioInspectorActionStates({
+          updateClipboardActionState,
+          updateRemovalActionState,
+          updateLockActionState,
+          updateVisibilityActionState,
+          updateMotionActionState,
+          updateAlignmentActionState,
+          updateGroupActionState,
+          updateStyleActionState,
+          updateLayerOrderActionState
+        });
+      } else {
+        updateClipboardActionState();
+        updateRemovalActionState();
+        updateLockActionState();
+        updateVisibilityActionState();
+        updateMotionActionState();
+        if (typeof updateAlignmentActionState === 'function') {
+          updateAlignmentActionState();
+        }
+        if (typeof updateGroupActionState === 'function') {
+          updateGroupActionState();
+        }
+        updateStyleActionState();
+        updateLayerOrderActionState();
       }
-      if (typeof updateGroupActionState === 'function') {
-        updateGroupActionState();
-      }
-      updateStyleActionState();
-      updateLayerOrderActionState();
       const inspectorView = typeof SlideNextStudioEditorInspectorView !== 'undefined'
         ? SlideNextStudioEditorInspectorView
         : null;
