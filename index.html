@@ -10606,6 +10606,15 @@
       const html = buildEditorPreviewHtml();
       if (!html) return failPdfExport();
 
+      let canonicalDeck = null;
+      if (typeof buildEditorCanonicalDeck === 'function') {
+        try {
+          canonicalDeck = buildEditorCanonicalDeck();
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+
       const exportButton = typeof document !== 'undefined'
         ? document.getElementById('exportPdfBtn')
         : null;
@@ -10617,11 +10626,7 @@
           typeof buildEditorCanonicalDeck === 'function'
           && typeof pdfExport.resolveStudioPdfPageDimensions === 'function'
         ) {
-          try {
-            pageDimensions = pdfExport.resolveStudioPdfPageDimensions(buildEditorCanonicalDeck());
-          } catch (error) {
-            pageDimensions = {};
-          }
+          pageDimensions = pdfExport.resolveStudioPdfPageDimensions(canonicalDeck);
         }
         const didOpenPrintFlow = pdfExport.openStudioPdfPrintWindow({
           html,

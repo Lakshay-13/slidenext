@@ -71,6 +71,7 @@ test('exportPdf forwards canonical layout dimensions when the shared resolver is
     '\n\n    function launchPreview() {'
   );
   const calls = [];
+  let canonicalDeckBuilds = 0;
   const context = {
     SlideNextStudioPdfExport: {
       resolveStudioPdfPageDimensions(deck) {
@@ -83,6 +84,7 @@ test('exportPdf forwards canonical layout dimensions when the shared resolver is
       }
     },
     buildEditorCanonicalDeck() {
+      canonicalDeckBuilds += 1;
       return { layout: { size: { width: 1280, height: 720, unit: 'px' } } };
     },
     buildEditorPreviewHtml() {
@@ -107,6 +109,7 @@ test('exportPdf forwards canonical layout dimensions when the shared resolver is
       pageHeight: '720px'
     }]
   ]);
+  assert.equal(canonicalDeckBuilds, 1);
 });
 
 test('exportPdf skips preview generation when deck actions are unavailable or preview html is empty', () => {
