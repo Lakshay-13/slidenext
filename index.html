@@ -4600,6 +4600,21 @@
         ['elBorderRadius', 'borderRadius', '0'],
         ['elBorderColor', 'borderColor', '#ffffff']
       ];
+      const syncStudioStyleToolbarState = (
+        SlideNextStudioEditorStyle
+        && typeof SlideNextStudioEditorStyle.syncStudioStyleToolbarState === 'function'
+      )
+        ? SlideNextStudioEditorStyle.syncStudioStyleToolbarState
+        : null;
+      if (syncStudioStyleToolbarState) {
+        return syncStudioStyleToolbarState({
+          documentRef: document,
+          elements: selectedElements,
+          controlConfigs,
+          isLocked: isElementLocked,
+          canMutateDeck: () => !!getActiveSlide(doc)
+        });
+      }
       const buildStudioStyleToolbarState = (
         SlideNextStudioEditorStyle
         && typeof SlideNextStudioEditorStyle.buildStudioStyleToolbarState === 'function'

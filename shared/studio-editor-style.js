@@ -79,6 +79,21 @@
     return true;
   }
 
+  function syncStudioStyleToolbarState(options = {}) {
+    const toolbarState = buildStudioStyleToolbarState(
+      options.elements,
+      options.controlConfigs,
+      {
+        isLocked: options.isLocked,
+        canMutateDeck: options.canMutateDeck
+      }
+    );
+    return renderStudioStyleToolbarState({
+      documentRef: options.documentRef,
+      toolbarState
+    });
+  }
+
   function normalizeStudioStyleMutationValue(prop, value) {
     if (prop === 'opacity') {
       const displayValue = `${Math.max(10, Math.min(100, parseInt(value, 10) || 100))}`;
@@ -422,6 +437,7 @@
     buildStudioStyleMutationPlan,
     buildStudioStyleToolbarState,
     renderStudioStyleToolbarState,
+    syncStudioStyleToolbarState,
     normalizeStudioStyleMutationValue,
     applyStudioStyleMutation,
     applyStudioStyleMutationWithTransaction,

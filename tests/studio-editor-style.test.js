@@ -97,6 +97,31 @@ test('renderStudioStyleToolbarState applies control availability to inspector in
   assert.equal(controls.elTextColor.disabled, true);
 });
 
+test('syncStudioStyleToolbarState builds and renders control availability in one shared operation', () => {
+  const controls = {
+    elFontWeight: { disabled: true },
+    alignCenterBtn: { disabled: true }
+  };
+  const live = { isConnected: true, locked: false };
+
+  assert.equal(styleState.syncStudioStyleToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return controls[id] || null;
+      }
+    },
+    elements: [live],
+    controlConfigs: [
+      ['elFontWeight', 'weight', '400'],
+      ['alignCenterBtn', 'align', 'center']
+    ],
+    isLocked: (element) => !!element.locked,
+    canMutateDeck: () => true
+  }), true);
+  assert.equal(controls.elFontWeight.disabled, false);
+  assert.equal(controls.alignCenterBtn.disabled, false);
+});
+
 test('applyStudioStyleMutation applies shared style properties across the live selection', () => {
   const first = createElement('div');
   const second = createElement('p');

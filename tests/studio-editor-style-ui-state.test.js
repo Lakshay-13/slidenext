@@ -305,6 +305,45 @@ test('updateStyleActionState reuses the shared style toolbar helper when availab
   assert.equal(calls[0].canMutateDeck, true);
 });
 
+test('updateStyleActionState delegates toolbar state assembly to the shared style view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateStyleActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateStyleActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateLayerOrderActionState(doc = getIframeDoc()) {'
+  );
+  const selectedElement = { isConnected: true, locked: false };
+  const calls = [];
+  const context = {
+    selectedElements: [selectedElement],
+    SlideNextStudioEditorStyle: {
+      syncStudioStyleToolbarState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    document: {},
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    isElementLocked(element) {
+      return !!element.locked;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateStyleActionStateSource, context);
+
+  const doc = { activeSlide: {} };
+  assert.equal(context.updateStyleActionState(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.deepEqual(calls[0].elements, [selectedElement]);
+  assert.equal(calls[0].controlConfigs.length, 15);
+  assert.equal(calls[0].isLocked(selectedElement), false);
+  assert.equal(calls[0].canMutateDeck(), true);
+});
+
 test('applySelectedElementStyle returns false and refreshes style controls when style edits are unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(
