@@ -1034,7 +1034,7 @@ test('buildCurrentPresentationMetadataSeed fails closed when the deck context he
   assert.equal(metadata, null);
 });
 
-test('loadCurrentPresentationMetadata falls back to the shared deck loader when the deck context loader is unavailable', async () => {
+test('loadCurrentPresentationMetadata fails closed when the deck context loader is unavailable', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
@@ -1047,7 +1047,6 @@ test('loadCurrentPresentationMetadata falls back to the shared deck loader when 
     '\n\n    function setCurrentPresentationCanonicalDeck('
   );
 
-  let loaderCall = null;
   const context = {
     SlideNextStudioEditorSession: editorSession,
     SlideNextStudioDeckContext: {
@@ -1056,14 +1055,8 @@ test('loadCurrentPresentationMetadata falls back to the shared deck loader when 
       }
     },
     SlideNextDeckLoader: {
-      async loadPresentationMetadata(presentationUrl, presentationTitle, options) {
-        loaderCall = { presentationUrl, presentationTitle, options };
-        return {
-          id: 'onboarding-presentation',
-          title: presentationTitle,
-          sourcePath: presentationUrl,
-          subtitle: 'Getting Started'
-        };
+      async loadPresentationMetadata() {
+        throw new Error('loadPresentationMetadata should remain owned by the shared deck context');
       }
     },
     createCurrentStudioSessionStateReaders() {
@@ -1091,18 +1084,8 @@ test('loadCurrentPresentationMetadata falls back to the shared deck loader when 
     12
   );
 
-  assert.deepEqual(metadata, {
-    id: 'onboarding-presentation',
-    title: 'Project Onboarding',
-    sourcePath: '/presentations/onboarding-presentation/index.html',
-    subtitle: 'Getting Started'
-  });
-  assert.deepEqual(context.currentPresentationMetadata, metadata);
-  assert.equal(loaderCall.presentationUrl, '/presentations/onboarding-presentation/index.html');
-  assert.equal(loaderCall.presentationTitle, 'Project Onboarding');
-  assert.equal(loaderCall.options.fetchImpl, undefined);
-  assert.equal(loaderCall.options.requestInit, undefined);
-  assert.equal(typeof loaderCall.options.onError, 'function');
+  assert.equal(metadata, null);
+  assert.equal(context.currentPresentationMetadata, null);
 });
 
 test('applyCurrentPresentationMetadata refreshes the persisted canonical baseline only when requested', () => {
