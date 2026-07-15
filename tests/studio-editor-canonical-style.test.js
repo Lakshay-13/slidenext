@@ -32,6 +32,23 @@ function createElement() {
   };
 }
 
+test('buildStudioCanonicalStyleBaseline builds from the source document', () => {
+  const sourceDeck = createSourceDeck();
+  const sourceDocument = { id: 'editor-doc' };
+  let builtFromDocument = null;
+  const result = canonicalStyle.buildStudioCanonicalStyleBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtFromDocument = documentRef;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(builtFromDocument, sourceDocument);
+  assert.equal(result, sourceDeck);
+});
+
 test('buildStudioCanonicalStyleMutation maps text, source, style, and z-index edits to the model', () => {
   const sourceDeck = createSourceDeck();
   const element = createElement();

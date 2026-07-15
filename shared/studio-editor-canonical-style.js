@@ -27,6 +27,21 @@
     return element && element.dataset && element.dataset.editorId;
   }
 
+  function buildStudioCanonicalStyleBaseline(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+
+    if (!canonicalDeckApi || !buildCanonicalDeck) {
+      return null;
+    }
+
+    return buildCanonicalDeck(options.sourceDocument);
+  }
+
   function buildStudioCanonicalStyleMutation(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -99,6 +114,7 @@
   }
 
   return {
+    buildStudioCanonicalStyleBaseline,
     buildStudioCanonicalStyleMutation
   };
 });

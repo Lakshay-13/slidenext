@@ -5247,10 +5247,18 @@
       const canonicalStyleApi = typeof SlideNextStudioEditorCanonicalStyle !== 'undefined'
         ? SlideNextStudioEditorCanonicalStyle
         : null;
-      const canonicalDeckBeforeMutation = canonicalStyleApi
-        && typeof canonicalStyleApi.buildStudioCanonicalStyleMutation === 'function'
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(doc)
+      const buildCanonicalStyleBaseline = canonicalStyleApi
+        && typeof canonicalStyleApi.buildStudioCanonicalStyleBaseline === 'function'
+        ? canonicalStyleApi.buildStudioCanonicalStyleBaseline
+        : null;
+      const canonicalDeckBeforeMutation = buildCanonicalStyleBaseline
+        ? buildCanonicalStyleBaseline({
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+            sourceDocument: doc
+          })
         : null;
       const getStyleElementId = (element) => {
         if (typeof assignEditorElementId === 'function') {
