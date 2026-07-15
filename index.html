@@ -1128,6 +1128,7 @@
   </div>  <!-- Logic scripts -->
   <script src="/shared/canonical-deck.js"></script>
   <script src="/shared/studio-editor-canonical-state.js"></script>
+  <script src="/shared/studio-editor-canonical-deck.js"></script>
   <script src="/shared/presentation-metadata.js"></script>
   <script src="/shared/deck-import.js"></script>
   <script src="/shared/deck-loader.js"></script>
@@ -1222,6 +1223,42 @@
               ? SlideNextCanonicalDeck.isCanonicalDeck(value)
               : !!(value && typeof value === 'object' && Array.isArray(value.slides))
           )
+        })
+      : null;
+    const studioEditorCanonicalDeckBuilder = typeof SlideNextStudioEditorCanonicalDeck !== 'undefined'
+      && SlideNextStudioEditorCanonicalDeck
+      && typeof SlideNextStudioEditorCanonicalDeck.createStudioCanonicalDeckBuilder === 'function'
+      ? SlideNextStudioEditorCanonicalDeck.createStudioCanonicalDeckBuilder({
+          isCanonicalDeck: (value) => (
+            typeof SlideNextCanonicalDeck !== 'undefined'
+            && SlideNextCanonicalDeck
+            && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
+              ? SlideNextCanonicalDeck.isCanonicalDeck(value)
+              : !!(value && typeof value === 'object' && Array.isArray(value.slides))
+          ),
+          getCurrentPresentationMetadata: () => currentPresentationMetadata,
+          getPersistedCanonicalDeck: () => lastPersistedCanonicalDeck,
+          resolveLiveCanonicalDeck: (doc) => resolveEditorLiveCanonicalDeck(doc, studioEditorSessionToken),
+          resolveStoredCanonicalBaseline: resolveEditorStoredCanonicalBaseline,
+          buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
+          getPresentationUrl: () => currentPresentationUrl,
+          getPresentationTitle: () => currentTitle,
+          buildStudioCanonicalDeck: (
+            typeof SlideNextStudioDeckContext !== 'undefined'
+            && SlideNextStudioDeckContext
+            && typeof SlideNextStudioDeckContext.buildStudioCanonicalDeck === 'function'
+          )
+            ? (doc, options) => SlideNextStudioDeckContext.buildStudioCanonicalDeck(doc, options)
+            : null,
+          buildCanonicalDeckFromDocument: (
+            typeof SlideNextDeckLoader !== 'undefined'
+            && SlideNextDeckLoader
+            && typeof SlideNextDeckLoader.buildCanonicalDeckFromDocument === 'function'
+          )
+            ? (doc, options) => SlideNextDeckLoader.buildCanonicalDeckFromDocument(doc, options)
+            : null,
+          getSlideId: getEditorSlideId,
+          getNodeId: assignEditorElementId
         })
       : null;
     let isDraggingElement = false;
@@ -3731,6 +3768,9 @@
       const options = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
         ? arguments[1]
         : {};
+      if (typeof studioEditorCanonicalDeckBuilder === 'function') {
+        return studioEditorCanonicalDeckBuilder(doc, options);
+      }
       const canonicalDeckOverride = options && typeof options === 'object'
         && Object.prototype.hasOwnProperty.call(options, 'canonicalDeckOverride')
         ? options.canonicalDeckOverride
