@@ -67,8 +67,14 @@
     return true;
   }
 
+  function syncStudioInspectorForSelection(options = {}) {
+    syncStudioInspectorActionStates(options);
+    return syncStudioInspectorSelection(options);
+  }
+
   return {
     syncStudioInspectorActionStates,
-    syncStudioInspectorSelection
+    syncStudioInspectorSelection,
+    syncStudioInspectorForSelection
   };
 });

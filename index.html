@@ -4231,6 +4231,27 @@
       const inspectorController = typeof SlideNextStudioEditorInspectorController !== 'undefined'
         ? SlideNextStudioEditorInspectorController
         : null;
+      const inspectorView = typeof SlideNextStudioEditorInspectorView !== 'undefined'
+        ? SlideNextStudioEditorInspectorView
+        : null;
+      if (inspectorController && typeof inspectorController.syncStudioInspectorForSelection === 'function') {
+        return inspectorController.syncStudioInspectorForSelection({
+          documentRef: document,
+          selectionState: liveSelectionState,
+          inspectorView,
+          rgbToHex,
+          highlightAlignButton,
+          updateClipboardActionState,
+          updateRemovalActionState,
+          updateLockActionState,
+          updateVisibilityActionState,
+          updateMotionActionState,
+          updateAlignmentActionState,
+          updateGroupActionState,
+          updateStyleActionState,
+          updateLayerOrderActionState
+        });
+      }
       if (inspectorController && typeof inspectorController.syncStudioInspectorActionStates === 'function') {
         inspectorController.syncStudioInspectorActionStates({
           updateClipboardActionState,
@@ -4258,9 +4279,6 @@
         updateStyleActionState();
         updateLayerOrderActionState();
       }
-      const inspectorView = typeof SlideNextStudioEditorInspectorView !== 'undefined'
-        ? SlideNextStudioEditorInspectorView
-        : null;
       if (inspectorController && typeof inspectorController.syncStudioInspectorSelection === 'function') {
         return inspectorController.syncStudioInspectorSelection({
           documentRef: document,

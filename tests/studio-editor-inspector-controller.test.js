@@ -78,3 +78,21 @@ test('syncStudioInspectorSelection returns false when no selection is rendered',
     }
   }), false);
 });
+
+test('syncStudioInspectorForSelection refreshes action state before rendering selection', () => {
+  const calls = [];
+
+  assert.equal(inspectorController.syncStudioInspectorForSelection({
+    updateClipboardActionState() {
+      calls.push('actions');
+    },
+    inspectorView: {
+      syncStudioInspectorSelection() {
+        calls.push('selection');
+        return true;
+      }
+    },
+    selectionState: { hasSelection: true }
+  }), true);
+  assert.deepEqual(calls, ['actions', 'selection']);
+});
