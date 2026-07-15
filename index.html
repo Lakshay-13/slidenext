@@ -1150,6 +1150,7 @@
   <script src="/shared/studio-editor-ruler-view.js"></script>
   <script src="/shared/studio-editor-zoom.js"></script>
   <script src="/shared/studio-editor-status-view.js"></script>
+  <script src="/shared/studio-editor-grid-snap-view.js"></script>
   <script src="/shared/studio-editor-mutation.js"></script>
   <script src="/shared/studio-editor-transaction.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
@@ -1339,10 +1340,14 @@
     });
 
     function updateGridSnapActionState() {
-      const button = document.getElementById('toggleGridSnapBtn');
-      if (!button) return;
-      button.textContent = `Grid Snap: ${isGridSnapEnabled ? 'On' : 'Off'}`;
-      button.setAttribute('aria-pressed', String(isGridSnapEnabled));
+      const gridSnapView = typeof SlideNextStudioEditorGridSnapView !== 'undefined'
+        ? SlideNextStudioEditorGridSnapView
+        : null;
+      if (!gridSnapView || typeof gridSnapView.renderStudioGridSnapState !== 'function') return false;
+      return gridSnapView.renderStudioGridSnapState({
+        documentRef: document,
+        isEnabled: isGridSnapEnabled
+      });
     }
 
     function toggleGridSnap() {

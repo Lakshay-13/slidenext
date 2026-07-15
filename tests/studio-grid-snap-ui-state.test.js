@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const gridSnapView = require('../shared/studio-editor-grid-snap-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -38,6 +39,7 @@ test('toggleGridSnap updates the button state and toggles the editor grid prefer
     isGridSnapEnabled: false
   };
   vm.createContext(context);
+  context.SlideNextStudioEditorGridSnapView = gridSnapView;
   vm.runInContext(source, context);
 
   context.updateGridSnapActionState();
