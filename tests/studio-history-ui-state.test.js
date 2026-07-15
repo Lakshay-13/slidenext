@@ -1200,9 +1200,14 @@ test('captureState reuses the shared history state capturer when available', () 
     SlideNextStudioHistory: {
       createStudioHistoryStateCapturer(options = {}) {
         delegatedArgs = options;
-        return () => captureResult;
+        return () => {
+          options.afterCapture();
+          return captureResult;
+        };
       }
     },
+    pendingEditorTransaction: { id: 'pending' },
+    pendingEditorCanonicalDeck: { kind: 'slidenext.deck', slides: [] },
     undoStack: [],
     updateHistoryButtons() {}
   };
@@ -1221,6 +1226,8 @@ test('captureState reuses the shared history state capturer when available', () 
   assert.equal(typeof delegatedArgs.setUndoStack, 'function');
   assert.equal(typeof delegatedArgs.setRedoStack, 'function');
   assert.equal(delegatedArgs.updateHistoryButtons, context.updateHistoryButtons);
+  assert.equal(context.pendingEditorTransaction, null);
+  assert.equal(context.pendingEditorCanonicalDeck, null);
 });
 
 test('restoreFrameFromHistoryEntry threads the shared iframe accessor through history restore callbacks', () => {

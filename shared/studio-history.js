@@ -321,6 +321,9 @@
     const updateHistoryButtons = typeof options.updateHistoryButtons === 'function'
       ? options.updateHistoryButtons
       : () => {};
+    const afterCapture = typeof options.afterCapture === 'function'
+      ? options.afterCapture
+      : () => {};
     const captureHistoryState = typeof options.captureHistoryState === 'function'
       ? options.captureHistoryState
       : captureStudioHistoryState;
@@ -330,6 +333,7 @@
       const currentUndoStack = getUndoStack();
       const currentRedoStack = getRedoStack();
       if (!historyEntry) {
+        afterCapture();
         return {
           undoStack: currentUndoStack,
           redoStack: currentRedoStack,
@@ -345,6 +349,7 @@
         getHistoryStateOptions()
       );
       if (!nextHistoryState.didCapture) {
+        afterCapture();
         return {
           ...nextHistoryState,
           historyEntry
@@ -354,6 +359,7 @@
       setUndoStack(nextHistoryState.undoStack);
       setRedoStack(nextHistoryState.redoStack);
       updateHistoryButtons();
+      afterCapture();
       return {
         ...nextHistoryState,
         historyEntry

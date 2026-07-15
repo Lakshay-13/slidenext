@@ -621,6 +621,28 @@ test('createStudioHistoryStateCapturer leaves history state unchanged when no en
   assert.equal(captureCalls, 1);
 });
 
+test('createStudioHistoryStateCapturer invokes afterCapture after a skipped capture', () => {
+  let afterCaptureCalls = 0;
+  const capturer = studioHistory.createStudioHistoryStateCapturer({
+    createHistoryEntry() {
+      return { html: '<html></html>' };
+    },
+    captureHistoryState() {
+      return {
+        didCapture: false,
+        undoStack: ['undo-entry'],
+        redoStack: ['redo-entry']
+      };
+    },
+    afterCapture() {
+      afterCaptureCalls += 1;
+    }
+  });
+
+  capturer();
+  assert.equal(afterCaptureCalls, 1);
+});
+
 test('createStudioHistoryButtonUpdater applies the computed history button state to the provided controls', () => {
   const undoButton = { disabled: false };
   const redoButton = { disabled: true };

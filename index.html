@@ -8550,9 +8550,9 @@
           setRedoStack(nextRedoStack) {
             redoStack = nextRedoStack;
           },
-          updateHistoryButtons
+          updateHistoryButtons,
+          afterCapture: clearPendingTransaction
         })();
-        clearPendingTransaction();
         return captureResult;
       }
 
