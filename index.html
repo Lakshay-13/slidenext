@@ -8892,94 +8892,14 @@
         });
       }
 
-      [
-        'launchPreviewBtn',
-        'exportPdfBtn',
-        'exportPptxBtn',
-        'studioSaveBtn',
-        'studioVersionBtn',
-        'addSlideBtn',
-        'zoomOutBtn',
-        'zoomSelect',
-        'zoomInBtn',
-        'toolbarInsertHeadingBtn',
-        'toolbarInsertParagraphBtn',
-        'toolbarInsertImageBtn',
-        'toolbarInsertShapeBtn',
-        'insertHeadingBtn',
-        'insertParagraphBtn',
-        'insertImageBtn',
-        'insertShapeBtn',
-        'insertTableBtn',
-        'insertCodeBtn',
-        'openSourceViewBtn',
-        'wpTabSolid',
-        'wpTabPresets',
-        'wpTabCustom',
-        'wallpaperCustomColor',
-        'cgLinearBtn',
-        'cgRadialBtn',
-        'cgColor1',
-        'cgColor2',
-        'cgAngle',
-        'applyWallpaperToAllSlidesBtn',
-        'studioUndoBtn',
-        'studioRedoBtn',
-        'slidePasteClipboardBtn',
-        'copySelectionBtn',
-        'pasteClipboardBtn',
-        'toggleLockSelectionBtn',
-        'toggleVisibilitySelectionBtn',
-        'removeSelectionBtn',
-        'nudgeSelectionUpBtn',
-        'nudgeSelectionLeftBtn',
-        'nudgeSelectionRightBtn',
-        'nudgeSelectionDownBtn',
-        'alignSelectionLeftBtn',
-        'alignSelectionCenterBtn',
-        'alignSelectionRightBtn',
-        'alignSelectionTopBtn',
-        'alignSelectionMiddleBtn',
-        'alignSelectionBottomBtn',
-        'distributeSelectionHorizontalBtn',
-        'distributeSelectionVerticalBtn',
-        'groupSelectionBtn',
-        'ungroupSelectionBtn',
-        'toggleGridSnapBtn',
-        'arrangeLayerFrontBtn',
-        'arrangeLayerBackBtn',
-        'arrangeLayerForwardBtn',
-        'arrangeLayerBackwardBtn',
-        'elZIndex',
-        'elTextContent',
-        'elImageSrc',
-        'elFontSize',
-        'elFontFamily',
-        'elFontWeight',
-        'alignLeftBtn',
-        'alignCenterBtn',
-        'alignRightBtn',
-        'alignJustifyBtn',
-        'elTextColor',
-        'elOpacity',
-        'elBorderStyle',
-        'elBorderWidth',
-        'elBorderRadius',
-        'elBorderColor'
-      ].forEach((id) => {
-        const control = document.getElementById(id);
-        if (control) {
-          control.disabled = true;
-        }
-      });
-
-      ['wallpaperSolidsList', 'wallpaperGradientsList'].forEach((id) => {
-        const container = document.getElementById(id);
-        if (!container || typeof container.querySelectorAll !== 'function') return;
-        container.querySelectorAll('button').forEach((button) => {
-          button.disabled = true;
+      const deckReadyView = typeof SlideNextStudioDeckReady !== 'undefined'
+        ? SlideNextStudioDeckReady
+        : null;
+      if (deckReadyView && typeof deckReadyView.resetStudioDeckControlState === 'function') {
+        deckReadyView.resetStudioDeckControlState({
+          documentRef: document
         });
-      });
+      }
     }
 
     function resolveCurrentStudioInsertionActionState(doc = getIframeDoc()) {
