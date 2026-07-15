@@ -266,6 +266,41 @@
     };
   }
 
+  function createStudioMarqueeSelectionHandlers(options = {}) {
+    const commitSelectionState = typeof options.commitSelectionState === 'function'
+      ? options.commitSelectionState
+      : () => {};
+    const syncSelectionOverlay = typeof options.syncSelectionOverlay === 'function'
+      ? options.syncSelectionOverlay
+      : () => {};
+    const setSuppressNextFrameClick = typeof options.setSuppressNextFrameClick === 'function'
+      ? options.setSuppressNextFrameClick
+      : () => {};
+
+    return createStudioMarqueePointerHandlers({
+      ...options,
+      onSessionFinalize: (result, session) => {
+        if (typeof options.onSelectionSessionFinalize === 'function') {
+          options.onSelectionSessionFinalize(result, session);
+        }
+        if (result.cancelled || !result.didSelect) {
+          syncSelectionOverlay();
+          return;
+        }
+
+        const previousSelection = result.additive ? session.previousSelection : [];
+        const nextSelection = Array.from(new Set([
+          ...previousSelection,
+          ...(result.selection || [])
+        ]));
+        commitSelectionState({
+          selectedElements: nextSelection
+        });
+        setSuppressNextFrameClick(true);
+      }
+    });
+  }
+
   function attachStudioMarqueePointerHandlers(doc, handlers) {
     const body = doc && doc.body;
     if (!body || typeof body.addEventListener !== 'function' || !handlers) return false;
@@ -552,6 +587,7 @@
   return {
     createStudioFrameClickHandler,
     createStudioMarqueePointerHandlers,
+    createStudioMarqueeSelectionHandlers,
     attachStudioMarqueePointerHandlers,
     createStudioFrameKeydownHandler,
     createStudioGlobalKeydownHandler

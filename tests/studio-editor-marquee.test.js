@@ -199,3 +199,37 @@ test('createStudioMarqueePointerHandlers cancels without committing an inactive 
   assert.equal(results.length, 2);
   assert.equal(results[1].cancelled, true);
 });
+
+test('createStudioMarqueeSelectionHandlers commits additive selection and syncs cancelled drags', () => {
+  const slide = { contains: () => true };
+  const commits = [];
+  let suppressNextFrameClick = false;
+  let syncCalls = 0;
+  const handler = events.createStudioMarqueeSelectionHandlers({
+    getActiveSlide: () => slide,
+    getSlideMetrics: () => ({ scaleX: 1, scaleY: 1 }),
+    getPointerOnSlide: (event) => ({ x: event.clientX, y: event.clientY }),
+    getMarqueeElements: () => ['element-a'],
+    getMarqueeSelection: () => ['element-b'],
+    getSelectedElements: () => ['element-existing'],
+    commitSelectionState(nextState) {
+      commits.push(nextState);
+    },
+    syncSelectionOverlay() {
+      syncCalls += 1;
+    },
+    setSuppressNextFrameClick(nextValue) {
+      suppressNextFrameClick = nextValue;
+    }
+  });
+
+  assert.equal(handler.handlePointerDown(createPointerEvent({ target: slide, shiftKey: true })), true);
+  assert.equal(handler.handlePointerMove(createPointerEvent({ pointerId: 1, clientX: 40, clientY: 40 })), true);
+  assert.equal(handler.handlePointerUp(createPointerEvent({ pointerId: 1, clientX: 50, clientY: 50 })), true);
+  assert.deepEqual(commits, [{ selectedElements: ['element-existing', 'element-b'] }]);
+  assert.equal(suppressNextFrameClick, true);
+
+  assert.equal(handler.handlePointerDown(createPointerEvent({ target: slide })), true);
+  assert.equal(handler.handlePointerCancel(createPointerEvent({ pointerId: 1 })), true);
+  assert.equal(syncCalls, 1);
+});

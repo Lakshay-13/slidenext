@@ -5472,6 +5472,13 @@
           doc.defaultView?.addEventListener('blur', transformHandlers.handleWindowBlur, true);
         }
 
+        const createStudioMarqueeSelectionHandlers = (
+          typeof SlideNextStudioEditorEvents !== 'undefined'
+          && SlideNextStudioEditorEvents
+          && typeof SlideNextStudioEditorEvents.createStudioMarqueeSelectionHandlers === 'function'
+        )
+          ? SlideNextStudioEditorEvents.createStudioMarqueeSelectionHandlers
+          : null;
         const createStudioMarqueePointerHandlers = (
           typeof SlideNextStudioEditorEvents !== 'undefined'
           && SlideNextStudioEditorEvents
@@ -5479,8 +5486,8 @@
         )
           ? SlideNextStudioEditorEvents.createStudioMarqueePointerHandlers
           : null;
-        if (createStudioMarqueePointerHandlers) {
-          const marqueeHandlers = createStudioMarqueePointerHandlers({
+        if (createStudioMarqueeSelectionHandlers || createStudioMarqueePointerHandlers) {
+          const marqueeHandlers = (createStudioMarqueeSelectionHandlers || createStudioMarqueePointerHandlers)({
             getActiveSlide: () => getActiveSlide(doc),
             resolveEditableTarget,
             shouldIgnoreTarget: (target) => !!(target && (target.closest('.editor-resize-handle') || target.closest('#editorSelectionOverlay'))),
@@ -5502,7 +5509,22 @@
             onSessionFrame: (rect) => {
               renderMarqueeSelection(rect);
             },
-            onSessionFinalize: (result, session) => {
+            onSelectionSessionFinalize: createStudioMarqueeSelectionHandlers
+              ? () => {
+                  isDraggingElement = false;
+                  hideGuides();
+                  hideDragHud();
+                  clearMarqueeSelection();
+                }
+              : undefined,
+            commitSelectionState: commitEditorSelectionState,
+            syncSelectionOverlay,
+            setSuppressNextFrameClick: (nextValue) => {
+              suppressNextFrameClick = !!nextValue;
+            },
+            onSessionFinalize: createStudioMarqueeSelectionHandlers
+              ? undefined
+              : (result, session) => {
               isDraggingElement = false;
               hideGuides();
               hideDragHud();
@@ -5521,7 +5543,7 @@
                 selectedElements: nextSelection
               });
               suppressNextFrameClick = true;
-            }
+              }
           });
           const attachStudioMarqueePointerHandlers = typeof SlideNextStudioEditorEvents.attachStudioMarqueePointerHandlers === 'function'
             ? SlideNextStudioEditorEvents.attachStudioMarqueePointerHandlers
