@@ -1368,6 +1368,10 @@
     }
 
     function handlePointerDown(event = {}) {
+      if (session) {
+        return false;
+      }
+
       const slide = getActiveSlide();
       const transformSessionStart = resolveTransformSessionStart({
         slide,
@@ -1531,6 +1535,8 @@
     }
 
     function handlePointerDown(event = {}) {
+      if (session) return false;
+
       const slide = getActiveSlide();
       const transformSessionStart = resolveTransformSessionStart({
         slide,

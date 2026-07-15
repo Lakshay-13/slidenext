@@ -1857,6 +1857,36 @@ test('createStudioTransformPointerHandlers coordinates the shared pointer lifecy
   ]);
 });
 
+test('transform handlers reject concurrent pointer starts without replacing the active session', () => {
+  [
+    transformState.createStudioTransformPointerHandlers,
+    transformState.createStudioTransformFallbackPointerHandlers
+  ].forEach((createHandlers) => {
+    const activeSession = { pointerId: 7 };
+    let startCount = 0;
+    const handlers = createHandlers({
+      getActiveSlide: () => ({ id: 'slide-1' }),
+      resolveTransformSessionStart: () => {
+        startCount += 1;
+        return { session: activeSession, startBounds: {} };
+      },
+      finalizeTransformSession: (session) => {
+        assert.equal(session, activeSession);
+        return { didMove: false };
+      },
+      buildCompletionPlan: () => ({ shouldPersist: false, versionLabel: '' })
+    });
+
+    assert.equal(handlers.handlePointerDown({ pointerId: 7 }), true);
+    assert.equal(handlers.handlePointerDown({ pointerId: 8 }), false);
+    assert.equal(handlers.getSession(), activeSession);
+    assert.equal(startCount, 1);
+
+    handlers.finalizeSession({ cancelled: true });
+    assert.equal(handlers.getSession(), null);
+  });
+});
+
 test('transform pointer cancellation restores styles and does not persist either handler path', () => {
   [
     transformState.createStudioTransformPointerHandlers,
