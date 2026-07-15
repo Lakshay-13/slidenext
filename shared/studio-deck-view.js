@@ -218,6 +218,46 @@
     };
   }
 
+  function renderStudioWallpaperToolbarActionState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    const canUseWallpaperControls = !!options.canUseWallpaperControls;
+    [
+      'wpTabSolid',
+      'wpTabPresets',
+      'wpTabCustom',
+      'wallpaperCustomColor',
+      'cgLinearBtn',
+      'cgRadialBtn',
+      'cgColor1',
+      'cgColor2',
+      'cgAngle',
+      'applyWallpaperToAllSlidesBtn'
+    ].forEach((id) => {
+      const control = documentRef.getElementById(id);
+      if (control) control.disabled = !canUseWallpaperControls;
+    });
+
+    ['wallpaperSolidsList', 'wallpaperGradientsList'].forEach((id) => {
+      const container = documentRef.getElementById(id);
+      if (!container || typeof container.querySelectorAll !== 'function') return;
+      container.querySelectorAll('button').forEach((button) => {
+        button.disabled = !canUseWallpaperControls;
+      });
+    });
+    return true;
+  }
+
+  function syncStudioWallpaperToolbarActionState(options = {}) {
+    const actionState = options.actionState || resolveStudioWallpaperActionState(options.doc, {
+      getActiveSlide: options.getActiveSlide
+    });
+    return renderStudioWallpaperToolbarActionState({
+      documentRef: options.documentRef,
+      ...actionState
+    });
+  }
+
   function resolveStudioLiveActiveSlide(doc, options = {}) {
     const querySelector = typeof options.querySelector === 'function'
       ? options.querySelector
@@ -952,6 +992,8 @@
     syncStudioZoomToolbarActionState,
     resolveStudioInsertionActionState,
     resolveStudioWallpaperActionState,
+    renderStudioWallpaperToolbarActionState,
+    syncStudioWallpaperToolbarActionState,
     resolveStudioLiveActiveSlide,
     resolveStudioLiveActiveSlideId,
     resolveStudioFallbackActiveSlideId,

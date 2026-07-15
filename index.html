@@ -9290,6 +9290,15 @@
 
     function updateWallpaperActionState(doc = getIframeDoc()) {
       const actionState = resolveCurrentStudioWallpaperActionState(doc);
+      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
+        : null;
+      if (deckView && typeof deckView.syncStudioWallpaperToolbarActionState === 'function') {
+        return deckView.syncStudioWallpaperToolbarActionState({
+          documentRef: document,
+          actionState
+        });
+      }
 
       [
         'wpTabSolid',

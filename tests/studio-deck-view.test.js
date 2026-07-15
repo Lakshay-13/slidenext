@@ -489,6 +489,49 @@ test('resolveStudioWallpaperActionState derives wallpaper readiness from the act
   );
 });
 
+test('syncStudioWallpaperToolbarActionState resolves and renders wallpaper controls in one shared operation', () => {
+  const controls = {
+    wpTabSolid: { disabled: true },
+    wpTabPresets: { disabled: true },
+    wpTabCustom: { disabled: true },
+    wallpaperCustomColor: { disabled: true },
+    cgLinearBtn: { disabled: true },
+    cgRadialBtn: { disabled: true },
+    cgColor1: { disabled: true },
+    cgColor2: { disabled: true },
+    cgAngle: { disabled: true },
+    applyWallpaperToAllSlidesBtn: { disabled: true },
+    wallpaperSolidsList: {
+      buttons: [{ disabled: true }],
+      querySelectorAll() {
+        return this.buttons;
+      }
+    },
+    wallpaperGradientsList: {
+      buttons: [{ disabled: true }],
+      querySelectorAll() {
+        return this.buttons;
+      }
+    }
+  };
+
+  assert.equal(deckView.syncStudioWallpaperToolbarActionState({
+    documentRef: {
+      getElementById(id) {
+        return controls[id] || null;
+      }
+    },
+    doc: { activeSlide: {} },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    }
+  }), true);
+  assert.equal(controls.wpTabSolid.disabled, false);
+  assert.equal(controls.cgAngle.disabled, false);
+  assert.deepEqual(controls.wallpaperSolidsList.buttons.map((button) => button.disabled), [false]);
+  assert.deepEqual(controls.wallpaperGradientsList.buttons.map((button) => button.disabled), [false]);
+});
+
 test('resolveStudioLiveActiveSlide returns the active slide node when present and null otherwise', () => {
   const activeSlide = { label: 'slide-active' };
   const doc = {

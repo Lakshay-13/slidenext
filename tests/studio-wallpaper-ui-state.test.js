@@ -213,6 +213,45 @@ test('updateWallpaperActionState enables wallpaper controls only when the iframe
   });
 });
 
+test('updateWallpaperActionState delegates toolbar rendering to the shared deck view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateWallpaperActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateWallpaperActionState(doc = getIframeDoc()) {',
+    '\n\n    function resolveCurrentStudioDeckReadyActionState(doc = getIframeDoc()) {'
+  );
+  const doc = { activeSlide: {} };
+  const actionState = {
+    activeSlide: doc.activeSlide,
+    canUseWallpaperControls: true
+  };
+  const calls = [];
+  const context = {
+    resolveCurrentStudioWallpaperActionState(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return actionState;
+    },
+    SlideNextStudioDeckView: {
+      syncStudioWallpaperToolbarActionState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateWallpaperActionStateSource, context);
+
+  assert.equal(context.updateWallpaperActionState(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.deepEqual(calls[0].actionState, actionState);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
