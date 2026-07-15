@@ -1139,6 +1139,7 @@
   <script src="/shared/studio-editor-inspector-view.js"></script>
   <script src="/shared/studio-editor-layer-order.js"></script>
   <script src="/shared/studio-editor-layer-view.js"></script>
+  <script src="/shared/studio-editor-layer-controller.js"></script>
   <script src="/shared/studio-editor-insertion.js"></script>
   <script src="/shared/studio-editor-selection-bounds.js"></script>
   <script src="/shared/studio-editor-overlay-state.js"></script>
@@ -9771,6 +9772,20 @@
     function updateLayersList() {
       const iframeDoc = getIframeDoc();
       const activeSlide = getActiveSlide(iframeDoc);
+      const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
+        ? SlideNextStudioEditorLayerController
+        : null;
+      if (layerController && typeof layerController.syncStudioLayerList === 'function') {
+        return layerController.syncStudioLayerList({
+          documentRef: document,
+          iframeDoc,
+          getActiveSlide,
+          getNormalizedSlideLayerOrder,
+          buildEditorDeckSnapshot,
+          getElementByEditorId,
+          buildLayerOrderSelectionActionState
+        });
+      }
       const orderedLayerElements = activeSlide ? getNormalizedSlideLayerOrder(activeSlide) : [];
       
       const deckSnapshot = buildEditorDeckSnapshot(iframeDoc, { includeLayers: true });
