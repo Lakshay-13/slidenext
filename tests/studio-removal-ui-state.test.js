@@ -208,6 +208,44 @@ test('updateRemovalActionState reuses the shared removal toolbar helper when ava
   }]);
 });
 
+test('updateRemovalActionState delegates toolbar state assembly to the shared removal view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateRemovalActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateRemovalActionState(doc = getIframeDoc()) {',
+    '\n\n    function finalizeRemovalActionResult(result, doc = getIframeDoc()) {'
+  );
+  const selectedElement = { id: 'selected' };
+  const calls = [];
+  const context = {
+    selectedElements: [selectedElement],
+    isElementLocked() {
+      return false;
+    },
+    SlideNextStudioEditorRemoval: {
+      syncStudioRemovalToolbarState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    document: {},
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateRemovalActionStateSource, context);
+
+  const doc = { activeSlide: {} };
+  assert.equal(context.updateRemovalActionState(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.deepEqual(calls[0].elements, [selectedElement]);
+  assert.equal(calls[0].isLocked, context.isElementLocked);
+  assert.equal(calls[0].canMutateDeck(), true);
+});
+
 test('finalizeRemovalActionResult refreshes removal controls and preserves the action result', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const doc = { label: 'iframe-doc' };

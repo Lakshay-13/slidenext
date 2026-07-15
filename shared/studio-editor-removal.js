@@ -59,6 +59,17 @@
     return true;
   }
 
+  function syncStudioRemovalToolbarState(options = {}) {
+    const actionState = buildStudioRemovalToolbarState(options.elements, {
+      isLocked: options.isLocked,
+      canMutateDeck: options.canMutateDeck
+    });
+    return renderStudioRemovalToolbarState({
+      documentRef: options.documentRef,
+      actionState
+    });
+  }
+
   function removeStudioElements(elements = [], options = {}) {
     const selection = Array.isArray(elements) ? elements : [];
     const removeElement = typeof options.removeElement === 'function'
@@ -111,6 +122,7 @@
     buildStudioRemovalActionState,
     buildStudioRemovalToolbarState,
     renderStudioRemovalToolbarState,
+    syncStudioRemovalToolbarState,
     removeStudioElements
   };
 });

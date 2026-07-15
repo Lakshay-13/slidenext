@@ -113,3 +113,20 @@ test('renderStudioRemovalToolbarState applies the delete button state', () => {
   }), true);
   assert.equal(removeSelectionBtn.disabled, false);
 });
+
+test('syncStudioRemovalToolbarState builds and renders deletion controls in one shared operation', () => {
+  const removeSelectionBtn = { disabled: true };
+  const element = { isConnected: true, locked: false };
+
+  assert.equal(removal.syncStudioRemovalToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return id === 'removeSelectionBtn' ? removeSelectionBtn : null;
+      }
+    },
+    elements: [element],
+    isLocked: (target) => !!target.locked,
+    canMutateDeck: () => true
+  }), true);
+  assert.equal(removeSelectionBtn.disabled, false);
+});
