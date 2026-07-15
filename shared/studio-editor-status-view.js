@@ -31,6 +31,12 @@
       statusEl.innerHTML = `<span class="text-rose-400">PPTX Export Failed</span>`;
     } else if (state === 'exported') {
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> PPTX Exported</span>`;
+    } else if (state === 'exporting-pdf') {
+      statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Exporting PDF...</span>`;
+    } else if (state === 'pdf-export-failed') {
+      statusEl.innerHTML = `<span class="text-rose-400">PDF Export Failed</span>`;
+    } else if (state === 'pdf-exported') {
+      statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> PDF Export Ready</span>`;
     } else {
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
     }

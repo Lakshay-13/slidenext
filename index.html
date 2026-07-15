@@ -9991,12 +9991,37 @@
       const pdfExport = typeof SlideNextStudioPdfExport !== 'undefined'
         ? SlideNextStudioPdfExport
         : null;
-      if (!pdfExport || typeof pdfExport.openStudioPdfPrintWindow !== 'function') {
+      const setPdfExportStatus = (state) => {
+        if (typeof setStudioAutoSaveStatus === 'function') {
+          setStudioAutoSaveStatus(state);
+        }
+      };
+      const failPdfExport = () => {
+        setPdfExportStatus('pdf-export-failed');
         return false;
+      };
+      if (!pdfExport || typeof pdfExport.openStudioPdfPrintWindow !== 'function') {
+        return failPdfExport();
       }
       const html = buildEditorPreviewHtml();
-      if (!html) return false;
-      return pdfExport.openStudioPdfPrintWindow({ html });
+      if (!html) return failPdfExport();
+
+      const exportButton = typeof document !== 'undefined'
+        ? document.getElementById('exportPdfBtn')
+        : null;
+      if (exportButton) exportButton.disabled = true;
+      setPdfExportStatus('exporting-pdf');
+      try {
+        const didOpenPrintFlow = pdfExport.openStudioPdfPrintWindow({ html });
+        setPdfExportStatus(didOpenPrintFlow ? 'pdf-exported' : 'pdf-export-failed');
+        return !!didOpenPrintFlow;
+      } catch (error) {
+        return failPdfExport();
+      } finally {
+        if (exportButton) {
+          exportButton.disabled = !resolveCurrentStudioDeckReadyActionState().canUseDeckActions;
+        }
+      }
     }
 
     function launchPreview() {

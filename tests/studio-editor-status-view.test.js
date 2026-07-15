@@ -20,6 +20,9 @@ test('setStudioAutoSaveStatus renders loading, export, failure, and saved states
     ['exporting', 'Exporting PPTX'],
     ['export-failed', 'PPTX Export Failed'],
     ['exported', 'PPTX Exported'],
+    ['exporting-pdf', 'Exporting PDF'],
+    ['pdf-export-failed', 'PDF Export Failed'],
+    ['pdf-exported', 'PDF Export Ready'],
     ['saved', 'Saved to disk']
   ]) {
     assert.equal(statusView.setStudioAutoSaveStatus({ documentRef, state }), true);
