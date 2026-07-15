@@ -133,12 +133,10 @@ test('finalizeSlideMutationPersistence delegates lifecycle ordering to the share
   let delegatedArgs = null;
   const context = {
     SlideNextStudioEditorMutation: {
-      createStudioSlideMutationPersistenceFinalizer(options) {
+      finalizeStudioSlideMutation(options) {
         delegatedOptions = options;
-        return (versionLabel, nextTransaction) => {
-          delegatedArgs = [versionLabel, nextTransaction];
-          return 'delegated';
-        };
+        delegatedArgs = [options.versionLabel, options.transaction, options.canonicalDeck];
+        return 'delegated';
       }
     },
     saveHistoryState() {},
@@ -150,7 +148,7 @@ test('finalizeSlideMutationPersistence delegates lifecycle ordering to the share
   loadFinalizeSlideMutationPersistence(fileContent, context);
 
   assert.equal(context.finalizeSlideMutationPersistence('Auto: Added Slide', transaction), 'delegated');
-  assert.deepEqual(delegatedArgs, ['Auto: Added Slide', transaction]);
+  assert.deepEqual(delegatedArgs, ['Auto: Added Slide', transaction, null]);
   assert.equal(delegatedOptions.saveHistoryState, context.saveHistoryState);
   assert.equal(delegatedOptions.triggerAutoSave, context.triggerAutoSave);
   assert.equal(delegatedOptions.triggerAutoVersion, context.triggerAutoVersion);

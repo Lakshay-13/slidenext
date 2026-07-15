@@ -2758,23 +2758,6 @@
           })
         );
       }
-      const createStudioSlideMutationPersistenceFinalizer = (
-        typeof SlideNextStudioEditorMutation !== 'undefined'
-        && SlideNextStudioEditorMutation
-        && typeof SlideNextStudioEditorMutation.createStudioSlideMutationPersistenceFinalizer === 'function'
-      )
-        ? SlideNextStudioEditorMutation.createStudioSlideMutationPersistenceFinalizer
-        : null;
-      if (createStudioSlideMutationPersistenceFinalizer) {
-        const finalizeStudioSlideMutation = createStudioSlideMutationPersistenceFinalizer({
-          saveHistoryState,
-          triggerAutoSave,
-          triggerAutoVersion
-        });
-        return (versionLabel, transaction = null, canonicalDeck = null) => (
-          finalizeStudioSlideMutation(versionLabel, transaction, canonicalDeck)
-        );
-      }
 
       return (versionLabel, transaction = null, canonicalDeck = null) => {
         if (canonicalDeck) {
