@@ -93,6 +93,7 @@ test('setupIframeDragging wires marquee handlers beside shared transforms and co
       }
     },
     SlideNextStudioEditorEvents: {
+      attachStudioPointerHandlers: editorEvents.attachStudioPointerHandlers,
       attachStudioMarqueePointerHandlers: editorEvents.attachStudioMarqueePointerHandlers,
       createStudioMarqueePointerHandlers(options) {
         marqueeOptions = options;

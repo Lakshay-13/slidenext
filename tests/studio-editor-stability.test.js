@@ -7,6 +7,7 @@ const deckView = require('../shared/studio-deck-view.js');
 const history = require('../shared/studio-history.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const transformState = require('../shared/studio-editor-transform.js');
+const studioEvents = require('../shared/studio-editor-events.js');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
@@ -589,7 +590,7 @@ test('restoreStudioHistorySelectionState uses committed-selection restore callba
   });
 });
 
-test('setupIframeDragging delegates the fallback drag lifecycle without redundantly refreshing the layer list', () => {
+test('setupIframeDragging delegates the fallback drag lifecycle through shared pointer events', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setupIframeDraggingSource = extractFunctionSource(
     fileContent,
@@ -627,6 +628,7 @@ test('setupIframeDragging delegates the fallback drag lifecycle without redundan
         return null;
       }
     },
+    SlideNextStudioEditorEvents: studioEvents,
     SlideNextStudioEditorTransform: {
       createStudioTransformFallbackPointerHandlers(options) {
         fallbackOptions = options;
