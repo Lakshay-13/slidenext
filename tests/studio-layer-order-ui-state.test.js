@@ -231,6 +231,36 @@ test('finalizeLayerOrderMutation refreshes layer chrome before versioning', () =
   ]);
 });
 
+test('finalizeLayerOrderMutation reuses the shared deck mutation lifecycle when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const transaction = { id: 'layer-order-tx' };
+  let delegatedOptions = null;
+  const calls = [];
+  const context = {
+    finalizeEditorDeckMutation(label, options) {
+      delegatedOptions = { label, options };
+      return 'delegated';
+    },
+    updateLayerOrderActionState() {
+      calls.push('updateLayerOrderActionState');
+    },
+    saveHistoryState() {},
+    triggerAutoSave() {},
+    triggerAutoVersion() {},
+    updateLayersList() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeLayerOrderMutation(fileContent, context);
+
+  assert.equal(context.finalizeLayerOrderMutation('Auto: Layer Order', { transaction }), 'delegated');
+  assert.equal(delegatedOptions.label, 'Auto: Layer Order');
+  assert.equal(delegatedOptions.options.refreshThumbnails, false);
+  assert.equal(delegatedOptions.options.refreshLayersList, true);
+  assert.equal(delegatedOptions.options.transaction.id, transaction.id);
+  assert.deepEqual(calls, ['updateLayerOrderActionState']);
+});
+
 test('syncLayerOrderZIndexInput updates the z-index inspector only when a target and input are available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const zIndexInput = { value: '' };

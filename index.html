@@ -6591,6 +6591,15 @@
     }
 
     function finalizeLayerOrderMutation(versionLabel = 'Auto: Rearranged Layers', options = {}) {
+      if (typeof finalizeEditorDeckMutation === 'function') {
+        const result = finalizeEditorDeckMutation(versionLabel, {
+          refreshThumbnails: false,
+          refreshLayersList: true,
+          transaction: options.transaction || null
+        });
+        updateLayerOrderActionState();
+        return result;
+      }
       saveHistoryState(false, options.transaction || null);
       triggerAutoSave();
       updateLayersList();
