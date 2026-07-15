@@ -69,6 +69,29 @@ test('finalizeWallpaperMutation refreshes thumbnails and persists wallpaper chan
   ]);
 });
 
+test('finalizeWallpaperMutation reuses the shared deck mutation lifecycle when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const transaction = { id: 'wallpaper-tx' };
+  let delegated = null;
+  const context = {
+    finalizeEditorDeckMutation(label, options) {
+      delegated = { label, options };
+      return 'delegated';
+    },
+    generateThumbnails() {},
+    saveHistoryState() {},
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeWallpaperMutation(fileContent, context);
+
+  assert.equal(context.finalizeWallpaperMutation('Auto: Changed Background', transaction), 'delegated');
+  assert.equal(delegated.label, 'Auto: Changed Background');
+  assert.equal(delegated.options.transaction.id, transaction.id);
+});
+
 test('flushPendingWallpaperVersion commits a custom wallpaper version only when a real custom mutation is pending', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyPresetWallpaperSource = extractFunctionSource(

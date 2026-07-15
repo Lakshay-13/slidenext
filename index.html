@@ -6691,6 +6691,11 @@
     }
 
     function finalizeWallpaperMutation(versionLabel = '', transaction = null) {
+      if (typeof finalizeEditorDeckMutation === 'function') {
+        return finalizeEditorDeckMutation(versionLabel, {
+          transaction
+        });
+      }
       generateThumbnails();
       saveHistoryState(false, transaction);
       triggerAutoSave();
