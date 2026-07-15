@@ -220,6 +220,28 @@ test('finalizeStudioInsertedElements selects inserted elements before finalizing
   ]);
 });
 
+test('finalizeStudioInsertedElements forwards a canonical deck sidecar', () => {
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  let finalized = null;
+
+  assert.equal(mutation.finalizeStudioInsertedElements({
+    insertedElements: [{ id: 'node-1' }],
+    versionLabel: 'Auto: Added H2',
+    canonicalDeck,
+    finalizeMutation(label, options) {
+      finalized = { label, options };
+    }
+  }), true);
+
+  assert.deepEqual(finalized, {
+    label: 'Auto: Added H2',
+    options: {
+      transaction: undefined,
+      canonicalDeck
+    }
+  });
+});
+
 test('finalizeStudioSlideMutation forwards transaction and canonical deck persistence state', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };

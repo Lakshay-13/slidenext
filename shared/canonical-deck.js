@@ -264,6 +264,50 @@
     });
   }
 
+  function appendCanonicalNode(deckLike, slideId, nodeLike = {}) {
+    if (!deckLike || typeof deckLike !== 'object' || !nodeLike || typeof nodeLike !== 'object') {
+      return null;
+    }
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedSlideId = normalizeString(slideId).trim();
+    if (!isCanonicalDeck(deck) || !normalizedSlideId) {
+      return null;
+    }
+
+    const slideIndex = deck.slides.findIndex((slide) => slide && slide.id === normalizedSlideId);
+    if (slideIndex < 0) {
+      return null;
+    }
+
+    const collectNodeIds = (nodes = [], ids = new Set()) => {
+      nodes.forEach((node) => {
+        if (!node || typeof node !== 'object') return;
+        if (typeof node.id === 'string' && node.id.trim()) {
+          ids.add(node.id);
+        }
+        collectNodeIds(Array.isArray(node.children) ? node.children : [], ids);
+      });
+      return ids;
+    };
+    const slide = deck.slides[slideIndex];
+    const nextNode = createCanonicalNode(nodeLike, slide.nodes.length);
+    if (collectNodeIds(deck.slides.flatMap((candidate) => candidate.nodes)).has(nextNode.id)) {
+      return null;
+    }
+
+    return createCanonicalDeck({
+      ...deck,
+      slides: deck.slides.map((candidate, index) => index === slideIndex
+        ? {
+            ...candidate,
+            nodes: [...candidate.nodes, nextNode]
+          }
+        : candidate)
+    });
+  }
+
   function removeCanonicalNodes(deckLike, nodeIds = []) {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -756,6 +800,7 @@
     reorderCanonicalSlides,
     removeCanonicalSlide,
     appendCanonicalSlide,
+    appendCanonicalNode,
     removeCanonicalNodes,
     updateCanonicalNodeVisibility,
     updateCanonicalNodeLayout,

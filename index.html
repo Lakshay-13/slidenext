@@ -6280,6 +6280,7 @@
     }
 
     function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {
+      const canonicalDeck = arguments.length > 3 ? arguments[3] : null;
       const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
         ? SlideNextStudioEditorMutation
         : null;
@@ -6288,6 +6289,7 @@
           insertedElements,
           versionLabel,
           transaction,
+          ...(canonicalDeck ? { canonicalDeck } : {}),
           selectAllElements: SlideNextStudioEditorSelection.selectAllStudioElements,
           commitSelectionState: commitEditorSelectionState,
           finalizeMutation: finalizeEditorDeckMutation
@@ -6297,7 +6299,8 @@
       const nextSelectionState = SlideNextStudioEditorSelection.selectAllStudioElements(insertedElements);
       commitEditorSelectionState(nextSelectionState);
       finalizeEditorDeckMutation(versionLabel, {
-        transaction
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
       });
       return true;
     }
@@ -7292,6 +7295,25 @@
       const activeSlideId = typeof getEditorSlideId === 'function'
         ? getEditorSlideId(activeSlide)
         : '';
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const appendCanonicalNode = canonicalDeckApi
+        && typeof canonicalDeckApi.appendCanonicalNode === 'function'
+        ? canonicalDeckApi.appendCanonicalNode
+        : null;
+      const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
+        ? SlideNextDeckImport
+        : null;
+      const importElementToCanonicalNode = deckImportApi
+        && typeof deckImportApi.importElementToCanonicalNode === 'function'
+        ? deckImportApi.importElementToCanonicalNode
+        : null;
+      const canonicalDeckBeforeInsertion = appendCanonicalNode
+        && importElementToCanonicalNode
+        && typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(iframeDoc)
+        : null;
       const mutation = applyEditorElementInsertionWithTransaction(type, {
         documentRef: iframeDoc,
         slide: activeSlide,
@@ -7303,13 +7325,27 @@
       });
       const newEl = mutation.element;
       const transaction = mutation.transaction;
+      let canonicalDeck = null;
+      if (canonicalDeckBeforeInsertion && newEl) {
+        const canonicalNode = importElementToCanonicalNode(newEl, {
+          getNodeId: (element) => {
+            if (element && element.dataset && typeof assignEditorElementId === 'function') {
+              const assignedId = assignEditorElementId(element);
+              if (assignedId) return assignedId;
+            }
+            return element && element.dataset && element.dataset.editorId;
+          }
+        });
+        canonicalDeck = appendCanonicalNode(canonicalDeckBeforeInsertion, activeSlideId, canonicalNode);
+      }
       
       if (newEl) {
         if (typeof finalizeInsertedElements === 'function') {
           return finalizeInsertedElements(
             [newEl],
             'Auto: Added ' + type.toUpperCase(),
-            transaction
+            transaction,
+            canonicalDeck
           );
         }
         selectElement(newEl);

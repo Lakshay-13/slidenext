@@ -89,7 +89,8 @@
     const nextSelectionState = selectAllElements(insertedElements);
     commitSelectionState(nextSelectionState);
     finalizeMutation(options.versionLabel, {
-      transaction: options.transaction
+      transaction: options.transaction,
+      ...(options.canonicalDeck ? { canonicalDeck: options.canonicalDeck } : {})
     });
     return true;
   }

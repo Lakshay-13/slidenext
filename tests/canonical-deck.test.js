@@ -90,6 +90,36 @@ test('appendCanonicalSlide rejects invalid deck or slide input', () => {
   assert.equal(canonicalDeck.appendCanonicalSlide(deck, null), null);
 });
 
+test('appendCanonicalNode immutably appends a normalized node to a slide', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    metadata: { title: 'Deck' },
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1' }] }]
+  });
+
+  const expandedDeck = canonicalDeck.appendCanonicalNode(sourceDeck, 'slide-1', {
+    id: 'node-2',
+    tagName: 'H2',
+    text: 'Heading'
+  });
+
+  assert.deepEqual(expandedDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'node-2']);
+  assert.equal(expandedDeck.slides[0].nodes[1].tagName, 'h2');
+  assert.equal(expandedDeck.slides[0].nodes[1].text, 'Heading');
+  assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1']);
+  assert.equal(expandedDeck.metadata.title, 'Deck');
+});
+
+test('appendCanonicalNode rejects missing slides and duplicate node ids', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', children: [{ id: 'child-1' }] }] }]
+  });
+
+  assert.equal(canonicalDeck.appendCanonicalNode(deck, 'missing', { id: 'node-2' }), null);
+  assert.equal(canonicalDeck.appendCanonicalNode(deck, 'slide-1', { id: 'node-1' }), null);
+  assert.equal(canonicalDeck.appendCanonicalNode(deck, 'slide-1', { id: 'child-1' }), null);
+  assert.equal(canonicalDeck.appendCanonicalNode(deck, 'slide-1', null), null);
+});
+
 test('removeCanonicalNodes immutably removes top-level and nested nodes by id', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{

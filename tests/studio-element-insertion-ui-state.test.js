@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const insertion = require('../shared/studio-editor-insertion.js');
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -236,6 +237,77 @@ test('insertElement delegates successful insertion finalization to the shared li
   assert.equal(finalized.elements[0].tagName, 'H2');
   assert.equal(finalized.versionLabel, 'Auto: Added H2');
   assert.equal(finalized.transaction, null);
+});
+
+test('insertElement forwards an immutable canonical node sidecar for new elements', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const insertElementSource = extractFunctionSource(
+    fileContent,
+    'function insertElement(type) {',
+    '\n\n    // Rearrange Selected Element Layers'
+  );
+  const canonicalBefore = canonicalDeckModel.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }]
+  });
+  const activeSlide = {
+    children: [],
+    appendChild() {}
+  };
+  const insertedElement = {
+    tagName: 'H2',
+    dataset: { editorId: 'node-2' },
+    style: {},
+    appendChild() {}
+  };
+  let finalized = null;
+  const context = {
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextDeckImport: {
+      importElementToCanonicalNode(element, options) {
+        assert.equal(element, insertedElement);
+        assert.equal(options.getNodeId(element), 'node-2');
+        return { id: 'node-2', tagName: 'h2', text: 'New Heading' };
+      }
+    },
+    SlideNextStudioEditorInsertion: {
+      applyStudioElementInsertion(type, options) {
+        assert.equal(type, 'h2');
+        options.slide.appendChild(insertedElement);
+        return { element: insertedElement, transaction: { id: 'tx-insert' } };
+      }
+    },
+    getActiveSlide() {
+      return activeSlide;
+    },
+    getEditorSlideId(slide) {
+      assert.equal(slide, activeSlide);
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return {};
+    },
+    buildEditorCanonicalDeck(doc) {
+      assert.deepEqual(doc, {});
+      return canonicalBefore;
+    },
+    makeElementsHoverable() {},
+    finalizeInsertedElements(elements, versionLabel, transaction, canonicalDeck) {
+      finalized = { elements, versionLabel, transaction, canonicalDeck };
+      return true;
+    }
+  };
+
+  vm.createContext(context);
+  loadElementInsertionHelper(fileContent, context);
+  vm.runInContext(insertElementSource, context);
+
+  assert.equal(context.insertElement('h2'), true);
+  assert.equal(finalized.elements[0], insertedElement);
+  assert.equal(finalized.versionLabel, 'Auto: Added H2');
+  assert.deepEqual(finalized.transaction, { id: 'tx-insert' });
+  assert.deepEqual(finalized.canonicalDeck.slides[0].nodes.map((node) => node.id), ['node-2']);
+  assert.equal(finalized.canonicalDeck.slides[0].nodes[0].text, 'New Heading');
+  assert.deepEqual(canonicalBefore.slides[0].nodes, []);
 });
 
 test('insertElement no-ops when no active slide is available or the element type is unsupported', () => {
