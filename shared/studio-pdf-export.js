@@ -98,6 +98,35 @@
     return html.replace(/<html(?:\s[^>]*)?>/i, `$&<head>${styleTag}</head>`);
   }
 
+  function waitForStudioPdfPrintResources(documentRef) {
+    if (!documentRef) return Promise.resolve();
+
+    const waits = [];
+    const fontsReady = documentRef.fonts && documentRef.fonts.ready;
+    if (fontsReady && typeof fontsReady.then === 'function') {
+      waits.push(fontsReady);
+    }
+
+    const images = documentRef.images && typeof documentRef.images.length === 'number'
+      ? Array.from(documentRef.images)
+      : [];
+    images.forEach((image) => {
+      if (!image || image.complete || typeof image.addEventListener !== 'function') return;
+      waits.push(new Promise((resolve) => {
+        let settled = false;
+        const settle = () => {
+          if (settled) return;
+          settled = true;
+          resolve();
+        };
+        image.addEventListener('load', settle, { once: true });
+        image.addEventListener('error', settle, { once: true });
+      }));
+    });
+
+    return Promise.all(waits);
+  }
+
   function openStudioPdfPrintWindow(options = {}) {
     const openWindow = typeof options.openWindow === 'function'
       ? options.openWindow
@@ -129,19 +158,14 @@
         printWindow.print();
       }
     };
-    const waitForFonts = () => {
-      const fontsReady = printWindow.document.fonts && printWindow.document.fonts.ready;
-      if (fontsReady && typeof fontsReady.then === 'function') {
-        fontsReady.then(print).catch(print);
-        return;
-      }
-      print();
+    const waitForResources = () => {
+      waitForStudioPdfPrintResources(printWindow.document).then(print).catch(print);
     };
 
     if (typeof printWindow.addEventListener === 'function') {
-      printWindow.addEventListener('load', waitForFonts, { once: true });
+      printWindow.addEventListener('load', waitForResources, { once: true });
     } else {
-      waitForFonts();
+      waitForResources();
     }
     return true;
   }
@@ -152,6 +176,7 @@
     normalizeDimension,
     buildStudioPdfPrintStyles,
     buildStudioPdfPrintHtml,
+    waitForStudioPdfPrintResources,
     openStudioPdfPrintWindow
   };
 });

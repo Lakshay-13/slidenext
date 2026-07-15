@@ -33,6 +33,34 @@ test('buildStudioPdfPrintHtml preserves legacy html fallback and supports safe d
   assert.equal(pdfExport.normalizeDimension('javascript:alert(1)', '16in'), '16in');
 });
 
+test('waitForStudioPdfPrintResources waits for fonts and image load or error', async () => {
+  let resolveFonts;
+  const imageHandlers = {};
+  const image = {
+    complete: false,
+    addEventListener(type, handler) {
+      imageHandlers[type] = handler;
+    }
+  };
+  const fontsReady = new Promise(resolve => {
+    resolveFonts = resolve;
+  });
+  let didResolve = false;
+  const waiting = pdfExport.waitForStudioPdfPrintResources({
+    fonts: { ready: fontsReady },
+    images: [image]
+  }).then(() => {
+    didResolve = true;
+  });
+
+  await Promise.resolve();
+  assert.equal(didResolve, false);
+  resolveFonts();
+  imageHandlers.error();
+  await waiting;
+  assert.equal(didResolve, true);
+});
+
 test('openStudioPdfPrintWindow writes export html and waits for the print window load event', () => {
   let writtenHtml = '';
   let printCalls = 0;
