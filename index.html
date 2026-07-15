@@ -5081,15 +5081,26 @@
         && typeof canonicalVisibilityApi.buildStudioCanonicalVisibilityDeck === 'function'
         ? canonicalVisibilityApi.buildStudioCanonicalVisibilityDeck
         : null;
+      const buildCanonicalVisibilityBaseline = canonicalVisibilityApi
+        && typeof canonicalVisibilityApi.buildStudioCanonicalVisibilityBaseline === 'function'
+        ? canonicalVisibilityApi.buildStudioCanonicalVisibilityBaseline
+        : null;
+      const canonicalDeckBeforeVisibilityMutation = buildCanonicalVisibilityBaseline
+        ? buildCanonicalVisibilityBaseline({
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? () => buildEditorCanonicalDeck(doc)
+              : null,
+            sourceDocument: doc
+          })
+        : null;
       const canonicalDeck = buildCanonicalVisibilityDeck
         ? buildCanonicalVisibilityDeck(
             visibilityMutationPlan.selection,
             { hidden: visibilityMutationPlan.shouldHide },
             {
               canonicalDeckApi,
-              buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-                ? () => buildEditorCanonicalDeck(doc)
-                : null,
+              canonicalDeckBeforeMutation: canonicalDeckBeforeVisibilityMutation,
               getElementId: getVisibilityElementId
             }
           )
