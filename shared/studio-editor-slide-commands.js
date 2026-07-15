@@ -389,12 +389,68 @@
     };
   }
 
+  function applyStudioSlideReorderWithTransaction(container, slideNode, beforeNode = null, options = {}) {
+    if (!container || !slideNode) {
+      return {
+        didApply: false,
+        transaction: null
+      };
+    }
+
+    const applyStudioSlideReorderMutation = typeof options.applyStudioSlideReorderMutation === 'function'
+      ? options.applyStudioSlideReorderMutation
+      : null;
+    const createStudioMarkupTransactionCapture = typeof options.createStudioMarkupTransactionCapture === 'function'
+      ? options.createStudioMarkupTransactionCapture
+      : null;
+    const containerElementId = typeof options.containerElementId === 'string'
+      && options.containerElementId.trim()
+      ? options.containerElementId.trim()
+      : 'slides-container';
+
+    if (applyStudioSlideReorderMutation) {
+      const mutation = applyStudioSlideReorderMutation(container, slideNode, beforeNode, {
+        createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+        containerElementId,
+        getElementId: options.getElementId
+      });
+      return {
+        didApply: !!(mutation && mutation.didApply),
+        transaction: mutation && mutation.transaction ? mutation.transaction : null
+      };
+    }
+
+    if (typeof container.insertBefore !== 'function') {
+      return {
+        didApply: false,
+        transaction: null
+      };
+    }
+
+    const markupCapture = createStudioMarkupTransactionCapture
+      ? createStudioMarkupTransactionCapture([{
+          element: container,
+          elementId: containerElementId
+        }], {
+          getElementId: options.getElementId
+        })
+      : null;
+    container.insertBefore(slideNode, beforeNode || null);
+    return {
+      didApply: true,
+      transaction: markupCapture
+        ? markupCapture.createTransaction()
+        : null
+    };
+  }
+
   return {
     prepareStudioSlideDuplication,
     addStudioSlideNode,
     deleteStudioSlideNode,
     reorderStudioSlideNodes,
     applyStudioSlideInsertionWithTransaction,
-    applyStudioSlideDeletionWithTransaction
+    applyStudioSlideDeletionWithTransaction,
+    applyStudioSlideReorderWithTransaction
   };
 });

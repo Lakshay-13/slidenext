@@ -457,3 +457,54 @@ test('applyStudioSlideDeletionWithTransaction uses the fallback remove and marku
   assert.equal(result.transaction.operations[0].elementId, 'slides-container');
   assert.equal(result.transaction.operations[0].after, '<section data-slide-id="slide-1"></section>');
 });
+
+test('applyStudioSlideReorderWithTransaction delegates the shared slide mutation and preserves target options', () => {
+  const container = { id: 'slides-container' };
+  const slideNode = { id: 'slide-1' };
+  const beforeNode = { id: 'slide-3' };
+  let delegatedOptions = null;
+  const result = slideCommands.applyStudioSlideReorderWithTransaction(container, slideNode, beforeNode, {
+    applyStudioSlideReorderMutation(sourceContainer, sourceSlide, targetNode, options) {
+      assert.equal(sourceContainer, container);
+      assert.equal(sourceSlide, slideNode);
+      assert.equal(targetNode, beforeNode);
+      delegatedOptions = options;
+      return { didApply: true, transaction: { type: 'markup' } };
+    },
+    createStudioMarkupTransactionCapture() {},
+    containerElementId: 'deck-slides',
+    getElementId() {}
+  });
+
+  assert.deepEqual(result, {
+    didApply: true,
+    transaction: { type: 'markup' }
+  });
+  assert.equal(delegatedOptions.containerElementId, 'deck-slides');
+  assert.equal(typeof delegatedOptions.createMarkupTransactionCapture, 'function');
+});
+
+test('applyStudioSlideReorderWithTransaction uses the fallback insertBefore and markup transaction', () => {
+  const slideNode = { id: 'slide-3' };
+  const beforeNode = { id: 'slide-1' };
+  const container = {
+    id: 'slides-container',
+    innerHTML: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-3"></section>',
+    insertBefore(node, sibling) {
+      assert.equal(node, slideNode);
+      assert.equal(sibling, beforeNode);
+      this.innerHTML = '<section data-slide-id="slide-3"></section><section data-slide-id="slide-1"></section>';
+      return node;
+    }
+  };
+
+  const result = slideCommands.applyStudioSlideReorderWithTransaction(container, slideNode, beforeNode, {
+    createStudioMarkupTransactionCapture(items, options) {
+      return studioTransaction.createStudioMarkupTransactionCapture(items, options);
+    }
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.transaction.operations[0].elementId, 'slides-container');
+  assert.equal(result.transaction.operations[0].after, '<section data-slide-id="slide-3"></section><section data-slide-id="slide-1"></section>');
+});
