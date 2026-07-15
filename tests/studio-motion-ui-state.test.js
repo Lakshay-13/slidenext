@@ -545,6 +545,54 @@ test('nudgeSelectedElements persists the moved selection through the shared muta
   assert.deepEqual(calls[9], ['triggerAutoVersion', 'Auto: Nudged Element']);
 });
 
+test('nudgeSelectedElements delegates position application to the shared nudge module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const nudgeSelectedElementsSource = extractFunctionSource(
+    fileContent,
+    'function nudgeSelectedElements(dx, dy) {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  const movedElement = {
+    dataset: { editorId: 'node-1' },
+    style: { left: '10px', top: '20px' }
+  };
+  let finalized = null;
+  const context = {
+    SlideNextStudioEditorNudge: {
+      buildStudioNudgedLayout() {
+        return {
+          didChange: true,
+          nextItems: [{ element: movedElement, nextLeft: 120, nextTop: 80 }]
+        };
+      },
+      applyStudioNudgedLayout: studioNudge.applyStudioNudgedLayout
+    },
+    SlideNextStudioEditorTransaction: studioTransaction,
+    buildMotionSelectionActionState() {
+      return {
+        canNudge: true,
+        doc: {},
+        nudgeLayoutItems: [{ element: movedElement }],
+        slideBounds: { width: 1920, height: 1080 }
+      };
+    },
+    assignEditorElementId() {
+      return 'node-1';
+    },
+    finalizeEditorDeckMutation(versionLabel, options) {
+      finalized = { versionLabel, options };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(nudgeSelectedElementsSource, context);
+
+  assert.equal(context.nudgeSelectedElements(1, 1), true);
+  assert.deepEqual(movedElement.style, { left: '120px', top: '80px' });
+  assert.equal(finalized.versionLabel, 'Auto: Nudged Element');
+  assert.equal(finalized.options.transaction.operations[0].elementId, 'node-1');
+});
+
 test('nudgeSelectedElements forwards a reversible style transaction to history', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const nudgeSelectedElementsSource = extractFunctionSource(

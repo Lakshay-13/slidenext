@@ -58,6 +58,34 @@ test('buildStudioNudgedLayout offsets item positions and preserves parent-relati
   });
 });
 
+test('applyStudioNudgedLayout applies positions and creates an optional transaction', () => {
+  const element = {
+    dataset: { editorId: 'node-1' },
+    style: { left: '10px', top: '20px' }
+  };
+  let transactionItems = null;
+  const result = nudge.applyStudioNudgedLayout([{
+    element,
+    startLeft: '10px',
+    startTop: '20px',
+    nextLeft: 120,
+    nextTop: 80
+  }], {
+    createPositionTransaction(items) {
+      transactionItems = items;
+      return { type: 'position' };
+    },
+    getElementId(target) {
+      return target.dataset.editorId;
+    }
+  });
+
+  assert.equal(result.didApply, true);
+  assert.deepEqual(element.style, { left: '120px', top: '80px' });
+  assert.equal(transactionItems[0].element, element);
+  assert.deepEqual(result.transaction, { type: 'position' });
+});
+
 test('buildStudioNudgeDeltaFromKey resolves fine and coarse arrow-key deltas', () => {
   assert.deepEqual(nudge.buildStudioNudgeDeltaFromKey('ArrowUp'), { dx: 0, dy: -1 });
   assert.deepEqual(nudge.buildStudioNudgeDeltaFromKey('ArrowRight', { shiftKey: true }), { dx: 10, dy: 0 });

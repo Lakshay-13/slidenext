@@ -5205,6 +5205,9 @@
       }
       const nudgeResult = SlideNextStudioEditorNudge.buildStudioNudgedLayout(nudgeLayoutItems, { dx, dy }, slideBounds);
       if (!nudgeResult.didChange) return false;
+      const nudgeApi = typeof SlideNextStudioEditorNudge !== 'undefined'
+        ? SlideNextStudioEditorNudge
+        : null;
       const createStudioPositionTransaction = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -5212,20 +5215,35 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioPositionTransaction
         : null;
-      const transaction = createStudioPositionTransaction
-        ? createStudioPositionTransaction(nudgeResult.nextItems, {
-            getElementId(element) {
-              if (typeof assignEditorElementId === 'function') {
-                return assignEditorElementId(element);
-              }
-              return element && element.dataset && element.dataset.editorId;
-            }
-          })
+      const getNudgeElementId = (element) => {
+        if (typeof assignEditorElementId === 'function') {
+          return assignEditorElementId(element);
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
+      const applyStudioNudgedLayout = nudgeApi
+        && typeof nudgeApi.applyStudioNudgedLayout === 'function'
+        ? nudgeApi.applyStudioNudgedLayout
         : null;
-      nudgeResult.nextItems.forEach((item) => {
-        item.element.style.left = `${item.nextLeft}px`;
-        item.element.style.top = `${item.nextTop}px`;
-      });
+      let transaction = null;
+      if (applyStudioNudgedLayout) {
+        const mutation = applyStudioNudgedLayout(nudgeResult.nextItems, {
+          createPositionTransaction: createStudioPositionTransaction,
+          getElementId: getNudgeElementId
+        });
+        if (!mutation.didApply) return false;
+        transaction = mutation.transaction;
+      } else {
+        transaction = createStudioPositionTransaction
+          ? createStudioPositionTransaction(nudgeResult.nextItems, {
+              getElementId: getNudgeElementId
+            })
+          : null;
+        nudgeResult.nextItems.forEach((item) => {
+          item.element.style.left = `${item.nextLeft}px`;
+          item.element.style.top = `${item.nextTop}px`;
+        });
+      }
       finalizeEditorDeckMutation('Auto: Nudged Element', {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
