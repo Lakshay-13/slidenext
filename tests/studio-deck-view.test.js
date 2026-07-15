@@ -71,6 +71,38 @@ test('applyStudioSlideReorderMutation moves a slide node and captures the contai
   });
 });
 
+test('slide mutations preserve custom transaction target options', () => {
+  const slideNode = { id: 'slide-2' };
+  const container = {
+    innerHTML: '<section data-slide-id="slide-1"></section>',
+    appendChild(node) {
+      assert.equal(node, slideNode);
+      this.innerHTML = '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section>';
+      return node;
+    }
+  };
+  const getElementId = () => 'custom-container-id';
+  let captureOptions = null;
+
+  const result = deckView.applyStudioSlideInsertionMutation(container, slideNode, {
+    containerElementId: 'deck-slides',
+    getElementId,
+    createMarkupTransactionCapture(items, options) {
+      captureOptions = { items, options };
+      return studioTransaction.createStudioMarkupTransactionCapture(items, options);
+    }
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(captureOptions.options.getElementId, getElementId);
+  assert.deepEqual(result.transaction.operations, [{
+    type: 'markup',
+    elementId: 'deck-slides',
+    before: '<section data-slide-id="slide-1"></section>',
+    after: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section>'
+  }]);
+});
+
 test('syncStudioDeckActiveThumbnailCardState resolves thumbnail cards from the document', () => {
   const activeCard = { dataset: { slideId: 'slide-2' }, className: '' };
   const inactiveCard = { dataset: { slideId: 'slide-1' }, className: '' };
