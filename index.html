@@ -2478,6 +2478,13 @@
         ? reorderCanonicalSlides(canonicalDeckBeforeReorder, sourceSlideId, targetSlideId)
         : null;
       const slideMutationState = captureSlideMutationRestoreState(iframeDoc);
+      const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
+        : null;
+      const applyStudioSlideReorderMutation = deckViewApi
+        && typeof deckViewApi.applyStudioSlideReorderMutation === 'function'
+        ? deckViewApi.applyStudioSlideReorderMutation
+        : null;
       const createStudioMarkupTransactionCapture = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
         && SlideNextStudioEditorTransaction
@@ -2485,17 +2492,33 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
         : null;
-      const markupCapture = createStudioMarkupTransactionCapture
-        ? createStudioMarkupTransactionCapture([{
-            element: container,
-            elementId: 'slides-container'
-          }])
-        : null;
-      
-      if (fromIdx < toIdx) {
-        container.insertBefore(draggedNode, targetNode.nextSibling);
+      let transaction = null;
+      if (applyStudioSlideReorderMutation) {
+        const mutation = applyStudioSlideReorderMutation(
+          container,
+          draggedNode,
+          fromIdx < toIdx ? targetNode.nextSibling : targetNode,
+          {
+            createMarkupTransactionCapture: createStudioMarkupTransactionCapture
+          }
+        );
+        if (!mutation.didApply) return false;
+        transaction = mutation.transaction;
       } else {
-        container.insertBefore(draggedNode, targetNode);
+        const markupCapture = createStudioMarkupTransactionCapture
+          ? createStudioMarkupTransactionCapture([{
+              element: container,
+              elementId: 'slides-container'
+            }])
+          : null;
+        if (fromIdx < toIdx) {
+          container.insertBefore(draggedNode, targetNode.nextSibling);
+        } else {
+          container.insertBefore(draggedNode, targetNode);
+        }
+        transaction = markupCapture
+          ? markupCapture.createTransaction()
+          : null;
       }
       
       generateThumbnails();
@@ -2504,9 +2527,6 @@
         preservedActiveSlideId: slideMutationState.preservedActiveSlideId,
         fallbackIndex: slideCount === 0 ? 0 : Math.min(toIdx, slideCount - 1),
       });
-      const transaction = markupCapture
-        ? markupCapture.createTransaction()
-        : null;
       if (canonicalDeckAfterReorder) {
         finalizeSlideMutationPersistence('Auto: Reordered Slides', transaction, canonicalDeckAfterReorder);
       } else {

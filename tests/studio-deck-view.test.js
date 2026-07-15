@@ -2,6 +2,44 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const deckView = require('../shared/studio-deck-view.js');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
+
+test('applyStudioSlideReorderMutation moves a slide node and captures the container markup transaction', () => {
+  const draggedNode = { id: 'slide-1' };
+  const beforeNode = { id: 'slide-3' };
+  const container = {
+    innerHTML: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-3"></section>',
+    insertBefore(node, before) {
+      assert.equal(node, draggedNode);
+      assert.equal(before, beforeNode);
+      this.innerHTML = '<section data-slide-id="slide-1"></section>';
+      return node;
+    }
+  };
+
+  const result = deckView.applyStudioSlideReorderMutation(
+    container,
+    draggedNode,
+    beforeNode,
+    {
+      createMarkupTransactionCapture(items, options) {
+        return studioTransaction.createStudioMarkupTransactionCapture(items, options);
+      }
+    }
+  );
+
+  assert.equal(result.didApply, true);
+  assert.deepEqual(result.transaction, {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'markup',
+      elementId: 'slides-container',
+      before: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-3"></section>',
+      after: '<section data-slide-id="slide-1"></section>'
+    }]
+  });
+});
 
 test('createStudioCanonicalDeckResolver caches the first canonical deck build for a view session', () => {
   const doc = { label: 'iframe-doc' };

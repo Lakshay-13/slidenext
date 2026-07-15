@@ -617,6 +617,72 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
   assert.equal(calls[14][1], 2);
 });
 
+test('reorderSlides delegates DOM ordering and transaction capture to the shared deck view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const reorderSlidesSource = extractFunctionSource(
+    fileContent,
+    'function reorderSlides(fromIdx, toIdx) {',
+    '\n\n    function updateActiveThumbnailCardState(activeSlideId) {'
+  );
+  const firstSlide = { id: 'slide-1' };
+  const secondSlide = { id: 'slide-2', nextSibling: null };
+  const slides = [firstSlide, secondSlide];
+  const container = { id: 'slides-container' };
+  const iframeDoc = { id: 'doc' };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      applyStudioSlideReorderMutation(...args) {
+        calls.push(['applyStudioSlideReorderMutation', ...args]);
+        return {
+          didApply: true,
+          transaction: { type: 'markup' }
+        };
+      }
+    },
+    captureSlideMutationRestoreState(doc) {
+      calls.push(['captureSlideMutationRestoreState', doc]);
+      return {
+        preservedActiveSlideId: 'slide-1',
+        preservedSelectionIds: ['element-1']
+      };
+    },
+    finalizeSlideMutationPersistence(...args) {
+      calls.push(['finalizeSlideMutationPersistence', ...args]);
+    },
+    generateThumbnails() {
+      calls.push(['generateThumbnails']);
+    },
+    getIframeDoc() {
+      calls.push(['getIframeDoc']);
+      return iframeDoc;
+    },
+    getSlides() {
+      calls.push(['getSlides']);
+      return slides;
+    },
+    restoreDeckViewAfterSlideMutation(...args) {
+      calls.push(['restoreDeckViewAfterSlideMutation', ...args]);
+    }
+  };
+  iframeDoc.getElementById = (id) => id === 'slidesContainer' ? container : null;
+
+  vm.createContext(context);
+  vm.runInContext(reorderSlidesSource, context);
+
+  assert.equal(context.reorderSlides(0, 1), true);
+  const delegation = calls.find(([name]) => name === 'applyStudioSlideReorderMutation');
+  assert.equal(delegation[1], container);
+  assert.equal(delegation[2], firstSlide);
+  assert.equal(delegation[3], secondSlide.nextSibling);
+  const finalize = calls.find(([name]) => name === 'finalizeSlideMutationPersistence');
+  assert.deepEqual(finalize, [
+    'finalizeSlideMutationPersistence',
+    'Auto: Reordered Slides',
+    { type: 'markup' }
+  ]);
+});
+
 test('reorderSlides no-ops when the iframe document is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const reorderSlidesSource = extractFunctionSource(
