@@ -5,7 +5,6 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const canonicalDeckModel = require('../shared/canonical-deck.js');
-const presentationMetadata = require('../shared/presentation-metadata.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const deckView = require('../shared/studio-deck-view.js');
 
@@ -148,6 +147,9 @@ test('resolveEditorStoredCanonicalBaseline prefers the current metadata canonica
           return persistedCanonicalDeck;
         }
         return null;
+      },
+      resolvePreferredStoredStudioCanonicalDeck(primaryStoredPresentationMetadata) {
+        return context.SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck(primaryStoredPresentationMetadata);
       }
     },
     currentPresentationMetadata: {
@@ -166,7 +168,7 @@ test('resolveEditorStoredCanonicalBaseline prefers the current metadata canonica
   assert.deepEqual(calls, [context.currentPresentationMetadata]);
 });
 
-test('resolveEditorStoredCanonicalDeck falls back to the shared presentation metadata normalizer when the deck context helper is unavailable', () => {
+test('resolveEditorStoredCanonicalDeck fails closed when the deck context helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const rawStoredCanonicalDeck = {
     metadata: {
@@ -177,9 +179,7 @@ test('resolveEditorStoredCanonicalDeck falls back to the shared presentation met
     ]
   };
   const context = {
-    SlideNextStudioDeckContext: {},
-    SlideNextPresentationMetadata: presentationMetadata,
-    SlideNextCanonicalDeck: canonicalDeckModel
+    SlideNextStudioDeckContext: {}
   };
 
   vm.createContext(context);
@@ -192,16 +192,7 @@ test('resolveEditorStoredCanonicalDeck falls back to the shared presentation met
     canonicalDeck: rawStoredCanonicalDeck
   });
 
-  assert.deepEqual(result, canonicalDeckModel.createCanonicalDeck({
-    metadata: {
-      id: 'onboarding-presentation',
-      title: 'Project Onboarding',
-      sourcePath: '/presentations/onboarding-presentation/index.html'
-    },
-    slides: [
-      { id: 'slide-1', nodes: [] }
-    ]
-  }));
+  assert.equal(result, null);
 });
 
 test('resolveEditorStoredCanonicalBaseline delegates precedence to the shared deck context when available', () => {

@@ -3558,36 +3558,8 @@
       const resolveStoredCanonicalDeck = SlideNextStudioDeckContext
         && typeof SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck === 'function'
         ? SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck
-        : (() => {
-            const resolvePresentationCanonicalDeck = (
-              typeof SlideNextPresentationMetadata !== 'undefined'
-              && SlideNextPresentationMetadata
-              && typeof SlideNextPresentationMetadata.resolvePresentationCanonicalDeck === 'function'
-            )
-              ? SlideNextPresentationMetadata.resolvePresentationCanonicalDeck
-              : null;
-            if (resolvePresentationCanonicalDeck) {
-              const createCanonicalDeck = (
-                typeof SlideNextCanonicalDeck !== 'undefined'
-                && SlideNextCanonicalDeck
-                && typeof SlideNextCanonicalDeck.createCanonicalDeck === 'function'
-              )
-                ? SlideNextCanonicalDeck.createCanonicalDeck
-                : null;
-              const isCanonicalDeck = (
-                typeof SlideNextCanonicalDeck !== 'undefined'
-                && SlideNextCanonicalDeck
-                && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-              )
-                ? SlideNextCanonicalDeck.isCanonicalDeck
-                : null;
-              return (storedMetadata) => resolvePresentationCanonicalDeck(storedMetadata, {
-                createCanonicalDeck,
-                isCanonicalDeck
-              });
-            }
-            return (storedMetadata) => storedMetadata && storedMetadata.canonicalDeck ? storedMetadata.canonicalDeck : null;
-          })();
+        : null;
+      if (!resolveStoredCanonicalDeck) return null;
       return resolveStoredCanonicalDeck(metadata) || null;
     }
 
