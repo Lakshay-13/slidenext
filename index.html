@@ -4042,6 +4042,68 @@
       return SlideNextStudioEditorDom.applyStudioSlideLayerOrder(slide, orderedElements);
     }
 
+    function applyEditorLayerOrderMutationWithTransaction(slide, initialOrder, nextOrder, options = {}) {
+      const layerOrderApi = typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+        ? SlideNextStudioEditorLayerOrder
+        : null;
+      const applyStudioLayerOrderMutation = layerOrderApi
+        && typeof layerOrderApi.applyStudioLayerOrderMutation === 'function'
+        ? layerOrderApi.applyStudioLayerOrderMutation
+        : null;
+      const createStudioStyleTransaction = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+        : null;
+      const getElementId = typeof options.getElementId === 'function'
+        ? options.getElementId
+        : (element) => {
+            if (typeof assignEditorElementId === 'function') {
+              const assignedId = assignEditorElementId(element);
+              if (assignedId) return assignedId;
+            }
+            return element && element.dataset && element.dataset.editorId;
+          };
+      const applyLayerOrder = typeof options.applyLayerOrder === 'function'
+        ? options.applyLayerOrder
+        : applySlideLayerOrder;
+      if (applyStudioLayerOrderMutation) {
+        const mutation = applyStudioLayerOrderMutation(slide, initialOrder, nextOrder, {
+          applyLayerOrder,
+          createStyleTransaction: createStudioStyleTransaction,
+          getElementId
+        });
+        return mutation && typeof mutation === 'object'
+          ? mutation
+          : { didApply: false, transaction: null };
+      }
+      const transactionItems = createStudioStyleTransaction
+        ? initialOrder.map((element) => ({
+            element,
+            elementId: getElementId(element),
+            before: {
+              zIndex: element && element.style ? element.style.zIndex : ''
+            }
+          }))
+        : [];
+      if (typeof applyLayerOrder === 'function') {
+        applyLayerOrder(slide, nextOrder);
+      }
+      transactionItems.forEach((item) => {
+        item.after = {
+          zIndex: item.element && item.element.style ? item.element.style.zIndex : ''
+        };
+      });
+      return {
+        didApply: true,
+        transaction: createStudioStyleTransaction
+          ? createStudioStyleTransaction(transactionItems, { getElementId })
+          : null
+      };
+    }
+
     function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {
       const slide = getActiveSlide();
       if (!slide) return false;
@@ -4054,58 +4116,24 @@
       if (!reorderResult.didChange) {
         return false;
       }
-
-      const applyStudioLayerOrderMutation = (
-        typeof SlideNextStudioEditorLayerOrder !== 'undefined'
-        && SlideNextStudioEditorLayerOrder
-        && typeof SlideNextStudioEditorLayerOrder.applyStudioLayerOrderMutation === 'function'
-      )
-        ? SlideNextStudioEditorLayerOrder.applyStudioLayerOrderMutation
-        : null;
-      const createStudioStyleTransaction = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
-        : null;
       const getLayerOrderElementId = (element) => {
         if (typeof assignEditorElementId === 'function') {
-          return assignEditorElementId(element);
+          const assignedId = assignEditorElementId(element);
+          if (assignedId) return assignedId;
         }
         return element && element.dataset && element.dataset.editorId;
       };
-      if (applyStudioLayerOrderMutation) {
-        const mutation = applyStudioLayerOrderMutation(slide, initialOrder, reorderResult.nextOrder, {
-          applyLayerOrder: applySlideLayerOrder,
-          createStyleTransaction: createStudioStyleTransaction,
+      const mutation = applyEditorLayerOrderMutationWithTransaction(
+        slide,
+        initialOrder,
+        reorderResult.nextOrder,
+        {
           getElementId: getLayerOrderElementId
-        });
-        if (!mutation.didApply) return false;
-        if (typeof options.onTransaction === 'function') {
-          options.onTransaction(mutation.transaction);
         }
-        return true;
-      }
-      const transactionItems = createStudioStyleTransaction
-        ? initialOrder.map((element) => {
-            getLayerOrderElementId(element);
-            return {
-              element,
-              before: {
-                zIndex: element && element.style ? element.style.zIndex : ''
-              }
-            };
-          })
-        : [];
-      applySlideLayerOrder(slide, reorderResult.nextOrder);
-      transactionItems.forEach((item) => {
-        item.after = {
-          zIndex: item.element && item.element.style ? item.element.style.zIndex : ''
-        };
-      });
+      );
+      if (!mutation.didApply) return false;
       if (typeof options.onTransaction === 'function') {
-        options.onTransaction(createStudioStyleTransaction(transactionItems));
+        options.onTransaction(mutation.transaction);
       }
       return true;
     }

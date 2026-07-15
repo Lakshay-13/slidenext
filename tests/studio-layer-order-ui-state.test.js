@@ -61,6 +61,15 @@ function loadReorderSlideLayers(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadLayerOrderMutationHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorLayerOrderMutationWithTransaction(slide, initialOrder, nextOrder, options = {}) {',
+    'function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function createControls() {
   return {
     arrangeLayerFrontBtn: { disabled: true },
@@ -168,6 +177,7 @@ test('reorderSlideLayers forwards a reversible z-index transaction', () => {
   };
 
   vm.createContext(context);
+  loadLayerOrderMutationHelper(fileContent, context);
   loadReorderSlideLayers(fileContent, context);
 
   assert.equal(context.reorderSlideLayers('front', [first], {
@@ -425,6 +435,7 @@ test('reorderSlideLayers delegates order application to the shared layer-order m
   };
 
   vm.createContext(context);
+  loadLayerOrderMutationHelper(fileContent, context);
   vm.runInContext(source, context);
 
   let captured = null;
