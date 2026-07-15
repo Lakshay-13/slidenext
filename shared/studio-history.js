@@ -513,6 +513,18 @@
     };
   }
 
+  function syncStudioHistoryButtons(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+
+    return createStudioHistoryButtonUpdater({
+      getUndoStack: () => options.undoStack,
+      getRedoStack: () => options.redoStack,
+      getUndoButton: () => documentRef.getElementById('studioUndoBtn'),
+      getRedoButton: () => documentRef.getElementById('studioRedoBtn')
+    })();
+  }
+
   function scheduleStudioHistoryCapture(currentTimer, debounce, captureFn, options = {}) {
     const clearScheduledCapture = typeof options.clearScheduledCapture === 'function'
       ? options.clearScheduledCapture
@@ -742,6 +754,7 @@
     stepStudioHistoryRedo,
     getStudioHistoryButtonState,
     createStudioHistoryButtonUpdater,
+    syncStudioHistoryButtons,
     scheduleStudioHistoryCapture,
     createStudioHistorySaveHandler,
     restoreStudioHistoryActiveSlide,

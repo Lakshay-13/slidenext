@@ -655,6 +655,29 @@ test('createStudioHistoryButtonUpdater applies the computed history button state
   ]);
 });
 
+test('syncStudioHistoryButtons resolves editor controls from the document', () => {
+  const buttons = {
+    studioUndoBtn: { disabled: false },
+    studioRedoBtn: { disabled: true }
+  };
+  const documentRef = {
+    getElementById(id) {
+      return buttons[id] || null;
+    }
+  };
+
+  assert.deepEqual(studioHistory.syncStudioHistoryButtons({
+    documentRef,
+    undoStack: ['entry-1', 'entry-2'],
+    redoStack: ['entry-3']
+  }), {
+    undoDisabled: false,
+    redoDisabled: false
+  });
+  assert.equal(buttons.studioUndoBtn.disabled, false);
+  assert.equal(buttons.studioRedoBtn.disabled, false);
+});
+
 test('createStudioHistoryStepRunner applies successful history steps and skips unsuccessful ones', () => {
   const calls = [];
   let undoStack = ['undo-entry'];

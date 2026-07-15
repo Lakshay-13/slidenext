@@ -25,47 +25,7 @@ function loadResolveEditorMetadataPersistenceOptions(fileContent, context) {
   vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
 }
 
-test('updateHistoryButtons tolerates missing history controls', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateHistoryButtonsSource = extractFunctionSource(
-    fileContent,
-    'function updateHistoryButtons() {',
-    '\n\n    function editorUndo() {'
-  );
-
-  const calls = [];
-  const context = {
-    SlideNextStudioHistory: {
-      getStudioHistoryButtonState(undoStack, redoStack) {
-        calls.push(['getStudioHistoryButtonState', undoStack, redoStack]);
-        return {
-          undoDisabled: true,
-          redoDisabled: false
-        };
-      }
-    },
-    document: {
-      getElementById(id) {
-        calls.push(['getElementById', id]);
-        return null;
-      }
-    },
-    undoStack: ['entry-1'],
-    redoStack: ['entry-2']
-  };
-
-  vm.createContext(context);
-  vm.runInContext(updateHistoryButtonsSource, context);
-
-  assert.doesNotThrow(() => context.updateHistoryButtons());
-  assert.deepEqual(calls, [
-    ['getStudioHistoryButtonState', ['entry-1'], ['entry-2']],
-    ['getElementById', 'studioUndoBtn'],
-    ['getElementById', 'studioRedoBtn']
-  ]);
-});
-
-test('updateHistoryButtons reuses the shared history button updater when available', () => {
+test('updateHistoryButtons delegates editor control rendering to shared history state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateHistoryButtonsSource = extractFunctionSource(
     fileContent,
@@ -76,14 +36,43 @@ test('updateHistoryButtons reuses the shared history button updater when availab
   let delegatedArgs = null;
   const context = {
     SlideNextStudioHistory: {
-      createStudioHistoryButtonUpdater(options = {}) {
+      syncStudioHistoryButtons(options) {
         delegatedArgs = options;
-        return () => ({
+        return {
           undoDisabled: true,
           redoDisabled: false
-        });
+        };
       }
     },
+    document: {
+      getElementById() { return null; }
+    },
+    undoStack: ['entry-1'],
+    redoStack: ['entry-2']
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateHistoryButtonsSource, context);
+
+  assert.deepEqual(context.updateHistoryButtons(), {
+    undoDisabled: true,
+    redoDisabled: false
+  });
+  assert.equal(delegatedArgs.documentRef, context.document);
+  assert.deepEqual(delegatedArgs.undoStack, ['entry-1']);
+  assert.deepEqual(delegatedArgs.redoStack, ['entry-2']);
+});
+
+test('updateHistoryButtons returns false when the shared history state is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateHistoryButtonsSource = extractFunctionSource(
+    fileContent,
+    'function updateHistoryButtons() {',
+    '\n\n    function editorUndo() {'
+  );
+
+  const context = {
+    SlideNextStudioHistory: {},
     document: {
       getElementById(id) {
         return { id, disabled: null };
@@ -96,17 +85,7 @@ test('updateHistoryButtons reuses the shared history button updater when availab
   vm.createContext(context);
   vm.runInContext(updateHistoryButtonsSource, context);
 
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(context.updateHistoryButtons())),
-    {
-      undoDisabled: true,
-      redoDisabled: false
-    }
-  );
-  assert.equal(typeof delegatedArgs.getUndoStack, 'function');
-  assert.equal(typeof delegatedArgs.getRedoStack, 'function');
-  assert.equal(typeof delegatedArgs.getUndoButton, 'function');
-  assert.equal(typeof delegatedArgs.getRedoButton, 'function');
+  assert.equal(context.updateHistoryButtons(), false);
 });
 
 test('editorUndo reuses the shared history step runner when available', () => {
