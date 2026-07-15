@@ -20,6 +20,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadTransformSessionFinalizer(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createEditorTransformSessionFinalizer(transformApi, options = {}) {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
@@ -719,6 +728,7 @@ test('setupIframeDragging delegates the fallback drag lifecycle without redundan
   };
 
   vm.createContext(context);
+  loadTransformSessionFinalizer(fileContent, context);
   vm.runInContext(setupIframeDraggingSource, context);
 
   context.setupIframeDragging(doc);
@@ -843,6 +853,7 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
   };
 
   vm.createContext(context);
+  loadTransformSessionFinalizer(fileContent, context);
   vm.runInContext(setupIframeDraggingSource, context);
 
   context.setupIframeDragging(doc);
@@ -984,6 +995,7 @@ test('setupIframeDragging delegates interaction binding to the shared interactio
   };
 
   vm.createContext(context);
+  loadTransformSessionFinalizer(fileContent, context);
   vm.runInContext(setupIframeDraggingSource, context);
 
   context.setupIframeDragging(doc);

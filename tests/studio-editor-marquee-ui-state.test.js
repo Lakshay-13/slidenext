@@ -15,6 +15,15 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadTransformSessionFinalizer(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createEditorTransformSessionFinalizer(transformApi, options = {}) {',
+    '\n\n    // Element dragging + resize on an open canvas'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('setupIframeDragging wires marquee handlers beside shared transforms and commits additive selection', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setupIframeDraggingSource = extractFunctionSource(
@@ -134,6 +143,7 @@ test('setupIframeDragging wires marquee handlers beside shared transforms and co
   };
 
   vm.createContext(context);
+  loadTransformSessionFinalizer(fileContent, context);
   vm.runInContext(setupIframeDraggingSource, context);
   context.setupIframeDragging(doc);
 
