@@ -3033,23 +3033,19 @@
       )
         ? SlideNextDeckImport.importSlideToCanonicalSlide
         : null;
-      const canonicalDeckBeforeDuplication = buildCanonicalDuplicateSlideDeck
-        && typeof SlideNextCanonicalDeck !== 'undefined'
-        && SlideNextCanonicalDeck
-        && typeof SlideNextCanonicalDeck.insertCanonicalSlide === 'function'
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(iframeDoc)
-        : null;
       const canonicalDeckAfterDuplication = buildCanonicalDuplicateSlideDeck
         ? buildCanonicalDuplicateSlideDeck({
             canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
               ? SlideNextCanonicalDeck
               : null,
-            canonicalDeckBeforeMutation: canonicalDeckBeforeDuplication,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
             importSlideToCanonicalSlide,
             duplicateSlide,
             duplicateSlideId,
             insertionIndex,
+            sourceDocument: iframeDoc,
             title: `Slide ${insertionIndex + 1}`,
             getSlideId: () => duplicateSlideId
           })

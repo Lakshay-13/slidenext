@@ -23,7 +23,7 @@
       : null;
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
-      : (buildCanonicalDeck ? buildCanonicalDeck() : null);
+      : (buildCanonicalDeck ? buildCanonicalDeck(options.sourceDocument) : null);
     const duplicateSlide = options.duplicateSlide;
     const insertionIndex = Number.isInteger(options.insertionIndex) ? options.insertionIndex : -1;
     const duplicateSlideId = typeof options.duplicateSlideId === 'string' ? options.duplicateSlideId : '';

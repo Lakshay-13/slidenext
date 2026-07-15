@@ -40,6 +40,26 @@ test('buildStudioCanonicalDuplicateSlideDeck preserves the fallback slide import
   assert.equal(canonicalSlide.buildStudioCanonicalDuplicateSlideDeck({}), null);
 });
 
+test('buildStudioCanonicalDuplicateSlideDeck passes the source document to the canonical builder', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const sourceDocument = { id: 'editor-doc' };
+  let builtFromDocument = null;
+  const result = canonicalSlide.buildStudioCanonicalDuplicateSlideDeck({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtFromDocument = documentRef;
+      return sourceDeck;
+    },
+    sourceDocument,
+    duplicateSlide: { id: 'generated-slide' },
+    duplicateSlideId: 'slide-2',
+    insertionIndex: 1
+  });
+
+  assert.equal(builtFromDocument, sourceDocument);
+  assert.deepEqual(result.slides.map((slide) => slide.id), ['slide-1', 'slide-2']);
+});
+
 test('buildStudioCanonicalAddSlideDeck imports and appends a new slide without mutating the source', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const sourceDocument = { id: 'editor-doc' };
