@@ -5175,28 +5175,26 @@
         return false;
       }
 
-      if (prop === 'size') {
-        const fontSizeLabel = document.getElementById('fontSizeVal');
-        if (fontSizeLabel) {
-          fontSizeLabel.textContent = `${styleMutationResult.displayValue}px`;
-        }
-      } else if (prop === 'align') {
+      if (prop === 'align') {
         highlightAlignButton(val);
+      } else if (styleApi && typeof styleApi.syncStudioStyleFeedbackLabel === 'function') {
+        styleApi.syncStudioStyleFeedbackLabel({
+          documentRef: typeof document !== 'undefined' ? document : null,
+          prop,
+          displayValue: styleMutationResult.displayValue
+        });
+      } else if (prop === 'size') {
+        const fontSizeLabel = document.getElementById('fontSizeVal');
+        if (fontSizeLabel) fontSizeLabel.textContent = `${styleMutationResult.displayValue}px`;
       } else if (prop === 'borderWidth') {
         const borderWidthLabel = document.getElementById('borderWidthVal');
-        if (borderWidthLabel) {
-          borderWidthLabel.textContent = `${styleMutationResult.displayValue}px`;
-        }
+        if (borderWidthLabel) borderWidthLabel.textContent = `${styleMutationResult.displayValue}px`;
       } else if (prop === 'borderRadius') {
         const borderRadiusLabel = document.getElementById('borderRadiusVal');
-        if (borderRadiusLabel) {
-          borderRadiusLabel.textContent = `${styleMutationResult.displayValue}px`;
-        }
+        if (borderRadiusLabel) borderRadiusLabel.textContent = `${styleMutationResult.displayValue}px`;
       } else if (prop === 'opacity') {
         const opacityLabel = document.getElementById('opacityVal');
-        if (opacityLabel) {
-          opacityLabel.textContent = `${styleMutationResult.displayValue}%`;
-        }
+        if (opacityLabel) opacityLabel.textContent = `${styleMutationResult.displayValue}%`;
       }
       finalizeEditorDeckMutation(styleMutationPlan.versionLabel, {
         syncSelectionOverlay: true,

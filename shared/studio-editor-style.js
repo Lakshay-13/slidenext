@@ -115,6 +115,22 @@
     });
   }
 
+  function syncStudioStyleFeedbackLabel(options = {}) {
+    const feedbackConfig = {
+      size: { id: 'fontSizeVal', suffix: 'px' },
+      borderWidth: { id: 'borderWidthVal', suffix: 'px' },
+      borderRadius: { id: 'borderRadiusVal', suffix: 'px' },
+      opacity: { id: 'opacityVal', suffix: '%' }
+    }[options.prop];
+    const documentRef = options.documentRef;
+    if (!feedbackConfig || !documentRef || typeof documentRef.getElementById !== 'function') return false;
+
+    const label = documentRef.getElementById(feedbackConfig.id);
+    if (!label) return false;
+    label.textContent = `${options.displayValue}${feedbackConfig.suffix}`;
+    return true;
+  }
+
   function normalizeStudioStyleMutationValue(prop, value) {
     if (prop === 'opacity') {
       const displayValue = `${Math.max(10, Math.min(100, parseInt(value, 10) || 100))}`;
@@ -460,6 +476,7 @@
     buildStudioStyleToolbarState,
     renderStudioStyleToolbarState,
     syncStudioStyleToolbarState,
+    syncStudioStyleFeedbackLabel,
     normalizeStudioStyleMutationValue,
     applyStudioStyleMutation,
     applyStudioStyleMutationWithTransaction,

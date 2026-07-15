@@ -122,6 +122,36 @@ test('syncStudioStyleToolbarState builds and renders control availability in one
   assert.equal(controls.alignCenterBtn.disabled, false);
 });
 
+test('syncStudioStyleFeedbackLabel renders numeric inspector feedback with the correct unit', () => {
+  const labels = {
+    fontSizeVal: { textContent: '' },
+    opacityVal: { textContent: '' }
+  };
+  const documentRef = {
+    getElementById(id) {
+      return labels[id] || null;
+    }
+  };
+
+  assert.equal(styleState.syncStudioStyleFeedbackLabel({
+    documentRef,
+    prop: 'size',
+    displayValue: '24'
+  }), true);
+  assert.equal(styleState.syncStudioStyleFeedbackLabel({
+    documentRef,
+    prop: 'opacity',
+    displayValue: '80'
+  }), true);
+  assert.equal(labels.fontSizeVal.textContent, '24px');
+  assert.equal(labels.opacityVal.textContent, '80%');
+  assert.equal(styleState.syncStudioStyleFeedbackLabel({
+    documentRef,
+    prop: 'align',
+    displayValue: 'center'
+  }), false);
+});
+
 test('applyStudioStyleMutation applies shared style properties across the live selection', () => {
   const first = createElement('div');
   const second = createElement('p');
