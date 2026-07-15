@@ -6726,13 +6726,6 @@
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
         ? deckImportApi.importElementToCanonicalNode
         : null;
-      const canonicalDeckBeforeInsertion = buildCanonicalInsertionDeck
-        && canonicalDeckApi
-        && typeof canonicalDeckApi.appendCanonicalNode === 'function'
-        && importElementToCanonicalNode
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(iframeDoc)
-        : null;
       const mutation = applyEditorElementInsertionWithTransaction(type, {
         documentRef: iframeDoc,
         slide: activeSlide,
@@ -6745,12 +6738,15 @@
       const newEl = mutation.element;
       const transaction = mutation.transaction;
       let canonicalDeck = null;
-      if (buildCanonicalInsertionDeck && canonicalDeckBeforeInsertion && newEl) {
+      if (buildCanonicalInsertionDeck && newEl) {
         canonicalDeck = buildCanonicalInsertionDeck(newEl, {
           canonicalDeckApi,
-          canonicalDeckBeforeMutation: canonicalDeckBeforeInsertion,
+          buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+            ? buildEditorCanonicalDeck
+            : null,
           importElementToCanonicalNode,
           slideId: activeSlideId,
+          sourceDocument: iframeDoc,
           getNodeId: (element) => {
             if (element && element.dataset && typeof assignEditorElementId === 'function') {
               const assignedId = assignEditorElementId(element);
