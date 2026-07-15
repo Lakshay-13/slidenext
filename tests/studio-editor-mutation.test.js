@@ -109,6 +109,47 @@ test('finalizeStudioMutation delegates version and mutation options to the share
   ]);
 });
 
+test('finalizeStudioSelectionToggleMutation syncs selection before persisting a transaction', () => {
+  const calls = [];
+  assert.equal(mutation.finalizeStudioSelectionToggleMutation({
+    versionLabel: 'Auto: Locked Element',
+    mutationOptions: {
+      transaction: { id: 'tx-2' }
+    },
+    syncSelectionUi() {
+      calls.push(['selection']);
+    },
+    finalizeMutation(label, options) {
+      calls.push(['finalize', label, options]);
+    }
+  }), true);
+
+  assert.deepEqual(calls, [
+    ['selection'],
+    ['finalize', 'Auto: Locked Element', {
+      refreshThumbnails: false,
+      transaction: { id: 'tx-2' }
+    }]
+  ]);
+});
+
+test('finalizeStudioSelectionToggleMutation honors skipped selection UI', () => {
+  const calls = [];
+  assert.equal(mutation.finalizeStudioSelectionToggleMutation({
+    versionLabel: 'Auto: Visibility Update',
+    mutationOptions: {
+      skipSelectionUi: true
+    },
+    syncSelectionUi() {
+      calls.push('selection');
+    },
+    finalizeMutation() {
+      calls.push('finalize');
+    }
+  }), true);
+  assert.deepEqual(calls, ['finalize']);
+});
+
 test('createStudioSlideMutationPersistenceFinalizer preserves slide persistence ordering', () => {
   const calls = [];
   const finalizeSlideMutation = mutation.createStudioSlideMutationPersistenceFinalizer({

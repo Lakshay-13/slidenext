@@ -54,6 +54,20 @@
     return mutationFinalizer(options.versionLabel, options.mutationOptions || {});
   }
 
+  function finalizeStudioSelectionToggleMutation(options = {}) {
+    const mutationOptions = options.mutationOptions || {};
+    if (!mutationOptions.skipSelectionUi && typeof options.syncSelectionUi === 'function') {
+      options.syncSelectionUi();
+    }
+    const finalizeMutation = options.finalizeMutation;
+    if (typeof finalizeMutation !== 'function') return false;
+    finalizeMutation(options.versionLabel, {
+      refreshThumbnails: false,
+      ...(mutationOptions.transaction ? { transaction: mutationOptions.transaction } : {})
+    });
+    return true;
+  }
+
   function createStudioSlideMutationPersistenceFinalizer(options = {}) {
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
@@ -82,6 +96,7 @@
   return {
     createStudioMutationFinalizer,
     finalizeStudioMutation,
+    finalizeStudioSelectionToggleMutation,
     createStudioSlideMutationPersistenceFinalizer
   };
 });

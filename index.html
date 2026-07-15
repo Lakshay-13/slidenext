@@ -4937,6 +4937,17 @@
     }
 
     function finalizeSelectionToggleMutation(versionLabel, options = {}) {
+      const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
+        ? SlideNextStudioEditorMutation
+        : null;
+      if (mutationApi && typeof mutationApi.finalizeStudioSelectionToggleMutation === 'function') {
+        return mutationApi.finalizeStudioSelectionToggleMutation({
+          versionLabel,
+          mutationOptions: options,
+          syncSelectionUi: syncSelectionUiAfterMutation,
+          finalizeMutation: finalizeEditorDeckMutation
+        });
+      }
       if (!options.skipSelectionUi) {
         syncSelectionUiAfterMutation();
       }
