@@ -37,15 +37,16 @@
   }
 
   function getStudioSelectedElementIds(elements = [], options = {}) {
-    const isEligibleElement = typeof options.isEligibleElement === 'function'
-      ? options.isEligibleElement
-      : () => true;
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : () => '';
+    const selectedElements = liveSelection && typeof liveSelection.getStudioLiveSelection === 'function'
+      ? liveSelection.getStudioLiveSelection(elements, options)
+      : Array.isArray(elements)
+        ? elements
+        : [];
 
-    return elements
-      .filter((el) => el && el.isConnected && isEligibleElement(el))
+    return selectedElements
       .map((el) => getElementId(el))
       .filter(Boolean);
   }

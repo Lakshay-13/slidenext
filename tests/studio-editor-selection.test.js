@@ -3,6 +3,22 @@ const assert = require('node:assert/strict');
 
 const studioSelection = require('../shared/studio-editor-selection.js');
 
+test('getStudioSelectedElementIds reuses live selection normalization', () => {
+  const first = { id: 'first', isConnected: true, eligible: true };
+  const second = { id: 'second', isConnected: true, eligible: true };
+  const stale = { id: 'stale', isConnected: false, eligible: true };
+
+  assert.deepEqual(studioSelection.getStudioSelectedElementIds([
+    first,
+    stale,
+    first,
+    second
+  ], {
+    isEligibleElement: (element) => element.eligible,
+    getElementId: (element) => element.id
+  }), ['first', 'second']);
+});
+
 test('restoreStudioSelectionAfterSlideMutation preserves selection before restoring committed ids', () => {
   const calls = [];
   const activeElement = {
