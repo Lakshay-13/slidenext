@@ -5351,39 +5351,27 @@
     // Element dragging + resize on an open canvas
     function setupIframeDragging(doc) {
       const buildTransformTransaction = (finalizeResult) => {
+        const transformApi = (
+          typeof SlideNextStudioEditorTransform !== 'undefined'
+          && SlideNextStudioEditorTransform
+        )
+          ? SlideNextStudioEditorTransform
+          : null;
+        if (!transformApi || typeof transformApi.buildStudioTransformStyleTransaction !== 'function') {
+          return null;
+        }
         const transactionApi = (
           typeof SlideNextStudioEditorTransaction !== 'undefined'
           && SlideNextStudioEditorTransaction
         )
           ? SlideNextStudioEditorTransaction
           : null;
-        const session = finalizeResult && finalizeResult.session;
-        if (!transactionApi
-          || !session
-          || !Array.isArray(session.items)
-          || typeof transactionApi.createStudioStyleTransaction !== 'function') {
-          return null;
-        }
-
-        const properties = ['position', 'margin', 'left', 'top', 'width', 'height'];
-        const transactionItems = session.items.map((item) => {
-          const element = item && item.element;
-          if (!element) return null;
-          if (typeof assignEditorElementId === 'function') {
-            assignEditorElementId(element);
-          }
-          const style = element.style || {};
-          const after = properties.reduce((nextStyle, property) => {
-            nextStyle[property] = typeof style[property] === 'string' ? style[property] : '';
-            return nextStyle;
-          }, {});
-          return {
-            element,
-            before: item.startStyle || {},
-            after
-          };
-        }).filter(Boolean);
-        return transactionApi.createStudioStyleTransaction(transactionItems);
+        return transformApi.buildStudioTransformStyleTransaction(finalizeResult, {
+          transactionApi,
+          assignEditorElementId: typeof assignEditorElementId === 'function'
+            ? assignEditorElementId
+            : null
+        });
       };
       const createStudioTransformPointerHandlers = (
         typeof SlideNextStudioEditorTransform !== 'undefined'

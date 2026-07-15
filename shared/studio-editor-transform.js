@@ -755,6 +755,38 @@
     };
   }
 
+  function buildStudioTransformStyleTransaction(finalizeResult = {}, options = {}) {
+    const transactionApi = options.transactionApi;
+    if (!transactionApi
+      || typeof transactionApi.createStudioStyleTransaction !== 'function'
+      || !finalizeResult.session
+      || !Array.isArray(finalizeResult.session.items)) {
+      return null;
+    }
+
+    const assignEditorElementId = typeof options.assignEditorElementId === 'function'
+      ? options.assignEditorElementId
+      : null;
+    const properties = ['position', 'margin', 'left', 'top', 'width', 'height'];
+    const transactionItems = finalizeResult.session.items.map((item) => {
+      const element = item && item.element;
+      if (!element) return null;
+      if (assignEditorElementId) assignEditorElementId(element);
+      const style = element.style || {};
+      const after = properties.reduce((nextStyle, property) => {
+        nextStyle[property] = typeof style[property] === 'string' ? style[property] : '';
+        return nextStyle;
+      }, {});
+      return {
+        element,
+        before: item.startStyle || {},
+        after
+      };
+    }).filter(Boolean);
+
+    return transactionApi.createStudioStyleTransaction(transactionItems);
+  }
+
   function buildStudioPositionedLayoutItem(element, options = {}) {
     if (!element || typeof element.getBoundingClientRect !== 'function') {
       return null;
@@ -1236,6 +1268,7 @@
     cleanupStudioTransformSession,
     finalizeStudioTransformSession,
     buildStudioTransformCompletionPlan,
+    buildStudioTransformStyleTransaction,
     buildStudioPositionedLayoutItem,
     buildStudioPositionedLayoutItems,
     getStudioTransformInlineStyle,

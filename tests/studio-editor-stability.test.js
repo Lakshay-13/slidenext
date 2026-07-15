@@ -5,6 +5,7 @@ const selection = require('../shared/studio-editor-selection.js');
 const deckView = require('../shared/studio-deck-view.js');
 const history = require('../shared/studio-history.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const transformState = require('../shared/studio-editor-transform.js');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
@@ -775,6 +776,7 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
       getStudioClosestPositionedAncestor() {}
     },
     SlideNextStudioEditorTransform: {
+      buildStudioTransformStyleTransaction: transformState.buildStudioTransformStyleTransaction,
       createStudioTransformPointerHandlers(options) {
         delegatedOptions = options;
         return transformHandlers;

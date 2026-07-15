@@ -25,6 +25,74 @@ test('canStudioTransformSelection rejects empty selections', () => {
   }), false);
 });
 
+test('buildStudioTransformStyleTransaction captures position and size style changes', () => {
+  const element = {
+    dataset: {},
+    style: {
+      position: 'absolute',
+      margin: '0',
+      left: '20px',
+      top: '30px',
+      width: '120px',
+      height: '80px'
+    }
+  };
+  const transactionApi = {
+    createStudioStyleTransaction(items) {
+      return items;
+    }
+  };
+  const result = transformState.buildStudioTransformStyleTransaction({
+    session: {
+      items: [{
+        element,
+        startStyle: {
+          position: '',
+          margin: '',
+          left: '',
+          top: '',
+          width: '',
+          height: ''
+        }
+      }]
+    }
+  }, {
+    transactionApi,
+    assignEditorElementId(target) {
+      target.dataset.editorId = 'node-1';
+    }
+  });
+
+  assert.deepEqual(result, [{
+    element,
+    before: {
+      position: '',
+      margin: '',
+      left: '',
+      top: '',
+      width: '',
+      height: ''
+    },
+    after: {
+      position: 'absolute',
+      margin: '0',
+      left: '20px',
+      top: '30px',
+      width: '120px',
+      height: '80px'
+    }
+  }]);
+});
+
+test('buildStudioTransformStyleTransaction returns null without a transaction-ready session', () => {
+  assert.equal(transformState.buildStudioTransformStyleTransaction({}, {}), null);
+  assert.equal(transformState.buildStudioTransformStyleTransaction({
+    session: { items: [] }
+  }, {
+    transactionApi: {}
+  }), null);
+});
+
 test('canStudioTransformSelection allows connected unlocked freeform selections', () => {
   assert.equal(transformState.canStudioTransformSelection([
     { id: 1, isConnected: true },
