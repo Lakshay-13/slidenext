@@ -257,6 +257,7 @@ test('updateEditorPersistedDeckState updates only the provided persisted baselin
     lastPersistedCanonicalDeck: { id: 'old-deck' },
     persistedDeckPlaybackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 2' },
     SlideNextDeckPersistence: deckPersistence,
+    SlideNextStudioEditorPersistence: editorPersistence,
     SlideNextStudioDeckContext: {
       resolveStoredStudioCanonicalDeck(metadata) {
         return metadata && metadata.canonicalDeck ? metadata.canonicalDeck : null;
@@ -320,7 +321,7 @@ test('updateEditorPersistedDeckState reuses the shared persisted-state updater b
   assert.equal(typeof delegatedArgs.setPersistedPlaybackState, 'function');
 });
 
-test('updateEditorPersistedDeckState reuses the shared persisted-baseline updater when available', () => {
+test('updateEditorPersistedDeckState does not mutate state when the shared updater is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
     fileContent,
@@ -328,44 +329,24 @@ test('updateEditorPersistedDeckState reuses the shared persisted-baseline update
     '\n\n    function captureState() {'
   );
 
-  const calls = [];
   const context = {
     lastPersistedDeckHtml: '<html>old</html>',
     lastPersistedCanonicalDeck: { id: 'old-deck' },
     persistedDeckPlaybackState: { activeSlideIds: ['slide-1'], slideCounterText: '1 / 2' },
-    SlideNextDeckPersistence: deckPersistence,
-    SlideNextStudioEditorPersistence: {
-      updateStudioPersistedDeckState(nextState, options = {}) {
-        calls.push({
-          nextState,
-          hasResolveCanonicalDeck: typeof options.resolveCanonicalDeck === 'function',
-          hasNormalizePlaybackState: typeof options.normalizePlaybackState === 'function',
-          hasSetPersistedDeckHtml: typeof options.setPersistedDeckHtml === 'function',
-          hasSetPersistedCanonicalDeck: typeof options.setPersistedCanonicalDeck === 'function',
-          hasSetPersistedPlaybackState: typeof options.setPersistedPlaybackState === 'function'
-        });
-      }
-    }
+    SlideNextDeckPersistence: deckPersistence
   };
 
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
   vm.runInContext(updateEditorPersistedDeckStateSource, context);
 
-  context.updateEditorPersistedDeckState({
+  const result = context.updateEditorPersistedDeckState({
     cleanHtml: '<html>new</html>'
   });
-
-  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
-    nextState: {
-      cleanHtml: '<html>new</html>'
-    },
-    hasResolveCanonicalDeck: true,
-    hasNormalizePlaybackState: true,
-    hasSetPersistedDeckHtml: true,
-    hasSetPersistedCanonicalDeck: true,
-    hasSetPersistedPlaybackState: true
-  }]);
+  assert.deepEqual(Object.keys(result), []);
+  assert.equal(context.lastPersistedDeckHtml, '<html>old</html>');
+  assert.deepEqual(context.lastPersistedCanonicalDeck, { id: 'old-deck' });
+  assert.deepEqual(context.persistedDeckPlaybackState, { activeSlideIds: ['slide-1'], slideCounterText: '1 / 2' });
 });
 
 test('updateEditorPersistedDeckState normalizes the persisted canonical baseline through the shared deck context', () => {
@@ -403,6 +384,7 @@ test('updateEditorPersistedDeckState normalizes the persisted canonical baseline
     lastPersistedCanonicalDeck: null,
     persistedDeckPlaybackState: null,
     SlideNextDeckPersistence: deckPersistence,
+    SlideNextStudioEditorPersistence: editorPersistence,
     SlideNextStudioDeckContext: {
       resolveStoredStudioCanonicalDeck(metadata) {
         calls.push(metadata);

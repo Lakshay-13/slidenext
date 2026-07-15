@@ -7996,78 +7996,29 @@
       )
         ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateUpdater
         : null;
-      if (createStudioPersistedDeckStateUpdater) {
-        return createStudioPersistedDeckStateUpdater({
-          resolveCanonicalDeck(canonicalDeck) {
-            return resolveEditorStoredCanonicalDeck({
-              canonicalDeck
-            }) || null;
-          },
-          normalizePlaybackState(playbackState) {
-            return SlideNextDeckPersistence
-              && typeof SlideNextDeckPersistence.normalizePersistedDeckPlaybackState === 'function'
-              ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(playbackState)
-              : (playbackState || null);
-          },
-          setPersistedDeckHtml(cleanHtml) {
-            lastPersistedDeckHtml = cleanHtml;
-          },
-          setPersistedCanonicalDeck(canonicalDeck) {
-            lastPersistedCanonicalDeck = canonicalDeck;
-          },
-          setPersistedPlaybackState(playbackState) {
-            persistedDeckPlaybackState = playbackState;
-          }
-        })(nextState);
-      }
-
-      const updateStudioPersistedDeckState = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.updateStudioPersistedDeckState === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.updateStudioPersistedDeckState
-        : null;
-      if (updateStudioPersistedDeckState) {
-        updateStudioPersistedDeckState(nextState, {
-          resolveCanonicalDeck(canonicalDeck) {
-            return resolveEditorStoredCanonicalDeck({
-              canonicalDeck
-            }) || null;
-          },
-          normalizePlaybackState(playbackState) {
-            return SlideNextDeckPersistence
-              && typeof SlideNextDeckPersistence.normalizePersistedDeckPlaybackState === 'function'
-              ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(playbackState)
-              : (playbackState || null);
-          },
-          setPersistedDeckHtml(cleanHtml) {
-            lastPersistedDeckHtml = cleanHtml;
-          },
-          setPersistedCanonicalDeck(canonicalDeck) {
-            lastPersistedCanonicalDeck = canonicalDeck;
-          },
-          setPersistedPlaybackState(playbackState) {
-            persistedDeckPlaybackState = playbackState;
-          }
-        });
-        return;
-      }
-
-      if (Object.prototype.hasOwnProperty.call(nextState, 'cleanHtml')) {
-        lastPersistedDeckHtml = typeof nextState.cleanHtml === 'string' ? nextState.cleanHtml : '';
-      }
-      if (Object.prototype.hasOwnProperty.call(nextState, 'canonicalDeck')) {
-        lastPersistedCanonicalDeck = resolveEditorStoredCanonicalDeck({
-          canonicalDeck: nextState.canonicalDeck
-        }) || null;
-      }
-      if (Object.prototype.hasOwnProperty.call(nextState, 'playbackState')) {
-        persistedDeckPlaybackState = SlideNextDeckPersistence
-          && typeof SlideNextDeckPersistence.normalizePersistedDeckPlaybackState === 'function'
-          ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(nextState.playbackState)
-          : (nextState.playbackState || null);
-      }
+      if (!createStudioPersistedDeckStateUpdater) return {};
+      return createStudioPersistedDeckStateUpdater({
+        resolveCanonicalDeck(canonicalDeck) {
+          return resolveEditorStoredCanonicalDeck({
+            canonicalDeck
+          }) || null;
+        },
+        normalizePlaybackState(playbackState) {
+          return SlideNextDeckPersistence
+            && typeof SlideNextDeckPersistence.normalizePersistedDeckPlaybackState === 'function'
+            ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(playbackState)
+            : (playbackState || null);
+        },
+        setPersistedDeckHtml(cleanHtml) {
+          lastPersistedDeckHtml = cleanHtml;
+        },
+        setPersistedCanonicalDeck(canonicalDeck) {
+          lastPersistedCanonicalDeck = canonicalDeck;
+        },
+        setPersistedPlaybackState(playbackState) {
+          persistedDeckPlaybackState = playbackState;
+        }
+      })(nextState);
     }
 
     function captureState() {
