@@ -4339,6 +4339,20 @@
     }
 
     function updateLockActionState(doc = getIframeDoc()) {
+      const syncStudioLockToolbarState = (
+        SlideNextStudioEditorLockState
+        && typeof SlideNextStudioEditorLockState.syncStudioLockToolbarState === 'function'
+      )
+        ? SlideNextStudioEditorLockState.syncStudioLockToolbarState
+        : null;
+      if (syncStudioLockToolbarState) {
+        return syncStudioLockToolbarState({
+          documentRef: document,
+          elements: selectedElements,
+          isLocked: isElementLocked,
+          canMutateDeck: () => !!getActiveSlide(doc)
+        });
+      }
       const buildStudioLockToolbarState = (
         SlideNextStudioEditorLockState
         && typeof SlideNextStudioEditorLockState.buildStudioLockToolbarState === 'function'

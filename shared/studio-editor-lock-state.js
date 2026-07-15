@@ -59,6 +59,17 @@
     return true;
   }
 
+  function syncStudioLockToolbarState(options = {}) {
+    const actionState = buildStudioLockToolbarState(options.elements, {
+      isLocked: options.isLocked,
+      canMutateDeck: options.canMutateDeck
+    });
+    return renderStudioLockToolbarState({
+      documentRef: options.documentRef,
+      actionState
+    });
+  }
+
   function buildStudioLockMutationPlan(elements = [], options = {}) {
     const selection = getStudioLockSelection(elements, options);
     const isLocked = typeof options.isLocked === 'function'
@@ -143,6 +154,7 @@
     buildStudioLockActionState,
     buildStudioLockToolbarState,
     renderStudioLockToolbarState,
+    syncStudioLockToolbarState,
     buildStudioLockMutationPlan,
     applyStudioLockMutation
   };

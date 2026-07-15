@@ -227,6 +227,44 @@ test('updateLockActionState reuses the shared lock toolbar helper when available
   }]);
 });
 
+test('updateLockActionState delegates toolbar state assembly to the shared lock view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateLockActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateLockActionState(doc = getIframeDoc()) {',
+    '\n\n    function buildRemovalSelectionActionState(doc = null) {'
+  );
+  const selectedElement = { id: 'selected' };
+  const calls = [];
+  const context = {
+    selectedElements: [selectedElement],
+    isElementLocked() {
+      return false;
+    },
+    SlideNextStudioEditorLockState: {
+      syncStudioLockToolbarState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    document: {},
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateLockActionStateSource, context);
+
+  const doc = { activeSlide: {} };
+  assert.equal(context.updateLockActionState(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.deepEqual(calls[0].elements, [selectedElement]);
+  assert.equal(calls[0].isLocked, context.isElementLocked);
+  assert.equal(calls[0].canMutateDeck(), true);
+});
+
 test('toggleSelectedElementsLockState returns false and skips persistence when planned targets disconnect before apply', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const toggleSelectedElementsLockStateSource = extractFunctionSource(

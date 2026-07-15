@@ -159,6 +159,31 @@ test('renderStudioLockToolbarState applies lock button, icon, and label chrome',
   assert.equal(nodes.toggleLockSelectionLabel.textContent, 'Unlock Selected');
 });
 
+test('syncStudioLockToolbarState builds and renders lock controls in one shared operation', () => {
+  const button = { disabled: true };
+  const icon = { textContent: '' };
+  const label = { textContent: '' };
+  const element = { isConnected: true, locked: true };
+
+  assert.equal(lockState.syncStudioLockToolbarState({
+    documentRef: {
+      getElementById(id) {
+        return {
+          toggleLockSelectionBtn: button,
+          toggleLockSelectionIcon: icon,
+          toggleLockSelectionLabel: label
+        }[id] || null;
+      }
+    },
+    elements: [element],
+    isLocked: (target) => !!target.locked,
+    canMutateDeck: () => true
+  }), true);
+  assert.equal(button.disabled, false);
+  assert.equal(icon.textContent, 'lock_open');
+  assert.equal(label.textContent, 'Unlock Selected');
+});
+
 test('applyStudioLockMutation applies live lock changes and creates an optional dataset transaction', () => {
   const element = {
     isConnected: true,
