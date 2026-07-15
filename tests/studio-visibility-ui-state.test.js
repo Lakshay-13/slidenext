@@ -240,6 +240,7 @@ test('toggleSelectedElementsVisibility returns false and skips persistence when 
       }
     },
     SlideNextStudioEditorVisibilityState: {
+      applyStudioVisibilityWithTransaction: visibilityState.applyStudioVisibilityWithTransaction,
       buildStudioVisibilityMutationPlan() {
         calls.push(['buildStudioVisibilityMutationPlan']);
         return {
@@ -320,6 +321,7 @@ test('toggleSelectedElementsVisibility returns true after hiding live targets an
       }
     },
     SlideNextStudioEditorVisibilityState: {
+      applyStudioVisibilityWithTransaction: visibilityState.applyStudioVisibilityWithTransaction,
       buildStudioVisibilityMutationPlan() {
         calls.push(['buildStudioVisibilityMutationPlan']);
         return {
@@ -437,6 +439,7 @@ test('toggleSelectedElementsVisibility captures a reversible visibility transact
       syncStudioSelectionUi() {}
     },
     SlideNextStudioEditorVisibilityState: {
+      applyStudioVisibilityWithTransaction: visibilityState.applyStudioVisibilityWithTransaction,
       buildStudioVisibilityMutationPlan() {
         return {
           didChange: true,
@@ -528,6 +531,7 @@ test('toggleSelectedElementsVisibility forwards an immutable canonical visibilit
     selectedElements: [liveTarget],
     SlideNextCanonicalDeck: canonicalDeckModel,
     SlideNextStudioEditorVisibilityState: {
+      applyStudioVisibilityWithTransaction: visibilityState.applyStudioVisibilityWithTransaction,
       buildStudioVisibilityMutationPlan() {
         return {
           didChange: true,
@@ -592,6 +596,7 @@ test('toggleSelectedElementsVisibility can skip temporary selection UI sync when
       }
     },
     SlideNextStudioEditorVisibilityState: {
+      applyStudioVisibilityWithTransaction: visibilityState.applyStudioVisibilityWithTransaction,
       buildStudioVisibilityMutationPlan() {
         calls.push(['buildStudioVisibilityMutationPlan']);
         return {
@@ -671,6 +676,7 @@ test('toggleSelectedElementsVisibility delegates visibility application to the s
   const context = {
     selectedElements: [liveTarget],
     SlideNextStudioEditorVisibilityState: {
+      applyStudioVisibilityWithTransaction: visibilityState.applyStudioVisibilityWithTransaction,
       buildStudioVisibilityMutationPlan() {
         return {
           didChange: true,
@@ -679,8 +685,8 @@ test('toggleSelectedElementsVisibility delegates visibility application to the s
           versionLabel: 'Auto: Hid Element'
         };
       },
-      applyStudioVisibilityMutation(selection, shouldHide, options) {
-        calls.push(['applyStudioVisibilityMutation', selection, shouldHide, options]);
+      applyStudioVisibilityWithTransaction(selection, shouldHide, options) {
+        calls.push(['applyStudioVisibilityWithTransaction', selection, shouldHide, options]);
         return { didApply: true, transaction: { type: 'visibility' } };
       }
     },
@@ -711,7 +717,7 @@ test('toggleSelectedElementsVisibility delegates visibility application to the s
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility(), true);
-  assert.equal(calls[0][0], 'applyStudioVisibilityMutation');
+  assert.equal(calls[0][0], 'applyStudioVisibilityWithTransaction');
   assert.equal(calls[0][1][0], liveTarget);
   assert.equal(calls[0][2], true);
   assert.equal(typeof calls[0][3].getVisibilityState, 'function');

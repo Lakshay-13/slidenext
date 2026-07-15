@@ -5492,6 +5492,16 @@
       const visibilityApi = typeof SlideNextStudioEditorVisibilityState !== 'undefined'
         ? SlideNextStudioEditorVisibilityState
         : null;
+      const applyStudioVisibilityWithTransaction = visibilityApi
+        && typeof visibilityApi.applyStudioVisibilityWithTransaction === 'function'
+        ? visibilityApi.applyStudioVisibilityWithTransaction
+        : null;
+      if (!applyStudioVisibilityWithTransaction) {
+        return {
+          didApply: false,
+          transaction: null
+        };
+      }
       const applyStudioVisibilityMutation = visibilityApi
         && typeof visibilityApi.applyStudioVisibilityMutation === 'function'
         ? visibilityApi.applyStudioVisibilityMutation
@@ -5532,47 +5542,14 @@
             }
             return element && element.dataset && element.dataset.editorId;
           };
-      if (applyStudioVisibilityMutation) {
-        const mutation = applyStudioVisibilityMutation(selection, shouldHide, {
-          isHidden,
-          setHidden,
-          getVisibilityState,
-          createVisibilityTransaction: createStudioVisibilityTransaction,
-          getElementId
-        });
-        return mutation && typeof mutation === 'object'
-          ? mutation
-          : { didApply: false, transaction: null };
-      }
-
-      const visibilityTransactionItems = createStudioVisibilityTransaction
-        ? selection
-            .filter((element) => element && element.isConnected && isHidden(element) !== shouldHide)
-            .map((element) => ({
-              element,
-              elementId: getElementId(element),
-              before: getVisibilityState(element)
-            }))
-        : [];
-      let changedCount = 0;
-      selection.forEach((element) => {
-        if (!element || !element.isConnected || isHidden(element) === shouldHide) return;
-        setHidden(element, shouldHide);
-        changedCount += 1;
+      return applyStudioVisibilityWithTransaction(selection, shouldHide, {
+        applyStudioVisibilityMutation,
+        createStudioVisibilityTransaction,
+        isHidden,
+        setHidden,
+        getVisibilityState,
+        getElementId
       });
-      if (changedCount === 0) {
-        return { didApply: false, transaction: null };
-      }
-      visibilityTransactionItems.forEach((item) => {
-        item.after = getVisibilityState(item.element);
-      });
-      const transaction = createStudioVisibilityTransaction
-        ? createStudioVisibilityTransaction(visibilityTransactionItems, { getElementId })
-        : null;
-      return {
-        didApply: true,
-        transaction
-      };
     }
 
     function toggleSelectedElementsVisibility(options = {}) {

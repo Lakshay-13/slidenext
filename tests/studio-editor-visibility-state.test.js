@@ -201,3 +201,46 @@ test('applyStudioVisibilityMutation applies live visibility changes and creates 
   assert.equal(result.transaction.operations[0].before.hidden, false);
   assert.equal(result.transaction.operations[0].after.hidden, true);
 });
+
+test('applyStudioVisibilityWithTransaction delegates visibility mutation dependencies', () => {
+  const selection = [{ id: 'node-1' }];
+  const calls = [];
+  const result = visibilityState.applyStudioVisibilityWithTransaction(selection, true, {
+    applyStudioVisibilityMutation(...args) {
+      calls.push(args);
+      return { didApply: true, transaction: { type: 'visibility' } };
+    },
+    createStudioVisibilityTransaction() {},
+    isHidden() {},
+    setHidden() {},
+    getVisibilityState() {},
+    getElementId() {}
+  });
+
+  assert.deepEqual(result, { didApply: true, transaction: { type: 'visibility' } });
+  assert.deepEqual(calls[0].slice(0, 2), [selection, true]);
+});
+
+test('applyStudioVisibilityWithTransaction preserves fallback state capture', () => {
+  const element = { isConnected: true, hidden: false };
+  const result = visibilityState.applyStudioVisibilityWithTransaction([element], true, {
+    isHidden: (target) => target.hidden,
+    setHidden: (target, shouldHide) => {
+      target.hidden = shouldHide;
+    },
+    getVisibilityState: (target) => ({ hidden: target.hidden }),
+    createStudioVisibilityTransaction(items) {
+      return { items };
+    },
+    getElementId: () => 'node-1'
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(element.hidden, true);
+  assert.deepEqual(result.transaction.items, [{
+    element,
+    elementId: 'node-1',
+    before: { hidden: false },
+    after: { hidden: true }
+  }]);
+});
