@@ -475,13 +475,31 @@ test('updateDeckReadyToolbarActionState delegates toolbar rendering to the share
   };
   const calls = [];
   const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentStudioSaveButtonState: 'saving-version',
     resolveCurrentStudioDeckReadyActionState(currentDoc) {
       assert.equal(currentDoc, doc);
       return actionState;
     },
+    getCurrentEditorPersistedDeckState() {
+      return { cleanHtml: '<html>persisted-baseline</html>' };
+    },
+    resolveEditorPersistedDeckStateWithContent(persistedDeckState) {
+      return persistedDeckState;
+    },
+    resolveEditorStoredCanonicalBaseline() {
+      return null;
+    },
     SlideNextStudioDeckReady: {
       syncStudioDeckReadyToolbarActionState(options) {
         calls.push(options);
+        assert.equal(options.doc, doc);
+        assert.equal(options.presentationUrl, context.currentPresentationUrl);
+        assert.deepEqual(options.persistedDeckStateWithContent, {
+          cleanHtml: '<html>persisted-baseline</html>'
+        });
+        assert.equal(options.storedCanonicalDeck, null);
+        assert.equal(options.saveButtonState, 'saving-version');
         return 'delegated';
       }
     },
@@ -497,5 +515,6 @@ test('updateDeckReadyToolbarActionState delegates toolbar rendering to the share
   assert.equal(context.updateDeckReadyToolbarActionState(doc), 'delegated');
   assert.equal(calls.length, 1);
   assert.equal(calls[0].documentRef, context.document);
-  assert.deepEqual(calls[0].actionState, actionState);
+  assert.equal(calls[0].doc, doc);
+  assert.equal(calls[0].presentationUrl, context.currentPresentationUrl);
 });

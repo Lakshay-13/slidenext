@@ -9328,16 +9328,24 @@
     }
 
     function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {
-      const actionState = resolveCurrentStudioDeckReadyActionState(doc);
       const deckReadyView = typeof SlideNextStudioDeckReady !== 'undefined'
         ? SlideNextStudioDeckReady
         : null;
       if (deckReadyView && typeof deckReadyView.syncStudioDeckReadyToolbarActionState === 'function') {
         return deckReadyView.syncStudioDeckReadyToolbarActionState({
           documentRef: document,
-          actionState
+          doc,
+          presentationUrl: currentPresentationUrl,
+          persistedDeckStateWithContent: resolveEditorPersistedDeckStateWithContent(
+            getCurrentEditorPersistedDeckState()
+          ),
+          storedCanonicalDeck: resolveEditorStoredCanonicalBaseline(),
+          saveButtonState: typeof currentStudioSaveButtonState === 'string'
+            ? currentStudioSaveButtonState
+            : 'idle'
         });
       }
+      const actionState = resolveCurrentStudioDeckReadyActionState(doc);
       if (!deckReadyView || typeof deckReadyView.renderStudioDeckReadyToolbarActionState !== 'function') return false;
       return deckReadyView.renderStudioDeckReadyToolbarActionState({
         documentRef: document,
