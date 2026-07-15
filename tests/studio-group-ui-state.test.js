@@ -168,6 +168,43 @@ test('buildGroupSelectionActionState delegates geometry orchestration to the sha
   assert.equal(delegatedOptions.options.isLocked, context.isElementLocked);
 });
 
+test('buildUngroupSelectionActionState delegates group-wrapper filtering to the shared group module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function buildUngroupSelectionActionState(doc = null) {',
+    '\n\n    function updateAlignmentActionState'
+  );
+  const doc = { id: 'doc' };
+  const selection = [{ id: 'group-1' }];
+  let delegatedOptions = null;
+  const context = {
+    selectedElements: selection,
+    getIframeDoc() {
+      return doc;
+    },
+    SlideNextStudioEditorGroup: {
+      buildStudioUngroupSelectionActionState(elements, options) {
+        delegatedOptions = { elements, options };
+        return { canUngroup: true };
+      }
+    },
+    getActiveSlide() {},
+    getLiveSelectedElements() {},
+    isEditorGroupElement() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.deepEqual(context.buildUngroupSelectionActionState(doc), { canUngroup: true });
+  assert.equal(delegatedOptions.elements, selection);
+  assert.equal(delegatedOptions.options.doc, doc);
+  assert.equal(delegatedOptions.options.getActiveSlide, context.getActiveSlide);
+  assert.equal(delegatedOptions.options.getLiveSelectedElements, context.getLiveSelectedElements);
+  assert.equal(delegatedOptions.options.isEditorGroupElement, context.isEditorGroupElement);
+});
+
 test('groupSelectedElements wraps selected children with relative coordinates and records one mutation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(

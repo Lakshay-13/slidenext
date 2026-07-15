@@ -4788,6 +4788,17 @@
 
     function buildUngroupSelectionActionState(doc = null) {
       const resolvedDoc = doc || getIframeDoc();
+      const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
+        ? SlideNextStudioEditorGroup
+        : null;
+      if (groupApi && typeof groupApi.buildStudioUngroupSelectionActionState === 'function') {
+        return groupApi.buildStudioUngroupSelectionActionState(selectedElements, {
+          doc: resolvedDoc,
+          getActiveSlide,
+          getLiveSelectedElements,
+          isEditorGroupElement
+        });
+      }
       const slide = getActiveSlide(resolvedDoc);
       const selection = getLiveSelectedElements(selectedElements, resolvedDoc);
       const groups = selection.filter(isEditorGroupElement).filter((group) => {

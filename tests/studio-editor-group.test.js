@@ -128,6 +128,36 @@ test('buildStudioGroupSelectionActionState resolves same-parent geometry before 
   assert.equal(result.groupPlan.canGroup, true);
 });
 
+test('buildStudioUngroupSelectionActionState keeps only valid selected group wrappers', () => {
+  const doc = { id: 'doc' };
+  const slide = { id: 'slide' };
+  const parent = { id: 'parent' };
+  const groupNode = { id: 'group', parentElement: parent, children: [{}] };
+  const invalidGroup = { id: 'invalid', parentElement: parent, children: [] };
+  const selection = [groupNode, invalidGroup];
+
+  const result = group.buildStudioUngroupSelectionActionState(selection, {
+    doc,
+    getActiveSlide(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return slide;
+    },
+    getLiveSelectedElements(elements, currentDoc) {
+      assert.equal(elements, selection);
+      assert.equal(currentDoc, doc);
+      return selection;
+    },
+    isEditorGroupElement(element) {
+      return element === groupNode || element === invalidGroup;
+    }
+  });
+
+  assert.equal(result.slide, slide);
+  assert.deepEqual(result.selection, selection);
+  assert.deepEqual(result.groups, [groupNode]);
+  assert.equal(result.canUngroup, false);
+});
+
 test('buildStudioUngroupedLayout restores absolute positions from group-relative coordinates', () => {
   assert.deepEqual(group.buildStudioUngroupedLayout({ left: 100, top: 120 }, [
     { id: 'first', relativeLeft: 0, relativeTop: 0, parentLeft: 0, parentTop: 0 },

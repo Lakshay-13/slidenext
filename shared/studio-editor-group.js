@@ -134,6 +134,31 @@
     };
   }
 
+  function buildStudioUngroupSelectionActionState(elements = [], options = {}) {
+    const resolvedDoc = options.doc || null;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getLiveSelectedElements = typeof options.getLiveSelectedElements === 'function'
+      ? options.getLiveSelectedElements
+      : (selection) => selection;
+    const isEditorGroupElement = typeof options.isEditorGroupElement === 'function'
+      ? options.isEditorGroupElement
+      : () => false;
+    const slide = getActiveSlide(resolvedDoc);
+    const selection = getLiveSelectedElements(elements, resolvedDoc);
+    const groups = selection.filter(isEditorGroupElement).filter((group) => {
+      return !!(group.parentElement && group.children && group.children.length > 0);
+    });
+
+    return {
+      slide,
+      selection,
+      groups,
+      canUngroup: !!(slide && selection.length > 0 && groups.length === selection.length)
+    };
+  }
+
   function renderStudioGroupToolbarState(options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -389,6 +414,7 @@
     getStudioGroupableSelection,
     buildStudioGroupPlan,
     buildStudioGroupSelectionActionState,
+    buildStudioUngroupSelectionActionState,
     buildStudioGroupToolbarState,
     renderStudioGroupToolbarState,
     syncStudioGroupToolbarState,
