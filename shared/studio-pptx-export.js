@@ -52,37 +52,47 @@
     const endpoint = typeof options.endpoint === 'string' && options.endpoint.trim()
       ? options.endpoint.trim()
       : '/api/export/pptx';
-    const response = await fetchImpl(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        canonicalDeck: options.canonicalDeck,
-        sourcePath: options.sourcePath || '',
-        filename: options.filename || 'slidenext-presentation.pptx'
-      })
-    });
-    if (!response || response.ok !== true || typeof response.blob !== 'function') {
-      return { success: false, error: 'PPTX export request failed', response };
-    }
-
-    const blob = await response.blob();
-    const downloadUrl = urlApi.createObjectURL(blob);
-    const anchor = documentRef.createElement('a');
-    anchor.href = downloadUrl;
-    anchor.download = getFilenameFromResponse(response, options.filename);
-    documentRef.body.appendChild(anchor);
     try {
-      anchor.click();
-    } finally {
-      if (typeof anchor.remove === 'function') anchor.remove();
-      urlApi.revokeObjectURL(downloadUrl);
-    }
+      const response = await fetchImpl(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          canonicalDeck: options.canonicalDeck,
+          sourcePath: options.sourcePath || '',
+          filename: options.filename || 'slidenext-presentation.pptx'
+        })
+      });
+      if (!response || response.ok !== true || typeof response.blob !== 'function') {
+        return { success: false, error: 'PPTX export request failed', response };
+      }
 
-    return {
-      success: true,
-      filename: anchor.download,
-      warningCount: getWarningCount(response)
-    };
+      const blob = await response.blob();
+      const downloadUrl = urlApi.createObjectURL(blob);
+      let anchor = null;
+      try {
+        anchor = documentRef.createElement('a');
+        anchor.href = downloadUrl;
+        anchor.download = getFilenameFromResponse(response, options.filename);
+        documentRef.body.appendChild(anchor);
+        anchor.click();
+      } finally {
+        if (anchor && typeof anchor.remove === 'function') anchor.remove();
+        urlApi.revokeObjectURL(downloadUrl);
+      }
+
+      return {
+        success: true,
+        filename: anchor.download,
+        warningCount: getWarningCount(response)
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error && typeof error.message === 'string' && error.message.trim()
+          ? error.message.trim()
+          : 'PPTX export request failed'
+      };
+    }
   }
 
   return {

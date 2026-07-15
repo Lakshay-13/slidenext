@@ -90,6 +90,61 @@ test('exportStudioPptx reports unavailable dependencies and failed responses', a
   assert.equal(result.error, 'PPTX export request failed');
 });
 
+test('exportStudioPptx converts request and download exceptions into failed results', async () => {
+  const revokedUrls = [];
+  const baseOptions = {
+    documentRef: {
+      body: {},
+      createElement() {
+        return { click() {} };
+      }
+    },
+    urlApi: {
+      createObjectURL() {
+        return 'blob:slidenext';
+      },
+      revokeObjectURL(url) {
+        revokedUrls.push(url);
+      }
+    }
+  };
+
+  assert.deepEqual(await pptxExport.exportStudioPptx({
+    ...baseOptions,
+    fetchImpl: async () => {
+      throw new Error('offline');
+    }
+  }), {
+    success: false,
+    error: 'offline'
+  });
+
+  const downloadError = await pptxExport.exportStudioPptx({
+    ...baseOptions,
+    fetchImpl: async () => ({
+      ok: true,
+      headers: { get: () => '' },
+      blob: async () => ({})
+    }),
+    documentRef: {
+      body: { appendChild() {} },
+      createElement() {
+        return {
+          click() {
+            throw new Error('download blocked');
+          },
+          remove() {}
+        };
+      }
+    }
+  });
+  assert.deepEqual(downloadError, {
+    success: false,
+    error: 'download blocked'
+  });
+  assert.deepEqual(revokedUrls, ['blob:slidenext']);
+});
+
 test('normalizeDownloadFilename keeps downloads safe and ends with pptx', () => {
   assert.equal(pptxExport.normalizeDownloadFilename('/tmp/Demo deck.pptx'), 'Demo_deck.pptx');
   assert.equal(pptxExport.normalizeDownloadFilename(''), 'slidenext-presentation.pptx');
