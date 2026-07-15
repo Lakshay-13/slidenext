@@ -68,6 +68,72 @@
     };
   }
 
+  function buildStudioGroupSelectionActionState(elements = [], options = {}) {
+    const resolvedDoc = options.doc || null;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getLiveSelectedElements = typeof options.getLiveSelectedElements === 'function'
+      ? options.getLiveSelectedElements
+      : (selection) => selection;
+    const getSlideMetrics = typeof options.getSlideMetrics === 'function'
+      ? options.getSlideMetrics
+      : () => null;
+    const buildPositionedLayoutItems = typeof options.buildPositionedLayoutItems === 'function'
+      ? options.buildPositionedLayoutItems
+      : () => [];
+    const getClosestPositionedAncestor = typeof options.getClosestPositionedAncestor === 'function'
+      ? options.getClosestPositionedAncestor
+      : () => null;
+    const getRectOnSlide = typeof options.getRectOnSlide === 'function'
+      ? options.getRectOnSlide
+      : (rect) => rect;
+    const slide = getActiveSlide(resolvedDoc);
+    const selection = getLiveSelectedElements(elements, resolvedDoc);
+    if (!resolvedDoc || !slide || selection.length < 2) {
+      return {
+        slide,
+        selection,
+        layoutItems: [],
+        parent: null,
+        groupPlan: {
+          canGroup: false,
+          selection: [],
+          bounds: null,
+          nextItems: []
+        },
+        canGroup: false
+      };
+    }
+
+    const slideMetrics = getSlideMetrics(slide);
+    const layoutItems = buildPositionedLayoutItems(selection, {
+      getClosestPositionedAncestor,
+      getRectOnSlide,
+      slideMetrics
+    });
+    const parent = getClosestPositionedAncestor(selection[0]);
+    const sameDirectParent = !!parent && selection.every((element) => {
+      return element.parentElement === parent
+        && getClosestPositionedAncestor(element) === parent;
+    });
+    const groupPlan = buildStudioGroupPlan(layoutItems, {
+      isLocked: options.isLocked,
+      isFreeformPositioned: options.isFreeformPositioned
+    });
+
+    return {
+      slide,
+      selection,
+      layoutItems,
+      parent: sameDirectParent ? parent : null,
+      groupPlan,
+      canGroup: !!(sameDirectParent
+        && groupPlan.canGroup
+        && groupPlan.selection.length === selection.length)
+    };
+  }
+
   function renderStudioGroupToolbarState(options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -322,6 +388,7 @@
   return {
     getStudioGroupableSelection,
     buildStudioGroupPlan,
+    buildStudioGroupSelectionActionState,
     buildStudioGroupToolbarState,
     renderStudioGroupToolbarState,
     syncStudioGroupToolbarState,

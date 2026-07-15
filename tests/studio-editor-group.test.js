@@ -81,6 +81,53 @@ test('buildStudioGroupPlan rejects insufficient, invalid, or ineligible selectio
   }).canGroup, false);
 });
 
+test('buildStudioGroupSelectionActionState resolves same-parent geometry before enabling grouping', () => {
+  const doc = { id: 'doc' };
+  const slide = { id: 'slide' };
+  const parent = { id: 'parent' };
+  const first = { id: 'first', parentElement: parent };
+  const second = { id: 'second', parentElement: parent };
+  const selection = [first, second];
+  const layoutItems = [
+    { element: first, absLeft: 10, absTop: 20, width: 40, height: 30, parentLeft: 0, parentTop: 0 },
+    { element: second, absLeft: 80, absTop: 60, width: 50, height: 20, parentLeft: 0, parentTop: 0 }
+  ];
+
+  const result = group.buildStudioGroupSelectionActionState(selection, {
+    doc,
+    getActiveSlide(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return slide;
+    },
+    getLiveSelectedElements(elements, currentDoc) {
+      assert.equal(elements, selection);
+      assert.equal(currentDoc, doc);
+      return selection;
+    },
+    getSlideMetrics(currentSlide) {
+      assert.equal(currentSlide, slide);
+      return { logicalWidth: 1920, logicalHeight: 1080 };
+    },
+    buildPositionedLayoutItems(elements, options) {
+      assert.equal(elements, selection);
+      assert.equal(options.slideMetrics.logicalWidth, 1920);
+      return layoutItems;
+    },
+    getClosestPositionedAncestor(element) {
+      return element ? parent : null;
+    },
+    isFreeformPositioned() {
+      return true;
+    }
+  });
+
+  assert.equal(result.slide, slide);
+  assert.equal(result.parent, parent);
+  assert.equal(result.layoutItems, layoutItems);
+  assert.equal(result.canGroup, true);
+  assert.equal(result.groupPlan.canGroup, true);
+});
+
 test('buildStudioUngroupedLayout restores absolute positions from group-relative coordinates', () => {
   assert.deepEqual(group.buildStudioUngroupedLayout({ left: 100, top: 120 }, [
     { id: 'first', relativeLeft: 0, relativeTop: 0, parentLeft: 0, parentTop: 0 },

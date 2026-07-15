@@ -4691,6 +4691,24 @@
 
     function buildGroupSelectionActionState(doc = null) {
       const resolvedDoc = doc || getIframeDoc();
+      const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
+        ? SlideNextStudioEditorGroup
+        : null;
+      if (groupApi && typeof groupApi.buildStudioGroupSelectionActionState === 'function') {
+        return groupApi.buildStudioGroupSelectionActionState(selectedElements, {
+          doc: resolvedDoc,
+          getActiveSlide,
+          getLiveSelectedElements,
+          getSlideMetrics,
+          buildPositionedLayoutItems(selection, options) {
+            return SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(selection, options);
+          },
+          getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+          getRectOnSlide,
+          isLocked: isElementLocked,
+          isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
+        });
+      }
       const slide = getActiveSlide(resolvedDoc);
       const selection = getLiveSelectedElements(selectedElements, resolvedDoc);
       if (!resolvedDoc || !slide || selection.length < 2) {

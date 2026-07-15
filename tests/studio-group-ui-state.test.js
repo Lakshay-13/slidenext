@@ -120,6 +120,54 @@ test('buildGroupSelectionActionState requires a complete same-parent freeform se
   assert.equal(result.groupPlan.selection.length, 2);
 });
 
+test('buildGroupSelectionActionState delegates geometry orchestration to the shared group module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function buildGroupSelectionActionState(doc = null) {',
+    '\n\n    function updateGroupActionState'
+  );
+  const doc = { id: 'doc' };
+  const selection = [{ id: 'node-1' }, { id: 'node-2' }];
+  let delegatedOptions = null;
+  const context = {
+    selectedElements: selection,
+    getIframeDoc() {
+      return doc;
+    },
+    SlideNextStudioEditorGroup: {
+      buildStudioGroupSelectionActionState(elements, options) {
+        delegatedOptions = { elements, options };
+        return { canGroup: true };
+      }
+    },
+    getActiveSlide() {},
+    getLiveSelectedElements() {},
+    getSlideMetrics() {},
+    getRectOnSlide() {},
+    isElementLocked() {},
+    SlideNextStudioEditorTransform: {
+      buildStudioPositionedLayoutItems() {},
+      isStudioFreeformPositioned() {}
+    },
+    SlideNextStudioEditorDom: {
+      getStudioClosestPositionedAncestor() {}
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.deepEqual(context.buildGroupSelectionActionState(doc), { canGroup: true });
+  assert.equal(delegatedOptions.elements, selection);
+  assert.equal(delegatedOptions.options.doc, doc);
+  assert.equal(delegatedOptions.options.getActiveSlide, context.getActiveSlide);
+  assert.equal(delegatedOptions.options.getLiveSelectedElements, context.getLiveSelectedElements);
+  assert.equal(delegatedOptions.options.getSlideMetrics, context.getSlideMetrics);
+  assert.equal(delegatedOptions.options.getRectOnSlide, context.getRectOnSlide);
+  assert.equal(delegatedOptions.options.isLocked, context.isElementLocked);
+});
+
 test('groupSelectedElements wraps selected children with relative coordinates and records one mutation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
