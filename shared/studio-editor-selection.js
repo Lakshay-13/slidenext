@@ -320,6 +320,15 @@
     return nextSelectionState;
   }
 
+  function restoreStudioSelectionAfterSlideMutation(selectedIds, doc, options = {}) {
+    const preserveSelection = typeof options.preserveSelection === 'function'
+      ? options.preserveSelection
+      : () => {};
+
+    preserveSelection();
+    return restoreCommittedStudioSelectionByIdsOnActiveSlide(selectedIds, doc, options);
+  }
+
   return {
     normalizeStudioSelectionState,
     getStudioSelectedElementIds,
@@ -337,6 +346,7 @@
     commitStudioSelectionState,
     syncStudioSelectionUi,
     syncStudioSelectionUiAfterMutation,
-    restoreCommittedStudioSelectionByIdsOnActiveSlide
+    restoreCommittedStudioSelectionByIdsOnActiveSlide,
+    restoreStudioSelectionAfterSlideMutation
   };
 });

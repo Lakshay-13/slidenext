@@ -3,6 +3,64 @@ const assert = require('node:assert/strict');
 
 const studioSelection = require('../shared/studio-editor-selection.js');
 
+test('restoreStudioSelectionAfterSlideMutation preserves selection before restoring committed ids', () => {
+  const calls = [];
+  const activeElement = {
+    isConnected: true,
+    classList: {
+      add() {},
+      remove() {}
+    }
+  };
+  const activeSlide = {
+    contains(element) {
+      return element === activeElement;
+    }
+  };
+  const doc = {
+    querySelectorAll() {
+      return [];
+    }
+  };
+
+  const result = studioSelection.restoreStudioSelectionAfterSlideMutation(['element-1'], doc, {
+    preserveSelection() {
+      calls.push('preserveSelection');
+    },
+    getActiveSlide() {
+      calls.push('getActiveSlide');
+      return activeSlide;
+    },
+    getElementById(id) {
+      calls.push(['getElementById', id]);
+      return id === 'element-1' ? activeElement : null;
+    },
+    applySelectionState() {
+      calls.push('applySelectionState');
+    },
+    syncSelectionOverlay() {
+      calls.push('syncSelectionOverlay');
+    },
+    syncInspectorForSelection() {
+      calls.push('syncInspectorForSelection');
+    },
+    updateLayersList() {
+      calls.push('updateLayersList');
+    }
+  });
+
+  assert.equal(result.restored, true);
+  assert.deepEqual(calls, [
+    'preserveSelection',
+    'getActiveSlide',
+    ['getElementById', 'element-1'],
+    'applySelectionState',
+    'syncSelectionOverlay',
+    'syncInspectorForSelection',
+    'updateLayersList'
+  ]);
+});
+
 test('syncStudioSelectionUiAfterMutation refreshes classes before selection chrome', () => {
   const selectedElements = [{ id: 'node-1' }];
   const calls = [];

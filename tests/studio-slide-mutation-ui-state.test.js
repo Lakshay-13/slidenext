@@ -43,6 +43,15 @@ function loadRestoreDeckViewAfterSlideMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadRestoreSelectionAfterPreservedSlideMutation(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function restoreSelectionAfterPreservedSlideMutation(selectedIds, doc = getIframeDoc()) {',
+    '\n\n    function ensureSelectionOverlay(doc, slide) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadResolveCurrentStudioInsertionActionState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -174,6 +183,44 @@ test('captureSlideMutationRestoreState delegates the snapshot to the shared deck
   assert.equal(calls[0][1].saveHistoryState, context.saveHistoryState);
   assert.equal(calls[0][1].getActiveSlideId, context.getActiveSlideId);
   assert.equal(calls[0][1].getCommittedSelectedElementIds, context.getCommittedSelectedElementIds);
+});
+
+test('restoreSelectionAfterPreservedSlideMutation delegates preservation ordering to shared selection', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { id: 'doc' };
+  let delegatedOptions = null;
+  const selectionIds = ['node-1'];
+  const context = {
+    preserveSelectionOnNextActiveSlideSync: false,
+    SlideNextStudioEditorSelection: {
+      restoreStudioSelectionAfterSlideMutation(ids, doc, options) {
+        delegatedOptions = { ids, doc, options };
+        options.preserveSelection();
+        return { restored: true };
+      }
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getEditorSelectionOptions(options) {
+      return { selectionOptions: true, doc: options.doc };
+    },
+    applyEditorSelectionState() {},
+    syncSelectionOverlay() {},
+    hideDragHud() {},
+    syncInspectorForSelection() {},
+    updateLayersList() {}
+  };
+
+  vm.createContext(context);
+  loadRestoreSelectionAfterPreservedSlideMutation(fileContent, context);
+
+  assert.equal(context.restoreSelectionAfterPreservedSlideMutation(selectionIds, iframeDoc), true);
+  assert.deepEqual(delegatedOptions.ids, selectionIds);
+  assert.equal(delegatedOptions.doc, iframeDoc);
+  assert.deepEqual(delegatedOptions.options.selectionOptions, true);
+  assert.equal(delegatedOptions.options.doc, iframeDoc);
+  assert.equal(context.preserveSelectionOnNextActiveSlideSync, true);
 });
 
 test('restoreDeckViewAfterSlideMutation delegates slide restore callbacks through shared selection and navigation helpers', () => {
