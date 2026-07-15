@@ -2944,21 +2944,41 @@
       )
         ? SlideNextDeckImport.importSlideToCanonicalSlide
         : null;
-      const buildCanonicalAddSlideDeck = canonicalSlideApi
-        && typeof canonicalSlideApi.buildStudioCanonicalAddSlideDeck === 'function'
-        ? (options) => canonicalSlideApi.buildStudioCanonicalAddSlideDeck({
+      const buildCanonicalAddSlideBaseline = canonicalSlideApi
+        && typeof canonicalSlideApi.buildStudioCanonicalAddSlideBaseline === 'function'
+        ? (options) => canonicalSlideApi.buildStudioCanonicalAddSlideBaseline({
             ...options,
             canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
               ? SlideNextCanonicalDeck
               : null,
             buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
               ? buildEditorCanonicalDeck
-              : null,
-            getSlideId: typeof getEditorSlideId === 'function'
-              ? getEditorSlideId
-              : (slide) => slide && slide.id || '',
-            importSlideToCanonicalSlide
+              : null
           })
+        : null;
+      const buildCanonicalAddSlideDeck = canonicalSlideApi
+        && typeof canonicalSlideApi.buildStudioCanonicalAddSlideDeck === 'function'
+        ? (options) => {
+            const canonicalDeckBeforeMutation = buildCanonicalAddSlideBaseline
+              ? buildCanonicalAddSlideBaseline(options)
+              : null;
+            return canonicalSlideApi.buildStudioCanonicalAddSlideDeck({
+              ...options,
+              canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+                ? SlideNextCanonicalDeck
+                : null,
+              buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+                ? buildEditorCanonicalDeck
+                : null,
+              ...(buildCanonicalAddSlideBaseline
+                ? { canonicalDeckBeforeMutation }
+                : {}),
+              getSlideId: typeof getEditorSlideId === 'function'
+                ? getEditorSlideId
+                : (slide) => slide && slide.id || '',
+              importSlideToCanonicalSlide
+            });
+          }
         : null;
 
       return addStudioSlideNode({

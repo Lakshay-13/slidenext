@@ -63,6 +63,25 @@
     return insertCanonicalSlide(canonicalDeckBeforeMutation, canonicalSlide, insertionIndex);
   }
 
+  function buildStudioCanonicalAddSlideBaseline(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const appendCanonicalSlide = canonicalDeckApi
+      && typeof canonicalDeckApi.appendCanonicalSlide === 'function'
+      ? canonicalDeckApi.appendCanonicalSlide
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+
+    if (!appendCanonicalSlide || !buildCanonicalDeck) {
+      return null;
+    }
+
+    return buildCanonicalDeck(options.sourceDocument);
+  }
+
   function buildStudioCanonicalAddSlideDeck(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -74,14 +93,9 @@
     const importSlideToCanonicalSlide = typeof options.importSlideToCanonicalSlide === 'function'
       ? options.importSlideToCanonicalSlide
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
-      : (appendCanonicalSlide && buildCanonicalDeck
-        ? buildCanonicalDeck(options.sourceDocument)
-        : null);
+      : buildStudioCanonicalAddSlideBaseline(options);
     const newSlide = options.newSlide;
     const insertionIndex = Number.isInteger(options.insertionIndex) ? options.insertionIndex : -1;
     const getSlideId = typeof options.getSlideId === 'function'
@@ -165,6 +179,7 @@
   }
 
   return {
+    buildStudioCanonicalAddSlideBaseline,
     buildStudioCanonicalAddSlideDeck,
     buildStudioCanonicalDeleteSlideDeck,
     buildStudioCanonicalDuplicateSlideBaseline,

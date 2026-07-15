@@ -77,6 +77,23 @@ test('buildStudioCanonicalDuplicateSlideDeck passes the source document to the c
   assert.deepEqual(result.slides.map((slide) => slide.id), ['slide-1', 'slide-2']);
 });
 
+test('buildStudioCanonicalAddSlideBaseline builds from the source document', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const sourceDocument = { id: 'editor-doc' };
+  let builtFromDocument = null;
+  const result = canonicalSlide.buildStudioCanonicalAddSlideBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtFromDocument = documentRef;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(builtFromDocument, sourceDocument);
+  assert.equal(result, sourceDeck);
+});
+
 test('buildStudioCanonicalAddSlideDeck imports and appends a new slide without mutating the source', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const sourceDocument = { id: 'editor-doc' };
