@@ -2754,6 +2754,19 @@
 
     function finalizeSlideMutationPersistence(versionLabel, transaction = null) {
       const canonicalDeck = arguments.length > 2 ? arguments[2] : null;
+      const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
+        ? SlideNextStudioEditorMutation
+        : null;
+      if (mutationApi && typeof mutationApi.finalizeStudioSlideMutation === 'function') {
+        return mutationApi.finalizeStudioSlideMutation({
+          versionLabel,
+          transaction,
+          canonicalDeck,
+          saveHistoryState,
+          triggerAutoSave,
+          triggerAutoVersion
+        });
+      }
       const createStudioSlideMutationPersistenceFinalizer = (
         typeof SlideNextStudioEditorMutation !== 'undefined'
         && SlideNextStudioEditorMutation

@@ -68,6 +68,17 @@
     return true;
   }
 
+  function finalizeStudioSlideMutation(options = {}) {
+    const finalizeSlideMutation = createStudioSlideMutationPersistenceFinalizer(options);
+    const transaction = Object.prototype.hasOwnProperty.call(options, 'transaction')
+      ? options.transaction
+      : null;
+    const canonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
+      ? options.canonicalDeck
+      : null;
+    return finalizeSlideMutation(options.versionLabel, transaction, canonicalDeck);
+  }
+
   function createStudioSlideMutationPersistenceFinalizer(options = {}) {
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
@@ -97,6 +108,7 @@
     createStudioMutationFinalizer,
     finalizeStudioMutation,
     finalizeStudioSelectionToggleMutation,
+    finalizeStudioSlideMutation,
     createStudioSlideMutationPersistenceFinalizer
   };
 });

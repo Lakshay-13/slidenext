@@ -150,6 +150,32 @@ test('finalizeStudioSelectionToggleMutation honors skipped selection UI', () => 
   assert.deepEqual(calls, ['finalize']);
 });
 
+test('finalizeStudioSlideMutation forwards transaction and canonical deck persistence state', () => {
+  const calls = [];
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+
+  assert.equal(mutation.finalizeStudioSlideMutation({
+    versionLabel: 'Auto: Added Slide',
+    transaction: { id: 'tx-3' },
+    canonicalDeck,
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    },
+    triggerAutoSave() {
+      calls.push(['save']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    }
+  }), 'Auto: Added Slide');
+
+  assert.deepEqual(calls, [
+    ['history', false, { id: 'tx-3' }, canonicalDeck],
+    ['save'],
+    ['version', 'Auto: Added Slide']
+  ]);
+});
+
 test('createStudioSlideMutationPersistenceFinalizer preserves slide persistence ordering', () => {
   const calls = [];
   const finalizeSlideMutation = mutation.createStudioSlideMutationPersistenceFinalizer({
