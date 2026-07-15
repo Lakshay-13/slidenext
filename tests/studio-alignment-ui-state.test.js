@@ -23,6 +23,9 @@ function loadPositionMutationHelper(fileContent, context) {
     'function applyEditorPositionLayoutWithTransaction(nextItems, options = {}) {',
     'function alignSelectedElements(action = \'\') {'
   );
+  if (!context.SlideNextStudioEditorTransaction) {
+    context.SlideNextStudioEditorTransaction = studioTransaction;
+  }
   vm.runInContext(helperSource, context);
 }
 

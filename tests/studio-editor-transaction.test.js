@@ -58,6 +58,45 @@ test('createStudioPositionTransaction derives reversible left and top patches', 
   });
 });
 
+test('applyStudioPositionLayoutWithTransaction delegates layout application and preserves transaction context', () => {
+  const first = { style: { left: '10px', top: '20px' } };
+  const calls = [];
+  const result = transaction.applyStudioPositionLayoutWithTransaction([
+    { element: first, nextLeft: 40, nextTop: 50 }
+  ], {
+    createPositionTransaction(items, options) {
+      calls.push(['createPositionTransaction', items, options]);
+      return { type: 'position' };
+    },
+    getElementId(element) {
+      return element;
+    },
+    applyLayout(items, options) {
+      calls.push(['applyLayout', items, options]);
+      items[0].element.style.left = `${items[0].nextLeft}px`;
+      items[0].element.style.top = `${items[0].nextTop}px`;
+      return { didApply: true, transaction: { type: 'delegated' } };
+    }
+  });
+
+  assert.equal(result.didApply, true);
+  assert.deepEqual(first.style, { left: '40px', top: '50px' });
+  assert.equal(result.transaction.type, 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'applyLayout');
+  assert.equal(calls[0][2].createPositionTransaction instanceof Function, true);
+});
+
+test('applyStudioPositionLayoutWithTransaction applies a direct layout when no delegate is provided', () => {
+  const first = { style: { left: '10px', top: '20px' } };
+  const result = transaction.applyStudioPositionLayoutWithTransaction([
+    { element: first, nextLeft: 40, nextTop: 50 }
+  ]);
+
+  assert.deepEqual(result, { didApply: true, transaction: null });
+  assert.deepEqual(first.style, { left: '40px', top: '50px' });
+});
+
 test('applyStudioEditorTransaction applies before and after style patches', () => {
   const element = createStyleElement('node-1', { left: '10px', top: '20px' });
   const styleTransaction = transaction.createStudioStyleTransaction([{

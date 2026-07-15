@@ -111,6 +111,44 @@
     return createStudioStyleTransaction(transactionItems, { getElementId });
   }
 
+  function applyStudioPositionLayoutWithTransaction(items = [], options = {}) {
+    const nextItems = Array.isArray(items) ? items : [];
+    const createPositionTransaction = typeof options.createPositionTransaction === 'function'
+      ? options.createPositionTransaction
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const applyLayout = typeof options.applyLayout === 'function'
+      ? options.applyLayout
+      : null;
+
+    if (applyLayout) {
+      const mutation = applyLayout(nextItems, {
+        createPositionTransaction,
+        getElementId
+      });
+      return mutation && typeof mutation === 'object'
+        ? mutation
+        : { didApply: false, transaction: null };
+    }
+
+    const transaction = createPositionTransaction
+      ? createPositionTransaction(nextItems, { getElementId })
+      : null;
+    let didApply = false;
+    nextItems.forEach((item) => {
+      if (!item || !item.element || !item.element.style) return;
+      item.element.style.left = `${item.nextLeft}px`;
+      item.element.style.top = `${item.nextTop}px`;
+      didApply = true;
+    });
+    return {
+      didApply,
+      transaction
+    };
+  }
+
   function createStudioPropertyTransaction(items = [], options = {}) {
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
@@ -505,6 +543,7 @@
     normalizeTransactionValue,
     createStudioStyleTransaction,
     createStudioPositionTransaction,
+    applyStudioPositionLayoutWithTransaction,
     createStudioPropertyTransaction,
     createStudioDatasetTransaction,
     createStudioVisibilityTransaction,

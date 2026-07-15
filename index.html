@@ -6481,19 +6481,22 @@
     }
 
     function applyEditorPositionLayoutWithTransaction(nextItems, options = {}) {
+      const transactionApi = (
+        typeof SlideNextStudioEditorTransaction !== 'undefined'
+        && SlideNextStudioEditorTransaction
+        && typeof SlideNextStudioEditorTransaction.applyStudioPositionLayoutWithTransaction === 'function'
+      )
+        ? SlideNextStudioEditorTransaction
+        : null;
+      if (!transactionApi) {
+        return { didApply: false, transaction: null };
+      }
       const alignmentApi = typeof SlideNextStudioEditorAlignment !== 'undefined'
         ? SlideNextStudioEditorAlignment
         : null;
       const defaultApplyLayout = alignmentApi
         && typeof alignmentApi.applyStudioAlignmentLayout === 'function'
         ? alignmentApi.applyStudioAlignmentLayout
-        : null;
-      const createStudioPositionTransaction = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioPositionTransaction === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioPositionTransaction
         : null;
       const getElementId = typeof options.getElementId === 'function'
         ? options.getElementId
@@ -6506,27 +6509,11 @@
       const applyLayout = Object.prototype.hasOwnProperty.call(options, 'applyLayout')
         ? options.applyLayout
         : defaultApplyLayout;
-      if (typeof applyLayout === 'function') {
-        const mutation = applyLayout(nextItems, {
-          createPositionTransaction: createStudioPositionTransaction,
-          getElementId
-        });
-        return mutation && typeof mutation === 'object'
-          ? mutation
-          : { didApply: false, transaction: null };
-      }
-
-      const transaction = createStudioPositionTransaction
-        ? createStudioPositionTransaction(nextItems, { getElementId })
-        : null;
-      nextItems.forEach((item) => {
-        item.element.style.left = `${item.nextLeft}px`;
-        item.element.style.top = `${item.nextTop}px`;
+      return transactionApi.applyStudioPositionLayoutWithTransaction(nextItems, {
+        createPositionTransaction: transactionApi.createStudioPositionTransaction,
+        getElementId,
+        applyLayout
       });
-      return {
-        didApply: true,
-        transaction
-      };
     }
 
     function alignSelectedElements(action = '') {
