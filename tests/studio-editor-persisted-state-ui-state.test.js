@@ -116,7 +116,7 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent returns null without
   );
 });
 
-test('getCurrentEditorPersistedDeckState reuses the shared persisted snapshot helper when available', () => {
+test('getCurrentEditorPersistedDeckState does not use the snapshot helper when the shared reader is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   const persistedDeckState = {
@@ -131,8 +131,7 @@ test('getCurrentEditorPersistedDeckState reuses the shared persisted snapshot he
     persistedDeckPlaybackState: persistedDeckState.playbackState,
     SlideNextStudioEditorPersistence: {
       createStudioPersistedDeckStateSnapshot(options = {}) {
-        calls.push(options);
-        return persistedDeckState;
+        throw new Error('createStudioPersistedDeckStateSnapshot should remain owned by the shared reader');
       }
     }
   };
@@ -142,13 +141,13 @@ test('getCurrentEditorPersistedDeckState reuses the shared persisted snapshot he
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.getCurrentEditorPersistedDeckState())),
-    persistedDeckState
+    {
+      cleanHtml: '',
+      canonicalDeck: null,
+      playbackState: null
+    }
   );
-  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
-    persistedDeckHtml: '<html>persisted</html>',
-    persistedCanonicalDeck: { id: 'persisted-deck' },
-    persistedPlaybackState: { activeSlideIds: ['slide-2'], slideCounterText: '2 / 4' }
-  }]);
+  assert.deepEqual(calls, []);
 });
 
 test('getCurrentEditorPersistedDeckState reuses the shared persisted state reader when available', () => {
