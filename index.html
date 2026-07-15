@@ -1657,18 +1657,7 @@
           ...deckViewSharedOptions
         });
       }
-
-      const explicitActiveSlideId = typeof options.activeSlideId === 'string' && options.activeSlideId.trim()
-        ? options.activeSlideId
-        : '';
-      return {
-        activeSlideId: explicitActiveSlideId || resolveEditorFallbackActiveSlideId(doc, canonicalDeck),
-        preferSourceHtml: false,
-        preferHeadSourceHtml: false,
-        preferBodySourceHtml: false,
-        preferSlideSourceHtml: false,
-        preferNodeSourceHtml: false
-      };
+      return null;
     }
 
     function createEditorCanonicalDeckResolverWithBuilder(

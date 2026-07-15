@@ -17,6 +17,23 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function createEditorDeckViewSharedOptionsForTest(context, doc) {
+  return deckView.createStudioDeckViewSharedOptions(doc, {
+    currentSlideIndex: context.currentSlideIndex,
+    getPersistedActiveSlideId: () => typeof context.getPersistedActiveSlideId === 'function'
+      ? context.getPersistedActiveSlideId()
+      : '',
+    buildCanonicalDeck: (nextDoc) => typeof context.buildEditorCanonicalDeck === 'function'
+      ? context.buildEditorCanonicalDeck(nextDoc)
+      : null,
+    resolveCanonicalDeckOverride: (nextCanonicalDeck) => nextCanonicalDeck,
+    resolveLiveActiveSlideId: (nextDoc) => typeof context.getActiveSlideId === 'function'
+      ? context.getActiveSlideId(nextDoc)
+      : '',
+    isCanonicalDeck: (deck) => !!deck && Array.isArray(deck.slides)
+  });
+}
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
@@ -157,6 +174,7 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc && nextDoc.querySelector('.slide-active');
       },
@@ -171,6 +189,9 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
         });
         return options.buildFallbackHtml(null);
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
       return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
@@ -236,7 +257,8 @@ test('buildEditorSourceHtml falls back to the shared deck html source builder wh
   const calls = [];
   const context = {
     SlideNextStudioDeckView: {
-      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver
+      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions
     },
     SlideNextDeckHtml: {
       buildDeckSourceHtml(nextCanonicalDeck, options) {
@@ -253,6 +275,9 @@ test('buildEditorSourceHtml falls back to the shared deck html source builder wh
     },
     buildPersistableDeckHtml() {
       throw new Error('buildPersistableDeckHtml should not run when source html renders from the canonical deck');
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     currentSlideIndex: 1,
     getActiveSlide(nextDoc) {
@@ -297,10 +322,14 @@ test('buildEditorSourceHtml reuses the shared deck-view html builder when the so
   };
   const context = {
     SlideNextStudioDeckView: {
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       buildStudioDeckHtml(doc, options) {
         calls.push({ doc, options });
         return '<html>source-from-deck-view-html</html>';
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
       return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
@@ -428,9 +457,13 @@ test('buildEditorSourceDeckHtml prefers provided source deck html builder overri
   let delegatedArgs = null;
   const context = {
     SlideNextStudioDeckView: {
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       buildStudioSourceHtml() {
         throw new Error('default studio source html builder should not run');
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     SlideNextDeckHtml: {
       buildDeckSourceHtml() {
@@ -491,6 +524,7 @@ test('buildEditorSourceHtml prefers the live active slide when the editor frame 
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc && nextDoc.querySelector('.slide-active');
       },
@@ -501,6 +535,9 @@ test('buildEditorSourceHtml prefers the live active slide when the editor frame 
         calls.push({ doc, options });
         return '<html>source</html>';
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     buildEditorCanonicalDeck(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
@@ -560,6 +597,7 @@ test('buildEditorSourceHtml reuses the resolved live canonical deck when source 
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc.querySelector('.slide-active');
       },
@@ -570,6 +608,9 @@ test('buildEditorSourceHtml reuses the resolved live canonical deck when source 
         assert.equal(options.buildCanonicalDeck(doc), canonicalDeck);
         return options.buildFallbackHtml(doc);
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
       return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
@@ -634,10 +675,14 @@ test('buildEditorSourceHtml falls back to the current session slide when live ac
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       buildStudioSourceHtml(doc, options) {
         assert.equal(options.buildCanonicalDeck(doc), canonicalDeck);
         return options.deckHtmlOptions.renderOptions.activeSlideId;
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
       return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);

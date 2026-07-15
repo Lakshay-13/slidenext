@@ -2581,6 +2581,29 @@ test('buildEditorDeckRenderOptions reuses the local deck view shared options hel
   ]);
 });
 
+test('buildEditorDeckRenderOptions fails closed when the shared deck view helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorDeckRenderOptionsSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorDeckRenderOptions(doc = getIframeDoc(), canonicalDeck = null, options = {}) {',
+    '\n\n    function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {'
+  );
+  const context = {
+    SlideNextStudioDeckView: {},
+    resolveEditorFallbackActiveSlideId() {
+      throw new Error('resolveEditorFallbackActiveSlideId should remain owned by the shared deck view helper');
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorDeckRenderOptionsSource, context);
+
+  assert.equal(context.buildEditorDeckRenderOptions(), null);
+});
+
 test('createEditorDeckViewHtmlOptions maps canonical html arguments when local helpers are available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createEditorDeckViewHtmlOptionsSource = extractFunctionSource(

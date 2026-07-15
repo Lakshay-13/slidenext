@@ -1456,11 +1456,6 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
 
 test('restoreFrameFromHistoryEntry clears stale persisted playback state when the restored frame has no playback markers', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
-    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
-  );
   const persistedDeckStateHelperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
@@ -1488,6 +1483,20 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
       callLog.push(['capturePersistedDeckPlaybackState', doc, nextCanonicalDeck]);
       return null;
     },
+    createEditorDeckViewBuildOptions() {
+      return {
+        deckHtmlOptions: {
+          renderOptions: {
+            activeSlideId: '',
+            preferSourceHtml: false,
+            preferHeadSourceHtml: false,
+            preferBodySourceHtml: false,
+            preferSlideSourceHtml: false,
+            preferNodeSourceHtml: false
+          }
+        }
+      };
+    },
     currentSlideIndex: 0,
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     generateThumbnails() {},
@@ -1502,10 +1511,6 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
     },
     makeElementsHoverable() {},
     observeDeckActiveSlideState() {},
-    resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
-      callLog.push(['resolveEditorFallbackCanonicalDeck', nextDoc, nextCanonicalDeck]);
-      return nextCanonicalDeck;
-    },
     restoreCommittedSelectionByIdsOnActiveSlide() {},
     setCurrentPresentationCanonicalDeck(nextCanonicalDeck) {
       callLog.push(['setCurrentPresentationCanonicalDeck', nextCanonicalDeck]);
@@ -1536,7 +1541,6 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext(persistedDeckStateHelperSource, context);
   vm.runInContext(restoreFrameFromHistoryEntrySource, context);
 
@@ -1545,13 +1549,12 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
     canonicalDeck: null
   });
 
-  assert.deepEqual(callLog[0], ['resolveEditorFallbackCanonicalDeck', null, null]);
-  assert.deepEqual(callLog[1], ['capturePersistedDeckPlaybackState', iframeDoc, null]);
+  assert.deepEqual(callLog[0], ['capturePersistedDeckPlaybackState', iframeDoc, null]);
   assert.deepEqual(
-    JSON.parse(JSON.stringify(callLog[2])),
+    JSON.parse(JSON.stringify(callLog[1])),
     ['updateEditorPersistedDeckState', { playbackState: null }]
   );
-  assert.deepEqual(callLog[3], ['setCurrentPresentationCanonicalDeck', null]);
+  assert.deepEqual(callLog[2], ['setCurrentPresentationCanonicalDeck', null]);
 });
 
 test('restoreFrameFromHistoryEntry applies a valid transaction without replacing the live frame', () => {

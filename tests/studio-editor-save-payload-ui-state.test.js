@@ -18,6 +18,23 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function createEditorDeckViewSharedOptionsForTest(context, doc) {
+  return deckView.createStudioDeckViewSharedOptions(doc, {
+    currentSlideIndex: context.currentSlideIndex,
+    getPersistedActiveSlideId: () => typeof context.getPersistedActiveSlideId === 'function'
+      ? context.getPersistedActiveSlideId()
+      : '',
+    buildCanonicalDeck: (nextDoc) => typeof context.buildEditorCanonicalDeck === 'function'
+      ? context.buildEditorCanonicalDeck(nextDoc)
+      : null,
+    resolveCanonicalDeckOverride: (nextCanonicalDeck) => nextCanonicalDeck,
+    resolveLiveActiveSlideId: (nextDoc) => typeof context.getActiveSlideId === 'function'
+      ? context.getActiveSlideId(nextDoc)
+      : '',
+    isCanonicalDeck: (deck) => !!deck && Array.isArray(deck.slides)
+  });
+}
+
 function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
   const helperSource = extractFunctionSource(
@@ -4285,10 +4302,14 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
     },
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       buildStudioSourceHtml(nextDoc, options) {
         calls.push([nextDoc, options]);
         return '<html>canonical-source</html>';
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     buildEditorSourceDeckHtml(nextDoc, options = {}) {
       calls.push(['buildEditorSourceDeckHtml', nextDoc, options]);
@@ -4413,6 +4434,12 @@ test('buildPersistableDeckHtml reuses the local deck view build options helper w
       assert.equal(options.buildViewOptions(nextDoc), sourceViewOptions);
       return '<html>canonical-source</html>';
     },
+    SlideNextStudioDeckView: {
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
+    },
     buildEditorCanonicalDeck(nextDoc) {
       assert.equal(nextDoc, null);
       return canonicalDeck;
@@ -4502,7 +4529,11 @@ test('buildPersistableDeckHtml reuses buildEditorSourceDeckHtml when rendering c
       ...editorPersistence
     },
     SlideNextStudioDeckView: {
-      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver
+      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     createEditorDeckViewBuildOptions(nextDoc, options) {
       assert.equal(nextDoc, null);
@@ -4597,7 +4628,11 @@ test('buildPersistableDeckHtml reuses the local persistable source deck html ren
       ...editorPersistence
     },
     SlideNextStudioDeckView: {
-      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver
+      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     createEditorDeckViewBuildOptions(nextDoc, options) {
       return {
@@ -4695,10 +4730,14 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
     },
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       buildStudioSourceHtml(nextDoc, options) {
         calls.push([nextDoc, options]);
         return '<html>canonical-source</html>';
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     buildEditorSourceDeckHtml(nextDoc, options = {}) {
       calls.push(['buildEditorSourceDeckHtml', nextDoc, options]);

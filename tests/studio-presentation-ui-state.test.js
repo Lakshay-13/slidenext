@@ -17,6 +17,23 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function createEditorDeckViewSharedOptionsForTest(context, doc) {
+  return deckView.createStudioDeckViewSharedOptions(doc, {
+    currentSlideIndex: context.currentSlideIndex,
+    getPersistedActiveSlideId: () => typeof context.getPersistedActiveSlideId === 'function'
+      ? context.getPersistedActiveSlideId()
+      : '',
+    buildCanonicalDeck: (nextDoc) => typeof context.buildEditorCanonicalDeck === 'function'
+      ? context.buildEditorCanonicalDeck(nextDoc)
+      : null,
+    resolveCanonicalDeckOverride: (nextCanonicalDeck) => nextCanonicalDeck,
+    resolveLiveActiveSlideId: (nextDoc) => typeof context.getActiveSlideId === 'function'
+      ? context.getActiveSlideId(nextDoc)
+      : '',
+    isCanonicalDeck: (deck) => !!deck && Array.isArray(deck.slides)
+  });
+}
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
@@ -259,6 +276,7 @@ test('buildEditorPreviewHtml falls back to the persisted html baseline when the 
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc && nextDoc.querySelector('.slide-active');
       },
@@ -273,6 +291,9 @@ test('buildEditorPreviewHtml falls back to the persisted html baseline when the 
         });
         return options.buildFallbackHtml(null);
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     buildEditorCanonicalDeck(nextDoc) {
       buildEditorCanonicalDeckCalls += 1;
@@ -336,7 +357,8 @@ test('buildEditorPreviewHtml falls back to the shared deck html preview builder 
   const calls = [];
   const context = {
     SlideNextStudioDeckView: {
-      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver
+      createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions
     },
     SlideNextDeckHtml: {
       buildDeckPreviewHtml(nextCanonicalDeck, presentationUrl, options) {
@@ -353,6 +375,9 @@ test('buildEditorPreviewHtml falls back to the shared deck html preview builder 
     },
     buildPersistableDeckHtml() {
       throw new Error('buildPersistableDeckHtml should not run when preview html renders from the canonical deck');
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     currentSlideIndex: 1,
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
@@ -838,6 +863,7 @@ test('buildEditorPreviewHtml prefers the live active slide when the editor frame
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc && nextDoc.querySelector('.slide-active');
       },
@@ -848,6 +874,9 @@ test('buildEditorPreviewHtml prefers the live active slide when the editor frame
         calls.push({ doc, options });
         return '<html>preview</html>';
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     buildEditorCanonicalDeck(nextDoc) {
       assert.equal(nextDoc, iframeDoc);
@@ -910,6 +939,7 @@ test('buildEditorPreviewHtml reuses the resolved live canonical deck when previe
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       resolveStudioLiveActiveSlide(nextDoc) {
         return nextDoc.querySelector('.slide-active');
       },
@@ -920,6 +950,9 @@ test('buildEditorPreviewHtml reuses the resolved live canonical deck when previe
         assert.equal(options.buildCanonicalDeck(doc), canonicalDeck);
         return options.buildFallbackHtml(doc);
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     buildEditorCanonicalDeck(nextDoc) {
       buildEditorCanonicalDeckCalls += 1;
@@ -984,10 +1017,14 @@ test('buildEditorPreviewHtml falls back to the current session slide when live a
   const context = {
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
+      createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       buildStudioPreviewHtml(doc, options) {
         assert.equal(options.buildCanonicalDeck(doc), canonicalDeck);
         return options.deckHtmlOptions.renderOptions.activeSlideId;
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     buildEditorCanonicalDeck(nextDoc) {
       buildEditorCanonicalDeckCalls += 1;
