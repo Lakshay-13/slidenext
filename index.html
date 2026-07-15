@@ -3708,7 +3708,11 @@
     }
 
     function getCommittedSelectedEditorElementIds(doc = getIframeDoc()) {
-      return SlideNextStudioEditorSelection.getStudioCommittedSelectedElementIds(
+      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
+        ? SlideNextStudioEditorSelection
+        : null;
+      if (!selectionApi || typeof selectionApi.getStudioCommittedSelectedElementIds !== 'function') return [];
+      return selectionApi.getStudioCommittedSelectedElementIds(
         selectedElements,
         doc,
         getEditorSelectionOptions({ doc })

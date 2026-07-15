@@ -18,6 +18,55 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function loadGetCommittedSelectedEditorElementIds(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function getCommittedSelectedEditorElementIds(doc = getIframeDoc()) {',
+    '\n\n    function areEditorIdListsEqual(a = [], b = []) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+test('getCommittedSelectedEditorElementIds delegates to shared selection', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { id: 'doc' };
+  const selectedElements = [{ id: 'node-1' }];
+  let delegatedArgs = null;
+  const context = {
+    selectedElements,
+    SlideNextStudioEditorSelection: {
+      getStudioCommittedSelectedElementIds(...args) {
+        delegatedArgs = args;
+        return ['node-1'];
+      }
+    },
+    getEditorSelectionOptions(options) {
+      return { doc: options.doc, selectionOptions: true };
+    }
+  };
+
+  vm.createContext(context);
+  loadGetCommittedSelectedEditorElementIds(fileContent, context);
+
+  assert.deepEqual(context.getCommittedSelectedEditorElementIds(iframeDoc), ['node-1']);
+  assert.equal(delegatedArgs[0], selectedElements);
+  assert.equal(delegatedArgs[1], iframeDoc);
+  assert.deepEqual(delegatedArgs[2], { doc: iframeDoc, selectionOptions: true });
+});
+
+test('getCommittedSelectedEditorElementIds fails closed when the shared selection API is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    selectedElements: [{ id: 'node-1' }],
+    SlideNextStudioEditorSelection: null
+  };
+
+  vm.createContext(context);
+  loadGetCommittedSelectedEditorElementIds(fileContent, context);
+
+  assert.equal(context.getCommittedSelectedEditorElementIds({ id: 'doc' }).length, 0);
+});
+
 test('applyEditorSelectionState keeps only connected selections on the active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorSelectionOptionsSource = extractFunctionSource(
