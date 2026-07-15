@@ -6319,13 +6319,74 @@
         canMutateDeck: () => !!getActiveSlide(getIframeDoc())
       });
       if (!pastePlan.canPaste) return finalizeClipboardActionResult(false);
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const appendCanonicalNode = canonicalDeckApi
+        && typeof canonicalDeckApi.appendCanonicalNode === 'function'
+        ? canonicalDeckApi.appendCanonicalNode
+        : null;
+      const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
+        ? SlideNextDeckImport
+        : null;
+      const importElementToCanonicalNode = deckImportApi
+        && typeof deckImportApi.importElementToCanonicalNode === 'function'
+        ? deckImportApi.importElementToCanonicalNode
+        : null;
+      let canonicalDeckBeforePaste = null;
+      let canonicalSlideId = '';
+      if (appendCanonicalNode
+        && importElementToCanonicalNode
+        && typeof buildEditorCanonicalDeck === 'function'
+        && typeof getIframeDoc === 'function'
+        && typeof getActiveSlide === 'function') {
+        const doc = getIframeDoc();
+        const activeSlide = getActiveSlide(doc);
+        canonicalSlideId = typeof getEditorSlideId === 'function'
+          ? getEditorSlideId(activeSlide)
+          : activeSlide && activeSlide.id;
+        canonicalDeckBeforePaste = buildEditorCanonicalDeck(doc);
+      }
       let transaction = null;
       const pasted = insertClipboardPayload(pastePlan.items, pastePlan.nextPasteCount, {
         onTransaction(nextTransaction) {
           transaction = nextTransaction;
         }
       });
-      const didPaste = finalizeInsertedElements(pasted, 'Auto: Pasted Element', transaction);
+      let canonicalDeck = null;
+      if (canonicalDeckBeforePaste && canonicalSlideId) {
+        let nextCanonicalDeck = canonicalDeckBeforePaste;
+        let didAppendAll = true;
+        pasted.forEach((element) => {
+          if (!didAppendAll) return;
+          const canonicalNode = importElementToCanonicalNode(element, {
+            getNodeId: (node) => {
+              if (node && node.dataset && typeof assignEditorElementId === 'function') {
+                const assignedId = assignEditorElementId(node);
+                if (assignedId) return assignedId;
+              }
+              return node && node.dataset && node.dataset.editorId;
+            }
+          });
+          const appendedDeck = appendCanonicalNode(
+            nextCanonicalDeck,
+            canonicalSlideId,
+            canonicalNode
+          );
+          if (!appendedDeck) {
+            didAppendAll = false;
+            return;
+          }
+          nextCanonicalDeck = appendedDeck;
+        });
+        canonicalDeck = didAppendAll ? nextCanonicalDeck : null;
+      }
+      const didPaste = finalizeInsertedElements(
+        pasted,
+        'Auto: Pasted Element',
+        transaction,
+        canonicalDeck
+      );
       if (didPaste) {
         editorClipboard = pastePlan.nextClipboard;
       }

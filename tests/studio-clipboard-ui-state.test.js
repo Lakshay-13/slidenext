@@ -1193,3 +1193,81 @@ test('pasteClipboardElements returns false and refreshes clipboard controls when
     ['updateClipboardActionState']
   ]);
 });
+
+test('pasteClipboardElements forwards a canonical deck sidecar for pasted nodes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
+  const pasteClipboardElementsSource = extractFunctionSource(
+    fileContent,
+    'function pasteClipboardElements() {',
+    '\n\n    function duplicateSelectedElements() {'
+  );
+  const sourceDeck = canonicalDeckModel.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', text: 'Original' }] }]
+  });
+  const pastedElement = { dataset: { editorId: 'node-3' } };
+  const activeSlide = { id: 'slide-1' };
+  const nextClipboard = { items: [{ id: 'clipboard-item' }], pasteCount: 1 };
+  let finalized = null;
+  const context = {
+    editorClipboard: { items: [{ id: 'clipboard-item' }], pasteCount: 0 },
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    SlideNextDeckImport: {
+      importElementToCanonicalNode(element, options) {
+        assert.equal(element, pastedElement);
+        assert.equal(options.getNodeId(element), 'node-3');
+        return { id: 'node-3', tagName: 'p', text: 'Pasted' };
+      }
+    },
+    SlideNextStudioEditorClipboard: {
+      buildStudioClipboardPastePlan(clipboard, options) {
+        assert.equal(clipboard.pasteCount, 0);
+        assert.equal(options.canMutateDeck(), true);
+        return {
+          canPaste: true,
+          items: [{ id: 'clipboard-item' }],
+          nextPasteCount: 1,
+          nextClipboard
+        };
+      }
+    },
+    buildEditorCanonicalDeck(doc) {
+      assert.equal(doc.label, 'iframe-doc');
+      return sourceDeck;
+    },
+    finalizeInsertedElements(elements, versionLabel, transaction, canonicalDeck) {
+      finalized = { elements, versionLabel, transaction, canonicalDeck };
+      return true;
+    },
+    getActiveSlide(doc) {
+      assert.equal(doc.label, 'iframe-doc');
+      return activeSlide;
+    },
+    getEditorSlideId(slide) {
+      assert.equal(slide, activeSlide);
+      return 'slide-1';
+    },
+    getIframeDoc() {
+      return { label: 'iframe-doc' };
+    },
+    insertClipboardPayload(items, offsetMultiplier, options) {
+      assert.deepEqual(items, [{ id: 'clipboard-item' }]);
+      assert.equal(offsetMultiplier, 1);
+      options.onTransaction({ id: 'tx-paste' });
+      return [pastedElement];
+    },
+    updateClipboardActionState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${finalizeClipboardActionResultSource}\n${pasteClipboardElementsSource}`, context);
+
+  assert.equal(context.pasteClipboardElements(), true);
+  assert.equal(finalized.elements[0], pastedElement);
+  assert.equal(finalized.versionLabel, 'Auto: Pasted Element');
+  assert.deepEqual(finalized.transaction, { id: 'tx-paste' });
+  assert.deepEqual(finalized.canonicalDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'node-3']);
+  assert.equal(finalized.canonicalDeck.slides[0].nodes[1].text, 'Pasted');
+  assert.equal(context.editorClipboard, nextClipboard);
+  assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1']);
+});
