@@ -266,6 +266,28 @@
     };
   }
 
+  function attachStudioMarqueePointerHandlers(doc, handlers) {
+    const body = doc && doc.body;
+    if (!body || typeof body.addEventListener !== 'function' || !handlers) return false;
+
+    [
+      ['pointerdown', handlers.handlePointerDown],
+      ['pointermove', handlers.handlePointerMove],
+      ['pointerup', handlers.handlePointerUp],
+      ['pointercancel', handlers.handlePointerCancel]
+    ].forEach(([eventName, handler]) => {
+      if (typeof handler === 'function') body.addEventListener(eventName, handler, true);
+    });
+
+    const frameWindow = doc.defaultView;
+    if (frameWindow
+      && typeof frameWindow.addEventListener === 'function'
+      && typeof handlers.handleWindowBlur === 'function') {
+      frameWindow.addEventListener('blur', handlers.handleWindowBlur, true);
+    }
+    return true;
+  }
+
   function createStudioFrameKeydownHandler(options = {}) {
     const getActiveElement = typeof options.getActiveElement === 'function'
       ? options.getActiveElement
@@ -530,6 +552,7 @@
   return {
     createStudioFrameClickHandler,
     createStudioMarqueePointerHandlers,
+    attachStudioMarqueePointerHandlers,
     createStudioFrameKeydownHandler,
     createStudioGlobalKeydownHandler
   };

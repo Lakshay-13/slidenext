@@ -52,6 +52,45 @@ test('createStudioMarqueePointerHandlers starts only on empty primary slide spac
   assert.equal(handler.getSession().additive, false);
 });
 
+test('attachStudioMarqueePointerHandlers binds the shared marquee lifecycle', () => {
+  const bodyListeners = new Map();
+  const windowListeners = new Map();
+  const doc = {
+    body: {
+      addEventListener(type, handler, capture) {
+        bodyListeners.set(type, { handler, capture });
+      }
+    },
+    defaultView: {
+      addEventListener(type, handler, capture) {
+        windowListeners.set(type, { handler, capture });
+      }
+    }
+  };
+  const handlers = {
+    handlePointerDown() {},
+    handlePointerMove() {},
+    handlePointerUp() {},
+    handlePointerCancel() {},
+    handleWindowBlur() {}
+  };
+
+  assert.equal(events.attachStudioMarqueePointerHandlers(doc, handlers), true);
+  assert.equal(bodyListeners.get('pointerdown').handler, handlers.handlePointerDown);
+  assert.equal(bodyListeners.get('pointermove').handler, handlers.handlePointerMove);
+  assert.equal(bodyListeners.get('pointerup').handler, handlers.handlePointerUp);
+  assert.equal(bodyListeners.get('pointercancel').handler, handlers.handlePointerCancel);
+  assert.deepEqual(windowListeners.get('blur'), {
+    handler: handlers.handleWindowBlur,
+    capture: true
+  });
+});
+
+test('attachStudioMarqueePointerHandlers tolerates missing editor frame targets', () => {
+  assert.equal(events.attachStudioMarqueePointerHandlers(null, {}), false);
+  assert.equal(events.attachStudioMarqueePointerHandlers({ body: {} }, {}), false);
+});
+
 test('createStudioMarqueePointerHandlers captures, frames, and finalizes a marquee selection', () => {
   const calls = [];
   const slide = { contains: () => true };

@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const editorEvents = require('../shared/studio-editor-events.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -78,6 +79,7 @@ test('setupIframeDragging wires marquee handlers beside shared transforms and co
       }
     },
     SlideNextStudioEditorEvents: {
+      attachStudioMarqueePointerHandlers: editorEvents.attachStudioMarqueePointerHandlers,
       createStudioMarqueePointerHandlers(options) {
         marqueeOptions = options;
         return marqueeHandlers;

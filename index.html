@@ -5491,11 +5491,18 @@
               suppressNextFrameClick = true;
             }
           });
-          doc.body.addEventListener('pointerdown', marqueeHandlers.handlePointerDown, true);
-          doc.body.addEventListener('pointermove', marqueeHandlers.handlePointerMove, true);
-          doc.body.addEventListener('pointerup', marqueeHandlers.handlePointerUp, true);
-          doc.body.addEventListener('pointercancel', marqueeHandlers.handlePointerCancel, true);
-          doc.defaultView?.addEventListener('blur', marqueeHandlers.handleWindowBlur, true);
+          const attachStudioMarqueePointerHandlers = typeof SlideNextStudioEditorEvents.attachStudioMarqueePointerHandlers === 'function'
+            ? SlideNextStudioEditorEvents.attachStudioMarqueePointerHandlers
+            : null;
+          if (attachStudioMarqueePointerHandlers) {
+            attachStudioMarqueePointerHandlers(doc, marqueeHandlers);
+          } else {
+            doc.body.addEventListener('pointerdown', marqueeHandlers.handlePointerDown, true);
+            doc.body.addEventListener('pointermove', marqueeHandlers.handlePointerMove, true);
+            doc.body.addEventListener('pointerup', marqueeHandlers.handlePointerUp, true);
+            doc.body.addEventListener('pointercancel', marqueeHandlers.handlePointerCancel, true);
+            doc.defaultView?.addEventListener('blur', marqueeHandlers.handleWindowBlur, true);
+          }
         }
         return;
       }
