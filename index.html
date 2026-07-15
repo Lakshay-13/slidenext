@@ -7629,32 +7629,29 @@
         && typeof SlideNextStudioHistory.createStudioHistoryStepRunner === 'function'
         ? SlideNextStudioHistory.createStudioHistoryStepRunner
         : null;
-      if (createStudioHistoryStepRunner) {
-        return createStudioHistoryStepRunner({
-          stepHistory: SlideNextStudioHistory.stepStudioHistoryUndo,
-          didStepKey: 'didUndo',
-          getUndoStack: () => undoStack,
-          getRedoStack: () => redoStack,
-          setUndoStack(nextUndoStack) {
-            undoStack = nextUndoStack;
-          },
-          setRedoStack(nextRedoStack) {
-            redoStack = nextRedoStack;
-          },
-          restoreHistoryEntry: restoreFrameFromHistoryEntry,
-          updateHistoryButtons,
-          triggerAutoSave
-        })();
+      if (!createStudioHistoryStepRunner) {
+        return {
+          didUndo: false,
+          undoStack,
+          redoStack,
+          restoreEntry: null
+        };
       }
-
-      const nextHistoryState = SlideNextStudioHistory.stepStudioHistoryUndo(undoStack, redoStack);
-      if (!nextHistoryState.didUndo) return;
-
-      undoStack = nextHistoryState.undoStack;
-      redoStack = nextHistoryState.redoStack;
-      restoreFrameFromHistoryEntry(nextHistoryState.restoreEntry);
-      updateHistoryButtons();
-      triggerAutoSave();
+      return createStudioHistoryStepRunner({
+        stepHistory: SlideNextStudioHistory.stepStudioHistoryUndo,
+        didStepKey: 'didUndo',
+        getUndoStack: () => undoStack,
+        getRedoStack: () => redoStack,
+        setUndoStack(nextUndoStack) {
+          undoStack = nextUndoStack;
+        },
+        setRedoStack(nextRedoStack) {
+          redoStack = nextRedoStack;
+        },
+        restoreHistoryEntry: restoreFrameFromHistoryEntry,
+        updateHistoryButtons,
+        triggerAutoSave
+      })();
     }
 
     function editorRedo() {
@@ -7662,32 +7659,29 @@
         && typeof SlideNextStudioHistory.createStudioHistoryStepRunner === 'function'
         ? SlideNextStudioHistory.createStudioHistoryStepRunner
         : null;
-      if (createStudioHistoryStepRunner) {
-        return createStudioHistoryStepRunner({
-          stepHistory: SlideNextStudioHistory.stepStudioHistoryRedo,
-          didStepKey: 'didRedo',
-          getUndoStack: () => undoStack,
-          getRedoStack: () => redoStack,
-          setUndoStack(nextUndoStack) {
-            undoStack = nextUndoStack;
-          },
-          setRedoStack(nextRedoStack) {
-            redoStack = nextRedoStack;
-          },
-          restoreHistoryEntry: restoreFrameFromHistoryEntry,
-          updateHistoryButtons,
-          triggerAutoSave
-        })();
+      if (!createStudioHistoryStepRunner) {
+        return {
+          didRedo: false,
+          undoStack,
+          redoStack,
+          restoreEntry: null
+        };
       }
-
-      const nextHistoryState = SlideNextStudioHistory.stepStudioHistoryRedo(undoStack, redoStack);
-      if (!nextHistoryState.didRedo) return;
-
-      undoStack = nextHistoryState.undoStack;
-      redoStack = nextHistoryState.redoStack;
-      restoreFrameFromHistoryEntry(nextHistoryState.restoreEntry);
-      updateHistoryButtons();
-      triggerAutoSave();
+      return createStudioHistoryStepRunner({
+        stepHistory: SlideNextStudioHistory.stepStudioHistoryRedo,
+        didStepKey: 'didRedo',
+        getUndoStack: () => undoStack,
+        getRedoStack: () => redoStack,
+        setUndoStack(nextUndoStack) {
+          undoStack = nextUndoStack;
+        },
+        setRedoStack(nextRedoStack) {
+          redoStack = nextRedoStack;
+        },
+        restoreHistoryEntry: restoreFrameFromHistoryEntry,
+        updateHistoryButtons,
+        triggerAutoSave
+      })();
     }
 
     function restoreFrameFromHistoryEntry(entry) {

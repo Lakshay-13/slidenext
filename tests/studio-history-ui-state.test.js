@@ -227,6 +227,42 @@ test('editorRedo reuses the shared history step runner when available', () => {
   assert.equal(delegatedArgs.triggerAutoSave, context.triggerAutoSave);
 });
 
+test('editor undo and redo fail closed when the shared history step runner is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const editorUndoSource = extractFunctionSource(
+    fileContent,
+    'function editorUndo() {',
+    '\n\n    function editorRedo() {'
+  );
+  const editorRedoSource = extractFunctionSource(
+    fileContent,
+    'function editorRedo() {',
+    '\n\n    function restoreFrameFromHistoryEntry(entry) {'
+  );
+  const context = {
+    redoStack: ['redo-entry'],
+    SlideNextStudioHistory: {},
+    undoStack: ['undo-entry']
+  };
+
+  vm.createContext(context);
+  vm.runInContext(editorUndoSource, context);
+  vm.runInContext(editorRedoSource, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(context.editorUndo())), {
+    didUndo: false,
+    undoStack: ['undo-entry'],
+    redoStack: ['redo-entry'],
+    restoreEntry: null
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(context.editorRedo())), {
+    didRedo: false,
+    undoStack: ['undo-entry'],
+    redoStack: ['redo-entry'],
+    restoreEntry: null
+  });
+});
+
 test('createHistoryEntry fails closed when the shared history entry builder is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createHistoryEntrySource = extractFunctionSource(
