@@ -1142,6 +1142,7 @@ test('resolveEditorPersistedDeckStateWithContent fails closed when the shared re
 test('resolveEditorPersistedDeckStateWithContent reuses the shared persisted-state content resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let delegatedArgs = null;
+  let resolverCreateCalls = 0;
   const context = {
     lastPersistedCanonicalDeck: null,
     lastPersistedDeckHtml: '<html>persisted-baseline</html>',
@@ -1149,6 +1150,7 @@ test('resolveEditorPersistedDeckStateWithContent reuses the shared persisted-sta
     SlideNextStudioEditorPersistence: {
       ...editorPersistence,
       createStudioPersistedDeckStateContentResolver(options = {}) {
+        resolverCreateCalls += 1;
         delegatedArgs = options;
         return (persistedDeckState) => persistedDeckState;
       }
@@ -1170,6 +1172,19 @@ test('resolveEditorPersistedDeckStateWithContent reuses the shared persisted-sta
       playbackState: null
     }
   );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveEditorPersistedDeckStateWithContent({
+      cleanHtml: '<html>second</html>',
+      canonicalDeck: { id: 'second' },
+      playbackState: null
+    }))),
+    {
+      cleanHtml: '<html>second</html>',
+      canonicalDeck: { id: 'second' },
+      playbackState: null
+    }
+  );
+  assert.equal(resolverCreateCalls, 1);
   assert.equal(delegatedArgs.readPersistedDeckState, context.getCurrentEditorPersistedDeckState);
   assert.equal(delegatedArgs.resolveWithContent, context.getCurrentEditorPersistedDeckState.resolveWithContent);
 });

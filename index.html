@@ -3743,21 +3743,22 @@
     };
 
     function resolveEditorPersistedDeckStateWithContent(persistedDeckState = getCurrentEditorPersistedDeckState()) {
-      const createStudioPersistedDeckStateContentResolver = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateContentResolver === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateContentResolver
-        : null;
-      if (createStudioPersistedDeckStateContentResolver) {
-        return createStudioPersistedDeckStateContentResolver({
+      if (typeof resolveEditorPersistedDeckStateWithContent.contentResolver !== 'function') {
+        const createStudioPersistedDeckStateContentResolver = (
+          typeof SlideNextStudioEditorPersistence !== 'undefined'
+          && SlideNextStudioEditorPersistence
+          && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateContentResolver === 'function'
+        )
+          ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateContentResolver
+          : null;
+        if (!createStudioPersistedDeckStateContentResolver) return null;
+        resolveEditorPersistedDeckStateWithContent.contentResolver = createStudioPersistedDeckStateContentResolver({
           readPersistedDeckState: getCurrentEditorPersistedDeckState,
           resolveWithContent: getCurrentEditorPersistedDeckState.resolveWithContent
-        })(persistedDeckState);
+        });
       }
-
-      return null;
+      if (typeof resolveEditorPersistedDeckStateWithContent.contentResolver !== 'function') return null;
+      return resolveEditorPersistedDeckStateWithContent.contentResolver(persistedDeckState);
     }
 
     function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {
