@@ -210,6 +210,42 @@ test('updateZoomActionState enables zoom controls only when the iframe has a liv
   );
 });
 
+test('updateZoomActionState delegates toolbar rendering to the shared deck view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateZoomActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateZoomActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateWallpaperActionState(doc = getIframeDoc()) {'
+  );
+  const doc = { activeSlide: {} };
+  const actionState = { canUseZoomControls: true };
+  const calls = [];
+  const context = {
+    resolveCurrentStudioZoomActionState(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return actionState;
+    },
+    SlideNextStudioDeckView: {
+      syncStudioZoomToolbarActionState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateZoomActionStateSource, context);
+
+  assert.equal(context.updateZoomActionState(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.deepEqual(calls[0].actionState, actionState);
+});
+
 test('zoom helpers no-op safely when zoom readiness is disabled and still tolerate a missing zoom select', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const zoomInSource = extractFunctionSource(

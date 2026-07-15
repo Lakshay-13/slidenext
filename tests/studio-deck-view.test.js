@@ -415,6 +415,27 @@ test('resolveStudioZoomActionState derives zoom readiness from the active slide 
   );
 });
 
+test('syncStudioZoomToolbarActionState resolves and renders zoom controls in one shared operation', () => {
+  const controls = {
+    zoomOutBtn: { disabled: true },
+    zoomSelect: { disabled: true },
+    zoomInBtn: { disabled: true }
+  };
+
+  assert.equal(deckView.syncStudioZoomToolbarActionState({
+    documentRef: {
+      getElementById(id) {
+        return controls[id] || null;
+      }
+    },
+    doc: { activeSlide: {} },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    }
+  }), true);
+  assert.deepEqual(Object.values(controls).map((control) => control.disabled), [false, false, false]);
+});
+
 test('resolveStudioInsertionActionState derives slide insertion readiness from the active slide and slide container resolvers', () => {
   assert.deepEqual(
     deckView.resolveStudioInsertionActionState(null),

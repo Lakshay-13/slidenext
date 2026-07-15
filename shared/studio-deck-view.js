@@ -170,6 +170,27 @@
     };
   }
 
+  function renderStudioZoomToolbarActionState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    const canUseZoomControls = !!options.canUseZoomControls;
+    ['zoomOutBtn', 'zoomSelect', 'zoomInBtn'].forEach((id) => {
+      const control = documentRef.getElementById(id);
+      if (control) control.disabled = !canUseZoomControls;
+    });
+    return true;
+  }
+
+  function syncStudioZoomToolbarActionState(options = {}) {
+    const actionState = options.actionState || resolveStudioZoomActionState(options.doc, {
+      getActiveSlide: options.getActiveSlide
+    });
+    return renderStudioZoomToolbarActionState({
+      documentRef: options.documentRef,
+      ...actionState
+    });
+  }
+
   function resolveStudioInsertionActionState(doc, options = {}) {
     const getActiveSlide = typeof options.getActiveSlide === 'function'
       ? options.getActiveSlide
@@ -927,6 +948,8 @@
     createStudioDeckRenderOptions,
     createStudioDeckViewSharedOptions,
     resolveStudioZoomActionState,
+    renderStudioZoomToolbarActionState,
+    syncStudioZoomToolbarActionState,
     resolveStudioInsertionActionState,
     resolveStudioWallpaperActionState,
     resolveStudioLiveActiveSlide,
