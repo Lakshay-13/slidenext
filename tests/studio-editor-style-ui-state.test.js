@@ -958,8 +958,20 @@ test('applySelectedElementStyle forwards a reversible text property transaction'
     textContent: 'Before'
   };
   const historyCalls = [];
+  const sourceDeck = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'node-1',
+        text: 'Before',
+        html: '<div>Before</div>',
+        children: [{ id: 'child-1', text: 'Nested' }]
+      }]
+    }]
+  });
   const context = {
     SlideNextStudioEditorMutation: studioMutation,
+    SlideNextCanonicalDeck: canonicalDeckModel,
     SlideNextStudioEditorStyle: styleState,
     SlideNextStudioEditorTransaction: studioTransaction,
     selectedElements: [element],
@@ -971,6 +983,9 @@ test('applySelectedElementStyle forwards a reversible text property transaction'
     },
     getIframeDoc() {
       return {};
+    },
+    buildEditorCanonicalDeck() {
+      return sourceDeck;
     },
     isElementLocked() {
       return false;
@@ -1003,5 +1018,17 @@ test('applySelectedElementStyle forwards a reversible text property transaction'
       before: 'Before',
       after: 'After'
     }]
+  }, {
+    ...sourceDeck,
+    slides: [{
+      ...sourceDeck.slides[0],
+      nodes: [{
+        ...sourceDeck.slides[0].nodes[0],
+        text: 'After',
+        html: '',
+        children: []
+      }]
+    }]
   }]]);
+  assert.equal(sourceDeck.slides[0].nodes[0].text, 'Before');
 });

@@ -5772,7 +5772,12 @@
         && typeof canonicalDeckApi.updateCanonicalNodeLayout === 'function'
         ? canonicalDeckApi.updateCanonicalNodeLayout
         : null;
-      const canonicalDeckBeforeMutation = updateCanonicalNodeLayout
+      const updateCanonicalNodeText = prop === 'text'
+        && canonicalDeckApi
+        && typeof canonicalDeckApi.updateCanonicalNodeText === 'function'
+        ? canonicalDeckApi.updateCanonicalNodeText
+        : null;
+      const canonicalDeckBeforeMutation = (updateCanonicalNodeLayout || updateCanonicalNodeText)
         && typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(doc)
         : null;
@@ -5827,7 +5832,15 @@
         : [];
       const canonicalDeck = updateCanonicalNodeLayout
         ? updateCanonicalNodeLayout(canonicalDeckBeforeMutation, canonicalNodeLayouts)
-        : null;
+        : updateCanonicalNodeText
+          ? updateCanonicalNodeText(canonicalDeckBeforeMutation, [{
+              id: getStyleElementId(styleMutationPlan.selection[0]),
+              text: styleMutationPlan.selection[0]
+                && typeof styleMutationPlan.selection[0].textContent === 'string'
+                ? styleMutationPlan.selection[0].textContent
+                : `${val}`
+            }])
+          : null;
       finalizeEditorDeckMutation(styleMutationPlan.versionLabel, {
         syncSelectionOverlay: true,
         refreshLayersList: prop === 'zIndex',

@@ -183,6 +183,52 @@ test('updateCanonicalNodeLayout returns null for no-op or invalid layout updates
   ]), null);
 });
 
+test('updateCanonicalNodeText immutably replaces source HTML and children after text edits', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'node-1',
+        text: 'Before',
+        html: '<div>Before</div>',
+        children: [{ id: 'child-1', text: 'Nested' }]
+      }]
+    }]
+  });
+
+  const updatedDeck = canonicalDeck.updateCanonicalNodeText(sourceDeck, [{
+    id: 'node-1',
+    text: 'After'
+  }]);
+
+  assert.ok(canonicalDeck.isCanonicalDeck(updatedDeck));
+  assert.equal(sourceDeck.slides[0].nodes[0].text, 'Before');
+  assert.equal(sourceDeck.slides[0].nodes[0].html, '<div>Before</div>');
+  assert.equal(sourceDeck.slides[0].nodes[0].children.length, 1);
+  assert.equal(updatedDeck.slides[0].nodes[0].text, 'After');
+  assert.equal(updatedDeck.slides[0].nodes[0].html, '');
+  assert.deepEqual(updatedDeck.slides[0].nodes[0].children, []);
+});
+
+test('updateCanonicalNodeText returns null for no-op or invalid text updates', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', text: 'Same' }]
+    }]
+  });
+
+  assert.equal(canonicalDeck.updateCanonicalNodeText(deck, [
+    { id: 'node-1', text: 'Same' }
+  ]), null);
+  assert.equal(canonicalDeck.updateCanonicalNodeText(deck, [
+    { id: 'missing', text: 'New' }
+  ]), null);
+  assert.equal(canonicalDeck.updateCanonicalNodeText(deck, [
+    { id: 'node-1', text: 42 }
+  ]), null);
+});
+
 test('updateCanonicalSlideBackground immutably updates selected slide backgrounds', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{

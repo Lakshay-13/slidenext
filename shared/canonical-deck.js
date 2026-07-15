@@ -412,6 +412,66 @@
     });
   }
 
+  function updateCanonicalNodeText(deckLike, nodeTexts = []) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const textUpdates = new Map();
+    (Array.isArray(nodeTexts) ? nodeTexts : []).forEach((entry) => {
+      const nodeId = normalizeString(entry && entry.id).trim();
+      if (!nodeId || typeof (entry && entry.text) !== 'string') return;
+      textUpdates.set(nodeId, entry.text);
+    });
+    if (!isCanonicalDeck(deck) || textUpdates.size === 0) {
+      return null;
+    }
+
+    let didChange = false;
+    function updateNodes(nodes = []) {
+      return nodes.map((node, index) => {
+        if (!node || typeof node !== 'object') return node;
+        let nextNode = node;
+        let nodeChanged = false;
+        const currentChildren = Array.isArray(node.children) ? node.children : [];
+        const nextChildren = updateNodes(currentChildren);
+        if (nextChildren.some((child, childIndex) => child !== currentChildren[childIndex])) {
+          nextNode = {
+            ...nextNode,
+            children: nextChildren
+          };
+          nodeChanged = true;
+        }
+
+        if (textUpdates.has(node.id)) {
+          const nextText = textUpdates.get(node.id);
+          if (node.text !== nextText || node.html !== '' || nextChildren.length > 0) {
+            nextNode = {
+              ...nextNode,
+              text: nextText,
+              html: '',
+              children: []
+            };
+            nodeChanged = true;
+          }
+        }
+
+        if (!nodeChanged) return node;
+        didChange = true;
+        return createCanonicalNode(nextNode, index);
+      });
+    }
+
+    const nextSlides = deck.slides.map((slide) => ({
+      ...slide,
+      nodes: updateNodes(Array.isArray(slide.nodes) ? slide.nodes : [])
+    }));
+    if (!didChange) return null;
+    return createCanonicalDeck({
+      ...deck,
+      slides: nextSlides
+    });
+  }
+
   function updateCanonicalSlideBackground(deckLike, slideIds = [], background = '') {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -463,6 +523,7 @@
     appendCanonicalSlide,
     updateCanonicalNodeVisibility,
     updateCanonicalNodeLayout,
+    updateCanonicalNodeText,
     updateCanonicalSlideBackground
   };
 });
