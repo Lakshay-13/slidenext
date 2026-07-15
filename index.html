@@ -5400,9 +5400,18 @@
         && typeof canonicalRemovalApi.buildStudioCanonicalRemovalDeck === 'function'
         ? canonicalRemovalApi.buildStudioCanonicalRemovalDeck
         : null;
-      const canonicalDeckBeforeRemoval = buildCanonicalRemovalDeck
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(doc)
+      const buildCanonicalRemovalBaseline = canonicalRemovalApi
+        && typeof canonicalRemovalApi.buildStudioCanonicalRemovalBaseline === 'function'
+        ? canonicalRemovalApi.buildStudioCanonicalRemovalBaseline
+        : null;
+      const canonicalDeckBeforeRemoval = buildCanonicalRemovalBaseline
+        ? buildCanonicalRemovalBaseline({
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+            sourceDocument: doc
+          })
         : null;
       const mutation = applyEditorRemovalMutationWithTransaction(removalActionState.selection, {
         getElementId: getRemovalElementId,
