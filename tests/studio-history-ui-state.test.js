@@ -411,11 +411,9 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
     'buildEditorCanonicalDeck',
     'getEditorHistoryOptions',
     'getPersistedActiveSlideId',
-    'getEditorHistoryOptions',
-    'buildStudioHistoryFrameHtml'
+    'getEditorHistoryOptions'
   ]);
   assert.equal(calls[1][1], null);
-  assert.equal(calls[5][1], null);
   assert.equal(entry.html, '');
   assert.equal(entry.activeSlideId, 'slide-2');
   assert.equal(Array.isArray(entry.selectedElementIds), true);
@@ -746,8 +744,8 @@ test('buildHistoryFrameHtml forwards sanitizer overrides into getEditorHistoryOp
   };
   const context = {
     SlideNextStudioHistory: {
-      buildStudioHistoryFrameHtml(nextDoc, options) {
-        calls.push(['buildStudioHistoryFrameHtml', nextDoc, options]);
+      buildStudioHistoryCaptureHtml(nextDoc, options) {
+        calls.push(['buildStudioHistoryCaptureHtml', nextDoc, options]);
         return '<section>history</section>';
       }
     },
@@ -776,17 +774,26 @@ test('buildHistoryFrameHtml forwards sanitizer overrides into getEditorHistoryOp
   });
 
   assert.equal(html, '<section>history</section>');
-  assert.deepEqual(calls, [
-    ['getEditorHistoryOptions', {
-      chromeNodeIds: ['editorHistoryOverlay'],
-      sanitizeFrameRoot: sanitizer,
-      canonicalDeck
-    }],
-    ['buildStudioHistoryFrameHtml', doc, {
-      chromeNodeIds: ['editorHistoryOverlay'],
-      sanitizeFrameRoot: sanitizer
-    }]
+  assert.deepEqual(calls.map(([name]) => name), [
+    'getEditorHistoryOptions',
+    'buildStudioHistoryCaptureHtml'
   ]);
+  assert.deepEqual(calls[0][1], {
+    chromeNodeIds: ['editorHistoryOverlay'],
+    sanitizeFrameRoot: sanitizer,
+    canonicalDeck
+  });
+  assert.equal(calls[1][0], 'buildStudioHistoryCaptureHtml');
+  assert.equal(calls[1][1], doc);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(calls[1][2].frameOptions)),
+    {
+      chromeNodeIds: ['editorHistoryOverlay']
+    }
+  );
+  assert.equal(calls[1][2].frameOptions.sanitizeFrameRoot, sanitizer);
+  assert.equal(calls[1][2].canonicalDeck, canonicalDeck);
+  assert.equal(typeof calls[1][2].buildFallbackHtml, 'function');
 });
 
 test('buildHistoryFrameHtml reuses the shared history capture helper when available', () => {
