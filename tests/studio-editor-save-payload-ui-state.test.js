@@ -1823,6 +1823,37 @@ test('resolveEditorReusablePersistedHtml reuses the shared reusable-html resolve
   assert.equal(delegatedArgs.isPersistedCanonicalDeck, context.SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck);
 });
 
+test('resolveEditorReusablePersistedHtml fails closed when the shared helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorReusablePersistedHtmlSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const context = {};
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorReusablePersistedHtmlSource, context);
+
+  assert.equal(
+    context.resolveEditorReusablePersistedHtml({
+      cleanHtml: '<html>persisted-baseline</html>',
+      canonicalDeck
+    }, {
+      canonicalDeck,
+      persistedHtml: '<html>persisted-baseline</html>',
+      persistedCanonicalDeck: canonicalDeck
+    }),
+    ''
+  );
+});
+
 test('resolveEditorMetadataPersistenceOptions delegates through the shared metadata persistence helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(

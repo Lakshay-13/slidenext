@@ -8315,49 +8315,7 @@
         });
       }
 
-      const nextPersistedDeckState = persistedDeckState && typeof persistedDeckState === 'object'
-        ? persistedDeckState
-        : {};
-      const persistedHtml = typeof options.persistedHtml === 'string'
-        ? options.persistedHtml
-        : (typeof nextPersistedDeckState.cleanHtml === 'string'
-            ? nextPersistedDeckState.cleanHtml
-            : '');
-      const canonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
-        ? options.canonicalDeck
-        : null;
-      const persistedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'persistedCanonicalDeck')
-        ? options.persistedCanonicalDeck
-        : (nextPersistedDeckState.canonicalDeck || null);
-      const resolveStudioPersistedHtmlReuse = typeof options.resolveStudioPersistedHtmlReuse === 'function'
-        ? options.resolveStudioPersistedHtmlReuse
-        : SlideNextStudioEditorPersistence
-          && typeof SlideNextStudioEditorPersistence.resolveStudioPersistedHtmlReuse === 'function'
-          ? SlideNextStudioEditorPersistence.resolveStudioPersistedHtmlReuse
-          : null;
-      const isPersistedCanonicalDeck = typeof options.isPersistedCanonicalDeck === 'function'
-        ? options.isPersistedCanonicalDeck
-        : SlideNextStudioEditorPersistence
-          && typeof SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck === 'function'
-          ? SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck
-          : (nextCanonicalDeck, nextPersistedCanonicalDeck) => {
-              if (!nextCanonicalDeck) {
-                return true;
-              }
-              if (!nextPersistedCanonicalDeck) {
-                return false;
-              }
-              try {
-                return JSON.stringify(nextCanonicalDeck) === JSON.stringify(nextPersistedCanonicalDeck);
-              } catch (err) {
-                return false;
-              }
-            };
-      return resolveStudioPersistedHtmlReuse
-        ? resolveStudioPersistedHtmlReuse(nextPersistedDeckState, { canonicalDeck })
-        : (persistedHtml.trim() && isPersistedCanonicalDeck(canonicalDeck, persistedCanonicalDeck)
-            ? persistedHtml
-            : '');
+      return '';
     }
 
     function resolveEditorMetadataPersistenceOptions(options = {}) {
