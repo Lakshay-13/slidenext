@@ -5268,6 +5268,21 @@
     }
 
     function updateClipboardActionState(doc = getIframeDoc()) {
+      const syncStudioClipboardToolbarState = (
+        SlideNextStudioEditorClipboard
+        && typeof SlideNextStudioEditorClipboard.syncStudioClipboardToolbarState === 'function'
+      )
+        ? SlideNextStudioEditorClipboard.syncStudioClipboardToolbarState
+        : null;
+      if (syncStudioClipboardToolbarState) {
+        return syncStudioClipboardToolbarState({
+          documentRef: document,
+          elements: selectedElements,
+          clipboard: editorClipboard,
+          isLocked: isElementLocked,
+          canMutateDeck: () => !!getActiveSlide(doc)
+        });
+      }
       const buildStudioClipboardToolbarState = (
         SlideNextStudioEditorClipboard
         && typeof SlideNextStudioEditorClipboard.buildStudioClipboardToolbarState === 'function'

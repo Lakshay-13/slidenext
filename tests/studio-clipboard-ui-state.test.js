@@ -636,6 +636,47 @@ test('updateClipboardActionState reuses the shared clipboard toolbar helper when
   }]);
 });
 
+test('updateClipboardActionState delegates toolbar state assembly to the shared clipboard view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateClipboardActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateClipboardActionState(doc = getIframeDoc()) {',
+    '\n\n    function sanitizeDuplicatedSubtree(root) {'
+  );
+  const selectedElement = { id: 'selected' };
+  const clipboard = { items: [{ id: 'clipboard-item' }], pasteCount: 0 };
+  const calls = [];
+  const context = {
+    selectedElements: [selectedElement],
+    editorClipboard: clipboard,
+    isElementLocked() {
+      return false;
+    },
+    SlideNextStudioEditorClipboard: {
+      syncStudioClipboardToolbarState(options) {
+        calls.push(options);
+        return 'delegated';
+      }
+    },
+    document: {},
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateClipboardActionStateSource, context);
+
+  const doc = { activeSlide: {} };
+  assert.equal(context.updateClipboardActionState(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, context.document);
+  assert.deepEqual(calls[0].elements, [selectedElement]);
+  assert.equal(calls[0].clipboard, clipboard);
+  assert.equal(calls[0].isLocked, context.isElementLocked);
+  assert.equal(calls[0].canMutateDeck(), true);
+});
+
 test('copySelectedElements returns false and refreshes clipboard controls when payload build yields no items', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);

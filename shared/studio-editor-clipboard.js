@@ -100,6 +100,21 @@
     return true;
   }
 
+  function syncStudioClipboardToolbarState(options = {}) {
+    const actionState = buildStudioClipboardToolbarState(
+      options.elements,
+      options.clipboard,
+      {
+        isLocked: options.isLocked,
+        canMutateDeck: options.canMutateDeck
+      }
+    );
+    return renderStudioClipboardToolbarState({
+      documentRef: options.documentRef,
+      actionState
+    });
+  }
+
   function buildStudioClipboardSelectionMutationPlan(elements = [], clipboard = null, options = {}) {
     const clipboardMutationPlan = buildStudioClipboardMutationPlan(elements, clipboard, options);
     const buildPayloadItems = typeof options.buildPayloadItems === 'function'
@@ -397,6 +412,7 @@
     buildStudioClipboardActionState,
     buildStudioClipboardToolbarState,
     renderStudioClipboardToolbarState,
+    syncStudioClipboardToolbarState,
     buildStudioClipboardSelectionMutationPlan,
     buildStudioClipboardMutationPlan,
     buildStudioClipboardPayloadItem,
