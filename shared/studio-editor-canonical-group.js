@@ -48,12 +48,9 @@
     const importElementToCanonicalNode = typeof options.importElementToCanonicalNode === 'function'
       ? options.importElementToCanonicalNode
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
-      : (buildCanonicalDeck ? buildCanonicalDeck() : null);
+      : buildStudioCanonicalGroupBaseline(options);
     const groupElement = options.groupElement;
     const slideId = typeof options.slideId === 'string' ? options.slideId : '';
     const parentNodeId = typeof options.parentNodeId === 'string' ? options.parentNodeId : '';
