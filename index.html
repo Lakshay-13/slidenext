@@ -5061,19 +5061,13 @@
       return true;
     }
 
-    function toggleSelectedElementsLockState() {
-      const doc = getIframeDoc();
-      const lockMutationPlan = SlideNextStudioEditorLockState.buildStudioLockMutationPlan(selectedElements, {
-        isLocked: isElementLocked,
-        canMutateDeck: () => !!getActiveSlide(doc)
-      });
-      if (!lockMutationPlan.didChange) return false;
-      const applyStudioLockMutation = (
-        typeof SlideNextStudioEditorLockState !== 'undefined'
-        && SlideNextStudioEditorLockState
-        && typeof SlideNextStudioEditorLockState.applyStudioLockMutation === 'function'
-      )
-        ? SlideNextStudioEditorLockState.applyStudioLockMutation
+    function applyEditorLockMutationWithTransaction(selection, shouldLock, options = {}) {
+      const lockApi = typeof SlideNextStudioEditorLockState !== 'undefined'
+        ? SlideNextStudioEditorLockState
+        : null;
+      const applyStudioLockMutation = lockApi
+        && typeof lockApi.applyStudioLockMutation === 'function'
+        ? lockApi.applyStudioLockMutation
         : null;
       const createStudioDatasetTransaction = (
         typeof SlideNextStudioEditorTransaction !== 'undefined'
@@ -5082,34 +5076,48 @@
       )
         ? SlideNextStudioEditorTransaction.createStudioDatasetTransaction
         : null;
-      const getLockElementId = (element) => {
-        if (typeof assignEditorElementId === 'function') {
-          return assignEditorElementId(element);
-        }
-        return element && element.dataset && element.dataset.editorId;
-      };
+      const isLocked = typeof options.isLocked === 'function'
+        ? options.isLocked
+        : () => false;
+      const setLocked = typeof options.setLocked === 'function'
+        ? options.setLocked
+        : (element, nextShouldLock) => {
+            if (typeof setElementLockedState === 'function') {
+              setElementLockedState(element, nextShouldLock);
+            }
+          };
+      const getElementId = typeof options.getElementId === 'function'
+        ? options.getElementId
+        : (element) => {
+            if (typeof assignEditorElementId === 'function') {
+              return assignEditorElementId(element);
+            }
+            return element && element.dataset && element.dataset.editorId;
+          };
       if (applyStudioLockMutation) {
-        const mutation = applyStudioLockMutation(lockMutationPlan.selection, lockMutationPlan.shouldLock, {
-          isLocked: isElementLocked,
-          setLocked: SlideNextStudioElementState.setStudioElementLockedState,
+        const mutation = applyStudioLockMutation(selection, shouldLock, {
+          isLocked,
+          setLocked,
           createDatasetTransaction: createStudioDatasetTransaction,
-          getElementId: getLockElementId
+          getElementId
         });
-        if (!mutation.didApply) return false;
-        return finalizeSelectionToggleMutation(lockMutationPlan.versionLabel, {
-          transaction: mutation.transaction
-        });
+        return mutation && typeof mutation === 'object'
+          ? mutation
+          : { didApply: false, transaction: null };
       }
+
       const transactionItems = createStudioDatasetTransaction
-        ? lockMutationPlan.selection
-            .filter((el) => el && el.isConnected && isElementLocked(el) !== lockMutationPlan.shouldLock)
-            .map((el) => {
-              getLockElementId(el);
+        ? selection
+            .filter((element) => element && element.isConnected && isLocked(element) !== shouldLock)
+            .map((element) => {
+              getElementId(element);
               return {
-                element: el,
+                element,
                 property: 'editorLocked',
-                before: el.dataset && el.dataset.editorLocked ? el.dataset.editorLocked : '',
-                after: lockMutationPlan.shouldLock ? 'true' : ''
+                before: element.dataset && element.dataset.editorLocked
+                  ? element.dataset.editorLocked
+                  : '',
+                after: shouldLock ? 'true' : ''
               };
             })
         : [];
@@ -5117,15 +5125,38 @@
         ? createStudioDatasetTransaction(transactionItems)
         : null;
       let changedCount = 0;
-      lockMutationPlan.selection.forEach(el => {
-        if (!el || !el.isConnected) return;
-        if (isElementLocked(el) === lockMutationPlan.shouldLock) return;
-        SlideNextStudioElementState.setStudioElementLockedState(el, lockMutationPlan.shouldLock);
+      selection.forEach((element) => {
+        if (!element || !element.isConnected || isLocked(element) === shouldLock) return;
+        setLocked(element, shouldLock);
         changedCount += 1;
       });
-      if (changedCount === 0) return false;
+      return {
+        didApply: changedCount > 0,
+        transaction: changedCount > 0 ? transaction : null
+      };
+    }
+
+    function toggleSelectedElementsLockState() {
+      const doc = getIframeDoc();
+      const lockMutationPlan = SlideNextStudioEditorLockState.buildStudioLockMutationPlan(selectedElements, {
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(doc)
+      });
+      if (!lockMutationPlan.didChange) return false;
+      const getLockElementId = (element) => {
+        if (typeof assignEditorElementId === 'function') {
+          return assignEditorElementId(element);
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
+      const mutation = applyEditorLockMutationWithTransaction(lockMutationPlan.selection, lockMutationPlan.shouldLock, {
+        isLocked: isElementLocked,
+        setLocked: SlideNextStudioElementState.setStudioElementLockedState,
+        getElementId: getLockElementId
+      });
+      if (!mutation.didApply) return false;
       return finalizeSelectionToggleMutation(lockMutationPlan.versionLabel, {
-        transaction
+        transaction: mutation.transaction
       });
     }
 

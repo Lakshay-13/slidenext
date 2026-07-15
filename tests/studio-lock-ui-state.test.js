@@ -43,6 +43,15 @@ function loadFinalizeSelectionToggleMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadLockMutationHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorLockMutationWithTransaction(selection, shouldLock, options = {}) {',
+    'function toggleSelectedElementsLockState() {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 test('syncSelectionUiAfterMutation refreshes selection classes before syncing selection chrome', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectedElements = [{ id: 'node-1' }];
@@ -337,6 +346,7 @@ test('toggleSelectedElementsLockState returns false and skips persistence when p
   loadSyncSelectionUiAfterMutation(fileContent, context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadLockMutationHelper(fileContent, context);
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
   assert.equal(context.toggleSelectedElementsLockState(), false);
@@ -418,6 +428,7 @@ test('toggleSelectedElementsLockState returns true after locking live targets an
   loadSyncSelectionUiAfterMutation(fileContent, context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
+  loadLockMutationHelper(fileContent, context);
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
   assert.equal(context.toggleSelectedElementsLockState(), true);
@@ -495,6 +506,7 @@ test('toggleSelectedElementsLockState captures a reversible dataset transaction'
   vm.createContext(context);
   loadSyncSelectionUiAfterMutation(fileContent, context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
+  loadLockMutationHelper(fileContent, context);
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
   assert.equal(context.toggleSelectedElementsLockState(), true);
@@ -563,6 +575,7 @@ test('toggleSelectedElementsLockState delegates lock application to the shared l
 
   vm.createContext(context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
+  loadLockMutationHelper(fileContent, context);
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
   assert.equal(context.toggleSelectedElementsLockState(), true);
