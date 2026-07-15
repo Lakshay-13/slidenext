@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorSession = require('../shared/studio-editor-session.js');
+const deckView = require('../shared/studio-deck-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -16,6 +17,23 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
   return fileContent.slice(start, end);
+}
+
+function createEditorDeckViewSharedOptionsForTest(context, doc) {
+  return deckView.createStudioDeckViewSharedOptions(doc, {
+    currentSlideIndex: context.currentSlideIndex,
+    getPersistedActiveSlideId: () => typeof context.getPersistedActiveSlideId === 'function'
+      ? context.getPersistedActiveSlideId()
+      : '',
+    buildCanonicalDeck: (nextDoc) => typeof context.buildEditorCanonicalDeck === 'function'
+      ? context.buildEditorCanonicalDeck(nextDoc)
+      : null,
+    resolveCanonicalDeckOverride: (nextCanonicalDeck) => nextCanonicalDeck,
+    resolveLiveActiveSlideId: (nextDoc) => typeof context.resolveEditorLiveActiveSlideId === 'function'
+      ? context.resolveEditorLiveActiveSlideId(nextDoc)
+      : '',
+    isCanonicalDeck: (deck) => !!deck && Array.isArray(deck.slides)
+  });
 }
 
 function loadCreateCurrentStudioSessionStateReaders(fileContent, context) {
@@ -588,6 +606,9 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
   const fetchCalls = [];
   const context = {
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextStudioDeckView: {
+      resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId
+    },
     SlideNextDeckPersistence: {
       capturePersistedDeckPlaybackState(nextDoc, options) {
         assert.equal(nextDoc, iframeDoc);
@@ -598,6 +619,9 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
           slideCounterText: '2 / 5'
         };
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     SlideNextStudioEditorPersistence: {
       ...editorPersistence,

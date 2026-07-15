@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const studioHistory = require('../shared/studio-history.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
+const deckView = require('../shared/studio-deck-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -15,6 +16,21 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
   return fileContent.slice(start, end);
+}
+
+function createEditorDeckViewSharedOptionsForTest(context, doc) {
+  return deckView.createStudioDeckViewSharedOptions(doc, {
+    currentSlideIndex: context.currentSlideIndex,
+    getPersistedActiveSlideId: () => typeof context.getPersistedActiveSlideId === 'function'
+      ? context.getPersistedActiveSlideId()
+      : '',
+    buildCanonicalDeck: (nextDoc) => typeof context.buildEditorCanonicalDeck === 'function'
+      ? context.buildEditorCanonicalDeck(nextDoc)
+      : null,
+    resolveCanonicalDeckOverride: (nextCanonicalDeck) => nextCanonicalDeck,
+    resolveLiveActiveSlideId: () => '',
+    isCanonicalDeck: (deck) => !!deck && Array.isArray(deck.slides)
+  });
 }
 
 function loadSaveHistoryState(fileContent, context) {
@@ -314,6 +330,9 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
   };
   const calls = [];
   const context = {
+    SlideNextStudioDeckView: {
+      resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId
+    },
     SlideNextStudioHistory: {
       buildStudioHistoryFrameHtml(doc, options) {
         calls.push(['buildStudioHistoryFrameHtml', doc, options]);
@@ -355,6 +374,9 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
       calls.push(['getIframeDoc']);
       return null;
     },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
+    },
     resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
       calls.push(['resolveEditorFallbackCanonicalDeck', nextDoc, nextCanonicalDeck]);
       return nextCanonicalDeck;
@@ -376,17 +398,15 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
     'buildEditorCanonicalDeck',
     'getEditorHistoryOptions',
     'getPersistedActiveSlideId',
-    'resolveEditorFallbackCanonicalDeck',
     'createStudioHistoryEntry',
     'getEditorHistoryOptions',
     'buildStudioHistoryFrameHtml'
   ]);
   assert.equal(calls[1][1], null);
   assert.equal(calls[4][1], null);
-  assert.equal(calls[5][1], null);
-  assert.equal(calls[5][2].activeSlideId, 'slide-2');
-  assert.equal(Array.isArray(calls[5][2].selectedElementIds), true);
-  assert.equal(calls[5][2].selectedElementIds.length, 0);
+  assert.equal(calls[4][2].activeSlideId, 'slide-2');
+  assert.equal(Array.isArray(calls[4][2].selectedElementIds), true);
+  assert.equal(calls[4][2].selectedElementIds.length, 0);
   assert.equal(entry.html, '');
   assert.equal(entry.activeSlideId, 'slide-2');
   assert.equal(Array.isArray(entry.selectedElementIds), true);

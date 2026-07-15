@@ -3587,6 +3587,9 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when playback-st
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextStudioDeckView: {
+      resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId
+    },
     SlideNextDeckPersistence: {
       buildPersistableDeckHtml(nextDoc, options) {
         assert.equal(nextDoc, iframeDoc);
@@ -3608,6 +3611,9 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when playback-st
           slideCounterText: '2 / 5'
         };
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     buildEditorCanonicalDeck() {
       buildEditorCanonicalDeckCalls += 1;
@@ -3755,6 +3761,9 @@ test('capturePersistedDeckPlaybackState delegates fallback active slide resoluti
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextStudioDeckView: {
+      resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId
+    },
     SlideNextDeckPersistence: {
       capturePersistedDeckPlaybackState(nextDoc, options) {
         assert.equal(nextDoc, iframeDoc);
@@ -3773,6 +3782,9 @@ test('capturePersistedDeckPlaybackState delegates fallback active slide resoluti
           slideCounterText: nextPlaybackState.slideCounterText
         };
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
       return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
@@ -4072,6 +4084,9 @@ test('capturePersistedDeckPlaybackState falls back to the current session slide 
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextStudioDeckView: {
+      resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId
+    },
     SlideNextDeckPersistence: {
       capturePersistedDeckPlaybackState(nextDoc, options) {
         assert.equal(nextDoc, iframeDoc);
@@ -4082,6 +4097,9 @@ test('capturePersistedDeckPlaybackState falls back to the current session slide 
           slideCounterText: '2 / 5'
         };
       }
+    },
+    createEditorDeckViewSharedOptions(nextDoc) {
+      return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
     resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
       return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);

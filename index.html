@@ -1586,30 +1586,7 @@
         const deckViewSharedOptions = createEditorDeckViewSharedOptions(doc);
         return resolveStudioFallbackActiveSlideId(doc, canonicalDeck, deckViewSharedOptions);
       }
-
-      const persistedActiveSlideId = getPersistedActiveSlideId();
-      const nextCanonicalDeck = resolveEditorFallbackCanonicalDeck(doc, canonicalDeck);
-      if (doc) {
-        const liveActiveSlideId = resolveEditorLiveActiveSlideId(doc);
-        if (typeof liveActiveSlideId === 'string' && liveActiveSlideId.trim()) {
-          return liveActiveSlideId;
-        }
-        if (!nextCanonicalDeck) {
-          return persistedActiveSlideId;
-        }
-      }
-
-      const resolvedCanonicalDeck = nextCanonicalDeck || buildEditorCanonicalDeck(doc);
-      if (!resolvedCanonicalDeck || !Array.isArray(resolvedCanonicalDeck.slides) || resolvedCanonicalDeck.slides.length === 0) {
-        return persistedActiveSlideId;
-      }
-
-      const fallbackIndex = Number.isInteger(currentSlideIndex) ? currentSlideIndex : 0;
-      const safeIndex = Math.max(0, Math.min(fallbackIndex, resolvedCanonicalDeck.slides.length - 1));
-      const activeSlide = resolvedCanonicalDeck.slides[safeIndex];
-      return activeSlide && typeof activeSlide.id === 'string' && activeSlide.id.trim()
-        ? activeSlide.id
-        : persistedActiveSlideId;
+      return '';
     }
 
     function resolveEditorLiveActiveSlide(doc = getIframeDoc()) {
