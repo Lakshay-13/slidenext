@@ -231,6 +231,43 @@ test('buildMotionSelectionActionState reuses the shared nudge action helper when
   ]);
 });
 
+test('buildMotionSelectionActionState fails closed when the shared nudge helper is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = { activeSlide: { id: 'slide-1' } };
+  const context = {
+    SlideNextStudioEditorNudge: {},
+    getActiveSlide(currentDoc) {
+      return currentDoc && currentDoc.activeSlide ? currentDoc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getNudgeSelectionState() {
+      return {
+        canNudge: true,
+        selection: [{ id: 'node-1' }]
+      };
+    },
+    getSlideMetrics() {
+      return {
+        logicalWidth: 1920,
+        logicalHeight: 1080
+      };
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildMotionSelectionActionState(fileContent, context);
+
+  const motionActionState = context.buildMotionSelectionActionState();
+
+  assert.equal(motionActionState.doc, doc);
+  assert.equal(motionActionState.slide, doc.activeSlide);
+  assert.equal(motionActionState.canNudge, false);
+  assert.equal(motionActionState.canResolveNudgeLayout, false);
+  assert.deepEqual(JSON.parse(JSON.stringify(motionActionState.nudgeLayoutItems)), []);
+});
+
 test('updateMotionActionState enables nudge controls only when the iframe has a live active slide and resolvable geometry', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateMotionActionStateSource = extractFunctionSource(
@@ -371,6 +408,9 @@ test('nudgeSelectedElements returns false and refreshes motion controls when sel
   const slide = { id: 'slide-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorNudge: {
+      buildStudioNudgeActionState: studioNudge.buildStudioNudgeActionState
+    },
     SlideNextStudioEditorDom: {
       getStudioClosestPositionedAncestor() {
         return slide;
@@ -507,6 +547,7 @@ test('nudgeSelectedElements persists the moved selection through the shared muta
       }
     },
     SlideNextStudioEditorNudge: {
+      buildStudioNudgeActionState: studioNudge.buildStudioNudgeActionState,
       buildStudioNudgedLayout(layoutItems, delta, slideBounds) {
         calls.push(['buildStudioNudgedLayout', layoutItems, delta, slideBounds]);
         return {

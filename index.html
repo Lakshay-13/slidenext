@@ -4446,31 +4446,15 @@
           }
         });
       }
-
-      const slideBounds = slideMetrics
-        ? {
-            width: slideMetrics.logicalWidth,
-            height: slideMetrics.logicalHeight
-          }
-        : null;
-      const nudgeLayoutItems = resolvedDoc && slide && nudgeSelectionState.canNudge
-        ? SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(nudgeSelectionState.selection, {
-            getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
-            getRectOnSlide,
-            slideMetrics
-          })
-        : [];
-      const canResolveNudgeLayout = nudgeLayoutItems.length === nudgeSelectionState.selection.length
-        && nudgeLayoutItems.length > 0;
       return {
         doc: resolvedDoc,
         slide,
         slideMetrics,
-        slideBounds,
+        slideBounds: null,
         nudgeSelectionState,
-        nudgeLayoutItems,
-        canResolveNudgeLayout,
-        canNudge: !!(resolvedDoc && slide && nudgeSelectionState.canNudge && canResolveNudgeLayout)
+        nudgeLayoutItems: [],
+        canResolveNudgeLayout: false,
+        canNudge: false
       };
     }
 
