@@ -80,6 +80,7 @@ test('attachStudioMarqueePointerHandlers binds the shared marquee lifecycle', ()
   assert.equal(bodyListeners.get('pointermove').handler, handlers.handlePointerMove);
   assert.equal(bodyListeners.get('pointerup').handler, handlers.handlePointerUp);
   assert.equal(bodyListeners.get('pointercancel').handler, handlers.handlePointerCancel);
+  assert.equal(bodyListeners.get('lostpointercapture').handler, handlers.handlePointerCancel);
   assert.deepEqual(windowListeners.get('blur'), {
     handler: handlers.handleWindowBlur,
     capture: true
@@ -116,6 +117,7 @@ test('attachStudioPointerHandlers optionally prevents native drag while binding 
   assert.equal(events.attachStudioPointerHandlers(doc, handlers, { preventNativeDrag: true }), true);
   assert.equal(documentListeners.get('dragstart').capture, true);
   assert.equal(bodyListeners.get('pointerdown').handler, handlers.handlePointerDown);
+  assert.equal(bodyListeners.get('lostpointercapture').handler, handlers.handlePointerCancel);
   assert.deepEqual(windowListeners.get('blur'), {
     handler: handlers.handleWindowBlur,
     capture: true
