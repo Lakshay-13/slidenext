@@ -73,6 +73,28 @@ test('renderStudioInspectorSelectionSummary shows element inspector and selectio
   assert.equal(nodes.elementInspectorPanel.classList.contains('hidden'), false);
 });
 
+test('renderStudioInspectorAlignmentState highlights only the selected alignment control', () => {
+  const nodes = {
+    alignLeftBtn: { className: '' },
+    alignCenterBtn: { className: '' },
+    alignRightBtn: { className: '' },
+    alignJustifyBtn: { className: '' }
+  };
+
+  assert.equal(inspectorView.renderStudioInspectorAlignmentState({
+    documentRef: {
+      getElementById(id) {
+        return nodes[id] || null;
+      }
+    },
+    align: 'center'
+  }), true);
+  assert.match(nodes.alignCenterBtn.className, /bg-\[#7028d0\]/);
+  assert.match(nodes.alignLeftBtn.className, /hover:bg-white\/5/);
+  assert.match(nodes.alignRightBtn.className, /hover:bg-white\/5/);
+  assert.match(nodes.alignJustifyBtn.className, /hover:bg-white\/5/);
+});
+
 test('syncStudioInspectorContentControls switches between image and text controls', () => {
   const classLists = {
     imageGroup: createClassList(),

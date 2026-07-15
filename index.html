@@ -5009,15 +5009,13 @@
     }
 
     function highlightAlignButton(align) {
-      const alignBtns = ['Left', 'Center', 'Right', 'Justify'];
-      alignBtns.forEach(btn => {
-        const el = document.getElementById(`align${btn}Btn`);
-        if (!el) return;
-        if (btn.toLowerCase() === align) {
-          el.className = 'py-1 flex items-center justify-center bg-[#7028d0]/15 border border-[#7028d0]/30 text-[#7028d0] rounded transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none';
-        } else {
-          el.className = 'py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none';
-        }
+      const inspectorView = typeof SlideNextStudioEditorInspectorView !== 'undefined'
+        ? SlideNextStudioEditorInspectorView
+        : null;
+      if (!inspectorView || typeof inspectorView.renderStudioInspectorAlignmentState !== 'function') return false;
+      return inspectorView.renderStudioInspectorAlignmentState({
+        documentRef: document,
+        align
       });
     }
 

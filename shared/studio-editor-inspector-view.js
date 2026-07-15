@@ -104,6 +104,20 @@
     return true;
   }
 
+  function renderStudioInspectorAlignmentState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+
+    const activeClass = 'py-1 flex items-center justify-center bg-[#7028d0]/15 border border-[#7028d0]/30 text-[#7028d0] rounded transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none';
+    const inactiveClass = 'py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none';
+    ['Left', 'Center', 'Right', 'Justify'].forEach((buttonName) => {
+      const button = documentRef.getElementById(`align${buttonName}Btn`);
+      if (!button) return;
+      button.className = buttonName.toLowerCase() === options.align ? activeClass : inactiveClass;
+    });
+    return true;
+  }
+
   function syncStudioInspectorContentControls(options = {}) {
     const documentRef = options.documentRef;
     const primaryElement = options.primaryElement;
@@ -244,6 +258,7 @@
   return {
     renderStudioInspectorSelectionSummary,
     resetStudioInspectorUiState,
+    renderStudioInspectorAlignmentState,
     syncStudioInspectorContentControls,
     syncStudioInspectorTypographyControls,
     syncStudioInspectorBorderControls,
