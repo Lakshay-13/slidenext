@@ -6525,24 +6525,36 @@
         ? SlideNextStudioEditorTransform
         : null;
       let canonicalDeckBeforeTransform = null;
-      const captureCanonicalTransformBaseline = () => {
+      const getCanonicalTransformBuilders = () => {
         const canonicalTransformApi = typeof SlideNextStudioEditorCanonicalTransform !== 'undefined'
           ? SlideNextStudioEditorCanonicalTransform
           : null;
-        const buildCanonicalTransformBaseline = canonicalTransformApi
-          && typeof canonicalTransformApi.buildStudioCanonicalTransformBaseline === 'function'
-          ? canonicalTransformApi.buildStudioCanonicalTransformBaseline
+        const buildCanonicalLayoutUpdates = transformApi
+          && typeof transformApi.buildStudioTransformCanonicalLayoutUpdates === 'function'
+          ? transformApi.buildStudioTransformCanonicalLayoutUpdates
           : null;
-        if (!buildCanonicalTransformBaseline) return null;
-        return buildCanonicalTransformBaseline({
+        if (!canonicalTransformApi
+          || typeof canonicalTransformApi.createStudioCanonicalTransformMutationBuilders !== 'function') {
+          return null;
+        }
+        return canonicalTransformApi.createStudioCanonicalTransformMutationBuilders({
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
             : null,
           buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
             ? (sourceDocument) => buildEditorCanonicalDeck(sourceDocument)
             : null,
-          sourceDocument: doc
+          buildCanonicalLayoutUpdates,
+          getElementId: typeof assignEditorElementId === 'function'
+            ? assignEditorElementId
+            : null
         });
+      };
+      const captureCanonicalTransformBaseline = () => {
+        const canonicalTransformBuilders = getCanonicalTransformBuilders();
+        return canonicalTransformBuilders
+          ? canonicalTransformBuilders.buildCanonicalTransformBaseline({ sourceDocument: doc })
+          : null;
       };
       const buildTransformTransaction = (finalizeResult) => {
         if (!transformApi || typeof transformApi.buildStudioTransformStyleTransaction !== 'function') {
@@ -6562,34 +6574,18 @@
         });
       };
       const buildCanonicalTransformDeck = (finalizeResult) => {
-        const canonicalTransformApi = typeof SlideNextStudioEditorCanonicalTransform !== 'undefined'
-          ? SlideNextStudioEditorCanonicalTransform
-          : null;
-        const buildCanonicalLayoutUpdates = transformApi
-          && typeof transformApi.buildStudioTransformCanonicalLayoutUpdates === 'function'
-          ? transformApi.buildStudioTransformCanonicalLayoutUpdates
-          : null;
-        if (!canonicalTransformApi
-          || typeof canonicalTransformApi.buildStudioCanonicalTransformDeck !== 'function') {
+        const canonicalTransformBuilders = getCanonicalTransformBuilders();
+        if (!canonicalTransformBuilders) {
           canonicalDeckBeforeTransform = null;
           return null;
         }
         const canonicalDeckBeforeMutation = canonicalDeckBeforeTransform;
         try {
-          return canonicalTransformApi.buildStudioCanonicalTransformDeck(finalizeResult, {
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            buildCanonicalLayoutUpdates,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? () => buildEditorCanonicalDeck(doc)
-              : null,
+          return canonicalTransformBuilders.buildCanonicalTransformDeck(finalizeResult, {
+            sourceDocument: doc,
             ...(canonicalDeckBeforeMutation
               ? { canonicalDeckBeforeMutation }
-              : {}),
-            getElementId: typeof assignEditorElementId === 'function'
-              ? assignEditorElementId
-              : null
+              : {})
           });
         } finally {
           canonicalDeckBeforeTransform = null;
