@@ -176,6 +176,14 @@ test('resolvePptxExportOptions keeps the default wide layout for canonical 16:9 
   assert.equal(result.options.customLayout, null);
 });
 
+test('createCanonicalPptxExport fails closed for an empty canonical deck', () => {
+  const result = pptxExport.createCanonicalPptxExport({ slides: [] }, { PptxGenJS: FakePptx });
+
+  assert.equal(result.pptx, null);
+  assert.equal(result.slideCount, 0);
+  assert.deepEqual(result.diagnostics.warnings, ['Canonical deck has no slides']);
+});
+
 test('createCanonicalPptxExport preserves canonical slide sections', () => {
   const result = pptxExport.createCanonicalPptxExport({
     slides: [

@@ -14,7 +14,7 @@ test('exportStudioPptx posts the canonical deck and downloads the response', asy
     }
   };
   const result = await pptxExport.exportStudioPptx({
-    canonicalDeck: { kind: 'slidenext.deck', slides: [] },
+    canonicalDeck: { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] },
     sourcePath: '/presentations/demo/index.html',
     filename: 'Demo deck.pptx',
     fetchImpl(endpoint, options) {
@@ -61,7 +61,7 @@ test('exportStudioPptx posts the canonical deck and downloads the response', asy
   assert.equal(calls[0][0], 'fetch');
   assert.equal(calls[0][1], '/api/export/pptx');
   assert.deepEqual(JSON.parse(calls[0][2].body), {
-    canonicalDeck: { kind: 'slidenext.deck', slides: [] },
+    canonicalDeck: { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] },
     sourcePath: '/presentations/demo/index.html',
     filename: 'Demo deck.pptx'
   });
@@ -97,7 +97,7 @@ test('exportStudioPptx reports unavailable dependencies and failed responses', a
   assert.equal(fetchCalls, 0);
 
   const result = await pptxExport.exportStudioPptx({
-    canonicalDeck: { kind: 'slidenext.deck', slides: [] },
+    canonicalDeck: { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] },
     fetchImpl: async () => ({ ok: false }),
     documentRef: { body: {}, createElement() {} },
     urlApi: {
@@ -109,10 +109,32 @@ test('exportStudioPptx reports unavailable dependencies and failed responses', a
   assert.equal(result.error, 'PPTX export request failed');
 });
 
+test('exportStudioPptx rejects an empty canonical deck before making a request', async () => {
+  let fetchCalls = 0;
+  const result = await pptxExport.exportStudioPptx({
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] },
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return { ok: true };
+    },
+    documentRef: { body: {}, createElement() {} },
+    urlApi: {
+      createObjectURL() {},
+      revokeObjectURL() {}
+    }
+  });
+
+  assert.deepEqual(result, {
+    success: false,
+    error: 'PPTX canonical deck is empty'
+  });
+  assert.equal(fetchCalls, 0);
+});
+
 test('exportStudioPptx converts request and download exceptions into failed results', async () => {
   const revokedUrls = [];
   const baseOptions = {
-    canonicalDeck: { kind: 'slidenext.deck', slides: [] },
+    canonicalDeck: { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] },
     documentRef: {
       body: {},
       createElement() {

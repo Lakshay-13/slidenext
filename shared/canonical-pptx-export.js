@@ -779,6 +779,10 @@
   function createCanonicalPptxExport(deckSeed, options = {}) {
     const preflight = preflightCanonicalPptxExport(deckSeed, options);
     const { deck, options: normalizedOptions, sourceSize, diagnostics } = preflight;
+    if (deck.slides.length === 0) {
+      diagnostics.warnings.push('Canonical deck has no slides');
+      return { deck, pptx: null, slideCount: 0, diagnostics };
+    }
     const PptxGenJS = normalizedOptions.PptxGenJS;
     const pptx = normalizedOptions.pptx || (typeof PptxGenJS === 'function' ? new PptxGenJS() : null);
     if (!pptx) {

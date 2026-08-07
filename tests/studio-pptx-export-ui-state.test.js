@@ -131,3 +131,39 @@ test('exportPptx skips unavailable decks and reports failed responses', async ()
   assert.equal(await context.exportPptx(), false);
   assert.deepEqual(statuses, ['exporting', 'export-failed', 'export-failed']);
 });
+
+test('exportPptx rejects an empty canonical deck before invoking the browser exporter', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const statuses = [];
+  let exportCalls = 0;
+  const context = {
+    currentPresentationUrl: '/presentations/demo/index.html',
+    currentTitle: 'Demo deck',
+    buildEditorCanonicalDeck() {
+      return { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+    },
+    resolveCurrentStudioDeckReadyActionState() {
+      return { canUseDeckActions: true };
+    },
+    document: {
+      getElementById() {
+        return { disabled: false };
+      }
+    },
+    SlideNextStudioPptxExport: {
+      exportStudioPptx() {
+        exportCalls += 1;
+        return Promise.resolve({ success: true });
+      }
+    },
+    setStudioAutoSaveStatus(state) {
+      statuses.push(state);
+    }
+  };
+
+  loadExportPptx(fileContent, context);
+
+  assert.equal(await context.exportPptx(), false);
+  assert.equal(exportCalls, 0);
+  assert.deepEqual(statuses, ['export-failed']);
+});

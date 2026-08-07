@@ -51,6 +51,9 @@
     if (!options.canonicalDeck || !Array.isArray(options.canonicalDeck.slides)) {
       return { success: false, error: 'PPTX canonical deck is unavailable' };
     }
+    if (options.canonicalDeck.slides.length === 0) {
+      return { success: false, error: 'PPTX canonical deck is empty' };
+    }
 
     const endpoint = typeof options.endpoint === 'string' && options.endpoint.trim()
       ? options.endpoint.trim()

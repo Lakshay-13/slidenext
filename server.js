@@ -97,6 +97,9 @@ app.post('/api/export/pptx', async (req, res) => {
   if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) {
     return res.status(400).json({ error: 'Missing canonicalDeck' });
   }
+  if (canonicalDeck.slides.length === 0) {
+    return res.status(400).json({ error: 'Cannot export an empty deck' });
+  }
 
   try {
     const result = canonicalPptxExport.createCanonicalPptxExport(canonicalDeck, {

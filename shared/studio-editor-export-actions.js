@@ -137,7 +137,10 @@
         setStatus('export-failed');
         return false;
       }
-      if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return false;
+      if (!canonicalDeck || !Array.isArray(canonicalDeck.slides) || canonicalDeck.slides.length === 0) {
+        setStatus('export-failed');
+        return false;
+      }
 
       const exportButton = documentRef && typeof documentRef.getElementById === 'function'
         ? documentRef.getElementById('exportPptxBtn')
