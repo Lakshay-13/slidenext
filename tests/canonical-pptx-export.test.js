@@ -34,13 +34,20 @@ class FakePptx {
     this.ShapeType = { rect: 'RECTANGLE' };
     this.layouts = [];
     this.slides = [];
+    this.sections = [];
+    this.slideOptions = [];
   }
 
   defineLayout(layout) {
     this.layouts.push(layout);
   }
 
-  addSlide() {
+  addSection(section) {
+    this.sections.push(section);
+  }
+
+  addSlide(options) {
+    this.slideOptions.push(options);
     const slide = new FakeSlide();
     this.slides.push(slide);
     return slide;
@@ -167,6 +174,43 @@ test('resolvePptxExportOptions keeps the default wide layout for canonical 16:9 
   assert.equal(result.options.pageWidth, 13.333);
   assert.equal(result.options.pageHeight, 7.5);
   assert.equal(result.options.customLayout, null);
+});
+
+test('createCanonicalPptxExport preserves canonical slide sections', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [
+      { id: 'slide-1', section: 'Opening', nodes: [] },
+      { id: 'slide-2', section: 'Opening', nodes: [] },
+      { id: 'slide-3', section: 'Closing', nodes: [] }
+    ]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.pptx.sections, [
+    { title: 'Opening' },
+    { title: 'Closing' }
+  ]);
+  assert.deepEqual(result.pptx.slideOptions, [
+    { sectionTitle: 'Opening' },
+    { sectionTitle: 'Opening' },
+    { sectionTitle: 'Closing' }
+  ]);
+  assert.deepEqual(result.diagnostics.warnings, []);
+});
+
+test('createCanonicalPptxExport warns when section support is unavailable', () => {
+  class LegacyPptx extends FakePptx {
+    constructor() {
+      super();
+      this.addSection = undefined;
+    }
+  }
+
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{ id: 'slide-1', section: 'Opening', nodes: [] }]
+  }, { PptxGenJS: LegacyPptx });
+
+  assert.match(result.diagnostics.warnings.join('\n'), /sections are unavailable/);
+  assert.deepEqual(result.pptx.slideOptions, [undefined]);
 });
 
 test('createCanonicalPptxExport reports missing geometry and image assets without throwing', () => {

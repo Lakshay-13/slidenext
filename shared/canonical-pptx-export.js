@@ -650,12 +650,38 @@
       scaleY: normalizedOptions.pageHeight / sourceSize.height
     };
 
+    const sectionTitles = [];
+    const seenSectionTitles = new Set();
+    deck.slides.forEach((slide) => {
+      const sectionTitle = typeof slide.section === 'string' ? slide.section.trim() : '';
+      if (sectionTitle && !seenSectionTitles.has(sectionTitle)) {
+        seenSectionTitles.add(sectionTitle);
+        sectionTitles.push(sectionTitle);
+      }
+    });
+    let canExportSections = sectionTitles.length > 0;
+    if (canExportSections && typeof pptx.addSection !== 'function') {
+      diagnostics.warnings.push('PptxGenJS sections are unavailable; slide section metadata was not exported');
+      canExportSections = false;
+    }
+    if (canExportSections) {
+      try {
+        sectionTitles.forEach(title => pptx.addSection({ title }));
+      } catch (error) {
+        diagnostics.warnings.push('PptxGenJS sections could not be created; slide section metadata was not exported');
+        canExportSections = false;
+      }
+    }
+
     deck.slides.forEach(slide => {
       if (typeof pptx.addSlide !== 'function') {
         diagnostics.warnings.push('PptxGenJS instance cannot add slides');
         return;
       }
-      const outputSlide = pptx.addSlide();
+      const sectionTitle = typeof slide.section === 'string' ? slide.section.trim() : '';
+      const outputSlide = canExportSections && sectionTitle
+        ? pptx.addSlide({ sectionTitle })
+        : pptx.addSlide();
       renderSlide(slide, { ...contextBase, slide: outputSlide });
     });
 
