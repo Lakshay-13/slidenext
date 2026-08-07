@@ -7,6 +7,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const clipboardState = require('../shared/studio-editor-clipboard.js');
+const clipboardMutation = require('../shared/studio-editor-clipboard-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -40,6 +41,7 @@ function loadClipboardInsertionHelper(fileContent, context) {
     'function applyEditorClipboardInsertionWithTransaction(insertionPlans, slide, options = {}) {',
     '\n\n    function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {'
   );
+  context.SlideNextStudioEditorClipboardMutation = clipboardMutation;
   vm.runInContext(helperSource, context);
 }
 
