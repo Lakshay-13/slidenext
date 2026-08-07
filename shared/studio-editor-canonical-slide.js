@@ -124,6 +124,44 @@
     return appendCanonicalSlide(canonicalDeckBeforeMutation, canonicalSlide);
   }
 
+  function createStudioCanonicalAddSlideMutationBuilders(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const importSlideToCanonicalSlide = typeof options.importSlideToCanonicalSlide === 'function'
+      ? options.importSlideToCanonicalSlide
+      : null;
+    const getSlideId = typeof options.getSlideId === 'function'
+      ? options.getSlideId
+      : (slide) => slide && slide.id || '';
+    const buildCanonicalAddSlideBaseline = (addOptions = {}) => (
+      buildStudioCanonicalAddSlideBaseline({
+        ...addOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck
+      })
+    );
+    const buildCanonicalAddSlideDeck = (addOptions = {}) => {
+      const canonicalDeckBeforeMutation = buildCanonicalAddSlideBaseline(addOptions);
+      return buildStudioCanonicalAddSlideDeck({
+        ...addOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck,
+        getSlideId,
+        importSlideToCanonicalSlide,
+        canonicalDeckBeforeMutation
+      });
+    };
+
+    return {
+      buildCanonicalAddSlideBaseline,
+      buildCanonicalAddSlideDeck
+    };
+  }
+
   function buildStudioCanonicalDeleteSlideBaseline(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -239,6 +277,7 @@
   return {
     buildStudioCanonicalAddSlideBaseline,
     buildStudioCanonicalAddSlideDeck,
+    createStudioCanonicalAddSlideMutationBuilders,
     buildStudioCanonicalDeleteSlideBaseline,
     buildStudioCanonicalDeleteSlideDeck,
     buildStudioCanonicalDuplicateSlideBaseline,

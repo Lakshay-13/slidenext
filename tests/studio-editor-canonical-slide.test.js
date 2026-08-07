@@ -120,6 +120,36 @@ test('buildStudioCanonicalAddSlideDeck imports and appends a new slide without m
   assert.deepEqual(sourceDeck.slides.map((slide) => slide.id), ['slide-1']);
 });
 
+test('createStudioCanonicalAddSlideMutationBuilders shares canonical import wiring', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const sourceDocument = { id: 'editor-doc' };
+  const builtDocuments = [];
+  const importedSlides = [];
+  const builders = canonicalSlide.createStudioCanonicalAddSlideMutationBuilders({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtDocuments.push(documentRef);
+      return sourceDeck;
+    },
+    getSlideId: (slide) => slide.id,
+    importSlideToCanonicalSlide(slide, index, options) {
+      importedSlides.push([slide, index, options.getSlideId(slide)]);
+      return { id: options.getSlideId(slide), title: 'New' };
+    }
+  });
+
+  const newSlide = { id: 'slide-2' };
+  const result = builders.buildCanonicalAddSlideDeck({
+    sourceDocument,
+    newSlide,
+    insertionIndex: 1
+  });
+
+  assert.deepEqual(builtDocuments, [sourceDocument]);
+  assert.deepEqual(importedSlides, [[newSlide, 1, 'slide-2']]);
+  assert.deepEqual(result.slides.map((slide) => slide.id), ['slide-1', 'slide-2']);
+});
+
 test('buildStudioCanonicalDeleteSlideBaseline builds from the source document', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const sourceDocument = { id: 'editor-doc' };
