@@ -7,6 +7,7 @@ const studioHistory = require('../shared/studio-history.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const deckView = require('../shared/studio-deck-view.js');
+const historyRestore = require('../shared/studio-editor-history-restore.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -1457,6 +1458,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   vm.runInContext('createEditorDeckViewBuildOptions = __createEditorDeckViewBuildOptions;', context);
   vm.runInContext(persistedDeckStateHelperSource, context);
+  context.SlideNextStudioEditorHistoryRestore = historyRestore;
   vm.runInContext(restoreFrameFromHistoryEntrySource, context);
 
   context.restoreFrameFromHistoryEntry({
@@ -1602,6 +1604,7 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
 
   vm.createContext(context);
   vm.runInContext(persistedDeckStateHelperSource, context);
+  context.SlideNextStudioEditorHistoryRestore = historyRestore;
   vm.runInContext(restoreFrameFromHistoryEntrySource, context);
 
   context.restoreFrameFromHistoryEntry({
@@ -1691,6 +1694,7 @@ test('restoreFrameFromHistoryEntry applies a valid transaction without replacing
 
   vm.createContext(context);
   vm.runInContext(persistedDeckStateHelperSource, context);
+  context.SlideNextStudioEditorHistoryRestore = historyRestore;
   vm.runInContext(restoreFrameFromHistoryEntrySource, context);
 
   const result = context.restoreFrameFromHistoryEntry({
@@ -1779,6 +1783,7 @@ test('restoreFrameFromHistoryEntry resolves slide-scoped markup transactions wit
 
   vm.createContext(context);
   vm.runInContext(persistedDeckStateHelperSource, context);
+  context.SlideNextStudioEditorHistoryRestore = historyRestore;
   vm.runInContext(restoreFrameFromHistoryEntrySource, context);
 
   const result = context.restoreFrameFromHistoryEntry({
