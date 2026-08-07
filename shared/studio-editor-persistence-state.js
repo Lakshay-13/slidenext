@@ -1223,6 +1223,53 @@
     };
   }
 
+  function createStudioEditorVersionPersistenceSuccessHandlerAdapter(options = {}) {
+    const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
+      ? options.persistenceApi
+      : null;
+    const createHandlerOptions = typeof options.createHandlerOptions === 'function'
+      ? options.createHandlerOptions
+      : null;
+    const handleVersionPersistenceSuccess = typeof options.handleVersionPersistenceSuccess === 'function'
+      ? options.handleVersionPersistenceSuccess
+      : persistenceApi
+        && typeof persistenceApi.handleStudioVersionPersistenceSuccess === 'function'
+        ? persistenceApi.handleStudioVersionPersistenceSuccess
+        : null;
+
+    return function applyEditorVersionPersistenceSuccess(persistenceContext = {}, nextOptions = {}) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      const currentCreateHandlerOptions = typeof resolvedOptions.createHandlerOptions === 'function'
+        ? resolvedOptions.createHandlerOptions
+        : createHandlerOptions;
+      const currentHandleVersionPersistenceSuccess = typeof resolvedOptions.handleVersionPersistenceSuccess === 'function'
+        ? resolvedOptions.handleVersionPersistenceSuccess
+        : handleVersionPersistenceSuccess;
+      const createStudioVersionPersistenceSuccessHandler = persistenceApi
+        && typeof persistenceApi.createStudioVersionPersistenceSuccessHandler === 'function'
+        ? persistenceApi.createStudioVersionPersistenceSuccessHandler
+        : null;
+      if (createStudioVersionPersistenceSuccessHandler) {
+        const handler = createStudioVersionPersistenceSuccessHandler({
+          createHandlerOptions: currentCreateHandlerOptions,
+          handleVersionPersistenceSuccess: currentHandleVersionPersistenceSuccess
+        });
+        return typeof handler === 'function'
+          ? handler(persistenceContext, resolvedOptions)
+          : null;
+      }
+      if (!currentHandleVersionPersistenceSuccess) return null;
+      return currentHandleVersionPersistenceSuccess(
+        persistenceContext,
+        currentCreateHandlerOptions
+          ? currentCreateHandlerOptions(resolvedOptions)
+          : resolvedOptions
+      );
+    };
+  }
+
   return {
     createStudioEditorPersistedDeckStateAdapter,
     createStudioEditorPersistedDeckStateApplierAdapter,
@@ -1245,6 +1292,7 @@
     createStudioEditorPersistenceTaskStaleCheckerAdapter,
     createStudioEditorPersistenceActionCurrentRunnerAdapter,
     createStudioEditorPersistenceFailureHandlerAdapter,
-    createStudioEditorPersistenceSuccessHandlerAdapter
+    createStudioEditorPersistenceSuccessHandlerAdapter,
+    createStudioEditorVersionPersistenceSuccessHandlerAdapter
   };
 });
