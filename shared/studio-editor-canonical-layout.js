@@ -62,6 +62,7 @@
       return {
         id: nodeId,
         layout: {
+          mode: 'absolute',
           x: item.nextAbsLeft,
           y: item.nextAbsTop
         }

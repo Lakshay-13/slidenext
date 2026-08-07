@@ -76,6 +76,7 @@ test('buildStudioCanonicalLayoutMutation maps positioned items onto a fresh cano
 
   assert.equal(result.slides[0].nodes[0].layout.x, 40);
   assert.equal(result.slides[0].nodes[0].layout.y, 60);
+  assert.equal(result.slides[0].nodes[0].layout.mode, 'absolute');
   assert.equal(sourceDeck.slides[0].nodes[0].layout.x, null);
 });
 
