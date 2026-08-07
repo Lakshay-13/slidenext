@@ -103,7 +103,10 @@ app.post('/api/export/pptx', async (req, res) => {
       assetBaseDir: resolvePptxAssetBaseDir(sourcePath || canonicalDeck.metadata?.sourcePath),
       assetExists(assetSource) {
         if (/^(data:|https?:\/\/)/i.test(assetSource)) return true;
-        return !assetSource.startsWith(workspaceDir) || fsSync.existsSync(assetSource);
+        const resolvedAssetPath = path.resolve(assetSource);
+        const workspacePrefix = `${workspaceDir}${path.sep}`;
+        return resolvedAssetPath.startsWith(workspacePrefix)
+          && fsSync.existsSync(resolvedAssetPath);
       }
     });
     if (!result.pptx || typeof result.pptx.write !== 'function') {
