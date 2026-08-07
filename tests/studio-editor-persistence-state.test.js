@@ -1355,3 +1355,78 @@ test('createStudioEditorVersionPersistenceSuccessHandlerAdapter returns null wit
 
   assert.equal(adapter({}, {}), null);
 });
+
+test('createStudioEditorPersistenceHandlerOptionsAdapter preserves builder precedence', () => {
+  const createSessionReaderOptions = () => ({ sessionReaderOptions: true });
+  const applyPersistedDeckState = () => {
+    throw new Error('direct state application should not run when the builder exists');
+  };
+  let factoryOptions = null;
+  const adapter = editorPersistenceState.createStudioEditorPersistenceHandlerOptionsAdapter({
+    persistenceApi: {
+      createStudioPersistenceHandlerOptionsBuilder(options) {
+        factoryOptions = options;
+        return (nextOptions) => ({
+          presentationUrl: nextOptions.presentationUrl || options.getPresentationUrl(),
+          createSessionReaderOptions: options.createSessionReaderOptions,
+          applyPersistedDeckState: options.applyPersistedDeckState,
+          onSuccess: nextOptions.onSuccess,
+          onFailure: nextOptions.onFailure
+        });
+      }
+    },
+    getPresentationUrl: () => '/presentations/deck/index.html',
+    createSessionReaderOptions,
+    applyPersistedDeckState
+  });
+  const result = adapter({
+    presentationUrl: '/presentations/custom/index.html',
+    onSuccess: 'success-sentinel',
+    onFailure: 'failure-sentinel'
+  });
+
+  assert.equal(result.presentationUrl, '/presentations/custom/index.html');
+  assert.equal(result.createSessionReaderOptions, createSessionReaderOptions);
+  assert.equal(result.applyPersistedDeckState, applyPersistedDeckState);
+  assert.equal(result.onSuccess, 'success-sentinel');
+  assert.equal(result.onFailure, 'failure-sentinel');
+  assert.equal(factoryOptions.getPresentationUrl(), '/presentations/deck/index.html');
+  assert.equal(factoryOptions.createSessionReaderOptions, createSessionReaderOptions);
+  assert.equal(factoryOptions.applyPersistedDeckState, applyPersistedDeckState);
+});
+
+test('createStudioEditorPersistenceHandlerOptionsAdapter uses direct helper without a builder', () => {
+  let readerOptions = null;
+  const stateUpdates = [];
+  const createSessionReaderOptions = (options) => {
+    readerOptions = options;
+    return { readerOptions: true };
+  };
+  const adapter = editorPersistenceState.createStudioEditorPersistenceHandlerOptionsAdapter({
+    getPresentationUrl: () => '/presentations/deck/index.html',
+    createSessionReaderOptions,
+    applyPersistedDeckState: (...args) => stateUpdates.push(args)
+  });
+
+  assert.deepEqual(adapter({
+    presentationUrl: '/presentations/custom/index.html',
+    onSuccess: 'success-sentinel',
+    onFailure: 'failure-sentinel'
+  }), { readerOptions: true });
+  readerOptions.setPersistedHtml('<html>next</html>');
+  readerOptions.setPersistedCanonicalDeck({ id: 'deck-1' });
+  readerOptions.setPersistedPlaybackState({ activeSlideId: 'slide-1' });
+  assert.deepEqual(stateUpdates, [
+    [{ cleanHtml: '<html>next</html>' }],
+    [{ canonicalDeck: { id: 'deck-1' } }, { presentationUrl: '/presentations/custom/index.html' }],
+    [{ playbackState: { activeSlideId: 'slide-1' } }]
+  ]);
+  assert.equal(readerOptions.onSuccess, 'success-sentinel');
+  assert.equal(readerOptions.onFailure, 'failure-sentinel');
+});
+
+test('createStudioEditorPersistenceHandlerOptionsAdapter returns null without a session reader', () => {
+  const adapter = editorPersistenceState.createStudioEditorPersistenceHandlerOptionsAdapter();
+
+  assert.equal(adapter({}), null);
+});

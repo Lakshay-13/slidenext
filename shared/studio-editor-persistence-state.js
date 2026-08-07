@@ -1270,6 +1270,68 @@
     };
   }
 
+  function createStudioEditorPersistenceHandlerOptionsAdapter(options = {}) {
+    const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
+      ? options.persistenceApi
+      : null;
+    const getPresentationUrl = typeof options.getPresentationUrl === 'function'
+      ? options.getPresentationUrl
+      : () => '';
+    const createSessionReaderOptions = typeof options.createSessionReaderOptions === 'function'
+      ? options.createSessionReaderOptions
+      : null;
+    const applyPersistedDeckState = typeof options.applyPersistedDeckState === 'function'
+      ? options.applyPersistedDeckState
+      : () => {};
+
+    return function createEditorPersistenceHandlerOptions(nextOptions = {}) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      const currentCreateSessionReaderOptions = typeof resolvedOptions.createSessionReaderOptions === 'function'
+        ? resolvedOptions.createSessionReaderOptions
+        : createSessionReaderOptions;
+      const currentApplyPersistedDeckState = typeof resolvedOptions.applyPersistedDeckState === 'function'
+        ? resolvedOptions.applyPersistedDeckState
+        : applyPersistedDeckState;
+      const createStudioPersistenceHandlerOptionsBuilder = persistenceApi
+        && typeof persistenceApi.createStudioPersistenceHandlerOptionsBuilder === 'function'
+        ? persistenceApi.createStudioPersistenceHandlerOptionsBuilder
+        : null;
+      if (createStudioPersistenceHandlerOptionsBuilder) {
+        const builder = createStudioPersistenceHandlerOptionsBuilder({
+          getPresentationUrl,
+          createSessionReaderOptions: currentCreateSessionReaderOptions,
+          applyPersistedDeckState: currentApplyPersistedDeckState
+        });
+        return typeof builder === 'function'
+          ? builder(resolvedOptions)
+          : null;
+      }
+      if (!currentCreateSessionReaderOptions) return null;
+      const persistencePresentationUrl = typeof resolvedOptions.presentationUrl === 'string'
+        && resolvedOptions.presentationUrl
+        ? resolvedOptions.presentationUrl
+        : getPresentationUrl();
+      return currentCreateSessionReaderOptions({
+        setPersistedHtml(nextHtml) {
+          currentApplyPersistedDeckState({ cleanHtml: nextHtml });
+        },
+        setPersistedCanonicalDeck(nextCanonicalDeck) {
+          currentApplyPersistedDeckState(
+            { canonicalDeck: nextCanonicalDeck },
+            { presentationUrl: persistencePresentationUrl }
+          );
+        },
+        setPersistedPlaybackState(nextPlaybackState) {
+          currentApplyPersistedDeckState({ playbackState: nextPlaybackState });
+        },
+        onSuccess: resolvedOptions.onSuccess,
+        onFailure: resolvedOptions.onFailure
+      });
+    };
+  }
+
   return {
     createStudioEditorPersistedDeckStateAdapter,
     createStudioEditorPersistedDeckStateApplierAdapter,
@@ -1293,6 +1355,7 @@
     createStudioEditorPersistenceActionCurrentRunnerAdapter,
     createStudioEditorPersistenceFailureHandlerAdapter,
     createStudioEditorPersistenceSuccessHandlerAdapter,
-    createStudioEditorVersionPersistenceSuccessHandlerAdapter
+    createStudioEditorVersionPersistenceSuccessHandlerAdapter,
+    createStudioEditorPersistenceHandlerOptionsAdapter
   };
 });

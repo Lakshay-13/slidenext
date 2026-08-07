@@ -814,6 +814,46 @@ test('createCurrentStudioPersistenceHandlerOptions reuses the shared handler-opt
   assert.equal(delegatedArgs.applyPersistedDeckState, context.applyCurrentStudioPersistedDeckState);
 });
 
+test('createCurrentStudioPersistenceHandlerOptions delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createCurrentStudioPersistenceHandlerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
+    '\n\n    function applyCurrentStudioPersistenceFailure('
+  );
+  const context = {
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistenceHandlerOptionsBuilder(options = {}) {
+        return (nextOptions = {}) => ({
+          presentationUrl: nextOptions.presentationUrl || options.getPresentationUrl(),
+          createSessionReaderOptions: options.createSessionReaderOptions,
+          applyPersistedDeckState: options.applyPersistedDeckState,
+          onSuccess: nextOptions.onSuccess,
+          onFailure: nextOptions.onFailure
+        });
+      }
+    },
+    createCurrentStudioSessionReaderOptions() {},
+    applyCurrentStudioPersistedDeckState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createCurrentStudioPersistenceHandlerOptionsSource, context);
+
+  const result = context.createCurrentStudioPersistenceHandlerOptions({
+    presentationUrl: 'presentations/custom/index.html',
+    onSuccess: 'success-sentinel',
+    onFailure: 'failure-sentinel'
+  });
+  assert.equal(result.presentationUrl, 'presentations/custom/index.html');
+  assert.equal(result.createSessionReaderOptions, context.createCurrentStudioSessionReaderOptions);
+  assert.equal(result.applyPersistedDeckState, context.applyCurrentStudioPersistedDeckState);
+  assert.equal(result.onSuccess, 'success-sentinel');
+  assert.equal(result.onFailure, 'failure-sentinel');
+});
+
 test('resolveCurrentStudioPersistenceStateFromCapture reuses the shared capture-state resolver builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
