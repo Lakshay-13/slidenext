@@ -222,6 +222,17 @@ test('createCanonicalPptxExport skips missing image files after preflight', () =
   assert.deepEqual(result.pptx.slides[0].calls, []);
 });
 
+test('createCanonicalPptxExport preserves solid legacy slide backgrounds from style text', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      layout: { background: { style: 'background: #123456;' } },
+      nodes: []
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.pptx.slides[0].background, { color: '123456' });
+});
+
 test('normalizeHexColor handles short hex and rgb values', () => {
   assert.equal(pptxExport.normalizeHexColor('#abc'), 'AABBCC');
   assert.equal(pptxExport.normalizeHexColor('rgb(1, 2, 3)'), '010203');

@@ -162,6 +162,16 @@
     return style;
   }
 
+  function resolveSlideBackgroundColor(background = {}) {
+    const directColor = normalizeHexColor(background.color);
+    if (directColor) return directColor;
+    const backgroundStyle = typeof background.style === 'string' ? background.style : '';
+    const styleColor = normalizeHexColor(backgroundStyle);
+    if (styleColor) return styleColor;
+    const parsedStyle = parseStyle(backgroundStyle);
+    return normalizeHexColor(parsedStyle['background-color'] || parsedStyle.background);
+  }
+
   function textOptions(node, bounds) {
     const style = nodeStyle(node);
     const tagName = typeof node.tagName === 'string' ? node.tagName.toLowerCase() : '';
@@ -404,7 +414,7 @@
 
   function renderSlide(slide, context) {
     const background = asObject(slide.layout).background || {};
-    const color = normalizeHexColor(background.color);
+    const color = resolveSlideBackgroundColor(background);
     if (color) context.slide.background = { color };
     if (slide.notes && typeof context.slide.addNotes === 'function') context.slide.addNotes(slide.notes);
     slide.nodes.forEach(node => renderNode(node, context));
