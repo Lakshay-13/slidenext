@@ -973,6 +973,50 @@ test('isCurrentStudioPersistenceTaskStale reuses the shared stale-task checker w
   assert.equal(delegatedArgs.isPersistenceTaskStale, context.SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale);
 });
 
+test('isCurrentStudioPersistenceTaskStale delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const isCurrentStudioPersistenceTaskStaleSource = extractFunctionSource(
+    fileContent,
+    'function isCurrentStudioPersistenceTaskStale(',
+    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
+  );
+
+  const context = {
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 12,
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistenceTaskStaleChecker(options = {}) {
+        return (presentationUrl, sessionToken) => ({
+          presentationUrl,
+          sessionToken,
+          currentPresentationUrl: options.getPresentationUrl(),
+          currentSessionToken: options.getSessionToken()
+        });
+      },
+      isStudioPersistenceTaskStale() {
+        throw new Error('direct stale checking should not run when the adapter builder exists');
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(isCurrentStudioPersistenceTaskStaleSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.isCurrentStudioPersistenceTaskStale(
+      'presentations/custom/index.html',
+      15
+    ))),
+    {
+      presentationUrl: 'presentations/custom/index.html',
+      sessionToken: 15,
+      currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+      currentSessionToken: 12
+    }
+  );
+});
+
 test('runCurrentStudioPersistenceActionIfCurrent reuses the shared current-action runner when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const runCurrentStudioPersistenceActionIfCurrentSource = extractFunctionSource(

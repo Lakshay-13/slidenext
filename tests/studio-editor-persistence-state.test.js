@@ -1043,3 +1043,64 @@ test('createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter retur
 
   assert.equal(adapter({}), null);
 });
+
+test('createStudioEditorPersistenceTaskStaleCheckerAdapter preserves builder precedence', () => {
+  const isPersistenceTaskStale = () => {
+    throw new Error('direct stale checker should not run when the builder exists');
+  };
+  let factoryOptions = null;
+  const adapter = editorPersistenceState.createStudioEditorPersistenceTaskStaleCheckerAdapter({
+    persistenceApi: {
+      createStudioPersistenceTaskStaleChecker(options) {
+        factoryOptions = options;
+        return (presentationUrl, sessionToken) => ({
+          presentationUrl,
+          sessionToken,
+          currentPresentationUrl: options.getPresentationUrl(),
+          currentSessionToken: options.getSessionToken(),
+          isPersistenceTaskStale: options.isPersistenceTaskStale
+        });
+      }
+    },
+    getPresentationUrl: () => '/presentations/deck/index.html',
+    getSessionToken: () => 12,
+    isPersistenceTaskStale
+  });
+
+  const result = adapter('/presentations/custom/index.html', 15);
+  assert.equal(result.presentationUrl, '/presentations/custom/index.html');
+  assert.equal(result.sessionToken, 15);
+  assert.equal(result.currentPresentationUrl, '/presentations/deck/index.html');
+  assert.equal(result.currentSessionToken, 12);
+  assert.equal(result.isPersistenceTaskStale, isPersistenceTaskStale);
+  assert.equal(factoryOptions.getPresentationUrl(), '/presentations/deck/index.html');
+  assert.equal(factoryOptions.getSessionToken(), 12);
+  assert.equal(factoryOptions.isPersistenceTaskStale, isPersistenceTaskStale);
+});
+
+test('createStudioEditorPersistenceTaskStaleCheckerAdapter uses direct helper without a builder', () => {
+  let delegatedArgs = null;
+  const isPersistenceTaskStale = (presentationUrl, options) => {
+    delegatedArgs = { presentationUrl, options };
+    return true;
+  };
+  const adapter = editorPersistenceState.createStudioEditorPersistenceTaskStaleCheckerAdapter({
+    persistenceApi: { isStudioPersistenceTaskStale: isPersistenceTaskStale },
+    getPresentationUrl: () => '/presentations/deck/index.html',
+    getSessionToken: () => 12
+  });
+
+  assert.equal(adapter('/presentations/custom/index.html', 15), true);
+  assert.equal(delegatedArgs.presentationUrl, '/presentations/custom/index.html');
+  assert.deepEqual(delegatedArgs.options, {
+    currentPresentationUrl: '/presentations/deck/index.html',
+    currentSessionToken: 12,
+    sessionToken: 15
+  });
+});
+
+test('createStudioEditorPersistenceTaskStaleCheckerAdapter returns null without a shared checker', () => {
+  const adapter = editorPersistenceState.createStudioEditorPersistenceTaskStaleCheckerAdapter();
+
+  assert.equal(adapter('/presentations/deck/index.html', 12), null);
+});
