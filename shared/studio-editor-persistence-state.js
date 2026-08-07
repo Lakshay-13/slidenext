@@ -903,6 +903,57 @@
     };
   }
 
+  function createStudioEditorPersistedSaveRequestCheckerAdapter(options = {}) {
+    const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
+      ? options.persistenceApi
+      : null;
+    const readPersistedDeckState = typeof options.readPersistedDeckState === 'function'
+      ? options.readPersistedDeckState
+      : () => options.persistedDeckState || {};
+    const isPersistedSaveRequest = typeof options.isPersistedSaveRequest === 'function'
+      ? options.isPersistedSaveRequest
+      : persistenceApi
+        && typeof persistenceApi.isStudioPersistedSaveRequest === 'function'
+        ? persistenceApi.isStudioPersistedSaveRequest
+        : null;
+
+    return function isEditorPersistedSaveRequest(
+      saveRequestBody = null,
+      cleanHtml = saveRequestBody && saveRequestBody.htmlContent,
+      nextOptions = {}
+    ) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      const currentReadPersistedDeckState = typeof resolvedOptions.readPersistedDeckState === 'function'
+        ? resolvedOptions.readPersistedDeckState
+        : readPersistedDeckState;
+      const currentIsPersistedSaveRequest = typeof resolvedOptions.isPersistedSaveRequest === 'function'
+        ? resolvedOptions.isPersistedSaveRequest
+        : isPersistedSaveRequest;
+      const createStudioPersistedSaveRequestChecker = persistenceApi
+        && typeof persistenceApi.createStudioPersistedSaveRequestChecker === 'function'
+        ? persistenceApi.createStudioPersistedSaveRequestChecker
+        : null;
+      if (createStudioPersistedSaveRequestChecker) {
+        const checker = createStudioPersistedSaveRequestChecker({
+          readPersistedDeckState: currentReadPersistedDeckState,
+          isPersistedSaveRequest: currentIsPersistedSaveRequest
+        });
+        return typeof checker === 'function'
+          ? checker(saveRequestBody, cleanHtml, resolvedOptions)
+          : null;
+      }
+      if (!currentIsPersistedSaveRequest) return null;
+      return currentIsPersistedSaveRequest(
+        saveRequestBody,
+        currentReadPersistedDeckState(),
+        cleanHtml,
+        resolvedOptions
+      );
+    };
+  }
+
   return {
     createStudioEditorPersistedDeckStateAdapter,
     createStudioEditorPersistedDeckStateApplierAdapter,
@@ -919,6 +970,7 @@
     createStudioEditorPersistableDeckStateCapturerAdapter,
     createStudioEditorPersistedDeckPlaybackStateCapturerAdapter,
     createStudioEditorSaveRequestBodyAdapter,
-    createStudioEditorPersistedDeckHtmlCheckerAdapter
+    createStudioEditorPersistedDeckHtmlCheckerAdapter,
+    createStudioEditorPersistedSaveRequestCheckerAdapter
   };
 });

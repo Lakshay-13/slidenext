@@ -8982,6 +8982,28 @@
     }
 
     function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {
+      const createStudioEditorPersistedSaveRequestCheckerAdapter = (
+        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+        && SlideNextStudioEditorPersistenceState
+        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistedSaveRequestCheckerAdapter === 'function'
+      )
+        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistedSaveRequestCheckerAdapter
+        : null;
+      if (createStudioEditorPersistedSaveRequestCheckerAdapter) {
+        const adapter = createStudioEditorPersistedSaveRequestCheckerAdapter({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          readPersistedDeckState: getCurrentEditorPersistedDeckState
+        });
+        const result = typeof adapter === 'function'
+          ? adapter(saveRequestBody, cleanHtml)
+          : null;
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
+
       const createStudioPersistedSaveRequestChecker = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence

@@ -723,6 +723,45 @@ test('isCurrentDeckStatePersisted reuses the shared persisted-save-request check
   assert.equal(delegatedArgs.isPersistedSaveRequest, context.SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest);
 });
 
+test('isCurrentDeckStatePersisted delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const isCurrentDeckStatePersistedSource = extractFunctionSource(
+    fileContent,
+    'function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {',
+    '\n\n    function createCurrentStudioPersistenceHandlerOptions(options = {}) {'
+  );
+
+  const persistedDeckState = { cleanHtml: '<html>persisted</html>', canonicalDeck: null };
+  let factoryOptions = null;
+  const context = {
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistedSaveRequestChecker(options = {}) {
+        factoryOptions = options;
+        return (saveRequestBody, cleanHtml) => ({
+          saveRequestBody,
+          cleanHtml,
+          persistedDeckState: options.readPersistedDeckState()
+        });
+      }
+    },
+    getCurrentEditorPersistedDeckState() {
+      return persistedDeckState;
+    }
+  };
+  const saveRequestBody = { htmlContent: '<html>current</html>' };
+
+  vm.createContext(context);
+  vm.runInContext(isCurrentDeckStatePersistedSource, context);
+
+  assert.deepEqual(context.isCurrentDeckStatePersisted(saveRequestBody), {
+    saveRequestBody,
+    cleanHtml: '<html>current</html>',
+    persistedDeckState
+  });
+  assert.equal(factoryOptions.readPersistedDeckState, context.getCurrentEditorPersistedDeckState);
+});
+
 test('createCurrentStudioPersistenceHandlerOptions reuses the shared handler-options builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createCurrentStudioPersistenceHandlerOptionsSource = extractFunctionSource(

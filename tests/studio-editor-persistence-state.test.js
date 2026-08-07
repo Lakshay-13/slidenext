@@ -906,3 +906,63 @@ test('createStudioEditorPersistedDeckHtmlCheckerAdapter returns null without a s
 
   assert.equal(adapter('<html>current</html>'), null);
 });
+
+test('createStudioEditorPersistedSaveRequestCheckerAdapter preserves builder precedence', () => {
+  const persistedDeckState = { cleanHtml: '<html>persisted</html>', canonicalDeck: { id: 'deck-1' } };
+  const readPersistedDeckState = () => persistedDeckState;
+  const isPersistedSaveRequest = () => true;
+  let factoryOptions = null;
+  const adapter = editorPersistenceState.createStudioEditorPersistedSaveRequestCheckerAdapter({
+    persistenceApi: {
+      isStudioPersistedSaveRequest() {
+        throw new Error('direct save checker should not run when the builder exists');
+      },
+      createStudioPersistedSaveRequestChecker(options) {
+        factoryOptions = options;
+        return (saveRequestBody, cleanHtml) => ({
+          saveRequestBody,
+          cleanHtml,
+          persistedDeckState: options.readPersistedDeckState(),
+          result: options.isPersistedSaveRequest(saveRequestBody, options.readPersistedDeckState(), cleanHtml)
+        });
+      }
+    },
+    readPersistedDeckState,
+    isPersistedSaveRequest
+  });
+
+  const saveRequestBody = { htmlContent: '<html>current</html>' };
+  assert.deepEqual(adapter(saveRequestBody, '<html>current</html>'), {
+    saveRequestBody,
+    cleanHtml: '<html>current</html>',
+    persistedDeckState,
+    result: true
+  });
+  assert.equal(factoryOptions.readPersistedDeckState, readPersistedDeckState);
+  assert.equal(factoryOptions.isPersistedSaveRequest, isPersistedSaveRequest);
+});
+
+test('createStudioEditorPersistedSaveRequestCheckerAdapter uses direct helper without a builder', () => {
+  let delegatedArgs = null;
+  const persistedDeckState = { cleanHtml: '<html>persisted</html>' };
+  const isPersistedSaveRequest = (saveRequestBody, nextPersistedDeckState, cleanHtml) => {
+    delegatedArgs = { saveRequestBody, persistedDeckState: nextPersistedDeckState, cleanHtml };
+    return true;
+  };
+  const adapter = editorPersistenceState.createStudioEditorPersistedSaveRequestCheckerAdapter({
+    persistenceApi: { isStudioPersistedSaveRequest: isPersistedSaveRequest },
+    readPersistedDeckState: () => persistedDeckState
+  });
+  const saveRequestBody = { htmlContent: '<html>current</html>' };
+
+  assert.equal(adapter(saveRequestBody), true);
+  assert.equal(delegatedArgs.saveRequestBody, saveRequestBody);
+  assert.equal(delegatedArgs.persistedDeckState, persistedDeckState);
+  assert.equal(delegatedArgs.cleanHtml, '<html>current</html>');
+});
+
+test('createStudioEditorPersistedSaveRequestCheckerAdapter returns null without a shared checker', () => {
+  const adapter = editorPersistenceState.createStudioEditorPersistedSaveRequestCheckerAdapter();
+
+  assert.equal(adapter({ htmlContent: '<html>current</html>' }), null);
+});
