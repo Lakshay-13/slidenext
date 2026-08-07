@@ -1177,6 +1177,7 @@
   <script src="/shared/studio-editor-transform.js"></script>
   <script src="/shared/studio-editor-canonical-transform.js"></script>
   <script src="/shared/studio-editor-canonical-wallpaper.js"></script>
+  <script src="/shared/studio-editor-wallpaper-mutation.js"></script>
   <script src="/shared/studio-editor-canonical-visibility.js"></script>
   <script src="/shared/studio-editor-canonical-layout.js"></script>
   <script src="/shared/studio-editor-canonical-group.js"></script>
@@ -7211,27 +7212,25 @@
     }
 
     function applyEditorWallpaperSlidesMutationWithTransaction(slides, background, options = {}) {
-      const sourceSlides = Array.isArray(slides) ? slides : [];
-      if (sourceSlides.length === 0) {
+      const mutationApi = typeof SlideNextStudioEditorWallpaperMutation !== 'undefined'
+        ? SlideNextStudioEditorWallpaperMutation
+        : null;
+      const applyMutation = mutationApi
+        && typeof mutationApi.applyStudioWallpaperSlidesMutationWithTransaction === 'function'
+        ? mutationApi.applyStudioWallpaperSlidesMutationWithTransaction
+        : null;
+      if (!applyMutation) {
         return {
           didChange: false,
           transaction: null
         };
       }
 
-      const createStudioStyleTransaction = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+      const transactionApi = typeof SlideNextStudioEditorTransaction !== 'undefined'
+        ? SlideNextStudioEditorTransaction
         : null;
       const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
         ? SlideNextStudioEditorWallpaperView
-        : null;
-      const applyStudioWallpaperToSlides = wallpaperView
-        && typeof wallpaperView.applyStudioWallpaperToSlides === 'function'
-        ? wallpaperView.applyStudioWallpaperToSlides
         : null;
       const getSlideId = typeof options.getSlideId === 'function'
         ? options.getSlideId
@@ -7246,51 +7245,22 @@
       const canonicalWallpaperApi = typeof SlideNextStudioEditorCanonicalWallpaper !== 'undefined'
         ? SlideNextStudioEditorCanonicalWallpaper
         : null;
-      const canonicalWallpaperBuilders = canonicalWallpaperApi
-        && typeof canonicalWallpaperApi.createStudioCanonicalWallpaperMutationBuilders === 'function'
-        ? canonicalWallpaperApi.createStudioCanonicalWallpaperMutationBuilders({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? () => buildEditorCanonicalDeck()
-              : null
-          })
-        : null;
-      const buildCanonicalWallpaperDeck = canonicalWallpaperBuilders
-        && typeof canonicalWallpaperBuilders.buildCanonicalWallpaperDeck === 'function'
-        ? canonicalWallpaperBuilders.buildCanonicalWallpaperDeck
-        : null;
-      const canonicalDeckBeforeMutation = canonicalWallpaperBuilders
-        && typeof canonicalWallpaperBuilders.buildCanonicalWallpaperBaseline === 'function'
-        ? canonicalWallpaperBuilders.buildCanonicalWallpaperBaseline()
-        : null;
-      const canonicalDeck = buildCanonicalWallpaperDeck
-        ? buildCanonicalWallpaperDeck(sourceSlides, background, {
-            ...(canonicalDeckBeforeMutation
-              ? { canonicalDeckBeforeMutation }
-              : {}),
-            getSlideId
-          })
-        : null;
-      if (!applyStudioWallpaperToSlides) {
-        return {
-          didChange: false,
-          transaction: null
-        };
-      }
-      const mutation = applyStudioWallpaperToSlides(sourceSlides, background, {
-        createStyleTransaction: createStudioStyleTransaction,
-        getSlideId
+      return applyMutation(slides, background, {
+        createStyleTransaction: transactionApi
+          && typeof transactionApi.createStudioStyleTransaction === 'function'
+          ? transactionApi.createStudioStyleTransaction
+          : null,
+        applyStudioWallpaperToSlides: wallpaperView
+          && typeof wallpaperView.applyStudioWallpaperToSlides === 'function'
+          ? wallpaperView.applyStudioWallpaperToSlides
+          : null,
+        getSlideId,
+        canonicalDeckApi,
+        canonicalWallpaperApi,
+        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+          ? () => buildEditorCanonicalDeck()
+          : null
       });
-      return mutation && typeof mutation === 'object'
-        ? {
-            didChange: !!mutation.didChange,
-            transaction: mutation.transaction || null,
-            ...(mutation.didChange && canonicalDeck ? { canonicalDeck } : {})
-          }
-        : {
-            didChange: false,
-            transaction: null
-          };
     }
 
     function applyEditorWallpaperMutationWithTransaction(activeSlide, background, options = {}) {
