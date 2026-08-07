@@ -40,6 +40,7 @@ function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
 
 function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.SlideNextStudioEditorPersistenceState ??= editorPersistenceState;
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
