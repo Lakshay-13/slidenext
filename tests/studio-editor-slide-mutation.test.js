@@ -55,3 +55,27 @@ test('createStudioEditorSlideMutationPersistenceFinalizer preserves the local fa
     ['version', 'Auto: Slide']
   ]);
 });
+
+test('createStudioEditorSlideMutationRestoreStateCapturer preserves active slide and selection fallback', () => {
+  const calls = [];
+  const capture = slideMutation.createStudioEditorSlideMutationRestoreStateCapturer({
+    saveHistoryState() {
+      calls.push('history');
+    },
+    getActiveSlideId(doc) {
+      calls.push(['active', doc]);
+      return 'slide-2';
+    },
+    getSelectedElementIds(doc) {
+      calls.push(['selection', doc]);
+      return ['node-1'];
+    }
+  });
+  const doc = { id: 'doc' };
+
+  assert.deepEqual(capture(doc), {
+    preservedActiveSlideId: 'slide-2',
+    preservedSelectionIds: ['node-1']
+  });
+  assert.deepEqual(calls, ['history', ['active', doc], ['selection', doc]]);
+});

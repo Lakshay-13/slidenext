@@ -48,7 +48,60 @@
     };
   }
 
+  function createStudioEditorSlideMutationRestoreStateCapturer(options = {}) {
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const deckViewApi = options.deckViewApi && typeof options.deckViewApi === 'object'
+      ? options.deckViewApi
+      : null;
+    const saveHistoryState = typeof options.saveHistoryState === 'function'
+      ? options.saveHistoryState
+      : () => {};
+    const getActiveSlideId = typeof options.getActiveSlideId === 'function'
+      ? options.getActiveSlideId
+      : () => '';
+    const getCommittedSelectedElementIds = typeof options.getSelectedElementIds === 'function'
+      ? options.getSelectedElementIds
+      : () => [];
+    const createRestoreStateCapturer = mutationApi
+      && typeof mutationApi.createStudioSlideMutationRestoreStateCapturer === 'function'
+      ? mutationApi.createStudioSlideMutationRestoreStateCapturer
+      : null;
+    const captureStudioDeckViewBeforeSlideMutation = deckViewApi
+      && typeof deckViewApi.captureStudioDeckViewBeforeSlideMutation === 'function'
+      ? deckViewApi.captureStudioDeckViewBeforeSlideMutation
+      : null;
+
+    if (createRestoreStateCapturer) {
+      return createRestoreStateCapturer({
+        captureStudioDeckViewBeforeSlideMutation,
+        saveHistoryState,
+        getActiveSlideId,
+        getCommittedSelectedElementIds
+      });
+    }
+
+    if (captureStudioDeckViewBeforeSlideMutation) {
+      return (iframeDoc) => captureStudioDeckViewBeforeSlideMutation({
+        doc: iframeDoc,
+        saveHistoryState,
+        getActiveSlideId,
+        getCommittedSelectedElementIds
+      });
+    }
+
+    return (iframeDoc) => {
+      saveHistoryState();
+      return {
+        preservedActiveSlideId: getActiveSlideId(iframeDoc),
+        preservedSelectionIds: getCommittedSelectedElementIds(iframeDoc)
+      };
+    };
+  }
+
   return {
-    createStudioEditorSlideMutationPersistenceFinalizer
+    createStudioEditorSlideMutationPersistenceFinalizer,
+    createStudioEditorSlideMutationRestoreStateCapturer
   };
 });

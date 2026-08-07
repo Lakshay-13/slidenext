@@ -38,6 +38,7 @@ function loadCaptureSlideMutationRestoreState(fileContent, context) {
     'function createEditorSlideMutationRestoreStateCapturer(options = {}) {',
     '\n\n    function restoreDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, options = {}) {'
   );
+  context.SlideNextStudioEditorSlideMutation = slideMutation;
   vm.runInContext(helperSource, context);
 }
 
