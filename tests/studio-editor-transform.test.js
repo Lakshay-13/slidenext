@@ -1117,6 +1117,66 @@ test('resolveStudioTransformBounds applies the shared interaction and normalizat
   });
 });
 
+test('resolveStudioTransformBounds preserves locked resize ratios when slide edges constrain the result', () => {
+  assert.deepEqual(transformState.resolveStudioTransformBounds({
+    type: 'resize',
+    handleDir: 'se',
+    slideBounds: {
+      width: 200,
+      height: 120
+    },
+    startBounds: {
+      left: 100,
+      top: 50,
+      right: 180,
+      bottom: 90,
+      width: 80,
+      height: 40
+    }
+  }, {
+    dx: 100,
+    dy: 100,
+    minSizePx: 8,
+    lockAspectRatio: true
+  }), {
+    left: 100,
+    top: 50,
+    right: 200,
+    bottom: 100,
+    width: 100,
+    height: 50
+  });
+
+  assert.deepEqual(transformState.resolveStudioTransformBounds({
+    type: 'resize',
+    handleDir: 'e',
+    slideBounds: {
+      width: 200,
+      height: 120
+    },
+    startBounds: {
+      left: 100,
+      top: 50,
+      right: 180,
+      bottom: 90,
+      width: 80,
+      height: 40
+    }
+  }, {
+    dx: 100,
+    dy: 100,
+    minSizePx: 8,
+    lockAspectRatio: true
+  }), {
+    left: 100,
+    top: 45,
+    right: 200,
+    bottom: 95,
+    width: 100,
+    height: 50
+  });
+});
+
 test('applyStudioTransformBounds updates drag and resize item styles using shared transform math', () => {
   const dragElement = { tagName: 'DIV', style: {} };
   transformState.applyStudioTransformBounds({

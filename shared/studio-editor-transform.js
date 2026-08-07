@@ -568,6 +568,95 @@
     );
   }
 
+  function fitStudioLockedAspectRatioBoundsToSlide(bounds = {}, session = {}, slideBounds = {}) {
+    if (session.type !== 'resize') {
+      return bounds;
+    }
+
+    const slideWidth = Number.isFinite(slideBounds.width) ? slideBounds.width : 0;
+    const slideHeight = Number.isFinite(slideBounds.height) ? slideBounds.height : 0;
+    if (!(slideWidth > 0) || !(slideHeight > 0)) {
+      return bounds;
+    }
+
+    const left = Number.isFinite(bounds.left) ? bounds.left : 0;
+    const top = Number.isFinite(bounds.top) ? bounds.top : 0;
+    const right = Number.isFinite(bounds.right) ? bounds.right : left;
+    const bottom = Number.isFinite(bounds.bottom) ? bounds.bottom : top;
+    const width = right - left;
+    const height = bottom - top;
+    if (!(width > 0) || !(height > 0)) {
+      return bounds;
+    }
+
+    const startBounds = session.startBounds || {};
+    const startWidth = Number.isFinite(startBounds.width)
+      ? startBounds.width
+      : (Number.isFinite(startBounds.right) ? startBounds.right : 0) - (Number.isFinite(startBounds.left) ? startBounds.left : 0);
+    const startHeight = Number.isFinite(startBounds.height)
+      ? startBounds.height
+      : (Number.isFinite(startBounds.bottom) ? startBounds.bottom : 0) - (Number.isFinite(startBounds.top) ? startBounds.top : 0);
+    if (!(startWidth > 0) || !(startHeight > 0)) {
+      return bounds;
+    }
+
+    const aspectRatio = startWidth / startHeight;
+    const handleDir = typeof session.handleDir === 'string' ? session.handleDir : '';
+    const hasHorizontalHandle = handleDir.includes('e') || handleDir.includes('w');
+    const hasVerticalHandle = handleDir.includes('n') || handleDir.includes('s');
+    const centerX = (left + right) / 2;
+    const centerY = (top + bottom) / 2;
+    const maxWidth = handleDir.includes('w')
+      ? right
+      : handleDir.includes('e')
+        ? slideWidth - left
+        : 2 * Math.min(centerX, slideWidth - centerX);
+    const maxHeight = handleDir.includes('n')
+      ? bottom
+      : handleDir.includes('s')
+        ? slideHeight - top
+        : 2 * Math.min(centerY, slideHeight - centerY);
+    const fittedWidth = Math.min(width, maxWidth, maxHeight * aspectRatio);
+    if (!(fittedWidth > 0) || !Number.isFinite(fittedWidth)) {
+      return bounds;
+    }
+
+    const fittedHeight = fittedWidth / aspectRatio;
+    let fittedLeft = left;
+    let fittedTop = top;
+    let fittedRight = right;
+    let fittedBottom = bottom;
+
+    if (hasHorizontalHandle) {
+      if (handleDir.includes('w')) {
+        fittedLeft = right - fittedWidth;
+      } else {
+        fittedRight = left + fittedWidth;
+      }
+    } else {
+      fittedLeft = centerX - (fittedWidth / 2);
+      fittedRight = centerX + (fittedWidth / 2);
+    }
+
+    if (hasVerticalHandle) {
+      if (handleDir.includes('n')) {
+        fittedTop = bottom - fittedHeight;
+      } else {
+        fittedBottom = top + fittedHeight;
+      }
+    } else {
+      fittedTop = centerY - (fittedHeight / 2);
+      fittedBottom = centerY + (fittedHeight / 2);
+    }
+
+    return {
+      left: fittedLeft,
+      top: fittedTop,
+      right: fittedRight,
+      bottom: fittedBottom
+    };
+  }
+
   function resolveStudioTransformBounds(session = {}, options = {}) {
     const slideBounds = options.slideBounds || session.slideBounds || {};
     const handleDir = typeof session.handleDir === 'string' ? session.handleDir : '';
@@ -586,7 +675,10 @@
       options.onGuides(snapResult.guides);
     }
     const normalizedBounds = normalizeStudioTransformBounds(snapResult.bounds, slideBounds, normalizeOptions);
-    return normalizeStudioTransformBounds(normalizedBounds, slideBounds, normalizeOptions);
+    const aspectRatioBounds = (session.lockAspectRatio || options.lockAspectRatio)
+      ? fitStudioLockedAspectRatioBoundsToSlide(normalizedBounds, session, slideBounds)
+      : normalizedBounds;
+    return normalizeStudioTransformBounds(aspectRatioBounds, slideBounds, normalizeOptions);
   }
 
   function applyStudioTransformBounds(session = {}, bounds = {}, options = {}) {
