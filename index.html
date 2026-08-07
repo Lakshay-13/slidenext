@@ -1231,6 +1231,7 @@
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
+  <script src="/shared/studio-editor-history-state.js"></script>
   <script src="/shared/studio-editor-history-restore.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
@@ -7313,15 +7314,19 @@
     let undoDebounceTimer = null;
     let pendingEditorCanonicalDeck = null;
     function saveHistoryState(debounce = false, transaction = null) {
-      if (!saveHistoryState.historyHandler) {
-        const createStudioHistorySaveHandler = SlideNextStudioHistory
-          && typeof SlideNextStudioHistory.createStudioHistorySaveHandler === 'function'
-          ? SlideNextStudioHistory.createStudioHistorySaveHandler
+      if (typeof saveHistoryState.adapter !== 'function') {
+        const createStudioEditorHistorySaveAdapter = (
+          typeof SlideNextStudioEditorHistoryState !== 'undefined'
+          && SlideNextStudioEditorHistoryState
+          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistorySaveAdapter === 'function'
+        )
+          ? SlideNextStudioEditorHistoryState.createStudioEditorHistorySaveAdapter
           : null;
-        if (!createStudioHistorySaveHandler) {
+        if (!createStudioEditorHistorySaveAdapter) {
           return { didCapture: false, nextTimer: undoDebounceTimer };
         }
-        saveHistoryState.historyHandler = createStudioHistorySaveHandler({
+        saveHistoryState.adapter = createStudioEditorHistorySaveAdapter({
+          historyApi: SlideNextStudioHistory,
           transactionApi: (
             typeof SlideNextStudioEditorTransaction !== 'undefined'
             && SlideNextStudioEditorTransaction
@@ -7357,10 +7362,10 @@
           }
         });
       }
-      if (typeof saveHistoryState.historyHandler !== 'function') {
+      if (typeof saveHistoryState.adapter !== 'function') {
         return { didCapture: false, nextTimer: undoDebounceTimer };
       }
-      return saveHistoryState.historyHandler(
+      return saveHistoryState.adapter(
         debounce,
         transaction,
         ...(arguments.length > 2 ? [arguments[2]] : [])

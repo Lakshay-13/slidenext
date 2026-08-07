@@ -7,6 +7,7 @@ const studioHistory = require('../shared/studio-history.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const deckView = require('../shared/studio-deck-view.js');
+const historyState = require('../shared/studio-editor-history-state.js');
 const historyRestore = require('../shared/studio-editor-history-restore.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -44,6 +45,7 @@ function loadSaveHistoryState(fileContent, context) {
     ...studioHistory,
     ...(context.SlideNextStudioHistory || {})
   };
+  context.SlideNextStudioEditorHistoryState = historyState;
   vm.runInContext(helperSource, context);
 }
 
