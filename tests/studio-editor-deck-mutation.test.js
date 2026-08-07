@@ -162,3 +162,35 @@ test('finalizeStudioEditorLayerOrderMutation preserves layer chrome and history 
     ['version', 'Auto: Layer Order']
   ]);
 });
+
+test('finalizeStudioEditorWallpaperMutation preserves canonical history fallback ordering', () => {
+  const calls = [];
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const result = deckMutation.finalizeStudioEditorWallpaperMutation(
+    'Auto: Changed Background',
+    { id: 'tx' },
+    canonicalDeck,
+    {
+      generateThumbnails() {
+        calls.push(['thumbnails']);
+      },
+      saveHistoryState(...args) {
+        calls.push(['history', ...args]);
+      },
+      triggerAutoSave() {
+        calls.push(['save']);
+      },
+      triggerAutoVersion(label) {
+        calls.push(['version', label]);
+      }
+    }
+  );
+
+  assert.equal(result, 'Auto: Changed Background');
+  assert.deepEqual(calls, [
+    ['thumbnails'],
+    ['history', false, { id: 'tx' }, canonicalDeck],
+    ['save'],
+    ['version', 'Auto: Changed Background']
+  ]);
+});

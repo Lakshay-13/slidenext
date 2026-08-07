@@ -212,10 +212,57 @@
     return versionLabel;
   }
 
+  function finalizeStudioEditorWallpaperMutation(
+    versionLabel = '',
+    transaction = null,
+    canonicalDeck = null,
+    options = {}
+  ) {
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    if (mutationApi && typeof mutationApi.finalizeStudioWallpaperMutation === 'function') {
+      return mutationApi.finalizeStudioWallpaperMutation({
+        versionLabel,
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {}),
+        finalizeMutation: options.finalizeMutation,
+        generateThumbnails: options.generateThumbnails,
+        saveHistoryState: options.saveHistoryState,
+        triggerAutoSave: options.triggerAutoSave,
+        triggerAutoVersion: options.triggerAutoVersion
+      });
+    }
+    if (typeof options.finalizeMutation === 'function') {
+      return options.finalizeMutation(versionLabel, {
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
+    }
+    if (typeof options.generateThumbnails === 'function') {
+      options.generateThumbnails();
+    }
+    if (typeof options.saveHistoryState === 'function') {
+      if (canonicalDeck) {
+        options.saveHistoryState(false, transaction, canonicalDeck);
+      } else {
+        options.saveHistoryState(false, transaction);
+      }
+    }
+    if (typeof options.triggerAutoSave === 'function') {
+      options.triggerAutoSave();
+    }
+    if (versionLabel && typeof options.triggerAutoVersion === 'function') {
+      options.triggerAutoVersion(versionLabel);
+    }
+    return versionLabel;
+  }
+
   return {
     finalizeStudioEditorDeckMutation,
     finalizeStudioEditorSelectionToggleMutation,
     finalizeStudioEditorInsertedElements,
-    finalizeStudioEditorLayerOrderMutation
+    finalizeStudioEditorLayerOrderMutation,
+    finalizeStudioEditorWallpaperMutation
   };
 });

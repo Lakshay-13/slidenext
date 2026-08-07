@@ -8,6 +8,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalWallpaper = require('../shared/studio-editor-canonical-wallpaper.js');
 const studioWallpaperView = require('../shared/studio-editor-wallpaper-view.js');
 const studioWallpaperMutation = require('../shared/studio-editor-wallpaper-mutation.js');
+const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -25,6 +26,7 @@ function loadFinalizeWallpaperMutation(fileContent, context) {
     'function finalizeWallpaperMutation(versionLabel = \'\', transaction = null, canonicalDeck = null) {',
     '\n\n    function applyPresetWallpaper(val, isCustomInput = false) {'
   );
+  context.SlideNextStudioEditorDeckMutation = deckMutation;
   vm.runInContext(helperSource, context);
 }
 

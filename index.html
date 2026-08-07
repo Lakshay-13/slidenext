@@ -6976,40 +6976,30 @@
     }
 
     function finalizeWallpaperMutation(versionLabel = '', transaction = null, canonicalDeck = null) {
-      const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
-        ? SlideNextStudioEditorMutation
+      const deckMutationApi = typeof SlideNextStudioEditorDeckMutation !== 'undefined'
+        ? SlideNextStudioEditorDeckMutation
         : null;
-      if (mutationApi && typeof mutationApi.finalizeStudioWallpaperMutation === 'function') {
-        return mutationApi.finalizeStudioWallpaperMutation({
-          versionLabel,
-          transaction,
-          ...(canonicalDeck ? { canonicalDeck } : {}),
+      if (!deckMutationApi
+        || typeof deckMutationApi.finalizeStudioEditorWallpaperMutation !== 'function') {
+        return false;
+      }
+      return deckMutationApi.finalizeStudioEditorWallpaperMutation(
+        versionLabel,
+        transaction,
+        canonicalDeck,
+        {
+          mutationApi: typeof SlideNextStudioEditorMutation !== 'undefined'
+            ? SlideNextStudioEditorMutation
+            : null,
           finalizeMutation: typeof finalizeEditorDeckMutation === 'function'
             ? finalizeEditorDeckMutation
             : null,
-          generateThumbnails,
-          saveHistoryState,
-          triggerAutoSave,
-          triggerAutoVersion
-        });
-      }
-      if (typeof finalizeEditorDeckMutation === 'function') {
-        return finalizeEditorDeckMutation(versionLabel, {
-          transaction,
-          ...(canonicalDeck ? { canonicalDeck } : {})
-        });
-      }
-      generateThumbnails();
-      if (canonicalDeck) {
-        saveHistoryState(false, transaction, canonicalDeck);
-      } else {
-        saveHistoryState(false, transaction);
-      }
-      triggerAutoSave();
-      if (versionLabel) {
-        triggerAutoVersion(versionLabel);
-      }
-      return versionLabel;
+          generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
+          saveHistoryState: typeof saveHistoryState === 'function' ? saveHistoryState : null,
+          triggerAutoSave: typeof triggerAutoSave === 'function' ? triggerAutoSave : null,
+          triggerAutoVersion: typeof triggerAutoVersion === 'function' ? triggerAutoVersion : null
+        }
+      );
     }
 
     function flushPendingWallpaperVersion() {
