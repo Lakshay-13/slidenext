@@ -63,6 +63,45 @@
     return insertCanonicalSlide(canonicalDeckBeforeMutation, canonicalSlide, insertionIndex);
   }
 
+  function createStudioCanonicalDuplicateSlideMutationBuilders(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const importSlideToCanonicalSlide = typeof options.importSlideToCanonicalSlide === 'function'
+      ? options.importSlideToCanonicalSlide
+      : null;
+    const buildCanonicalDuplicateSlideBaseline = (duplicateOptions = {}) => (
+      buildStudioCanonicalDuplicateSlideBaseline({
+        ...duplicateOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck
+      })
+    );
+    const buildCanonicalDuplicateSlideDeck = (duplicateOptions = {}) => {
+      const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(
+        duplicateOptions,
+        'canonicalDeckBeforeMutation'
+      )
+        ? duplicateOptions.canonicalDeckBeforeMutation
+        : buildCanonicalDuplicateSlideBaseline(duplicateOptions);
+      return buildStudioCanonicalDuplicateSlideDeck({
+        ...duplicateOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck,
+        importSlideToCanonicalSlide,
+        canonicalDeckBeforeMutation
+      });
+    };
+
+    return {
+      buildCanonicalDuplicateSlideBaseline,
+      buildCanonicalDuplicateSlideDeck
+    };
+  }
+
   function buildStudioCanonicalAddSlideBaseline(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -282,6 +321,7 @@
     buildStudioCanonicalDeleteSlideDeck,
     buildStudioCanonicalDuplicateSlideBaseline,
     buildStudioCanonicalDuplicateSlideDeck,
+    createStudioCanonicalDuplicateSlideMutationBuilders,
     buildStudioCanonicalReorderSlideBaseline,
     buildStudioCanonicalReorderSlideDeck,
     createStudioCanonicalReorderSlideMutationBuilders

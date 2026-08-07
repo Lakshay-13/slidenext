@@ -3100,20 +3100,24 @@
       const canonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
         ? SlideNextStudioEditorCanonicalSlide
         : null;
-      const buildCanonicalDuplicateSlideDeck = canonicalSlideApi
-        && typeof canonicalSlideApi.buildStudioCanonicalDuplicateSlideDeck === 'function'
-        ? canonicalSlideApi.buildStudioCanonicalDuplicateSlideDeck
-        : null;
-      const buildCanonicalDuplicateSlideBaseline = canonicalSlideApi
-        && typeof canonicalSlideApi.buildStudioCanonicalDuplicateSlideBaseline === 'function'
-        ? canonicalSlideApi.buildStudioCanonicalDuplicateSlideBaseline
-        : null;
       const importSlideToCanonicalSlide = (
         typeof SlideNextDeckImport !== 'undefined'
         && SlideNextDeckImport
         && typeof SlideNextDeckImport.importSlideToCanonicalSlide === 'function'
       )
         ? SlideNextDeckImport.importSlideToCanonicalSlide
+        : null;
+      const canonicalDuplicateSlideBuilders = canonicalSlideApi
+        && typeof canonicalSlideApi.createStudioCanonicalDuplicateSlideMutationBuilders === 'function'
+        ? canonicalSlideApi.createStudioCanonicalDuplicateSlideMutationBuilders({
+            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+              ? SlideNextCanonicalDeck
+              : null,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+            importSlideToCanonicalSlide
+          })
         : null;
       return duplicateStudioSlideNode({
         getIframeDoc,
@@ -3126,27 +3130,11 @@
         sanitizeDuplicatedSubtree,
         assignSlideId: assignEditorSlideId,
         makeElementsHoverable,
-        buildCanonicalDuplicateSlideBaseline: buildCanonicalDuplicateSlideBaseline
-          ? (options) => buildCanonicalDuplicateSlideBaseline({
-              ...options,
-              canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-                ? SlideNextCanonicalDeck
-                : null,
-              buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-                ? buildEditorCanonicalDeck
-                : null
-            })
+        buildCanonicalDuplicateSlideBaseline: canonicalDuplicateSlideBuilders
+          ? canonicalDuplicateSlideBuilders.buildCanonicalDuplicateSlideBaseline
           : null,
-        buildCanonicalDuplicateSlideDeck: buildCanonicalDuplicateSlideDeck
-          ? (options) => buildCanonicalDuplicateSlideDeck({
-              ...options,
-              canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-                ? SlideNextCanonicalDeck
-                : null,
-              buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-                ? buildEditorCanonicalDeck
-                : null
-            })
+        buildCanonicalDuplicateSlideDeck: canonicalDuplicateSlideBuilders
+          ? canonicalDuplicateSlideBuilders.buildCanonicalDuplicateSlideDeck
           : null,
         importSlideToCanonicalSlide,
         saveHistoryState: typeof saveHistoryState === 'function' ? saveHistoryState : null,

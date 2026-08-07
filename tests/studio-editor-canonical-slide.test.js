@@ -77,6 +77,34 @@ test('buildStudioCanonicalDuplicateSlideDeck passes the source document to the c
   assert.deepEqual(result.slides.map((slide) => slide.id), ['slide-1', 'slide-2']);
 });
 
+test('createStudioCanonicalDuplicateSlideMutationBuilders preserves an explicit baseline', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const explicitBaseline = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }, { id: 'slide-3' }]
+  });
+  let buildCount = 0;
+  const builders = canonicalSlide.createStudioCanonicalDuplicateSlideMutationBuilders({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck() {
+      buildCount += 1;
+      return sourceDeck;
+    },
+    importSlideToCanonicalSlide(slide, index, options) {
+      return { id: options.getSlideId(), title: `Copied ${index}` };
+    }
+  });
+
+  const result = builders.buildCanonicalDuplicateSlideDeck({
+    canonicalDeckBeforeMutation: explicitBaseline,
+    duplicateSlide: { id: 'slide-2' },
+    duplicateSlideId: 'slide-2',
+    insertionIndex: 1
+  });
+
+  assert.equal(buildCount, 0);
+  assert.deepEqual(result.slides.map((slide) => slide.id), ['slide-1', 'slide-2', 'slide-3']);
+});
+
 test('buildStudioCanonicalAddSlideBaseline builds from the source document', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const sourceDocument = { id: 'editor-doc' };
