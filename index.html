@@ -9156,6 +9156,27 @@
     }
 
     function runCurrentStudioPersistenceActionIfCurrent(persistenceContext, action) {
+      const createStudioEditorPersistenceActionCurrentRunnerAdapter = (
+        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+        && SlideNextStudioEditorPersistenceState
+        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceActionCurrentRunnerAdapter === 'function'
+      )
+        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceActionCurrentRunnerAdapter
+        : null;
+      if (createStudioEditorPersistenceActionCurrentRunnerAdapter) {
+        const adapter = createStudioEditorPersistenceActionCurrentRunnerAdapter({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          readCurrentSessionState: createCurrentStudioSessionStateReaders
+        });
+        const result = typeof adapter === 'function'
+          ? adapter(persistenceContext, action)
+          : null;
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
       const createStudioPersistenceActionCurrentRunner = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence

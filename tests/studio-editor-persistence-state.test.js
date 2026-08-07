@@ -1104,3 +1104,69 @@ test('createStudioEditorPersistenceTaskStaleCheckerAdapter returns null without 
 
   assert.equal(adapter('/presentations/deck/index.html', 12), null);
 });
+
+test('createStudioEditorPersistenceActionCurrentRunnerAdapter preserves builder precedence', () => {
+  const readCurrentSessionState = () => ({
+    getCurrentPresentationUrl: () => '/presentations/deck/index.html',
+    getCurrentSessionToken: () => 12
+  });
+  const runPersistenceActionIfCurrent = () => {
+    throw new Error('direct action runner should not run when the builder exists');
+  };
+  let factoryOptions = null;
+  const adapter = editorPersistenceState.createStudioEditorPersistenceActionCurrentRunnerAdapter({
+    persistenceApi: {
+      createStudioPersistenceActionCurrentRunner(options) {
+        factoryOptions = options;
+        return (persistenceContext, action) => ({
+          persistenceContext,
+          action,
+          readCurrentSessionState: options.readCurrentSessionState,
+          runPersistenceActionIfCurrent: options.runPersistenceActionIfCurrent
+        });
+      }
+    },
+    readCurrentSessionState,
+    runPersistenceActionIfCurrent
+  });
+  const persistenceContext = { presentationUrl: '/presentations/deck/index.html' };
+  const action = () => {};
+
+  const result = adapter(persistenceContext, action);
+  assert.equal(result.persistenceContext, persistenceContext);
+  assert.equal(result.action, action);
+  assert.equal(result.readCurrentSessionState, readCurrentSessionState);
+  assert.equal(result.runPersistenceActionIfCurrent, runPersistenceActionIfCurrent);
+  assert.equal(factoryOptions.readCurrentSessionState, readCurrentSessionState);
+  assert.equal(factoryOptions.runPersistenceActionIfCurrent, runPersistenceActionIfCurrent);
+});
+
+test('createStudioEditorPersistenceActionCurrentRunnerAdapter uses direct helper without a builder', () => {
+  const sessionState = {
+    getCurrentPresentationUrl: () => '/presentations/deck/index.html',
+    getCurrentSessionToken: () => 12
+  };
+  const readCurrentSessionState = () => sessionState;
+  let delegatedArgs = null;
+  const runPersistenceActionIfCurrent = (persistenceContext, options, action) => {
+    delegatedArgs = { persistenceContext, options, action };
+    return true;
+  };
+  const adapter = editorPersistenceState.createStudioEditorPersistenceActionCurrentRunnerAdapter({
+    persistenceApi: { runStudioPersistenceActionIfCurrent: runPersistenceActionIfCurrent },
+    readCurrentSessionState
+  });
+  const persistenceContext = { sessionToken: 12 };
+  const action = () => {};
+
+  assert.equal(adapter(persistenceContext, action), true);
+  assert.equal(delegatedArgs.persistenceContext, persistenceContext);
+  assert.equal(delegatedArgs.options, sessionState);
+  assert.equal(delegatedArgs.action, action);
+});
+
+test('createStudioEditorPersistenceActionCurrentRunnerAdapter returns null without a shared runner', () => {
+  const adapter = editorPersistenceState.createStudioEditorPersistenceActionCurrentRunnerAdapter();
+
+  assert.equal(adapter({}, null), null);
+});
