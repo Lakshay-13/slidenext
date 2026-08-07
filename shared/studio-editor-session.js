@@ -241,6 +241,25 @@
       && isCurrentStudioEditorSession(options);
   }
 
+  function createStudioEditorFrameLoadGuardAdapter(options = {}) {
+    const sessionApi = options.sessionApi && typeof options.sessionApi === 'object'
+      ? options.sessionApi
+      : null;
+    const shouldHandleFrameLoad = typeof options.shouldHandleFrameLoad === 'function'
+      ? options.shouldHandleFrameLoad
+      : sessionApi
+        && typeof sessionApi.shouldHandleStudioFrameLoad === 'function'
+        ? sessionApi.shouldHandleStudioFrameLoad
+        : shouldHandleStudioFrameLoad;
+
+    return function shouldHandleEditorFrameLoad(expectedPresentationUrl = '', nextOptions = {}) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      return shouldHandleFrameLoad(expectedPresentationUrl, resolvedOptions);
+    };
+  }
+
   function createStudioFrameLoadHandler(options = {}) {
     return () => {
       const shouldHandleLoad = typeof options.shouldHandleLoad === 'function'
@@ -291,6 +310,7 @@
     createStudioEditorPresentationSessionStateUpdateAdapter,
     isCurrentStudioEditorSession,
     shouldHandleStudioFrameLoad,
+    createStudioEditorFrameLoadGuardAdapter,
     createStudioFrameLoadHandler,
     createStudioEditorFrameLoadHandlerAdapter
   };

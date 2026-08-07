@@ -345,6 +345,34 @@ test('shouldHandleStudioFrameLoad rejects stale same-url editor session tokens',
   ), true);
 });
 
+test('createStudioEditorFrameLoadGuardAdapter delegates URL and session options through the session API', () => {
+  let delegatedUrl = null;
+  let delegatedOptions = null;
+  const adapter = editorSession.createStudioEditorFrameLoadGuardAdapter({
+    sessionApi: {
+      shouldHandleStudioFrameLoad(expectedPresentationUrl, options) {
+        delegatedUrl = expectedPresentationUrl;
+        delegatedOptions = options;
+        return true;
+      }
+    }
+  });
+
+  const options = { sessionToken: 8 };
+  assert.equal(adapter('/presentations/deck/index.html', options), true);
+  assert.equal(delegatedUrl, '/presentations/deck/index.html');
+  assert.equal(delegatedOptions, options);
+});
+
+test('createStudioEditorFrameLoadGuardAdapter falls back to the shared guard', () => {
+  const adapter = editorSession.createStudioEditorFrameLoadGuardAdapter();
+  assert.equal(adapter('', { editorActive: true }), false);
+  assert.equal(adapter('/presentations/deck/index.html', {
+    currentPresentationUrl: '/presentations/deck/index.html',
+    editorActive: true
+  }), true);
+});
+
 test('createStudioFrameLoadHandler runs load hooks for the active editor session', () => {
   const calls = [];
   const onLoad = editorSession.createStudioFrameLoadHandler({

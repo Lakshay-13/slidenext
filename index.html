@@ -2335,6 +2335,35 @@
         : () => false;
     }
 
+    function shouldHandleCurrentStudioFrameLoad(expectedPresentationUrl = '', options = {}) {
+      const createStudioEditorFrameLoadGuardAdapter = (
+        typeof SlideNextStudioEditorSession !== 'undefined'
+        && SlideNextStudioEditorSession
+        && typeof SlideNextStudioEditorSession.createStudioEditorFrameLoadGuardAdapter === 'function'
+      )
+        ? SlideNextStudioEditorSession.createStudioEditorFrameLoadGuardAdapter
+        : null;
+      if (createStudioEditorFrameLoadGuardAdapter) {
+        const adapter = createStudioEditorFrameLoadGuardAdapter({
+          sessionApi: SlideNextStudioEditorSession
+        });
+        if (typeof adapter === 'function') {
+          return adapter(expectedPresentationUrl, options);
+        }
+      }
+
+      const shouldHandleStudioFrameLoad = (
+        typeof SlideNextStudioEditorSession !== 'undefined'
+        && SlideNextStudioEditorSession
+        && typeof SlideNextStudioEditorSession.shouldHandleStudioFrameLoad === 'function'
+      )
+        ? SlideNextStudioEditorSession.shouldHandleStudioFrameLoad
+        : null;
+      return shouldHandleStudioFrameLoad
+        ? shouldHandleStudioFrameLoad(expectedPresentationUrl, options)
+        : false;
+    }
+
     function launchStudioEditor(url, title, category) {
       const editorSessionToken = ++studioEditorSessionToken;
       if (typeof resetEditorLiveCanonicalDeck === 'function') {
@@ -2401,7 +2430,7 @@
         afterLoad: () => {
           const savedZoom = localStorage.getItem('presentationZoom') || 'fit';
           setTimeout(() => {
-            if (!SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(url, {
+            if (!shouldHandleCurrentStudioFrameLoad(url, {
               ...frameLoadSessionStateReaders,
               sessionToken: editorSessionToken,
               isEditorActive
