@@ -426,7 +426,9 @@
     const slideBounds = options.slideBounds || session.slideBounds || {};
     const slideWidth = Number.isFinite(slideBounds.width) ? slideBounds.width : 0;
     const slideHeight = Number.isFinite(slideBounds.height) ? slideBounds.height : 0;
-    const snapDistancePx = Number.isFinite(options.snapDistancePx) ? options.snapDistancePx : 8;
+    const snapDistancePx = Number.isFinite(options.snapDistancePx) && options.snapDistancePx >= 0
+      ? options.snapDistancePx
+      : 8;
     const left = Number.isFinite(bounds.left) ? bounds.left : 0;
     const top = Number.isFinite(bounds.top) ? bounds.top : 0;
     const right = Number.isFinite(bounds.right) ? bounds.right : left;

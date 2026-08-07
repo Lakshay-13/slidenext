@@ -928,6 +928,24 @@ test('snapStudioTransformBounds optionally aligns dragged top-left bounds to a g
     right: 123,
     bottom: 87
   });
+
+  assert.deepEqual(transformState.snapStudioTransformBounds({
+    left: 49,
+    top: 36,
+    right: 149,
+    bottom: 86
+  }, {
+    type: 'drag',
+    slideBounds: { width: 500, height: 400 }
+  }, {
+    snapDistancePx: -1,
+    snapTargets: [{ left: 50, top: 40, right: 150, bottom: 90 }]
+  }).bounds, {
+    left: 50,
+    top: 40,
+    right: 150,
+    bottom: 90
+  });
 });
 
 test('snapStudioTransformBounds aligns dragged bounds to neighboring element guides', () => {
