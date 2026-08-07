@@ -262,6 +262,9 @@ test('createStudioTransformFallbackPointerHandlers coordinates the legacy pointe
       calls.push(['completion', result]);
       return { shouldPersist: true, versionLabel: 'Auto: Moved Element' };
     },
+    getGridSizePx() {
+      return 20;
+    },
     onSessionStart(bounds) {
       calls.push(['start', bounds]);
     },
@@ -293,6 +296,7 @@ test('createStudioTransformFallbackPointerHandlers coordinates the legacy pointe
       dragStartThresholdPx: 4,
       minSizePx: 0,
       dragOverflowMarginPx: 0,
+      gridSizePx: 20,
       lockAspectRatio: true
     }],
     ['apply', session, { left: 12, top: 22 }],
