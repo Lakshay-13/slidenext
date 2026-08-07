@@ -53,8 +53,44 @@
     return updateCanonicalSlideBackground(canonicalDeckBeforeMutation, slideIds, background);
   }
 
+  function createStudioCanonicalWallpaperMutationBuilders(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const buildCanonicalWallpaperBaseline = (baselineOptions = {}) => (
+      buildStudioCanonicalWallpaperBaseline({
+        ...baselineOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck
+      })
+    );
+    const buildCanonicalWallpaperDeck = (slides, background, deckOptions = {}) => {
+      const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(
+        deckOptions,
+        'canonicalDeckBeforeMutation'
+      )
+        ? deckOptions.canonicalDeckBeforeMutation
+        : buildCanonicalWallpaperBaseline(deckOptions);
+      return buildStudioCanonicalWallpaperDeck(slides, background, {
+        ...deckOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck,
+        canonicalDeckBeforeMutation
+      });
+    };
+
+    return {
+      buildCanonicalWallpaperBaseline,
+      buildCanonicalWallpaperDeck
+    };
+  }
+
   return {
     buildStudioCanonicalWallpaperBaseline,
-    buildStudioCanonicalWallpaperDeck
+    buildStudioCanonicalWallpaperDeck,
+    createStudioCanonicalWallpaperMutationBuilders
   };
 });

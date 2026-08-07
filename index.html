@@ -7205,28 +7205,25 @@
       const canonicalWallpaperApi = typeof SlideNextStudioEditorCanonicalWallpaper !== 'undefined'
         ? SlideNextStudioEditorCanonicalWallpaper
         : null;
-      const buildCanonicalWallpaperDeck = canonicalWallpaperApi
-        && typeof canonicalWallpaperApi.buildStudioCanonicalWallpaperDeck === 'function'
-        ? canonicalWallpaperApi.buildStudioCanonicalWallpaperDeck
-        : null;
-      const buildCanonicalWallpaperBaseline = canonicalWallpaperApi
-        && typeof canonicalWallpaperApi.buildStudioCanonicalWallpaperBaseline === 'function'
-        ? canonicalWallpaperApi.buildStudioCanonicalWallpaperBaseline
-        : null;
-      const canonicalDeckBeforeMutation = buildCanonicalWallpaperBaseline
-        ? buildCanonicalWallpaperBaseline({
+      const canonicalWallpaperBuilders = canonicalWallpaperApi
+        && typeof canonicalWallpaperApi.createStudioCanonicalWallpaperMutationBuilders === 'function'
+        ? canonicalWallpaperApi.createStudioCanonicalWallpaperMutationBuilders({
             canonicalDeckApi,
             buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
               ? () => buildEditorCanonicalDeck()
               : null
           })
         : null;
+      const buildCanonicalWallpaperDeck = canonicalWallpaperBuilders
+        && typeof canonicalWallpaperBuilders.buildCanonicalWallpaperDeck === 'function'
+        ? canonicalWallpaperBuilders.buildCanonicalWallpaperDeck
+        : null;
+      const canonicalDeckBeforeMutation = canonicalWallpaperBuilders
+        && typeof canonicalWallpaperBuilders.buildCanonicalWallpaperBaseline === 'function'
+        ? canonicalWallpaperBuilders.buildCanonicalWallpaperBaseline()
+        : null;
       const canonicalDeck = buildCanonicalWallpaperDeck
         ? buildCanonicalWallpaperDeck(sourceSlides, background, {
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? () => buildEditorCanonicalDeck()
-              : null,
             ...(canonicalDeckBeforeMutation
               ? { canonicalDeckBeforeMutation }
               : {}),

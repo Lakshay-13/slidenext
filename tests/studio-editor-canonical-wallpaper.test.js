@@ -55,3 +55,28 @@ test('buildStudioCanonicalWallpaperDeck fails closed when an adapter dependency 
     buildCanonicalDeck: createSourceDeck
   }), null);
 });
+
+test('createStudioCanonicalWallpaperMutationBuilders reuses an explicit baseline', () => {
+  const sourceDeck = createSourceDeck();
+  let buildCount = 0;
+  const builders = canonicalWallpaper.createStudioCanonicalWallpaperMutationBuilders({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck() {
+      buildCount += 1;
+      return sourceDeck;
+    }
+  });
+
+  const result = builders.buildCanonicalWallpaperDeck(
+    [{ id: 'slide-1' }],
+    '#123456',
+    {
+      canonicalDeckBeforeMutation: sourceDeck,
+      getSlideId: (slide) => slide.id
+    }
+  );
+
+  assert.equal(buildCount, 0);
+  assert.equal(result.slides[0].layout.background.style, '#123456');
+  assert.equal(sourceDeck.slides[0].layout.background.style, '#000000');
+});
