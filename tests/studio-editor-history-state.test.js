@@ -37,3 +37,50 @@ test('createStudioEditorHistorySaveAdapter fails closed when shared history is u
     nextTimer: 'existing-timer'
   });
 });
+
+test('createStudioEditorHistoryEntryBuilder reads pending canonical state for each entry', () => {
+  const calls = [];
+  let pendingCanonicalDeck = null;
+  let pendingTransaction = null;
+  const historyApi = {
+    buildStudioHistoryEntry(doc, options) {
+      const canonicalDeck = options.buildCanonicalDeck(doc);
+      calls.push({ doc, canonicalDeck, transaction: options.transaction });
+      return { canonicalDeck, transaction: options.transaction };
+    }
+  };
+  const baseDeck = { kind: 'slidenext.deck', slides: [] };
+  const overrideDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  const builder = historyState.createStudioEditorHistoryEntryBuilder({
+    historyApi,
+    getPendingCanonicalDeck() {
+      return pendingCanonicalDeck;
+    },
+    buildCanonicalDeck(doc, options) {
+      return options && options.canonicalDeckOverride
+        ? options.canonicalDeckOverride
+        : baseDeck;
+    },
+    getPendingTransaction() {
+      return pendingTransaction;
+    }
+  });
+
+  pendingCanonicalDeck = overrideDeck;
+  pendingTransaction = { id: 'transaction-1' };
+  assert.deepEqual(builder('doc-1'), {
+    canonicalDeck: overrideDeck,
+    transaction: pendingTransaction
+  });
+
+  pendingCanonicalDeck = null;
+  pendingTransaction = { id: 'transaction-2' };
+  assert.deepEqual(builder('doc-2'), {
+    canonicalDeck: baseDeck,
+    transaction: pendingTransaction
+  });
+  assert.deepEqual(calls.map(({ doc, canonicalDeck, transaction }) => ({ doc, canonicalDeck, transaction })), [
+    { doc: 'doc-1', canonicalDeck: overrideDeck, transaction: { id: 'transaction-1' } },
+    { doc: 'doc-2', canonicalDeck: baseDeck, transaction: { id: 'transaction-2' } }
+  ]);
+});

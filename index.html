@@ -7394,34 +7394,41 @@
     }
 
     function createHistoryEntry(doc) {
-      const pendingCanonicalDeck = typeof pendingEditorCanonicalDeck !== 'undefined'
-        ? pendingEditorCanonicalDeck
-        : null;
-      const buildHistoryCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
-        canonicalDeckOverride: pendingCanonicalDeck
-      });
-      const historyCanonicalDeckBuilder = pendingCanonicalDeck
-        ? buildHistoryCanonicalDeck
-        : buildEditorCanonicalDeck;
-      const buildStudioHistoryEntry = SlideNextStudioHistory
-        && typeof SlideNextStudioHistory.buildStudioHistoryEntry === 'function'
-        ? SlideNextStudioHistory.buildStudioHistoryEntry
-        : null;
-      if (buildStudioHistoryEntry) {
-        return buildStudioHistoryEntry(doc, {
+      if (typeof createHistoryEntry.builder !== 'function') {
+        const createStudioEditorHistoryEntryBuilder = (
+          typeof SlideNextStudioEditorHistoryState !== 'undefined'
+          && SlideNextStudioEditorHistoryState
+          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryEntryBuilder === 'function'
+        )
+          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryEntryBuilder
+          : null;
+        if (!createStudioEditorHistoryEntryBuilder) return null;
+        createHistoryEntry.builder = createStudioEditorHistoryEntryBuilder({
+          historyApi: SlideNextStudioHistory,
           getDocument: getIframeDoc,
-          buildCanonicalDeck: historyCanonicalDeckBuilder,
+          getPendingCanonicalDeck: () => (
+            typeof pendingEditorCanonicalDeck !== 'undefined'
+              ? pendingEditorCanonicalDeck
+              : null
+          ),
+          buildCanonicalDeck: buildEditorCanonicalDeck,
           getHistoryOptions: getEditorHistoryOptions,
-          resolveFallbackActiveSlideId: resolveEditorFallbackActiveSlideId,
+          resolveFallbackActiveSlideId: typeof resolveEditorFallbackActiveSlideId === 'function'
+            ? resolveEditorFallbackActiveSlideId
+            : null,
           buildHistoryHtml: buildHistoryFrameHtml,
           getActiveSlideId,
           getSelectedElementIds: getCommittedSelectedEditorElementIds,
-          transaction: typeof pendingEditorTransaction !== 'undefined'
-            ? pendingEditorTransaction
-            : null
+          getPendingTransaction: () => (
+            typeof pendingEditorTransaction !== 'undefined'
+              ? pendingEditorTransaction
+              : null
+          )
         });
       }
-      return null;
+      return typeof createHistoryEntry.builder === 'function'
+        ? createHistoryEntry.builder(doc)
+        : null;
     }
 
     function updateEditorPersistedDeckState(nextState = {}) {

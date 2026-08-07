@@ -317,6 +317,7 @@ test('createHistoryEntry fails closed when the shared history entry builder is u
       calls.push(['getIframeDoc']);
       return iframeDoc;
     },
+    SlideNextStudioEditorHistoryState: historyState,
     SlideNextStudioHistory: {
       createStudioHistoryEntry(doc, options) {
         calls.push(['createStudioHistoryEntry', doc, options]);
@@ -404,6 +405,7 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
       calls.push(['getIframeDoc']);
       return null;
     },
+    SlideNextStudioEditorHistoryState: historyState,
     createEditorDeckViewSharedOptions(nextDoc) {
       return createEditorDeckViewSharedOptionsForTest(context, nextDoc);
     },
@@ -461,6 +463,7 @@ test('createHistoryEntry reuses the shared history entry builder when available'
     getEditorHistoryOptions() {},
     getIframeDoc() {},
     resolveEditorFallbackActiveSlideId() {},
+    SlideNextStudioEditorHistoryState: historyState,
     SlideNextStudioHistory: {
       buildStudioHistoryEntry(doc, options) {
         delegatedArgs = { doc, options };

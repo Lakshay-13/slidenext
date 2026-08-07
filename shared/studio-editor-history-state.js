@@ -84,7 +84,63 @@
     };
   }
 
+  function createStudioEditorHistoryEntryBuilder(options = {}) {
+    const historyApi = options.historyApi && typeof options.historyApi === 'object'
+      ? options.historyApi
+      : null;
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : () => null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : () => null;
+    const getHistoryOptions = typeof options.getHistoryOptions === 'function'
+      ? options.getHistoryOptions
+      : () => ({});
+    const resolveFallbackActiveSlideId = typeof options.resolveFallbackActiveSlideId === 'function'
+      ? options.resolveFallbackActiveSlideId
+      : () => '';
+    const buildHistoryHtml = typeof options.buildHistoryHtml === 'function'
+      ? options.buildHistoryHtml
+      : () => '';
+    const getActiveSlideId = typeof options.getActiveSlideId === 'function'
+      ? options.getActiveSlideId
+      : () => '';
+    const getSelectedElementIds = typeof options.getSelectedElementIds === 'function'
+      ? options.getSelectedElementIds
+      : () => [];
+    const getPendingTransaction = typeof options.getPendingTransaction === 'function'
+      ? options.getPendingTransaction
+      : () => null;
+
+    return function createHistoryEntry(doc) {
+      if (!historyApi || typeof historyApi.buildStudioHistoryEntry !== 'function') {
+        return null;
+      }
+      const pendingCanonicalDeck = getPendingCanonicalDeck();
+      const historyCanonicalDeckBuilder = pendingCanonicalDeck
+        ? (sourceDoc) => buildCanonicalDeck(sourceDoc, {
+            canonicalDeckOverride: pendingCanonicalDeck
+          })
+        : buildCanonicalDeck;
+      return historyApi.buildStudioHistoryEntry(doc, {
+        getDocument,
+        buildCanonicalDeck: historyCanonicalDeckBuilder,
+        getHistoryOptions,
+        resolveFallbackActiveSlideId,
+        buildHistoryHtml,
+        getActiveSlideId,
+        getSelectedElementIds,
+        transaction: getPendingTransaction()
+      });
+    };
+  }
+
   return {
-    createStudioEditorHistorySaveAdapter
+    createStudioEditorHistorySaveAdapter,
+    createStudioEditorHistoryEntryBuilder
   };
 });
