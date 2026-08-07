@@ -9,6 +9,7 @@ const history = require('../shared/studio-history.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const transformState = require('../shared/studio-editor-transform.js');
 const studioEvents = require('../shared/studio-editor-events.js');
+const interactionOptions = require('../shared/studio-editor-interaction-options.js');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
@@ -34,6 +35,7 @@ function loadTransformSessionFinalizer(fileContent, context) {
     ...(context.SlideNextStudioEditorTransform || {})
   };
   context.SlideNextStudioEditorCanonicalTransform = canonicalTransform;
+  context.SlideNextStudioEditorInteractionOptions = interactionOptions;
   vm.runInContext(helperSource, context);
 }
 
