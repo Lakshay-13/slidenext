@@ -342,6 +342,57 @@ test('preflightCanonicalPptxExport reports missing slide background image assets
   assert.match(report.diagnostics.warnings.join('\n'), /missing background image asset/);
 });
 
+test('createCanonicalPptxExport renders node background images before child content', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      nodes: [{
+        id: 'panel-1',
+        type: 'container',
+        style: 'background-image: url("data:image/png;base64,AAAA"); background-size: cover; background-position: center;',
+        layout: { x: 100, y: 50, width: 400, height: 200 },
+        children: [{
+          id: 'panel-text',
+          type: 'text',
+          text: 'Panel content',
+          layout: { x: 20, y: 15, width: 200, height: 40 }
+        }]
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.pptx.slides[0].calls.map(call => call.type), ['image', 'text']);
+  assert.deepEqual(result.pptx.slides[0].calls[0].options.sizing, {
+    type: 'cover',
+    x: 1.3333,
+    y: 0.66665,
+    w: 5.3332,
+    h: 2.6666
+  });
+  assert.deepEqual(result.diagnostics.missingNodeBackgroundAssets, []);
+});
+
+test('preflightCanonicalPptxExport reports missing node background image assets', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'panel-1',
+        type: 'container',
+        style: 'background-image: url("images/panel.png");',
+        layout: { x: 0, y: 0, width: 100, height: 100 }
+      }]
+    }]
+  }, {
+    assetBaseDir: '/deck',
+    assetExists(source) {
+      return source !== '/deck/images/panel.png';
+    }
+  });
+
+  assert.deepEqual(report.diagnostics.missingNodeBackgroundAssets, ['panel-1:background']);
+  assert.match(report.diagnostics.warnings.join('\n'), /missing background image asset/);
+});
+
 test('createCanonicalPptxExport resolves grouped child positions from parent-local coordinates', () => {
   const result = pptxExport.createCanonicalPptxExport({
     layout: { size: { width: 1000, height: 500, unit: 'px' } },

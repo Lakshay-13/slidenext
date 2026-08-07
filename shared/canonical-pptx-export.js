@@ -70,7 +70,33 @@
 
   function parseStyle(styleText) {
     if (typeof styleText !== 'string') return {};
-    return styleText.split(';').reduce((styles, declaration) => {
+    const declarations = [];
+    let current = '';
+    let quote = '';
+    let parenDepth = 0;
+    for (let index = 0; index < styleText.length; index += 1) {
+      const char = styleText[index];
+      if (quote) {
+        current += char;
+        if (char === quote && styleText[index - 1] !== '\\') quote = '';
+        continue;
+      }
+      if (char === '"' || char === '\'') {
+        quote = char;
+        current += char;
+        continue;
+      }
+      if (char === '(') parenDepth += 1;
+      if (char === ')' && parenDepth > 0) parenDepth -= 1;
+      if (char === ';' && parenDepth === 0) {
+        declarations.push(current);
+        current = '';
+        continue;
+      }
+      current += char;
+    }
+    declarations.push(current);
+    return declarations.reduce((styles, declaration) => {
       const separator = declaration.indexOf(':');
       if (separator < 0) return styles;
       const property = declaration.slice(0, separator).trim().toLowerCase();
@@ -222,6 +248,14 @@
     return resolveAssetSource(extractCssImageSource(background && background.image), options);
   }
 
+  function resolveNodeBackgroundImageSource(node, options) {
+    const style = nodeStyle(node);
+    return resolveAssetSource(
+      extractCssImageSource(style['background-image'] || style.background),
+      options
+    );
+  }
+
   function resolveSlideBackgroundImageSizing(background, options) {
     const styles = parseStyle(background && background.style);
     const type = typeof styles['background-size'] === 'string'
@@ -261,6 +295,10 @@
     return `${slide && slide.id ? slide.id : 'unknown'}:background`;
   }
 
+  function getNodeBackgroundAssetDiagnosticId(node) {
+    return `${node && node.id ? node.id : 'unknown'}:background`;
+  }
+
   function nodeStyle(node) {
     const style = parseStyle(node.style);
     const attributes = asObject(node.attributes);
@@ -273,6 +311,23 @@
     if (objectFit !== 'cover' && objectFit !== 'contain') return null;
     return {
       type: objectFit,
+      x: bounds.x,
+      y: bounds.y,
+      w: bounds.w,
+      h: bounds.h
+    };
+  }
+
+  function resolveNodeBackgroundImageSizing(node, bounds) {
+    const styles = nodeStyle(node);
+    const type = (styles['background-size'] || '').trim().toLowerCase();
+    if (type !== 'cover' && type !== 'contain') return null;
+    const position = (styles['background-position'] || '').trim().toLowerCase();
+    if (position && !/^(?:center|center\s+center)$/.test(position)) return null;
+    const repeat = (styles['background-repeat'] || '').trim().toLowerCase();
+    if (repeat && repeat !== 'no-repeat') return null;
+    return {
+      type,
       x: bounds.x,
       y: bounds.y,
       w: bounds.w,
@@ -341,7 +396,8 @@
       overflowNodes: [],
       fontSubstitutionRisks: [],
       missingAssets: [],
-      missingBackgroundAssets: []
+      missingBackgroundAssets: [],
+      missingNodeBackgroundAssets: []
     };
   }
 
@@ -421,6 +477,9 @@
 
       const type = typeof node.type === 'string' ? node.type.toLowerCase() : '';
       const imageNode = type === 'image' || node.tagName === 'img';
+      const style = nodeStyle(node);
+      const nodeBackgroundValue = style['background-image'] || style.background || '';
+      const nodeBackgroundSource = resolveNodeBackgroundImageSource(node, normalizedOptions);
       if (UNSUPPORTED_NODE_TYPES.has(type)) {
         diagnostics.unsupportedNodes.push({
           id: nodeId,
@@ -443,14 +502,38 @@
       }
 
       if (imageNode) {
-        const objectFit = (nodeStyle(node)['object-fit'] || '').trim().toLowerCase();
+        const objectFit = (style['object-fit'] || '').trim().toLowerCase();
         if (objectFit && !['fill', 'cover', 'contain'].includes(objectFit)) {
           diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['object-fit'] });
           diagnostics.warnings.push(`Node ${nodeId} uses unsupported image fit: ${objectFit}`);
         }
       }
 
-      const style = nodeStyle(node);
+      if (nodeBackgroundValue && /(?:url\(|gradient\()/i.test(nodeBackgroundValue)) {
+        if (!nodeBackgroundSource) {
+          diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['background-image'] });
+          diagnostics.warnings.push(`Node ${nodeId} background image is not an exportable image URL`);
+        } else {
+          let hasMissingAsset = false;
+          if (normalizedOptions.assetExists) {
+            try {
+              hasMissingAsset = !normalizedOptions.assetExists(
+                nodeBackgroundSource,
+                { id: getNodeBackgroundAssetDiagnosticId(node), type: 'background-image' },
+                deck
+              );
+            } catch (err) {
+              hasMissingAsset = true;
+            }
+          }
+          if (hasMissingAsset) {
+            const diagnosticId = getNodeBackgroundAssetDiagnosticId(node);
+            diagnostics.missingNodeBackgroundAssets.push(diagnosticId);
+            diagnostics.warnings.push(`Node ${nodeId} references a missing background image asset`);
+          }
+        }
+      }
+
       const unsupportedProperties = Object.keys(style).filter(property => UNSUPPORTED_STYLE_PROPERTIES.has(property));
       if (unsupportedProperties.length > 0) {
         diagnostics.unsupportedStyles.push({ id: nodeId, properties: unsupportedProperties });
@@ -545,6 +628,19 @@
     const childOrigin = getNodeChildOrigin(node, origin);
     const hasExportableChildren = hasExportableChildBounds(children, childOrigin);
     const text = getNestedNodeText(node);
+    const nodeBackgroundSource = resolveNodeBackgroundImageSource(node, context.options);
+    const missingNodeBackground = context.diagnostics
+      && Array.isArray(context.diagnostics.missingNodeBackgroundAssets)
+      && context.diagnostics.missingNodeBackgroundAssets.includes(getNodeBackgroundAssetDiagnosticId(node));
+
+    if (nodeBackgroundSource && bounds && !missingNodeBackground && typeof context.slide.addImage === 'function') {
+      const backgroundOptions = nodeBackgroundSource.startsWith('data:')
+        ? { data: nodeBackgroundSource, ...bounds }
+        : { path: nodeBackgroundSource, ...bounds };
+      const sizing = resolveNodeBackgroundImageSizing(node, bounds);
+      if (sizing) backgroundOptions.sizing = sizing;
+      context.slide.addImage(backgroundOptions);
+    }
 
     if (tableNode) {
       const rows = getCanonicalTableRows(node);
