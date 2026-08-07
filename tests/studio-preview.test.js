@@ -538,6 +538,62 @@ test('openStudioSourceView resolves source modal chrome from the document', asyn
   assert.equal(contentEl.classList.contains('scale-100'), true);
 });
 
+test('applyStudioSourceView forwards edited source and closes only after a successful apply', async () => {
+  const modalEl = { classList: createClassList(['opacity-100']) };
+  const contentEl = { classList: createClassList(['scale-100']) };
+  const textareaEl = {
+    value: '<html><body><section class="slide">Edited</section></body></html>'
+  };
+  const documentStub = {
+    getElementById(id) {
+      switch (id) {
+        case 'sourceViewModal': return modalEl;
+        case 'sourceViewModalContent': return contentEl;
+        case 'sourceViewContent': return textareaEl;
+        default: return null;
+      }
+    }
+  };
+  let appliedSource = '';
+
+  assert.equal(preview.applyStudioSourceView({
+    canOpenSourceView: true,
+    document: documentStub,
+    onApplySourceHtml(sourceHtml) {
+      appliedSource = sourceHtml;
+      return { success: true };
+    }
+  }), true);
+  assert.equal(appliedSource, textareaEl.value);
+  assert.equal(modalEl.classList.contains('opacity-0'), true);
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  assert.equal(modalEl.classList.contains('hidden'), true);
+});
+
+test('applyStudioSourceView keeps the source modal open when the apply callback rejects', () => {
+  const modalEl = { classList: createClassList(['opacity-100']) };
+  const contentEl = { classList: createClassList(['scale-100']) };
+  const textareaEl = { value: '<html>invalid</html>' };
+  const documentStub = {
+    getElementById(id) {
+      return {
+        sourceViewModal: modalEl,
+        sourceViewModalContent: contentEl,
+        sourceViewContent: textareaEl
+      }[id] || null;
+    }
+  };
+
+  assert.equal(preview.applyStudioSourceView({
+    canOpenSourceView: true,
+    document: documentStub,
+    onApplySourceHtml() {
+      return { success: false };
+    }
+  }), false);
+  assert.equal(modalEl.classList.contains('opacity-0'), false);
+});
+
 test('resetSourceViewModal clears source modal state immediately', () => {
   const modalEl = { classList: createClassList(['opacity-100']) };
   const contentEl = { classList: createClassList(['scale-100']) };

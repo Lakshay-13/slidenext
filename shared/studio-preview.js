@@ -315,6 +315,7 @@
       contentEl,
       textareaEl,
       sourceHtml,
+      editable = false,
       emptySourceHtml = '<!DOCTYPE html>\n<!-- No source available -->'
     } = options;
 
@@ -322,6 +323,7 @@
 
     if (textareaEl) {
       textareaEl.value = sourceHtml || emptySourceHtml;
+      textareaEl.readOnly = editable !== true;
       textareaEl.scrollTop = 0;
     }
 
@@ -409,6 +411,43 @@
     });
   }
 
+  function applySourceViewModal(options = {}) {
+    const documentRef = resolvePreviewDocument(options);
+    const textareaEl = options.textareaEl || resolvePreviewDocumentElement(documentRef, 'sourceViewContent');
+    if (!textareaEl || typeof options.onApplySourceHtml !== 'function') {
+      return false;
+    }
+
+    const sourceHtml = typeof textareaEl.value === 'string' ? textareaEl.value : '';
+    const result = options.onApplySourceHtml(sourceHtml);
+    if (result === false || (result && result.success === false)) {
+      return false;
+    }
+
+    closeStudioSourceView({
+      ...options,
+      document: documentRef
+    });
+    return true;
+  }
+
+  function applyStudioSourceView(options = {}) {
+    const documentRef = resolvePreviewDocument(options);
+    const hasExplicitOpenPermission = typeof options.canOpenSourceView === 'boolean';
+    if (hasExplicitOpenPermission && !options.canOpenSourceView) {
+      return false;
+    }
+    const sourceViewBtnEl = options.sourceViewBtnEl || resolvePreviewDocumentElement(documentRef, 'openSourceViewBtn');
+    if (!hasExplicitOpenPermission && sourceViewBtnEl && sourceViewBtnEl.disabled) {
+      return false;
+    }
+
+    return applySourceViewModal({
+      ...options,
+      document: documentRef
+    });
+  }
+
   function resetSourceViewModal(options = {}) {
     const {
       modalEl,
@@ -462,6 +501,8 @@
     openStudioSourceView,
     closeSourceViewModal,
     closeStudioSourceView,
+    applySourceViewModal,
+    applyStudioSourceView,
     resetSourceViewModal,
     resetStudioSourceViewUiState
   };
