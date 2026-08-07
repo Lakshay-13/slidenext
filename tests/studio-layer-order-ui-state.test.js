@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const layerOrder = require('../shared/studio-editor-layer-order.js');
+const layerOrderMutation = require('../shared/studio-editor-layer-order-mutation.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -69,6 +70,7 @@ function loadLayerOrderMutationHelper(fileContent, context) {
     'function applyEditorLayerOrderMutationWithTransaction(slide, initialOrder, nextOrder, options = {}) {',
     'function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {'
   );
+  context.SlideNextStudioEditorLayerOrderMutation = layerOrderMutation;
   vm.runInContext(helperSource, context);
 }
 

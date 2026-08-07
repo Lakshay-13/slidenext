@@ -1165,6 +1165,7 @@
   <script src="/shared/studio-editor-inspector-view.js"></script>
   <script src="/shared/studio-editor-inspector-controller.js"></script>
   <script src="/shared/studio-editor-layer-order.js"></script>
+  <script src="/shared/studio-editor-layer-order-mutation.js"></script>
   <script src="/shared/studio-editor-layer-view.js"></script>
   <script src="/shared/studio-editor-layer-controller.js"></script>
   <script src="/shared/studio-editor-insertion.js"></script>
@@ -3988,30 +3989,19 @@
     }
 
     function applyEditorLayerOrderMutationWithTransaction(slide, initialOrder, nextOrder, options = {}) {
-      const layerOrderApi = typeof SlideNextStudioEditorLayerOrder !== 'undefined'
-        ? SlideNextStudioEditorLayerOrder
+      const mutationApi = typeof SlideNextStudioEditorLayerOrderMutation !== 'undefined'
+        ? SlideNextStudioEditorLayerOrderMutation
         : null;
-      const applyStudioLayerOrderWithTransaction = layerOrderApi
-        && typeof layerOrderApi.applyStudioLayerOrderWithTransaction === 'function'
-        ? layerOrderApi.applyStudioLayerOrderWithTransaction
+      const applyMutation = mutationApi
+        && typeof mutationApi.applyStudioLayerOrderMutationWithTransaction === 'function'
+        ? mutationApi.applyStudioLayerOrderMutationWithTransaction
         : null;
-      if (!applyStudioLayerOrderWithTransaction) {
+      if (!applyMutation) {
         return {
           didApply: false,
           transaction: null
         };
       }
-      const applyStudioLayerOrderMutation = layerOrderApi
-        && typeof layerOrderApi.applyStudioLayerOrderMutation === 'function'
-        ? layerOrderApi.applyStudioLayerOrderMutation
-        : null;
-      const createStudioStyleTransaction = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
-        : null;
       const getElementId = typeof options.getElementId === 'function'
         ? options.getElementId
         : (element) => {
@@ -4021,14 +4011,17 @@
             }
             return element && element.dataset && element.dataset.editorId;
           };
-      const applyLayerOrder = typeof options.applyLayerOrder === 'function'
-        ? options.applyLayerOrder
-        : applySlideLayerOrder;
-      return applyStudioLayerOrderWithTransaction(slide, initialOrder, nextOrder, {
-        applyStudioLayerOrderMutation,
-        createStudioStyleTransaction,
+      return applyMutation(slide, initialOrder, nextOrder, {
+        layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+          ? SlideNextStudioEditorLayerOrder
+          : null,
+        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+          ? SlideNextStudioEditorTransaction
+          : null,
         getElementId,
-        applyLayerOrder
+        applyLayerOrder: typeof options.applyLayerOrder === 'function'
+          ? options.applyLayerOrder
+          : applySlideLayerOrder
       });
     }
 
