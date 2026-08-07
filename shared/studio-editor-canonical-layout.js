@@ -78,9 +78,42 @@
     });
   }
 
+  function buildStudioCanonicalLayerOrderMutation(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const orderedElements = Array.isArray(options.orderedElements) ? options.orderedElements : [];
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const layoutUpdates = orderedElements.map((element) => {
+      const elementId = getElementId(element);
+      const zIndex = element && element.style ? Number(element.style.zIndex) : NaN;
+      return elementId && Number.isFinite(zIndex)
+        ? { id: elementId, layout: { zIndex } }
+        : null;
+    }).filter(Boolean);
+    const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(
+      options,
+      'canonicalDeckBeforeMutation'
+    )
+      ? options.canonicalDeckBeforeMutation
+      : buildStudioCanonicalLayoutBaseline({
+          canonicalDeckApi,
+          buildCanonicalDeck: options.buildCanonicalDeck,
+          sourceDocument: options.sourceDocument
+        });
+
+    return buildStudioCanonicalLayoutDeck(layoutUpdates, {
+      canonicalDeckApi,
+      canonicalDeckBeforeMutation
+    });
+  }
+
   return {
     buildStudioCanonicalLayoutBaseline,
     buildStudioCanonicalLayoutDeck,
-    buildStudioCanonicalLayoutMutation
+    buildStudioCanonicalLayoutMutation,
+    buildStudioCanonicalLayerOrderMutation
   };
 });

@@ -78,3 +78,24 @@ test('buildStudioCanonicalLayoutMutation maps positioned items onto a fresh cano
   assert.equal(result.slides[0].nodes[0].layout.y, 60);
   assert.equal(sourceDeck.slides[0].nodes[0].layout.x, null);
 });
+
+test('buildStudioCanonicalLayerOrderMutation maps z-indexes using the pre-mutation deck', () => {
+  const sourceDeck = createSourceDeck();
+  const first = {
+    dataset: { editorId: 'node-1' },
+    style: { zIndex: '4' }
+  };
+  const second = {
+    dataset: { editorId: 'node-2' },
+    style: { zIndex: '2' }
+  };
+  const result = canonicalLayout.buildStudioCanonicalLayerOrderMutation({
+    canonicalDeckApi: canonicalDeck,
+    canonicalDeckBeforeMutation: sourceDeck,
+    orderedElements: [first, second]
+  });
+
+  assert.equal(result.slides[0].nodes[0].layout.zIndex, 4);
+  assert.equal(result.slides[0].nodes[0].layout.x, null);
+  assert.equal(sourceDeck.slides[0].nodes[0].layout.zIndex, 0);
+});
