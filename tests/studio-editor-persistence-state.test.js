@@ -132,3 +132,38 @@ test('createStudioEditorPersistedDeckStateReaderAdapter fails closed without sha
   assert.equal(adapter.resolveWithContent({ cleanHtml: '<html>input</html>' }), null);
   assert.equal(adapter.resolvePersistedDeckStateWithContent({ cleanHtml: '<html>input</html>' }), null);
 });
+
+test('createStudioEditorPersistedActiveSlideIdAdapter lazily reuses the shared active-slide reader', () => {
+  let createCalls = 0;
+  let delegatedOptions = null;
+  const persistenceApi = {
+    resolvePersistedActiveSlideId() {
+      throw new Error('resolvePersistedActiveSlideId should be provided to the shared reader');
+    },
+    createStudioPersistedActiveSlideIdReader(options) {
+      createCalls += 1;
+      delegatedOptions = options;
+      return (playbackState) => playbackState && playbackState.activeSlideIds
+        ? playbackState.activeSlideIds[0]
+        : '';
+    }
+  };
+  const adapter = editorPersistenceState.createStudioEditorPersistedActiveSlideIdAdapter({
+    persistenceApi,
+    getPlaybackState: () => ({ activeSlideIds: ['slide-1'] }),
+    resolvePersistedDeckActiveSlideId: () => 'slide-shared'
+  });
+
+  assert.equal(adapter(), 'slide-1');
+  assert.equal(adapter({ activeSlideIds: ['slide-2'] }), 'slide-2');
+  assert.equal(createCalls, 1);
+  assert.equal(typeof delegatedOptions.getPlaybackState, 'function');
+  assert.equal(typeof delegatedOptions.resolvePersistedDeckActiveSlideId, 'function');
+});
+
+test('createStudioEditorPersistedActiveSlideIdAdapter fails closed without shared persistence', () => {
+  const adapter = editorPersistenceState.createStudioEditorPersistedActiveSlideIdAdapter();
+
+  assert.equal(adapter(), '');
+  assert.equal(adapter({ activeSlideIds: ['slide-1'] }), '');
+});

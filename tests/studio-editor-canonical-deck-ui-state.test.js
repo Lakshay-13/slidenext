@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
+const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
 const deckView = require('../shared/studio-deck-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -1670,6 +1671,47 @@ test('getPersistedActiveSlideId reuses the shared editor persistence helper when
   assert.equal(readerCreateCalls, 1);
   assert.equal(typeof delegatedArgs.getPlaybackState, 'function');
   assert.equal(delegatedArgs.resolvePersistedDeckActiveSlideId, context.SlideNextDeckPersistence.resolvePersistedDeckActiveSlideId);
+});
+
+test('getPersistedActiveSlideId delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let delegatedArgs = null;
+  let readerCreateCalls = 0;
+  const context = {
+    SlideNextDeckPersistence: {
+      resolvePersistedDeckActiveSlideId() {
+        return 'legacy-reader';
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistedActiveSlideIdReader(options = {}) {
+        readerCreateCalls += 1;
+        delegatedArgs = options;
+        return (playbackState) => playbackState && playbackState.activeSlideIds
+          ? playbackState.activeSlideIds[0]
+          : '';
+      }
+    },
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    persistedDeckPlaybackState: {
+      activeSlideIds: ['slide-2'],
+      slideCounterText: '2 / 4'
+    }
+  };
+
+  const getPersistedActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {',
+    '\n\n    function getCurrentEditorPersistedDeckState() {'
+  );
+  vm.createContext(context);
+  vm.runInContext(getPersistedActiveSlideIdSource, context);
+
+  assert.equal(context.getPersistedActiveSlideId(), 'slide-2');
+  assert.equal(context.getPersistedActiveSlideId({ activeSlideIds: ['slide-3'] }), 'slide-3');
+  assert.equal(readerCreateCalls, 1);
+  assert.equal(typeof delegatedArgs.getPlaybackState, 'function');
+  assert.equal(delegatedArgs.resolvePersistedDeckActiveSlideId, null);
 });
 
 test('resolveEditorCanonicalDeckViewState delegates resolver orchestration to the shared deck view helper when available', () => {
