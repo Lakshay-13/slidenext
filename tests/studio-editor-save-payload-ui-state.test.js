@@ -1262,6 +1262,61 @@ test('resolveEditorCapturedPersistableDeckState reuses the shared captured-state
   );
 });
 
+test('resolveEditorCapturedPersistableDeckState delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorCapturedPersistableDeckStateSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {',
+    '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
+  );
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1']
+  };
+  let factoryOptions = null;
+  const context = {
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    SlideNextStudioEditorPersistence: {
+      createStudioCapturedPersistableDeckStateResolver(options = {}) {
+        factoryOptions = options;
+        return (nextCleanHtml, nextOptions = {}) => ({
+          cleanHtml: nextCleanHtml,
+          canonicalDeck: nextOptions.canonicalDeck,
+          playbackState: nextOptions.resolvePlaybackState(nextOptions.canonicalDeck)
+        });
+      }
+    }
+  };
+  const resolvePlaybackState = (nextCanonicalDeck) => {
+    assert.equal(nextCanonicalDeck, canonicalDeck);
+    return playbackState;
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorCapturedPersistableDeckStateSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.resolveEditorCapturedPersistableDeckState('<html>persisted</html>', {
+      canonicalDeck,
+      resolvePlaybackState
+    }))),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck,
+      playbackState: {
+        activeSlideIds: ['slide-1']
+      }
+    }
+  );
+  assert.equal(typeof factoryOptions.buildCanonicalDeck, 'function');
+  assert.equal(typeof factoryOptions.resolvePlaybackState, 'function');
+});
+
 test('captureEditorPersistableDeckBuildState reuses the shared build-state capturer when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(

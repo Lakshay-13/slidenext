@@ -8416,6 +8416,27 @@
       const nextCleanHtml = typeof cleanHtml === 'string'
         ? cleanHtml
         : '';
+      const createStudioEditorCapturedPersistableDeckStateResolverAdapter = (
+        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+        && SlideNextStudioEditorPersistenceState
+        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorCapturedPersistableDeckStateResolverAdapter === 'function'
+      )
+        ? SlideNextStudioEditorPersistenceState.createStudioEditorCapturedPersistableDeckStateResolverAdapter
+        : null;
+      if (createStudioEditorCapturedPersistableDeckStateResolverAdapter) {
+        const adapter = createStudioEditorCapturedPersistableDeckStateResolverAdapter({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null
+        });
+        const resolvedState = typeof adapter === 'function'
+          ? adapter(nextCleanHtml, options)
+          : null;
+        if (resolvedState !== null && typeof resolvedState !== 'undefined') {
+          return resolvedState;
+        }
+      }
+
       const createStudioCapturedPersistableDeckStateResolver = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence

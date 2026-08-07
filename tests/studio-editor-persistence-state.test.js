@@ -504,3 +504,72 @@ test('createStudioEditorReusablePersistedHtmlSanitizerAdapter fails closed witho
   assert.equal(adapter('<html>persisted</html>'), '<html>persisted</html>');
   assert.equal(adapter(null), '');
 });
+
+test('createStudioEditorCapturedPersistableDeckStateResolverAdapter preserves builder precedence', () => {
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const playbackState = { activeSlideIds: ['slide-2'] };
+  let factoryOptions = null;
+  const resolveStudioCapturedPersistableDeckState = () => {
+    throw new Error('direct captured-state resolver should not run when the builder exists');
+  };
+  const adapter = editorPersistenceState.createStudioEditorCapturedPersistableDeckStateResolverAdapter({
+    persistenceApi: {
+      resolveStudioCapturedPersistableDeckState,
+      createStudioCapturedPersistableDeckStateResolver(options) {
+        factoryOptions = options;
+        return (cleanHtml, nextOptions) => ({
+          cleanHtml,
+          canonicalDeck: nextOptions.canonicalDeck,
+          playbackState: nextOptions.resolvePlaybackState(nextOptions.canonicalDeck)
+        });
+      }
+    }
+  });
+  const resolvePlaybackState = (nextCanonicalDeck) => {
+    assert.equal(nextCanonicalDeck, canonicalDeck);
+    return playbackState;
+  };
+
+  assert.deepEqual(adapter('<html>persisted</html>', {
+    canonicalDeck,
+    resolvePlaybackState
+  }), {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck,
+    playbackState
+  });
+  assert.equal(factoryOptions.resolveCapturedPersistableDeckState, resolveStudioCapturedPersistableDeckState);
+  assert.equal(typeof factoryOptions.buildCanonicalDeck, 'function');
+  assert.equal(typeof factoryOptions.resolvePlaybackState, 'function');
+});
+
+test('createStudioEditorCapturedPersistableDeckStateResolverAdapter uses the direct helper without a builder', () => {
+  let delegatedArgs = null;
+  const resolveStudioCapturedPersistableDeckState = (cleanHtml, options) => {
+    delegatedArgs = { cleanHtml, options };
+    return { direct: true };
+  };
+  const adapter = editorPersistenceState.createStudioEditorCapturedPersistableDeckStateResolverAdapter({
+    persistenceApi: { resolveStudioCapturedPersistableDeckState }
+  });
+
+  assert.deepEqual(adapter('<html>persisted</html>', {
+    canonicalDeck: { id: 'deck-1' },
+    playbackState: { activeSlideIds: ['slide-1'] }
+  }), { direct: true });
+  assert.equal(delegatedArgs.cleanHtml, '<html>persisted</html>');
+  assert.deepEqual(delegatedArgs.options, {
+    canonicalDeck: { id: 'deck-1' },
+    playbackState: { activeSlideIds: ['slide-1'] },
+    buildCanonicalDeck: delegatedArgs.options.buildCanonicalDeck,
+    resolvePlaybackState: delegatedArgs.options.resolvePlaybackState
+  });
+  assert.equal(typeof delegatedArgs.options.buildCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.options.resolvePlaybackState, 'function');
+});
+
+test('createStudioEditorCapturedPersistableDeckStateResolverAdapter returns null without a shared resolver', () => {
+  const adapter = editorPersistenceState.createStudioEditorCapturedPersistableDeckStateResolverAdapter();
+
+  assert.equal(adapter('<html>persisted</html>'), null);
+});
