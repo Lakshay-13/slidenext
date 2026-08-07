@@ -72,3 +72,28 @@ test('buildStudioCanonicalVisibilityMutation centralizes baseline and patch appl
   assert.equal(result.slides[0].nodes[0].visibility.hidden, true);
   assert.equal(sourceDeck.slides[0].nodes[0].visibility.hidden, false);
 });
+
+test('createStudioCanonicalVisibilityMutationBuilders reuses an explicit baseline', () => {
+  const sourceDeck = createSourceDeck();
+  let buildCount = 0;
+  const builders = canonicalVisibility.createStudioCanonicalVisibilityMutationBuilders({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck() {
+      buildCount += 1;
+      return sourceDeck;
+    }
+  });
+
+  const result = builders.buildCanonicalVisibilityMutation(
+    [{ dataset: { editorId: 'node-1' } }],
+    { hidden: true },
+    {
+      canonicalDeckBeforeMutation: sourceDeck,
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.equal(buildCount, 0);
+  assert.equal(result.slides[0].nodes[0].visibility.hidden, true);
+  assert.equal(sourceDeck.slides[0].nodes[0].visibility.hidden, false);
+});

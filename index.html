@@ -5100,16 +5100,21 @@
       const canonicalVisibilityApi = typeof SlideNextStudioEditorCanonicalVisibility !== 'undefined'
         ? SlideNextStudioEditorCanonicalVisibility
         : null;
-      const buildCanonicalVisibilityMutation = canonicalVisibilityApi
-        && typeof canonicalVisibilityApi.buildStudioCanonicalVisibilityMutation === 'function'
-        ? canonicalVisibilityApi.buildStudioCanonicalVisibilityMutation
-        : null;
-      const canonicalDeck = buildCanonicalVisibilityMutation
-        ? buildCanonicalVisibilityMutation(lockMutationPlan.selection, { locked: lockMutationPlan.shouldLock }, {
+      const canonicalVisibilityBuilders = canonicalVisibilityApi
+        && typeof canonicalVisibilityApi.createStudioCanonicalVisibilityMutationBuilders === 'function'
+        ? canonicalVisibilityApi.createStudioCanonicalVisibilityMutationBuilders({
             canonicalDeckApi,
             buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
               ? () => buildEditorCanonicalDeck(doc)
-              : null,
+              : null
+          })
+        : null;
+      const buildCanonicalVisibilityMutation = canonicalVisibilityBuilders
+        && typeof canonicalVisibilityBuilders.buildCanonicalVisibilityMutation === 'function'
+        ? canonicalVisibilityBuilders.buildCanonicalVisibilityMutation
+        : null;
+      const canonicalDeck = buildCanonicalVisibilityMutation
+        ? buildCanonicalVisibilityMutation(lockMutationPlan.selection, { locked: lockMutationPlan.shouldLock }, {
             sourceDocument: doc,
             getElementId: getLockElementId
           })
@@ -5210,16 +5215,21 @@
       const canonicalVisibilityApi = typeof SlideNextStudioEditorCanonicalVisibility !== 'undefined'
         ? SlideNextStudioEditorCanonicalVisibility
         : null;
-      const buildCanonicalVisibilityMutation = canonicalVisibilityApi
-        && typeof canonicalVisibilityApi.buildStudioCanonicalVisibilityMutation === 'function'
-        ? canonicalVisibilityApi.buildStudioCanonicalVisibilityMutation
-        : null;
-      const canonicalDeck = buildCanonicalVisibilityMutation
-        ? buildCanonicalVisibilityMutation(visibilityMutationPlan.selection, { hidden: visibilityMutationPlan.shouldHide }, {
+      const canonicalVisibilityBuilders = canonicalVisibilityApi
+        && typeof canonicalVisibilityApi.createStudioCanonicalVisibilityMutationBuilders === 'function'
+        ? canonicalVisibilityApi.createStudioCanonicalVisibilityMutationBuilders({
             canonicalDeckApi,
             buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
               ? () => buildEditorCanonicalDeck(doc)
-              : null,
+              : null
+          })
+        : null;
+      const buildCanonicalVisibilityMutation = canonicalVisibilityBuilders
+        && typeof canonicalVisibilityBuilders.buildCanonicalVisibilityMutation === 'function'
+        ? canonicalVisibilityBuilders.buildCanonicalVisibilityMutation
+        : null;
+      const canonicalDeck = buildCanonicalVisibilityMutation
+        ? buildCanonicalVisibilityMutation(visibilityMutationPlan.selection, { hidden: visibilityMutationPlan.shouldHide }, {
             sourceDocument: doc,
             getElementId: getVisibilityElementId
           })

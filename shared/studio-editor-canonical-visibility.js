@@ -71,9 +71,48 @@
     });
   }
 
+  function createStudioCanonicalVisibilityMutationBuilders(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const buildCanonicalVisibilityBaseline = (baselineOptions = {}) => (
+      buildStudioCanonicalVisibilityBaseline({
+        ...baselineOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck
+      })
+    );
+    const buildCanonicalVisibilityDeck = (selection, visibilityPatch = {}, deckOptions = {}) => {
+      const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(
+        deckOptions,
+        'canonicalDeckBeforeMutation'
+      )
+        ? deckOptions.canonicalDeckBeforeMutation
+        : buildCanonicalVisibilityBaseline(deckOptions);
+      return buildStudioCanonicalVisibilityDeck(selection, visibilityPatch, {
+        ...deckOptions,
+        canonicalDeckApi,
+        canonicalDeckBeforeMutation
+      });
+    };
+    const buildCanonicalVisibilityMutation = (selection, visibilityPatch = {}, mutationOptions = {}) => (
+      buildCanonicalVisibilityDeck(selection, visibilityPatch, mutationOptions)
+    );
+
+    return {
+      buildCanonicalVisibilityBaseline,
+      buildCanonicalVisibilityDeck,
+      buildCanonicalVisibilityMutation
+    };
+  }
+
   return {
     buildStudioCanonicalVisibilityBaseline,
     buildStudioCanonicalVisibilityDeck,
-    buildStudioCanonicalVisibilityMutation
+    buildStudioCanonicalVisibilityMutation,
+    createStudioCanonicalVisibilityMutationBuilders
   };
 });
