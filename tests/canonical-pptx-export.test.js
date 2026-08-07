@@ -284,6 +284,40 @@ test('createCanonicalPptxExport resolves grouped child positions from parent-loc
   })), [{ id: 'group-1', x: 900 }, { id: 'text-1', x: 1050 }]);
 });
 
+test('createCanonicalPptxExport renders siblings in stable z-index order', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      nodes: [
+        {
+          id: 'front',
+          type: 'shape',
+          style: 'background-color: #ff0000;',
+          layout: { x: 0, y: 0, width: 100, height: 100, zIndex: 10 }
+        },
+        {
+          id: 'back',
+          type: 'shape',
+          style: 'background-color: #0000ff;',
+          layout: { x: 0, y: 0, width: 100, height: 100, zIndex: 1 }
+        },
+        {
+          id: 'tie',
+          type: 'shape',
+          style: 'background-color: #00ff00;',
+          layout: { x: 0, y: 0, width: 100, height: 100, zIndex: 1 }
+        }
+      ]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.pptx.slides[0].calls.map(call => call.options.fill.color), [
+    '0000FF',
+    '00FF00',
+    'FF0000'
+  ]);
+});
+
 test('normalizeHexColor handles short hex and rgb values', () => {
   assert.equal(pptxExport.normalizeHexColor('#abc'), 'AABBCC');
   assert.equal(pptxExport.normalizeHexColor('rgb(1, 2, 3)'), '010203');

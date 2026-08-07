@@ -123,6 +123,19 @@
       .filter(row => row.length > 0);
   }
 
+  function getPptxRenderOrder(nodes = []) {
+    return (Array.isArray(nodes) ? nodes : [])
+      .map((node, index) => ({
+        node,
+        index,
+        zIndex: Number.isFinite(node && node.layout && node.layout.zIndex)
+          ? node.layout.zIndex
+          : 0
+      }))
+      .sort((left, right) => left.zIndex - right.zIndex || left.index - right.index)
+      .map(entry => entry.node);
+  }
+
   function getNodeCanvasLayout(node, origin = {}) {
     const layout = asObject(node.layout);
     const x = Number.isFinite(layout.x) ? layout.x : null;
@@ -370,7 +383,7 @@
         x: Number.isFinite(bounds.x) ? bounds.x : (Number.isFinite(origin.x) ? origin.x : 0),
         y: Number.isFinite(bounds.y) ? bounds.y : (Number.isFinite(origin.y) ? origin.y : 0)
       };
-      (Array.isArray(childNodes) ? childNodes : []).forEach(child => visit(child, childOrigin));
+      getPptxRenderOrder(childNodes).forEach(child => visit(child, childOrigin));
     }
 
     deck.slides.forEach(slide => {
@@ -436,7 +449,7 @@
       x: Number.isFinite(layout.x) ? layout.x : (Number.isFinite(origin.x) ? origin.x : 0),
       y: Number.isFinite(layout.y) ? layout.y : (Number.isFinite(origin.y) ? origin.y : 0)
     };
-    children.forEach(child => renderNode(child, context, childOrigin));
+    getPptxRenderOrder(children).forEach(child => renderNode(child, context, childOrigin));
   }
 
   function renderSlide(slide, context) {
@@ -444,7 +457,7 @@
     const color = resolveSlideBackgroundColor(background);
     if (color) context.slide.background = { color };
     if (slide.notes && typeof context.slide.addNotes === 'function') context.slide.addNotes(slide.notes);
-    slide.nodes.forEach(node => renderNode(node, context));
+    getPptxRenderOrder(slide.nodes).forEach(node => renderNode(node, context));
   }
 
   function createCanonicalPptxExport(deckSeed, options = {}) {
