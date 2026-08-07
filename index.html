@@ -1208,6 +1208,7 @@
   <script src="/shared/studio-editor-transaction.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-slide-commands.js"></script>
+  <script src="/shared/studio-editor-slide-deletion-mutation.js"></script>
   <script src="/shared/studio-editor-slide-insertion-mutation.js"></script>
   <script src="/shared/studio-editor-slide-reorder-mutation.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
@@ -3142,38 +3143,29 @@
     }
 
     function applyEditorSlideDeletionWithTransaction(container, slideNode, options = {}) {
-      const slideCommands = typeof SlideNextStudioEditorSlideCommands !== 'undefined'
-        ? SlideNextStudioEditorSlideCommands
+      const mutationApi = typeof SlideNextStudioEditorSlideDeletionMutation !== 'undefined'
+        ? SlideNextStudioEditorSlideDeletionMutation
         : null;
-      const applyStudioSlideDeletionWithTransaction = slideCommands
-        && typeof slideCommands.applyStudioSlideDeletionWithTransaction === 'function'
-        ? slideCommands.applyStudioSlideDeletionWithTransaction
+      const applyMutation = mutationApi
+        && typeof mutationApi.applyStudioSlideDeletionMutationWithTransaction === 'function'
+        ? mutationApi.applyStudioSlideDeletionMutationWithTransaction
         : null;
-      if (!applyStudioSlideDeletionWithTransaction) {
+      if (!applyMutation) {
         return {
           didApply: false,
           transaction: null
         };
       }
-
-      const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
-        : null;
-      const applyStudioSlideDeletionMutation = deckViewApi
-        && typeof deckViewApi.applyStudioSlideDeletionMutation === 'function'
-        ? deckViewApi.applyStudioSlideDeletionMutation
-        : null;
-      const createStudioMarkupTransactionCapture = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
-        : null;
-
-      return applyStudioSlideDeletionWithTransaction(container, slideNode, {
-        applyStudioSlideDeletionMutation,
-        createStudioMarkupTransactionCapture,
+      return applyMutation(container, slideNode, {
+        slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+          ? SlideNextStudioEditorSlideCommands
+          : null,
+        deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
+          ? SlideNextStudioDeckView
+          : null,
+        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+          ? SlideNextStudioEditorTransaction
+          : null,
         containerElementId: options.containerElementId,
         getElementId: options.getElementId
       });

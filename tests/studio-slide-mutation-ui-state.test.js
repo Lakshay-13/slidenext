@@ -7,6 +7,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalSlide = require('../shared/studio-editor-canonical-slide.js');
 const slideCommands = require('../shared/studio-editor-slide-commands.js');
+const slideDeletionMutation = require('../shared/studio-editor-slide-deletion-mutation.js');
 const slideInsertionMutation = require('../shared/studio-editor-slide-insertion-mutation.js');
 const slideReorderMutation = require('../shared/studio-editor-slide-reorder-mutation.js');
 
@@ -63,6 +64,7 @@ function loadApplyEditorSlideDeletionWithTransaction(fileContent, context) {
     'function applyEditorSlideDeletionWithTransaction(container, slideNode, options = {}) {',
     '\n\n    // Delete Active Slide Node'
   );
+  context.SlideNextStudioEditorSlideDeletionMutation = slideDeletionMutation;
   vm.runInContext(helperSource, context);
 }
 
