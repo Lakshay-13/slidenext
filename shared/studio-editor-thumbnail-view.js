@@ -48,8 +48,19 @@
     const setupDragAndDropThumbnail = typeof options.setupDragAndDropThumbnail === 'function'
       ? options.setupDragAndDropThumbnail
       : () => {};
+    const hasSections = slides.some((slide) => typeof slide.section === 'string' && slide.section.trim());
+    let previousSection = null;
 
     slides.forEach((slide) => {
+      const section = typeof slide.section === 'string' ? slide.section.trim() : '';
+      if (hasSections && section !== previousSection) {
+        const sectionLabel = documentRef.createElement('div');
+        sectionLabel.className = 'text-[9px] font-mono uppercase tracking-widest text-zinc-500 px-1 pt-2 pb-0.5';
+        sectionLabel.textContent = section || 'Unsectioned';
+        listContainer.appendChild(sectionLabel);
+      }
+      previousSection = section;
+
       const isActive = slide.id === deckSnapshot.activeSlideId;
       const thumbCard = documentRef.createElement('div');
       thumbCard.className = `glass-card p-3 border ${canMutateSlides ? 'cursor-pointer' : 'cursor-default'} relative group flex items-start gap-3 select-none transition-all ${

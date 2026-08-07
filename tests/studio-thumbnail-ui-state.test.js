@@ -41,6 +41,7 @@ function createThumbCard() {
     innerHTML: '',
     listeners: [],
     style: {},
+    textContent: '',
     addEventListener(type, handler) {
       this.listeners.push({ type, handler });
     }
@@ -88,6 +89,38 @@ test('syncStudioThumbnailList derives the slide-delete affordance from snapshot 
   }), true);
   assert.equal(thumbnailsList.children.length, 2);
   assert.match(thumbnailsList.children[0].innerHTML, /deleteSlideNodeById/);
+});
+
+test('renderStudioThumbnailList groups slides by section and labels unsectioned slides', () => {
+  const thumbnailsList = createListContainer();
+  const documentRef = {
+    getElementById(id) {
+      return id === 'thumbnailsList' ? thumbnailsList : null;
+    },
+    createElement() {
+      return createThumbCard();
+    }
+  };
+
+  assert.equal(thumbnailView.renderStudioThumbnailList({
+    documentRef,
+    deckSnapshot: {
+      activeSlideId: 'slide-1',
+      slides: [
+        { id: 'slide-1', index: 0, title: 'First', section: 'Opening', backgroundLabel: 'Solid' },
+        { id: 'slide-2', index: 1, title: 'Second', section: 'Opening', backgroundLabel: 'Solid' },
+        { id: 'slide-3', index: 2, title: 'Third', section: 'Closing', backgroundLabel: 'Solid' },
+        { id: 'slide-4', index: 3, title: 'Fourth', section: '', backgroundLabel: 'Solid' }
+      ]
+    },
+    canMutateSlides: false
+  }), true);
+
+  assert.deepEqual(
+    thumbnailsList.children.filter((child) => child.textContent).map((child) => child.textContent),
+    ['Opening', 'Closing', 'Unsectioned']
+  );
+  assert.equal(thumbnailsList.children.length, 7);
 });
 
 test('syncStudioEditorThumbnails assembles the live editor snapshot before rendering', () => {
