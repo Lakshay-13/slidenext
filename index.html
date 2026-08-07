@@ -1208,6 +1208,7 @@
   <script src="/shared/studio-editor-thumbnail-view.js"></script>
   <script src="/shared/studio-editor-mutation.js"></script>
   <script src="/shared/studio-editor-transaction.js"></script>
+  <script src="/shared/studio-editor-position-layout-mutation.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-slide-commands.js"></script>
   <script src="/shared/studio-editor-slide-deletion-mutation.js"></script>
@@ -6006,23 +6007,16 @@
     }
 
     function applyEditorPositionLayoutWithTransaction(nextItems, options = {}) {
-      const transactionApi = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.applyStudioPositionLayoutWithTransaction === 'function'
-      )
-        ? SlideNextStudioEditorTransaction
+      const mutationApi = typeof SlideNextStudioEditorPositionLayoutMutation !== 'undefined'
+        ? SlideNextStudioEditorPositionLayoutMutation
         : null;
-      if (!transactionApi) {
+      const applyMutation = mutationApi
+        && typeof mutationApi.applyStudioPositionLayoutMutationWithTransaction === 'function'
+        ? mutationApi.applyStudioPositionLayoutMutationWithTransaction
+        : null;
+      if (!applyMutation) {
         return { didApply: false, transaction: null };
       }
-      const alignmentApi = typeof SlideNextStudioEditorAlignment !== 'undefined'
-        ? SlideNextStudioEditorAlignment
-        : null;
-      const defaultApplyLayout = alignmentApi
-        && typeof alignmentApi.applyStudioAlignmentLayout === 'function'
-        ? alignmentApi.applyStudioAlignmentLayout
-        : null;
       const getElementId = typeof options.getElementId === 'function'
         ? options.getElementId
         : (element) => {
@@ -6031,13 +6025,17 @@
             }
             return element && element.dataset && element.dataset.editorId;
           };
-      const applyLayout = Object.prototype.hasOwnProperty.call(options, 'applyLayout')
-        ? options.applyLayout
-        : defaultApplyLayout;
-      return transactionApi.applyStudioPositionLayoutWithTransaction(nextItems, {
-        createPositionTransaction: transactionApi.createStudioPositionTransaction,
+      return applyMutation(nextItems, {
+        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+          ? SlideNextStudioEditorTransaction
+          : null,
+        alignmentApi: typeof SlideNextStudioEditorAlignment !== 'undefined'
+          ? SlideNextStudioEditorAlignment
+          : null,
         getElementId,
-        applyLayout
+        ...(Object.prototype.hasOwnProperty.call(options, 'applyLayout')
+          ? { applyLayout: options.applyLayout }
+          : {})
       });
     }
 

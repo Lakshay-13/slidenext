@@ -7,6 +7,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioAlignment = require('../shared/studio-editor-alignment.js');
+const positionLayoutMutation = require('../shared/studio-editor-position-layout-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -27,6 +28,7 @@ function loadPositionMutationHelper(fileContent, context) {
   if (!context.SlideNextStudioEditorTransaction) {
     context.SlideNextStudioEditorTransaction = studioTransaction;
   }
+  context.SlideNextStudioEditorPositionLayoutMutation = positionLayoutMutation;
   vm.runInContext(helperSource, context);
 }
 
