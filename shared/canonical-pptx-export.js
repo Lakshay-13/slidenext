@@ -84,7 +84,9 @@
     if (typeof value === 'number') return Number.isFinite(value) ? value : null;
     if (typeof value !== 'string') return null;
     const match = value.trim().match(/^(-?[\d.]+)(px)?$/i);
-    return match ? Number(match[1]) : null;
+    if (!match) return null;
+    const parsed = Number(match[1]);
+    return Number.isFinite(parsed) ? parsed : null;
   }
 
   function stripHtml(value) {

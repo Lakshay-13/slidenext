@@ -350,6 +350,35 @@ test('normalizeHexColor handles short hex and rgb values', () => {
   assert.equal(pptxExport.normalizeHexColor('transparent'), '');
 });
 
+test('createCanonicalPptxExport ignores malformed CSS pixel values', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 100, height: 100, unit: 'px' } },
+    slides: [{
+      nodes: [
+        {
+          id: 'text-1',
+          type: 'text',
+          text: 'Fallback text',
+          style: 'font-size: .;',
+          layout: { x: 0, y: 0, width: 50, height: 20 }
+        },
+        {
+          id: 'shape-1',
+          type: 'shape',
+          style: 'background-color: #fff; border-width: 1.2.3;',
+          layout: { x: 0, y: 30, width: 50, height: 20 }
+        }
+      ]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const [textCall, shapeCall] = result.pptx.slides[0].calls;
+  assert.equal(textCall.options.fontSize, 10.5);
+  assert.equal(shapeCall.options.line.width, 0.5);
+  assert.ok(Number.isFinite(textCall.options.fontSize));
+  assert.ok(Number.isFinite(shapeCall.options.line.width));
+});
+
 test('preflightCanonicalPptxExport reports export fidelity risks', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     layout: { size: { width: 100, height: 100, unit: 'px' } },
