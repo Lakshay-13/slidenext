@@ -85,3 +85,43 @@ test('syncStudioSpeakerNotesControl handles canonical fallback slides and empty 
   assert.equal(control.value, '');
   assert.equal(control.disabled, true);
 });
+
+test('applyStudioSlideSection stores section metadata in a reversible dataset transaction', () => {
+  const slide = createSlide();
+  const mutation = notes.applyStudioSlideSection(slide, 'Research', {
+    transactionApi: transaction,
+    getElementId: (element) => `slide:${element.dataset.editorId}`
+  });
+
+  assert.equal(mutation.didApply, true);
+  assert.equal(notes.getStudioSlideSection(slide), 'Research');
+  assert.deepEqual(slide.state, { 'data-slide-section': 'Research' });
+  assert.deepEqual(mutation.transaction.operations, [{
+    type: 'dataset',
+    elementId: 'slide:slide-1',
+    property: 'slideSection',
+    before: '',
+    after: 'Research'
+  }]);
+});
+
+test('syncStudioSlideSectionControl reads canonical section fallback and disables without an active slide', () => {
+  const control = { value: '', disabled: false };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'slideSectionInput' ? control : null;
+    }
+  };
+
+  assert.equal(notes.syncStudioSlideSectionControl({
+    documentRef,
+    activeSlide: { section: 'Closing' },
+    canEdit: true
+  }), true);
+  assert.equal(control.value, 'Closing');
+  assert.equal(control.disabled, false);
+
+  notes.syncStudioSlideSectionControl({ documentRef, activeSlide: null, canEdit: false });
+  assert.equal(control.value, '');
+  assert.equal(control.disabled, true);
+});

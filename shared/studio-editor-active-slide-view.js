@@ -50,6 +50,9 @@
     const syncSpeakerNotesControl = typeof options.syncSpeakerNotesControl === 'function'
       ? options.syncSpeakerNotesControl
       : () => {};
+    const syncSlideSectionControl = typeof options.syncSlideSectionControl === 'function'
+      ? options.syncSlideSectionControl
+      : () => {};
 
     const syncToDeckSnapshotFallback = (deckSnapshot) => {
       const slideCount = Array.isArray(deckSnapshot && deckSnapshot.slides)
@@ -57,6 +60,7 @@
         : 0;
       if (slideCount === 0) {
         syncSpeakerNotesControl(null);
+        syncSlideSectionControl(null);
         updateCurrentPresentationSessionState({ slideIndex: 0 });
         updateActiveThumbnailCardState('');
         setSlideCountLabel('0 / 0');
@@ -70,6 +74,7 @@
       const activeSlideSnapshot = deckSnapshot.slides[activeIndex] || null;
       const activeSlideId = activeSlideSnapshot ? activeSlideSnapshot.id : '';
       syncSpeakerNotesControl(activeSlideSnapshot);
+      syncSlideSectionControl(activeSlideSnapshot);
       updateCurrentPresentationSessionState({ slideIndex: activeIndex });
       updateActiveThumbnailCardState(activeSlideId);
       setSlideCountLabel(`${activeIndex + 1} / ${slideCount}`);
@@ -109,6 +114,7 @@
       ? options.getActiveSlide(doc)
       : null;
     syncSpeakerNotesControl(activeSlide);
+    syncSlideSectionControl(activeSlide);
     const syncCustomGradientControls = typeof options.syncCustomGradientControls === 'function'
       ? options.syncCustomGradientControls
       : () => false;

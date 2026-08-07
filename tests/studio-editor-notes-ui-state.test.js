@@ -103,3 +103,44 @@ test('updateActiveSlideNotes forwards the shared action result', () => {
   assert.equal(context.updateActiveSlideNotes('Cue for slide'), false);
   assert.equal(actionCalls, 1);
 });
+
+test('updateActiveSlideSection delegates to the shared section action', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateActiveSlideSection(value = \'\') {',
+    '\n\n    function pruneEditorChromeNodes'
+  );
+  let delegatedOptions = null;
+  const context = {
+    SlideNextStudioEditorNotes: { id: 'metadata-api' },
+    SlideNextStudioEditorNotesActions: {
+      applyStudioSlideSectionEdit(value, options) {
+        delegatedOptions = { value, options };
+        return true;
+      }
+    },
+    resolveCurrentStudioDeckReadyActionState() {
+      return { canUseDeckActions: true };
+    },
+    getIframeDoc() {
+      return { id: 'frame' };
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    getEditorSlideId() {
+      return 'slide-1';
+    },
+    finalizeEditorDeckMutation() {},
+    syncStudioChromeToActiveSlide() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateActiveSlideSection('Research'), true);
+  assert.equal(delegatedOptions.value, 'Research');
+  assert.equal(delegatedOptions.options.sectionApi, context.SlideNextStudioEditorNotes);
+  assert.equal(delegatedOptions.options.getElementId({}), 'slide:slide-1');
+});

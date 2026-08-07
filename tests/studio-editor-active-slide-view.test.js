@@ -139,3 +139,22 @@ test('syncStudioActiveSlideChrome refreshes speaker notes for the active slide',
   assert.equal(didSync, true);
   assert.deepEqual(calls, [{ id: 'slide-1' }]);
 });
+
+test('syncStudioActiveSlideChrome refreshes slide section for the active slide', () => {
+  const calls = [];
+
+  activeSlideView.syncStudioActiveSlideChrome({ label: 'iframe-doc' }, {
+    getCurrentSlideIndex: () => 0,
+    syncStudioActiveSlideView() {
+      return { didSync: true };
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    syncSlideSectionControl(activeSlide) {
+      calls.push(activeSlide);
+    }
+  });
+
+  assert.deepEqual(calls, [{ id: 'slide-1' }]);
+});

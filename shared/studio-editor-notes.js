@@ -45,16 +45,15 @@
     return true;
   }
 
-  function getStudioSpeakerNotes(slide) {
+  function getStudioSlideAttribute(slide, attributeName, datasetKey, canonicalKey) {
     if (!slide) return '';
     if (typeof slide.getAttribute === 'function' || slide.dataset) {
-      const speakerNotes = readAttribute(slide, SPEAKER_NOTES_ATTRIBUTE, 'speakerNotes');
-      return speakerNotes || readAttribute(slide, LEGACY_NOTES_ATTRIBUTE, 'notes');
+      return readAttribute(slide, attributeName, datasetKey);
     }
-    return normalizeSpeakerNotes(slide.notes);
+    return normalizeSpeakerNotes(slide[canonicalKey]);
   }
 
-  function applyStudioSpeakerNotes(slide, notes, options = {}) {
+  function applyStudioSlideAttribute(slide, value, options = {}) {
     if (!slide) {
       return {
         didApply: false,
@@ -63,25 +62,33 @@
       };
     }
 
-    const beforeSpeakerNotes = readAttribute(slide, SPEAKER_NOTES_ATTRIBUTE, 'speakerNotes');
-    const beforeLegacyNotes = readAttribute(slide, LEGACY_NOTES_ATTRIBUTE, 'notes');
-    const afterSpeakerNotes = normalizeSpeakerNotes(notes);
-    if (beforeSpeakerNotes === afterSpeakerNotes && !beforeLegacyNotes) {
+    const attributeName = normalizeSpeakerNotes(options.attributeName);
+    const datasetKey = normalizeSpeakerNotes(options.datasetKey);
+    const legacyAttributeName = normalizeSpeakerNotes(options.legacyAttributeName);
+    const legacyDatasetKey = normalizeSpeakerNotes(options.legacyDatasetKey);
+    const beforeValue = readAttribute(slide, attributeName, datasetKey);
+    const beforeLegacyValue = legacyAttributeName && legacyDatasetKey
+      ? readAttribute(slide, legacyAttributeName, legacyDatasetKey)
+      : '';
+    const afterValue = normalizeSpeakerNotes(value);
+    if (beforeValue === afterValue && !beforeLegacyValue) {
       return {
         didApply: false,
-        notes: afterSpeakerNotes,
+        notes: afterValue,
         transaction: null
       };
     }
 
-    if (!writeAttribute(slide, SPEAKER_NOTES_ATTRIBUTE, 'speakerNotes', afterSpeakerNotes)) {
+    if (!writeAttribute(slide, attributeName, datasetKey, afterValue)) {
       return {
         didApply: false,
-        notes: beforeSpeakerNotes || beforeLegacyNotes,
+        notes: beforeValue || beforeLegacyValue,
         transaction: null
       };
     }
-    writeAttribute(slide, LEGACY_NOTES_ATTRIBUTE, 'notes', '');
+    if (legacyAttributeName && legacyDatasetKey) {
+      writeAttribute(slide, legacyAttributeName, legacyDatasetKey, '');
+    }
 
     const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
       ? options.transactionApi
@@ -94,16 +101,18 @@
       ? createStudioDatasetTransaction([
           {
             element: slide,
-            property: 'speakerNotes',
-            before: beforeSpeakerNotes,
-            after: afterSpeakerNotes
+            property: datasetKey,
+            before: beforeValue,
+            after: afterValue
           },
-          {
-            element: slide,
-            property: 'notes',
-            before: beforeLegacyNotes,
-            after: ''
-          }
+          ...(legacyAttributeName && legacyDatasetKey
+            ? [{
+                element: slide,
+                property: legacyDatasetKey,
+                before: beforeLegacyValue,
+                after: ''
+              }]
+            : [])
         ], {
           getElementId: options.getElementId
         })
@@ -111,12 +120,44 @@
 
     return {
       didApply: true,
-      notes: afterSpeakerNotes,
+      notes: afterValue,
       transaction
     };
   }
 
-  function syncStudioSpeakerNotesControl(options = {}) {
+  function applyStudioSpeakerNotes(slide, notes, options = {}) {
+    return applyStudioSlideAttribute(slide, notes, {
+      ...options,
+      attributeName: SPEAKER_NOTES_ATTRIBUTE,
+      datasetKey: 'speakerNotes',
+      legacyAttributeName: LEGACY_NOTES_ATTRIBUTE,
+      legacyDatasetKey: 'notes'
+    });
+  }
+
+  function getStudioSpeakerNotes(slide) {
+    const speakerNotes = getStudioSlideAttribute(
+      slide,
+      SPEAKER_NOTES_ATTRIBUTE,
+      'speakerNotes',
+      'notes'
+    );
+    return speakerNotes || readAttribute(slide, LEGACY_NOTES_ATTRIBUTE, 'notes') || normalizeSpeakerNotes(slide && slide.notes);
+  }
+
+  function getStudioSlideSection(slide) {
+    return getStudioSlideAttribute(slide, 'data-slide-section', 'slideSection', 'section');
+  }
+
+  function applyStudioSlideSection(slide, section, options = {}) {
+    return applyStudioSlideAttribute(slide, section, {
+      ...options,
+      attributeName: 'data-slide-section',
+      datasetKey: 'slideSection'
+    });
+  }
+
+  function syncStudioSlideMetadataControl(options = {}) {
     const documentRef = options.documentRef;
     const controlId = typeof options.controlId === 'string' && options.controlId.trim()
       ? options.controlId
@@ -127,17 +168,41 @@
     if (!control) return false;
 
     const activeSlide = options.activeSlide || null;
-    control.value = getStudioSpeakerNotes(activeSlide);
+    const getValue = typeof options.getValue === 'function'
+      ? options.getValue
+      : getStudioSpeakerNotes;
+    control.value = getValue(activeSlide);
     control.disabled = !activeSlide || options.canEdit !== true;
     return true;
+  }
+
+  function syncStudioSpeakerNotesControl(options = {}) {
+    return syncStudioSlideMetadataControl({
+      ...options,
+      getValue: getStudioSpeakerNotes
+    });
+  }
+
+  function syncStudioSlideSectionControl(options = {}) {
+    return syncStudioSlideMetadataControl({
+      ...options,
+      controlId: options.controlId || 'slideSectionInput',
+      getValue: getStudioSlideSection
+    });
   }
 
   return {
     SPEAKER_NOTES_ATTRIBUTE,
     LEGACY_NOTES_ATTRIBUTE,
     normalizeSpeakerNotes,
+    getStudioSlideAttribute,
+    applyStudioSlideAttribute,
     getStudioSpeakerNotes,
     applyStudioSpeakerNotes,
-    syncStudioSpeakerNotesControl
+    getStudioSlideSection,
+    applyStudioSlideSection,
+    syncStudioSlideMetadataControl,
+    syncStudioSpeakerNotesControl,
+    syncStudioSlideSectionControl
   };
 });

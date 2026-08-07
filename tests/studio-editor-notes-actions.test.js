@@ -94,3 +94,30 @@ test('applyStudioSpeakerNotesEdit refuses to mutate without a persistence finali
   assert.equal(result, false);
   assert.equal(mutationCalls, 0);
 });
+
+test('applyStudioSlideSectionEdit uses the section metadata mutation and label', () => {
+  const calls = [];
+  const result = actions.applyStudioSlideSectionEdit('Research', {
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getDocument: () => ({ id: 'frame' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    sectionApi: {
+      applyStudioSlideSection(slide, value, options) {
+        calls.push(['apply', slide, value, options]);
+        return { didApply: true, transaction: { kind: 'section' } };
+      }
+    },
+    finalizeMutation(label, options) {
+      calls.push(['finalize', label, options]);
+    }
+  });
+
+  assert.equal(result, true);
+  assert.equal(calls[0][0], 'apply');
+  assert.equal(calls[0][2], 'Research');
+  assert.deepEqual(calls[1], [
+    'finalize',
+    'Auto: Updated Slide Section',
+    { refreshThumbnails: false, transaction: { kind: 'section' } }
+  ]);
+});

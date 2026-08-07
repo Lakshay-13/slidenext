@@ -867,6 +867,12 @@
             <p class="text-[10px] text-zinc-600 font-mono">Saved with the slide and included in supported exports.</p>
           </div>
 
+          <div class="flex flex-col gap-2">
+            <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Slide Section</h4>
+            <input id="slideSectionInput" onchange="updateActiveSlideSection(this.value)" type="text" disabled placeholder="e.g. Opening, Research, Closing" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed" />
+            <p class="text-[10px] text-zinc-600 font-mono">A lightweight organizer label for this slide.</p>
+          </div>
+
           <div class="flex flex-col gap-3">
             <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Align Selection</h4>
             <div class="grid grid-cols-3 gap-1.5 bg-zinc-900 p-2 rounded-lg border border-white/5">
@@ -2758,6 +2764,17 @@
             canEdit: !!activeSlide && resolveCurrentStudioDeckReadyActionState().canUseDeckActions
           });
         },
+        syncSlideSectionControl: (activeSlide) => {
+          const notesView = typeof SlideNextStudioEditorNotes !== 'undefined'
+            ? SlideNextStudioEditorNotes
+            : null;
+          if (!notesView || typeof notesView.syncStudioSlideSectionControl !== 'function') return false;
+          return notesView.syncStudioSlideSectionControl({
+            documentRef: document,
+            activeSlide,
+            canEdit: !!activeSlide && resolveCurrentStudioDeckReadyActionState().canUseDeckActions
+          });
+        },
         syncCustomGradientControls: (activeSlide) => {
           if (!wallpaperView || typeof wallpaperView.syncStudioCustomGradientControls !== 'function') return false;
           const result = wallpaperView.syncStudioCustomGradientControls({
@@ -3936,6 +3953,38 @@
         getDocument: getIframeDoc,
         getActiveSlide,
         notesApi: notesView,
+        transactionApi: (
+          typeof SlideNextStudioEditorTransaction !== 'undefined'
+          && SlideNextStudioEditorTransaction
+        )
+          ? SlideNextStudioEditorTransaction
+          : null,
+        getElementId: (element) => {
+          const slideId = typeof getEditorSlideId === 'function'
+            ? getEditorSlideId(element)
+            : '';
+          return slideId ? `slide:${slideId}` : '';
+        },
+        finalizeMutation: finalizeEditorDeckMutation,
+        syncChrome: syncStudioChromeToActiveSlide
+      });
+    }
+
+    function updateActiveSlideSection(value = '') {
+      const notesView = typeof SlideNextStudioEditorNotes !== 'undefined'
+        ? SlideNextStudioEditorNotes
+        : null;
+      const notesActions = typeof SlideNextStudioEditorNotesActions !== 'undefined'
+        ? SlideNextStudioEditorNotesActions
+        : null;
+      if (!notesView || !notesActions || typeof notesActions.applyStudioSlideSectionEdit !== 'function') {
+        return false;
+      }
+      return notesActions.applyStudioSlideSectionEdit(value, {
+        resolveReadyState: resolveCurrentStudioDeckReadyActionState,
+        getDocument: getIframeDoc,
+        getActiveSlide,
+        sectionApi: notesView,
         transactionApi: (
           typeof SlideNextStudioEditorTransaction !== 'undefined'
           && SlideNextStudioEditorTransaction

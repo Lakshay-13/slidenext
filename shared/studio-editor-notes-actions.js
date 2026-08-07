@@ -7,7 +7,7 @@
     root.SlideNextStudioEditorNotesActions = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  function applyStudioSpeakerNotesEdit(value = '', options = {}) {
+  function applyStudioSlideMetadataEdit(value = '', options = {}) {
     const resolveReadyState = typeof options.resolveReadyState === 'function'
       ? options.resolveReadyState
       : () => ({ canUseDeckActions: false });
@@ -22,18 +22,21 @@
       ? options.getActiveSlide
       : () => null;
     const activeSlide = getActiveSlide(documentRef);
-    const notesApi = options.notesApi && typeof options.notesApi === 'object'
-      ? options.notesApi
+    const metadataApi = options.metadataApi && typeof options.metadataApi === 'object'
+      ? options.metadataApi
       : null;
-    const applyNotes = notesApi && typeof notesApi.applyStudioSpeakerNotes === 'function'
-      ? notesApi.applyStudioSpeakerNotes
+    const applyMetadata = typeof options.applyMetadata === 'function'
+      ? options.applyMetadata
+      : metadataApi && typeof options.metadataMethod === 'string'
+        && typeof metadataApi[options.metadataMethod] === 'function'
+        ? metadataApi[options.metadataMethod]
       : null;
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : null;
-    if (!activeSlide || !applyNotes || !finalizeMutation) return false;
+    if (!activeSlide || !applyMetadata || !finalizeMutation) return false;
 
-    const mutation = applyNotes(activeSlide, value, {
+    const mutation = applyMetadata(activeSlide, value, {
       transactionApi: options.transactionApi,
       getElementId: options.getElementId
     });
@@ -49,7 +52,26 @@
     return true;
   }
 
+  function applyStudioSpeakerNotesEdit(value = '', options = {}) {
+    return applyStudioSlideMetadataEdit(value, {
+      ...options,
+      metadataApi: options.notesApi,
+      metadataMethod: 'applyStudioSpeakerNotes'
+    });
+  }
+
+  function applyStudioSlideSectionEdit(value = '', options = {}) {
+    return applyStudioSlideMetadataEdit(value, {
+      ...options,
+      metadataApi: options.sectionApi,
+      metadataMethod: 'applyStudioSlideSection',
+      versionLabel: options.versionLabel || 'Auto: Updated Slide Section'
+    });
+  }
+
   return {
-    applyStudioSpeakerNotesEdit
+    applyStudioSlideMetadataEdit,
+    applyStudioSpeakerNotesEdit,
+    applyStudioSlideSectionEdit
   };
 });
