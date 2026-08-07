@@ -158,6 +158,34 @@ test('createStudioPresentationSessionStateUpdate normalizes only the provided pr
   });
 });
 
+test('createStudioEditorPresentationSessionStateUpdateAdapter delegates to the shared normalizer', () => {
+  let delegatedState = null;
+  const adapter = editorSession.createStudioEditorPresentationSessionStateUpdateAdapter({
+    sessionApi: {
+      createStudioPresentationSessionStateUpdate(nextState) {
+        delegatedState = nextState;
+        return { normalized: true };
+      }
+    }
+  });
+
+  assert.deepEqual(adapter({ presentationTitle: 'Renamed Deck' }), { normalized: true });
+  assert.deepEqual(delegatedState, { presentationTitle: 'Renamed Deck' });
+});
+
+test('createStudioEditorPresentationSessionStateUpdateAdapter supports call-time normalizer overrides', () => {
+  const adapter = editorSession.createStudioEditorPresentationSessionStateUpdateAdapter();
+
+  assert.deepEqual(adapter(
+    { slideIndex: 4 },
+    {
+      createSessionStateUpdate(nextState) {
+        return { overridden: nextState.slideIndex };
+      }
+    }
+  ), { overridden: 4 });
+});
+
 test('shouldHandleStudioFrameLoad requires an active matching editor session', () => {
   assert.equal(editorSession.shouldHandleStudioFrameLoad('', {
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',

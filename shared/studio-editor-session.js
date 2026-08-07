@@ -109,6 +109,28 @@
     return sessionStateUpdate;
   }
 
+  function createStudioEditorPresentationSessionStateUpdateAdapter(options = {}) {
+    const sessionApi = options.sessionApi && typeof options.sessionApi === 'object'
+      ? options.sessionApi
+      : null;
+    const createSessionStateUpdate = typeof options.createSessionStateUpdate === 'function'
+      ? options.createSessionStateUpdate
+      : sessionApi
+        && typeof sessionApi.createStudioPresentationSessionStateUpdate === 'function'
+        ? sessionApi.createStudioPresentationSessionStateUpdate
+        : createStudioPresentationSessionStateUpdate;
+
+    return function normalizeEditorPresentationSessionState(nextState = {}, nextOptions = {}) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      const currentCreateSessionStateUpdate = typeof resolvedOptions.createSessionStateUpdate === 'function'
+        ? resolvedOptions.createSessionStateUpdate
+        : createSessionStateUpdate;
+      return currentCreateSessionStateUpdate(nextState);
+    };
+  }
+
   function isCurrentStudioEditorSession(options = {}) {
     const expectedSessionToken = Number.isInteger(options.sessionToken)
       ? options.sessionToken
@@ -168,6 +190,7 @@
     createStudioSessionSnapshot,
     createStudioEditorSessionSnapshotAdapter,
     createStudioPresentationSessionStateUpdate,
+    createStudioEditorPresentationSessionStateUpdateAdapter,
     isCurrentStudioEditorSession,
     shouldHandleStudioFrameLoad,
     createStudioFrameLoadHandler

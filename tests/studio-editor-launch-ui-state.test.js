@@ -755,6 +755,54 @@ test('updateCurrentPresentationSessionState updates only the provided session fi
   });
 });
 
+test('updateCurrentPresentationSessionState delegates normalization through the editor session adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateCurrentPresentationSessionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateCurrentPresentationSessionState(nextState = {}) {',
+    '\n\n    function launchStudioEditor(url, title, category) {'
+  );
+  let adapterOptions = null;
+  const metadata = { id: 'deck-1' };
+  const context = {
+    SlideNextStudioEditorSession: {
+      createStudioEditorPresentationSessionStateUpdateAdapter(options = {}) {
+        adapterOptions = options;
+        return (nextState) => ({
+          presentationTitle: nextState.presentationTitle,
+          slideIndex: nextState.slideIndex,
+          presentationMetadata: nextState.presentationMetadata
+        });
+      },
+      createStudioPresentationSessionStateUpdate() {
+        throw new Error('direct session normalization should not run when the adapter exists');
+      }
+    },
+    currentCategory: 'General',
+    currentPresentationMetadata: { id: 'seed' },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentSlideIndex: 2,
+    currentTitle: 'Project Onboarding',
+    applyCurrentPresentationMetadata(nextMetadata) {
+      context.currentPresentationMetadata = nextMetadata;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateCurrentPresentationSessionStateSource, context);
+
+  context.updateCurrentPresentationSessionState({
+    presentationTitle: 'Renamed Deck',
+    slideIndex: 4,
+    presentationMetadata: metadata
+  });
+
+  assert.equal(context.currentTitle, 'Renamed Deck');
+  assert.equal(context.currentSlideIndex, 4);
+  assert.equal(context.currentPresentationMetadata, metadata);
+  assert.equal(adapterOptions.sessionApi, context.SlideNextStudioEditorSession);
+});
+
 test('setStudioAutoSaveStatus renders saving and failure editor states', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setStudioAutoSaveStatusSource = extractFunctionSource(

@@ -2219,7 +2219,18 @@
     }
 
     function updateCurrentPresentationSessionState(nextState = {}) {
-      const sessionStateUpdate = SlideNextStudioEditorSession.createStudioPresentationSessionStateUpdate(nextState);
+      const createStudioEditorPresentationSessionStateUpdateAdapter = (
+        typeof SlideNextStudioEditorSession !== 'undefined'
+        && SlideNextStudioEditorSession
+        && typeof SlideNextStudioEditorSession.createStudioEditorPresentationSessionStateUpdateAdapter === 'function'
+      )
+        ? SlideNextStudioEditorSession.createStudioEditorPresentationSessionStateUpdateAdapter
+        : null;
+      const sessionStateUpdate = createStudioEditorPresentationSessionStateUpdateAdapter
+        ? createStudioEditorPresentationSessionStateUpdateAdapter({
+            sessionApi: SlideNextStudioEditorSession
+          })(nextState)
+        : SlideNextStudioEditorSession.createStudioPresentationSessionStateUpdate(nextState);
       if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationUrl')) {
         currentPresentationUrl = sessionStateUpdate.presentationUrl;
       }
