@@ -6235,20 +6235,28 @@
       const canonicalGroupApi = typeof SlideNextStudioEditorCanonicalGroup !== 'undefined'
         ? SlideNextStudioEditorCanonicalGroup
         : null;
-      const buildCanonicalGroupDeck = canonicalGroupApi
-        && typeof canonicalGroupApi.buildStudioCanonicalGroupDeck === 'function'
-        ? canonicalGroupApi.buildStudioCanonicalGroupDeck
-        : null;
-      const buildCanonicalGroupBaseline = canonicalGroupApi
-        && typeof canonicalGroupApi.buildStudioCanonicalGroupBaseline === 'function'
-        ? canonicalGroupApi.buildStudioCanonicalGroupBaseline
-        : null;
       const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
         ? SlideNextDeckImport
         : null;
       const importElementToCanonicalNode = deckImportApi
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
         ? deckImportApi.importElementToCanonicalNode
+        : null;
+      const canonicalGroupBuilders = canonicalGroupApi
+        && typeof canonicalGroupApi.createStudioCanonicalGroupMutationBuilders === 'function'
+        ? canonicalGroupApi.createStudioCanonicalGroupMutationBuilders({
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+            importElementToCanonicalNode
+          })
+        : null;
+      const buildCanonicalGroupDeck = canonicalGroupBuilders
+        ? canonicalGroupBuilders.buildCanonicalGroupDeck
+        : null;
+      const buildCanonicalGroupBaseline = canonicalGroupBuilders
+        ? canonicalGroupBuilders.buildCanonicalGroupBaseline
         : null;
       let canonicalDeckBeforeGrouping = null;
       let canonicalSlideId = '';

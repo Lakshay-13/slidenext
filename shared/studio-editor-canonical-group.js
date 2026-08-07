@@ -79,6 +79,45 @@
     );
   }
 
+  function createStudioCanonicalGroupMutationBuilders(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const importElementToCanonicalNode = typeof options.importElementToCanonicalNode === 'function'
+      ? options.importElementToCanonicalNode
+      : null;
+    const buildCanonicalGroupBaseline = (groupOptions = {}) => (
+      buildStudioCanonicalGroupBaseline({
+        ...groupOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck
+      })
+    );
+    const buildCanonicalGroupDeck = (groupOptions = {}) => {
+      const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(
+        groupOptions,
+        'canonicalDeckBeforeMutation'
+      )
+        ? groupOptions.canonicalDeckBeforeMutation
+        : buildCanonicalGroupBaseline(groupOptions);
+      return buildStudioCanonicalGroupDeck({
+        ...groupOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck,
+        importElementToCanonicalNode,
+        canonicalDeckBeforeMutation
+      });
+    };
+
+    return {
+      buildCanonicalGroupBaseline,
+      buildCanonicalGroupDeck
+    };
+  }
+
   function buildStudioCanonicalUngroupDeck(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -129,6 +168,7 @@
   return {
     buildStudioCanonicalGroupBaseline,
     buildStudioCanonicalGroupDeck,
+    createStudioCanonicalGroupMutationBuilders,
     buildStudioCanonicalUngroupBaseline,
     buildStudioCanonicalUngroupDeck
   };
