@@ -954,6 +954,74 @@
     };
   }
 
+  function createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter(options = {}) {
+    const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
+      ? options.persistenceApi
+      : null;
+    const getPresentationUrl = typeof options.getPresentationUrl === 'function'
+      ? options.getPresentationUrl
+      : () => '';
+    const capturePersistableDeckState = typeof options.capturePersistableDeckState === 'function'
+      ? options.capturePersistableDeckState
+      : null;
+    const resolvePersistenceStateFromDocumentCapture = typeof options.resolvePersistenceStateFromDocumentCapture === 'function'
+      ? options.resolvePersistenceStateFromDocumentCapture
+      : persistenceApi
+        && typeof persistenceApi.resolveStudioPersistenceStateFromDocumentCapture === 'function'
+        ? persistenceApi.resolveStudioPersistenceStateFromDocumentCapture
+        : null;
+
+    return function resolveEditorPersistenceStateFromCapture(doc = null, nextOptions = {}) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      const currentCapturePersistableDeckState = typeof resolvedOptions.capturePersistableDeckState === 'function'
+        ? resolvedOptions.capturePersistableDeckState
+        : capturePersistableDeckState;
+      const currentResolvePersistenceStateFromDocumentCapture = typeof resolvedOptions.resolvePersistenceStateFromDocumentCapture === 'function'
+        ? resolvedOptions.resolvePersistenceStateFromDocumentCapture
+        : resolvePersistenceStateFromDocumentCapture;
+      const createStudioPersistenceStateFromDocumentCaptureResolver = persistenceApi
+        && typeof persistenceApi.createStudioPersistenceStateFromDocumentCaptureResolver === 'function'
+        ? persistenceApi.createStudioPersistenceStateFromDocumentCaptureResolver
+        : null;
+      if (createStudioPersistenceStateFromDocumentCaptureResolver) {
+        const resolver = createStudioPersistenceStateFromDocumentCaptureResolver({
+          getPresentationUrl,
+          capturePersistableDeckState: currentCapturePersistableDeckState,
+          resolvePersistenceStateFromDocumentCapture: currentResolvePersistenceStateFromDocumentCapture
+        });
+        return typeof resolver === 'function'
+          ? resolver(doc, resolvedOptions)
+          : null;
+      }
+
+      const resolvePersistenceStateFromCapture = typeof resolvedOptions.resolvePersistenceStateFromCapture === 'function'
+        ? resolvedOptions.resolvePersistenceStateFromCapture
+        : null;
+      if (!currentCapturePersistableDeckState
+        || !currentResolvePersistenceStateFromDocumentCapture
+        || !resolvePersistenceStateFromCapture) {
+        return null;
+      }
+      return currentResolvePersistenceStateFromDocumentCapture(
+        doc,
+        typeof resolvedOptions.presentationUrl === 'string' && resolvedOptions.presentationUrl
+          ? resolvedOptions.presentationUrl
+          : getPresentationUrl(),
+        {
+          capturePersistableDeckState: currentCapturePersistableDeckState,
+          persistenceOptions: resolvedOptions.persistenceOptions
+            && typeof resolvedOptions.persistenceOptions === 'object'
+            && !Array.isArray(resolvedOptions.persistenceOptions)
+            ? { ...resolvedOptions.persistenceOptions }
+            : {}
+        },
+        resolvePersistenceStateFromCapture
+      );
+    };
+  }
+
   return {
     createStudioEditorPersistedDeckStateAdapter,
     createStudioEditorPersistedDeckStateApplierAdapter,
@@ -971,6 +1039,7 @@
     createStudioEditorPersistedDeckPlaybackStateCapturerAdapter,
     createStudioEditorSaveRequestBodyAdapter,
     createStudioEditorPersistedDeckHtmlCheckerAdapter,
-    createStudioEditorPersistedSaveRequestCheckerAdapter
+    createStudioEditorPersistedSaveRequestCheckerAdapter,
+    createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter
   };
 });

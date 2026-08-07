@@ -9219,6 +9219,28 @@
       const nextOptions = options && typeof options === 'object'
         ? options
         : {};
+      const createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter = (
+        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+        && SlideNextStudioEditorPersistenceState
+        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter === 'function'
+      )
+        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter
+        : null;
+      if (createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter) {
+        const adapter = createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          getPresentationUrl: () => currentPresentationUrl,
+          capturePersistableDeckState: captureEditorPersistableDeckState
+        });
+        const resolvedState = typeof adapter === 'function'
+          ? adapter(doc, nextOptions)
+          : null;
+        if (resolvedState !== null && typeof resolvedState !== 'undefined') {
+          return resolvedState;
+        }
+      }
       const createStudioPersistenceStateFromDocumentCaptureResolver = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence

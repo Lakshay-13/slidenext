@@ -880,6 +880,51 @@ test('resolveCurrentStudioPersistenceStateFromCapture reuses the shared capture-
   assert.equal(delegatedArgs.resolvePersistenceStateFromDocumentCapture, context.SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture);
 });
 
+test('resolveCurrentStudioPersistenceStateFromCapture delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
+    fileContent,
+    'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
+    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
+  );
+
+  const doc = { label: 'iframe-doc' };
+  const context = {
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistenceStateFromDocumentCaptureResolver(options = {}) {
+        return (nextDoc, nextOptions = {}) => ({
+          doc: nextDoc,
+          presentationUrl: nextOptions.presentationUrl || options.getPresentationUrl(),
+          capturedBy: options.capturePersistableDeckState,
+          resolvePersistenceStateFromCapture: nextOptions.resolvePersistenceStateFromCapture
+        });
+      },
+      resolveStudioPersistenceStateFromDocumentCapture() {
+        throw new Error('direct capture-state resolution should not run when the adapter builder exists');
+      }
+    },
+    captureEditorPersistableDeckState() {},
+    getIframeDoc() {
+      return doc;
+    }
+  };
+  const resolvePersistenceStateFromCapture = () => {};
+
+  vm.createContext(context);
+  vm.runInContext(resolveCurrentStudioPersistenceStateFromCaptureSource, context);
+
+  const result = context.resolveCurrentStudioPersistenceStateFromCapture(doc, {
+    presentationUrl: 'presentations/custom/index.html',
+    resolvePersistenceStateFromCapture
+  });
+  assert.equal(result.doc, doc);
+  assert.equal(result.presentationUrl, 'presentations/custom/index.html');
+  assert.equal(result.capturedBy, context.captureEditorPersistableDeckState);
+  assert.equal(result.resolvePersistenceStateFromCapture, resolvePersistenceStateFromCapture);
+});
+
 test('isCurrentStudioPersistenceTaskStale reuses the shared stale-task checker when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const isCurrentStudioPersistenceTaskStaleSource = extractFunctionSource(

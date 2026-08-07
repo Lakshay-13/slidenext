@@ -966,3 +966,80 @@ test('createStudioEditorPersistedSaveRequestCheckerAdapter returns null without 
 
   assert.equal(adapter({ htmlContent: '<html>current</html>' }), null);
 });
+
+test('createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter preserves builder precedence', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const capturePersistableDeckState = () => ({ cleanHtml: '<html>captured</html>' });
+  const resolvePersistenceStateFromDocumentCapture = () => {
+    throw new Error('direct persistence resolver should not run when the builder exists');
+  };
+  let factoryOptions = null;
+  const adapter = editorPersistenceState.createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter({
+    persistenceApi: {
+      createStudioPersistenceStateFromDocumentCaptureResolver(options) {
+        factoryOptions = options;
+        return (doc, nextOptions) => ({
+          doc,
+          nextOptions,
+          capturePersistableDeckState: options.capturePersistableDeckState,
+          resolvePersistenceStateFromDocumentCapture: options.resolvePersistenceStateFromDocumentCapture
+        });
+      }
+    },
+    getPresentationUrl: () => '/presentations/deck/index.html',
+    capturePersistableDeckState,
+    resolvePersistenceStateFromDocumentCapture
+  });
+  const nextOptions = {
+    presentationUrl: '/presentations/custom/index.html',
+    persistenceOptions: { sessionToken: 12 },
+    resolvePersistenceStateFromCapture() {}
+  };
+
+  const result = adapter(iframeDoc, nextOptions);
+  assert.equal(result.doc, iframeDoc);
+  assert.equal(result.nextOptions, nextOptions);
+  assert.equal(result.capturePersistableDeckState, capturePersistableDeckState);
+  assert.equal(result.resolvePersistenceStateFromDocumentCapture, resolvePersistenceStateFromDocumentCapture);
+  assert.equal(factoryOptions.getPresentationUrl(), '/presentations/deck/index.html');
+  assert.equal(factoryOptions.capturePersistableDeckState, capturePersistableDeckState);
+  assert.equal(factoryOptions.resolvePersistenceStateFromDocumentCapture, resolvePersistenceStateFromDocumentCapture);
+});
+
+test('createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter uses direct helper without a builder', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const capturedDeckState = { cleanHtml: '<html>captured</html>' };
+  const capturePersistableDeckState = (doc) => {
+    assert.equal(doc, iframeDoc);
+    return capturedDeckState;
+  };
+  let delegatedArgs = null;
+  const resolvePersistenceStateFromDocumentCapture = (doc, presentationUrl, options, resolvePersistenceStateFromCapture) => {
+    delegatedArgs = { doc, presentationUrl, options, resolvePersistenceStateFromCapture };
+    return { resolved: true };
+  };
+  const adapter = editorPersistenceState.createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter({
+    persistenceApi: {
+      resolveStudioPersistenceStateFromDocumentCapture: resolvePersistenceStateFromDocumentCapture
+    },
+    getPresentationUrl: () => '/presentations/deck/index.html',
+    capturePersistableDeckState
+  });
+  const resolvePersistenceStateFromCapture = () => {};
+
+  assert.deepEqual(adapter(iframeDoc, {
+    persistenceOptions: { sessionToken: 12 },
+    resolvePersistenceStateFromCapture
+  }), { resolved: true });
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(delegatedArgs.presentationUrl, '/presentations/deck/index.html');
+  assert.equal(delegatedArgs.options.capturePersistableDeckState, capturePersistableDeckState);
+  assert.deepEqual(delegatedArgs.options.persistenceOptions, { sessionToken: 12 });
+  assert.equal(delegatedArgs.resolvePersistenceStateFromCapture, resolvePersistenceStateFromCapture);
+});
+
+test('createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter returns null without required helpers', () => {
+  const adapter = editorPersistenceState.createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter();
+
+  assert.equal(adapter({}), null);
+});
