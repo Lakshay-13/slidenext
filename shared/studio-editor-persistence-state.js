@@ -242,11 +242,38 @@
     };
   }
 
+  function createStudioEditorCanonicalDeckOverrideAdapter(options = {}) {
+    const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
+      ? options.persistenceApi
+      : null;
+    const resolveCanonicalDeckOverride = typeof options.resolveCanonicalDeckOverride === 'function'
+      ? options.resolveCanonicalDeckOverride
+      : persistenceApi
+        && typeof persistenceApi.resolveStudioCanonicalDeckOverride === 'function'
+        ? persistenceApi.resolveStudioCanonicalDeckOverride
+        : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+
+    return function resolveEditorCanonicalDeckOverride(canonicalDeck = null, nextOptions = {}) {
+      if (!resolveCanonicalDeckOverride) return null;
+      return resolveCanonicalDeckOverride({
+        canonicalDeck,
+        buildCanonicalDeck: typeof nextOptions.buildCanonicalDeck === 'function'
+          ? nextOptions.buildCanonicalDeck
+          : null,
+        isCanonicalDeck
+      });
+    };
+  }
+
   return {
     createStudioEditorPersistedDeckStateAdapter,
     createStudioEditorPersistedDeckStateApplierAdapter,
     createStudioEditorPersistedDeckStateReaderAdapter,
     createStudioEditorPersistedActiveSlideIdAdapter,
-    createStudioEditorFallbackCanonicalDeckAdapter
+    createStudioEditorFallbackCanonicalDeckAdapter,
+    createStudioEditorCanonicalDeckOverrideAdapter
   };
 });

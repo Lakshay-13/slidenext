@@ -789,6 +789,47 @@ test('resolveEditorCanonicalDeckOverride delegates canonical override resolution
   assert.equal(delegatedArgs.isCanonicalDeck, context.SlideNextCanonicalDeck.isCanonicalDeck);
 });
 
+test('resolveEditorCanonicalDeckOverride delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const isCanonicalDeck = (deck) => deck === canonicalDeck;
+  const override = { id: 'override' };
+  let delegatedOptions = null;
+  const buildCanonicalDeck = () => canonicalDeck;
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      resolveStudioCanonicalDeckOverride(options) {
+        delegatedOptions = options;
+        return canonicalDeck;
+      }
+    },
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    getEditorCanonicalDeckValidator() {
+      return isCanonicalDeck;
+    }
+  };
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {',
+    '\n\n    function getEditorCanonicalDeckValidator() {'
+  );
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.equal(
+    context.resolveEditorCanonicalDeckOverride(override, { buildCanonicalDeck }),
+    canonicalDeck
+  );
+  assert.equal(delegatedOptions.canonicalDeck, override);
+  assert.equal(delegatedOptions.buildCanonicalDeck, buildCanonicalDeck);
+  assert.equal(delegatedOptions.isCanonicalDeck, isCanonicalDeck);
+});
+
 test('getEditorCanonicalDeckValidator returns the shared canonical deck validator when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(

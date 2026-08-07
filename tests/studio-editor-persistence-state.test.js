@@ -199,3 +199,34 @@ test('createStudioEditorFallbackCanonicalDeckAdapter fails closed without shared
 
   assert.equal(adapter({ id: 'malformed' }), null);
 });
+
+test('createStudioEditorCanonicalDeckOverrideAdapter forwards per-call builders and validators', () => {
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  let delegatedOptions = null;
+  const persistenceApi = {
+    resolveStudioCanonicalDeckOverride(options) {
+      delegatedOptions = options;
+      return canonicalDeck;
+    }
+  };
+  const isCanonicalDeck = (deck) => deck === canonicalDeck;
+  const buildCanonicalDeck = () => canonicalDeck;
+  const adapter = editorPersistenceState.createStudioEditorCanonicalDeckOverrideAdapter({
+    persistenceApi,
+    isCanonicalDeck
+  });
+  const override = { id: 'override' };
+
+  assert.equal(adapter(override, { buildCanonicalDeck }), canonicalDeck);
+  assert.equal(delegatedOptions.canonicalDeck, override);
+  assert.equal(delegatedOptions.buildCanonicalDeck, buildCanonicalDeck);
+  assert.equal(delegatedOptions.isCanonicalDeck, isCanonicalDeck);
+  assert.equal(adapter(override), canonicalDeck);
+  assert.equal(delegatedOptions.buildCanonicalDeck, null);
+});
+
+test('createStudioEditorCanonicalDeckOverrideAdapter fails closed without shared persistence', () => {
+  const adapter = editorPersistenceState.createStudioEditorCanonicalDeckOverrideAdapter();
+
+  assert.equal(adapter({ id: 'override' }), null);
+});

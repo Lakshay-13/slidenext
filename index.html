@@ -3562,6 +3562,22 @@
     }
 
     function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {
+      const createStudioEditorCanonicalDeckOverrideAdapter = (
+        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+        && SlideNextStudioEditorPersistenceState
+        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorCanonicalDeckOverrideAdapter === 'function'
+      )
+        ? SlideNextStudioEditorPersistenceState.createStudioEditorCanonicalDeckOverrideAdapter
+        : null;
+      if (createStudioEditorCanonicalDeckOverrideAdapter) {
+        const adapter = createStudioEditorCanonicalDeckOverrideAdapter({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          isCanonicalDeck: getEditorCanonicalDeckValidator()
+        });
+        return typeof adapter === 'function' ? adapter(canonicalDeck, options) : null;
+      }
       const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : null;
