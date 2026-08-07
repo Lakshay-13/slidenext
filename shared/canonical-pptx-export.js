@@ -360,6 +360,13 @@
 
     deck.slides.forEach(slide => {
       const background = asObject(slide.layout).background || {};
+      if (background.style && !resolveSlideBackgroundColor(background)) {
+        diagnostics.unsupportedStyles.push({
+          id: slide.id || 'unknown',
+          properties: ['background']
+        });
+        diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} uses unsupported CSS background styling`);
+      }
       if (background.image) {
         diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} background image was not exported`);
       }

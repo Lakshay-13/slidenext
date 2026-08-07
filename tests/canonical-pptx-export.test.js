@@ -265,3 +265,19 @@ test('preflightCanonicalPptxExport reports export fidelity risks', () => {
   assert.match(report.diagnostics.warnings.join('\n'), /extends beyond slide bounds/);
   assert.match(report.diagnostics.warnings.join('\n'), /unsupported CSS: transform/);
 });
+
+test('preflightCanonicalPptxExport reports unsupported non-solid slide backgrounds', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      id: 'slide-1',
+      layout: { background: { style: 'background: linear-gradient(red, blue);' } },
+      nodes: []
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedStyles, [{
+    id: 'slide-1',
+    properties: ['background']
+  }]);
+  assert.match(report.diagnostics.warnings.join('\n'), /Slide slide-1 uses unsupported CSS background styling/);
+});
