@@ -58,6 +58,16 @@ function loadHistoryStepAdapter(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadBuildHistoryFrameHtml(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function createHistoryEntry(doc) {'
+  );
+  context.SlideNextStudioEditorHistoryState = historyState;
+  vm.runInContext(helperSource, context);
+}
+
 function loadResolveEditorMetadataPersistenceOptions(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= studioPersistence;
   const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
@@ -434,7 +444,7 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
 
   vm.createContext(context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
-  vm.runInContext(buildHistoryFrameHtmlSource, context);
+  loadBuildHistoryFrameHtml(fileContent, context);
   vm.runInContext(createHistoryEntrySource, context);
 
   const entry = context.createHistoryEntry();
@@ -653,7 +663,7 @@ test('buildHistoryFrameHtml reuses shared deck source sanitization for history s
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   loadResolveEditorMetadataPersistenceOptions(fileContent, context);
   vm.runInContext(getEditorHistoryOptionsSource, context);
-  vm.runInContext(buildHistoryFrameHtmlSource, context);
+  loadBuildHistoryFrameHtml(fileContent, context);
 
   const html = context.buildHistoryFrameHtml(doc);
 
@@ -799,7 +809,7 @@ test('buildHistoryFrameHtml forwards sanitizer overrides into getEditorHistoryOp
   };
 
   vm.createContext(context);
-  vm.runInContext(buildHistoryFrameHtmlSource, context);
+  loadBuildHistoryFrameHtml(fileContent, context);
 
   const html = context.buildHistoryFrameHtml(doc, {
     chromeNodeIds: ['editorHistoryOverlay'],
@@ -868,7 +878,7 @@ test('buildHistoryFrameHtml reuses the shared history capture helper when availa
   };
 
   vm.createContext(context);
-  vm.runInContext(buildHistoryFrameHtmlSource, context);
+  loadBuildHistoryFrameHtml(fileContent, context);
 
   const html = context.buildHistoryFrameHtml(doc, {
     chromeNodeIds: ['editorHistoryOverlay'],
@@ -1028,7 +1038,7 @@ test('buildHistoryFrameHtml strips editor style tags when the shared deck source
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   loadResolveEditorMetadataPersistenceOptions(fileContent, context);
   vm.runInContext(getEditorHistoryOptionsSource, context);
-  vm.runInContext(buildHistoryFrameHtmlSource, context);
+  loadBuildHistoryFrameHtml(fileContent, context);
 
   const html = context.buildHistoryFrameHtml(doc);
 

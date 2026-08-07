@@ -7389,24 +7389,24 @@
     }
 
     function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {
-      const buildStudioHistoryCaptureHtml = SlideNextStudioHistory
-        && typeof SlideNextStudioHistory.buildStudioHistoryCaptureHtml === 'function'
-        ? SlideNextStudioHistory.buildStudioHistoryCaptureHtml
-        : null;
-      const historyOptions = getEditorHistoryOptions(options);
-      const buildFallbackHistoryHtml = (sourceDoc = doc) => sourceDoc
-        ? buildPersistableDeckHtml(sourceDoc, {
-            canonicalDeck: options.canonicalDeck
-          })
-        : '';
-      if (buildStudioHistoryCaptureHtml) {
-        return buildStudioHistoryCaptureHtml(doc, {
-          frameOptions: historyOptions,
-          canonicalDeck: options.canonicalDeck,
-          buildFallbackHtml: buildFallbackHistoryHtml
+      if (typeof buildHistoryFrameHtml.builder !== 'function') {
+        const createStudioEditorHistoryFrameHtmlBuilder = (
+          typeof SlideNextStudioEditorHistoryState !== 'undefined'
+          && SlideNextStudioEditorHistoryState
+          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryFrameHtmlBuilder === 'function'
+        )
+          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryFrameHtmlBuilder
+          : null;
+        if (!createStudioEditorHistoryFrameHtmlBuilder) return '';
+        buildHistoryFrameHtml.builder = createStudioEditorHistoryFrameHtmlBuilder({
+          historyApi: SlideNextStudioHistory,
+          getHistoryOptions: getEditorHistoryOptions,
+          buildPersistableDeckHtml
         });
       }
-      return '';
+      return typeof buildHistoryFrameHtml.builder === 'function'
+        ? buildHistoryFrameHtml.builder(doc, options)
+        : '';
     }
 
     function createHistoryEntry(doc) {

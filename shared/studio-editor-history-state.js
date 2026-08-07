@@ -283,10 +283,43 @@
     };
   }
 
+  function createStudioEditorHistoryFrameHtmlBuilder(options = {}) {
+    const historyApi = options.historyApi && typeof options.historyApi === 'object'
+      ? options.historyApi
+      : null;
+    const getHistoryOptions = typeof options.getHistoryOptions === 'function'
+      ? options.getHistoryOptions
+      : () => ({});
+    const buildPersistableDeckHtml = typeof options.buildPersistableDeckHtml === 'function'
+      ? options.buildPersistableDeckHtml
+      : () => '';
+
+    return function buildHistoryFrameHtml(doc, buildOptions = {}) {
+      const historyOptions = getHistoryOptions(buildOptions);
+      const buildStudioHistoryCaptureHtml = historyApi
+        && typeof historyApi.buildStudioHistoryCaptureHtml === 'function'
+        ? historyApi.buildStudioHistoryCaptureHtml
+        : null;
+      if (!buildStudioHistoryCaptureHtml) return '';
+
+      const buildFallbackHistoryHtml = (sourceDoc = doc) => sourceDoc
+        ? buildPersistableDeckHtml(sourceDoc, {
+            canonicalDeck: buildOptions.canonicalDeck
+          })
+        : '';
+      return buildStudioHistoryCaptureHtml(doc, {
+        frameOptions: historyOptions,
+        canonicalDeck: buildOptions.canonicalDeck,
+        buildFallbackHtml: buildFallbackHistoryHtml
+      });
+    };
+  }
+
   return {
     createStudioEditorHistorySaveAdapter,
     createStudioEditorHistoryEntryBuilder,
     createStudioEditorHistoryCaptureAdapter,
-    createStudioEditorHistoryStepAdapter
+    createStudioEditorHistoryStepAdapter,
+    createStudioEditorHistoryFrameHtmlBuilder
   };
 });

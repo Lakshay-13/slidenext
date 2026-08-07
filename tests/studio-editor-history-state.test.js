@@ -172,3 +172,32 @@ test('createStudioEditorHistoryStepAdapter builds independent undo and redo runn
   assert.equal(createdSteps[1].stepHistory, historyApi.stepStudioHistoryRedo);
   assert.equal(createdSteps[1].didStepKey, 'didRedo');
 });
+
+test('createStudioEditorHistoryFrameHtmlBuilder preserves capture and fallback callbacks', () => {
+  const calls = [];
+  const doc = { id: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const builder = historyState.createStudioEditorHistoryFrameHtmlBuilder({
+    historyApi: {
+      buildStudioHistoryCaptureHtml(nextDoc, options) {
+        calls.push(['capture', nextDoc, options]);
+        return options.buildFallbackHtml(nextDoc);
+      }
+    },
+    getHistoryOptions(options) {
+      calls.push(['history-options', options]);
+      return { chromeNodeIds: ['editor-overlay'] };
+    },
+    buildPersistableDeckHtml(nextDoc, options) {
+      calls.push(['fallback', nextDoc, options]);
+      return '<html>fallback</html>';
+    }
+  });
+
+  assert.equal(builder(doc, { canonicalDeck }), '<html>fallback</html>');
+  assert.deepEqual(calls.map(([name]) => name), ['history-options', 'capture', 'fallback']);
+  assert.equal(calls[1][1], doc);
+  assert.deepEqual(calls[1][2].frameOptions, { chromeNodeIds: ['editor-overlay'] });
+  assert.equal(calls[1][2].canonicalDeck, canonicalDeck);
+  assert.deepEqual(calls[2][2], { canonicalDeck });
+});
