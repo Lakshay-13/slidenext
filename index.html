@@ -5683,32 +5683,34 @@
 
     function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {
       const canonicalDeck = arguments.length > 3 ? arguments[3] : null;
+      const deckMutationApi = typeof SlideNextStudioEditorDeckMutation !== 'undefined'
+        ? SlideNextStudioEditorDeckMutation
+        : null;
+      if (!deckMutationApi
+        || typeof deckMutationApi.finalizeStudioEditorInsertedElements !== 'function') {
+        return false;
+      }
       const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
         ? SlideNextStudioEditorSelection
         : null;
-      if (!selectionApi || typeof selectionApi.selectAllStudioElements !== 'function') return false;
-      const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
-        ? SlideNextStudioEditorMutation
-        : null;
-      if (mutationApi && typeof mutationApi.finalizeStudioInsertedElements === 'function') {
-        return mutationApi.finalizeStudioInsertedElements({
-          insertedElements,
-          versionLabel,
-          transaction,
-          ...(canonicalDeck ? { canonicalDeck } : {}),
-          selectAllElements: selectionApi.selectAllStudioElements,
-          commitSelectionState: commitEditorSelectionState,
-          finalizeMutation: finalizeEditorDeckMutation
-        });
-      }
-      if (!insertedElements || insertedElements.length === 0) return false;
-      const nextSelectionState = selectionApi.selectAllStudioElements(insertedElements);
-      commitEditorSelectionState(nextSelectionState);
-      finalizeEditorDeckMutation(versionLabel, {
+      return deckMutationApi.finalizeStudioEditorInsertedElements(
+        insertedElements,
+        versionLabel,
         transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
-      });
-      return true;
+        canonicalDeck,
+        {
+          selectionApi,
+          mutationApi: typeof SlideNextStudioEditorMutation !== 'undefined'
+            ? SlideNextStudioEditorMutation
+            : null,
+          commitSelectionState: typeof commitEditorSelectionState === 'function'
+            ? commitEditorSelectionState
+            : null,
+          finalizeMutation: typeof finalizeEditorDeckMutation === 'function'
+            ? finalizeEditorDeckMutation
+            : null
+        }
+      );
     }
 
     function copySelectedElements() {

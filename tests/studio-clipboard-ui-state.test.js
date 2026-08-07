@@ -8,6 +8,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const clipboardState = require('../shared/studio-editor-clipboard.js');
 const clipboardMutation = require('../shared/studio-editor-clipboard-mutation.js');
+const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -266,6 +267,7 @@ test('finalizeInsertedElements commits the new selection and delegates persisten
   };
 
   vm.createContext(context);
+  context.SlideNextStudioEditorDeckMutation = deckMutation;
   vm.runInContext(finalizeInsertedElementsSource, context);
 
   assert.equal(context.finalizeInsertedElements(insertedElements, 'Auto: Pasted Element'), true);
@@ -293,6 +295,7 @@ test('finalizeInsertedElements fails closed when shared selection is unavailable
   };
 
   vm.createContext(context);
+  context.SlideNextStudioEditorDeckMutation = deckMutation;
   vm.runInContext(finalizeInsertedElementsSource, context);
 
   assert.equal(context.finalizeInsertedElements([{ id: 'node-1' }], 'Auto: Pasted Element'), false);
@@ -323,6 +326,7 @@ test('finalizeInsertedElements delegates selection and persistence ordering to s
   };
 
   vm.createContext(context);
+  context.SlideNextStudioEditorDeckMutation = deckMutation;
   vm.runInContext(finalizeInsertedElementsSource, context);
 
   assert.equal(context.finalizeInsertedElements(insertedElements, 'Auto: Pasted Element', { id: 'tx-1' }), true);
@@ -402,6 +406,7 @@ test('duplicateSelectedElements forwards the insertion markup transaction to his
   };
 
   vm.createContext(context);
+  context.SlideNextStudioEditorDeckMutation = deckMutation;
   vm.runInContext(
     `${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${finalizeInsertedElementsSource}\n${duplicateSelectedElementsSource}`,
     context
@@ -494,6 +499,7 @@ test('duplicateSelectedElements forwards a canonical deck sidecar for cloned nod
   };
 
   vm.createContext(context);
+  context.SlideNextStudioEditorDeckMutation = deckMutation;
   vm.runInContext(
     `${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${finalizeInsertedElementsSource}\n${duplicateSelectedElementsSource}`,
     context

@@ -109,8 +109,49 @@
     return true;
   }
 
+  function finalizeStudioEditorInsertedElements(
+    insertedElements,
+    versionLabel,
+    transaction = null,
+    canonicalDeck = null,
+    options = {}
+  ) {
+    const selectionApi = options.selectionApi && typeof options.selectionApi === 'object'
+      ? options.selectionApi
+      : null;
+    if (!selectionApi || typeof selectionApi.selectAllStudioElements !== 'function') return false;
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const finalizeMutation = typeof options.finalizeMutation === 'function'
+      ? options.finalizeMutation
+      : null;
+    if (mutationApi && typeof mutationApi.finalizeStudioInsertedElements === 'function') {
+      return mutationApi.finalizeStudioInsertedElements({
+        insertedElements,
+        versionLabel,
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {}),
+        selectAllElements: selectionApi.selectAllStudioElements,
+        commitSelectionState: options.commitSelectionState,
+        finalizeMutation
+      });
+    }
+    if (!insertedElements || insertedElements.length === 0 || !finalizeMutation) return false;
+    const nextSelectionState = selectionApi.selectAllStudioElements(insertedElements);
+    if (typeof options.commitSelectionState === 'function') {
+      options.commitSelectionState(nextSelectionState);
+    }
+    finalizeMutation(versionLabel, {
+      transaction,
+      ...(canonicalDeck ? { canonicalDeck } : {})
+    });
+    return true;
+  }
+
   return {
     finalizeStudioEditorDeckMutation,
-    finalizeStudioEditorSelectionToggleMutation
+    finalizeStudioEditorSelectionToggleMutation,
+    finalizeStudioEditorInsertedElements
   };
 });

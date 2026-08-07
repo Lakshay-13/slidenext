@@ -92,3 +92,38 @@ test('finalizeStudioEditorSelectionToggleMutation preserves selection and persis
     }]
   ]);
 });
+
+test('finalizeStudioEditorInsertedElements selects before persisting inserted content', () => {
+  const calls = [];
+  const insertedElements = [{ id: 'node-1' }];
+  const result = deckMutation.finalizeStudioEditorInsertedElements(
+    insertedElements,
+    'Auto: Pasted Element',
+    { id: 'tx' },
+    { id: 'deck' },
+    {
+      selectionApi: {
+        selectAllStudioElements(elements) {
+          calls.push(['select', elements]);
+          return { selectedElements: elements };
+        }
+      },
+      commitSelectionState(state) {
+        calls.push(['commit', state]);
+      },
+      finalizeMutation(label, options) {
+        calls.push(['finalize', label, options]);
+      }
+    }
+  );
+
+  assert.equal(result, true);
+  assert.deepEqual(calls, [
+    ['select', insertedElements],
+    ['commit', { selectedElements: insertedElements }],
+    ['finalize', 'Auto: Pasted Element', {
+      transaction: { id: 'tx' },
+      canonicalDeck: { id: 'deck' }
+    }]
+  ]);
+});
