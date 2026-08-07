@@ -1209,6 +1209,7 @@
   <script src="/shared/studio-editor-thumbnail-view.js"></script>
   <script src="/shared/studio-editor-mutation.js"></script>
   <script src="/shared/studio-editor-transaction.js"></script>
+  <script src="/shared/studio-editor-slide-mutation.js"></script>
   <script src="/shared/studio-editor-position-layout-mutation.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-slide-commands.js"></script>
@@ -2857,44 +2858,21 @@
     }
 
     function createEditorSlideMutationPersistenceFinalizer(options = {}) {
-      const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
-        ? SlideNextStudioEditorMutation
+      const slideMutationApi = typeof SlideNextStudioEditorSlideMutation !== 'undefined'
+        ? SlideNextStudioEditorSlideMutation
         : null;
-      const saveHistoryState = typeof options.saveHistoryState === 'function'
-        ? options.saveHistoryState
-        : () => {};
-      const triggerAutoSave = typeof options.triggerAutoSave === 'function'
-        ? options.triggerAutoSave
-        : () => {};
-      const triggerAutoVersion = typeof options.triggerAutoVersion === 'function'
-        ? options.triggerAutoVersion
-        : () => {};
-
-      if (mutationApi && typeof mutationApi.finalizeStudioSlideMutation === 'function') {
-        return (versionLabel, transaction = null, canonicalDeck = null) => (
-          mutationApi.finalizeStudioSlideMutation({
-            versionLabel,
-            transaction,
-            canonicalDeck,
-            saveHistoryState,
-            triggerAutoSave,
-            triggerAutoVersion
-          })
-        );
+      if (!slideMutationApi
+        || typeof slideMutationApi.createStudioEditorSlideMutationPersistenceFinalizer !== 'function') {
+        return () => {};
       }
-
-      return (versionLabel, transaction = null, canonicalDeck = null) => {
-        if (canonicalDeck) {
-          saveHistoryState(false, transaction, canonicalDeck);
-        } else {
-          saveHistoryState(false, transaction);
-        }
-        triggerAutoSave();
-        if (versionLabel) {
-          triggerAutoVersion(versionLabel);
-        }
-        return versionLabel;
-      };
+      return slideMutationApi.createStudioEditorSlideMutationPersistenceFinalizer({
+        mutationApi: typeof SlideNextStudioEditorMutation !== 'undefined'
+          ? SlideNextStudioEditorMutation
+          : null,
+        saveHistoryState: options.saveHistoryState,
+        triggerAutoSave: options.triggerAutoSave,
+        triggerAutoVersion: options.triggerAutoVersion
+      });
     }
 
     function finalizeSlideMutationPersistence(versionLabel, transaction = null) {

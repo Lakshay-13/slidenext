@@ -10,6 +10,7 @@ const slideCommands = require('../shared/studio-editor-slide-commands.js');
 const slideDeletionMutation = require('../shared/studio-editor-slide-deletion-mutation.js');
 const slideInsertionMutation = require('../shared/studio-editor-slide-insertion-mutation.js');
 const slideReorderMutation = require('../shared/studio-editor-slide-reorder-mutation.js');
+const slideMutation = require('../shared/studio-editor-slide-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -27,6 +28,7 @@ function loadFinalizeSlideMutationPersistence(fileContent, context) {
     'function createEditorSlideMutationPersistenceFinalizer(options = {}) {',
     '\n\n    function captureSlideMutationRestoreState(iframeDoc) {'
   );
+  context.SlideNextStudioEditorSlideMutation = slideMutation;
   vm.runInContext(helperSource, context);
 }
 
