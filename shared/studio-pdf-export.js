@@ -12,10 +12,12 @@
   const DEFAULT_LOAD_TIMEOUT_MS = 10000;
 
   function normalizeDimension(value, fallback) {
-    if (typeof value !== 'string' || !/^\d+(?:\.\d+)?(?:in|cm|mm|px|pt)$/.test(value.trim())) {
+    const normalizedValue = typeof value === 'string' ? value.trim() : '';
+    const match = normalizedValue.match(/^(\d+(?:\.\d+)?)(?:in|cm|mm|px|pt)$/);
+    if (!match || !(Number(match[1]) > 0)) {
       return fallback;
     }
-    return value.trim();
+    return normalizedValue;
   }
 
   function resolveStudioPdfPageDimensions(canonicalDeck) {

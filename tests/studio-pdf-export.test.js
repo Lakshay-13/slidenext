@@ -36,6 +36,7 @@ test('buildStudioPdfPrintHtml preserves legacy html fallback and supports safe d
   assert.match(html, /\.frame \{/);
   assert.match(html, /<section class="frame">A<\/section>/);
   assert.equal(pdfExport.normalizeDimension('javascript:alert(1)', '16in'), '16in');
+  assert.equal(pdfExport.normalizeDimension('0in', '16in'), '16in');
 });
 
 test('buildStudioPdfPrintHtml prepends print styles to html fragments', () => {
