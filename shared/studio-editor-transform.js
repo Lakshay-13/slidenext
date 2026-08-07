@@ -1443,6 +1443,7 @@
         dragStartThresholdPx,
         minSizePx,
         dragOverflowMarginPx,
+        snapDistancePx: options.snapDistancePx,
         gridSizePx: getGridSizePx(),
         lockAspectRatio: !!event.shiftKey
       });
@@ -1603,6 +1604,7 @@
         dragStartThresholdPx,
         minSizePx,
         dragOverflowMarginPx,
+        snapDistancePx: options.snapDistancePx,
         gridSizePx: getGridSizePx(),
         lockAspectRatio: !!event.shiftKey
       });
