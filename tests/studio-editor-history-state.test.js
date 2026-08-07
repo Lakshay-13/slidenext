@@ -84,3 +84,57 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
     { doc: 'doc-2', canonicalDeck: baseDeck, transaction: { id: 'transaction-2' } }
   ]);
 });
+
+test('createStudioEditorHistoryCaptureAdapter reuses the capturer and clears pending state', () => {
+  let createCalls = 0;
+  let clearCalls = 0;
+  let undoStack = [];
+  let redoStack = [];
+  const capturedEntries = [];
+  const historyApi = {
+    createStudioHistoryStateCapturer(options) {
+      createCalls += 1;
+      return () => {
+        const entry = options.createHistoryEntry();
+        capturedEntries.push(entry);
+        options.setUndoStack([...options.getUndoStack(), entry]);
+        options.afterCapture();
+        return {
+          didCapture: true,
+          undoStack: options.getUndoStack(),
+          redoStack: options.getRedoStack(),
+          historyEntry: entry
+        };
+      };
+    }
+  };
+  const captureState = historyState.createStudioEditorHistoryCaptureAdapter({
+    historyApi,
+    createHistoryEntry() {
+      return { id: capturedEntries.length + 1 };
+    },
+    getUndoStack() {
+      return undoStack;
+    },
+    getRedoStack() {
+      return redoStack;
+    },
+    setUndoStack(nextStack) {
+      undoStack = nextStack;
+    },
+    setRedoStack(nextStack) {
+      redoStack = nextStack;
+    },
+    clearPendingState() {
+      clearCalls += 1;
+    }
+  });
+
+  assert.equal(captureState().didCapture, true);
+  assert.equal(captureState().didCapture, true);
+  assert.equal(createCalls, 1);
+  assert.equal(clearCalls, 2);
+  assert.deepEqual(capturedEntries, [{ id: 1 }, { id: 2 }]);
+  assert.deepEqual(undoStack, [{ id: 1 }, { id: 2 }]);
+  assert.deepEqual(redoStack, []);
+});

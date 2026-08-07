@@ -139,8 +139,77 @@
     };
   }
 
+  function createStudioEditorHistoryCaptureAdapter(options = {}) {
+    const historyApi = options.historyApi && typeof options.historyApi === 'object'
+      ? options.historyApi
+      : null;
+    const createHistoryEntry = typeof options.createHistoryEntry === 'function'
+      ? options.createHistoryEntry
+      : () => null;
+    const getUndoStack = typeof options.getUndoStack === 'function'
+      ? options.getUndoStack
+      : () => [];
+    const getRedoStack = typeof options.getRedoStack === 'function'
+      ? options.getRedoStack
+      : () => [];
+    const getHistoryStateOptions = typeof options.getHistoryStateOptions === 'function'
+      ? options.getHistoryStateOptions
+      : () => ({});
+    const setUndoStack = typeof options.setUndoStack === 'function'
+      ? options.setUndoStack
+      : () => {};
+    const setRedoStack = typeof options.setRedoStack === 'function'
+      ? options.setRedoStack
+      : () => {};
+    const updateHistoryButtons = typeof options.updateHistoryButtons === 'function'
+      ? options.updateHistoryButtons
+      : () => {};
+    const clearPendingState = typeof options.clearPendingState === 'function'
+      ? options.clearPendingState
+      : () => {};
+
+    let historyCapturer = null;
+
+    function resolveFallbackResult() {
+      clearPendingState();
+      return {
+        didCapture: false,
+        undoStack: getUndoStack(),
+        redoStack: getRedoStack(),
+        historyEntry: null
+      };
+    }
+
+    function createHistoryCapturer() {
+      if (!historyApi || typeof historyApi.createStudioHistoryStateCapturer !== 'function') {
+        return null;
+      }
+      return historyApi.createStudioHistoryStateCapturer({
+        createHistoryEntry,
+        getUndoStack,
+        getRedoStack,
+        getHistoryStateOptions,
+        setUndoStack,
+        setRedoStack,
+        updateHistoryButtons,
+        afterCapture: clearPendingState
+      });
+    }
+
+    return function captureState() {
+      if (!historyCapturer) {
+        historyCapturer = createHistoryCapturer();
+      }
+      if (typeof historyCapturer !== 'function') {
+        return resolveFallbackResult();
+      }
+      return historyCapturer();
+    };
+  }
+
   return {
     createStudioEditorHistorySaveAdapter,
-    createStudioEditorHistoryEntryBuilder
+    createStudioEditorHistoryEntryBuilder,
+    createStudioEditorHistoryCaptureAdapter
   };
 });

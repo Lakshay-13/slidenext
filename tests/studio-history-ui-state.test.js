@@ -1045,6 +1045,7 @@ test('captureState reads the live frame through the shared iframe accessor befor
     SlideNextStudioHistory: {
       createStudioHistoryStateCapturer: studioHistory.createStudioHistoryStateCapturer
     },
+    SlideNextStudioEditorHistoryState: historyState,
     undoStack: [],
     updateHistoryButtons() {
       capturedCalls.push(['updateHistoryButtons']);
@@ -1181,6 +1182,7 @@ test('captureState fails closed when the shared history state capturer is unavai
         throw new Error('captureStudioHistoryState should not run without a history entry');
       }
     },
+    SlideNextStudioEditorHistoryState: historyState,
     undoStack: ['undo-entry'],
     updateHistoryButtons() {
       throw new Error('updateHistoryButtons should not run without a history entry');
@@ -1231,6 +1233,7 @@ test('captureState can store a persisted baseline history entry without a live f
     SlideNextStudioHistory: {
       createStudioHistoryStateCapturer: studioHistory.createStudioHistoryStateCapturer
     },
+    SlideNextStudioEditorHistoryState: historyState,
     undoStack: [],
     updateHistoryButtons() {
       capturedCalls.push(['updateHistoryButtons']);
@@ -1285,6 +1288,7 @@ test('captureState reuses the shared history state capturer when available', () 
         };
       }
     },
+    SlideNextStudioEditorHistoryState: historyState,
     pendingEditorTransaction: { id: 'pending' },
     pendingEditorCanonicalDeck: { kind: 'slidenext.deck', slides: [] },
     undoStack: [],

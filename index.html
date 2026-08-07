@@ -7469,21 +7469,24 @@
     }
 
     function captureState() {
-      const clearPendingTransaction = () => {
-        if (typeof pendingEditorTransaction !== 'undefined') {
-          pendingEditorTransaction = null;
-        }
-        if (typeof pendingEditorCanonicalDeck !== 'undefined') {
-          pendingEditorCanonicalDeck = null;
-        }
-      };
-      if (typeof captureState.historyCapturer !== 'function') {
-        const createStudioHistoryStateCapturer = SlideNextStudioHistory
-          && typeof SlideNextStudioHistory.createStudioHistoryStateCapturer === 'function'
-          ? SlideNextStudioHistory.createStudioHistoryStateCapturer
+      if (typeof captureState.adapter !== 'function') {
+        const createStudioEditorHistoryCaptureAdapter = (
+          typeof SlideNextStudioEditorHistoryState !== 'undefined'
+          && SlideNextStudioEditorHistoryState
+          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryCaptureAdapter === 'function'
+        )
+          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryCaptureAdapter
           : null;
-        if (!createStudioHistoryStateCapturer) {
-          clearPendingTransaction();
+        const clearPendingState = () => {
+          if (typeof pendingEditorTransaction !== 'undefined') {
+            pendingEditorTransaction = null;
+          }
+          if (typeof pendingEditorCanonicalDeck !== 'undefined') {
+            pendingEditorCanonicalDeck = null;
+          }
+        };
+        if (!createStudioEditorHistoryCaptureAdapter) {
+          clearPendingState();
           return {
             didCapture: false,
             undoStack,
@@ -7491,11 +7494,14 @@
             historyEntry: null
           };
         }
-        captureState.historyCapturer = createStudioHistoryStateCapturer({
+        captureState.adapter = createStudioEditorHistoryCaptureAdapter({
+          historyApi: SlideNextStudioHistory,
           createHistoryEntry,
           getUndoStack: () => undoStack,
           getRedoStack: () => redoStack,
-          getHistoryStateOptions: getEditorHistoryStackOptions,
+          getHistoryStateOptions: typeof getEditorHistoryStackOptions === 'function'
+            ? getEditorHistoryStackOptions
+            : null,
           setUndoStack(nextUndoStack) {
             undoStack = nextUndoStack;
           },
@@ -7503,19 +7509,18 @@
             redoStack = nextRedoStack;
           },
           updateHistoryButtons,
-          afterCapture: clearPendingTransaction
+          clearPendingState
         });
       }
-      if (typeof captureState.historyCapturer !== 'function') {
-        clearPendingTransaction();
+      if (typeof captureState.adapter !== 'function') {
         return {
-          didCapture: false,
-          undoStack,
-          redoStack,
-          historyEntry: null
+            didCapture: false,
+            undoStack,
+            redoStack,
+            historyEntry: null
         };
       }
-      return captureState.historyCapturer();
+      return captureState.adapter();
     }
 
     function updateHistoryButtons() {
