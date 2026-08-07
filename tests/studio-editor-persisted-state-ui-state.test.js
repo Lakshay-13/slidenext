@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const deckPersistence = require('../shared/deck-persistence.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
+const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -18,6 +19,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 }
 
 function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
+  context.SlideNextStudioEditorPersistenceState ??= editorPersistenceState;
   const resolveEditorStoredCanonicalDeckSource = extractFunctionSource(
     fileContent,
     'function resolveEditorStoredCanonicalDeck(metadata) {',
