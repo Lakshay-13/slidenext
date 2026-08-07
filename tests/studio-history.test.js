@@ -631,6 +631,55 @@ test('createStudioHistorySaveHandler clears pending transactions when no transac
   assert.equal(scheduledCapture, true);
 });
 
+test('restoreStudioHistoryTransaction delegates replay and post-apply synchronization', () => {
+  const historyEntry = { canonicalDeck: { slides: [{ id: 'slide-1' }] } };
+  const historyStep = {
+    direction: 'undo',
+    transaction: { kind: 'slidenext.editor.transaction', operations: [] }
+  };
+  const element = { id: 'element-1' };
+  const calls = [];
+  const visibilityState = () => {};
+  const result = studioHistory.restoreStudioHistoryTransaction(historyEntry, historyStep, {
+    transactionApi: {
+      applyStudioEditorTransaction(transaction, direction, options) {
+        assert.deepEqual(transaction, historyStep.transaction);
+        assert.equal(direction, 'undo');
+        assert.equal(options.getElementById('element-1'), element);
+        assert.equal(options.applyVisibilityState, visibilityState);
+        assert.equal(options.applyMarkupState(element, '<section>next</section>'), true);
+        calls.push('apply');
+        return { didApply: true, changedCount: 1 };
+      }
+    },
+    getElementById(editorId) {
+      assert.equal(editorId, 'element-1');
+      return element;
+    },
+    applyVisibilityState: visibilityState,
+    applyMarkupState(target, markup) {
+      assert.equal(target, element);
+      assert.equal(markup, '<section>next</section>');
+      return true;
+    },
+    onApplied(transactionResult, nextHistoryEntry) {
+      assert.deepEqual(transactionResult, { didApply: true, changedCount: 1 });
+      assert.equal(nextHistoryEntry, historyEntry);
+      calls.push('onApplied');
+      return { didRestoreTransaction: true, transactionResult };
+    }
+  });
+
+  assert.deepEqual(result, {
+    didRestoreTransaction: true,
+    transactionResult: { didApply: true, changedCount: 1 }
+  });
+  assert.deepEqual(calls, ['apply', 'onApplied']);
+  assert.equal(studioHistory.restoreStudioHistoryTransaction(historyEntry, null, {
+    transactionApi: { applyStudioEditorTransaction() { throw new Error('should not apply'); } }
+  }), null);
+});
+
 test('createStudioHistoryStateCapturer leaves history state unchanged when no entry is available or capture is skipped', () => {
   const missingEntryCapturer = studioHistory.createStudioHistoryStateCapturer({
     createHistoryEntry() {

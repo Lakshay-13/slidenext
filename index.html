@@ -7995,20 +7995,18 @@
       const historyStep = arguments.length > 1 ? arguments[1] : null;
       const fallbackIndex = currentSlideIndex;
 
-      const transactionApi = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-      )
-        ? SlideNextStudioEditorTransaction
+      const restoreStudioHistoryTransaction = SlideNextStudioHistory
+        && typeof SlideNextStudioHistory.restoreStudioHistoryTransaction === 'function'
+        ? SlideNextStudioHistory.restoreStudioHistoryTransaction
         : null;
-      if (transactionApi
-        && historyStep
-        && historyStep.transaction
-        && typeof transactionApi.applyStudioEditorTransaction === 'function') {
-        const transactionResult = transactionApi.applyStudioEditorTransaction(
-          historyStep.transaction,
-          historyStep.direction,
-          {
+      const transactionRestoreResult = restoreStudioHistoryTransaction
+        ? restoreStudioHistoryTransaction(historyEntry, historyStep, {
+            transactionApi: (
+              typeof SlideNextStudioEditorTransaction !== 'undefined'
+              && SlideNextStudioEditorTransaction
+            )
+              ? SlideNextStudioEditorTransaction
+              : null,
             getElementById: (editorId) => {
               if (editorId === 'slides-container') {
                 return iframeDoc && iframeDoc.getElementById('slidesContainer');
@@ -8035,33 +8033,33 @@
                 generateThumbnails();
               }
               return true;
+            },
+            onApplied(transactionResult) {
+              SlideNextStudioHistory.restoreStudioHistorySelectionState(historyEntry, {
+                doc: iframeDoc,
+                restoreCommittedSelectionState: (selectedElementIds, doc) => restoreCommittedSelectionByIdsOnActiveSlide(selectedElementIds, doc),
+                observeDeckActiveSlideState
+              });
+              syncSelectionOverlay();
+              const restoredPlaybackState = capturePersistedDeckPlaybackState(iframeDoc, historyEntry.canonicalDeck);
+              applyCurrentStudioPersistedDeckState({ playbackState: restoredPlaybackState });
+              if (typeof setEditorLiveCanonicalDeck === 'function') {
+                setEditorLiveCanonicalDeck(historyEntry.canonicalDeck, iframeDoc, studioEditorSessionToken);
+              }
+              setCurrentPresentationCanonicalDeck(
+                Object.prototype.hasOwnProperty.call(historyEntry, 'canonicalDeck')
+                  ? historyEntry.canonicalDeck
+                  : null
+              );
+              return {
+                didRestoreTransaction: true,
+                transactionResult
+              };
             }
-          }
-        );
-        if (transactionResult.didApply) {
-          SlideNextStudioHistory.restoreStudioHistorySelectionState(historyEntry, {
-            doc: iframeDoc,
-            restoreCommittedSelectionState: (selectedElementIds, doc) => restoreCommittedSelectionByIdsOnActiveSlide(selectedElementIds, doc),
-            observeDeckActiveSlideState
-          });
-          syncSelectionOverlay();
-          const restoredPlaybackState = capturePersistedDeckPlaybackState(iframeDoc, historyEntry.canonicalDeck);
-          applyCurrentStudioPersistedDeckState({ playbackState: restoredPlaybackState });
-          if (typeof setEditorLiveCanonicalDeck === 'function') {
-            setEditorLiveCanonicalDeck(historyEntry.canonicalDeck, iframeDoc, studioEditorSessionToken);
-          }
-          setCurrentPresentationCanonicalDeck(
-            Object.prototype.hasOwnProperty.call(historyEntry, 'canonicalDeck')
-              ? historyEntry.canonicalDeck
-              : null
-          );
-          return {
-            didRestoreTransaction: true,
-            transactionResult
-          };
-        }
-      }
-      
+          })
+        : null;
+      if (transactionRestoreResult) return transactionRestoreResult;
+
       applyEditorSelectionState({});
       
       SlideNextStudioHistory.restoreStudioHistoryEntry(historyEntry, {

@@ -1649,6 +1649,7 @@ test('restoreFrameFromHistoryEntry applies a valid transaction without replacing
       normalizeStudioHistoryEntry(entry) {
         return entry;
       },
+      restoreStudioHistoryTransaction: studioHistory.restoreStudioHistoryTransaction,
       restoreStudioHistorySelectionState(entry, options) {
         callLog.push(['restoreStudioHistorySelectionState', entry]);
         options.restoreCommittedSelectionState(entry.selectedElementIds, options.doc);
@@ -1744,6 +1745,7 @@ test('restoreFrameFromHistoryEntry resolves slide-scoped markup transactions wit
       normalizeStudioHistoryEntry(entry) {
         return entry;
       },
+      restoreStudioHistoryTransaction: studioHistory.restoreStudioHistoryTransaction,
       restoreStudioHistorySelectionState(entry, options) {
         options.restoreCommittedSelectionState(entry.selectedElementIds, options.doc);
         options.observeDeckActiveSlideState(options.doc);

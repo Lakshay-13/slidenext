@@ -642,6 +642,49 @@
     };
   }
 
+  function restoreStudioHistoryTransaction(historyEntry, historyStep, options = {}) {
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const transaction = historyStep && historyStep.transaction;
+    if (!transactionApi
+      || !historyStep
+      || !transaction
+      || typeof transactionApi.applyStudioEditorTransaction !== 'function') {
+      return null;
+    }
+
+    const getElementById = typeof options.getElementById === 'function'
+      ? options.getElementById
+      : () => null;
+    const applyVisibilityState = typeof options.applyVisibilityState === 'function'
+      ? options.applyVisibilityState
+      : null;
+    const applyMarkupState = typeof options.applyMarkupState === 'function'
+      ? options.applyMarkupState
+      : () => false;
+    const transactionResult = transactionApi.applyStudioEditorTransaction(
+      transaction,
+      historyStep.direction,
+      {
+        getElementById,
+        applyVisibilityState,
+        applyMarkupState
+      }
+    );
+    if (!transactionResult || !transactionResult.didApply) return null;
+
+    const onApplied = typeof options.onApplied === 'function'
+      ? options.onApplied
+      : null;
+    return onApplied
+      ? onApplied(transactionResult, historyEntry)
+      : {
+          didRestoreTransaction: true,
+          transactionResult
+        };
+  }
+
   function restoreStudioHistoryActiveSlide(historyEntry, options = {}) {
     const restoreActiveSlideById = typeof options.restoreActiveSlideById === 'function'
       ? options.restoreActiveSlideById
@@ -787,6 +830,7 @@
     syncStudioHistoryButtons,
     scheduleStudioHistoryCapture,
     createStudioHistorySaveHandler,
+    restoreStudioHistoryTransaction,
     restoreStudioHistoryActiveSlide,
     restoreStudioHistorySelectionState,
     restoreStudioHistoryFrameSetup,
