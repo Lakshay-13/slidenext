@@ -503,6 +503,9 @@
         return;
       }
       const nudgeDelta = deckShortcutReady && hasSelection
+        && !event.ctrlKey
+        && !event.metaKey
+        && !event.altKey
         ? buildNudgeDeltaFromKey(event.key, { shiftKey: !!event.shiftKey })
         : null;
       if (nudgeDelta) {
@@ -522,7 +525,11 @@
         return;
       }
 
-      if (deckShortcutReady && (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'ArrowLeft' || event.key === 'PageDown' || event.key === 'PageUp')) {
+      if (deckShortcutReady
+        && !event.ctrlKey
+        && !event.metaKey
+        && !event.altKey
+        && (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'ArrowLeft' || event.key === 'PageDown' || event.key === 'PageUp')) {
         event.preventDefault();
         event.stopPropagation();
       }
@@ -651,6 +658,9 @@
         return;
       }
       const nudgeDelta = !typingContext && deckShortcutReady && hasSelection
+        && !event.ctrlKey
+        && !event.metaKey
+        && !event.altKey
         ? buildNudgeDeltaFromKey(event.key, { shiftKey: !!event.shiftKey })
         : null;
       if (nudgeDelta) {

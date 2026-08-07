@@ -398,6 +398,35 @@ test('createStudioFrameKeydownHandler routes unmodified navigation keys without 
   assert.equal(nudgeEvent.stopped, 1);
 });
 
+test('createStudioFrameKeydownHandler leaves modified arrow and page shortcuts untouched', () => {
+  const calls = {
+    navigation: [],
+    nudge: []
+  };
+  const handler = events.createStudioFrameKeydownHandler({
+    getActiveElement: () => null,
+    getSelectedElements: () => [{ id: 'node-1', isConnected: true }],
+    canMutateDeck: () => true,
+    navigateSlide(direction) {
+      calls.navigation.push(direction);
+    },
+    nudgeSelectedElements(dx, dy) {
+      calls.nudge.push([dx, dy]);
+    }
+  });
+
+  const modifiedArrowEvent = createKeyboardEvent({ key: 'ArrowRight', ctrlKey: true });
+  handler(modifiedArrowEvent);
+  const modifiedPageEvent = createKeyboardEvent({ key: 'PageDown', altKey: true });
+  handler(modifiedPageEvent);
+
+  assert.deepEqual(calls, { navigation: [], nudge: [] });
+  assert.equal(modifiedArrowEvent.prevented, 0);
+  assert.equal(modifiedArrowEvent.stopped, 0);
+  assert.equal(modifiedPageEvent.prevented, 0);
+  assert.equal(modifiedPageEvent.stopped, 0);
+});
+
 test('createStudioFrameKeydownHandler does not intercept undo and redo while typing', () => {
   const calls = {
     undo: 0,
@@ -775,4 +804,23 @@ test('createStudioGlobalKeydownHandler routes page navigation when the editor is
 
   assert.deepEqual(calls, [-1]);
   assert.equal(event.prevented, 1);
+});
+
+test('createStudioGlobalKeydownHandler leaves modified nudge shortcuts untouched', () => {
+  const calls = [];
+  const handler = events.createStudioGlobalKeydownHandler({
+    isEditorActive: () => true,
+    getActiveElement: () => null,
+    getSelectedElements: () => [{ id: 'node-1', isConnected: true }],
+    canMutateDeck: () => true,
+    nudgeSelectedElements(dx, dy) {
+      calls.push([dx, dy]);
+    }
+  });
+
+  const event = createKeyboardEvent({ key: 'ArrowLeft', metaKey: true });
+  handler(event);
+
+  assert.deepEqual(calls, []);
+  assert.equal(event.prevented, 0);
 });
