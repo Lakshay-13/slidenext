@@ -69,6 +69,46 @@ test('exportPdf delegates a ready deck to the shared browser print exporter', ()
   assert.equal(exportButton.disabled, false);
 });
 
+test('exportPdf keeps the button disabled until the async print flow completes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const statusCalls = [];
+  const exportButton = { disabled: false };
+  let printOptions;
+  const context = {
+    SlideNextStudioPdfExport: {
+      openStudioPdfPrintWindow(options) {
+        printOptions = options;
+        return true;
+      }
+    },
+    buildEditorPreviewHtml() {
+      return '<html><body><div class="slide">A</div></body></html>';
+    },
+    document: {
+      getElementById(id) {
+        return id === 'exportPdfBtn' ? exportButton : null;
+      }
+    },
+    setStudioAutoSaveStatus(state) {
+      statusCalls.push(state);
+    },
+    resolveCurrentStudioDeckReadyActionState() {
+      return { canUseDeckActions: true };
+    }
+  };
+
+  loadExportPdfAction(fileContent, context);
+
+  assert.equal(context.exportPdf(), true);
+  assert.equal(exportButton.disabled, true);
+  assert.deepEqual(statusCalls, ['exporting-pdf']);
+
+  printOptions.onPrint();
+
+  assert.equal(exportButton.disabled, false);
+  assert.deepEqual(statusCalls, ['exporting-pdf', 'pdf-exported']);
+});
+
 test('exportPdf forwards canonical layout dimensions when the shared resolver is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];

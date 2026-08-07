@@ -59,6 +59,12 @@
       const exportButton = documentRef && typeof documentRef.getElementById === 'function'
         ? documentRef.getElementById('exportPdfBtn')
         : null;
+      let printFlowAccepted = false;
+      const restoreExportButton = () => {
+        if (exportButton) {
+          exportButton.disabled = !resolveReadyState().canUseDeckActions;
+        }
+      };
       if (exportButton) exportButton.disabled = true;
       setStatus('exporting-pdf');
       try {
@@ -73,17 +79,22 @@
         const didOpenPrintFlow = pdfExport.openStudioPdfPrintWindow({
           html,
           ...pageDimensions,
-          onPrint: () => setStatus('pdf-exported'),
-          onError: () => setStatus('pdf-export-failed')
+          onPrint: () => {
+            setStatus('pdf-exported');
+            restoreExportButton();
+          },
+          onError: () => {
+            setStatus('pdf-export-failed');
+            restoreExportButton();
+          }
         });
         if (!didOpenPrintFlow) return failPdfExport();
+        printFlowAccepted = true;
         return true;
       } catch (error) {
         return failPdfExport();
       } finally {
-        if (exportButton) {
-          exportButton.disabled = !resolveReadyState().canUseDeckActions;
-        }
+        if (!printFlowAccepted) restoreExportButton();
       }
     };
   }
