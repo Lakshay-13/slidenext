@@ -151,9 +151,16 @@
     }
 
     if (prop === 'size' || prop === 'borderWidth' || prop === 'borderRadius') {
+      const fallback = prop === 'size' ? 16 : 0;
+      const parsedValue = typeof value === 'number'
+        ? value
+        : (typeof value === 'string' && value.trim() ? Number(value) : NaN);
+      const normalizedValue = Number.isFinite(parsedValue) && parsedValue >= 0
+        ? parsedValue
+        : fallback;
       return {
-        styleValue: `${value}px`,
-        displayValue: `${value}`
+        styleValue: `${normalizedValue}px`,
+        displayValue: `${normalizedValue}`
       };
     }
 

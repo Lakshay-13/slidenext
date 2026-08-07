@@ -209,6 +209,28 @@ test('applyStudioStyleMutation applies shared style properties across the live s
   assert.equal(second.style.opacity, '1');
 });
 
+test('applyStudioStyleMutation normalizes invalid numeric inspector values', () => {
+  const element = createElement();
+
+  assert.deepEqual(styleState.applyStudioStyleMutation([element], 'size', 'not-a-number'), {
+    didApply: true,
+    displayValue: '16'
+  });
+  assert.equal(element.style.fontSize, '16px');
+
+  assert.deepEqual(styleState.applyStudioStyleMutation([element], 'borderWidth', '-4'), {
+    didApply: true,
+    displayValue: '0'
+  });
+  assert.equal(element.style.borderWidth, '0px');
+
+  assert.deepEqual(styleState.applyStudioStyleMutation([element], 'borderRadius', 'NaN'), {
+    didApply: true,
+    displayValue: '0'
+  });
+  assert.equal(element.style.borderRadius, '0px');
+});
+
 test('applyStudioStyleMutation only edits the primary target for text and image source updates', () => {
   const first = createElement('div');
   const second = createElement('div');
