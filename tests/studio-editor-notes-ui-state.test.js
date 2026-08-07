@@ -16,6 +16,11 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 
 test('updateActiveSlideNotes delegates to the shared notes action', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const metadataAdapterSource = extractFunctionSource(
+    fileContent,
+    'function applyActiveSlideMetadataEdit(value = \'\', options = {}) {',
+    '\n\n    function updateActiveSlideNotes'
+  );
   const source = extractFunctionSource(
     fileContent,
     'function updateActiveSlideNotes(value = \'\') {',
@@ -29,7 +34,7 @@ test('updateActiveSlideNotes delegates to the shared notes action', () => {
     },
     SlideNextStudioEditorTransaction: { id: 'transaction-api' },
     SlideNextStudioEditorNotesActions: {
-      applyStudioSpeakerNotesEdit(value, options) {
+      applyStudioSlideMetadataEdit(value, options) {
         delegatedOptions = { value, options };
         return true;
       }
@@ -51,11 +56,13 @@ test('updateActiveSlideNotes delegates to the shared notes action', () => {
   };
 
   vm.createContext(context);
+  vm.runInContext(metadataAdapterSource, context);
   vm.runInContext(source, context);
 
   assert.equal(context.updateActiveSlideNotes('Cue for slide'), true);
   assert.equal(delegatedOptions.value, 'Cue for slide');
-  assert.equal(delegatedOptions.options.notesApi, context.SlideNextStudioEditorNotes);
+  assert.equal(delegatedOptions.options.metadataApi, context.SlideNextStudioEditorNotes);
+  assert.equal(delegatedOptions.options.metadataMethod, 'applyStudioSpeakerNotes');
   assert.equal(delegatedOptions.options.transactionApi, context.SlideNextStudioEditorTransaction);
   assert.equal(delegatedOptions.options.getDocument(), frame);
   assert.equal(delegatedOptions.options.getActiveSlide().id, 'slide-1');
@@ -70,6 +77,11 @@ test('updateActiveSlideNotes delegates to the shared notes action', () => {
 
 test('updateActiveSlideNotes forwards the shared action result', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const metadataAdapterSource = extractFunctionSource(
+    fileContent,
+    'function applyActiveSlideMetadataEdit(value = \'\', options = {}) {',
+    '\n\n    function updateActiveSlideNotes'
+  );
   const source = extractFunctionSource(
     fileContent,
     'function updateActiveSlideNotes(value = \'\') {',
@@ -88,7 +100,7 @@ test('updateActiveSlideNotes forwards the shared action result', () => {
     },
     SlideNextStudioEditorNotes: { id: 'notes-api' },
     SlideNextStudioEditorNotesActions: {
-      applyStudioSpeakerNotesEdit() {
+      applyStudioSlideMetadataEdit() {
         actionCalls += 1;
         return false;
       }
@@ -98,6 +110,7 @@ test('updateActiveSlideNotes forwards the shared action result', () => {
   };
 
   vm.createContext(context);
+  vm.runInContext(metadataAdapterSource, context);
   vm.runInContext(source, context);
 
   assert.equal(context.updateActiveSlideNotes('Cue for slide'), false);
@@ -106,6 +119,11 @@ test('updateActiveSlideNotes forwards the shared action result', () => {
 
 test('updateActiveSlideSection delegates to the shared section action', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const metadataAdapterSource = extractFunctionSource(
+    fileContent,
+    'function applyActiveSlideMetadataEdit(value = \'\', options = {}) {',
+    '\n\n    function updateActiveSlideNotes'
+  );
   const source = extractFunctionSource(
     fileContent,
     'function updateActiveSlideSection(value = \'\') {',
@@ -115,7 +133,7 @@ test('updateActiveSlideSection delegates to the shared section action', () => {
   const context = {
     SlideNextStudioEditorNotes: { id: 'metadata-api' },
     SlideNextStudioEditorNotesActions: {
-      applyStudioSlideSectionEdit(value, options) {
+      applyStudioSlideMetadataEdit(value, options) {
         delegatedOptions = { value, options };
         return true;
       }
@@ -137,10 +155,13 @@ test('updateActiveSlideSection delegates to the shared section action', () => {
   };
 
   vm.createContext(context);
+  vm.runInContext(metadataAdapterSource, context);
   vm.runInContext(source, context);
 
   assert.equal(context.updateActiveSlideSection('Research'), true);
   assert.equal(delegatedOptions.value, 'Research');
-  assert.equal(delegatedOptions.options.sectionApi, context.SlideNextStudioEditorNotes);
+  assert.equal(delegatedOptions.options.metadataApi, context.SlideNextStudioEditorNotes);
+  assert.equal(delegatedOptions.options.metadataMethod, 'applyStudioSlideSection');
+  assert.equal(delegatedOptions.options.versionLabel, 'Auto: Updated Slide Section');
   assert.equal(delegatedOptions.options.getElementId({}), 'slide:slide-1');
 });
