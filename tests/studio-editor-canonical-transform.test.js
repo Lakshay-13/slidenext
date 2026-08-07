@@ -52,6 +52,19 @@ test('buildStudioCanonicalTransformDeck fails closed when an adapter dependency 
   assert.equal(canonicalTransform.buildStudioCanonicalTransformDeck({}, {}), null);
 });
 
+test('buildStudioCanonicalTransformDeck fails closed when no layout updates are produced', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [] });
+  const result = canonicalTransform.buildStudioCanonicalTransformDeck({}, {
+    canonicalDeckApi: canonicalDeck,
+    canonicalDeckBeforeMutation: sourceDeck,
+    buildCanonicalLayoutUpdates() {
+      return [];
+    }
+  });
+
+  assert.equal(result, null);
+});
+
 test('createStudioCanonicalTransformMutationBuilders reuses an explicit baseline', () => {
   const explicitBaseline = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', layout: { x: 10, y: 20 } }] }]

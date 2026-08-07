@@ -48,6 +48,8 @@
     const layoutUpdates = buildCanonicalLayoutUpdates(finalizeResult, {
       getElementId: options.getElementId
     });
+    if (!Array.isArray(layoutUpdates) || layoutUpdates.length === 0) return null;
+
     return updateCanonicalNodeLayout(canonicalDeckBeforeMutation, layoutUpdates);
   }
 
