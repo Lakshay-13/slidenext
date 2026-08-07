@@ -698,3 +698,76 @@ test('createStudioEditorPersistableDeckStateCapturerAdapter returns null without
 
   assert.equal(adapter({ label: 'iframe-doc' }), null);
 });
+
+test('createStudioEditorPersistedDeckPlaybackStateCapturerAdapter preserves shared fallback inputs', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const getSlides = () => [];
+  const resolveFallbackActiveSlideId = (doc, nextCanonicalDeck) => {
+    assert.equal(doc, iframeDoc);
+    assert.equal(nextCanonicalDeck, canonicalDeck);
+    return 'slide-1';
+  };
+  const deckPersistenceApi = {
+    capturePersistedDeckPlaybackStateWithFallback() {},
+    capturePersistedDeckPlaybackState() {},
+    ensurePersistedDeckPlaybackStateActiveSlideId() {}
+  };
+  let factoryOptions = null;
+  const adapter = editorPersistenceState.createStudioEditorPersistedDeckPlaybackStateCapturerAdapter({
+    persistenceApi: {
+      captureStudioPersistedDeckPlaybackState() {
+        throw new Error('direct playback helper should not run when the builder exists');
+      },
+      createStudioPersistedDeckPlaybackStateCapturer(options) {
+        factoryOptions = options;
+        return (doc) => ({
+          doc,
+          fallbackActiveSlideId: options.resolveFallbackActiveSlideId(),
+          slideIdAttr: options.slideIdAttr
+        });
+      }
+    },
+    deckPersistenceApi,
+    getSlides,
+    slideIdAttr: 'data-slide-id',
+    resolveFallbackActiveSlideId
+  });
+
+  assert.deepEqual(adapter(iframeDoc, { canonicalDeck }), {
+    doc: iframeDoc,
+    fallbackActiveSlideId: 'slide-1',
+    slideIdAttr: 'data-slide-id'
+  });
+  assert.equal(factoryOptions.capturePersistedDeckPlaybackStateWithFallback, deckPersistenceApi.capturePersistedDeckPlaybackStateWithFallback);
+  assert.equal(factoryOptions.capturePersistedDeckPlaybackState, deckPersistenceApi.capturePersistedDeckPlaybackState);
+  assert.equal(factoryOptions.ensurePersistedDeckPlaybackStateActiveSlideId, deckPersistenceApi.ensurePersistedDeckPlaybackStateActiveSlideId);
+  assert.equal(factoryOptions.getSlides, getSlides);
+});
+
+test('createStudioEditorPersistedDeckPlaybackStateCapturerAdapter uses direct shared helper without a builder', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  let delegatedArgs = null;
+  const capturePlaybackState = (doc, options) => {
+    delegatedArgs = { doc, options };
+    return { activeSlideIds: ['slide-1'] };
+  };
+  const adapter = editorPersistenceState.createStudioEditorPersistedDeckPlaybackStateCapturerAdapter({
+    persistenceApi: { captureStudioPersistedDeckPlaybackState: capturePlaybackState },
+    getSlides: () => [],
+    slideIdAttr: 'data-slide-id'
+  });
+
+  assert.deepEqual(adapter(iframeDoc, { canonicalDeck: { id: 'deck-1' } }), {
+    activeSlideIds: ['slide-1']
+  });
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(typeof delegatedArgs.options.getSlides, 'function');
+  assert.equal(delegatedArgs.options.slideIdAttr, 'data-slide-id');
+});
+
+test('createStudioEditorPersistedDeckPlaybackStateCapturerAdapter returns null without shared playback helpers', () => {
+  const adapter = editorPersistenceState.createStudioEditorPersistedDeckPlaybackStateCapturerAdapter();
+
+  assert.equal(adapter({ label: 'iframe-doc' }), null);
+});

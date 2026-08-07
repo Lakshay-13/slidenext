@@ -669,6 +669,110 @@
     };
   }
 
+  function createStudioEditorPersistedDeckPlaybackStateCapturerAdapter(options = {}) {
+    const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
+      ? options.persistenceApi
+      : null;
+    const deckPersistenceApi = options.deckPersistenceApi && typeof options.deckPersistenceApi === 'object'
+      ? options.deckPersistenceApi
+      : null;
+    const capturePlaybackState = typeof options.capturePlaybackState === 'function'
+      ? options.capturePlaybackState
+      : persistenceApi
+        && typeof persistenceApi.captureStudioPersistedDeckPlaybackState === 'function'
+        ? persistenceApi.captureStudioPersistedDeckPlaybackState
+        : null;
+    const capturePersistedDeckPlaybackStateWithFallback = typeof options.capturePersistedDeckPlaybackStateWithFallback === 'function'
+      ? options.capturePersistedDeckPlaybackStateWithFallback
+      : deckPersistenceApi
+        && typeof deckPersistenceApi.capturePersistedDeckPlaybackStateWithFallback === 'function'
+        ? deckPersistenceApi.capturePersistedDeckPlaybackStateWithFallback
+        : null;
+    const capturePersistedDeckPlaybackState = typeof options.capturePersistedDeckPlaybackState === 'function'
+      ? options.capturePersistedDeckPlaybackState
+      : deckPersistenceApi
+        && typeof deckPersistenceApi.capturePersistedDeckPlaybackState === 'function'
+        ? deckPersistenceApi.capturePersistedDeckPlaybackState
+        : null;
+    const ensurePersistedDeckPlaybackStateActiveSlideId = typeof options.ensurePersistedDeckPlaybackStateActiveSlideId === 'function'
+      ? options.ensurePersistedDeckPlaybackStateActiveSlideId
+      : deckPersistenceApi
+        && typeof deckPersistenceApi.ensurePersistedDeckPlaybackStateActiveSlideId === 'function'
+        ? deckPersistenceApi.ensurePersistedDeckPlaybackStateActiveSlideId
+        : null;
+    const getSlides = typeof options.getSlides === 'function'
+      ? options.getSlides
+      : null;
+    const slideIdAttr = typeof options.slideIdAttr === 'string'
+      ? options.slideIdAttr
+      : '';
+    const resolveFallbackActiveSlideId = typeof options.resolveFallbackActiveSlideId === 'function'
+      ? options.resolveFallbackActiveSlideId
+      : null;
+
+    return function captureEditorPersistedDeckPlaybackState(doc = null, nextOptions = {}) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      const canonicalDeck = Object.prototype.hasOwnProperty.call(resolvedOptions, 'canonicalDeck')
+        ? resolvedOptions.canonicalDeck
+        : null;
+      const createStudioPersistedDeckPlaybackStateCapturer = persistenceApi
+        && typeof persistenceApi.createStudioPersistedDeckPlaybackStateCapturer === 'function'
+        ? persistenceApi.createStudioPersistedDeckPlaybackStateCapturer
+        : null;
+      const captureOptions = {
+        capturePlaybackState: typeof resolvedOptions.capturePlaybackState === 'function'
+          ? resolvedOptions.capturePlaybackState
+          : capturePlaybackState,
+        capturePersistedDeckPlaybackStateWithFallback: typeof resolvedOptions.capturePersistedDeckPlaybackStateWithFallback === 'function'
+          ? resolvedOptions.capturePersistedDeckPlaybackStateWithFallback
+          : capturePersistedDeckPlaybackStateWithFallback,
+        capturePersistedDeckPlaybackState: typeof resolvedOptions.capturePersistedDeckPlaybackState === 'function'
+          ? resolvedOptions.capturePersistedDeckPlaybackState
+          : capturePersistedDeckPlaybackState,
+        ensurePersistedDeckPlaybackStateActiveSlideId: typeof resolvedOptions.ensurePersistedDeckPlaybackStateActiveSlideId === 'function'
+          ? resolvedOptions.ensurePersistedDeckPlaybackStateActiveSlideId
+          : ensurePersistedDeckPlaybackStateActiveSlideId,
+        getSlides: typeof resolvedOptions.getSlides === 'function'
+          ? resolvedOptions.getSlides
+          : getSlides,
+        slideIdAttr: typeof resolvedOptions.slideIdAttr === 'string'
+          ? resolvedOptions.slideIdAttr
+          : slideIdAttr,
+        resolveFallbackActiveSlideId: doc && resolveFallbackActiveSlideId
+          ? () => resolveFallbackActiveSlideId(doc, canonicalDeck)
+          : null
+      };
+      if (createStudioPersistedDeckPlaybackStateCapturer) {
+        const capturer = createStudioPersistedDeckPlaybackStateCapturer(captureOptions);
+        return typeof capturer === 'function' ? capturer(doc) : null;
+      }
+      if (captureOptions.capturePlaybackState) {
+        return captureOptions.capturePlaybackState(doc, captureOptions);
+      }
+      if (captureOptions.capturePersistedDeckPlaybackStateWithFallback) {
+        return captureOptions.capturePersistedDeckPlaybackStateWithFallback(doc, {
+          getSlides: captureOptions.getSlides,
+          slideIdAttr: captureOptions.slideIdAttr,
+          resolveFallbackActiveSlideId: captureOptions.resolveFallbackActiveSlideId
+        });
+      }
+      if (!captureOptions.capturePersistedDeckPlaybackState) return null;
+      const playbackState = captureOptions.capturePersistedDeckPlaybackState(doc, {
+        getSlides: captureOptions.getSlides,
+        slideIdAttr: captureOptions.slideIdAttr
+      });
+      if (!doc) return playbackState;
+      if (captureOptions.ensurePersistedDeckPlaybackStateActiveSlideId) {
+        return captureOptions.ensurePersistedDeckPlaybackStateActiveSlideId(playbackState, {
+          resolveFallbackActiveSlideId: captureOptions.resolveFallbackActiveSlideId
+        });
+      }
+      return playbackState;
+    };
+  }
+
   return {
     createStudioEditorPersistedDeckStateAdapter,
     createStudioEditorPersistedDeckStateApplierAdapter,
@@ -682,6 +786,7 @@
     createStudioEditorReusablePersistedHtmlSanitizerAdapter,
     createStudioEditorCapturedPersistableDeckStateResolverAdapter,
     createStudioEditorPersistableDeckBuildStateCapturerAdapter,
-    createStudioEditorPersistableDeckStateCapturerAdapter
+    createStudioEditorPersistableDeckStateCapturerAdapter,
+    createStudioEditorPersistedDeckPlaybackStateCapturerAdapter
   };
 });

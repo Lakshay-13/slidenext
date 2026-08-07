@@ -4340,6 +4340,60 @@ test('capturePersistedDeckPlaybackState reuses the shared playback-state capture
   assert.equal(delegatedArgs.slideIdAttr, 'data-slide-id');
 });
 
+test('capturePersistedDeckPlaybackState delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const capturePersistedDeckPlaybackStateSource = extractFunctionSource(
+    fileContent,
+    'function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  let factoryOptions = null;
+  const context = {
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistedDeckPlaybackStateCapturer(options = {}) {
+        factoryOptions = options;
+        return (doc) => ({
+          doc,
+          fallbackActiveSlideId: options.resolveFallbackActiveSlideId(),
+          slideIdAttr: options.slideIdAttr
+        });
+      }
+    },
+    SlideNextDeckPersistence: {
+      capturePersistedDeckPlaybackStateWithFallback() {},
+      capturePersistedDeckPlaybackState() {},
+      ensurePersistedDeckPlaybackStateActiveSlideId() {}
+    },
+    getSlides() {
+      return [];
+    },
+    resolveEditorFallbackActiveSlideId(nextDoc, nextCanonicalDeck) {
+      assert.equal(nextDoc, iframeDoc);
+      assert.equal(nextCanonicalDeck, canonicalDeck);
+      return 'slide-1';
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('buildEditorCanonicalDeck should not run for an explicit canonical deck');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(capturePersistedDeckPlaybackStateSource, context);
+
+  assert.deepEqual(context.capturePersistedDeckPlaybackState(iframeDoc, canonicalDeck), {
+    doc: iframeDoc,
+    fallbackActiveSlideId: 'slide-1',
+    slideIdAttr: 'data-slide-id'
+  });
+  assert.equal(factoryOptions.getSlides, context.getSlides);
+  assert.equal(factoryOptions.slideIdAttr, 'data-slide-id');
+});
+
 test('capturePersistedDeckPlaybackState delegates through the shared editor persistence helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const capturePersistedDeckPlaybackStateSource = extractFunctionSource(
