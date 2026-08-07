@@ -115,7 +115,10 @@
     if (/<head(?:\s[^>]*)?>/i.test(html)) {
       return html.replace(/<head(?:\s[^>]*)?>/i, `$&${styleTag}`);
     }
-    return html.replace(/<html(?:\s[^>]*)?>/i, `$&<head>${styleTag}</head>`);
+    if (/<html(?:\s[^>]*)?>/i.test(html)) {
+      return html.replace(/<html(?:\s[^>]*)?>/i, `$&<head>${styleTag}</head>`);
+    }
+    return `${styleTag}${html}`;
   }
 
   function waitForStudioPdfPrintResources(documentRef, options = {}) {

@@ -34,6 +34,14 @@ test('buildStudioPdfPrintHtml preserves legacy html fallback and supports safe d
   assert.equal(pdfExport.normalizeDimension('javascript:alert(1)', '16in'), '16in');
 });
 
+test('buildStudioPdfPrintHtml prepends print styles to html fragments', () => {
+  const html = pdfExport.buildStudioPdfPrintHtml('<div class="slide">Fragment</div>');
+
+  assert.match(html, /^<style data-slidenext-pdf-print="true">/);
+  assert.match(html, /break-after: page/);
+  assert.match(html, /<div class="slide">Fragment<\/div>/);
+});
+
 test('resolveStudioPdfPageDimensions maps valid canonical layout sizes and rejects unsafe values', () => {
   assert.deepEqual(
     pdfExport.resolveStudioPdfPageDimensions({
