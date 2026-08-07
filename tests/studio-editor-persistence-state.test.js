@@ -1170,3 +1170,64 @@ test('createStudioEditorPersistenceActionCurrentRunnerAdapter returns null witho
 
   assert.equal(adapter({}, null), null);
 });
+
+test('createStudioEditorPersistenceFailureHandlerAdapter preserves builder precedence', () => {
+  const createHandlerOptions = (options) => ({ handlerOptions: true, ...options });
+  const handlePersistenceFailure = () => {
+    throw new Error('direct failure handler should not run when the builder exists');
+  };
+  let factoryOptions = null;
+  const adapter = editorPersistenceState.createStudioEditorPersistenceFailureHandlerAdapter({
+    persistenceApi: {
+      createStudioPersistenceFailureHandler(options) {
+        factoryOptions = options;
+        return (persistenceContext, nextOptions) => ({
+          persistenceContext,
+          resolvedOptions: options.createHandlerOptions(nextOptions),
+          handlePersistenceFailure: options.handlePersistenceFailure
+        });
+      }
+    },
+    createHandlerOptions,
+    handlePersistenceFailure
+  });
+  const persistenceContext = { presentationUrl: '/presentations/deck/index.html' };
+  const nextOptions = { onFailure: 'callback-sentinel' };
+
+  const result = adapter(persistenceContext, nextOptions);
+  assert.equal(result.persistenceContext, persistenceContext);
+  assert.deepEqual(result.resolvedOptions, {
+    handlerOptions: true,
+    onFailure: 'callback-sentinel'
+  });
+  assert.equal(result.handlePersistenceFailure, handlePersistenceFailure);
+  assert.equal(factoryOptions.createHandlerOptions, createHandlerOptions);
+  assert.equal(factoryOptions.handlePersistenceFailure, handlePersistenceFailure);
+});
+
+test('createStudioEditorPersistenceFailureHandlerAdapter uses direct helper without a builder', () => {
+  const createHandlerOptions = (options) => ({ handlerOptions: true, ...options });
+  let delegatedArgs = null;
+  const handlePersistenceFailure = (persistenceContext, options) => {
+    delegatedArgs = { persistenceContext, options };
+    return false;
+  };
+  const adapter = editorPersistenceState.createStudioEditorPersistenceFailureHandlerAdapter({
+    persistenceApi: { handleStudioPersistenceFailure: handlePersistenceFailure },
+    createHandlerOptions
+  });
+  const persistenceContext = { sessionToken: 12 };
+
+  assert.equal(adapter(persistenceContext, { onFailure: 'callback-sentinel' }), false);
+  assert.equal(delegatedArgs.persistenceContext, persistenceContext);
+  assert.deepEqual(delegatedArgs.options, {
+    handlerOptions: true,
+    onFailure: 'callback-sentinel'
+  });
+});
+
+test('createStudioEditorPersistenceFailureHandlerAdapter returns null without a shared handler', () => {
+  const adapter = editorPersistenceState.createStudioEditorPersistenceFailureHandlerAdapter();
+
+  assert.equal(adapter({}, {}), null);
+});

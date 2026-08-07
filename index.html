@@ -9069,6 +9069,27 @@
     }
 
     function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
+      const createStudioEditorPersistenceFailureHandlerAdapter = (
+        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+        && SlideNextStudioEditorPersistenceState
+        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceFailureHandlerAdapter === 'function'
+      )
+        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceFailureHandlerAdapter
+        : null;
+      if (createStudioEditorPersistenceFailureHandlerAdapter) {
+        const adapter = createStudioEditorPersistenceFailureHandlerAdapter({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          createHandlerOptions: createCurrentStudioPersistenceHandlerOptions
+        });
+        const result = typeof adapter === 'function'
+          ? adapter(persistenceContext, options)
+          : null;
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
       const createStudioPersistenceFailureHandler = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence

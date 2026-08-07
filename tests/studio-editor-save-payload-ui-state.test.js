@@ -1182,6 +1182,50 @@ test('applyCurrentStudioPersistenceFailure reuses the shared failure handler whe
   );
 });
 
+test('applyCurrentStudioPersistenceFailure delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyCurrentStudioPersistenceFailureSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistenceFailure(',
+    '\n\n    function applyCurrentStudioPersistenceSuccess('
+  );
+  const context = {
+    createCurrentStudioPersistenceHandlerOptions(options = {}) {
+      return {
+        handlerOptions: true,
+        onFailure: options.onFailure
+      };
+    },
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistenceFailureHandler(options = {}) {
+        return (persistenceContext, nextOptions) => ({
+          persistenceContext,
+          resolvedOptions: options.createHandlerOptions(nextOptions),
+          handlePersistenceFailure: options.handlePersistenceFailure
+        });
+      },
+      handleStudioPersistenceFailure() {
+        throw new Error('direct failure handling should not run when the adapter builder exists');
+      }
+    }
+  };
+  const persistenceContext = { presentationUrl: 'presentations/deck/index.html' };
+
+  vm.createContext(context);
+  vm.runInContext(applyCurrentStudioPersistenceFailureSource, context);
+
+  const result = context.applyCurrentStudioPersistenceFailure(persistenceContext, {
+    onFailure: 'callback-sentinel'
+  });
+  assert.equal(result.persistenceContext, persistenceContext);
+  assert.deepEqual(result.resolvedOptions, {
+    handlerOptions: true,
+    onFailure: 'callback-sentinel'
+  });
+  assert.equal(result.handlePersistenceFailure, context.SlideNextStudioEditorPersistence.handleStudioPersistenceFailure);
+});
+
 test('applyCurrentStudioPersistenceSuccess reuses the shared success handler when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyCurrentStudioPersistenceSuccessSource = extractFunctionSource(
