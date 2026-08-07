@@ -631,6 +631,45 @@ test('createStudioHistorySaveHandler clears pending transactions when no transac
   assert.equal(scheduledCapture, true);
 });
 
+test('createStudioHistorySaveHandler rejects malformed canonical sidecars while preserving transactions', () => {
+  let pendingTransaction = null;
+  let pendingCanonicalDeck = null;
+  let liveCanonicalDeck = null;
+  const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
+    isCanonicalDeck(deck) {
+      return deck && deck.kind === 'slidenext.deck';
+    },
+    getPendingTransaction() {
+      return pendingTransaction;
+    },
+    setPendingTransaction(nextTransaction) {
+      pendingTransaction = nextTransaction;
+    },
+    setPendingCanonicalDeck(nextCanonicalDeck) {
+      pendingCanonicalDeck = nextCanonicalDeck;
+    },
+    setLiveCanonicalDeck(nextCanonicalDeck) {
+      liveCanonicalDeck = nextCanonicalDeck;
+    },
+    getTimer() {
+      return null;
+    },
+    setTimer() {},
+    captureState() {},
+    scheduleCapture() {
+      return { nextTimer: null, didCapture: true };
+    }
+  });
+
+  const transaction = { kind: 'slidenext.editor.transaction', operations: [] };
+  const result = saveHistoryState(false, transaction, { kind: 'invalid.deck' });
+
+  assert.deepEqual(result, { nextTimer: null, didCapture: true });
+  assert.deepEqual(pendingTransaction, transaction);
+  assert.equal(pendingCanonicalDeck, null);
+  assert.equal(liveCanonicalDeck, null);
+});
+
 test('restoreStudioHistoryTransaction delegates replay and post-apply synchronization', () => {
   const historyEntry = { canonicalDeck: { slides: [{ id: 'slide-1' }] } };
   const historyStep = {

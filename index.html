@@ -7343,6 +7343,9 @@
               : null;
             setEditorLiveCanonicalDeck(nextCanonicalDeck, liveEditorDoc, liveSessionToken);
           },
+          isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+            ? getEditorCanonicalDeckValidator()
+            : null,
           getTimer: () => undoDebounceTimer,
           setTimer(nextTimer) {
             undoDebounceTimer = nextTimer;
