@@ -7533,86 +7533,57 @@
       });
     }
 
-    function editorUndo() {
-      if (typeof editorUndo.historyRunner !== 'function') {
-        const createStudioHistoryStepRunner = SlideNextStudioHistory
-          && typeof SlideNextStudioHistory.createStudioHistoryStepRunner === 'function'
-          ? SlideNextStudioHistory.createStudioHistoryStepRunner
+    function getEditorHistoryStepAdapter() {
+      if (typeof getEditorHistoryStepAdapter.adapter !== 'object'
+        || !getEditorHistoryStepAdapter.adapter) {
+        const createStudioEditorHistoryStepAdapter = (
+          typeof SlideNextStudioEditorHistoryState !== 'undefined'
+          && SlideNextStudioEditorHistoryState
+          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryStepAdapter === 'function'
+        )
+          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryStepAdapter
           : null;
-        if (!createStudioHistoryStepRunner) {
-          return {
+        if (!createStudioEditorHistoryStepAdapter) return null;
+        getEditorHistoryStepAdapter.adapter = createStudioEditorHistoryStepAdapter({
+          historyApi: SlideNextStudioHistory,
+          getUndoStack: () => undoStack,
+          getRedoStack: () => redoStack,
+          setUndoStack(nextUndoStack) {
+            undoStack = nextUndoStack;
+          },
+          setRedoStack(nextRedoStack) {
+            redoStack = nextRedoStack;
+          },
+          restoreHistoryEntry: restoreFrameFromHistoryEntry,
+          updateHistoryButtons,
+          triggerAutoSave
+        });
+      }
+      return getEditorHistoryStepAdapter.adapter;
+    }
+
+    function editorUndo() {
+      const historyStepAdapter = getEditorHistoryStepAdapter();
+      return historyStepAdapter && typeof historyStepAdapter.undo === 'function'
+        ? historyStepAdapter.undo()
+        : {
             didUndo: false,
             undoStack,
             redoStack,
             restoreEntry: null
           };
-        }
-        editorUndo.historyRunner = createStudioHistoryStepRunner({
-          stepHistory: SlideNextStudioHistory.stepStudioHistoryUndo,
-          didStepKey: 'didUndo',
-          getUndoStack: () => undoStack,
-          getRedoStack: () => redoStack,
-          setUndoStack(nextUndoStack) {
-            undoStack = nextUndoStack;
-          },
-          setRedoStack(nextRedoStack) {
-            redoStack = nextRedoStack;
-          },
-          restoreHistoryEntry: restoreFrameFromHistoryEntry,
-          updateHistoryButtons,
-          triggerAutoSave
-        });
-      }
-      if (typeof editorUndo.historyRunner !== 'function') {
-        return {
-          didUndo: false,
-          undoStack,
-          redoStack,
-          restoreEntry: null
-        };
-      }
-      return editorUndo.historyRunner();
     }
 
     function editorRedo() {
-      if (typeof editorRedo.historyRunner !== 'function') {
-        const createStudioHistoryStepRunner = SlideNextStudioHistory
-          && typeof SlideNextStudioHistory.createStudioHistoryStepRunner === 'function'
-          ? SlideNextStudioHistory.createStudioHistoryStepRunner
-          : null;
-        if (!createStudioHistoryStepRunner) {
-          return {
+      const historyStepAdapter = getEditorHistoryStepAdapter();
+      return historyStepAdapter && typeof historyStepAdapter.redo === 'function'
+        ? historyStepAdapter.redo()
+        : {
             didRedo: false,
             undoStack,
             redoStack,
             restoreEntry: null
           };
-        }
-        editorRedo.historyRunner = createStudioHistoryStepRunner({
-          stepHistory: SlideNextStudioHistory.stepStudioHistoryRedo,
-          didStepKey: 'didRedo',
-          getUndoStack: () => undoStack,
-          getRedoStack: () => redoStack,
-          setUndoStack(nextUndoStack) {
-            undoStack = nextUndoStack;
-          },
-          setRedoStack(nextRedoStack) {
-            redoStack = nextRedoStack;
-          },
-          restoreHistoryEntry: restoreFrameFromHistoryEntry,
-          updateHistoryButtons,
-          triggerAutoSave
-        });
-      }
-      if (typeof editorRedo.historyRunner !== 'function') {
-        return {
-          didRedo: false,
-          undoStack,
-          redoStack,
-          restoreEntry: null
-        };
-      }
-      return editorRedo.historyRunner();
     }
 
     function restoreFrameFromHistoryEntry(entry) {

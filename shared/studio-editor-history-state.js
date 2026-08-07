@@ -207,9 +207,86 @@
     };
   }
 
+  function createStudioEditorHistoryStepAdapter(options = {}) {
+    const historyApi = options.historyApi && typeof options.historyApi === 'object'
+      ? options.historyApi
+      : null;
+    const getUndoStack = typeof options.getUndoStack === 'function'
+      ? options.getUndoStack
+      : () => [];
+    const getRedoStack = typeof options.getRedoStack === 'function'
+      ? options.getRedoStack
+      : () => [];
+    const setUndoStack = typeof options.setUndoStack === 'function'
+      ? options.setUndoStack
+      : () => {};
+    const setRedoStack = typeof options.setRedoStack === 'function'
+      ? options.setRedoStack
+      : () => {};
+    const restoreHistoryEntry = typeof options.restoreHistoryEntry === 'function'
+      ? options.restoreHistoryEntry
+      : () => {};
+    const updateHistoryButtons = typeof options.updateHistoryButtons === 'function'
+      ? options.updateHistoryButtons
+      : () => {};
+    const triggerAutoSave = typeof options.triggerAutoSave === 'function'
+      ? options.triggerAutoSave
+      : () => {};
+
+    const runners = {
+      undo: null,
+      redo: null
+    };
+
+    function resolveFallbackResult(direction) {
+      return {
+        [direction === 'undo' ? 'didUndo' : 'didRedo']: false,
+        undoStack: getUndoStack(),
+        redoStack: getRedoStack(),
+        restoreEntry: null
+      };
+    }
+
+    function createRunner(direction) {
+      if (!historyApi || typeof historyApi.createStudioHistoryStepRunner !== 'function') {
+        return null;
+      }
+      const isUndo = direction === 'undo';
+      return historyApi.createStudioHistoryStepRunner({
+        stepHistory: isUndo
+          ? historyApi.stepStudioHistoryUndo
+          : historyApi.stepStudioHistoryRedo,
+        didStepKey: isUndo ? 'didUndo' : 'didRedo',
+        getUndoStack,
+        getRedoStack,
+        setUndoStack,
+        setRedoStack,
+        restoreHistoryEntry,
+        updateHistoryButtons,
+        triggerAutoSave
+      });
+    }
+
+    function run(direction) {
+      if (typeof runners[direction] !== 'function') {
+        runners[direction] = createRunner(direction);
+      }
+      if (typeof runners[direction] !== 'function') {
+        return resolveFallbackResult(direction);
+      }
+      return runners[direction]();
+    }
+
+    return {
+      undo: () => run('undo'),
+      redo: () => run('redo')
+    };
+  }
+
   return {
     createStudioEditorHistorySaveAdapter,
     createStudioEditorHistoryEntryBuilder,
-    createStudioEditorHistoryCaptureAdapter
+    createStudioEditorHistoryCaptureAdapter,
+    createStudioEditorHistoryStepAdapter
   };
 });

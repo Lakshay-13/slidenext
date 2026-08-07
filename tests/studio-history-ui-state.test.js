@@ -49,6 +49,15 @@ function loadSaveHistoryState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadHistoryStepAdapter(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function getEditorHistoryStepAdapter() {',
+    '\n\n    function editorUndo() {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadResolveEditorMetadataPersistenceOptions(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= studioPersistence;
   const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
@@ -147,6 +156,7 @@ test('editorUndo reuses the shared history step runner when available', () => {
         return () => stepResult;
       }
     },
+    SlideNextStudioEditorHistoryState: historyState,
     redoStack: ['redo-entry'],
     restoreFrameFromHistoryEntry() {
       throw new Error('restoreFrameFromHistoryEntry should be delegated through the shared runner');
@@ -161,6 +171,7 @@ test('editorUndo reuses the shared history step runner when available', () => {
   };
 
   vm.createContext(context);
+  loadHistoryStepAdapter(fileContent, context);
   vm.runInContext(editorUndoSource, context);
 
   assert.deepEqual(
@@ -208,6 +219,7 @@ test('editorRedo reuses the shared history step runner when available', () => {
         return () => stepResult;
       }
     },
+    SlideNextStudioEditorHistoryState: historyState,
     redoStack: ['redo-entry'],
     restoreFrameFromHistoryEntry() {
       throw new Error('restoreFrameFromHistoryEntry should be delegated through the shared runner');
@@ -222,6 +234,7 @@ test('editorRedo reuses the shared history step runner when available', () => {
   };
 
   vm.createContext(context);
+  loadHistoryStepAdapter(fileContent, context);
   vm.runInContext(editorRedoSource, context);
 
   assert.deepEqual(
@@ -263,6 +276,7 @@ test('editor undo and redo fail closed when the shared history step runner is un
   };
 
   vm.createContext(context);
+  loadHistoryStepAdapter(fileContent, context);
   vm.runInContext(editorUndoSource, context);
   vm.runInContext(editorRedoSource, context);
 

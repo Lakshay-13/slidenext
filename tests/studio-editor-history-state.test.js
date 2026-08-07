@@ -138,3 +138,37 @@ test('createStudioEditorHistoryCaptureAdapter reuses the capturer and clears pen
   assert.deepEqual(undoStack, [{ id: 1 }, { id: 2 }]);
   assert.deepEqual(redoStack, []);
 });
+
+test('createStudioEditorHistoryStepAdapter builds independent undo and redo runners', () => {
+  const createdSteps = [];
+  const historyApi = {
+    stepStudioHistoryUndo() {},
+    stepStudioHistoryRedo() {},
+    createStudioHistoryStepRunner(options) {
+      createdSteps.push(options);
+      return () => ({
+        [options.didStepKey]: true,
+        undoStack: options.getUndoStack(),
+        redoStack: options.getRedoStack(),
+        restoreEntry: null
+      });
+    }
+  };
+  const undoStack = ['undo-entry'];
+  const redoStack = ['redo-entry'];
+  const adapter = historyState.createStudioEditorHistoryStepAdapter({
+    historyApi,
+    getUndoStack: () => undoStack,
+    getRedoStack: () => redoStack
+  });
+
+  assert.equal(adapter.undo().didUndo, true);
+  assert.equal(adapter.undo().didUndo, true);
+  assert.equal(adapter.redo().didRedo, true);
+  assert.equal(adapter.redo().didRedo, true);
+  assert.equal(createdSteps.length, 2);
+  assert.equal(createdSteps[0].stepHistory, historyApi.stepStudioHistoryUndo);
+  assert.equal(createdSteps[0].didStepKey, 'didUndo');
+  assert.equal(createdSteps[1].stepHistory, historyApi.stepStudioHistoryRedo);
+  assert.equal(createdSteps[1].didStepKey, 'didRedo');
+});
