@@ -10,6 +10,7 @@ const styleState = require('../shared/studio-editor-style.js');
 const studioMutation = require('../shared/studio-editor-mutation.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const styleMutation = require('../shared/studio-editor-style-mutation.js');
+const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -27,6 +28,7 @@ function loadFinalizeEditorDeckMutation(fileContent, context) {
     'function finalizeEditorDeckMutation(versionLabel, options = {}) {',
     '\n\n    // Apply styles immediately to active selected elements'
   );
+  context.SlideNextStudioEditorDeckMutation = deckMutation;
   vm.runInContext(helperSource, context);
 }
 

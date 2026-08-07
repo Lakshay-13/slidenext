@@ -8,6 +8,7 @@ const canonicalRemoval = require('../shared/studio-editor-canonical-removal.js')
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const removalState = require('../shared/studio-editor-removal.js');
 const removalMutation = require('../shared/studio-editor-removal-mutation.js');
+const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -43,6 +44,7 @@ function loadFinalizeEditorDeckMutation(fileContent, context) {
     'function finalizeEditorDeckMutation(versionLabel, options = {}) {',
     '\n\n    // Apply styles immediately to active selected elements'
   );
+  context.SlideNextStudioEditorDeckMutation = deckMutation;
   vm.runInContext(helperSource, context);
 }
 

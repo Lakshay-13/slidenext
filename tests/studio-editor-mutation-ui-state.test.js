@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -23,6 +24,7 @@ test('finalizeEditorDeckMutation delegates to the shared mutation finalizer', ()
   );
   const calls = [];
   const context = {
+    SlideNextStudioEditorDeckMutation: deckMutation,
     SlideNextStudioEditorMutation: {
       finalizeStudioMutation(options) {
         calls.push([
@@ -76,6 +78,7 @@ test('finalizeEditorDeckMutation supplies the canonical deck builder to shared m
   let capturedBuildCanonicalDeck = null;
   let buildCanonicalDeckOptions = null;
   const context = {
+    SlideNextStudioEditorDeckMutation: deckMutation,
     SlideNextStudioEditorMutation: {
       finalizeStudioMutation(options) {
         capturedMutationOptions = options.mutationOptions;

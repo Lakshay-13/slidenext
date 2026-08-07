@@ -8,6 +8,7 @@ const canonicalVisibility = require('../shared/studio-editor-canonical-visibilit
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const lockState = require('../shared/studio-editor-lock-state.js');
 const lockMutation = require('../shared/studio-editor-lock-mutation.js');
+const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -25,6 +26,7 @@ function loadFinalizeEditorDeckMutation(fileContent, context) {
     'function finalizeEditorDeckMutation(versionLabel, options = {}) {',
     '\n\n    // Apply styles immediately to active selected elements'
   );
+  context.SlideNextStudioEditorDeckMutation = deckMutation;
   vm.runInContext(helperSource, context);
 }
 
