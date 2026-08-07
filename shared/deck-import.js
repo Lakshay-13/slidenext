@@ -531,6 +531,21 @@
     return matchedValue;
   }
 
+  function hasImportedStyleProperty(styleText = '', propertyName = '') {
+    const normalizedPropertyName = normalizeString(propertyName).trim().toLowerCase();
+    if (!normalizedPropertyName) {
+      return false;
+    }
+
+    return splitInlineStyleDeclarations(styleText).some((declaration) => {
+      const separatorIndex = declaration.indexOf(':');
+      if (separatorIndex === -1) {
+        return false;
+      }
+      return normalizeString(declaration.slice(0, separatorIndex)).trim().toLowerCase() === normalizedPropertyName;
+    });
+  }
+
   function isImportedSlideBackgroundStyleProperty(propertyName = '') {
     const normalizedPropertyName = normalizeString(propertyName).trim().toLowerCase();
     return normalizedPropertyName === 'background' || normalizedPropertyName.startsWith('background-');
@@ -879,6 +894,40 @@
     return normalizeString(style[propertyName] || style[camelCaseName]);
   }
 
+  function buildImportedComputedNodeBackgroundStyle(el, inlineStyleText, options = {}) {
+    const computedStyle = getImportedComputedStyle(el, options);
+    if (!computedStyle) {
+      return '';
+    }
+
+    const declarations = [];
+    const hasInlineBackground = hasImportedStyleProperty(inlineStyleText, 'background')
+      || hasImportedStyleProperty(inlineStyleText, 'background-image');
+    const computedBackgroundImage = normalizeImportedComputedCssValue(
+      readImportedStyleValue(computedStyle, 'background-image'),
+      options
+    );
+    if (!hasInlineBackground && computedBackgroundImage && computedBackgroundImage.toLowerCase() !== 'none') {
+      declarations.push(`background-image: ${computedBackgroundImage};`);
+    }
+
+    [
+      ['background-size', /^(?:cover|contain)$/i],
+      ['background-position', /^(?:center|center\s+center)$/i],
+      ['background-repeat', /^no-repeat$/i]
+    ].forEach(([propertyName, supportedValuePattern]) => {
+      if (hasImportedStyleProperty(inlineStyleText, propertyName)) {
+        return;
+      }
+      const value = readImportedStyleValue(computedStyle, propertyName);
+      if (supportedValuePattern.test(value)) {
+        declarations.push(`${propertyName}: ${value};`);
+      }
+    });
+
+    return declarations.join(' ');
+  }
+
   function normalizeImportedComputedCssValue(value, options = {}) {
     const source = normalizeString(value);
     if (!source || !/url\(/i.test(source)) return source;
@@ -925,6 +974,14 @@
     const visibility = buildImportedVisibility(el, win);
     const attributes = stripCanonicalNodeAttributeDuplicates(sanitizeImportedAttributeMap(el, options), visibility);
     const inlineStyleText = normalizeString(el.getAttribute('style'));
+    const importedStyleText = stripImportedNodeHiddenStyle(
+      stripImportedNodeLayoutStyle(inlineStyleText, importedLayout),
+      visibility
+    );
+    const computedBackgroundStyleText = buildImportedComputedNodeBackgroundStyle(el, inlineStyleText, options);
+    const canonicalStyleText = [importedStyleText, computedBackgroundStyleText]
+      .filter(Boolean)
+      .join(' ');
 
     return canonicalDeck.createCanonicalNode({
       id: typeof options.getNodeId === 'function'
@@ -937,10 +994,7 @@
       html: stripCanonicalNodeSourceHtmlDuplicates(buildImportedSourceHtml(el, options), attributes, visibility),
       classes: sanitizeImportedClassNames(el.classList || [], options),
       attributes,
-      style: stripImportedNodeHiddenStyle(
-        stripImportedNodeLayoutStyle(inlineStyleText, importedLayout),
-        visibility
-      ),
+      style: canonicalStyleText,
       layout: importedLayout,
       visibility,
       children: childElements.map((child, childIndex) => importElementToCanonicalNode(child, options, {

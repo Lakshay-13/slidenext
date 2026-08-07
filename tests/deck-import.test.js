@@ -1329,6 +1329,66 @@ test('importElementToCanonicalNode promotes an explicit hidden utility class int
   assert.deepEqual(node.classes, ['hero-card', 'hidden']);
 });
 
+test('importElementToCanonicalNode promotes computed class-based background images and sizing', () => {
+  const element = createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['hero-card']),
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return {
+            backgroundImage: 'url("http://localhost/presentations/demo/assets/panel.png")',
+            backgroundSize: 'contain',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          };
+        }
+      }
+    },
+    attributes: {
+      class: 'hero-card'
+    },
+    textContent: 'Panel',
+    outerHTML: '<div class="hero-card">Panel</div>'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element, {
+    sourcePath: '/presentations/demo/index.html'
+  });
+
+  assert.equal(
+    node.style,
+    'background-image: url("assets/panel.png"); background-size: contain; background-position: center; background-repeat: no-repeat;'
+  );
+});
+
+test('importElementToCanonicalNode keeps explicit background styles authoritative over computed values', () => {
+  const element = createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['hero-card']),
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return {
+            backgroundImage: 'url("assets/computed.png")',
+            backgroundSize: 'cover'
+          };
+        }
+      }
+    },
+    attributes: {
+      class: 'hero-card',
+      style: 'background-image: url("assets/inline.png"); background-size: contain;'
+    },
+    textContent: 'Panel',
+    outerHTML: '<div class="hero-card" style="background-image: url(&quot;assets/inline.png&quot;); background-size: contain;">Panel</div>'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+
+  assert.equal(node.style, 'background-image: url("assets/inline.png"); background-size: contain;');
+});
+
 test('importElementToCanonicalNode strips only hidden style flags once visibility is captured structurally', () => {
   const element = createImportedElement({
     tagName: 'DIV',
