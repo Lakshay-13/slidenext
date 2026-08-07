@@ -47,6 +47,19 @@ test('buildStudioPdfPrintHtml prepends print styles to html fragments', () => {
   assert.match(html, /<div class="slide">Fragment<\/div>/);
 });
 
+test('openStudioPdfPrintWindow rejects a known empty deck before opening a popup', () => {
+  let openCalls = 0;
+  assert.equal(pdfExport.openStudioPdfPrintWindow({
+    html: '<html><body><div class="slide">A</div></body></html>',
+    slideCount: 0,
+    openWindow() {
+      openCalls += 1;
+      return null;
+    }
+  }), false);
+  assert.equal(openCalls, 0);
+});
+
 test('resolveStudioPdfPageDimensions maps valid canonical layout sizes and rejects unsafe values', () => {
   assert.deepEqual(
     pdfExport.resolveStudioPdfPageDimensions({

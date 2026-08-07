@@ -180,6 +180,9 @@
       : root && typeof root.open === 'function'
         ? root.open.bind(root)
         : null;
+    if (Number.isInteger(options.slideCount) && options.slideCount <= 0) {
+      return false;
+    }
     const html = buildStudioPdfPrintHtml(options.html, options);
     if (!openWindow || !html) {
       return false;

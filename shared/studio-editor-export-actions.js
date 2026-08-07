@@ -55,6 +55,9 @@
           canonicalDeck = null;
         }
       }
+      if (canonicalDeck && Array.isArray(canonicalDeck.slides) && canonicalDeck.slides.length === 0) {
+        return failPdfExport();
+      }
 
       const exportButton = documentRef && typeof documentRef.getElementById === 'function'
         ? documentRef.getElementById('exportPdfBtn')
@@ -78,6 +81,9 @@
         }
         const didOpenPrintFlow = pdfExport.openStudioPdfPrintWindow({
           html,
+          ...(canonicalDeck && Array.isArray(canonicalDeck.slides)
+            ? { slideCount: canonicalDeck.slides.length }
+            : {}),
           ...pageDimensions,
           onPrint: () => {
             setStatus('pdf-exported');

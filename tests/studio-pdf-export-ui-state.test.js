@@ -180,6 +180,35 @@ test('exportPdf skips preview generation when deck actions are unavailable or pr
   assert.equal(buildCalls, 1);
 });
 
+test('exportPdf fails closed for an empty canonical deck without opening a popup', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const statusCalls = [];
+  const context = {
+    SlideNextStudioPdfExport: {
+      openStudioPdfPrintWindow() {
+        throw new Error('empty deck should not open a print popup');
+      }
+    },
+    buildEditorCanonicalDeck() {
+      return { slides: [] };
+    },
+    buildEditorPreviewHtml() {
+      return '<html><body><div class="slide">A</div></body></html>';
+    },
+    setStudioAutoSaveStatus(state) {
+      statusCalls.push(state);
+    },
+    resolveCurrentStudioDeckReadyActionState() {
+      return { canUseDeckActions: true };
+    }
+  };
+
+  loadExportPdfAction(fileContent, context);
+
+  assert.equal(context.exportPdf(), false);
+  assert.deepEqual(statusCalls, ['pdf-export-failed']);
+});
+
 test('exportPdf reports preview renderer failures instead of throwing', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const statusCalls = [];
