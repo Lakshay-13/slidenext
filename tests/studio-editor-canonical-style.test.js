@@ -103,3 +103,27 @@ test('buildStudioCanonicalStyleMutationWithBaseline builds the model from the so
   assert.equal(result.slides[0].nodes[0].style, 'color: #ffffff;');
   assert.equal(sourceDeck.slides[0].nodes[0].style, 'color: #000000;');
 });
+
+test('createStudioCanonicalStyleMutationBuilders reuses an explicit baseline', () => {
+  const sourceDeck = createSourceDeck();
+  let buildCount = 0;
+  const builders = canonicalStyle.createStudioCanonicalStyleMutationBuilders({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck() {
+      buildCount += 1;
+      return sourceDeck;
+    }
+  });
+
+  const result = builders.buildCanonicalStyleMutation({
+    canonicalDeckBeforeMutation: sourceDeck,
+    selection: [createElement()],
+    prop: 'color',
+    value: '#ffffff',
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(buildCount, 0);
+  assert.equal(result.slides[0].nodes[0].style, 'color: #ffffff;');
+  assert.equal(sourceDeck.slides[0].nodes[0].style, 'color: #000000;');
+});

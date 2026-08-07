@@ -5407,18 +5407,21 @@
       const canonicalStyleApi = typeof SlideNextStudioEditorCanonicalStyle !== 'undefined'
         ? SlideNextStudioEditorCanonicalStyle
         : null;
-      const buildCanonicalStyleBaseline = canonicalStyleApi
-        && typeof canonicalStyleApi.buildStudioCanonicalStyleBaseline === 'function'
-        ? canonicalStyleApi.buildStudioCanonicalStyleBaseline
-        : null;
-      const canonicalDeckBeforeMutation = buildCanonicalStyleBaseline
-        ? buildCanonicalStyleBaseline({
+      const canonicalStyleBuilders = canonicalStyleApi
+        && typeof canonicalStyleApi.createStudioCanonicalStyleMutationBuilders === 'function'
+        ? canonicalStyleApi.createStudioCanonicalStyleMutationBuilders({
             canonicalDeckApi,
             buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
               ? buildEditorCanonicalDeck
-              : null,
-            sourceDocument: doc
+              : null
           })
+        : null;
+      const buildCanonicalStyleBaseline = canonicalStyleBuilders
+        && typeof canonicalStyleBuilders.buildCanonicalStyleBaseline === 'function'
+        ? canonicalStyleBuilders.buildCanonicalStyleBaseline
+        : null;
+      const canonicalDeckBeforeMutation = buildCanonicalStyleBaseline
+        ? buildCanonicalStyleBaseline({ sourceDocument: doc })
         : null;
       const getStyleElementId = (element) => {
         if (typeof assignEditorElementId === 'function') {
@@ -5460,14 +5463,10 @@
         const opacityLabel = document.getElementById('opacityVal');
         if (opacityLabel) opacityLabel.textContent = `${styleMutationResult.displayValue}%`;
       }
-      const canonicalDeck = canonicalStyleApi
-        && typeof canonicalStyleApi.buildStudioCanonicalStyleMutationWithBaseline === 'function'
-        ? canonicalStyleApi.buildStudioCanonicalStyleMutationWithBaseline({
-            canonicalDeckApi,
+      const canonicalDeck = canonicalStyleBuilders
+        && typeof canonicalStyleBuilders.buildCanonicalStyleMutation === 'function'
+        ? canonicalStyleBuilders.buildCanonicalStyleMutation({
             canonicalDeckBeforeMutation,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
             sourceDocument: doc,
             selection: styleMutationPlan.selection,
             prop,

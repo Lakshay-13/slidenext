@@ -135,9 +135,44 @@
     });
   }
 
+  function createStudioCanonicalStyleMutationBuilders(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const buildCanonicalStyleBaseline = (baselineOptions = {}) => (
+      buildStudioCanonicalStyleBaseline({
+        ...baselineOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck
+      })
+    );
+    const buildCanonicalStyleMutation = (mutationOptions = {}) => {
+      const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(
+        mutationOptions,
+        'canonicalDeckBeforeMutation'
+      )
+        ? mutationOptions.canonicalDeckBeforeMutation
+        : buildCanonicalStyleBaseline(mutationOptions);
+      return buildStudioCanonicalStyleMutation({
+        ...mutationOptions,
+        canonicalDeckApi,
+        canonicalDeckBeforeMutation
+      });
+    };
+
+    return {
+      buildCanonicalStyleBaseline,
+      buildCanonicalStyleMutation
+    };
+  }
+
   return {
     buildStudioCanonicalStyleBaseline,
     buildStudioCanonicalStyleMutation,
-    buildStudioCanonicalStyleMutationWithBaseline
+    buildStudioCanonicalStyleMutationWithBaseline,
+    createStudioCanonicalStyleMutationBuilders
   };
 });
