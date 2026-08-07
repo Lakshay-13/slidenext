@@ -46,6 +46,7 @@ function loadFinalizeSelectionToggleMutation(fileContent, context) {
     'function finalizeSelectionToggleMutation(versionLabel, options = {}) {',
     '\n\n    function toggleSelectedElementsLockState() {'
   );
+  context.SlideNextStudioEditorDeckMutation = deckMutation;
   vm.runInContext(helperSource, context);
 }
 

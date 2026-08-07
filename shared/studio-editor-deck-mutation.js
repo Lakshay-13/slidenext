@@ -79,7 +79,38 @@
     return versionLabel;
   }
 
+  function finalizeStudioEditorSelectionToggleMutation(versionLabel, mutationOptions = {}, options = {}) {
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const syncSelectionUi = typeof options.syncSelectionUi === 'function'
+      ? options.syncSelectionUi
+      : () => {};
+    const finalizeMutation = typeof options.finalizeMutation === 'function'
+      ? options.finalizeMutation
+      : null;
+    if (mutationApi && typeof mutationApi.finalizeStudioSelectionToggleMutation === 'function') {
+      return mutationApi.finalizeStudioSelectionToggleMutation({
+        versionLabel,
+        mutationOptions,
+        syncSelectionUi,
+        finalizeMutation
+      });
+    }
+    if (!mutationOptions.skipSelectionUi) {
+      syncSelectionUi();
+    }
+    if (!finalizeMutation) return false;
+    finalizeMutation(versionLabel, {
+      refreshThumbnails: false,
+      ...(mutationOptions.transaction ? { transaction: mutationOptions.transaction } : {}),
+      ...(mutationOptions.canonicalDeck ? { canonicalDeck: mutationOptions.canonicalDeck } : {})
+    });
+    return true;
+  }
+
   return {
-    finalizeStudioEditorDeckMutation
+    finalizeStudioEditorDeckMutation,
+    finalizeStudioEditorSelectionToggleMutation
   };
 });

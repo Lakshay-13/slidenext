@@ -66,3 +66,29 @@ test('finalizeStudioEditorDeckMutation preserves canonical fallback history beha
     ['version', 'Auto: Style']
   ]);
 });
+
+test('finalizeStudioEditorSelectionToggleMutation preserves selection and persistence ordering', () => {
+  const calls = [];
+  const result = deckMutation.finalizeStudioEditorSelectionToggleMutation(
+    'Auto: Locked Element',
+    { transaction: { id: 'tx' }, canonicalDeck: { id: 'deck' } },
+    {
+      syncSelectionUi() {
+        calls.push('selection');
+      },
+      finalizeMutation(label, options) {
+        calls.push(['finalize', label, options]);
+      }
+    }
+  );
+
+  assert.equal(result, true);
+  assert.deepEqual(calls, [
+    'selection',
+    ['finalize', 'Auto: Locked Element', {
+      refreshThumbnails: false,
+      transaction: { id: 'tx' },
+      canonicalDeck: { id: 'deck' }
+    }]
+  ]);
+});
