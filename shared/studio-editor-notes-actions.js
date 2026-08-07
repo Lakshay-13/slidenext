@@ -36,15 +36,39 @@
       : null;
     if (!activeSlide || !applyMetadata || !finalizeMutation) return false;
 
+    const buildCanonicalMetadataBaseline = typeof options.buildCanonicalMetadataBaseline === 'function'
+      ? options.buildCanonicalMetadataBaseline
+      : null;
+    const buildCanonicalMetadataDeck = typeof options.buildCanonicalMetadataDeck === 'function'
+      ? options.buildCanonicalMetadataDeck
+      : null;
+    const canonicalMetadataKey = typeof options.canonicalMetadataKey === 'string'
+      ? options.canonicalMetadataKey.trim()
+      : '';
+    const canonicalDeckBeforeMutation = buildCanonicalMetadataBaseline
+      ? buildCanonicalMetadataBaseline({ sourceDocument: documentRef })
+      : null;
+
     const mutation = applyMetadata(activeSlide, value, {
       transactionApi: options.transactionApi,
       getElementId: options.getElementId
     });
     if (!mutation || !mutation.didApply) return false;
 
+    const canonicalDeck = buildCanonicalMetadataDeck && canonicalMetadataKey
+      ? buildCanonicalMetadataDeck(activeSlide, {
+          [canonicalMetadataKey]: value
+        }, {
+          sourceDocument: documentRef,
+          canonicalDeckBeforeMutation,
+          getSlideId: options.getSlideId
+        })
+      : null;
+
     finalizeMutation(options.versionLabel || 'Auto: Updated Speaker Notes', {
       refreshThumbnails: false,
-      transaction: mutation.transaction || null
+      transaction: mutation.transaction || null,
+      ...(canonicalDeck ? { canonicalDeck } : {})
     });
     if (typeof options.syncChrome === 'function') {
       options.syncChrome(documentRef);

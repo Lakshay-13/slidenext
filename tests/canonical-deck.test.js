@@ -37,6 +37,29 @@ test('createCanonicalDeck preserves optional slide sections without changing emp
   assert.equal(Object.prototype.hasOwnProperty.call(deck.slides[1], 'section'), false);
 });
 
+test('updateCanonicalSlideMetadata updates notes and sections immutably', () => {
+  const source = canonicalDeck.createCanonicalDeck({
+    slides: [
+      { id: 'slide-1', notes: 'Before', section: 'Opening' },
+      { id: 'slide-2', notes: 'Other', section: 'Body' }
+    ]
+  });
+
+  const updated = canonicalDeck.updateCanonicalSlideMetadata(source, 'slide-1', {
+    notes: 'After',
+    section: ''
+  });
+
+  assert.equal(source.slides[0].notes, 'Before');
+  assert.equal(source.slides[0].section, 'Opening');
+  assert.equal(updated.slides[0].notes, 'After');
+  assert.equal(Object.prototype.hasOwnProperty.call(updated.slides[0], 'section'), false);
+  assert.deepEqual(updated.slides[1], source.slides[1]);
+  assert.equal(canonicalDeck.updateCanonicalSlideMetadata(source, 'slide-1', {
+    notes: 'Before'
+  }), null);
+});
+
 test('createCanonicalDeck repairs duplicate asset ids without changing asset order', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     assets: [

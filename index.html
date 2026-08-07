@@ -1183,6 +1183,7 @@
   <script src="/shared/studio-editor-canonical-removal.js"></script>
   <script src="/shared/studio-editor-canonical-insertion.js"></script>
   <script src="/shared/studio-editor-canonical-slide.js"></script>
+  <script src="/shared/studio-editor-canonical-metadata.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
@@ -3862,6 +3863,20 @@
       if (!notesView || !notesActions || typeof notesActions.applyStudioSlideMetadataEdit !== 'function') {
         return false;
       }
+      const canonicalMetadataApi = typeof SlideNextStudioEditorCanonicalMetadata !== 'undefined'
+        ? SlideNextStudioEditorCanonicalMetadata
+        : null;
+      const canonicalMetadataBuilders = canonicalMetadataApi
+        && typeof canonicalMetadataApi.createStudioCanonicalMetadataMutationBuilders === 'function'
+        ? canonicalMetadataApi.createStudioCanonicalMetadataMutationBuilders({
+            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+              ? SlideNextCanonicalDeck
+              : null,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null
+          })
+        : null;
       return notesActions.applyStudioSlideMetadataEdit(value, {
         resolveReadyState: resolveCurrentStudioDeckReadyActionState,
         getDocument: getIframeDoc,
@@ -3881,6 +3896,13 @@
             : '';
           return slideId ? `slide:${slideId}` : '';
         },
+        canonicalMetadataKey: options.metadataMethod === 'applyStudioSlideSection' ? 'section' : 'notes',
+        buildCanonicalMetadataBaseline: canonicalMetadataBuilders
+          ? canonicalMetadataBuilders.buildCanonicalMetadataBaseline
+          : null,
+        buildCanonicalMetadataDeck: canonicalMetadataBuilders
+          ? canonicalMetadataBuilders.buildCanonicalMetadataDeck
+          : null,
         finalizeMutation: finalizeEditorDeckMutation,
         syncChrome: syncStudioChromeToActiveSlide
       });

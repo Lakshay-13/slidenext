@@ -77,6 +77,51 @@ test('applyStudioSpeakerNotesEdit does not mutate when the deck is unavailable',
   assert.equal(mutationCalls, 0);
 });
 
+test('applyStudioSpeakerNotesEdit forwards an explicit canonical metadata sidecar', () => {
+  const calls = [];
+  const canonicalDeckBeforeMutation = { id: 'before' };
+  const canonicalDeck = { id: 'after' };
+  const getSlideId = (slide) => slide.id;
+  const result = actions.applyStudioSpeakerNotesEdit('Cue', {
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getDocument: () => ({ id: 'frame' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    notesApi: {
+      applyStudioSpeakerNotes() {
+        return { didApply: true, transaction: { kind: 'notes' } };
+      }
+    },
+    canonicalMetadataKey: 'notes',
+    buildCanonicalMetadataBaseline(options) {
+      calls.push(['baseline', options]);
+      return canonicalDeckBeforeMutation;
+    },
+    buildCanonicalMetadataDeck(slide, patch, options) {
+      calls.push(['deck', slide, patch, options]);
+      return canonicalDeck;
+    },
+    getSlideId,
+    finalizeMutation(label, options) {
+      calls.push(['finalize', label, options]);
+    }
+  });
+
+  assert.equal(result, true);
+  assert.deepEqual(calls, [
+    ['baseline', { sourceDocument: { id: 'frame' } }],
+    ['deck', { id: 'slide-1' }, { notes: 'Cue' }, {
+      sourceDocument: { id: 'frame' },
+      canonicalDeckBeforeMutation,
+      getSlideId
+    }],
+    ['finalize', 'Auto: Updated Speaker Notes', {
+      refreshThumbnails: false,
+      transaction: { kind: 'notes' },
+      canonicalDeck
+    }]
+  ]);
+});
+
 test('applyStudioSpeakerNotesEdit refuses to mutate without a persistence finalizer', () => {
   let mutationCalls = 0;
   const result = actions.applyStudioSpeakerNotesEdit('Ignored', {
