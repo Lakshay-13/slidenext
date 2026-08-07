@@ -3610,6 +3610,26 @@
     }
 
     function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
+      const createStudioEditorFallbackCanonicalDeckAdapter = (
+        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+        && SlideNextStudioEditorPersistenceState
+        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorFallbackCanonicalDeckAdapter === 'function'
+      )
+        ? SlideNextStudioEditorPersistenceState.createStudioEditorFallbackCanonicalDeckAdapter
+        : null;
+      if (createStudioEditorFallbackCanonicalDeckAdapter) {
+        const adapter = createStudioEditorFallbackCanonicalDeckAdapter({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          buildCanonicalDeck: canonicalDeck
+            ? () => buildEditorCanonicalDeck(doc)
+            : null,
+          resolveCanonicalDeckOverride: resolveEditorCanonicalDeckOverride,
+          isCanonicalDeck: getEditorCanonicalDeckValidator()
+        });
+        return typeof adapter === 'function' ? adapter(canonicalDeck) : null;
+      }
       const createStudioFallbackCanonicalDeckResolver = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence

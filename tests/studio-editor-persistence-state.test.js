@@ -167,3 +167,35 @@ test('createStudioEditorPersistedActiveSlideIdAdapter fails closed without share
   assert.equal(adapter(), '');
   assert.equal(adapter({ activeSlideIds: ['slide-1'] }), '');
 });
+
+test('createStudioEditorFallbackCanonicalDeckAdapter preserves conditional canonical rebuilds', () => {
+  const fallbackDeck = { kind: 'slidenext.deck', slides: [] };
+  const resolverOptions = [];
+  const persistenceApi = {
+    createStudioFallbackCanonicalDeckResolver(options) {
+      resolverOptions.push(options);
+      return (canonicalDeck) => canonicalDeck && options.buildCanonicalDeck
+        ? options.buildCanonicalDeck()
+        : canonicalDeck;
+    }
+  };
+  const adapter = editorPersistenceState.createStudioEditorFallbackCanonicalDeckAdapter({
+    persistenceApi,
+    buildCanonicalDeck: () => fallbackDeck,
+    resolveCanonicalDeckOverride: (canonicalDeck) => canonicalDeck,
+    isCanonicalDeck: (canonicalDeck) => canonicalDeck === fallbackDeck
+  });
+  const malformedDeck = { id: 'malformed' };
+
+  assert.equal(adapter(malformedDeck), fallbackDeck);
+  assert.equal(adapter(null), null);
+  assert.equal(resolverOptions.length, 2);
+  assert.equal(typeof resolverOptions[0].buildCanonicalDeck, 'function');
+  assert.equal(resolverOptions[1].buildCanonicalDeck, null);
+});
+
+test('createStudioEditorFallbackCanonicalDeckAdapter fails closed without shared persistence', () => {
+  const adapter = editorPersistenceState.createStudioEditorFallbackCanonicalDeckAdapter();
+
+  assert.equal(adapter({ id: 'malformed' }), null);
+});
