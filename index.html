@@ -9117,6 +9117,27 @@
     }
 
     function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
+      const createStudioEditorPersistenceSuccessHandlerAdapter = (
+        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+        && SlideNextStudioEditorPersistenceState
+        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceSuccessHandlerAdapter === 'function'
+      )
+        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceSuccessHandlerAdapter
+        : null;
+      if (createStudioEditorPersistenceSuccessHandlerAdapter) {
+        const adapter = createStudioEditorPersistenceSuccessHandlerAdapter({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          createHandlerOptions: createCurrentStudioPersistenceHandlerOptions
+        });
+        const result = typeof adapter === 'function'
+          ? adapter(persistenceContext, options)
+          : null;
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
       const createStudioPersistenceSuccessHandler = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence

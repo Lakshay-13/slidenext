@@ -1287,6 +1287,50 @@ test('applyCurrentStudioPersistenceSuccess reuses the shared success handler whe
   );
 });
 
+test('applyCurrentStudioPersistenceSuccess delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyCurrentStudioPersistenceSuccessSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistenceSuccess(',
+    '\n\n    function applyCurrentStudioVersionPersistenceSuccess('
+  );
+  const context = {
+    createCurrentStudioPersistenceHandlerOptions(options = {}) {
+      return {
+        handlerOptions: true,
+        onSuccess: options.onSuccess
+      };
+    },
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistenceSuccessHandler(options = {}) {
+        return (persistenceContext, nextOptions) => ({
+          persistenceContext,
+          resolvedOptions: options.createHandlerOptions(nextOptions),
+          handlePersistenceSuccess: options.handlePersistenceSuccess
+        });
+      },
+      handleStudioPersistenceSuccess() {
+        throw new Error('direct success handling should not run when the adapter builder exists');
+      }
+    }
+  };
+  const persistenceContext = { presentationUrl: 'presentations/deck/index.html' };
+
+  vm.createContext(context);
+  vm.runInContext(applyCurrentStudioPersistenceSuccessSource, context);
+
+  const result = context.applyCurrentStudioPersistenceSuccess(persistenceContext, {
+    onSuccess: 'callback-sentinel'
+  });
+  assert.equal(result.persistenceContext, persistenceContext);
+  assert.deepEqual(result.resolvedOptions, {
+    handlerOptions: true,
+    onSuccess: 'callback-sentinel'
+  });
+  assert.equal(result.handlePersistenceSuccess, context.SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess);
+});
+
 test('applyCurrentStudioVersionPersistenceSuccess reuses the shared version-success handler when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyCurrentStudioVersionPersistenceSuccessSource = extractFunctionSource(
