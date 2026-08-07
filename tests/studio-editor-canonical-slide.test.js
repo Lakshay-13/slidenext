@@ -200,3 +200,28 @@ test('buildStudioCanonicalReorderSlideDeck moves the requested slide without mut
   assert.deepEqual(result.slides.map((slide) => slide.id), ['slide-2', 'slide-3', 'slide-1']);
   assert.deepEqual(sourceDeck.slides.map((slide) => slide.id), ['slide-1', 'slide-2', 'slide-3']);
 });
+
+test('createStudioCanonicalReorderSlideMutationBuilders shares canonical API wiring', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }, { id: 'slide-2' }]
+  });
+  const sourceDocument = { id: 'editor-doc' };
+  const builtDocuments = [];
+  const builders = canonicalSlide.createStudioCanonicalReorderSlideMutationBuilders({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtDocuments.push(documentRef);
+      return sourceDeck;
+    }
+  });
+
+  const result = builders.buildCanonicalReorderSlideDeck({
+    sourceDocument,
+    sourceSlide: { id: 'slide-1' },
+    targetSlide: { id: 'slide-2' },
+    getSlideId: (slide) => slide.id
+  });
+
+  assert.deepEqual(builtDocuments, [sourceDocument]);
+  assert.deepEqual(result.slides.map((slide) => slide.id), ['slide-2', 'slide-1']);
+});

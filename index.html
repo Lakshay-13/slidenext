@@ -2591,10 +2591,9 @@
       const canonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
         ? SlideNextStudioEditorCanonicalSlide
         : null;
-      const buildCanonicalReorderSlideBaseline = canonicalSlideApi
-        && typeof canonicalSlideApi.buildStudioCanonicalReorderSlideBaseline === 'function'
-        ? (options) => canonicalSlideApi.buildStudioCanonicalReorderSlideBaseline({
-            ...options,
+      const canonicalReorderSlideBuilders = canonicalSlideApi
+        && typeof canonicalSlideApi.createStudioCanonicalReorderSlideMutationBuilders === 'function'
+        ? canonicalSlideApi.createStudioCanonicalReorderSlideMutationBuilders({
             canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
               ? SlideNextCanonicalDeck
               : null,
@@ -2602,26 +2601,6 @@
               ? buildEditorCanonicalDeck
               : null
           })
-        : null;
-      const buildCanonicalReorderSlideDeck = canonicalSlideApi
-        && typeof canonicalSlideApi.buildStudioCanonicalReorderSlideDeck === 'function'
-        ? (options) => {
-            const canonicalDeckBeforeMutation = buildCanonicalReorderSlideBaseline
-              ? buildCanonicalReorderSlideBaseline(options)
-              : null;
-            return canonicalSlideApi.buildStudioCanonicalReorderSlideDeck({
-              ...options,
-              canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-                ? SlideNextCanonicalDeck
-                : null,
-              buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-                ? buildEditorCanonicalDeck
-                : null,
-              ...(buildCanonicalReorderSlideBaseline
-                ? { canonicalDeckBeforeMutation }
-                : {})
-            });
-          }
         : null;
 
       return reorderStudioSlideNodes(fromIdx, toIdx, {
@@ -2633,7 +2612,12 @@
         getSlideId: typeof getEditorSlideId === 'function'
           ? getEditorSlideId
           : (slide) => slide && slide.id || '',
-        buildCanonicalReorderSlideDeck,
+        buildCanonicalReorderSlideBaseline: canonicalReorderSlideBuilders
+          ? canonicalReorderSlideBuilders.buildCanonicalReorderSlideBaseline
+          : null,
+        buildCanonicalReorderSlideDeck: canonicalReorderSlideBuilders
+          ? canonicalReorderSlideBuilders.buildCanonicalReorderSlideDeck
+          : null,
         captureSlideMutationState: typeof captureSlideMutationRestoreState === 'function'
           ? captureSlideMutationRestoreState
           : null,

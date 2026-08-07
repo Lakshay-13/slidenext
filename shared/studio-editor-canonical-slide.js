@@ -206,6 +206,36 @@
     return reorderCanonicalSlides(canonicalDeckBeforeMutation, sourceSlideId, targetSlideId);
   }
 
+  function createStudioCanonicalReorderSlideMutationBuilders(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const buildCanonicalReorderSlideBaseline = (reorderOptions = {}) => (
+      buildStudioCanonicalReorderSlideBaseline({
+        ...reorderOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck
+      })
+    );
+    const buildCanonicalReorderSlideDeck = (reorderOptions = {}) => {
+      const canonicalDeckBeforeMutation = buildCanonicalReorderSlideBaseline(reorderOptions);
+      return buildStudioCanonicalReorderSlideDeck({
+        ...reorderOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck,
+        canonicalDeckBeforeMutation
+      });
+    };
+
+    return {
+      buildCanonicalReorderSlideBaseline,
+      buildCanonicalReorderSlideDeck
+    };
+  }
+
   return {
     buildStudioCanonicalAddSlideBaseline,
     buildStudioCanonicalAddSlideDeck,
@@ -214,6 +244,7 @@
     buildStudioCanonicalDuplicateSlideBaseline,
     buildStudioCanonicalDuplicateSlideDeck,
     buildStudioCanonicalReorderSlideBaseline,
-    buildStudioCanonicalReorderSlideDeck
+    buildStudioCanonicalReorderSlideDeck,
+    createStudioCanonicalReorderSlideMutationBuilders
   };
 });
