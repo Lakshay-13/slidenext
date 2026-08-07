@@ -7,6 +7,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalVisibility = require('../shared/studio-editor-canonical-visibility.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const lockState = require('../shared/studio-editor-lock-state.js');
+const lockMutation = require('../shared/studio-editor-lock-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -51,6 +52,7 @@ function loadLockMutationHelper(fileContent, context) {
     'function applyEditorLockMutationWithTransaction(selection, shouldLock, options = {}) {',
     'function toggleSelectedElementsLockState() {'
   );
+  context.SlideNextStudioEditorLockMutation = lockMutation;
   vm.runInContext(helperSource, context);
 }
 

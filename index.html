@@ -1174,6 +1174,7 @@
   <script src="/shared/studio-editor-clipboard.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
+  <script src="/shared/studio-editor-lock-mutation.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
   <script src="/shared/studio-editor-visibility-mutation.js"></script>
   <script src="/shared/studio-editor-transform.js"></script>
@@ -5051,30 +5052,19 @@
     }
 
     function applyEditorLockMutationWithTransaction(selection, shouldLock, options = {}) {
-      const lockApi = typeof SlideNextStudioEditorLockState !== 'undefined'
-        ? SlideNextStudioEditorLockState
+      const mutationApi = typeof SlideNextStudioEditorLockMutation !== 'undefined'
+        ? SlideNextStudioEditorLockMutation
         : null;
-      const applyStudioLockWithTransaction = lockApi
-        && typeof lockApi.applyStudioLockWithTransaction === 'function'
-        ? lockApi.applyStudioLockWithTransaction
+      const applyMutation = mutationApi
+        && typeof mutationApi.applyStudioLockMutationWithTransaction === 'function'
+        ? mutationApi.applyStudioLockMutationWithTransaction
         : null;
-      if (!applyStudioLockWithTransaction) {
+      if (!applyMutation) {
         return {
           didApply: false,
           transaction: null
         };
       }
-      const applyStudioLockMutation = lockApi
-        && typeof lockApi.applyStudioLockMutation === 'function'
-        ? lockApi.applyStudioLockMutation
-        : null;
-      const createStudioDatasetTransaction = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioDatasetTransaction === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioDatasetTransaction
-        : null;
       const isLocked = typeof options.isLocked === 'function'
         ? options.isLocked
         : () => false;
@@ -5094,9 +5084,13 @@
             }
             return element && element.dataset && element.dataset.editorId;
           };
-      return applyStudioLockWithTransaction(selection, shouldLock, {
-        applyStudioLockMutation,
-        createStudioDatasetTransaction,
+      return applyMutation(selection, shouldLock, {
+        lockApi: typeof SlideNextStudioEditorLockState !== 'undefined'
+          ? SlideNextStudioEditorLockState
+          : null,
+        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+          ? SlideNextStudioEditorTransaction
+          : null,
         isLocked,
         setLocked,
         getElementId
