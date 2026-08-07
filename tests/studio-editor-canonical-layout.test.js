@@ -123,3 +123,27 @@ test('createStudioCanonicalLayoutMutationBuilder shares canonical dependencies',
   assert.equal(builtFromDocument.id, 'editor-doc');
   assert.equal(result.slides[0].nodes[0].layout.x, 40);
 });
+
+test('createStudioCanonicalLayerOrderMutationBuilder reuses an explicit baseline', () => {
+  const sourceDeck = createSourceDeck();
+  let buildCount = 0;
+  const buildCanonicalLayerOrderMutation = canonicalLayout.createStudioCanonicalLayerOrderMutationBuilder({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck() {
+      buildCount += 1;
+      return sourceDeck;
+    }
+  });
+
+  const result = buildCanonicalLayerOrderMutation({
+    canonicalDeckBeforeMutation: sourceDeck,
+    orderedElements: [{
+      dataset: { editorId: 'node-1' },
+      style: { zIndex: '7' }
+    }]
+  });
+
+  assert.equal(buildCount, 0);
+  assert.equal(result.slides[0].nodes[0].layout.zIndex, 7);
+  assert.equal(sourceDeck.slides[0].nodes[0].layout.zIndex, 0);
+});

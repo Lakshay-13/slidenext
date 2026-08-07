@@ -4019,8 +4019,13 @@
         ? SlideNextStudioEditorCanonicalLayout
         : null;
       const buildCanonicalLayerOrderMutation = canonicalLayoutApi
-        && typeof canonicalLayoutApi.buildStudioCanonicalLayerOrderMutation === 'function'
-        ? canonicalLayoutApi.buildStudioCanonicalLayerOrderMutation
+        && typeof canonicalLayoutApi.createStudioCanonicalLayerOrderMutationBuilder === 'function'
+        ? canonicalLayoutApi.createStudioCanonicalLayerOrderMutationBuilder({
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null
+          })
         : null;
       const buildCanonicalLayoutBaseline = canonicalLayoutApi
         && typeof canonicalLayoutApi.buildStudioCanonicalLayoutBaseline === 'function'
