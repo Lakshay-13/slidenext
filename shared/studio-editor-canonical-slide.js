@@ -7,6 +7,58 @@
     root.SlideNextStudioEditorCanonicalSlide = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function createStudioCanonicalSlideMutationBuilders(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const buildBaseline = typeof options.buildBaseline === 'function'
+      ? options.buildBaseline
+      : null;
+    const buildDeck = typeof options.buildDeck === 'function'
+      ? options.buildDeck
+      : null;
+    const decorateDeckOptions = typeof options.decorateDeckOptions === 'function'
+      ? options.decorateDeckOptions
+      : (mutationOptions) => mutationOptions;
+
+    const buildCanonicalMutationBaseline = (mutationOptions = {}) => (
+      buildBaseline
+        ? buildBaseline({
+            ...mutationOptions,
+            canonicalDeckApi,
+            buildCanonicalDeck
+          })
+        : null
+    );
+    const buildCanonicalMutationDeck = (mutationOptions = {}) => {
+      const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(
+        mutationOptions,
+        'canonicalDeckBeforeMutation'
+      )
+        ? mutationOptions.canonicalDeckBeforeMutation
+        : buildCanonicalMutationBaseline(mutationOptions);
+      const decoratedOptions = decorateDeckOptions(mutationOptions);
+      return buildDeck
+        ? buildDeck({
+            ...(decoratedOptions && typeof decoratedOptions === 'object'
+              ? decoratedOptions
+              : mutationOptions),
+            canonicalDeckApi,
+            buildCanonicalDeck,
+            canonicalDeckBeforeMutation
+          })
+        : null;
+    };
+
+    return {
+      buildCanonicalMutationBaseline,
+      buildCanonicalMutationDeck
+    };
+  }
+
   function buildStudioCanonicalDuplicateSlideBaseline(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -64,41 +116,22 @@
   }
 
   function createStudioCanonicalDuplicateSlideMutationBuilders(options = {}) {
-    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
-      ? options.canonicalDeckApi
-      : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
     const importSlideToCanonicalSlide = typeof options.importSlideToCanonicalSlide === 'function'
       ? options.importSlideToCanonicalSlide
       : null;
-    const buildCanonicalDuplicateSlideBaseline = (duplicateOptions = {}) => (
-      buildStudioCanonicalDuplicateSlideBaseline({
+    const builders = createStudioCanonicalSlideMutationBuilders({
+      ...options,
+      buildBaseline: buildStudioCanonicalDuplicateSlideBaseline,
+      buildDeck: buildStudioCanonicalDuplicateSlideDeck,
+      decorateDeckOptions: (duplicateOptions) => ({
         ...duplicateOptions,
-        canonicalDeckApi,
-        buildCanonicalDeck
+        importSlideToCanonicalSlide
       })
-    );
-    const buildCanonicalDuplicateSlideDeck = (duplicateOptions = {}) => {
-      const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(
-        duplicateOptions,
-        'canonicalDeckBeforeMutation'
-      )
-        ? duplicateOptions.canonicalDeckBeforeMutation
-        : buildCanonicalDuplicateSlideBaseline(duplicateOptions);
-      return buildStudioCanonicalDuplicateSlideDeck({
-        ...duplicateOptions,
-        canonicalDeckApi,
-        buildCanonicalDeck,
-        importSlideToCanonicalSlide,
-        canonicalDeckBeforeMutation
-      });
-    };
+    });
 
     return {
-      buildCanonicalDuplicateSlideBaseline,
-      buildCanonicalDuplicateSlideDeck
+      buildCanonicalDuplicateSlideBaseline: builders.buildCanonicalMutationBaseline,
+      buildCanonicalDuplicateSlideDeck: builders.buildCanonicalMutationDeck
     };
   }
 
@@ -164,40 +197,26 @@
   }
 
   function createStudioCanonicalAddSlideMutationBuilders(options = {}) {
-    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
-      ? options.canonicalDeckApi
-      : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
     const importSlideToCanonicalSlide = typeof options.importSlideToCanonicalSlide === 'function'
       ? options.importSlideToCanonicalSlide
       : null;
     const getSlideId = typeof options.getSlideId === 'function'
       ? options.getSlideId
       : (slide) => slide && slide.id || '';
-    const buildCanonicalAddSlideBaseline = (addOptions = {}) => (
-      buildStudioCanonicalAddSlideBaseline({
+    const builders = createStudioCanonicalSlideMutationBuilders({
+      ...options,
+      buildBaseline: buildStudioCanonicalAddSlideBaseline,
+      buildDeck: buildStudioCanonicalAddSlideDeck,
+      decorateDeckOptions: (addOptions) => ({
         ...addOptions,
-        canonicalDeckApi,
-        buildCanonicalDeck
-      })
-    );
-    const buildCanonicalAddSlideDeck = (addOptions = {}) => {
-      const canonicalDeckBeforeMutation = buildCanonicalAddSlideBaseline(addOptions);
-      return buildStudioCanonicalAddSlideDeck({
-        ...addOptions,
-        canonicalDeckApi,
-        buildCanonicalDeck,
         getSlideId,
-        importSlideToCanonicalSlide,
-        canonicalDeckBeforeMutation
-      });
-    };
+        importSlideToCanonicalSlide
+      })
+    });
 
     return {
-      buildCanonicalAddSlideBaseline,
-      buildCanonicalAddSlideDeck
+      buildCanonicalAddSlideBaseline: builders.buildCanonicalMutationBaseline,
+      buildCanonicalAddSlideDeck: builders.buildCanonicalMutationDeck
     };
   }
 
@@ -238,32 +257,15 @@
   }
 
   function createStudioCanonicalDeleteSlideMutationBuilders(options = {}) {
-    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
-      ? options.canonicalDeckApi
-      : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
-    const buildCanonicalDeleteSlideBaseline = (deleteOptions = {}) => (
-      buildStudioCanonicalDeleteSlideBaseline({
-        ...deleteOptions,
-        canonicalDeckApi,
-        buildCanonicalDeck
-      })
-    );
-    const buildCanonicalDeleteSlideDeck = (deleteOptions = {}) => {
-      const canonicalDeckBeforeMutation = buildCanonicalDeleteSlideBaseline(deleteOptions);
-      return buildStudioCanonicalDeleteSlideDeck({
-        ...deleteOptions,
-        canonicalDeckApi,
-        buildCanonicalDeck,
-        canonicalDeckBeforeMutation
-      });
-    };
+    const builders = createStudioCanonicalSlideMutationBuilders({
+      ...options,
+      buildBaseline: buildStudioCanonicalDeleteSlideBaseline,
+      buildDeck: buildStudioCanonicalDeleteSlideDeck
+    });
 
     return {
-      buildCanonicalDeleteSlideBaseline,
-      buildCanonicalDeleteSlideDeck
+      buildCanonicalDeleteSlideBaseline: builders.buildCanonicalMutationBaseline,
+      buildCanonicalDeleteSlideDeck: builders.buildCanonicalMutationDeck
     };
   }
 
@@ -314,32 +316,15 @@
   }
 
   function createStudioCanonicalReorderSlideMutationBuilders(options = {}) {
-    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
-      ? options.canonicalDeckApi
-      : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
-    const buildCanonicalReorderSlideBaseline = (reorderOptions = {}) => (
-      buildStudioCanonicalReorderSlideBaseline({
-        ...reorderOptions,
-        canonicalDeckApi,
-        buildCanonicalDeck
-      })
-    );
-    const buildCanonicalReorderSlideDeck = (reorderOptions = {}) => {
-      const canonicalDeckBeforeMutation = buildCanonicalReorderSlideBaseline(reorderOptions);
-      return buildStudioCanonicalReorderSlideDeck({
-        ...reorderOptions,
-        canonicalDeckApi,
-        buildCanonicalDeck,
-        canonicalDeckBeforeMutation
-      });
-    };
+    const builders = createStudioCanonicalSlideMutationBuilders({
+      ...options,
+      buildBaseline: buildStudioCanonicalReorderSlideBaseline,
+      buildDeck: buildStudioCanonicalReorderSlideDeck
+    });
 
     return {
-      buildCanonicalReorderSlideBaseline,
-      buildCanonicalReorderSlideDeck
+      buildCanonicalReorderSlideBaseline: builders.buildCanonicalMutationBaseline,
+      buildCanonicalReorderSlideDeck: builders.buildCanonicalMutationDeck
     };
   }
 
