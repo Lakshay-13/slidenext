@@ -122,11 +122,13 @@
       : null;
     if (!canonicalDeckApi || !buildCanonicalDeck) return null;
 
-    const canonicalDeckBeforeMutation = buildStudioCanonicalStyleBaseline({
-      canonicalDeckApi,
-      buildCanonicalDeck,
-      sourceDocument: options.sourceDocument
-    });
+    const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
+      ? options.canonicalDeckBeforeMutation
+      : buildStudioCanonicalStyleBaseline({
+          canonicalDeckApi,
+          buildCanonicalDeck,
+          sourceDocument: options.sourceDocument
+        });
     return buildStudioCanonicalStyleMutation({
       ...options,
       canonicalDeckBeforeMutation

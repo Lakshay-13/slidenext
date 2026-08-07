@@ -5468,6 +5468,19 @@
       const canonicalStyleApi = typeof SlideNextStudioEditorCanonicalStyle !== 'undefined'
         ? SlideNextStudioEditorCanonicalStyle
         : null;
+      const buildCanonicalStyleBaseline = canonicalStyleApi
+        && typeof canonicalStyleApi.buildStudioCanonicalStyleBaseline === 'function'
+        ? canonicalStyleApi.buildStudioCanonicalStyleBaseline
+        : null;
+      const canonicalDeckBeforeMutation = buildCanonicalStyleBaseline
+        ? buildCanonicalStyleBaseline({
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+            sourceDocument: doc
+          })
+        : null;
       const getStyleElementId = (element) => {
         if (typeof assignEditorElementId === 'function') {
           const assignedId = assignEditorElementId(element);
@@ -5512,6 +5525,7 @@
         && typeof canonicalStyleApi.buildStudioCanonicalStyleMutationWithBaseline === 'function'
         ? canonicalStyleApi.buildStudioCanonicalStyleMutationWithBaseline({
             canonicalDeckApi,
+            canonicalDeckBeforeMutation,
             buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
               ? buildEditorCanonicalDeck
               : null,
@@ -5598,21 +5612,18 @@
       const canonicalRemovalApi = typeof SlideNextStudioEditorCanonicalRemoval !== 'undefined'
         ? SlideNextStudioEditorCanonicalRemoval
         : null;
-      const buildCanonicalRemovalDeck = canonicalRemovalApi
-        && typeof canonicalRemovalApi.buildStudioCanonicalRemovalDeck === 'function'
-        ? canonicalRemovalApi.buildStudioCanonicalRemovalDeck
+      const buildCanonicalRemovalMutation = canonicalRemovalApi
+        && typeof canonicalRemovalApi.buildStudioCanonicalRemovalMutation === 'function'
+        ? canonicalRemovalApi.buildStudioCanonicalRemovalMutation
         : null;
-      const buildCanonicalRemovalBaseline = canonicalRemovalApi
-        && typeof canonicalRemovalApi.buildStudioCanonicalRemovalBaseline === 'function'
-        ? canonicalRemovalApi.buildStudioCanonicalRemovalBaseline
-        : null;
-      const canonicalDeckBeforeRemoval = buildCanonicalRemovalBaseline
-        ? buildCanonicalRemovalBaseline({
+      const canonicalDeck = buildCanonicalRemovalMutation
+        ? buildCanonicalRemovalMutation(removalActionState.selection, {
             canonicalDeckApi,
             buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
               ? buildEditorCanonicalDeck
               : null,
-            sourceDocument: doc
+            sourceDocument: doc,
+            getElementId: getRemovalElementId
           })
         : null;
       const mutation = applyEditorRemovalMutationWithTransaction(removalActionState.selection, {
@@ -5622,13 +5633,6 @@
         }
       });
       if (!mutation.didRemove) return finalizeRemovalActionResult(false, doc);
-      const canonicalDeck = buildCanonicalRemovalDeck
-        ? buildCanonicalRemovalDeck(removalActionState.selection, {
-            canonicalDeckApi,
-            canonicalDeckBeforeMutation: canonicalDeckBeforeRemoval,
-            getElementId: getRemovalElementId
-          })
-        : null;
       deselectElement();
       finalizeEditorDeckMutation('Auto: Deleted Element', {
         transaction: mutation.transaction,

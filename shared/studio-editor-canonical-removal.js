@@ -50,8 +50,29 @@
     return removeCanonicalNodes(canonicalDeckBeforeMutation, nodeIds);
   }
 
+  function buildStudioCanonicalRemovalMutation(selection, options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    if (!canonicalDeckApi || !buildCanonicalDeck) return null;
+
+    const canonicalDeckBeforeMutation = buildStudioCanonicalRemovalBaseline({
+      canonicalDeckApi,
+      buildCanonicalDeck,
+      sourceDocument: options.sourceDocument
+    });
+    return buildStudioCanonicalRemovalDeck(selection, {
+      ...options,
+      canonicalDeckBeforeMutation
+    });
+  }
+
   return {
     buildStudioCanonicalRemovalBaseline,
-    buildStudioCanonicalRemovalDeck
+    buildStudioCanonicalRemovalDeck,
+    buildStudioCanonicalRemovalMutation
   };
 });

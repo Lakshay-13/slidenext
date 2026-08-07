@@ -48,3 +48,24 @@ test('buildStudioCanonicalRemovalDeck fails closed without a model or selection'
   }), null);
   assert.equal(canonicalRemoval.buildStudioCanonicalRemovalDeck([{ dataset: { editorId: 'node-1' } }], {}), null);
 });
+
+test('buildStudioCanonicalRemovalMutation centralizes baseline and node removal', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1' }, { id: 'after' }]
+    }]
+  });
+  const result = canonicalRemoval.buildStudioCanonicalRemovalMutation(
+    [{ dataset: { editorId: 'node-1' } }],
+    {
+      canonicalDeckApi: canonicalDeck,
+      buildCanonicalDeck: () => sourceDeck,
+      sourceDocument: { id: 'editor-doc' },
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['after']);
+  assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'after']);
+});
