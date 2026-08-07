@@ -722,6 +722,50 @@ test('normalizeStudioTransformBounds clamps drag motion and resize bounds determ
   });
 });
 
+test('normalizeStudioTransformBounds rejects invalid non-negative constraints', () => {
+  assert.deepEqual(transformState.normalizeStudioTransformBounds({
+    left: -20,
+    top: -20,
+    right: 80,
+    bottom: 80
+  }, {
+    width: 100,
+    height: 100
+  }, {
+    mode: 'drag',
+    dragOverflowMarginPx: -10
+  }), {
+    left: 0,
+    top: 0,
+    right: 100,
+    bottom: 100,
+    width: 100,
+    height: 100
+  });
+
+  const resizeElement = { tagName: 'DIV', style: {} };
+  transformState.applyStudioTransformBounds({
+    type: 'resize',
+    startBounds: { left: 0, top: 0, width: 100, height: 50 },
+    items: [{
+      element: resizeElement,
+      startAbsLeft: 0,
+      startAbsTop: 0,
+      startWidth: 0,
+      startHeight: 0
+    }]
+  }, {
+    left: 0,
+    top: 0,
+    width: 100,
+    height: 50
+  }, {
+    minSizePx: Number.NaN
+  });
+  assert.equal(resizeElement.style.width, '0px');
+  assert.equal(resizeElement.style.height, '0px');
+});
+
 test('buildStudioTransformInteractionBounds derives raw drag and resize bounds from session state', () => {
   assert.deepEqual(transformState.buildStudioTransformInteractionBounds({
     type: 'drag',

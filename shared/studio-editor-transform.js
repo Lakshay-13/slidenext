@@ -251,6 +251,11 @@
     return Math.max(min, Math.min(max, value));
   }
 
+  function normalizeStudioTransformConstraint(value, fallback = 0) {
+    if (!Number.isFinite(value) || value < 0) return fallback === 0 ? 0 : fallback;
+    return value === 0 ? 0 : value;
+  }
+
   function normalizeStudioTransformBounds(bounds = {}, slideRect = {}, options = {}) {
     let left = Number.isFinite(bounds.left) ? bounds.left : 0;
     let top = Number.isFinite(bounds.top) ? bounds.top : 0;
@@ -260,15 +265,15 @@
     const slideHeight = Number.isFinite(slideRect.height) ? slideRect.height : 0;
     const mode = options.mode || '';
     const handleDir = options.handleDir || '';
-    const minSizePx = Number.isFinite(options.minSizePx) ? options.minSizePx : 0;
-    const dragOverflowMarginPx = Number.isFinite(options.dragOverflowMarginPx) ? options.dragOverflowMarginPx : 0;
+    const minSizePx = normalizeStudioTransformConstraint(options.minSizePx);
+    const dragOverflowMarginPx = normalizeStudioTransformConstraint(options.dragOverflowMarginPx);
 
     if (mode === 'drag') {
       const width = right - left;
       const height = bottom - top;
-      const minLeft = -dragOverflowMarginPx;
+      const minLeft = dragOverflowMarginPx === 0 ? 0 : -dragOverflowMarginPx;
       const maxLeft = Math.max(minLeft, slideWidth - width + dragOverflowMarginPx);
-      const minTop = -dragOverflowMarginPx;
+      const minTop = dragOverflowMarginPx === 0 ? 0 : -dragOverflowMarginPx;
       const maxTop = Math.max(minTop, slideHeight - height + dragOverflowMarginPx);
       left = clampStudioTransformValue(left, minLeft, maxLeft);
       top = clampStudioTransformValue(top, minTop, maxTop);
@@ -329,7 +334,7 @@
       return bounds;
     }
 
-    const minSizePx = Number.isFinite(options.minSizePx) ? options.minSizePx : 0;
+    const minSizePx = normalizeStudioTransformConstraint(options.minSizePx);
     const rawWidth = Math.max(minSizePx, Math.abs((bounds.right || 0) - (bounds.left || 0)));
     const rawHeight = Math.max(minSizePx, Math.abs((bounds.bottom || 0) - (bounds.top || 0)));
     let width = rawWidth;
@@ -569,8 +574,8 @@
     const normalizeOptions = {
       mode: session.type,
       handleDir,
-      minSizePx: Number.isFinite(options.minSizePx) ? options.minSizePx : 0,
-      dragOverflowMarginPx: Number.isFinite(options.dragOverflowMarginPx) ? options.dragOverflowMarginPx : 0
+      minSizePx: normalizeStudioTransformConstraint(options.minSizePx),
+      dragOverflowMarginPx: normalizeStudioTransformConstraint(options.dragOverflowMarginPx)
     };
     const rawBounds = buildStudioTransformInteractionBounds(session, options);
     const snapResult = snapStudioTransformBounds(rawBounds, session, {
@@ -586,7 +591,7 @@
 
   function applyStudioTransformBounds(session = {}, bounds = {}, options = {}) {
     const items = Array.isArray(session.items) ? session.items : [];
-    const minSizePx = Number.isFinite(options.minSizePx) ? options.minSizePx : 0;
+    const minSizePx = normalizeStudioTransformConstraint(options.minSizePx);
     const shouldResizeWidth = typeof options.shouldResizeWidth === 'function'
       ? options.shouldResizeWidth
       : shouldStudioResizeWidth;
@@ -1253,8 +1258,8 @@
         pointer: options.pointer,
         dx: motionState.dx,
         dy: motionState.dy,
-        minSizePx: Number.isFinite(options.minSizePx) ? options.minSizePx : 0,
-        dragOverflowMarginPx: Number.isFinite(options.dragOverflowMarginPx) ? options.dragOverflowMarginPx : 0,
+        minSizePx: normalizeStudioTransformConstraint(options.minSizePx),
+        dragOverflowMarginPx: normalizeStudioTransformConstraint(options.dragOverflowMarginPx),
         lockAspectRatio: !!options.lockAspectRatio,
         snapEnabled: options.snapEnabled,
         snapDistancePx: options.snapDistancePx,
@@ -1369,10 +1374,8 @@
       ? options.itemOptions
       : {};
     const dragStartThresholdPx = normalizeStudioTransformDragStartThreshold(options.dragStartThresholdPx);
-    const minSizePx = Number.isFinite(options.minSizePx) ? options.minSizePx : 0;
-    const dragOverflowMarginPx = Number.isFinite(options.dragOverflowMarginPx)
-      ? options.dragOverflowMarginPx
-      : 0;
+    const minSizePx = normalizeStudioTransformConstraint(options.minSizePx);
+    const dragOverflowMarginPx = normalizeStudioTransformConstraint(options.dragOverflowMarginPx);
     const getGridSizePx = typeof options.getGridSizePx === 'function'
       ? options.getGridSizePx
       : () => options.gridSizePx;
@@ -1542,10 +1545,8 @@
       ? options.itemOptions
       : {};
     const dragStartThresholdPx = normalizeStudioTransformDragStartThreshold(options.dragStartThresholdPx);
-    const minSizePx = Number.isFinite(options.minSizePx) ? options.minSizePx : 0;
-    const dragOverflowMarginPx = Number.isFinite(options.dragOverflowMarginPx)
-      ? options.dragOverflowMarginPx
-      : 0;
+    const minSizePx = normalizeStudioTransformConstraint(options.minSizePx);
+    const dragOverflowMarginPx = normalizeStudioTransformConstraint(options.dragOverflowMarginPx);
     const getGridSizePx = typeof options.getGridSizePx === 'function'
       ? options.getGridSizePx
       : () => options.gridSizePx;
