@@ -1599,7 +1599,8 @@
         clientY: event.clientY,
         dragStartThresholdPx,
         minSizePx,
-        dragOverflowMarginPx
+        dragOverflowMarginPx,
+        lockAspectRatio: !!event.shiftKey
       });
       if (!transformFrameState.isActive) return false;
 

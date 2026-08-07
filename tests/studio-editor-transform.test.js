@@ -275,7 +275,12 @@ test('createStudioTransformFallbackPointerHandlers coordinates the legacy pointe
 
   assert.equal(handlers.handlePointerDown({ pointerId: 7 }), true);
   activeSession = session;
-  assert.equal(handlers.handlePointerMove({ pointerId: 7, clientX: 30, clientY: 40 }), true);
+  assert.equal(handlers.handlePointerMove({
+    pointerId: 7,
+    clientX: 30,
+    clientY: 40,
+    shiftKey: true
+  }), true);
   assert.equal(handlers.handlePointerUp({ pointerId: 7 }), true);
   assert.deepEqual(calls, [
     'getActiveSlide',
@@ -287,7 +292,8 @@ test('createStudioTransformFallbackPointerHandlers coordinates the legacy pointe
       clientY: 40,
       dragStartThresholdPx: 4,
       minSizePx: 0,
-      dragOverflowMarginPx: 0
+      dragOverflowMarginPx: 0,
+      lockAspectRatio: true
     }],
     ['apply', session, { left: 12, top: 22 }],
     ['session-frame', { left: 12, top: 22 }],
