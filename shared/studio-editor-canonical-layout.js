@@ -95,6 +95,8 @@
         ? { id: elementId, layout: { zIndex } }
         : null;
     }).filter(Boolean);
+    if (layoutUpdates.length === 0) return null;
+
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(
       options,
       'canonicalDeckBeforeMutation'

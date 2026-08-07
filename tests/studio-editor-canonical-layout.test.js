@@ -117,6 +117,20 @@ test('buildStudioCanonicalLayerOrderMutation maps z-indexes using the pre-mutati
   assert.equal(sourceDeck.slides[0].nodes[0].layout.zIndex, 0);
 });
 
+test('buildStudioCanonicalLayerOrderMutation fails closed when no z-index updates are valid', () => {
+  const sourceDeck = createSourceDeck();
+  const result = canonicalLayout.buildStudioCanonicalLayerOrderMutation({
+    canonicalDeckApi: canonicalDeck,
+    canonicalDeckBeforeMutation: sourceDeck,
+    orderedElements: [{
+      dataset: {},
+      style: { zIndex: 'not-a-number' }
+    }]
+  });
+
+  assert.equal(result, null);
+});
+
 test('createStudioCanonicalLayoutMutationBuilder shares canonical dependencies', () => {
   const sourceDeck = createSourceDeck();
   let builtFromDocument = null;
