@@ -233,6 +233,50 @@ test('createCanonicalPptxExport preserves solid legacy slide backgrounds from st
   assert.deepEqual(result.pptx.slides[0].background, { color: '123456' });
 });
 
+test('createCanonicalPptxExport renders canonical slide background images before nodes', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      id: 'slide-1',
+      layout: { background: { image: 'url("data:image/png;base64,AAAA")' } },
+      nodes: [{
+        id: 'text-1',
+        type: 'text',
+        text: 'Foreground',
+        layout: { x: 100, y: 50, width: 200, height: 40 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.pptx.slides[0].calls.map(call => call.type), ['image', 'text']);
+  assert.deepEqual(result.pptx.slides[0].calls[0].options, {
+    data: 'data:image/png;base64,AAAA',
+    x: 0,
+    y: 0,
+    w: 13.333,
+    h: 6.6665
+  });
+  assert.deepEqual(result.diagnostics.missingBackgroundAssets, []);
+});
+
+test('preflightCanonicalPptxExport reports missing slide background image assets', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      id: 'slide-1',
+      layout: { background: { image: 'url("images/background.png")' } },
+      nodes: []
+    }]
+  }, {
+    assetBaseDir: '/deck',
+    assetExists(source) {
+      return source !== '/deck/images/background.png';
+    }
+  });
+
+  assert.deepEqual(report.diagnostics.missingBackgroundAssets, ['slide-1:background']);
+  assert.match(report.diagnostics.warnings.join('\n'), /missing background image asset/);
+});
+
 test('createCanonicalPptxExport resolves grouped child positions from parent-local coordinates', () => {
   const result = pptxExport.createCanonicalPptxExport({
     layout: { size: { width: 1000, height: 500, unit: 'px' } },

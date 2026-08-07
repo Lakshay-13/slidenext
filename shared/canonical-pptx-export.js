@@ -198,14 +198,32 @@
     return typeof attributes[name] === 'string' ? attributes[name] : '';
   }
 
+  function resolveAssetSource(source, options) {
+    if (!source) return '';
+    if (/^(data:|https?:\/\/|file:\/\/|\/)/i.test(source) || !options.assetBaseDir) return source;
+    return `${options.assetBaseDir.replace(/[\\/]$/, '')}/${source.replace(/^[/\\]+/, '')}`;
+  }
+
   function resolveImageSource(node, deck, options) {
     const directSource = getNodeAttribute(node, 'src');
     const assetId = getNodeAttribute(node, 'data-asset-id') || getNodeAttribute(node, 'data-asset');
     const asset = assetId ? deck.assets.find(item => item.id === assetId) : null;
-    const source = directSource || (asset && asset.src) || '';
-    if (!source) return '';
-    if (/^(data:|https?:\/\/|file:\/\/|\/)/i.test(source) || !options.assetBaseDir) return source;
-    return `${options.assetBaseDir.replace(/[\\/]$/, '')}/${source.replace(/^[/\\]+/, '')}`;
+    return resolveAssetSource(directSource || (asset && asset.src) || '', options);
+  }
+
+  function extractCssImageSource(value) {
+    if (typeof value !== 'string') return '';
+    const match = value.match(/url\(\s*(?:'([^']*)'|"([^"]*)"|([^)]*))\s*\)/i);
+    const source = (match && (match[1] || match[2] || match[3]) || '').trim();
+    return source && !source.startsWith('#') ? source : '';
+  }
+
+  function resolveSlideBackgroundImageSource(background, options) {
+    return resolveAssetSource(extractCssImageSource(background && background.image), options);
+  }
+
+  function getBackgroundAssetDiagnosticId(slide) {
+    return `${slide && slide.id ? slide.id : 'unknown'}:background`;
   }
 
   function nodeStyle(node) {
@@ -275,7 +293,8 @@
       unsupportedStyles: [],
       overflowNodes: [],
       fontSubstitutionRisks: [],
-      missingAssets: []
+      missingAssets: [],
+      missingBackgroundAssets: []
     };
   }
 
@@ -419,6 +438,7 @@
 
     deck.slides.forEach(slide => {
       const background = asObject(slide.layout).background || {};
+      const backgroundImageSource = resolveSlideBackgroundImageSource(background, normalizedOptions);
       if (background.style && !resolveSlideBackgroundColor(background)) {
         diagnostics.unsupportedStyles.push({
           id: slide.id || 'unknown',
@@ -426,8 +446,29 @@
         });
         diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} uses unsupported CSS background styling`);
       }
-      if (background.image) {
-        diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} background image was not exported`);
+      if (background.image && !backgroundImageSource) {
+        diagnostics.unsupportedStyles.push({
+          id: slide.id || 'unknown',
+          properties: ['background-image']
+        });
+        diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} background image is not an exportable image URL`);
+      } else if (backgroundImageSource) {
+        let hasMissingAsset = false;
+        if (normalizedOptions.assetExists) {
+          try {
+            hasMissingAsset = !normalizedOptions.assetExists(backgroundImageSource, {
+              id: getBackgroundAssetDiagnosticId(slide),
+              type: 'background-image'
+            }, deck);
+          } catch (err) {
+            hasMissingAsset = true;
+          }
+        }
+        if (hasMissingAsset) {
+          const diagnosticId = getBackgroundAssetDiagnosticId(slide);
+          diagnostics.missingBackgroundAssets.push(diagnosticId);
+          diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} references a missing background image asset`);
+        }
       }
       slide.nodes.forEach(visit);
     });
@@ -488,6 +529,23 @@
     const background = asObject(slide.layout).background || {};
     const color = resolveSlideBackgroundColor(background);
     if (color) context.slide.background = { color };
+    const backgroundSource = resolveSlideBackgroundImageSource(background, context.options);
+    const backgroundId = getBackgroundAssetDiagnosticId(slide);
+    const missingBackground = context.diagnostics
+      && Array.isArray(context.diagnostics.missingBackgroundAssets)
+      && context.diagnostics.missingBackgroundAssets.includes(backgroundId);
+    if (backgroundSource && !missingBackground && typeof context.slide.addImage === 'function') {
+      const bounds = {
+        x: 0,
+        y: 0,
+        w: context.options.pageWidth,
+        h: context.options.pageHeight
+      };
+      const imageOptions = backgroundSource.startsWith('data:')
+        ? { data: backgroundSource, ...bounds }
+        : { path: backgroundSource, ...bounds };
+      context.slide.addImage(imageOptions);
+    }
     if (slide.notes && typeof context.slide.addNotes === 'function') context.slide.addNotes(slide.notes);
     getPptxRenderOrder(slide.nodes).forEach(node => renderNode(node, context));
   }
