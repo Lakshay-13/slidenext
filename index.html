@@ -3201,10 +3201,9 @@
       const canonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
         ? SlideNextStudioEditorCanonicalSlide
         : null;
-      const buildCanonicalDeleteSlideBaseline = canonicalSlideApi
-        && typeof canonicalSlideApi.buildStudioCanonicalDeleteSlideBaseline === 'function'
-        ? (options) => canonicalSlideApi.buildStudioCanonicalDeleteSlideBaseline({
-            ...options,
+      const canonicalDeleteSlideBuilders = canonicalSlideApi
+        && typeof canonicalSlideApi.createStudioCanonicalDeleteSlideMutationBuilders === 'function'
+        ? canonicalSlideApi.createStudioCanonicalDeleteSlideMutationBuilders({
             canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
               ? SlideNextCanonicalDeck
               : null,
@@ -3213,25 +3212,8 @@
               : null
           })
         : null;
-      const buildCanonicalDeleteSlideDeck = canonicalSlideApi
-        && typeof canonicalSlideApi.buildStudioCanonicalDeleteSlideDeck === 'function'
-        ? (options) => {
-            const canonicalDeckBeforeMutation = buildCanonicalDeleteSlideBaseline
-              ? buildCanonicalDeleteSlideBaseline(options)
-              : null;
-            return canonicalSlideApi.buildStudioCanonicalDeleteSlideDeck({
-              ...options,
-              canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-                ? SlideNextCanonicalDeck
-                : null,
-              buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-                ? buildEditorCanonicalDeck
-                : null,
-              ...(buildCanonicalDeleteSlideBaseline
-                ? { canonicalDeckBeforeMutation }
-                : {})
-            });
-          }
+      const buildCanonicalDeleteSlideDeck = canonicalDeleteSlideBuilders
+        ? canonicalDeleteSlideBuilders.buildCanonicalDeleteSlideDeck
         : null;
 
       return deleteStudioSlideNode(idx, {

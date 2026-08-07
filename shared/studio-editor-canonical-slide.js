@@ -237,6 +237,36 @@
     return removeCanonicalSlide(canonicalDeckBeforeMutation, slideId);
   }
 
+  function createStudioCanonicalDeleteSlideMutationBuilders(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const buildCanonicalDeleteSlideBaseline = (deleteOptions = {}) => (
+      buildStudioCanonicalDeleteSlideBaseline({
+        ...deleteOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck
+      })
+    );
+    const buildCanonicalDeleteSlideDeck = (deleteOptions = {}) => {
+      const canonicalDeckBeforeMutation = buildCanonicalDeleteSlideBaseline(deleteOptions);
+      return buildStudioCanonicalDeleteSlideDeck({
+        ...deleteOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck,
+        canonicalDeckBeforeMutation
+      });
+    };
+
+    return {
+      buildCanonicalDeleteSlideBaseline,
+      buildCanonicalDeleteSlideDeck
+    };
+  }
+
   function buildStudioCanonicalReorderSlideBaseline(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -319,6 +349,7 @@
     createStudioCanonicalAddSlideMutationBuilders,
     buildStudioCanonicalDeleteSlideBaseline,
     buildStudioCanonicalDeleteSlideDeck,
+    createStudioCanonicalDeleteSlideMutationBuilders,
     buildStudioCanonicalDuplicateSlideBaseline,
     buildStudioCanonicalDuplicateSlideDeck,
     createStudioCanonicalDuplicateSlideMutationBuilders,

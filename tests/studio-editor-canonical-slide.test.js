@@ -217,6 +217,29 @@ test('buildStudioCanonicalDeleteSlideDeck removes only the requested slide witho
   assert.deepEqual(sourceDeck.slides.map((slide) => slide.id), ['slide-1', 'slide-2']);
 });
 
+test('createStudioCanonicalDeleteSlideMutationBuilders builds from the source document once', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }, { id: 'slide-2' }]
+  });
+  const sourceDocument = { id: 'editor-doc' };
+  const builtDocuments = [];
+  const builders = canonicalSlide.createStudioCanonicalDeleteSlideMutationBuilders({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtDocuments.push(documentRef);
+      return sourceDeck;
+    }
+  });
+
+  const result = builders.buildCanonicalDeleteSlideDeck({
+    sourceDocument,
+    slideId: 'slide-2'
+  });
+
+  assert.deepEqual(builtDocuments, [sourceDocument]);
+  assert.deepEqual(result.slides.map((slide) => slide.id), ['slide-1']);
+});
+
 test('buildStudioCanonicalReorderSlideBaseline builds from the source document', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const sourceDocument = { id: 'editor-doc' };
