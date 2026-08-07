@@ -1214,6 +1214,7 @@
   <script src="/shared/presentation-library.js"></script>
   <script src="/shared/presentation-library-view.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
+  <script src="/shared/studio-editor-style-mutation.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
@@ -5344,21 +5345,16 @@
     }
 
     function applyEditorStyleMutationWithTransaction(styleApi, selection, prop, value, options = {}) {
-      const resolvedStyleApi = styleApi && typeof styleApi === 'object' ? styleApi : null;
-      const createStyleTransaction = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioStyleTransaction === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioStyleTransaction
+      const mutationApi = typeof SlideNextStudioEditorStyleMutation !== 'undefined'
+        ? SlideNextStudioEditorStyleMutation
         : null;
-      const createPropertyTransaction = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioPropertyTransaction === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioPropertyTransaction
+      const applyMutation = mutationApi
+        && typeof mutationApi.applyStudioStyleMutationWithTransaction === 'function'
+        ? mutationApi.applyStudioStyleMutationWithTransaction
         : null;
+      if (!applyMutation) {
+        return { didApply: false, displayValue: `${value}`, transaction: null };
+      }
       const getElementId = typeof options.getElementId === 'function'
         ? options.getElementId
         : (element) => {
@@ -5368,26 +5364,16 @@
             }
             return element && element.dataset && element.dataset.editorId;
           };
-      const applyStudioStyleMutationWithTransaction = resolvedStyleApi
-        && typeof resolvedStyleApi.applyStudioStyleMutationWithTransaction === 'function'
-        ? resolvedStyleApi.applyStudioStyleMutationWithTransaction
-        : null;
-      const applyStudioStyleMutation = resolvedStyleApi
-        && typeof resolvedStyleApi.applyStudioStyleMutation === 'function'
-        ? resolvedStyleApi.applyStudioStyleMutation
-        : null;
-      if (!applyStudioStyleMutationWithTransaction) {
-        return { didApply: false, displayValue: `${value}`, transaction: null };
-      }
-      const mutation = applyStudioStyleMutationWithTransaction(selection, prop, value, {
-        createStyleTransaction,
-        createPropertyTransaction,
+      return applyMutation(styleApi, selection, prop, value, {
+        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+          ? SlideNextStudioEditorTransaction
+          : null,
         getElementId,
-        applyStudioStyleMutation
+        applyStudioStyleMutation: styleApi
+          && typeof styleApi.applyStudioStyleMutation === 'function'
+          ? styleApi.applyStudioStyleMutation
+          : null
       });
-      return mutation && typeof mutation === 'object'
-        ? mutation
-        : { didApply: false, displayValue: `${value}`, transaction: null };
     }
 
     // Apply styles immediately to active selected elements
