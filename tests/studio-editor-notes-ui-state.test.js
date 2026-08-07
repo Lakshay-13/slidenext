@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const slideMetadata = require('../shared/studio-editor-slide-metadata.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -29,6 +30,7 @@ test('updateActiveSlideNotes delegates to the shared notes action', () => {
   let delegatedOptions = null;
   const frame = { id: 'live-frame' };
   const context = {
+    SlideNextStudioEditorSlideMetadata: slideMetadata,
     SlideNextStudioEditorNotes: {
       id: 'notes-api'
     },
@@ -89,6 +91,7 @@ test('updateActiveSlideNotes forwards the shared action result', () => {
   );
   let actionCalls = 0;
   const context = {
+    SlideNextStudioEditorSlideMetadata: slideMetadata,
     resolveCurrentStudioDeckReadyActionState() {
       return { canUseDeckActions: false };
     },
@@ -131,6 +134,7 @@ test('updateActiveSlideSection delegates to the shared section action', () => {
   );
   let delegatedOptions = null;
   const context = {
+    SlideNextStudioEditorSlideMetadata: slideMetadata,
     SlideNextStudioEditorNotes: { id: 'metadata-api' },
     SlideNextStudioEditorNotesActions: {
       applyStudioSlideMetadataEdit(value, options) {

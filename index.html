@@ -1204,6 +1204,7 @@
   <script src="/shared/studio-editor-wallpaper-view.js"></script>
   <script src="/shared/studio-editor-notes.js"></script>
   <script src="/shared/studio-editor-notes-actions.js"></script>
+  <script src="/shared/studio-editor-slide-metadata.js"></script>
   <script src="/shared/studio-editor-active-slide-view.js"></script>
   <script src="/shared/studio-editor-thumbnail-view.js"></script>
   <script src="/shared/studio-editor-mutation.js"></script>
@@ -3840,36 +3841,34 @@
     }
 
     function applyActiveSlideMetadataEdit(value = '', options = {}) {
+      const slideMetadata = typeof SlideNextStudioEditorSlideMetadata !== 'undefined'
+        ? SlideNextStudioEditorSlideMetadata
+        : null;
       const notesView = typeof SlideNextStudioEditorNotes !== 'undefined'
         ? SlideNextStudioEditorNotes
         : null;
       const notesActions = typeof SlideNextStudioEditorNotesActions !== 'undefined'
         ? SlideNextStudioEditorNotesActions
         : null;
-      if (!notesView || !notesActions || typeof notesActions.applyStudioSlideMetadataEdit !== 'function') {
+      if (!slideMetadata || typeof slideMetadata.applyStudioActiveSlideMetadataEdit !== 'function') {
         return false;
       }
-      const canonicalMetadataApi = typeof SlideNextStudioEditorCanonicalMetadata !== 'undefined'
-        ? SlideNextStudioEditorCanonicalMetadata
-        : null;
-      const canonicalMetadataBuilders = canonicalMetadataApi
-        && typeof canonicalMetadataApi.createStudioCanonicalMetadataMutationBuilders === 'function'
-        ? canonicalMetadataApi.createStudioCanonicalMetadataMutationBuilders({
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null
-          })
-        : null;
-      return notesActions.applyStudioSlideMetadataEdit(value, {
+      return slideMetadata.applyStudioActiveSlideMetadataEdit(value, {
+        metadataApi: notesView,
+        metadataActions: notesActions,
+        canonicalMetadataApi: typeof SlideNextStudioEditorCanonicalMetadata !== 'undefined'
+          ? SlideNextStudioEditorCanonicalMetadata
+          : null,
+        canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+          ? SlideNextCanonicalDeck
+          : null,
+        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck
+          : null,
         resolveReadyState: resolveCurrentStudioDeckReadyActionState,
         getDocument: getIframeDoc,
         getActiveSlide,
-        metadataApi: notesView,
         metadataMethod: options.metadataMethod,
-        ...(options.versionLabel ? { versionLabel: options.versionLabel } : {}),
         transactionApi: (
           typeof SlideNextStudioEditorTransaction !== 'undefined'
           && SlideNextStudioEditorTransaction
@@ -3882,13 +3881,7 @@
             : '';
           return slideId ? `slide:${slideId}` : '';
         },
-        canonicalMetadataKey: options.metadataMethod === 'applyStudioSlideSection' ? 'section' : 'notes',
-        buildCanonicalMetadataBaseline: canonicalMetadataBuilders
-          ? canonicalMetadataBuilders.buildCanonicalMetadataBaseline
-          : null,
-        buildCanonicalMetadataDeck: canonicalMetadataBuilders
-          ? canonicalMetadataBuilders.buildCanonicalMetadataDeck
-          : null,
+        ...(options.versionLabel ? { versionLabel: options.versionLabel } : {}),
         finalizeMutation: finalizeEditorDeckMutation,
         syncChrome: syncStudioChromeToActiveSlide
       });
