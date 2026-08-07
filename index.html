@@ -5994,15 +5994,16 @@
         ? SlideNextStudioEditorCanonicalLayout
         : null;
       const buildCanonicalLayoutMutation = canonicalLayoutApi
-        && typeof canonicalLayoutApi.buildStudioCanonicalLayoutMutation === 'function'
-        ? canonicalLayoutApi.buildStudioCanonicalLayoutMutation
-        : null;
-      const canonicalDeck = buildCanonicalLayoutMutation
-        ? buildCanonicalLayoutMutation({
+        && typeof canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder === 'function'
+        ? canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder({
             canonicalDeckApi,
             buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
               ? buildEditorCanonicalDeck
-              : null,
+              : null
+          })
+        : null;
+      const canonicalDeck = buildCanonicalLayoutMutation
+        ? buildCanonicalLayoutMutation({
             sourceDocument: doc,
             nextItems: nudgeResult.nextItems,
             getElementId: getNudgeElementId
@@ -6089,15 +6090,16 @@
         ? SlideNextStudioEditorCanonicalLayout
         : null;
       const buildCanonicalLayoutMutation = canonicalLayoutApi
-        && typeof canonicalLayoutApi.buildStudioCanonicalLayoutMutation === 'function'
-        ? canonicalLayoutApi.buildStudioCanonicalLayoutMutation
-        : null;
-      const canonicalDeck = buildCanonicalLayoutMutation
-        ? buildCanonicalLayoutMutation({
+        && typeof canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder === 'function'
+        ? canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder({
             canonicalDeckApi,
             buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
               ? buildEditorCanonicalDeck
-              : null,
+              : null
+          })
+        : null;
+      const canonicalDeck = buildCanonicalLayoutMutation
+        ? buildCanonicalLayoutMutation({
             sourceDocument: typeof getIframeDoc === 'function' ? getIframeDoc() : null,
             nextItems: alignmentResult.nextItems,
             getElementId: getAlignmentElementId
@@ -6143,15 +6145,16 @@
         ? SlideNextStudioEditorCanonicalLayout
         : null;
       const buildCanonicalLayoutMutation = canonicalLayoutApi
-        && typeof canonicalLayoutApi.buildStudioCanonicalLayoutMutation === 'function'
-        ? canonicalLayoutApi.buildStudioCanonicalLayoutMutation
-        : null;
-      const canonicalDeck = buildCanonicalLayoutMutation
-        ? buildCanonicalLayoutMutation({
+        && typeof canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder === 'function'
+        ? canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder({
             canonicalDeckApi,
             buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
               ? buildEditorCanonicalDeck
-              : null,
+              : null
+          })
+        : null;
+      const canonicalDeck = buildCanonicalLayoutMutation
+        ? buildCanonicalLayoutMutation({
             sourceDocument: typeof getIframeDoc === 'function' ? getIframeDoc() : null,
             nextItems: distributionResult.nextItems,
             getElementId: getDistributionElementId

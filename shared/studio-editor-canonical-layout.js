@@ -110,10 +110,25 @@
     });
   }
 
+  function createStudioCanonicalLayoutMutationBuilder(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    return (mutationOptions = {}) => buildStudioCanonicalLayoutMutation({
+      ...mutationOptions,
+      canonicalDeckApi,
+      buildCanonicalDeck
+    });
+  }
+
   return {
     buildStudioCanonicalLayoutBaseline,
     buildStudioCanonicalLayoutDeck,
     buildStudioCanonicalLayoutMutation,
-    buildStudioCanonicalLayerOrderMutation
+    buildStudioCanonicalLayerOrderMutation,
+    createStudioCanonicalLayoutMutationBuilder
   };
 });

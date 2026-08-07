@@ -99,3 +99,27 @@ test('buildStudioCanonicalLayerOrderMutation maps z-indexes using the pre-mutati
   assert.equal(result.slides[0].nodes[0].layout.x, null);
   assert.equal(sourceDeck.slides[0].nodes[0].layout.zIndex, 0);
 });
+
+test('createStudioCanonicalLayoutMutationBuilder shares canonical dependencies', () => {
+  const sourceDeck = createSourceDeck();
+  let builtFromDocument = null;
+  const buildCanonicalLayoutMutation = canonicalLayout.createStudioCanonicalLayoutMutationBuilder({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck(documentRef) {
+      builtFromDocument = documentRef;
+      return sourceDeck;
+    }
+  });
+
+  const result = buildCanonicalLayoutMutation({
+    sourceDocument: { id: 'editor-doc' },
+    nextItems: [{
+      element: { dataset: { editorId: 'node-1' } },
+      nextAbsLeft: 40,
+      nextAbsTop: 60
+    }]
+  });
+
+  assert.equal(builtFromDocument.id, 'editor-doc');
+  assert.equal(result.slides[0].nodes[0].layout.x, 40);
+});
