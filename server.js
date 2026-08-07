@@ -91,6 +91,13 @@ function normalizePptxDownloadFilename(filename, title = '') {
   return `${baseName || 'slidenext-presentation'}.pptx`;
 }
 
+function resolveProvidedCanonicalDeck(canonicalDeck) {
+  if (canonicalDeck === undefined || canonicalDeck === null) {
+    return null;
+  }
+  return presentationMetadata.resolvePresentationCanonicalDeck({ canonicalDeck });
+}
+
 // Export any canonical deck without writing generated files into the workspace.
 app.post('/api/export/pptx', async (req, res) => {
   const { canonicalDeck, filename, sourcePath } = req.body || {};
@@ -243,6 +250,9 @@ app.post('/api/save', async (req, res) => {
   const { htmlPath, htmlContent, isAutoSave, versionLabel, canonicalDeck } = req.body;
   if (!htmlPath || !htmlContent) {
     return res.status(400).json({ error: 'Missing htmlPath or htmlContent' });
+  }
+  if (canonicalDeck !== undefined && canonicalDeck !== null && !resolveProvidedCanonicalDeck(canonicalDeck)) {
+    return res.status(400).json({ error: 'Invalid canonicalDeck' });
   }
 
   try {
