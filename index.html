@@ -1208,6 +1208,7 @@
   <script src="/shared/studio-editor-transaction.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-slide-commands.js"></script>
+  <script src="/shared/studio-editor-slide-insertion-mutation.js"></script>
   <script src="/shared/studio-editor-slide-reorder-mutation.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-interaction-options.js"></script>
@@ -2984,38 +2985,29 @@
     }
 
     function applyEditorSlideInsertionWithTransaction(container, slideNode, options = {}) {
-      const slideCommands = typeof SlideNextStudioEditorSlideCommands !== 'undefined'
-        ? SlideNextStudioEditorSlideCommands
+      const mutationApi = typeof SlideNextStudioEditorSlideInsertionMutation !== 'undefined'
+        ? SlideNextStudioEditorSlideInsertionMutation
         : null;
-      const applyStudioSlideInsertionWithTransaction = slideCommands
-        && typeof slideCommands.applyStudioSlideInsertionWithTransaction === 'function'
-        ? slideCommands.applyStudioSlideInsertionWithTransaction
+      const applyMutation = mutationApi
+        && typeof mutationApi.applyStudioSlideInsertionMutationWithTransaction === 'function'
+        ? mutationApi.applyStudioSlideInsertionMutationWithTransaction
         : null;
-      if (!applyStudioSlideInsertionWithTransaction) {
+      if (!applyMutation) {
         return {
           didApply: false,
           transaction: null
         };
       }
-
-      const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
-        : null;
-      const applyStudioSlideInsertionMutation = deckViewApi
-        && typeof deckViewApi.applyStudioSlideInsertionMutation === 'function'
-        ? deckViewApi.applyStudioSlideInsertionMutation
-        : null;
-      const createStudioMarkupTransactionCapture = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
-        : null;
-
-      return applyStudioSlideInsertionWithTransaction(container, slideNode, {
-        applyStudioSlideInsertionMutation,
-        createStudioMarkupTransactionCapture,
+      return applyMutation(container, slideNode, {
+        slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+          ? SlideNextStudioEditorSlideCommands
+          : null,
+        deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
+          ? SlideNextStudioDeckView
+          : null,
+        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+          ? SlideNextStudioEditorTransaction
+          : null,
         containerElementId: options.containerElementId,
         beforeNode: options.beforeNode,
         getElementId: options.getElementId

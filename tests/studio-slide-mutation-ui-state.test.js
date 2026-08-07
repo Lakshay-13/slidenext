@@ -7,6 +7,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalSlide = require('../shared/studio-editor-canonical-slide.js');
 const slideCommands = require('../shared/studio-editor-slide-commands.js');
+const slideInsertionMutation = require('../shared/studio-editor-slide-insertion-mutation.js');
 const slideReorderMutation = require('../shared/studio-editor-slide-reorder-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -52,6 +53,7 @@ function loadApplyEditorSlideInsertionWithTransaction(fileContent, context) {
     'function applyEditorSlideInsertionWithTransaction(container, slideNode, options = {}) {',
     '\n\n    // Add Blank Slide Node'
   );
+  context.SlideNextStudioEditorSlideInsertionMutation = slideInsertionMutation;
   vm.runInContext(helperSource, context);
 }
 
