@@ -123,20 +123,31 @@
       .filter(row => row.length > 0);
   }
 
-  function getNodeBounds(node, context) {
+  function getNodeCanvasLayout(node, origin = {}) {
     const layout = asObject(node.layout);
     const x = Number.isFinite(layout.x) ? layout.x : null;
     const y = Number.isFinite(layout.y) ? layout.y : null;
     const width = Number.isFinite(layout.width) ? layout.width : null;
     const height = Number.isFinite(layout.height) ? layout.height : null;
-    if ([x, y, width, height].some(value => value === null) || width <= 0 || height <= 0) {
+    return {
+      x: x === null ? null : x + (Number.isFinite(origin.x) ? origin.x : 0),
+      y: y === null ? null : y + (Number.isFinite(origin.y) ? origin.y : 0),
+      width,
+      height
+    };
+  }
+
+  function getNodeBounds(node, context, origin = {}) {
+    const layout = getNodeCanvasLayout(node, origin);
+    if (!layout || [layout.x, layout.y, layout.width, layout.height].some(value => value === null)
+      || layout.width <= 0 || layout.height <= 0) {
       return null;
     }
     return {
-      x: x * context.scaleX,
-      y: y * context.scaleY,
-      w: width * context.scaleX,
-      h: height * context.scaleY
+      x: layout.x * context.scaleX,
+      y: layout.y * context.scaleY,
+      w: layout.width * context.scaleX,
+      h: layout.height * context.scaleY
     };
   }
 
@@ -275,10 +286,10 @@
     const sourceSize = resolvedExportOptions.sourceSize;
     const diagnostics = createExportDiagnostics();
 
-    function visit(node) {
+    function visit(node, origin = {}) {
       if (!node || node.visibility?.hidden) return;
       const nodeId = node.id || 'unknown';
-      const bounds = asObject(node.layout);
+      const bounds = getNodeCanvasLayout(node, origin);
       const hasBounds = [bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite)
         && bounds.width > 0
         && bounds.height > 0;
@@ -355,7 +366,11 @@
       }
 
       const childNodes = type === 'table' || node.tagName === 'table' ? [] : node.children;
-      (Array.isArray(childNodes) ? childNodes : []).forEach(visit);
+      const childOrigin = {
+        x: Number.isFinite(bounds.x) ? bounds.x : (Number.isFinite(origin.x) ? origin.x : 0),
+        y: Number.isFinite(bounds.y) ? bounds.y : (Number.isFinite(origin.y) ? origin.y : 0)
+      };
+      (Array.isArray(childNodes) ? childNodes : []).forEach(child => visit(child, childOrigin));
     }
 
     deck.slides.forEach(slide => {
@@ -376,12 +391,12 @@
     return { deck, options: normalizedOptions, sourceSize, diagnostics };
   }
 
-  function renderNode(node, context) {
+  function renderNode(node, context, origin = {}) {
     if (!node || node.visibility?.hidden) return;
     const children = Array.isArray(node.children) ? node.children : [];
     const tagName = typeof node.tagName === 'string' ? node.tagName.toLowerCase() : '';
     const type = typeof node.type === 'string' ? node.type.toLowerCase() : '';
-    const bounds = getNodeBounds(node, context);
+    const bounds = getNodeBounds(node, context, origin);
     const imageNode = type === 'image' || tagName === 'img';
     const shapeNode = type === 'shape' || node.classes?.includes('editor-shape');
     const tableNode = type === 'table' || tagName === 'table';
@@ -416,7 +431,12 @@
       if (bounds) context.slide.addText(getNodeText(node), textOptions(node, bounds));
     }
 
-    children.forEach(child => renderNode(child, context));
+    const layout = getNodeCanvasLayout(node, origin);
+    const childOrigin = {
+      x: Number.isFinite(layout.x) ? layout.x : (Number.isFinite(origin.x) ? origin.x : 0),
+      y: Number.isFinite(layout.y) ? layout.y : (Number.isFinite(origin.y) ? origin.y : 0)
+    };
+    children.forEach(child => renderNode(child, context, childOrigin));
   }
 
   function renderSlide(slide, context) {

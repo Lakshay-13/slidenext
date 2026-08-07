@@ -233,6 +233,57 @@ test('createCanonicalPptxExport preserves solid legacy slide backgrounds from st
   assert.deepEqual(result.pptx.slides[0].background, { color: '123456' });
 });
 
+test('createCanonicalPptxExport resolves grouped child positions from parent-local coordinates', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      nodes: [{
+        id: 'group-1',
+        type: 'group',
+        layout: { x: 200, y: 100, width: 300, height: 200 },
+        children: [{
+          id: 'group-2',
+          type: 'group',
+          layout: { x: 50, y: 25, width: 150, height: 100 },
+          children: [{
+            id: 'text-1',
+            type: 'text',
+            text: 'Nested',
+            layout: { x: 10, y: 5, width: 100, height: 40 }
+          }]
+        }]
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const textCall = result.pptx.slides[0].calls[0];
+  assert.equal(textCall.type, 'text');
+  assert.ok(Math.abs(textCall.options.x - (260 / 1000 * 13.333)) < 0.001);
+  assert.ok(Math.abs(textCall.options.y - (130 / 500 * 6.6665)) < 0.001);
+  assert.deepEqual(result.diagnostics.overflowNodes, []);
+
+  const overflowReport = pptxExport.preflightCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      nodes: [{
+        id: 'group-1',
+        type: 'group',
+        layout: { x: 900, y: 0, width: 200, height: 100 },
+        children: [{
+          id: 'text-1',
+          type: 'text',
+          text: 'Overflow',
+          layout: { x: 150, y: 0, width: 100, height: 40 }
+        }]
+      }]
+    }]
+  });
+  assert.deepEqual(overflowReport.diagnostics.overflowNodes.map(node => ({
+    id: node.id,
+    x: node.x
+  })), [{ id: 'group-1', x: 900 }, { id: 'text-1', x: 1050 }]);
+});
+
 test('normalizeHexColor handles short hex and rgb values', () => {
   assert.equal(pptxExport.normalizeHexColor('#abc'), 'AABBCC');
   assert.equal(pptxExport.normalizeHexColor('rgb(1, 2, 3)'), '010203');
