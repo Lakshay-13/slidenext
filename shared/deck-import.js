@@ -671,6 +671,7 @@
     delete nextAttributes.style;
     delete nextAttributes['aria-label'];
     delete nextAttributes['data-slide-name'];
+    delete nextAttributes['data-slide-section'];
     delete nextAttributes['data-speaker-notes'];
     delete nextAttributes['data-notes'];
     return nextAttributes;
@@ -693,6 +694,7 @@
       'style',
       'aria-label',
       'data-slide-name',
+      'data-slide-section',
       'data-speaker-notes',
       'data-notes',
       ...Object.keys(asPlainObject(attributes))
@@ -947,6 +949,7 @@
       id: slideId,
       name: normalizeString(slide.getAttribute('data-slide-name'), title),
       title,
+      section: normalizeString(slide.getAttribute('data-slide-section')),
       notes: normalizeString(slide.getAttribute('data-speaker-notes') || slide.getAttribute('data-notes')),
       layout: {
         mode: canonicalDeck.DEFAULT_LAYOUT_MODE,

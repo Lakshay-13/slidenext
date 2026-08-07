@@ -201,6 +201,10 @@
       backgroundLabel: buildDomBackgroundLabel(slide),
       elementCount: editableElements.length
     };
+    const section = typeof slide.getAttribute === 'function'
+      ? normalizeString(slide.getAttribute('data-slide-section'))
+      : '';
+    if (section) snapshot.section = section;
 
     if (options.includeLayers) {
       const orderedElements = typeof options.getNormalizedSlideLayerOrder === 'function'
@@ -295,6 +299,8 @@
       backgroundLabel: buildCanonicalBackgroundLabel(slide),
       elementCount: countCanonicalSlideNodes(slide && Array.isArray(slide.nodes) ? slide.nodes : [])
     };
+    const section = normalizeString(slide.section);
+    if (section) snapshot.section = section;
 
     if (options.includeLayers) {
       snapshot.elements = buildCanonicalLayerSnapshot(slide && Array.isArray(slide.nodes) ? slide.nodes : [], options.canonicalLayerOptions || options);

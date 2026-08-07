@@ -82,6 +82,14 @@ test('buildDeckSnapshotFromCanonicalDeck ignores structural slide classes when i
   assert.equal(snapshot.slides[0].backgroundLabel, 'Default');
 });
 
+test('buildDeckSnapshotFromCanonicalDeck exposes optional slide sections', () => {
+  const snapshot = deckModel.buildDeckSnapshotFromCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Intro', section: 'Opening', nodes: [] }]
+  });
+
+  assert.equal(snapshot.slides[0].section, 'Opening');
+});
+
 test('buildDeckSnapshotFromCanonicalDeck keeps custom background classes in the inferred label', () => {
   const snapshot = deckModel.buildDeckSnapshotFromCanonicalDeck({
     slides: [

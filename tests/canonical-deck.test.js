@@ -25,6 +25,18 @@ test('createCanonicalDeck repairs duplicate slide and nested node ids determinis
   ], ['node-1', 'node-1-2', 'node-1-3']);
 });
 
+test('createCanonicalDeck preserves optional slide sections without changing empty slide shape', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [
+      { id: 'slide-1', section: 'Opening' },
+      { id: 'slide-2' }
+    ]
+  });
+
+  assert.equal(deck.slides[0].section, 'Opening');
+  assert.equal(Object.prototype.hasOwnProperty.call(deck.slides[1], 'section'), false);
+});
+
 test('createCanonicalDeck repairs duplicate asset ids without changing asset order', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     assets: [

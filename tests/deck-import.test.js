@@ -1439,6 +1439,37 @@ test('importSlideToCanonicalSlide sanitizes stored slide source html fragments',
   });
 });
 
+test('importSlideToCanonicalSlide promotes slide section metadata and removes it from duplicated source state', () => {
+  const heading = createImportedElement({
+    tagName: 'H1',
+    classList: createIterableClassList(['editor-hoverable']),
+    textContent: 'Intro',
+    attributes: { class: 'editor-hoverable' },
+    outerHTML: '<h1 class="editor-hoverable">Intro</h1>'
+  });
+  const slide = createImportedElement({
+    tagName: 'SECTION',
+    classList: createIterableClassList(['slide']),
+    children: [heading],
+    textContent: 'Intro',
+    attributes: {
+      class: 'slide',
+      'data-slide-section': 'Opening',
+      'data-slide-name': 'Intro'
+    },
+    outerHTML: '<section class="slide" data-slide-section="Opening"><h1>Intro</h1></section>',
+    querySelector(selector) {
+      return selector === 'h1, h2, h3' ? heading : null;
+    }
+  });
+
+  const canonicalSlide = deckImport.importSlideToCanonicalSlide(slide, 0);
+
+  assert.equal(canonicalSlide.section, 'Opening');
+  assert.equal(canonicalSlide.source.html.includes('data-slide-section'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(canonicalSlide.source.attributes, 'data-slide-section'), false);
+});
+
 test('importSlideToCanonicalSlide promotes explicit background color and image declarations into canonical background fields', () => {
   const heading = createImportedElement({
     tagName: 'H1',

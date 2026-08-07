@@ -2007,6 +2007,24 @@ test('renderCanonicalDeckHtml falls back to canonical slide name and notes attri
   assert.match(html, /data-speaker-notes="Remember to introduce the roadmap\." class="slide slide-active" id="slide-1"/);
 });
 
+test('renderCanonicalDeckHtml falls back to canonical slide section when source attributes are absent', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    slides: [{
+      id: 'slide-1',
+      section: 'Opening',
+      nodes: [],
+      source: { html: '', attributes: {} }
+    }],
+    source: { html: '', headHtml: '', bodyHtml: '' }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /data-slide-section="Opening"/);
+});
+
 test('renderCanonicalDeckHtml preserves explicit slide notes attributes over canonical note fallbacks', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [

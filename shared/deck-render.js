@@ -519,6 +519,9 @@
     if (!sourceAttributes['data-slide-name'] && slide.name) {
       sourceAttributes['data-slide-name'] = slide.name;
     }
+    if (!sourceAttributes['data-slide-section'] && slide.section) {
+      sourceAttributes['data-slide-section'] = slide.section;
+    }
     if (!sourceAttributes['data-speaker-notes'] && !sourceAttributes['data-notes'] && slide.notes) {
       sourceAttributes['data-speaker-notes'] = slide.notes;
     }

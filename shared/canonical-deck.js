@@ -105,12 +105,14 @@
     const layout = asPlainObject(slide.layout);
     const background = asPlainObject(layout.background);
     const source = asPlainObject(slide.source);
+    const section = normalizeString(slide.section);
 
     return {
       id: normalizeString(slide.id, `slide-${index + 1}`),
       name: normalizeString(slide.name),
       title: normalizeString(slide.title, normalizeString(slide.name, `Slide ${index + 1}`)),
       notes: normalizeString(slide.notes),
+      ...(section ? { section } : {}),
       layout: {
         mode: normalizeString(layout.mode, DEFAULT_LAYOUT_MODE),
         background: {
