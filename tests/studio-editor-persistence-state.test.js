@@ -628,3 +628,73 @@ test('createStudioEditorPersistableDeckBuildStateCapturerAdapter returns null wi
 
   assert.equal(adapter({ label: 'iframe-doc' }), null);
 });
+
+test('createStudioEditorPersistableDeckStateCapturerAdapter preserves builder precedence', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const playbackState = { activeSlideIds: ['slide-1'] };
+  const capturePersistableDeckState = () => {
+    throw new Error('direct persistable-deck-state capture should not run when the builder exists');
+  };
+  const captureBuildState = () => ({ cleanHtml: '<html>persisted</html>' });
+  const buildCanonicalDeck = () => canonicalDeck;
+  const resolvePlaybackState = () => playbackState;
+  let factoryOptions = null;
+  const adapter = editorPersistenceState.createStudioEditorPersistableDeckStateCapturerAdapter({
+    persistenceApi: {
+      captureStudioPersistableDeckState: () => {
+        throw new Error('default capture should not run when the builder exists');
+      },
+      createStudioPersistableDeckStateCapturer(options) {
+        factoryOptions = options;
+        return (doc, nextOptions) => ({
+          doc,
+          canonicalDeck: nextOptions.canonicalDeck,
+          playbackState: options.resolvePlaybackState(nextOptions.canonicalDeck)
+        });
+      }
+    },
+    capturePersistableDeckState,
+    captureBuildState,
+    buildCanonicalDeck,
+    resolvePlaybackState
+  });
+
+  assert.deepEqual(adapter(iframeDoc, { canonicalDeck }), {
+    doc: iframeDoc,
+    canonicalDeck,
+    playbackState
+  });
+  assert.equal(factoryOptions.capturePersistableDeckState, capturePersistableDeckState);
+  assert.equal(factoryOptions.captureBuildState, captureBuildState);
+  assert.equal(factoryOptions.buildCanonicalDeck, buildCanonicalDeck);
+  assert.equal(factoryOptions.resolvePlaybackState, resolvePlaybackState);
+});
+
+test('createStudioEditorPersistableDeckStateCapturerAdapter uses direct helper without a builder', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  let delegatedArgs = null;
+  const capturePersistableDeckState = (doc, options) => {
+    delegatedArgs = { doc, options };
+    return { direct: true };
+  };
+  const adapter = editorPersistenceState.createStudioEditorPersistableDeckStateCapturerAdapter({
+    persistenceApi: { captureStudioPersistableDeckState: capturePersistableDeckState },
+    captureBuildState: () => ({ cleanHtml: '<html>persisted</html>' }),
+    buildCanonicalDeck: () => ({ id: 'deck-1' }),
+    resolvePlaybackState: () => ({ activeSlideIds: ['slide-1'] })
+  });
+
+  assert.deepEqual(adapter(iframeDoc, { canonicalDeck: { id: 'deck-1' } }), { direct: true });
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.deepEqual(delegatedArgs.options.canonicalDeck, { id: 'deck-1' });
+  assert.equal(typeof delegatedArgs.options.captureBuildState, 'function');
+  assert.equal(typeof delegatedArgs.options.buildCanonicalDeck, 'function');
+  assert.equal(typeof delegatedArgs.options.resolvePlaybackState, 'function');
+});
+
+test('createStudioEditorPersistableDeckStateCapturerAdapter returns null without a shared capturer', () => {
+  const adapter = editorPersistenceState.createStudioEditorPersistableDeckStateCapturerAdapter();
+
+  assert.equal(adapter({ label: 'iframe-doc' }), null);
+});

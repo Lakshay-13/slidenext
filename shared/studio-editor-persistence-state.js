@@ -602,6 +602,73 @@
     };
   }
 
+  function createStudioEditorPersistableDeckStateCapturerAdapter(options = {}) {
+    const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
+      ? options.persistenceApi
+      : null;
+    const defaultCapturePersistableDeckState = typeof options.capturePersistableDeckState === 'function'
+      ? options.capturePersistableDeckState
+      : persistenceApi
+        && typeof persistenceApi.captureStudioPersistableDeckState === 'function'
+        ? persistenceApi.captureStudioPersistableDeckState
+        : null;
+    const defaultCaptureBuildState = typeof options.captureBuildState === 'function'
+      ? options.captureBuildState
+      : null;
+    const defaultBuildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : () => null;
+    const defaultResolvePlaybackState = typeof options.resolvePlaybackState === 'function'
+      ? options.resolvePlaybackState
+      : () => null;
+
+    return function captureEditorPersistableDeckState(doc = null, nextOptions = {}) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      const capturePersistableDeckState = typeof resolvedOptions.captureStudioPersistableDeckState === 'function'
+        ? resolvedOptions.captureStudioPersistableDeckState
+        : defaultCapturePersistableDeckState;
+      const captureBuildState = typeof resolvedOptions.captureBuildState === 'function'
+        ? resolvedOptions.captureBuildState
+        : defaultCaptureBuildState;
+      const buildCanonicalDeck = typeof resolvedOptions.buildCanonicalDeck === 'function'
+        ? resolvedOptions.buildCanonicalDeck
+        : defaultBuildCanonicalDeck;
+      const resolvePlaybackState = typeof resolvedOptions.resolvePlaybackState === 'function'
+        ? resolvedOptions.resolvePlaybackState
+        : defaultResolvePlaybackState;
+      const createStudioPersistableDeckStateCapturer = persistenceApi
+        && typeof persistenceApi.createStudioPersistableDeckStateCapturer === 'function'
+        ? persistenceApi.createStudioPersistableDeckStateCapturer
+        : null;
+      if (createStudioPersistableDeckStateCapturer) {
+        const capturer = createStudioPersistableDeckStateCapturer({
+          capturePersistableDeckState,
+          captureBuildState,
+          buildCanonicalDeck,
+          resolvePlaybackState
+        });
+        return typeof capturer === 'function'
+          ? capturer(doc, {
+              canonicalDeck: Object.prototype.hasOwnProperty.call(resolvedOptions, 'canonicalDeck')
+                ? resolvedOptions.canonicalDeck
+                : null
+            })
+          : null;
+      }
+      if (!capturePersistableDeckState) return null;
+      return capturePersistableDeckState(doc, {
+        canonicalDeck: Object.prototype.hasOwnProperty.call(resolvedOptions, 'canonicalDeck')
+          ? resolvedOptions.canonicalDeck
+          : null,
+        captureBuildState,
+        buildCanonicalDeck,
+        resolvePlaybackState
+      });
+    };
+  }
+
   return {
     createStudioEditorPersistedDeckStateAdapter,
     createStudioEditorPersistedDeckStateApplierAdapter,
@@ -614,6 +681,7 @@
     createStudioEditorPersistableDeckSanitizerOptionsAdapter,
     createStudioEditorReusablePersistedHtmlSanitizerAdapter,
     createStudioEditorCapturedPersistableDeckStateResolverAdapter,
-    createStudioEditorPersistableDeckBuildStateCapturerAdapter
+    createStudioEditorPersistableDeckBuildStateCapturerAdapter,
+    createStudioEditorPersistableDeckStateCapturerAdapter
   };
 });
