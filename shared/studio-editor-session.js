@@ -261,6 +261,25 @@
     };
   }
 
+  function createStudioEditorFrameLoadHandlerAdapter(options = {}) {
+    const sessionApi = options.sessionApi && typeof options.sessionApi === 'object'
+      ? options.sessionApi
+      : null;
+    const createFrameLoadHandler = typeof options.createFrameLoadHandler === 'function'
+      ? options.createFrameLoadHandler
+      : sessionApi
+        && typeof sessionApi.createStudioFrameLoadHandler === 'function'
+        ? sessionApi.createStudioFrameLoadHandler
+        : createStudioFrameLoadHandler;
+
+    return function createEditorFrameLoadHandler(nextOptions = {}) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      return createFrameLoadHandler(resolvedOptions);
+    };
+  }
+
   return {
     createStudioSessionStateReaders,
     createStudioEditorSessionStateReadersAdapter,
@@ -272,6 +291,7 @@
     createStudioEditorPresentationSessionStateUpdateAdapter,
     isCurrentStudioEditorSession,
     shouldHandleStudioFrameLoad,
-    createStudioFrameLoadHandler
+    createStudioFrameLoadHandler,
+    createStudioEditorFrameLoadHandlerAdapter
   };
 });

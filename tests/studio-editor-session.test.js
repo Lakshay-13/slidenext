@@ -400,3 +400,34 @@ test('createStudioFrameLoadHandler skips stale same-url reopen sessions', () => 
   assert.equal(onLoad(), false);
   assert.deepEqual(calls, []);
 });
+
+test('createStudioEditorFrameLoadHandlerAdapter delegates handler options through the session API', () => {
+  let delegatedOptions = null;
+  const adapter = editorSession.createStudioEditorFrameLoadHandlerAdapter({
+    sessionApi: {
+      createStudioFrameLoadHandler(options) {
+        delegatedOptions = options;
+        return () => 'loaded';
+      }
+    }
+  });
+
+  const onLoad = adapter({ presentationUrl: '/presentations/deck/index.html' });
+  assert.equal(onLoad(), 'loaded');
+  assert.deepEqual(delegatedOptions, {
+    presentationUrl: '/presentations/deck/index.html'
+  });
+});
+
+test('createStudioEditorFrameLoadHandlerAdapter supports call-time options without mutating them', () => {
+  const adapter = editorSession.createStudioEditorFrameLoadHandlerAdapter();
+  const handleLoad = () => {};
+  const options = {
+    presentationUrl: '/presentations/deck/index.html',
+    handleLoad
+  };
+  const onLoad = adapter(options);
+
+  assert.equal(onLoad(), false);
+  assert.equal(options.handleLoad, handleLoad);
+});

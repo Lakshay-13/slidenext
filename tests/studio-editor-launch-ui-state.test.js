@@ -37,6 +37,15 @@ function loadCreateCurrentStudioSessionReaderOptions(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadCreateCurrentStudioFrameLoadHandler(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioFrameLoadHandler(options = {}) {',
+    '\n\n    function launchStudioEditor(url, title, category) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadBuildCurrentPresentationMetadataSeed(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -180,6 +189,7 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   vm.createContext(context);
   context.SlideNextStudioEditorStatusView = editorStatusView;
   loadCreateCurrentStudioSessionStateReaders(fileContent, context);
+  loadCreateCurrentStudioFrameLoadHandler(fileContent, context);
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
@@ -346,6 +356,7 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
   vm.createContext(context);
   context.SlideNextStudioEditorStatusView = editorStatusView;
   loadCreateCurrentStudioSessionStateReaders(fileContent, context);
+  loadCreateCurrentStudioFrameLoadHandler(fileContent, context);
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
@@ -677,6 +688,7 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
 
   vm.createContext(context);
   context.SlideNextStudioEditorStatusView = editorStatusView;
+  loadCreateCurrentStudioFrameLoadHandler(fileContent, context);
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 

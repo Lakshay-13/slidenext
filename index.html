@@ -2303,6 +2303,38 @@
       }
     }
 
+    function createCurrentStudioFrameLoadHandler(options = {}) {
+      const createStudioEditorFrameLoadHandlerAdapter = (
+        typeof SlideNextStudioEditorSession !== 'undefined'
+        && SlideNextStudioEditorSession
+        && typeof SlideNextStudioEditorSession.createStudioEditorFrameLoadHandlerAdapter === 'function'
+      )
+        ? SlideNextStudioEditorSession.createStudioEditorFrameLoadHandlerAdapter
+        : null;
+      if (createStudioEditorFrameLoadHandlerAdapter) {
+        const adapter = createStudioEditorFrameLoadHandlerAdapter({
+          sessionApi: SlideNextStudioEditorSession
+        });
+        if (typeof adapter === 'function') {
+          return adapter(options);
+        }
+        if (adapter && typeof adapter === 'object') {
+          return adapter;
+        }
+      }
+
+      const createStudioFrameLoadHandler = (
+        typeof SlideNextStudioEditorSession !== 'undefined'
+        && SlideNextStudioEditorSession
+        && typeof SlideNextStudioEditorSession.createStudioFrameLoadHandler === 'function'
+      )
+        ? SlideNextStudioEditorSession.createStudioFrameLoadHandler
+        : null;
+      return createStudioFrameLoadHandler
+        ? createStudioFrameLoadHandler(options)
+        : () => false;
+    }
+
     function launchStudioEditor(url, title, category) {
       const editorSessionToken = ++studioEditorSessionToken;
       if (typeof resetEditorLiveCanonicalDeck === 'function') {
@@ -2358,7 +2390,7 @@
       updateDeckReadyToolbarActionState();
       
       // Configure load triggers BEFORE setting src
-      iframe.onload = SlideNextStudioEditorSession.createStudioFrameLoadHandler({
+      iframe.onload = createCurrentStudioFrameLoadHandler({
         presentationUrl: url,
         ...frameLoadSessionStateReaders,
         sessionToken: editorSessionToken,
