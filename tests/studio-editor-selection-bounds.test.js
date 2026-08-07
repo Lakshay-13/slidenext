@@ -59,6 +59,34 @@ test('buildStudioSelectionBounds enforces minimum size and skips invalid bounds'
   }), null);
 });
 
+test('buildStudioSelectionBounds falls back for invalid minimum sizes', () => {
+  const element = {
+    isConnected: true,
+    bounds: { left: 10, top: 10, right: 15, bottom: 15 }
+  };
+  const buildOptions = (minSizePx) => ({
+    minSizePx,
+    getElementBounds: (target) => target.bounds
+  });
+
+  assert.deepEqual(selectionBounds.buildStudioSelectionBounds([element], buildOptions(Number.NaN)), {
+    left: 10,
+    top: 10,
+    right: 15,
+    bottom: 15,
+    width: 24,
+    height: 24
+  });
+  assert.deepEqual(selectionBounds.buildStudioSelectionBounds([element], buildOptions(-1)), {
+    left: 10,
+    top: 10,
+    right: 15,
+    bottom: 15,
+    width: 24,
+    height: 24
+  });
+});
+
 test('getStudioMarqueeSelection normalizes reverse drags and returns overlapping live elements', () => {
   const elements = [
     { id: 1, isConnected: false, hidden: false, bounds: { left: 10, top: 10, right: 30, bottom: 30 } },

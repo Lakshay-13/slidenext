@@ -36,6 +36,10 @@
     };
   }
 
+  function normalizeStudioSelectionMinSize(value, fallback = 24) {
+    return Number.isFinite(value) && value >= 0 ? value : fallback;
+  }
+
   function getStudioMarqueeSelection(elements = [], marqueeRect, options = {}) {
     const normalizedMarqueeRect = normalizeStudioSelectionRect(marqueeRect);
     if (!normalizedMarqueeRect) {
@@ -68,7 +72,7 @@
     const getElementBounds = typeof options.getElementBounds === 'function'
       ? options.getElementBounds
       : () => null;
-    const minSizePx = typeof options.minSizePx === 'number' ? options.minSizePx : 24;
+    const minSizePx = normalizeStudioSelectionMinSize(options.minSizePx);
     const rects = selection
       .map((element) => getElementBounds(element))
       .filter((rect) => rect
