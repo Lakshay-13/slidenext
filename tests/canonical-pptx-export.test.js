@@ -372,6 +372,37 @@ test('createCanonicalPptxExport renders node background images before child cont
   assert.deepEqual(result.diagnostics.missingNodeBackgroundAssets, []);
 });
 
+test('createCanonicalPptxExport renders solid node backgrounds beneath child content with alpha', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      nodes: [{
+        id: 'panel-1',
+        type: 'container',
+        style: 'background-color: rgba(10, 20, 30, 0.5);',
+        layout: { x: 100, y: 50, width: 400, height: 200 },
+        children: [{
+          id: 'panel-text',
+          type: 'text',
+          text: 'Panel content',
+          layout: { x: 20, y: 15, width: 200, height: 40 }
+        }]
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.pptx.slides[0].calls.map(call => call.type), ['shape', 'text']);
+  assert.deepEqual(result.pptx.slides[0].calls[0].options.fill, {
+    color: '0A141E',
+    transparency: 50
+  });
+  assert.deepEqual(result.pptx.slides[0].calls[0].options.line, {
+    color: '0A141E',
+    transparency: 100,
+    width: 0
+  });
+});
+
 test('preflightCanonicalPptxExport reports missing node background image assets', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{

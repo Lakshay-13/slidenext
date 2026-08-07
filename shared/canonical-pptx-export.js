@@ -68,6 +68,28 @@
       .join('').toUpperCase();
   }
 
+  function resolvePptxFillColor(value) {
+    if (typeof value !== 'string' || !value.trim()) return null;
+    const input = value.trim();
+    if (input.toLowerCase() === 'transparent') {
+      return { color: 'FFFFFF', transparency: 100 };
+    }
+
+    const rgba = input.match(/^rgba\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/i);
+    if (rgba) {
+      const alpha = Math.max(0, Math.min(1, Number(rgba[4])));
+      const color = normalizeHexColor(`rgb(${rgba[1]}, ${rgba[2]}, ${rgba[3]})`);
+      if (!color) return null;
+      return {
+        color,
+        ...(alpha < 1 ? { transparency: Math.round((1 - alpha) * 100) } : {})
+      };
+    }
+
+    const color = normalizeHexColor(input);
+    return color ? { color } : null;
+  }
+
   function parseStyle(styleText) {
     if (typeof styleText !== 'string') return {};
     const declarations = [];
@@ -373,12 +395,12 @@
 
   function shapeOptions(node, bounds) {
     const style = nodeStyle(node);
-    const fill = normalizeHexColor(style['background-color'] || style.background) || 'FFFFFF';
-    const lineColor = normalizeHexColor(style['border-color']) || fill;
+    const fill = resolvePptxFillColor(style['background-color'] || style.background) || { color: 'FFFFFF' };
+    const lineColor = normalizeHexColor(style['border-color']) || fill.color;
     const lineWidth = parseCssPx(style['border-width']);
     return {
       ...bounds,
-      fill: { color: fill },
+      fill,
       line: { color: lineColor, width: lineWidth === null ? 0.5 : Math.max(0, lineWidth * 0.75) }
     };
   }
@@ -628,10 +650,20 @@
     const childOrigin = getNodeChildOrigin(node, origin);
     const hasExportableChildren = hasExportableChildBounds(children, childOrigin);
     const text = getNestedNodeText(node);
+    const style = nodeStyle(node);
+    const nodeBackgroundFill = resolvePptxFillColor(style['background-color'] || style.background);
     const nodeBackgroundSource = resolveNodeBackgroundImageSource(node, context.options);
     const missingNodeBackground = context.diagnostics
       && Array.isArray(context.diagnostics.missingNodeBackgroundAssets)
       && context.diagnostics.missingNodeBackgroundAssets.includes(getNodeBackgroundAssetDiagnosticId(node));
+
+    if (nodeBackgroundFill && nodeBackgroundFill.transparency !== 100 && bounds && !shapeNode && typeof context.slide.addShape === 'function') {
+      context.slide.addShape(getShapeType(context.pptx, 'rect'), {
+        ...bounds,
+        fill: nodeBackgroundFill,
+        line: { color: nodeBackgroundFill.color, transparency: 100, width: 0 }
+      });
+    }
 
     if (nodeBackgroundSource && bounds && !missingNodeBackground && typeof context.slide.addImage === 'function') {
       const backgroundOptions = nodeBackgroundSource.startsWith('data:')
