@@ -2508,6 +2508,56 @@ test('buildEditorPersistableDeckSanitizerOptions delegates through the editor pe
   assert.equal(factoryOptions.getDeckSanitizerOptions, getDeckSanitizerOptions);
 });
 
+test('sanitizeEditorReusablePersistedHtml delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const sanitizeEditorReusablePersistedHtmlSource = extractFunctionSource(
+    fileContent,
+    'function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+
+  const playbackState = {
+    activeSlideIds: ['slide-2']
+  };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    SlideNextStudioEditorPersistence: {
+      sanitizeStudioReusablePersistedHtml(persistedHtml, options = {}) {
+        delegatedArgs = {
+          persistedHtml,
+          playbackState: options.playbackState,
+          buildPersistableDeckHtml: options.buildPersistableDeckHtml,
+          resolveMetadataPersistenceOptions: options.resolveMetadataPersistenceOptions,
+          getDeckSanitizerOptions: options.getDeckSanitizerOptions,
+          DOMParser: options.DOMParser
+        };
+        return '<html>sanitized</html>';
+      }
+    },
+    DOMParser: class DOMParser {}
+  };
+  const buildPersistableDeckHtml = () => '<html>built</html>';
+  const resolveMetadataPersistenceOptions = () => ({ emptyContainerIds: ['pixelMatrix'] });
+  const getDeckSanitizerOptions = () => ({ chromeNodeIds: ['editorSelectionOverlay'] });
+
+  vm.createContext(context);
+  vm.runInContext(sanitizeEditorReusablePersistedHtmlSource, context);
+
+  assert.equal(context.sanitizeEditorReusablePersistedHtml('<html>persisted</html>', {
+    playbackState,
+    buildPersistableDeckHtml,
+    resolveMetadataPersistenceOptions,
+    getDeckSanitizerOptions
+  }), '<html>sanitized</html>');
+  assert.equal(delegatedArgs.persistedHtml, '<html>persisted</html>');
+  assert.equal(delegatedArgs.playbackState, playbackState);
+  assert.equal(delegatedArgs.buildPersistableDeckHtml, buildPersistableDeckHtml);
+  assert.equal(delegatedArgs.resolveMetadataPersistenceOptions, resolveMetadataPersistenceOptions);
+  assert.equal(delegatedArgs.getDeckSanitizerOptions, getDeckSanitizerOptions);
+  assert.equal(delegatedArgs.DOMParser, context.DOMParser);
+});
+
 test('sanitizeEditorReusablePersistedHtml reuses the local persistable deck sanitizer options helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const sanitizeEditorReusablePersistedHtmlSource = extractFunctionSource(

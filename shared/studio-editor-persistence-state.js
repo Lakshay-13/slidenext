@@ -444,6 +444,58 @@
     };
   }
 
+  function createStudioEditorReusablePersistedHtmlSanitizerAdapter(options = {}) {
+    const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
+      ? options.persistenceApi
+      : null;
+    const defaultBuildPersistableDeckHtml = typeof options.buildPersistableDeckHtml === 'function'
+      ? options.buildPersistableDeckHtml
+      : null;
+    const defaultResolveMetadataPersistenceOptions = typeof options.resolveMetadataPersistenceOptions === 'function'
+      ? options.resolveMetadataPersistenceOptions
+      : () => ({});
+    const defaultGetDeckSanitizerOptions = typeof options.getDeckSanitizerOptions === 'function'
+      ? options.getDeckSanitizerOptions
+      : () => ({});
+    const defaultDOMParser = typeof options.DOMParser === 'function'
+      ? options.DOMParser
+      : null;
+
+    return function sanitizeEditorReusablePersistedHtml(persistedHtml, nextOptions = {}) {
+      const nextPersistedHtml = typeof persistedHtml === 'string'
+        ? persistedHtml
+        : '';
+      const sanitizeStudioReusablePersistedHtml = persistenceApi
+        && typeof persistenceApi.sanitizeStudioReusablePersistedHtml === 'function'
+        ? persistenceApi.sanitizeStudioReusablePersistedHtml
+        : null;
+      if (!sanitizeStudioReusablePersistedHtml) return nextPersistedHtml;
+      return sanitizeStudioReusablePersistedHtml(nextPersistedHtml, {
+        playbackState: Object.prototype.hasOwnProperty.call(nextOptions, 'playbackState')
+          ? nextOptions.playbackState
+          : null,
+        resolveMetadataPersistenceOptions: typeof nextOptions.resolveMetadataPersistenceOptions === 'function'
+          ? nextOptions.resolveMetadataPersistenceOptions
+          : defaultResolveMetadataPersistenceOptions,
+        getDeckSanitizerOptions: typeof nextOptions.getDeckSanitizerOptions === 'function'
+          ? nextOptions.getDeckSanitizerOptions
+          : defaultGetDeckSanitizerOptions,
+        buildPersistableDeckHtml: typeof nextOptions.buildPersistableDeckHtml === 'function'
+          ? nextOptions.buildPersistableDeckHtml
+          : defaultBuildPersistableDeckHtml,
+        DOMParser: typeof nextOptions.DOMParser === 'function'
+          ? nextOptions.DOMParser
+          : defaultDOMParser,
+        parseHtml: typeof nextOptions.parseHtml === 'function'
+          ? nextOptions.parseHtml
+          : undefined,
+        buildPersistableDeckSanitizerOptions: typeof nextOptions.buildPersistableDeckSanitizerOptions === 'function'
+          ? nextOptions.buildPersistableDeckSanitizerOptions
+          : undefined
+      });
+    };
+  }
+
   return {
     createStudioEditorPersistedDeckStateAdapter,
     createStudioEditorPersistedDeckStateApplierAdapter,
@@ -453,6 +505,7 @@
     createStudioEditorCanonicalDeckOverrideAdapter,
     createStudioEditorReusablePersistedHtmlAdapter,
     createStudioEditorMetadataPersistenceOptionsAdapter,
-    createStudioEditorPersistableDeckSanitizerOptionsAdapter
+    createStudioEditorPersistableDeckSanitizerOptionsAdapter,
+    createStudioEditorReusablePersistedHtmlSanitizerAdapter
   };
 });

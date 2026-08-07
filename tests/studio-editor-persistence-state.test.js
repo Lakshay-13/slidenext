@@ -443,3 +443,64 @@ test('createStudioEditorPersistableDeckSanitizerOptionsAdapter fails closed with
 
   assert.deepEqual(adapter({ activeSlideIds: ['slide-1'] }), {});
 });
+
+test('createStudioEditorReusablePersistedHtmlSanitizerAdapter forwards shared sanitizer inputs', () => {
+  const playbackState = { activeSlideIds: ['slide-2'] };
+  const buildPersistableDeckHtml = () => '<html>built</html>';
+  const resolveMetadataPersistenceOptions = () => ({ emptyContainerIds: ['pixelMatrix'] });
+  const getDeckSanitizerOptions = () => ({ chromeNodeIds: ['editorSelectionOverlay'] });
+  const DOMParser = class DOMParser {};
+  let delegatedArgs = null;
+  const adapter = editorPersistenceState.createStudioEditorReusablePersistedHtmlSanitizerAdapter({
+    persistenceApi: {
+      sanitizeStudioReusablePersistedHtml(persistedHtml, options) {
+        delegatedArgs = { persistedHtml, options };
+        return '<html>sanitized</html>';
+      }
+    },
+    buildPersistableDeckHtml,
+    resolveMetadataPersistenceOptions,
+    getDeckSanitizerOptions,
+    DOMParser
+  });
+
+  assert.equal(adapter('<html>persisted</html>', { playbackState }), '<html>sanitized</html>');
+  assert.equal(delegatedArgs.persistedHtml, '<html>persisted</html>');
+  assert.equal(delegatedArgs.options.playbackState, playbackState);
+  assert.equal(delegatedArgs.options.buildPersistableDeckHtml, buildPersistableDeckHtml);
+  assert.equal(delegatedArgs.options.resolveMetadataPersistenceOptions, resolveMetadataPersistenceOptions);
+  assert.equal(delegatedArgs.options.getDeckSanitizerOptions, getDeckSanitizerOptions);
+  assert.equal(delegatedArgs.options.DOMParser, DOMParser);
+});
+
+test('createStudioEditorReusablePersistedHtmlSanitizerAdapter preserves per-call overrides', () => {
+  let delegatedOptions = null;
+  const adapter = editorPersistenceState.createStudioEditorReusablePersistedHtmlSanitizerAdapter({
+    persistenceApi: {
+      sanitizeStudioReusablePersistedHtml(_persistedHtml, options) {
+        delegatedOptions = options;
+        return options.buildPersistableDeckHtml();
+      }
+    },
+    buildPersistableDeckHtml: () => '<html>default</html>'
+  });
+  const buildPersistableDeckHtml = () => '<html>override</html>';
+  const resolveMetadataPersistenceOptions = () => ({ override: true });
+  const getDeckSanitizerOptions = () => ({ override: true });
+
+  assert.equal(adapter('<html>persisted</html>', {
+    buildPersistableDeckHtml,
+    resolveMetadataPersistenceOptions,
+    getDeckSanitizerOptions
+  }), '<html>override</html>');
+  assert.equal(delegatedOptions.buildPersistableDeckHtml, buildPersistableDeckHtml);
+  assert.equal(delegatedOptions.resolveMetadataPersistenceOptions, resolveMetadataPersistenceOptions);
+  assert.equal(delegatedOptions.getDeckSanitizerOptions, getDeckSanitizerOptions);
+});
+
+test('createStudioEditorReusablePersistedHtmlSanitizerAdapter fails closed without shared sanitizer', () => {
+  const adapter = editorPersistenceState.createStudioEditorReusablePersistedHtmlSanitizerAdapter();
+
+  assert.equal(adapter('<html>persisted</html>'), '<html>persisted</html>');
+  assert.equal(adapter(null), '');
+});
