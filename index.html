@@ -1192,6 +1192,7 @@
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
+  <script src="/shared/studio-editor-group-mutation.js"></script>
   <script src="/shared/studio-editor-ruler.js"></script>
   <script src="/shared/studio-editor-ruler-view.js"></script>
   <script src="/shared/studio-editor-zoom.js"></script>
@@ -6179,23 +6180,16 @@
     }
 
     function applyEditorGroupMutationWithTransaction(options = {}) {
-      const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
-        ? SlideNextStudioEditorGroup
+      const mutationApi = typeof SlideNextStudioEditorGroupMutation !== 'undefined'
+        ? SlideNextStudioEditorGroupMutation
         : null;
-      const applyStudioGroupMutation = groupApi
-        && typeof groupApi.applyStudioGroupMutation === 'function'
-        ? groupApi.applyStudioGroupMutation
+      const applyMutation = mutationApi
+        && typeof mutationApi.applyStudioGroupMutationWithTransaction === 'function'
+        ? mutationApi.applyStudioGroupMutationWithTransaction
         : null;
-      if (!applyStudioGroupMutation) {
+      if (!applyMutation) {
         return { didApply: false, group: null, transaction: null };
       }
-      const createStudioMarkupTransactionCapture = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
-        : null;
       const getElementId = typeof options.getElementId === 'function'
         ? options.getElementId
         : (element) => {
@@ -6205,22 +6199,22 @@
             }
             return element && element.dataset && element.dataset.editorId;
           };
-      const assignElementId = typeof options.assignElementId === 'function'
-        ? options.assignElementId
-        : null;
-      const prepareGroup = typeof options.prepareGroup === 'function'
-        ? options.prepareGroup
-        : null;
-      const mutation = applyStudioGroupMutation({
+      return applyMutation({
         ...options,
-        createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+        groupApi: typeof SlideNextStudioEditorGroup !== 'undefined'
+          ? SlideNextStudioEditorGroup
+          : null,
+        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+          ? SlideNextStudioEditorTransaction
+          : null,
         getElementId,
-        assignElementId,
-        prepareGroup
+        assignElementId: typeof options.assignElementId === 'function'
+          ? options.assignElementId
+          : null,
+        prepareGroup: typeof options.prepareGroup === 'function'
+          ? options.prepareGroup
+          : null
       });
-      return mutation && typeof mutation === 'object'
-        ? mutation
-        : { didApply: false, group: null, transaction: null };
     }
 
     function groupSelectedElements() {

@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioGroup = require('../shared/studio-editor-group.js');
+const groupMutation = require('../shared/studio-editor-group-mutation.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalGroup = require('../shared/studio-editor-canonical-group.js');
 
@@ -28,6 +29,7 @@ function loadGroupMutationHelper(fileContent, context) {
     ...studioGroup,
     ...(context.SlideNextStudioEditorGroup || {})
   };
+  context.SlideNextStudioEditorGroupMutation = groupMutation;
   vm.runInContext(helperSource, context);
 }
 
