@@ -1222,6 +1222,7 @@
   <script src="/shared/studio-editor-interactions.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
   <script src="/shared/studio-editor-persistence-state.js"></script>
+  <script src="/shared/studio-editor-autosave.js"></script>
   <script src="/shared/studio-modal-visibility.js"></script>
   <script src="/shared/presentation-library.js"></script>
   <script src="/shared/presentation-library-view.js"></script>
@@ -8936,69 +8937,44 @@
     // 6. AutoSave debouncing pipeline
     let autoSaveDebounceTimer = null;
     function triggerAutoSave() {
-      const { presentationUrl: scheduledPresentationUrl, sessionToken: scheduledSessionToken } = captureCurrentStudioSessionState();
-      setStudioAutoSaveStatus('saving');
-      
-      clearTimeout(autoSaveDebounceTimer);
-      autoSaveDebounceTimer = setTimeout(async () => {
-        autoSaveDebounceTimer = null;
-        if (isCurrentStudioPersistenceTaskStale(scheduledPresentationUrl, scheduledSessionToken)) return;
-        const iframeDoc = getIframeDoc();
-        const autoSavePersistenceState = resolveCurrentStudioPersistenceStateFromCapture(iframeDoc, {
-          presentationUrl: scheduledPresentationUrl,
-          resolvePersistenceStateFromCapture: SlideNextStudioEditorPersistence.resolveStudioAutoSavePersistenceStateFromCapture,
-          persistenceOptions: {
-            isPersistedState: isCurrentDeckStatePersisted,
-            buildSaveRequestBody: buildEditorSaveRequestBody,
-            sessionToken: scheduledSessionToken
-          }
+      if (typeof triggerAutoSave.adapter !== 'function') {
+        const createStudioEditorAutoSaveAdapter = (
+          typeof SlideNextStudioEditorAutoSave !== 'undefined'
+          && SlideNextStudioEditorAutoSave
+          && typeof SlideNextStudioEditorAutoSave.createStudioEditorAutoSaveAdapter === 'function'
+        )
+          ? SlideNextStudioEditorAutoSave.createStudioEditorAutoSaveAdapter
+          : null;
+        if (!createStudioEditorAutoSaveAdapter) return;
+        triggerAutoSave.adapter = createStudioEditorAutoSaveAdapter({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          captureSessionState: captureCurrentStudioSessionState,
+          setStatus: setStudioAutoSaveStatus,
+          getTimer: () => autoSaveDebounceTimer,
+          clearTimer: clearTimeout,
+          setTimer(nextTimer) {
+            autoSaveDebounceTimer = nextTimer;
+          },
+          schedule: (callback, delayMs) => setTimeout(callback, delayMs),
+          isTaskStale: isCurrentStudioPersistenceTaskStale,
+          getDocument: getIframeDoc,
+          resolvePersistenceState: resolveCurrentStudioPersistenceStateFromCapture,
+          isPersistedState: isCurrentDeckStatePersisted,
+          buildSaveRequestBody: buildEditorSaveRequestBody,
+          applyPersistenceSuccess: typeof applyCurrentStudioPersistenceSuccess === 'function'
+            ? applyCurrentStudioPersistenceSuccess
+            : null,
+          applyPersistenceFailure: typeof applyCurrentStudioPersistenceFailure === 'function'
+            ? applyCurrentStudioPersistenceFailure
+            : null,
+          fetchImpl: fetch,
+          logger: typeof console !== 'undefined' ? console : null
         });
-        if (!autoSavePersistenceState) {
-          setStudioAutoSaveStatus('saved');
-          return;
-        }
-        const { persistencePlan } = autoSavePersistenceState;
-
-        if (persistencePlan.hasPersistedCurrentState) {
-          setStudioAutoSaveStatus('saved');
-          return;
-        }
-        
-        try {
-          await SlideNextStudioEditorPersistence.executeStudioAutoSavePersistenceRequestWithHandlers(
-            autoSavePersistenceState,
-            {
-              fetchImpl: fetch,
-              applyPersistenceSuccess: (persistenceContext, successOptions = {}) => {
-                return applyCurrentStudioPersistenceSuccess(persistenceContext, successOptions);
-              },
-              applyPersistenceFailure: (persistenceContext, failureOptions = {}) => {
-                return applyCurrentStudioPersistenceFailure(persistenceContext, failureOptions);
-              },
-              successOptions: {
-                presentationUrl: persistencePlan.persistenceContext
-                  ? persistencePlan.persistenceContext.presentationUrl
-                  : scheduledPresentationUrl,
-                onSuccess: () => {
-                  setStudioAutoSaveStatus('saved');
-                }
-              },
-              failureOptions: {
-                onFailure: () => {
-                  setStudioAutoSaveStatus('autosave-failed');
-                }
-              }
-            }
-          );
-        } catch (err) {
-          console.error('AutoSave Error:', err);
-          applyCurrentStudioPersistenceFailure(persistencePlan.persistenceContext, {
-            onFailure: () => {
-              setStudioAutoSaveStatus('network-error');
-            }
-          });
-        }
-      }, 1500); // 1.5s debounce delay
+      }
+      if (typeof triggerAutoSave.adapter !== 'function') return;
+      return triggerAutoSave.adapter();
     }
 
     // Custom styled checkpoint version modal controls

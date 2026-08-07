@@ -9,6 +9,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
+const editorAutoSave = require('../shared/studio-editor-autosave.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
@@ -143,6 +144,16 @@ function loadIsCurrentStudioPersistenceTaskStale(fileContent, context) {
     fileContent,
     'function isCurrentStudioPersistenceTaskStale(',
     '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadTriggerAutoSave(fileContent, context) {
+  context.SlideNextStudioEditorAutoSave ??= editorAutoSave;
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function triggerAutoSave() {',
+    '\n\n    // Custom styled checkpoint version modal controls'
   );
   vm.runInContext(helperSource, context);
 }
@@ -2275,7 +2286,7 @@ test('triggerAutoSave skips persistence when the shared iframe accessor has no l
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadCaptureCurrentStudioSessionState(fileContent, context);
   loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
-  vm.runInContext(triggerAutoSaveSource, context);
+  loadTriggerAutoSave(fileContent, context);
 
   context.triggerAutoSave();
   assert.equal(statusEl.innerHTML, 'saving');
@@ -2403,7 +2414,7 @@ test('triggerAutoSave can persist rendered canonical html when the shared iframe
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadCaptureCurrentStudioSessionState(fileContent, context);
   loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
-  vm.runInContext(triggerAutoSaveSource, context);
+  loadTriggerAutoSave(fileContent, context);
 
   context.triggerAutoSave();
   assert.equal(statusEl.innerHTML, 'saving');
@@ -2543,7 +2554,7 @@ test('triggerAutoSave refreshes the persisted playback baseline after a successf
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadCaptureCurrentStudioSessionState(fileContent, context);
   loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
-  vm.runInContext(triggerAutoSaveSource, context);
+  loadTriggerAutoSave(fileContent, context);
 
   context.triggerAutoSave();
   assert.equal(statusEl.innerHTML, 'saving');
@@ -2671,7 +2682,7 @@ test('triggerAutoSave clears the persisted playback baseline after a successful 
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadCaptureCurrentStudioSessionState(fileContent, context);
   loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
-  vm.runInContext(triggerAutoSaveSource, context);
+  loadTriggerAutoSave(fileContent, context);
 
   context.triggerAutoSave();
   assert.equal(statusEl.innerHTML, 'saving');
@@ -2787,7 +2798,7 @@ test('triggerAutoSave reports network persistence errors through the shared fail
   vm.createContext(context);
   loadCaptureCurrentStudioSessionState(fileContent, context);
   loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
-  vm.runInContext(triggerAutoSaveSource, context);
+  loadTriggerAutoSave(fileContent, context);
 
   context.triggerAutoSave();
   assert.equal(statusState, 'saving');
