@@ -5541,16 +5541,21 @@
       const canonicalRemovalApi = typeof SlideNextStudioEditorCanonicalRemoval !== 'undefined'
         ? SlideNextStudioEditorCanonicalRemoval
         : null;
-      const buildCanonicalRemovalMutation = canonicalRemovalApi
-        && typeof canonicalRemovalApi.buildStudioCanonicalRemovalMutation === 'function'
-        ? canonicalRemovalApi.buildStudioCanonicalRemovalMutation
-        : null;
-      const canonicalDeck = buildCanonicalRemovalMutation
-        ? buildCanonicalRemovalMutation(removalActionState.selection, {
+      const canonicalRemovalBuilders = canonicalRemovalApi
+        && typeof canonicalRemovalApi.createStudioCanonicalRemovalMutationBuilders === 'function'
+        ? canonicalRemovalApi.createStudioCanonicalRemovalMutationBuilders({
             canonicalDeckApi,
             buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
               ? buildEditorCanonicalDeck
-              : null,
+              : null
+          })
+        : null;
+      const buildCanonicalRemovalMutation = canonicalRemovalBuilders
+        && typeof canonicalRemovalBuilders.buildCanonicalRemovalMutation === 'function'
+        ? canonicalRemovalBuilders.buildCanonicalRemovalMutation
+        : null;
+      const canonicalDeck = buildCanonicalRemovalMutation
+        ? buildCanonicalRemovalMutation(removalActionState.selection, {
             sourceDocument: doc,
             getElementId: getRemovalElementId
           })

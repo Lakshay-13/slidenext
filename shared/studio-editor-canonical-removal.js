@@ -70,9 +70,48 @@
     });
   }
 
+  function createStudioCanonicalRemovalMutationBuilders(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const buildCanonicalRemovalBaseline = (baselineOptions = {}) => (
+      buildStudioCanonicalRemovalBaseline({
+        ...baselineOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck
+      })
+    );
+    const buildCanonicalRemovalDeck = (selection, deckOptions = {}) => {
+      const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(
+        deckOptions,
+        'canonicalDeckBeforeMutation'
+      )
+        ? deckOptions.canonicalDeckBeforeMutation
+        : buildCanonicalRemovalBaseline(deckOptions);
+      return buildStudioCanonicalRemovalDeck(selection, {
+        ...deckOptions,
+        canonicalDeckApi,
+        canonicalDeckBeforeMutation
+      });
+    };
+    const buildCanonicalRemovalMutation = (selection, mutationOptions = {}) => (
+      buildCanonicalRemovalDeck(selection, mutationOptions)
+    );
+
+    return {
+      buildCanonicalRemovalBaseline,
+      buildCanonicalRemovalDeck,
+      buildCanonicalRemovalMutation
+    };
+  }
+
   return {
     buildStudioCanonicalRemovalBaseline,
     buildStudioCanonicalRemovalDeck,
-    buildStudioCanonicalRemovalMutation
+    buildStudioCanonicalRemovalMutation,
+    createStudioCanonicalRemovalMutationBuilders
   };
 });

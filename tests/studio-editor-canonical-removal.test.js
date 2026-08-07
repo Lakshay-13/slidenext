@@ -69,3 +69,29 @@ test('buildStudioCanonicalRemovalMutation centralizes baseline and node removal'
   assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['after']);
   assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'after']);
 });
+
+test('createStudioCanonicalRemovalMutationBuilders reuses an explicit baseline', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1' }, { id: 'node-2' }] }]
+  });
+  let buildCount = 0;
+  const builders = canonicalRemoval.createStudioCanonicalRemovalMutationBuilders({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck() {
+      buildCount += 1;
+      return sourceDeck;
+    }
+  });
+
+  const result = builders.buildCanonicalRemovalMutation(
+    [{ dataset: { editorId: 'node-1' } }],
+    {
+      canonicalDeckBeforeMutation: sourceDeck,
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.equal(buildCount, 0);
+  assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['node-2']);
+  assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'node-2']);
+});
