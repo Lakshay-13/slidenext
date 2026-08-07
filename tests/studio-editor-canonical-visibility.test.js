@@ -55,3 +55,20 @@ test('buildStudioCanonicalVisibilityDeck fails closed when the selection or adap
     hidden: true
   }, {}), null);
 });
+
+test('buildStudioCanonicalVisibilityMutation centralizes baseline and patch application', () => {
+  const sourceDeck = createSourceDeck();
+  const result = canonicalVisibility.buildStudioCanonicalVisibilityMutation(
+    [{ dataset: { editorId: 'node-1' } }],
+    { hidden: true },
+    {
+      canonicalDeckApi: canonicalDeck,
+      buildCanonicalDeck: () => sourceDeck,
+      sourceDocument: { id: 'editor-doc' },
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.equal(result.slides[0].nodes[0].visibility.hidden, true);
+  assert.equal(sourceDeck.slides[0].nodes[0].visibility.hidden, false);
+});

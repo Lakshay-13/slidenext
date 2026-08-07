@@ -50,8 +50,30 @@
     return updateCanonicalNodeVisibility(canonicalDeckBeforeMutation, nodeIds, visibilityPatch);
   }
 
+  function buildStudioCanonicalVisibilityMutation(selection, visibilityPatch = {}, options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    if (!canonicalDeckApi || !buildCanonicalDeck) return null;
+
+    const canonicalDeckBeforeMutation = buildStudioCanonicalVisibilityBaseline({
+      canonicalDeckApi,
+      buildCanonicalDeck,
+      sourceDocument: options.sourceDocument
+    });
+    return buildStudioCanonicalVisibilityDeck(selection, visibilityPatch, {
+      canonicalDeckApi,
+      canonicalDeckBeforeMutation,
+      getElementId: options.getElementId
+    });
+  }
+
   return {
     buildStudioCanonicalVisibilityBaseline,
-    buildStudioCanonicalVisibilityDeck
+    buildStudioCanonicalVisibilityDeck,
+    buildStudioCanonicalVisibilityMutation
   };
 });
