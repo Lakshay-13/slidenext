@@ -2193,6 +2193,26 @@
     }
 
     function createCurrentStudioSessionReaderOptions(options = {}) {
+      const createStudioEditorSessionReaderOptionsAdapter = (
+        typeof SlideNextStudioEditorSession !== 'undefined'
+        && SlideNextStudioEditorSession
+        && typeof SlideNextStudioEditorSession.createStudioEditorSessionReaderOptionsAdapter === 'function'
+      )
+        ? SlideNextStudioEditorSession.createStudioEditorSessionReaderOptionsAdapter
+        : null;
+      if (createStudioEditorSessionReaderOptionsAdapter) {
+        const adapter = createStudioEditorSessionReaderOptionsAdapter({
+          sessionApi: SlideNextStudioEditorSession,
+          readCurrentSessionState: createCurrentStudioSessionStateReaders
+        });
+        if (typeof adapter === 'function') {
+          return adapter(options);
+        }
+        if (adapter && typeof adapter === 'object') {
+          return adapter;
+        }
+      }
+
       const createStudioSessionReaderOptionsBuilder = (
         typeof SlideNextStudioEditorSession !== 'undefined'
         && SlideNextStudioEditorSession

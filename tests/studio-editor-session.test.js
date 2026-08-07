@@ -110,6 +110,60 @@ test('createStudioSessionReaderOptionsBuilder reuses live session readers and ca
   ]);
 });
 
+test('createStudioEditorSessionReaderOptionsAdapter delegates builder input and preserves live reader options', () => {
+  let delegatedArgs = null;
+  const adapter = editorSession.createStudioEditorSessionReaderOptionsAdapter({
+    sessionApi: {
+      createStudioSessionReaderOptionsBuilder(options) {
+        delegatedArgs = options;
+        return editorSession.createStudioSessionReaderOptionsBuilder(options);
+      }
+    },
+    readCurrentSessionState: () => ({
+      getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+      getCurrentSessionToken: () => 12
+    })
+  });
+
+  const sessionReaderOptions = adapter({ onLoad: 'load-sentinel' });
+  assert.equal(sessionReaderOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(sessionReaderOptions.getCurrentSessionToken(), 12);
+  assert.equal(sessionReaderOptions.onLoad, 'load-sentinel');
+  assert.equal(delegatedArgs.readCurrentSessionState().getCurrentSessionToken(), 12);
+});
+
+test('createStudioEditorSessionReaderOptionsAdapter supports call-time builder and reader overrides', () => {
+  let capturedArgs = null;
+  const adapter = editorSession.createStudioEditorSessionReaderOptionsAdapter({
+    readCurrentSessionState: () => ({
+      getCurrentPresentationUrl: () => '/presentations/default/index.html',
+      getCurrentSessionToken: () => 4
+    })
+  });
+
+  const sessionReaderOptions = adapter({
+    createSessionReaderOptionsBuilder(options) {
+      capturedArgs = options;
+      return nextOptions => ({
+        ...options.readCurrentSessionState(),
+        ...nextOptions,
+        builderUsed: true
+      });
+    },
+    readCurrentSessionState: () => ({
+      getCurrentPresentationUrl: () => '/presentations/custom/index.html',
+      getCurrentSessionToken: () => 15
+    }),
+    onLoad: 'custom-sentinel'
+  });
+
+  assert.equal(sessionReaderOptions.getCurrentPresentationUrl(), '/presentations/custom/index.html');
+  assert.equal(sessionReaderOptions.getCurrentSessionToken(), 15);
+  assert.equal(sessionReaderOptions.onLoad, 'custom-sentinel');
+  assert.equal(sessionReaderOptions.builderUsed, true);
+  assert.equal(capturedArgs.readCurrentSessionState().getCurrentSessionToken(), 15);
+});
+
 test('createStudioSessionSnapshot preserves the supplied presentation identity and normalized session token', () => {
   const snapshot = editorSession.createStudioSessionSnapshot({
     presentationUrl: '/presentations/onboarding-presentation/index.html',

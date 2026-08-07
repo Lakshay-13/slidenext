@@ -59,6 +59,46 @@
     };
   }
 
+  function createStudioEditorSessionReaderOptionsAdapter(options = {}) {
+    const sessionApi = options.sessionApi && typeof options.sessionApi === 'object'
+      ? options.sessionApi
+      : null;
+    const createSessionReaderOptionsBuilder = typeof options.createSessionReaderOptionsBuilder === 'function'
+      ? options.createSessionReaderOptionsBuilder
+      : sessionApi
+        && typeof sessionApi.createStudioSessionReaderOptionsBuilder === 'function'
+        ? sessionApi.createStudioSessionReaderOptionsBuilder
+        : createStudioSessionReaderOptionsBuilder;
+    const readCurrentSessionState = typeof options.readCurrentSessionState === 'function'
+      ? options.readCurrentSessionState
+      : () => createStudioSessionStateReaders(options);
+
+    return function createEditorSessionReaderOptions(nextOptions = {}) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      const currentCreateSessionReaderOptionsBuilder = typeof resolvedOptions.createSessionReaderOptionsBuilder === 'function'
+        ? resolvedOptions.createSessionReaderOptionsBuilder
+        : createSessionReaderOptionsBuilder;
+      const currentReadCurrentSessionState = typeof resolvedOptions.readCurrentSessionState === 'function'
+        ? resolvedOptions.readCurrentSessionState
+        : readCurrentSessionState;
+      if (currentCreateSessionReaderOptionsBuilder) {
+        const createSessionReaderOptions = currentCreateSessionReaderOptionsBuilder({
+          readCurrentSessionState: currentReadCurrentSessionState
+        });
+        if (typeof createSessionReaderOptions === 'function') {
+          return createSessionReaderOptions(resolvedOptions);
+        }
+      }
+
+      return {
+        ...currentReadCurrentSessionState(),
+        ...resolvedOptions
+      };
+    };
+  }
+
   function createStudioSessionReaderOptionsBuilder(options = {}) {
     const defaultReadCurrentSessionState = typeof options.readCurrentSessionState === 'function'
       ? options.readCurrentSessionState
@@ -225,6 +265,7 @@
     createStudioSessionStateReaders,
     createStudioEditorSessionStateReadersAdapter,
     createStudioSessionReaderOptionsBuilder,
+    createStudioEditorSessionReaderOptionsAdapter,
     createStudioSessionSnapshot,
     createStudioEditorSessionSnapshotAdapter,
     createStudioPresentationSessionStateUpdate,

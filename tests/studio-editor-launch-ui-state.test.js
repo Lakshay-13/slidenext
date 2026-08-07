@@ -427,8 +427,11 @@ test('createCurrentStudioSessionReaderOptions reuses the shared session-reader o
     },
     SlideNextStudioEditorSession: {
       ...editorSession,
-      createStudioSessionReaderOptionsBuilder(options = {}) {
+      createStudioEditorSessionReaderOptionsAdapter(options = {}) {
         delegatedArgs = options;
+        return editorSession.createStudioEditorSessionReaderOptionsAdapter(options);
+      },
+      createStudioSessionReaderOptionsBuilder(options = {}) {
         const sessionStateReaders = options.readCurrentSessionState();
         return (nextOptions = {}) => ({
           getCurrentPresentationUrl: sessionStateReaders.getCurrentPresentationUrl,
