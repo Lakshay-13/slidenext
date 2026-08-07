@@ -140,6 +140,32 @@ test('exportPdf skips preview generation when deck actions are unavailable or pr
   assert.equal(buildCalls, 1);
 });
 
+test('exportPdf reports preview renderer failures instead of throwing', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const statusCalls = [];
+  const context = {
+    SlideNextStudioPdfExport: {
+      openStudioPdfPrintWindow() {
+        throw new Error('print exporter should not run');
+      }
+    },
+    buildEditorPreviewHtml() {
+      throw new Error('preview render failed');
+    },
+    setStudioAutoSaveStatus(state) {
+      statusCalls.push(state);
+    },
+    resolveCurrentStudioDeckReadyActionState() {
+      return { canUseDeckActions: true };
+    }
+  };
+
+  loadExportPdfAction(fileContent, context);
+
+  assert.doesNotThrow(() => assert.equal(context.exportPdf(), false));
+  assert.deepEqual(statusCalls, ['pdf-export-failed']);
+});
+
 test('exportPdf reports popup failures and restores the export button', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const statusCalls = [];

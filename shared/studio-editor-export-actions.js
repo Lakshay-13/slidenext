@@ -39,7 +39,12 @@
         return failPdfExport();
       }
 
-      const html = buildPreviewHtml();
+      let html = '';
+      try {
+        html = buildPreviewHtml();
+      } catch (error) {
+        return failPdfExport();
+      }
       if (!html) return failPdfExport();
 
       let canonicalDeck = null;
