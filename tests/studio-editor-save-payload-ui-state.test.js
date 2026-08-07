@@ -1317,6 +1317,47 @@ test('resolveEditorCapturedPersistableDeckState delegates through the editor per
   assert.equal(typeof factoryOptions.resolvePlaybackState, 'function');
 });
 
+test('captureEditorPersistableDeckBuildState delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(
+    fileContent,
+    'function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {',
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  let factoryOptions = null;
+  const context = {
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistableDeckBuildStateCapturer(options = {}) {
+        factoryOptions = options;
+        return (doc, nextOptions = {}) => ({
+          doc,
+          canonicalDeck: nextOptions.canonicalDeck,
+          buildPersistableDeckHtml: options.buildPersistableDeckHtml
+        });
+      }
+    },
+    buildPersistableDeckHtml() {
+      return '<html>persisted</html>';
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(captureEditorPersistableDeckBuildStateSource, context);
+
+  assert.deepEqual(context.captureEditorPersistableDeckBuildState(iframeDoc, {
+    canonicalDeck
+  }), {
+    doc: iframeDoc,
+    canonicalDeck,
+    buildPersistableDeckHtml: context.buildPersistableDeckHtml
+  });
+  assert.equal(factoryOptions.buildPersistableDeckHtml, context.buildPersistableDeckHtml);
+});
+
 test('captureEditorPersistableDeckBuildState reuses the shared build-state capturer when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(

@@ -573,3 +573,58 @@ test('createStudioEditorCapturedPersistableDeckStateResolverAdapter returns null
 
   assert.equal(adapter('<html>persisted</html>'), null);
 });
+
+test('createStudioEditorPersistableDeckBuildStateCapturerAdapter preserves builder precedence', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const buildPersistableDeckHtml = () => '<html>persisted</html>';
+  let factoryOptions = null;
+  const captureStudioPersistableDeckBuildState = () => {
+    throw new Error('direct build-state capturer should not run when the builder exists');
+  };
+  const adapter = editorPersistenceState.createStudioEditorPersistableDeckBuildStateCapturerAdapter({
+    persistenceApi: {
+      captureStudioPersistableDeckBuildState,
+      createStudioPersistableDeckBuildStateCapturer(options) {
+        factoryOptions = options;
+        return (doc, nextOptions) => ({
+          doc,
+          buildPersistableDeckHtml: options.buildPersistableDeckHtml,
+          canonicalDeck: nextOptions.canonicalDeck
+        });
+      }
+    },
+    buildPersistableDeckHtml
+  });
+
+  assert.deepEqual(adapter(iframeDoc, { canonicalDeck: { id: 'deck-1' } }), {
+    doc: iframeDoc,
+    buildPersistableDeckHtml,
+    canonicalDeck: { id: 'deck-1' }
+  });
+  assert.equal(factoryOptions.capturePersistableDeckBuildState, captureStudioPersistableDeckBuildState);
+  assert.equal(factoryOptions.buildPersistableDeckHtml, buildPersistableDeckHtml);
+});
+
+test('createStudioEditorPersistableDeckBuildStateCapturerAdapter uses direct helper without a builder', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  let delegatedArgs = null;
+  const captureStudioPersistableDeckBuildState = (doc, options) => {
+    delegatedArgs = { doc, options };
+    return { direct: true };
+  };
+  const adapter = editorPersistenceState.createStudioEditorPersistableDeckBuildStateCapturerAdapter({
+    persistenceApi: { captureStudioPersistableDeckBuildState },
+    buildPersistableDeckHtml: () => '<html>persisted</html>'
+  });
+
+  assert.deepEqual(adapter(iframeDoc, { canonicalDeck: { id: 'deck-1' } }), { direct: true });
+  assert.equal(delegatedArgs.doc, iframeDoc);
+  assert.equal(delegatedArgs.options.canonicalDeck.id, 'deck-1');
+  assert.equal(typeof delegatedArgs.options.buildPersistableDeckHtml, 'function');
+});
+
+test('createStudioEditorPersistableDeckBuildStateCapturerAdapter returns null without a shared capturer', () => {
+  const adapter = editorPersistenceState.createStudioEditorPersistableDeckBuildStateCapturerAdapter();
+
+  assert.equal(adapter({ label: 'iframe-doc' }), null);
+});

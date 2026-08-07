@@ -8344,6 +8344,28 @@
       const nextBuildOptions = buildOptions && typeof buildOptions === 'object'
         ? buildOptions
         : {};
+      const createStudioEditorPersistableDeckBuildStateCapturerAdapter = (
+        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+        && SlideNextStudioEditorPersistenceState
+        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistableDeckBuildStateCapturerAdapter === 'function'
+      )
+        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistableDeckBuildStateCapturerAdapter
+        : null;
+      if (createStudioEditorPersistableDeckBuildStateCapturerAdapter) {
+        const adapter = createStudioEditorPersistableDeckBuildStateCapturerAdapter({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          buildPersistableDeckHtml
+        });
+        const capturedState = typeof adapter === 'function'
+          ? adapter(doc, nextBuildOptions)
+          : null;
+        if (capturedState !== null && typeof capturedState !== 'undefined') {
+          return capturedState;
+        }
+      }
+
       const createStudioPersistableDeckBuildStateCapturer = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence
