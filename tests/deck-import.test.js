@@ -1337,6 +1337,7 @@ test('importElementToCanonicalNode promotes computed class-based background imag
       defaultView: {
         getComputedStyle() {
           return {
+            backgroundColor: 'rgba(10, 20, 30, 0.5)',
             backgroundImage: 'url("http://localhost/presentations/demo/assets/panel.png")',
             backgroundSize: 'contain',
             backgroundPosition: 'center',
@@ -1358,7 +1359,7 @@ test('importElementToCanonicalNode promotes computed class-based background imag
 
   assert.equal(
     node.style,
-    'background-image: url("assets/panel.png"); background-size: contain; background-position: center; background-repeat: no-repeat;'
+    'background-color: rgba(10, 20, 30, 0.5); background-image: url("assets/panel.png"); background-size: contain; background-position: center; background-repeat: no-repeat;'
   );
 });
 
@@ -1370,6 +1371,7 @@ test('importElementToCanonicalNode keeps explicit background styles authoritativ
       defaultView: {
         getComputedStyle() {
           return {
+            backgroundColor: 'rgb(1, 2, 3)',
             backgroundImage: 'url("assets/computed.png")',
             backgroundSize: 'cover'
           };
@@ -1378,15 +1380,39 @@ test('importElementToCanonicalNode keeps explicit background styles authoritativ
     },
     attributes: {
       class: 'hero-card',
-      style: 'background-image: url("assets/inline.png"); background-size: contain;'
+      style: 'background-color: #112233; background-image: url("assets/inline.png"); background-size: contain;'
     },
     textContent: 'Panel',
-    outerHTML: '<div class="hero-card" style="background-image: url(&quot;assets/inline.png&quot;); background-size: contain;">Panel</div>'
+    outerHTML: '<div class="hero-card" style="background-color: #112233; background-image: url(&quot;assets/inline.png&quot;); background-size: contain;">Panel</div>'
   });
 
   const node = deckImport.importElementToCanonicalNode(element);
 
-  assert.equal(node.style, 'background-image: url("assets/inline.png"); background-size: contain;');
+  assert.equal(node.style, 'background-color: #112233; background-image: url("assets/inline.png"); background-size: contain;');
+});
+
+test('importElementToCanonicalNode omits transparent computed background colors', () => {
+  const element = createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['hero-card']),
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return {
+            backgroundColor: 'rgba(0, 0, 0, 0)',
+            backgroundImage: 'none'
+          };
+        }
+      }
+    },
+    attributes: { class: 'hero-card' },
+    textContent: 'Panel',
+    outerHTML: '<div class="hero-card">Panel</div>'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+
+  assert.equal(node.style, '');
 });
 
 test('importElementToCanonicalNode strips only hidden style flags once visibility is captured structurally', () => {

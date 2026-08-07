@@ -894,6 +894,13 @@
     return normalizeString(style[propertyName] || style[camelCaseName]);
   }
 
+  function isImportedTransparentColor(value) {
+    const normalizedValue = normalizeString(value).trim().toLowerCase();
+    return !normalizedValue
+      || normalizedValue === 'transparent'
+      || /^rgba\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*0(?:\.0+)?\s*\)$/i.test(normalizedValue);
+  }
+
   function buildImportedComputedNodeBackgroundStyle(el, inlineStyleText, options = {}) {
     const computedStyle = getImportedComputedStyle(el, options);
     if (!computedStyle) {
@@ -903,6 +910,12 @@
     const declarations = [];
     const hasInlineBackground = hasImportedStyleProperty(inlineStyleText, 'background')
       || hasImportedStyleProperty(inlineStyleText, 'background-image');
+    const hasInlineBackgroundColor = hasImportedStyleProperty(inlineStyleText, 'background')
+      || hasImportedStyleProperty(inlineStyleText, 'background-color');
+    const computedBackgroundColor = readImportedStyleValue(computedStyle, 'background-color');
+    if (!hasInlineBackgroundColor && !isImportedTransparentColor(computedBackgroundColor)) {
+      declarations.push(`background-color: ${computedBackgroundColor};`);
+    }
     const computedBackgroundImage = normalizeImportedComputedCssValue(
       readImportedStyleValue(computedStyle, 'background-image'),
       options
