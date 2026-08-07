@@ -66,10 +66,12 @@
     overflow: visible !important;
   }
 
-  .slides-container {
+  .slides-container,
+  .slides-wrapper {
     display: block !important;
     width: auto !important;
     height: auto !important;
+    position: static !important;
     transform: none !important;
     transition: none !important;
   }
@@ -78,6 +80,7 @@
     display: flex !important;
     width: ${pageWidth} !important;
     height: ${pageHeight} !important;
+    position: relative !important;
     min-height: 0 !important;
     max-height: ${pageHeight} !important;
     margin: 0 !important;
