@@ -57,8 +57,30 @@
     return appendCanonicalNode(canonicalDeckBeforeMutation, slideId, canonicalNode);
   }
 
+  function buildStudioCanonicalInsertionSequence(elements, options = {}) {
+    if (!Array.isArray(elements) || elements.length === 0) return null;
+
+    const slideId = typeof options.slideId === 'string' ? options.slideId : '';
+    const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
+      ? options.canonicalDeckBeforeMutation
+      : buildStudioCanonicalInsertionBaseline(options);
+    if (!canonicalDeckBeforeMutation || !slideId) return null;
+
+    let nextCanonicalDeck = canonicalDeckBeforeMutation;
+    for (const element of elements) {
+      const appendedDeck = buildStudioCanonicalInsertionDeck(element, {
+        ...options,
+        canonicalDeckBeforeMutation: nextCanonicalDeck
+      });
+      if (!appendedDeck) return null;
+      nextCanonicalDeck = appendedDeck;
+    }
+    return nextCanonicalDeck;
+  }
+
   return {
     buildStudioCanonicalInsertionBaseline,
-    buildStudioCanonicalInsertionDeck
+    buildStudioCanonicalInsertionDeck,
+    buildStudioCanonicalInsertionSequence
   };
 });

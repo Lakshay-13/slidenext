@@ -56,3 +56,30 @@ test('buildStudioCanonicalInsertionDeck builds the baseline from the source docu
   assert.equal(builtFromDocument, sourceDocument);
   assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['inserted']);
 });
+
+test('buildStudioCanonicalInsertionSequence appends every inserted node in order', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }] }]
+  });
+  const elements = [
+    { dataset: { editorId: 'inserted-1' } },
+    { dataset: { editorId: 'inserted-2' } }
+  ];
+
+  const result = canonicalInsertion.buildStudioCanonicalInsertionSequence(elements, {
+    canonicalDeckApi: canonicalDeck,
+    canonicalDeckBeforeMutation: sourceDeck,
+    slideId: 'slide-1',
+    importElementToCanonicalNode(element, options) {
+      return { id: options.getNodeId(element) };
+    },
+    getNodeId: (element) => element.dataset.editorId
+  });
+
+  assert.deepEqual(result.slides[0].nodes.map((node) => node.id), [
+    'existing',
+    'inserted-1',
+    'inserted-2'
+  ]);
+  assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['existing']);
+});
