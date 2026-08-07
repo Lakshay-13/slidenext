@@ -222,6 +222,41 @@
     return resolveAssetSource(extractCssImageSource(background && background.image), options);
   }
 
+  function resolveSlideBackgroundImageSizing(background, options) {
+    const styles = parseStyle(background && background.style);
+    const type = typeof styles['background-size'] === 'string'
+      ? styles['background-size'].trim().toLowerCase()
+      : '';
+    if (type !== 'cover' && type !== 'contain') return null;
+    const position = (styles['background-position'] || '').trim().toLowerCase();
+    if (position && !/^(?:center|center\s+center)$/.test(position)) return null;
+    const repeat = (styles['background-repeat'] || '').trim().toLowerCase();
+    if (repeat && repeat !== 'no-repeat') return null;
+    return {
+      type,
+      x: 0,
+      y: 0,
+      w: options.pageWidth,
+      h: options.pageHeight
+    };
+  }
+
+  function hasSupportedSlideBackgroundStyle(background, imageSource) {
+    if (!imageSource) return false;
+    const styles = parseStyle(background && background.style);
+    const properties = Object.keys(styles);
+    if (properties.length === 0) return false;
+    return properties.every((property) => {
+      if (property === 'background-size') {
+        return ['cover', 'contain'].includes(styles[property].trim().toLowerCase());
+      }
+      if (property === 'background-position') {
+        return /^(?:center|center\s+center)$/i.test(styles[property].trim());
+      }
+      return property === 'background-repeat' && styles[property].trim().toLowerCase() === 'no-repeat';
+    });
+  }
+
   function getBackgroundAssetDiagnosticId(slide) {
     return `${slide && slide.id ? slide.id : 'unknown'}:background`;
   }
@@ -439,7 +474,8 @@
     deck.slides.forEach(slide => {
       const background = asObject(slide.layout).background || {};
       const backgroundImageSource = resolveSlideBackgroundImageSource(background, normalizedOptions);
-      if (background.style && !resolveSlideBackgroundColor(background)) {
+      const supportsBackgroundStyle = hasSupportedSlideBackgroundStyle(background, backgroundImageSource);
+      if (background.style && !resolveSlideBackgroundColor(background) && !supportsBackgroundStyle) {
         diagnostics.unsupportedStyles.push({
           id: slide.id || 'unknown',
           properties: ['background']
@@ -544,6 +580,8 @@
       const imageOptions = backgroundSource.startsWith('data:')
         ? { data: backgroundSource, ...bounds }
         : { path: backgroundSource, ...bounds };
+      const sizing = resolveSlideBackgroundImageSizing(background, context.options);
+      if (sizing) imageOptions.sizing = sizing;
       context.slide.addImage(imageOptions);
     }
     if (slide.notes && typeof context.slide.addNotes === 'function') context.slide.addNotes(slide.notes);

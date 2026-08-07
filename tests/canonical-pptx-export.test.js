@@ -238,7 +238,12 @@ test('createCanonicalPptxExport renders canonical slide background images before
     layout: { size: { width: 1000, height: 500, unit: 'px' } },
     slides: [{
       id: 'slide-1',
-      layout: { background: { image: 'url("data:image/png;base64,AAAA")' } },
+      layout: {
+        background: {
+          image: 'url("data:image/png;base64,AAAA")',
+          style: 'background-size: cover; background-position: center;'
+        }
+      },
       nodes: [{
         id: 'text-1',
         type: 'text',
@@ -254,9 +259,17 @@ test('createCanonicalPptxExport renders canonical slide background images before
     x: 0,
     y: 0,
     w: 13.333,
-    h: 6.6665
+    h: 6.6665,
+    sizing: {
+      type: 'cover',
+      x: 0,
+      y: 0,
+      w: 13.333,
+      h: 6.6665
+    }
   });
   assert.deepEqual(result.diagnostics.missingBackgroundAssets, []);
+  assert.deepEqual(result.diagnostics.warnings, []);
 });
 
 test('preflightCanonicalPptxExport reports missing slide background image assets', () => {
