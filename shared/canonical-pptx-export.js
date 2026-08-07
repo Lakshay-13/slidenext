@@ -114,6 +114,16 @@
       .trim();
   }
 
+  function isTextContainerNode(node) {
+    const type = typeof node?.type === 'string' ? node.type.toLowerCase() : '';
+    const tagName = typeof node?.tagName === 'string' ? node.tagName.toLowerCase() : '';
+    return type === 'text'
+      || type === 'heading'
+      || type === 'code'
+      || /^h[1-6]$/.test(tagName)
+      || ['blockquote', 'code', 'li', 'p', 'pre', 'span'].includes(tagName);
+  }
+
   function getCanonicalTableRows(node) {
     return (Array.isArray(node.children) ? node.children : [])
       .filter(row => row && row.tagName === 'tr')
@@ -162,6 +172,23 @@
       w: layout.width * context.scaleX,
       h: layout.height * context.scaleY
     };
+  }
+
+  function getNodeChildOrigin(node, origin = {}) {
+    const layout = getNodeCanvasLayout(node, origin);
+    return {
+      x: Number.isFinite(layout.x) ? layout.x : (Number.isFinite(origin.x) ? origin.x : 0),
+      y: Number.isFinite(layout.y) ? layout.y : (Number.isFinite(origin.y) ? origin.y : 0)
+    };
+  }
+
+  function hasExportableChildBounds(children, origin = {}) {
+    return (Array.isArray(children) ? children : []).some((child) => {
+      const layout = getNodeCanvasLayout(child, origin);
+      return [layout.x, layout.y, layout.width, layout.height].every(Number.isFinite)
+        && layout.width > 0
+        && layout.height > 0;
+    });
   }
 
   function getNodeAttribute(node, name) {
@@ -379,10 +406,12 @@
       }
 
       const childNodes = type === 'table' || node.tagName === 'table' ? [] : node.children;
-      const childOrigin = {
-        x: Number.isFinite(bounds.x) ? bounds.x : (Number.isFinite(origin.x) ? origin.x : 0),
-        y: Number.isFinite(bounds.y) ? bounds.y : (Number.isFinite(origin.y) ? origin.y : 0)
-      };
+      const childOrigin = getNodeChildOrigin(node, origin);
+      if (isTextContainerNode(node)
+        && getNestedNodeText(node)
+        && !hasExportableChildBounds(childNodes, childOrigin)) {
+        return;
+      }
       getPptxRenderOrder(childNodes).forEach(child => visit(child, childOrigin));
     }
 
@@ -413,6 +442,9 @@
     const imageNode = type === 'image' || tagName === 'img';
     const shapeNode = type === 'shape' || node.classes?.includes('editor-shape');
     const tableNode = type === 'table' || tagName === 'table';
+    const childOrigin = getNodeChildOrigin(node, origin);
+    const hasExportableChildren = hasExportableChildBounds(children, childOrigin);
+    const text = getNestedNodeText(node);
 
     if (tableNode) {
       const rows = getCanonicalTableRows(node);
@@ -440,15 +472,13 @@
       }
     } else if (shapeNode) {
       if (bounds) context.slide.addShape(getShapeType(context.pptx, 'rect'), shapeOptions(node, bounds));
-    } else if (!UNSUPPORTED_NODE_TYPES.has(type) && getNodeText(node) && children.length === 0) {
-      if (bounds) context.slide.addText(getNodeText(node), textOptions(node, bounds));
+    } else if (!UNSUPPORTED_NODE_TYPES.has(type)
+      && text
+      && bounds
+      && (children.length === 0 || (isTextContainerNode(node) && !hasExportableChildren))) {
+      context.slide.addText(text, textOptions(node, bounds));
     }
 
-    const layout = getNodeCanvasLayout(node, origin);
-    const childOrigin = {
-      x: Number.isFinite(layout.x) ? layout.x : (Number.isFinite(origin.x) ? origin.x : 0),
-      y: Number.isFinite(layout.y) ? layout.y : (Number.isFinite(origin.y) ? origin.y : 0)
-    };
     getPptxRenderOrder(children).forEach(child => renderNode(child, context, childOrigin));
   }
 

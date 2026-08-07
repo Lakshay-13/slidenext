@@ -318,6 +318,32 @@ test('createCanonicalPptxExport renders siblings in stable z-index order', () =>
   ]);
 });
 
+test('createCanonicalPptxExport preserves aggregate text for flow-only inline children', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      nodes: [{
+        id: 'heading-1',
+        type: 'heading',
+        tagName: 'h1',
+        layout: { x: 100, y: 50, width: 400, height: 80 },
+        children: [{
+          id: 'heading-span-1',
+          type: 'text',
+          tagName: 'span',
+          text: 'Rich title'
+        }]
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.pptx.slides[0].calls.map(call => ({
+    type: call.type,
+    text: call.text
+  })), [{ type: 'text', text: 'Rich title' }]);
+  assert.deepEqual(result.diagnostics.warnings, []);
+});
+
 test('normalizeHexColor handles short hex and rgb values', () => {
   assert.equal(pptxExport.normalizeHexColor('#abc'), 'AABBCC');
   assert.equal(pptxExport.normalizeHexColor('rgb(1, 2, 3)'), '010203');
