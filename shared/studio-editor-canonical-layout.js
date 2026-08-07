@@ -41,8 +41,46 @@
     return updateCanonicalNodeLayout(canonicalDeckBeforeMutation, Array.isArray(layoutUpdates) ? layoutUpdates : []);
   }
 
+  function buildStudioCanonicalLayoutMutation(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const nextItems = Array.isArray(options.nextItems) ? options.nextItems : [];
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    if (!canonicalDeckApi || !buildCanonicalDeck) return null;
+
+    const layoutUpdates = nextItems.map((item) => {
+      const nodeId = getElementId(item && item.element);
+      if (!nodeId || !Number.isFinite(item && item.nextAbsLeft) || !Number.isFinite(item && item.nextAbsTop)) {
+        return null;
+      }
+      return {
+        id: nodeId,
+        layout: {
+          x: item.nextAbsLeft,
+          y: item.nextAbsTop
+        }
+      };
+    }).filter(Boolean);
+    const canonicalDeckBeforeMutation = buildStudioCanonicalLayoutBaseline({
+      canonicalDeckApi,
+      buildCanonicalDeck,
+      sourceDocument: options.sourceDocument
+    });
+    return buildStudioCanonicalLayoutDeck(layoutUpdates, {
+      canonicalDeckApi,
+      canonicalDeckBeforeMutation
+    });
+  }
+
   return {
     buildStudioCanonicalLayoutBaseline,
-    buildStudioCanonicalLayoutDeck
+    buildStudioCanonicalLayoutDeck,
+    buildStudioCanonicalLayoutMutation
   };
 });

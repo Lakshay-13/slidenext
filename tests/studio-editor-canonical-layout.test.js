@@ -57,3 +57,24 @@ test('buildStudioCanonicalLayoutDeck supports a builder and fails closed without
   assert.equal(result.slides[0].nodes[0].layout.x, 40);
   assert.equal(canonicalLayout.buildStudioCanonicalLayoutDeck([], { canonicalDeckApi: {} }), null);
 });
+
+test('buildStudioCanonicalLayoutMutation maps positioned items onto a fresh canonical deck', () => {
+  const sourceDeck = createSourceDeck();
+  const element = { dataset: { editorId: 'node-1' } };
+  const result = canonicalLayout.buildStudioCanonicalLayoutMutation({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck() {
+      return sourceDeck;
+    },
+    nextItems: [{
+      element,
+      nextAbsLeft: 40,
+      nextAbsTop: 60
+    }],
+    getElementId: (node) => node.dataset.editorId
+  });
+
+  assert.equal(result.slides[0].nodes[0].layout.x, 40);
+  assert.equal(result.slides[0].nodes[0].layout.y, 60);
+  assert.equal(sourceDeck.slides[0].nodes[0].layout.x, null);
+});
