@@ -3656,6 +3656,13 @@
 
     function getCurrentEditorPersistedDeckState() {
       if (typeof getCurrentEditorPersistedDeckState.stateReader !== 'function') {
+        const createStudioEditorPersistedDeckStateReaderAdapter = (
+          typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+          && SlideNextStudioEditorPersistenceState
+          && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckStateReaderAdapter === 'function'
+        )
+          ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckStateReaderAdapter
+          : null;
         const createStudioPersistedDeckStateReader = (
           typeof SlideNextStudioEditorPersistence !== 'undefined'
           && SlideNextStudioEditorPersistence
@@ -3663,12 +3670,19 @@
         )
           ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateReader
           : null;
-        if (createStudioPersistedDeckStateReader) {
-          getCurrentEditorPersistedDeckState.stateReader = createStudioPersistedDeckStateReader({
+        const createReader = createStudioEditorPersistedDeckStateReaderAdapter || createStudioPersistedDeckStateReader;
+        if (createReader) {
+          const readerOptions = {
             getPersistedDeckHtml: () => lastPersistedDeckHtml,
             getPersistedCanonicalDeck: () => lastPersistedCanonicalDeck,
             getPersistedPlaybackState: () => persistedDeckPlaybackState
-          });
+          };
+          if (createStudioEditorPersistedDeckStateReaderAdapter) {
+            readerOptions.persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null;
+          }
+          getCurrentEditorPersistedDeckState.stateReader = createReader(readerOptions);
         }
       }
       if (typeof getCurrentEditorPersistedDeckState.stateReader === 'function') {
@@ -3683,6 +3697,20 @@
     }
 
     getCurrentEditorPersistedDeckState.resolveWithContent = function (persistedDeckState = getCurrentEditorPersistedDeckState()) {
+      const hasPersistedDeckStateReaderAdapter = (
+        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+        && SlideNextStudioEditorPersistenceState
+        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckStateReaderAdapter === 'function'
+      );
+      if (typeof getCurrentEditorPersistedDeckState.stateReader !== 'function'
+        && hasPersistedDeckStateReaderAdapter) {
+        getCurrentEditorPersistedDeckState();
+      }
+      if (getCurrentEditorPersistedDeckState.stateReader
+        && getCurrentEditorPersistedDeckState.stateReader.isStudioEditorPersistedDeckStateReaderAdapter
+        && typeof getCurrentEditorPersistedDeckState.stateReader.resolveWithContent === 'function') {
+        return getCurrentEditorPersistedDeckState.stateReader.resolveWithContent(persistedDeckState);
+      }
       if (!getCurrentEditorPersistedDeckState.resolveWithContent.contentReader) {
         const createStudioPersistedDeckStateReader = (
           typeof SlideNextStudioEditorPersistence !== 'undefined'
@@ -3722,18 +3750,35 @@
 
     function resolveEditorPersistedDeckStateWithContent(persistedDeckState = getCurrentEditorPersistedDeckState()) {
       if (typeof resolveEditorPersistedDeckStateWithContent.contentResolver !== 'function') {
-        const createStudioPersistedDeckStateContentResolver = (
-          typeof SlideNextStudioEditorPersistence !== 'undefined'
-          && SlideNextStudioEditorPersistence
-          && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateContentResolver === 'function'
-        )
-          ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateContentResolver
-          : null;
-        if (!createStudioPersistedDeckStateContentResolver) return null;
-        resolveEditorPersistedDeckStateWithContent.contentResolver = createStudioPersistedDeckStateContentResolver({
-          readPersistedDeckState: getCurrentEditorPersistedDeckState,
-          resolveWithContent: getCurrentEditorPersistedDeckState.resolveWithContent
-        });
+        const hasPersistedDeckStateReaderAdapter = (
+          typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+          && SlideNextStudioEditorPersistenceState
+          && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckStateReaderAdapter === 'function'
+        );
+        if (typeof getCurrentEditorPersistedDeckState.stateReader !== 'function'
+          && hasPersistedDeckStateReaderAdapter) {
+          getCurrentEditorPersistedDeckState();
+        }
+        if (getCurrentEditorPersistedDeckState.stateReader
+          && getCurrentEditorPersistedDeckState.stateReader.isStudioEditorPersistedDeckStateReaderAdapter
+          && typeof getCurrentEditorPersistedDeckState.stateReader.resolvePersistedDeckStateWithContent === 'function') {
+          resolveEditorPersistedDeckStateWithContent.contentResolver = (
+            getCurrentEditorPersistedDeckState.stateReader.resolvePersistedDeckStateWithContent
+          );
+        } else {
+          const createStudioPersistedDeckStateContentResolver = (
+            typeof SlideNextStudioEditorPersistence !== 'undefined'
+            && SlideNextStudioEditorPersistence
+            && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateContentResolver === 'function'
+          )
+            ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateContentResolver
+            : null;
+          if (!createStudioPersistedDeckStateContentResolver) return null;
+          resolveEditorPersistedDeckStateWithContent.contentResolver = createStudioPersistedDeckStateContentResolver({
+            readPersistedDeckState: getCurrentEditorPersistedDeckState,
+            resolveWithContent: getCurrentEditorPersistedDeckState.resolveWithContent
+          });
+        }
       }
       if (typeof resolveEditorPersistedDeckStateWithContent.contentResolver !== 'function') return null;
       return resolveEditorPersistedDeckStateWithContent.contentResolver(persistedDeckState);

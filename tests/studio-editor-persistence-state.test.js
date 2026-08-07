@@ -72,3 +72,63 @@ test('createStudioEditorPersistedDeckStateApplierAdapter returns input state wit
   const nextState = { playbackState: null };
   assert.equal(adapter(nextState), nextState);
 });
+
+test('createStudioEditorPersistedDeckStateReaderAdapter lazily caches state, content, and content-resolution readers', () => {
+  const persistedState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: { id: 'persisted-deck' },
+    playbackState: { activeSlideIds: ['slide-2'] }
+  };
+  const readerOptions = [];
+  let contentResolverOptions = null;
+  const persistenceApi = {
+    createStudioPersistedDeckStateReader(options) {
+      readerOptions.push(options);
+      const reader = () => persistedState;
+      reader.resolveWithContent = (nextState) => ({ ...nextState, resolved: true });
+      return reader;
+    },
+    createStudioPersistedDeckStateContentResolver(options) {
+      contentResolverOptions = options;
+      return (nextState) => ({ ...nextState, contentResolved: true });
+    }
+  };
+  const adapter = editorPersistenceState.createStudioEditorPersistedDeckStateReaderAdapter({
+    persistenceApi,
+    getPersistedDeckHtml: () => persistedState.cleanHtml,
+    getPersistedCanonicalDeck: () => persistedState.canonicalDeck,
+    getPersistedPlaybackState: () => persistedState.playbackState
+  });
+
+  assert.deepEqual(adapter(), persistedState);
+  assert.deepEqual(adapter(), persistedState);
+  assert.deepEqual(adapter.resolveWithContent({ cleanHtml: '<html>input</html>' }), {
+    cleanHtml: '<html>input</html>',
+    resolved: true
+  });
+  assert.deepEqual(adapter.resolveWithContent({ cleanHtml: '<html>second</html>' }), {
+    cleanHtml: '<html>second</html>',
+    resolved: true
+  });
+  assert.deepEqual(adapter.resolvePersistedDeckStateWithContent({ cleanHtml: '<html>third</html>' }), {
+    cleanHtml: '<html>third</html>',
+    contentResolved: true
+  });
+  assert.equal(readerOptions.length, 2);
+  assert.equal(readerOptions[0].getPersistedDeckHtml(), persistedState.cleanHtml);
+  assert.equal(readerOptions[1].resolvePersistableDeckStateWithContent, null);
+  assert.equal(typeof contentResolverOptions.readPersistedDeckState, 'function');
+  assert.equal(typeof contentResolverOptions.resolveWithContent, 'function');
+});
+
+test('createStudioEditorPersistedDeckStateReaderAdapter fails closed without shared persistence', () => {
+  const adapter = editorPersistenceState.createStudioEditorPersistedDeckStateReaderAdapter();
+
+  assert.deepEqual(adapter(), {
+    cleanHtml: '',
+    canonicalDeck: null,
+    playbackState: null
+  });
+  assert.equal(adapter.resolveWithContent({ cleanHtml: '<html>input</html>' }), null);
+  assert.equal(adapter.resolvePersistedDeckStateWithContent({ cleanHtml: '<html>input</html>' }), null);
+});

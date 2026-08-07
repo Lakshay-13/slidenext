@@ -270,6 +270,52 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent reuses the shared pe
   assert.equal(delegatedArgs.resolvePersistableDeckStateWithContent, null);
 });
 
+test('getCurrentEditorPersistedDeckState delegates through the editor persistence-state reader adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: { id: 'persisted-deck' },
+    playbackState: { activeSlideIds: ['slide-2'] }
+  };
+  const readerCreateCalls = [];
+  let contentResolverCreateCalls = 0;
+  const context = {
+    lastPersistedDeckHtml: persistedDeckState.cleanHtml,
+    lastPersistedCanonicalDeck: persistedDeckState.canonicalDeck,
+    persistedDeckPlaybackState: persistedDeckState.playbackState,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistedDeckStateReader(options = {}) {
+        readerCreateCalls.push(options);
+        const reader = () => persistedDeckState;
+        reader.resolveWithContent = (nextState) => ({ ...nextState, resolved: true });
+        return reader;
+      },
+      createStudioPersistedDeckStateContentResolver(options = {}) {
+        contentResolverCreateCalls += 1;
+        assert.equal(typeof options.readPersistedDeckState, 'function');
+        assert.equal(typeof options.resolveWithContent, 'function');
+        return (nextState) => ({ ...nextState, contentResolved: true });
+      }
+    },
+    SlideNextStudioEditorPersistenceState: editorPersistenceState
+  };
+
+  vm.createContext(context);
+  loadGetCurrentEditorPersistedDeckState(fileContent, context);
+
+  assert.deepEqual(context.getCurrentEditorPersistedDeckState(), persistedDeckState);
+  assert.deepEqual(
+    context.getCurrentEditorPersistedDeckState.resolveWithContent({ cleanHtml: '<html>input</html>' }),
+    { cleanHtml: '<html>input</html>', resolved: true }
+  );
+  assert.deepEqual(
+    context.resolveEditorPersistedDeckStateWithContent({ cleanHtml: '<html>input</html>' }),
+    { cleanHtml: '<html>input</html>', contentResolved: true }
+  );
+  assert.equal(readerCreateCalls.length, 2);
+  assert.equal(contentResolverCreateCalls, 1);
+});
+
 test('getCurrentEditorPersistedDeckState.resolveWithContent does not use the snapshot-with-content helper without the shared reader', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
