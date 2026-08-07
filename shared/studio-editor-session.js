@@ -22,6 +22,43 @@
     };
   }
 
+  function createStudioEditorSessionStateReadersAdapter(options = {}) {
+    const sessionApi = options.sessionApi && typeof options.sessionApi === 'object'
+      ? options.sessionApi
+      : null;
+    const createSessionStateReaders = typeof options.createSessionStateReaders === 'function'
+      ? options.createSessionStateReaders
+      : sessionApi
+        && typeof sessionApi.createStudioSessionStateReaders === 'function'
+        ? sessionApi.createStudioSessionStateReaders
+        : createStudioSessionStateReaders;
+    const getCurrentPresentationUrl = typeof options.getCurrentPresentationUrl === 'function'
+      ? options.getCurrentPresentationUrl
+      : () => normalizeString(options.currentPresentationUrl);
+    const getCurrentSessionToken = typeof options.getCurrentSessionToken === 'function'
+      ? options.getCurrentSessionToken
+      : () => (Number.isInteger(options.currentSessionToken) ? options.currentSessionToken : null);
+
+    return function createEditorSessionStateReaders(nextOptions = {}) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      const currentCreateSessionStateReaders = typeof resolvedOptions.createSessionStateReaders === 'function'
+        ? resolvedOptions.createSessionStateReaders
+        : createSessionStateReaders;
+      const currentGetPresentationUrl = typeof resolvedOptions.getCurrentPresentationUrl === 'function'
+        ? resolvedOptions.getCurrentPresentationUrl
+        : getCurrentPresentationUrl;
+      const currentGetSessionToken = typeof resolvedOptions.getCurrentSessionToken === 'function'
+        ? resolvedOptions.getCurrentSessionToken
+        : getCurrentSessionToken;
+      return currentCreateSessionStateReaders({
+        getCurrentPresentationUrl: currentGetPresentationUrl,
+        getCurrentSessionToken: currentGetSessionToken
+      });
+    };
+  }
+
   function createStudioSessionReaderOptionsBuilder(options = {}) {
     const defaultReadCurrentSessionState = typeof options.readCurrentSessionState === 'function'
       ? options.readCurrentSessionState
@@ -186,6 +223,7 @@
 
   return {
     createStudioSessionStateReaders,
+    createStudioEditorSessionStateReadersAdapter,
     createStudioSessionReaderOptionsBuilder,
     createStudioSessionSnapshot,
     createStudioEditorSessionSnapshotAdapter,

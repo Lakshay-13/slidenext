@@ -2151,10 +2151,45 @@
     }
 
     function createCurrentStudioSessionStateReaders() {
-      return SlideNextStudioEditorSession.createStudioSessionStateReaders({
+      const createStudioEditorSessionStateReadersAdapter = (
+        typeof SlideNextStudioEditorSession !== 'undefined'
+        && SlideNextStudioEditorSession
+        && typeof SlideNextStudioEditorSession.createStudioEditorSessionStateReadersAdapter === 'function'
+      )
+        ? SlideNextStudioEditorSession.createStudioEditorSessionStateReadersAdapter
+        : null;
+      if (createStudioEditorSessionStateReadersAdapter) {
+        const adapter = createStudioEditorSessionStateReadersAdapter({
+          sessionApi: SlideNextStudioEditorSession,
+          getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentSessionToken: () => studioEditorSessionToken
+        });
+        if (typeof adapter === 'function') {
+          return adapter();
+        }
+        if (adapter && typeof adapter === 'object') {
+          return adapter;
+        }
+      }
+
+      const createStudioSessionStateReaders = (
+        typeof SlideNextStudioEditorSession !== 'undefined'
+        && SlideNextStudioEditorSession
+        && typeof SlideNextStudioEditorSession.createStudioSessionStateReaders === 'function'
+      )
+        ? SlideNextStudioEditorSession.createStudioSessionStateReaders
+        : null;
+      if (createStudioSessionStateReaders) {
+        return createStudioSessionStateReaders({
+          getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentSessionToken: () => studioEditorSessionToken
+        });
+      }
+
+      return {
         getCurrentPresentationUrl: () => currentPresentationUrl,
         getCurrentSessionToken: () => studioEditorSessionToken
-      });
+      };
     }
 
     function createCurrentStudioSessionReaderOptions(options = {}) {

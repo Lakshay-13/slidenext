@@ -2702,12 +2702,12 @@ test('loadVersions reuses the shared version-history loader when available', asy
 
 test('createCurrentStudioSessionStateReaders exposes live presentation and session getters', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  let capturedOptions = null;
+  let capturedAdapterOptions = null;
   const context = {
     SlideNextStudioEditorSession: {
       ...editorSession,
-      createStudioSessionStateReaders(options) {
-        capturedOptions = options;
+      createStudioEditorSessionStateReadersAdapter(options) {
+        capturedAdapterOptions = options;
         return editorSession.createStudioSessionStateReaders(options);
       }
     },
@@ -2721,13 +2721,13 @@ test('createCurrentStudioSessionStateReaders exposes live presentation and sessi
   const options = context.createCurrentStudioSessionStateReaders();
   assert.equal(options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
   assert.equal(options.getCurrentSessionToken(), 4);
-  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
-  assert.equal(capturedOptions.getCurrentSessionToken(), 4);
+  assert.equal(capturedAdapterOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(capturedAdapterOptions.getCurrentSessionToken(), 4);
 
   context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
   context.studioEditorSessionToken = 5;
   assert.equal(options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
   assert.equal(options.getCurrentSessionToken(), 5);
-  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
-  assert.equal(capturedOptions.getCurrentSessionToken(), 5);
+  assert.equal(capturedAdapterOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(capturedAdapterOptions.getCurrentSessionToken(), 5);
 });

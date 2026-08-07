@@ -27,6 +27,58 @@ test('createStudioSessionStateReaders exposes supplied live readers and normaliz
   assert.equal(fallbackReaders.getCurrentSessionToken(), null);
 });
 
+test('createStudioEditorSessionStateReadersAdapter delegates live readers through the shared session API', () => {
+  let delegatedOptions = null;
+  let currentPresentationUrl = '/presentations/onboarding-presentation/index.html';
+  let currentSessionToken = 4;
+  const adapter = editorSession.createStudioEditorSessionStateReadersAdapter({
+    sessionApi: {
+      createStudioSessionStateReaders(options) {
+        delegatedOptions = options;
+        return editorSession.createStudioSessionStateReaders(options);
+      }
+    },
+    getCurrentPresentationUrl: () => currentPresentationUrl,
+    getCurrentSessionToken: () => currentSessionToken
+  });
+
+  const readers = adapter();
+  assert.equal(readers.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(readers.getCurrentSessionToken(), 4);
+  assert.equal(delegatedOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(delegatedOptions.getCurrentSessionToken(), 4);
+
+  currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  currentSessionToken = 5;
+  assert.equal(readers.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(readers.getCurrentSessionToken(), 5);
+});
+
+test('createStudioEditorSessionStateReadersAdapter supports call-time factory and reader overrides', () => {
+  let capturedOptions = null;
+  const adapter = editorSession.createStudioEditorSessionStateReadersAdapter({
+    getCurrentPresentationUrl: () => '/presentations/default/index.html',
+    getCurrentSessionToken: () => 4
+  });
+
+  const readers = adapter({
+    createSessionStateReaders(options) {
+      capturedOptions = options;
+      return {
+        getCurrentPresentationUrl: options.getCurrentPresentationUrl,
+        getCurrentSessionToken: options.getCurrentSessionToken
+      };
+    },
+    getCurrentPresentationUrl: () => '/presentations/custom/index.html',
+    getCurrentSessionToken: () => 15
+  });
+
+  assert.equal(readers.getCurrentPresentationUrl(), '/presentations/custom/index.html');
+  assert.equal(readers.getCurrentSessionToken(), 15);
+  assert.equal(capturedOptions.getCurrentPresentationUrl(), '/presentations/custom/index.html');
+  assert.equal(capturedOptions.getCurrentSessionToken(), 15);
+});
+
 test('createStudioSessionReaderOptionsBuilder reuses live session readers and call-time overrides', () => {
   const calls = [];
   const createSessionReaderOptions = editorSession.createStudioSessionReaderOptionsBuilder({
