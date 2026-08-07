@@ -1169,6 +1169,7 @@
   <script src="/shared/studio-editor-layer-view.js"></script>
   <script src="/shared/studio-editor-layer-controller.js"></script>
   <script src="/shared/studio-editor-insertion.js"></script>
+  <script src="/shared/studio-editor-element-insertion-mutation.js"></script>
   <script src="/shared/studio-editor-selection-bounds.js"></script>
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
@@ -6789,38 +6790,30 @@
 
     // Insert New elements (perfectly centered on native 1080p slide)
     function applyEditorElementInsertionWithTransaction(type, options = {}) {
-      const insertionApi = typeof SlideNextStudioEditorInsertion !== 'undefined'
-        ? SlideNextStudioEditorInsertion
+      const mutationApi = typeof SlideNextStudioEditorElementInsertionMutation !== 'undefined'
+        ? SlideNextStudioEditorElementInsertionMutation
         : null;
-      const applyStudioElementInsertion = insertionApi
-        && typeof insertionApi.applyStudioElementInsertion === 'function'
-        ? insertionApi.applyStudioElementInsertion
+      const applyMutation = mutationApi
+        && typeof mutationApi.applyStudioElementInsertionMutationWithTransaction === 'function'
+        ? mutationApi.applyStudioElementInsertionMutationWithTransaction
         : null;
-      const createStudioMarkupTransactionCapture = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
-        : null;
-      if (!applyStudioElementInsertion) {
+      if (!applyMutation) {
         return { element: null, transaction: null };
       }
-      const mutation = applyStudioElementInsertion(type, {
+      return applyMutation(type, {
+        insertionApi: typeof SlideNextStudioEditorInsertion !== 'undefined'
+          ? SlideNextStudioEditorInsertion
+          : null,
+        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+          ? SlideNextStudioEditorTransaction
+          : null,
         documentRef: options.documentRef,
         slide: options.slide,
         offset: options.offset,
-        prepareElement: typeof options.prepareElement === 'function'
-          ? options.prepareElement
-          : null,
-        createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+        prepareElement: options.prepareElement,
         transactionElementId: options.transactionElementId || '',
         getElementId: options.getElementId
       });
-      return {
-        element: mutation && mutation.element ? mutation.element : null,
-        transaction: mutation && mutation.transaction ? mutation.transaction : null
-      };
     }
 
     function insertElement(type) {
