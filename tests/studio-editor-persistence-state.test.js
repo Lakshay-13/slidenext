@@ -771,3 +771,83 @@ test('createStudioEditorPersistedDeckPlaybackStateCapturerAdapter returns null w
 
   assert.equal(adapter({ label: 'iframe-doc' }), null);
 });
+
+test('createStudioEditorSaveRequestBodyAdapter preserves builder precedence', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const cleanHtml = '<html>persisted</html>';
+  const getPresentationUrl = () => 'presentations/deck/index.html';
+  const capturePersistableDeckState = () => ({ cleanHtml, canonicalDeck: { id: 'deck-1' } });
+  const resolveCanonicalDeck = (canonicalDeck) => canonicalDeck;
+  const buildPersistableDeckHtml = () => cleanHtml;
+  let factoryOptions = null;
+  const adapter = editorPersistenceState.createStudioEditorSaveRequestBodyAdapter({
+    persistenceApi: {
+      createStudioSaveRequestBodyBuilder(options) {
+        factoryOptions = options;
+        return (doc, nextCleanHtml, nextOptions) => ({
+          doc,
+          cleanHtml: nextCleanHtml,
+          presentationUrl: nextOptions.presentationUrl,
+          capturePersistableDeckState: options.capturePersistableDeckState,
+          resolveCanonicalDeck: options.resolveCanonicalDeck,
+          buildPersistableDeckHtml: options.buildPersistableDeckHtml
+        });
+      },
+      resolveStudioSaveRequestDeckState() {
+        throw new Error('direct save-state resolution should not run when the builder exists');
+      }
+    },
+    getPresentationUrl,
+    capturePersistableDeckState,
+    resolveCanonicalDeck,
+    buildPersistableDeckHtml
+  });
+
+  const result = adapter(iframeDoc, null, { presentationUrl: 'presentations/custom/index.html' });
+  assert.equal(result.doc, iframeDoc);
+  assert.equal(result.cleanHtml, null);
+  assert.equal(result.presentationUrl, 'presentations/custom/index.html');
+  assert.equal(factoryOptions.getPresentationUrl, getPresentationUrl);
+  assert.equal(factoryOptions.capturePersistableDeckState, capturePersistableDeckState);
+  assert.equal(factoryOptions.resolveCanonicalDeck, resolveCanonicalDeck);
+  assert.equal(factoryOptions.buildPersistableDeckHtml, buildPersistableDeckHtml);
+});
+
+test('createStudioEditorSaveRequestBodyAdapter uses direct shared helpers without a builder', () => {
+  let resolveArgs = null;
+  let buildArgs = null;
+  const adapter = editorPersistenceState.createStudioEditorSaveRequestBodyAdapter({
+    persistenceApi: {
+      resolveStudioSaveRequestDeckState(doc, cleanHtml, options) {
+        resolveArgs = { doc, cleanHtml, options };
+        return { cleanHtml: '<html>resolved</html>', canonicalDeck: { id: 'deck-1' } };
+      },
+      buildStudioSaveRequestBody(presentationUrl, cleanHtml, options) {
+        buildArgs = { presentationUrl, cleanHtml, options };
+        return { htmlPath: presentationUrl, htmlContent: cleanHtml, ...options };
+      }
+    },
+    getPresentationUrl: () => 'presentations/deck/index.html'
+  });
+
+  assert.deepEqual(adapter({ label: 'iframe-doc' }, null, {
+    isAutoSave: true,
+    versionLabel: 'checkpoint'
+  }), {
+    htmlPath: 'presentations/deck/index.html',
+    htmlContent: '<html>resolved</html>',
+    isAutoSave: true,
+    versionLabel: 'checkpoint',
+    canonicalDeck: { id: 'deck-1' }
+  });
+  assert.equal(resolveArgs.doc.label, 'iframe-doc');
+  assert.equal(resolveArgs.cleanHtml, null);
+  assert.equal(buildArgs.presentationUrl, 'presentations/deck/index.html');
+  assert.equal(buildArgs.cleanHtml, '<html>resolved</html>');
+});
+
+test('createStudioEditorSaveRequestBodyAdapter returns null without shared save helpers', () => {
+  const adapter = editorPersistenceState.createStudioEditorSaveRequestBodyAdapter();
+
+  assert.equal(adapter({ label: 'iframe-doc' }), null);
+});

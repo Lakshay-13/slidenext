@@ -8805,6 +8805,38 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
         ? options.canonicalDeck
         : null;
+      const createStudioEditorSaveRequestBodyAdapter = (
+        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+        && SlideNextStudioEditorPersistenceState
+        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorSaveRequestBodyAdapter === 'function'
+      )
+        ? SlideNextStudioEditorPersistenceState.createStudioEditorSaveRequestBodyAdapter
+        : null;
+      if (createStudioEditorSaveRequestBodyAdapter) {
+        const adapter = createStudioEditorSaveRequestBodyAdapter({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          getPresentationUrl: () => currentPresentationUrl,
+          capturePersistableDeckState: typeof captureEditorPersistableDeckState === 'function'
+            ? captureEditorPersistableDeckState
+            : null,
+          resolveCanonicalDeck: (nextCanonicalDeck, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
+            nextCanonicalDeck,
+            {
+              buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
+            }
+          ),
+          buildPersistableDeckHtml
+        });
+        const saveRequestBody = typeof adapter === 'function'
+          ? adapter(doc, cleanHtml, options)
+          : null;
+        if (saveRequestBody !== null && typeof saveRequestBody !== 'undefined') {
+          return saveRequestBody;
+        }
+      }
+
       const createStudioSaveRequestBodyBuilder = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence

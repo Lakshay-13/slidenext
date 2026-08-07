@@ -520,6 +520,63 @@ test('buildEditorSaveRequestBody reuses the shared save-request body builder whe
   assert.equal(delegatedArgs.buildPersistableDeckHtml, context.buildPersistableDeckHtml);
 });
 
+test('buildEditorSaveRequestBody delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSaveRequestBodySource = extractFunctionSource(
+    fileContent,
+    'function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {',
+    '\n\n    function isCurrentDeckHtmlPersisted(cleanHtml) {'
+  );
+
+  const doc = { label: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    SlideNextStudioEditorPersistence: {
+      createStudioSaveRequestBodyBuilder(options = {}) {
+        delegatedArgs = options;
+        return (nextDoc, nextCleanHtml, nextOptions = {}) => ({
+          doc: nextDoc,
+          cleanHtml: nextCleanHtml,
+          presentationUrl: nextOptions.presentationUrl,
+          canonicalDeck: nextOptions.canonicalDeck,
+          buildPersistableDeckHtml: options.buildPersistableDeckHtml
+        });
+      }
+    },
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    buildPersistableDeckHtml() {
+      return '<html>persisted</html>';
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('buildEditorCanonicalDeck should not run while the save builder is delegated');
+    },
+    resolveEditorCanonicalDeckOverride(nextCanonicalDeck) {
+      return nextCanonicalDeck;
+    },
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorSaveRequestBodySource, context);
+
+  assert.deepEqual(context.buildEditorSaveRequestBody(doc, null, {
+    presentationUrl: 'presentations/custom/index.html',
+    canonicalDeck
+  }), {
+    doc,
+    cleanHtml: null,
+    presentationUrl: 'presentations/custom/index.html',
+    canonicalDeck,
+    buildPersistableDeckHtml: context.buildPersistableDeckHtml
+  });
+  assert.equal(delegatedArgs.getPresentationUrl(), context.currentPresentationUrl);
+  assert.equal(delegatedArgs.buildPersistableDeckHtml, context.buildPersistableDeckHtml);
+});
+
 test('isCurrentDeckHtmlPersisted reuses the shared persisted-html checker when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const isCurrentDeckHtmlPersistedSource = extractFunctionSource(
