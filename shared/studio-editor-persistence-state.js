@@ -268,12 +268,81 @@
     };
   }
 
+  function createStudioEditorReusablePersistedHtmlAdapter(options = {}) {
+    const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
+      ? options.persistenceApi
+      : null;
+    const defaultResolveReusablePersistedHtml = persistenceApi
+      && typeof persistenceApi.resolveStudioReusablePersistedHtml === 'function'
+      ? persistenceApi.resolveStudioReusablePersistedHtml
+      : null;
+    const defaultResolvePersistedHtmlReuse = persistenceApi
+      && typeof persistenceApi.resolveStudioPersistedHtmlReuse === 'function'
+      ? persistenceApi.resolveStudioPersistedHtmlReuse
+      : null;
+    const defaultIsPersistedCanonicalDeck = persistenceApi
+      && typeof persistenceApi.isStudioPersistedCanonicalDeck === 'function'
+      ? persistenceApi.isStudioPersistedCanonicalDeck
+      : null;
+
+    function buildResolverOptions(nextOptions = {}) {
+      return {
+        persistedHtml: typeof nextOptions.persistedHtml === 'string'
+          ? nextOptions.persistedHtml
+          : undefined,
+        canonicalDeck: Object.prototype.hasOwnProperty.call(nextOptions, 'canonicalDeck')
+          ? nextOptions.canonicalDeck
+          : null,
+        persistedCanonicalDeck: Object.prototype.hasOwnProperty.call(nextOptions, 'persistedCanonicalDeck')
+          ? nextOptions.persistedCanonicalDeck
+          : undefined,
+        resolvePersistedHtmlReuse: typeof nextOptions.resolveStudioPersistedHtmlReuse === 'function'
+          ? nextOptions.resolveStudioPersistedHtmlReuse
+          : undefined,
+        isPersistedCanonicalDeck: typeof nextOptions.isPersistedCanonicalDeck === 'function'
+          ? nextOptions.isPersistedCanonicalDeck
+          : undefined
+      };
+    }
+
+    return function resolveEditorReusablePersistedHtml(persistedDeckState, nextOptions = {}) {
+      const resolveReusablePersistedHtml = typeof nextOptions.resolveStudioReusablePersistedHtml === 'function'
+        ? nextOptions.resolveStudioReusablePersistedHtml
+        : defaultResolveReusablePersistedHtml;
+      const resolvePersistedHtmlReuse = typeof nextOptions.resolveStudioPersistedHtmlReuse === 'function'
+        ? nextOptions.resolveStudioPersistedHtmlReuse
+        : defaultResolvePersistedHtmlReuse;
+      const isPersistedCanonicalDeck = typeof nextOptions.isPersistedCanonicalDeck === 'function'
+        ? nextOptions.isPersistedCanonicalDeck
+        : defaultIsPersistedCanonicalDeck;
+      const resolverOptions = buildResolverOptions(nextOptions);
+      const createStudioReusablePersistedHtmlResolver = persistenceApi
+        && typeof persistenceApi.createStudioReusablePersistedHtmlResolver === 'function'
+        ? persistenceApi.createStudioReusablePersistedHtmlResolver
+        : null;
+      if (createStudioReusablePersistedHtmlResolver) {
+        return createStudioReusablePersistedHtmlResolver({
+          resolveReusablePersistedHtml,
+          resolvePersistedHtmlReuse,
+          isPersistedCanonicalDeck
+        })(persistedDeckState, resolverOptions);
+      }
+      if (!resolveReusablePersistedHtml) return '';
+      return resolveReusablePersistedHtml(persistedDeckState, {
+        ...resolverOptions,
+        resolvePersistedHtmlReuse,
+        isPersistedCanonicalDeck
+      });
+    };
+  }
+
   return {
     createStudioEditorPersistedDeckStateAdapter,
     createStudioEditorPersistedDeckStateApplierAdapter,
     createStudioEditorPersistedDeckStateReaderAdapter,
     createStudioEditorPersistedActiveSlideIdAdapter,
     createStudioEditorFallbackCanonicalDeckAdapter,
-    createStudioEditorCanonicalDeckOverrideAdapter
+    createStudioEditorCanonicalDeckOverrideAdapter,
+    createStudioEditorReusablePersistedHtmlAdapter
   };
 });

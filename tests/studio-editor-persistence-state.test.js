@@ -230,3 +230,77 @@ test('createStudioEditorCanonicalDeckOverrideAdapter fails closed without shared
 
   assert.equal(adapter({ id: 'override' }), null);
 });
+
+test('createStudioEditorReusablePersistedHtmlAdapter preserves builder-first option forwarding', () => {
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted</html>',
+    canonicalDeck: { id: 'persisted-deck' }
+  };
+  const canonicalDeck = { id: 'current-deck' };
+  let factoryOptions = null;
+  const persistenceApi = {
+    resolveStudioReusablePersistedHtml() {
+      throw new Error('direct reusable-html helper should not run when the builder exists');
+    },
+    resolveStudioPersistedHtmlReuse() {},
+    isStudioPersistedCanonicalDeck() {},
+    createStudioReusablePersistedHtmlResolver(options) {
+      factoryOptions = options;
+      return (nextPersistedDeckState, nextOptions) => ({
+        persistedDeckState: nextPersistedDeckState,
+        options: nextOptions
+      });
+    }
+  };
+  const adapter = editorPersistenceState.createStudioEditorReusablePersistedHtmlAdapter({
+    persistenceApi
+  });
+  const resolvePersistedHtmlReuse = () => '<html>reuse</html>';
+  const isPersistedCanonicalDeck = () => true;
+
+  const result = adapter(persistedDeckState, {
+    canonicalDeck,
+    persistedHtml: persistedDeckState.cleanHtml,
+    persistedCanonicalDeck: persistedDeckState.canonicalDeck,
+    resolveStudioPersistedHtmlReuse: resolvePersistedHtmlReuse,
+    isPersistedCanonicalDeck
+  });
+
+  assert.equal(result.persistedDeckState, persistedDeckState);
+  assert.equal(result.options.canonicalDeck, canonicalDeck);
+  assert.equal(result.options.persistedHtml, persistedDeckState.cleanHtml);
+  assert.equal(result.options.resolvePersistedHtmlReuse, resolvePersistedHtmlReuse);
+  assert.equal(result.options.isPersistedCanonicalDeck, isPersistedCanonicalDeck);
+  assert.equal(factoryOptions.resolveReusablePersistedHtml, persistenceApi.resolveStudioReusablePersistedHtml);
+  assert.equal(factoryOptions.resolvePersistedHtmlReuse, resolvePersistedHtmlReuse);
+  assert.equal(factoryOptions.isPersistedCanonicalDeck, isPersistedCanonicalDeck);
+});
+
+test('createStudioEditorReusablePersistedHtmlAdapter uses the direct helper when no builder exists', () => {
+  const calls = [];
+  const persistedDeckState = { cleanHtml: '<html>persisted</html>' };
+  const adapter = editorPersistenceState.createStudioEditorReusablePersistedHtmlAdapter({
+    persistenceApi: {
+      resolveStudioReusablePersistedHtml(nextState, options) {
+        calls.push([nextState, options]);
+        return '<html>reused</html>';
+      }
+    }
+  });
+
+  assert.equal(adapter(persistedDeckState, { canonicalDeck: { id: 'current-deck' } }), '<html>reused</html>');
+  assert.equal(calls[0][0], persistedDeckState);
+  assert.deepEqual(calls[0][1], {
+    persistedHtml: undefined,
+    canonicalDeck: { id: 'current-deck' },
+    persistedCanonicalDeck: undefined,
+    resolvePersistedHtmlReuse: null,
+    isPersistedCanonicalDeck: null
+  });
+});
+
+test('createStudioEditorReusablePersistedHtmlAdapter fails closed without shared persistence', () => {
+  const adapter = editorPersistenceState.createStudioEditorReusablePersistedHtmlAdapter();
+
+  assert.equal(adapter({ cleanHtml: '<html>persisted</html>' }), '');
+});

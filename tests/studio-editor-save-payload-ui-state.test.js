@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
+const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
 const deckView = require('../shared/studio-deck-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -1839,6 +1840,54 @@ test('resolveEditorReusablePersistedHtml reuses the shared reusable-html resolve
       isPersistedCanonicalDeck: 'function'
     }
   );
+  assert.equal(delegatedArgs.resolveReusablePersistedHtml, context.SlideNextStudioEditorPersistence.resolveStudioReusablePersistedHtml);
+  assert.equal(delegatedArgs.resolvePersistedHtmlReuse, context.SlideNextStudioEditorPersistence.resolveStudioPersistedHtmlReuse);
+  assert.equal(delegatedArgs.isPersistedCanonicalDeck, context.SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck);
+});
+
+test('resolveEditorReusablePersistedHtml delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorReusablePersistedHtmlSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+  const canonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+  const persistedDeckState = {
+    cleanHtml: '<html>persisted-baseline</html>',
+    canonicalDeck
+  };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      createStudioReusablePersistedHtmlResolver(options = {}) {
+        delegatedArgs = options;
+        return (nextPersistedDeckState, nextOptions = {}) => ({
+          persistedDeckState: nextPersistedDeckState,
+          options: nextOptions
+        });
+      },
+      resolveStudioReusablePersistedHtml() {
+        throw new Error('direct reusable-html helper should remain behind the adapter');
+      },
+      resolveStudioPersistedHtmlReuse() {},
+      isStudioPersistedCanonicalDeck() {}
+    },
+    SlideNextStudioEditorPersistenceState: editorPersistenceState
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorReusablePersistedHtmlSource, context);
+
+  const result = context.resolveEditorReusablePersistedHtml(persistedDeckState, {
+    canonicalDeck,
+    persistedHtml: persistedDeckState.cleanHtml,
+    persistedCanonicalDeck: canonicalDeck
+  });
+
+  assert.equal(result.persistedDeckState, persistedDeckState);
+  assert.equal(result.options.canonicalDeck, canonicalDeck);
+  assert.equal(result.options.persistedHtml, persistedDeckState.cleanHtml);
   assert.equal(delegatedArgs.resolveReusablePersistedHtml, context.SlideNextStudioEditorPersistence.resolveStudioReusablePersistedHtml);
   assert.equal(delegatedArgs.resolvePersistedHtmlReuse, context.SlideNextStudioEditorPersistence.resolveStudioPersistedHtmlReuse);
   assert.equal(delegatedArgs.isPersistedCanonicalDeck, context.SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck);
