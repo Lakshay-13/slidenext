@@ -105,8 +105,33 @@ test('waitForStudioPdfPrintResources waits for fonts and image load or error', a
   assert.equal(didResolve, false);
   resolveFonts();
   imageHandlers.error();
-  await waiting;
-  assert.equal(didResolve, true);
+  await assert.rejects(waiting, /PDF image resource failed to load/);
+  assert.equal(didResolve, false);
+});
+
+test('waitForStudioPdfPrintResources rejects when fonts fail to load', async () => {
+  const fontError = new Error('font load failed');
+  await assert.rejects(
+    pdfExport.waitForStudioPdfPrintResources({
+      fonts: { ready: Promise.reject(fontError) },
+      images: []
+    }),
+    /font load failed/
+  );
+});
+
+test('waitForStudioPdfPrintResources rejects already-complete broken images', async () => {
+  await assert.rejects(
+    pdfExport.waitForStudioPdfPrintResources({
+      images: [{
+        complete: true,
+        currentSrc: 'missing.png',
+        naturalWidth: 0,
+        addEventListener() {}
+      }]
+    }),
+    /PDF image resource failed to load/
+  );
 });
 
 test('waitForStudioPdfPrintResources preloads CSS background images', async () => {
@@ -246,6 +271,55 @@ test('openStudioPdfPrintWindow reports print-dialog failures', () => {
   printWindow.loadHandler();
   return new Promise((resolve) => {
     setImmediate(() => {
+      assert.equal(printErrors, 1);
+      resolve();
+    });
+  });
+});
+
+test('openStudioPdfPrintWindow reports resource failures without printing', () => {
+  let printCalls = 0;
+  let printErrors = 0;
+  let loadHandler = null;
+  const imageHandlers = {};
+  const printWindow = {
+    document: {
+      open() {},
+      write() {},
+      close() {},
+      images: [{
+        complete: false,
+        addEventListener(type, handler) {
+          imageHandlers[type] = handler;
+        }
+      }]
+    },
+    addEventListener(type, handler) {
+      assert.equal(type, 'load');
+      loadHandler = handler;
+    },
+    print() {
+      printCalls += 1;
+    }
+  };
+
+  assert.equal(pdfExport.openStudioPdfPrintWindow({
+    html: '<html><body><img src="missing.png"></body></html>',
+    openWindow() {
+      return printWindow;
+    },
+    onError(error) {
+      assert.match(error.message, /PDF image resource failed to load/);
+      printErrors += 1;
+    }
+  }), true);
+
+  loadHandler();
+  imageHandlers.error();
+
+  return new Promise((resolve) => {
+    setImmediate(() => {
+      assert.equal(printCalls, 0);
       assert.equal(printErrors, 1);
       resolve();
     });

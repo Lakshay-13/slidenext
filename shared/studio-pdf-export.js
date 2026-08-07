@@ -134,38 +134,64 @@
     const timeoutMs = Number.isFinite(options.timeoutMs)
       ? Math.max(0, options.timeoutMs)
       : 5000;
-    const waitWithTimeout = (resource) => new Promise((resolve) => {
+    const waitWithTimeout = (resource) => new Promise((resolve, reject) => {
       let settled = false;
-      const settle = () => {
+      const settle = (error = null) => {
         if (settled) return;
         settled = true;
         if (timeoutId) clearTimeout(timeoutId);
-        resolve();
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
       };
       const timeoutId = setTimeout(settle, timeoutMs);
-      Promise.resolve(resource).then(settle, settle);
+      Promise.resolve(resource).then(() => settle(), settle);
     });
     const waitForImage = (image, source = null) => {
-      if (!image || (source === null && image.complete) || typeof image.addEventListener !== 'function') {
+      if (!image || typeof image.addEventListener !== 'function') {
         return null;
       }
-      return new Promise((resolve) => {
+      const hasImageSource = source !== null
+        ? !!source
+        : !!(image.currentSrc || image.src);
+      const isBrokenCompleteImage = () => (
+        image.complete
+        && hasImageSource
+        && Number.isFinite(image.naturalWidth)
+        && image.naturalWidth === 0
+      );
+      if (source === null && image.complete) {
+        return isBrokenCompleteImage()
+          ? Promise.reject(new Error('PDF image resource failed to load'))
+          : null;
+      }
+      return new Promise((resolve, reject) => {
         let settled = false;
-        const settle = () => {
+        const settle = (error = null) => {
           if (settled) return;
           settled = true;
           if (timeoutId) clearTimeout(timeoutId);
-          resolve();
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
         };
+        const fail = () => settle(new Error('PDF image resource failed to load'));
         const timeoutId = setTimeout(settle, timeoutMs);
-        image.addEventListener('load', settle, { once: true });
-        image.addEventListener('error', settle, { once: true });
+        image.addEventListener('load', () => settle(), { once: true });
+        image.addEventListener('error', fail, { once: true });
         if (source !== null) {
           try {
             image.src = source;
-            if (image.complete) settle();
+            if (image.complete) {
+              if (isBrokenCompleteImage()) fail();
+              else settle();
+            }
           } catch (error) {
-            settle();
+            settle(error);
           }
         }
       });
@@ -306,7 +332,9 @@
       }
     };
     const waitForResources = () => {
-      waitForStudioPdfPrintResources(printWindow.document, options).then(print).catch(print);
+      waitForStudioPdfPrintResources(printWindow.document, options)
+        .then(print)
+        .catch(reportPrintFailure);
     };
     const handleLoad = () => {
       if (didLoad) return;
