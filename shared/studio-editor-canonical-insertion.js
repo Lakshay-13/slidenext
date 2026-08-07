@@ -89,10 +89,26 @@
         canonicalDeckBeforeMutation
       });
     };
+    const buildCanonicalInsertionSequence = (elements, sequenceOptions = {}) => {
+      const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(
+        sequenceOptions,
+        'canonicalDeckBeforeMutation'
+      )
+        ? sequenceOptions.canonicalDeckBeforeMutation
+        : buildCanonicalInsertionBaseline(sequenceOptions);
+      return buildStudioCanonicalInsertionSequence(elements, {
+        ...sequenceOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck,
+        importElementToCanonicalNode,
+        canonicalDeckBeforeMutation
+      });
+    };
 
     return {
       buildCanonicalInsertionBaseline,
-      buildCanonicalInsertionDeck
+      buildCanonicalInsertionDeck,
+      buildCanonicalInsertionSequence
     };
   }
 

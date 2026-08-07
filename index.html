@@ -5837,16 +5837,25 @@
       const canonicalInsertionApi = typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
         ? SlideNextStudioEditorCanonicalInsertion
         : null;
-      const buildCanonicalInsertionSequence = canonicalInsertionApi
-        && typeof canonicalInsertionApi.buildStudioCanonicalInsertionSequence === 'function'
-        ? canonicalInsertionApi.buildStudioCanonicalInsertionSequence
-        : null;
       const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
         ? SlideNextDeckImport
         : null;
       const importElementToCanonicalNode = deckImportApi
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
         ? deckImportApi.importElementToCanonicalNode
+        : null;
+      const canonicalInsertionBuilders = canonicalInsertionApi
+        && typeof canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders === 'function'
+        ? canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders({
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+            importElementToCanonicalNode
+          })
+        : null;
+      const buildCanonicalInsertionSequence = canonicalInsertionBuilders
+        ? canonicalInsertionBuilders.buildCanonicalInsertionSequence
         : null;
       let canonicalSlideId = '';
       let canonicalSourceDocument = null;
@@ -5868,11 +5877,6 @@
       });
       const canonicalDeck = canonicalSourceDocument && canonicalSlideId && buildCanonicalInsertionSequence
         ? buildCanonicalInsertionSequence(pasted, {
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
-            importElementToCanonicalNode,
             slideId: canonicalSlideId,
             sourceDocument: canonicalSourceDocument,
             getNodeId: (node) => {
@@ -5905,16 +5909,25 @@
       const canonicalInsertionApi = typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
         ? SlideNextStudioEditorCanonicalInsertion
         : null;
-      const buildCanonicalInsertionSequence = canonicalInsertionApi
-        && typeof canonicalInsertionApi.buildStudioCanonicalInsertionSequence === 'function'
-        ? canonicalInsertionApi.buildStudioCanonicalInsertionSequence
-        : null;
       const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
         ? SlideNextDeckImport
         : null;
       const importElementToCanonicalNode = deckImportApi
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
         ? deckImportApi.importElementToCanonicalNode
+        : null;
+      const canonicalInsertionBuilders = canonicalInsertionApi
+        && typeof canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders === 'function'
+        ? canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders({
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+            importElementToCanonicalNode
+          })
+        : null;
+      const buildCanonicalInsertionSequence = canonicalInsertionBuilders
+        ? canonicalInsertionBuilders.buildCanonicalInsertionSequence
         : null;
       let canonicalSlideId = '';
       let canonicalSourceDocument = null;
@@ -5937,11 +5950,6 @@
       if (duplicates.length === 0) return finalizeClipboardActionResult(false);
       const canonicalDeck = canonicalSourceDocument && canonicalSlideId && buildCanonicalInsertionSequence
         ? buildCanonicalInsertionSequence(duplicates, {
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
-            importElementToCanonicalNode,
             slideId: canonicalSlideId,
             sourceDocument: canonicalSourceDocument,
             getNodeId: (node) => {

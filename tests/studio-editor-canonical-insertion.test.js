@@ -86,6 +86,34 @@ test('createStudioCanonicalInsertionMutationBuilders preserves an explicit basel
   assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['existing', 'inserted']);
 });
 
+test('createStudioCanonicalInsertionMutationBuilders builds insertion sequences', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }] }]
+  });
+  const builders = canonicalInsertion.createStudioCanonicalInsertionMutationBuilders({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck: () => sourceDeck,
+    importElementToCanonicalNode(element, options) {
+      return { id: options.getNodeId(element) };
+    }
+  });
+
+  const result = builders.buildCanonicalInsertionSequence([
+    { dataset: { editorId: 'inserted-1' } },
+    { dataset: { editorId: 'inserted-2' } }
+  ], {
+    canonicalDeckBeforeMutation: sourceDeck,
+    slideId: 'slide-1',
+    getNodeId: (element) => element.dataset.editorId
+  });
+
+  assert.deepEqual(result.slides[0].nodes.map((node) => node.id), [
+    'existing',
+    'inserted-1',
+    'inserted-2'
+  ]);
+});
+
 test('buildStudioCanonicalInsertionSequence appends every inserted node in order', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }] }]
