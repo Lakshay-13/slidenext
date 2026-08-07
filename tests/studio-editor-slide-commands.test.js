@@ -51,6 +51,133 @@ test('prepareStudioSlideDuplication rejects missing clone or slide-id capabiliti
   }), null);
 });
 
+test('duplicateStudioSlideNode preserves canonical duplication and mutation lifecycle ordering', () => {
+  const doc = { id: 'editor-doc' };
+  const sourceSlide = {
+    classList: {
+      remove(className) {
+        assert.equal(className, 'slide-active');
+      }
+    },
+    cloneNode(deep) {
+      assert.equal(deep, true);
+      return duplicateSlide;
+    }
+  };
+  const duplicateSlide = {
+    classList: {
+      remove(className) {
+        assert.equal(className, 'slide-active');
+      }
+    }
+  };
+  const targetSlide = { id: 'slide-3' };
+  const slides = [sourceSlide, targetSlide];
+  const container = { id: 'slides-container' };
+  const importSlideToCanonicalSlide = () => ({ id: 'slide-2' });
+  const calls = [];
+
+  const result = slideCommands.duplicateStudioSlideNode({
+    getIframeDoc() {
+      calls.push('getIframeDoc');
+      return doc;
+    },
+    resolveInsertionActionState(sourceDoc) {
+      assert.equal(sourceDoc, doc);
+      calls.push('resolveInsertionActionState');
+      return { canDuplicateSlide: true };
+    },
+    getSlideContainer(sourceDoc) {
+      assert.equal(sourceDoc, doc);
+      calls.push('getSlideContainer');
+      return container;
+    },
+    getSlides(sourceDoc) {
+      assert.equal(sourceDoc, doc);
+      calls.push('getSlides');
+      return slides;
+    },
+    getActiveSlide(sourceDoc) {
+      assert.equal(sourceDoc, doc);
+      calls.push('getActiveSlide');
+      return sourceSlide;
+    },
+    sanitizeDuplicatedSubtree(slide) {
+      assert.equal(slide, duplicateSlide);
+      calls.push('sanitizeDuplicatedSubtree');
+    },
+    assignSlideId(slide, options) {
+      assert.equal(slide, duplicateSlide);
+      assert.deepEqual(options, { forceNew: true });
+      calls.push('assignSlideId');
+      return 'slide-2';
+    },
+    makeElementsHoverable(slide) {
+      assert.equal(slide, duplicateSlide);
+      calls.push('makeElementsHoverable');
+    },
+    buildCanonicalDuplicateSlideBaseline(options) {
+      assert.equal(options.sourceDocument, doc);
+      calls.push('buildCanonicalDuplicateSlideBaseline');
+      return { slides: [{ id: 'slide-1' }, { id: 'slide-3' }] };
+    },
+    buildCanonicalDuplicateSlideDeck(options) {
+      assert.equal(options.sourceDocument, doc);
+      assert.equal(options.duplicateSlide, duplicateSlide);
+      assert.equal(options.duplicateSlideId, 'slide-2');
+      assert.equal(options.insertionIndex, 1);
+      assert.equal(options.title, 'Slide 2');
+      assert.equal(options.importSlideToCanonicalSlide, importSlideToCanonicalSlide);
+      assert.deepEqual(options.canonicalDeckBeforeMutation.slides.map((slide) => slide.id), ['slide-1', 'slide-3']);
+      calls.push('buildCanonicalDuplicateSlideDeck');
+      return { slides: [{ id: 'slide-1' }, { id: 'slide-2' }, { id: 'slide-3' }] };
+    },
+    importSlideToCanonicalSlide,
+    saveHistoryState() {
+      calls.push('saveHistoryState');
+    },
+    applyInsertion(sourceContainer, slide, options) {
+      assert.equal(sourceContainer, container);
+      assert.equal(slide, duplicateSlide);
+      assert.equal(options.beforeNode, targetSlide);
+      calls.push('applyInsertion');
+      return { didApply: true, transaction: { type: 'markup' } };
+    },
+    generateThumbnails() {
+      calls.push('generateThumbnails');
+    },
+    setActiveSlide(index) {
+      assert.equal(index, 1);
+      calls.push('setActiveSlide');
+    },
+    finalizeMutation(label, transaction, canonicalDeck) {
+      assert.equal(label, 'Auto: Duplicated Slide');
+      assert.deepEqual(transaction, { type: 'markup' });
+      assert.deepEqual(canonicalDeck.slides.map((slide) => slide.id), ['slide-1', 'slide-2', 'slide-3']);
+      calls.push('finalizeMutation');
+    }
+  });
+
+  assert.equal(result, true);
+  assert.deepEqual(calls, [
+    'getIframeDoc',
+    'resolveInsertionActionState',
+    'getSlideContainer',
+    'getSlides',
+    'getActiveSlide',
+    'sanitizeDuplicatedSubtree',
+    'assignSlideId',
+    'makeElementsHoverable',
+    'buildCanonicalDuplicateSlideBaseline',
+    'buildCanonicalDuplicateSlideDeck',
+    'saveHistoryState',
+    'applyInsertion',
+    'generateThumbnails',
+    'setActiveSlide',
+    'finalizeMutation'
+  ]);
+});
+
 test('addStudioSlideNode preserves canonical insertion and mutation lifecycle ordering', () => {
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };

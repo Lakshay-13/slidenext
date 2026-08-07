@@ -40,6 +40,99 @@
     };
   }
 
+  function duplicateStudioSlideNode(options = {}) {
+    const getIframeDoc = typeof options.getIframeDoc === 'function'
+      ? options.getIframeDoc
+      : () => null;
+    const iframeDoc = getIframeDoc();
+    const resolveInsertionActionState = typeof options.resolveInsertionActionState === 'function'
+      ? options.resolveInsertionActionState
+      : () => ({ canDuplicateSlide: false });
+    if (!iframeDoc || !resolveInsertionActionState(iframeDoc).canDuplicateSlide) return false;
+
+    const getSlideContainer = typeof options.getSlideContainer === 'function'
+      ? options.getSlideContainer
+      : (doc) => doc && typeof doc.getElementById === 'function'
+        ? doc.getElementById('slidesContainer')
+        : null;
+    const container = getSlideContainer(iframeDoc);
+    if (!container) return false;
+
+    const getSlides = typeof options.getSlides === 'function' ? options.getSlides : () => [];
+    const slides = getSlides(iframeDoc);
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const sourceSlide = getActiveSlide(iframeDoc);
+    const sourceIndex = slides.indexOf(sourceSlide);
+    if (!sourceSlide || sourceIndex < 0 || typeof sourceSlide.cloneNode !== 'function') {
+      return false;
+    }
+
+    const duplicatePreparation = prepareStudioSlideDuplication(sourceSlide, {
+      sanitizeDuplicatedSubtree: options.sanitizeDuplicatedSubtree,
+      assignSlideId: options.assignSlideId,
+      activeClassName: options.activeClassName,
+      makeElementsHoverable: options.makeElementsHoverable
+    });
+    if (!duplicatePreparation) return false;
+    const duplicateSlide = duplicatePreparation.slide;
+    const duplicateSlideId = duplicatePreparation.slideId;
+    const insertionIndex = sourceIndex + 1;
+
+    const buildCanonicalDuplicateSlideBaseline = typeof options.buildCanonicalDuplicateSlideBaseline === 'function'
+      ? options.buildCanonicalDuplicateSlideBaseline
+      : null;
+    const canonicalDeckBeforeDuplication = buildCanonicalDuplicateSlideBaseline
+      ? buildCanonicalDuplicateSlideBaseline({
+          sourceDocument: iframeDoc
+        })
+      : null;
+    const buildCanonicalDuplicateSlideDeck = typeof options.buildCanonicalDuplicateSlideDeck === 'function'
+      ? options.buildCanonicalDuplicateSlideDeck
+      : null;
+    const canonicalDeckAfterDuplication = buildCanonicalDuplicateSlideDeck
+      ? buildCanonicalDuplicateSlideDeck({
+          canonicalDeckBeforeMutation: canonicalDeckBeforeDuplication,
+          duplicateSlide,
+          duplicateSlideId,
+          insertionIndex,
+          sourceDocument: iframeDoc,
+          title: `Slide ${insertionIndex + 1}`,
+          getSlideId: () => duplicateSlideId,
+          importSlideToCanonicalSlide: options.importSlideToCanonicalSlide
+        })
+      : null;
+
+    const saveHistoryState = typeof options.saveHistoryState === 'function'
+      ? options.saveHistoryState
+      : () => {};
+    saveHistoryState();
+    const applyInsertion = typeof options.applyInsertion === 'function'
+      ? options.applyInsertion
+      : () => ({ didApply: false, transaction: null });
+    const mutation = applyInsertion(container, duplicateSlide, {
+      beforeNode: slides[insertionIndex] || null
+    });
+    if (!mutation || !mutation.didApply) return false;
+
+    if (typeof options.generateThumbnails === 'function') {
+      options.generateThumbnails();
+    }
+    if (typeof options.setActiveSlide === 'function') {
+      options.setActiveSlide(insertionIndex);
+    }
+    const finalizeMutation = typeof options.finalizeMutation === 'function'
+      ? options.finalizeMutation
+      : () => {};
+    if (canonicalDeckAfterDuplication) {
+      finalizeMutation('Auto: Duplicated Slide', mutation.transaction, canonicalDeckAfterDuplication);
+    } else {
+      finalizeMutation('Auto: Duplicated Slide', mutation.transaction);
+    }
+    return true;
+  }
+
   function addStudioSlideNode(options = {}) {
     const getIframeDoc = typeof options.getIframeDoc === 'function'
       ? options.getIframeDoc
@@ -419,6 +512,7 @@
 
   return {
     prepareStudioSlideDuplication,
+    duplicateStudioSlideNode,
     addStudioSlideNode,
     deleteStudioSlideNode,
     reorderStudioSlideNodes,

@@ -3120,38 +3120,15 @@
     }
 
     function duplicateSlideNode() {
-      const iframeDoc = getIframeDoc();
-      const insertionState = resolveCurrentStudioInsertionActionState(iframeDoc);
-      if (!insertionState.canDuplicateSlide || !iframeDoc) return false;
-      const container = iframeDoc.getElementById('slidesContainer');
-      if (!container) return false;
-
-      const slides = getSlides(iframeDoc);
-      const sourceSlide = getActiveSlide(iframeDoc);
-      const sourceIndex = slides.indexOf(sourceSlide);
-      if (!sourceSlide || sourceIndex < 0 || typeof sourceSlide.cloneNode !== 'function') {
-        return false;
-      }
-
       const slideCommands = typeof SlideNextStudioEditorSlideCommands !== 'undefined'
         ? SlideNextStudioEditorSlideCommands
         : null;
-      const prepareStudioSlideDuplication = slideCommands
-        && typeof slideCommands.prepareStudioSlideDuplication === 'function'
-        ? slideCommands.prepareStudioSlideDuplication
+      const duplicateStudioSlideNode = slideCommands
+        && typeof slideCommands.duplicateStudioSlideNode === 'function'
+        ? slideCommands.duplicateStudioSlideNode
         : null;
-      const duplicatePreparation = prepareStudioSlideDuplication
-        ? prepareStudioSlideDuplication(sourceSlide, {
-            sanitizeDuplicatedSubtree,
-            assignSlideId: assignEditorSlideId,
-            makeElementsHoverable
-          })
-        : null;
-      if (!duplicatePreparation) return false;
-      const duplicateSlide = duplicatePreparation.slide;
-      const duplicateSlideId = duplicatePreparation.slideId;
+      if (!duplicateStudioSlideNode) return false;
 
-      const insertionIndex = sourceIndex + 1;
       const canonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
         ? SlideNextStudioEditorCanonicalSlide
         : null;
@@ -3170,51 +3147,50 @@
       )
         ? SlideNextDeckImport.importSlideToCanonicalSlide
         : null;
-      const canonicalDeckBeforeDuplication = buildCanonicalDuplicateSlideBaseline
-        ? buildCanonicalDuplicateSlideBaseline({
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
-            sourceDocument: iframeDoc
-          })
-        : null;
-      const canonicalDeckAfterDuplication = buildCanonicalDuplicateSlideDeck
-        ? buildCanonicalDuplicateSlideDeck({
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
-            canonicalDeckBeforeMutation: canonicalDeckBeforeDuplication,
-            importSlideToCanonicalSlide,
-            duplicateSlide,
-            duplicateSlideId,
-            insertionIndex,
-            sourceDocument: iframeDoc,
-            title: `Slide ${insertionIndex + 1}`,
-            getSlideId: () => duplicateSlideId
-          })
-        : null;
-
-      saveHistoryState();
-      const mutation = applyEditorSlideInsertionWithTransaction(container, duplicateSlide, {
-        beforeNode: slides[insertionIndex] || null
+      return duplicateStudioSlideNode({
+        getIframeDoc,
+        resolveInsertionActionState: resolveCurrentStudioInsertionActionState,
+        getSlideContainer: (doc) => doc && typeof doc.getElementById === 'function'
+          ? doc.getElementById('slidesContainer')
+          : null,
+        getSlides: typeof getSlides === 'function' ? getSlides : () => [],
+        getActiveSlide: typeof getActiveSlide === 'function' ? getActiveSlide : null,
+        sanitizeDuplicatedSubtree,
+        assignSlideId: assignEditorSlideId,
+        makeElementsHoverable,
+        buildCanonicalDuplicateSlideBaseline: buildCanonicalDuplicateSlideBaseline
+          ? (options) => buildCanonicalDuplicateSlideBaseline({
+              ...options,
+              canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+                ? SlideNextCanonicalDeck
+                : null,
+              buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+                ? buildEditorCanonicalDeck
+                : null
+            })
+          : null,
+        buildCanonicalDuplicateSlideDeck: buildCanonicalDuplicateSlideDeck
+          ? (options) => buildCanonicalDuplicateSlideDeck({
+              ...options,
+              canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+                ? SlideNextCanonicalDeck
+                : null,
+              buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+                ? buildEditorCanonicalDeck
+                : null
+            })
+          : null,
+        importSlideToCanonicalSlide,
+        saveHistoryState: typeof saveHistoryState === 'function' ? saveHistoryState : null,
+        applyInsertion: typeof applyEditorSlideInsertionWithTransaction === 'function'
+          ? applyEditorSlideInsertionWithTransaction
+          : () => ({ didApply: false, transaction: null }),
+        generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
+        setActiveSlide: typeof setActiveSlide === 'function' ? setActiveSlide : null,
+        finalizeMutation: typeof finalizeSlideMutationPersistence === 'function'
+          ? finalizeSlideMutationPersistence
+          : null
       });
-      if (!mutation.didApply) return false;
-      const transaction = mutation.transaction;
-
-      generateThumbnails();
-      setActiveSlide(insertionIndex);
-      if (canonicalDeckAfterDuplication) {
-        finalizeSlideMutationPersistence('Auto: Duplicated Slide', transaction, canonicalDeckAfterDuplication);
-      } else {
-        finalizeSlideMutationPersistence('Auto: Duplicated Slide', transaction);
-      }
-      return true;
     }
 
     function applyEditorSlideDeletionWithTransaction(container, slideNode, options = {}) {
