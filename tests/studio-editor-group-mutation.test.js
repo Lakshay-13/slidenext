@@ -91,3 +91,40 @@ test('applyStudioGroupMutationWithTransaction fails closed without a shared grou
     { didApply: false, group: null, transaction: null }
   );
 });
+
+test('applyStudioUngroupMutationWithTransaction delegates layout and markup transaction dependencies', () => {
+  let delegated = null;
+  const result = groupMutation.applyStudioUngroupMutationWithTransaction({
+    groups: [{ id: 'group-1' }],
+    groupApi: {
+      buildStudioUngroupedLayout() {
+        return { canUngroup: true, nextItems: [] };
+      },
+      applyStudioUngroupMutation(nextOptions) {
+        delegated = nextOptions;
+        return { didApply: true, restoredElements: [], restoredGroups: [], transaction: { id: 'tx-ungroup' } };
+      }
+    },
+    transactionApi: {
+      createStudioMarkupTransactionCapture: studioTransaction.createStudioMarkupTransactionCapture
+    },
+    getElementId: () => 'node-1'
+  });
+
+  assert.deepEqual(result, {
+    didApply: true,
+    restoredElements: [],
+    restoredGroups: [],
+    transaction: { id: 'tx-ungroup' }
+  });
+  assert.equal(typeof delegated.buildUngroupedLayout, 'function');
+  assert.equal(typeof delegated.createMarkupTransactionCapture, 'function');
+  assert.equal(typeof delegated.getElementId, 'function');
+});
+
+test('applyStudioUngroupMutationWithTransaction fails closed without a shared group adapter', () => {
+  assert.deepEqual(
+    groupMutation.applyStudioUngroupMutationWithTransaction({}),
+    { didApply: false, restoredElements: [], restoredGroups: [], transaction: null }
+  );
+});

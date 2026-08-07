@@ -6348,27 +6348,16 @@
     }
 
     function applyEditorUngroupMutationWithTransaction(options = {}) {
-      const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
-        ? SlideNextStudioEditorGroup
+      const mutationApi = typeof SlideNextStudioEditorGroupMutation !== 'undefined'
+        ? SlideNextStudioEditorGroupMutation
         : null;
-      const applyStudioUngroupMutation = groupApi
-        && typeof groupApi.applyStudioUngroupMutation === 'function'
-        ? groupApi.applyStudioUngroupMutation
+      const applyMutation = mutationApi
+        && typeof mutationApi.applyStudioUngroupMutationWithTransaction === 'function'
+        ? mutationApi.applyStudioUngroupMutationWithTransaction
         : null;
-      if (!applyStudioUngroupMutation) {
+      if (!applyMutation) {
         return { didApply: false, restoredElements: [], restoredGroups: [], transaction: null };
       }
-      const buildStudioUngroupedLayout = groupApi
-        && typeof groupApi.buildStudioUngroupedLayout === 'function'
-        ? groupApi.buildStudioUngroupedLayout
-        : null;
-      const createStudioMarkupTransactionCapture = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
-        : null;
       const getElementId = typeof options.getElementId === 'function'
         ? options.getElementId
         : (element) => {
@@ -6378,15 +6367,16 @@
             }
             return element && element.dataset && element.dataset.editorId;
           };
-      const mutation = applyStudioUngroupMutation({
+      return applyMutation({
         ...options,
-        buildUngroupedLayout: buildStudioUngroupedLayout,
-        createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+        groupApi: typeof SlideNextStudioEditorGroup !== 'undefined'
+          ? SlideNextStudioEditorGroup
+          : null,
+        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+          ? SlideNextStudioEditorTransaction
+          : null,
         getElementId
       });
-      return mutation && typeof mutation === 'object'
-        ? mutation
-        : { didApply: false, restoredElements: [], restoredGroups: [], transaction: null };
     }
 
     function ungroupSelectedElements() {

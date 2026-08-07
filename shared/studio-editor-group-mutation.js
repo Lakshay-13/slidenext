@@ -48,7 +48,46 @@
       : { didApply: false, group: null, transaction: null };
   }
 
+  function applyStudioUngroupMutationWithTransaction(options = {}) {
+    const groupApi = options.groupApi && typeof options.groupApi === 'object'
+      ? options.groupApi
+      : null;
+    const applyStudioUngroupMutation = groupApi
+      && typeof groupApi.applyStudioUngroupMutation === 'function'
+      ? groupApi.applyStudioUngroupMutation
+      : null;
+    if (!applyStudioUngroupMutation) {
+      return { didApply: false, restoredElements: [], restoredGroups: [], transaction: null };
+    }
+
+    const buildStudioUngroupedLayout = groupApi
+      && typeof groupApi.buildStudioUngroupedLayout === 'function'
+      ? groupApi.buildStudioUngroupedLayout
+      : null;
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const createStudioMarkupTransactionCapture = transactionApi
+      && typeof transactionApi.createStudioMarkupTransactionCapture === 'function'
+      ? transactionApi.createStudioMarkupTransactionCapture
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+
+    const mutation = applyStudioUngroupMutation({
+      ...options,
+      buildUngroupedLayout: buildStudioUngroupedLayout,
+      createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+      getElementId
+    });
+    return mutation && typeof mutation === 'object'
+      ? mutation
+      : { didApply: false, restoredElements: [], restoredGroups: [], transaction: null };
+  }
+
   return {
-    applyStudioGroupMutationWithTransaction
+    applyStudioGroupMutationWithTransaction,
+    applyStudioUngroupMutationWithTransaction
   };
 });

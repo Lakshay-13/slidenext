@@ -43,6 +43,7 @@ function loadUngroupMutationHelper(fileContent, context) {
     ...studioGroup,
     ...(context.SlideNextStudioEditorGroup || {})
   };
+  context.SlideNextStudioEditorGroupMutation = groupMutation;
   vm.runInContext(helperSource, context);
 }
 
