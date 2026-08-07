@@ -7893,6 +7893,47 @@
     }
 
     function resolveEditorMetadataPersistenceOptions(options = {}) {
+      const createStudioEditorMetadataPersistenceOptionsAdapter = (
+        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+        && SlideNextStudioEditorPersistenceState
+        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorMetadataPersistenceOptionsAdapter === 'function'
+      )
+        ? SlideNextStudioEditorPersistenceState.createStudioEditorMetadataPersistenceOptionsAdapter
+        : null;
+      if (createStudioEditorMetadataPersistenceOptionsAdapter) {
+        const adapter = createStudioEditorMetadataPersistenceOptionsAdapter({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          getCurrentPresentationMetadata: () => (
+            typeof currentPresentationMetadata !== 'undefined'
+              ? currentPresentationMetadata
+              : null
+          ),
+          resolveMergedPresentationPersistenceOptions: (
+            typeof SlideNextDeckLoader !== 'undefined'
+            && SlideNextDeckLoader
+            && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
+          )
+            ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
+            : null,
+          resolvePresentationPersistenceOptions: (
+            typeof SlideNextDeckLoader !== 'undefined'
+            && SlideNextDeckLoader
+            && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
+          )
+            ? SlideNextDeckLoader.resolvePresentationPersistenceOptions
+            : null,
+          mergePresentationPersistenceOptions: (
+            typeof SlideNextPresentationMetadata !== 'undefined'
+            && SlideNextPresentationMetadata
+            && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
+          )
+            ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
+            : null
+        });
+        return typeof adapter === 'function' ? adapter(options) : {};
+      }
       const createStudioMetadataPersistenceOptionsResolver = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence

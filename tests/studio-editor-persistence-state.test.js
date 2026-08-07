@@ -304,3 +304,73 @@ test('createStudioEditorReusablePersistedHtmlAdapter fails closed without shared
 
   assert.equal(adapter({ cleanHtml: '<html>persisted</html>' }), '');
 });
+
+test('createStudioEditorMetadataPersistenceOptionsAdapter preserves builder precedence and callbacks', () => {
+  const metadata = { id: 'deck-1' };
+  const mergedResolver = () => ({ merged: true });
+  const presentationResolver = () => ({ presentation: true });
+  const mergeOptions = () => ({ mergedOptions: true });
+  const metadataResolver = (options) => ({
+    metadata: options.currentPresentationMetadata,
+    persistenceOptions: options.persistenceOptions
+  });
+  let factoryOptions = null;
+  const persistenceApi = {
+    resolveStudioMetadataPersistenceOptions() {
+      throw new Error('direct metadata helper should not run when the builder exists');
+    },
+    createStudioMetadataPersistenceOptionsResolver(options) {
+      factoryOptions = options;
+      return (nextOptions) => options.resolveMetadataPersistenceOptions({
+        currentPresentationMetadata: options.getCurrentPresentationMetadata(),
+        persistenceOptions: nextOptions.persistenceOptions
+      });
+    }
+  };
+  const adapter = editorPersistenceState.createStudioEditorMetadataPersistenceOptionsAdapter({
+    persistenceApi,
+    getCurrentPresentationMetadata: () => metadata,
+    resolveMergedPresentationPersistenceOptions: mergedResolver,
+    resolvePresentationPersistenceOptions: presentationResolver,
+    mergePresentationPersistenceOptions: mergeOptions,
+    resolveMetadataPersistenceOptions: metadataResolver
+  });
+
+  assert.deepEqual(adapter({ persistenceOptions: { theme: 'dark' } }), {
+    metadata,
+    persistenceOptions: { theme: 'dark' }
+  });
+  assert.equal(factoryOptions.getCurrentPresentationMetadata(), metadata);
+  assert.equal(factoryOptions.resolveMergedPresentationPersistenceOptions, mergedResolver);
+  assert.equal(factoryOptions.resolvePresentationPersistenceOptions, presentationResolver);
+  assert.equal(factoryOptions.mergePresentationPersistenceOptions, mergeOptions);
+  assert.equal(factoryOptions.resolveMetadataPersistenceOptions, metadataResolver);
+});
+
+test('createStudioEditorMetadataPersistenceOptionsAdapter uses the direct helper when no builder exists', () => {
+  let delegatedOptions = null;
+  const adapter = editorPersistenceState.createStudioEditorMetadataPersistenceOptionsAdapter({
+    persistenceApi: {
+      resolveStudioMetadataPersistenceOptions(options) {
+        delegatedOptions = options;
+        return { direct: true };
+      }
+    },
+    currentPresentationMetadata: { id: 'deck-1' }
+  });
+
+  assert.deepEqual(adapter({ persistenceOptions: { theme: 'light' } }), { direct: true });
+  assert.deepEqual(delegatedOptions, {
+    currentPresentationMetadata: { id: 'deck-1' },
+    persistenceOptions: { theme: 'light' },
+    resolveMergedPresentationPersistenceOptions: null,
+    resolvePresentationPersistenceOptions: null,
+    mergePresentationPersistenceOptions: null
+  });
+});
+
+test('createStudioEditorMetadataPersistenceOptionsAdapter fails closed without shared persistence', () => {
+  const adapter = editorPersistenceState.createStudioEditorMetadataPersistenceOptionsAdapter();
+
+  assert.deepEqual(adapter({ persistenceOptions: { theme: 'dark' } }), {});
+});

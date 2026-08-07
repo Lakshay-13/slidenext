@@ -336,6 +336,70 @@
     };
   }
 
+  function createStudioEditorMetadataPersistenceOptionsAdapter(options = {}) {
+    const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
+      ? options.persistenceApi
+      : null;
+    const getCurrentPresentationMetadata = typeof options.getCurrentPresentationMetadata === 'function'
+      ? options.getCurrentPresentationMetadata
+      : () => options.currentPresentationMetadata;
+    const defaultResolveMergedPresentationPersistenceOptions = typeof options.resolveMergedPresentationPersistenceOptions === 'function'
+      ? options.resolveMergedPresentationPersistenceOptions
+      : null;
+    const defaultResolvePresentationPersistenceOptions = typeof options.resolvePresentationPersistenceOptions === 'function'
+      ? options.resolvePresentationPersistenceOptions
+      : null;
+    const defaultMergePresentationPersistenceOptions = typeof options.mergePresentationPersistenceOptions === 'function'
+      ? options.mergePresentationPersistenceOptions
+      : null;
+    const defaultResolveMetadataPersistenceOptions = typeof options.resolveMetadataPersistenceOptions === 'function'
+      ? options.resolveMetadataPersistenceOptions
+      : persistenceApi
+        && typeof persistenceApi.resolveStudioMetadataPersistenceOptions === 'function'
+        ? persistenceApi.resolveStudioMetadataPersistenceOptions
+        : null;
+
+    return function resolveEditorMetadataPersistenceOptions(nextOptions = {}) {
+      const resolveMergedPresentationPersistenceOptions = typeof nextOptions.resolveMergedPresentationPersistenceOptions === 'function'
+        ? nextOptions.resolveMergedPresentationPersistenceOptions
+        : defaultResolveMergedPresentationPersistenceOptions;
+      const resolvePresentationPersistenceOptions = typeof nextOptions.resolvePresentationPersistenceOptions === 'function'
+        ? nextOptions.resolvePresentationPersistenceOptions
+        : defaultResolvePresentationPersistenceOptions;
+      const mergePresentationPersistenceOptions = typeof nextOptions.mergePresentationPersistenceOptions === 'function'
+        ? nextOptions.mergePresentationPersistenceOptions
+        : defaultMergePresentationPersistenceOptions;
+      const resolveMetadataPersistenceOptions = typeof nextOptions.resolveStudioMetadataPersistenceOptions === 'function'
+        ? nextOptions.resolveStudioMetadataPersistenceOptions
+        : defaultResolveMetadataPersistenceOptions;
+      const createStudioMetadataPersistenceOptionsResolver = persistenceApi
+        && typeof persistenceApi.createStudioMetadataPersistenceOptionsResolver === 'function'
+        ? persistenceApi.createStudioMetadataPersistenceOptionsResolver
+        : null;
+      if (createStudioMetadataPersistenceOptionsResolver) {
+        return createStudioMetadataPersistenceOptionsResolver({
+          getCurrentPresentationMetadata,
+          resolveMergedPresentationPersistenceOptions,
+          resolvePresentationPersistenceOptions,
+          mergePresentationPersistenceOptions,
+          resolveMetadataPersistenceOptions
+        })(nextOptions);
+      }
+      if (resolveMetadataPersistenceOptions) {
+        return resolveMetadataPersistenceOptions({
+          currentPresentationMetadata: Object.prototype.hasOwnProperty.call(nextOptions, 'currentPresentationMetadata')
+            ? nextOptions.currentPresentationMetadata
+            : getCurrentPresentationMetadata(),
+          persistenceOptions: nextOptions.persistenceOptions,
+          resolveMergedPresentationPersistenceOptions,
+          resolvePresentationPersistenceOptions,
+          mergePresentationPersistenceOptions
+        });
+      }
+      return {};
+    };
+  }
+
   return {
     createStudioEditorPersistedDeckStateAdapter,
     createStudioEditorPersistedDeckStateApplierAdapter,
@@ -343,6 +407,7 @@
     createStudioEditorPersistedActiveSlideIdAdapter,
     createStudioEditorFallbackCanonicalDeckAdapter,
     createStudioEditorCanonicalDeckOverrideAdapter,
-    createStudioEditorReusablePersistedHtmlAdapter
+    createStudioEditorReusablePersistedHtmlAdapter,
+    createStudioEditorMetadataPersistenceOptionsAdapter
   };
 });

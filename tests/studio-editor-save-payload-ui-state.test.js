@@ -2035,6 +2035,48 @@ test('resolveEditorMetadataPersistenceOptions reuses the shared metadata persist
   assert.equal(delegatedArgs.mergePresentationPersistenceOptions, null);
 });
 
+test('resolveEditorMetadataPersistenceOptions delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+  const metadata = { id: 'deck-1' };
+  let delegatedOptions = null;
+  const context = {
+    currentPresentationMetadata: metadata,
+    SlideNextStudioEditorPersistence: {
+      createStudioMetadataPersistenceOptionsResolver(options = {}) {
+        delegatedOptions = options;
+        return (nextOptions = {}) => ({
+          metadata: options.getCurrentPresentationMetadata(),
+          persistenceOptions: nextOptions.persistenceOptions
+        });
+      },
+      resolveStudioMetadataPersistenceOptions() {
+        throw new Error('direct metadata helper should remain behind the adapter');
+      }
+    },
+    SlideNextStudioEditorPersistenceState: editorPersistenceState
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+
+  assert.deepEqual(
+    context.resolveEditorMetadataPersistenceOptions({ persistenceOptions: { theme: 'dark' } }),
+    {
+      metadata,
+      persistenceOptions: { theme: 'dark' }
+    }
+  );
+  assert.equal(delegatedOptions.getCurrentPresentationMetadata(), metadata);
+  assert.equal(delegatedOptions.resolveMergedPresentationPersistenceOptions, null);
+  assert.equal(delegatedOptions.resolvePresentationPersistenceOptions, null);
+  assert.equal(delegatedOptions.mergePresentationPersistenceOptions, null);
+});
+
 test('resolveEditorMetadataPersistenceOptions prefers the shared merged persistence resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
