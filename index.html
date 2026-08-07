@@ -6870,20 +6870,28 @@
       const canonicalInsertionApi = typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
         ? SlideNextStudioEditorCanonicalInsertion
         : null;
-      const buildCanonicalInsertionDeck = canonicalInsertionApi
-        && typeof canonicalInsertionApi.buildStudioCanonicalInsertionDeck === 'function'
-        ? canonicalInsertionApi.buildStudioCanonicalInsertionDeck
-        : null;
-      const buildCanonicalInsertionBaseline = canonicalInsertionApi
-        && typeof canonicalInsertionApi.buildStudioCanonicalInsertionBaseline === 'function'
-        ? canonicalInsertionApi.buildStudioCanonicalInsertionBaseline
-        : null;
       const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
         ? SlideNextDeckImport
         : null;
       const importElementToCanonicalNode = deckImportApi
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
         ? deckImportApi.importElementToCanonicalNode
+        : null;
+      const canonicalInsertionBuilders = canonicalInsertionApi
+        && typeof canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders === 'function'
+        ? canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders({
+            canonicalDeckApi,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+            importElementToCanonicalNode
+          })
+        : null;
+      const buildCanonicalInsertionDeck = canonicalInsertionBuilders
+        ? canonicalInsertionBuilders.buildCanonicalInsertionDeck
+        : null;
+      const buildCanonicalInsertionBaseline = canonicalInsertionBuilders
+        ? canonicalInsertionBuilders.buildCanonicalInsertionBaseline
         : null;
       const canonicalDeckBeforeInsertion = buildCanonicalInsertionBaseline
         ? buildCanonicalInsertionBaseline({

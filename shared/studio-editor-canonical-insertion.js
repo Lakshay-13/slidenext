@@ -57,6 +57,45 @@
     return appendCanonicalNode(canonicalDeckBeforeMutation, slideId, canonicalNode);
   }
 
+  function createStudioCanonicalInsertionMutationBuilders(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const importElementToCanonicalNode = typeof options.importElementToCanonicalNode === 'function'
+      ? options.importElementToCanonicalNode
+      : null;
+    const buildCanonicalInsertionBaseline = (insertionOptions = {}) => (
+      buildStudioCanonicalInsertionBaseline({
+        ...insertionOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck
+      })
+    );
+    const buildCanonicalInsertionDeck = (element, insertionOptions = {}) => {
+      const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(
+        insertionOptions,
+        'canonicalDeckBeforeMutation'
+      )
+        ? insertionOptions.canonicalDeckBeforeMutation
+        : buildCanonicalInsertionBaseline(insertionOptions);
+      return buildStudioCanonicalInsertionDeck(element, {
+        ...insertionOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck,
+        importElementToCanonicalNode,
+        canonicalDeckBeforeMutation
+      });
+    };
+
+    return {
+      buildCanonicalInsertionBaseline,
+      buildCanonicalInsertionDeck
+    };
+  }
+
   function buildStudioCanonicalInsertionSequence(elements, options = {}) {
     if (!Array.isArray(elements) || elements.length === 0) return null;
 
@@ -81,6 +120,7 @@
   return {
     buildStudioCanonicalInsertionBaseline,
     buildStudioCanonicalInsertionDeck,
-    buildStudioCanonicalInsertionSequence
+    buildStudioCanonicalInsertionSequence,
+    createStudioCanonicalInsertionMutationBuilders
   };
 });

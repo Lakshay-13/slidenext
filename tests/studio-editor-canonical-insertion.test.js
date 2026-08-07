@@ -57,6 +57,35 @@ test('buildStudioCanonicalInsertionDeck builds the baseline from the source docu
   assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['inserted']);
 });
 
+test('createStudioCanonicalInsertionMutationBuilders preserves an explicit baseline', () => {
+  const explicitBaseline = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }] }]
+  });
+  let buildCount = 0;
+  const builders = canonicalInsertion.createStudioCanonicalInsertionMutationBuilders({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck() {
+      buildCount += 1;
+      return explicitBaseline;
+    },
+    importElementToCanonicalNode(element, options) {
+      return { id: options.getNodeId(element), text: 'Inserted' };
+    }
+  });
+
+  const result = builders.buildCanonicalInsertionDeck(
+    { dataset: { editorId: 'inserted' } },
+    {
+      canonicalDeckBeforeMutation: explicitBaseline,
+      slideId: 'slide-1',
+      getNodeId: (node) => node.dataset.editorId
+    }
+  );
+
+  assert.equal(buildCount, 0);
+  assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['existing', 'inserted']);
+});
+
 test('buildStudioCanonicalInsertionSequence appends every inserted node in order', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }] }]
