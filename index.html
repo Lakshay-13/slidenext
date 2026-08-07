@@ -1173,6 +1173,7 @@
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
+  <script src="/shared/studio-editor-removal-mutation.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-lock-mutation.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
@@ -5480,27 +5481,20 @@
     }
 
     function applyEditorRemovalMutationWithTransaction(selection, options = {}) {
-      const removalApi = typeof SlideNextStudioEditorRemoval !== 'undefined'
-        ? SlideNextStudioEditorRemoval
+      const mutationApi = typeof SlideNextStudioEditorRemovalMutation !== 'undefined'
+        ? SlideNextStudioEditorRemovalMutation
         : null;
-      const removeStudioElements = removalApi
-        && typeof removalApi.removeStudioElements === 'function'
-        ? removalApi.removeStudioElements
+      const applyMutation = mutationApi
+        && typeof mutationApi.applyStudioRemovalMutationWithTransaction === 'function'
+        ? mutationApi.applyStudioRemovalMutationWithTransaction
         : null;
-      if (!removeStudioElements) {
+      if (!applyMutation) {
         return {
           didRemove: false,
           removedCount: 0,
           transaction: null
         };
       }
-      const createStudioMarkupTransactionCapture = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
-        : null;
       const getElementId = typeof options.getElementId === 'function'
         ? options.getElementId
         : (element) => {
@@ -5510,21 +5504,22 @@
             }
             return element && element.dataset && element.dataset.editorId;
           };
-      const removeElement = typeof options.removeElement === 'function'
-        ? options.removeElement
-        : (element) => {
-            if (element && typeof element.remove === 'function') {
-              element.remove();
-            }
-          };
-      const mutation = removeStudioElements(selection, {
-        createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+      return applyMutation(selection, {
+        removalApi: typeof SlideNextStudioEditorRemoval !== 'undefined'
+          ? SlideNextStudioEditorRemoval
+          : null,
+        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+          ? SlideNextStudioEditorTransaction
+          : null,
         getElementId,
-        removeElement
+        removeElement: typeof options.removeElement === 'function'
+          ? options.removeElement
+          : (element) => {
+              if (element && typeof element.remove === 'function') {
+                element.remove();
+              }
+            }
       });
-      return mutation && typeof mutation === 'object'
-        ? mutation
-        : { didRemove: false, removedCount: 0, transaction: null };
     }
 
     // Delete active selection

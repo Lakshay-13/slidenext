@@ -7,6 +7,7 @@ const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalRemoval = require('../shared/studio-editor-canonical-removal.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const removalState = require('../shared/studio-editor-removal.js');
+const removalMutation = require('../shared/studio-editor-removal-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -51,6 +52,7 @@ function loadRemovalMutationHelper(fileContent, context) {
     'function applyEditorRemovalMutationWithTransaction(selection, options = {}) {',
     '\n\n    // Delete active selection'
   );
+  context.SlideNextStudioEditorRemovalMutation = removalMutation;
   vm.runInContext(helperSource, context);
 }
 
