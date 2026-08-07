@@ -2178,6 +2178,26 @@
     }
 
     function captureCurrentStudioSessionState() {
+      const createStudioEditorSessionSnapshotAdapter = (
+        typeof SlideNextStudioEditorSession !== 'undefined'
+        && SlideNextStudioEditorSession
+        && typeof SlideNextStudioEditorSession.createStudioEditorSessionSnapshotAdapter === 'function'
+      )
+        ? SlideNextStudioEditorSession.createStudioEditorSessionSnapshotAdapter
+        : null;
+      if (createStudioEditorSessionSnapshotAdapter) {
+        const adapter = createStudioEditorSessionSnapshotAdapter({
+          sessionApi: SlideNextStudioEditorSession,
+          getPresentationUrl: () => currentPresentationUrl,
+          getSessionToken: () => studioEditorSessionToken
+        });
+        const snapshot = typeof adapter === 'function'
+          ? adapter()
+          : null;
+        if (snapshot !== null && typeof snapshot !== 'undefined') {
+          return snapshot;
+        }
+      }
       const createStudioSessionSnapshot = (
         typeof SlideNextStudioEditorSession !== 'undefined'
         && SlideNextStudioEditorSession

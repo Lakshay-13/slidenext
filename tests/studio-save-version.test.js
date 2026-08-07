@@ -102,6 +102,40 @@ test('captureCurrentStudioSessionState reuses the shared session snapshot helper
   );
 });
 
+test('captureCurrentStudioSessionState delegates through the editor session snapshot adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let delegatedArgs = null;
+  const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 12,
+    SlideNextStudioEditorSession: {
+      createStudioEditorSessionSnapshotAdapter(options = {}) {
+        delegatedArgs = options;
+        return () => ({
+          presentationUrl: options.getPresentationUrl(),
+          sessionToken: options.getSessionToken(),
+          viaAdapter: true
+        });
+      },
+      createStudioSessionSnapshot() {
+        throw new Error('direct session snapshot should not run when the adapter exists');
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureCurrentStudioSessionState(fileContent, context);
+
+  assert.deepEqual(context.captureCurrentStudioSessionState(), {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    sessionToken: 12,
+    viaAdapter: true
+  });
+  assert.equal(delegatedArgs.sessionApi, context.SlideNextStudioEditorSession);
+  assert.equal(delegatedArgs.getPresentationUrl(), '/presentations/onboarding-presentation/index.html');
+  assert.equal(delegatedArgs.getSessionToken(), 12);
+});
+
 function loadCreateCurrentStudioSessionReaderOptions(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,

@@ -46,6 +46,49 @@
     };
   }
 
+  function createStudioEditorSessionSnapshotAdapter(options = {}) {
+    const sessionApi = options.sessionApi && typeof options.sessionApi === 'object'
+      ? options.sessionApi
+      : null;
+    const getPresentationUrl = typeof options.getPresentationUrl === 'function'
+      ? options.getPresentationUrl
+      : () => normalizeString(options.presentationUrl);
+    const getSessionToken = typeof options.getSessionToken === 'function'
+      ? options.getSessionToken
+      : () => (Number.isInteger(options.sessionToken) ? options.sessionToken : null);
+    const createSessionSnapshot = typeof options.createSessionSnapshot === 'function'
+      ? options.createSessionSnapshot
+      : sessionApi
+        && typeof sessionApi.createStudioSessionSnapshot === 'function'
+        ? sessionApi.createStudioSessionSnapshot
+        : null;
+
+    return function captureEditorSessionSnapshot(nextOptions = {}) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      const currentGetPresentationUrl = typeof resolvedOptions.getPresentationUrl === 'function'
+        ? resolvedOptions.getPresentationUrl
+        : getPresentationUrl;
+      const currentGetSessionToken = typeof resolvedOptions.getSessionToken === 'function'
+        ? resolvedOptions.getSessionToken
+        : getSessionToken;
+      const currentCreateSessionSnapshot = typeof resolvedOptions.createSessionSnapshot === 'function'
+        ? resolvedOptions.createSessionSnapshot
+        : createSessionSnapshot;
+      if (currentCreateSessionSnapshot) {
+        return currentCreateSessionSnapshot({
+          presentationUrl: currentGetPresentationUrl(),
+          sessionToken: currentGetSessionToken()
+        });
+      }
+      return {
+        presentationUrl: currentGetPresentationUrl(),
+        sessionToken: currentGetSessionToken()
+      };
+    };
+  }
+
   function createStudioPresentationSessionStateUpdate(nextState = {}) {
     const sessionStateUpdate = {};
     if (Object.prototype.hasOwnProperty.call(nextState, 'presentationUrl')) {
@@ -123,6 +166,7 @@
     createStudioSessionStateReaders,
     createStudioSessionReaderOptionsBuilder,
     createStudioSessionSnapshot,
+    createStudioEditorSessionSnapshotAdapter,
     createStudioPresentationSessionStateUpdate,
     isCurrentStudioEditorSession,
     shouldHandleStudioFrameLoad,

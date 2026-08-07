@@ -80,6 +80,57 @@ test('createStudioSessionSnapshot preserves the supplied presentation identity a
   });
 });
 
+test('createStudioEditorSessionSnapshotAdapter delegates live identity through the shared snapshot helper', () => {
+  let delegatedArgs = null;
+  const adapter = editorSession.createStudioEditorSessionSnapshotAdapter({
+    sessionApi: {
+      createStudioSessionSnapshot(options) {
+        delegatedArgs = options;
+        return { ...options, normalized: true };
+      }
+    },
+    getPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+    getSessionToken: () => 12
+  });
+
+  assert.deepEqual(adapter(), {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    sessionToken: 12,
+    normalized: true
+  });
+  assert.deepEqual(delegatedArgs, {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    sessionToken: 12
+  });
+});
+
+test('createStudioEditorSessionSnapshotAdapter supports call-time reader overrides', () => {
+  const adapter = editorSession.createStudioEditorSessionSnapshotAdapter({
+    getPresentationUrl: () => '/presentations/default/index.html',
+    getSessionToken: () => 4
+  });
+
+  assert.deepEqual(adapter({
+    getPresentationUrl: () => '/presentations/custom/index.html',
+    getSessionToken: () => 15
+  }), {
+    presentationUrl: '/presentations/custom/index.html',
+    sessionToken: 15
+  });
+});
+
+test('createStudioEditorSessionSnapshotAdapter returns a raw snapshot without a shared helper', () => {
+  const adapter = editorSession.createStudioEditorSessionSnapshotAdapter({
+    presentationUrl: '/presentations/deck/index.html',
+    sessionToken: 8
+  });
+
+  assert.deepEqual(adapter(), {
+    presentationUrl: '/presentations/deck/index.html',
+    sessionToken: 8
+  });
+});
+
 test('createStudioPresentationSessionStateUpdate normalizes only the provided presentation session fields', () => {
   const metadata = { id: 'deck-1' };
   const sessionStateUpdate = editorSession.createStudioPresentationSessionStateUpdate({
