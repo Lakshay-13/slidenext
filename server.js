@@ -10,6 +10,7 @@ const {
 } = require('./shared/version-backup-utils');
 const presentationMetadata = require('./shared/presentation-metadata');
 const canonicalPptxExport = require('./shared/canonical-pptx-export');
+const { isPathWithin } = require('./shared/path-boundary');
 
 const app = express();
 const PORT = 11004;
@@ -78,8 +79,7 @@ function resolvePptxAssetBaseDir(sourcePath) {
   if (typeof sourcePath !== 'string' || !sourcePath.trim()) return '';
   const normalizedSourcePath = sourcePath.trim().replace(/^[/\\]+/, '');
   const candidate = path.resolve(workspaceDir, path.dirname(normalizedSourcePath));
-  const workspacePrefix = `${workspaceDir}${path.sep}`;
-  return candidate === workspaceDir || candidate.startsWith(workspacePrefix) ? candidate : '';
+  return isPathWithin(workspaceDir, candidate) ? candidate : '';
 }
 
 function normalizePptxDownloadFilename(filename, title = '') {
@@ -107,8 +107,7 @@ app.post('/api/export/pptx', async (req, res) => {
       assetExists(assetSource) {
         if (/^(data:|https?:\/\/)/i.test(assetSource)) return true;
         const resolvedAssetPath = path.resolve(assetSource);
-        const workspacePrefix = `${workspaceDir}${path.sep}`;
-        return resolvedAssetPath.startsWith(workspacePrefix)
+        return isPathWithin(workspaceDir, resolvedAssetPath)
           && fsSync.existsSync(resolvedAssetPath);
       }
     });
@@ -169,7 +168,7 @@ async function readPresentationMetadataSidecar(htmlPath) {
 
   const normalizedMetadataPath = metadataPath.replace(/^\//, '');
   const metadataFile = path.resolve(workspaceDir, normalizedMetadataPath);
-  if (!metadataFile.startsWith(workspaceDir)) {
+  if (!isPathWithin(workspaceDir, metadataFile)) {
     return null;
   }
 
@@ -250,7 +249,7 @@ app.post('/api/save', async (req, res) => {
     const targetFile = path.resolve(workspaceDir, htmlPath);
     
     // Check if target file is within workspace boundaries
-    if (!targetFile.startsWith(workspaceDir)) {
+    if (!isPathWithin(workspaceDir, targetFile)) {
       return res.status(403).json({ error: 'Access denied: outside workspace directory' });
     }
 
@@ -317,7 +316,7 @@ app.post('/api/versions/create', async (req, res) => {
 
   try {
     const targetFile = path.resolve(workspaceDir, htmlPath);
-    if (!targetFile.startsWith(workspaceDir)) {
+    if (!isPathWithin(workspaceDir, targetFile)) {
       return res.status(403).json({ error: 'Access denied: outside workspace directory' });
     }
 
@@ -357,7 +356,7 @@ app.get('/api/versions', async (req, res) => {
 
   try {
     const targetFile = path.resolve(workspaceDir, htmlPath);
-    if (!targetFile.startsWith(workspaceDir)) {
+    if (!isPathWithin(workspaceDir, targetFile)) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -407,7 +406,7 @@ app.post('/api/restore', async (req, res) => {
 
   try {
     const targetFile = path.resolve(workspaceDir, htmlPath);
-    if (!targetFile.startsWith(workspaceDir)) {
+    if (!isPathWithin(workspaceDir, targetFile)) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -415,7 +414,7 @@ app.post('/api/restore', async (req, res) => {
     const versionFilePath = path.resolve(parentDir, '.versions', versionFilename);
 
     // Validate that the version file is indeed inside the .versions directory
-    if (!versionFilePath.startsWith(path.join(parentDir, '.versions'))) {
+    if (!isPathWithin(path.join(parentDir, '.versions'), versionFilePath)) {
       return res.status(403).json({ error: 'Access denied: invalid backup path' });
     }
 
@@ -436,7 +435,7 @@ app.post('/api/restore', async (req, res) => {
 
         if (metadataVersionFilename) {
           const metadataVersionFile = path.resolve(parentDir, '.versions', metadataVersionFilename);
-          if (metadataVersionFile.startsWith(path.join(parentDir, '.versions'))) {
+          if (isPathWithin(path.join(parentDir, '.versions'), metadataVersionFile)) {
             try {
               const metadataBackupContent = await fs.readFile(metadataVersionFile, 'utf8');
               restoredMetadata = JSON.parse(metadataBackupContent);
@@ -477,14 +476,14 @@ app.post('/api/versions/rename', async (req, res) => {
 
   try {
     const targetFile = path.resolve(workspaceDir, htmlPath);
-    if (!targetFile.startsWith(workspaceDir)) {
+    if (!isPathWithin(workspaceDir, targetFile)) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
     const parentDir = path.dirname(targetFile);
     const versionFilePath = path.resolve(parentDir, '.versions', versionFilename);
 
-    if (!versionFilePath.startsWith(path.join(parentDir, '.versions'))) {
+    if (!isPathWithin(path.join(parentDir, '.versions'), versionFilePath)) {
       return res.status(403).json({ error: 'Access denied: invalid backup path' });
     }
 
@@ -525,8 +524,8 @@ app.post('/api/versions/rename', async (req, res) => {
         const metadataVersionFile = path.resolve(parentDir, '.versions', metadataVersionFilename);
         const newMetadataVersionFile = path.resolve(parentDir, '.versions', newMetadataVersionFilename);
         if (
-          metadataVersionFile.startsWith(path.join(parentDir, '.versions')) &&
-          newMetadataVersionFile.startsWith(path.join(parentDir, '.versions'))
+          isPathWithin(path.join(parentDir, '.versions'), metadataVersionFile) &&
+          isPathWithin(path.join(parentDir, '.versions'), newMetadataVersionFile)
         ) {
           try {
             await fs.rename(metadataVersionFile, newMetadataVersionFile);
@@ -556,14 +555,14 @@ app.post('/api/versions/delete', async (req, res) => {
 
   try {
     const targetFile = path.resolve(workspaceDir, htmlPath);
-    if (!targetFile.startsWith(workspaceDir)) {
+    if (!isPathWithin(workspaceDir, targetFile)) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
     const parentDir = path.dirname(targetFile);
     const versionFilePath = path.resolve(parentDir, '.versions', versionFilename);
 
-    if (!versionFilePath.startsWith(path.join(parentDir, '.versions'))) {
+    if (!isPathWithin(path.join(parentDir, '.versions'), versionFilePath)) {
       return res.status(403).json({ error: 'Access denied: invalid backup path' });
     }
 
@@ -579,7 +578,7 @@ app.post('/api/versions/delete', async (req, res) => {
       );
       if (metadataVersionFilename) {
         const metadataVersionFile = path.resolve(parentDir, '.versions', metadataVersionFilename);
-        if (metadataVersionFile.startsWith(path.join(parentDir, '.versions'))) {
+        if (isPathWithin(path.join(parentDir, '.versions'), metadataVersionFile)) {
           try {
             await fs.unlink(metadataVersionFile);
             console.log(`Deleted version metadata backup: ${metadataVersionFilename}`);
