@@ -6792,6 +6792,14 @@
         getPointerOnSlide,
         getSelectionBounds,
         getSnapTargets: (slide, selection, slideMetrics) => {
+          if (transformApi && typeof transformApi.buildStudioTransformSnapTargets === 'function') {
+            return transformApi.buildStudioTransformSnapTargets(slide, selection, {
+              slideMetrics,
+              getSlideEditableElements,
+              isHidden: isElementHidden,
+              getRectOnSlide
+            });
+          }
           const selectedSet = new Set(Array.isArray(selection) ? selection : []);
           return getSlideEditableElements(slide)
             .filter((element) => !selectedSet.has(element) && !isElementHidden(element))

@@ -389,6 +389,32 @@
     return { left, top, right, bottom };
   }
 
+  function buildStudioTransformSnapTargets(slide, selection = [], options = {}) {
+    const getSlideEditableElements = typeof options.getSlideEditableElements === 'function'
+      ? options.getSlideEditableElements
+      : () => [];
+    const isHidden = typeof options.isHidden === 'function'
+      ? options.isHidden
+      : () => false;
+    const getRectOnSlide = typeof options.getRectOnSlide === 'function'
+      ? options.getRectOnSlide
+      : () => null;
+    const slideMetrics = options.slideMetrics || {};
+    const selectedSet = new Set(Array.isArray(selection) ? selection : []);
+
+    return getSlideEditableElements(slide)
+      .filter((element) => !selectedSet.has(element) && !isHidden(element))
+      .map((element) => {
+        if (!element || typeof element.getBoundingClientRect !== 'function') return null;
+        return getRectOnSlide(element.getBoundingClientRect(), slideMetrics);
+      })
+      .filter((bounds) => bounds
+        && Number.isFinite(bounds.left)
+        && Number.isFinite(bounds.top)
+        && Number.isFinite(bounds.right)
+        && Number.isFinite(bounds.bottom));
+  }
+
   function snapStudioTransformBounds(bounds = {}, session = {}, options = {}) {
     if (session.type !== 'drag' || options.snapEnabled === false) {
       return {
@@ -1633,6 +1659,7 @@
     shouldStudioResizeWidth,
     shouldStudioResizeHeight,
     buildStudioTransformInteractionBounds,
+    buildStudioTransformSnapTargets,
     resolveStudioTransformBounds,
     normalizeStudioTransformBounds,
     applyStudioTransformBounds,

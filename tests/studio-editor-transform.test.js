@@ -944,6 +944,42 @@ test('snapStudioTransformBounds aligns dragged bounds to neighboring element gui
   });
 });
 
+test('buildStudioTransformSnapTargets excludes selected and hidden elements and normalizes bounds', () => {
+  const selectedElement = {
+    getBoundingClientRect() {
+      throw new Error('selected elements should not be measured');
+    }
+  };
+  const hiddenElement = {
+    getBoundingClientRect() {
+      throw new Error('hidden elements should not be measured');
+    }
+  };
+  const visibleElement = {
+    getBoundingClientRect() {
+      return { left: 25, top: 35, right: 125, bottom: 95 };
+    }
+  };
+
+  assert.deepEqual(transformState.buildStudioTransformSnapTargets('slide', [selectedElement], {
+    slideMetrics: { scaleX: 2, scaleY: 2 },
+    getSlideEditableElements() {
+      return [selectedElement, hiddenElement, visibleElement];
+    },
+    isHidden(element) {
+      return element === hiddenElement;
+    },
+    getRectOnSlide(rect, slideMetrics) {
+      return {
+        left: rect.left * slideMetrics.scaleX,
+        top: rect.top * slideMetrics.scaleY,
+        right: rect.right * slideMetrics.scaleX,
+        bottom: rect.bottom * slideMetrics.scaleY
+      };
+    }
+  }), [{ left: 50, top: 70, right: 250, bottom: 190 }]);
+});
+
 test('resolveStudioTransformBounds applies the shared interaction and normalization pipeline', () => {
   assert.deepEqual(transformState.resolveStudioTransformBounds({
     type: 'drag',
