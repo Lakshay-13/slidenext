@@ -79,6 +79,23 @@ test('buildStudioCanonicalLayoutMutation maps positioned items onto a fresh cano
   assert.equal(sourceDeck.slides[0].nodes[0].layout.x, null);
 });
 
+test('buildStudioCanonicalLayoutMutation fails closed when no positioned items are valid', () => {
+  const sourceDeck = createSourceDeck();
+  const result = canonicalLayout.buildStudioCanonicalLayoutMutation({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck() {
+      return sourceDeck;
+    },
+    nextItems: [{
+      element: { dataset: {} },
+      nextAbsLeft: NaN,
+      nextAbsTop: 60
+    }]
+  });
+
+  assert.equal(result, null);
+});
+
 test('buildStudioCanonicalLayerOrderMutation maps z-indexes using the pre-mutation deck', () => {
   const sourceDeck = createSourceDeck();
   const first = {

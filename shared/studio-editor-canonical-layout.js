@@ -67,6 +67,8 @@
         }
       };
     }).filter(Boolean);
+    if (layoutUpdates.length === 0) return null;
+
     const canonicalDeckBeforeMutation = buildStudioCanonicalLayoutBaseline({
       canonicalDeckApi,
       buildCanonicalDeck,
