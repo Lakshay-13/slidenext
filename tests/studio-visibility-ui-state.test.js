@@ -8,6 +8,7 @@ const canonicalVisibility = require('../shared/studio-editor-canonical-visibilit
 const studioElementState = require('../shared/studio-element-state.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const visibilityState = require('../shared/studio-editor-visibility-state.js');
+const visibilityMutation = require('../shared/studio-editor-visibility-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -52,6 +53,7 @@ function loadVisibilityMutationHelper(fileContent, context) {
     'function applyEditorVisibilityMutationWithTransaction(selection, shouldHide, options = {}) {',
     'function toggleSelectedElementsVisibility(options = {}) {'
   );
+  context.SlideNextStudioEditorVisibilityMutation = visibilityMutation;
   vm.runInContext(helperSource, context);
 }
 
