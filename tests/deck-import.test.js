@@ -1505,3 +1505,40 @@ test('importSlideToCanonicalSlide promotes explicit background color and image d
     style: 'position: relative;'
   });
 });
+
+test('importSlideToCanonicalSlide promotes computed class-based background images and sizing', () => {
+  const slide = createImportedElement({
+    tagName: 'SECTION',
+    classList: createIterableClassList(['slide', 'hero-slide']),
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return {
+            backgroundColor: 'rgb(16, 24, 32)',
+            backgroundImage: 'url("http://localhost/presentations/demo/assets/hero.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          };
+        }
+      }
+    },
+    attributes: {
+      class: 'slide hero-slide',
+      'data-slide-name': 'Computed Background'
+    },
+    outerHTML: '<section class="slide hero-slide"></section>'
+  });
+
+  const canonicalSlide = deckImport.importSlideToCanonicalSlide(slide, 0, {
+    sourcePath: '/presentations/demo/index.html'
+  });
+
+  assert.equal(canonicalSlide.layout.background.color, 'rgb(16, 24, 32)');
+  assert.equal(canonicalSlide.layout.background.image, 'url("assets/hero.png")');
+  assert.equal(
+    canonicalSlide.layout.background.style,
+    'background-size: cover; background-position: center; background-repeat: no-repeat;'
+  );
+  assert.equal(canonicalSlide.source.attributes.style, undefined);
+});

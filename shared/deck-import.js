@@ -859,6 +859,49 @@
     };
   }
 
+  function getImportedComputedStyle(el, options = {}) {
+    const win = options.window || (el && el.ownerDocument && el.ownerDocument.defaultView) || null;
+    if (!win || typeof win.getComputedStyle !== 'function') return null;
+    try {
+      return win.getComputedStyle(el);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function readImportedStyleValue(style, propertyName) {
+    if (!style) return '';
+    if (typeof style.getPropertyValue === 'function') {
+      const value = normalizeString(style.getPropertyValue(propertyName));
+      if (value) return value;
+    }
+    const camelCaseName = propertyName.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+    return normalizeString(style[propertyName] || style[camelCaseName]);
+  }
+
+  function normalizeImportedComputedCssValue(value, options = {}) {
+    const source = normalizeString(value);
+    if (!source || !/url\(/i.test(source)) return source;
+    const sourcePath = normalizeString(options.sourcePath).replace(/^[/\\]+/, '');
+    const sourceDirectoryEnd = sourcePath.lastIndexOf('/');
+    const sourceDirectory = sourceDirectoryEnd >= 0 ? sourcePath.slice(0, sourceDirectoryEnd) : '';
+    if (!sourceDirectory || typeof URL !== 'function') return source;
+
+    return source.replace(/url\(\s*(?:'([^']*)'|"([^"]*)"|([^)]*))\s*\)/gi, (match, single, double, bare) => {
+      const urlValue = normalizeString(single || double || bare);
+      if (!/^https?:\/\//i.test(urlValue)) return match;
+      try {
+        const absolutePath = decodeURIComponent(new URL(urlValue).pathname).replace(/^[/\\]+/, '');
+        if (absolutePath.startsWith(`${sourceDirectory}/`)) {
+          return `url("${absolutePath.slice(sourceDirectory.length + 1)}")`;
+        }
+      } catch (error) {
+        return match;
+      }
+      return match;
+    });
+  }
+
   function buildImportedVisibility(el, win) {
     const hasHiddenClass = !!(el && el.classList && typeof el.classList.contains === 'function' && el.classList.contains('hidden'));
     return {
@@ -935,12 +978,39 @@
     const title = inferSlideTitle(slide, index, options);
     const sourceAttributes = stripCanonicalSlideAttributeDuplicates(sanitizeImportedAttributeMap(slide, options));
     const inlineStyleText = normalizeString(slide.getAttribute('style'));
-    const backgroundStyleText = extractImportedSlideBackgroundStyle(inlineStyleText);
+    const computedStyle = getImportedComputedStyle(slide, options);
+    const computedBackgroundImage = normalizeImportedComputedCssValue(
+      readImportedStyleValue(computedStyle, 'background-image'),
+      options
+    );
+    const backgroundStyleText = [
+      extractImportedSlideBackgroundStyle(inlineStyleText),
+      ...['background-size', 'background-position', 'background-repeat']
+        .map((propertyName) => ({
+          propertyName,
+          value: readImportedStyleValue(computedStyle, propertyName)
+        }))
+        .filter(({ propertyName, value }) => {
+          if (findImportedStylePropertyValue(inlineStyleText, propertyName)) return false;
+          if (propertyName === 'background-size') return /^(?:cover|contain)$/i.test(value);
+          if (propertyName === 'background-position') return /^(?:center|center\s+center)$/i.test(value);
+          return value.toLowerCase() === 'no-repeat';
+        })
+        .map(({ propertyName, value }) => `${propertyName}: ${value};`)
+    ].filter(Boolean).join(' ');
     const sourceStyleText = stripImportedSlideBackgroundStyle(inlineStyleText);
     const backgroundColor = normalizeString(slide.style && slide.style.backgroundColor)
-      || findImportedStylePropertyValue(inlineStyleText, 'background-color');
+      || findImportedStylePropertyValue(inlineStyleText, 'background-color')
+      || (() => {
+        const computedColor = readImportedStyleValue(computedStyle, 'background-color');
+        return computedColor && computedColor !== 'transparent'
+          && !/^rgba\([^)]*,\s*0\s*\)$/i.test(computedColor)
+          ? computedColor
+          : '';
+      })();
     const backgroundImage = normalizeString(slide.style && slide.style.backgroundImage)
-      || findImportedStylePropertyValue(inlineStyleText, 'background-image');
+      || findImportedStylePropertyValue(inlineStyleText, 'background-image')
+      || (computedBackgroundImage.toLowerCase() === 'none' ? '' : computedBackgroundImage);
     if (sourceStyleText) {
       sourceAttributes.style = sourceStyleText;
     }
