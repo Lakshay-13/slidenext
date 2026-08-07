@@ -14,100 +14,92 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
-test('updateActiveSlideNotes persists a canonical transaction and refreshes the inspector', () => {
+test('updateActiveSlideNotes delegates to the shared notes action', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
     fileContent,
     'function updateActiveSlideNotes(value = \'\') {',
     '\n\n    function pruneEditorChromeNodes'
   );
-  const calls = [];
+  let delegatedOptions = null;
   const frame = { id: 'live-frame' };
-  const slide = { id: 'slide-node' };
-  const transaction = { kind: 'slidenext.editor.transaction' };
   const context = {
+    SlideNextStudioEditorNotes: {
+      id: 'notes-api'
+    },
+    SlideNextStudioEditorTransaction: { id: 'transaction-api' },
+    SlideNextStudioEditorNotesActions: {
+      applyStudioSpeakerNotesEdit(value, options) {
+        delegatedOptions = { value, options };
+        return true;
+      }
+    },
     resolveCurrentStudioDeckReadyActionState() {
       return { canUseDeckActions: true };
     },
     getIframeDoc() {
       return frame;
     },
-    getActiveSlide(nextFrame) {
-      calls.push(['getActiveSlide', nextFrame]);
-      return slide;
+    getActiveSlide() {
+      return { id: 'slide-1' };
     },
-    SlideNextStudioEditorNotes: {
-      applyStudioSpeakerNotes(nextSlide, value, options) {
-        calls.push([
-          'applyStudioSpeakerNotes',
-          nextSlide,
-          value,
-          options.getElementId(nextSlide),
-          options.transactionApi
-        ]);
-        return { didApply: true, transaction };
-      }
-    },
-    SlideNextStudioEditorTransaction: { id: 'transaction-api' },
     getEditorSlideId() {
       return 'slide-1';
     },
-    finalizeEditorDeckMutation(label, options) {
-      calls.push(['finalizeEditorDeckMutation', label, options]);
-    },
-    syncStudioChromeToActiveSlide(nextFrame) {
-      calls.push(['syncStudioChromeToActiveSlide', nextFrame]);
-    }
+    finalizeEditorDeckMutation() {},
+    syncStudioChromeToActiveSlide() {}
   };
 
   vm.createContext(context);
   vm.runInContext(source, context);
 
   assert.equal(context.updateActiveSlideNotes('Cue for slide'), true);
-  assert.deepEqual(calls.map(([name]) => name), [
-    'getActiveSlide',
-    'applyStudioSpeakerNotes',
-    'finalizeEditorDeckMutation',
-    'syncStudioChromeToActiveSlide'
-  ]);
-  assert.deepEqual(calls[1].slice(0, 4), [
-    'applyStudioSpeakerNotes',
-    slide,
-    'Cue for slide',
-    'slide:slide-1'
-  ]);
-  assert.equal(calls[1][4], context.SlideNextStudioEditorTransaction);
-  assert.deepEqual(JSON.parse(JSON.stringify(calls[2])), [
-    'finalizeEditorDeckMutation',
-    'Auto: Updated Speaker Notes',
-    { refreshThumbnails: false, transaction }
-  ]);
-  assert.deepEqual(calls[3], ['syncStudioChromeToActiveSlide', frame]);
+  assert.equal(delegatedOptions.value, 'Cue for slide');
+  assert.equal(delegatedOptions.options.notesApi, context.SlideNextStudioEditorNotes);
+  assert.equal(delegatedOptions.options.transactionApi, context.SlideNextStudioEditorTransaction);
+  assert.equal(delegatedOptions.options.getDocument(), frame);
+  assert.equal(delegatedOptions.options.getActiveSlide().id, 'slide-1');
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(delegatedOptions.options.resolveReadyState())),
+    { canUseDeckActions: true }
+  );
+  assert.equal(delegatedOptions.options.finalizeMutation, context.finalizeEditorDeckMutation);
+  assert.equal(delegatedOptions.options.syncChrome, context.syncStudioChromeToActiveSlide);
+  assert.equal(delegatedOptions.options.getElementId({}), 'slide:slide-1');
 });
 
-test('updateActiveSlideNotes refuses changes when the deck is not ready', () => {
+test('updateActiveSlideNotes forwards the shared action result', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
     fileContent,
     'function updateActiveSlideNotes(value = \'\') {',
     '\n\n    function pruneEditorChromeNodes'
   );
-  let applyCalls = 0;
+  let actionCalls = 0;
   const context = {
     resolveCurrentStudioDeckReadyActionState() {
       return { canUseDeckActions: false };
     },
-    SlideNextStudioEditorNotes: {
-      applyStudioSpeakerNotes() {
-        applyCalls += 1;
-        return { didApply: true };
+    getIframeDoc() {
+      return null;
+    },
+    getActiveSlide() {
+      return null;
+    },
+    SlideNextStudioEditorNotes: { id: 'notes-api' },
+    SlideNextStudioEditorNotesActions: {
+      applyStudioSpeakerNotesEdit() {
+        actionCalls += 1;
+        return false;
       }
-    }
+    },
+    finalizeEditorDeckMutation() {},
+    syncStudioChromeToActiveSlide() {}
   };
 
   vm.createContext(context);
   vm.runInContext(source, context);
 
-  assert.equal(context.updateActiveSlideNotes('ignored'), false);
-  assert.equal(applyCalls, 0);
+  assert.equal(context.updateActiveSlideNotes('Cue for slide'), false);
+  assert.equal(actionCalls, 1);
 });

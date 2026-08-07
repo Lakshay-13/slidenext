@@ -1188,6 +1188,7 @@
   <script src="/shared/studio-theme-view.js"></script>
   <script src="/shared/studio-editor-wallpaper-view.js"></script>
   <script src="/shared/studio-editor-notes.js"></script>
+  <script src="/shared/studio-editor-notes-actions.js"></script>
   <script src="/shared/studio-editor-active-slide-view.js"></script>
   <script src="/shared/studio-editor-thumbnail-view.js"></script>
   <script src="/shared/studio-editor-mutation.js"></script>
@@ -3921,17 +3922,20 @@
     }
 
     function updateActiveSlideNotes(value = '') {
-      if (!resolveCurrentStudioDeckReadyActionState().canUseDeckActions) return false;
-      const iframeDoc = getIframeDoc();
-      const activeSlide = getActiveSlide(iframeDoc);
       const notesView = typeof SlideNextStudioEditorNotes !== 'undefined'
         ? SlideNextStudioEditorNotes
         : null;
-      if (!activeSlide || !notesView || typeof notesView.applyStudioSpeakerNotes !== 'function') {
+      const notesActions = typeof SlideNextStudioEditorNotesActions !== 'undefined'
+        ? SlideNextStudioEditorNotesActions
+        : null;
+      if (!notesView || !notesActions || typeof notesActions.applyStudioSpeakerNotesEdit !== 'function') {
         return false;
       }
-
-      const mutation = notesView.applyStudioSpeakerNotes(activeSlide, value, {
+      return notesActions.applyStudioSpeakerNotesEdit(value, {
+        resolveReadyState: resolveCurrentStudioDeckReadyActionState,
+        getDocument: getIframeDoc,
+        getActiveSlide,
+        notesApi: notesView,
         transactionApi: (
           typeof SlideNextStudioEditorTransaction !== 'undefined'
           && SlideNextStudioEditorTransaction
@@ -3943,16 +3947,10 @@
             ? getEditorSlideId(element)
             : '';
           return slideId ? `slide:${slideId}` : '';
-        }
+        },
+        finalizeMutation: finalizeEditorDeckMutation,
+        syncChrome: syncStudioChromeToActiveSlide
       });
-      if (!mutation.didApply) return false;
-
-      finalizeEditorDeckMutation('Auto: Updated Speaker Notes', {
-        refreshThumbnails: false,
-        transaction: mutation.transaction
-      });
-      syncStudioChromeToActiveSlide(iframeDoc);
-      return true;
     }
 
     function pruneEditorChromeNodes(doc = getIframeDoc(), activeSlide = getActiveSlide(doc)) {
