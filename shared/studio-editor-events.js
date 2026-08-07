@@ -409,7 +409,12 @@
       : () => null;
     const isTypingContext = typeof options.isTypingContext === 'function'
       ? options.isTypingContext
-      : (activeEl) => !!(activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable));
+      : (activeEl) => !!(activeEl && (
+        activeEl.tagName === 'INPUT'
+        || activeEl.tagName === 'TEXTAREA'
+        || activeEl.tagName === 'SELECT'
+        || activeEl.isContentEditable
+      ));
 
     return function studioFrameKeydownHandler(event) {
       const activeEl = getActiveElement();
@@ -549,7 +554,12 @@
       : () => null;
     const isTypingContext = typeof options.isTypingContext === 'function'
       ? options.isTypingContext
-      : (activeEl) => !!(activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable));
+      : (activeEl) => !!(activeEl && (
+        activeEl.tagName === 'INPUT'
+        || activeEl.tagName === 'TEXTAREA'
+        || activeEl.tagName === 'SELECT'
+        || activeEl.isContentEditable
+      ));
 
     return function studioGlobalKeydownHandler(event) {
       if (!isEditorActive()) {

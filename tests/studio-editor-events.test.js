@@ -387,6 +387,23 @@ test('createStudioFrameKeydownHandler does not intercept undo and redo while typ
   assert.equal(redoEvent.stopped, 0);
 });
 
+test('createStudioFrameKeydownHandler does not nudge while an inspector select is focused', () => {
+  const calls = [];
+  const handler = events.createStudioFrameKeydownHandler({
+    getActiveElement: () => ({ tagName: 'SELECT' }),
+    getSelectedElements: () => [{ id: 'node-1', isConnected: true }],
+    nudgeSelectedElements(dx, dy) {
+      calls.push([dx, dy]);
+    }
+  });
+
+  const event = createKeyboardEvent({ key: 'ArrowDown' });
+  handler(event);
+  assert.deepEqual(calls, []);
+  assert.equal(event.prevented, 0);
+  assert.equal(event.stopped, 0);
+});
+
 test('createStudioGlobalKeydownHandler ignores stale disconnected selections for selection-only shortcuts', () => {
   const calls = {
     arrange: [],
@@ -677,4 +694,21 @@ test('createStudioGlobalKeydownHandler does not intercept undo and redo while ty
   handler(redoEvent);
   assert.equal(calls.redo, 0);
   assert.equal(redoEvent.prevented, 0);
+});
+
+test('createStudioGlobalKeydownHandler does not nudge while an inspector select is focused', () => {
+  const calls = [];
+  const handler = events.createStudioGlobalKeydownHandler({
+    isEditorActive: () => true,
+    getActiveElement: () => ({ tagName: 'SELECT' }),
+    getSelectedElements: () => [{ id: 'node-1', isConnected: true }],
+    nudgeSelectedElements(dx, dy) {
+      calls.push([dx, dy]);
+    }
+  });
+
+  const event = createKeyboardEvent({ key: 'ArrowDown' });
+  handler(event);
+  assert.deepEqual(calls, []);
+  assert.equal(event.prevented, 0);
 });
