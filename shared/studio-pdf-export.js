@@ -145,6 +145,31 @@
       const timeoutId = setTimeout(settle, timeoutMs);
       Promise.resolve(resource).then(settle, settle);
     });
+    const waitForImage = (image, source = null) => {
+      if (!image || (source === null && image.complete) || typeof image.addEventListener !== 'function') {
+        return null;
+      }
+      return new Promise((resolve) => {
+        let settled = false;
+        const settle = () => {
+          if (settled) return;
+          settled = true;
+          if (timeoutId) clearTimeout(timeoutId);
+          resolve();
+        };
+        const timeoutId = setTimeout(settle, timeoutMs);
+        image.addEventListener('load', settle, { once: true });
+        image.addEventListener('error', settle, { once: true });
+        if (source !== null) {
+          try {
+            image.src = source;
+            if (image.complete) settle();
+          } catch (error) {
+            settle();
+          }
+        }
+      });
+    };
 
     const waits = [];
     const fontsReady = documentRef.fonts && documentRef.fonts.ready;
@@ -156,20 +181,64 @@
       ? Array.from(documentRef.images)
       : [];
     images.forEach((image) => {
-      if (!image || image.complete || typeof image.addEventListener !== 'function') return;
-      waits.push(new Promise((resolve) => {
-        let settled = false;
-        const settle = () => {
-          if (settled) return;
-          settled = true;
-          if (timeoutId) clearTimeout(timeoutId);
-          resolve();
-        };
-        const timeoutId = setTimeout(settle, timeoutMs);
-        image.addEventListener('load', settle, { once: true });
-        image.addEventListener('error', settle, { once: true });
-      }));
+      const wait = waitForImage(image);
+      if (wait) waits.push(wait);
     });
+
+    const getComputedStyle = documentRef.defaultView
+      && typeof documentRef.defaultView.getComputedStyle === 'function'
+      ? documentRef.defaultView.getComputedStyle.bind(documentRef.defaultView)
+      : root && typeof root.getComputedStyle === 'function'
+        ? root.getComputedStyle.bind(root)
+        : null;
+    let elements = [];
+    if (typeof documentRef.querySelectorAll === 'function') {
+      try {
+        elements = Array.from(documentRef.querySelectorAll('*') || []);
+      } catch (error) {
+        elements = [];
+      }
+    }
+    const backgroundImageUrls = new Set();
+    elements.forEach((element) => {
+      let style = element && element.style;
+      if (getComputedStyle) {
+        try {
+          style = getComputedStyle(element);
+        } catch (error) {
+          style = element && element.style;
+        }
+      }
+      const backgroundImage = style && typeof style.backgroundImage === 'string'
+        ? style.backgroundImage
+        : '';
+      const urlPattern = /url\((?:'([^']*)'|"([^"]*)"|([^)]*))\)/gi;
+      let match = urlPattern.exec(backgroundImage);
+      while (match) {
+        const url = (match[1] || match[2] || match[3] || '').trim();
+        if (url && !/^(?:data:|blob:|#)/i.test(url)) {
+          backgroundImageUrls.add(url);
+        }
+        match = urlPattern.exec(backgroundImage);
+      }
+    });
+    const createPreloadImage = typeof documentRef.createElement === 'function'
+      ? () => {
+          try {
+            return documentRef.createElement('img');
+          } catch (error) {
+            return null;
+          }
+        }
+      : root && typeof root.Image === 'function'
+        ? () => new root.Image()
+        : null;
+    if (createPreloadImage) {
+      backgroundImageUrls.forEach((url) => {
+        const wait = waitForImage(createPreloadImage(), url);
+        if (wait) waits.push(wait);
+      });
+    }
 
     return Promise.all(waits);
   }

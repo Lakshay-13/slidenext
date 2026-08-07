@@ -109,6 +109,41 @@ test('waitForStudioPdfPrintResources waits for fonts and image load or error', a
   assert.equal(didResolve, true);
 });
 
+test('waitForStudioPdfPrintResources preloads CSS background images', async () => {
+  const imageHandlers = {};
+  let assignedSource = '';
+  const preloadImage = {
+    complete: false,
+    addEventListener(type, handler) {
+      imageHandlers[type] = handler;
+    },
+    set src(value) {
+      assignedSource = value;
+    }
+  };
+  const waiting = pdfExport.waitForStudioPdfPrintResources({
+    images: [],
+    querySelectorAll() {
+      return [{}];
+    },
+    defaultView: {
+      getComputedStyle() {
+        return { backgroundImage: 'linear-gradient(red, blue), url("assets/background.png")' };
+      }
+    },
+    createElement(tagName) {
+      assert.equal(tagName, 'img');
+      return preloadImage;
+    }
+  });
+
+  await Promise.resolve();
+  assert.equal(assignedSource, 'assets/background.png');
+  assert.equal(typeof imageHandlers.load, 'function');
+  imageHandlers.load();
+  await waiting;
+});
+
 test('waitForStudioPdfPrintResources resolves when a resource never settles', async () => {
   const image = {
     complete: false,
