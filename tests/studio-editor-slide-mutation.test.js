@@ -79,3 +79,39 @@ test('createStudioEditorSlideMutationRestoreStateCapturer preserves active slide
   });
   assert.deepEqual(calls, ['history', ['active', doc], ['selection', doc]]);
 });
+
+test('restoreStudioEditorDeckViewAfterSlideMutation forwards slide restore options', () => {
+  const calls = [];
+  const doc = { id: 'doc' };
+  const selectionIds = ['node-1'];
+  const result = slideMutation.restoreStudioEditorDeckViewAfterSlideMutation(doc, selectionIds, {
+    deckViewApi: {
+      restoreStudioDeckViewAfterSlideMutation(options) {
+        calls.push(options);
+        options.restoreActiveSlideById('slide-2');
+        options.restoreSelectionState();
+        options.setActiveSlideByIndex(1);
+        return true;
+      }
+    },
+    preservedActiveSlideId: 'slide-2',
+    removedSlideId: 'slide-1',
+    fallbackIndex: 1,
+    restoreActiveSlideById(slideId, nextDoc) {
+      assert.equal(slideId, 'slide-2');
+      assert.equal(nextDoc, doc);
+    },
+    restoreSelectionState(nextSelectionIds, nextDoc) {
+      assert.deepEqual(nextSelectionIds, selectionIds);
+      assert.equal(nextDoc, doc);
+    },
+    setActiveSlideByIndex(index) {
+      assert.equal(index, 1);
+    }
+  });
+
+  assert.equal(result, true);
+  assert.equal(calls[0].fallbackIndex, 1);
+  assert.equal(calls[0].preservedActiveSlideId, 'slide-2');
+  assert.equal(calls[0].removedSlideId, 'slide-1');
+});

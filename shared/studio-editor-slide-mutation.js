@@ -100,8 +100,34 @@
     };
   }
 
+  function restoreStudioEditorDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, options = {}) {
+    const deckViewApi = options.deckViewApi && typeof options.deckViewApi === 'object'
+      ? options.deckViewApi
+      : null;
+    const restoreDeckView = deckViewApi
+      && typeof deckViewApi.restoreStudioDeckViewAfterSlideMutation === 'function'
+      ? deckViewApi.restoreStudioDeckViewAfterSlideMutation
+      : null;
+    if (!restoreDeckView) return false;
+
+    const restoreOptions = {
+      restoreActiveSlideById: (slideId) => options.restoreActiveSlideById(slideId, iframeDoc),
+      restoreSelectionState: () => options.restoreSelectionState(preservedSelectionIds, iframeDoc),
+      fallbackIndex: options.fallbackIndex,
+      setActiveSlideByIndex: (index) => options.setActiveSlideByIndex(index)
+    };
+    if (Object.prototype.hasOwnProperty.call(options, 'preservedActiveSlideId')) {
+      restoreOptions.preservedActiveSlideId = options.preservedActiveSlideId;
+    }
+    if (Object.prototype.hasOwnProperty.call(options, 'removedSlideId')) {
+      restoreOptions.removedSlideId = options.removedSlideId;
+    }
+    return restoreDeckView(restoreOptions);
+  }
+
   return {
     createStudioEditorSlideMutationPersistenceFinalizer,
-    createStudioEditorSlideMutationRestoreStateCapturer
+    createStudioEditorSlideMutationRestoreStateCapturer,
+    restoreStudioEditorDeckViewAfterSlideMutation
   };
 });

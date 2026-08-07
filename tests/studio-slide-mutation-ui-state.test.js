@@ -48,6 +48,7 @@ function loadRestoreDeckViewAfterSlideMutation(fileContent, context) {
     'function restoreDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, options = {}) {',
     '\n\n    // Add Blank Slide Node'
   );
+  context.SlideNextStudioEditorSlideMutation = slideMutation;
   vm.runInContext(helperSource, context);
 }
 

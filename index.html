@@ -2919,21 +2919,28 @@
     }
 
     function restoreDeckViewAfterSlideMutation(iframeDoc, preservedSelectionIds, options = {}) {
-      const restoreOptions = {
-        restoreActiveSlideById: (slideId) => setActiveSlideById(slideId, iframeDoc, { preserveSelection: true }),
-        restoreSelectionState: () => {
-          restoreSelectionAfterPreservedSlideMutation(preservedSelectionIds, iframeDoc);
-        },
-        fallbackIndex: options.fallbackIndex,
-        setActiveSlideByIndex: (index) => setActiveSlide(index)
-      };
-      if (Object.prototype.hasOwnProperty.call(options, 'preservedActiveSlideId')) {
-        restoreOptions.preservedActiveSlideId = options.preservedActiveSlideId;
+      const slideMutationApi = typeof SlideNextStudioEditorSlideMutation !== 'undefined'
+        ? SlideNextStudioEditorSlideMutation
+        : null;
+      if (!slideMutationApi
+        || typeof slideMutationApi.restoreStudioEditorDeckViewAfterSlideMutation !== 'function') {
+        return false;
       }
-      if (Object.prototype.hasOwnProperty.call(options, 'removedSlideId')) {
-        restoreOptions.removedSlideId = options.removedSlideId;
-      }
-      return SlideNextStudioDeckView.restoreStudioDeckViewAfterSlideMutation(restoreOptions);
+      return slideMutationApi.restoreStudioEditorDeckViewAfterSlideMutation(
+        iframeDoc,
+        preservedSelectionIds,
+        {
+          ...options,
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
+            ? SlideNextStudioDeckView
+            : null,
+          restoreActiveSlideById: (slideId, doc) => setActiveSlideById(slideId, doc, { preserveSelection: true }),
+          restoreSelectionState: (selectedIds, doc) => {
+            restoreSelectionAfterPreservedSlideMutation(selectedIds, doc);
+          },
+          setActiveSlideByIndex: (index) => setActiveSlide(index)
+        }
+      );
     }
 
     function applyEditorSlideInsertionWithTransaction(container, slideNode, options = {}) {
