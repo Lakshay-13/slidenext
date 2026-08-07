@@ -165,11 +165,51 @@
     return ungroupCanonicalNodes(canonicalDeckBeforeMutation, slideId, canonicalGroupChanges);
   }
 
+  function createStudioCanonicalUngroupMutationBuilders(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const importElementToCanonicalNode = typeof options.importElementToCanonicalNode === 'function'
+      ? options.importElementToCanonicalNode
+      : null;
+    const buildCanonicalUngroupBaseline = (ungroupOptions = {}) => (
+      buildStudioCanonicalUngroupBaseline({
+        ...ungroupOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck
+      })
+    );
+    const buildCanonicalUngroupDeck = (ungroupOptions = {}) => {
+      const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(
+        ungroupOptions,
+        'canonicalDeckBeforeMutation'
+      )
+        ? ungroupOptions.canonicalDeckBeforeMutation
+        : buildCanonicalUngroupBaseline(ungroupOptions);
+      return buildStudioCanonicalUngroupDeck({
+        ...ungroupOptions,
+        canonicalDeckApi,
+        buildCanonicalDeck,
+        importElementToCanonicalNode,
+        canonicalDeckBeforeMutation
+      });
+    };
+
+    return {
+      buildCanonicalUngroupBaseline,
+      buildCanonicalUngroupDeck
+    };
+  }
+
   return {
     buildStudioCanonicalGroupBaseline,
     buildStudioCanonicalGroupDeck,
     createStudioCanonicalGroupMutationBuilders,
     buildStudioCanonicalUngroupBaseline,
-    buildStudioCanonicalUngroupDeck
+    buildStudioCanonicalUngroupDeck,
+    createStudioCanonicalUngroupMutationBuilders
   };
 });

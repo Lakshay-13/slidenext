@@ -139,3 +139,40 @@ test('buildStudioCanonicalUngroupBaseline builds from the source document', () =
   assert.equal(builtFromDocument, sourceDocument);
   assert.equal(result, sourceDeck);
 });
+
+test('createStudioCanonicalUngroupMutationBuilders preserves an explicit baseline', () => {
+  const explicitBaseline = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'group-1', children: [{ id: 'child-1' }, { id: 'child-2' }] }]
+    }]
+  });
+  let buildCount = 0;
+  const group = { dataset: { editorId: 'group-1' } };
+  const builders = canonicalGroup.createStudioCanonicalUngroupMutationBuilders({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck() {
+      buildCount += 1;
+      return createSourceDeck();
+    },
+    importElementToCanonicalNode(element, options) {
+      return { id: options.getNodeId(element) };
+    }
+  });
+
+  const result = builders.buildCanonicalUngroupDeck({
+    canonicalDeckBeforeMutation: explicitBaseline,
+    groupTargets: [{ group, groupId: 'group-1', parentNodeId: '', slideId: 'slide-1' }],
+    restoredGroups: [{
+      group,
+      restoredElements: [
+        { dataset: { editorId: 'child-1' } },
+        { dataset: { editorId: 'child-2' } }
+      ]
+    }],
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(buildCount, 0);
+  assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['child-1', 'child-2']);
+});
