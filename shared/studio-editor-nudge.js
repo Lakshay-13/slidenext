@@ -100,9 +100,13 @@
     return Math.max(min, Math.min(max, value));
   }
 
+  function normalizeStudioNudgeStep(value, fallback) {
+    return Number.isFinite(value) && value > 0 ? value : fallback;
+  }
+
   function buildStudioNudgeDeltaFromKey(key = '', options = {}) {
-    const fineStepPx = Number.isFinite(options.fineStepPx) ? options.fineStepPx : 1;
-    const coarseStepPx = Number.isFinite(options.coarseStepPx) ? options.coarseStepPx : 10;
+    const fineStepPx = normalizeStudioNudgeStep(options.fineStepPx, 1);
+    const coarseStepPx = normalizeStudioNudgeStep(options.coarseStepPx, 10);
     const step = options.shiftKey ? coarseStepPx : fineStepPx;
 
     if (key === 'ArrowUp') return { dx: 0, dy: -step };

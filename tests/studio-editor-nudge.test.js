@@ -125,6 +125,14 @@ test('buildStudioNudgeDeltaFromKey resolves fine and coarse arrow-key deltas', (
   assert.equal(nudge.buildStudioNudgeDeltaFromKey('Enter'), null);
 });
 
+test('buildStudioNudgeDeltaFromKey falls back for non-positive custom steps', () => {
+  assert.deepEqual(nudge.buildStudioNudgeDeltaFromKey('ArrowRight', { fineStepPx: 0 }), { dx: 1, dy: 0 });
+  assert.deepEqual(nudge.buildStudioNudgeDeltaFromKey('ArrowDown', {
+    shiftKey: true,
+    coarseStepPx: -5
+  }), { dx: 0, dy: 10 });
+});
+
 test('buildStudioNudgeActionState derives geometry readiness from the resolved slide metrics and layout items', () => {
   const selectionState = {
     selection: [{ id: 'node-1' }],
