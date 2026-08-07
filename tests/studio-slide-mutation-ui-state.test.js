@@ -7,6 +7,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalSlide = require('../shared/studio-editor-canonical-slide.js');
 const slideCommands = require('../shared/studio-editor-slide-commands.js');
+const slideReorderMutation = require('../shared/studio-editor-slide-reorder-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -69,6 +70,7 @@ function loadApplyEditorSlideReorderWithTransaction(fileContent, context) {
     'function applyEditorSlideReorderWithTransaction(container, slideNode, beforeNode = null, options = {}) {',
     '\n\n    // Swap node indices in iframe and re-render'
   );
+  context.SlideNextStudioEditorSlideReorderMutation = slideReorderMutation;
   vm.runInContext(helperSource, context);
 }
 

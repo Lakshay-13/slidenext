@@ -1208,6 +1208,7 @@
   <script src="/shared/studio-editor-transaction.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-slide-commands.js"></script>
+  <script src="/shared/studio-editor-slide-reorder-mutation.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-interaction-options.js"></script>
   <script src="/shared/studio-editor-interactions.js"></script>
@@ -2548,38 +2549,29 @@
     }
 
     function applyEditorSlideReorderWithTransaction(container, slideNode, beforeNode = null, options = {}) {
-      const slideCommands = typeof SlideNextStudioEditorSlideCommands !== 'undefined'
-        ? SlideNextStudioEditorSlideCommands
+      const mutationApi = typeof SlideNextStudioEditorSlideReorderMutation !== 'undefined'
+        ? SlideNextStudioEditorSlideReorderMutation
         : null;
-      const applyStudioSlideReorderWithTransaction = slideCommands
-        && typeof slideCommands.applyStudioSlideReorderWithTransaction === 'function'
-        ? slideCommands.applyStudioSlideReorderWithTransaction
+      const applyMutation = mutationApi
+        && typeof mutationApi.applyStudioSlideReorderMutationWithTransaction === 'function'
+        ? mutationApi.applyStudioSlideReorderMutationWithTransaction
         : null;
-      if (!applyStudioSlideReorderWithTransaction) {
+      if (!applyMutation) {
         return {
           didApply: false,
           transaction: null
         };
       }
-
-      const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
-        : null;
-      const applyStudioSlideReorderMutation = deckViewApi
-        && typeof deckViewApi.applyStudioSlideReorderMutation === 'function'
-        ? deckViewApi.applyStudioSlideReorderMutation
-        : null;
-      const createStudioMarkupTransactionCapture = (
-        typeof SlideNextStudioEditorTransaction !== 'undefined'
-        && SlideNextStudioEditorTransaction
-        && typeof SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture === 'function'
-      )
-        ? SlideNextStudioEditorTransaction.createStudioMarkupTransactionCapture
-        : null;
-
-      return applyStudioSlideReorderWithTransaction(container, slideNode, beforeNode, {
-        applyStudioSlideReorderMutation,
-        createStudioMarkupTransactionCapture,
+      return applyMutation(container, slideNode, beforeNode, {
+        slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+          ? SlideNextStudioEditorSlideCommands
+          : null,
+        deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
+          ? SlideNextStudioDeckView
+          : null,
+        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+          ? SlideNextStudioEditorTransaction
+          : null,
         containerElementId: options.containerElementId,
         getElementId: options.getElementId
       });
