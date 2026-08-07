@@ -861,6 +861,48 @@
     };
   }
 
+  function createStudioEditorPersistedDeckHtmlCheckerAdapter(options = {}) {
+    const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
+      ? options.persistenceApi
+      : null;
+    const readPersistedDeckState = typeof options.readPersistedDeckState === 'function'
+      ? options.readPersistedDeckState
+      : () => options.persistedDeckState || {};
+    const isPersistedDeckHtml = typeof options.isPersistedDeckHtml === 'function'
+      ? options.isPersistedDeckHtml
+      : persistenceApi
+        && typeof persistenceApi.isStudioPersistedDeckHtml === 'function'
+        ? persistenceApi.isStudioPersistedDeckHtml
+        : null;
+
+    return function isEditorPersistedDeckHtml(cleanHtml = '', nextOptions = {}) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      const currentReadPersistedDeckState = typeof resolvedOptions.readPersistedDeckState === 'function'
+        ? resolvedOptions.readPersistedDeckState
+        : readPersistedDeckState;
+      const currentIsPersistedDeckHtml = typeof resolvedOptions.isPersistedDeckHtml === 'function'
+        ? resolvedOptions.isPersistedDeckHtml
+        : isPersistedDeckHtml;
+      const createStudioPersistedDeckHtmlChecker = persistenceApi
+        && typeof persistenceApi.createStudioPersistedDeckHtmlChecker === 'function'
+        ? persistenceApi.createStudioPersistedDeckHtmlChecker
+        : null;
+      if (createStudioPersistedDeckHtmlChecker) {
+        const checker = createStudioPersistedDeckHtmlChecker({
+          readPersistedDeckState: currentReadPersistedDeckState,
+          isPersistedDeckHtml: currentIsPersistedDeckHtml
+        });
+        return typeof checker === 'function'
+          ? checker(cleanHtml, resolvedOptions)
+          : null;
+      }
+      if (!currentIsPersistedDeckHtml) return null;
+      return currentIsPersistedDeckHtml(cleanHtml, currentReadPersistedDeckState());
+    };
+  }
+
   return {
     createStudioEditorPersistedDeckStateAdapter,
     createStudioEditorPersistedDeckStateApplierAdapter,
@@ -876,6 +918,7 @@
     createStudioEditorPersistableDeckBuildStateCapturerAdapter,
     createStudioEditorPersistableDeckStateCapturerAdapter,
     createStudioEditorPersistedDeckPlaybackStateCapturerAdapter,
-    createStudioEditorSaveRequestBodyAdapter
+    createStudioEditorSaveRequestBodyAdapter,
+    createStudioEditorPersistedDeckHtmlCheckerAdapter
   };
 });

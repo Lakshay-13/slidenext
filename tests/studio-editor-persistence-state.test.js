@@ -851,3 +851,58 @@ test('createStudioEditorSaveRequestBodyAdapter returns null without shared save 
 
   assert.equal(adapter({ label: 'iframe-doc' }), null);
 });
+
+test('createStudioEditorPersistedDeckHtmlCheckerAdapter preserves builder precedence', () => {
+  const persistedDeckState = { cleanHtml: '<html>persisted</html>' };
+  const readPersistedDeckState = () => persistedDeckState;
+  const isPersistedDeckHtml = () => true;
+  let factoryOptions = null;
+  const adapter = editorPersistenceState.createStudioEditorPersistedDeckHtmlCheckerAdapter({
+    persistenceApi: {
+      isStudioPersistedDeckHtml() {
+        throw new Error('direct html checker should not run when the builder exists');
+      },
+      createStudioPersistedDeckHtmlChecker(options) {
+        factoryOptions = options;
+        return (cleanHtml) => ({
+          cleanHtml,
+          persistedDeckState: options.readPersistedDeckState(),
+          result: options.isPersistedDeckHtml(cleanHtml, options.readPersistedDeckState())
+        });
+      }
+    },
+    readPersistedDeckState,
+    isPersistedDeckHtml
+  });
+
+  assert.deepEqual(adapter('<html>current</html>'), {
+    cleanHtml: '<html>current</html>',
+    persistedDeckState,
+    result: true
+  });
+  assert.equal(factoryOptions.readPersistedDeckState, readPersistedDeckState);
+  assert.equal(factoryOptions.isPersistedDeckHtml, isPersistedDeckHtml);
+});
+
+test('createStudioEditorPersistedDeckHtmlCheckerAdapter uses direct helper without a builder', () => {
+  let delegatedArgs = null;
+  const isPersistedDeckHtml = (cleanHtml, persistedDeckState) => {
+    delegatedArgs = { cleanHtml, persistedDeckState };
+    return cleanHtml === persistedDeckState.cleanHtml;
+  };
+  const persistedDeckState = { cleanHtml: '<html>persisted</html>' };
+  const adapter = editorPersistenceState.createStudioEditorPersistedDeckHtmlCheckerAdapter({
+    persistenceApi: { isStudioPersistedDeckHtml: isPersistedDeckHtml },
+    readPersistedDeckState: () => persistedDeckState
+  });
+
+  assert.equal(adapter('<html>persisted</html>'), true);
+  assert.equal(delegatedArgs.cleanHtml, '<html>persisted</html>');
+  assert.equal(delegatedArgs.persistedDeckState, persistedDeckState);
+});
+
+test('createStudioEditorPersistedDeckHtmlCheckerAdapter returns null without a shared checker', () => {
+  const adapter = editorPersistenceState.createStudioEditorPersistedDeckHtmlCheckerAdapter();
+
+  assert.equal(adapter('<html>current</html>'), null);
+});

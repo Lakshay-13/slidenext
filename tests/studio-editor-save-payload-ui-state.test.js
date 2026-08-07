@@ -628,6 +628,42 @@ test('isCurrentDeckHtmlPersisted reuses the shared persisted-html checker when a
   assert.equal(delegatedArgs.isPersistedDeckHtml, context.SlideNextStudioEditorPersistence.isStudioPersistedDeckHtml);
 });
 
+test('isCurrentDeckHtmlPersisted delegates through the editor persistence-state adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const isCurrentDeckHtmlPersistedSource = extractFunctionSource(
+    fileContent,
+    'function isCurrentDeckHtmlPersisted(cleanHtml) {',
+    '\n\n    function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {'
+  );
+
+  const persistedDeckState = { cleanHtml: '<html>persisted</html>' };
+  let factoryOptions = null;
+  const context = {
+    SlideNextStudioEditorPersistenceState: editorPersistenceState,
+    SlideNextStudioEditorPersistence: {
+      createStudioPersistedDeckHtmlChecker(options = {}) {
+        factoryOptions = options;
+        return (cleanHtml) => ({
+          cleanHtml,
+          persistedDeckState: options.readPersistedDeckState()
+        });
+      }
+    },
+    getCurrentEditorPersistedDeckState() {
+      return persistedDeckState;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(isCurrentDeckHtmlPersistedSource, context);
+
+  assert.deepEqual(context.isCurrentDeckHtmlPersisted('<html>current</html>'), {
+    cleanHtml: '<html>current</html>',
+    persistedDeckState
+  });
+  assert.equal(factoryOptions.readPersistedDeckState, context.getCurrentEditorPersistedDeckState);
+});
+
 test('isCurrentDeckStatePersisted reuses the shared persisted-save-request checker when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const isCurrentDeckStatePersistedSource = extractFunctionSource(

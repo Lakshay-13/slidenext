@@ -8935,6 +8935,26 @@
     }
 
     function isCurrentDeckHtmlPersisted(cleanHtml) {
+      const createStudioEditorPersistedDeckHtmlCheckerAdapter = (
+        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+        && SlideNextStudioEditorPersistenceState
+        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckHtmlCheckerAdapter === 'function'
+      )
+        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckHtmlCheckerAdapter
+        : null;
+      if (createStudioEditorPersistedDeckHtmlCheckerAdapter) {
+        const adapter = createStudioEditorPersistedDeckHtmlCheckerAdapter({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          readPersistedDeckState: getCurrentEditorPersistedDeckState
+        });
+        const result = typeof adapter === 'function' ? adapter(cleanHtml) : null;
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
+
       const createStudioPersistedDeckHtmlChecker = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
         && SlideNextStudioEditorPersistence
