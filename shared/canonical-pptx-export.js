@@ -90,6 +90,31 @@
     return color ? { color } : null;
   }
 
+  function resolvePptxTransparency(value) {
+    if (typeof value !== 'string' && typeof value !== 'number') return 0;
+    const input = `${value}`.trim();
+    const parsed = Number.parseFloat(input);
+    if (!Number.isFinite(parsed)) return 0;
+    const opacity = input.endsWith('%') ? parsed / 100 : parsed;
+    return Math.round((1 - Math.max(0, Math.min(1, opacity))) * 100);
+  }
+
+  function mergePptxTransparency(options, transparency) {
+    const extraTransparency = Math.max(0, Math.min(100, Number(transparency) || 0));
+    if (!options || typeof options !== 'object' || !extraTransparency) return options;
+    const currentTransparency = Math.max(
+      0,
+      Math.min(100, Number(options && options.transparency) || 0)
+    );
+    const combinedTransparency = Math.round(
+      (1 - ((1 - currentTransparency / 100) * (1 - extraTransparency / 100))) * 100
+    );
+    return {
+      ...options,
+      transparency: combinedTransparency
+    };
+  }
+
   function parseStyle(styleText) {
     if (typeof styleText !== 'string') return {};
     const declarations = [];
@@ -328,6 +353,10 @@
     return style;
   }
 
+  function nodeTransparency(node) {
+    return resolvePptxTransparency(nodeStyle(node).opacity);
+  }
+
   function resolveNodeImageSizing(node, bounds) {
     const objectFit = (nodeStyle(node)['object-fit'] || '').trim().toLowerCase();
     if (objectFit !== 'cover' && objectFit !== 'contain') return null;
@@ -379,7 +408,7 @@
     const fontFace = style['font-family']
       ? style['font-family'].split(',')[0].trim().replace(/^['"]|['"]$/g, '')
       : 'Aptos';
-    return {
+    return mergePptxTransparency({
       ...bounds,
       fontFace,
       fontSize,
@@ -390,7 +419,7 @@
       margin: 0,
       breakLine: false,
       fit: 'shrink'
-    };
+    }, nodeTransparency(node));
   }
 
   function shapeOptions(node, bounds) {
@@ -398,10 +427,14 @@
     const fill = resolvePptxFillColor(style['background-color'] || style.background) || { color: 'FFFFFF' };
     const lineColor = normalizeHexColor(style['border-color']) || fill.color;
     const lineWidth = parseCssPx(style['border-width']);
+    const transparency = nodeTransparency(node);
     return {
       ...bounds,
-      fill,
-      line: { color: lineColor, width: lineWidth === null ? 0.5 : Math.max(0, lineWidth * 0.75) }
+      fill: mergePptxTransparency(fill, transparency),
+      line: mergePptxTransparency({
+        color: lineColor,
+        width: lineWidth === null ? 0.5 : Math.max(0, lineWidth * 0.75)
+      }, transparency)
     };
   }
 
@@ -651,7 +684,11 @@
     const hasExportableChildren = hasExportableChildBounds(children, childOrigin);
     const text = getNestedNodeText(node);
     const style = nodeStyle(node);
-    const nodeBackgroundFill = resolvePptxFillColor(style['background-color'] || style.background);
+    const transparency = nodeTransparency(node);
+    const nodeBackgroundFill = mergePptxTransparency(
+      resolvePptxFillColor(style['background-color'] || style.background),
+      transparency
+    );
     const nodeBackgroundSource = resolveNodeBackgroundImageSource(node, context.options);
     const missingNodeBackground = context.diagnostics
       && Array.isArray(context.diagnostics.missingNodeBackgroundAssets)
@@ -671,7 +708,7 @@
         : { path: nodeBackgroundSource, ...bounds };
       const sizing = resolveNodeBackgroundImageSizing(node, bounds);
       if (sizing) backgroundOptions.sizing = sizing;
-      context.slide.addImage(backgroundOptions);
+      context.slide.addImage(mergePptxTransparency(backgroundOptions, transparency));
     }
 
     if (tableNode) {
@@ -698,7 +735,7 @@
           : { path: source, ...bounds };
         const sizing = resolveNodeImageSizing(node, bounds);
         if (sizing) imageOptions.sizing = sizing;
-        context.slide.addImage(imageOptions);
+        context.slide.addImage(mergePptxTransparency(imageOptions, transparency));
       }
     } else if (shapeNode) {
       if (bounds) context.slide.addShape(getShapeType(context.pptx, 'rect'), shapeOptions(node, bounds));

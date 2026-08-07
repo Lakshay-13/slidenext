@@ -403,6 +403,39 @@ test('createCanonicalPptxExport renders solid node backgrounds beneath child con
   });
 });
 
+test('createCanonicalPptxExport preserves node opacity across text, shape, and image output', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    assets: [{ id: 'asset-1', src: 'data:image/png;base64,AAAA' }],
+    slides: [{
+      nodes: [{
+        id: 'text-1',
+        type: 'text',
+        text: 'Faded text',
+        style: 'opacity: 0.6;',
+        layout: { x: 0, y: 0, width: 200, height: 40 }
+      }, {
+        id: 'shape-1',
+        type: 'shape',
+        style: 'background-color: rgba(10, 20, 30, 0.5); opacity: 0.5;',
+        layout: { x: 0, y: 50, width: 200, height: 40 }
+      }, {
+        id: 'image-1',
+        type: 'image',
+        attributes: { 'data-asset-id': 'asset-1' },
+        style: 'opacity: 25%;',
+        layout: { x: 0, y: 100, width: 200, height: 40 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const [textCall, shapeCall, imageCall] = result.pptx.slides[0].calls;
+  assert.equal(textCall.options.transparency, 40);
+  assert.equal(shapeCall.options.fill.transparency, 75);
+  assert.equal(shapeCall.options.line.transparency, 50);
+  assert.equal(imageCall.options.transparency, 75);
+});
+
 test('preflightCanonicalPptxExport reports missing node background image assets', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{
