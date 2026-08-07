@@ -374,3 +374,72 @@ test('createStudioEditorMetadataPersistenceOptionsAdapter fails closed without s
 
   assert.deepEqual(adapter({ persistenceOptions: { theme: 'dark' } }), {});
 });
+
+test('createStudioEditorPersistableDeckSanitizerOptionsAdapter preserves builder precedence and callbacks', () => {
+  const resolveMetadataPersistenceOptions = () => ({ metadata: true });
+  const getDeckSanitizerOptions = () => ({ sanitizer: true });
+  let factoryOptions = null;
+  const persistenceApi = {
+    buildStudioPersistableDeckSanitizerOptions() {
+      throw new Error('direct sanitizer helper should not run when the builder exists');
+    },
+    createStudioPersistableDeckSanitizerOptionsBuilder(options) {
+      factoryOptions = options;
+      return (playbackState, nextOptions) => ({
+        playbackState,
+        metadata: (
+          typeof nextOptions.resolveMetadataPersistenceOptions === 'function'
+            ? nextOptions.resolveMetadataPersistenceOptions
+            : options.resolveMetadataPersistenceOptions
+        )(),
+        sanitizer: (
+          typeof nextOptions.getDeckSanitizerOptions === 'function'
+            ? nextOptions.getDeckSanitizerOptions
+            : options.getDeckSanitizerOptions
+        )()
+      });
+    }
+  };
+  const adapter = editorPersistenceState.createStudioEditorPersistableDeckSanitizerOptionsAdapter({
+    persistenceApi,
+    resolveMetadataPersistenceOptions,
+    getDeckSanitizerOptions
+  });
+  const playbackState = { activeSlideIds: ['slide-2'] };
+
+  assert.deepEqual(adapter(playbackState), {
+    playbackState,
+    metadata: { metadata: true },
+    sanitizer: { sanitizer: true }
+  });
+  assert.equal(factoryOptions.resolveMetadataPersistenceOptions, resolveMetadataPersistenceOptions);
+  assert.equal(factoryOptions.getDeckSanitizerOptions, getDeckSanitizerOptions);
+});
+
+test('createStudioEditorPersistableDeckSanitizerOptionsAdapter uses direct helper when no builder exists', () => {
+  let delegatedArgs = null;
+  const resolveMetadataPersistenceOptions = () => ({ metadata: true });
+  const getDeckSanitizerOptions = () => ({ sanitizer: true });
+  const adapter = editorPersistenceState.createStudioEditorPersistableDeckSanitizerOptionsAdapter({
+    persistenceApi: {
+      buildStudioPersistableDeckSanitizerOptions(playbackState, options) {
+        delegatedArgs = { playbackState, options };
+        return { direct: true };
+      }
+    },
+    resolveMetadataPersistenceOptions,
+    getDeckSanitizerOptions
+  });
+  const playbackState = { activeSlideIds: ['slide-3'] };
+
+  assert.deepEqual(adapter(playbackState), { direct: true });
+  assert.equal(delegatedArgs.playbackState, playbackState);
+  assert.equal(delegatedArgs.options.resolveMetadataPersistenceOptions, resolveMetadataPersistenceOptions);
+  assert.equal(delegatedArgs.options.getDeckSanitizerOptions, getDeckSanitizerOptions);
+});
+
+test('createStudioEditorPersistableDeckSanitizerOptionsAdapter fails closed without shared persistence', () => {
+  const adapter = editorPersistenceState.createStudioEditorPersistableDeckSanitizerOptionsAdapter();
+
+  assert.deepEqual(adapter({ activeSlideIds: ['slide-1'] }), {});
+});
