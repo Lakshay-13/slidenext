@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -20,6 +21,7 @@ function loadFinalizeLayerOrderMutation(fileContent, context) {
     'function finalizeLayerOrderMutation(versionLabel = \'Auto: Rearranged Layers\', options = {}) {',
     '\n\n    function syncLayerOrderZIndexInput(target) {'
   );
+  context.SlideNextStudioEditorDeckMutation = deckMutation;
   vm.runInContext(helperSource, context);
 }
 

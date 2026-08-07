@@ -127,3 +127,38 @@ test('finalizeStudioEditorInsertedElements selects before persisting inserted co
     }]
   ]);
 });
+
+test('finalizeStudioEditorLayerOrderMutation preserves layer chrome and history ordering', () => {
+  const calls = [];
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const result = deckMutation.finalizeStudioEditorLayerOrderMutation(
+    'Auto: Layer Order',
+    { transaction: { id: 'tx' }, canonicalDeck },
+    {
+      saveHistoryState(...args) {
+        calls.push(['history', ...args]);
+      },
+      triggerAutoSave() {
+        calls.push(['save']);
+      },
+      updateLayersList() {
+        calls.push(['layers']);
+      },
+      updateLayerOrderActionState() {
+        calls.push(['actions']);
+      },
+      triggerAutoVersion(label) {
+        calls.push(['version', label]);
+      }
+    }
+  );
+
+  assert.equal(result, 'Auto: Layer Order');
+  assert.deepEqual(calls, [
+    ['history', false, { id: 'tx' }, canonicalDeck],
+    ['save'],
+    ['layers'],
+    ['actions'],
+    ['version', 'Auto: Layer Order']
+  ]);
+});

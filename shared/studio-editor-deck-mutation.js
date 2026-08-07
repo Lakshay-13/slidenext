@@ -149,9 +149,73 @@
     return true;
   }
 
+  function finalizeStudioEditorLayerOrderMutation(
+    versionLabel = 'Auto: Rearranged Layers',
+    mutationOptions = {},
+    options = {}
+  ) {
+    const resolvedMutationOptions = mutationOptions && typeof mutationOptions === 'object'
+      ? mutationOptions
+      : {};
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const transaction = resolvedMutationOptions.transaction || null;
+    const canonicalDeck = resolvedMutationOptions.canonicalDeck || null;
+    const finalizeMutation = typeof options.finalizeMutation === 'function'
+      ? options.finalizeMutation
+      : null;
+    if (mutationApi && typeof mutationApi.finalizeStudioLayerOrderMutation === 'function') {
+      return mutationApi.finalizeStudioLayerOrderMutation({
+        versionLabel,
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {}),
+        finalizeMutation,
+        saveHistoryState: options.saveHistoryState,
+        triggerAutoSave: options.triggerAutoSave,
+        updateLayersList: options.updateLayersList,
+        updateLayerOrderActionState: options.updateLayerOrderActionState,
+        triggerAutoVersion: options.triggerAutoVersion
+      });
+    }
+    if (finalizeMutation) {
+      const result = finalizeMutation(versionLabel, {
+        refreshThumbnails: false,
+        refreshLayersList: true,
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
+      if (typeof options.updateLayerOrderActionState === 'function') {
+        options.updateLayerOrderActionState();
+      }
+      return result;
+    }
+    if (typeof options.saveHistoryState === 'function') {
+      if (canonicalDeck) {
+        options.saveHistoryState(false, transaction, canonicalDeck);
+      } else {
+        options.saveHistoryState(false, transaction);
+      }
+    }
+    if (typeof options.triggerAutoSave === 'function') {
+      options.triggerAutoSave();
+    }
+    if (typeof options.updateLayersList === 'function') {
+      options.updateLayersList();
+    }
+    if (typeof options.updateLayerOrderActionState === 'function') {
+      options.updateLayerOrderActionState();
+    }
+    if (versionLabel && typeof options.triggerAutoVersion === 'function') {
+      options.triggerAutoVersion(versionLabel);
+    }
+    return versionLabel;
+  }
+
   return {
     finalizeStudioEditorDeckMutation,
     finalizeStudioEditorSelectionToggleMutation,
-    finalizeStudioEditorInsertedElements
+    finalizeStudioEditorInsertedElements,
+    finalizeStudioEditorLayerOrderMutation
   };
 });

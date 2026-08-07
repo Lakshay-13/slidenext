@@ -8,6 +8,7 @@ const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const layerOrder = require('../shared/studio-editor-layer-order.js');
 const layerOrderMutation = require('../shared/studio-editor-layer-order-mutation.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -25,6 +26,7 @@ function loadFinalizeLayerOrderMutation(fileContent, context) {
     'function finalizeLayerOrderMutation(versionLabel = \'Auto: Rearranged Layers\', options = {}) {',
     '\n\n    function syncLayerOrderZIndexInput(target) {'
   );
+  context.SlideNextStudioEditorDeckMutation = deckMutation;
   vm.runInContext(helperSource, context);
 }
 

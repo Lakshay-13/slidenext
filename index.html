@@ -6840,46 +6840,28 @@
     }
 
     function finalizeLayerOrderMutation(versionLabel = 'Auto: Rearranged Layers', options = {}) {
-      const mutationApi = typeof SlideNextStudioEditorMutation !== 'undefined'
-        ? SlideNextStudioEditorMutation
+      const deckMutationApi = typeof SlideNextStudioEditorDeckMutation !== 'undefined'
+        ? SlideNextStudioEditorDeckMutation
         : null;
-      if (mutationApi && typeof mutationApi.finalizeStudioLayerOrderMutation === 'function') {
-        return mutationApi.finalizeStudioLayerOrderMutation({
-          versionLabel,
-          transaction: options.transaction || null,
-          ...(options.canonicalDeck ? { canonicalDeck: options.canonicalDeck } : {}),
-          finalizeMutation: typeof finalizeEditorDeckMutation === 'function'
-            ? finalizeEditorDeckMutation
-            : null,
-          saveHistoryState,
-          triggerAutoSave,
-          updateLayersList,
-          updateLayerOrderActionState,
-          triggerAutoVersion
-        });
+      if (!deckMutationApi
+        || typeof deckMutationApi.finalizeStudioEditorLayerOrderMutation !== 'function') {
+        return false;
       }
-      if (typeof finalizeEditorDeckMutation === 'function') {
-        const result = finalizeEditorDeckMutation(versionLabel, {
-          refreshThumbnails: false,
-          refreshLayersList: true,
-          transaction: options.transaction || null,
-          ...(options.canonicalDeck ? { canonicalDeck: options.canonicalDeck } : {})
-        });
-        updateLayerOrderActionState();
-        return result;
-      }
-      if (options.canonicalDeck) {
-        saveHistoryState(false, options.transaction || null, options.canonicalDeck);
-      } else {
-        saveHistoryState(false, options.transaction || null);
-      }
-      triggerAutoSave();
-      updateLayersList();
-      updateLayerOrderActionState();
-      if (versionLabel) {
-        triggerAutoVersion(versionLabel);
-      }
-      return versionLabel;
+      return deckMutationApi.finalizeStudioEditorLayerOrderMutation(versionLabel, options, {
+        mutationApi: typeof SlideNextStudioEditorMutation !== 'undefined'
+          ? SlideNextStudioEditorMutation
+          : null,
+        finalizeMutation: typeof finalizeEditorDeckMutation === 'function'
+          ? finalizeEditorDeckMutation
+          : null,
+        saveHistoryState: typeof saveHistoryState === 'function' ? saveHistoryState : null,
+        triggerAutoSave: typeof triggerAutoSave === 'function' ? triggerAutoSave : null,
+        updateLayersList: typeof updateLayersList === 'function' ? updateLayersList : null,
+        updateLayerOrderActionState: typeof updateLayerOrderActionState === 'function'
+          ? updateLayerOrderActionState
+          : null,
+        triggerAutoVersion: typeof triggerAutoVersion === 'function' ? triggerAutoVersion : null
+      });
     }
 
     function syncLayerOrderZIndexInput(target) {
