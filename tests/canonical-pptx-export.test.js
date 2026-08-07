@@ -83,6 +83,7 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
           id: 'image-1',
           type: 'image',
           attributes: { 'data-asset-id': 'asset-1' },
+          style: 'object-fit: cover;',
           layout: { x: 600, y: 100, width: 100, height: 50 }
         },
         {
@@ -141,6 +142,13 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
 
   const imageCall = result.pptx.slides[0].calls[3];
   assert.equal(imageCall.options.data, 'data:image/png;base64,AAAA');
+  assert.deepEqual(imageCall.options.sizing, {
+    type: 'cover',
+    x: imageCall.options.x,
+    y: imageCall.options.y,
+    w: imageCall.options.w,
+    h: imageCall.options.h
+  });
   assert.deepEqual(result.pptx.slides[0].calls[4].rows, [
     ['Name', 'Value'],
     ['Alpha', '42']
@@ -461,6 +469,26 @@ test('preflightCanonicalPptxExport reports export fidelity risks', () => {
   }]);
   assert.match(report.diagnostics.warnings.join('\n'), /extends beyond slide bounds/);
   assert.match(report.diagnostics.warnings.join('\n'), /unsupported CSS: transform/);
+});
+
+test('preflightCanonicalPptxExport reports unsupported image fit values', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'image-fit-1',
+        type: 'image',
+        attributes: { src: 'data:image/png;base64,AAAA' },
+        style: 'object-fit: none;',
+        layout: { x: 0, y: 0, width: 100, height: 100 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedStyles, [{
+    id: 'image-fit-1',
+    properties: ['object-fit']
+  }]);
+  assert.match(report.diagnostics.warnings.join('\n'), /unsupported image fit: none/);
 });
 
 test('preflightCanonicalPptxExport reports unsupported non-solid slide backgrounds', () => {

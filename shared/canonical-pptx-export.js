@@ -268,6 +268,18 @@
     return style;
   }
 
+  function resolveNodeImageSizing(node, bounds) {
+    const objectFit = (nodeStyle(node)['object-fit'] || '').trim().toLowerCase();
+    if (objectFit !== 'cover' && objectFit !== 'contain') return null;
+    return {
+      type: objectFit,
+      x: bounds.x,
+      y: bounds.y,
+      w: bounds.w,
+      h: bounds.h
+    };
+  }
+
   function resolveSlideBackgroundColor(background = {}) {
     const directColor = normalizeHexColor(background.color);
     if (directColor) return directColor;
@@ -408,6 +420,7 @@
       }
 
       const type = typeof node.type === 'string' ? node.type.toLowerCase() : '';
+      const imageNode = type === 'image' || node.tagName === 'img';
       if (UNSUPPORTED_NODE_TYPES.has(type)) {
         diagnostics.unsupportedNodes.push({
           id: nodeId,
@@ -426,6 +439,14 @@
             reason: 'table has no exportable rows'
           });
           diagnostics.warnings.push(`Node ${nodeId} is not fully supported: table has no exportable rows`);
+        }
+      }
+
+      if (imageNode) {
+        const objectFit = (nodeStyle(node)['object-fit'] || '').trim().toLowerCase();
+        if (objectFit && !['fill', 'cover', 'contain'].includes(objectFit)) {
+          diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['object-fit'] });
+          diagnostics.warnings.push(`Node ${nodeId} uses unsupported image fit: ${objectFit}`);
         }
       }
 
@@ -547,6 +568,8 @@
         const imageOptions = source.startsWith('data:')
           ? { data: source, ...bounds }
           : { path: source, ...bounds };
+        const sizing = resolveNodeImageSizing(node, bounds);
+        if (sizing) imageOptions.sizing = sizing;
         context.slide.addImage(imageOptions);
       }
     } else if (shapeNode) {
