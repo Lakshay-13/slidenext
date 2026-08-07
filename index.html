@@ -5468,19 +5468,6 @@
       const canonicalStyleApi = typeof SlideNextStudioEditorCanonicalStyle !== 'undefined'
         ? SlideNextStudioEditorCanonicalStyle
         : null;
-      const buildCanonicalStyleBaseline = canonicalStyleApi
-        && typeof canonicalStyleApi.buildStudioCanonicalStyleBaseline === 'function'
-        ? canonicalStyleApi.buildStudioCanonicalStyleBaseline
-        : null;
-      const canonicalDeckBeforeMutation = buildCanonicalStyleBaseline
-        ? buildCanonicalStyleBaseline({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
-            sourceDocument: doc
-          })
-        : null;
       const getStyleElementId = (element) => {
         if (typeof assignEditorElementId === 'function') {
           const assignedId = assignEditorElementId(element);
@@ -5522,10 +5509,13 @@
         if (opacityLabel) opacityLabel.textContent = `${styleMutationResult.displayValue}%`;
       }
       const canonicalDeck = canonicalStyleApi
-        && typeof canonicalStyleApi.buildStudioCanonicalStyleMutation === 'function'
-        ? canonicalStyleApi.buildStudioCanonicalStyleMutation({
+        && typeof canonicalStyleApi.buildStudioCanonicalStyleMutationWithBaseline === 'function'
+        ? canonicalStyleApi.buildStudioCanonicalStyleMutationWithBaseline({
             canonicalDeckApi,
-            canonicalDeckBeforeMutation,
+            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+            sourceDocument: doc,
             selection: styleMutationPlan.selection,
             prop,
             value: val,

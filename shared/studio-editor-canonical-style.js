@@ -113,8 +113,29 @@
     return null;
   }
 
+  function buildStudioCanonicalStyleMutationWithBaseline(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    if (!canonicalDeckApi || !buildCanonicalDeck) return null;
+
+    const canonicalDeckBeforeMutation = buildStudioCanonicalStyleBaseline({
+      canonicalDeckApi,
+      buildCanonicalDeck,
+      sourceDocument: options.sourceDocument
+    });
+    return buildStudioCanonicalStyleMutation({
+      ...options,
+      canonicalDeckBeforeMutation
+    });
+  }
+
   return {
     buildStudioCanonicalStyleBaseline,
-    buildStudioCanonicalStyleMutation
+    buildStudioCanonicalStyleMutation,
+    buildStudioCanonicalStyleMutationWithBaseline
   };
 });

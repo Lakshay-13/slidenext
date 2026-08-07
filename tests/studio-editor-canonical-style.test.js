@@ -87,3 +87,19 @@ test('buildStudioCanonicalStyleMutation returns null without a canonical model o
     prop: 'unsupported'
   }), null);
 });
+
+test('buildStudioCanonicalStyleMutationWithBaseline builds the model from the source document', () => {
+  const sourceDeck = createSourceDeck();
+  const result = canonicalStyle.buildStudioCanonicalStyleMutationWithBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck: () => sourceDeck,
+    sourceDocument: { id: 'editor-doc' },
+    selection: [createElement()],
+    prop: 'color',
+    value: '#ffffff',
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(result.slides[0].nodes[0].style, 'color: #ffffff;');
+  assert.equal(sourceDeck.slides[0].nodes[0].style, 'color: #000000;');
+});
