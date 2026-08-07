@@ -87,6 +87,8 @@
     flex: none !important;
     break-after: page;
     page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
     overflow: hidden !important;
   }
 
