@@ -119,3 +119,23 @@ test('syncStudioActiveSlideChrome uses the canonical fallback when no iframe exi
     'history'
   ]);
 });
+
+test('syncStudioActiveSlideChrome refreshes speaker notes for the active slide', () => {
+  const calls = [];
+
+  const didSync = activeSlideView.syncStudioActiveSlideChrome({ label: 'iframe-doc' }, {
+    getCurrentSlideIndex: () => 0,
+    syncStudioActiveSlideView() {
+      return { didSync: true };
+    },
+    getActiveSlide() {
+      return { id: 'slide-1' };
+    },
+    syncSpeakerNotesControl(activeSlide) {
+      calls.push(activeSlide);
+    }
+  });
+
+  assert.equal(didSync, true);
+  assert.deepEqual(calls, [{ id: 'slide-1' }]);
+});
