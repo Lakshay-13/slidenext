@@ -1447,7 +1447,8 @@
         copySelectedElements,
         pasteClipboardElements,
         duplicateSelectedElements,
-        nudgeSelectedElements
+        nudgeSelectedElements,
+        navigateSlide: typeof navigateEditorSlide === 'function' ? navigateEditorSlide : null
       }));
 
       // Bind window resize for FIT zoom scaling
@@ -2406,7 +2407,8 @@
         copySelectedElements,
         pasteClipboardElements,
         duplicateSelectedElements,
-        nudgeSelectedElements
+        nudgeSelectedElements,
+        navigateSlide: typeof navigateEditorSlide === 'function' ? navigateEditorSlide : null
       });
       const attachFrameInteractionHandlers = typeof SlideNextStudioEditorEvents.attachStudioFrameInteractionHandlers === 'function'
         ? SlideNextStudioEditorEvents.attachStudioFrameInteractionHandlers
@@ -2842,13 +2844,23 @@
     // Toggle active slide viewport display
     function setActiveSlide(index, options = {}) {
       const iframeDoc = getIframeDoc();
-      SlideNextStudioDeckView.setStudioDeckActiveSlide(index, {
+      return SlideNextStudioDeckView.setStudioDeckActiveSlide(index, {
         doc: iframeDoc,
         captureHistory: options.captureHistory,
         preserveSelection: !!options.preserveSelection,
         getSlides,
         syncStudioChromeToActiveSlide
       });
+    }
+
+    function navigateEditorSlide(direction = 0) {
+      const doc = getIframeDoc();
+      const slides = getSlides(doc);
+      if (!slides.length || !Number.isFinite(direction) || direction === 0) return false;
+      const currentIndex = Number.isInteger(currentSlideIndex) ? currentSlideIndex : 0;
+      const nextIndex = Math.max(0, Math.min(slides.length - 1, currentIndex + Math.sign(direction)));
+      if (nextIndex === currentIndex) return false;
+      return setActiveSlide(nextIndex, { captureHistory: true }) !== false;
     }
 
     // Sync presentation's internal dots and counter

@@ -50,6 +50,7 @@ test('setActiveSlide reads the live frame through the shared iframe accessor and
     SlideNextStudioDeckView: {
       setStudioDeckActiveSlide(index, options) {
         capturedCall = { index, options };
+        return true;
       }
     },
     syncStudioChromeToActiveSlide() {}
@@ -67,6 +68,47 @@ test('setActiveSlide reads the live frame through the shared iframe accessor and
   assert.equal(capturedCall.options.preserveSelection, true);
   assert.equal(capturedCall.options.getSlides, context.getSlides);
   assert.equal(capturedCall.options.syncStudioChromeToActiveSlide, context.syncStudioChromeToActiveSlide);
+});
+
+test('navigateEditorSlide clamps navigation to the live slide list and records history for changes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const navigateEditorSlideSource = extractFunctionSource(
+    fileContent,
+    'function navigateEditorSlide(direction = 0) {',
+    '\n\n    // Sync presentation\'s internal dots and counter'
+  );
+  const slides = [{ id: 'slide-1' }, { id: 'slide-2' }, { id: 'slide-3' }];
+  const calls = [];
+  const context = {
+    currentSlideIndex: 1,
+    getIframeDoc() {
+      return { id: 'doc' };
+    },
+    getSlides() {
+      return slides;
+    },
+    setActiveSlide(index, options) {
+      calls.push({ index, options });
+      context.currentSlideIndex = index;
+      return true;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(navigateEditorSlideSource, context);
+
+  assert.equal(context.navigateEditorSlide(-1), true);
+  assert.equal(context.navigateEditorSlide(1), true);
+  assert.equal(context.navigateEditorSlide(1), true);
+  assert.equal(context.navigateEditorSlide(1), false);
+  assert.deepEqual(calls.map(({ index, options }) => ({
+    index,
+    captureHistory: options.captureHistory
+  })), [
+    { index: 0, captureHistory: true },
+    { index: 1, captureHistory: true },
+    { index: 2, captureHistory: true }
+  ]);
 });
 
 test('bindDeckNavigationSync reads the live frame window through the shared iframe accessor', () => {

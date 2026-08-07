@@ -364,6 +364,16 @@
     return didAttach;
   }
 
+  function resolveStudioSlideNavigationDirection(event = {}, hasSelection = false) {
+    if (event.ctrlKey || event.metaKey || event.altKey) return 0;
+    if (event.key === 'PageDown') return 1;
+    if (event.key === 'PageUp') return -1;
+    if (hasSelection) return 0;
+    if (event.key === 'ArrowRight' || event.key === ' ') return 1;
+    if (event.key === 'ArrowLeft') return -1;
+    return 0;
+  }
+
   function createStudioFrameKeydownHandler(options = {}) {
     const getActiveElement = typeof options.getActiveElement === 'function'
       ? options.getActiveElement
@@ -401,6 +411,9 @@
     const nudgeSelectedElements = typeof options.nudgeSelectedElements === 'function'
       ? options.nudgeSelectedElements
       : () => {};
+    const navigateSlide = typeof options.navigateSlide === 'function'
+      ? options.navigateSlide
+      : null;
     const canMutateDeck = typeof options.canMutateDeck === 'function'
       ? options.canMutateDeck
       : () => true;
@@ -499,6 +512,16 @@
         return;
       }
 
+      const navigationDirection = deckShortcutReady
+        ? resolveStudioSlideNavigationDirection(event, hasSelection)
+        : 0;
+      if (navigationDirection && navigateSlide) {
+        event.preventDefault();
+        event.stopPropagation();
+        navigateSlide(navigationDirection);
+        return;
+      }
+
       if (deckShortcutReady && (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'ArrowLeft' || event.key === 'PageDown' || event.key === 'PageUp')) {
         event.preventDefault();
         event.stopPropagation();
@@ -546,6 +569,9 @@
     const nudgeSelectedElements = typeof options.nudgeSelectedElements === 'function'
       ? options.nudgeSelectedElements
       : () => {};
+    const navigateSlide = typeof options.navigateSlide === 'function'
+      ? options.navigateSlide
+      : null;
     const canMutateDeck = typeof options.canMutateDeck === 'function'
       ? options.canMutateDeck
       : () => true;
@@ -630,6 +656,15 @@
       if (nudgeDelta) {
         event.preventDefault();
         nudgeSelectedElements(nudgeDelta.dx, nudgeDelta.dy);
+        return;
+      }
+
+      const navigationDirection = !typingContext && deckShortcutReady
+        ? resolveStudioSlideNavigationDirection(event, hasSelection)
+        : 0;
+      if (navigationDirection && navigateSlide) {
+        event.preventDefault();
+        navigateSlide(navigationDirection);
         return;
       }
     };

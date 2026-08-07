@@ -353,6 +353,51 @@ test('createStudioFrameKeydownHandler still suppresses frame navigation keys whe
   assert.equal(nextSlideEvent.stopped, 1);
 });
 
+test('createStudioFrameKeydownHandler routes unmodified navigation keys without stealing selected-element nudges', () => {
+  const calls = {
+    navigation: [],
+    nudge: []
+  };
+  const handler = events.createStudioFrameKeydownHandler({
+    getActiveElement: () => null,
+    getSelectedElements: () => [],
+    canMutateDeck: () => true,
+    navigateSlide(direction) {
+      calls.navigation.push(direction);
+    },
+    nudgeSelectedElements(dx, dy) {
+      calls.nudge.push([dx, dy]);
+    }
+  });
+
+  for (const [key, direction] of [['PageDown', 1], ['PageUp', -1], ['ArrowRight', 1], ['ArrowLeft', -1], [' ', 1]]) {
+    const event = createKeyboardEvent({ key });
+    handler(event);
+    assert.equal(event.prevented, 1);
+    assert.equal(event.stopped, 1);
+    assert.equal(calls.navigation.at(-1), direction);
+  }
+
+  const selectedHandler = events.createStudioFrameKeydownHandler({
+    getActiveElement: () => null,
+    getSelectedElements: () => [{ id: 'node-1', isConnected: true }],
+    canMutateDeck: () => true,
+    navigateSlide(direction) {
+      calls.navigation.push(direction);
+    },
+    nudgeSelectedElements(dx, dy) {
+      calls.nudge.push([dx, dy]);
+    }
+  });
+  const nudgeEvent = createKeyboardEvent({ key: 'ArrowRight' });
+  selectedHandler(nudgeEvent);
+
+  assert.deepEqual(calls.nudge, [[1, 0]]);
+  assert.equal(calls.navigation.length, 5);
+  assert.equal(nudgeEvent.prevented, 1);
+  assert.equal(nudgeEvent.stopped, 1);
+});
+
 test('createStudioFrameKeydownHandler does not intercept undo and redo while typing', () => {
   const calls = {
     undo: 0,
@@ -711,4 +756,23 @@ test('createStudioGlobalKeydownHandler does not nudge while an inspector select 
   handler(event);
   assert.deepEqual(calls, []);
   assert.equal(event.prevented, 0);
+});
+
+test('createStudioGlobalKeydownHandler routes page navigation when the editor is active', () => {
+  const calls = [];
+  const handler = events.createStudioGlobalKeydownHandler({
+    isEditorActive: () => true,
+    getActiveElement: () => null,
+    getSelectedElements: () => [],
+    canMutateDeck: () => true,
+    navigateSlide(direction) {
+      calls.push(direction);
+    }
+  });
+
+  const event = createKeyboardEvent({ key: 'PageUp' });
+  handler(event);
+
+  assert.deepEqual(calls, [-1]);
+  assert.equal(event.prevented, 1);
 });
