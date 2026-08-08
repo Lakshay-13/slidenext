@@ -188,7 +188,26 @@
     };
   }
 
+  function createStudioEditorHistoryRestoreStateAdapter(options = {}) {
+    const restoreApi = options.restoreApi && typeof options.restoreApi === 'object'
+      ? options.restoreApi
+      : null;
+    const createHistoryRestoreHandler = typeof options.createHistoryRestoreHandler === 'function'
+      ? options.createHistoryRestoreHandler
+      : restoreApi && typeof restoreApi.createStudioEditorHistoryRestoreHandler === 'function'
+        ? restoreApi.createStudioEditorHistoryRestoreHandler
+        : null;
+    if (!createHistoryRestoreHandler) return null;
+
+    const handlerOptions = { ...options };
+    delete handlerOptions.restoreApi;
+    delete handlerOptions.createHistoryRestoreHandler;
+    const restoreHandler = createHistoryRestoreHandler(handlerOptions);
+    return typeof restoreHandler === 'function' ? restoreHandler : null;
+  }
+
   return {
-    createStudioEditorHistoryRestoreHandler
+    createStudioEditorHistoryRestoreHandler,
+    createStudioEditorHistoryRestoreStateAdapter
   };
 });

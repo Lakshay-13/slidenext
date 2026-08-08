@@ -7854,13 +7854,14 @@
 
     function restoreFrameFromHistoryEntry(entry) {
       if (typeof restoreFrameFromHistoryEntry.restoreHandler !== 'function') {
-        const createStudioEditorHistoryRestoreHandler = typeof SlideNextStudioEditorHistoryRestore !== 'undefined'
+        const createStudioEditorHistoryRestoreStateAdapter = typeof SlideNextStudioEditorHistoryRestore !== 'undefined'
           && SlideNextStudioEditorHistoryRestore
-          && typeof SlideNextStudioEditorHistoryRestore.createStudioEditorHistoryRestoreHandler === 'function'
-          ? SlideNextStudioEditorHistoryRestore.createStudioEditorHistoryRestoreHandler
+          && typeof SlideNextStudioEditorHistoryRestore.createStudioEditorHistoryRestoreStateAdapter === 'function'
+          ? SlideNextStudioEditorHistoryRestore.createStudioEditorHistoryRestoreStateAdapter
           : null;
-        if (!createStudioEditorHistoryRestoreHandler) return false;
-        restoreFrameFromHistoryEntry.restoreHandler = createStudioEditorHistoryRestoreHandler({
+        if (!createStudioEditorHistoryRestoreStateAdapter) return false;
+        restoreFrameFromHistoryEntry.restoreHandler = createStudioEditorHistoryRestoreStateAdapter({
+          restoreApi: SlideNextStudioEditorHistoryRestore,
           historyApi: SlideNextStudioHistory,
           transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
             ? SlideNextStudioEditorTransaction
