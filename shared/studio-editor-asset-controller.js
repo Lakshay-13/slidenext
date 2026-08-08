@@ -14,6 +14,9 @@
     const getCanonicalDeck = typeof options.getCanonicalDeck === 'function'
       ? options.getCanonicalDeck
       : () => null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const getActiveSlideId = typeof options.getActiveSlideId === 'function'
       ? options.getActiveSlideId
       : () => '';
@@ -45,6 +48,23 @@
       ? options.onAssetsChanged
       : null;
 
+    function resolveCanonicalDeck() {
+      if (getCanonicalDeckBaseline) {
+        let liveCanonicalDeck = null;
+        try {
+          liveCanonicalDeck = getCanonicalDeckBaseline();
+        } catch (err) {
+          liveCanonicalDeck = null;
+        }
+        if (liveCanonicalDeck
+          && (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+            || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
+          return liveCanonicalDeck;
+        }
+      }
+      return getCanonicalDeck();
+    }
+
     function commitDeck(nextCanonicalDeck, versionLabel = '') {
       if (finalizeMutation) {
         finalizeMutation(versionLabel, {
@@ -64,7 +84,7 @@
       if (!canonicalDeckApi || typeof canonicalDeckApi.appendCanonicalAsset !== 'function') {
         return null;
       }
-      const nextCanonicalDeck = canonicalDeckApi.appendCanonicalAsset(getCanonicalDeck(), assetLike);
+      const nextCanonicalDeck = canonicalDeckApi.appendCanonicalAsset(resolveCanonicalDeck(), assetLike);
       if (!nextCanonicalDeck) return null;
       const asset = nextCanonicalDeck.assets[nextCanonicalDeck.assets.length - 1] || null;
       return commitDeck(
@@ -77,7 +97,7 @@
       if (!canonicalDeckApi || typeof canonicalDeckApi.removeCanonicalAsset !== 'function') {
         return false;
       }
-      const nextCanonicalDeck = canonicalDeckApi.removeCanonicalAsset(getCanonicalDeck(), assetId);
+      const nextCanonicalDeck = canonicalDeckApi.removeCanonicalAsset(resolveCanonicalDeck(), assetId);
       if (!nextCanonicalDeck) return false;
       commitDeck(nextCanonicalDeck, `Auto: Removed Asset "${assetId}"`);
       return true;
@@ -91,7 +111,7 @@
       const selectedImage = getSelectedImage();
       if (!selectedImage || isElementLocked(selectedImage)) return false;
       const nextCanonicalDeck = canonicalDeckApi.updateCanonicalNodeAsset(
-        getCanonicalDeck(),
+        resolveCanonicalDeck(),
         getActiveSlideId(),
         getElementId(selectedImage),
         assetId

@@ -28,6 +28,30 @@ test('addAsset commits a canonical asset and notifies the library view', () => {
   assert.deepEqual(versionLabels, ['Auto: Added Asset "Hero Image"']);
 });
 
+test('asset mutations prefer a valid live canonical baseline', () => {
+  const liveDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let didBuildFromDocument = false;
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => liveDeck,
+    getCanonicalDeck: () => {
+      didBuildFromDocument = true;
+      return canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+    },
+    saveHistoryState: () => {}
+  });
+
+  const nextDeck = controller.addAsset({
+    id: 'live-image',
+    name: 'Live Image',
+    type: 'image',
+    src: '/images/live.png'
+  });
+
+  assert.equal(nextDeck.assets[0].id, 'live-image');
+  assert.equal(didBuildFromDocument, false);
+});
+
 test('removeAsset commits unused asset removal and rejects referenced assets', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     assets: [
