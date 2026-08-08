@@ -2529,6 +2529,39 @@ test('resolveEditorReusablePersistedHtml delegates through the editor persistenc
   assert.equal(delegatedArgs.isPersistedCanonicalDeck, context.SlideNextStudioEditorPersistence.isStudioPersistedCanonicalDeck);
 });
 
+test('resolveEditorReusablePersistedHtml creates the shared persistence-state adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorReusablePersistedHtmlSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+  const persistedDeckState = { cleanHtml: '<html>persisted</html>' };
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorReusablePersistedHtmlAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(options.persistenceApi, context.SlideNextStudioEditorPersistence);
+        return (nextPersistedDeckState, nextOptions) => {
+          calls.push([nextPersistedDeckState, nextOptions]);
+          return nextPersistedDeckState.cleanHtml;
+        };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorReusablePersistedHtmlSource, context);
+
+  assert.equal(context.resolveEditorReusablePersistedHtml(persistedDeckState, { id: 1 }), '<html>persisted</html>');
+  assert.equal(context.resolveEditorReusablePersistedHtml(persistedDeckState, { id: 2 }), '<html>persisted</html>');
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls.map(([, options]) => options.id), [1, 2]);
+});
+
 test('resolveEditorReusablePersistedHtml fails closed when the shared helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorReusablePersistedHtmlSource = extractFunctionSource(

@@ -6940,12 +6940,16 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorReusablePersistedHtmlAdapter
         : null;
       if (createStudioEditorReusablePersistedHtmlAdapter) {
-        const adapter = createStudioEditorReusablePersistedHtmlAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null
-        });
-        return typeof adapter === 'function' ? adapter(persistedDeckState, options) : '';
+        if (typeof resolveEditorReusablePersistedHtml.adapter !== 'function') {
+          resolveEditorReusablePersistedHtml.adapter = createStudioEditorReusablePersistedHtmlAdapter({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null
+          });
+        }
+        return typeof resolveEditorReusablePersistedHtml.adapter === 'function'
+          ? resolveEditorReusablePersistedHtml.adapter(persistedDeckState, options)
+          : '';
       }
       const createStudioReusablePersistedHtmlResolver = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'
