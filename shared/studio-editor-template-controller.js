@@ -11,12 +11,41 @@
     const canonicalDeckApi = options.canonicalDeckApi
       || (root && root.SlideNextCanonicalDeck)
       || null;
+    const renderApi = options.renderApi
+      || (root && root.SlideNextDeckRender)
+      || null;
     const getCanonicalDeck = typeof options.getCanonicalDeck === 'function'
       ? options.getCanonicalDeck
       : () => null;
     const getActiveSlideId = typeof options.getActiveSlideId === 'function'
       ? options.getActiveSlideId
       : () => '';
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getSlideContainer = typeof options.getSlideContainer === 'function'
+      ? options.getSlideContainer
+      : (documentRef) => documentRef && typeof documentRef.getElementById === 'function'
+        ? documentRef.getElementById('slidesContainer')
+        : null;
+    const getSlides = typeof options.getSlides === 'function'
+      ? options.getSlides
+      : () => [];
+    const prepareSlide = typeof options.prepareSlide === 'function'
+      ? options.prepareSlide
+      : null;
+    const applyInsertion = typeof options.applyInsertion === 'function'
+      ? options.applyInsertion
+      : null;
+    const generateThumbnails = typeof options.generateThumbnails === 'function'
+      ? options.generateThumbnails
+      : null;
+    const setActiveSlide = typeof options.setActiveSlide === 'function'
+      ? options.setActiveSlide
+      : null;
+    const finalizeMutation = typeof options.finalizeMutation === 'function'
+      ? options.finalizeMutation
+      : null;
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : null;
@@ -29,6 +58,25 @@
     const onTemplatesChanged = typeof options.onTemplatesChanged === 'function'
       ? options.onTemplatesChanged
       : null;
+
+    function renderCanonicalSlideElement(documentRef, slide, index) {
+      if (!documentRef
+        || typeof documentRef.createElement !== 'function'
+        || !renderApi
+        || typeof renderApi.renderCanonicalSlide !== 'function') {
+        return null;
+      }
+      const html = renderApi.renderCanonicalSlide(slide, index, {
+        preferSlideSourceHtml: true
+      });
+      if (typeof html !== 'string' || !html.trim()) return null;
+      const template = documentRef.createElement('template');
+      if (!template) return null;
+      template.innerHTML = html;
+      return template.content && template.content.firstElementChild
+        ? template.content.firstElementChild
+        : null;
+    }
 
     function saveActiveSlide(templateLike = {}) {
       if (!canonicalDeckApi
@@ -53,8 +101,61 @@
       return nextCanonicalDeck;
     }
 
+    function insertTemplate(templateId) {
+      if (!canonicalDeckApi
+        || typeof canonicalDeckApi.insertCanonicalTemplateSlide !== 'function'
+        || !applyInsertion) {
+        return false;
+      }
+
+      const canonicalDeck = getCanonicalDeck();
+      const activeSlideId = getActiveSlideId();
+      const activeSlideIndex = canonicalDeck && Array.isArray(canonicalDeck.slides)
+        ? canonicalDeck.slides.findIndex((slide) => slide && slide.id === activeSlideId)
+        : -1;
+      if (!canonicalDeck || activeSlideIndex < 0) return false;
+
+      const insertionIndex = activeSlideIndex + 1;
+      const nextCanonicalDeck = canonicalDeckApi.insertCanonicalTemplateSlide(
+        canonicalDeck,
+        templateId,
+        insertionIndex
+      );
+      const nextSlide = nextCanonicalDeck && nextCanonicalDeck.slides[insertionIndex];
+      const documentRef = getDocument();
+      const container = getSlideContainer(documentRef);
+      const slides = getSlides(documentRef);
+      if (!nextSlide || !documentRef || !container || !Array.isArray(slides)) return false;
+
+      const slideElement = renderCanonicalSlideElement(documentRef, nextSlide, insertionIndex);
+      if (!slideElement) return false;
+      if (prepareSlide) prepareSlide(slideElement);
+
+      if (saveHistoryState) saveHistoryState(false);
+      const mutation = applyInsertion(container, slideElement, {
+        beforeNode: slides[insertionIndex] || null
+      });
+      if (!mutation || !mutation.didApply) return false;
+
+      if (generateThumbnails) generateThumbnails();
+      if (setActiveSlide) setActiveSlide(insertionIndex);
+      const template = Array.isArray(canonicalDeck.templates)
+        ? canonicalDeck.templates.find((candidate) => candidate && candidate.id === templateId)
+        : null;
+      const versionLabel = `Auto: Inserted Template${template && template.name ? ` "${template.name}"` : ''}`;
+      if (finalizeMutation) {
+        finalizeMutation(versionLabel, mutation.transaction, nextCanonicalDeck);
+      } else {
+        if (saveHistoryState) saveHistoryState(false, mutation.transaction, nextCanonicalDeck);
+        if (triggerAutoSave) triggerAutoSave();
+        if (triggerAutoVersion) triggerAutoVersion(versionLabel);
+      }
+      return true;
+    }
+
     return {
-      saveActiveSlide
+      saveActiveSlide,
+      insertTemplate
     };
   }
 

@@ -51,3 +51,80 @@ test('template controller fails closed when the active slide or dependencies are
   assert.equal(controller.saveActiveSlide({ name: 'Empty' }), null);
   assert.equal(templateController.createStudioEditorTemplateController().saveActiveSlide(), null);
 });
+
+test('template controller inserts a rendered template after the active slide through a transaction', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    templates: [{
+      id: 'hero-template',
+      name: 'Hero Template',
+      slide: { nodes: [{ id: 'title', tagName: 'h1', text: 'Hero' }] }
+    }],
+    slides: [{ id: 'slide-1', title: 'Current' }]
+  });
+  const currentSlide = { id: 'current-slide' };
+  const container = {
+    children: [],
+    appendChild(element) {
+      this.children.push(element);
+    },
+    insertBefore(element, beforeNode) {
+      const index = this.children.indexOf(beforeNode);
+      this.children.splice(index < 0 ? this.children.length : index, 0, element);
+    }
+  };
+  const documentRef = {
+    createElement(tagName) {
+      if (tagName !== 'template') return null;
+      const rootElement = { dataset: {}, children: [] };
+      return {
+        content: { firstElementChild: rootElement },
+        set innerHTML(value) {
+          this.markup = value;
+        }
+      };
+    }
+  };
+  const calls = [];
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalSlide(slide) {
+        return `<section data-slide-id="${slide.id}"></section>`;
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => documentRef,
+    getSlideContainer: () => container,
+    getSlides: () => [currentSlide],
+    prepareSlide(element) {
+      element.prepared = true;
+    },
+    applyInsertion(target, element, options) {
+      target.insertBefore(element, options.beforeNode || null);
+      return { didApply: true, transaction: { kind: 'slide-insert' } };
+    },
+    generateThumbnails() {
+      calls.push(['thumbnails']);
+    },
+    setActiveSlide(index) {
+      calls.push(['active', index]);
+    },
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    },
+    finalizeMutation(...args) {
+      calls.push(['finalize', ...args]);
+    }
+  });
+
+  assert.equal(controller.insertTemplate('hero-template'), true);
+  assert.equal(container.children.length, 1);
+  assert.equal(container.children[0].prepared, true);
+  assert.equal(calls[0][0], 'history');
+  assert.deepEqual(calls.slice(1, 3), [['thumbnails'], ['active', 1]]);
+  assert.equal(calls[3][0], 'finalize');
+  assert.equal(calls[3][1], 'Auto: Inserted Template "Hero Template"');
+  assert.equal(calls[3][2].kind, 'slide-insert');
+  assert.equal(calls[3][3].slides.length, 2);
+});
