@@ -5469,57 +5469,51 @@
     }
 
     function updateStyleActionState(doc = getIframeDoc()) {
-      const syncStudioStyleToolbarState = (
-        SlideNextStudioEditorStyle
-        && typeof SlideNextStudioEditorStyle.syncStudioStyleToolbarState === 'function'
-      )
-        ? SlideNextStudioEditorStyle.syncStudioStyleToolbarState
+      const styleApi = typeof SlideNextStudioEditorStyle !== 'undefined'
+        ? SlideNextStudioEditorStyle
         : null;
-      if (syncStudioStyleToolbarState) {
-        return syncStudioStyleToolbarState({
-          documentRef: document,
-          elements: selectedElements,
-          isLocked: isElementLocked,
-          canMutateDeck: () => !!getActiveSlide(doc)
-        });
+      if (!styleApi) {
+        return false;
       }
-      const getStyleToolbarControlConfigs = (
-        SlideNextStudioEditorStyle
-        && typeof SlideNextStudioEditorStyle.getStudioStyleToolbarControlConfigs === 'function'
-      )
-        ? SlideNextStudioEditorStyle.getStudioStyleToolbarControlConfigs
-        : null;
-      const controlConfigs = getStyleToolbarControlConfigs
-        ? getStyleToolbarControlConfigs()
+      const toolbarOptions = {
+        documentRef: document,
+        elements: selectedElements,
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(doc)
+      };
+      if (typeof styleApi.syncStudioStyleToolbarState === 'function') {
+        return styleApi.syncStudioStyleToolbarState(toolbarOptions);
+      }
+      if (typeof styleApi.renderStudioStyleToolbarState !== 'function') {
+        return false;
+      }
+      const controlConfigs = typeof styleApi.getStudioStyleToolbarControlConfigs === 'function'
+        ? styleApi.getStudioStyleToolbarControlConfigs()
         : [];
-      const buildStudioStyleToolbarState = (
-        SlideNextStudioEditorStyle
-        && typeof SlideNextStudioEditorStyle.buildStudioStyleToolbarState === 'function'
-      )
-        ? SlideNextStudioEditorStyle.buildStudioStyleToolbarState
-        : null;
-      if (buildStudioStyleToolbarState) {
-        const toolbarState = buildStudioStyleToolbarState(selectedElements, controlConfigs, {
+      if (typeof styleApi.buildStudioStyleToolbarState === 'function') {
+        const toolbarState = styleApi.buildStudioStyleToolbarState(selectedElements, controlConfigs, {
           isLocked: isElementLocked,
           canMutateDeck: () => !!getActiveSlide(doc)
         });
-        return SlideNextStudioEditorStyle.renderStudioStyleToolbarState({
+        return styleApi.renderStudioStyleToolbarState({
           documentRef: document,
           toolbarState
         });
       }
-
+      if (typeof styleApi.buildStudioStyleMutationPlan !== 'function') {
+        return false;
+      }
       const toolbarState = { controlStates: {} };
       controlConfigs.forEach(([id, prop, value]) => {
         const control = document.getElementById(id);
         if (!control) return;
-        const styleMutationPlan = SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(selectedElements, prop, value, {
+        const styleMutationPlan = styleApi.buildStudioStyleMutationPlan(selectedElements, prop, value, {
           isLocked: isElementLocked,
           canMutateDeck: () => !!getActiveSlide(doc)
         });
         toolbarState.controlStates[id] = styleMutationPlan.canApply;
       });
-      return SlideNextStudioEditorStyle.renderStudioStyleToolbarState({
+      return styleApi.renderStudioStyleToolbarState({
         documentRef: document,
         toolbarState
       });
