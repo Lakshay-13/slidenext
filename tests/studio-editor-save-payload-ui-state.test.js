@@ -846,6 +846,49 @@ test('isCurrentDeckStatePersisted delegates through the editor persistence-state
   assert.equal(factoryOptions.readPersistedDeckState, context.getCurrentEditorPersistedDeckState);
 });
 
+test('isCurrentDeckStatePersisted creates the shared persistence-state adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const isCurrentDeckStatePersistedSource = extractFunctionSource(
+    fileContent,
+    'function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {',
+    '\n\n    function createCurrentStudioPersistenceHandlerOptions(options = {}) {'
+  );
+  let persistedDeckState = { cleanHtml: '<html>one</html>' };
+  let adapterCreateCalls = 0;
+  let checkerCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorPersistedSaveRequestCheckerAdapter(options) {
+        adapterCreateCalls += 1;
+        return (saveRequestBody, cleanHtml) => {
+          checkerCalls += 1;
+          return cleanHtml === options.readPersistedDeckState().cleanHtml
+            && saveRequestBody.id === checkerCalls;
+        };
+      }
+    },
+    getCurrentEditorPersistedDeckState() {
+      return persistedDeckState;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(isCurrentDeckStatePersistedSource, context);
+
+  assert.equal(
+    context.isCurrentDeckStatePersisted({ id: 1, htmlContent: '<html>one</html>' }),
+    true
+  );
+  persistedDeckState = { cleanHtml: '<html>two</html>' };
+  assert.equal(
+    context.isCurrentDeckStatePersisted({ id: 2, htmlContent: '<html>two</html>' }),
+    true
+  );
+  assert.equal(adapterCreateCalls, 1);
+  assert.equal(checkerCalls, 2);
+});
+
 test('createCurrentStudioPersistenceHandlerOptions reuses the shared handler-options builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createCurrentStudioPersistenceHandlerOptionsSource = extractFunctionSource(
