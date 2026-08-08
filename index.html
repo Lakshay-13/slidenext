@@ -1268,6 +1268,7 @@
   <script src="/shared/studio-editor-canonical-style.js"></script>
   <script src="/shared/studio-editor-canonical-state.js"></script>
   <script src="/shared/studio-editor-canonical-deck.js"></script>
+  <script src="/shared/studio-editor-canonical-mutation.js"></script>
   <script src="/shared/presentation-metadata.js"></script>
   <script src="/shared/image-position.js"></script>
   <script src="/shared/deck-import.js"></script>
@@ -2235,6 +2236,13 @@
             : null,
           getSlideId: getEditorSlideId,
           getNodeId: assignEditorElementId
+        })
+      : null;
+    const studioEditorMutationCanonicalDeckBuilder = typeof SlideNextStudioEditorCanonicalMutation !== 'undefined'
+      && SlideNextStudioEditorCanonicalMutation
+      && typeof SlideNextStudioEditorCanonicalMutation.createStudioEditorMutationCanonicalDeckBuilder === 'function'
+      ? SlideNextStudioEditorCanonicalMutation.createStudioEditorMutationCanonicalDeckBuilder({
+          buildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions)
         })
       : null;
     const studioEditorDeckMutationFinalizer = typeof SlideNextStudioEditorDeckMutation !== 'undefined'
@@ -4182,9 +4190,12 @@
     }
 
     function buildEditorMutationCanonicalDeck(sourceDoc) {
-      return buildEditorCanonicalDeck(sourceDoc, {
-        preferLiveCanonicalDeck: false
-      });
+      if (typeof studioEditorMutationCanonicalDeckBuilder !== 'function') return null;
+      try {
+        return studioEditorMutationCanonicalDeckBuilder(sourceDoc);
+      } catch (err) {
+        return null;
+      }
     }
 
     function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {
