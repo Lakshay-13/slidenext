@@ -70,6 +70,37 @@ function hasDisabledAttribute(attrs) {
   return /\sdisabled(?=\s|=|$)/.test(attrs);
 }
 
+test('resolveLayerRowElement delegates stable row lookup to the shared controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function resolveLayerRowElement(row) {',
+    '\n\n    function selectLayerElementByRef'
+  );
+  const row = { dataset: { editorElementId: 'node-1' } };
+  const target = { id: 'node-1' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorLayerController: {
+      resolveStudioLayerRowElement(options) {
+        calls.push(options);
+        return target;
+      }
+    },
+    getElementByEditorId() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.resolveLayerRowElement(row), target);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].row, row);
+  assert.equal(typeof calls[0].getElementByEditorId, 'function');
+});
+
 test('updateLayersList delegates layer synchronization to the shared layer controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateLayersListSource = extractFunctionSource(

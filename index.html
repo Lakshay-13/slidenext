@@ -10337,15 +10337,13 @@
       const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
         ? SlideNextStudioEditorLayerController
         : null;
-      if (layerController && typeof layerController.resolveStudioLayerRowElement === 'function') {
-        return layerController.resolveStudioLayerRowElement({
-          row,
-          getElementByEditorId
-        });
+      if (!layerController || typeof layerController.resolveStudioLayerRowElement !== 'function') {
+        return null;
       }
-      if (!row) return null;
-      const editorId = row.dataset.editorElementId;
-      return getElementByEditorId(editorId);
+      return layerController.resolveStudioLayerRowElement({
+        row,
+        getElementByEditorId
+      });
     }
 
     function selectLayerElementByRef(event) {
