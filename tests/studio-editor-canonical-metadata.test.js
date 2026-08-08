@@ -42,6 +42,21 @@ test('buildStudioCanonicalMetadataBaseline prefers a valid live canonical deck',
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalMetadataBaseline rejects invalid compatibility baselines', () => {
+  let rebuildCalls = 0;
+  const result = metadata.buildStudioCanonicalMetadataBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => {
+      rebuildCalls += 1;
+      return { invalid: true };
+    }
+  });
+
+  assert.equal(result, null);
+  assert.equal(rebuildCalls, 1);
+});
+
 test('buildStudioCanonicalMetadataBaseline falls back when the live canonical deck is invalid', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   let didBuildFromDocument = false;
