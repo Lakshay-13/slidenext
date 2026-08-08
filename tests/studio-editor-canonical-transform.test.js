@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalTransform = require('../shared/studio-editor-canonical-transform.js');
 
 test('buildStudioCanonicalTransformBaseline builds from the source document', () => {
@@ -10,6 +11,7 @@ test('buildStudioCanonicalTransformBaseline builds from the source document', ()
   let builtFromDocument = null;
   const result = canonicalTransform.buildStudioCanonicalTransformBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeckBaseline(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
@@ -29,6 +31,7 @@ test('buildStudioCanonicalTransformBaseline prefers a valid live canonical deck'
   let didBuildFromDocument = false;
   const result = canonicalTransform.buildStudioCanonicalTransformBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline(documentRef) {
       assert.deepEqual(documentRef, { id: 'editor-doc' });
       return liveDeck;
@@ -49,6 +52,7 @@ test('buildStudioCanonicalTransformBaseline falls back when the live canonical d
   let didBuildFromDocument = false;
   const result = canonicalTransform.buildStudioCanonicalTransformBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return { invalid: true };
     },
@@ -113,6 +117,7 @@ test('createStudioCanonicalTransformMutationBuilders reuses an explicit baseline
   let buildCount = 0;
   const builders = canonicalTransform.createStudioCanonicalTransformMutationBuilders({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck() {
       buildCount += 1;
       return explicitBaseline;
