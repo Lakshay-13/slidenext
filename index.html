@@ -5392,7 +5392,7 @@
       const metrics = slideMetrics || getSlideMetrics(slide);
       return SlideNextStudioEditorSelectionBounds.buildStudioSelectionBounds(elements, {
         minSizePx: MIN_ELEMENT_SIZE_PX,
-        isHidden: isElementHidden,
+        isHidden: getEditorCanonicalVisibilityReader('hidden'),
         getElementBounds: (element) => getRectOnSlide(element.getBoundingClientRect(), metrics)
       });
     }
@@ -5403,13 +5403,14 @@
         || typeof SlideNextStudioEditorOverlay.syncStudioSelectionOverlayForActiveSlide !== 'function') {
         return false;
       }
+      const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc);
       return SlideNextStudioEditorOverlay.syncStudioSelectionOverlayForActiveSlide({
         documentRef: doc,
         getActiveSlide,
         ...getEditorOverlayOptions(),
         selectedElements,
         buildSelectionOverlayState: SlideNextStudioEditorOverlayState.buildStudioSelectionOverlayState,
-        isHidden: isElementHidden,
+        isHidden: readHiddenState,
         getSelectionBounds,
         getTransformSelectionState,
         hideGuides,
@@ -5669,6 +5670,32 @@
 
     function isElementHidden(el) {
       return SlideNextStudioElementState.isStudioElementHidden(el);
+    }
+
+    function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {
+      const fallback = typeof fallbackReader === 'function' ? fallbackReader : () => false;
+      let canonicalDeck = null;
+      if (typeof buildEditorCanonicalDeck === 'function') {
+        try {
+          canonicalDeck = buildEditorCanonicalDeck(doc);
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      const canonicalStateApi = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalState
+        : null;
+      const createVisibilityReader = canonicalStateApi
+        && typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReader === 'function'
+        ? canonicalStateApi.createStudioEditorCanonicalVisibilityReader
+        : null;
+      return canonicalDeck && createVisibilityReader
+        ? createVisibilityReader(canonicalDeck, {
+            property,
+            resolveCanonicalNode: resolveEditorCanonicalNodeForElement,
+            fallbackReader: fallback
+          })
+        : fallback;
     }
 
     function setElementHiddenState(el, hidden) {

@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js');
 const canonicalBridge = require('../shared/studio-editor-canonical-bridge.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
+const selectionBounds = require('../shared/studio-editor-selection-bounds.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -86,6 +87,110 @@ test('canonical visibility reader prefers model state and falls back safely', ()
     }
   });
   assert.equal(throwingReader(element), true);
+});
+
+test('editor selection bounds and overlays use canonical hidden state before DOM fallback', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const visibilityReaderSource = extractFunctionSource(
+    fileContent,
+    'function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {',
+    '\n\n    function setElementHiddenState'
+  );
+  const selectionBoundsSource = extractFunctionSource(
+    fileContent,
+    'function getSelectionBounds(elements = selectedElements, slideMetrics = null) {',
+    '\n\n    function syncSelectionOverlay'
+  );
+  const overlaySource = extractFunctionSource(
+    fileContent,
+    '    function syncSelectionOverlay() {',
+    '\n\n    function syncInspectorForSelection'
+  );
+  const documentRef = { id: 'active-frame' };
+  const slide = { id: 'slide-1' };
+  const hiddenElement = {
+    dataset: { editorId: 'hidden-node' },
+    domHidden: false,
+    getBoundingClientRect() {
+      return { left: 100, top: 100, right: 300, bottom: 300 };
+    }
+  };
+  const visibleElement = {
+    dataset: { editorId: 'visible-node' },
+    domHidden: false,
+    getBoundingClientRect() {
+      return { left: 10, top: 20, right: 110, bottom: 80 };
+    }
+  };
+  const canonicalDeck = createDeck('live');
+  canonicalDeck.slides = [{
+    id: 'slide-1',
+    nodes: [
+      { id: 'hidden-node', visibility: { hidden: true } },
+      { id: 'visible-node', visibility: { hidden: false } }
+    ]
+  }];
+  const context = {
+    SlideNextStudioEditorCanonicalState: canonicalState,
+    SlideNextStudioEditorSelectionBounds: selectionBounds,
+    SlideNextStudioEditorOverlay: {
+      syncStudioSelectionOverlayForActiveSlide(options) {
+        return options.isHidden(hiddenElement);
+      }
+    },
+    SlideNextStudioEditorOverlayState: {
+      buildStudioSelectionOverlayState() {}
+    },
+    buildEditorCanonicalDeck() {
+      return canonicalDeck;
+    },
+    getIframeDoc() {
+      return documentRef;
+    },
+    getActiveSlide() {
+      return slide;
+    },
+    getSlideMetrics() {
+      return {};
+    },
+    getRectOnSlide(rect) {
+      return {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom
+      };
+    },
+    resolveEditorCanonicalNodeForElement(element, deck) {
+      return deck.slides[0].nodes.find((node) => node.id === element.dataset.editorId) || null;
+    },
+    isElementHidden(element) {
+      return element.domHidden;
+    },
+    MIN_ELEMENT_SIZE_PX: 24,
+    getEditorOverlayOptions() {
+      return {};
+    },
+    selectedElements: [hiddenElement, visibleElement],
+    getTransformSelectionState() {
+      return { canTransform: false };
+    },
+    hideGuides() {},
+    hideDragHud() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${visibilityReaderSource}\n${selectionBoundsSource}\n${overlaySource}`, context);
+
+  assert.deepEqual(context.getSelectionBounds([hiddenElement, visibleElement]), {
+    left: 10,
+    top: 20,
+    right: 110,
+    bottom: 80,
+    width: 100,
+    height: 60
+  });
+  assert.equal(context.syncSelectionOverlay(), true);
 });
 
 test('buildEditorCanonicalDeck prefers the active live model unless DOM rebuild is requested', () => {
