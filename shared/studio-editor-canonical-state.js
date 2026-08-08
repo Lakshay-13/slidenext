@@ -88,7 +88,7 @@
       ? options.isCanonicalDeck
       : null;
 
-    function isValidLiveCanonicalDeck(value) {
+    function isValidCanonicalDeck(value) {
       if (!value) return false;
       if (!isCanonicalDeck) return true;
       try {
@@ -102,14 +102,15 @@
       if (getCanonicalDeckBaseline) {
         try {
           const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
-          if (isValidLiveCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
+          if (isValidCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
         } catch (error) {
           // Fall through to the document rebuild path.
         }
       }
       if (buildCanonicalDeckBaseline) {
         try {
-          return buildCanonicalDeckBaseline(sourceDocument);
+          const rebuiltCanonicalDeck = buildCanonicalDeckBaseline(sourceDocument);
+          return isValidCanonicalDeck(rebuiltCanonicalDeck) ? rebuiltCanonicalDeck : null;
         } catch (error) {
           return null;
         }

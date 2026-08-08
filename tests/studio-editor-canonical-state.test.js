@@ -57,6 +57,19 @@ test('canonical deck baseline reader validates live models before falling back',
   assert.equal(readBaseline({ id: 'iframe-doc' }), rebuiltDeck);
   assert.equal(didRebuild, true);
 });
+
+test('canonical deck baseline reader rejects invalid rebuilt models', () => {
+  const readBaseline = canonicalState.createStudioEditorCanonicalDeckBaselineReader({
+    buildCanonicalDeckBaseline() {
+      return { invalid: true };
+    },
+    isCanonicalDeck(value) {
+      return !!value && Array.isArray(value.slides);
+    }
+  });
+
+  assert.equal(readBaseline({ id: 'iframe-doc' }), null);
+});
 const selectionBounds = require('../shared/studio-editor-selection-bounds.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
