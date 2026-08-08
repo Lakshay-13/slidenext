@@ -20,18 +20,12 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 }
 
 function loadTransformSessionFinalizer(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createEditorTransformSessionFinalizer(transformApi, options = {}) {',
-    '\n\n    // Element dragging + resize on an open canvas'
-  );
   context.SlideNextStudioEditorTransform = {
     createStudioTransformSessionFinalizer: transformState.createStudioTransformSessionFinalizer,
     ...(context.SlideNextStudioEditorTransform || {})
   };
   context.SlideNextStudioEditorCanonicalTransform = canonicalTransform;
   context.SlideNextStudioEditorInteractionOptions = interactionOptions;
-  vm.runInContext(helperSource, context);
 }
 
 function installTransformController(context) {
