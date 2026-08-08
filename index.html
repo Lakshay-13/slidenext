@@ -9669,60 +9669,53 @@
       const saveButtonState = typeof currentStudioSaveButtonState === 'string'
         ? currentStudioSaveButtonState
         : 'idle';
-      const resolveStudioDeckReadyActionState = (
-        typeof SlideNextStudioDeckReady !== 'undefined'
-        && SlideNextStudioDeckReady
-        && typeof SlideNextStudioDeckReady.resolveStudioDeckReadyActionState === 'function'
-      )
-        ? SlideNextStudioDeckReady.resolveStudioDeckReadyActionState
+      const deckReadyView = typeof SlideNextStudioDeckReady !== 'undefined'
+        ? SlideNextStudioDeckReady
         : null;
-      if (resolveStudioDeckReadyActionState) {
-        return resolveStudioDeckReadyActionState({
-          doc,
-          presentationUrl: currentPresentationUrl,
-          persistedDeckStateWithContent,
-          storedCanonicalDeck,
-          saveButtonState
-        });
+      if (!deckReadyView || typeof deckReadyView.resolveStudioDeckReadyActionState !== 'function') {
+        return {
+          canUseSaveButton: false,
+          canUseDeckActions: false,
+          canLaunchPreview: false
+        };
       }
-
-      const hasDeckContent = !!(
-        (doc && doc.documentElement)
-        || persistedDeckStateWithContent
-        || storedCanonicalDeck
-      );
-      const canUseDeckActions = !!currentPresentationUrl && hasDeckContent;
-      const isSavingVersion = saveButtonState === 'saving-version';
-      return {
-        canUseSaveButton: canUseDeckActions && !isSavingVersion,
-        canUseDeckActions,
-        canLaunchPreview: !!currentPresentationUrl
-      };
+      return deckReadyView.resolveStudioDeckReadyActionState({
+        doc,
+        presentationUrl: currentPresentationUrl,
+        persistedDeckStateWithContent,
+        storedCanonicalDeck,
+        saveButtonState
+      });
     }
 
     function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {
       const deckReadyView = typeof SlideNextStudioDeckReady !== 'undefined'
         ? SlideNextStudioDeckReady
         : null;
-      if (deckReadyView && typeof deckReadyView.syncStudioDeckReadyToolbarActionState === 'function') {
-        return deckReadyView.syncStudioDeckReadyToolbarActionState({
-          documentRef: document,
-          doc,
-          presentationUrl: currentPresentationUrl,
-          persistedDeckStateWithContent: resolveEditorPersistedDeckStateWithContent(
-            getCurrentEditorPersistedDeckState()
-          ),
-          storedCanonicalDeck: resolveEditorStoredCanonicalBaseline(),
-          saveButtonState: typeof currentStudioSaveButtonState === 'string'
-            ? currentStudioSaveButtonState
-            : 'idle'
-        });
+      if (!deckReadyView) {
+        return false;
       }
-      const actionState = resolveCurrentStudioDeckReadyActionState(doc);
-      if (!deckReadyView || typeof deckReadyView.renderStudioDeckReadyToolbarActionState !== 'function') return false;
+      const toolbarOptions = {
+        documentRef: document,
+        doc,
+        presentationUrl: currentPresentationUrl,
+        persistedDeckStateWithContent: resolveEditorPersistedDeckStateWithContent(
+          getCurrentEditorPersistedDeckState()
+        ),
+        storedCanonicalDeck: resolveEditorStoredCanonicalBaseline(),
+        saveButtonState: typeof currentStudioSaveButtonState === 'string'
+          ? currentStudioSaveButtonState
+          : 'idle'
+      };
+      if (typeof deckReadyView.syncStudioDeckReadyToolbarActionState === 'function') {
+        return deckReadyView.syncStudioDeckReadyToolbarActionState(toolbarOptions);
+      }
+      if (typeof deckReadyView.renderStudioDeckReadyToolbarActionState !== 'function') {
+        return false;
+      }
       return deckReadyView.renderStudioDeckReadyToolbarActionState({
         documentRef: document,
-        actionState
+        actionState: resolveCurrentStudioDeckReadyActionState(doc)
       });
     }
 

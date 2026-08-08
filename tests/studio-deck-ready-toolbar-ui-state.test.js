@@ -41,6 +41,9 @@ function loadResolveCurrentStudioDeckReadyActionState(fileContent, context) {
     'function resolveCurrentStudioDeckReadyActionState(doc = getIframeDoc()) {',
     '\n\n    function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {'
   );
+  if (typeof context.SlideNextStudioDeckReady === 'undefined') {
+    context.SlideNextStudioDeckReady = deckReadyView;
+  }
   vm.runInContext(helperSource, context);
 }
 
