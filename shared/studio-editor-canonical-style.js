@@ -17,7 +17,9 @@
     borderStyle: { property: 'border-style', domProperty: 'borderStyle' },
     borderWidth: { property: 'border-width', domProperty: 'borderWidth' },
     borderRadius: { property: 'border-radius', domProperty: 'borderRadius' },
-    borderColor: { property: 'border-color', domProperty: 'borderColor' }
+    borderColor: { property: 'border-color', domProperty: 'borderColor' },
+    objectFit: { property: 'object-fit', domProperty: 'objectFit' },
+    objectPosition: { property: 'object-position', domProperty: 'objectPosition' }
   };
 
   function resolveElementId(element, getElementId) {

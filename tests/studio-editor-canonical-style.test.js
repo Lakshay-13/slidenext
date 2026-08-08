@@ -25,7 +25,12 @@ function createElement() {
     dataset: { editorId: 'node-1' },
     textContent: 'After',
     src: 'after.png',
-    style: { color: '#ffffff', zIndex: '9' },
+    style: {
+      color: '#ffffff',
+      objectFit: 'cover',
+      objectPosition: 'right bottom',
+      zIndex: '9'
+    },
     getAttribute(name) {
       return name === 'src' ? this.src : null;
     }
@@ -68,6 +73,12 @@ test('buildStudioCanonicalStyleMutation maps text, source, style, and z-index ed
 
   const styleDeck = canonicalStyle.buildStudioCanonicalStyleMutation({ ...options, prop: 'color', value: '#ffffff' });
   assert.equal(styleDeck.slides[0].nodes[0].style, 'color: #ffffff;');
+
+  const imageFitDeck = canonicalStyle.buildStudioCanonicalStyleMutation({ ...options, prop: 'objectFit', value: 'cover' });
+  assert.equal(imageFitDeck.slides[0].nodes[0].style, 'color: #000000; object-fit: cover;');
+
+  const imagePositionDeck = canonicalStyle.buildStudioCanonicalStyleMutation({ ...options, prop: 'objectPosition', value: 'right bottom' });
+  assert.equal(imagePositionDeck.slides[0].nodes[0].style, 'color: #000000; object-position: right bottom;');
 
   const zIndexDeck = canonicalStyle.buildStudioCanonicalStyleMutation({ ...options, prop: 'zIndex', value: '9' });
   assert.equal(zIndexDeck.slides[0].nodes[0].layout.zIndex, 9);
