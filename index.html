@@ -1919,6 +1919,7 @@
           isElementLocked: (...args) => isElementLocked(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           applyLayerOrderMutation: (...args) => applyEditorLayerOrderMutationWithTransaction(...args)
         })
       : null;

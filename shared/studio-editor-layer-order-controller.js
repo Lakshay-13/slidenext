@@ -39,6 +39,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const applyLayerOrderMutation = typeof options.applyLayerOrderMutation === 'function'
       ? options.applyLayerOrderMutation
       : () => ({ didApply: false, transaction: null });
@@ -52,7 +55,8 @@
         && typeof canonicalLayoutApi.createStudioCanonicalLayerOrderMutationBuilder === 'function'
         ? canonicalLayoutApi.createStudioCanonicalLayerOrderMutationBuilder({
             canonicalDeckApi,
-            buildCanonicalDeck
+            buildCanonicalDeck,
+            buildCanonicalDeckBaseline
           })
         : null;
       const buildCanonicalLayoutBaseline = canonicalLayoutApi
@@ -63,6 +67,7 @@
         ? buildCanonicalLayoutBaseline({
             canonicalDeckApi,
             buildCanonicalDeck,
+            buildCanonicalDeckBaseline,
             sourceDocument: getIframeDoc()
           })
         : null;

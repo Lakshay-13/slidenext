@@ -230,6 +230,10 @@ test('layer order wiring rebuilds the canonical deck from the iframe DOM', () =>
     controllerSource,
     /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/
   );
+  assert.match(
+    controllerSource,
+    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
+  );
 });
 
 test('style wiring rebuilds the canonical deck from the iframe DOM', () => {
