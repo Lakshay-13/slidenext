@@ -24,6 +24,44 @@ test('buildStudioCanonicalTransformBaseline builds from the source document', ()
   assert.equal(result, sourceDeck);
 });
 
+test('buildStudioCanonicalTransformBaseline prefers a valid live canonical deck', () => {
+  const liveDeck = canonicalDeck.createCanonicalDeck({ slides: [] });
+  let didBuildFromDocument = false;
+  const result = canonicalTransform.buildStudioCanonicalTransformBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline(documentRef) {
+      assert.deepEqual(documentRef, { id: 'editor-doc' });
+      return liveDeck;
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return canonicalDeck.createCanonicalDeck({ slides: [] });
+    },
+    sourceDocument: { id: 'editor-doc' }
+  });
+
+  assert.equal(result, liveDeck);
+  assert.equal(didBuildFromDocument, false);
+});
+
+test('buildStudioCanonicalTransformBaseline falls back when the live canonical deck is invalid', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [] });
+  let didBuildFromDocument = false;
+  const result = canonicalTransform.buildStudioCanonicalTransformBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return { invalid: true };
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return sourceDeck;
+    }
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(didBuildFromDocument, true);
+});
+
 test('buildStudioCanonicalTransformDeck applies canonical layout updates to the current model', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{

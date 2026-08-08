@@ -103,6 +103,9 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const assignElementId = typeof options.assignElementId === 'function'
       ? options.assignElementId
       : null;
@@ -143,6 +146,9 @@
           : null,
         buildCanonicalDeckBaseline: buildCanonicalDeckBaseline
           ? (sourceDocument) => buildCanonicalDeckBaseline(sourceDocument)
+          : null,
+        getCanonicalDeckBaseline: getCanonicalDeckBaseline
+          ? (sourceDocument) => getCanonicalDeckBaseline(sourceDocument)
           : null,
         buildCanonicalLayoutUpdates,
         getElementId: assignElementId

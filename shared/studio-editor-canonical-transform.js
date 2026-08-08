@@ -15,15 +15,31 @@
       && typeof canonicalDeckApi.updateCanonicalNodeLayout === 'function'
       ? canonicalDeckApi.updateCanonicalNodeLayout
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : null;
 
-    if (!updateCanonicalNodeLayout || !buildCanonicalDeck) {
-      return null;
+    if (!updateCanonicalNodeLayout) return null;
+
+    if (getCanonicalDeckBaseline) {
+      let liveCanonicalDeck = null;
+      try {
+        liveCanonicalDeck = getCanonicalDeckBaseline(options.sourceDocument);
+      } catch (err) {
+        liveCanonicalDeck = null;
+      }
+      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+        || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
+        if (liveCanonicalDeck) return liveCanonicalDeck;
+      }
     }
+
+    if (!buildCanonicalDeck) return null;
 
     return buildCanonicalDeck(options.sourceDocument);
   }
@@ -65,6 +81,9 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const buildCanonicalLayoutUpdates = typeof options.buildCanonicalLayoutUpdates === 'function'
       ? options.buildCanonicalLayoutUpdates
       : null;
@@ -76,7 +95,8 @@
         ...baselineOptions,
         canonicalDeckApi,
         buildCanonicalDeck,
-        buildCanonicalDeckBaseline
+        buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline
       })
     );
     const buildCanonicalTransformDeck = (finalizeResult, deckOptions = {}) => {
@@ -95,6 +115,7 @@
         canonicalDeckApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline,
         buildCanonicalLayoutUpdates,
         getElementId
       });

@@ -2290,6 +2290,10 @@
           triggerAutoVersion: (...args) => triggerAutoVersion(...args),
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+            sourceDoc || getIframeDoc(),
+            studioEditorSessionToken
+          ),
           assignElementId: (...args) => assignEditorElementId(...args),
           getGridSizePx: () => isGridSnapEnabled ? GRID_SNAP_SIZE_PX : null,
           getIsDraggingElement: () => isDraggingElement,

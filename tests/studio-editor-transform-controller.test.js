@@ -48,6 +48,55 @@ test('transform controller delegates modern transform and marquee setup with sha
   });
 });
 
+test('transform controller forwards the live canonical baseline reader', () => {
+  let builderOptions = null;
+  const liveCanonicalDeck = { kind: 'live-deck' };
+  const controller = transformController.createStudioEditorTransformController({
+    transformApi: {
+      createStudioTransformSessionFinalizer() {
+        return () => {};
+      },
+      buildStudioTransformCanonicalLayoutUpdates() {
+        return [];
+      }
+    },
+    canonicalTransformApi: {
+      createStudioCanonicalTransformMutationBuilders(options) {
+        builderOptions = options;
+        return {
+          buildCanonicalTransformBaseline() {
+            return options.getCanonicalDeckBaseline({ id: 'editor-doc' });
+          },
+          buildCanonicalTransformDeck() {
+            return null;
+          }
+        };
+      }
+    },
+    interactionOptionsApi: {
+      buildStudioTransformInteractionOptions(options) {
+        options.onSessionStart({ id: 'start-bounds' });
+        return { kind: 'transform' };
+      },
+      buildStudioMarqueeInteractionOptions() {
+        return { kind: 'marquee' };
+      }
+    },
+    interactionsApi: {
+      attachStudioEditorInteractionHandlers() {
+        return true;
+      }
+    },
+    getCanonicalDeckBaseline() {
+      return liveCanonicalDeck;
+    }
+  });
+
+  assert.equal(controller.setup({ body: {} }), true);
+  assert.equal(typeof builderOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(builderOptions.getCanonicalDeckBaseline(), liveCanonicalDeck);
+});
+
 test('transform controller fails closed when no transform factory is available', () => {
   const controller = transformController.createStudioEditorTransformController({});
   assert.equal(controller.setup({ body: {} }), false);
