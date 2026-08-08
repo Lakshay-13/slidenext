@@ -50,6 +50,42 @@ test('renderCanonicalDeckHtml renders a source-less deck with slidesContainer an
   assert.match(html, /<p>Agenda<\/p>/);
 });
 
+test('renderCanonicalDeckHtml composes master nodes and lets matching slide nodes override them', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    masterSlides: [{
+      id: 'master-1',
+      slide: {
+        nodes: [
+          { id: 'brand', tagName: 'p', text: 'Master brand' },
+          { id: 'footer', tagName: 'p', text: 'Master footer' }
+        ]
+      }
+    }],
+    slides: [{
+      id: 'slide-1',
+      masterSlideId: 'master-1',
+      nodes: [
+        { id: 'brand', tagName: 'h1', text: 'Slide brand' },
+        { id: 'body', tagName: 'p', text: 'Slide body' }
+      ],
+      source: {
+        html: '<section><p>stale slide source</p></section>'
+      }
+    }],
+    source: {
+      html: '<!DOCTYPE html><html><body><p>stale deck source</p></body></html>',
+      headHtml: '',
+      bodyHtml: '<main>stale body source</main>'
+    }
+  });
+
+  assert.match(html, /<h1>Slide brand<\/h1>/);
+  assert.match(html, /<p>Master footer<\/p>/);
+  assert.match(html, /<p>Slide body<\/p>/);
+  assert.doesNotMatch(html, /Master brand/);
+  assert.doesNotMatch(html, /stale slide source|stale deck source|stale body source/);
+});
+
 test('renderCanonicalDeckHtml preserves explicit slide classes when source attributes already provide them', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [

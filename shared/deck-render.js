@@ -689,6 +689,42 @@
     });
   }
 
+  function findCanonicalMasterSlide(slide = {}, masterSlides = []) {
+    const masterSlideId = normalizeString(slide.masterSlideId).trim();
+    if (!masterSlideId || !Array.isArray(masterSlides)) {
+      return null;
+    }
+    return masterSlides.find((master) => master && master.id === masterSlideId) || null;
+  }
+
+  function mergeCanonicalMasterNodes(masterNodes = [], slideNodes = []) {
+    const normalizedMasterNodes = Array.isArray(masterNodes) ? masterNodes : [];
+    const normalizedSlideNodes = Array.isArray(slideNodes) ? slideNodes : [];
+    const slideNodesById = new Map(
+      normalizedSlideNodes
+        .filter((node) => node && normalizeString(node.id).trim())
+        .map((node) => [node.id, node])
+    );
+    const overriddenNodeIds = new Set();
+    const mergedNodes = normalizedMasterNodes.map((masterNode) => {
+      const nodeId = normalizeString(masterNode && masterNode.id).trim();
+      const overrideNode = nodeId ? slideNodesById.get(nodeId) : null;
+      if (!overrideNode) {
+        return masterNode;
+      }
+      overriddenNodeIds.add(nodeId);
+      return overrideNode;
+    });
+
+    return [
+      ...mergedNodes,
+      ...normalizedSlideNodes.filter((node) => {
+        const nodeId = normalizeString(node && node.id).trim();
+        return !nodeId || !overriddenNodeIds.has(nodeId);
+      })
+    ];
+  }
+
   function renderCanonicalNode(node, options = {}) {
     if (!node || typeof node !== 'object') return '';
     const layoutStyleText = buildRenderedNodeLayoutStyle(node.layout);
@@ -717,14 +753,24 @@
 
   function renderCanonicalSlide(slide, index = 0, options = {}) {
     if (!slide || typeof slide !== 'object') return '';
-    if (options.preferSlideSourceHtml !== false && slide.source && normalizeString(slide.source.html)) {
+    const masterSlide = findCanonicalMasterSlide(slide, options.masterSlides);
+    const effectiveSlide = masterSlide
+      ? {
+          ...slide,
+          nodes: mergeCanonicalMasterNodes(masterSlide.slide && masterSlide.slide.nodes, slide.nodes)
+        }
+      : slide;
+    if (!masterSlide
+      && options.preferSlideSourceHtml !== false
+      && slide.source
+      && normalizeString(slide.source.html)) {
       return applyCanonicalSlideSourceHtmlState(slide.source.html, slide, index, options);
     }
 
-    const sourceAttributes = buildRenderedSlideAttributes(slide, index, options);
+    const sourceAttributes = buildRenderedSlideAttributes(effectiveSlide, index, options);
 
-    const slideHtml = Array.isArray(slide.nodes)
-      ? slide.nodes.map(node => renderCanonicalNode(node, options)).join('')
+    const slideHtml = Array.isArray(effectiveSlide.nodes)
+      ? effectiveSlide.nodes.map(node => renderCanonicalNode(node, options)).join('')
       : '';
     const attrs = renderAttributeMap(sourceAttributes);
     return `<section${attrs}>${slideHtml}</section>`;
@@ -939,6 +985,7 @@
     const slidesHtml = Array.isArray(deck.slides)
       ? deck.slides.map((slide, index) => renderCanonicalSlide(slide, index, {
         ...options,
+        masterSlides: deck.masterSlides,
         activeSlideId: resolvedActiveSlideId
       })).join('\n')
       : '';
@@ -989,6 +1036,13 @@
       && options.preferNodeSourceHtml !== false;
   }
 
+  function hasCanonicalMasterSlideAssignments(deck = {}) {
+    return Array.isArray(deck.masterSlides)
+      && deck.masterSlides.length > 0
+      && Array.isArray(deck.slides)
+      && deck.slides.some((slide) => normalizeString(slide && slide.masterSlideId).trim());
+  }
+
   function canReuseCanonicalDeckBodySourceHtml(options = {}) {
     const requestedActiveSlideId = normalizeString(options.activeSlideId).trim();
     return options.preferBodySourceHtml !== false
@@ -1002,7 +1056,11 @@
       ? deckLike
       : canonicalDeck.createCanonicalDeck(deckLike);
 
-    if (canReuseCanonicalDeckSourceHtml(options) && deck.source && normalizeString(deck.source.html)) {
+    const hasMasterSlideAssignments = hasCanonicalMasterSlideAssignments(deck);
+    if (!hasMasterSlideAssignments
+      && canReuseCanonicalDeckSourceHtml(options)
+      && deck.source
+      && normalizeString(deck.source.html)) {
       return deck.source.html;
     }
 
@@ -1011,7 +1069,7 @@
       : applyCanonicalDeckHeadSourceHtmlState(normalizeString(deck.source && deck.source.headHtml), deck) || buildDefaultHeadHtml(deck);
     const htmlAttributes = asPlainObject(deck.source && deck.source.htmlAttributes);
     const bodyAttributes = asPlainObject(deck.source && deck.source.bodyAttributes);
-    const bodyHtml = canReuseCanonicalDeckBodySourceHtml(options)
+    const bodyHtml = !hasMasterSlideAssignments && canReuseCanonicalDeckBodySourceHtml(options)
       ? applyCanonicalDeckBodySourceHtmlState(normalizeString(deck.source && deck.source.bodyHtml), deck) || buildDefaultBodyHtml(deck, options)
       : buildDefaultBodyHtml(deck, options);
 
