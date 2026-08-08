@@ -7112,12 +7112,8 @@
           canonicalDeck = null;
         }
       }
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const canonicalTarget = canonicalDeckApi
-        && typeof canonicalDeckApi.findCanonicalNodeById === 'function'
-        ? canonicalDeckApi.findCanonicalNodeById(canonicalDeck, targetId)
+      const canonicalTarget = typeof resolveEditorCanonicalNodeForElement === 'function'
+        ? resolveEditorCanonicalNodeForElement(target, canonicalDeck)
         : null;
       return layerOrderView.syncStudioLayerOrderZIndexInput({
         documentRef: document,

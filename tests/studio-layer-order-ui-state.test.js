@@ -34,12 +34,17 @@ function loadFinalizeLayerOrderMutation(fileContent, context) {
 }
 
 function loadSyncLayerOrderZIndexInput(fileContent, context) {
-  const helperSource = extractFunctionSource(
+  const canonicalNodeResolverSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCanonicalNodeForElement(element, canonicalDeck = null) {',
+    '\n\n    function getLiveSelectedElements(elements = selectedElements, doc = getIframeDoc()) {'
+  );
+  const syncSource = extractFunctionSource(
     fileContent,
     'function syncLayerOrderZIndexInput(target) {',
     '\n\n    function refreshLayerOrderUi(options = {}) {'
   );
-  vm.runInContext(helperSource, context);
+  vm.runInContext(`${canonicalNodeResolverSource}\n${syncSource}`, context);
 }
 
 function loadRefreshLayerOrderUi(fileContent, context) {
