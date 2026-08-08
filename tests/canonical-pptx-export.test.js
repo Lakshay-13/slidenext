@@ -110,12 +110,12 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
             tagName: 'tr',
             children: [
               { tagName: 'th', text: 'Name' },
-              { tagName: 'th', text: 'Value' }
+              { tagName: 'th', text: 'Value', style: 'text-align: right;' }
             ]
           }, {
             tagName: 'tr',
             children: [
-              { tagName: 'td', text: 'Alpha' },
+              { tagName: 'td', text: 'Alpha', style: 'text-align: center;' },
               { tagName: 'td', text: '42' }
             ]
           }]
@@ -163,9 +163,9 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
   assert.deepEqual(result.pptx.slides[0].calls[4].rows, [
     [
       { text: 'Name', options: { bold: true } },
-      { text: 'Value', options: { bold: true } }
+      { text: 'Value', options: { bold: true, align: 'right' } }
     ],
-    ['Alpha', '42']
+    [{ text: 'Alpha', options: { align: 'center' } }, '42']
   ]);
   assert.equal(result.diagnostics.unsupportedNodes[0].id, 'table-1');
   assert.deepEqual(result.diagnostics.missingAssets, []);

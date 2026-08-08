@@ -224,8 +224,14 @@
         .filter(cell => cell && (cell.tagName === 'td' || cell.tagName === 'th'))
         .map(cell => {
           const text = getNestedNodeText(cell);
-          return cell.tagName === 'th'
-            ? { text, options: { bold: true } }
+          const cellStyle = nodeStyle(cell);
+          const cellOptions = {};
+          if (cell.tagName === 'th') cellOptions.bold = true;
+          if (typeof cellStyle['text-align'] === 'string' && cellStyle['text-align'].trim()) {
+            cellOptions.align = resolvePptxTextAlignment(cellStyle['text-align']);
+          }
+          return Object.keys(cellOptions).length > 0
+            ? { text, options: cellOptions }
             : text;
         }))
       .filter(row => row.length > 0);
