@@ -2020,6 +2020,24 @@
           getNodeId: assignEditorElementId
         })
       : null;
+    const studioEditorDeckMutationFinalizer = typeof SlideNextStudioEditorDeckMutation !== 'undefined'
+      && SlideNextStudioEditorDeckMutation
+      && typeof SlideNextStudioEditorDeckMutation.createStudioEditorDeckMutationFinalizer === 'function'
+      ? SlideNextStudioEditorDeckMutation.createStudioEditorDeckMutationFinalizer({
+          mutationApi: typeof SlideNextStudioEditorMutation !== 'undefined'
+            ? SlideNextStudioEditorMutation
+            : null,
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+            preferLiveCanonicalDeck: false
+          }),
+          syncSelectionOverlay: typeof syncSelectionOverlay === 'function' ? syncSelectionOverlay : null,
+          generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
+          updateLayersList: typeof updateLayersList === 'function' ? updateLayersList : null,
+          saveHistoryState: typeof saveHistoryState === 'function' ? saveHistoryState : null,
+          triggerAutoSave: typeof triggerAutoSave === 'function' ? triggerAutoSave : null,
+          triggerAutoVersion: typeof triggerAutoVersion === 'function' ? triggerAutoVersion : null
+        })
+      : null;
     let isDraggingElement = false;
     let suppressNextFrameClick = false;
     let zoomFactor = 1.0;
@@ -5512,6 +5530,9 @@
     }
 
     function finalizeEditorDeckMutation(versionLabel, options = {}) {
+      if (typeof studioEditorDeckMutationFinalizer === 'function') {
+        return studioEditorDeckMutationFinalizer(versionLabel, options);
+      }
       const deckMutationApi = typeof SlideNextStudioEditorDeckMutation !== 'undefined'
         ? SlideNextStudioEditorDeckMutation
         : null;

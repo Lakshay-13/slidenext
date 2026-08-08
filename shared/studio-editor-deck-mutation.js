@@ -7,6 +7,46 @@
     root.SlideNextStudioEditorDeckMutation = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function createStudioEditorDeckMutationFinalizer(options = {}) {
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const syncSelectionOverlay = typeof options.syncSelectionOverlay === 'function'
+      ? options.syncSelectionOverlay
+      : null;
+    const generateThumbnails = typeof options.generateThumbnails === 'function'
+      ? options.generateThumbnails
+      : null;
+    const updateLayersList = typeof options.updateLayersList === 'function'
+      ? options.updateLayersList
+      : null;
+    const saveHistoryState = typeof options.saveHistoryState === 'function'
+      ? options.saveHistoryState
+      : null;
+    const triggerAutoSave = typeof options.triggerAutoSave === 'function'
+      ? options.triggerAutoSave
+      : null;
+    const triggerAutoVersion = typeof options.triggerAutoVersion === 'function'
+      ? options.triggerAutoVersion
+      : null;
+
+    return function finalizeConfiguredStudioEditorDeckMutation(versionLabel, mutationOptions = {}) {
+      return finalizeStudioEditorDeckMutation(versionLabel, mutationOptions, {
+        mutationApi,
+        buildCanonicalDeck,
+        syncSelectionOverlay,
+        generateThumbnails,
+        updateLayersList,
+        saveHistoryState,
+        triggerAutoSave,
+        triggerAutoVersion
+      });
+    };
+  }
+
   function finalizeStudioEditorDeckMutation(versionLabel, mutationOptions = {}, options = {}) {
     const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
       ? options.mutationApi
@@ -259,6 +299,7 @@
   }
 
   return {
+    createStudioEditorDeckMutationFinalizer,
     finalizeStudioEditorDeckMutation,
     finalizeStudioEditorSelectionToggleMutation,
     finalizeStudioEditorInsertedElements,

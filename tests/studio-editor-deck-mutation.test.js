@@ -3,6 +3,33 @@ const assert = require('node:assert/strict');
 
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 
+test('createStudioEditorDeckMutationFinalizer reuses configured mutation dependencies', () => {
+  const calls = [];
+  const mutationApi = {
+    finalizeStudioMutation(options) {
+      calls.push(options);
+      return options.versionLabel;
+    }
+  };
+  const buildCanonicalDeck = () => ({ kind: 'slidenext.deck', slides: [] });
+  const finalizer = deckMutation.createStudioEditorDeckMutationFinalizer({
+    mutationApi,
+    buildCanonicalDeck,
+    syncSelectionOverlay() {},
+    generateThumbnails() {},
+    updateLayersList() {},
+    saveHistoryState() {},
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  });
+
+  assert.equal(finalizer('Auto: Move', { transaction: { id: 'tx' } }), 'Auto: Move');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].mutationApi, undefined);
+  assert.equal(calls[0].buildCanonicalDeck, buildCanonicalDeck);
+  assert.deepEqual(calls[0].mutationOptions, { transaction: { id: 'tx' } });
+});
+
 test('finalizeStudioEditorDeckMutation delegates shared mutation finalization', () => {
   const calls = [];
   const mutationApi = {
