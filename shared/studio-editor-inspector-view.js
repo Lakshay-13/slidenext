@@ -300,8 +300,14 @@
     }
 
     if (borderGroup) borderGroup.classList.remove('hidden');
+    const canonicalBorderStyle = readStudioInspectorCanonicalStyleValue(
+      options.canonicalNode,
+      'border-style'
+    );
     const borderStyleInput = documentRef.getElementById('elBorderStyle');
-    if (borderStyleInput) borderStyleInput.value = computedStyles.borderStyle || 'none';
+    if (borderStyleInput) {
+      borderStyleInput.value = canonicalBorderStyle || computedStyles.borderStyle || 'none';
+    }
     const bWidth = parseInt(computedStyles.borderWidth) || 0;
     const borderWidthInput = documentRef.getElementById('elBorderWidth');
     if (borderWidthInput) borderWidthInput.value = bWidth;
@@ -347,6 +353,7 @@
       documentRef,
       selection: selectionState.selection,
       computedStyles,
+      canonicalNode: options.canonicalNode,
       rgbToHex: options.rgbToHex
     });
     return true;

@@ -388,6 +388,32 @@ test('syncStudioInspectorTypographyControls prefers canonical text alignment dat
   assert.deepEqual(alignments, ['right']);
 });
 
+test('syncStudioInspectorBorderControls prefers canonical border-style data', () => {
+  const classList = createClassList();
+  classList.add('editor-shape');
+  const borderStyleInput = { value: '' };
+
+  assert.equal(inspectorView.syncStudioInspectorBorderControls({
+    documentRef: {
+      getElementById(id) {
+        return id === 'elBorderStyle' ? borderStyleInput : null;
+      }
+    },
+    selection: [{ tagName: 'DIV', classList }],
+    canonicalNode: { style: 'border-style: dashed;' },
+    computedStyles: {
+      borderStyle: 'solid',
+      borderWidth: '1px',
+      borderRadius: '2px',
+      borderColor: '#fff'
+    },
+    rgbToHex(value) {
+      return value;
+    }
+  }), true);
+  assert.equal(borderStyleInput.value, 'dashed');
+});
+
 test('syncStudioInspectorBorderControls applies border values for shape-like selections', () => {
   const classList = createClassList();
   classList.add('editor-shape');
