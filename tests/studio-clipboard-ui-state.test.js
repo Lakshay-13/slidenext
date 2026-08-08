@@ -8,6 +8,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const clipboardState = require('../shared/studio-editor-clipboard.js');
 const clipboardMutation = require('../shared/studio-editor-clipboard-mutation.js');
+const clipboardController = require('../shared/studio-editor-clipboard-controller.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -44,6 +45,26 @@ function loadClipboardInsertionHelper(fileContent, context) {
   );
   context.SlideNextStudioEditorClipboardMutation = clipboardMutation;
   vm.runInContext(helperSource, context);
+}
+
+function installClipboardController(context) {
+  context.studioEditorClipboardController = clipboardController.createStudioEditorClipboardController({
+    clipboardApi: context.SlideNextStudioEditorClipboard,
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    canonicalInsertionApi: context.SlideNextStudioEditorCanonicalInsertion,
+    deckImportApi: context.SlideNextDeckImport,
+    getClipboard: () => context.editorClipboard,
+    setClipboard: (nextClipboard) => { context.editorClipboard = nextClipboard; },
+    buildClipboardSelectionMutationPlan: context.buildClipboardSelectionMutationPlan,
+    finalizeClipboardActionResult: context.finalizeClipboardActionResult,
+    getIframeDoc: context.getIframeDoc,
+    getActiveSlide: context.getActiveSlide,
+    getEditorSlideId: context.getEditorSlideId,
+    assignElementId: context.assignEditorElementId,
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    insertClipboardPayload: context.insertClipboardPayload,
+    finalizeInsertedElements: context.finalizeInsertedElements
+  });
 }
 
 function createControls() {
@@ -411,6 +432,7 @@ test('duplicateSelectedElements forwards the insertion markup transaction to his
     `${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${finalizeInsertedElementsSource}\n${duplicateSelectedElementsSource}`,
     context
   );
+  installClipboardController(context);
 
   assert.equal(context.duplicateSelectedElements(), true);
   assert.equal(finalized.versionLabel, 'Auto: Duplicated Element');
@@ -504,6 +526,7 @@ test('duplicateSelectedElements forwards a canonical deck sidecar for cloned nod
     `${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${finalizeInsertedElementsSource}\n${duplicateSelectedElementsSource}`,
     context
   );
+  installClipboardController(context);
 
   assert.equal(context.duplicateSelectedElements(), true);
   assert.equal(finalized.versionLabel, 'Auto: Duplicated Element');
@@ -926,6 +949,7 @@ test('copySelectedElements returns false and refreshes clipboard controls when p
 
   vm.createContext(context);
   vm.runInContext(`${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${copySelectedElementsSource}`, context);
+  installClipboardController(context);
 
   assert.equal(context.copySelectedElements(), false);
   assert.equal(context.editorClipboard, null);
@@ -992,6 +1016,7 @@ test('copySelectedElements returns true after creating clipboard state from copi
 
   vm.createContext(context);
   vm.runInContext(`${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${copySelectedElementsSource}`, context);
+  installClipboardController(context);
 
   assert.equal(context.copySelectedElements(), true);
   assert.equal(context.editorClipboard, nextClipboard);
@@ -1048,6 +1073,7 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
 
   vm.createContext(context);
   vm.runInContext(`${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${duplicateSelectedElementsSource}`, context);
+  installClipboardController(context);
 
   assert.equal(context.duplicateSelectedElements(), false);
   assert.deepEqual(calls, [
@@ -1114,6 +1140,7 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
 
   vm.createContext(context);
   vm.runInContext(`${buildClipboardSelectionMutationPlanSource}\n${finalizeClipboardActionResultSource}\n${duplicateSelectedElementsSource}`, context);
+  installClipboardController(context);
 
   assert.equal(context.duplicateSelectedElements(), false);
   assert.deepEqual(calls, [
@@ -1219,6 +1246,7 @@ test('pasteClipboardElements returns false and refreshes clipboard controls when
 
   vm.createContext(context);
   vm.runInContext(`${finalizeClipboardActionResultSource}\n${pasteClipboardElementsSource}`, context);
+  installClipboardController(context);
 
   assert.equal(context.pasteClipboardElements(), false);
   assert.equal(context.editorClipboard, null);
@@ -1296,6 +1324,7 @@ test('pasteClipboardElements forwards a canonical deck sidecar for pasted nodes'
 
   vm.createContext(context);
   vm.runInContext(`${finalizeClipboardActionResultSource}\n${pasteClipboardElementsSource}`, context);
+  installClipboardController(context);
 
   assert.equal(context.pasteClipboardElements(), true);
   assert.equal(finalized.elements[0], pastedElement);

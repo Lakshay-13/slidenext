@@ -1204,6 +1204,7 @@
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
   <script src="/shared/studio-editor-clipboard-mutation.js"></script>
+  <script src="/shared/studio-editor-clipboard-controller.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
   <script src="/shared/studio-editor-removal-mutation.js"></script>
   <script src="/shared/studio-editor-removal-controller.js"></script>
@@ -1832,6 +1833,37 @@
           buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           applyStyleMutation: (...args) => applyEditorStyleMutationWithTransaction(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
+        })
+      : null;
+    const studioEditorClipboardController = typeof SlideNextStudioEditorClipboardController !== 'undefined'
+      && SlideNextStudioEditorClipboardController
+      && typeof SlideNextStudioEditorClipboardController.createStudioEditorClipboardController === 'function'
+      ? SlideNextStudioEditorClipboardController.createStudioEditorClipboardController({
+          clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
+            ? SlideNextStudioEditorClipboard
+            : null,
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          canonicalInsertionApi: typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
+            ? SlideNextStudioEditorCanonicalInsertion
+            : null,
+          deckImportApi: typeof SlideNextDeckImport !== 'undefined'
+            ? SlideNextDeckImport
+            : null,
+          getClipboard: () => editorClipboard,
+          setClipboard: (nextClipboard) => {
+            editorClipboard = nextClipboard;
+          },
+          buildClipboardSelectionMutationPlan: (...args) => buildClipboardSelectionMutationPlan(...args),
+          finalizeClipboardActionResult: (...args) => finalizeClipboardActionResult(...args),
+          getIframeDoc: (...args) => getIframeDoc(...args),
+          getActiveSlide: (...args) => getActiveSlide(...args),
+          getEditorSlideId: (...args) => getEditorSlideId(...args),
+          assignElementId: (...args) => assignEditorElementId(...args),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          insertClipboardPayload: (...args) => insertClipboardPayload(...args),
+          finalizeInsertedElements: (...args) => finalizeInsertedElements(...args)
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -5734,155 +5766,24 @@
     }
 
     function copySelectedElements() {
-      const clipboardActionState = buildClipboardSelectionMutationPlan();
-      if (!clipboardActionState.canCopy) return finalizeClipboardActionResult(false);
-      const items = clipboardActionState.payloadItems;
-      if (items.length === 0) return finalizeClipboardActionResult(false);
-      editorClipboard = SlideNextStudioEditorClipboard.createStudioClipboardState(items);
-      return finalizeClipboardActionResult(true);
+      return studioEditorClipboardController
+        && typeof studioEditorClipboardController.copy === 'function'
+        ? studioEditorClipboardController.copy()
+        : false;
     }
 
     function pasteClipboardElements() {
-      const pastePlan = SlideNextStudioEditorClipboard.buildStudioClipboardPastePlan(editorClipboard, {
-        canMutateDeck: () => !!getActiveSlide(getIframeDoc())
-      });
-      if (!pastePlan.canPaste) return finalizeClipboardActionResult(false);
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const canonicalInsertionApi = typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
-        ? SlideNextStudioEditorCanonicalInsertion
-        : null;
-      const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
-        ? SlideNextDeckImport
-        : null;
-      const importElementToCanonicalNode = deckImportApi
-        && typeof deckImportApi.importElementToCanonicalNode === 'function'
-        ? deckImportApi.importElementToCanonicalNode
-        : null;
-      const canonicalInsertionBuilders = canonicalInsertionApi
-        && typeof canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders === 'function'
-        ? canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
-            importElementToCanonicalNode
-          })
-        : null;
-      const buildCanonicalInsertionSequence = canonicalInsertionBuilders
-        ? canonicalInsertionBuilders.buildCanonicalInsertionSequence
-        : null;
-      let canonicalSlideId = '';
-      let canonicalSourceDocument = null;
-      if (buildCanonicalInsertionSequence
-        && typeof getIframeDoc === 'function'
-        && typeof getActiveSlide === 'function') {
-        const doc = getIframeDoc();
-        canonicalSourceDocument = doc;
-        const activeSlide = getActiveSlide(doc);
-        canonicalSlideId = typeof getEditorSlideId === 'function'
-          ? getEditorSlideId(activeSlide)
-          : activeSlide && activeSlide.id;
-      }
-      let transaction = null;
-      const pasted = insertClipboardPayload(pastePlan.items, pastePlan.nextPasteCount, {
-        onTransaction(nextTransaction) {
-          transaction = nextTransaction;
-        }
-      });
-      const canonicalDeck = canonicalSourceDocument && canonicalSlideId && buildCanonicalInsertionSequence
-        ? buildCanonicalInsertionSequence(pasted, {
-            slideId: canonicalSlideId,
-            sourceDocument: canonicalSourceDocument,
-            getNodeId: (node) => {
-              if (node && node.dataset && typeof assignEditorElementId === 'function') {
-                const assignedId = assignEditorElementId(node);
-                if (assignedId) return assignedId;
-              }
-              return node && node.dataset && node.dataset.editorId;
-            }
-          })
-        : null;
-      const didPaste = finalizeInsertedElements(
-        pasted,
-        'Auto: Pasted Element',
-        transaction,
-        canonicalDeck
-      );
-      if (didPaste) {
-        editorClipboard = pastePlan.nextClipboard;
-      }
-      return finalizeClipboardActionResult(didPaste);
+      return studioEditorClipboardController
+        && typeof studioEditorClipboardController.paste === 'function'
+        ? studioEditorClipboardController.paste()
+        : false;
     }
 
     function duplicateSelectedElements() {
-      const clipboardActionState = buildClipboardSelectionMutationPlan();
-      if (!clipboardActionState.canDuplicate) return finalizeClipboardActionResult(false);
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const canonicalInsertionApi = typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
-        ? SlideNextStudioEditorCanonicalInsertion
-        : null;
-      const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
-        ? SlideNextDeckImport
-        : null;
-      const importElementToCanonicalNode = deckImportApi
-        && typeof deckImportApi.importElementToCanonicalNode === 'function'
-        ? deckImportApi.importElementToCanonicalNode
-        : null;
-      const canonicalInsertionBuilders = canonicalInsertionApi
-        && typeof canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders === 'function'
-        ? canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
-            importElementToCanonicalNode
-          })
-        : null;
-      const buildCanonicalInsertionSequence = canonicalInsertionBuilders
-        ? canonicalInsertionBuilders.buildCanonicalInsertionSequence
-        : null;
-      let canonicalSlideId = '';
-      let canonicalSourceDocument = null;
-      if (buildCanonicalInsertionSequence
-        && typeof getIframeDoc === 'function'
-        && typeof getActiveSlide === 'function') {
-        const doc = getIframeDoc();
-        canonicalSourceDocument = doc;
-        const activeSlide = getActiveSlide(doc);
-        canonicalSlideId = typeof getEditorSlideId === 'function'
-          ? getEditorSlideId(activeSlide)
-          : activeSlide && activeSlide.id;
-      }
-      let transaction = null;
-      const duplicates = insertClipboardPayload(clipboardActionState.payloadItems, 1, {
-        onTransaction(nextTransaction) {
-          transaction = nextTransaction;
-        }
-      });
-      if (duplicates.length === 0) return finalizeClipboardActionResult(false);
-      const canonicalDeck = canonicalSourceDocument && canonicalSlideId && buildCanonicalInsertionSequence
-        ? buildCanonicalInsertionSequence(duplicates, {
-            slideId: canonicalSlideId,
-            sourceDocument: canonicalSourceDocument,
-            getNodeId: (node) => {
-              if (node && node.dataset && typeof assignEditorElementId === 'function') {
-                const assignedId = assignEditorElementId(node);
-                if (assignedId) return assignedId;
-              }
-              return node && node.dataset && node.dataset.editorId;
-            }
-          })
-        : null;
-      return finalizeClipboardActionResult(finalizeInsertedElements(
-        duplicates,
-        'Auto: Duplicated Element',
-        transaction,
-        canonicalDeck
-      ));
+      return studioEditorClipboardController
+        && typeof studioEditorClipboardController.duplicate === 'function'
+        ? studioEditorClipboardController.duplicate()
+        : false;
     }
 
     function nudgeSelectedElements(dx, dy) {
