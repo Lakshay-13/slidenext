@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 
 function createSourceDeck() {
@@ -19,6 +20,7 @@ test('buildStudioCanonicalLayoutBaseline builds from the source document', () =>
   let builtFromDocument = null;
   const result = canonicalLayout.buildStudioCanonicalLayoutBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeckBaseline(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
@@ -38,6 +40,7 @@ test('buildStudioCanonicalLayoutBaseline prefers a valid live canonical deck', (
   let didBuildFromDocument = false;
   const result = canonicalLayout.buildStudioCanonicalLayoutBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline(documentRef) {
       assert.deepEqual(documentRef, { id: 'editor-doc' });
       return liveDeck;
@@ -87,6 +90,7 @@ test('buildStudioCanonicalLayoutMutation maps positioned items onto a fresh cano
   const element = { dataset: { editorId: 'node-1' } };
   const result = canonicalLayout.buildStudioCanonicalLayoutMutation({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeckBaseline() {
       baselineBuildCount += 1;
       return sourceDeck;
@@ -113,6 +117,7 @@ test('buildStudioCanonicalLayoutMutation fails closed when no positioned items a
   const sourceDeck = createSourceDeck();
   const result = canonicalLayout.buildStudioCanonicalLayoutMutation({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck() {
       return sourceDeck;
     },
@@ -138,6 +143,7 @@ test('buildStudioCanonicalLayerOrderMutation maps z-indexes using the pre-mutati
   };
   const result = canonicalLayout.buildStudioCanonicalLayerOrderMutation({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     canonicalDeckBeforeMutation: sourceDeck,
     orderedElements: [first, second]
   });
@@ -190,6 +196,7 @@ test('createStudioCanonicalLayoutMutationBuilder falls back when the live baseli
   let fallbackBuildCount = 0;
   const buildCanonicalLayoutMutation = canonicalLayout.createStudioCanonicalLayoutMutationBuilder({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline: () => ({ invalid: true }),
     buildCanonicalDeckBaseline() {
       fallbackBuildCount += 1;

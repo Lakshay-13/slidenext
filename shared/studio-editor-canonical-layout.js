@@ -1,12 +1,12 @@
 (function (root, factory) {
-  const api = factory();
+  const api = factory(root);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorCanonicalLayout = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   function buildStudioCanonicalLayoutBaseline(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -19,27 +19,47 @@
       : typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
 
     if (!canonicalDeckApi) {
       return null;
     }
+    const readCanonicalDeckBaseline = canonicalStateApi
+      && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
+      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
+          getCanonicalDeckBaseline: getCanonicalDeckBaseline
+            ? (sourceDocument) => {
+                const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+                if (!liveCanonicalDeck
+                  || (typeof canonicalDeckApi.isCanonicalDeck === 'function'
+                    && !canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
+                  return null;
+                }
+                return liveCanonicalDeck;
+              }
+            : null,
+          buildCanonicalDeckBaseline: buildCanonicalDeck
+        })
+      : (sourceDocument) => {
+          if (getCanonicalDeckBaseline) {
+            try {
+              const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+              if (liveCanonicalDeck
+                && (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+                  || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
+                return liveCanonicalDeck;
+              }
+            } catch (err) {
+              // Fall through to the document rebuild path.
+            }
+          }
+          if (!buildCanonicalDeck) return null;
+          return buildCanonicalDeck(sourceDocument);
+        };
 
-    if (getCanonicalDeckBaseline) {
-      let liveCanonicalDeck = null;
-      try {
-        liveCanonicalDeck = getCanonicalDeckBaseline(options.sourceDocument);
-      } catch (err) {
-        liveCanonicalDeck = null;
-      }
-      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
-        || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
-        if (liveCanonicalDeck) return liveCanonicalDeck;
-      }
-    }
-
-    if (!buildCanonicalDeck) return null;
-
-    return buildCanonicalDeck(options.sourceDocument);
+    return readCanonicalDeckBaseline(options.sourceDocument);
   }
 
   function buildStudioCanonicalLayoutDeck(layoutUpdates, options = {}) {
@@ -152,6 +172,9 @@
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
@@ -164,6 +187,7 @@
     return (mutationOptions = {}) => buildStudioCanonicalLayoutMutation({
       ...mutationOptions,
       canonicalDeckApi,
+      canonicalStateApi,
       buildCanonicalDeck,
       buildCanonicalDeckBaseline,
       getCanonicalDeckBaseline
@@ -174,6 +198,9 @@
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
@@ -186,6 +213,7 @@
     return (mutationOptions = {}) => buildStudioCanonicalLayerOrderMutation({
       ...mutationOptions,
       canonicalDeckApi,
+      canonicalStateApi,
       buildCanonicalDeck,
       buildCanonicalDeckBaseline,
       getCanonicalDeckBaseline
