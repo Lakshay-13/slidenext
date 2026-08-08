@@ -558,9 +558,12 @@
       : 800;
 
     if (!debounce) {
+      if (currentTimer) {
+        clearScheduledCapture(currentTimer);
+      }
       captureFn();
       return {
-        nextTimer: currentTimer,
+        nextTimer: null,
         didCapture: true
       };
     }

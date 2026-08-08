@@ -626,6 +626,37 @@ test('createStudioHistorySaveHandler merges transactions and schedules history c
   assert.equal(scheduledCalls[0][1], false);
 });
 
+test('scheduleStudioHistoryCapture cancels a pending debounce before an immediate capture', () => {
+  const clearedTimers = [];
+  let captureCalls = 0;
+  let scheduleCalls = 0;
+
+  const result = studioHistory.scheduleStudioHistoryCapture(
+    'pending-timer',
+    false,
+    () => {
+      captureCalls += 1;
+    },
+    {
+      clearScheduledCapture(timer) {
+        clearedTimers.push(timer);
+      },
+      scheduleCapture() {
+        scheduleCalls += 1;
+        return 'unexpected-timer';
+      }
+    }
+  );
+
+  assert.deepEqual(result, {
+    nextTimer: null,
+    didCapture: true
+  });
+  assert.deepEqual(clearedTimers, ['pending-timer']);
+  assert.equal(captureCalls, 1);
+  assert.equal(scheduleCalls, 0);
+});
+
 test('createStudioHistorySaveHandler clears pending transactions when no transaction is provided', () => {
   let pendingTransaction = { id: 'pending' };
   let pendingCanonicalDeck = { kind: 'slidenext.deck', slides: [] };
