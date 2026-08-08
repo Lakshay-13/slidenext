@@ -36,6 +36,10 @@ test('applyThemeTokenPreset mirrors and persists a ready deck theme preset', () 
       return iframeDoc;
     },
     SlideNextStudioEditorCanonicalTheme: {
+      buildStudioCanonicalThemeBaseline(options) {
+        calls.push(['baseline-helper', options]);
+        return options.buildCanonicalDeckBaseline(options.sourceDocument);
+      },
       buildStudioCanonicalThemeDeck(tokens, options) {
         calls.push(['build', tokens, options]);
         return canonicalDeck;
@@ -61,9 +65,10 @@ test('applyThemeTokenPreset mirrors and persists a ready deck theme preset', () 
   loadFunction(fileContent, 'function applyThemeTokenPreset(presetId) {', '\n\n    function setCustomGradientType', context);
 
   assert.equal(context.applyThemeTokenPreset('aurora'), true);
-  assert.deepEqual(calls.map(([name]) => name), ['baseline', 'build', 'apply', 'finalize', 'sync']);
-  assert.equal(calls[3][1], 'Auto: Applied Aurora Glass Theme');
-  assert.equal(calls[3][2].canonicalDeck, canonicalDeck);
+  assert.deepEqual(calls.map(([name]) => name), ['baseline-helper', 'baseline', 'build', 'apply', 'finalize', 'sync']);
+  assert.equal(typeof calls[0][1].getCanonicalDeckBaseline, 'function');
+  assert.equal(calls[4][1], 'Auto: Applied Aurora Glass Theme');
+  assert.equal(calls[4][2].canonicalDeck, canonicalDeck);
 });
 
 test('applyThemeTokenPreset refuses unavailable decks without mutating state', () => {

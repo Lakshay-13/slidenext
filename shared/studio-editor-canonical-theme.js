@@ -53,13 +53,31 @@
       && typeof canonicalDeckApi.updateCanonicalThemeTokens === 'function'
       ? canonicalDeckApi.updateCanonicalThemeTokens
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : null;
 
-    if (!updateCanonicalThemeTokens || !buildCanonicalDeck) return null;
+    if (!updateCanonicalThemeTokens) return null;
+
+    if (getCanonicalDeckBaseline) {
+      let liveCanonicalDeck = null;
+      try {
+        liveCanonicalDeck = getCanonicalDeckBaseline(options.sourceDocument);
+      } catch (err) {
+        liveCanonicalDeck = null;
+      }
+      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+        || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
+        if (liveCanonicalDeck) return liveCanonicalDeck;
+      }
+    }
+
+    if (!buildCanonicalDeck) return null;
     return buildCanonicalDeck(options.sourceDocument);
   }
 

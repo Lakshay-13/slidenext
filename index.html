@@ -7159,13 +7159,22 @@
         : null;
       if (!iframeDoc
         || !canonicalThemeApi
+        || typeof canonicalThemeApi.buildStudioCanonicalThemeBaseline !== 'function'
         || typeof canonicalThemeApi.buildStudioCanonicalThemeDeck !== 'function'
         || typeof canonicalThemeApi.applyStudioCanonicalThemeTokenUpdates !== 'function'
         || !canonicalDeckApi) {
         return false;
       }
 
-      const canonicalDeckBeforeMutation = buildEditorCanonicalDeck(iframeDoc);
+      const canonicalDeckBeforeMutation = canonicalThemeApi.buildStudioCanonicalThemeBaseline({
+        canonicalDeckApi,
+        sourceDocument: iframeDoc,
+        getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+          sourceDoc || iframeDoc,
+          studioEditorSessionToken
+        ),
+        buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc || iframeDoc)
+      });
       const canonicalDeck = canonicalThemeApi.buildStudioCanonicalThemeDeck(preset.tokens, {
         canonicalDeckApi,
         canonicalDeckBeforeMutation

@@ -58,6 +58,42 @@ test('applyStudioCanonicalThemeTokenUpdates is a no-op for invalid or unchanged 
   }), false);
 });
 
+test('buildStudioCanonicalThemeBaseline prefers a valid live canonical deck', () => {
+  const liveDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let didBuildFromDocument = false;
+  const result = canonicalTheme.buildStudioCanonicalThemeBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return liveDeck;
+    },
+    buildCanonicalDeck() {
+      didBuildFromDocument = true;
+      return canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+    }
+  });
+
+  assert.equal(result, liveDeck);
+  assert.equal(didBuildFromDocument, false);
+});
+
+test('buildStudioCanonicalThemeBaseline falls back when the live canonical deck is invalid', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let didBuildFromDocument = false;
+  const result = canonicalTheme.buildStudioCanonicalThemeBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return { invalid: true };
+    },
+    buildCanonicalDeck() {
+      didBuildFromDocument = true;
+      return sourceDeck;
+    }
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(didBuildFromDocument, true);
+});
+
 test('buildStudioCanonicalThemeDeck applies token updates to a supplied baseline', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     theme: { tokens: { '--color-primary': '#7028d0' } },
