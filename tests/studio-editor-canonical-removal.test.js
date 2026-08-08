@@ -24,6 +24,24 @@ test('buildStudioCanonicalRemovalBaseline builds from the source document', () =
   assert.equal(result, sourceDeck);
 });
 
+test('buildStudioCanonicalRemovalBaseline prefers a valid live canonical deck', () => {
+  const liveDeck = canonicalDeck.createCanonicalDeck({ slides: [] });
+  let didBuildFromDocument = false;
+  const result = canonicalRemoval.buildStudioCanonicalRemovalBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return liveDeck;
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return canonicalDeck.createCanonicalDeck({ slides: [] });
+    }
+  });
+
+  assert.equal(result, liveDeck);
+  assert.equal(didBuildFromDocument, false);
+});
+
 test('buildStudioCanonicalRemovalDeck removes selected nodes without mutating the source', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{
@@ -79,6 +97,30 @@ test('buildStudioCanonicalRemovalMutation centralizes baseline and node removal'
   assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['after']);
   assert.equal(baselineBuildCount, 1);
   assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'after']);
+});
+
+test('buildStudioCanonicalRemovalMutation falls back when the live baseline is invalid', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1' }, { id: 'after' }] }]
+  });
+  let didBuildFromDocument = false;
+  const result = canonicalRemoval.buildStudioCanonicalRemovalMutation(
+    [{ dataset: { editorId: 'node-1' } }],
+    {
+      canonicalDeckApi: canonicalDeck,
+      getCanonicalDeckBaseline() {
+        return { invalid: true };
+      },
+      buildCanonicalDeckBaseline() {
+        didBuildFromDocument = true;
+        return sourceDeck;
+      },
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['after']);
+  assert.equal(didBuildFromDocument, true);
 });
 
 test('createStudioCanonicalRemovalMutationBuilders reuses an explicit baseline', () => {

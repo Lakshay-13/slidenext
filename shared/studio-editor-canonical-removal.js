@@ -20,10 +20,24 @@
       : typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
 
-    if (!removeCanonicalNodes || !buildCanonicalDeck) {
-      return null;
+    if (!removeCanonicalNodes) return null;
+    if (getCanonicalDeckBaseline) {
+      let liveCanonicalDeck = null;
+      try {
+        liveCanonicalDeck = getCanonicalDeckBaseline(options.sourceDocument);
+      } catch (err) {
+        liveCanonicalDeck = null;
+      }
+      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+        || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
+        if (liveCanonicalDeck) return liveCanonicalDeck;
+      }
     }
+    if (!buildCanonicalDeck) return null;
 
     return buildCanonicalDeck(options.sourceDocument);
   }
@@ -62,12 +76,17 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
-    if (!canonicalDeckApi || (!buildCanonicalDeck && !buildCanonicalDeckBaseline)) return null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
+    if (!canonicalDeckApi
+      || (!buildCanonicalDeck && !buildCanonicalDeckBaseline && !getCanonicalDeckBaseline)) return null;
 
     const canonicalDeckBeforeMutation = buildStudioCanonicalRemovalBaseline({
       canonicalDeckApi,
       buildCanonicalDeck,
       buildCanonicalDeckBaseline,
+      getCanonicalDeckBaseline,
       sourceDocument: options.sourceDocument
     });
     return buildStudioCanonicalRemovalDeck(selection, {
@@ -86,12 +105,16 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const buildCanonicalRemovalBaseline = (baselineOptions = {}) => (
       buildStudioCanonicalRemovalBaseline({
         ...baselineOptions,
         canonicalDeckApi,
         buildCanonicalDeck,
-        buildCanonicalDeckBaseline
+        buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline
       })
     );
     const buildCanonicalRemovalDeck = (selection, deckOptions = {}) => {
@@ -106,6 +129,7 @@
         canonicalDeckApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline,
         canonicalDeckBeforeMutation
       });
     };

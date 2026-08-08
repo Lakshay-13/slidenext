@@ -228,6 +228,10 @@ test('element removal wiring rebuilds the canonical deck from the iframe DOM', (
     controllerSource,
     /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
   );
+  assert.match(
+    controllerSource,
+    /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
+  );
 });
 
 test('layer order wiring rebuilds the canonical deck from the iframe DOM', () => {
