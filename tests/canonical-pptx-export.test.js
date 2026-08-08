@@ -216,6 +216,31 @@ test('createCanonicalPptxExport preserves table cell spans', () => {
   ]);
 });
 
+test('createCanonicalPptxExport preserves explicit table column widths', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      nodes: [{
+        id: 'sized-table',
+        type: 'table',
+        layout: { x: 0, y: 0, width: 400, height: 100 },
+        children: [{
+          tagName: 'tr',
+          children: [
+            { tagName: 'td', text: 'Narrow', style: 'width: 100px;' },
+            { tagName: 'td', text: 'Wide', style: 'width: 300px;' }
+          ]
+        }]
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const columnWidths = result.pptx.slides[0].calls[0].options.colW;
+  assert.equal(columnWidths.length, 2);
+  assert.ok(Math.abs(columnWidths[0] - 1.3333) < 0.001);
+  assert.ok(Math.abs(columnWidths[1] - 3.9999) < 0.001);
+});
+
 test('resolvePptxExportOptions keeps the default wide layout for canonical 16:9 decks', () => {
   const result = pptxExport.resolvePptxExportOptions({
     layout: { size: { width: 1920, height: 1080, unit: 'px' } },

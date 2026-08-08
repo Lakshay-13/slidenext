@@ -352,6 +352,30 @@
     return risks;
   }
 
+  function getCanonicalTableColumnWidths(node, tableWidth) {
+    if (!(Number.isFinite(tableWidth) && tableWidth > 0)) return null;
+    const rows = (Array.isArray(node && node.children) ? node.children : [])
+      .filter(row => row && row.tagName === 'tr');
+    const rowWithWidths = rows.find((row) => {
+      const cells = (Array.isArray(row.children) ? row.children : [])
+        .filter(cell => cell && (cell.tagName === 'td' || cell.tagName === 'th'));
+      return cells.length > 0 && cells.every((cell) => {
+        const attributes = asObject(cell.attributes);
+        const colspan = Number.parseInt(cell.colspan || attributes.colspan, 10);
+        const width = parseCssPx(nodeStyle(cell).width);
+        return (!Number.isInteger(colspan) || colspan <= 1) && Number.isFinite(width) && width > 0;
+      });
+    });
+    if (!rowWithWidths) return null;
+
+    const widths = rowWithWidths.children
+      .filter(cell => cell && (cell.tagName === 'td' || cell.tagName === 'th'))
+      .map(cell => parseCssPx(nodeStyle(cell).width));
+    const totalWidth = widths.reduce((sum, width) => sum + width, 0);
+    if (!(totalWidth > 0)) return null;
+    return widths.map(width => tableWidth * (width / totalWidth));
+  }
+
   function getPptxRenderOrder(nodes = []) {
     return (Array.isArray(nodes) ? nodes : [])
       .map((node, index) => ({
@@ -1077,8 +1101,10 @@
           none: 'none',
           hidden: 'none'
         }[tableBorderStyle] || 'solid';
+        const tableColumnWidths = getCanonicalTableColumnWidths(node, bounds.w);
         context.slide.addTable(rows, {
           ...bounds,
+          ...(tableColumnWidths ? { colW: tableColumnWidths } : {}),
           border: { type: tableBorderType, color: tableBorderColor, pt: tableBorderWidth },
           color: tableColor,
           fill: tableFill,
