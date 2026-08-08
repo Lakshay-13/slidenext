@@ -1547,6 +1547,10 @@
           resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
           resolveSourceHtml: () => buildEditorSourceHtml(),
           buildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
+          getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
+            getIframeDoc(),
+            studioEditorSessionToken
+          ),
           getCurrentDocument: () => getIframeDoc(),
           resolveActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
             sourceDoc,

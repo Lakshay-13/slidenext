@@ -26,6 +26,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const getCurrentDocument = typeof options.getCurrentDocument === 'function'
       ? options.getCurrentDocument
       : () => null;
@@ -76,12 +79,21 @@
       }
 
       const historyOptions = resolveHistoryOptions() || {};
+      let canonicalDeckBaseline = null;
+      if (getCanonicalDeckBaseline) {
+        try {
+          canonicalDeckBaseline = getCanonicalDeckBaseline();
+        } catch (error) {
+          canonicalDeckBaseline = null;
+        }
+      }
       return sourceApi.applyStudioEditorSource(sourceHtml, {
         DOMParser: DOMParserConstructor,
         sanitizeSourceRoot: typeof historyOptions.sanitizeFrameRoot === 'function'
           ? historyOptions.sanitizeFrameRoot
           : null,
         buildCanonicalDeck,
+        ...(canonicalDeckBaseline ? { canonicalDeckBaseline } : {}),
         isCanonicalDeck,
         getCurrentDocument,
         resolveActiveSlideId,

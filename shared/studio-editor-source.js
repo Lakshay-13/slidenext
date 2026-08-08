@@ -75,9 +75,13 @@
     let canonicalDeck;
     if (buildCanonicalDeck) {
       try {
-        canonicalDeck = buildCanonicalDeck(parsedDocument, {
+        const buildOptions = {
           preferLiveCanonicalDeck: false
-        });
+        };
+        if (options.canonicalDeckBaseline) {
+          buildOptions.canonicalDeckBaseline = options.canonicalDeckBaseline;
+        }
+        canonicalDeck = buildCanonicalDeck(parsedDocument, buildOptions);
       } catch (error) {
         canonicalDeck = null;
       }

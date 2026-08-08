@@ -87,6 +87,17 @@ test('source controller blocks modal operations when deck actions are unavailabl
   assert.equal(calls.length, 0);
 });
 
+test('source controller forwards the live canonical baseline to source application', () => {
+  const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
+  const { calls, controller } = createController({
+    getCanonicalDeckBaseline: () => canonicalDeckBaseline
+  });
+
+  controller.applySourceHtml('<html></html>');
+
+  assert.equal(calls[0][2].canonicalDeckBaseline, canonicalDeckBaseline);
+});
+
 test('source controller reports source engine unavailability without throwing', () => {
   const { controller } = createController({ sourceApi: null });
 

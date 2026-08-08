@@ -139,6 +139,41 @@ test('applyStudioEditorSource preserves raw HTML when canonical import fails', (
   });
 });
 
+test('applyStudioEditorSource forwards the canonical rebuild baseline', () => {
+  const sourceRoot = {
+    innerHTML: '<section class="slide">Edited</section>',
+    querySelectorAll() {
+      return [{}];
+    }
+  };
+  const parsedDocument = { documentElement: sourceRoot };
+  const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
+  let capturedOptions = null;
+
+  const result = source.applyStudioEditorSource('<html>edited</html>', {
+    DOMParser: class DOMParser {
+      parseFromString() {
+        return parsedDocument;
+      }
+    },
+    canonicalDeckBaseline,
+    buildCanonicalDeck(_documentRef, options) {
+      capturedOptions = options;
+      return { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+    },
+    getCurrentDocument() {
+      return { id: 'live-frame' };
+    },
+    restoreHistoryEntry() {}
+  });
+
+  assert.equal(result.success, true);
+  assert.deepEqual(capturedOptions, {
+    preferLiveCanonicalDeck: false,
+    canonicalDeckBaseline
+  });
+});
+
 test('applyStudioEditorSource reports unavailable parser and empty source without invoking callbacks', () => {
   let callbackCalls = 0;
   const options = {
