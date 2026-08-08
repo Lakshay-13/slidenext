@@ -34,6 +34,7 @@ test('asset mutations prefer a valid live canonical baseline', () => {
   let didBuildFromDocument = false;
   const controller = assetController.createStudioEditorAssetController({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline: () => liveDeck,
     getCanonicalDeck: () => {
       didBuildFromDocument = true;
