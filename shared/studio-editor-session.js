@@ -232,6 +232,30 @@
       getPresentationUrl,
       getSessionToken
     });
+    const createReaders = sessionApi
+      && typeof sessionApi.createStudioEditorSessionStateReadersAdapter === 'function'
+      ? sessionApi.createStudioEditorSessionStateReadersAdapter
+      : createStudioEditorSessionStateReadersAdapter;
+    const readers = createReaders({
+      sessionApi,
+      getCurrentPresentationUrl: getPresentationUrl,
+      getCurrentSessionToken: getSessionToken
+    });
+    const createReaderOptions = sessionApi
+      && typeof sessionApi.createStudioEditorSessionReaderOptionsAdapter === 'function'
+      ? sessionApi.createStudioEditorSessionReaderOptionsAdapter
+      : createStudioEditorSessionReaderOptionsAdapter;
+    const readerOptions = createReaderOptions({
+      sessionApi,
+      readCurrentSessionState: () => (
+        typeof readers === 'function'
+          ? readers()
+          : createStudioSessionStateReaders({
+              getCurrentPresentationUrl: getPresentationUrl,
+              getCurrentSessionToken: getSessionToken
+            })
+      )
+    });
     const setPresentationUrl = typeof options.setPresentationUrl === 'function'
       ? options.setPresentationUrl
       : () => {};
@@ -277,7 +301,30 @@
           };
     }
 
-    return { update, capture };
+    function readSessionState() {
+      return typeof readers === 'function'
+        ? readers()
+        : createStudioSessionStateReaders({
+            getCurrentPresentationUrl: getPresentationUrl,
+            getCurrentSessionToken: getSessionToken
+          });
+    }
+
+    function createSessionReaderOptions(nextOptions = {}) {
+      return typeof readerOptions === 'function'
+        ? readerOptions(nextOptions)
+        : {
+            ...readSessionState(),
+            ...(nextOptions && typeof nextOptions === 'object' ? nextOptions : {})
+          };
+    }
+
+    return {
+      readers: readSessionState,
+      readerOptions: createSessionReaderOptions,
+      update,
+      capture
+    };
   }
 
   function isCurrentStudioEditorSession(options = {}) {

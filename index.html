@@ -3423,6 +3423,11 @@
     }
 
     function createCurrentStudioSessionStateReaders() {
+      if (typeof studioEditorSessionStateController !== 'undefined'
+        && studioEditorSessionStateController
+        && typeof studioEditorSessionStateController.readers === 'function') {
+        return studioEditorSessionStateController.readers();
+      }
       const createStudioEditorSessionStateReadersAdapter = (
         typeof SlideNextStudioEditorSession !== 'undefined'
         && SlideNextStudioEditorSession
@@ -3467,6 +3472,11 @@
     }
 
     function createCurrentStudioSessionReaderOptions(options = {}) {
+      if (typeof studioEditorSessionStateController !== 'undefined'
+        && studioEditorSessionStateController
+        && typeof studioEditorSessionStateController.readerOptions === 'function') {
+        return studioEditorSessionStateController.readerOptions(options);
+      }
       const createStudioEditorSessionReaderOptionsAdapter = (
         typeof SlideNextStudioEditorSession !== 'undefined'
         && SlideNextStudioEditorSession

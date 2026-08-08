@@ -358,6 +358,30 @@ test('createStudioEditorPresentationSessionStateController captures the live ses
   });
 });
 
+test('createStudioEditorPresentationSessionStateController provides live readers and reader options', () => {
+  let presentationUrl = '/presentations/deck/index.html';
+  let sessionToken = 4;
+  const controller = editorSession.createStudioEditorPresentationSessionStateController({
+    sessionApi: editorSession,
+    getPresentationUrl: () => presentationUrl,
+    getSessionToken: () => sessionToken
+  });
+
+  const readers = controller.readers();
+  assert.equal(readers.getCurrentPresentationUrl(), presentationUrl);
+  assert.equal(readers.getCurrentSessionToken(), sessionToken);
+  assert.deepEqual(controller.readerOptions({ onLoad: 'load' }), {
+    getCurrentPresentationUrl: readers.getCurrentPresentationUrl,
+    getCurrentSessionToken: readers.getCurrentSessionToken,
+    onLoad: 'load'
+  });
+
+  presentationUrl = '/presentations/other/index.html';
+  sessionToken = 5;
+  assert.equal(readers.getCurrentPresentationUrl(), presentationUrl);
+  assert.equal(readers.getCurrentSessionToken(), sessionToken);
+});
+
 test('shouldHandleStudioFrameLoad requires an active matching editor session', () => {
   assert.equal(editorSession.shouldHandleStudioFrameLoad('', {
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
