@@ -113,6 +113,7 @@
     const slide = asPlainObject(seed);
     const layout = asPlainObject(slide.layout);
     const background = asPlainObject(layout.background);
+    const backgroundAssetId = normalizeString(background.assetId).trim();
     const source = asPlainObject(slide.source);
     const section = normalizeString(slide.section);
 
@@ -128,7 +129,8 @@
           color: normalizeString(background.color),
           image: normalizeString(background.image),
           className: normalizeString(background.className),
-          style: normalizeString(background.style)
+          style: normalizeString(background.style),
+          ...(backgroundAssetId ? { assetId: backgroundAssetId } : {})
         }
       },
       nodes: Array.isArray(slide.nodes)

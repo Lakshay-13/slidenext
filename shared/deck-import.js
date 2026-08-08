@@ -1157,6 +1157,13 @@
     const backgroundImage = normalizeString(slide.style && slide.style.backgroundImage)
       || findImportedStylePropertyValue(inlineStyleText, 'background-image')
       || (computedBackgroundImage.toLowerCase() === 'none' ? '' : computedBackgroundImage);
+    const backgroundAssetId = resolveImportedBackgroundAssetId(
+      slide,
+      [inlineStyleText, backgroundImage ? `background-image: ${backgroundImage};` : '']
+        .filter(Boolean)
+        .join(' '),
+      options
+    );
     if (sourceStyleText) {
       sourceAttributes.style = sourceStyleText;
     }
@@ -1173,7 +1180,8 @@
           color: backgroundColor,
           image: backgroundImage,
           className: sanitizeImportedSlideBackgroundClassName(slide.className, options),
-          style: backgroundStyleText
+          style: backgroundStyleText,
+          ...(backgroundAssetId ? { assetId: backgroundAssetId } : {})
         }
       },
       nodes: childElements.map((child, childIndex) => importElementToCanonicalNode(child, options, {

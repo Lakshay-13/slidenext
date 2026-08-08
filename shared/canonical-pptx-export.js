@@ -508,10 +508,14 @@
     const rawSource = extractCssImageSource(background && background.image);
     const source = resolveAssetSource(rawSource, options);
     const assets = deck && Array.isArray(deck.assets) ? deck.assets : [];
-    const asset = assets.find(item => item.src === rawSource || resolveAssetSource(item.src, options) === source);
+    const assetId = typeof background.assetId === 'string' ? background.assetId.trim() : '';
+    const asset = assetId
+      ? assets.find(item => item.id === assetId)
+      : assets.find(item => item.src === rawSource || resolveAssetSource(item.src, options) === source);
+    const resolvedSource = assetId && asset ? asset.src : rawSource || (asset && asset.src) || '';
     return {
       asset: asset || null,
-      source
+      source: resolveAssetSource(resolvedSource, options)
     };
   }
 

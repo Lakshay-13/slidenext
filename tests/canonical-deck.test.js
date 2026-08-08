@@ -53,6 +53,17 @@ test('createCanonicalNode preserves an explicit asset reference without requirin
   assert.equal(Object.prototype.hasOwnProperty.call(legacyNode, 'backgroundAssetId'), false);
 });
 
+test('createCanonicalSlide preserves an explicit background asset reference without requiring one', () => {
+  const slide = canonicalDeck.createCanonicalSlide({
+    id: 'slide-1',
+    layout: { background: { assetId: ' background-1 ' } }
+  });
+  const legacySlide = canonicalDeck.createCanonicalSlide({ id: 'slide-2' });
+
+  assert.equal(slide.layout.background.assetId, 'background-1');
+  assert.equal(Object.prototype.hasOwnProperty.call(legacySlide.layout.background, 'assetId'), false);
+});
+
 test('createCanonicalDeck preserves optional slide sections without changing empty slide shape', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     slides: [

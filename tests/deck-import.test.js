@@ -1757,6 +1757,39 @@ test('importSlideToCanonicalSlide promotes explicit background color and image d
   });
 });
 
+test('importSlideToCanonicalSlide promotes canonical background asset references', () => {
+  const explicitSlide = createImportedElement({
+    tagName: 'SECTION',
+    attributes: {
+      'data-background-asset-id': 'asset-explicit-background'
+    },
+    style: {
+      backgroundImage: 'url("assets/explicit-background.png")'
+    },
+    outerHTML: '<section data-background-asset-id="asset-explicit-background"></section>'
+  });
+  const resolvedSlide = createImportedElement({
+    tagName: 'SECTION',
+    attributes: {
+      style: 'background-image: url("assets/resolved-background.png");'
+    },
+    style: {
+      backgroundImage: 'url("assets/resolved-background.png")'
+    },
+    outerHTML: '<section style="background-image: url(&quot;assets/resolved-background.png&quot;);"></section>'
+  });
+
+  const explicit = deckImport.importSlideToCanonicalSlide(explicitSlide, 0);
+  const resolved = deckImport.importSlideToCanonicalSlide(resolvedSlide, 1, {
+    resolveAssetId(_element, source) {
+      return source === 'assets/resolved-background.png' ? 'asset-resolved-background' : '';
+    }
+  });
+
+  assert.equal(explicit.layout.background.assetId, 'asset-explicit-background');
+  assert.equal(resolved.layout.background.assetId, 'asset-resolved-background');
+});
+
 test('importSlideToCanonicalSlide promotes computed class-based background images and sizing', () => {
   const slide = createImportedElement({
     tagName: 'SECTION',

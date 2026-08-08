@@ -224,6 +224,27 @@ test('createCanonicalPptxExport prefers the canonical node background asset refe
   assert.equal(result.pptx.slides[0].calls[0].options.path, 'canonical.png');
 });
 
+test('createCanonicalPptxExport prefers the canonical slide background asset reference', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    assets: [
+      { id: 'asset-canonical-slide-background', src: 'canonical-background.png' },
+      { id: 'asset-legacy-slide-background', src: 'legacy-background.png' }
+    ],
+    slides: [{
+      layout: {
+        background: {
+          assetId: 'asset-canonical-slide-background',
+          image: 'url("legacy-background.png")'
+        }
+      },
+      nodes: []
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.equal(result.pptx.slides[0].calls[0].type, 'image');
+  assert.equal(result.pptx.slides[0].calls[0].options.path, 'canonical-background.png');
+});
+
 test('createCanonicalPptxExport preserves table cell spans', () => {
   const result = pptxExport.createCanonicalPptxExport({
     slides: [{
