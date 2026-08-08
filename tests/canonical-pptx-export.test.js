@@ -229,6 +229,46 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
   assert.deepEqual(result.diagnostics.missingAssets, []);
 });
 
+test('createCanonicalPptxExport resolves nested theme tokens and CSS fallbacks', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    theme: {
+      tokens: {
+        '--background': '#0f172a',
+        '--accent': '#14b8a6',
+        '--primary': 'var(--accent)'
+      }
+    },
+    slides: [{
+      layout: {
+        background: { style: 'background-color: var(--background);' }
+      },
+      nodes: [
+        {
+          id: 'themed-text',
+          type: 'text',
+          text: 'Themed text',
+          style: 'color: var(--primary);',
+          layout: { x: 0, y: 0, width: 300, height: 80 }
+        },
+        {
+          id: 'themed-shape',
+          type: 'shape',
+          style: 'background-color: var(--surface, rgba(255, 255, 255, 0.2)); border-color: var(--primary);',
+          layout: { x: 0, y: 100, width: 300, height: 80 }
+        }
+      ]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.pptx.slides[0].background, { color: '0F172A' });
+  assert.equal(result.pptx.slides[0].calls[0].options.color, '14B8A6');
+  assert.deepEqual(result.pptx.slides[0].calls[1].options.fill, {
+    color: 'FFFFFF',
+    transparency: 80
+  });
+  assert.equal(result.pptx.slides[0].calls[1].options.line.color, '14B8A6');
+});
+
 test('createCanonicalPptxExport prefers the canonical node asset reference', () => {
   const result = pptxExport.createCanonicalPptxExport({
     assets: [

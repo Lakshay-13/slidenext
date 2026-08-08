@@ -176,6 +176,87 @@
     }, {});
   }
 
+  function findCssFunctionEnd(value, startIndex) {
+    let depth = 0;
+    let quote = '';
+    for (let index = startIndex; index < value.length; index += 1) {
+      const char = value[index];
+      if (quote) {
+        if (char === quote && value[index - 1] !== '\\') quote = '';
+        continue;
+      }
+      if (char === '"' || char === "'") {
+        quote = char;
+        continue;
+      }
+      if (char === '(') depth += 1;
+      if (char === ')') {
+        depth -= 1;
+        if (depth === 0) return index;
+      }
+    }
+    return -1;
+  }
+
+  function splitCssFunctionArguments(value) {
+    let depth = 0;
+    let quote = '';
+    for (let index = 0; index < value.length; index += 1) {
+      const char = value[index];
+      if (quote) {
+        if (char === quote && value[index - 1] !== '\\') quote = '';
+        continue;
+      }
+      if (char === '"' || char === "'") {
+        quote = char;
+        continue;
+      }
+      if (char === '(') depth += 1;
+      if (char === ')' && depth > 0) depth -= 1;
+      if (char === ',' && depth === 0) {
+        return [value.slice(0, index), value.slice(index + 1)];
+      }
+    }
+    return [value, ''];
+  }
+
+  function resolveCssVariables(value, themeTokens = {}, resolving = new Set()) {
+    if (typeof value !== 'string' || !value.toLowerCase().includes('var(')) return value;
+    const tokens = asObject(themeTokens);
+    let output = '';
+    let cursor = 0;
+    const variablePattern = /var\s*\(/gi;
+    let match;
+    while ((match = variablePattern.exec(value))) {
+      const start = match.index;
+      const end = findCssFunctionEnd(value, start + match[0].length - 1);
+      if (end < 0) break;
+      output += value.slice(cursor, start);
+      const [rawName, rawFallback] = splitCssFunctionArguments(
+        value.slice(start + match[0].length, end)
+      );
+      const tokenName = rawName.trim();
+      const fallback = rawFallback.trim();
+      const hasToken = Object.prototype.hasOwnProperty.call(tokens, tokenName)
+        && typeof tokens[tokenName] === 'string'
+        && tokens[tokenName].trim() !== '';
+      if (/^--[A-Za-z_][A-Za-z0-9_-]*$/.test(tokenName)
+        && hasToken
+        && !resolving.has(tokenName)) {
+        const nextResolving = new Set(resolving);
+        nextResolving.add(tokenName);
+        output += resolveCssVariables(tokens[tokenName], tokens, nextResolving);
+      } else if (fallback) {
+        output += resolveCssVariables(fallback, tokens, resolving);
+      } else {
+        output += value.slice(start, end + 1);
+      }
+      cursor = end + 1;
+      variablePattern.lastIndex = end + 1;
+    }
+    return output + value.slice(cursor);
+  }
+
   function parseCssPx(value) {
     if (typeof value === 'number') return Number.isFinite(value) ? value : null;
     if (typeof value !== 'string') return null;
@@ -222,14 +303,14 @@
       || ['blockquote', 'code', 'li', 'p', 'pre', 'span'].includes(tagName);
   }
 
-  function getCanonicalTableRows(node) {
+  function getCanonicalTableRows(node, themeTokens = {}) {
     return (Array.isArray(node.children) ? node.children : [])
       .filter(row => row && row.tagName === 'tr')
       .map(row => (Array.isArray(row.children) ? row.children : [])
         .filter(cell => cell && (cell.tagName === 'td' || cell.tagName === 'th'))
         .map(cell => {
           const text = getNestedNodeText(cell);
-          const cellStyle = nodeStyle(cell);
+          const cellStyle = nodeStyle(cell, themeTokens);
           const cellAttributes = asObject(cell.attributes);
           const cellOptions = {};
           const cellFill = resolvePptxFillColor(cellStyle['background-color'] || cellStyle.background);
@@ -300,7 +381,7 @@
       .filter(row => row.length > 0);
   }
 
-  function getCanonicalTableFontSubstitutionRisks(node, availableFonts = []) {
+  function getCanonicalTableFontSubstitutionRisks(node, availableFonts = [], themeTokens = {}) {
     const tableNodeId = node && node.id ? node.id : 'unknown';
     const knownFonts = Array.isArray(availableFonts) ? availableFonts : [];
     const risks = [];
@@ -310,7 +391,7 @@
         (Array.isArray(row.children) ? row.children : [])
           .filter(cell => cell && (cell.tagName === 'td' || cell.tagName === 'th'))
           .forEach((cell, cellIndex) => {
-            const fontFamily = nodeStyle(cell)['font-family'];
+            const fontFamily = nodeStyle(cell, themeTokens)['font-family'];
             if (!fontFamily) return;
             const primaryFont = fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
             if (!primaryFont || knownFonts.includes(primaryFont)) return;
@@ -335,14 +416,14 @@
     };
   }
 
-  function getCanonicalTableBorderStyleRisks(node) {
+  function getCanonicalTableBorderStyleRisks(node, themeTokens = {}) {
     const tableNodeId = node && node.id ? node.id : 'unknown';
     const risks = [];
     const addRisk = (id, styleValue, scope) => {
       const fallback = getPptxBorderStyleFallback(styleValue);
       if (fallback) risks.push({ id, scope, ...fallback });
     };
-    addRisk(tableNodeId, nodeStyle(node)['border-style'], 'table');
+    addRisk(tableNodeId, nodeStyle(node, themeTokens)['border-style'], 'table');
     (Array.isArray(node && node.children) ? node.children : [])
       .filter(row => row && row.tagName === 'tr')
       .forEach((row, rowIndex) => {
@@ -351,7 +432,7 @@
           .forEach((cell, cellIndex) => {
             addRisk(
               `${tableNodeId}:cell-${rowIndex + 1}-${cellIndex + 1}`,
-              nodeStyle(cell)['border-style'],
+              nodeStyle(cell, themeTokens)['border-style'],
               'table cell'
             );
           });
@@ -359,7 +440,7 @@
     return risks;
   }
 
-  function getCanonicalTableColumnWidths(node, tableWidth) {
+  function getCanonicalTableColumnWidths(node, tableWidth, themeTokens = {}) {
     if (!(Number.isFinite(tableWidth) && tableWidth > 0)) return null;
     const rows = (Array.isArray(node && node.children) ? node.children : [])
       .filter(row => row && row.tagName === 'tr');
@@ -369,7 +450,7 @@
       return cells.length > 0 && cells.every((cell) => {
         const attributes = asObject(cell.attributes);
         const colspan = Number.parseInt(cell.colspan || attributes.colspan, 10);
-        const width = parseCssPx(nodeStyle(cell).width);
+        const width = parseCssPx(nodeStyle(cell, themeTokens).width);
         return (!Number.isInteger(colspan) || colspan <= 1) && Number.isFinite(width) && width > 0;
       });
     });
@@ -377,18 +458,18 @@
 
     const widths = rowWithWidths.children
       .filter(cell => cell && (cell.tagName === 'td' || cell.tagName === 'th'))
-      .map(cell => parseCssPx(nodeStyle(cell).width));
+      .map(cell => parseCssPx(nodeStyle(cell, themeTokens).width));
     const totalWidth = widths.reduce((sum, width) => sum + width, 0);
     if (!(totalWidth > 0)) return null;
     return widths.map(width => tableWidth * (width / totalWidth));
   }
 
-  function getCanonicalTableRowHeights(node, tableHeight) {
+  function getCanonicalTableRowHeights(node, tableHeight, themeTokens = {}) {
     if (!(Number.isFinite(tableHeight) && tableHeight > 0)) return null;
     const rows = (Array.isArray(node && node.children) ? node.children : [])
       .filter(row => row && row.tagName === 'tr');
     if (rows.length === 0) return null;
-    const heights = rows.map(row => parseCssPx(nodeStyle(row).height));
+    const heights = rows.map(row => parseCssPx(nodeStyle(row, themeTokens).height));
     if (!heights.every(height => Number.isFinite(height) && height > 0)) return null;
     const totalHeight = heights.reduce((sum, height) => sum + height, 0);
     if (!(totalHeight > 0)) return null;
@@ -582,7 +663,7 @@
     return bars;
   }
 
-  function parseCanonicalChartBarValue(node) {
+  function parseCanonicalChartBarValue(node, themeTokens = {}) {
     const attributes = ['data-chart-value', 'data-value'];
     for (const attribute of attributes) {
       const rawValue = getNodeAttribute(node, attribute).trim();
@@ -590,7 +671,7 @@
       const value = Number(rawValue);
       if (Number.isFinite(value)) return value;
     }
-    const height = nodeStyle(node).height;
+    const height = nodeStyle(node, themeTokens).height;
     const match = typeof height === 'string' && height.trim().match(/^(-?(?:\d+\.?\d*|\.\d+))(?:%|px)?$/i);
     return match ? Number(match[1]) : null;
   }
@@ -604,13 +685,13 @@
     return titleNode ? getNestedNodeText(titleNode) : '';
   }
 
-  function getCanonicalChartData(node) {
+  function getCanonicalChartData(node, themeTokens = {}) {
     const chartType = getNodeAttribute(node, 'data-chart-type').trim().toLowerCase() || 'bar';
     if (!['bar', 'column'].includes(chartType)) return null;
     let values = parseCanonicalChartNumberList(getNodeAttribute(node, 'data-chart-values'));
     if (values.length === 0) {
       const legacyBars = collectCanonicalChartBars(node && node.children)
-        .map(parseCanonicalChartBarValue);
+        .map(child => parseCanonicalChartBarValue(child, themeTokens));
       if (legacyBars.length > 0 && legacyBars.every(Number.isFinite)) values = legacyBars;
     }
     if (values.length === 0) return null;
@@ -673,7 +754,11 @@
   }
 
   function resolveSlideBackgroundImageAsset(background, deck, options) {
-    const rawSource = extractCssImageSource(background && background.image);
+    const themeTokens = asObject(deck && deck.theme && deck.theme.tokens);
+    const rawSource = extractCssImageSource(resolveCssVariables(
+      background && background.image,
+      themeTokens
+    ));
     const source = resolveAssetSource(rawSource, options);
     const assets = deck && Array.isArray(deck.assets) ? deck.assets : [];
     const assetId = typeof background.assetId === 'string' ? background.assetId.trim() : '';
@@ -692,7 +777,8 @@
   }
 
   function resolveNodeBackgroundImageAsset(node, deck, options) {
-    const style = nodeStyle(node);
+    const themeTokens = asObject(deck && deck.theme && deck.theme.tokens);
+    const style = nodeStyle(node, themeTokens);
     const rawSource = extractCssImageSource(style['background-image'] || style.background);
     const source = resolveAssetSource(rawSource, options);
     const attributes = asObject(node && node.attributes);
@@ -714,8 +800,8 @@
     };
   }
 
-  function resolveSlideBackgroundImageSizing(background, options, asset) {
-    const styles = parseStyle(background && background.style);
+  function resolveSlideBackgroundImageSizing(background, options, asset, themeTokens = {}) {
+    const styles = parseStyle(resolveCssVariables(background && background.style, themeTokens));
     const type = typeof styles['background-size'] === 'string'
       ? styles['background-size'].trim().toLowerCase()
       : '';
@@ -732,9 +818,9 @@
     }, asset);
   }
 
-  function hasSupportedSlideBackgroundStyle(background, imageSource, imageAsset) {
+  function hasSupportedSlideBackgroundStyle(background, imageSource, imageAsset, themeTokens = {}) {
     if (!imageSource) return false;
-    const styles = parseStyle(background && background.style);
+    const styles = parseStyle(resolveCssVariables(background && background.style, themeTokens));
     const properties = Object.keys(styles);
     if (properties.length === 0) return false;
     return properties.every((property) => {
@@ -759,15 +845,18 @@
     return `${node && node.id ? node.id : 'unknown'}:background`;
   }
 
-  function nodeStyle(node) {
+  function nodeStyle(node, themeTokens = {}) {
     const style = parseStyle(node.style);
     const attributes = asObject(node.attributes);
     if (typeof attributes.style === 'string') Object.assign(style, parseStyle(attributes.style));
+    Object.keys(style).forEach(property => {
+      style[property] = resolveCssVariables(style[property], themeTokens);
+    });
     return style;
   }
 
-  function nodeTransparency(node) {
-    return resolvePptxTransparency(nodeStyle(node).opacity);
+  function nodeTransparency(node, themeTokens = {}) {
+    return resolvePptxTransparency(nodeStyle(node, themeTokens).opacity);
   }
 
   function getPptxImageDimensions(asset) {
@@ -840,8 +929,8 @@
     };
   }
 
-  function resolveNodeImageSizing(node, bounds, asset) {
-    const styles = nodeStyle(node);
+  function resolveNodeImageSizing(node, bounds, asset, themeTokens = {}) {
+    const styles = nodeStyle(node, themeTokens);
     const objectFit = (styles['object-fit'] || '').trim().toLowerCase();
     if (objectFit !== 'cover' && objectFit !== 'contain') return null;
     return resolvePptxImageFitSizing(
@@ -880,8 +969,8 @@
     return properties;
   }
 
-  function resolveNodeBackgroundImageSizing(node, bounds, asset) {
-    const styles = nodeStyle(node);
+  function resolveNodeBackgroundImageSizing(node, bounds, asset, themeTokens = {}) {
+    const styles = nodeStyle(node, themeTokens);
     const type = (styles['background-size'] || '').trim().toLowerCase();
     if (type !== 'cover' && type !== 'contain') return null;
     const repeat = (styles['background-repeat'] || '').trim().toLowerCase();
@@ -891,10 +980,13 @@
     return resolvePptxImageFitSizing(type, position, bounds, asset);
   }
 
-  function resolveSlideBackgroundColor(background = {}) {
-    const directColor = normalizeHexColor(background.color);
+  function resolveSlideBackgroundColor(background = {}, themeTokens = {}) {
+    const directColor = normalizeHexColor(resolveCssVariables(background.color, themeTokens));
     if (directColor) return directColor;
-    const backgroundStyle = typeof background.style === 'string' ? background.style : '';
+    const backgroundStyle = resolveCssVariables(
+      typeof background.style === 'string' ? background.style : '',
+      themeTokens
+    );
     const styleColor = normalizeHexColor(backgroundStyle);
     if (styleColor) return styleColor;
     const parsedStyle = parseStyle(backgroundStyle);
@@ -917,8 +1009,8 @@
     };
   }
 
-  function textOptions(node, bounds) {
-    const style = nodeStyle(node);
+  function textOptions(node, bounds, themeTokens = {}) {
+    const style = nodeStyle(node, themeTokens);
     const tagName = typeof node.tagName === 'string' ? node.tagName.toLowerCase() : '';
     const cssFontSize = parseCssPx(style['font-size']);
     const defaultFontSize = /^h[1-6]$/.test(tagName)
@@ -968,11 +1060,11 @@
       ...verticalAlignment,
       ...textDecoration,
       ...characterSpacing
-    }, nodeTransparency(node));
+    }, nodeTransparency(node, themeTokens));
   }
 
-  function shapeOptions(node, bounds) {
-    const style = nodeStyle(node);
+  function shapeOptions(node, bounds, themeTokens = {}) {
+    const style = nodeStyle(node, themeTokens);
     const fill = resolvePptxFillColor(style['background-color'] || style.background) || { color: 'FFFFFF' };
     const lineColor = normalizeHexColor(style['border-color']) || fill.color;
     const lineWidth = parseCssPx(style['border-width']);
@@ -986,7 +1078,7 @@
         : ['none', 'hidden'].includes(borderStyle)
           ? { transparency: 100 }
           : {};
-    const transparency = nodeTransparency(node);
+    const transparency = nodeTransparency(node, themeTokens);
     return {
       ...bounds,
       fill: mergePptxTransparency(fill, transparency),
@@ -1003,8 +1095,8 @@
     return shapeTypes[name] || name;
   }
 
-  function resolvePptxBorderRadius(node) {
-    const style = nodeStyle(node);
+  function resolvePptxBorderRadius(node, themeTokens = {}) {
+    const style = nodeStyle(node, themeTokens);
     const radiusValue = typeof style['border-radius'] === 'string'
       ? style['border-radius'].trim().split(/\s+/)[0]
       : '';
@@ -1016,8 +1108,8 @@
     return radius > 0 ? { isPercent, radius } : null;
   }
 
-  function hasUnsupportedPptxBorderRadius(node) {
-    const value = nodeStyle(node)['border-radius'];
+  function hasUnsupportedPptxBorderRadius(node, themeTokens = {}) {
+    const value = nodeStyle(node, themeTokens)['border-radius'];
     if (typeof value !== 'string' || !value.trim()) return false;
     const [horizontalPart, verticalPart] = value.split('/').map(part => part.trim());
     if (verticalPart) return true;
@@ -1025,10 +1117,10 @@
     return tokens.length > 1 && tokens.some(token => token !== tokens[0]);
   }
 
-  function resolvePptxNodeShapeType(node, bounds, pptx) {
+  function resolvePptxNodeShapeType(node, bounds, pptx, themeTokens = {}) {
     const shapeTypes = asObject(pptx && pptx.ShapeType);
     const rectangle = shapeTypes.rect || 'rect';
-    const radius = resolvePptxBorderRadius(node);
+    const radius = resolvePptxBorderRadius(node, themeTokens);
     if (!radius) return rectangle;
 
     const nodeLayout = getNodeCanvasLayout(node);
@@ -1106,6 +1198,7 @@
     const normalizedOptions = resolvedExportOptions.options;
     const sourceSize = resolvedExportOptions.sourceSize;
     const diagnostics = createExportDiagnostics();
+    const themeTokens = asObject(deck.theme && deck.theme.tokens);
 
     function visit(node, origin = {}, parentClip = null) {
       if (!node || node.visibility?.hidden) return;
@@ -1153,11 +1246,11 @@
       }
 
       const imageNode = type === 'image' || node.tagName === 'img';
-      const style = nodeStyle(node);
+      const style = nodeStyle(node, themeTokens);
       const nodeBackgroundValue = style['background-image'] || style.background || '';
       const nodeBackgroundAsset = resolveNodeBackgroundImageAsset(node, deck, normalizedOptions);
       const nodeBackgroundSource = nodeBackgroundAsset.source;
-      const chartData = type === 'chart' ? getCanonicalChartData(node) : null;
+      const chartData = type === 'chart' ? getCanonicalChartData(node, themeTokens) : null;
       const embedPlaceholderNode = type === 'embed' && isCanonicalEmbedPlaceholder(node);
       const svgData = getCanonicalInlineSvgData(node);
       if (UNSUPPORTED_NODE_TYPES.has(type)
@@ -1173,7 +1266,7 @@
         diagnostics.warnings.push(`Node ${nodeId} is not fully supported: node type ${type}`);
       }
       if (type === 'table' || node.tagName === 'table') {
-        if (getCanonicalTableRows(node).length === 0) {
+        if (getCanonicalTableRows(node, themeTokens).length === 0) {
           diagnostics.unsupportedNodes.push({
             id: nodeId,
             type: 'table',
@@ -1182,12 +1275,12 @@
           });
           diagnostics.warnings.push(`Node ${nodeId} is not fully supported: table has no exportable rows`);
         }
-        getCanonicalTableFontSubstitutionRisks(node, normalizedOptions.availableFonts)
+        getCanonicalTableFontSubstitutionRisks(node, normalizedOptions.availableFonts, themeTokens)
           .forEach((risk) => {
             diagnostics.fontSubstitutionRisks.push(risk);
             diagnostics.warnings.push(`Node ${risk.id} may substitute font ${risk.fontFamily}`);
           });
-        getCanonicalTableBorderStyleRisks(node).forEach((risk) => {
+        getCanonicalTableBorderStyleRisks(node, themeTokens).forEach((risk) => {
           diagnostics.unsupportedStyles.push({ id: risk.id, properties: ['border-style'] });
           diagnostics.warnings.push(
             `Node ${risk.id} uses unsupported ${risk.scope} border-style: ${risk.borderStyle}; using ${risk.fallbackStyle} fallback`
@@ -1280,7 +1373,7 @@
         }
       }
 
-      if (hasUnsupportedPptxBorderRadius(node)) {
+      if (hasUnsupportedPptxBorderRadius(node, themeTokens)) {
         diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['border-radius'] });
         diagnostics.warnings.push(`Node ${nodeId} uses unsupported non-uniform border-radius`);
       }
@@ -1328,9 +1421,10 @@
       const supportsBackgroundStyle = hasSupportedSlideBackgroundStyle(
         background,
         backgroundImageSource,
-        backgroundImageAsset.asset
+        backgroundImageAsset.asset,
+        themeTokens
       );
-      if (background.style && !resolveSlideBackgroundColor(background) && !supportsBackgroundStyle) {
+      if (background.style && !resolveSlideBackgroundColor(background, themeTokens) && !supportsBackgroundStyle) {
         diagnostics.unsupportedStyles.push({
           id: slide.id || 'unknown',
           properties: ['background']
@@ -1379,6 +1473,7 @@
 
   function renderNode(node, context, origin = {}) {
     if (!node || node.visibility?.hidden) return;
+    const themeTokens = asObject(context.deck.theme && context.deck.theme.tokens);
     const children = Array.isArray(node.children) ? node.children : [];
     const tagName = typeof node.tagName === 'string' ? node.tagName.toLowerCase() : '';
     const type = typeof node.type === 'string' ? node.type.toLowerCase() : '';
@@ -1387,14 +1482,14 @@
     const shapeNode = type === 'shape' || node.classes?.includes('editor-shape');
     const tableNode = type === 'table' || tagName === 'table';
     const chartNode = type === 'chart';
-    const chartData = chartNode ? getCanonicalChartData(node) : null;
+    const chartData = chartNode ? getCanonicalChartData(node, themeTokens) : null;
     const embedPlaceholderNode = type === 'embed' && isCanonicalEmbedPlaceholder(node);
     const svgData = getCanonicalInlineSvgData(node);
     const childOrigin = getNodeChildOrigin(node, origin);
     const hasExportableChildren = hasExportableChildBounds(children, childOrigin);
     const text = getNestedNodeText(node);
-    const style = nodeStyle(node);
-    const transparency = nodeTransparency(node);
+    const style = nodeStyle(node, themeTokens);
+    const transparency = nodeTransparency(node, themeTokens);
     const nodeBackgroundFill = mergePptxTransparency(
       resolvePptxFillColor(style['background-color'] || style.background),
       transparency
@@ -1408,7 +1503,7 @@
     if (nodeBackgroundFill && nodeBackgroundFill.transparency !== 100 && bounds
       && !shapeNode && !tableNode && !embedPlaceholderNode
       && typeof context.slide.addShape === 'function') {
-      context.slide.addShape(resolvePptxNodeShapeType(node, bounds, context.pptx), {
+      context.slide.addShape(resolvePptxNodeShapeType(node, bounds, context.pptx, themeTokens), {
         ...bounds,
         fill: nodeBackgroundFill,
         line: { color: nodeBackgroundFill.color, transparency: 100, width: 0 }
@@ -1419,7 +1514,12 @@
       const backgroundOptions = nodeBackgroundSource.startsWith('data:')
         ? { data: nodeBackgroundSource, ...bounds }
         : { path: nodeBackgroundSource, ...bounds };
-      const sizing = resolveNodeBackgroundImageSizing(node, bounds, nodeBackgroundAsset.asset);
+      const sizing = resolveNodeBackgroundImageSizing(
+        node,
+        bounds,
+        nodeBackgroundAsset.asset,
+        themeTokens
+      );
       if (sizing) {
         if (sizing.sizing) backgroundOptions.sizing = sizing.sizing;
         if (Number.isFinite(sizing.imageX)) backgroundOptions.x = sizing.imageX;
@@ -1429,7 +1529,7 @@
           backgroundOptions.h = sizing.imageHeight;
         }
       }
-      if (resolvePptxBorderRadius(node)) backgroundOptions.rounding = true;
+      if (resolvePptxBorderRadius(node, themeTokens)) backgroundOptions.rounding = true;
       context.slide.addImage(mergePptxTransparency(backgroundOptions, transparency));
     }
 
@@ -1447,17 +1547,20 @@
       }], chartOptions);
     } else if (embedPlaceholderNode && bounds) {
       if (typeof context.slide.addShape === 'function') {
-        context.slide.addShape(resolvePptxNodeShapeType(node, bounds, context.pptx), shapeOptions(node, bounds));
+        context.slide.addShape(
+          resolvePptxNodeShapeType(node, bounds, context.pptx, themeTokens),
+          shapeOptions(node, bounds, themeTokens)
+        );
       }
       if (text && typeof context.slide.addText === 'function') {
-        context.slide.addText(text, textOptions(node, bounds));
+        context.slide.addText(text, textOptions(node, bounds, themeTokens));
       }
     } else if (svgData && bounds && typeof context.slide.addImage === 'function') {
       context.slide.addImage({ data: svgData, ...bounds });
     } else if (tableNode) {
-      const rows = getCanonicalTableRows(node);
+      const rows = getCanonicalTableRows(node, themeTokens);
       if (rows.length > 0 && bounds && typeof context.slide.addTable === 'function') {
-        const tableStyle = nodeStyle(node);
+        const tableStyle = nodeStyle(node, themeTokens);
         const tableFontFace = typeof tableStyle['font-family'] === 'string'
           ? tableStyle['font-family'].split(',')[0].trim().replace(/^['"]|['"]$/g, '')
           : '';
@@ -1484,8 +1587,8 @@
           none: 'none',
           hidden: 'none'
         }[tableBorderStyle] || 'solid';
-        const tableColumnWidths = getCanonicalTableColumnWidths(node, bounds.w);
-        const tableRowHeights = getCanonicalTableRowHeights(node, bounds.h);
+        const tableColumnWidths = getCanonicalTableColumnWidths(node, bounds.w, themeTokens);
+        const tableRowHeights = getCanonicalTableRowHeights(node, bounds.h, themeTokens);
         context.slide.addTable(rows, {
           ...bounds,
           ...(tableColumnWidths ? { colW: tableColumnWidths } : {}),
@@ -1508,7 +1611,7 @@
         const imageOptions = source.startsWith('data:')
           ? { data: source, ...bounds }
           : { path: source, ...bounds };
-        const sizing = resolveNodeImageSizing(node, bounds, imageAsset.asset);
+        const sizing = resolveNodeImageSizing(node, bounds, imageAsset.asset, themeTokens);
         if (sizing) {
           if (sizing.sizing) imageOptions.sizing = sizing.sizing;
           if (Number.isFinite(sizing.imageX)) imageOptions.x = sizing.imageX;
@@ -1518,26 +1621,30 @@
             imageOptions.h = sizing.imageHeight;
           }
         }
-        if (resolvePptxBorderRadius(node)) imageOptions.rounding = true;
+        if (resolvePptxBorderRadius(node, themeTokens)) imageOptions.rounding = true;
         context.slide.addImage(mergePptxTransparency(imageOptions, transparency));
       }
     } else if (shapeNode) {
       if (bounds) {
-        context.slide.addShape(resolvePptxNodeShapeType(node, bounds, context.pptx), shapeOptions(node, bounds));
+        context.slide.addShape(
+          resolvePptxNodeShapeType(node, bounds, context.pptx, themeTokens),
+          shapeOptions(node, bounds, themeTokens)
+        );
       }
     } else if (!UNSUPPORTED_NODE_TYPES.has(type)
       && text
       && bounds
       && (children.length === 0 || (isTextContainerNode(node) && !hasExportableChildren))) {
-      context.slide.addText(text, textOptions(node, bounds));
+      context.slide.addText(text, textOptions(node, bounds, themeTokens));
     }
 
     getPptxRenderOrder(children).forEach(child => renderNode(child, context, childOrigin));
   }
 
   function renderSlide(slide, context) {
+    const themeTokens = asObject(context.deck.theme && context.deck.theme.tokens);
     const background = asObject(slide.layout).background || {};
-    const color = resolveSlideBackgroundColor(background);
+    const color = resolveSlideBackgroundColor(background, themeTokens);
     if (color) context.slide.background = { color };
     const backgroundAsset = resolveSlideBackgroundImageAsset(background, context.deck, context.options);
     const backgroundSource = backgroundAsset.source;
@@ -1555,7 +1662,12 @@
       const imageOptions = backgroundSource.startsWith('data:')
         ? { data: backgroundSource, ...bounds }
         : { path: backgroundSource, ...bounds };
-      const sizing = resolveSlideBackgroundImageSizing(background, context.options, backgroundAsset.asset);
+      const sizing = resolveSlideBackgroundImageSizing(
+        background,
+        context.options,
+        backgroundAsset.asset,
+        themeTokens
+      );
       if (sizing) {
         if (sizing.sizing) imageOptions.sizing = sizing.sizing;
         if (Number.isFinite(sizing.imageX)) imageOptions.x = sizing.imageX;
