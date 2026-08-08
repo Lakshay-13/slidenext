@@ -72,6 +72,24 @@ test('clearStudioMarqueeSelection hides the existing selection overlay', () => {
   assert.equal(overlay.style.display, 'none');
 });
 
+test('hideStudioSelectionOverlay ensures and hides the selection chrome for inline editing', () => {
+  const overlay = createOverlay();
+  const slide = {
+    querySelector(selector) {
+      assert.equal(selector, '#editorSelectionOverlay');
+      return overlay;
+    }
+  };
+
+  const result = overlayView.hideStudioSelectionOverlay({}, slide);
+
+  assert.equal(result, overlay);
+  assert.deepEqual(overlay.style, {
+    display: 'none',
+    pointerEvents: 'none'
+  });
+});
+
 test('syncStudioSelectionOverlay applies bounds and transform handle state', () => {
   const overlay = createOverlay();
   const slide = {

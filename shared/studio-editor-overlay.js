@@ -55,6 +55,14 @@
     return hud;
   }
 
+  function hideStudioSelectionOverlay(doc, slide, options = {}) {
+    const overlay = ensureStudioSelectionOverlay(doc, slide, options);
+    if (!overlay) return null;
+    overlay.style.display = 'none';
+    overlay.style.pointerEvents = 'none';
+    return overlay;
+  }
+
   function clearStudioGuides(slide, options = {}) {
     if (!slide) return;
     const guidesLayerId = options.guidesLayerId || 'editorGuidesLayer';
@@ -261,6 +269,7 @@
 
   return {
     ensureStudioSelectionOverlay,
+    hideStudioSelectionOverlay,
     ensureStudioGuidesLayer,
     ensureStudioDragHud,
     clearStudioGuides,

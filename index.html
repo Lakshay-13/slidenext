@@ -3411,10 +3411,15 @@
             && !isElementHidden(element),
           onStart: ({ element }) => {
             commitEditorSelectionState({ selectedElements: [element] });
-            const overlay = ensureSelectionOverlay(iframeDoc, getActiveSlide(iframeDoc));
-            if (overlay) {
-              overlay.style.display = 'none';
-              overlay.style.pointerEvents = 'none';
+            const overlayApi = typeof SlideNextStudioEditorOverlay !== 'undefined'
+              ? SlideNextStudioEditorOverlay
+              : null;
+            if (overlayApi && typeof overlayApi.hideStudioSelectionOverlay === 'function') {
+              overlayApi.hideStudioSelectionOverlay(
+                iframeDoc,
+                getActiveSlide(iframeDoc),
+                getEditorOverlayOptions()
+              );
             }
           },
           onCommit: ({ text }) => {
