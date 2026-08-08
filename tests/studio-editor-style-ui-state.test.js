@@ -441,6 +441,48 @@ test('updateStyleActionState delegates toolbar state assembly to the shared styl
   assert.equal(calls[0].canMutateDeck(), true);
 });
 
+test('updateStyleActionState prefers canonical lock metadata for style controls', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateStyleActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateStyleActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateLayerOrderActionState(doc = getIframeDoc()) {'
+  );
+  const selectedElement = { isConnected: true, locked: false };
+  const doc = { activeSlide: {} };
+  let receivedOptions = null;
+  const context = {
+    selectedElements: [selectedElement],
+    SlideNextStudioEditorStyle: {
+      syncStudioStyleToolbarState(options) {
+        receivedOptions = options;
+        return 'delegated';
+      }
+    },
+    document: {},
+    buildEditorCanonicalDeck() {
+      return { kind: 'slidenext.deck' };
+    },
+    resolveEditorCanonicalNodeForElement(element) {
+      return element === selectedElement
+        ? { visibility: { locked: true } }
+        : null;
+    },
+    getActiveSlide(currentDoc) {
+      return currentDoc && currentDoc.activeSlide ? currentDoc.activeSlide : null;
+    },
+    isElementLocked() {
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateStyleActionStateSource, context);
+
+  assert.equal(context.updateStyleActionState(doc), 'delegated');
+  assert.equal(receivedOptions.isLocked(selectedElement), true);
+});
+
 test('applySelectedElementStyle returns false and refreshes style controls when style edits are unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(

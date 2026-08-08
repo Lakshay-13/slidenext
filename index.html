@@ -6007,10 +6007,30 @@
       if (!styleApi || typeof styleApi.syncStudioStyleToolbarState !== 'function') {
         return false;
       }
+      let canonicalDeck = null;
+      if (typeof buildEditorCanonicalDeck === 'function') {
+        try {
+          canonicalDeck = buildEditorCanonicalDeck(doc);
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      const readLockedState = canonicalDeck
+        ? (element) => {
+            const canonicalNode = typeof resolveEditorCanonicalNodeForElement === 'function'
+              ? resolveEditorCanonicalNodeForElement(element, canonicalDeck)
+              : null;
+            return canonicalNode
+              && canonicalNode.visibility
+              && typeof canonicalNode.visibility.locked === 'boolean'
+              ? canonicalNode.visibility.locked
+              : isElementLocked(element);
+          }
+        : isElementLocked;
       const toolbarOptions = {
         documentRef: document,
         elements: selectedElements,
-        isLocked: isElementLocked,
+        isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
       };
       return styleApi.syncStudioStyleToolbarState(toolbarOptions);
