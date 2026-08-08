@@ -6775,18 +6775,11 @@
       const rulerViewApi = typeof SlideNextStudioEditorRulerView !== 'undefined'
         ? SlideNextStudioEditorRulerView
         : null;
-      if (rulerViewApi && typeof rulerViewApi.syncStudioCanvasRulers === 'function') {
-        return rulerViewApi.syncStudioCanvasRulers({
-          documentRef: document,
-          zoomFactor
-        });
-      }
-      return rulerViewApi && typeof rulerViewApi.renderStudioCanvasRulers === 'function'
-        ? rulerViewApi.renderStudioCanvasRulers({
-            documentRef: document,
-            zoomFactor
-          })
-        : false;
+      if (!rulerViewApi || typeof rulerViewApi.syncStudioCanvasRulers !== 'function') return false;
+      return rulerViewApi.syncStudioCanvasRulers({
+        documentRef: document,
+        zoomFactor
+      });
     }
 
     // 4. Zoom Engine (Center workspace stage)
