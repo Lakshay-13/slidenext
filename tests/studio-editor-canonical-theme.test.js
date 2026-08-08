@@ -78,6 +78,21 @@ test('buildStudioCanonicalThemeBaseline prefers a valid live canonical deck', ()
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalThemeBaseline rejects invalid compatibility baselines', () => {
+  let rebuildCalls = 0;
+  const result = canonicalTheme.buildStudioCanonicalThemeBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeck: () => {
+      rebuildCalls += 1;
+      return { invalid: true };
+    }
+  });
+
+  assert.equal(result, null);
+  assert.equal(rebuildCalls, 1);
+});
+
 test('buildStudioCanonicalThemeBaseline falls back when the live canonical deck is invalid', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   let didBuildFromDocument = false;
