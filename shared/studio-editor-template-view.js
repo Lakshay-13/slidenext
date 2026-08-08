@@ -58,7 +58,23 @@
     return true;
   }
 
+  function syncStudioTemplateState(options = {}) {
+    const documentRef = options.documentRef;
+    const canUseTemplateActions = !!options.canUseTemplateActions;
+    if (documentRef && typeof documentRef.getElementById === 'function') {
+      ['saveActiveSlideTemplateBtn', 'templateNameInput'].forEach((id) => {
+        const control = documentRef.getElementById(id);
+        if (control) control.disabled = !canUseTemplateActions;
+      });
+    }
+    return renderStudioTemplateLibrary({
+      ...options,
+      canInsert: canUseTemplateActions
+    });
+  }
+
   return {
-    renderStudioTemplateLibrary
+    renderStudioTemplateLibrary,
+    syncStudioTemplateState
   };
 });

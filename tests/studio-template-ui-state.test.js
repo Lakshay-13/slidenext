@@ -150,6 +150,37 @@ test('shared template view wires insert and remove actions to injected callbacks
   assert.deepEqual(calls, [['insert', 'hero'], ['remove', 'hero']]);
 });
 
+test('shared template state sync updates template controls before rendering the library', () => {
+  const controls = {
+    saveActiveSlideTemplateBtn: { disabled: false },
+    templateNameInput: { disabled: false }
+  };
+  const list = {
+    children: [],
+    textContent: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const documentRef = {
+    getElementById(id) {
+      return controls[id] || (id === 'savedTemplatesList' ? list : null);
+    },
+    createElement() {
+      return { textContent: '' };
+    }
+  };
+
+  assert.equal(templateView.syncStudioTemplateState({
+    documentRef,
+    templates: [],
+    canUseTemplateActions: false
+  }), true);
+  assert.equal(controls.saveActiveSlideTemplateBtn.disabled, true);
+  assert.equal(controls.templateNameInput.disabled, true);
+  assert.equal(list.children[0].textContent, 'No slide templates saved');
+});
+
 test('insertSavedTemplate delegates to the template controller and refreshes editor state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(

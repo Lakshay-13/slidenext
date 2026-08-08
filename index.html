@@ -5808,20 +5808,23 @@
     }
 
     function updateTemplateActionState(doc = getIframeDoc()) {
-      const canSave = !!getActiveSlide(doc);
-      const documentApi = typeof document !== 'undefined'
-        && document
-        && typeof document.getElementById === 'function'
-        ? document
+      const templateView = typeof SlideNextStudioEditorTemplateView !== 'undefined'
+        ? SlideNextStudioEditorTemplateView
         : null;
-      const button = documentApi ? documentApi.getElementById('saveActiveSlideTemplateBtn') : null;
-      const nameInput = documentApi ? documentApi.getElementById('templateNameInput') : null;
-      if (button) button.disabled = !canSave;
-      if (nameInput) nameInput.disabled = !canSave;
+      if (!templateView || typeof templateView.syncStudioTemplateState !== 'function') {
+        return false;
+      }
+      const canSave = !!getActiveSlide(doc);
       const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(doc)
         : null;
-      renderSavedTemplates(canonicalDeck && canonicalDeck.templates);
+      templateView.syncStudioTemplateState({
+        documentRef: document,
+        templates: canonicalDeck && canonicalDeck.templates,
+        canUseTemplateActions: canSave,
+        insertTemplate: typeof insertSavedTemplate === 'function' ? insertSavedTemplate : null,
+        removeTemplate: typeof removeSavedTemplate === 'function' ? removeSavedTemplate : null
+      });
       return canSave;
     }
 
