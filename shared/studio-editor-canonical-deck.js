@@ -97,6 +97,7 @@
       const canonicalDeck = buildCanonicalDeckFromDocument(doc, {
         presentationMetadata: presentationMetadata || buildPresentationMetadataSeed(presentationUrl, presentationTitle),
         sourcePath: presentationUrl,
+        canonicalDeckBaseline: buildOptions.canonicalDeckBaseline,
         getSlideId: options.getSlideId,
         getNodeId: options.getNodeId
       });

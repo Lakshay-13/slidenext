@@ -142,3 +142,29 @@ test('canonical deck builder forwards the DOM rebuild baseline to the shared dec
   );
   assert.equal(capturedOptions.canonicalDeckBaseline, canonicalDeckBaseline);
 });
+
+test('canonical deck builder forwards the DOM rebuild baseline to the direct importer fallback', () => {
+  const documentRef = {};
+  const canonicalDeckBaseline = createDeck('baseline');
+  const importedDeck = createDeck('imported');
+  let capturedOptions = null;
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    getCurrentPresentationMetadata: () => ({ id: 'demo' }),
+    getPersistedCanonicalDeck: () => null,
+    buildCanonicalDeckFromDocument(_doc, options) {
+      capturedOptions = options;
+      return importedDeck;
+    },
+    getPresentationUrl: () => '/presentations/demo/index.html',
+    getPresentationTitle: () => 'Demo'
+  });
+
+  assert.equal(
+    builder(documentRef, {
+      preferLiveCanonicalDeck: false,
+      canonicalDeckBaseline
+    }),
+    importedDeck
+  );
+  assert.equal(capturedOptions.canonicalDeckBaseline, canonicalDeckBaseline);
+});
