@@ -264,6 +264,20 @@ test('transform wiring rebuilds the canonical deck from the iframe DOM', () => {
   );
 });
 
+test('deck mutation finalizer wiring uses the DOM mutation canonical builder', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const controllerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorDeckMutationFinalizer =',
+    'const studioEditorSlideMutationPersistenceFinalizer ='
+  );
+
+  assert.match(
+    controllerSource,
+    /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/
+  );
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(
