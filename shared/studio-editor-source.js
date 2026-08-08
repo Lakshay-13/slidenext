@@ -14,6 +14,27 @@
     };
   }
 
+  function resolveSourceSlideCount(parsedDocument, sourceRoot, options = {}) {
+    if (typeof options.resolveSourceSlideCount === 'function') {
+      try {
+        const count = options.resolveSourceSlideCount(parsedDocument, sourceRoot);
+        return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
+      } catch (error) {
+        return 0;
+      }
+    }
+
+    const queryRoot = parsedDocument && typeof parsedDocument.querySelectorAll === 'function'
+      ? parsedDocument
+      : sourceRoot;
+    if (!queryRoot || typeof queryRoot.querySelectorAll !== 'function') return 0;
+    try {
+      return queryRoot.querySelectorAll('.slide').length;
+    } catch (error) {
+      return 0;
+    }
+  }
+
   function applyStudioEditorSource(sourceHtml = '', options = {}) {
     if (typeof sourceHtml !== 'string' || !sourceHtml.trim()) {
       return fail('Source HTML is empty');
@@ -51,23 +72,28 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
-    if (!buildCanonicalDeck) {
-      return fail('Canonical deck builder is unavailable');
-    }
-
     let canonicalDeck;
-    try {
-      canonicalDeck = buildCanonicalDeck(parsedDocument, {
-        preferLiveCanonicalDeck: false
-      });
-    } catch (error) {
-      return fail('Source HTML could not be converted to a canonical deck');
+    if (buildCanonicalDeck) {
+      try {
+        canonicalDeck = buildCanonicalDeck(parsedDocument, {
+          preferLiveCanonicalDeck: false
+        });
+      } catch (error) {
+        canonicalDeck = null;
+      }
     }
 
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : (value) => !!value && typeof value === 'object' && Array.isArray(value.slides);
-    if (!isCanonicalDeck(canonicalDeck) || canonicalDeck.slides.length === 0) {
+    let hasCanonicalSlides = false;
+    try {
+      hasCanonicalSlides = isCanonicalDeck(canonicalDeck)
+        && canonicalDeck.slides.length > 0;
+    } catch (error) {
+      hasCanonicalSlides = false;
+    }
+    if (!hasCanonicalSlides && resolveSourceSlideCount(parsedDocument, sourceRoot, options) === 0) {
       return fail('Source HTML must contain at least one slide');
     }
 
@@ -84,7 +110,9 @@
     const resolvedActiveSlideId = resolveActiveSlideId(parsedDocument, canonicalDeck);
     const activeSlideId = typeof resolvedActiveSlideId === 'string' && resolvedActiveSlideId.trim()
       ? resolvedActiveSlideId
-      : (typeof canonicalDeck.slides[0].id === 'string' ? canonicalDeck.slides[0].id : '');
+      : (hasCanonicalSlides && typeof canonicalDeck.slides[0].id === 'string'
+        ? canonicalDeck.slides[0].id
+        : '');
     const historyEntry = {
       html: sourceRoot.innerHTML,
       activeSlideId,

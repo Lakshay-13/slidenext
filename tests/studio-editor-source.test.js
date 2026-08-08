@@ -101,6 +101,44 @@ test('applyStudioEditorSource fails before mutation when the source has no slide
   });
 });
 
+test('applyStudioEditorSource preserves raw HTML when canonical import fails', () => {
+  const sourceRoot = {
+    innerHTML: '<section class="slide">Legacy content</section>',
+    querySelectorAll(selector) {
+      assert.equal(selector, '.slide');
+      return [{}];
+    }
+  };
+  const parsedDocument = { documentElement: sourceRoot };
+  let restoredEntry = null;
+
+  const result = source.applyStudioEditorSource('<html>legacy</html>', {
+    DOMParser: class DOMParser {
+      parseFromString() {
+        return parsedDocument;
+      }
+    },
+    buildCanonicalDeck() {
+      throw new Error('legacy deck is not canonicalizable');
+    },
+    getCurrentDocument() {
+      return { id: 'live-frame' };
+    },
+    restoreHistoryEntry(historyEntry) {
+      restoredEntry = historyEntry;
+    }
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.canonicalDeck, null);
+  assert.deepEqual(restoredEntry, {
+    html: '<section class="slide">Legacy content</section>',
+    activeSlideId: '',
+    selectedElementIds: [],
+    canonicalDeck: null
+  });
+});
+
 test('applyStudioEditorSource reports unavailable parser and empty source without invoking callbacks', () => {
   let callbackCalls = 0;
   const options = {
