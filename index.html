@@ -7802,22 +7802,24 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckPlaybackStateCapturerAdapter
         : null;
       if (createStudioEditorPersistedDeckPlaybackStateCapturerAdapter) {
-        const adapter = createStudioEditorPersistedDeckPlaybackStateCapturerAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          deckPersistenceApi: typeof SlideNextDeckPersistence !== 'undefined'
-            ? SlideNextDeckPersistence
-            : null,
-          getSlides,
-          slideIdAttr: EDITOR_SLIDE_ID_ATTR,
-          resolveFallbackActiveSlideId: (nextDoc, nextCanonicalDeck) => resolveEditorFallbackActiveSlideId(
-            nextDoc,
-            nextCanonicalDeck || buildEditorCanonicalDeck(nextDoc)
-          )
-        });
-        const playbackState = typeof adapter === 'function'
-          ? adapter(doc, { canonicalDeck })
+        if (typeof capturePersistedDeckPlaybackState.adapter !== 'function') {
+          capturePersistedDeckPlaybackState.adapter = createStudioEditorPersistedDeckPlaybackStateCapturerAdapter({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            deckPersistenceApi: typeof SlideNextDeckPersistence !== 'undefined'
+              ? SlideNextDeckPersistence
+              : null,
+            getSlides,
+            slideIdAttr: EDITOR_SLIDE_ID_ATTR,
+            resolveFallbackActiveSlideId: (nextDoc, nextCanonicalDeck) => resolveEditorFallbackActiveSlideId(
+              nextDoc,
+              nextCanonicalDeck || buildEditorCanonicalDeck(nextDoc)
+            )
+          });
+        }
+        const playbackState = typeof capturePersistedDeckPlaybackState.adapter === 'function'
+          ? capturePersistedDeckPlaybackState.adapter(doc, { canonicalDeck })
           : null;
         if (playbackState !== null && typeof playbackState !== 'undefined') {
           return playbackState;

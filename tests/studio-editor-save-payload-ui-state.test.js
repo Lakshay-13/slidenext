@@ -5097,6 +5097,57 @@ test('capturePersistedDeckPlaybackState delegates through the editor persistence
   assert.equal(factoryOptions.slideIdAttr, 'data-slide-id');
 });
 
+test('capturePersistedDeckPlaybackState creates the shared persistence-state adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const capturePersistedDeckPlaybackStateSource = extractFunctionSource(
+    fileContent,
+    'function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {'
+  );
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextStudioEditorPersistence: {},
+    SlideNextDeckPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorPersistedDeckPlaybackStateCapturerAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(options.persistenceApi, context.SlideNextStudioEditorPersistence);
+        assert.equal(options.deckPersistenceApi, context.SlideNextDeckPersistence);
+        return (doc, nextOptions) => {
+          calls.push([doc, nextOptions]);
+          return { id: nextOptions.canonicalDeck.id };
+        };
+      }
+    },
+    getSlides() {
+      return [];
+    },
+    resolveEditorFallbackActiveSlideId() {
+      return 'slide-1';
+    },
+    buildEditorCanonicalDeck() {
+      return { id: 'built' };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(capturePersistedDeckPlaybackStateSource, context);
+
+  const iframeDoc = { label: 'iframe-doc' };
+  assert.deepEqual(
+    context.capturePersistedDeckPlaybackState(iframeDoc, { id: 'one' }),
+    { id: 'one' }
+  );
+  assert.deepEqual(
+    context.capturePersistedDeckPlaybackState(iframeDoc, { id: 'two' }),
+    { id: 'two' }
+  );
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls.map(([, options]) => options.canonicalDeck.id), ['one', 'two']);
+});
+
 test('capturePersistedDeckPlaybackState delegates through the shared editor persistence helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const capturePersistedDeckPlaybackStateSource = extractFunctionSource(
