@@ -192,3 +192,45 @@ test('lock and visibility readers rebuild when the live canonical baseline is in
   assert.equal(typeof readers.locked, 'function');
   assert.equal(typeof readers.hidden, 'function');
 });
+
+test('lock reader uses a rebuilt deck after strict compatibility validation', () => {
+  const selected = [{ isConnected: true, dataset: { editorId: 'node-1' } }];
+  const rebuiltDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', visibility: { locked: true } }] }]
+  });
+  let capturedDeck = null;
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    isCanonicalDeck: (value) => (
+      value
+        && value.kind === 'slidenext.deck'
+        && Array.isArray(value.slides)
+        ? true
+        : 1
+    )
+  };
+  const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
+    lockStateApi: {
+      buildStudioLockMutationPlan(elements, options) {
+        assert.equal(options.isLocked(elements[0]), true);
+        return { didChange: false };
+      }
+    },
+    canonicalDeckApi,
+    canonicalStateApi: {
+      createStudioEditorCanonicalLockReaderFromApi(deck) {
+        capturedDeck = deck;
+        return () => true;
+      }
+    },
+    getSelectedElements: () => selected,
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isLocked: () => false,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => rebuiltDeck
+  });
+
+  assert.equal(controller.toggleLock(), false);
+  assert.equal(capturedDeck, rebuiltDeck);
+});

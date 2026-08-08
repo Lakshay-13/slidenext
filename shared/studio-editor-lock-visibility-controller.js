@@ -80,6 +80,16 @@
       ? options.finalizeSelectionToggleMutation
       : null;
 
+    function isValidCanonicalDeck(value) {
+      if (!value) return false;
+      if (!canonicalDeckApi || typeof canonicalDeckApi.isCanonicalDeck !== 'function') return true;
+      try {
+        return canonicalDeckApi.isCanonicalDeck(value) === true;
+      } catch (err) {
+        return false;
+      }
+    }
+
     const resolveCanonicalDeck = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
@@ -94,14 +104,17 @@
           if (getCanonicalDeckBaseline) {
             try {
               const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
-              if (liveCanonicalDeck) return liveCanonicalDeck;
+              if (isValidCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
             } catch (err) {
               // Fall through to the document rebuild path.
             }
           }
           if (buildCanonicalDeckBaseline) {
             try {
-              return buildCanonicalDeckBaseline(sourceDocument);
+              const rebuiltCanonicalDeck = buildCanonicalDeckBaseline(sourceDocument);
+              return isValidCanonicalDeck(rebuiltCanonicalDeck)
+                ? rebuiltCanonicalDeck
+                : null;
             } catch (err) {
               return null;
             }
