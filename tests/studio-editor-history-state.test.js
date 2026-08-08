@@ -245,6 +245,33 @@ test('createStudioEditorHistoryStepAdapter builds independent undo and redo runn
   assert.equal(createdSteps[1].didStepKey, 'didRedo');
 });
 
+test('createStudioEditorHistoryStepStateAdapter reuses the shared step adapter', () => {
+  let createCalls = 0;
+  let capturedOptions = null;
+  const adapter = historyState.createStudioEditorHistoryStepStateAdapter({
+    historyStateApi: {
+      createStudioEditorHistoryStepAdapter(options) {
+        createCalls += 1;
+        capturedOptions = options;
+        return { undo: () => ({ didUndo: true }), redo: () => ({ didRedo: true }) };
+      }
+    },
+    historyApi: { id: 'history-api' },
+    triggerAutoSave: () => {}
+  });
+
+  assert.deepEqual(adapter.undo(), { didUndo: true });
+  assert.deepEqual(adapter.redo(), { didRedo: true });
+  assert.equal(createCalls, 1);
+  assert.equal(capturedOptions.historyApi.id, 'history-api');
+  assert.equal(capturedOptions.triggerAutoSave instanceof Function, true);
+  assert.equal('historyStateApi' in capturedOptions, false);
+});
+
+test('createStudioEditorHistoryStepStateAdapter fails closed without a shared step adapter', () => {
+  assert.equal(historyState.createStudioEditorHistoryStepStateAdapter(), null);
+});
+
 test('createStudioEditorHistoryFrameHtmlBuilder preserves capture and fallback callbacks', () => {
   const calls = [];
   const doc = { id: 'iframe-doc' };

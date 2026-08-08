@@ -7801,15 +7801,16 @@
     function getEditorHistoryStepAdapter() {
       if (typeof getEditorHistoryStepAdapter.adapter !== 'object'
         || !getEditorHistoryStepAdapter.adapter) {
-        const createStudioEditorHistoryStepAdapter = (
+        const createStudioEditorHistoryStepStateAdapter = (
           typeof SlideNextStudioEditorHistoryState !== 'undefined'
           && SlideNextStudioEditorHistoryState
-          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryStepAdapter === 'function'
+          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryStepStateAdapter === 'function'
         )
-          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryStepAdapter
+          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryStepStateAdapter
           : null;
-        if (!createStudioEditorHistoryStepAdapter) return null;
-        getEditorHistoryStepAdapter.adapter = createStudioEditorHistoryStepAdapter({
+        if (!createStudioEditorHistoryStepStateAdapter) return null;
+        getEditorHistoryStepAdapter.adapter = createStudioEditorHistoryStepStateAdapter({
+          historyStateApi: SlideNextStudioEditorHistoryState,
           historyApi: SlideNextStudioHistory,
           getUndoStack: () => undoStack,
           getRedoStack: () => redoStack,

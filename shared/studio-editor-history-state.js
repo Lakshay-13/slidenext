@@ -345,6 +345,24 @@
     };
   }
 
+  function createStudioEditorHistoryStepStateAdapter(options = {}) {
+    const historyStateApi = options.historyStateApi && typeof options.historyStateApi === 'object'
+      ? options.historyStateApi
+      : null;
+    const createHistoryStepAdapter = typeof options.createHistoryStepAdapter === 'function'
+      ? options.createHistoryStepAdapter
+      : historyStateApi && typeof historyStateApi.createStudioEditorHistoryStepAdapter === 'function'
+        ? historyStateApi.createStudioEditorHistoryStepAdapter
+        : null;
+    if (!createHistoryStepAdapter) return null;
+
+    const adapterOptions = { ...options };
+    delete adapterOptions.historyStateApi;
+    delete adapterOptions.createHistoryStepAdapter;
+    const stepAdapter = createHistoryStepAdapter(adapterOptions);
+    return stepAdapter && typeof stepAdapter === 'object' ? stepAdapter : null;
+  }
+
   function createStudioEditorHistoryFrameHtmlBuilder(options = {}) {
     const historyApi = options.historyApi && typeof options.historyApi === 'object'
       ? options.historyApi
@@ -384,6 +402,7 @@
     createStudioEditorHistoryCaptureAdapter,
     createStudioEditorHistoryCaptureStateAdapter,
     createStudioEditorHistoryStepAdapter,
+    createStudioEditorHistoryStepStateAdapter,
     createStudioEditorHistoryFrameHtmlBuilder
   };
 });

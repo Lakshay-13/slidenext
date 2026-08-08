@@ -116,6 +116,40 @@ test('updateHistoryButtons delegates editor control rendering to shared history 
   assert.deepEqual(delegatedArgs.redoStack, ['entry-2']);
 });
 
+test('getEditorHistoryStepAdapter delegates factory wiring through shared history state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let capturedOptions = null;
+  let createCalls = 0;
+  const context = {
+    SlideNextStudioHistory: { id: 'history-api' },
+    SlideNextStudioEditorHistoryState: {
+      createStudioEditorHistoryStepStateAdapter(options) {
+        createCalls += 1;
+        capturedOptions = options;
+        return { undo: () => ({ didUndo: true }), redo: () => ({ didRedo: true }) };
+      }
+    },
+    undoStack: ['undo-entry'],
+    redoStack: ['redo-entry'],
+    restoreFrameFromHistoryEntry() {},
+    updateHistoryButtons() {},
+    triggerAutoSave() {}
+  };
+
+  vm.createContext(context);
+  loadHistoryStepAdapter(fileContent, context);
+
+  assert.deepEqual(context.getEditorHistoryStepAdapter().undo(), { didUndo: true });
+  assert.equal(context.getEditorHistoryStepAdapter(), context.getEditorHistoryStepAdapter());
+  assert.equal(createCalls, 1);
+  assert.equal(capturedOptions.historyApi.id, 'history-api');
+  assert.deepEqual(capturedOptions.getUndoStack(), ['undo-entry']);
+  assert.deepEqual(capturedOptions.getRedoStack(), ['redo-entry']);
+  assert.equal(capturedOptions.restoreHistoryEntry, context.restoreFrameFromHistoryEntry);
+  assert.equal(capturedOptions.updateHistoryButtons, context.updateHistoryButtons);
+  assert.equal(capturedOptions.triggerAutoSave, context.triggerAutoSave);
+});
+
 test('updateHistoryButtons returns false when the shared history state is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateHistoryButtonsSource = extractFunctionSource(
