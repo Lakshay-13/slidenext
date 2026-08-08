@@ -6340,10 +6340,17 @@
     function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
-      if (!doc || !slide || !items || items.length === 0) return [];
+      const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
+        ? SlideNextStudioEditorClipboard
+        : null;
+      if (!doc || !slide || !items || items.length === 0
+        || !clipboardApi
+        || typeof clipboardApi.buildStudioClipboardInsertionPlan !== 'function') {
+        return [];
+      }
 
       const slideMetrics = getSlideMetrics(slide);
-      const insertionPlans = SlideNextStudioEditorClipboard.buildStudioClipboardInsertionPlan(items, offsetMultiplier, {
+      const insertionPlans = clipboardApi.buildStudioClipboardInsertionPlan(items, offsetMultiplier, {
         slide,
         prepareElement: makeElementsHoverable,
         isOnActiveSlide: (element) => !!(element && slide.contains(element)),

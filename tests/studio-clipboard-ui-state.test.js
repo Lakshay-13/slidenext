@@ -757,6 +757,31 @@ test('insertClipboardPayload delegates insertion application to the shared clipb
   assert.deepEqual(capturedTransaction, { type: 'markup' });
 });
 
+test('insertClipboardPayload returns no insertions when the shared clipboard module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const insertClipboardPayloadSource = extractFunctionSource(
+    fileContent,
+    'function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {',
+    '\n\n    function buildClipboardSelectionMutationPlan'
+  );
+  const doc = {};
+  const context = {
+    getIframeDoc() {
+      return doc;
+    },
+    getActiveSlide() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(insertClipboardPayloadSource, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(
+    context.insertClipboardPayload([{ id: 'source-1' }])
+  )), []);
+});
+
 test('updateClipboardActionState enables paste on a live slide and enables copy only when clipboard payloads can be built', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
