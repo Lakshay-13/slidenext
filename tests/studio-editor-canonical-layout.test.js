@@ -19,9 +19,12 @@ test('buildStudioCanonicalLayoutBaseline builds from the source document', () =>
   let builtFromDocument = null;
   const result = canonicalLayout.buildStudioCanonicalLayoutBaseline({
     canonicalDeckApi: canonicalDeck,
-    buildCanonicalDeck(documentRef) {
+    buildCanonicalDeckBaseline(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
+    },
+    buildCanonicalDeck() {
+      throw new Error('DOM mutation builder should not provide the baseline');
     },
     sourceDocument
   });
@@ -60,11 +63,16 @@ test('buildStudioCanonicalLayoutDeck supports a builder and fails closed without
 
 test('buildStudioCanonicalLayoutMutation maps positioned items onto a fresh canonical deck', () => {
   const sourceDeck = createSourceDeck();
+  let baselineBuildCount = 0;
   const element = { dataset: { editorId: 'node-1' } };
   const result = canonicalLayout.buildStudioCanonicalLayoutMutation({
     canonicalDeckApi: canonicalDeck,
-    buildCanonicalDeck() {
+    buildCanonicalDeckBaseline() {
+      baselineBuildCount += 1;
       return sourceDeck;
+    },
+    buildCanonicalDeck() {
+      throw new Error('DOM mutation builder should not provide the baseline');
     },
     nextItems: [{
       element,
@@ -77,6 +85,7 @@ test('buildStudioCanonicalLayoutMutation maps positioned items onto a fresh cano
   assert.equal(result.slides[0].nodes[0].layout.x, 40);
   assert.equal(result.slides[0].nodes[0].layout.y, 60);
   assert.equal(result.slides[0].nodes[0].layout.mode, 'absolute');
+  assert.equal(baselineBuildCount, 1);
   assert.equal(sourceDeck.slides[0].nodes[0].layout.x, null);
 });
 

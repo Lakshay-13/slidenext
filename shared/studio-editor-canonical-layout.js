@@ -11,9 +11,11 @@
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : null;
 
     if (!canonicalDeckApi || !buildCanonicalDeck) {
       return null;
@@ -48,11 +50,14 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const nextItems = Array.isArray(options.nextItems) ? options.nextItems : [];
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
-    if (!canonicalDeckApi || !buildCanonicalDeck) return null;
+    if (!canonicalDeckApi || (!buildCanonicalDeck && !buildCanonicalDeckBaseline)) return null;
 
     const layoutUpdates = nextItems.map((item) => {
       const nodeId = getElementId(item && item.element);
@@ -73,6 +78,7 @@
     const canonicalDeckBeforeMutation = buildStudioCanonicalLayoutBaseline({
       canonicalDeckApi,
       buildCanonicalDeck,
+      buildCanonicalDeckBaseline,
       sourceDocument: options.sourceDocument
     });
     return buildStudioCanonicalLayoutDeck(layoutUpdates, {
@@ -106,6 +112,7 @@
       : buildStudioCanonicalLayoutBaseline({
           canonicalDeckApi,
           buildCanonicalDeck: options.buildCanonicalDeck,
+          buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
           sourceDocument: options.sourceDocument
         });
 
@@ -122,10 +129,14 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     return (mutationOptions = {}) => buildStudioCanonicalLayoutMutation({
       ...mutationOptions,
       canonicalDeckApi,
-      buildCanonicalDeck
+      buildCanonicalDeck,
+      buildCanonicalDeckBaseline
     });
   }
 
@@ -136,10 +147,14 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     return (mutationOptions = {}) => buildStudioCanonicalLayerOrderMutation({
       ...mutationOptions,
       canonicalDeckApi,
-      buildCanonicalDeck
+      buildCanonicalDeck,
+      buildCanonicalDeckBaseline
     });
   }
 
