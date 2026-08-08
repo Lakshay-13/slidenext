@@ -299,6 +299,62 @@ test('updateLockActionState reuses the shared lock toolbar helper when available
   }]);
 });
 
+test('updateLockActionState prefers canonical lock metadata when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateLockActionStateSource = extractFunctionSource(
+    fileContent,
+    'function isElementLocked(el) {',
+    '\n\n    function buildRemovalSelectionActionState(doc = null) {'
+  );
+  const toggleLockSelectionBtn = { disabled: true };
+  const toggleLockSelectionIcon = { textContent: '' };
+  const toggleLockSelectionLabel = { textContent: '' };
+  const selectedElement = {
+    dataset: { editorId: 'node-1' }
+  };
+  const context = {
+    selectedElements: [selectedElement],
+    isElementLocked() {
+      return false;
+    },
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    buildEditorCanonicalDeck() {
+      return canonicalDeckModel.createCanonicalDeck({
+        slides: [{
+          id: 'slide-1',
+          nodes: [{
+            id: 'node-1',
+            visibility: { locked: true }
+          }]
+        }]
+      });
+    },
+    SlideNextStudioEditorLockState: lockState,
+    document: {
+      getElementById(id) {
+        if (id === 'toggleLockSelectionBtn') return toggleLockSelectionBtn;
+        if (id === 'toggleLockSelectionIcon') return toggleLockSelectionIcon;
+        if (id === 'toggleLockSelectionLabel') return toggleLockSelectionLabel;
+        return null;
+      }
+    },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateLockActionStateSource, context);
+
+  context.updateLockActionState({ activeSlide: {} });
+  assert.equal(toggleLockSelectionBtn.disabled, false);
+  assert.equal(toggleLockSelectionIcon.textContent, 'lock_open');
+  assert.equal(toggleLockSelectionLabel.textContent, 'Unlock Selected');
+});
+
 test('updateLockActionState delegates toolbar state assembly to the shared lock view', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateLockActionStateSource = extractFunctionSource(

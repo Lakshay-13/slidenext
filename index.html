@@ -5538,6 +5538,24 @@
       return SlideNextStudioElementState.isStudioElementLocked(el);
     }
 
+    function resolveEditorCanonicalNodeForElement(element, canonicalDeck = null) {
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const elementId = element && element.dataset && element.dataset.editorId;
+      if (!canonicalDeckApi
+        || typeof canonicalDeckApi.findCanonicalNodeById !== 'function'
+        || !elementId
+        || !canonicalDeck) {
+        return null;
+      }
+      try {
+        return canonicalDeckApi.findCanonicalNodeById(canonicalDeck, elementId);
+      } catch (error) {
+        return null;
+      }
+    }
+
     function getLiveSelectedElements(elements = selectedElements, doc = getIframeDoc()) {
       const liveSelectionApi = typeof SlideNextStudioEditorLiveSelection !== 'undefined'
         ? SlideNextStudioEditorLiveSelection
@@ -5587,10 +5605,28 @@
       if (!lockState || typeof lockState.syncStudioLockToolbarState !== 'function') {
         return false;
       }
+      let canonicalDeck = null;
+      if (typeof buildEditorCanonicalDeck === 'function') {
+        try {
+          canonicalDeck = buildEditorCanonicalDeck(doc);
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      const readLockedState = canonicalDeck
+        ? (element) => {
+            const canonicalNode = resolveEditorCanonicalNodeForElement(element, canonicalDeck);
+            return canonicalNode
+              && canonicalNode.visibility
+              && typeof canonicalNode.visibility.locked === 'boolean'
+              ? canonicalNode.visibility.locked
+              : isElementLocked(element);
+          }
+        : isElementLocked;
       return lockState.syncStudioLockToolbarState({
         documentRef: document,
         elements: selectedElements,
-        isLocked: isElementLocked,
+        isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
     }
