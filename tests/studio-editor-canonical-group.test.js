@@ -104,6 +104,29 @@ test('buildStudioCanonicalGroupBaseline rejects invalid compatibility baselines'
   assert.equal(rebuildCalls, 1);
 });
 
+test('buildStudioCanonicalGroupBaseline uses structural validation without a canonical validator', () => {
+  const canonicalDeckApi = {
+    groupCanonicalNodes() {}
+  };
+  const malformedDeck = { invalid: true };
+  const validDeck = { slides: [] };
+
+  assert.equal(
+    canonicalGroup.buildStudioCanonicalGroupBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => malformedDeck
+    }),
+    null
+  );
+  assert.equal(
+    canonicalGroup.buildStudioCanonicalGroupBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => validDeck
+    }),
+    validDeck
+  );
+});
+
 test('createStudioCanonicalGroupMutationBuilders preserves an explicit baseline', () => {
   const sourceDeck = createSourceDeck();
   const explicitBaseline = canonicalDeck.createCanonicalDeck({
