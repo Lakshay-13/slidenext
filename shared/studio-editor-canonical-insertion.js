@@ -26,6 +26,17 @@
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
+
+    function isValidCanonicalDeck(value) {
+      if (!value) return false;
+      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function') return true;
+      try {
+        return canonicalDeckApi.isCanonicalDeck(value) === true;
+      } catch (err) {
+        return false;
+      }
+    }
+
     if (!appendCanonicalNode) return null;
     const readCanonicalDeckBaseline = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
@@ -40,9 +51,7 @@
           if (getCanonicalDeckBaseline) {
             try {
               const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
-              if (liveCanonicalDeck
-                && (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
-                  || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
+              if (isValidCanonicalDeck(liveCanonicalDeck)) {
                 return liveCanonicalDeck;
               }
             } catch (err) {
@@ -50,7 +59,14 @@
             }
           }
           if (!buildCanonicalDeck) return null;
-          return buildCanonicalDeck(sourceDocument);
+          try {
+            const rebuiltCanonicalDeck = buildCanonicalDeck(sourceDocument);
+            return isValidCanonicalDeck(rebuiltCanonicalDeck)
+              ? rebuiltCanonicalDeck
+              : null;
+          } catch (err) {
+            return null;
+          }
         };
 
     return readCanonicalDeckBaseline(options.sourceDocument);
