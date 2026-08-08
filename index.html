@@ -9495,7 +9495,7 @@
       const deckReadyView = typeof SlideNextStudioDeckReady !== 'undefined'
         ? SlideNextStudioDeckReady
         : null;
-      if (!deckReadyView) {
+      if (!deckReadyView || typeof deckReadyView.syncStudioDeckReadyToolbarActionState !== 'function') {
         return false;
       }
       const toolbarOptions = {
@@ -9510,16 +9510,7 @@
           ? currentStudioSaveButtonState
           : 'idle'
       };
-      if (typeof deckReadyView.syncStudioDeckReadyToolbarActionState === 'function') {
-        return deckReadyView.syncStudioDeckReadyToolbarActionState(toolbarOptions);
-      }
-      if (typeof deckReadyView.renderStudioDeckReadyToolbarActionState !== 'function') {
-        return false;
-      }
-      return deckReadyView.renderStudioDeckReadyToolbarActionState({
-        documentRef: document,
-        actionState: resolveCurrentStudioDeckReadyActionState(doc)
-      });
+      return deckReadyView.syncStudioDeckReadyToolbarActionState(toolbarOptions);
     }
 
     function setStudioAutoSaveStatus(state) {

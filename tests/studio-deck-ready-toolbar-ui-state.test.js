@@ -376,6 +376,10 @@ test('updateDeckReadyToolbarActionState delegates action gating to the shared de
           canLaunchPreview: true
         };
       },
+      syncStudioDeckReadyToolbarActionState(options = {}) {
+        calls.push(options);
+        return deckReadyView.syncStudioDeckReadyToolbarActionState(options);
+      },
       renderStudioDeckReadyToolbarActionState(options = {}) {
         return deckReadyView.renderStudioDeckReadyToolbarActionState(options);
       }
@@ -394,6 +398,7 @@ test('updateDeckReadyToolbarActionState delegates action gating to the shared de
   context.updateDeckReadyToolbarActionState(doc);
 
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
+    documentRef: {},
     doc,
     presentationUrl: '/presentations/onboarding-presentation/index.html',
     persistedDeckStateWithContent,
