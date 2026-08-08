@@ -108,6 +108,53 @@ test('shared asset view wires use and remove actions to injected callbacks', () 
   assert.deepEqual(calls, [['apply', 'hero'], ['remove', 'hero']]);
 });
 
+test('shared asset state sync derives image eligibility before rendering the library', () => {
+  const list = {
+    children: [],
+    set textContent(value) {
+      this.children = [];
+      this.value = value;
+    },
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const documentRef = {
+    getElementById() {
+      return list;
+    },
+    createElement() {
+      return {
+        textContent: '',
+        children: [],
+        disabled: false,
+        addEventListener() {},
+        appendChild(child) {
+          this.children.push(child);
+        },
+        setAttribute() {}
+      };
+    }
+  };
+  const assets = [{ id: 'hero', name: 'Hero', type: 'image' }];
+
+  assert.equal(assetView.syncStudioAssetState({
+    documentRef,
+    assets,
+    selectedElement: { tagName: 'IMG' },
+    isElementLocked: () => false
+  }), true);
+  assert.equal(list.children[0].children[1].disabled, false);
+
+  assert.equal(assetView.syncStudioAssetState({
+    documentRef,
+    assets,
+    selectedElement: { tagName: 'div' },
+    isElementLocked: () => false
+  }), true);
+  assert.equal(list.children[0].children[1].disabled, true);
+});
+
 test('addAssetToLibrary validates the source and delegates a normalized image asset', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(

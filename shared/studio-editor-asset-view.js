@@ -61,7 +61,30 @@
     return true;
   }
 
+  function resolveStudioAssetActionState(options = {}) {
+    const selectedElement = options.selectedElement;
+    const isElementLocked = typeof options.isElementLocked === 'function'
+      ? options.isElementLocked
+      : () => false;
+    return {
+      canApplyAsset: !!selectedElement
+        && selectedElement.tagName
+        && selectedElement.tagName.toLowerCase() === 'img'
+        && !isElementLocked(selectedElement)
+    };
+  }
+
+  function syncStudioAssetState(options = {}) {
+    const actionState = resolveStudioAssetActionState(options);
+    return renderStudioAssetLibrary({
+      ...options,
+      canApply: actionState.canApplyAsset
+    });
+  }
+
   return {
-    renderStudioAssetLibrary
+    renderStudioAssetLibrary,
+    resolveStudioAssetActionState,
+    syncStudioAssetState
   };
 });

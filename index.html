@@ -5797,14 +5797,27 @@
       const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(doc)
         : null;
+      const assetView = typeof SlideNextStudioEditorAssetView !== 'undefined'
+        ? SlideNextStudioEditorAssetView
+        : null;
+      if (!assetView || typeof assetView.syncStudioAssetState !== 'function') {
+        return false;
+      }
       const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
         ? selectedElements[0]
         : null;
-      const canApply = !!candidate
-        && candidate.tagName
-        && candidate.tagName.toLowerCase() === 'img'
-        && !isElementLocked(candidate);
-      return renderSavedAssets(canonicalDeck && canonicalDeck.assets, canApply);
+      return assetView.syncStudioAssetState({
+        documentRef: document,
+        assets: canonicalDeck && canonicalDeck.assets,
+        selectedElement: candidate,
+        isElementLocked: (element) => isElementLocked(element),
+        applyAsset: typeof applyAssetToSelectedImage === 'function'
+          ? applyAssetToSelectedImage
+          : null,
+        removeAsset: typeof removeAssetFromLibrary === 'function'
+          ? removeAssetFromLibrary
+          : null
+      });
     }
 
     function updateTemplateActionState(doc = getIframeDoc()) {
