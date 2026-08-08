@@ -35,6 +35,9 @@ test('studio editor canonical state resolves only for its owning document and se
 
   assert.equal(state.set(deck, { documentRef, sessionToken: 4 }), deck);
   assert.equal(state.resolve({ documentRef, sessionToken: 4 }), deck);
+  assert.equal(state.resolve(), null);
+  assert.equal(state.resolve({ documentRef }), null);
+  assert.equal(state.resolve({ sessionToken: 4 }), null);
   assert.equal(state.resolve({ documentRef: {}, sessionToken: 4 }), null);
   assert.equal(state.resolve({ documentRef, sessionToken: 5 }), null);
 });

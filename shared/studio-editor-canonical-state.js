@@ -47,14 +47,14 @@
       if (!canonicalDeck) {
         return null;
       }
+      const hasOwnerDocument = Object.prototype.hasOwnProperty.call(owner, 'documentRef');
+      const hasOwnerSession = Object.prototype.hasOwnProperty.call(owner, 'sessionToken');
       if (hasDocumentOwner
-        && Object.prototype.hasOwnProperty.call(owner, 'documentRef')
-        && owner.documentRef !== ownerDocument) {
+        && (!hasOwnerDocument || owner.documentRef !== ownerDocument)) {
         return null;
       }
       if (hasSessionOwner
-        && Object.prototype.hasOwnProperty.call(owner, 'sessionToken')
-        && owner.sessionToken !== ownerSessionToken) {
+        && (!hasOwnerSession || owner.sessionToken !== ownerSessionToken)) {
         return null;
       }
       return canonicalDeck;
