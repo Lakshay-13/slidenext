@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
+const deckView = require('../shared/studio-deck-view.js');
 const studioInsertion = require('../shared/studio-editor-insertion.js');
 const elementInsertionMutation = require('../shared/studio-editor-element-insertion-mutation.js');
 const elementInsertionController = require('../shared/studio-editor-element-insertion-controller.js');
@@ -181,6 +182,7 @@ test('insertElement forwards an immutable canonical node sidecar after insertion
 test('resolveCurrentStudioInsertionActionState reports add-slide and insertion readiness from the live deck document', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const context = {
+    SlideNextStudioDeckView: deckView,
     getActiveSlide(doc) {
       return doc && doc.activeSlide ? doc.activeSlide : null;
     },
@@ -295,6 +297,7 @@ test('updateInsertionActionState enables deck-ready insert controls only when th
 
   const controls = createControls();
   const context = {
+    SlideNextStudioDeckView: deckView,
     document: {
       getElementById(id) {
         return controls[id] || null;

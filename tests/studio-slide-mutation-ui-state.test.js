@@ -11,6 +11,7 @@ const slideDeletionMutation = require('../shared/studio-editor-slide-deletion-mu
 const slideInsertionMutation = require('../shared/studio-editor-slide-insertion-mutation.js');
 const slideReorderMutation = require('../shared/studio-editor-slide-reorder-mutation.js');
 const slideMutation = require('../shared/studio-editor-slide-mutation.js');
+const deckView = require('../shared/studio-deck-view.js');
 const reorderController = require('../shared/studio-editor-slide-reorder-controller.js');
 const insertionController = require('../shared/studio-editor-slide-insertion-controller.js');
 const deletionController = require('../shared/studio-editor-slide-deletion-controller.js');
@@ -213,6 +214,9 @@ function loadResolveCurrentStudioInsertionActionState(fileContent, context) {
     'function resolveCurrentStudioInsertionActionState(doc = getIframeDoc()) {',
     '\n\n    function updateInsertionActionState(doc = getIframeDoc()) {'
   );
+  if (typeof context.SlideNextStudioDeckView === 'undefined') {
+    context.SlideNextStudioDeckView = deckView;
+  }
   vm.runInContext(helperSource, context);
 }
 
@@ -717,6 +721,9 @@ test('addSlideNode delegates slide insertion and transaction capture to the shar
   const context = {
     SlideNextStudioEditorSlideCommands: slideCommands,
     SlideNextStudioDeckView: {
+      resolveStudioInsertionActionState() {
+        return { canAddSlide: true };
+      },
       applyStudioSlideInsertionMutation(...args) {
         calls.push(['applyStudioSlideInsertionMutation', ...args]);
         return {

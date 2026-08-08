@@ -9570,77 +9570,38 @@
     }
 
     function resolveCurrentStudioInsertionActionState(doc = getIframeDoc()) {
-      const resolveStudioInsertionActionState = (
-        typeof SlideNextStudioDeckView !== 'undefined'
-        && SlideNextStudioDeckView
-        && typeof SlideNextStudioDeckView.resolveStudioInsertionActionState === 'function'
-      )
-        ? SlideNextStudioDeckView.resolveStudioInsertionActionState
+      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
         : null;
-      if (resolveStudioInsertionActionState) {
-        return resolveStudioInsertionActionState(doc, {
-          getActiveSlide,
-          getSlideContainer: (sourceDoc) => sourceDoc && typeof sourceDoc.getElementById === 'function'
-            ? sourceDoc.getElementById('slidesContainer')
-            : null
-        });
+      if (!deckView || typeof deckView.resolveStudioInsertionActionState !== 'function') {
+        return {
+          canAddSlide: false,
+          canDuplicateSlide: false,
+          canInsertElements: false
+        };
       }
-
-      const slideContainer = doc && typeof doc.getElementById === 'function'
-        ? doc.getElementById('slidesContainer')
-        : null;
-      const hasSlideContainer = !!slideContainer;
-      const hasActiveSlide = !!getActiveSlide(doc);
-      return {
-        canAddSlide: hasSlideContainer,
-        canDuplicateSlide: hasSlideContainer && hasActiveSlide,
-        canInsertElements: hasActiveSlide
-      };
+      return deckView.resolveStudioInsertionActionState(doc, {
+        getActiveSlide,
+        getSlideContainer: (sourceDoc) => sourceDoc && typeof sourceDoc.getElementById === 'function'
+          ? sourceDoc.getElementById('slidesContainer')
+          : null
+      });
     }
 
     function updateInsertionActionState(doc = getIframeDoc()) {
       const deckView = typeof SlideNextStudioDeckView !== 'undefined'
         ? SlideNextStudioDeckView
         : null;
-      if (deckView && typeof deckView.syncStudioInsertionToolbarActionState === 'function') {
-        return deckView.syncStudioInsertionToolbarActionState({
-          documentRef: document,
-          doc,
-          getActiveSlide,
-          getSlideContainer: (sourceDoc) => sourceDoc && typeof sourceDoc.getElementById === 'function'
-            ? sourceDoc.getElementById('slidesContainer')
-            : null
-        });
+      if (!deckView || typeof deckView.syncStudioInsertionToolbarActionState !== 'function') {
+        return false;
       }
-
-      const actionState = resolveCurrentStudioInsertionActionState(doc);
-      const addSlideBtn = document.getElementById('addSlideBtn');
-      if (addSlideBtn) {
-        addSlideBtn.disabled = !actionState.canAddSlide;
-      }
-      const duplicateSlideBtn = document.getElementById('duplicateSlideBtn');
-      if (duplicateSlideBtn) {
-        duplicateSlideBtn.disabled = !actionState.canDuplicateSlide;
-      }
-
-      [
-        'toolbarInsertHeadingBtn',
-        'toolbarInsertParagraphBtn',
-        'toolbarInsertImageBtn',
-        'toolbarInsertShapeBtn',
-        'insertHeadingBtn',
-        'insertParagraphBtn',
-        'insertImageBtn',
-        'insertShapeBtn',
-        'insertTableBtn',
-        'insertCodeBtn',
-        'insertEmbedBtn',
-        'insertChartBtn'
-      ].forEach((id) => {
-        const control = document.getElementById(id);
-        if (control) {
-          control.disabled = !actionState.canInsertElements;
-        }
+      return deckView.syncStudioInsertionToolbarActionState({
+        documentRef: document,
+        doc,
+        getActiveSlide,
+        getSlideContainer: (sourceDoc) => sourceDoc && typeof sourceDoc.getElementById === 'function'
+          ? sourceDoc.getElementById('slidesContainer')
+          : null
       });
     }
 
