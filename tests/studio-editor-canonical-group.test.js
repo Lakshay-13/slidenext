@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalGroup = require('../shared/studio-editor-canonical-group.js');
 
 function createSourceDeck() {
@@ -17,6 +18,7 @@ test('buildStudioCanonicalGroupDeck imports and groups selected nodes without mu
   const sourceDeck = createSourceDeck();
   const result = canonicalGroup.buildStudioCanonicalGroupDeck({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     canonicalDeckBeforeMutation: sourceDeck,
     slideId: 'slide-1',
     nodeIds: ['node-1', 'node-2'],
@@ -37,6 +39,7 @@ test('buildStudioCanonicalGroupDeck fails closed when grouping dependencies are 
   assert.equal(canonicalGroup.buildStudioCanonicalGroupDeck({}), null);
   assert.equal(canonicalGroup.buildStudioCanonicalGroupDeck({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     canonicalDeckBeforeMutation: createSourceDeck(),
     slideId: 'slide-1',
     nodeIds: ['node-1'],
@@ -53,6 +56,7 @@ test('buildStudioCanonicalGroupBaseline builds from the source document', () => 
   let builtFromDocument = null;
   const result = canonicalGroup.buildStudioCanonicalGroupBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeckBaseline(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
@@ -93,6 +97,7 @@ test('createStudioCanonicalGroupMutationBuilders preserves an explicit baseline'
   let buildCount = 0;
   const builders = canonicalGroup.createStudioCanonicalGroupMutationBuilders({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck() {
       buildCount += 1;
       return sourceDeck;
@@ -128,6 +133,7 @@ test('buildStudioCanonicalUngroupDeck restores imported children without mutatin
   const group = { dataset: { editorId: 'group-1' } };
   const result = canonicalGroup.buildStudioCanonicalUngroupDeck({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     canonicalDeckBeforeMutation: sourceDeck,
     groupTargets: [{ group, groupId: 'group-1', parentNodeId: '', slideId: 'slide-1' }],
     restoredGroups: [{ group, restoredElements: [

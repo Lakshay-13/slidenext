@@ -1,12 +1,55 @@
 (function (root, factory) {
-  const api = factory();
+  const api = factory(root);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorCanonicalGroup = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  function readStudioCanonicalGroupBaseline(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
+    const getCanonicalDeckBaseline = options.getCanonicalDeckBaseline;
+    const buildCanonicalDeck = options.buildCanonicalDeck;
+    const readCanonicalDeckBaseline = canonicalStateApi
+      && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
+      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
+          getCanonicalDeckBaseline: getCanonicalDeckBaseline
+            ? (sourceDocument) => {
+                const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+                if (!liveCanonicalDeck
+                  || (typeof canonicalDeckApi.isCanonicalDeck === 'function'
+                    && !canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
+                  return null;
+                }
+                return liveCanonicalDeck;
+              }
+            : null,
+          buildCanonicalDeckBaseline: buildCanonicalDeck
+        })
+      : (sourceDocument) => {
+          if (getCanonicalDeckBaseline) {
+            try {
+              const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+              if (liveCanonicalDeck
+                && (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+                  || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
+                return liveCanonicalDeck;
+              }
+            } catch (err) {
+              // Fall through to the document rebuild path.
+            }
+          }
+          if (!buildCanonicalDeck) return null;
+          return buildCanonicalDeck(sourceDocument);
+        };
+
+    return readCanonicalDeckBaseline(options.sourceDocument);
+  }
+
   function buildStudioCanonicalGroupBaseline(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -23,21 +66,17 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     if (!groupCanonicalNodes) return null;
-    if (getCanonicalDeckBaseline) {
-      let liveCanonicalDeck = null;
-      try {
-        liveCanonicalDeck = getCanonicalDeckBaseline(options.sourceDocument);
-      } catch (err) {
-        liveCanonicalDeck = null;
-      }
-      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
-        || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
-        if (liveCanonicalDeck) return liveCanonicalDeck;
-      }
-    }
-    if (!buildCanonicalDeck) return null;
-    return buildCanonicalDeck(options.sourceDocument);
+    return readStudioCanonicalGroupBaseline({
+      canonicalDeckApi,
+      canonicalStateApi,
+      getCanonicalDeckBaseline,
+      buildCanonicalDeck,
+      sourceDocument: options.sourceDocument
+    });
   }
 
   function buildStudioCanonicalUngroupBaseline(options = {}) {
@@ -56,27 +95,26 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     if (!ungroupCanonicalNodes) return null;
-    if (getCanonicalDeckBaseline) {
-      let liveCanonicalDeck = null;
-      try {
-        liveCanonicalDeck = getCanonicalDeckBaseline(options.sourceDocument);
-      } catch (err) {
-        liveCanonicalDeck = null;
-      }
-      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
-        || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
-        if (liveCanonicalDeck) return liveCanonicalDeck;
-      }
-    }
-    if (!buildCanonicalDeck) return null;
-    return buildCanonicalDeck(options.sourceDocument);
+    return readStudioCanonicalGroupBaseline({
+      canonicalDeckApi,
+      canonicalStateApi,
+      getCanonicalDeckBaseline,
+      buildCanonicalDeck,
+      sourceDocument: options.sourceDocument
+    });
   }
 
   function buildStudioCanonicalGroupDeck(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     const groupCanonicalNodes = canonicalDeckApi
       && typeof canonicalDeckApi.groupCanonicalNodes === 'function'
       ? canonicalDeckApi.groupCanonicalNodes
@@ -119,6 +157,9 @@
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
@@ -135,6 +176,7 @@
       buildStudioCanonicalGroupBaseline({
         ...groupOptions,
         canonicalDeckApi,
+        canonicalStateApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
         getCanonicalDeckBaseline
@@ -150,6 +192,7 @@
       return buildStudioCanonicalGroupDeck({
         ...groupOptions,
         canonicalDeckApi,
+        canonicalStateApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
         getCanonicalDeckBaseline,
@@ -168,6 +211,9 @@
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     const ungroupCanonicalNodes = canonicalDeckApi
       && typeof canonicalDeckApi.ungroupCanonicalNodes === 'function'
       ? canonicalDeckApi.ungroupCanonicalNodes
@@ -215,6 +261,9 @@
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
@@ -231,6 +280,7 @@
       buildStudioCanonicalUngroupBaseline({
         ...ungroupOptions,
         canonicalDeckApi,
+        canonicalStateApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
         getCanonicalDeckBaseline
@@ -246,6 +296,7 @@
       return buildStudioCanonicalUngroupDeck({
         ...ungroupOptions,
         canonicalDeckApi,
+        canonicalStateApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
         getCanonicalDeckBaseline,
