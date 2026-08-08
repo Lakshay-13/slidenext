@@ -5724,22 +5724,6 @@
       });
     }
 
-    function renderSavedTemplates(templates = []) {
-      const templateView = typeof SlideNextStudioEditorTemplateView !== 'undefined'
-        ? SlideNextStudioEditorTemplateView
-        : null;
-      if (!templateView || typeof templateView.renderStudioTemplateLibrary !== 'function') {
-        return false;
-      }
-      return templateView.renderStudioTemplateLibrary({
-        documentRef: document,
-        templates,
-        canInsert: typeof getActiveSlide === 'function' ? !!getActiveSlide() : false,
-        insertTemplate: typeof insertSavedTemplate === 'function' ? insertSavedTemplate : null,
-        removeTemplate: typeof removeSavedTemplate === 'function' ? removeSavedTemplate : null
-      });
-    }
-
     function renderSavedMasterSlides(masterSlides = [], activeMasterSlideId = '') {
       const masterSlideView = typeof SlideNextStudioEditorMasterSlideView !== 'undefined'
         ? SlideNextStudioEditorMasterSlideView

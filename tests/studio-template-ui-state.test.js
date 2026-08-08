@@ -52,59 +52,6 @@ test('saveActiveSlideAsTemplate delegates the name and refreshes template state'
   assert.equal(refreshCalls, 1);
 });
 
-test('renderSavedTemplates uses text content and shows the empty state', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const source = extractFunctionSource(
-    fileContent,
-    'function renderSavedTemplates(templates = []) {',
-    '\n\n    function updateTemplateActionState'
-  );
-  const list = {
-    children: [],
-    set textContent(value) {
-      this.children = [];
-      this.value = value;
-    },
-    appendChild(child) {
-      this.children.push(child);
-    }
-  };
-  const context = {
-    SlideNextStudioEditorTemplateView: templateView,
-    document: {
-      getElementById() {
-        return list;
-      },
-      createElement() {
-        return {
-          textContent: '',
-          children: [],
-          addEventListener() {},
-          appendChild(child) {
-            this.children.push(child);
-          },
-          setAttribute() {}
-        };
-      }
-    },
-    getActiveSlide() {
-      return { id: 'active-slide' };
-    },
-    insertSavedTemplate() {},
-    removeSavedTemplate() {}
-  };
-
-  vm.createContext(context);
-  vm.runInContext(source, context);
-
-  assert.equal(context.renderSavedTemplates([
-    { name: '<Hero>', slide: { nodes: [{ id: 'title' }] } }
-  ]), true);
-  assert.equal(list.children[0].children[0].textContent, '<Hero> - 1 element');
-  assert.equal(context.renderSavedTemplates([]), true);
-  assert.equal(list.children[0].textContent, 'No slide templates saved');
-});
-
 test('shared template view wires insert and remove actions to injected callbacks', () => {
   const list = {
     children: [],
