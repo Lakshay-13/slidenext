@@ -15,9 +15,11 @@
       && typeof canonicalDeckApi.removeCanonicalNodes === 'function'
       ? canonicalDeckApi.removeCanonicalNodes
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : null;
 
     if (!removeCanonicalNodes || !buildCanonicalDeck) {
       return null;
@@ -57,11 +59,15 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
-    if (!canonicalDeckApi || !buildCanonicalDeck) return null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
+    if (!canonicalDeckApi || (!buildCanonicalDeck && !buildCanonicalDeckBaseline)) return null;
 
     const canonicalDeckBeforeMutation = buildStudioCanonicalRemovalBaseline({
       canonicalDeckApi,
       buildCanonicalDeck,
+      buildCanonicalDeckBaseline,
       sourceDocument: options.sourceDocument
     });
     return buildStudioCanonicalRemovalDeck(selection, {
@@ -77,11 +83,15 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const buildCanonicalRemovalBaseline = (baselineOptions = {}) => (
       buildStudioCanonicalRemovalBaseline({
         ...baselineOptions,
         canonicalDeckApi,
-        buildCanonicalDeck
+        buildCanonicalDeck,
+        buildCanonicalDeckBaseline
       })
     );
     const buildCanonicalRemovalDeck = (selection, deckOptions = {}) => {
@@ -94,6 +104,8 @@
       return buildStudioCanonicalRemovalDeck(selection, {
         ...deckOptions,
         canonicalDeckApi,
+        buildCanonicalDeck,
+        buildCanonicalDeckBaseline,
         canonicalDeckBeforeMutation
       });
     };

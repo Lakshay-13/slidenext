@@ -33,6 +33,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const applyRemovalMutation = typeof options.applyRemovalMutation === 'function'
       ? options.applyRemovalMutation
       : () => ({ didRemove: false, transaction: null });
@@ -53,7 +56,8 @@
         && typeof canonicalRemovalApi.createStudioCanonicalRemovalMutationBuilders === 'function'
         ? canonicalRemovalApi.createStudioCanonicalRemovalMutationBuilders({
             canonicalDeckApi,
-            buildCanonicalDeck
+            buildCanonicalDeck,
+            buildCanonicalDeckBaseline
           })
         : null;
       const buildCanonicalRemovalMutation = canonicalRemovalBuilders

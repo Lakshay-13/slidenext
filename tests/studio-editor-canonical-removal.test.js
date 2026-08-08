@@ -10,9 +10,12 @@ test('buildStudioCanonicalRemovalBaseline builds from the source document', () =
   let builtFromDocument = null;
   const result = canonicalRemoval.buildStudioCanonicalRemovalBaseline({
     canonicalDeckApi: canonicalDeck,
-    buildCanonicalDeck(documentRef) {
+    buildCanonicalDeckBaseline(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
+    },
+    buildCanonicalDeck() {
+      throw new Error('DOM mutation builder should not provide the baseline');
     },
     sourceDocument
   });
@@ -56,17 +59,25 @@ test('buildStudioCanonicalRemovalMutation centralizes baseline and node removal'
       nodes: [{ id: 'node-1' }, { id: 'after' }]
     }]
   });
+  let baselineBuildCount = 0;
   const result = canonicalRemoval.buildStudioCanonicalRemovalMutation(
     [{ dataset: { editorId: 'node-1' } }],
     {
       canonicalDeckApi: canonicalDeck,
-      buildCanonicalDeck: () => sourceDeck,
+      buildCanonicalDeckBaseline() {
+        baselineBuildCount += 1;
+        return sourceDeck;
+      },
+      buildCanonicalDeck() {
+        throw new Error('DOM mutation builder should not provide the baseline');
+      },
       sourceDocument: { id: 'editor-doc' },
       getElementId: (element) => element.dataset.editorId
     }
   );
 
   assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['after']);
+  assert.equal(baselineBuildCount, 1);
   assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'after']);
 });
 

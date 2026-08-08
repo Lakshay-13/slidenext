@@ -1894,6 +1894,7 @@
           getIframeDoc: (...args) => getIframeDoc(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           applyRemovalMutation: (...args) => applyEditorRemovalMutationWithTransaction(...args),
           deselectElement: (...args) => deselectElement(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)

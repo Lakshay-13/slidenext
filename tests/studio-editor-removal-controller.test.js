@@ -4,8 +4,16 @@ const removalController = require('../shared/studio-editor-removal-controller.js
 
 test('removal controller delegates the mutation, deselects, and finalizes', () => {
   const calls = [];
+  let builderOptions = null;
   const target = { dataset: { editorId: 'node-1' } };
   const controller = removalController.createStudioEditorRemovalController({
+    canonicalDeckApi: {},
+    canonicalRemovalApi: {
+      createStudioCanonicalRemovalMutationBuilders(options) {
+        builderOptions = options;
+        return { buildCanonicalRemovalMutation: () => null };
+      }
+    },
     buildRemovalSelectionActionState: (doc) => ({
       canRemove: true,
       selection: [target],
@@ -13,6 +21,8 @@ test('removal controller delegates the mutation, deselects, and finalizes', () =
     }),
     getIframeDoc: () => ({ id: 'doc' }),
     assignElementId: (element) => element.dataset.editorId,
+    buildCanonicalDeck: () => ({ slides: [] }),
+    buildCanonicalDeckBaseline: () => ({ slides: [] }),
     applyRemovalMutation: (selection, options) => {
       calls.push(['remove', selection, options]);
       return { didRemove: true, transaction: { id: 'tx' } };
@@ -27,6 +37,8 @@ test('removal controller delegates the mutation, deselects, and finalizes', () =
   assert.equal(calls[1][0], 'deselect');
   assert.equal(calls[2][1], 'Auto: Deleted Element');
   assert.deepEqual(calls[2][2].transaction, { id: 'tx' });
+  assert.equal(typeof builderOptions.buildCanonicalDeck, 'function');
+  assert.equal(typeof builderOptions.buildCanonicalDeckBaseline, 'function');
 });
 
 test('removal controller refreshes removal state when deletion is unavailable', () => {
