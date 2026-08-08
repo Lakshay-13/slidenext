@@ -56,6 +56,9 @@ test('toggleLayerVisibilityByRef restores preserved selection when the visibilit
   const row = { id: 'row-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
+    updateLayersList() {},
+    deselectElement() {},
     applyEditorSelectionState(nextSelectionState) {
       calls.push(['applyEditorSelectionState', nextSelectionState]);
     },
@@ -129,6 +132,9 @@ test('toggleLayerVisibilityByRef deselects the temporary target when the visibil
   const row = { id: 'row-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
+    updateLayersList() {},
+    deselectElement() {},
     applyEditorSelectionState(nextSelectionState) {
       calls.push(['applyEditorSelectionState', nextSelectionState]);
     },
@@ -204,6 +210,8 @@ test('toggleLayerVisibilityByRef skips temporary selection UI sync before restor
   const row = { id: 'row-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
+    updateLayersList() {},
     applyEditorSelectionState(nextSelectionState) {
       calls.push(['applyEditorSelectionState', nextSelectionState]);
     },
@@ -211,6 +219,7 @@ test('toggleLayerVisibilityByRef skips temporary selection UI sync before restor
       calls.push(['getCommittedSelectedEditorElementIds']);
       return ['el-1'];
     },
+    deselectElement() {},
     refreshSelectionClasses() {
       calls.push(['refreshSelectionClasses']);
     },
@@ -391,6 +400,13 @@ test('toggleLayerVisibilityByRef refreshes the layer list when the row target is
   const row = { id: 'row-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
+    getCommittedSelectedEditorElementIds() {},
+    deselectElement() {},
+    restoreCommittedSelectionByIdsOnActiveSlide() {},
+    applyEditorSelectionState() {},
+    refreshSelectionClasses() {},
+    toggleSelectedElementsVisibility() {},
     resolveLayerRowElement(currentRow) {
       calls.push(['resolveLayerRowElement', currentRow]);
       return null;

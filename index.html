@@ -10365,48 +10365,20 @@
       const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
         ? SlideNextStudioEditorLayerController
         : null;
-      if (layerController && typeof layerController.toggleStudioLayerVisibilityByRef === 'function') {
-        return layerController.toggleStudioLayerVisibilityByRef({
-          event,
-          resolveLayerRowElement,
-          updateLayersList,
-          getCommittedSelectedEditorElementIds,
-          deselectElement,
-          restoreCommittedSelectionByIdsOnActiveSlide,
-          applyEditorSelectionState,
-          refreshSelectionClasses,
-          toggleSelectedElementsVisibility
-        });
+      if (!layerController || typeof layerController.toggleStudioLayerVisibilityByRef !== 'function') {
+        return false;
       }
-      event.preventDefault();
-      event.stopPropagation();
-      const parentRow = event.currentTarget.closest('[class*="border"]');
-      const target = resolveLayerRowElement(parentRow);
-      if (!target) {
-        updateLayersList();
-        return;
-      }
-      const preservedSelectionIds = getCommittedSelectedEditorElementIds();
-      const restorePreservedSelection = () => {
-        if (preservedSelectionIds.length === 0) {
-          deselectElement();
-          return;
-        }
-        restoreCommittedSelectionByIdsOnActiveSlide(preservedSelectionIds);
-      };
-      applyEditorSelectionState({
-        selectedElements: [target],
-        selectedElement: target
+      return layerController.toggleStudioLayerVisibilityByRef({
+        event,
+        resolveLayerRowElement,
+        updateLayersList,
+        getCommittedSelectedEditorElementIds,
+        deselectElement,
+        restoreCommittedSelectionByIdsOnActiveSlide,
+        applyEditorSelectionState,
+        refreshSelectionClasses,
+        toggleSelectedElementsVisibility
       });
-      refreshSelectionClasses();
-      const didToggle = toggleSelectedElementsVisibility({
-        skipSelectionUi: true
-      });
-      if (!didToggle) {
-        restorePreservedSelection();
-        return;
-      }
-      restorePreservedSelection();
     }
     
     function changeLayerZIndexByRef(event, action) {
