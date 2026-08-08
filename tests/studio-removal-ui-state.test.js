@@ -133,6 +133,9 @@ test('updateRemovalActionState enables the delete control only when the iframe h
       return false;
     },
     SlideNextStudioEditorRemoval: {
+      syncStudioRemovalToolbarState(options) {
+        return removalState.syncStudioRemovalToolbarState(options);
+      },
       buildStudioRemovalActionState(elements, options = {}) {
         return {
           canRemove: typeof options.canMutateDeck === 'function' ? options.canMutateDeck() : true
@@ -191,6 +194,16 @@ test('updateRemovalActionState reuses the shared removal toolbar helper when ava
       return false;
     },
     SlideNextStudioEditorRemoval: {
+      syncStudioRemovalToolbarState(options) {
+        const actionState = this.buildStudioRemovalToolbarState(options.elements, {
+          isLocked: options.isLocked,
+          canMutateDeck: options.canMutateDeck
+        });
+        return this.renderStudioRemovalToolbarState({
+          documentRef: options.documentRef,
+          actionState
+        });
+      },
       buildStudioRemovalActionState() {
         throw new Error('buildStudioRemovalActionState should not be used when shared toolbar helper exists');
       },
