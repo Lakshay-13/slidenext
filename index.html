@@ -1380,6 +1380,7 @@
   <script src="/shared/studio-editor-transform-controller.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
   <script src="/shared/studio-editor-persistence-state.js"></script>
+  <script src="/shared/studio-editor-persistence-controller.js"></script>
   <script src="/shared/studio-editor-autosave.js"></script>
   <script src="/shared/studio-modal-visibility.js"></script>
   <script src="/shared/presentation-library.js"></script>
@@ -2447,6 +2448,39 @@
             setActiveSlideById,
             setActiveSlide
           })
+        })
+      : null;
+    const studioEditorPersistenceController = typeof SlideNextStudioEditorPersistenceController !== 'undefined'
+      && SlideNextStudioEditorPersistenceController
+      && typeof SlideNextStudioEditorPersistenceController.createStudioEditorPersistenceController === 'function'
+      ? SlideNextStudioEditorPersistenceController.createStudioEditorPersistenceController({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+            ? SlideNextStudioEditorPersistenceState
+            : null,
+          resolveCanonicalDeck(canonicalDeck) {
+            return typeof resolveEditorStoredCanonicalDeck === 'function'
+              ? resolveEditorStoredCanonicalDeck({ canonicalDeck }) || null
+              : null;
+          },
+          normalizePlaybackState(playbackState) {
+            return typeof SlideNextDeckPersistence !== 'undefined'
+              && SlideNextDeckPersistence
+              && typeof SlideNextDeckPersistence.normalizePersistedDeckPlaybackState === 'function'
+              ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(playbackState)
+              : (playbackState || null);
+          },
+          setPersistedDeckHtml(cleanHtml) {
+            lastPersistedDeckHtml = cleanHtml;
+          },
+          setPersistedCanonicalDeck(canonicalDeck) {
+            lastPersistedCanonicalDeck = canonicalDeck;
+          },
+          setPersistedPlaybackState(playbackState) {
+            persistedDeckPlaybackState = playbackState;
+          }
         })
       : null;
     const studioEditorDeckMutationFinalizer = typeof SlideNextStudioEditorDeckMutation !== 'undefined'
@@ -7259,6 +7293,11 @@
     }
 
     function updateEditorPersistedDeckState(nextState = {}) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.update === 'function') {
+        return studioEditorPersistenceController.update(nextState);
+      }
       if (typeof updateEditorPersistedDeckState.adapter !== 'function') {
         const createStudioEditorPersistedDeckStateAdapter = (
           typeof SlideNextStudioEditorPersistenceState !== 'undefined'
