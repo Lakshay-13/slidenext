@@ -10,6 +10,10 @@ function createDocument() {
         tagName: tagName.toUpperCase(),
         style: {},
         children: [],
+        attributes: {},
+        setAttribute(name, value) {
+          this.attributes[name] = String(value);
+        },
         appendChild(child) {
           this.children.push(child);
           return child;
@@ -26,6 +30,7 @@ test('createStudioInsertedElement creates the existing text, image, and shape de
   const image = insertion.createStudioInsertedElement('img', { documentRef, offset: 30 });
   const icon = insertion.createStudioInsertedElement('icon', { documentRef, offset: 30 });
   const shape = insertion.createStudioInsertedElement('shape', { documentRef, offset: 30 });
+  const embed = insertion.createStudioInsertedElement('embed', { documentRef, offset: 30 });
 
   assert.equal(heading.tagName, 'H2');
   assert.equal(heading.textContent, 'New Heading');
@@ -39,6 +44,10 @@ test('createStudioInsertedElement creates the existing text, image, and shape de
   assert.equal(icon.style.left, 'calc(48% + 30px)');
   assert.equal(shape.className, 'editor-shape');
   assert.equal(shape.style.width, '200px');
+  assert.equal(embed.className, 'editor-embed-placeholder');
+  assert.equal(embed.textContent, 'Media / Embed Placeholder');
+  assert.equal(embed.attributes['data-embed-placeholder'], 'true');
+  assert.equal(embed.style.left, 'calc(30% + 30px)');
 });
 
 test('createStudioInsertedElement creates the existing table and code defaults', () => {

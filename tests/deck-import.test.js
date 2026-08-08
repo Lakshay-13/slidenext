@@ -1188,6 +1188,22 @@ test('importElementToCanonicalNode preserves Material Symbols as icon nodes', ()
   assert.equal(node.attributes['aria-label'], 'Spark');
 });
 
+test('importElementToCanonicalNode preserves media placeholders as embed nodes', () => {
+  const node = deckImport.importElementToCanonicalNode(createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['editor-embed-placeholder']),
+    attributes: {
+      class: 'editor-embed-placeholder',
+      'data-embed-placeholder': 'true'
+    },
+    textContent: 'Media / Embed Placeholder',
+    outerHTML: '<div class="editor-embed-placeholder" data-embed-placeholder="true">Media / Embed Placeholder</div>'
+  }));
+
+  assert.equal(node.type, 'embed');
+  assert.equal(node.attributes['data-embed-placeholder'], 'true');
+});
+
 test('importElementToCanonicalNode promotes explicit and resolved asset references', () => {
   const explicitNode = deckImport.importElementToCanonicalNode(createImportedElement({
     tagName: 'IMG',

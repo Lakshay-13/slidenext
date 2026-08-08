@@ -28,6 +28,7 @@
     'insertShapeBtn',
     'insertTableBtn',
     'insertCodeBtn',
+    'insertEmbedBtn',
     'openSourceViewBtn',
     'wpTabSolid',
     'wpTabPresets',

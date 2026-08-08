@@ -124,6 +124,30 @@ function trainEpoch(model, data) {
   return loss.val;
 }`;
       element.appendChild(codeNode);
+    } else if (type === 'embed') {
+      element = documentRef.createElement('div');
+      element.className = 'editor-embed-placeholder';
+      element.textContent = 'Media / Embed Placeholder';
+      if (typeof element.setAttribute === 'function') {
+        element.setAttribute('data-embed-placeholder', 'true');
+        element.setAttribute('role', 'img');
+        element.setAttribute('aria-label', 'Media or embed placeholder');
+      }
+      element.style.width = '560px';
+      element.style.height = '315px';
+      element.style.display = 'flex';
+      element.style.alignItems = 'center';
+      element.style.justifyContent = 'center';
+      element.style.position = 'absolute';
+      element.style.left = centeredPosition(30, offset);
+      element.style.top = centeredPosition(35, offset);
+      element.style.border = '1px dashed rgba(196, 161, 255, 0.65)';
+      element.style.borderRadius = '12px';
+      element.style.backgroundColor = 'rgba(112, 40, 208, 0.14)';
+      element.style.color = '#c4a1ff';
+      element.style.fontFamily = "'Geist', sans-serif";
+      element.style.fontSize = '18px';
+      element.style.fontWeight = '600';
     }
 
     return element;

@@ -32,7 +32,8 @@ function createControls() {
     insertImageBtn: { disabled: true },
     insertShapeBtn: { disabled: true },
     insertTableBtn: { disabled: true },
-    insertCodeBtn: { disabled: true }
+    insertCodeBtn: { disabled: true },
+    insertEmbedBtn: { disabled: true }
   };
 }
 
@@ -323,7 +324,8 @@ test('updateInsertionActionState enables deck-ready insert controls only when th
     insertImageBtn: true,
     insertShapeBtn: true,
     insertTableBtn: true,
-    insertCodeBtn: true
+    insertCodeBtn: true,
+    insertEmbedBtn: true
   });
 
   context.updateInsertionActionState({
@@ -343,7 +345,8 @@ test('updateInsertionActionState enables deck-ready insert controls only when th
     insertImageBtn: true,
     insertShapeBtn: true,
     insertTableBtn: true,
-    insertCodeBtn: true
+    insertCodeBtn: true,
+    insertEmbedBtn: true
   });
 
   const readyDoc = {
@@ -365,7 +368,8 @@ test('updateInsertionActionState enables deck-ready insert controls only when th
     insertImageBtn: false,
     insertShapeBtn: false,
     insertTableBtn: false,
-    insertCodeBtn: false
+    insertCodeBtn: false,
+    insertEmbedBtn: false
   });
 });
 
