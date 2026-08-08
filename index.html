@@ -5286,27 +5286,12 @@
       const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
         ? SlideNextStudioEditorGroup
         : null;
-      if (!groupApi) {
+      if (!groupApi || typeof groupApi.syncStudioGroupToolbarState !== 'function') {
         return false;
       }
       const groupState = buildGroupSelectionActionState(doc);
       const ungroupState = buildUngroupSelectionActionState(doc);
-      const syncStudioGroupToolbarState = (
-        typeof groupApi.syncStudioGroupToolbarState === 'function'
-      )
-        ? groupApi.syncStudioGroupToolbarState
-        : null;
-      if (syncStudioGroupToolbarState) {
-        return syncStudioGroupToolbarState({
-          documentRef: document,
-          canGroup: groupState.canGroup,
-          canUngroup: ungroupState.canUngroup
-        });
-      }
-      if (typeof groupApi.renderStudioGroupToolbarState !== 'function') {
-        return false;
-      }
-      return groupApi.renderStudioGroupToolbarState({
+      return groupApi.syncStudioGroupToolbarState({
         documentRef: document,
         canGroup: groupState.canGroup,
         canUngroup: ungroupState.canUngroup
