@@ -4928,96 +4928,42 @@
       const inspectorView = typeof SlideNextStudioEditorInspectorView !== 'undefined'
         ? SlideNextStudioEditorInspectorView
         : null;
-      if (inspectorController && typeof inspectorController.syncStudioInspectorForSelection === 'function') {
-        return inspectorController.syncStudioInspectorForSelection({
-          documentRef: document,
-          selectionState: liveSelectionState,
-          inspectorView,
-          rgbToHex,
-          highlightAlignButton,
-          updateClipboardActionState,
-          updateRemovalActionState,
-          updateLockActionState,
-          updateVisibilityActionState,
-          updateMotionActionState,
-          updateAlignmentActionState,
-          updateGroupActionState,
-          updateStyleActionState,
-          updateLayerOrderActionState
-        });
+      if (!inspectorController || typeof inspectorController.syncStudioInspectorForSelection !== 'function') {
+        return false;
       }
-      if (inspectorController && typeof inspectorController.syncStudioInspectorActionStates === 'function') {
-        inspectorController.syncStudioInspectorActionStates({
-          updateClipboardActionState,
-          updateRemovalActionState,
-          updateLockActionState,
-          updateVisibilityActionState,
-          updateMotionActionState,
-          updateAlignmentActionState,
-          updateGroupActionState,
-          updateStyleActionState,
-          updateLayerOrderActionState
-        });
-      } else {
-        updateClipboardActionState();
-        updateRemovalActionState();
-        updateLockActionState();
-        updateVisibilityActionState();
-        updateMotionActionState();
-        if (typeof updateAlignmentActionState === 'function') {
-          updateAlignmentActionState();
-        }
-        if (typeof updateGroupActionState === 'function') {
-          updateGroupActionState();
-        }
-        updateStyleActionState();
-        updateLayerOrderActionState();
-      }
-      if (inspectorController && typeof inspectorController.syncStudioInspectorSelection === 'function') {
-        return inspectorController.syncStudioInspectorSelection({
-          documentRef: document,
-          selectionState: liveSelectionState,
-          inspectorView,
-          rgbToHex,
-          highlightAlignButton
-        });
-      }
-      if (inspectorView && typeof inspectorView.syncStudioInspectorSelection === 'function') {
-        return inspectorView.syncStudioInspectorSelection({
-          documentRef: document,
-          selectionState: liveSelectionState,
-          rgbToHex,
-          highlightAlignButton
-        });
-      }
-      if (!inspectorView || typeof inspectorView.renderStudioInspectorSelectionSummary !== 'function') return false;
-      const selectionSummary = inspectorView.renderStudioInspectorSelectionSummary({
+      return inspectorController.syncStudioInspectorForSelection({
         documentRef: document,
-        selectionState: liveSelectionState
-      });
-      if (!selectionSummary.hasSelection) return false;
-
-      const el = selectionSummary.primaryElement;
-      const isMulti = selectionSummary.isMulti;
-      inspectorView.syncStudioInspectorContentControls({
-        documentRef: document,
-        primaryElement: el,
-        isMulti
-      });
-
-      const computedStyles = el.ownerDocument.defaultView.getComputedStyle(el);
-      inspectorView.syncStudioInspectorTypographyControls({
-        documentRef: document,
-        primaryElement: el,
-        computedStyles,
+        selectionState: liveSelectionState,
+        inspectorView,
         rgbToHex,
-        highlightAlignButton
-      });
-      inspectorView.syncStudioInspectorBorderControls({
-        documentRef: document,
-        selection: liveSelectionState.selection,
-        computedStyles,
-        rgbToHex
+        highlightAlignButton,
+        updateClipboardActionState: typeof updateClipboardActionState === 'function'
+          ? updateClipboardActionState
+          : null,
+        updateRemovalActionState: typeof updateRemovalActionState === 'function'
+          ? updateRemovalActionState
+          : null,
+        updateLockActionState: typeof updateLockActionState === 'function'
+          ? updateLockActionState
+          : null,
+        updateVisibilityActionState: typeof updateVisibilityActionState === 'function'
+          ? updateVisibilityActionState
+          : null,
+        updateMotionActionState: typeof updateMotionActionState === 'function'
+          ? updateMotionActionState
+          : null,
+        updateAlignmentActionState: typeof updateAlignmentActionState === 'function'
+          ? updateAlignmentActionState
+          : null,
+        updateGroupActionState: typeof updateGroupActionState === 'function'
+          ? updateGroupActionState
+          : null,
+        updateStyleActionState: typeof updateStyleActionState === 'function'
+          ? updateStyleActionState
+          : null,
+        updateLayerOrderActionState: typeof updateLayerOrderActionState === 'function'
+          ? updateLayerOrderActionState
+          : null
       });
     }
 

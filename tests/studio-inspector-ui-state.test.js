@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const liveSelection = require('../shared/studio-editor-live-selection.js');
+const inspectorController = require('../shared/studio-editor-inspector-controller.js');
 const inspectorView = require('../shared/studio-editor-inspector-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -15,6 +16,14 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
   return fileContent.slice(start, end);
+}
+
+function createInspectorTestContext(context) {
+  if (!context.__withoutInspectorController) {
+    context.SlideNextStudioEditorInspectorController = inspectorController;
+  }
+  delete context.__withoutInspectorController;
+  vm.createContext(context);
 }
 
 test('syncInspectorForSelection delegates inspector control synchronization to the shared view', () => {
@@ -58,7 +67,7 @@ test('syncInspectorForSelection delegates inspector control synchronization to t
     updateVisibilityActionState() {}
   };
 
-  vm.createContext(context);
+  createInspectorTestContext(context);
   vm.runInContext(syncInspectorForSelectionSource, context);
 
   assert.equal(context.syncInspectorForSelection(), true);
@@ -82,7 +91,30 @@ test('syncInspectorForSelection fails closed when live-selection state is unavai
     }
   };
 
-  vm.createContext(context);
+  createInspectorTestContext(context);
+  vm.runInContext(syncInspectorForSelectionSource, context);
+
+  assert.equal(context.syncInspectorForSelection(), false);
+});
+
+test('syncInspectorForSelection fails closed when the shared inspector controller is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncInspectorForSelectionSource = extractFunctionSource(
+    fileContent,
+    'function syncInspectorForSelection() {',
+    '\n\n    // Click Selection highlights'
+  );
+  const context = {
+    __withoutInspectorController: true,
+    SlideNextStudioEditorLiveSelection: {
+      buildStudioLiveSelectionState() {
+        return { hasSelection: false, count: 0, selection: [] };
+      }
+    },
+    selectedElements: []
+  };
+
+  createInspectorTestContext(context);
   vm.runInContext(syncInspectorForSelectionSource, context);
 
   assert.equal(context.syncInspectorForSelection(), false);
@@ -144,7 +176,7 @@ test('syncInspectorForSelection tolerates missing inspector chrome when no selec
     }
   };
 
-  vm.createContext(context);
+  createInspectorTestContext(context);
   vm.runInContext(syncInspectorForSelectionSource, context);
 
   assert.doesNotThrow(() => context.syncInspectorForSelection());
@@ -295,7 +327,7 @@ test('syncInspectorForSelection tolerates a missing z-index input when a live se
     }
   };
 
-  vm.createContext(context);
+  createInspectorTestContext(context);
   vm.runInContext(syncInspectorForSelectionSource, context);
 
   assert.doesNotThrow(() => context.syncInspectorForSelection());
@@ -443,7 +475,7 @@ test('syncInspectorForSelection tolerates a missing font-family select when a li
     }
   };
 
-  vm.createContext(context);
+  createInspectorTestContext(context);
   vm.runInContext(syncInspectorForSelectionSource, context);
 
   assert.doesNotThrow(() => context.syncInspectorForSelection());
@@ -583,7 +615,7 @@ test('syncInspectorForSelection tolerates a missing text-color input when a live
     }
   };
 
-  vm.createContext(context);
+  createInspectorTestContext(context);
   vm.runInContext(syncInspectorForSelectionSource, context);
 
   assert.doesNotThrow(() => context.syncInspectorForSelection());
@@ -725,7 +757,7 @@ test('syncInspectorForSelection tolerates a missing font-weight control when a l
     }
   };
 
-  vm.createContext(context);
+  createInspectorTestContext(context);
   vm.runInContext(syncInspectorForSelectionSource, context);
 
   assert.doesNotThrow(() => context.syncInspectorForSelection());
@@ -864,7 +896,7 @@ test('syncInspectorForSelection tolerates missing opacity controls when a live s
     }
   };
 
-  vm.createContext(context);
+  createInspectorTestContext(context);
   vm.runInContext(syncInspectorForSelectionSource, context);
 
   assert.doesNotThrow(() => context.syncInspectorForSelection());
@@ -1004,7 +1036,7 @@ test('syncInspectorForSelection tolerates missing font-size controls when a live
     }
   };
 
-  vm.createContext(context);
+  createInspectorTestContext(context);
   vm.runInContext(syncInspectorForSelectionSource, context);
 
   assert.doesNotThrow(() => context.syncInspectorForSelection());
@@ -1151,7 +1183,7 @@ test('syncInspectorForSelection tolerates missing border inspector controls when
     }
   };
 
-  vm.createContext(context);
+  createInspectorTestContext(context);
   vm.runInContext(syncInspectorForSelectionSource, context);
 
   assert.doesNotThrow(() => context.syncInspectorForSelection());
@@ -1292,7 +1324,7 @@ test('syncInspectorForSelection tolerates missing content and image controls for
     }
   };
 
-  vm.createContext(context);
+  createInspectorTestContext(context);
   vm.runInContext(syncInspectorForSelectionSource, context);
 
   assert.doesNotThrow(() => context.syncInspectorForSelection());
