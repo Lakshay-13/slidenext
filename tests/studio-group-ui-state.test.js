@@ -8,6 +8,7 @@ const studioGroup = require('../shared/studio-editor-group.js');
 const groupMutation = require('../shared/studio-editor-group-mutation.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalGroup = require('../shared/studio-editor-canonical-group.js');
+const groupController = require('../shared/studio-editor-group-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -45,6 +46,29 @@ function loadUngroupMutationHelper(fileContent, context) {
   };
   context.SlideNextStudioEditorGroupMutation = groupMutation;
   vm.runInContext(helperSource, context);
+}
+
+function installGroupController(context) {
+  context.studioEditorGroupController = groupController.createStudioEditorGroupController({
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    canonicalGroupApi: context.SlideNextStudioEditorCanonicalGroup,
+    deckImportApi: context.SlideNextDeckImport,
+    buildGroupSelectionActionState: context.buildGroupSelectionActionState,
+    buildUngroupSelectionActionState: context.buildUngroupSelectionActionState,
+    updateGroupActionState: context.updateGroupActionState,
+    getIframeDoc: context.getIframeDoc,
+    getSlideMetrics: context.getSlideMetrics,
+    getRectOnSlide: context.getRectOnSlide,
+    getNormalizedSlideLayerOrder: context.getNormalizedSlideLayerOrder,
+    assignElementId: context.assignEditorElementId,
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    getEditorSlideId: context.getEditorSlideId,
+    applyGroupMutation: context.applyEditorGroupMutationWithTransaction,
+    applyUngroupMutation: context.applyEditorUngroupMutationWithTransaction,
+    commitSelectionState: context.commitEditorSelectionState,
+    finalizeDeckMutation: context.finalizeEditorDeckMutation,
+    prepareGroup: context.makeElementsHoverable
+  });
 }
 
 test('updateGroupActionState delegates toolbar state assembly to the shared group view', () => {
@@ -329,6 +353,7 @@ test('groupSelectedElements wraps selected children with relative coordinates an
   };
   vm.createContext(context);
   loadGroupMutationHelper(fileContent, context);
+  installGroupController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.groupSelectedElements(), true);
@@ -434,6 +459,7 @@ test('groupSelectedElements delegates wrapper mutation to the shared group modul
 
   vm.createContext(context);
   loadGroupMutationHelper(fileContent, context);
+  installGroupController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.groupSelectedElements(), true);
@@ -532,6 +558,7 @@ test('groupSelectedElements forwards a canonical tree sidecar for grouped nodes'
 
   vm.createContext(context);
   loadGroupMutationHelper(fileContent, context);
+  installGroupController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.groupSelectedElements(), true);
@@ -626,6 +653,7 @@ test('ungroupSelectedElements restores child positions, removes the wrapper, and
   };
   vm.createContext(context);
   loadUngroupMutationHelper(fileContent, context);
+  installGroupController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.ungroupSelectedElements(), true);
@@ -699,6 +727,7 @@ test('ungroupSelectedElements delegates wrapper removal to the shared group modu
 
   vm.createContext(context);
   loadUngroupMutationHelper(fileContent, context);
+  installGroupController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.ungroupSelectedElements(), true);
@@ -778,6 +807,7 @@ test('ungroupSelectedElements forwards a canonical tree sidecar for restored chi
 
   vm.createContext(context);
   loadUngroupMutationHelper(fileContent, context);
+  installGroupController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.ungroupSelectedElements(), true);

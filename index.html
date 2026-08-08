@@ -1226,6 +1226,7 @@
   <script src="/shared/studio-editor-alignment-controller.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-group-mutation.js"></script>
+  <script src="/shared/studio-editor-group-controller.js"></script>
   <script src="/shared/studio-editor-ruler.js"></script>
   <script src="/shared/studio-editor-ruler-view.js"></script>
   <script src="/shared/studio-editor-zoom.js"></script>
@@ -1697,6 +1698,36 @@
           buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
+        })
+      : null;
+    const studioEditorGroupController = typeof SlideNextStudioEditorGroupController !== 'undefined'
+      && SlideNextStudioEditorGroupController
+      && typeof SlideNextStudioEditorGroupController.createStudioEditorGroupController === 'function'
+      ? SlideNextStudioEditorGroupController.createStudioEditorGroupController({
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          canonicalGroupApi: typeof SlideNextStudioEditorCanonicalGroup !== 'undefined'
+            ? SlideNextStudioEditorCanonicalGroup
+            : null,
+          deckImportApi: typeof SlideNextDeckImport !== 'undefined'
+            ? SlideNextDeckImport
+            : null,
+          buildGroupSelectionActionState: (...args) => buildGroupSelectionActionState(...args),
+          buildUngroupSelectionActionState: (...args) => buildUngroupSelectionActionState(...args),
+          updateGroupActionState: (...args) => updateGroupActionState(...args),
+          getIframeDoc: (...args) => getIframeDoc(...args),
+          getSlideMetrics: (...args) => getSlideMetrics(...args),
+          getRectOnSlide: (...args) => getRectOnSlide(...args),
+          getNormalizedSlideLayerOrder: (...args) => getNormalizedSlideLayerOrder(...args),
+          assignElementId: (...args) => assignEditorElementId(...args),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          getEditorSlideId: (...args) => getEditorSlideId(...args),
+          applyGroupMutation: (...args) => applyEditorGroupMutationWithTransaction(...args),
+          applyUngroupMutation: (...args) => applyEditorUngroupMutationWithTransaction(...args),
+          commitSelectionState: (...args) => commitEditorSelectionState(...args),
+          finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args),
+          prepareGroup: (...args) => makeElementsHoverable(...args)
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -6147,133 +6178,10 @@
     }
 
     function groupSelectedElements() {
-      const groupActionState = buildGroupSelectionActionState();
-      if (!groupActionState.canGroup) {
-        updateGroupActionState();
-        return false;
-      }
-
-      const doc = getIframeDoc();
-      const { slide, parent, groupPlan } = groupActionState;
-      const slideMetrics = getSlideMetrics(slide);
-      const parentBounds = getRectOnSlide(parent.getBoundingClientRect(), slideMetrics);
-      const getGroupElementId = (element) => {
-        if (typeof assignEditorElementId === 'function') {
-          const assignedId = assignEditorElementId(element);
-          if (assignedId) return assignedId;
-        }
-        return element && element.dataset && element.dataset.editorId;
-      };
-      const selectedSet = new Set(groupActionState.selection);
-      const orderedSelection = getNormalizedSlideLayerOrder(slide)
-        .filter((element) => selectedSet.has(element));
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const canonicalGroupApi = typeof SlideNextStudioEditorCanonicalGroup !== 'undefined'
-        ? SlideNextStudioEditorCanonicalGroup
-        : null;
-      const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
-        ? SlideNextDeckImport
-        : null;
-      const importElementToCanonicalNode = deckImportApi
-        && typeof deckImportApi.importElementToCanonicalNode === 'function'
-        ? deckImportApi.importElementToCanonicalNode
-        : null;
-      const canonicalGroupBuilders = canonicalGroupApi
-        && typeof canonicalGroupApi.createStudioCanonicalGroupMutationBuilders === 'function'
-        ? canonicalGroupApi.createStudioCanonicalGroupMutationBuilders({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
-            importElementToCanonicalNode
-          })
-        : null;
-      const buildCanonicalGroupDeck = canonicalGroupBuilders
-        ? canonicalGroupBuilders.buildCanonicalGroupDeck
-        : null;
-      const buildCanonicalGroupBaseline = canonicalGroupBuilders
-        ? canonicalGroupBuilders.buildCanonicalGroupBaseline
-        : null;
-      let canonicalDeckBeforeGrouping = null;
-      let canonicalSlideId = '';
-      let canonicalParentId = '';
-      let canonicalSelectedNodeIds = [];
-      if (buildCanonicalGroupDeck
-        && canonicalDeckApi
-        && typeof canonicalDeckApi.groupCanonicalNodes === 'function'
-        && importElementToCanonicalNode
-        && typeof buildEditorCanonicalDeck === 'function') {
-        canonicalSlideId = typeof getEditorSlideId === 'function'
-          ? getEditorSlideId(slide)
-          : slide && slide.id;
-        canonicalParentId = parent === slide ? '' : getGroupElementId(parent);
-        canonicalSelectedNodeIds = orderedSelection
-          .map((element) => getGroupElementId(element))
-          .filter(Boolean);
-        if (parent === slide || canonicalParentId) {
-          canonicalDeckBeforeGrouping = buildCanonicalGroupBaseline
-            ? buildCanonicalGroupBaseline({
-                canonicalDeckApi,
-                buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-                  ? buildEditorCanonicalDeck
-                  : null,
-                sourceDocument: doc
-              })
-            : null;
-        } else {
-          canonicalSelectedNodeIds = [];
-        }
-      }
-      const mutation = applyEditorGroupMutationWithTransaction({
-        documentRef: doc,
-        parent,
-        groupPlan,
-        parentBounds,
-        orderedSelection,
-        getElementId: getGroupElementId,
-        assignElementId: typeof assignEditorElementId === 'function'
-          ? assignEditorElementId
-          : null,
-        prepareGroup: typeof makeElementsHoverable === 'function'
-          ? makeElementsHoverable
-          : null
-      });
-      if (!mutation.didApply) return false;
-      let canonicalDeck = null;
-      if (buildCanonicalGroupDeck
-        && canonicalDeckBeforeGrouping
-        && canonicalSlideId
-        && canonicalSelectedNodeIds.length > 1) {
-        canonicalDeck = buildCanonicalGroupDeck({
-          canonicalDeckApi,
-          canonicalDeckBeforeMutation: canonicalDeckBeforeGrouping,
-          importElementToCanonicalNode,
-          slideId: canonicalSlideId,
-          parentNodeId: canonicalParentId,
-          nodeIds: canonicalSelectedNodeIds,
-          groupElement: mutation.group,
-          getNodeId: (element) => {
-            if (element && element.dataset && typeof assignEditorElementId === 'function') {
-              const assignedId = assignEditorElementId(element);
-              if (assignedId) return assignedId;
-            }
-            return element && element.dataset && element.dataset.editorId;
-          }
-        });
-      }
-      commitEditorSelectionState({
-        selectedElements: [mutation.group]
-      });
-      finalizeEditorDeckMutation('Auto: Grouped Elements', {
-        syncSelectionOverlay: true,
-        refreshThumbnails: false,
-        debounceHistory: true,
-        transaction: mutation.transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
-      });
-      return true;
+      return studioEditorGroupController
+        && typeof studioEditorGroupController.group === 'function'
+        ? studioEditorGroupController.group()
+        : false;
     }
 
     function applyEditorUngroupMutationWithTransaction(options = {}) {
@@ -6309,128 +6217,10 @@
     }
 
     function ungroupSelectedElements() {
-      const ungroupActionState = buildUngroupSelectionActionState();
-      if (!ungroupActionState.canUngroup) {
-        updateGroupActionState();
-        return false;
-      }
-
-      const slideMetrics = getSlideMetrics(ungroupActionState.slide);
-      const getUngroupElementId = (element) => {
-        if (typeof assignEditorElementId === 'function') {
-          const assignedId = assignEditorElementId(element);
-          if (assignedId) return assignedId;
-        }
-        return element && element.dataset && element.dataset.editorId;
-      };
-
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const canonicalGroupApi = typeof SlideNextStudioEditorCanonicalGroup !== 'undefined'
-        ? SlideNextStudioEditorCanonicalGroup
-        : null;
-      const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
-        ? SlideNextDeckImport
-        : null;
-      const importElementToCanonicalNode = deckImportApi
-        && typeof deckImportApi.importElementToCanonicalNode === 'function'
-        ? deckImportApi.importElementToCanonicalNode
-        : null;
-      const canonicalUngroupBuilders = canonicalGroupApi
-        && typeof canonicalGroupApi.createStudioCanonicalUngroupMutationBuilders === 'function'
-        ? canonicalGroupApi.createStudioCanonicalUngroupMutationBuilders({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
-            importElementToCanonicalNode
-          })
-        : null;
-      const buildCanonicalUngroupDeck = canonicalUngroupBuilders
-        ? canonicalUngroupBuilders.buildCanonicalUngroupDeck
-        : null;
-      const buildCanonicalUngroupBaseline = canonicalUngroupBuilders
-        ? canonicalUngroupBuilders.buildCanonicalUngroupBaseline
-        : null;
-      let canonicalDeckBeforeUngrouping = null;
-      let canonicalGroupTargets = [];
-      if (buildCanonicalUngroupDeck
-        && canonicalDeckApi
-        && typeof canonicalDeckApi.ungroupCanonicalNodes === 'function'
-        && importElementToCanonicalNode
-        && typeof buildEditorCanonicalDeck === 'function') {
-        const canonicalSlideId = typeof getEditorSlideId === 'function'
-          ? getEditorSlideId(ungroupActionState.slide)
-          : ungroupActionState.slide && ungroupActionState.slide.id;
-        const groupIds = new Set();
-        let canBuildCanonicalSidecar = !!canonicalSlideId;
-        canonicalGroupTargets = ungroupActionState.groups.map((group) => {
-          const parent = group && group.parentElement;
-          const groupId = getUngroupElementId(group);
-          const parentNodeId = parent === ungroupActionState.slide
-            ? ''
-            : getUngroupElementId(parent);
-          if (!groupId || (!parentNodeId && parent !== ungroupActionState.slide) || groupIds.has(groupId)) {
-            canBuildCanonicalSidecar = false;
-          }
-          groupIds.add(groupId);
-          return { group, groupId, parentNodeId };
-        });
-        if (canonicalGroupTargets.some((target) => target.parentNodeId && groupIds.has(target.parentNodeId))) {
-          canBuildCanonicalSidecar = false;
-        }
-        if (canBuildCanonicalSidecar) {
-          canonicalDeckBeforeUngrouping = buildCanonicalUngroupBaseline
-            ? buildCanonicalUngroupBaseline({
-                canonicalDeckApi,
-                buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-                  ? buildEditorCanonicalDeck
-                  : null
-              })
-            : null;
-          canonicalGroupTargets = canonicalGroupTargets.map((target) => ({
-            ...target,
-            slideId: canonicalSlideId
-          }));
-        } else {
-          canonicalGroupTargets = [];
-        }
-      }
-
-      const mutation = applyEditorUngroupMutationWithTransaction({
-        groups: ungroupActionState.groups,
-        slideMetrics,
-        getRectOnSlide,
-        getElementId: getUngroupElementId
-      });
-      if (!mutation.didApply) return false;
-      let canonicalDeck = null;
-      if (buildCanonicalUngroupDeck
-        && canonicalDeckBeforeUngrouping
-        && canonicalGroupTargets.length === ungroupActionState.groups.length
-        && Array.isArray(mutation.restoredGroups)
-        && mutation.restoredGroups.length === canonicalGroupTargets.length) {
-        canonicalDeck = buildCanonicalUngroupDeck({
-          canonicalDeckApi,
-          canonicalDeckBeforeMutation: canonicalDeckBeforeUngrouping,
-          importElementToCanonicalNode,
-          groupTargets: canonicalGroupTargets,
-          restoredGroups: mutation.restoredGroups,
-          getElementId: getUngroupElementId
-        });
-      }
-      commitEditorSelectionState({
-        selectedElements: mutation.restoredElements
-      });
-      finalizeEditorDeckMutation('Auto: Ungrouped Elements', {
-        syncSelectionOverlay: true,
-        refreshThumbnails: false,
-        debounceHistory: true,
-        transaction: mutation.transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
-      });
-      return true;
+      return studioEditorGroupController
+        && typeof studioEditorGroupController.ungroup === 'function'
+        ? studioEditorGroupController.ungroup()
+        : false;
     }
 
     function createEditorTransformSessionFinalizer(transformApi, options = {}) {
