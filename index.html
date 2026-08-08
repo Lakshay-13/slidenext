@@ -1784,9 +1784,7 @@
           buildMotionSelectionActionState: () => buildMotionSelectionActionState(),
           updateMotionActionState: (...args) => updateMotionActionState(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
-            preferLiveCanonicalDeck: false
-          }),
+          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
         })
