@@ -35,8 +35,18 @@
     const setPersistedPlaybackState = typeof options.setPersistedPlaybackState === 'function'
       ? options.setPersistedPlaybackState
       : () => {};
+    const currentPresentationUrl = typeof options.currentPresentationUrl === 'string'
+      ? options.currentPresentationUrl
+      : '';
+    const getCurrentPresentationUrl = typeof options.getCurrentPresentationUrl === 'function'
+      ? options.getCurrentPresentationUrl
+      : () => currentPresentationUrl;
+    const setCurrentPresentationCanonicalDeck = typeof options.setCurrentPresentationCanonicalDeck === 'function'
+      ? options.setCurrentPresentationCanonicalDeck
+      : () => {};
 
     let stateUpdater = null;
+    let stateApplier = null;
 
     function createStateUpdater() {
       if (!persistenceStateApi
@@ -60,7 +70,28 @@
       return typeof stateUpdater === 'function' ? stateUpdater(nextState) : {};
     }
 
-    return { update };
+    function createStateApplier() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorPersistedDeckStateApplierAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorPersistedDeckStateApplierAdapter({
+        persistenceApi,
+        currentPresentationUrl,
+        getCurrentPresentationUrl,
+        updatePersistedDeckState: update,
+        setCurrentPresentationCanonicalDeck
+      });
+    }
+
+    function apply(nextState = {}, nextOptions = {}) {
+      if (typeof stateApplier !== 'function') {
+        stateApplier = createStateApplier();
+      }
+      return typeof stateApplier === 'function' ? stateApplier(nextState, nextOptions) : nextState;
+    }
+
+    return { update, apply };
   }
 
   return {

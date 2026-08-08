@@ -2480,7 +2480,9 @@
           },
           setPersistedPlaybackState(playbackState) {
             persistedDeckPlaybackState = playbackState;
-          }
+          },
+          getCurrentPresentationUrl: () => currentPresentationUrl,
+          setCurrentPresentationCanonicalDeck: (...args) => setCurrentPresentationCanonicalDeck(...args)
         })
       : null;
     const studioEditorSessionStateController = typeof SlideNextStudioEditorSession !== 'undefined'
@@ -4411,6 +4413,11 @@
     }
 
     function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.apply === 'function') {
+        return studioEditorPersistenceController.apply(nextState, options);
+      }
       if (typeof applyCurrentStudioPersistedDeckState.adapter !== 'function') {
         const createStudioEditorPersistedDeckStateApplierAdapter = (
           typeof SlideNextStudioEditorPersistenceState !== 'undefined'

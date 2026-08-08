@@ -49,4 +49,36 @@ test('persistence controller fails closed when the shared state adapter is unava
     persistenceStateApi: null
   });
   assert.deepEqual(controller.update({ cleanHtml: '<html></html>' }), {});
+  assert.deepEqual(controller.apply({ canonicalDeck: { slides: [] } }), {
+    canonicalDeck: { slides: [] }
+  });
+});
+
+test('persistence controller applies canonical state through the shared applier', () => {
+  const stored = {};
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState,
+    currentPresentationUrl: '/presentations/deck/index.html',
+    getCurrentPresentationUrl: () => '/presentations/deck/index.html',
+    resolveCanonicalDeck(value) {
+      return value === canonicalDeck ? canonicalDeck : null;
+    },
+    setPersistedCanonicalDeck(value) {
+      stored.canonicalDeck = value;
+    },
+    setCurrentPresentationCanonicalDeck(value, presentationUrl) {
+      stored.synced = { value, presentationUrl };
+    }
+  });
+
+  assert.deepEqual(controller.apply({ canonicalDeck }), { canonicalDeck });
+  assert.deepEqual(stored, {
+    canonicalDeck,
+    synced: {
+      value: canonicalDeck,
+      presentationUrl: '/presentations/deck/index.html'
+    }
+  });
 });
