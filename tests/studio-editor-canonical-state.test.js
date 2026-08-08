@@ -118,6 +118,7 @@ test('buildEditorCanonicalDeck prefers the active live model unless DOM rebuild 
     rebuiltDeck
   );
   assert.equal(calls.length, 1);
+  assert.equal(calls[0][1].canonicalDeckBaseline, liveDeck);
 });
 
 test('buildEditorCanonicalDeck fails closed when the canonical builder throws', () => {

@@ -4309,9 +4309,23 @@
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
-      const options = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
+      let options = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
         ? arguments[1]
         : {};
+      if (options.preferLiveCanonicalDeck === false
+        && !Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBaseline')
+        && typeof resolveEditorLiveCanonicalDeck === 'function') {
+        const canonicalDeckBaseline = resolveEditorLiveCanonicalDeck(
+          doc || getIframeDoc(),
+          studioEditorSessionToken
+        );
+        if (canonicalDeckBaseline) {
+          options = {
+            ...options,
+            canonicalDeckBaseline
+          };
+        }
+      }
       if (!studioEditorCanonicalBridge
         || typeof studioEditorCanonicalBridge.buildCanonicalDeck !== 'function') return null;
       return studioEditorCanonicalBridge.buildCanonicalDeck(doc, options);
