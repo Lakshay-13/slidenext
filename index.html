@@ -6516,11 +6516,14 @@
       const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
         ? selectedElements[0]
         : null;
+      const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
+        ? getEditorCanonicalVisibilityReader('locked', doc, isElementLocked)
+        : isElementLocked;
       return assetView.syncStudioAssetState({
         documentRef: document,
         assets: canonicalDeck && canonicalDeck.assets,
         selectedElement: candidate,
-        isElementLocked: (element) => isElementLocked(element),
+        isElementLocked: readLockedState,
         applyAsset: typeof applyAssetToSelectedImage === 'function'
           ? applyAssetToSelectedImage
           : null,

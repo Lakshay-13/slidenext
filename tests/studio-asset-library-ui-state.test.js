@@ -4,6 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const assetView = require('../shared/studio-editor-asset-view.js');
+const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -317,4 +319,62 @@ test('asset library state resolves relative previews against the current present
     receivedOptions.resolvePreviewSource('assets/hero.png'),
     'http://localhost:3000/presentations/demo/assets/hero.png'
   );
+});
+
+test('asset library state prefers canonical lock metadata when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const visibilityReaderSource = extractFunctionSource(
+    fileContent,
+    'function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {',
+    '\n\n    function setElementHiddenState'
+  );
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateAssetLibraryState(doc = getIframeDoc()) {',
+    '\n\n    function updateTemplateActionState'
+  );
+  const doc = { id: 'doc' };
+  const selectedElement = { tagName: 'IMG', dataset: { editorId: 'node-1' } };
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    assets: [{ id: 'hero', name: 'Hero', type: 'image' }],
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', visibility: { locked: true } }]
+    }]
+  });
+  let receivedOptions = null;
+  const context = {
+    SlideNextStudioEditorCanonicalState: canonicalState,
+    SlideNextStudioEditorAssetView: {
+      syncStudioAssetState(options) {
+        receivedOptions = options;
+        return options.isElementLocked(selectedElement);
+      }
+    },
+    buildEditorCanonicalDeck(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return canonicalDeck;
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    },
+    isElementLocked() {
+      return false;
+    },
+    isElementHidden() {
+      return false;
+    },
+    resolveEditorCanonicalNodeForElement(element, deck) {
+      return deck.slides[0].nodes.find((node) => node.id === element.dataset.editorId) || null;
+    },
+    selectedElements: [selectedElement]
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${visibilityReaderSource}\n${source}`, context);
+
+  assert.equal(context.updateAssetLibraryState(doc), true);
+  assert.equal(receivedOptions.selectedElement, selectedElement);
+  assert.equal(receivedOptions.isElementLocked(selectedElement), true);
 });
