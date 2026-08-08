@@ -1218,6 +1218,7 @@
   <script src="/shared/studio-editor-slide-insertion-mutation.js"></script>
   <script src="/shared/studio-editor-slide-reorder-mutation.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
+  <script src="/shared/studio-editor-inline-edit.js"></script>
   <script src="/shared/studio-editor-interaction-options.js"></script>
   <script src="/shared/studio-editor-interactions.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
@@ -1373,6 +1374,10 @@
       "[class*='box']"
     ].join(', ');
     const EDITOR_INLINE_TEXT_TAGS = new Set(['span', 'strong', 'em', 'b', 'i', 'u', 'small', 'mark', 'sup', 'sub', 'label']);
+    const EDITOR_INLINE_EDIT_TEXT_TAGS = new Set([
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li', 'pre', 'code', 'blockquote',
+      ...EDITOR_INLINE_TEXT_TAGS
+    ]);
     const RESIZE_HANDLE_DIRECTIONS = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
 
     // Slide Wallpapers Presets Data
@@ -2544,6 +2549,33 @@
         selectElement,
         deselectElement
       });
+      const inlineTextEditApi = typeof SlideNextStudioEditorInlineEdit !== 'undefined'
+        ? SlideNextStudioEditorInlineEdit
+        : null;
+      if (inlineTextEditApi && typeof inlineTextEditApi.attachStudioInlineTextEditHandlers === 'function') {
+        inlineTextEditApi.attachStudioInlineTextEditHandlers(iframeDoc, {
+          getActiveSlide: () => getActiveSlide(iframeDoc),
+          resolveTextElement: resolveInlineTextEditTarget,
+          canEdit: (element) => !!getActiveSlide(iframeDoc)
+            && !isElementLocked(element)
+            && !isElementHidden(element),
+          onStart: ({ element }) => {
+            commitEditorSelectionState({ selectedElements: [element] });
+            const overlay = ensureSelectionOverlay(iframeDoc, getActiveSlide(iframeDoc));
+            if (overlay) {
+              overlay.style.display = 'none';
+              overlay.style.pointerEvents = 'none';
+            }
+          },
+          onCommit: ({ text }) => {
+            applySelectedElementStyle('text', text);
+          },
+          onEnd: () => {
+            syncSelectionOverlay();
+            syncInspectorForSelection();
+          }
+        });
+      }
       const frameKeydownHandler = SlideNextStudioEditorEvents.createStudioFrameKeydownHandler({
         getActiveElement: () => iframeDoc.activeElement,
         getSelectedElements: () => getLiveSelectedElements(selectedElements, iframeDoc),
@@ -4308,6 +4340,32 @@
 
     function resolveEditableTarget(node) {
       return SlideNextStudioEditorDom.resolveStudioEditableTarget(node, getEditorDomOptions());
+    }
+
+    function resolveInlineTextEditTarget(node, slide) {
+      if (node && typeof node.closest === 'function' && node.closest('.editor-resize-handle')) {
+        return null;
+      }
+      const selected = node && typeof node.closest === 'function'
+        && node.closest('#editorSelectionOverlay')
+        ? getLiveSelectedElements(selectedElements, getIframeDoc())[0]
+        : null;
+      let current = selected || (node && node.nodeType === 1
+        ? node
+        : node && node.parentElement
+          ? node.parentElement
+          : null);
+      while (current && current !== slide) {
+        const tagName = typeof current.tagName === 'string'
+          ? current.tagName.toLowerCase()
+          : '';
+        if (EDITOR_INLINE_EDIT_TEXT_TAGS.has(tagName)
+          && (!slide || typeof slide.contains !== 'function' || slide.contains(current))) {
+          return current;
+        }
+        current = current.parentElement;
+      }
+      return null;
     }
 
     function refreshSelectionClasses() {

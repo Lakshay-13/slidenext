@@ -14,6 +14,12 @@ function createElement(tagName = 'div') {
   };
 }
 
+test('editor chrome allows text selection while a node is being edited inline', () => {
+  const css = styleState.getStudioEditorStyleText();
+  assert.match(css, /\[data-editor-inline-editing="true"\]/);
+  assert.match(css, /user-select: text !important/);
+});
+
 test('buildStudioStyleMutationPlan filters stale selections, blocks locked selections, respects deck readiness, and maps version labels', () => {
   const stale = { isConnected: false, locked: false };
   const live = { isConnected: true, locked: false };
@@ -49,6 +55,13 @@ test('buildStudioStyleMutationPlan filters stale selections, blocks locked selec
     canApply: false,
     versionLabel: 'Auto: Changed Font Weight'
   });
+
+  assert.equal(
+    styleState.buildStudioStyleMutationPlan([live], 'text', 'Edited', {
+      isLocked: (element) => !!element.locked
+    }).versionLabel,
+    'Auto: Edited Text'
+  );
 });
 
 test('buildStudioStyleToolbarState derives inspector control enablement from shared style mutation plans', () => {

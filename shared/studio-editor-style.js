@@ -9,6 +9,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const DEFAULT_STUDIO_EDITOR_STYLE_ID = 'editor-style-tag';
   const STUDIO_STYLE_VERSION_LABELS = {
+    text: 'Auto: Edited Text',
     family: 'Auto: Changed Font Family',
     weight: 'Auto: Changed Font Weight',
     align: 'Auto: Changed Alignment',
@@ -460,6 +461,12 @@
       [style*="position: absolute"] {
         cursor: move !important;
         user-select: none !important;
+      }
+      [data-editor-inline-editing="true"],
+      [data-editor-inline-editing="true"] * {
+        cursor: text !important;
+        user-select: text !important;
+        -webkit-user-select: text !important;
       }
       a {
         pointer-events: none !important;
