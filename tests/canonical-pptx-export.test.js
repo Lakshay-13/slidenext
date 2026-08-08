@@ -548,6 +548,33 @@ test('createCanonicalPptxExport renders node background images before child cont
   assert.deepEqual(result.diagnostics.missingNodeBackgroundAssets, []);
 });
 
+test('createCanonicalPptxExport preserves focal positioning for node background images', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 1000, unit: 'px' } },
+    assets: [{
+      id: 'asset-1',
+      src: 'data:image/png;base64,AAAA',
+      meta: { width: 1600, height: 900 }
+    }],
+    slides: [{
+      nodes: [{
+        id: 'panel-1',
+        type: 'container',
+        style: 'background-image: url("data:image/png;base64,AAAA"); background-size: cover; background-position: right bottom; background-repeat: no-repeat;',
+        layout: { x: 100, y: 50, width: 400, height: 400 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const imageOptions = result.pptx.slides[0].calls[0].options;
+  assert.equal(imageOptions.sizing.type, 'crop');
+  assert.ok(imageOptions.w > imageOptions.sizing.w);
+  assert.ok(imageOptions.h >= imageOptions.sizing.h);
+  assert.ok(imageOptions.sizing.x > 0);
+  assert.ok(imageOptions.sizing.y >= 0);
+  assert.deepEqual(result.diagnostics.unsupportedStyles, []);
+});
+
 test('createCanonicalPptxExport renders solid node backgrounds beneath child content with alpha', () => {
   const result = pptxExport.createCanonicalPptxExport({
     layout: { size: { width: 1000, height: 500, unit: 'px' } },
@@ -1189,6 +1216,26 @@ test('preflightCanonicalPptxExport reports unsupported image positioning', () =>
   ]);
   assert.match(report.diagnostics.warnings.join('\n'), /unsupported image positioning: object-position/);
   assert.match(report.diagnostics.warnings.join('\n'), /unsupported background image positioning/);
+});
+
+test('preflightCanonicalPptxExport accepts focal positioning for sized node backgrounds', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    assets: [{
+      id: 'asset-1',
+      src: 'data:image/png;base64,AAAA',
+      meta: { width: 1600, height: 900 }
+    }],
+    slides: [{
+      nodes: [{
+        id: 'background-image-1',
+        type: 'container',
+        style: 'background-image: url("data:image/png;base64,AAAA"); background-size: cover; background-position: right bottom; background-repeat: no-repeat;',
+        layout: { x: 0, y: 0, width: 400, height: 400 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedStyles, []);
 });
 
 test('createCanonicalPptxExport maps supported image focal positions to crop sizing', () => {
