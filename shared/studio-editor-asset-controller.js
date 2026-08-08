@@ -109,9 +109,29 @@
         return false;
       }
       const selectedImage = getSelectedImage();
-      if (!selectedImage || isElementLocked(selectedImage)) return false;
+      if (!selectedImage) return false;
+      const canonicalDeck = resolveCanonicalDeck();
+      let canonicalLockState = null;
+      if (canonicalDeck
+        && typeof canonicalDeckApi.findCanonicalNodeById === 'function') {
+        try {
+          const canonicalNode = canonicalDeckApi.findCanonicalNodeById(
+            canonicalDeck,
+            getElementId(selectedImage)
+          );
+          const value = canonicalNode
+            && canonicalNode.visibility
+            && canonicalNode.visibility.locked;
+          if (typeof value === 'boolean') canonicalLockState = value;
+        } catch (err) {
+          canonicalLockState = null;
+        }
+      }
+      if (canonicalLockState === true || isElementLocked(selectedImage)) {
+        return false;
+      }
       const nextCanonicalDeck = canonicalDeckApi.updateCanonicalNodeAsset(
-        resolveCanonicalDeck(),
+        canonicalDeck,
         getActiveSlideId(),
         getElementId(selectedImage),
         assetId

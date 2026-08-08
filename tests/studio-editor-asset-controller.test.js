@@ -123,6 +123,43 @@ test('applyAsset refuses missing, unselected, and locked image targets', () => {
   assert.equal(lockedController.applyAsset('hero'), false);
 });
 
+test('applyAsset prefers canonical lock metadata over stale DOM state', () => {
+  let deck = canonicalDeck.createCanonicalDeck({
+    assets: [{ id: 'hero', src: '/hero.png' }],
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'image-1', type: 'image', visibility: { locked: true } }]
+    }]
+  });
+  const selectedImage = {
+    dataset: { editorId: 'image-1' },
+    setAttribute() {}
+  };
+  const createController = () => assetController.createStudioEditorAssetController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedImage: () => selectedImage,
+    isElementLocked: () => false,
+    saveHistoryState: (_debounce, _transaction, nextDeck) => { deck = nextDeck; }
+  });
+
+  assert.equal(createController().applyAsset('hero'), false);
+
+  deck = canonicalDeck.updateCanonicalNodeVisibility(deck, ['image-1'], {
+    locked: false
+  });
+  const unlockedController = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedImage: () => selectedImage,
+    isElementLocked: () => true,
+    saveHistoryState: (_debounce, _transaction, nextDeck) => { deck = nextDeck; }
+  });
+  assert.equal(unlockedController.applyAsset('hero'), false);
+});
+
 test('asset controller returns false when an asset operation cannot produce a deck', () => {
   const controller = assetController.createStudioEditorAssetController({
     canonicalDeckApi: canonicalDeck,
