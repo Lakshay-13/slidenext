@@ -1390,6 +1390,7 @@
   <script src="/shared/deck-html.js"></script>
   <script src="/shared/studio-deck-view.js"></script>
   <script src="/shared/studio-editor-navigation-controller.js"></script>
+  <script src="/shared/studio-editor-navigation-sync.js"></script>
   <script src="/shared/studio-editor-ui-state.js"></script>
   <script src="/shared/studio-preview.js"></script>
   <script src="/shared/studio-pdf-export.js"></script>
@@ -1588,6 +1589,21 @@
           setCustomGradientType: (nextValue) => {
             customGradientType = nextValue;
           }
+        })
+      : null;
+    const studioEditorNavigationSync = typeof SlideNextStudioEditorNavigationSync !== 'undefined'
+      && SlideNextStudioEditorNavigationSync
+      && typeof SlideNextStudioEditorNavigationSync.createStudioEditorNavigationSync === 'function'
+      ? SlideNextStudioEditorNavigationSync.createStudioEditorNavigationSync({
+          activeSlideController: studioEditorActiveSlideController,
+          navigationController: studioEditorNavigationController,
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
+            ? SlideNextStudioDeckView
+            : null,
+          getDocument: () => getIframeDoc(),
+          updateTemplateActionState: (...args) => updateTemplateActionState(...args),
+          updateMasterSlideActionState: (...args) => updateMasterSlideActionState(...args),
+          updateAssetLibraryState: (...args) => updateAssetLibraryState(...args)
         })
       : null;
     const studioEditorThumbnailController = typeof SlideNextStudioEditorThumbnailController !== 'undefined'
@@ -2324,8 +2340,6 @@
     let renamingFilename = '';
     let renamingVersionContext = null;
     let editorClipboard = null;
-    let deckActiveSlideObserver = null;
-    let deckActiveSlideSyncTimer = null;
     let preserveSelectionOnNextActiveSlideSync = false;
     let isGridSnapEnabled = false;
     const GRID_SNAP_SIZE_PX = 20;
@@ -3610,92 +3624,53 @@
     }
 
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
-      const didSync = studioEditorActiveSlideController
-        ? studioEditorActiveSlideController.sync(doc, options)
-        : false;
-      if (typeof updateTemplateActionState === 'function') {
-        updateTemplateActionState(doc);
-      }
-      if (typeof updateMasterSlideActionState === 'function') {
-        updateMasterSlideActionState(doc);
-      }
-      if (typeof updateAssetLibraryState === 'function') {
-        updateAssetLibraryState(doc);
-      }
-      return didSync;
+      if (!studioEditorNavigationSync
+        || typeof studioEditorNavigationSync.sync !== 'function') return false;
+      return studioEditorNavigationSync.sync(doc, options);
     }
 
     function bindDeckNavigationSync(doc = getIframeDoc()) {
-      return studioEditorNavigationController
-        ? studioEditorNavigationController.bind(doc)
-        : false;
+      if (!studioEditorNavigationSync
+        || typeof studioEditorNavigationSync.bind !== 'function') return false;
+      return studioEditorNavigationSync.bind(doc);
     }
 
     function teardownDeckActiveSlideSync() {
-      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
-        : null;
-      if (!deckView || typeof deckView.teardownStudioDeckActiveSlideSync !== 'function') {
-        deckActiveSlideObserver = null;
-        deckActiveSlideSyncTimer = null;
-        return false;
-      }
-      const nextSyncState = deckView.teardownStudioDeckActiveSlideSync({
-        observer: deckActiveSlideObserver,
-        timer: deckActiveSlideSyncTimer
-      });
-      deckActiveSlideObserver = nextSyncState.observer;
-      deckActiveSlideSyncTimer = nextSyncState.timer;
-      return true;
+      if (!studioEditorNavigationSync
+        || typeof studioEditorNavigationSync.teardown !== 'function') return false;
+      return studioEditorNavigationSync.teardown();
     }
 
     function scheduleStudioChromeSync(doc = getIframeDoc()) {
-      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
-        : null;
-      if (!doc || !deckView || typeof deckView.scheduleStudioDeckActiveSlideSync !== 'function') return false;
-      deckActiveSlideSyncTimer = deckView.scheduleStudioDeckActiveSlideSync(deckActiveSlideSyncTimer, () => {
-        deckActiveSlideSyncTimer = null;
-        syncStudioChromeToActiveSlide(doc);
-      });
-      return true;
+      if (!studioEditorNavigationSync
+        || typeof studioEditorNavigationSync.schedule !== 'function') return false;
+      return studioEditorNavigationSync.schedule(doc);
     }
 
     function observeDeckActiveSlideState(doc = getIframeDoc()) {
-      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
-        : null;
-      teardownDeckActiveSlideSync();
-      if (!deckView || typeof deckView.observeStudioDeckActiveSlideState !== 'function') {
-        return false;
-      }
-      const nextObserverState = deckView.observeStudioDeckActiveSlideState(doc, {
-        scheduleSync: (nextDoc) => {
-          scheduleStudioChromeSync(nextDoc);
-        }
-      });
-      deckActiveSlideObserver = nextObserverState.observer;
-      return nextObserverState.didObserve;
+      if (!studioEditorNavigationSync
+        || typeof studioEditorNavigationSync.observe !== 'function') return false;
+      return studioEditorNavigationSync.observe(doc);
     }
 
     // Toggle active slide viewport display
     function setActiveSlide(index, options = {}) {
-      return studioEditorNavigationController
-        ? studioEditorNavigationController.setActiveSlide(index, options)
-        : false;
+      if (!studioEditorNavigationSync
+        || typeof studioEditorNavigationSync.setActiveSlide !== 'function') return false;
+      return studioEditorNavigationSync.setActiveSlide(index, options);
     }
 
     function navigateEditorSlide(direction = 0) {
-      return studioEditorNavigationController
-        ? studioEditorNavigationController.navigate(direction)
-        : false;
+      if (!studioEditorNavigationSync
+        || typeof studioEditorNavigationSync.navigate !== 'function') return false;
+      return studioEditorNavigationSync.navigate(direction);
     }
 
     // Sync presentation's internal dots and counter
     function updateIframeNavigationUI(doc, slides) {
-      return studioEditorNavigationController
-        ? studioEditorNavigationController.updateIframeNavigationUi(doc, slides)
-        : false;
+      if (!studioEditorNavigationSync
+        || typeof studioEditorNavigationSync.updateIframeNavigationUi !== 'function') return false;
+      return studioEditorNavigationSync.updateIframeNavigationUi(doc, slides);
     }
 
     function createEditorSlideMutationPersistenceFinalizer(options = {}) {

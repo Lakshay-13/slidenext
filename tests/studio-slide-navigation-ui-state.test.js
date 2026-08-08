@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const wallpaperView = require('../shared/studio-editor-wallpaper-view.js');
 const activeSlideView = require('../shared/studio-editor-active-slide-view.js');
 const activeSlideController = require('../shared/studio-editor-active-slide-controller.js');
+const navigationSync = require('../shared/studio-editor-navigation-sync.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -72,6 +73,24 @@ function ensureSyncStudioChromeActionStateHelpers(context) {
       context.customGradientType = nextValue;
     }
   });
+  context.studioEditorNavigationSync = navigationSync.createStudioEditorNavigationSync({
+    activeSlideController: context.studioEditorActiveSlideController,
+    navigationController: context.studioEditorNavigationController || null,
+    deckViewApi: context.SlideNextStudioDeckView || null,
+    getDocument: () => typeof context.getIframeDoc === 'function' ? context.getIframeDoc() : null,
+    updateTemplateActionState: resolveContextFunction('updateTemplateActionState'),
+    updateMasterSlideActionState: resolveContextFunction('updateMasterSlideActionState'),
+    updateAssetLibraryState: resolveContextFunction('updateAssetLibraryState')
+  });
+}
+
+function attachNavigationSync(context) {
+  context.studioEditorNavigationSync = navigationSync.createStudioEditorNavigationSync({
+    navigationController: context.studioEditorNavigationController || null,
+    deckViewApi: context.SlideNextStudioDeckView || null,
+    getDocument: () => typeof context.getIframeDoc === 'function' ? context.getIframeDoc() : null
+  });
+  return context;
 }
 
 test('setActiveSlide delegates requested options to the navigation controller', () => {
@@ -94,6 +113,7 @@ test('setActiveSlide delegates requested options to the navigation controller', 
       }
     }
   };
+  attachNavigationSync(context);
 
   vm.createContext(context);
   vm.runInContext(setActiveSlideSource, context);
@@ -127,6 +147,7 @@ test('navigateEditorSlide clamps navigation to the live slide list and records h
       }
     }
   };
+  attachNavigationSync(context);
 
   vm.createContext(context);
   vm.runInContext(navigateEditorSlideSource, context);
@@ -163,6 +184,7 @@ test('bindDeckNavigationSync delegates to the navigation controller', () => {
       }
     }
   };
+  attachNavigationSync(context);
 
   vm.createContext(context);
   vm.runInContext(bindDeckNavigationSyncSource, context);
@@ -179,17 +201,14 @@ test('deck active-slide lifecycle helpers fail closed without the shared deck vi
     '\n\n    // Toggle active slide viewport display'
   );
   const context = {
-    deckActiveSlideObserver: { disconnect() {} },
-    deckActiveSlideSyncTimer: 123,
-    syncStudioChromeToActiveSlide() {}
+    SlideNextStudioDeckView: null
   };
+  attachNavigationSync(context);
 
   vm.createContext(context);
   vm.runInContext(source, context);
 
   assert.equal(context.teardownDeckActiveSlideSync(), false);
-  assert.equal(context.deckActiveSlideObserver, null);
-  assert.equal(context.deckActiveSlideSyncTimer, null);
   assert.equal(context.scheduleStudioChromeSync(null), false);
   assert.equal(context.observeDeckActiveSlideState(null), false);
 });
@@ -213,6 +232,7 @@ test('updateIframeNavigationUI delegates to the navigation controller', () => {
       }
     }
   };
+  attachNavigationSync(context);
 
   vm.createContext(context);
   vm.runInContext(updateIframeNavigationUISource, context);
