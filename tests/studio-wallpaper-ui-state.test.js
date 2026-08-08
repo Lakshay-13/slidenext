@@ -152,6 +152,43 @@ test('resolveCurrentStudioWallpaperActionState reuses the shared deck-view wallp
   }]);
 });
 
+test('resolveCurrentStudioWallpaperActionState attaches the canonical active slide when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = {
+    activeSlide: { dataset: { slideId: 'slide-1' } }
+  };
+  const canonicalActiveSlide = {
+    id: 'slide-1',
+    layout: { background: { style: 'background: #112233;' } }
+  };
+  const context = {
+    SlideNextStudioDeckView: deckView,
+    getActiveSlide(sourceDoc) {
+      return sourceDoc && sourceDoc.activeSlide ? sourceDoc.activeSlide : null;
+    },
+    getEditorSlideId(slide) {
+      return slide && slide.dataset ? slide.dataset.slideId : '';
+    },
+    buildEditorCanonicalDeck(sourceDoc) {
+      assert.equal(sourceDoc, doc);
+      return { slides: [canonicalActiveSlide] };
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+
+  const result = context.resolveCurrentStudioWallpaperActionState(doc);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    activeSlide: doc.activeSlide,
+    canUseWallpaperControls: true,
+    canonicalActiveSlide
+  });
+});
+
 test('updateWallpaperActionState enables wallpaper controls only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateWallpaperActionStateSource = extractFunctionSource(

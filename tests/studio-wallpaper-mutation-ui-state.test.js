@@ -602,6 +602,43 @@ test('applyPresetWallpaper skips persistence when the active slide already has t
   ]);
 });
 
+test('applyPresetWallpaper compares against canonical active-slide paint', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyPresetWallpaperSource = extractFunctionSource(
+    fileContent,
+    'function applyPresetWallpaper(val, isCustomInput = false) {',
+    '\n\n    function setCustomGradientType(type) {'
+  );
+  const iframeDoc = { id: 'doc' };
+  const activeSlide = { style: { background: '#000000' } };
+  const canonicalActiveSlide = {
+    id: 'slide-1',
+    layout: { background: { style: 'background: linear-gradient(red, blue);' } }
+  };
+  const context = {
+    SlideNextStudioEditorWallpaperView: studioWallpaperView,
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    resolveCurrentStudioWallpaperActionState() {
+      return {
+        activeSlide,
+        canonicalActiveSlide,
+        canUseWallpaperControls: true
+      };
+    },
+    finalizeWallpaperMutation() {
+      throw new Error('canonical no-op should not persist');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyPresetWallpaperSource, context);
+
+  assert.equal(context.applyPresetWallpaper('linear-gradient(red, blue)'), false);
+  assert.equal(activeSlide.style.background, '#000000');
+});
+
 test('applyWallpaperToAllSlides uses the shared iframe accessor and propagates the active background to every slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyWallpaperToAllSlidesSource = extractFunctionSource(
@@ -719,6 +756,55 @@ test('applyWallpaperToAllSlides delegates slide mutation to the shared wallpaper
   assert.equal(typeof delegatedArgs.options.getSlideId, 'function');
   assert.equal(finalizedArgs[0], 'Auto: Applied Background to All Slides');
   assert.deepEqual(JSON.parse(JSON.stringify(finalizedArgs[1])), { type: 'style' });
+});
+
+test('applyWallpaperToAllSlides uses canonical active-slide paint', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyWallpaperToAllSlidesSource = extractFunctionSource(
+    fileContent,
+    'function applyWallpaperToAllSlides() {',
+    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+  );
+  const iframeDoc = { id: 'doc' };
+  const activeSlide = { style: { background: '#000000' } };
+  const siblingSlide = { style: { background: '' } };
+  let delegatedBackground = '';
+  const context = {
+    SlideNextStudioEditorWallpaperView: studioWallpaperView,
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getSlides() {
+      return [activeSlide, siblingSlide];
+    },
+    resolveCurrentStudioWallpaperActionState() {
+      return {
+        activeSlide,
+        canonicalActiveSlide: {
+          id: 'slide-1',
+          layout: { background: { style: 'background: linear-gradient(red, blue);' } }
+        },
+        canUseWallpaperControls: true
+      };
+    },
+    SlideNextStudioEditorCanonicalWallpaper: canonicalWallpaper,
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    buildEditorMutationCanonicalDeck() {
+      return canonicalDeckModel.createCanonicalDeck({ slides: [] });
+    },
+    applyEditorWallpaperSlidesMutationWithTransaction(slides, background) {
+      delegatedBackground = background;
+      return { didChange: true, transaction: null };
+    },
+    finalizeWallpaperMutation() {},
+    alert() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyWallpaperToAllSlidesSource, context);
+
+  assert.equal(context.applyWallpaperToAllSlides(), true);
+  assert.equal(delegatedBackground, 'linear-gradient(red, blue)');
 });
 
 test('applyWallpaperToAllSlides records one style transaction per changed slide', () => {

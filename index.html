@@ -7179,7 +7179,16 @@
       const activeSlide = actionState.activeSlide;
 
       if (!activeSlide) return false;
-      if (activeSlide.style.background === val) return false;
+      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+        ? SlideNextStudioEditorWallpaperView
+        : null;
+      const readBackgroundPaint = wallpaperView
+        && typeof wallpaperView.resolveStudioActiveSlideBackgroundPaint === 'function'
+        ? wallpaperView.resolveStudioActiveSlideBackgroundPaint
+        : (slide) => slide && slide.style && slide.style.background || '';
+      const currentBackground = readBackgroundPaint(actionState.canonicalActiveSlide)
+        || readBackgroundPaint(activeSlide);
+      if (currentBackground === val) return false;
 
       const activeSlideId = typeof getEditorSlideId === 'function'
         ? getEditorSlideId(activeSlide)
@@ -7345,7 +7354,15 @@
       const activeSlide = actionState.activeSlide;
       
       if (!activeSlide) return false;
-      const paint = activeSlide.style.background;
+      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+        ? SlideNextStudioEditorWallpaperView
+        : null;
+      const readBackgroundPaint = wallpaperView
+        && typeof wallpaperView.resolveStudioActiveSlideBackgroundPaint === 'function'
+        ? wallpaperView.resolveStudioActiveSlideBackgroundPaint
+        : (slide) => slide && slide.style && slide.style.background || '';
+      const paint = readBackgroundPaint(actionState.canonicalActiveSlide)
+        || readBackgroundPaint(activeSlide);
       if (!paint) return false;
       
       const slides = getSlides(iframeDoc);
@@ -9921,9 +9938,31 @@
           canUseWallpaperControls: false
         };
       }
-      return deckView.resolveStudioWallpaperActionState(doc, {
+      const actionState = deckView.resolveStudioWallpaperActionState(doc, {
         getActiveSlide
       });
+      const activeSlide = actionState && actionState.activeSlide;
+      if (!activeSlide
+        || typeof getEditorSlideId !== 'function'
+        || typeof buildEditorCanonicalDeck !== 'function') {
+        return actionState;
+      }
+
+      const activeSlideId = getEditorSlideId(activeSlide);
+      if (!activeSlideId) return actionState;
+
+      try {
+        const canonicalDeck = buildEditorCanonicalDeck(doc);
+        const canonicalActiveSlide = canonicalDeck
+          && Array.isArray(canonicalDeck.slides)
+          ? canonicalDeck.slides.find((slide) => slide && slide.id === activeSlideId)
+          : null;
+        return canonicalActiveSlide
+          ? { ...actionState, canonicalActiveSlide }
+          : actionState;
+      } catch (error) {
+        return actionState;
+      }
     }
 
     function updateWallpaperActionState(doc = getIframeDoc()) {

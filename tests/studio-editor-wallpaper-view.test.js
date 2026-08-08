@@ -54,6 +54,30 @@ test('wallpaper readers accept canonical slide background metadata', () => {
   );
 });
 
+test('resolveStudioActiveSlideBackgroundPaint prefers canonical paint and supports DOM fallback', () => {
+  assert.equal(
+    wallpaperView.resolveStudioActiveSlideBackgroundPaint({
+      layout: {
+        background: {
+          style: 'background: linear-gradient(red, blue);'
+        }
+      },
+      style: {
+        background: '#000000'
+      }
+    }),
+    'linear-gradient(red, blue)'
+  );
+  assert.equal(
+    wallpaperView.resolveStudioActiveSlideBackgroundPaint({
+      style: {
+        background: '#112233'
+      }
+    }),
+    '#112233'
+  );
+});
+
 test('resolveStudioActiveSlideGradientControls parses editable linear and radial gradients', () => {
   assert.deepEqual(
     wallpaperView.resolveStudioActiveSlideGradientControls({

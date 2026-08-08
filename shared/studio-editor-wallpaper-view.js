@@ -64,6 +64,14 @@
     };
   }
 
+  function resolveStudioActiveSlideBackgroundPaint(activeSlide) {
+    const backgroundValues = resolveStudioActiveSlideBackgroundValues(activeSlide);
+    return backgroundValues.background
+      || backgroundValues.backgroundColor
+      || backgroundValues.backgroundImage
+      || '';
+  }
+
   function rgbToHex(value, converter = null) {
     if (typeof converter === 'function') return converter(value);
     if (!colorUtils || typeof colorUtils.rgbToHex !== 'function') return '#ffffff';
@@ -435,6 +443,7 @@
     normalizeStudioWallpaperColor,
     splitStudioGradientSegments,
     extractStudioGradientStopColor,
+    resolveStudioActiveSlideBackgroundPaint,
     resolveStudioActiveSlideSolidWallpaperColor,
     renderStudioWallpaperPresets,
     applyStudioWallpaperToSlides,
