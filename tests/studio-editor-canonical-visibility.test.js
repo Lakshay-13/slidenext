@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalVisibility = require('../shared/studio-editor-canonical-visibility.js');
 
 function createSourceDeck() {
@@ -19,6 +20,7 @@ test('buildStudioCanonicalVisibilityBaseline builds from the source document', (
   let builtFromDocument = null;
   const result = canonicalVisibility.buildStudioCanonicalVisibilityBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeckBaseline(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
@@ -38,6 +40,7 @@ test('buildStudioCanonicalVisibilityBaseline prefers a valid live canonical deck
   let didBuildFromDocument = false;
   const result = canonicalVisibility.buildStudioCanonicalVisibilityBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return liveDeck;
     },
@@ -58,6 +61,7 @@ test('buildStudioCanonicalVisibilityDeck applies hidden and locked patches witho
     { hidden: true, locked: true },
     {
       canonicalDeckApi: canonicalDeck,
+      canonicalStateApi: canonicalState,
       buildCanonicalDeck: () => sourceDeck,
       getElementId: (element) => element.dataset.editorId
     }
@@ -85,6 +89,7 @@ test('buildStudioCanonicalVisibilityMutation centralizes baseline and patch appl
     { hidden: true },
     {
       canonicalDeckApi: canonicalDeck,
+      canonicalStateApi: canonicalState,
       buildCanonicalDeckBaseline() {
         baselineBuildCount += 1;
         return sourceDeck;
@@ -110,6 +115,7 @@ test('buildStudioCanonicalVisibilityMutation falls back when the live baseline i
     { locked: true },
     {
       canonicalDeckApi: canonicalDeck,
+      canonicalStateApi: canonicalState,
       getCanonicalDeckBaseline() {
         return { invalid: true };
       },
