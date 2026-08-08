@@ -57,6 +57,16 @@
       ? options.onMasterSlidesChanged
       : null;
 
+    function isValidCanonicalDeck(value) {
+      if (!value) return false;
+      if (!canonicalDeckApi || typeof canonicalDeckApi.isCanonicalDeck !== 'function') return true;
+      try {
+        return canonicalDeckApi.isCanonicalDeck(value) === true;
+      } catch (err) {
+        return false;
+      }
+    }
+
     const readCanonicalDeckBaseline = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
@@ -69,7 +79,10 @@
       : () => {
           if (!getCanonicalDeckBaseline) return null;
           try {
-            return getCanonicalDeckBaseline();
+            const liveCanonicalDeck = getCanonicalDeckBaseline();
+            return isValidCanonicalDeck(liveCanonicalDeck)
+              ? liveCanonicalDeck
+              : null;
           } catch (err) {
             return null;
           }
@@ -77,18 +90,11 @@
 
     function resolveCanonicalDeck() {
       const liveCanonicalDeck = readCanonicalDeckBaseline();
-      if (liveCanonicalDeck) {
-        try {
-          if (!canonicalDeckApi
-            || typeof canonicalDeckApi.isCanonicalDeck !== 'function'
-            || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
-            return liveCanonicalDeck;
-          }
-        } catch (error) {
-          // Fall through to the supplied canonical deck fallback.
-        }
-      }
-      return getCanonicalDeck();
+      if (isValidCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
+      const fallbackCanonicalDeck = getCanonicalDeck();
+      return isValidCanonicalDeck(fallbackCanonicalDeck)
+        ? fallbackCanonicalDeck
+        : null;
     }
 
     function renderCanonicalSlideElement(documentRef, slide, index, masterSlides) {
