@@ -226,7 +226,9 @@
           const text = getNestedNodeText(cell);
           const cellStyle = nodeStyle(cell);
           const cellOptions = {};
+          const cellFill = resolvePptxFillColor(cellStyle['background-color'] || cellStyle.background);
           if (cell.tagName === 'th') cellOptions.bold = true;
+          if (cellFill) cellOptions.fill = cellFill;
           if (typeof cellStyle['text-align'] === 'string' && cellStyle['text-align'].trim()) {
             cellOptions.align = resolvePptxTextAlignment(cellStyle['text-align']);
           }

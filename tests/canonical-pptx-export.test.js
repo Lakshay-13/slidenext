@@ -109,7 +109,7 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
           children: [{
             tagName: 'tr',
             children: [
-              { tagName: 'th', text: 'Name' },
+              { tagName: 'th', text: 'Name', style: 'background-color: #eef2ff;' },
               { tagName: 'th', text: 'Value', style: 'text-align: right;' }
             ]
           }, {
@@ -162,7 +162,7 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
   });
   assert.deepEqual(result.pptx.slides[0].calls[4].rows, [
     [
-      { text: 'Name', options: { bold: true } },
+      { text: 'Name', options: { bold: true, fill: { color: 'EEF2FF' } } },
       { text: 'Value', options: { bold: true, align: 'right' } }
     ],
     [{ text: 'Alpha', options: { align: 'center', valign: 'middle' } }, '42']
