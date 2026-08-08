@@ -187,6 +187,15 @@ test('style inspector inputs do not wire duplicate inline version checkpoints', 
   });
 });
 
+test('image asset URL commits on change instead of every keystroke', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const control = fileContent.match(/<input[^>]*id="elImageSrc"[^>]*>/);
+
+  assert.ok(control, 'image asset URL control should exist');
+  assert.match(control[0], /onchange="applySelectedElementStyle\('src', this\.value\)"/);
+  assert.doesNotMatch(control[0], /oninput=/);
+});
+
 test('updateStyleActionState disables style controls whenever the current selection cannot accept style edits', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateStyleActionStateSource = extractFunctionSource(
