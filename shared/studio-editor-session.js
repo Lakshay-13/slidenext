@@ -217,6 +217,21 @@
       ? sessionApi.createStudioEditorPresentationSessionStateUpdateAdapter
       : createStudioEditorPresentationSessionStateUpdateAdapter;
     const normalizeState = createStateUpdate({ sessionApi });
+    const getPresentationUrl = typeof options.getPresentationUrl === 'function'
+      ? options.getPresentationUrl
+      : () => normalizeString(options.presentationUrl);
+    const getSessionToken = typeof options.getSessionToken === 'function'
+      ? options.getSessionToken
+      : () => (Number.isInteger(options.sessionToken) ? options.sessionToken : null);
+    const createSnapshot = sessionApi
+      && typeof sessionApi.createStudioEditorSessionSnapshotAdapter === 'function'
+      ? sessionApi.createStudioEditorSessionSnapshotAdapter
+      : createStudioEditorSessionSnapshotAdapter;
+    const captureSnapshot = createSnapshot({
+      sessionApi,
+      getPresentationUrl,
+      getSessionToken
+    });
     const setPresentationUrl = typeof options.setPresentationUrl === 'function'
       ? options.setPresentationUrl
       : () => {};
@@ -253,7 +268,16 @@
       return sessionStateUpdate;
     }
 
-    return { update };
+    function capture() {
+      return typeof captureSnapshot === 'function'
+        ? captureSnapshot()
+        : {
+            presentationUrl: getPresentationUrl(),
+            sessionToken: getSessionToken()
+          };
+    }
+
+    return { update, capture };
   }
 
   function isCurrentStudioEditorSession(options = {}) {

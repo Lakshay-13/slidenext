@@ -336,6 +336,28 @@ test('createStudioEditorPresentationSessionStateController normalizes and applie
   ]);
 });
 
+test('createStudioEditorPresentationSessionStateController captures the live session identity', () => {
+  let presentationUrl = '/presentations/deck/index.html';
+  let sessionToken = 4;
+  const controller = editorSession.createStudioEditorPresentationSessionStateController({
+    sessionApi: editorSession,
+    getPresentationUrl: () => presentationUrl,
+    getSessionToken: () => sessionToken
+  });
+
+  assert.deepEqual(controller.capture(), {
+    presentationUrl: '/presentations/deck/index.html',
+    sessionToken: 4
+  });
+
+  presentationUrl = '/presentations/other/index.html';
+  sessionToken = 5;
+  assert.deepEqual(controller.capture(), {
+    presentationUrl: '/presentations/other/index.html',
+    sessionToken: 5
+  });
+});
+
 test('shouldHandleStudioFrameLoad requires an active matching editor session', () => {
   assert.equal(editorSession.shouldHandleStudioFrameLoad('', {
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',

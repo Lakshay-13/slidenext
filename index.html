@@ -2490,6 +2490,8 @@
       && typeof SlideNextStudioEditorSession.createStudioEditorPresentationSessionStateController === 'function'
       ? SlideNextStudioEditorSession.createStudioEditorPresentationSessionStateController({
           sessionApi: SlideNextStudioEditorSession,
+          getPresentationUrl: () => currentPresentationUrl,
+          getSessionToken: () => studioEditorSessionToken,
           setPresentationUrl: (value) => {
             currentPresentationUrl = value;
           },
@@ -3487,6 +3489,11 @@
     }
 
     function captureCurrentStudioSessionState() {
+      if (typeof studioEditorSessionStateController !== 'undefined'
+        && studioEditorSessionStateController
+        && typeof studioEditorSessionStateController.capture === 'function') {
+        return studioEditorSessionStateController.capture();
+      }
       const createStudioEditorSessionSnapshotAdapter = (
         typeof SlideNextStudioEditorSession !== 'undefined'
         && SlideNextStudioEditorSession
