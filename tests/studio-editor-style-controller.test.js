@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const styleController = require('../shared/studio-editor-style-controller.js');
+const canonicalDeck = require('../shared/canonical-deck.js');
 
 test('style controller assembles mutation, feedback, canonical, and finalization dependencies', () => {
   const calls = [];
@@ -70,4 +71,32 @@ test('style controller refreshes inspector and fails closed for unavailable edit
 
   assert.equal(controller.apply('color', '#fff'), false);
   assert.equal(syncCalls, 1);
+});
+
+test('style controller blocks canonical-locked elements even when the DOM is stale', () => {
+  const element = { dataset: { editorId: 'node-1' } };
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', visibility: { locked: true } }]
+    }]
+  });
+  let receivedLockState = null;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(selection, prop, value, options) {
+        receivedLockState = options.isLocked(element);
+        return { canApply: !receivedLockState };
+      }
+    },
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => deck,
+    getSelectedElements: () => [element],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isElementLocked: () => false
+  });
+
+  assert.equal(controller.apply('color', '#fff'), false);
+  assert.equal(receivedLockState, true);
 });

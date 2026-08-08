@@ -61,6 +61,50 @@
       ? options.finalizeDeckMutation
       : null;
 
+    function resolveCanonicalDeck(sourceDocument) {
+      if (getCanonicalDeckBaseline) {
+        try {
+          const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+          if (liveCanonicalDeck) return liveCanonicalDeck;
+        } catch (err) {
+          // Fall through to the document rebuild path.
+        }
+      }
+      if (buildCanonicalDeckBaseline) {
+        try {
+          return buildCanonicalDeckBaseline(sourceDocument);
+        } catch (err) {
+          return null;
+        }
+      }
+      return null;
+    }
+
+    function resolveLockedReader(sourceDocument) {
+      if (!canonicalDeckApi
+        || typeof canonicalDeckApi.findCanonicalNodeById !== 'function') {
+        return isElementLocked;
+      }
+      const canonicalDeck = resolveCanonicalDeck(sourceDocument);
+      if (!canonicalDeck) return isElementLocked;
+      return (element) => {
+        let canonicalLockState = null;
+        try {
+          const canonicalNode = canonicalDeckApi.findCanonicalNodeById(
+            canonicalDeck,
+            assignElementId(element)
+          );
+          const value = canonicalNode
+            && canonicalNode.visibility
+            && canonicalNode.visibility.locked;
+          if (typeof value === 'boolean') canonicalLockState = value;
+        } catch (err) {
+          canonicalLockState = null;
+        }
+        return canonicalLockState === true || isElementLocked(element);
+      };
+    }
+
     function finalizeStyleActionResult(result) {
       if (styleApi && typeof styleApi.finalizeStudioStyleActionResult === 'function') {
         return styleApi.finalizeStudioStyleActionResult(result, {
@@ -104,7 +148,7 @@
       }
       const doc = getIframeDoc();
       const styleMutationPlan = styleApi.buildStudioStyleMutationPlan(getSelectedElements(), prop, value, {
-        isLocked: isElementLocked,
+        isLocked: resolveLockedReader(doc),
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!styleMutationPlan || !styleMutationPlan.canApply) {
