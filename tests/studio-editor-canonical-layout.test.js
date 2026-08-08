@@ -72,6 +72,29 @@ test('buildStudioCanonicalLayoutBaseline rejects invalid compatibility baselines
   assert.equal(rebuildCalls, 1);
 });
 
+test('buildStudioCanonicalLayoutBaseline uses structural validation without a canonical validator', () => {
+  const canonicalDeckApi = {
+    updateCanonicalNodeLayout() {}
+  };
+  const malformedDeck = { invalid: true };
+  const validDeck = { slides: [] };
+
+  assert.equal(
+    canonicalLayout.buildStudioCanonicalLayoutBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => malformedDeck
+    }),
+    null
+  );
+  assert.equal(
+    canonicalLayout.buildStudioCanonicalLayoutBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => validDeck
+    }),
+    validDeck
+  );
+});
+
 test('buildStudioCanonicalLayoutDeck applies layout updates to the provided pre-mutation deck', () => {
   const sourceDeck = createSourceDeck();
   const result = canonicalLayout.buildStudioCanonicalLayoutDeck(
