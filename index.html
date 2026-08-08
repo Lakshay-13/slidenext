@@ -1266,6 +1266,7 @@
   <script src="/shared/studio-editor-inline-edit.js"></script>
   <script src="/shared/studio-editor-interaction-options.js"></script>
   <script src="/shared/studio-editor-interactions.js"></script>
+  <script src="/shared/studio-editor-transform-controller.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
   <script src="/shared/studio-editor-persistence-state.js"></script>
   <script src="/shared/studio-editor-autosave.js"></script>
@@ -1894,6 +1895,80 @@
           triggerAutoSave: (...args) => triggerAutoSave(...args),
           triggerAutoVersion: (...args) => triggerAutoVersion(...args),
           updateInsertionActionState: (...args) => updateInsertionActionState(...args)
+        })
+      : null;
+    const studioEditorTransformController = typeof SlideNextStudioEditorTransformController !== 'undefined'
+      && SlideNextStudioEditorTransformController
+      && typeof SlideNextStudioEditorTransformController.createStudioEditorTransformController === 'function'
+      ? SlideNextStudioEditorTransformController.createStudioEditorTransformController({
+          transformApi: typeof SlideNextStudioEditorTransform !== 'undefined'
+            ? SlideNextStudioEditorTransform
+            : null,
+          canonicalTransformApi: typeof SlideNextStudioEditorCanonicalTransform !== 'undefined'
+            ? SlideNextStudioEditorCanonicalTransform
+            : null,
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            ? SlideNextStudioEditorTransaction
+            : null,
+          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
+            ? SlideNextStudioEditorDom
+            : null,
+          interactionOptionsApi: typeof SlideNextStudioEditorInteractionOptions !== 'undefined'
+            ? SlideNextStudioEditorInteractionOptions
+            : null,
+          interactionsApi: typeof SlideNextStudioEditorInteractions !== 'undefined'
+            ? SlideNextStudioEditorInteractions
+            : null,
+          eventsApi: typeof SlideNextStudioEditorEvents !== 'undefined'
+            ? SlideNextStudioEditorEvents
+            : null,
+          selectionBoundsApi: typeof SlideNextStudioEditorSelectionBounds !== 'undefined'
+            ? SlideNextStudioEditorSelectionBounds
+            : null,
+          getActiveSlide: (...args) => getActiveSlide(...args),
+          getTransformSelectionState: (...args) => getTransformSelectionState(...args),
+          selectElement: (...args) => selectElement(...args),
+          resolveEditableTarget: (...args) => resolveEditableTarget(...args),
+          getSlideMetrics: (...args) => getSlideMetrics(...args),
+          getPointerOnSlide: (...args) => getPointerOnSlide(...args),
+          getSelectionBounds: (...args) => getSelectionBounds(...args),
+          getSlideEditableElements: (...args) => getSlideEditableElements(...args),
+          isHidden: (...args) => isElementHidden(...args),
+          getRectOnSlide: (...args) => getRectOnSlide(...args),
+          ensureOverlay: (slide) => ensureSelectionOverlay(getIframeDoc(), slide),
+          getClosestPositionedAncestor: (...args) => SlideNextStudioEditorDom
+            .getStudioClosestPositionedAncestor(...args),
+          getSelectedElements: () => getLiveSelectedElements(selectedElements, getIframeDoc()),
+          getMarqueeElements: (slide) => getNormalizedSlideLayerOrder(slide),
+          commitSelectionState: (...args) => commitEditorSelectionState(...args),
+          updateDragHud: (...args) => updateDragHud(...args),
+          renderGuides: (...args) => renderGuides(...args),
+          syncSelectionOverlay: (...args) => syncSelectionOverlay(...args),
+          hideGuides: (...args) => hideGuides(...args),
+          hideDragHud: (...args) => hideDragHud(...args),
+          syncInspectorForSelection: (...args) => syncInspectorForSelection(...args),
+          renderMarqueeSelection: (...args) => renderMarqueeSelection(...args),
+          clearMarqueeSelection: (...args) => clearMarqueeSelection(...args),
+          saveHistoryState: (...args) => saveHistoryState(...args),
+          triggerAutoSave: (...args) => triggerAutoSave(...args),
+          triggerAutoVersion: (...args) => triggerAutoVersion(...args),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          assignElementId: (...args) => assignEditorElementId(...args),
+          getGridSizePx: () => isGridSnapEnabled ? GRID_SNAP_SIZE_PX : null,
+          getIsDraggingElement: () => isDraggingElement,
+          setIsDraggingElement: (nextValue) => {
+            isDraggingElement = !!nextValue;
+          },
+          setSuppressNextFrameClick: (nextValue) => {
+            suppressNextFrameClick = !!nextValue;
+          },
+          dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
+          minSizePx: MIN_ELEMENT_SIZE_PX,
+          dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX,
+          snapDistancePx: SNAP_THRESHOLD_PX
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -5967,6 +6042,10 @@
 
     // Element dragging + resize on an open canvas
     function setupIframeDragging(doc) {
+      if (studioEditorTransformController
+        && typeof studioEditorTransformController.setup === 'function') {
+        return studioEditorTransformController.setup(doc);
+      }
       const transformApi = (
         typeof SlideNextStudioEditorTransform !== 'undefined'
         && SlideNextStudioEditorTransform

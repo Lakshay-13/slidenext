@@ -7,6 +7,7 @@ const editorEvents = require('../shared/studio-editor-events.js');
 const canonicalTransform = require('../shared/studio-editor-canonical-transform.js');
 const transformState = require('../shared/studio-editor-transform.js');
 const interactionOptions = require('../shared/studio-editor-interaction-options.js');
+const transformController = require('../shared/studio-editor-transform-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -31,6 +32,53 @@ function loadTransformSessionFinalizer(fileContent, context) {
   context.SlideNextStudioEditorCanonicalTransform = canonicalTransform;
   context.SlideNextStudioEditorInteractionOptions = interactionOptions;
   vm.runInContext(helperSource, context);
+}
+
+function installTransformController(context) {
+  context.studioEditorTransformController = transformController
+    .createStudioEditorTransformController({
+      transformApi: context.SlideNextStudioEditorTransform,
+      canonicalTransformApi: context.SlideNextStudioEditorCanonicalTransform,
+      interactionOptionsApi: context.SlideNextStudioEditorInteractionOptions,
+      eventsApi: context.SlideNextStudioEditorEvents,
+      selectionBoundsApi: context.SlideNextStudioEditorSelectionBounds,
+      getActiveSlide: context.getActiveSlide,
+      getTransformSelectionState: context.getTransformSelectionState,
+      selectElement: context.selectElement,
+      resolveEditableTarget: context.resolveEditableTarget,
+      getSlideMetrics: context.getSlideMetrics,
+      getPointerOnSlide: context.getPointerOnSlide,
+      getSelectionBounds: context.getSelectionBounds,
+      getSlideEditableElements: context.getSlideEditableElements,
+      isHidden: context.isElementHidden,
+      getRectOnSlide: context.getRectOnSlide,
+      ensureOverlay: context.ensureSelectionOverlay,
+      getClosestPositionedAncestor: context.SlideNextStudioEditorDom
+        && context.SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+      getSelectedElements: context.getLiveSelectedElements,
+      getMarqueeElements: context.getNormalizedSlideLayerOrder,
+      commitSelectionState: context.commitEditorSelectionState,
+      updateDragHud: context.updateDragHud,
+      renderGuides: context.renderGuides,
+      syncSelectionOverlay: context.syncSelectionOverlay,
+      hideGuides: context.hideGuides,
+      hideDragHud: context.hideDragHud,
+      syncInspectorForSelection: context.syncInspectorForSelection,
+      renderMarqueeSelection: context.renderMarqueeSelection,
+      clearMarqueeSelection: context.clearMarqueeSelection,
+      saveHistoryState: context.saveHistoryState,
+      triggerAutoSave: context.triggerAutoSave,
+      triggerAutoVersion: context.triggerAutoVersion,
+      getIsDraggingElement: () => !!context.isDraggingElement,
+      setIsDraggingElement: (nextValue) => { context.isDraggingElement = !!nextValue; },
+      setSuppressNextFrameClick: (nextValue) => {
+        context.suppressNextFrameClick = !!nextValue;
+      },
+      dragStartThresholdPx: context.DRAG_START_THRESHOLD_PX,
+      minSizePx: context.MIN_ELEMENT_SIZE_PX,
+      dragOverflowMarginPx: context.DRAG_OVERFLOW_MARGIN_PX,
+      snapDistancePx: context.SNAP_THRESHOLD_PX
+    });
 }
 
 test('setupIframeDragging wires marquee handlers beside shared transforms and commits additive selection', () => {
@@ -155,6 +203,7 @@ test('setupIframeDragging wires marquee handlers beside shared transforms and co
   vm.createContext(context);
   loadTransformSessionFinalizer(fileContent, context);
   vm.runInContext(setupIframeDraggingSource, context);
+  installTransformController(context);
   context.setupIframeDragging(doc);
 
   assert.equal(bodyListeners.get('pointerdown')[0], transformHandlers.handlePointerDown);
