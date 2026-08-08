@@ -23,6 +23,11 @@
     return typeof value === 'string' ? value : fallback;
   }
 
+  function normalizeLayoutMode(value, fallback = DEFAULT_LAYOUT_MODE) {
+    const mode = normalizeString(value).trim().toLowerCase();
+    return mode === 'freeform' ? 'absolute' : (mode || fallback);
+  }
+
   function normalizeStringArray(values) {
     if (!Array.isArray(values)) return [];
     return values.filter(value => typeof value === 'string' && value.trim() !== '');
@@ -83,7 +88,7 @@
       attributes: asPlainObject(node.attributes),
       style: normalizeString(node.style),
       layout: {
-        mode: normalizeString(layout.mode, DEFAULT_LAYOUT_MODE),
+        mode: normalizeLayoutMode(layout.mode),
         x: normalizeFiniteNumber(layout.x),
         y: normalizeFiniteNumber(layout.y),
         width: normalizeFiniteNumber(layout.width),
@@ -114,7 +119,7 @@
       notes: normalizeString(slide.notes),
       ...(section ? { section } : {}),
       layout: {
-        mode: normalizeString(layout.mode, DEFAULT_LAYOUT_MODE),
+        mode: normalizeLayoutMode(layout.mode),
         background: {
           color: normalizeString(background.color),
           image: normalizeString(background.image),
@@ -195,7 +200,7 @@
         customCss: normalizeString(theme.customCss)
       },
       layout: {
-        mode: normalizeString(layout.mode, DEFAULT_LAYOUT_MODE),
+        mode: normalizeLayoutMode(layout.mode),
         size: {
           width: normalizeFiniteNumber(layout.size?.width),
           height: normalizeFiniteNumber(layout.size?.height),

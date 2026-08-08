@@ -25,6 +25,20 @@ test('createCanonicalDeck repairs duplicate slide and nested node ids determinis
   ], ['node-1', 'node-1-2', 'node-1-3']);
 });
 
+test('createCanonicalDeck normalizes the legacy freeform layout alias to absolute', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    layout: { mode: 'freeform' },
+    slides: [{
+      layout: { mode: 'freeform' },
+      nodes: [{ id: 'node-1', layout: { mode: 'freeform', x: 40, y: 60 } }]
+    }]
+  });
+
+  assert.equal(deck.layout.mode, 'absolute');
+  assert.equal(deck.slides[0].layout.mode, 'absolute');
+  assert.equal(deck.slides[0].nodes[0].layout.mode, 'absolute');
+});
+
 test('createCanonicalDeck preserves optional slide sections without changing empty slide shape', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     slides: [

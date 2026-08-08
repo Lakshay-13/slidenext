@@ -28,6 +28,9 @@ test('buildBlankPresentationArtifacts creates a canonical editable deck and rend
   assert.equal(canonicalDeck.isCanonicalDeck(artifacts.canonicalDeck), true);
   assert.equal(artifacts.canonicalDeck.slides.length, 1);
   assert.equal(artifacts.canonicalDeck.slides[0].nodes[0].text, 'Team Kickoff');
+  assert.equal(artifacts.canonicalDeck.layout.mode, 'absolute');
+  assert.equal(artifacts.canonicalDeck.slides[0].nodes[0].layout.mode, 'absolute');
+  assert.match(artifacts.html, /position: absolute; left: 160px; top: 360px;/);
   assert.match(artifacts.html, /Team Kickoff/);
   assert.match(artifacts.html, /Double-click text to edit this slide/);
   assert.match(artifacts.html, /<script/);
