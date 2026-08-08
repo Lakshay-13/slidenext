@@ -18,6 +18,7 @@
     borderWidth: 'Auto: Changed Border Width',
     borderRadius: 'Auto: Changed Corner Radius',
     borderColor: 'Auto: Changed Border Color',
+    objectFit: 'Auto: Changed Image Fit',
     opacity: 'Auto: Changed Opacity'
   };
   const STUDIO_STYLE_TOOLBAR_CONTROL_CONFIGS = [
@@ -241,6 +242,9 @@
       } else if (prop === 'borderColor') {
         element.style.borderColor = normalizedValue.styleValue;
         didApply = true;
+      } else if (prop === 'objectFit') {
+        element.style.objectFit = normalizedValue.styleValue;
+        didApply = true;
       }
     });
 
@@ -266,7 +270,8 @@
       borderStyle: 'borderStyle',
       borderWidth: 'borderWidth',
       borderRadius: 'borderRadius',
-      borderColor: 'borderColor'
+      borderColor: 'borderColor',
+      objectFit: 'objectFit'
     }[prop] || '';
     const propertyTransactionProperty = {
       text: 'textContent',

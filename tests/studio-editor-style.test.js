@@ -269,6 +269,26 @@ test('applyStudioStyleMutation only edits the primary target for text and image 
   });
 });
 
+test('applyStudioStyleMutation applies image fit as a reversible style property', () => {
+  const image = createElement('img');
+  image.style.objectFit = 'fill';
+
+  const result = styleState.applyStudioStyleMutationWithTransaction(
+    [image],
+    'objectFit',
+    'cover',
+    {
+      createStyleTransaction: transactionState.createStudioStyleTransaction,
+      getElementId: () => 'image-fit'
+    }
+  );
+
+  assert.equal(result.didApply, true);
+  assert.equal(image.style.objectFit, 'cover');
+  assert.deepEqual(result.transaction.operations[0].before, { objectFit: 'fill' });
+  assert.deepEqual(result.transaction.operations[0].after, { objectFit: 'cover' });
+});
+
 test('applyStudioStyleMutationWithTransaction applies a mutation and builds a reversible style or property transaction', () => {
   const styledElement = createElement('div');
   styledElement.style.color = 'red';
