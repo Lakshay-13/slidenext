@@ -5724,26 +5724,6 @@
       });
     }
 
-    function renderSavedAssets(assets = [], canApply = false) {
-      const assetView = typeof SlideNextStudioEditorAssetView !== 'undefined'
-        ? SlideNextStudioEditorAssetView
-        : null;
-      if (!assetView || typeof assetView.renderStudioAssetLibrary !== 'function') {
-        return false;
-      }
-      return assetView.renderStudioAssetLibrary({
-        documentRef: document,
-        assets,
-        canApply,
-        applyAsset: typeof applyAssetToSelectedImage === 'function'
-          ? applyAssetToSelectedImage
-          : null,
-        removeAsset: typeof removeAssetFromLibrary === 'function'
-          ? removeAssetFromLibrary
-          : null
-      });
-    }
-
     function updateAssetLibraryState(doc = getIframeDoc()) {
       const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(doc)

@@ -15,54 +15,6 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
-test('renderSavedAssets renders asset names and the empty state', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const source = extractFunctionSource(
-    fileContent,
-    'function renderSavedAssets(assets = [], canApply = false) {',
-    '\n\n    function updateAssetLibraryState'
-  );
-  const list = {
-    children: [],
-    set textContent(value) {
-      this.children = [];
-      this.value = value;
-    },
-    appendChild(child) {
-      this.children.push(child);
-    }
-  };
-  const context = {
-    SlideNextStudioEditorAssetView: assetView,
-    document: {
-      getElementById() {
-        return list;
-      },
-      createElement() {
-        return {
-          textContent: '',
-          children: [],
-          addEventListener() {},
-          appendChild(child) {
-            this.children.push(child);
-          },
-          setAttribute() {}
-        };
-      }
-    }
-  };
-
-  vm.createContext(context);
-  vm.runInContext(source, context);
-
-  assert.equal(context.renderSavedAssets([
-    { id: 'hero', name: 'Hero', type: 'image', src: '/hero.png' }
-  ]), true);
-  assert.equal(list.children[0].children[0].textContent, 'Hero - image');
-  assert.equal(context.renderSavedAssets([]), true);
-  assert.equal(list.children[0].textContent, 'No assets saved');
-});
-
 test('shared asset view wires use and remove actions to injected callbacks', () => {
   const list = {
     children: [],
