@@ -5196,36 +5196,37 @@
     }
 
     function updateVisibilityActionState(doc = getIframeDoc()) {
-      const syncStudioVisibilityToolbarState = (
-        SlideNextStudioEditorVisibilityState
-        && typeof SlideNextStudioEditorVisibilityState.syncStudioVisibilityToolbarState === 'function'
-      )
-        ? SlideNextStudioEditorVisibilityState.syncStudioVisibilityToolbarState
+      const visibilityState = typeof SlideNextStudioEditorVisibilityState !== 'undefined'
+        ? SlideNextStudioEditorVisibilityState
         : null;
-      if (syncStudioVisibilityToolbarState) {
-        return syncStudioVisibilityToolbarState({
-          documentRef: document,
-          elements: selectedElements,
+      if (!visibilityState) {
+        return false;
+      }
+      const toolbarOptions = {
+        documentRef: document,
+        elements: selectedElements,
+        isHidden: isElementHidden,
+        canMutateDeck: () => !!getActiveSlide(doc)
+      };
+      if (typeof visibilityState.syncStudioVisibilityToolbarState === 'function') {
+        return visibilityState.syncStudioVisibilityToolbarState(toolbarOptions);
+      }
+      if (typeof visibilityState.renderStudioVisibilityToolbarState !== 'function') {
+        return false;
+      }
+      const buildToolbarState = typeof visibilityState.buildStudioVisibilityToolbarState === 'function'
+        ? visibilityState.buildStudioVisibilityToolbarState
+        : typeof visibilityState.buildStudioVisibilityActionState === 'function'
+          ? visibilityState.buildStudioVisibilityActionState
+          : null;
+      if (!buildToolbarState) {
+        return false;
+      }
+      const visibilityActionState = buildToolbarState(selectedElements, {
           isHidden: isElementHidden,
           canMutateDeck: () => !!getActiveSlide(doc)
         });
-      }
-      const buildStudioVisibilityToolbarState = (
-        SlideNextStudioEditorVisibilityState
-        && typeof SlideNextStudioEditorVisibilityState.buildStudioVisibilityToolbarState === 'function'
-      )
-        ? SlideNextStudioEditorVisibilityState.buildStudioVisibilityToolbarState
-        : null;
-      const visibilityActionState = buildStudioVisibilityToolbarState
-        ? buildStudioVisibilityToolbarState(selectedElements, {
-          isHidden: isElementHidden,
-          canMutateDeck: () => !!getActiveSlide(doc)
-        })
-        : SlideNextStudioEditorVisibilityState.buildStudioVisibilityActionState(selectedElements, {
-        isHidden: isElementHidden,
-        canMutateDeck: () => !!getActiveSlide(doc)
-      });
-      return SlideNextStudioEditorVisibilityState.renderStudioVisibilityToolbarState({
+      return visibilityState.renderStudioVisibilityToolbarState({
         documentRef: document,
         actionState: visibilityActionState
       });
