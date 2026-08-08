@@ -133,7 +133,10 @@ test('duplicateStudioSlideNode preserves canonical duplication and mutation life
       return { slides: [{ id: 'slide-1' }, { id: 'slide-2' }, { id: 'slide-3' }] };
     },
     importSlideToCanonicalSlide,
-    saveHistoryState() {
+    saveHistoryState(debounce, transaction, canonicalDeck) {
+      assert.equal(debounce, false);
+      assert.equal(transaction, null);
+      assert.deepEqual(canonicalDeck.slides.map((slide) => slide.id), ['slide-1', 'slide-3']);
       calls.push('saveHistoryState');
     },
     applyInsertion(sourceContainer, slide, options) {

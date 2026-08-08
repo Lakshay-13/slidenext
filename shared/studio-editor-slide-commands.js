@@ -107,7 +107,11 @@
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : () => {};
-    saveHistoryState();
+    if (canonicalDeckBeforeDuplication) {
+      saveHistoryState(false, null, canonicalDeckBeforeDuplication);
+    } else {
+      saveHistoryState();
+    }
     const applyInsertion = typeof options.applyInsertion === 'function'
       ? options.applyInsertion
       : () => ({ didApply: false, transaction: null });
