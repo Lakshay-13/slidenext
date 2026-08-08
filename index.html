@@ -1883,7 +1883,9 @@
           getVisibilityState: (...args) => SlideNextStudioElementState.getStudioElementVisibilityState(...args),
           assignLockElementId: (...args) => assignEditorElementId(...args),
           assignVisibilityElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+            preferLiveCanonicalDeck: false
+          }),
           applyLockMutation: (...args) => applyEditorLockMutationWithTransaction(...args),
           applyVisibilityMutation: (...args) => applyEditorVisibilityMutationWithTransaction(...args),
           finalizeSelectionToggleMutation: (...args) => finalizeSelectionToggleMutation(...args)
