@@ -5869,6 +5869,26 @@
       const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
         ? SlideNextStudioEditorGroup
         : null;
+      let canonicalDeck = null;
+      if (typeof buildEditorCanonicalDeck === 'function') {
+        try {
+          canonicalDeck = buildEditorCanonicalDeck(resolvedDoc);
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      const readLockedState = canonicalDeck
+        ? (element) => {
+            const canonicalNode = typeof resolveEditorCanonicalNodeForElement === 'function'
+              ? resolveEditorCanonicalNodeForElement(element, canonicalDeck)
+              : null;
+            return canonicalNode
+              && canonicalNode.visibility
+              && typeof canonicalNode.visibility.locked === 'boolean'
+              ? canonicalNode.visibility.locked
+              : isElementLocked(element);
+          }
+        : isElementLocked;
       if (groupApi && typeof groupApi.buildStudioGroupSelectionActionState === 'function') {
         return groupApi.buildStudioGroupSelectionActionState(selectedElements, {
           doc: resolvedDoc,
@@ -5880,7 +5900,7 @@
           },
           getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
           getRectOnSlide,
-          isLocked: isElementLocked,
+          isLocked: readLockedState,
           isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
         });
       }
@@ -5916,7 +5936,7 @@
           && SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(element) === parent;
       });
       const groupPlan = SlideNextStudioEditorGroup.buildStudioGroupPlan(layoutItems, {
-        isLocked: isElementLocked,
+        isLocked: readLockedState,
         isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
       });
 

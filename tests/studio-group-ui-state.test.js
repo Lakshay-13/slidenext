@@ -247,6 +247,58 @@ test('buildGroupSelectionActionState delegates geometry orchestration to the sha
   assert.equal(delegatedOptions.options.isLocked, context.isElementLocked);
 });
 
+test('buildGroupSelectionActionState prefers canonical lock metadata for grouping', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function buildGroupSelectionActionState(doc = null) {',
+    '\n\n    function updateGroupActionState'
+  );
+  const doc = { id: 'doc' };
+  const first = { id: 'node-1' };
+  const second = { id: 'node-2' };
+  let receivedOptions = null;
+  const context = {
+    selectedElements: [first, second],
+    getIframeDoc() {
+      return doc;
+    },
+    buildEditorCanonicalDeck() {
+      return { kind: 'slidenext.deck' };
+    },
+    resolveEditorCanonicalNodeForElement(element) {
+      return element === first
+        ? { visibility: { locked: true } }
+        : { visibility: { locked: false } };
+    },
+    SlideNextStudioEditorGroup: {
+      buildStudioGroupSelectionActionState(elements, options) {
+        receivedOptions = options;
+        return { canGroup: false };
+      }
+    },
+    getActiveSlide() {},
+    getLiveSelectedElements() {},
+    getSlideMetrics() {},
+    getRectOnSlide() {},
+    isElementLocked() {},
+    SlideNextStudioEditorTransform: {
+      buildStudioPositionedLayoutItems() {},
+      isStudioFreeformPositioned() {}
+    },
+    SlideNextStudioEditorDom: {
+      getStudioClosestPositionedAncestor() {}
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.deepEqual(context.buildGroupSelectionActionState(doc), { canGroup: false });
+  assert.equal(receivedOptions.isLocked(first), true);
+  assert.equal(receivedOptions.isLocked(second), false);
+});
+
 test('buildUngroupSelectionActionState delegates group-wrapper filtering to the shared group module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
