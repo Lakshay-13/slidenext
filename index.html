@@ -1945,8 +1945,25 @@
             ? SlideNextCanonicalDeck
             : null,
           getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
+          renderApi: typeof SlideNextDeckRender !== 'undefined'
+            ? SlideNextDeckRender
+            : null,
+          getDocument: () => getIframeDoc(),
+          getActiveSlide: (doc) => getActiveSlide(doc),
           getActiveSlideId: () => getActiveSlideId(getIframeDoc()),
           getSelectedNodeIds: () => getCommittedSelectedEditorElementIds(getIframeDoc()),
+          prepareElement: (...args) => makeElementsHoverable(...args),
+          createMarkupTransactionCapture: (...args) => {
+            const transactionApi = typeof SlideNextStudioEditorTransaction !== 'undefined'
+              ? SlideNextStudioEditorTransaction
+              : null;
+            return transactionApi
+              && typeof transactionApi.createStudioMarkupTransactionCapture === 'function'
+              ? transactionApi.createStudioMarkupTransactionCapture(...args)
+              : null;
+          },
+          getElementId: (element) => assignEditorElementId(element),
+          finalizeInsertedElements: (...args) => finalizeInsertedElements(...args),
           saveHistoryState: (...args) => saveHistoryState(...args),
           triggerAutoSave: (...args) => triggerAutoSave(...args),
           triggerAutoVersion: (...args) => triggerAutoVersion(...args),
@@ -5800,7 +5817,7 @@
         return false;
       }
       const list = document.getElementById('savedBlocksList');
-      if (!list) return false;
+      if (!list || typeof document.createElement !== 'function') return false;
       list.textContent = '';
       const normalizedBlocks = Array.isArray(blocks) ? blocks : [];
       if (normalizedBlocks.length === 0) {
@@ -5810,9 +5827,13 @@
         return true;
       }
       normalizedBlocks.forEach((block) => {
-        const item = document.createElement('span');
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'text-left rounded px-2 py-1 hover:bg-white/5 hover:text-white transition-colors';
         const nodeCount = Array.isArray(block && block.nodes) ? block.nodes.length : 0;
         item.textContent = `${block && block.name ? block.name : 'Unnamed Block'} - ${nodeCount} element${nodeCount === 1 ? '' : 's'}`;
+        item.disabled = !getActiveSlide();
+        item.addEventListener('click', () => insertSavedBlock(block.id));
         list.appendChild(item);
       });
       return true;
@@ -6064,6 +6085,15 @@
       if (nameInput) nameInput.value = '';
       updateBlockActionState();
       return true;
+    }
+
+    function insertSavedBlock(blockId) {
+      const didInsert = studioEditorBlockController
+        && typeof studioEditorBlockController.insertBlock === 'function'
+        ? studioEditorBlockController.insertBlock(blockId)
+        : false;
+      if (didInsert) updateBlockActionState();
+      return didInsert;
     }
 
     function nudgeSelectedElements(dx, dy) {
