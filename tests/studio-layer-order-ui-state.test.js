@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const layerOrder = require('../shared/studio-editor-layer-order.js');
 const layerOrderMutation = require('../shared/studio-editor-layer-order-mutation.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
@@ -835,6 +836,11 @@ test('updateLayerOrderActionState delegates toolbar state assembly to the shared
 
 test('updateLayerOrderActionState prefers canonical lock metadata for toolbar actions', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const visibilityReaderSource = extractFunctionSource(
+    fileContent,
+    'function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {',
+    '\n\n    function setElementHiddenState'
+  );
   const updateLayerOrderActionStateSource = extractFunctionSource(
     fileContent,
     'function updateLayerOrderActionState(doc = getIframeDoc()) {',
@@ -845,6 +851,7 @@ test('updateLayerOrderActionState prefers canonical lock metadata for toolbar ac
   let receivedOptions = null;
   const context = {
     selectedElements: [selectedElement],
+    SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorLayerOrder: {
       syncStudioLayerOrderToolbarState(options) {
         receivedOptions = options;
@@ -877,7 +884,7 @@ test('updateLayerOrderActionState prefers canonical lock metadata for toolbar ac
   };
 
   vm.createContext(context);
-  vm.runInContext(updateLayerOrderActionStateSource, context);
+  vm.runInContext(`${visibilityReaderSource}\n${updateLayerOrderActionStateSource}`, context);
 
   assert.equal(context.updateLayerOrderActionState({ activeSlide }), 'delegated');
   assert.equal(receivedOptions.isLocked(selectedElement), true);
