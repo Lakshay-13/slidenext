@@ -5668,8 +5668,29 @@
     }
 
     function buildRemovalSelectionActionState(doc = null) {
+      const hasCanonicalBuilder = typeof buildEditorCanonicalDeck === 'function';
+      let canonicalDeck = null;
+      if (hasCanonicalBuilder) {
+        try {
+          canonicalDeck = buildEditorCanonicalDeck(doc || getIframeDoc());
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      const readLockedState = canonicalDeck
+        ? (element) => {
+            const canonicalNode = typeof resolveEditorCanonicalNodeForElement === 'function'
+              ? resolveEditorCanonicalNodeForElement(element, canonicalDeck)
+              : null;
+            return canonicalNode
+              && canonicalNode.visibility
+              && typeof canonicalNode.visibility.locked === 'boolean'
+              ? canonicalNode.visibility.locked
+              : isElementLocked(element);
+          }
+        : isElementLocked;
       return SlideNextStudioEditorRemoval.buildStudioRemovalActionState(selectedElements, {
-        isLocked: isElementLocked,
+        isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc || getIframeDoc())
       });
     }
@@ -5681,10 +5702,30 @@
       if (!removalState || typeof removalState.syncStudioRemovalToolbarState !== 'function') {
         return false;
       }
+      let canonicalDeck = null;
+      if (typeof buildEditorCanonicalDeck === 'function') {
+        try {
+          canonicalDeck = buildEditorCanonicalDeck(doc);
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      const readLockedState = canonicalDeck
+        ? (element) => {
+            const canonicalNode = typeof resolveEditorCanonicalNodeForElement === 'function'
+              ? resolveEditorCanonicalNodeForElement(element, canonicalDeck)
+              : null;
+            return canonicalNode
+              && canonicalNode.visibility
+              && typeof canonicalNode.visibility.locked === 'boolean'
+              ? canonicalNode.visibility.locked
+              : isElementLocked(element);
+          }
+        : isElementLocked;
       return removalState.syncStudioRemovalToolbarState({
         documentRef: document,
         elements: selectedElements,
-        isLocked: isElementLocked,
+        isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
     }

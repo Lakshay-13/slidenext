@@ -118,6 +118,40 @@ test('buildRemovalSelectionActionState reuses the current selection and live sli
   ]);
 });
 
+test('buildRemovalSelectionActionState disables removal for canonical locked selections', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectedElement = { id: 'selected', isConnected: true };
+  const doc = { activeSlide: { id: 'slide-1' } };
+  const context = {
+    selectedElements: [selectedElement],
+    SlideNextStudioEditorRemoval: removalState,
+    buildEditorCanonicalDeck(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return { kind: 'slidenext.deck' };
+    },
+    resolveEditorCanonicalNodeForElement(element) {
+      return element === selectedElement
+        ? { visibility: { locked: true } }
+        : null;
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getActiveSlide(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return doc.activeSlide;
+    },
+    isElementLocked() {
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildRemovalSelectionActionState(fileContent, context);
+
+  assert.equal(context.buildRemovalSelectionActionState().canRemove, false);
+});
+
 test('updateRemovalActionState enables the delete control only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateRemovalActionStateSource = extractFunctionSource(
