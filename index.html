@@ -6573,6 +6573,24 @@
       const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
         ? SlideNextStudioEditorClipboard
         : null;
+      let canonicalDeck = null;
+      if (typeof buildEditorCanonicalDeck === 'function') {
+        try {
+          canonicalDeck = buildEditorCanonicalDeck(resolvedDoc);
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      const readLockedState = (element) => {
+        if (canonicalDeck && typeof resolveEditorCanonicalNodeForElement === 'function') {
+          const canonicalNode = resolveEditorCanonicalNodeForElement(element, canonicalDeck);
+          const value = canonicalNode
+            && canonicalNode.visibility
+            && canonicalNode.visibility.locked;
+          if (typeof value === 'boolean') return value;
+        }
+        return isElementLocked(element);
+      };
       const buildStudioClipboardSelectionMutationPlan = (
         clipboardApi
         && typeof clipboardApi.buildStudioClipboardSelectionMutationPlan === 'function'
@@ -6581,7 +6599,7 @@
         : null;
       if (buildStudioClipboardSelectionMutationPlan) {
         return buildStudioClipboardSelectionMutationPlan(selectedElements, editorClipboard, {
-          isLocked: isElementLocked,
+          isLocked: readLockedState,
           canMutateDeck: () => !!getActiveSlide(resolvedDoc),
           buildPayloadItems(selection) {
             return buildClipboardPayload(selection, resolvedDoc);
@@ -6600,7 +6618,7 @@
         };
       }
       const clipboardMutationPlan = clipboardApi.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
-        isLocked: isElementLocked,
+        isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(resolvedDoc)
       });
       const payloadItems = (clipboardMutationPlan.canCopy || clipboardMutationPlan.canDuplicate)

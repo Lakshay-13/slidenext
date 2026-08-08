@@ -215,6 +215,52 @@ test('buildClipboardSelectionMutationPlan reuses the shared clipboard selection 
   ]);
 });
 
+test('buildClipboardSelectionMutationPlan disables copy and duplicate for canonical locked selections', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
+  const selectedElement = { id: 'node-1', isConnected: true };
+  const doc = { id: 'iframe-doc' };
+  const context = {
+    selectedElements: [selectedElement],
+    editorClipboard: { items: [], pasteCount: 0 },
+    SlideNextStudioEditorClipboard: clipboardState,
+    buildEditorCanonicalDeck(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return { kind: 'slidenext.deck' };
+    },
+    resolveEditorCanonicalNodeForElement(element) {
+      return element === selectedElement
+        ? { visibility: { locked: true } }
+        : null;
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getActiveSlide(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return { id: 'slide-1' };
+    },
+    isElementLocked() {
+      return false;
+    },
+    buildClipboardPayload() {
+      throw new Error('locked selection must not build a payload');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildClipboardSelectionMutationPlanSource, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(context.buildClipboardSelectionMutationPlan())), {
+    selection: [selectedElement],
+    canCopy: false,
+    canDuplicate: false,
+    canPaste: false,
+    payloadItems: [],
+    canBuildPayload: false
+  });
+});
+
 test('buildClipboardSelectionMutationPlan fails closed when the shared clipboard module is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
