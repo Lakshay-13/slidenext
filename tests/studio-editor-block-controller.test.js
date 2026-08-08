@@ -71,6 +71,30 @@ test('block mutations prefer a valid live canonical baseline', () => {
   assert.equal(didBuildFromDocument, false);
 });
 
+test('block mutations fall back when the live canonical baseline is invalid', () => {
+  const fallbackDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', text: 'Fallback' }] }]
+  });
+  let didBuildFromDocument = false;
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    getCanonicalDeck: () => {
+      didBuildFromDocument = true;
+      return fallbackDeck;
+    },
+    getActiveSlideId: () => 'slide-1',
+    getSelectedNodeIds: () => ['node-1']
+  });
+
+  const result = controller.saveSelection({ id: 'fallback-block', name: 'Fallback Block' });
+
+  assert.equal(result.blocks[0].id, 'fallback-block');
+  assert.equal(result.blocks[0].nodes[0].text, 'Fallback');
+  assert.equal(didBuildFromDocument, true);
+});
+
 test('block controller fails closed when selection or dependencies are unavailable', () => {
   const controller = blockController.createStudioEditorBlockController({
     canonicalDeckApi: canonicalDeck,
