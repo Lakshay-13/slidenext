@@ -614,6 +614,8 @@
       const cropX = (imageWidth - bounds.w) * position.x;
       const cropY = (imageHeight - bounds.h) * position.y;
       return {
+        imageX: bounds.x,
+        imageY: bounds.y,
         imageWidth,
         imageHeight,
         sizing: {
@@ -623,6 +625,24 @@
           w: bounds.w,
           h: bounds.h
         }
+      };
+    }
+
+    if (objectFit === 'contain' && dimensions && position) {
+      const sourceAspectRatio = dimensions.width / dimensions.height;
+      const boxAspectRatio = bounds.w / bounds.h;
+      const imageWidth = sourceAspectRatio >= boxAspectRatio
+        ? bounds.w
+        : bounds.h * sourceAspectRatio;
+      const imageHeight = sourceAspectRatio >= boxAspectRatio
+        ? bounds.w / sourceAspectRatio
+        : bounds.h;
+      return {
+        imageX: bounds.x + ((bounds.w - imageWidth) * position.x),
+        imageY: bounds.y + ((bounds.h - imageHeight) * position.y),
+        imageWidth,
+        imageHeight,
+        sizing: null
       };
     }
 
@@ -649,8 +669,7 @@
     const objectFit = (style['object-fit'] || '').trim().toLowerCase();
     if (options.imageNode && ['cover', 'contain'].includes(objectFit)
       && !isCenteredPptxImagePosition(style['object-position'])
-      && (objectFit !== 'cover'
-        || !getPptxImageDimensions(options.imageAsset)
+      && (!getPptxImageDimensions(options.imageAsset)
         || !parsePptxImagePosition(style['object-position']))) {
       properties.push('object-position');
     }
@@ -1235,7 +1254,9 @@
           : { path: source, ...bounds };
         const sizing = resolveNodeImageSizing(node, bounds, imageAsset.asset);
         if (sizing) {
-          imageOptions.sizing = sizing.sizing;
+          if (sizing.sizing) imageOptions.sizing = sizing.sizing;
+          if (Number.isFinite(sizing.imageX)) imageOptions.x = sizing.imageX;
+          if (Number.isFinite(sizing.imageY)) imageOptions.y = sizing.imageY;
           if (Number.isFinite(sizing.imageWidth) && Number.isFinite(sizing.imageHeight)) {
             imageOptions.w = sizing.imageWidth;
             imageOptions.h = sizing.imageHeight;

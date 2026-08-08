@@ -1242,8 +1242,7 @@ test('preflightCanonicalPptxExport keeps non-centered contain positioning as a w
   const report = pptxExport.preflightCanonicalPptxExport({
     assets: [{
       id: 'asset-1',
-      src: 'data:image/png;base64,AAAA',
-      meta: { width: 1600, height: 900 }
+      src: 'data:image/png;base64,AAAA'
     }],
     slides: [{
       nodes: [{
@@ -1259,6 +1258,34 @@ test('preflightCanonicalPptxExport keeps non-centered contain positioning as a w
   assert.deepEqual(report.diagnostics.unsupportedStyles, [
     { id: 'image-1', properties: ['object-position'] }
   ]);
+});
+
+test('createCanonicalPptxExport preserves contain aspect ratio and focal position', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 1000, unit: 'px' } },
+    assets: [{
+      id: 'asset-1',
+      src: 'data:image/png;base64,AAAA',
+      meta: { width: 1600, height: 900 }
+    }],
+    slides: [{
+      nodes: [{
+        id: 'image-1',
+        type: 'image',
+        attributes: { 'data-asset-id': 'asset-1' },
+        style: 'object-fit: contain; object-position: right bottom;',
+        layout: { x: 0, y: 0, width: 400, height: 400 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const imageOptions = result.pptx.slides[0].calls[0].options;
+  assert.equal('sizing' in imageOptions, false);
+  assert.ok(Math.abs(imageOptions.w - 5.3332) < 0.001);
+  assert.ok(imageOptions.h < 5.3332);
+  assert.ok(Math.abs(imageOptions.x - 0) < 0.001);
+  assert.ok(imageOptions.y > 0);
+  assert.deepEqual(result.diagnostics.unsupportedStyles, []);
 });
 
 test('preflightCanonicalPptxExport reports non-uniform border radii', () => {
