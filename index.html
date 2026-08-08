@@ -4851,9 +4851,16 @@
 
     function renderGuides(guidesDef) {
       const doc = getIframeDoc();
-      const slide = getActiveSlide(doc);
-      if (!doc || !slide) return;
-      SlideNextStudioEditorOverlay.renderStudioGuides(doc, slide, guidesDef, getEditorOverlayOptions());
+      if (!SlideNextStudioEditorOverlay
+        || typeof SlideNextStudioEditorOverlay.renderStudioGuidesForActiveSlide !== 'function') {
+        return false;
+      }
+      return SlideNextStudioEditorOverlay.renderStudioGuidesForActiveSlide({
+        documentRef: doc,
+        getActiveSlide,
+        guidesDef,
+        ...getEditorOverlayOptions()
+      });
     }
 
     function renderMarqueeSelection(rect) {

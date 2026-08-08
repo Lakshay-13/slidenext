@@ -110,6 +110,16 @@
     return guidesLayer;
   }
 
+  function renderStudioGuidesForActiveSlide(options = {}) {
+    const documentRef = options.documentRef;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const slide = documentRef ? getActiveSlide(documentRef) : null;
+    if (!documentRef || !slide) return null;
+    return renderStudioGuides(documentRef, slide, options.guidesDef, options);
+  }
+
   function renderStudioMarqueeSelection(doc, slide, rect, options = {}) {
     if (!doc || !slide || !rect) return null;
     const overlay = ensureStudioSelectionOverlay(doc, slide, options);
@@ -205,6 +215,7 @@
     hideStudioDragHud,
     updateStudioDragHud,
     renderStudioGuides,
+    renderStudioGuidesForActiveSlide,
     renderStudioMarqueeSelection,
     clearStudioMarqueeSelection,
     syncStudioSelectionOverlay,

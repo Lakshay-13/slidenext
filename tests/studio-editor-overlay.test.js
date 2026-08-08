@@ -163,3 +163,37 @@ test('syncStudioSelectionOverlayForActiveSlide resolves the current slide before
   assert.equal(result.didSync, false);
   assert.equal(result.overlay, overlay);
 });
+
+test('renderStudioGuidesForActiveSlide resolves the current slide before rendering guides', () => {
+  const guideLine = { style: {} };
+  const guidesLayer = {
+    innerHTML: '',
+    appendChild(child) {
+      this.child = child;
+    }
+  };
+  const slide = {
+    querySelector() {
+      return guidesLayer;
+    }
+  };
+  const documentRef = {
+    createElement() {
+      return guideLine;
+    }
+  };
+  let resolvedDocument = null;
+
+  const result = overlayView.renderStudioGuidesForActiveSlide({
+    documentRef,
+    getActiveSlide(doc) {
+      resolvedDocument = doc;
+      return slide;
+    },
+    guidesDef: [{ axis: 'x', position: 24 }]
+  });
+
+  assert.equal(resolvedDocument, documentRef);
+  assert.equal(result, guidesLayer);
+  assert.equal(guideLine.style.left, '24px');
+});
