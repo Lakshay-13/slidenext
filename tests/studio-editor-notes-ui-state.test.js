@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const slideMetadata = require('../shared/studio-editor-slide-metadata.js');
+const metadataController = require('../shared/studio-editor-slide-metadata-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -13,6 +14,29 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
   return fileContent.slice(start, end);
+}
+
+function installSlideMetadataController(context) {
+  context.studioEditorSlideMetadataController = metadataController.createStudioEditorSlideMetadataController({
+    slideMetadataApi: context.SlideNextStudioEditorSlideMetadata,
+    metadataApi: context.SlideNextStudioEditorNotes,
+    metadataActions: context.SlideNextStudioEditorNotesActions,
+    canonicalMetadataApi: context.SlideNextStudioEditorCanonicalMetadata,
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    transactionApi: context.SlideNextStudioEditorTransaction,
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    resolveReadyState: context.resolveCurrentStudioDeckReadyActionState,
+    getDocument: context.getIframeDoc,
+    getActiveSlide: context.getActiveSlide,
+    getElementId: (element) => {
+      const slideId = typeof context.getEditorSlideId === 'function'
+        ? context.getEditorSlideId(element)
+        : '';
+      return slideId ? `slide:${slideId}` : '';
+    },
+    finalizeMutation: context.finalizeEditorDeckMutation,
+    syncChrome: context.syncStudioChromeToActiveSlide
+  });
 }
 
 test('updateActiveSlideNotes delegates to the shared notes action', () => {
@@ -58,6 +82,7 @@ test('updateActiveSlideNotes delegates to the shared notes action', () => {
   };
 
   vm.createContext(context);
+  installSlideMetadataController(context);
   vm.runInContext(metadataAdapterSource, context);
   vm.runInContext(source, context);
 
@@ -113,6 +138,7 @@ test('updateActiveSlideNotes forwards the shared action result', () => {
   };
 
   vm.createContext(context);
+  installSlideMetadataController(context);
   vm.runInContext(metadataAdapterSource, context);
   vm.runInContext(source, context);
 
@@ -159,6 +185,7 @@ test('updateActiveSlideSection delegates to the shared section action', () => {
   };
 
   vm.createContext(context);
+  installSlideMetadataController(context);
   vm.runInContext(metadataAdapterSource, context);
   vm.runInContext(source, context);
 
