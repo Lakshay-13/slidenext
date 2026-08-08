@@ -1204,6 +1204,22 @@ test('importElementToCanonicalNode preserves media placeholders as embed nodes',
   assert.equal(node.attributes['data-embed-placeholder'], 'true');
 });
 
+test('importElementToCanonicalNode preserves chart frames as chart nodes', () => {
+  const node = deckImport.importElementToCanonicalNode(createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['editor-chart']),
+    attributes: {
+      class: 'editor-chart',
+      'data-chart-type': 'bar'
+    },
+    textContent: 'Quarterly trend',
+    outerHTML: '<div class="editor-chart" data-chart-type="bar">Quarterly trend</div>'
+  }));
+
+  assert.equal(node.type, 'chart');
+  assert.equal(node.attributes['data-chart-type'], 'bar');
+});
+
 test('importElementToCanonicalNode promotes explicit and resolved asset references', () => {
   const explicitNode = deckImport.importElementToCanonicalNode(createImportedElement({
     tagName: 'IMG',

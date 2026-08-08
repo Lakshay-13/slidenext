@@ -584,7 +584,8 @@ test('syncStudioInsertionToolbarActionState resolves and renders insertion contr
     insertShapeBtn: { disabled: true },
     insertTableBtn: { disabled: true },
     insertCodeBtn: { disabled: true },
-    insertEmbedBtn: { disabled: true }
+    insertEmbedBtn: { disabled: true },
+    insertChartBtn: { disabled: true }
   };
 
   assert.equal(deckView.syncStudioInsertionToolbarActionState({
@@ -612,6 +613,7 @@ test('syncStudioInsertionToolbarActionState resolves and renders insertion contr
   assert.equal(controls.duplicateSlideBtn.disabled, false);
   assert.equal(controls.insertCodeBtn.disabled, false);
   assert.equal(controls.insertEmbedBtn.disabled, false);
+  assert.equal(controls.insertChartBtn.disabled, false);
 });
 
 test('resolveStudioWallpaperActionState derives wallpaper readiness from the active slide resolver', () => {

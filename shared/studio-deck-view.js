@@ -225,7 +225,8 @@
       'insertShapeBtn',
       'insertTableBtn',
       'insertCodeBtn',
-      'insertEmbedBtn'
+      'insertEmbedBtn',
+      'insertChartBtn'
     ].forEach((id) => {
       const control = documentRef.getElementById(id);
       if (control) control.disabled = !options.canInsertElements;

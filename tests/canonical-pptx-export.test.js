@@ -431,6 +431,27 @@ test('createCanonicalPptxExport reports missing geometry and image assets withou
   assert.equal(result.pptx.slides[0].calls.length, 0);
 });
 
+test('preflightCanonicalPptxExport reports chart nodes as unsupported', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'chart-1',
+        type: 'chart',
+        text: 'Quarterly trend',
+        layout: { x: 0, y: 0, width: 300, height: 200 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedNodes, [{
+    id: 'chart-1',
+    type: 'chart',
+    tagName: '',
+    reason: 'node type chart'
+  }]);
+  assert.match(report.diagnostics.warnings.join('\n'), /node type chart/);
+});
+
 test('preflightCanonicalPptxExport does not warn for bound children inside flow containers', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{

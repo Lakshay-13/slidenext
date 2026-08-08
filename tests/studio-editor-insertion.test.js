@@ -31,6 +31,7 @@ test('createStudioInsertedElement creates the existing text, image, and shape de
   const icon = insertion.createStudioInsertedElement('icon', { documentRef, offset: 30 });
   const shape = insertion.createStudioInsertedElement('shape', { documentRef, offset: 30 });
   const embed = insertion.createStudioInsertedElement('embed', { documentRef, offset: 30 });
+  const chart = insertion.createStudioInsertedElement('chart', { documentRef, offset: 30 });
 
   assert.equal(heading.tagName, 'H2');
   assert.equal(heading.textContent, 'New Heading');
@@ -48,6 +49,10 @@ test('createStudioInsertedElement creates the existing text, image, and shape de
   assert.equal(embed.textContent, 'Media / Embed Placeholder');
   assert.equal(embed.attributes['data-embed-placeholder'], 'true');
   assert.equal(embed.style.left, 'calc(30% + 30px)');
+  assert.equal(chart.className, 'editor-chart');
+  assert.equal(chart.attributes['data-chart-type'], 'bar');
+  assert.equal(chart.children.length, 2);
+  assert.equal(chart.children[1].children.length, 4);
 });
 
 test('createStudioInsertedElement creates the existing table and code defaults', () => {

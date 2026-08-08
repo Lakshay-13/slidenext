@@ -148,6 +148,52 @@ function trainEpoch(model, data) {
       element.style.fontFamily = "'Geist', sans-serif";
       element.style.fontSize = '18px';
       element.style.fontWeight = '600';
+    } else if (type === 'chart') {
+      element = documentRef.createElement('div');
+      element.className = 'editor-chart';
+      if (typeof element.setAttribute === 'function') {
+        element.setAttribute('data-chart-type', 'bar');
+        element.setAttribute('role', 'img');
+        element.setAttribute('aria-label', 'Bar chart placeholder');
+      }
+      element.style.width = '600px';
+      element.style.height = '360px';
+      element.style.display = 'flex';
+      element.style.flexDirection = 'column';
+      element.style.gap = '18px';
+      element.style.padding = '24px';
+      element.style.position = 'absolute';
+      element.style.left = centeredPosition(28, offset);
+      element.style.top = centeredPosition(32, offset);
+      element.style.border = '1px solid rgba(255, 255, 255, 0.12)';
+      element.style.borderRadius = '14px';
+      element.style.backgroundColor = 'rgba(10, 10, 10, 0.72)';
+      element.style.color = '#f4f4f5';
+      element.style.fontFamily = "'Geist', sans-serif";
+
+      const title = documentRef.createElement('div');
+      title.textContent = 'Quarterly trend';
+      title.style.fontSize = '18px';
+      title.style.fontWeight = '600';
+      element.appendChild(title);
+
+      const chartBody = documentRef.createElement('div');
+      chartBody.className = 'editor-chart-bars';
+      chartBody.style.flex = '1';
+      chartBody.style.display = 'flex';
+      chartBody.style.alignItems = 'flex-end';
+      chartBody.style.gap = '18px';
+      chartBody.style.borderBottom = '1px solid rgba(255, 255, 255, 0.16)';
+      [42, 68, 55, 86].forEach((height, index) => {
+        const bar = documentRef.createElement('div');
+        bar.className = 'editor-chart-bar';
+        bar.style.height = `${height}%`;
+        bar.style.flex = '1';
+        bar.style.borderRadius = '6px 6px 0 0';
+        bar.style.backgroundColor = index % 2 === 0 ? '#7028d0' : '#c4a1ff';
+        chartBody.appendChild(bar);
+      });
+      element.appendChild(chartBody);
     }
 
     return element;

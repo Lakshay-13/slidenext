@@ -18,7 +18,7 @@
   const CUSTOM_PPTX_LAYOUT_NAME = 'SLIDENEXT_CANVAS';
   const DEFAULT_SOURCE_WIDTH = 1920;
   const DEFAULT_SOURCE_HEIGHT = 1080;
-  const UNSUPPORTED_NODE_TYPES = new Set(['vector', 'video', 'audio', 'embed', 'script']);
+  const UNSUPPORTED_NODE_TYPES = new Set(['vector', 'video', 'audio', 'embed', 'chart', 'script']);
   const UNSUPPORTED_STYLE_PROPERTIES = new Set([
     'backdrop-filter',
     'box-shadow',
