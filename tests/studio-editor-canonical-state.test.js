@@ -148,7 +148,7 @@ test('editor selection bounds and overlays use canonical hidden state before DOM
     id: 'slide-1',
     nodes: [
       { id: 'hidden-node', visibility: { hidden: true } },
-      { id: 'visible-node', visibility: { hidden: false } }
+      { id: 'visible-node', visibility: { hidden: false, locked: false } }
     ]
   }];
   const context = {
@@ -188,6 +188,9 @@ test('editor selection bounds and overlays use canonical hidden state before DOM
     isElementHidden(element) {
       return element.domHidden;
     },
+    isElementLocked(element) {
+      return !!element.domLocked;
+    },
     MIN_ELEMENT_SIZE_PX: 24,
     getEditorOverlayOptions() {
       return {};
@@ -212,6 +215,13 @@ test('editor selection bounds and overlays use canonical hidden state before DOM
     height: 60
   });
   assert.equal(context.syncSelectionOverlay(), true);
+  visibleElement.domLocked = true;
+  const readLockedState = context.getEditorCanonicalVisibilityReader(
+    'locked',
+    documentRef,
+    context.isElementLocked
+  );
+  assert.equal(readLockedState(visibleElement), true);
 });
 
 test('buildEditorCanonicalDeck prefers the active live model unless DOM rebuild is requested', () => {

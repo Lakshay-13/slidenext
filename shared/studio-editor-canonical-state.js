@@ -108,7 +108,7 @@
     });
 
     return function readCanonicalLockState(element) {
-      return readCanonicalLockValue(element) || fallbackReader(element);
+      return readCanonicalLockValue(element) === true || fallbackReader(element) === true;
     };
   }
 
