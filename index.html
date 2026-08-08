@@ -1313,6 +1313,7 @@
   <script src="/shared/studio-editor-block-controller.js"></script>
   <script src="/shared/studio-editor-template-controller.js"></script>
   <script src="/shared/studio-editor-master-slide-controller.js"></script>
+  <script src="/shared/studio-editor-asset-view.js"></script>
   <script src="/shared/studio-editor-asset-controller.js"></script>
   <script src="/shared/studio-editor-canonical-slide.js"></script>
   <script src="/shared/studio-editor-canonical-metadata.js"></script>
@@ -6106,48 +6107,23 @@
     }
 
     function renderSavedAssets(assets = [], canApply = false) {
-      if (typeof document === 'undefined' || !document || typeof document.getElementById !== 'function') {
+      const assetView = typeof SlideNextStudioEditorAssetView !== 'undefined'
+        ? SlideNextStudioEditorAssetView
+        : null;
+      if (!assetView || typeof assetView.renderStudioAssetLibrary !== 'function') {
         return false;
       }
-      const list = document.getElementById('savedAssetsList');
-      if (!list || typeof document.createElement !== 'function') return false;
-      const normalizedAssets = Array.isArray(assets) ? assets : [];
-      list.textContent = '';
-      if (normalizedAssets.length === 0) {
-        const emptyState = document.createElement('span');
-        emptyState.textContent = 'No assets saved';
-        list.appendChild(emptyState);
-        return true;
-      }
-      normalizedAssets.forEach((asset) => {
-        const row = document.createElement('div');
-        row.className = 'flex items-center gap-1';
-        const item = document.createElement('span');
-        item.className = 'min-w-0 flex-1 truncate rounded px-2 py-1';
-        const assetName = asset && asset.name ? asset.name : 'Unnamed Asset';
-        const assetType = asset && asset.type ? asset.type : 'file';
-        item.textContent = `${assetName} - ${assetType}`;
-        item.title = asset && asset.src ? asset.src : assetName;
-        const useButton = document.createElement('button');
-        useButton.type = 'button';
-        useButton.className = 'shrink-0 rounded px-1.5 py-1 text-zinc-500 hover:bg-[#7028d0]/10 hover:text-[#c4a1ff] transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
-        useButton.textContent = 'Use';
-        useButton.disabled = !canApply;
-        useButton.title = 'Use on selected image';
-        useButton.addEventListener('click', () => applyAssetToSelectedImage(asset.id));
-        const removeButton = document.createElement('button');
-        removeButton.type = 'button';
-        removeButton.className = 'shrink-0 rounded px-1.5 py-1 text-zinc-500 hover:bg-red-500/10 hover:text-red-300 transition-colors';
-        removeButton.textContent = 'Remove';
-        removeButton.title = `Remove ${assetName}`;
-        removeButton.setAttribute('aria-label', `Remove ${assetName}`);
-        removeButton.addEventListener('click', () => removeAssetFromLibrary(asset.id));
-        row.appendChild(item);
-        row.appendChild(useButton);
-        row.appendChild(removeButton);
-        list.appendChild(row);
+      return assetView.renderStudioAssetLibrary({
+        documentRef: document,
+        assets,
+        canApply,
+        applyAsset: typeof applyAssetToSelectedImage === 'function'
+          ? applyAssetToSelectedImage
+          : null,
+        removeAsset: typeof removeAssetFromLibrary === 'function'
+          ? removeAssetFromLibrary
+          : null
       });
-      return true;
     }
 
     function updateAssetLibraryState(doc = getIframeDoc()) {

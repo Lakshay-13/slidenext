@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const assetView = require('../shared/studio-editor-asset-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -32,6 +33,7 @@ test('renderSavedAssets renders asset names and the empty state', () => {
     }
   };
   const context = {
+    SlideNextStudioEditorAssetView: assetView,
     document: {
       getElementById() {
         return list;
@@ -59,6 +61,51 @@ test('renderSavedAssets renders asset names and the empty state', () => {
   assert.equal(list.children[0].children[0].textContent, 'Hero - image');
   assert.equal(context.renderSavedAssets([]), true);
   assert.equal(list.children[0].textContent, 'No assets saved');
+});
+
+test('shared asset view wires use and remove actions to injected callbacks', () => {
+  const list = {
+    children: [],
+    textContent: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const events = [];
+  const documentRef = {
+    getElementById() {
+      return list;
+    },
+    createElement() {
+      return {
+        children: [],
+        addEventListener(type, handler) {
+          events.push({ type, handler });
+        },
+        appendChild(child) {
+          this.children.push(child);
+        },
+        setAttribute() {}
+      };
+    }
+  };
+  const calls = [];
+
+  assert.equal(assetView.renderStudioAssetLibrary({
+    documentRef,
+    assets: [{ id: 'hero', name: 'Hero', type: 'image' }],
+    canApply: true,
+    applyAsset(assetId) {
+      calls.push(['apply', assetId]);
+    },
+    removeAsset(assetId) {
+      calls.push(['remove', assetId]);
+    }
+  }), true);
+
+  events.find((event) => event.type === 'click').handler();
+  events.reverse().find((event) => event.type === 'click').handler();
+  assert.deepEqual(calls, [['apply', 'hero'], ['remove', 'hero']]);
 });
 
 test('addAssetToLibrary validates the source and delegates a normalized image asset', () => {
