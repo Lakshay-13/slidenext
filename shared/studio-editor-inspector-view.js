@@ -252,7 +252,11 @@
     if (textColorInput) {
       textColorInput.value = rgbToHex(canonicalTextColor || computedStyles.color);
     }
-    highlightAlignButton(computedStyles.textAlign || 'left');
+    const canonicalTextAlign = readStudioInspectorCanonicalStyleValue(
+      options.canonicalNode,
+      'text-align'
+    );
+    highlightAlignButton(canonicalTextAlign || computedStyles.textAlign || 'left');
     const zIndexInput = documentRef.getElementById('elZIndex');
     const canonicalZIndex = options.canonicalNode
       && options.canonicalNode.layout

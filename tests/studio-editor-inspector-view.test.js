@@ -365,6 +365,29 @@ test('syncStudioInspectorTypographyControls prefers canonical text color data', 
   assert.equal(textColorInput.value, '#112233');
 });
 
+test('syncStudioInspectorTypographyControls prefers canonical text alignment data', () => {
+  const alignments = [];
+
+  assert.equal(inspectorView.syncStudioInspectorTypographyControls({
+    documentRef: {
+      getElementById() {
+        return null;
+      }
+    },
+    primaryElement: { style: { textAlign: 'left' } },
+    canonicalNode: { style: 'text-align: right;' },
+    computedStyles: {
+      fontFamily: 'sans-serif',
+      color: '#fff',
+      textAlign: 'left'
+    },
+    highlightAlignButton(value) {
+      alignments.push(value);
+    }
+  }), true);
+  assert.deepEqual(alignments, ['right']);
+});
+
 test('syncStudioInspectorBorderControls applies border values for shape-like selections', () => {
   const classList = createClassList();
   classList.add('editor-shape');
