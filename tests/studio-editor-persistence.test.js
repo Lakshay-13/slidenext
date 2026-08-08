@@ -1791,6 +1791,21 @@ test('resolveStudioSaveRequestCanonicalDeck falls back to the provided canonical
   assert.equal(buildCanonicalDeckCalls, 1);
 });
 
+test('resolveStudioSaveRequestCanonicalDeck fails closed when the fallback builder throws', () => {
+  assert.equal(
+    editorPersistence.resolveStudioSaveRequestCanonicalDeck({
+      canonicalDeck: { metadata: { title: 'Broken Deck' } },
+      buildCanonicalDeck() {
+        throw new Error('unsupported legacy markup');
+      },
+      isCanonicalDeck(value) {
+        return !!(value && Array.isArray(value.slides));
+      }
+    }),
+    null
+  );
+});
+
 test('resolveStudioCanonicalDeckOverride preserves the provided override when no canonical validator is available', () => {
   const providedCanonicalDeck = {
     metadata: {

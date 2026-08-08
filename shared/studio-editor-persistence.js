@@ -603,7 +603,12 @@
       return null;
     }
 
-    const fallbackCanonicalDeck = buildCanonicalDeck();
+    let fallbackCanonicalDeck = null;
+    try {
+      fallbackCanonicalDeck = buildCanonicalDeck();
+    } catch (err) {
+      return null;
+    }
     const resolvedFallbackCanonicalDeck = resolveStudioPersistenceCanonicalDeck(
       fallbackCanonicalDeck,
       resolutionOptions
