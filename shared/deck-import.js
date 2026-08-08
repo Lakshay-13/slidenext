@@ -971,6 +971,31 @@
     return declarations.join(' ');
   }
 
+  function buildImportedComputedImageStyle(el, inlineStyleText, options = {}) {
+    if (normalizeString(el && el.tagName).toLowerCase() !== 'img') return '';
+    const computedStyle = getImportedComputedStyle(el, options);
+    if (!computedStyle) return '';
+
+    const declarations = [];
+    const computedObjectFit = readImportedStyleValue(computedStyle, 'object-fit').trim().toLowerCase();
+    const inlineObjectFit = findImportedStylePropertyValue(inlineStyleText, 'object-fit');
+    const objectFit = inlineObjectFit || computedObjectFit;
+    if (!hasImportedStyleProperty(inlineStyleText, 'object-fit')
+      && /^(?:fill|cover|contain)$/i.test(computedObjectFit)) {
+      declarations.push(`object-fit: ${computedObjectFit};`);
+    }
+
+    if (['cover', 'contain'].includes(objectFit.trim().toLowerCase())
+      && !hasImportedStyleProperty(inlineStyleText, 'object-position')) {
+      const objectPosition = readImportedStyleValue(computedStyle, 'object-position');
+      if (isSupportedImportedImagePosition(objectPosition)) {
+        declarations.push(`object-position: ${objectPosition};`);
+      }
+    }
+
+    return declarations.join(' ');
+  }
+
   function normalizeImportedComputedCssValue(value, options = {}) {
     const source = normalizeString(value);
     if (!source || !/url\(/i.test(source)) return source;
@@ -1022,7 +1047,8 @@
       visibility
     );
     const computedBackgroundStyleText = buildImportedComputedNodeBackgroundStyle(el, inlineStyleText, options);
-    const canonicalStyleText = [importedStyleText, computedBackgroundStyleText]
+    const computedImageStyleText = buildImportedComputedImageStyle(el, inlineStyleText, options);
+    const canonicalStyleText = [importedStyleText, computedBackgroundStyleText, computedImageStyleText]
       .filter(Boolean)
       .join(' ');
 

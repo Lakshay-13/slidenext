@@ -1441,6 +1441,34 @@ test('importElementToCanonicalNode preserves computed focal background positions
   assert.match(node.style, /background-position: right bottom;/);
 });
 
+test('importElementToCanonicalNode preserves computed image fit and focal position', () => {
+  const element = createImportedElement({
+    tagName: 'IMG',
+    classList: createIterableClassList(['hero-image']),
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return {
+            objectFit: 'cover',
+            objectPosition: 'right bottom'
+          };
+        }
+      }
+    },
+    attributes: {
+      class: 'hero-image',
+      src: 'assets/hero.png'
+    },
+    textContent: '',
+    outerHTML: '<img class="hero-image" src="assets/hero.png">'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+
+  assert.match(node.style, /object-fit: cover;/);
+  assert.match(node.style, /object-position: right bottom;/);
+});
+
 test('importElementToCanonicalNode omits transparent computed background colors', () => {
   const element = createImportedElement({
     tagName: 'DIV',
