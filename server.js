@@ -9,6 +9,7 @@ const {
   deriveSiblingVersionBackupFilename
 } = require('./shared/version-backup-utils');
 const presentationMetadata = require('./shared/presentation-metadata');
+const presentationCreation = require('./shared/presentation-creation');
 const canonicalPptxExport = require('./shared/canonical-pptx-export');
 const { isPathWithin } = require('./shared/path-boundary');
 
@@ -72,6 +73,91 @@ app.get('/api/presentations', async (req, res) => {
   } catch (err) {
     console.error('Error reading presentations.json:', err);
     res.status(500).json({ error: 'Failed to read presentations configuration' });
+  }
+});
+
+// Create a new blank canonical deck and add it to the local presentation library.
+app.post('/api/presentations/create', async (req, res) => {
+  const title = req.body && req.body.title;
+  if (typeof title !== 'string' || !title.trim()) {
+    return res.status(400).json({ error: 'Missing presentation title' });
+  }
+
+  const presentationsDir = path.join(workspaceDir, 'presentations');
+  const configPath = path.join(presentationsDir, 'presentations.json');
+  let createdFolderPath = '';
+  let createdFolder = false;
+  let temporaryConfigPath = '';
+
+  try {
+    const configContent = await fs.readFile(configPath, 'utf8');
+    const libraryEntries = JSON.parse(configContent);
+    if (!Array.isArray(libraryEntries)) {
+      throw new Error('Presentations configuration must be an array');
+    }
+
+    const existingSlugs = libraryEntries
+      .map((entry) => entry && entry.folder)
+      .filter((folder) => typeof folder === 'string' && folder.trim());
+    const presentationDirectories = await fs.readdir(presentationsDir, { withFileTypes: true });
+    presentationDirectories
+      .filter((entry) => entry.isDirectory())
+      .forEach((entry) => existingSlugs.push(entry.name));
+
+    const artifacts = presentationCreation.buildBlankPresentationArtifacts({
+      title: title.trim(),
+      existingSlugs
+    });
+    if (!artifacts) {
+      throw new Error('Blank presentation factory is unavailable');
+    }
+
+    createdFolderPath = path.resolve(workspaceDir, 'presentations', artifacts.folder);
+    if (!isPathWithin(presentationsDir, createdFolderPath)) {
+      return res.status(403).json({ error: 'Access denied: invalid presentation path' });
+    }
+
+    await fs.mkdir(createdFolderPath);
+    createdFolder = true;
+    const htmlFile = path.join(createdFolderPath, 'index.html');
+    const metadataFile = path.join(createdFolderPath, 'presentation.json');
+    await fs.writeFile(htmlFile, artifacts.html, { encoding: 'utf8', flag: 'wx' });
+    await fs.writeFile(metadataFile, `${JSON.stringify(artifacts.metadata, null, 2)}\n`, { encoding: 'utf8', flag: 'wx' });
+
+    temporaryConfigPath = path.join(
+      presentationsDir,
+      `.presentations-${process.pid}-${Date.now()}-${artifacts.folder}.tmp`
+    );
+    await fs.writeFile(
+      temporaryConfigPath,
+      `${JSON.stringify([...libraryEntries, artifacts.libraryEntry], null, 2)}\n`,
+      { encoding: 'utf8', flag: 'wx' }
+    );
+    await fs.rename(temporaryConfigPath, configPath);
+    temporaryConfigPath = '';
+
+    const relativePath = `presentations/${artifacts.folder}/index.html`;
+    return res.status(201).json({
+      success: true,
+      presentation: {
+        ...artifacts.libraryEntry,
+        url: relativePath,
+        relativePath,
+        category: artifacts.libraryEntry.category || 'General'
+      }
+    });
+  } catch (err) {
+    if (temporaryConfigPath) {
+      await fs.rm(temporaryConfigPath, { force: true }).catch(() => {});
+    }
+    if (createdFolder && createdFolderPath) {
+      await fs.rm(createdFolderPath, { recursive: true, force: true }).catch(() => {});
+    }
+    if (err.code === 'EEXIST') {
+      return res.status(409).json({ error: 'A presentation with that name already exists' });
+    }
+    console.error('Error creating presentation:', err);
+    return res.status(500).json({ error: `Failed to create presentation: ${err.message}` });
   }
 });
 
