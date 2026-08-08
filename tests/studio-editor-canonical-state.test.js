@@ -6,6 +6,37 @@ const vm = require('node:vm');
 const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js');
 const canonicalBridge = require('../shared/studio-editor-canonical-bridge.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
+
+test('canonical deck baseline reader prefers live state and falls back to rebuilds', () => {
+  const doc = { id: 'iframe-doc' };
+  const liveDeck = { slides: [{ id: 'live' }] };
+  const rebuiltDeck = { slides: [{ id: 'rebuilt' }] };
+  const calls = [];
+  const readBaseline = canonicalState.createStudioEditorCanonicalDeckBaselineReader({
+    getCanonicalDeckBaseline(sourceDocument) {
+      calls.push(['live', sourceDocument]);
+      return liveDeck;
+    },
+    buildCanonicalDeckBaseline(sourceDocument) {
+      calls.push(['rebuild', sourceDocument]);
+      return rebuiltDeck;
+    }
+  });
+
+  assert.equal(readBaseline(doc), liveDeck);
+  assert.deepEqual(calls, [['live', doc]]);
+
+  const fallbackReader = canonicalState.createStudioEditorCanonicalDeckBaselineReader({
+    getCanonicalDeckBaseline() {
+      throw new Error('live state unavailable');
+    },
+    buildCanonicalDeckBaseline(sourceDocument) {
+      assert.equal(sourceDocument, doc);
+      return rebuiltDeck;
+    }
+  });
+  assert.equal(fallbackReader(doc), rebuiltDeck);
+});
 const selectionBounds = require('../shared/studio-editor-selection-bounds.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');

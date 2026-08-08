@@ -69,6 +69,34 @@
     };
   }
 
+  function createStudioEditorCanonicalDeckBaselineReader(options = {}) {
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
+
+    return function readCanonicalDeckBaseline(sourceDocument) {
+      if (getCanonicalDeckBaseline) {
+        try {
+          const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+          if (liveCanonicalDeck) return liveCanonicalDeck;
+        } catch (error) {
+          // Fall through to the document rebuild path.
+        }
+      }
+      if (buildCanonicalDeckBaseline) {
+        try {
+          return buildCanonicalDeckBaseline(sourceDocument);
+        } catch (error) {
+          return null;
+        }
+      }
+      return null;
+    };
+  }
+
   function createStudioEditorCanonicalNodeReader(canonicalDeck, options = {}) {
     const resolveCanonicalNode = typeof options.resolveCanonicalNode === 'function'
       ? options.resolveCanonicalNode
@@ -166,6 +194,7 @@
 
   return {
     createStudioEditorCanonicalState,
+    createStudioEditorCanonicalDeckBaselineReader,
     createStudioEditorCanonicalNodeReader,
     createStudioEditorCanonicalLockReader,
     createStudioEditorCanonicalLockReaderFromApi,

@@ -52,24 +52,30 @@
       ? options.applyLayerOrderMutation
       : () => ({ didApply: false, transaction: null });
 
-    function resolveCanonicalDeck(sourceDocument) {
-      if (getCanonicalDeckBaseline) {
-        try {
-          const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
-          if (liveCanonicalDeck) return liveCanonicalDeck;
-        } catch (err) {
-          // Fall through to the document rebuild path.
-        }
-      }
-      if (buildCanonicalDeckBaseline) {
-        try {
-          return buildCanonicalDeckBaseline(sourceDocument);
-        } catch (err) {
+    const resolveCanonicalDeck = canonicalStateApi
+      && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
+      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
+          getCanonicalDeckBaseline,
+          buildCanonicalDeckBaseline
+        })
+      : (sourceDocument) => {
+          if (getCanonicalDeckBaseline) {
+            try {
+              const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+              if (liveCanonicalDeck) return liveCanonicalDeck;
+            } catch (err) {
+              // Fall through to the document rebuild path.
+            }
+          }
+          if (buildCanonicalDeckBaseline) {
+            try {
+              return buildCanonicalDeckBaseline(sourceDocument);
+            } catch (err) {
+              return null;
+            }
+          }
           return null;
-        }
-      }
-      return null;
-    }
+        };
 
     function resolveLockedReader(sourceDocument) {
       if (!canonicalDeckApi
