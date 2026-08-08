@@ -33,8 +33,8 @@ test('applyStudioEditorSource sanitizes, imports, and restores source through ca
         calls.push(['sanitize', root]);
         root.innerHTML = '<body><section class="slide">Edited</section></body>';
       },
-      buildCanonicalDeck(documentRef) {
-        calls.push(['buildCanonicalDeck', documentRef]);
+      buildCanonicalDeck(documentRef, options) {
+        calls.push(['buildCanonicalDeck', documentRef, options]);
         return canonicalDeck;
       },
       isCanonicalDeck(value) {
@@ -77,6 +77,7 @@ test('applyStudioEditorSource sanitizes, imports, and restores source through ca
     'restoreHistoryEntry',
     'afterApply'
   ]);
+  assert.deepEqual(calls[1][2], { preferLiveCanonicalDeck: false });
 });
 
 test('applyStudioEditorSource fails before mutation when the source has no slides', () => {

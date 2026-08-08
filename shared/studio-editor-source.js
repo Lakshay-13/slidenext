@@ -57,7 +57,9 @@
 
     let canonicalDeck;
     try {
-      canonicalDeck = buildCanonicalDeck(parsedDocument);
+      canonicalDeck = buildCanonicalDeck(parsedDocument, {
+        preferLiveCanonicalDeck: false
+      });
     } catch (error) {
       return fail('Source HTML could not be converted to a canonical deck');
     }
