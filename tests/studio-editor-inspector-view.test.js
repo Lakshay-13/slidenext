@@ -318,6 +318,31 @@ test('syncStudioInspectorTypographyControls prefers canonical font-weight data',
   assert.equal(fontWeightInput.value, '700');
 });
 
+test('syncStudioInspectorTypographyControls prefers canonical font-family data', () => {
+  const familySelect = {
+    value: '',
+    options: [
+      { value: "'Geist', sans-serif" },
+      { value: "'Source Sans 3', sans-serif" }
+    ]
+  };
+
+  assert.equal(inspectorView.syncStudioInspectorTypographyControls({
+    documentRef: {
+      getElementById(id) {
+        return id === 'elFontFamily' ? familySelect : null;
+      }
+    },
+    primaryElement: { style: { fontFamily: 'Geist' } },
+    canonicalNode: { style: "font-family: 'Source Sans 3', sans-serif;" },
+    computedStyles: {
+      fontFamily: "'Geist', sans-serif",
+      color: '#fff'
+    }
+  }), true);
+  assert.equal(familySelect.value, "'Source Sans 3', sans-serif");
+});
+
 test('syncStudioInspectorBorderControls applies border values for shape-like selections', () => {
   const classList = createClassList();
   classList.add('editor-shape');

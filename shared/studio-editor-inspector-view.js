@@ -220,7 +220,11 @@
     const fontSizeLabel = documentRef.getElementById('fontSizeVal');
     if (fontSizeLabel) fontSizeLabel.textContent = fSize + 'px';
 
-    const fFamily = computedStyles.fontFamily.replace(/['"]/g, '');
+    const canonicalFontFamily = readStudioInspectorCanonicalStyleValue(
+      options.canonicalNode,
+      'font-family'
+    );
+    const fFamily = (canonicalFontFamily || computedStyles.fontFamily || '').replace(/['"]/g, '');
     const familySelect = documentRef.getElementById('elFontFamily');
     if (familySelect) {
       familySelect.value = "'Geist', sans-serif";
