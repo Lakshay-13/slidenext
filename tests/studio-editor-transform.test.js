@@ -1177,6 +1177,40 @@ test('resolveStudioTransformBounds preserves locked resize ratios when slide edg
   });
 });
 
+test('resolveStudioTransformBounds keeps locked ratios when minimum size conflicts with slide bounds', () => {
+  const bounds = transformState.resolveStudioTransformBounds({
+    type: 'resize',
+    handleDir: 'se',
+    slideBounds: {
+      width: 100,
+      height: 100
+    },
+    startBounds: {
+      left: 0,
+      top: 0,
+      right: 100,
+      bottom: 10,
+      width: 100,
+      height: 10
+    }
+  }, {
+    dx: -90,
+    dy: -5,
+    minSizePx: 24,
+    lockAspectRatio: true
+  });
+
+  assert.deepEqual(bounds, {
+    left: 0,
+    top: 0,
+    right: 100,
+    bottom: 10,
+    width: 100,
+    height: 10
+  });
+  assert.equal(bounds.width / bounds.height, 10);
+});
+
 test('applyStudioTransformBounds updates drag and resize item styles using shared transform math', () => {
   const dragElement = { tagName: 'DIV', style: {} };
   transformState.applyStudioTransformBounds({

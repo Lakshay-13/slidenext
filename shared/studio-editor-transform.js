@@ -678,7 +678,10 @@
     const aspectRatioBounds = (session.lockAspectRatio || options.lockAspectRatio)
       ? fitStudioLockedAspectRatioBoundsToSlide(normalizedBounds, session, slideBounds)
       : normalizedBounds;
-    return normalizeStudioTransformBounds(aspectRatioBounds, slideBounds, normalizeOptions);
+    const finalNormalizeOptions = (session.lockAspectRatio || options.lockAspectRatio)
+      ? { ...normalizeOptions, minSizePx: 0 }
+      : normalizeOptions;
+    return normalizeStudioTransformBounds(aspectRatioBounds, slideBounds, finalNormalizeOptions);
   }
 
   function applyStudioTransformBounds(session = {}, bounds = {}, options = {}) {
