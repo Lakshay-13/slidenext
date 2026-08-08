@@ -32,6 +32,8 @@ test('lock and visibility controller builds sidecars and finalizes both toggles'
         };
       }
     },
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getSelectedElements: () => selected,
     getIframeDoc: () => ({ id: 'doc' }),
     getActiveSlide: () => ({ id: 'slide-1' }),
