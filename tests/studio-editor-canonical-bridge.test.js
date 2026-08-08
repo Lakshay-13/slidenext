@@ -85,6 +85,27 @@ test('canonical bridge adds the live baseline to forced DOM rebuilds', () => {
   });
 });
 
+test('canonical bridge ignores an invalid live baseline when rebuilding', () => {
+  let capturedOptions = null;
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    canonicalStateApi: canonicalState,
+    isCanonicalDeck(value) {
+      return !!value && value.kind === 'slidenext.deck' && Array.isArray(value.slides);
+    },
+    canonicalDeckBuilder(_doc, options) {
+      capturedOptions = options;
+      return { kind: 'slidenext.deck', slides: [] };
+    },
+    getCanonicalDeckBaseline() {
+      return { invalid: true };
+    }
+  });
+
+  bridge.buildCanonicalDeck({}, { preferLiveCanonicalDeck: false });
+
+  assert.deepEqual(capturedOptions, { preferLiveCanonicalDeck: false });
+});
+
 test('canonical bridge fails closed when either builder throws or is unavailable', () => {
   const throwingBridge = canonicalBridge.createStudioEditorCanonicalBridge({
     canonicalDeckBuilder() {
