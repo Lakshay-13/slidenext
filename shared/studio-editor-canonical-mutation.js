@@ -7,6 +7,13 @@
     root.SlideNextStudioEditorCanonicalMutation = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  function isCanonicalDeckLike(value) {
+    return !!value
+      && typeof value === 'object'
+      && !Array.isArray(value)
+      && Array.isArray(value.slides);
+  }
+
   function createStudioEditorMutationCanonicalDeckBuilder(options = {}) {
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
@@ -23,9 +30,9 @@
 
     function isValidCanonicalDeck(value) {
       if (!value) return false;
-      if (!isCanonicalDeck) return true;
+      const validate = isCanonicalDeck || isCanonicalDeckLike;
       try {
-        return isCanonicalDeck(value) === true;
+        return validate(value) === true;
       } catch (err) {
         return false;
       }

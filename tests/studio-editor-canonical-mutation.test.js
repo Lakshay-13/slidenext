@@ -97,3 +97,14 @@ test('mutation canonical builder rejects invalid rebuilt output', () => {
 
   assert.equal(buildMutationDeck({ id: 'document' }), null);
 });
+
+test('mutation canonical builder rejects malformed output without a custom validator', () => {
+  const buildMutationDeck = canonicalMutation
+    .createStudioEditorMutationCanonicalDeckBuilder({
+      buildCanonicalDeck() {
+        return { invalid: true };
+      }
+    });
+
+  assert.equal(buildMutationDeck({ id: 'document' }), null);
+});
