@@ -75,7 +75,12 @@ test('renderSavedTemplates uses text content and shows the empty state', () => {
       createElement() {
         return {
           textContent: '',
-          addEventListener() {}
+          children: [],
+          addEventListener() {},
+          appendChild(child) {
+            this.children.push(child);
+          },
+          setAttribute() {}
         };
       }
     }
@@ -87,7 +92,7 @@ test('renderSavedTemplates uses text content and shows the empty state', () => {
   assert.equal(context.renderSavedTemplates([
     { name: '<Hero>', slide: { nodes: [{ id: 'title' }] } }
   ]), true);
-  assert.equal(list.children[0].textContent, '<Hero> - 1 element');
+  assert.equal(list.children[0].children[0].textContent, '<Hero> - 1 element');
   assert.equal(context.renderSavedTemplates([]), true);
   assert.equal(list.children[0].textContent, 'No slide templates saved');
 });
@@ -124,4 +129,33 @@ test('insertSavedTemplate delegates to the template controller and refreshes edi
   assert.equal(delegatedId, 'hero-template');
   assert.equal(templateRefreshes, 1);
   assert.equal(blockRefreshes, 1);
+});
+
+test('removeSavedTemplate delegates removal and refreshes template state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function removeSavedTemplate(templateId) {',
+    '\n\n    function nudgeSelectedElements'
+  );
+  let delegatedId = '';
+  let refreshCalls = 0;
+  const context = {
+    studioEditorTemplateController: {
+      removeTemplate(templateId) {
+        delegatedId = templateId;
+        return { templates: [] };
+      }
+    },
+    updateTemplateActionState() {
+      refreshCalls += 1;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.removeSavedTemplate('hero-template'), true);
+  assert.equal(delegatedId, 'hero-template');
+  assert.equal(refreshCalls, 1);
 });

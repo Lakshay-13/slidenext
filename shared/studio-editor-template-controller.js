@@ -104,6 +104,33 @@
       return nextCanonicalDeck;
     }
 
+    function removeTemplate(templateId) {
+      if (!canonicalDeckApi
+        || typeof canonicalDeckApi.removeCanonicalTemplate !== 'function') {
+        return null;
+      }
+
+      const canonicalDeck = getCanonicalDeck();
+      const normalizedTemplateId = typeof templateId === 'string' ? templateId.trim() : '';
+      const template = canonicalDeck
+        && Array.isArray(canonicalDeck.templates)
+        ? canonicalDeck.templates.find((candidate) => candidate && candidate.id === normalizedTemplateId)
+        : null;
+      const nextCanonicalDeck = canonicalDeckApi.removeCanonicalTemplate(
+        canonicalDeck,
+        normalizedTemplateId
+      );
+      if (!nextCanonicalDeck) return null;
+
+      if (saveHistoryState) saveHistoryState(false, null, nextCanonicalDeck);
+      if (triggerAutoSave) triggerAutoSave();
+      if (triggerAutoVersion) {
+        triggerAutoVersion(`Auto: Removed Template${template && template.name ? ` "${template.name}"` : normalizedTemplateId ? ` "${normalizedTemplateId}"` : ''}`);
+      }
+      if (onTemplatesChanged) onTemplatesChanged(nextCanonicalDeck.templates, nextCanonicalDeck);
+      return nextCanonicalDeck;
+    }
+
     function insertTemplate(templateId) {
       if (!canonicalDeckApi
         || typeof canonicalDeckApi.insertCanonicalTemplateSlide !== 'function'
@@ -159,6 +186,7 @@
 
     return {
       saveActiveSlide,
+      removeTemplate,
       insertTemplate
     };
   }
