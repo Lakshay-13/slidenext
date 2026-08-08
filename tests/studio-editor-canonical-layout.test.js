@@ -56,6 +56,22 @@ test('buildStudioCanonicalLayoutBaseline prefers a valid live canonical deck', (
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalLayoutBaseline rejects invalid compatibility baselines', () => {
+  let rebuildCalls = 0;
+  const result = canonicalLayout.buildStudioCanonicalLayoutBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline() {
+      rebuildCalls += 1;
+      return { invalid: true };
+    },
+    sourceDocument: { id: 'editor-doc' }
+  });
+
+  assert.equal(result, null);
+  assert.equal(rebuildCalls, 1);
+});
+
 test('buildStudioCanonicalLayoutDeck applies layout updates to the provided pre-mutation deck', () => {
   const sourceDeck = createSourceDeck();
   const result = canonicalLayout.buildStudioCanonicalLayoutDeck(
