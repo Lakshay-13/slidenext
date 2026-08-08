@@ -969,9 +969,10 @@
         const tableFill = resolvePptxFillColor(
           tableStyle['background-color'] || tableStyle.background
         ) || { color: 'FFFFFF' };
+        const tableBorderColor = normalizeHexColor(tableStyle['border-color']) || 'D1D5DB';
         context.slide.addTable(rows, {
           ...bounds,
-          border: { type: 'solid', color: 'D1D5DB', pt: 0.75 },
+          border: { type: 'solid', color: tableBorderColor, pt: 0.75 },
           color: tableColor,
           fill: tableFill,
           fontFace: tableFontFace || 'Aptos',

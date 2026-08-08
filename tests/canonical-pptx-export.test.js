@@ -105,7 +105,7 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
         {
           id: 'table-2',
           type: 'table',
-          style: 'font-family: Georgia, serif; font-size: 20px; color: #0f172a; background-color: #f8fafc;',
+          style: 'font-family: Georgia, serif; font-size: 20px; color: #0f172a; background-color: #f8fafc; border-color: #94a3b8;',
           layout: { x: 0, y: 200, width: 400, height: 150 },
           children: [{
             tagName: 'tr',
@@ -172,6 +172,11 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
   assert.equal(result.pptx.slides[0].calls[4].options.fontSize, 15);
   assert.equal(result.pptx.slides[0].calls[4].options.color, '0F172A');
   assert.deepEqual(result.pptx.slides[0].calls[4].options.fill, { color: 'F8FAFC' });
+  assert.deepEqual(result.pptx.slides[0].calls[4].options.border, {
+    type: 'solid',
+    color: '94A3B8',
+    pt: 0.75
+  });
   assert.equal(result.diagnostics.unsupportedNodes[0].id, 'table-1');
   assert.deepEqual(result.diagnostics.missingAssets, []);
 });
