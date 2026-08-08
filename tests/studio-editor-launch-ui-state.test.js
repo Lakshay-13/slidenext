@@ -825,6 +825,32 @@ test('shouldHandleCurrentStudioFrameLoad creates the shared frame-load guard ada
   ]);
 });
 
+test('createCurrentStudioFrameLoadHandler creates the shared frame-load handler adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let adapterCreateCalls = 0;
+  const context = {
+    SlideNextStudioEditorSession: {
+      createStudioEditorFrameLoadHandlerAdapter() {
+        adapterCreateCalls += 1;
+        return (options) => ({ presentationUrl: options.presentationUrl });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioFrameLoadHandler(fileContent, context);
+
+  assert.deepEqual(
+    context.createCurrentStudioFrameLoadHandler({ presentationUrl: '/presentations/one/index.html' }),
+    { presentationUrl: '/presentations/one/index.html' }
+  );
+  assert.deepEqual(
+    context.createCurrentStudioFrameLoadHandler({ presentationUrl: '/presentations/two/index.html' }),
+    { presentationUrl: '/presentations/two/index.html' }
+  );
+  assert.equal(adapterCreateCalls, 1);
+});
+
 test('updateCurrentPresentationSessionState updates only the provided session fields and delegates metadata commits', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateCurrentPresentationSessionStateSource = extractFunctionSource(
