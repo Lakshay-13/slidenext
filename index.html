@@ -10385,55 +10385,20 @@
       const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
         ? SlideNextStudioEditorLayerController
         : null;
-      if (layerController && typeof layerController.changeStudioLayerZIndexByRef === 'function') {
-        return layerController.changeStudioLayerZIndexByRef({
-          event,
-          action,
-          resolveLayerRowElement,
-          refreshLayerOrderUi,
-          isElementLocked,
-          reorderSlideLayers,
-          liveSelectionApi: SlideNextStudioEditorLiveSelection,
-          selectedElements,
-          syncLayerOrderZIndexInput,
-          finalizeLayerOrderMutation
-        });
+      if (!layerController || typeof layerController.changeStudioLayerZIndexByRef !== 'function') {
+        return false;
       }
-      event.preventDefault();
-      event.stopPropagation();
-      const parentRow = event.currentTarget.closest('[class*="border"]');
-      const el = resolveLayerRowElement(parentRow);
-      if (!el) {
-        refreshLayerOrderUi({ refreshLayersList: true, result: null });
-        return;
-      }
-      if (isElementLocked(el)) {
-        refreshLayerOrderUi({ refreshLayersList: true, result: null });
-        return;
-      }
-      let transaction = null;
-      let canonicalDeck = null;
-      const didChange = reorderSlideLayers(action, [el], {
-        onTransaction(nextTransaction) {
-          transaction = nextTransaction;
-        },
-        onCanonicalDeck(nextCanonicalDeck) {
-          canonicalDeck = nextCanonicalDeck;
-        }
-      });
-      if (!didChange) {
-        refreshLayerOrderUi({ refreshLayersList: true, result: null });
-        return;
-      }
-      
-      // Update selection properties panel if currently selected
-      if (SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement(selectedElements, el)) {
-        syncLayerOrderZIndexInput(el);
-      }
-
-      finalizeLayerOrderMutation('Auto: Rearranged Layers', {
-        transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
+      return layerController.changeStudioLayerZIndexByRef({
+        event,
+        action,
+        resolveLayerRowElement,
+        refreshLayerOrderUi,
+        isElementLocked,
+        reorderSlideLayers,
+        liveSelectionApi: SlideNextStudioEditorLiveSelection,
+        selectedElements,
+        syncLayerOrderZIndexInput,
+        finalizeLayerOrderMutation
       });
     }
 

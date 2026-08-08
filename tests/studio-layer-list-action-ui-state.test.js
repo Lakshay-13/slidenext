@@ -458,6 +458,13 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is loc
   const row = { id: 'row-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
+    SlideNextStudioEditorLiveSelection: {
+      isStudioLiveSelectedElement() {
+        return false;
+      }
+    },
+    selectedElements: [],
     isElementLocked(element) {
       calls.push(['isElementLocked', element]);
       return true;
@@ -534,6 +541,13 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is sta
   const row = { id: 'row-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
+    SlideNextStudioEditorLiveSelection: {
+      isStudioLiveSelectedElement() {
+        return false;
+      }
+    },
+    selectedElements: [],
     isElementLocked(element) {
       calls.push(['isElementLocked', element]);
       return false;
@@ -609,6 +623,13 @@ test('changeLayerZIndexByRef refreshes layer controls when the row reorder becom
   const row = { id: 'row-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
+    SlideNextStudioEditorLiveSelection: {
+      isStudioLiveSelectedElement() {
+        return false;
+      }
+    },
+    selectedElements: [],
     isElementLocked(element) {
       calls.push(['isElementLocked', element]);
       return false;
@@ -691,6 +712,7 @@ test('changeLayerZIndexByRef updates layer controls after a successful row reord
   const zIndexInput = { value: '' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
     SlideNextStudioEditorLiveSelection: {
       isStudioLiveSelectedElement(selection, element) {
         calls.push(['isStudioLiveSelectedElement', selection, element]);
@@ -796,6 +818,7 @@ test('changeLayerZIndexByRef tolerates a missing z-index input on successful row
   const row = { id: 'row-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
     SlideNextStudioEditorLiveSelection: {
       isStudioLiveSelectedElement(selection, element) {
         calls.push(['isStudioLiveSelectedElement', selection, element]);
