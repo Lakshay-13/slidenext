@@ -60,6 +60,24 @@ test('buildStudioCanonicalInsertionDeck builds the baseline from the source docu
   assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['inserted']);
 });
 
+test('buildStudioCanonicalInsertionBaseline prefers a valid live canonical deck', () => {
+  const liveDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let didBuildFromDocument = false;
+  const result = canonicalInsertion.buildStudioCanonicalInsertionBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return liveDeck;
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+    }
+  });
+
+  assert.equal(result, liveDeck);
+  assert.equal(didBuildFromDocument, false);
+});
+
 test('createStudioCanonicalInsertionMutationBuilders preserves an explicit baseline', () => {
   const explicitBaseline = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }] }]
@@ -115,6 +133,37 @@ test('createStudioCanonicalInsertionMutationBuilders builds insertion sequences'
     'inserted-1',
     'inserted-2'
   ]);
+});
+
+test('createStudioCanonicalInsertionMutationBuilders falls back when the live baseline is invalid', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }] }]
+  });
+  let didBuildFromDocument = false;
+  const builders = canonicalInsertion.createStudioCanonicalInsertionMutationBuilders({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return { invalid: true };
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return sourceDeck;
+    },
+    importElementToCanonicalNode(element, options) {
+      return { id: options.getNodeId(element) };
+    }
+  });
+
+  const result = builders.buildCanonicalInsertionSequence([
+    { dataset: { editorId: 'inserted' } }
+  ], {
+    sourceDocument: { id: 'editor-doc' },
+    slideId: 'slide-1',
+    getNodeId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(didBuildFromDocument, true);
+  assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['existing', 'inserted']);
 });
 
 test('buildStudioCanonicalInsertionSequence appends every inserted node in order', () => {

@@ -151,3 +151,61 @@ test('clipboard controller rebuilds canonical state from the live post-insertion
   assert.equal(typeof insertionBuilderOptions.buildCanonicalDeck, 'function');
   assert.equal(typeof insertionBuilderOptions.buildCanonicalDeckBaseline, 'function');
 });
+
+test('clipboard controller applies inserted nodes to a validated live canonical baseline first', () => {
+  const liveCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }] }]
+  };
+  let baselineUsed = null;
+  let finalizedCanonicalDeck = null;
+  const controller = clipboardController.createStudioEditorClipboardController({
+    clipboardApi: {
+      buildStudioClipboardPastePlan() {
+        return {
+          canPaste: true,
+          items: [{ id: 'clipboard-item' }],
+          nextPasteCount: 1,
+          nextClipboard: { items: [{ id: 'clipboard-item' }], pasteCount: 1 }
+        };
+      }
+    },
+    canonicalDeckApi: {
+      isCanonicalDeck(value) {
+        return value === liveCanonicalDeck;
+      }
+    },
+    canonicalInsertionApi: {
+      createStudioCanonicalInsertionMutationBuilders() {
+        return {
+          buildCanonicalInsertionSequence(_items, options) {
+            baselineUsed = options.canonicalDeckBeforeMutation;
+            return { slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }, { id: 'pasted' }] }] };
+          }
+        };
+      }
+    },
+    getClipboard: () => ({ items: [{ id: 'clipboard-item' }], pasteCount: 0 }),
+    getIframeDoc: () => ({ id: 'editor-document' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    getEditorSlideId: (slide) => slide.id,
+    getCanonicalDeckBaseline: () => liveCanonicalDeck,
+    buildCanonicalDeck() {
+      throw new Error('The DOM fallback should not run when live canonical state is valid');
+    },
+    insertClipboardPayload: () => [{ id: 'pasted' }],
+    finalizeInsertedElements: (_items, _label, _transaction, canonicalDeck) => {
+      finalizedCanonicalDeck = canonicalDeck;
+      return true;
+    },
+    finalizeClipboardActionResult: (result) => result
+  });
+
+  assert.equal(controller.paste(), true);
+  assert.equal(baselineUsed, liveCanonicalDeck);
+  assert.deepEqual(finalizedCanonicalDeck.slides[0].nodes.map((node) => node.id), [
+    'existing',
+    'pasted'
+  ]);
+});

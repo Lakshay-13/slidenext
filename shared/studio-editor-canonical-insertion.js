@@ -20,7 +20,23 @@
       : typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : null;
-    if (!appendCanonicalNode || !buildCanonicalDeck) return null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
+    if (!appendCanonicalNode) return null;
+    if (getCanonicalDeckBaseline) {
+      let liveCanonicalDeck = null;
+      try {
+        liveCanonicalDeck = getCanonicalDeckBaseline(options.sourceDocument);
+      } catch (err) {
+        liveCanonicalDeck = null;
+      }
+      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+        || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
+        if (liveCanonicalDeck) return liveCanonicalDeck;
+      }
+    }
+    if (!buildCanonicalDeck) return null;
     return buildCanonicalDeck(options.sourceDocument);
   }
 
@@ -40,6 +56,9 @@
       : null;
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
+      : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
       : null;
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
@@ -72,6 +91,9 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const importElementToCanonicalNode = typeof options.importElementToCanonicalNode === 'function'
       ? options.importElementToCanonicalNode
       : null;
@@ -80,7 +102,8 @@
         ...insertionOptions,
         canonicalDeckApi,
         buildCanonicalDeck,
-        buildCanonicalDeckBaseline
+        buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline
       })
     );
     const buildCanonicalInsertionDeck = (element, insertionOptions = {}) => {
@@ -95,6 +118,7 @@
         canonicalDeckApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline,
         importElementToCanonicalNode,
         canonicalDeckBeforeMutation
       });
@@ -111,6 +135,7 @@
         canonicalDeckApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline,
         importElementToCanonicalNode,
         canonicalDeckBeforeMutation
       });

@@ -290,6 +290,10 @@ test('clipboard wiring rebuilds the canonical deck from the iframe DOM', () => {
     controllerSource,
     /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
   );
+  assert.match(
+    controllerSource,
+    /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
+  );
 });
 
 test('element insertion wiring rebuilds the canonical deck from the iframe DOM', () => {

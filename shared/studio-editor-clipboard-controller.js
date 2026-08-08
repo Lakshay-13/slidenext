@@ -45,6 +45,9 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const insertClipboardPayload = typeof options.insertClipboardPayload === 'function'
       ? options.insertClipboardPayload
       : () => [];
@@ -63,6 +66,7 @@
             canonicalDeckApi,
             buildCanonicalDeck,
             buildCanonicalDeckBaseline,
+            getCanonicalDeckBaseline,
             importElementToCanonicalNode
           })
         : null;
@@ -85,11 +89,34 @@
       const sourceDocument = context && context.doc
         ? context.doc
         : getIframeDoc();
+      const insertedItems = context && Array.isArray(context.items) ? context.items : [];
+      let liveCanonicalDeck = null;
+      if (getCanonicalDeckBaseline) {
+        try {
+          liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+        } catch (err) {
+          liveCanonicalDeck = null;
+        }
+        if (liveCanonicalDeck
+          && canonicalDeckApi
+          && typeof canonicalDeckApi.isCanonicalDeck === 'function'
+          && !canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
+          liveCanonicalDeck = null;
+        }
+      }
+      if (liveCanonicalDeck && context && typeof context.buildCanonicalInsertionSequence === 'function') {
+        const canonicalDeckFromSequence = context.buildCanonicalInsertionSequence(insertedItems, {
+          slideId: context.slideId,
+          sourceDocument,
+          canonicalDeckBeforeMutation: liveCanonicalDeck,
+          getNodeId: (node) => assignElementId(node)
+        });
+        if (canonicalDeckFromSequence) return canonicalDeckFromSequence;
+      }
       if (buildCanonicalDeck && sourceDocument) {
         const liveCanonicalDeck = buildCanonicalDeck(sourceDocument, {
           preferLiveCanonicalDeck: false
         });
-        const insertedItems = context && Array.isArray(context.items) ? context.items : [];
         const insertedIds = insertedItems
           .map((item) => assignElementId(item))
           .filter((id) => typeof id === 'string' && id.trim());

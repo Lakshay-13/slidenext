@@ -2075,6 +2075,10 @@
           assignElementId: (...args) => assignEditorElementId(...args),
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+            sourceDoc || getIframeDoc(),
+            studioEditorSessionToken
+          ),
           insertClipboardPayload: (...args) => insertClipboardPayload(...args),
           finalizeInsertedElements: (...args) => finalizeInsertedElements(...args)
         })
