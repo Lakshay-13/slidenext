@@ -6715,20 +6715,13 @@
       const layerOrderView = typeof SlideNextStudioEditorLayerOrder !== 'undefined'
         ? SlideNextStudioEditorLayerOrder
         : null;
-      if (layerOrderView && typeof layerOrderView.syncStudioLayerOrderZIndexInput === 'function') {
-        return layerOrderView.syncStudioLayerOrderZIndexInput({
-          documentRef: document,
-          target
-        });
-      }
-      if (!target) {
+      if (!layerOrderView || typeof layerOrderView.syncStudioLayerOrderZIndexInput !== 'function') {
         return null;
       }
-      const zIndexInput = document.getElementById('elZIndex');
-      if (zIndexInput) {
-        zIndexInput.value = target.style.zIndex || 0;
-      }
-      return zIndexInput;
+      return layerOrderView.syncStudioLayerOrderZIndexInput({
+        documentRef: document,
+        target
+      });
     }
 
     function refreshLayerOrderUi(options = {}) {

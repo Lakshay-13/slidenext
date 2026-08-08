@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const layerController = require('../shared/studio-editor-layer-controller.js');
+const layerOrder = require('../shared/studio-editor-layer-order.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -713,6 +714,7 @@ test('changeLayerZIndexByRef updates layer controls after a successful row reord
   const calls = [];
   const context = {
     SlideNextStudioEditorLayerController: layerController,
+    SlideNextStudioEditorLayerOrder: layerOrder,
     SlideNextStudioEditorLiveSelection: {
       isStudioLiveSelectedElement(selection, element) {
         calls.push(['isStudioLiveSelectedElement', selection, element]);
@@ -819,6 +821,7 @@ test('changeLayerZIndexByRef tolerates a missing z-index input on successful row
   const calls = [];
   const context = {
     SlideNextStudioEditorLayerController: layerController,
+    SlideNextStudioEditorLayerOrder: layerOrder,
     SlideNextStudioEditorLiveSelection: {
       isStudioLiveSelectedElement(selection, element) {
         calls.push(['isStudioLiveSelectedElement', selection, element]);

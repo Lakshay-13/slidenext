@@ -409,6 +409,7 @@ test('syncLayerOrderZIndexInput updates the z-index inspector only when a target
   const calls = [];
   const context = {
     SlideNextStudioEditorLayerController: layerController,
+    SlideNextStudioEditorLayerOrder: layerOrder,
     document: {
       getElementById(id) {
         calls.push(['getElementById', id]);
@@ -978,6 +979,7 @@ test('arrangeElementLayer returns true and tolerates a missing z-index input whe
   const calls = [];
   const context = {
     SlideNextStudioEditorLayerController: layerController,
+    SlideNextStudioEditorLayerOrder: layerOrder,
     document: {
       getElementById(id) {
         calls.push(['getElementById', id]);
