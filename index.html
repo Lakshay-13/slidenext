@@ -1273,6 +1273,7 @@
   <script src="/shared/studio-deck-ready.js"></script>
   <script src="/shared/deck-html.js"></script>
   <script src="/shared/studio-deck-view.js"></script>
+  <script src="/shared/studio-editor-navigation-controller.js"></script>
   <script src="/shared/studio-editor-ui-state.js"></script>
   <script src="/shared/studio-preview.js"></script>
   <script src="/shared/studio-pdf-export.js"></script>
@@ -1395,6 +1396,20 @@
             saveHistoryState(false, null, canonicalDeck);
             triggerAutoSave();
           }
+        })
+      : null;
+    const studioEditorNavigationController = typeof SlideNextStudioEditorNavigationController !== 'undefined'
+      && SlideNextStudioEditorNavigationController
+      && typeof SlideNextStudioEditorNavigationController.createStudioEditorNavigationController === 'function'
+      ? SlideNextStudioEditorNavigationController.createStudioEditorNavigationController({
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
+            ? SlideNextStudioDeckView
+            : null,
+          getDocument: () => getIframeDoc(),
+          getWindow: () => getIframeWindow(),
+          getSlides: (doc) => getSlides(doc),
+          getCurrentSlideIndex: () => currentSlideIndex,
+          syncStudioChromeToActiveSlide: (...args) => syncStudioChromeToActiveSlide(...args)
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -3028,11 +3043,9 @@
     }
 
     function bindDeckNavigationSync(doc = getIframeDoc()) {
-      const frameWin = getIframeWindow();
-      return SlideNextStudioDeckView.bindStudioDeckNavigationSync(doc, frameWin, {
-        syncStudioChromeToActiveSlide,
-        getSyncStudioChromeOptions: () => ({ captureHistory: true })
-      });
+      return studioEditorNavigationController
+        ? studioEditorNavigationController.bind(doc)
+        : false;
     }
 
     function teardownDeckActiveSlideSync() {
@@ -3065,31 +3078,22 @@
 
     // Toggle active slide viewport display
     function setActiveSlide(index, options = {}) {
-      const iframeDoc = getIframeDoc();
-      return SlideNextStudioDeckView.setStudioDeckActiveSlide(index, {
-        doc: iframeDoc,
-        captureHistory: options.captureHistory,
-        preserveSelection: !!options.preserveSelection,
-        getSlides,
-        syncStudioChromeToActiveSlide
-      });
+      return studioEditorNavigationController
+        ? studioEditorNavigationController.setActiveSlide(index, options)
+        : false;
     }
 
     function navigateEditorSlide(direction = 0) {
-      const doc = getIframeDoc();
-      const slides = getSlides(doc);
-      if (!slides.length || !Number.isFinite(direction) || direction === 0) return false;
-      const currentIndex = Number.isInteger(currentSlideIndex) ? currentSlideIndex : 0;
-      const nextIndex = Math.max(0, Math.min(slides.length - 1, currentIndex + Math.sign(direction)));
-      if (nextIndex === currentIndex) return false;
-      return setActiveSlide(nextIndex, { captureHistory: true }) !== false;
+      return studioEditorNavigationController
+        ? studioEditorNavigationController.navigate(direction)
+        : false;
     }
 
     // Sync presentation's internal dots and counter
     function updateIframeNavigationUI(doc, slides) {
-      SlideNextStudioDeckView.updateStudioDeckNavigationUi(doc, slides, currentSlideIndex, {
-        setActiveSlide: (index) => setActiveSlide(index, { captureHistory: true })
-      });
+      return studioEditorNavigationController
+        ? studioEditorNavigationController.updateIframeNavigationUi(doc, slides)
+        : false;
     }
 
     function createEditorSlideMutationPersistenceFinalizer(options = {}) {

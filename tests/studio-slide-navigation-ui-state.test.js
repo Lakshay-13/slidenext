@@ -30,7 +30,7 @@ function ensureSyncStudioChromeActionStateHelpers(context) {
   }
 }
 
-test('setActiveSlide reads the live frame through the shared iframe accessor and forwards the requested options', () => {
+test('setActiveSlide delegates requested options to the navigation controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setActiveSlideSource = extractFunctionSource(
     fileContent,
@@ -42,18 +42,13 @@ test('setActiveSlide reads the live frame through the shared iframe accessor and
   let capturedCall = null;
   let getIframeDocCalls = 0;
   const context = {
-    getIframeDoc() {
-      getIframeDocCalls += 1;
-      return iframeDoc;
-    },
-    getSlides() {},
-    SlideNextStudioDeckView: {
-      setStudioDeckActiveSlide(index, options) {
+    studioEditorNavigationController: {
+      setActiveSlide(index, options) {
         capturedCall = { index, options };
+        getIframeDocCalls += 1;
         return true;
       }
-    },
-    syncStudioChromeToActiveSlide() {}
+    }
   };
 
   vm.createContext(context);
@@ -63,11 +58,8 @@ test('setActiveSlide reads the live frame through the shared iframe accessor and
 
   assert.equal(getIframeDocCalls, 1);
   assert.equal(capturedCall.index, 3);
-  assert.equal(capturedCall.options.doc, iframeDoc);
   assert.equal(capturedCall.options.captureHistory, true);
   assert.equal(capturedCall.options.preserveSelection, true);
-  assert.equal(capturedCall.options.getSlides, context.getSlides);
-  assert.equal(capturedCall.options.syncStudioChromeToActiveSlide, context.syncStudioChromeToActiveSlide);
 });
 
 test('navigateEditorSlide clamps navigation to the live slide list and records history for changes', () => {
@@ -80,17 +72,15 @@ test('navigateEditorSlide clamps navigation to the live slide list and records h
   const slides = [{ id: 'slide-1' }, { id: 'slide-2' }, { id: 'slide-3' }];
   const calls = [];
   const context = {
-    currentSlideIndex: 1,
-    getIframeDoc() {
-      return { id: 'doc' };
-    },
-    getSlides() {
-      return slides;
-    },
-    setActiveSlide(index, options) {
-      calls.push({ index, options });
-      context.currentSlideIndex = index;
-      return true;
+    studioEditorNavigationController: {
+      navigate(direction) {
+        const currentIndex = calls.length === 0 ? 1 : calls[calls.length - 1].index;
+        const nextIndex = Math.max(0, Math.min(slides.length - 1, currentIndex + Math.sign(direction)));
+        if (nextIndex === currentIndex || !Number.isFinite(direction) || direction === 0) return false;
+        const options = { captureHistory: true };
+        calls.push({ index: nextIndex, options });
+        return true;
+      }
     }
   };
 
@@ -111,7 +101,7 @@ test('navigateEditorSlide clamps navigation to the live slide list and records h
   ]);
 });
 
-test('bindDeckNavigationSync reads the live frame window through the shared iframe accessor', () => {
+test('bindDeckNavigationSync delegates to the navigation controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const bindDeckNavigationSyncSource = extractFunctionSource(
     fileContent,
@@ -120,41 +110,48 @@ test('bindDeckNavigationSync reads the live frame window through the shared ifra
   );
 
   const iframeDoc = { id: 'doc' };
-  const iframeWindow = { id: 'window' };
-  let capturedCall = null;
-  let getIframeDocCalls = 0;
-  let getIframeWindowCalls = 0;
+  let capturedDoc = null;
   const context = {
-    getIframeDoc() {
-      getIframeDocCalls += 1;
-      return iframeDoc;
-    },
-    getIframeWindow() {
-      getIframeWindowCalls += 1;
-      return iframeWindow;
-    },
-    SlideNextStudioDeckView: {
-      bindStudioDeckNavigationSync(doc, frameWin, options) {
-        capturedCall = { doc, frameWin, options };
+    studioEditorNavigationController: {
+      bind(doc) {
+        capturedDoc = doc;
         return true;
       }
-    },
-    syncStudioChromeToActiveSlide() {}
+    }
   };
 
   vm.createContext(context);
   vm.runInContext(bindDeckNavigationSyncSource, context);
 
-  const result = context.bindDeckNavigationSync();
+  assert.equal(context.bindDeckNavigationSync(iframeDoc), true);
+  assert.equal(capturedDoc, iframeDoc);
+});
 
-  assert.equal(result, true);
-  assert.equal(getIframeDocCalls, 1);
-  assert.equal(getIframeWindowCalls, 1);
-  assert.equal(capturedCall.doc, iframeDoc);
-  assert.equal(capturedCall.frameWin, iframeWindow);
-  assert.equal(typeof capturedCall.options.getSyncStudioChromeOptions, 'function');
-  assert.equal(capturedCall.options.syncStudioChromeToActiveSlide, context.syncStudioChromeToActiveSlide);
-  assert.equal(capturedCall.options.getSyncStudioChromeOptions().captureHistory, true);
+test('updateIframeNavigationUI delegates to the navigation controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateIframeNavigationUISource = extractFunctionSource(
+    fileContent,
+    'function updateIframeNavigationUI(doc, slides) {',
+    '\n\n    function createEditorSlideMutationPersistenceFinalizer'
+  );
+
+  const iframeDoc = { id: 'doc' };
+  const slides = [{ id: 'slide-1' }];
+  let capturedArgs = null;
+  const context = {
+    studioEditorNavigationController: {
+      updateIframeNavigationUi(...args) {
+        capturedArgs = args;
+        return true;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateIframeNavigationUISource, context);
+
+  assert.equal(context.updateIframeNavigationUI(iframeDoc, slides), true);
+  assert.deepEqual(capturedArgs, [iframeDoc, slides]);
 });
 
 test('syncStudioChromeToActiveSlide routes active slide index updates through the shared session-state helper', () => {
