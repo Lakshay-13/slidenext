@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalVisibility = require('../shared/studio-editor-canonical-visibility.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const lockState = require('../shared/studio-editor-lock-state.js');
 const lockMutation = require('../shared/studio-editor-lock-mutation.js');
@@ -317,6 +318,7 @@ test('updateLockActionState prefers canonical lock metadata when available', () 
     isElementLocked() {
       return false;
     },
+    SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextCanonicalDeck: canonicalDeckModel,
     buildEditorCanonicalDeck() {
       return canonicalDeckModel.createCanonicalDeck({
