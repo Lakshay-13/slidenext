@@ -2218,6 +2218,10 @@
             ? SlideNextDeckRender
             : null,
           getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
+          getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
+            getIframeDoc(),
+            studioEditorSessionToken
+          ),
           getDocument: () => getIframeDoc(),
           getSlides: (doc) => getSlides(doc),
           getActiveSlideId: () => getActiveSlideId(getIframeDoc()),

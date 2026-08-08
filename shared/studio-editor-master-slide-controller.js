@@ -17,6 +17,9 @@
     const getCanonicalDeck = typeof options.getCanonicalDeck === 'function'
       ? options.getCanonicalDeck
       : () => null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const getActiveSlideId = typeof options.getActiveSlideId === 'function'
       ? options.getActiveSlideId
       : () => '';
@@ -50,6 +53,23 @@
     const onMasterSlidesChanged = typeof options.onMasterSlidesChanged === 'function'
       ? options.onMasterSlidesChanged
       : null;
+
+    function resolveCanonicalDeck() {
+      if (getCanonicalDeckBaseline) {
+        let liveCanonicalDeck = null;
+        try {
+          liveCanonicalDeck = getCanonicalDeckBaseline();
+        } catch (err) {
+          liveCanonicalDeck = null;
+        }
+        if (liveCanonicalDeck
+          && (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+            || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
+          return liveCanonicalDeck;
+        }
+      }
+      return getCanonicalDeck();
+    }
 
     function renderCanonicalSlideElement(documentRef, slide, index, masterSlides) {
       if (!documentRef
@@ -122,7 +142,7 @@
         return null;
       }
       const nextCanonicalDeck = canonicalDeckApi.saveCanonicalMasterSlideFromSlideId(
-        getCanonicalDeck(),
+        resolveCanonicalDeck(),
         getActiveSlideId(),
         masterLike
       );
@@ -141,7 +161,7 @@
         return false;
       }
       const nextCanonicalDeck = canonicalDeckApi.updateCanonicalSlideMasterSlide(
-        getCanonicalDeck(),
+        resolveCanonicalDeck(),
         getActiveSlideId(),
         masterSlideId
       );
@@ -170,7 +190,7 @@
       const normalizedMasterSlideId = typeof masterSlideId === 'string'
         ? masterSlideId.trim()
         : '';
-      const currentDeck = getCanonicalDeck();
+      const currentDeck = resolveCanonicalDeck();
       const master = currentDeck
         && Array.isArray(currentDeck.masterSlides)
         ? currentDeck.masterSlides.find((candidate) => candidate && candidate.id === normalizedMasterSlideId)
