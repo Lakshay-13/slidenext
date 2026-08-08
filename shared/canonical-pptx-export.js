@@ -437,6 +437,13 @@
     return normalizeHexColor(parsedStyle['background-color'] || parsedStyle.background);
   }
 
+  function resolvePptxTextAlignment(value) {
+    const alignment = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    if (alignment === 'start') return 'left';
+    if (alignment === 'end') return 'right';
+    return ['left', 'center', 'right', 'justify'].includes(alignment) ? alignment : 'left';
+  }
+
   function textOptions(node, bounds) {
     const style = nodeStyle(node);
     const tagName = typeof node.tagName === 'string' ? node.tagName.toLowerCase() : '';
@@ -471,7 +478,7 @@
       bold: /^h[1-6]$/.test(tagName) || /^(bold|[6-9]00)$/i.test(style['font-weight'] || ''),
       italic: style['font-style'] === 'italic',
       color,
-      align: style['text-align'] || 'left',
+      align: resolvePptxTextAlignment(style['text-align']),
       margin: 0,
       breakLine: false,
       fit: 'shrink',

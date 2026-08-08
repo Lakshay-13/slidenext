@@ -598,6 +598,43 @@ test('createCanonicalPptxExport preserves supported CSS text vertical alignment'
   assert.deepEqual(calls.map(call => call.options.valign), ['top', 'middle', 'bottom', undefined]);
 });
 
+test('createCanonicalPptxExport normalizes CSS text alignment values', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'start-text',
+        type: 'text',
+        text: 'Start',
+        style: 'text-align: start;',
+        layout: { x: 0, y: 0, width: 100, height: 40 }
+      }, {
+        id: 'end-text',
+        type: 'text',
+        text: 'End',
+        style: 'text-align: end;',
+        layout: { x: 0, y: 50, width: 100, height: 40 }
+      }, {
+        id: 'justify-text',
+        type: 'text',
+        text: 'Justify',
+        style: 'text-align: justify;',
+        layout: { x: 0, y: 100, width: 100, height: 40 }
+      }, {
+        id: 'invalid-text',
+        type: 'text',
+        text: 'Fallback',
+        style: 'text-align: match-parent;',
+        layout: { x: 0, y: 150, width: 100, height: 40 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(
+    result.pptx.slides[0].calls.map(call => call.options.align),
+    ['left', 'right', 'justify', 'left']
+  );
+});
+
 test('preflightCanonicalPptxExport reports missing node background image assets', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{
