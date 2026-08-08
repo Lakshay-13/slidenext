@@ -7,6 +7,7 @@ const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const studioInsertion = require('../shared/studio-editor-insertion.js');
 const elementInsertionMutation = require('../shared/studio-editor-element-insertion-mutation.js');
+const elementInsertionController = require('../shared/studio-editor-element-insertion-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -65,6 +66,29 @@ function loadInsertElement(fileContent, context) {
     '\n\n    function finalizeLayerOrderMutation'
   );
   vm.runInContext(helperSource, context);
+}
+
+function installElementInsertionController(context) {
+  context.studioEditorElementInsertionController = elementInsertionController
+    .createStudioEditorElementInsertionController({
+      canonicalDeckApi: context.SlideNextCanonicalDeck,
+      canonicalInsertionApi: context.SlideNextStudioEditorCanonicalInsertion,
+      deckImportApi: context.SlideNextDeckImport,
+      getIframeDoc: context.getIframeDoc,
+      getActiveSlide: context.getActiveSlide,
+      getEditorSlideId: context.getEditorSlideId,
+      buildCanonicalDeck: context.buildEditorCanonicalDeck,
+      applyElementInsertion: context.applyEditorElementInsertionWithTransaction,
+      makeElementsHoverable: context.makeElementsHoverable,
+      assignElementId: context.assignEditorElementId,
+      finalizeInsertedElements: context.finalizeInsertedElements,
+      selectElement: context.selectElement,
+      generateThumbnails: context.generateThumbnails,
+      saveHistoryState: context.saveHistoryState,
+      triggerAutoSave: context.triggerAutoSave,
+      triggerAutoVersion: context.triggerAutoVersion,
+      updateInsertionActionState: context.updateInsertionActionState
+    });
 }
 
 test('applyEditorElementInsertionWithTransaction delegates element creation and transaction capture to the shared insertion module', () => {
@@ -144,6 +168,7 @@ test('insertElement forwards an immutable canonical node sidecar after insertion
   vm.createContext(context);
   loadElementInsertionMutationHelper(fileContent, context);
   loadInsertElement(fileContent, context);
+  installElementInsertionController(context);
 
   assert.equal(context.insertElement('h2'), true);
   assert.equal(finalized.transaction.id, 'tx-insert');

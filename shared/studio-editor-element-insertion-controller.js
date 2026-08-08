@@ -1,0 +1,161 @@
+(function (root, factory) {
+  const api = factory(root);
+  if (typeof module === 'object' && module.exports) {
+    module.exports = api;
+  }
+  if (root) {
+    root.SlideNextStudioEditorElementInsertionController = api;
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  function createStudioEditorElementInsertionController(options = {}) {
+    const hasOption = (name) => Object.prototype.hasOwnProperty.call(options, name);
+    const resolveDependency = (name, globalName) => hasOption(name)
+      ? options[name]
+      : (root && root[globalName]) || null;
+    const canonicalDeckApi = resolveDependency('canonicalDeckApi', 'SlideNextCanonicalDeck');
+    const canonicalInsertionApi = resolveDependency(
+      'canonicalInsertionApi',
+      'SlideNextStudioEditorCanonicalInsertion'
+    );
+    const deckImportApi = resolveDependency('deckImportApi', 'SlideNextDeckImport');
+    const getIframeDoc = typeof options.getIframeDoc === 'function'
+      ? options.getIframeDoc
+      : () => null;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getEditorSlideId = typeof options.getEditorSlideId === 'function'
+      ? options.getEditorSlideId
+      : (slide) => slide && slide.id;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const applyElementInsertion = typeof options.applyElementInsertion === 'function'
+      ? options.applyElementInsertion
+      : () => ({ element: null, transaction: null });
+    const makeElementsHoverable = typeof options.makeElementsHoverable === 'function'
+      ? options.makeElementsHoverable
+      : null;
+    const assignElementId = typeof options.assignElementId === 'function'
+      ? (element) => {
+          const assignedId = options.assignElementId(element);
+          if (assignedId) return assignedId;
+          return element && element.dataset && element.dataset.editorId;
+        }
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const finalizeInsertedElements = typeof options.finalizeInsertedElements === 'function'
+      ? options.finalizeInsertedElements
+      : null;
+    const selectElement = typeof options.selectElement === 'function' ? options.selectElement : null;
+    const generateThumbnails = typeof options.generateThumbnails === 'function'
+      ? options.generateThumbnails
+      : null;
+    const saveHistoryState = typeof options.saveHistoryState === 'function'
+      ? options.saveHistoryState
+      : null;
+    const triggerAutoSave = typeof options.triggerAutoSave === 'function'
+      ? options.triggerAutoSave
+      : null;
+    const triggerAutoVersion = typeof options.triggerAutoVersion === 'function'
+      ? options.triggerAutoVersion
+      : null;
+    const updateInsertionActionState = typeof options.updateInsertionActionState === 'function'
+      ? options.updateInsertionActionState
+      : null;
+
+    function buildCanonicalInsertionBuilders() {
+      const importElementToCanonicalNode = deckImportApi
+        && typeof deckImportApi.importElementToCanonicalNode === 'function'
+        ? deckImportApi.importElementToCanonicalNode
+        : null;
+      return canonicalInsertionApi
+        && typeof canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders === 'function'
+        ? canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders({
+            canonicalDeckApi,
+            buildCanonicalDeck,
+            importElementToCanonicalNode
+          })
+        : null;
+    }
+
+    function insert(type) {
+      const iframeDoc = getIframeDoc();
+      const activeSlide = getActiveSlide(iframeDoc);
+      if (!activeSlide) {
+        if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+        return false;
+      }
+
+      const activeSlideId = getEditorSlideId(activeSlide) || '';
+      const canonicalInsertionBuilders = buildCanonicalInsertionBuilders();
+      const canonicalDeckBeforeInsertion = canonicalInsertionBuilders
+        && typeof canonicalInsertionBuilders.buildCanonicalInsertionBaseline === 'function'
+        ? canonicalInsertionBuilders.buildCanonicalInsertionBaseline({
+            canonicalDeckApi,
+            buildCanonicalDeck,
+            sourceDocument: iframeDoc
+          })
+        : null;
+      const childCount = activeSlide.children && Number.isFinite(activeSlide.children.length)
+        ? activeSlide.children.length
+        : 0;
+      const mutation = applyElementInsertion(type, {
+        documentRef: iframeDoc,
+        slide: activeSlide,
+        offset: (childCount * 15) % 150,
+        prepareElement: makeElementsHoverable,
+        transactionElementId: activeSlideId ? `slide:${activeSlideId}` : ''
+      });
+      const newElement = mutation && mutation.element ? mutation.element : null;
+      const transaction = mutation && mutation.transaction ? mutation.transaction : null;
+      let canonicalDeck = null;
+      if (canonicalInsertionBuilders
+        && typeof canonicalInsertionBuilders.buildCanonicalInsertionDeck === 'function'
+        && canonicalDeckBeforeInsertion
+        && newElement) {
+        canonicalDeck = canonicalInsertionBuilders.buildCanonicalInsertionDeck(newElement, {
+          canonicalDeckApi,
+          canonicalDeckBeforeMutation: canonicalDeckBeforeInsertion,
+          slideId: activeSlideId,
+          sourceDocument: iframeDoc,
+          getNodeId: (element) => assignElementId(element)
+        });
+      }
+
+      if (newElement) {
+        const versionLabel = 'Auto: Added ' + type.toUpperCase();
+        if (finalizeInsertedElements) {
+          return finalizeInsertedElements(
+            [newElement],
+            versionLabel,
+            transaction,
+            canonicalDeck
+          );
+        }
+        if (selectElement) selectElement(newElement);
+        if (generateThumbnails) generateThumbnails();
+        if (saveHistoryState) {
+          if (transaction && canonicalDeck) {
+            saveHistoryState(false, transaction, canonicalDeck);
+          } else if (transaction) {
+            saveHistoryState(false, transaction);
+          } else {
+            saveHistoryState();
+          }
+        }
+        if (triggerAutoSave) triggerAutoSave();
+        if (triggerAutoVersion) triggerAutoVersion(versionLabel);
+        return true;
+      }
+
+      if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+      return false;
+    }
+
+    return { insert };
+  }
+
+  return {
+    createStudioEditorElementInsertionController
+  };
+});

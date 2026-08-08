@@ -8,6 +8,7 @@ const insertion = require('../shared/studio-editor-insertion.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const elementInsertionMutation = require('../shared/studio-editor-element-insertion-mutation.js');
+const elementInsertionController = require('../shared/studio-editor-element-insertion-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -27,6 +28,29 @@ function loadElementInsertionHelper(fileContent, context) {
   );
   context.SlideNextStudioEditorElementInsertionMutation = elementInsertionMutation;
   vm.runInContext(helperSource, context);
+}
+
+function installElementInsertionController(context) {
+  context.studioEditorElementInsertionController = elementInsertionController
+    .createStudioEditorElementInsertionController({
+      canonicalDeckApi: context.SlideNextCanonicalDeck,
+      canonicalInsertionApi: context.SlideNextStudioEditorCanonicalInsertion,
+      deckImportApi: context.SlideNextDeckImport,
+      getIframeDoc: context.getIframeDoc,
+      getActiveSlide: context.getActiveSlide,
+      getEditorSlideId: context.getEditorSlideId,
+      buildCanonicalDeck: context.buildEditorCanonicalDeck,
+      applyElementInsertion: context.applyEditorElementInsertionWithTransaction,
+      makeElementsHoverable: context.makeElementsHoverable,
+      assignElementId: context.assignEditorElementId,
+      finalizeInsertedElements: context.finalizeInsertedElements,
+      selectElement: context.selectElement,
+      generateThumbnails: context.generateThumbnails,
+      saveHistoryState: context.saveHistoryState,
+      triggerAutoSave: context.triggerAutoSave,
+      triggerAutoVersion: context.triggerAutoVersion,
+      updateInsertionActionState: context.updateInsertionActionState
+    });
 }
 
 test('insertElement uses the shared iframe accessor before adding a heading element to the active slide', () => {
@@ -94,6 +118,7 @@ test('insertElement uses the shared iframe accessor before adding a heading elem
   vm.createContext(context);
   loadElementInsertionHelper(fileContent, context);
   vm.runInContext(insertElementSource, context);
+  installElementInsertionController(context);
 
   const result = context.insertElement('h2');
 
@@ -176,6 +201,7 @@ test('insertElement records a slide-scoped markup transaction when adding a head
   vm.createContext(context);
   loadElementInsertionHelper(fileContent, context);
   vm.runInContext(insertElementSource, context);
+  installElementInsertionController(context);
 
   assert.equal(context.insertElement('h2'), true);
   const saveCall = calls.find(([name]) => name === 'saveHistoryState');
@@ -234,6 +260,7 @@ test('insertElement delegates successful insertion finalization to the shared li
   vm.createContext(context);
   loadElementInsertionHelper(fileContent, context);
   vm.runInContext(insertElementSource, context);
+  installElementInsertionController(context);
 
   assert.equal(context.insertElement('h2'), true);
   assert.equal(finalized.elements.length, 1);
@@ -304,6 +331,7 @@ test('insertElement forwards an immutable canonical node sidecar for new element
   vm.createContext(context);
   loadElementInsertionHelper(fileContent, context);
   vm.runInContext(insertElementSource, context);
+  installElementInsertionController(context);
 
   assert.equal(context.insertElement('h2'), true);
   assert.equal(finalized.elements[0], insertedElement);
@@ -382,6 +410,7 @@ test('insertElement preserves the canonical sidecar in its legacy persistence fa
   vm.createContext(context);
   loadElementInsertionHelper(fileContent, context);
   vm.runInContext(insertElementSource, context);
+  installElementInsertionController(context);
 
   assert.equal(context.insertElement('h2'), true);
   const saveCall = calls.find(([name]) => name === 'saveHistoryState');
@@ -440,6 +469,7 @@ test('insertElement no-ops when no active slide is available or the element type
   vm.createContext(context);
   loadElementInsertionHelper(fileContent, context);
   vm.runInContext(insertElementSource, context);
+  installElementInsertionController(context);
 
   assert.equal(context.insertElement('h2'), false);
   assert.deepEqual(calls, [
@@ -508,6 +538,7 @@ test('insertElement fails closed when the shared insertion apply helper is unava
   vm.createContext(context);
   loadElementInsertionHelper(fileContent, context);
   vm.runInContext(insertElementSource, context);
+  installElementInsertionController(context);
 
   assert.equal(context.insertElement('h2'), false);
   assert.deepEqual(calls, [['updateInsertionActionState']]);

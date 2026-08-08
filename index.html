@@ -1200,6 +1200,7 @@
   <script src="/shared/studio-editor-layer-controller.js"></script>
   <script src="/shared/studio-editor-insertion.js"></script>
   <script src="/shared/studio-editor-element-insertion-mutation.js"></script>
+  <script src="/shared/studio-editor-element-insertion-controller.js"></script>
   <script src="/shared/studio-editor-selection-bounds.js"></script>
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
@@ -1864,6 +1865,35 @@
           buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           insertClipboardPayload: (...args) => insertClipboardPayload(...args),
           finalizeInsertedElements: (...args) => finalizeInsertedElements(...args)
+        })
+      : null;
+    const studioEditorElementInsertionController = typeof SlideNextStudioEditorElementInsertionController !== 'undefined'
+      && SlideNextStudioEditorElementInsertionController
+      && typeof SlideNextStudioEditorElementInsertionController.createStudioEditorElementInsertionController === 'function'
+      ? SlideNextStudioEditorElementInsertionController.createStudioEditorElementInsertionController({
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          canonicalInsertionApi: typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
+            ? SlideNextStudioEditorCanonicalInsertion
+            : null,
+          deckImportApi: typeof SlideNextDeckImport !== 'undefined'
+            ? SlideNextDeckImport
+            : null,
+          getIframeDoc: (...args) => getIframeDoc(...args),
+          getActiveSlide: (...args) => getActiveSlide(...args),
+          getEditorSlideId: (...args) => getEditorSlideId(...args),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          applyElementInsertion: (...args) => applyEditorElementInsertionWithTransaction(...args),
+          makeElementsHoverable: (...args) => makeElementsHoverable(...args),
+          assignElementId: (...args) => assignEditorElementId(...args),
+          finalizeInsertedElements: (...args) => finalizeInsertedElements(...args),
+          selectElement: (...args) => selectElement(...args),
+          generateThumbnails: (...args) => generateThumbnails(...args),
+          saveHistoryState: (...args) => saveHistoryState(...args),
+          triggerAutoSave: (...args) => triggerAutoSave(...args),
+          triggerAutoVersion: (...args) => triggerAutoVersion(...args),
+          updateInsertionActionState: (...args) => updateInsertionActionState(...args)
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -6265,110 +6295,10 @@
     }
 
     function insertElement(type) {
-      const iframeDoc = getIframeDoc();
-      const activeSlide = getActiveSlide(iframeDoc);
-      if (!activeSlide) {
-        updateInsertionActionState(iframeDoc);
-        return false;
-      }
-
-      const activeSlideId = typeof getEditorSlideId === 'function'
-        ? getEditorSlideId(activeSlide)
-        : '';
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const canonicalInsertionApi = typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
-        ? SlideNextStudioEditorCanonicalInsertion
-        : null;
-      const deckImportApi = typeof SlideNextDeckImport !== 'undefined'
-        ? SlideNextDeckImport
-        : null;
-      const importElementToCanonicalNode = deckImportApi
-        && typeof deckImportApi.importElementToCanonicalNode === 'function'
-        ? deckImportApi.importElementToCanonicalNode
-        : null;
-      const canonicalInsertionBuilders = canonicalInsertionApi
-        && typeof canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders === 'function'
-        ? canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
-            importElementToCanonicalNode
-          })
-        : null;
-      const buildCanonicalInsertionDeck = canonicalInsertionBuilders
-        ? canonicalInsertionBuilders.buildCanonicalInsertionDeck
-        : null;
-      const buildCanonicalInsertionBaseline = canonicalInsertionBuilders
-        ? canonicalInsertionBuilders.buildCanonicalInsertionBaseline
-        : null;
-      const canonicalDeckBeforeInsertion = buildCanonicalInsertionBaseline
-        ? buildCanonicalInsertionBaseline({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
-            sourceDocument: iframeDoc
-          })
-        : null;
-      const mutation = applyEditorElementInsertionWithTransaction(type, {
-        documentRef: iframeDoc,
-        slide: activeSlide,
-        offset: (activeSlide.children.length * 15) % 150,
-        prepareElement: typeof makeElementsHoverable === 'function'
-          ? makeElementsHoverable
-          : null,
-        transactionElementId: activeSlideId ? `slide:${activeSlideId}` : ''
-      });
-      const newEl = mutation.element;
-      const transaction = mutation.transaction;
-      let canonicalDeck = null;
-      if (buildCanonicalInsertionDeck && canonicalDeckBeforeInsertion && newEl) {
-        canonicalDeck = buildCanonicalInsertionDeck(newEl, {
-          canonicalDeckApi,
-          canonicalDeckBeforeMutation: canonicalDeckBeforeInsertion,
-          importElementToCanonicalNode,
-          slideId: activeSlideId,
-          sourceDocument: iframeDoc,
-          getNodeId: (element) => {
-            if (element && element.dataset && typeof assignEditorElementId === 'function') {
-              const assignedId = assignEditorElementId(element);
-              if (assignedId) return assignedId;
-            }
-            return element && element.dataset && element.dataset.editorId;
-          }
-        });
-      }
-      
-      if (newEl) {
-        if (typeof finalizeInsertedElements === 'function') {
-          return finalizeInsertedElements(
-            [newEl],
-            'Auto: Added ' + type.toUpperCase(),
-            transaction,
-            canonicalDeck
-          );
-        }
-        selectElement(newEl);
-        generateThumbnails();
-        if (transaction) {
-          if (canonicalDeck) {
-            saveHistoryState(false, transaction, canonicalDeck);
-          } else {
-            saveHistoryState(false, transaction);
-          }
-        } else {
-          saveHistoryState();
-        }
-        triggerAutoSave();
-        triggerAutoVersion('Auto: Added ' + type.toUpperCase());
-        return true;
-      }
-
-      updateInsertionActionState(iframeDoc);
-      return false;
+      return studioEditorElementInsertionController
+        && typeof studioEditorElementInsertionController.insert === 'function'
+        ? studioEditorElementInsertionController.insert(type)
+        : false;
     }
 
     function finalizeLayerOrderMutation(versionLabel = 'Auto: Rearranged Layers', options = {}) {
