@@ -1310,6 +1310,7 @@
   <script src="/shared/studio-editor-canonical-group.js"></script>
   <script src="/shared/studio-editor-canonical-removal.js"></script>
   <script src="/shared/studio-editor-canonical-insertion.js"></script>
+  <script src="/shared/studio-editor-block-view.js"></script>
   <script src="/shared/studio-editor-block-controller.js"></script>
   <script src="/shared/studio-editor-template-view.js"></script>
   <script src="/shared/studio-editor-template-controller.js"></script>
@@ -5969,42 +5970,19 @@
     }
 
     function renderSavedBlocks(blocks = []) {
-      if (typeof document === 'undefined' || !document || typeof document.getElementById !== 'function') {
+      const blockView = typeof SlideNextStudioEditorBlockView !== 'undefined'
+        ? SlideNextStudioEditorBlockView
+        : null;
+      if (!blockView || typeof blockView.renderStudioBlockLibrary !== 'function') {
         return false;
       }
-      const list = document.getElementById('savedBlocksList');
-      if (!list || typeof document.createElement !== 'function') return false;
-      list.textContent = '';
-      const normalizedBlocks = Array.isArray(blocks) ? blocks : [];
-      if (normalizedBlocks.length === 0) {
-        const emptyState = document.createElement('span');
-        emptyState.textContent = 'No reusable blocks saved';
-        list.appendChild(emptyState);
-        return true;
-      }
-      normalizedBlocks.forEach((block) => {
-        const row = document.createElement('div');
-        row.className = 'flex items-center gap-1';
-        const item = document.createElement('button');
-        item.type = 'button';
-        item.className = 'min-w-0 flex-1 text-left rounded px-2 py-1 hover:bg-white/5 hover:text-white transition-colors';
-        const nodeCount = Array.isArray(block && block.nodes) ? block.nodes.length : 0;
-        const blockName = block && block.name ? block.name : 'Unnamed Block';
-        item.textContent = `${blockName} - ${nodeCount} element${nodeCount === 1 ? '' : 's'}`;
-        item.disabled = !getActiveSlide();
-        item.addEventListener('click', () => insertSavedBlock(block.id));
-        const removeButton = document.createElement('button');
-        removeButton.type = 'button';
-        removeButton.className = 'shrink-0 rounded px-1.5 py-1 text-zinc-500 hover:bg-red-500/10 hover:text-red-300 transition-colors';
-        removeButton.textContent = 'Remove';
-        removeButton.title = `Remove ${blockName}`;
-        removeButton.setAttribute('aria-label', `Remove ${blockName}`);
-        removeButton.addEventListener('click', () => removeSavedBlock(block.id));
-        row.appendChild(item);
-        row.appendChild(removeButton);
-        list.appendChild(row);
+      return blockView.renderStudioBlockLibrary({
+        documentRef: document,
+        blocks,
+        canInsert: typeof getActiveSlide === 'function' ? !!getActiveSlide() : false,
+        insertBlock: typeof insertSavedBlock === 'function' ? insertSavedBlock : null,
+        removeBlock: typeof removeSavedBlock === 'function' ? removeSavedBlock : null
       });
-      return true;
     }
 
     function renderSavedTemplates(templates = []) {
