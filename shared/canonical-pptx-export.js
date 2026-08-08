@@ -935,7 +935,8 @@
       && Array.isArray(context.diagnostics.missingNodeBackgroundAssets)
       && context.diagnostics.missingNodeBackgroundAssets.includes(getNodeBackgroundAssetDiagnosticId(node));
 
-    if (nodeBackgroundFill && nodeBackgroundFill.transparency !== 100 && bounds && !shapeNode && typeof context.slide.addShape === 'function') {
+    if (nodeBackgroundFill && nodeBackgroundFill.transparency !== 100 && bounds
+      && !shapeNode && !tableNode && typeof context.slide.addShape === 'function') {
       context.slide.addShape(resolvePptxNodeShapeType(node, bounds, context.pptx), {
         ...bounds,
         fill: nodeBackgroundFill,
@@ -965,11 +966,14 @@
           ? 11
           : Math.max(6, tableCssFontSize * 0.75);
         const tableColor = normalizeHexColor(tableStyle.color) || '000000';
+        const tableFill = resolvePptxFillColor(
+          tableStyle['background-color'] || tableStyle.background
+        ) || { color: 'FFFFFF' };
         context.slide.addTable(rows, {
           ...bounds,
           border: { type: 'solid', color: 'D1D5DB', pt: 0.75 },
           color: tableColor,
-          fill: 'FFFFFF',
+          fill: tableFill,
           fontFace: tableFontFace || 'Aptos',
           fontSize: tableFontSize,
           margin: 0.04
