@@ -7,11 +7,20 @@
     root.SlideNextStudioEditorMutation = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function isStudioCanonicalDeckLike(value) {
+    return !!value
+      && typeof value === 'object'
+      && !Array.isArray(value)
+      && Array.isArray(value.slides);
+  }
+
   function isValidStudioCanonicalDeck(value, validator) {
     if (!value) return false;
-    if (typeof validator !== 'function') return true;
+    const validate = typeof validator === 'function'
+      ? validator
+      : isStudioCanonicalDeckLike;
     try {
-      return validator(value) === true;
+      return validate(value) === true;
     } catch (err) {
       return false;
     }
