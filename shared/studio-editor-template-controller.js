@@ -34,6 +34,9 @@
     const prepareSlide = typeof options.prepareSlide === 'function'
       ? options.prepareSlide
       : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : null;
     const applyInsertion = typeof options.applyInsertion === 'function'
       ? options.applyInsertion
       : null;
@@ -133,7 +136,8 @@
 
       if (saveHistoryState) saveHistoryState(false);
       const mutation = applyInsertion(container, slideElement, {
-        beforeNode: slides[insertionIndex] || null
+        beforeNode: slides[insertionIndex] || null,
+        ...(getElementId ? { getElementId } : {})
       });
       if (!mutation || !mutation.didApply) return false;
 

@@ -1989,11 +1989,25 @@
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
             : null,
+          renderApi: typeof SlideNextDeckRender !== 'undefined'
+            ? SlideNextDeckRender
+            : null,
           getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
+          getDocument: () => getIframeDoc(),
+          getSlideContainer: (doc) => doc && typeof doc.getElementById === 'function'
+            ? doc.getElementById('slidesContainer')
+            : null,
+          getSlides: (doc) => getSlides(doc),
           getActiveSlideId: () => getActiveSlideId(getIframeDoc()),
+          prepareSlide: (...args) => makeElementsHoverable(...args),
+          getElementId: (element) => assignEditorSlideId(element),
+          applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
+          generateThumbnails: (...args) => generateThumbnails(...args),
+          setActiveSlide: (...args) => setActiveSlide(...args),
           saveHistoryState: (...args) => saveHistoryState(...args),
           triggerAutoSave: (...args) => triggerAutoSave(...args),
           triggerAutoVersion: (...args) => triggerAutoVersion(...args),
+          finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args),
           onTemplatesChanged: (templates) => renderSavedTemplates(templates)
         })
       : null;
@@ -5898,13 +5912,17 @@
         return true;
       }
       normalizedTemplates.forEach((template) => {
-        const item = document.createElement('span');
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'text-left rounded px-2 py-1 hover:bg-white/5 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
         const nodeCount = template
           && template.slide
           && Array.isArray(template.slide.nodes)
           ? template.slide.nodes.length
           : 0;
         item.textContent = `${template && template.name ? template.name : 'Unnamed Template'} - ${nodeCount} element${nodeCount === 1 ? '' : 's'}`;
+        item.disabled = typeof getActiveSlide === 'function' ? !getActiveSlide() : false;
+        item.addEventListener('click', () => insertSavedTemplate(template.id));
         list.appendChild(item);
       });
       return true;
@@ -6207,6 +6225,18 @@
       if (nameInput) nameInput.value = '';
       updateTemplateActionState();
       return true;
+    }
+
+    function insertSavedTemplate(templateId) {
+      const didInsert = studioEditorTemplateController
+        && typeof studioEditorTemplateController.insertTemplate === 'function'
+        ? studioEditorTemplateController.insertTemplate(templateId)
+        : false;
+      if (didInsert) {
+        updateTemplateActionState();
+        updateBlockActionState();
+      }
+      return didInsert;
     }
 
     function nudgeSelectedElements(dx, dy) {

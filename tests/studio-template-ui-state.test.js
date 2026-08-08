@@ -73,7 +73,10 @@ test('renderSavedTemplates uses text content and shows the empty state', () => {
         return list;
       },
       createElement() {
-        return { textContent: '' };
+        return {
+          textContent: '',
+          addEventListener() {}
+        };
       }
     }
   };
@@ -87,4 +90,38 @@ test('renderSavedTemplates uses text content and shows the empty state', () => {
   assert.equal(list.children[0].textContent, '<Hero> - 1 element');
   assert.equal(context.renderSavedTemplates([]), true);
   assert.equal(list.children[0].textContent, 'No slide templates saved');
+});
+
+test('insertSavedTemplate delegates to the template controller and refreshes editor state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function insertSavedTemplate(templateId) {',
+    '\n\n    function nudgeSelectedElements'
+  );
+  let delegatedId = '';
+  let templateRefreshes = 0;
+  let blockRefreshes = 0;
+  const context = {
+    studioEditorTemplateController: {
+      insertTemplate(templateId) {
+        delegatedId = templateId;
+        return true;
+      }
+    },
+    updateTemplateActionState() {
+      templateRefreshes += 1;
+    },
+    updateBlockActionState() {
+      blockRefreshes += 1;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.insertSavedTemplate('hero-template'), true);
+  assert.equal(delegatedId, 'hero-template');
+  assert.equal(templateRefreshes, 1);
+  assert.equal(blockRefreshes, 1);
 });
