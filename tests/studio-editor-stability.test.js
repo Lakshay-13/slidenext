@@ -206,6 +206,10 @@ test('lock and visibility wiring rebuilds the canonical deck from the iframe DOM
     controllerSource,
     /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
   );
+  assert.match(
+    controllerSource,
+    /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
+  );
 });
 
 test('element removal wiring rebuilds the canonical deck from the iframe DOM', () => {

@@ -64,6 +64,9 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const applyLockMutation = typeof options.applyLockMutation === 'function'
       ? options.applyLockMutation
       : () => ({ didApply: false, transaction: null });
@@ -84,6 +87,9 @@
               : null,
             buildCanonicalDeckBaseline: buildCanonicalDeckBaseline
               ? () => buildCanonicalDeckBaseline(doc)
+              : null,
+            getCanonicalDeckBaseline: getCanonicalDeckBaseline
+              ? () => getCanonicalDeckBaseline(doc)
               : null
           })
         : null;

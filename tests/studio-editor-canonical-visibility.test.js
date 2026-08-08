@@ -33,6 +33,24 @@ test('buildStudioCanonicalVisibilityBaseline builds from the source document', (
   assert.equal(result, sourceDeck);
 });
 
+test('buildStudioCanonicalVisibilityBaseline prefers a valid live canonical deck', () => {
+  const liveDeck = createSourceDeck();
+  let didBuildFromDocument = false;
+  const result = canonicalVisibility.buildStudioCanonicalVisibilityBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return liveDeck;
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return createSourceDeck();
+    }
+  });
+
+  assert.equal(result, liveDeck);
+  assert.equal(didBuildFromDocument, false);
+});
+
 test('buildStudioCanonicalVisibilityDeck applies hidden and locked patches without mutating the source', () => {
   const sourceDeck = createSourceDeck();
   const result = canonicalVisibility.buildStudioCanonicalVisibilityDeck(
@@ -82,6 +100,29 @@ test('buildStudioCanonicalVisibilityMutation centralizes baseline and patch appl
   assert.equal(result.slides[0].nodes[0].visibility.hidden, true);
   assert.equal(baselineBuildCount, 1);
   assert.equal(sourceDeck.slides[0].nodes[0].visibility.hidden, false);
+});
+
+test('buildStudioCanonicalVisibilityMutation falls back when the live baseline is invalid', () => {
+  const sourceDeck = createSourceDeck();
+  let didBuildFromDocument = false;
+  const result = canonicalVisibility.buildStudioCanonicalVisibilityMutation(
+    [{ dataset: { editorId: 'node-1' } }],
+    { locked: true },
+    {
+      canonicalDeckApi: canonicalDeck,
+      getCanonicalDeckBaseline() {
+        return { invalid: true };
+      },
+      buildCanonicalDeckBaseline() {
+        didBuildFromDocument = true;
+        return sourceDeck;
+      },
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.equal(result.slides[0].nodes[0].visibility.locked, true);
+  assert.equal(didBuildFromDocument, true);
 });
 
 test('createStudioCanonicalVisibilityMutationBuilders reuses an explicit baseline', () => {
