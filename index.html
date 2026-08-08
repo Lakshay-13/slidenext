@@ -1729,6 +1729,10 @@
             decorateSlide: makeElementsHoverable
           }),
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+            sourceDoc || getIframeDoc(),
+            studioEditorSessionToken
+          ),
           getSlideId: (...args) => getEditorSlideId(...args),
           saveHistoryState: (...args) => saveHistoryState(...args),
           applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),

@@ -122,6 +122,42 @@ test('buildStudioCanonicalAddSlideBaseline builds from the source document', () 
   assert.equal(result, sourceDeck);
 });
 
+test('buildStudioCanonicalAddSlideBaseline prefers a valid live canonical deck', () => {
+  const liveDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let didBuildFromDocument = false;
+  const result = canonicalSlide.buildStudioCanonicalAddSlideBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return liveDeck;
+    },
+    buildCanonicalDeck() {
+      didBuildFromDocument = true;
+      return canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+    }
+  });
+
+  assert.equal(result, liveDeck);
+  assert.equal(didBuildFromDocument, false);
+});
+
+test('buildStudioCanonicalAddSlideBaseline falls back when the live canonical deck is invalid', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let didBuildFromDocument = false;
+  const result = canonicalSlide.buildStudioCanonicalAddSlideBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return { invalid: true };
+    },
+    buildCanonicalDeck() {
+      didBuildFromDocument = true;
+      return sourceDeck;
+    }
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(didBuildFromDocument, true);
+});
+
 test('buildStudioCanonicalAddSlideDeck imports and appends a new slide without mutating the source', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const sourceDocument = { id: 'editor-doc' };

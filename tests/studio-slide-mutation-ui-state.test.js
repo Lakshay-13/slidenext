@@ -1253,6 +1253,10 @@ test('slide insertion wiring rebuilds the canonical deck from the iframe DOM', (
     controllerSource,
     /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/
   );
+  assert.match(
+    controllerSource,
+    /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
+  );
 });
 
 test('slide deletion wiring rebuilds the canonical deck from the iframe DOM', () => {

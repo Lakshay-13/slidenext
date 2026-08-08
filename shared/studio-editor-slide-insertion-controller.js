@@ -42,6 +42,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const getSlideId = typeof options.getSlideId === 'function'
       ? options.getSlideId
       : (slide) => slide && slide.id || '';
@@ -73,6 +76,7 @@
         ? canonicalSlideApi.createStudioCanonicalAddSlideMutationBuilders({
             canonicalDeckApi,
             buildCanonicalDeck,
+            getCanonicalDeckBaseline,
             importSlideToCanonicalSlide,
             getSlideId
           })

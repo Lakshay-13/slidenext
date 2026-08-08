@@ -4,6 +4,7 @@ const insertionController = require('../shared/studio-editor-slide-insertion-con
 
 test('slide insertion controller assembles canonical and editor mutation dependencies', () => {
   const calls = [];
+  const liveCanonicalDeck = { id: 'live-baseline' };
   const controller = insertionController.createStudioEditorSlideInsertionController({
     slideCommandsApi: {
       addStudioSlideNode(options) {
@@ -24,6 +25,7 @@ test('slide insertion controller assembles canonical and editor mutation depende
       importSlideToCanonicalSlide() {}
     },
     canonicalDeckApi: { id: 'canonical-api' },
+    getCanonicalDeckBaseline: () => liveCanonicalDeck,
     getIframeDoc: () => ({ id: 'doc' }),
     resolveInsertionActionState: () => ({ canAddSlide: true }),
     getSlides: () => [{ id: 'slide-1' }],
@@ -41,6 +43,7 @@ test('slide insertion controller assembles canonical and editor mutation depende
   assert.equal(calls[0][0], 'builders');
   assert.equal(calls[0][1].canonicalDeckApi.id, 'canonical-api');
   assert.equal(typeof calls[0][1].importSlideToCanonicalSlide, 'function');
+  assert.equal(calls[0][1].getCanonicalDeckBaseline(), liveCanonicalDeck);
   const options = calls[1];
   assert.equal(options.getIframeDoc().id, 'doc');
   assert.equal(options.resolveInsertionActionState().canAddSlide, true);
