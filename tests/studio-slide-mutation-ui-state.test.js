@@ -1289,6 +1289,10 @@ test('slide duplication wiring rebuilds the canonical deck from the iframe DOM',
     controllerSource,
     /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/
   );
+  assert.match(
+    controllerSource,
+    /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
+  );
 });
 
 test('reorderSlides delegates DOM ordering and transaction capture to the shared deck view', () => {

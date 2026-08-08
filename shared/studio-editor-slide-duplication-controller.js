@@ -51,6 +51,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const applyInsertion = typeof options.applyInsertion === 'function'
       ? options.applyInsertion
       : () => ({ didApply: false, transaction: null });
@@ -76,6 +79,7 @@
         ? canonicalSlideApi.createStudioCanonicalDuplicateSlideMutationBuilders({
             canonicalDeckApi,
             buildCanonicalDeck,
+            getCanonicalDeckBaseline,
             importSlideToCanonicalSlide
           })
         : null;

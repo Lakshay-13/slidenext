@@ -1794,6 +1794,10 @@
           assignSlideId: (...args) => assignEditorSlideId(...args),
           makeElementsHoverable: (...args) => makeElementsHoverable(...args),
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+            sourceDoc || getIframeDoc(),
+            studioEditorSessionToken
+          ),
           saveHistoryState: (...args) => saveHistoryState(...args),
           applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
           generateThumbnails: (...args) => generateThumbnails(...args),
