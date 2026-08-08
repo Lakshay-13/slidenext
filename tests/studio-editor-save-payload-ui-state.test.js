@@ -158,6 +158,54 @@ test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requ
   );
 });
 
+test('buildEditorSaveRequestBody creates the shared save adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = { label: 'iframe-doc' };
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorSaveRequestBodyAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(typeof options.getPresentationUrl, 'function');
+        return (nextDoc, cleanHtml, nextOptions) => {
+          calls.push([nextDoc, cleanHtml, nextOptions]);
+          return { htmlContent: cleanHtml || '<html>captured</html>' };
+        };
+      }
+    },
+    currentPresentationUrl: 'presentations/demo/index.html',
+    buildEditorCanonicalDeck() {
+      return { kind: 'slidenext.deck', slides: [] };
+    },
+    buildPersistableDeckHtml() {
+      return '<html>persisted</html>';
+    },
+    captureEditorPersistableDeckState() {
+      return { cleanHtml: '<html>captured</html>', canonicalDeck: null };
+    }
+  };
+
+  vm.createContext(context);
+  const source = extractFunctionSource(
+    fileContent,
+    'function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {',
+    '\n\n    function isCurrentDeckHtmlPersisted(cleanHtml) {'
+  );
+  loadBuildEditorSaveRequestBody(fileContent, context, source);
+
+  context.buildEditorSaveRequestBody(doc, null, { isAutoSave: true });
+  context.buildEditorSaveRequestBody(doc, '<html>provided</html>', { versionLabel: 'Manual' });
+
+  assert.equal(adapterCreateCalls, 1);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0][0], doc);
+  assert.equal(typeof calls[0][2].resolveCanonicalDeck, 'function');
+  assert.equal(typeof calls[0][2].capturePersistableDeckState, 'function');
+  assert.equal(calls[1][1], '<html>provided</html>');
+});
+
 test('buildEditorSaveRequestBody falls back to the persisted html baseline when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(

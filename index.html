@@ -7967,24 +7967,35 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorSaveRequestBodyAdapter
         : null;
       if (createStudioEditorSaveRequestBodyAdapter) {
-        const adapter = createStudioEditorSaveRequestBodyAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          getPresentationUrl: () => currentPresentationUrl,
-          capturePersistableDeckState: typeof captureEditorPersistableDeckState === 'function'
-            ? captureEditorPersistableDeckState
-            : null,
-          resolveCanonicalDeck: (nextCanonicalDeck, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
-            nextCanonicalDeck,
-            {
-              buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
-            }
-          ),
-          buildPersistableDeckHtml
-        });
-        const saveRequestBody = typeof adapter === 'function'
-          ? adapter(doc, cleanHtml, options)
+        if (typeof buildEditorSaveRequestBody.adapter !== 'function') {
+          buildEditorSaveRequestBody.adapter = createStudioEditorSaveRequestBodyAdapter({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            getPresentationUrl: () => currentPresentationUrl
+          });
+        }
+        const saveRequestOptions = {
+          ...options,
+          capturePersistableDeckState: typeof options.capturePersistableDeckState === 'function'
+            ? options.capturePersistableDeckState
+            : typeof captureEditorPersistableDeckState === 'function'
+              ? captureEditorPersistableDeckState
+              : null,
+          resolveCanonicalDeck: typeof options.resolveCanonicalDeck === 'function'
+            ? options.resolveCanonicalDeck
+            : (nextCanonicalDeck, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
+                nextCanonicalDeck,
+                {
+                  buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
+                }
+              ),
+          buildPersistableDeckHtml: typeof options.buildPersistableDeckHtml === 'function'
+            ? options.buildPersistableDeckHtml
+            : buildPersistableDeckHtml
+        };
+        const saveRequestBody = typeof buildEditorSaveRequestBody.adapter === 'function'
+          ? buildEditorSaveRequestBody.adapter(doc, cleanHtml, saveRequestOptions)
           : null;
         if (saveRequestBody !== null && typeof saveRequestBody !== 'undefined') {
           return saveRequestBody;
