@@ -104,6 +104,7 @@ test('buildEditorCanonicalDeck prefers the active live model unless DOM rebuild 
   });
   context.studioEditorCanonicalBridge = canonicalBridge.createStudioEditorCanonicalBridge({
     canonicalDeckBuilder: context.studioEditorCanonicalDeckBuilder,
+    getCanonicalDeckBaseline: (doc) => context.resolveEditorLiveCanonicalDeck(doc, context.studioEditorSessionToken),
     getDocument: context.getIframeDoc
   });
 

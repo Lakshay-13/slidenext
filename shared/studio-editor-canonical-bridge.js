@@ -20,6 +20,9 @@
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
       : () => null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
 
     function resetLiveCanonicalDeck() {
       if (!state || typeof state.reset !== 'function') return null;
@@ -49,8 +52,25 @@
         && typeof arguments[1] === 'object'
         ? arguments[1]
         : {};
+      let resolvedOptions = normalizedOptions;
+      if (normalizedOptions.preferLiveCanonicalDeck === false
+        && !Object.prototype.hasOwnProperty.call(normalizedOptions, 'canonicalDeckBaseline')
+        && getCanonicalDeckBaseline) {
+        let canonicalDeckBaseline = null;
+        try {
+          canonicalDeckBaseline = getCanonicalDeckBaseline(documentRef);
+        } catch (err) {
+          canonicalDeckBaseline = null;
+        }
+        if (canonicalDeckBaseline) {
+          resolvedOptions = {
+            ...normalizedOptions,
+            canonicalDeckBaseline
+          };
+        }
+      }
       try {
-        return canonicalDeckBuilder(documentRef, normalizedOptions);
+        return canonicalDeckBuilder(documentRef, resolvedOptions);
       } catch (err) {
         // Keep legacy HTML editing available when canonical import cannot proceed.
         return null;

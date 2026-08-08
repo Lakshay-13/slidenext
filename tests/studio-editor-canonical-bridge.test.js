@@ -60,6 +60,29 @@ test('canonical bridge uses the document getter and normalizes build options', (
   ]);
 });
 
+test('canonical bridge adds the live baseline to forced DOM rebuilds', () => {
+  const documentRef = { id: 'frame' };
+  const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
+  let capturedOptions = null;
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    canonicalDeckBuilder(_doc, options) {
+      capturedOptions = options;
+      return { kind: 'slidenext.deck', slides: [] };
+    },
+    getCanonicalDeckBaseline(sourceDoc) {
+      assert.equal(sourceDoc, documentRef);
+      return canonicalDeckBaseline;
+    }
+  });
+
+  bridge.buildCanonicalDeck(documentRef, { preferLiveCanonicalDeck: false });
+
+  assert.deepEqual(capturedOptions, {
+    preferLiveCanonicalDeck: false,
+    canonicalDeckBaseline
+  });
+});
+
 test('canonical bridge fails closed when either builder throws or is unavailable', () => {
   const throwingBridge = canonicalBridge.createStudioEditorCanonicalBridge({
     canonicalDeckBuilder() {
