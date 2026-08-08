@@ -154,6 +154,48 @@ test('waitForStudioPdfPrintResources rejects when fonts fail to load', async () 
   );
 });
 
+test('waitForStudioPdfPrintResources waits for external stylesheet links', async () => {
+  const handlers = {};
+  const stylesheet = {
+    href: 'styles.css',
+    sheet: null,
+    addEventListener(type, handler) {
+      handlers[type] = handler;
+    }
+  };
+  const waiting = pdfExport.waitForStudioPdfPrintResources({
+    images: [],
+    querySelectorAll(selector) {
+      return selector === 'link[rel~="stylesheet"]' ? [stylesheet] : [];
+    }
+  }, { timeoutMs: 100 });
+
+  await Promise.resolve();
+  handlers.load();
+  await waiting;
+});
+
+test('waitForStudioPdfPrintResources rejects failed external stylesheets', async () => {
+  const handlers = {};
+  const stylesheet = {
+    href: 'missing.css',
+    sheet: null,
+    addEventListener(type, handler) {
+      handlers[type] = handler;
+    }
+  };
+  const waiting = pdfExport.waitForStudioPdfPrintResources({
+    images: [],
+    querySelectorAll(selector) {
+      return selector === 'link[rel~="stylesheet"]' ? [stylesheet] : [];
+    }
+  }, { timeoutMs: 100 });
+
+  await Promise.resolve();
+  handlers.error();
+  await assert.rejects(waiting, /PDF stylesheet resource failed to load/);
+});
+
 test('waitForStudioPdfPrintResources rejects already-complete broken images', async () => {
   await assert.rejects(
     pdfExport.waitForStudioPdfPrintResources({

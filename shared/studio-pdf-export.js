@@ -246,6 +246,41 @@
       waits.push(waitWithTimeout(fontsReady, 'font'));
     }
 
+    const stylesheetLinks = typeof documentRef.querySelectorAll === 'function'
+      ? Array.from(documentRef.querySelectorAll('link[rel~="stylesheet"]') || [])
+      : [];
+    stylesheetLinks.forEach((link) => {
+      if (!link || typeof link.addEventListener !== 'function') return;
+      let hasLoadedStylesheet = false;
+      try {
+        hasLoadedStylesheet = !!link.sheet;
+      } catch (error) {
+        hasLoadedStylesheet = false;
+      }
+      if (hasLoadedStylesheet) return;
+
+      waits.push(new Promise((resolve, reject) => {
+        let settled = false;
+        const settle = (error = null) => {
+          if (settled) return;
+          settled = true;
+          if (hasStudioPdfTimerHandle(timeoutId)) clearTimeout(timeoutId);
+          if (error) reject(error);
+          else resolve();
+        };
+        const timeoutId = setTimeout(
+          () => settle(new Error('PDF stylesheet resource load timed out')),
+          timeoutMs
+        );
+        link.addEventListener('load', () => settle(), { once: true });
+        link.addEventListener(
+          'error',
+          () => settle(new Error('PDF stylesheet resource failed to load')),
+          { once: true }
+        );
+      }));
+    });
+
     const images = documentRef.images && typeof documentRef.images.length === 'number'
       ? Array.from(documentRef.images)
       : [];
