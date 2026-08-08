@@ -178,8 +178,14 @@
         center: 'center center',
         '50% 50%': 'center center'
       };
-      const position = positionAliases[computedStyles.objectPosition]
+      const canonicalObjectPosition = readStudioInspectorCanonicalStyleValue(
+        options.canonicalNode,
+        'object-position'
+      );
+      const position = positionAliases[canonicalObjectPosition]
+        || positionAliases[computedStyles.objectPosition]
         || positionAliases[primaryElement.style?.objectPosition]
+        || canonicalObjectPosition
         || computedStyles.objectPosition
         || primaryElement.style?.objectPosition
         || 'center center';

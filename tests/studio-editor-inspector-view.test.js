@@ -217,6 +217,35 @@ test('syncStudioInspectorContentControls prefers canonical object-fit data', () 
   assert.equal(nodes.elImagePosition.disabled, true);
 });
 
+test('syncStudioInspectorContentControls prefers canonical object-position data', () => {
+  const nodes = {
+    inspectorImageGroup: { classList: createClassList() },
+    elImageSrc: { value: '' },
+    elImageFit: { value: '', disabled: true },
+    elImagePosition: { value: '', disabled: true },
+    inspectorTextContentGroup: { classList: createClassList() }
+  };
+
+  assert.equal(inspectorView.syncStudioInspectorContentControls({
+    documentRef: {
+      getElementById(id) {
+        return nodes[id] || null;
+      }
+    },
+    primaryElement: {
+      tagName: 'IMG',
+      style: { objectFit: 'cover', objectPosition: 'left top' },
+      src: '/image.png'
+    },
+    isMulti: false,
+    canonicalNode: { style: 'object-fit: cover; object-position: right bottom;' },
+    computedStyles: { objectFit: 'cover', objectPosition: 'left top' }
+  }), true);
+  assert.equal(nodes.elImageFit.value, 'cover');
+  assert.equal(nodes.elImagePosition.value, 'right bottom');
+  assert.equal(nodes.elImagePosition.disabled, false);
+});
+
 test('syncStudioInspectorTypographyControls applies font, color, alignment, z-index, and opacity values', () => {
   const nodes = {
     elFontSize: { value: '' },
