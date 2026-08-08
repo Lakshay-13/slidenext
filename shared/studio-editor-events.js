@@ -8,14 +8,17 @@
   const transform = typeof module === 'object' && module.exports
     ? require('./studio-editor-transform')
     : root && root.SlideNextStudioEditorTransform;
-  const api = factory(liveSelection, nudge, transform);
+  const keyboard = typeof module === 'object' && module.exports
+    ? require('./studio-editor-keyboard')
+    : root && root.SlideNextStudioEditorKeyboard;
+  const api = factory(liveSelection, nudge, transform, keyboard);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorEvents = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (liveSelection, nudge, transform) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (liveSelection, nudge, transform, keyboard) {
   function getFrameShortcutSelection(elements = []) {
     if (liveSelection && typeof liveSelection.getStudioLiveSelection === 'function') {
       return liveSelection.getStudioLiveSelection(elements);
@@ -422,12 +425,9 @@
       : () => null;
     const isTypingContext = typeof options.isTypingContext === 'function'
       ? options.isTypingContext
-      : (activeEl) => !!(activeEl && (
-        activeEl.tagName === 'INPUT'
-        || activeEl.tagName === 'TEXTAREA'
-        || activeEl.tagName === 'SELECT'
-        || activeEl.isContentEditable
-      ));
+      : keyboard && typeof keyboard.isStudioTypingContext === 'function'
+        ? keyboard.isStudioTypingContext
+        : () => false;
 
     return function studioFrameKeydownHandler(event) {
       const activeEl = getActiveElement();
@@ -587,12 +587,9 @@
       : () => null;
     const isTypingContext = typeof options.isTypingContext === 'function'
       ? options.isTypingContext
-      : (activeEl) => !!(activeEl && (
-        activeEl.tagName === 'INPUT'
-        || activeEl.tagName === 'TEXTAREA'
-        || activeEl.tagName === 'SELECT'
-        || activeEl.isContentEditable
-      ));
+      : keyboard && typeof keyboard.isStudioTypingContext === 'function'
+        ? keyboard.isStudioTypingContext
+        : () => false;
 
     return function studioGlobalKeydownHandler(event) {
       if (!isEditorActive()) {

@@ -2,6 +2,16 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const events = require('../shared/studio-editor-events.js');
+const keyboard = require('../shared/studio-editor-keyboard.js');
+
+test('isStudioTypingContext normalizes tag names and contenteditable state', () => {
+  assert.equal(keyboard.isStudioTypingContext({ tagName: 'input' }), true);
+  assert.equal(keyboard.isStudioTypingContext({ tagName: 'TEXTAREA' }), true);
+  assert.equal(keyboard.isStudioTypingContext({ isContentEditable: true }), true);
+  assert.equal(keyboard.isStudioTypingContext({ contentEditable: 'true' }), true);
+  assert.equal(keyboard.isStudioTypingContext({ tagName: 'DIV', contentEditable: 'inherit' }), false);
+  assert.equal(keyboard.isStudioTypingContext(null), false);
+});
 
 test('attachStudioFrameInteractionHandlers binds frame click and keyboard listeners', () => {
   const listeners = new Map();
