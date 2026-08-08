@@ -1205,6 +1205,7 @@
   <script src="/shared/studio-editor-clipboard-mutation.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
   <script src="/shared/studio-editor-removal-mutation.js"></script>
+  <script src="/shared/studio-editor-removal-controller.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-lock-mutation.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
@@ -1761,6 +1762,26 @@
           applyLockMutation: (...args) => applyEditorLockMutationWithTransaction(...args),
           applyVisibilityMutation: (...args) => applyEditorVisibilityMutationWithTransaction(...args),
           finalizeSelectionToggleMutation: (...args) => finalizeSelectionToggleMutation(...args)
+        })
+      : null;
+    const studioEditorRemovalController = typeof SlideNextStudioEditorRemovalController !== 'undefined'
+      && SlideNextStudioEditorRemovalController
+      && typeof SlideNextStudioEditorRemovalController.createStudioEditorRemovalController === 'function'
+      ? SlideNextStudioEditorRemovalController.createStudioEditorRemovalController({
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          canonicalRemovalApi: typeof SlideNextStudioEditorCanonicalRemoval !== 'undefined'
+            ? SlideNextStudioEditorCanonicalRemoval
+            : null,
+          buildRemovalSelectionActionState: (...args) => buildRemovalSelectionActionState(...args),
+          finalizeRemovalActionResult: (...args) => finalizeRemovalActionResult(...args),
+          getIframeDoc: (...args) => getIframeDoc(...args),
+          assignElementId: (...args) => assignEditorElementId(...args),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          applyRemovalMutation: (...args) => applyEditorRemovalMutationWithTransaction(...args),
+          deselectElement: (...args) => deselectElement(...args),
+          finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -5574,54 +5595,10 @@
 
     // Delete active selection
     function removeSelectedElement() {
-      const doc = getIframeDoc();
-      const removalActionState = buildRemovalSelectionActionState(doc);
-      if (!removalActionState.canRemove) return finalizeRemovalActionResult(false, doc);
-      const getRemovalElementId = (element) => {
-        if (typeof assignEditorElementId === 'function') {
-          const assignedId = assignEditorElementId(element);
-          if (assignedId) return assignedId;
-        }
-        return element && element.dataset && element.dataset.editorId;
-      };
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const canonicalRemovalApi = typeof SlideNextStudioEditorCanonicalRemoval !== 'undefined'
-        ? SlideNextStudioEditorCanonicalRemoval
-        : null;
-      const canonicalRemovalBuilders = canonicalRemovalApi
-        && typeof canonicalRemovalApi.createStudioCanonicalRemovalMutationBuilders === 'function'
-        ? canonicalRemovalApi.createStudioCanonicalRemovalMutationBuilders({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null
-          })
-        : null;
-      const buildCanonicalRemovalMutation = canonicalRemovalBuilders
-        && typeof canonicalRemovalBuilders.buildCanonicalRemovalMutation === 'function'
-        ? canonicalRemovalBuilders.buildCanonicalRemovalMutation
-        : null;
-      const canonicalDeck = buildCanonicalRemovalMutation
-        ? buildCanonicalRemovalMutation(removalActionState.selection, {
-            sourceDocument: doc,
-            getElementId: getRemovalElementId
-          })
-        : null;
-      const mutation = applyEditorRemovalMutationWithTransaction(removalActionState.selection, {
-        getElementId: getRemovalElementId,
-        removeElement(element) {
-          element.remove();
-        }
-      });
-      if (!mutation.didRemove) return finalizeRemovalActionResult(false, doc);
-      deselectElement();
-      finalizeEditorDeckMutation('Auto: Deleted Element', {
-        transaction: mutation.transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
-      });
-      return true;
+      return studioEditorRemovalController
+        && typeof studioEditorRemovalController.remove === 'function'
+        ? studioEditorRemovalController.remove()
+        : false;
     }
 
     function updateClipboardActionState(doc = getIframeDoc()) {

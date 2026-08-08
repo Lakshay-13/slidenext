@@ -9,6 +9,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const removalState = require('../shared/studio-editor-removal.js');
 const removalMutation = require('../shared/studio-editor-removal-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
+const removalController = require('../shared/studio-editor-removal-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -56,6 +57,21 @@ function loadRemovalMutationHelper(fileContent, context) {
   );
   context.SlideNextStudioEditorRemovalMutation = removalMutation;
   vm.runInContext(helperSource, context);
+}
+
+function installRemovalController(context) {
+  context.studioEditorRemovalController = removalController.createStudioEditorRemovalController({
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    canonicalRemovalApi: context.SlideNextStudioEditorCanonicalRemoval,
+    buildRemovalSelectionActionState: context.buildRemovalSelectionActionState,
+    finalizeRemovalActionResult: context.finalizeRemovalActionResult,
+    getIframeDoc: context.getIframeDoc,
+    assignElementId: context.assignEditorElementId,
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    applyRemovalMutation: context.applyEditorRemovalMutationWithTransaction,
+    deselectElement: context.deselectElement,
+    finalizeDeckMutation: context.finalizeEditorDeckMutation
+  });
 }
 
 test('buildRemovalSelectionActionState reuses the current selection and live slide guard', () => {
@@ -381,6 +397,7 @@ test('removeSelectedElement returns false and skips persistence when planned tar
   loadFinalizeRemovalActionResult(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadRemovalMutationHelper(fileContent, context);
+  installRemovalController(context);
   vm.runInContext(removeSelectedElementSource, context);
 
   assert.equal(context.removeSelectedElement(), false);
@@ -434,6 +451,7 @@ test('removeSelectedElement returns false and refreshes removal controls when de
   loadFinalizeRemovalActionResult(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadRemovalMutationHelper(fileContent, context);
+  installRemovalController(context);
   vm.runInContext(removeSelectedElementSource, context);
 
   assert.equal(context.removeSelectedElement(), false);
@@ -529,6 +547,7 @@ test('removeSelectedElement returns true after removing live targets and persist
   loadFinalizeRemovalActionResult(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadRemovalMutationHelper(fileContent, context);
+  installRemovalController(context);
   vm.runInContext(removeSelectedElementSource, context);
 
   assert.equal(context.removeSelectedElement(), true);
@@ -604,6 +623,7 @@ test('removeSelectedElement captures a scoped parent markup transaction', () => 
   vm.createContext(context);
   loadBuildRemovalSelectionActionState(fileContent, context);
   loadRemovalMutationHelper(fileContent, context);
+  installRemovalController(context);
   vm.runInContext(removeSelectedElementSource, context);
 
   assert.equal(context.removeSelectedElement(), true);
@@ -668,6 +688,7 @@ test('removeSelectedElement delegates removal and markup capture to the shared r
   vm.createContext(context);
   loadBuildRemovalSelectionActionState(fileContent, context);
   loadRemovalMutationHelper(fileContent, context);
+  installRemovalController(context);
   vm.runInContext(removeSelectedElementSource, context);
 
   assert.equal(context.removeSelectedElement(), true);

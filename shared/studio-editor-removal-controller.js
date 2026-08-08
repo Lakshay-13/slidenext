@@ -1,0 +1,94 @@
+(function (root, factory) {
+  const api = factory(root);
+  if (typeof module === 'object' && module.exports) {
+    module.exports = api;
+  }
+  if (root) {
+    root.SlideNextStudioEditorRemovalController = api;
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  function createStudioEditorRemovalController(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi
+      || (root && root.SlideNextCanonicalDeck)
+      || null;
+    const canonicalRemovalApi = options.canonicalRemovalApi
+      || (root && root.SlideNextStudioEditorCanonicalRemoval)
+      || null;
+    const buildRemovalSelectionActionState = typeof options.buildRemovalSelectionActionState === 'function'
+      ? options.buildRemovalSelectionActionState
+      : null;
+    const finalizeRemovalActionResult = typeof options.finalizeRemovalActionResult === 'function'
+      ? options.finalizeRemovalActionResult
+      : (result) => result;
+    const getIframeDoc = typeof options.getIframeDoc === 'function'
+      ? options.getIframeDoc
+      : () => null;
+    const assignElementId = typeof options.assignElementId === 'function'
+      ? (element) => {
+          const assignedId = options.assignElementId(element);
+          if (assignedId) return assignedId;
+          return element && element.dataset && element.dataset.editorId;
+        }
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const applyRemovalMutation = typeof options.applyRemovalMutation === 'function'
+      ? options.applyRemovalMutation
+      : () => ({ didRemove: false, transaction: null });
+    const deselectElement = typeof options.deselectElement === 'function'
+      ? options.deselectElement
+      : null;
+    const finalizeDeckMutation = typeof options.finalizeDeckMutation === 'function'
+      ? options.finalizeDeckMutation
+      : null;
+
+    function remove() {
+      const doc = getIframeDoc();
+      if (!buildRemovalSelectionActionState) return finalizeRemovalActionResult(false, doc);
+      const removalActionState = buildRemovalSelectionActionState(doc);
+      if (!removalActionState.canRemove) return finalizeRemovalActionResult(false, doc);
+      const getRemovalElementId = (element) => assignElementId(element);
+      const canonicalRemovalBuilders = canonicalRemovalApi
+        && typeof canonicalRemovalApi.createStudioCanonicalRemovalMutationBuilders === 'function'
+        ? canonicalRemovalApi.createStudioCanonicalRemovalMutationBuilders({
+            canonicalDeckApi,
+            buildCanonicalDeck
+          })
+        : null;
+      const buildCanonicalRemovalMutation = canonicalRemovalBuilders
+        && typeof canonicalRemovalBuilders.buildCanonicalRemovalMutation === 'function'
+        ? canonicalRemovalBuilders.buildCanonicalRemovalMutation
+        : null;
+      const canonicalDeck = buildCanonicalRemovalMutation
+        ? buildCanonicalRemovalMutation(removalActionState.selection, {
+            sourceDocument: doc,
+            getElementId: getRemovalElementId
+          })
+        : null;
+      const mutation = applyRemovalMutation(removalActionState.selection, {
+        getElementId: getRemovalElementId,
+        removeElement(element) {
+          element.remove();
+        }
+      });
+      if (!mutation || !mutation.didRemove) return finalizeRemovalActionResult(false, doc);
+      if (deselectElement) deselectElement();
+      if (finalizeDeckMutation) {
+        finalizeDeckMutation('Auto: Deleted Element', {
+          transaction: mutation.transaction,
+          ...(canonicalDeck ? { canonicalDeck } : {})
+        });
+      }
+      return true;
+    }
+
+    return {
+      remove
+    };
+  }
+
+  return {
+    createStudioEditorRemovalController
+  };
+});
