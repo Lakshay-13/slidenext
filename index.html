@@ -6728,18 +6728,14 @@
       const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
         ? SlideNextStudioEditorLayerController
         : null;
-      if (layerController && typeof layerController.refreshStudioLayerOrderUi === 'function') {
-        return layerController.refreshStudioLayerOrderUi({
-          ...options,
-          updateLayersList,
-          updateLayerOrderActionState
-        });
+      if (!layerController || typeof layerController.refreshStudioLayerOrderUi !== 'function') {
+        return false;
       }
-      if (options.refreshLayersList) {
-        updateLayersList();
-      }
-      updateLayerOrderActionState();
-      return options.result === undefined ? false : options.result;
+      return layerController.refreshStudioLayerOrderUi({
+        ...options,
+        updateLayersList,
+        updateLayerOrderActionState
+      });
     }
 
     // Rearrange Selected Element Layers

@@ -433,6 +433,7 @@ test('refreshLayerOrderUi refreshes layer state and optionally the layer list', 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
     updateLayerOrderActionState() {
       calls.push(['updateLayerOrderActionState']);
     },
