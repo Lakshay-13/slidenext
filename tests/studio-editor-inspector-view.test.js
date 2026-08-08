@@ -474,6 +474,32 @@ test('syncStudioInspectorBorderControls prefers canonical border-radius data', (
   assert.equal(borderRadiusLabel.textContent, '12px');
 });
 
+test('syncStudioInspectorBorderControls prefers canonical border-color data', () => {
+  const classList = createClassList();
+  classList.add('editor-shape');
+  const borderColorInput = { value: '' };
+
+  assert.equal(inspectorView.syncStudioInspectorBorderControls({
+    documentRef: {
+      getElementById(id) {
+        return id === 'elBorderColor' ? borderColorInput : null;
+      }
+    },
+    selection: [{ tagName: 'DIV', classList }],
+    canonicalNode: { style: 'border-color: #112233;' },
+    computedStyles: {
+      borderStyle: 'solid',
+      borderWidth: '1px',
+      borderRadius: '2px',
+      borderColor: 'rgb(255, 255, 255)'
+    },
+    rgbToHex(value) {
+      return value;
+    }
+  }), true);
+  assert.equal(borderColorInput.value, '#112233');
+});
+
 test('syncStudioInspectorBorderControls applies border values for shape-like selections', () => {
   const classList = createClassList();
   classList.add('editor-shape');

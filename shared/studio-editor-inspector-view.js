@@ -330,8 +330,14 @@
     if (borderRadiusInput) borderRadiusInput.value = bRadius;
     const borderRadiusLabel = documentRef.getElementById('borderRadiusVal');
     if (borderRadiusLabel) borderRadiusLabel.textContent = bRadius + 'px';
+    const canonicalBorderColor = readStudioInspectorCanonicalStyleValue(
+      options.canonicalNode,
+      'border-color'
+    );
     const borderColorInput = documentRef.getElementById('elBorderColor');
-    if (borderColorInput) borderColorInput.value = rgbToHex(computedStyles.borderColor || '#ffffff');
+    if (borderColorInput) {
+      borderColorInput.value = rgbToHex(canonicalBorderColor || computedStyles.borderColor || '#ffffff');
+    }
     return true;
   }
 
