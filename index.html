@@ -6569,10 +6569,8 @@
         canonicalDeckApi,
         canonicalWallpaperApi,
         sourceDocument,
-        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-          ? (sourceDoc) => buildEditorCanonicalDeck(sourceDoc || sourceDocument, {
-              preferLiveCanonicalDeck: false
-            })
+        buildCanonicalDeck: typeof buildEditorMutationCanonicalDeck === 'function'
+          ? (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc || sourceDocument)
           : null
       });
     }

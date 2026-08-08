@@ -190,7 +190,7 @@ test('applyEditorWallpaperSlidesMutationWithTransaction returns an immutable can
   });
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
-    buildEditorCanonicalDeck() {
+    buildEditorMutationCanonicalDeck() {
       return canonicalDeckBefore;
     }
   };
@@ -219,8 +219,8 @@ test('applyEditorWallpaperSlidesMutationWithTransaction rebuilds canonical state
   const buildCalls = [];
   const context = {
     SlideNextCanonicalDeck: canonicalDeckModel,
-    buildEditorCanonicalDeck(documentRef, options) {
-      buildCalls.push([documentRef, options]);
+    buildEditorMutationCanonicalDeck(documentRef) {
+      buildCalls.push([documentRef, { preferLiveCanonicalDeck: false }]);
       return canonicalDeckBefore;
     }
   };
