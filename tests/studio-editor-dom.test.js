@@ -169,3 +169,18 @@ test('resolveStudioEditableTarget selects an embed placeholder frame', () => {
     placeholder
   );
 });
+
+test('resolveStudioEditableTarget selects a material icon node', () => {
+  const icon = createElement('SPAN', {
+    classNames: ['material-symbols-outlined']
+  });
+  icon.nodeType = 1;
+  icon.matches = (selector) => selector === '.material-symbols-outlined';
+
+  assert.equal(
+    domState.resolveStudioEditableTarget(icon, {
+      selectableSelector: '.material-symbols-outlined'
+    }),
+    icon
+  );
+});
