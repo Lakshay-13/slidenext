@@ -56,6 +56,10 @@
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
           getCanonicalDeckBaseline,
+          isCanonicalDeck: canonicalDeckApi
+            && typeof canonicalDeckApi.isCanonicalDeck === 'function'
+            ? canonicalDeckApi.isCanonicalDeck
+            : null,
           buildCanonicalDeckBaseline
         })
       : (sourceDocument) => {

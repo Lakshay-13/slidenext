@@ -118,3 +118,32 @@ test('layer order controller blocks canonical-locked elements when the DOM is st
   assert.equal(receivedLockState, true);
   assert.equal(applied, false);
 });
+
+test('layer order controller rebuilds the canonical lock baseline when live state is invalid', () => {
+  const first = { id: 'node-1', isConnected: true };
+  const slide = { contains: () => true };
+  const rebuiltDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', visibility: { locked: true } }] }]
+  });
+  let receivedLockState = null;
+  const controller = layerOrderController.createStudioEditorLayerOrderController({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => rebuiltDeck,
+    layerOrderApi: {
+      buildStudioLayerOrderMutationPlan(_elements, _action, options) {
+        receivedLockState = options.isLocked(first);
+        return { didChange: false };
+      }
+    },
+    getActiveSlide: () => slide,
+    getIframeDoc: () => ({ id: 'doc' }),
+    getNormalizedSlideLayerOrder: () => [first],
+    assignElementId: (element) => element.id,
+    isElementLocked: () => false
+  });
+
+  assert.equal(controller.reorder('front', [first]), false);
+  assert.equal(receivedLockState, true);
+});
