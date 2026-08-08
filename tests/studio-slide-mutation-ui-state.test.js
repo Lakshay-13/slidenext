@@ -13,6 +13,7 @@ const slideReorderMutation = require('../shared/studio-editor-slide-reorder-muta
 const slideMutation = require('../shared/studio-editor-slide-mutation.js');
 const reorderController = require('../shared/studio-editor-slide-reorder-controller.js');
 const insertionController = require('../shared/studio-editor-slide-insertion-controller.js');
+const deletionController = require('../shared/studio-editor-slide-deletion-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -127,6 +128,24 @@ function installSlideInsertionController(context) {
     applyInsertion: context.applyEditorSlideInsertionWithTransaction,
     generateThumbnails: context.generateThumbnails,
     setActiveSlide: context.setActiveSlide,
+    finalizeMutation: context.finalizeSlideMutationPersistence
+  });
+}
+
+function installSlideDeletionController(context) {
+  context.studioEditorSlideDeletionController = deletionController.createStudioEditorSlideDeletionController({
+    slideCommandsApi: context.SlideNextStudioEditorSlideCommands,
+    canonicalSlideApi: context.SlideNextStudioEditorCanonicalSlide,
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    getIframeDoc: context.getIframeDoc,
+    getSlides: context.getSlides,
+    alert: context.alert,
+    captureSlideMutationState: context.captureSlideMutationRestoreState,
+    getSlideId: context.getEditorSlideId,
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    applyDeletion: context.applyEditorSlideDeletionWithTransaction,
+    generateThumbnails: context.generateThumbnails,
+    restoreDeckViewAfterSlideMutation: context.restoreDeckViewAfterSlideMutation,
     finalizeMutation: context.finalizeSlideMutationPersistence
   });
 }
@@ -1571,6 +1590,7 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadApplyEditorSlideDeletionWithTransaction(fileContent, context);
+  installSlideDeletionController(context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   const result = context.deleteSlideNode(1);
@@ -1688,6 +1708,7 @@ test('deleteSlideNode delegates slide removal and transaction capture to the sha
 
   vm.createContext(context);
   loadApplyEditorSlideDeletionWithTransaction(fileContent, context);
+  installSlideDeletionController(context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   assert.equal(context.deleteSlideNode(1), true);
@@ -1728,6 +1749,7 @@ test('deleteSlideNode no-ops when the iframe document is unavailable', () => {
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadApplyEditorSlideDeletionWithTransaction(fileContent, context);
+  installSlideDeletionController(context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   assert.equal(context.deleteSlideNode(0), false);
@@ -1773,6 +1795,7 @@ test('deleteSlideNode no-ops when the requested slide index is unavailable', () 
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadApplyEditorSlideDeletionWithTransaction(fileContent, context);
+  installSlideDeletionController(context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   const result = context.deleteSlideNode(9);
@@ -1823,6 +1846,7 @@ test('deleteSlideNode refuses to remove the final remaining slide', () => {
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadApplyEditorSlideDeletionWithTransaction(fileContent, context);
+  installSlideDeletionController(context);
   vm.runInContext(deleteSlideNodeSource, context);
 
   const result = context.deleteSlideNode(0);

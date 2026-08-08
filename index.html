@@ -1246,6 +1246,7 @@
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-slide-commands.js"></script>
   <script src="/shared/studio-editor-slide-deletion-mutation.js"></script>
+  <script src="/shared/studio-editor-slide-deletion-controller.js"></script>
   <script src="/shared/studio-editor-slide-insertion-mutation.js"></script>
   <script src="/shared/studio-editor-slide-insertion-controller.js"></script>
   <script src="/shared/studio-editor-slide-reorder-mutation.js"></script>
@@ -1542,6 +1543,31 @@
           applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
           generateThumbnails: (...args) => generateThumbnails(...args),
           setActiveSlide: (...args) => setActiveSlide(...args),
+          finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args)
+        })
+      : null;
+    const studioEditorSlideDeletionController = typeof SlideNextStudioEditorSlideDeletionController !== 'undefined'
+      && SlideNextStudioEditorSlideDeletionController
+      && typeof SlideNextStudioEditorSlideDeletionController.createStudioEditorSlideDeletionController === 'function'
+      ? SlideNextStudioEditorSlideDeletionController.createStudioEditorSlideDeletionController({
+          slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+            ? SlideNextStudioEditorSlideCommands
+            : null,
+          canonicalSlideApi: typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
+            ? SlideNextStudioEditorCanonicalSlide
+            : null,
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          getIframeDoc: (...args) => getIframeDoc(...args),
+          getSlides: (...args) => getSlides(...args),
+          alert: typeof alert === 'function' ? alert : null,
+          captureSlideMutationState: (...args) => captureSlideMutationRestoreState(...args),
+          getSlideId: (...args) => getEditorSlideId(...args),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          applyDeletion: (...args) => applyEditorSlideDeletionWithTransaction(...args),
+          generateThumbnails: (...args) => generateThumbnails(...args),
+          restoreDeckViewAfterSlideMutation: (...args) => restoreDeckViewAfterSlideMutation(...args),
           finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args)
         })
       : null;
@@ -3176,58 +3202,10 @@
 
     // Delete Active Slide Node
     function deleteSlideNode(idx) {
-      const slideCommands = typeof SlideNextStudioEditorSlideCommands !== 'undefined'
-        ? SlideNextStudioEditorSlideCommands
-        : null;
-      const deleteStudioSlideNode = slideCommands
-        && typeof slideCommands.deleteStudioSlideNode === 'function'
-        ? slideCommands.deleteStudioSlideNode
-        : null;
-      if (!deleteStudioSlideNode) return false;
-
-      const canonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
-        ? SlideNextStudioEditorCanonicalSlide
-        : null;
-      const canonicalDeleteSlideBuilders = canonicalSlideApi
-        && typeof canonicalSlideApi.createStudioCanonicalDeleteSlideMutationBuilders === 'function'
-        ? canonicalSlideApi.createStudioCanonicalDeleteSlideMutationBuilders({
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null
-          })
-        : null;
-      const buildCanonicalDeleteSlideDeck = canonicalDeleteSlideBuilders
-        ? canonicalDeleteSlideBuilders.buildCanonicalDeleteSlideDeck
-        : null;
-
-      return deleteStudioSlideNode(idx, {
-        getIframeDoc,
-        getSlideContainer: (doc) => doc && typeof doc.getElementById === 'function'
-          ? doc.getElementById('slidesContainer')
-          : null,
-        getSlides: typeof getSlides === 'function' ? getSlides : () => [],
-        alert: typeof alert === 'function' ? alert : null,
-        captureSlideMutationState: typeof captureSlideMutationRestoreState === 'function'
-          ? captureSlideMutationRestoreState
-          : null,
-        getSlideId: typeof getEditorSlideId === 'function'
-          ? getEditorSlideId
-          : (slide) => slide && slide.id || '',
-        buildCanonicalDeleteSlideDeck,
-        applyDeletion: typeof applyEditorSlideDeletionWithTransaction === 'function'
-          ? applyEditorSlideDeletionWithTransaction
-          : () => ({ didApply: false, transaction: null }),
-        generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
-        restoreDeckViewAfterSlideMutation: typeof restoreDeckViewAfterSlideMutation === 'function'
-          ? restoreDeckViewAfterSlideMutation
-          : null,
-        finalizeMutation: typeof finalizeSlideMutationPersistence === 'function'
-          ? finalizeSlideMutationPersistence
-          : null
-      });
+      return studioEditorSlideDeletionController
+        && typeof studioEditorSlideDeletionController.remove === 'function'
+        ? studioEditorSlideDeletionController.remove(idx)
+        : false;
     }
 
     function getIframeDoc() {

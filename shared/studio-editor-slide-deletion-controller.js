@@ -1,0 +1,96 @@
+(function (root, factory) {
+  const api = factory(root);
+  if (typeof module === 'object' && module.exports) {
+    module.exports = api;
+  }
+  if (root) {
+    root.SlideNextStudioEditorSlideDeletionController = api;
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  function createStudioEditorSlideDeletionController(options = {}) {
+    const slideCommandsApi = options.slideCommandsApi
+      || (root && root.SlideNextStudioEditorSlideCommands)
+      || null;
+    const canonicalSlideApi = options.canonicalSlideApi
+      || (root && root.SlideNextStudioEditorCanonicalSlide)
+      || null;
+    const canonicalDeckApi = options.canonicalDeckApi
+      || (root && root.SlideNextCanonicalDeck)
+      || null;
+    const deleteStudioSlideNode = slideCommandsApi
+      && typeof slideCommandsApi.deleteStudioSlideNode === 'function'
+      ? slideCommandsApi.deleteStudioSlideNode
+      : null;
+    const getIframeDoc = typeof options.getIframeDoc === 'function'
+      ? options.getIframeDoc
+      : () => null;
+    const getSlideContainer = typeof options.getSlideContainer === 'function'
+      ? options.getSlideContainer
+      : (doc) => doc && typeof doc.getElementById === 'function'
+        ? doc.getElementById('slidesContainer')
+        : null;
+    const getSlides = typeof options.getSlides === 'function' ? options.getSlides : () => [];
+    const alert = typeof options.alert === 'function'
+      ? options.alert
+      : root && typeof root.alert === 'function'
+        ? root.alert.bind(root)
+        : null;
+    const captureSlideMutationState = typeof options.captureSlideMutationState === 'function'
+      ? options.captureSlideMutationState
+      : null;
+    const getSlideId = typeof options.getSlideId === 'function'
+      ? options.getSlideId
+      : (slide) => slide && slide.id || '';
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const applyDeletion = typeof options.applyDeletion === 'function'
+      ? options.applyDeletion
+      : () => ({ didApply: false, transaction: null });
+    const generateThumbnails = typeof options.generateThumbnails === 'function'
+      ? options.generateThumbnails
+      : null;
+    const restoreDeckViewAfterSlideMutation = typeof options.restoreDeckViewAfterSlideMutation === 'function'
+      ? options.restoreDeckViewAfterSlideMutation
+      : null;
+    const finalizeMutation = typeof options.finalizeMutation === 'function'
+      ? options.finalizeMutation
+      : null;
+
+    function remove(index) {
+      if (!deleteStudioSlideNode) return false;
+
+      const canonicalDeleteSlideBuilders = canonicalSlideApi
+        && typeof canonicalSlideApi.createStudioCanonicalDeleteSlideMutationBuilders === 'function'
+        ? canonicalSlideApi.createStudioCanonicalDeleteSlideMutationBuilders({
+            canonicalDeckApi,
+            buildCanonicalDeck
+          })
+        : null;
+
+      return deleteStudioSlideNode(index, {
+        getIframeDoc,
+        getSlideContainer,
+        getSlides,
+        alert,
+        captureSlideMutationState,
+        getSlideId,
+        buildCanonicalDeleteSlideDeck: canonicalDeleteSlideBuilders
+          ? canonicalDeleteSlideBuilders.buildCanonicalDeleteSlideDeck
+          : null,
+        applyDeletion,
+        generateThumbnails,
+        restoreDeckViewAfterSlideMutation,
+        finalizeMutation
+      });
+    }
+
+    return {
+      remove
+    };
+  }
+
+  return {
+    createStudioEditorSlideDeletionController
+  };
+});
