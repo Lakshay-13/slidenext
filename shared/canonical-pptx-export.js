@@ -233,9 +233,14 @@
             : '';
           const cssFontSize = parseCssPx(cellStyle['font-size']);
           const cellFontSize = cssFontSize === null ? null : Math.max(6, cssFontSize * 0.75);
+          const cellFontWeight = typeof cellStyle['font-weight'] === 'string'
+            ? cellStyle['font-weight'].trim().toLowerCase()
+            : '';
           const cellItalic = typeof cellStyle['font-style'] === 'string'
             && cellStyle['font-style'].trim().toLowerCase() === 'italic';
-          if (cell.tagName === 'th') cellOptions.bold = true;
+          if (cell.tagName === 'th' || /^(bold|[6-9]00)$/.test(cellFontWeight)) {
+            cellOptions.bold = true;
+          }
           if (cellFill) cellOptions.fill = cellFill;
           if (cellColor) cellOptions.color = cellColor;
           if (cellFontFace) cellOptions.fontFace = cellFontFace;
