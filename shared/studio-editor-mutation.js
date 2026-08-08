@@ -16,7 +16,13 @@
       return sourceOptions;
     }
 
-    const canonicalDeck = options.buildCanonicalDeck();
+    let canonicalDeck = null;
+    try {
+      canonicalDeck = options.buildCanonicalDeck();
+    } catch (err) {
+      // Do not interrupt mutation persistence when a legacy deck cannot import.
+      canonicalDeck = null;
+    }
     return canonicalDeck
       ? { ...sourceOptions, canonicalDeck }
       : sourceOptions;

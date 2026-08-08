@@ -124,6 +124,27 @@ test('createStudioMutationFinalizer resolves a canonical deck only when the muta
   ]);
 });
 
+test('createStudioMutationFinalizer preserves mutation persistence when canonical rebuild fails', () => {
+  const calls = [];
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    buildCanonicalDeck() {
+      throw new Error('unsupported legacy markup');
+    },
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    }
+  });
+
+  assert.equal(finalizeMutation('Auto: Legacy Edit', { transaction: { id: 'tx-legacy' } }), 'Auto: Legacy Edit');
+  assert.deepEqual(calls, [
+    ['history', false, { id: 'tx-legacy' }],
+    'save'
+  ]);
+});
+
 test('finalizeStudioMutation delegates version and mutation options to the shared finalizer', () => {
   const calls = [];
   const result = mutation.finalizeStudioMutation({
