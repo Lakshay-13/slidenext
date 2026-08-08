@@ -29,16 +29,9 @@
     const readCanonicalDeckBaseline = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
-          getCanonicalDeckBaseline: getCanonicalDeckBaseline
-            ? (sourceDocument) => {
-                const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
-                if (!liveCanonicalDeck
-                  || (typeof canonicalDeckApi.isCanonicalDeck === 'function'
-                    && !canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
-                  return null;
-                }
-                return liveCanonicalDeck;
-              }
+          getCanonicalDeckBaseline,
+          isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
+            ? canonicalDeckApi.isCanonicalDeck
             : null,
           buildCanonicalDeckBaseline: buildCanonicalDeck
         })
@@ -94,6 +87,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     const nextItems = Array.isArray(options.nextItems) ? options.nextItems : [];
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
@@ -118,6 +114,7 @@
 
     const canonicalDeckBeforeMutation = buildStudioCanonicalLayoutBaseline({
       canonicalDeckApi,
+      canonicalStateApi,
       buildCanonicalDeck,
       buildCanonicalDeckBaseline,
       getCanonicalDeckBaseline,
@@ -136,6 +133,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     const orderedElements = Array.isArray(options.orderedElements) ? options.orderedElements : [];
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
@@ -156,6 +156,7 @@
       ? options.canonicalDeckBeforeMutation
       : buildStudioCanonicalLayoutBaseline({
           canonicalDeckApi,
+          canonicalStateApi,
           buildCanonicalDeck: options.buildCanonicalDeck,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
           getCanonicalDeckBaseline,
