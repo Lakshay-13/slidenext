@@ -4173,7 +4173,12 @@
         ? arguments[1]
         : {};
       if (typeof studioEditorCanonicalDeckBuilder === 'function') {
-        return studioEditorCanonicalDeckBuilder(doc, options);
+        try {
+          return studioEditorCanonicalDeckBuilder(doc, options);
+        } catch (err) {
+          // Keep legacy HTML editing available when canonical import cannot proceed.
+          return null;
+        }
       }
       return null;
     }

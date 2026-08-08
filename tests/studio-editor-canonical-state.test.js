@@ -114,3 +114,22 @@ test('buildEditorCanonicalDeck prefers the active live model unless DOM rebuild 
   );
   assert.equal(calls.length, 1);
 });
+
+test('buildEditorCanonicalDeck fails closed when the canonical builder throws', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorCanonicalDeckSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorCanonicalDeck(doc = getIframeDoc()) {',
+    '\n\n    function resolveEditorCanonicalDeckOverride'
+  );
+  const context = {
+    studioEditorCanonicalDeckBuilder() {
+      throw new Error('unsupported legacy markup');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorCanonicalDeckSource, context);
+
+  assert.equal(context.buildEditorCanonicalDeck({ id: 'legacy-frame' }), null);
+});
