@@ -139,6 +139,30 @@
     };
   }
 
+  function createStudioEditorHistoryEntryAdapter(options = {}) {
+    const historyStateApi = options.historyStateApi && typeof options.historyStateApi === 'object'
+      ? options.historyStateApi
+      : null;
+    const createHistoryEntryBuilder = typeof options.createHistoryEntryBuilder === 'function'
+      ? options.createHistoryEntryBuilder
+      : historyStateApi && typeof historyStateApi.createStudioEditorHistoryEntryBuilder === 'function'
+        ? historyStateApi.createStudioEditorHistoryEntryBuilder
+        : null;
+    if (!createHistoryEntryBuilder) {
+      return () => null;
+    }
+
+    const builderOptions = { ...options };
+    delete builderOptions.historyStateApi;
+    delete builderOptions.createHistoryEntryBuilder;
+    const historyEntryBuilder = createHistoryEntryBuilder(builderOptions);
+    return function createHistoryEntry(doc) {
+      return typeof historyEntryBuilder === 'function'
+        ? historyEntryBuilder(doc)
+        : null;
+    };
+  }
+
   function createStudioEditorHistoryCaptureAdapter(options = {}) {
     const historyApi = options.historyApi && typeof options.historyApi === 'object'
       ? options.historyApi
@@ -318,6 +342,7 @@
   return {
     createStudioEditorHistorySaveAdapter,
     createStudioEditorHistoryEntryBuilder,
+    createStudioEditorHistoryEntryAdapter,
     createStudioEditorHistoryCaptureAdapter,
     createStudioEditorHistoryStepAdapter,
     createStudioEditorHistoryFrameHtmlBuilder

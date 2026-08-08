@@ -7654,15 +7654,16 @@
 
     function createHistoryEntry(doc) {
       if (typeof createHistoryEntry.builder !== 'function') {
-        const createStudioEditorHistoryEntryBuilder = (
+        const createStudioEditorHistoryEntryAdapter = (
           typeof SlideNextStudioEditorHistoryState !== 'undefined'
           && SlideNextStudioEditorHistoryState
-          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryEntryBuilder === 'function'
+          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryEntryAdapter === 'function'
         )
-          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryEntryBuilder
+          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryEntryAdapter
           : null;
-        if (!createStudioEditorHistoryEntryBuilder) return null;
-        createHistoryEntry.builder = createStudioEditorHistoryEntryBuilder({
+        if (!createStudioEditorHistoryEntryAdapter) return null;
+        createHistoryEntry.builder = createStudioEditorHistoryEntryAdapter({
+          historyStateApi: SlideNextStudioEditorHistoryState,
           historyApi: SlideNextStudioHistory,
           getDocument: getIframeDoc,
           getPendingCanonicalDeck: () => (

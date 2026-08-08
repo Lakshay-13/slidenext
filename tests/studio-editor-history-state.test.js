@@ -85,6 +85,35 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
   ]);
 });
 
+test('createStudioEditorHistoryEntryAdapter reuses the shared entry builder', () => {
+  let createCalls = 0;
+  let capturedOptions = null;
+  const adapter = historyState.createStudioEditorHistoryEntryAdapter({
+    historyStateApi: {
+      createStudioEditorHistoryEntryBuilder(options) {
+        createCalls += 1;
+        capturedOptions = options;
+        return doc => ({ doc, source: 'shared-builder' });
+      }
+    },
+    historyApi: { id: 'history-api' },
+    getPendingTransaction: () => ({ id: 'transaction-1' })
+  });
+
+  assert.deepEqual(adapter('doc-1'), { doc: 'doc-1', source: 'shared-builder' });
+  assert.deepEqual(adapter('doc-2'), { doc: 'doc-2', source: 'shared-builder' });
+  assert.equal(createCalls, 1);
+  assert.equal(capturedOptions.historyApi.id, 'history-api');
+  assert.equal(capturedOptions.getPendingTransaction().id, 'transaction-1');
+  assert.equal('historyStateApi' in capturedOptions, false);
+});
+
+test('createStudioEditorHistoryEntryAdapter fails closed without a shared builder', () => {
+  const adapter = historyState.createStudioEditorHistoryEntryAdapter();
+
+  assert.equal(adapter('doc'), null);
+});
+
 test('createStudioEditorHistoryCaptureAdapter reuses the capturer and clears pending state', () => {
   let createCalls = 0;
   let clearCalls = 0;
