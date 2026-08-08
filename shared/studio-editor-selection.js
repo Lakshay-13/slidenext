@@ -10,6 +10,38 @@
     root.SlideNextStudioEditorSelection = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (liveSelection) {
+  function buildStudioEditorSelectionOptions(options = {}) {
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const activeSlide = Object.prototype.hasOwnProperty.call(options, 'activeSlide')
+      ? options.activeSlide
+      : getActiveSlide(options.doc);
+    const isEditableElement = typeof options.isEditableElement === 'function'
+      ? options.isEditableElement
+      : () => true;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : () => '';
+    const getElementById = typeof options.getElementById === 'function'
+      ? options.getElementById
+      : () => null;
+
+    return {
+      selectionClassName: 'editor-selected',
+      isEligibleElement: (element) => !!(
+        isEditableElement(element)
+        && activeSlide
+        && typeof activeSlide.contains === 'function'
+        && activeSlide.contains(element)
+      ),
+      getElementId,
+      getActiveSlide,
+      getElementById,
+      ...options
+    };
+  }
+
   function normalizeStudioSelectionState(nextSelectionState = {}, options = {}) {
     const rawSelectedElements = Array.isArray(nextSelectionState.selectedElements)
       ? nextSelectionState.selectedElements
@@ -331,6 +363,7 @@
   }
 
   return {
+    buildStudioEditorSelectionOptions,
     normalizeStudioSelectionState,
     getStudioSelectedElementIds,
     getStudioCommittedSelectedElements,

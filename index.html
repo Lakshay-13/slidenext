@@ -3997,6 +3997,20 @@
       const activeSlide = Object.prototype.hasOwnProperty.call(options, 'activeSlide')
         ? options.activeSlide
         : getActiveSlide(doc);
+      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
+        ? SlideNextStudioEditorSelection
+        : null;
+      if (selectionApi && typeof selectionApi.buildStudioEditorSelectionOptions === 'function') {
+        return selectionApi.buildStudioEditorSelectionOptions({
+          ...options,
+          doc,
+          activeSlide,
+          isEditableElement: isEligibleEditableElement,
+          getElementId: assignEditorElementId,
+          getActiveSlide,
+          getElementById: getElementByEditorId
+        });
+      }
       return {
         selectionClassName: 'editor-selected',
         isEligibleElement: (element) => {

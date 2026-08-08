@@ -3,6 +3,30 @@ const assert = require('node:assert/strict');
 
 const studioSelection = require('../shared/studio-editor-selection.js');
 
+test('buildStudioEditorSelectionOptions scopes editable elements to the active slide', () => {
+  const activeElement = { id: 'active' };
+  const offSlideElement = { id: 'off-slide' };
+  const activeSlide = {
+    contains(element) {
+      return element === activeElement;
+    }
+  };
+
+  const options = studioSelection.buildStudioEditorSelectionOptions({
+    doc: { id: 'editor-doc' },
+    activeSlide,
+    isEditableElement: (element) => !!element,
+    getElementId: (element) => element.id,
+    getElementById: () => null,
+    getActiveSlide: () => activeSlide
+  });
+
+  assert.equal(options.selectionClassName, 'editor-selected');
+  assert.equal(options.isEligibleElement(activeElement), true);
+  assert.equal(options.isEligibleElement(offSlideElement), false);
+  assert.equal(options.getElementId(activeElement), 'active');
+});
+
 test('getStudioSelectedElementIds reuses live selection normalization', () => {
   const first = { id: 'first', isConnected: true, eligible: true };
   const second = { id: 'second', isConnected: true, eligible: true };
