@@ -78,6 +78,56 @@ test('syncInspectorForSelection delegates inspector control synchronization to t
   assert.equal(delegatedOptions.highlightAlignButton, context.highlightAlignButton);
 });
 
+test('syncInspectorForSelection resolves the canonical node for the selected element', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncInspectorForSelectionSource = extractFunctionSource(
+    fileContent,
+    'function syncInspectorForSelection() {',
+    '\n\n    // Click Selection highlights'
+  );
+  const selectedElement = { dataset: { editorId: 'node-1' } };
+  let delegatedOptions = null;
+  const context = {
+    SlideNextStudioEditorInspectorView: {
+      syncStudioInspectorSelection(options) {
+        delegatedOptions = options;
+        return true;
+      }
+    },
+    SlideNextStudioEditorLiveSelection: {
+      buildStudioLiveSelectionState() {
+        return {
+          hasSelection: true,
+          count: 1,
+          primaryElement: selectedElement,
+          selection: [selectedElement]
+        };
+      }
+    },
+    document: {},
+    selectedElements: [selectedElement],
+    rgbToHex() {},
+    highlightAlignButton() {},
+    buildEditorCanonicalDeck() {
+      return {
+        slides: [{ nodes: [{ id: 'node-1', layout: { zIndex: 7 } }] }]
+      };
+    },
+    getIframeDoc() {
+      return { id: 'iframe-document' };
+    }
+  };
+
+  createInspectorTestContext(context);
+  vm.runInContext(syncInspectorForSelectionSource, context);
+
+  assert.equal(context.syncInspectorForSelection(), true);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(delegatedOptions.canonicalNode)),
+    { id: 'node-1', layout: { zIndex: 7 } }
+  );
+});
+
 test('syncInspectorForSelection fails closed when live-selection state is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const syncInspectorForSelectionSource = extractFunctionSource(

@@ -5434,10 +5434,34 @@
       if (!inspectorController || typeof inspectorController.syncStudioInspectorForSelection !== 'function') {
         return false;
       }
+      const primaryElement = liveSelectionState.primaryElement;
+      const primaryElementId = primaryElement && primaryElement.dataset
+        ? primaryElement.dataset.editorId
+        : '';
+      const findCanonicalNode = (nodes = []) => {
+        for (const node of Array.isArray(nodes) ? nodes : []) {
+          if (node && node.id === primaryElementId) return node;
+          const nestedNode = findCanonicalNode(node && node.children);
+          if (nestedNode) return nestedNode;
+        }
+        return null;
+      };
+      let canonicalNode = null;
+      if (primaryElementId && typeof buildEditorCanonicalDeck === 'function') {
+        try {
+          const canonicalDeck = buildEditorCanonicalDeck(getIframeDoc());
+          canonicalNode = canonicalDeck && Array.isArray(canonicalDeck.slides)
+            ? canonicalDeck.slides.reduce((match, slide) => match || findCanonicalNode(slide && slide.nodes), null)
+            : null;
+        } catch (err) {
+          canonicalNode = null;
+        }
+      }
       return inspectorController.syncStudioInspectorForSelection({
         documentRef: document,
         selectionState: liveSelectionState,
         inspectorView,
+        canonicalNode,
         rgbToHex,
         highlightAlignButton,
         updateAssetLibraryState: typeof updateAssetLibraryState === 'function'

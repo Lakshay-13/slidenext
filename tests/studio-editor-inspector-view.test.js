@@ -231,6 +231,25 @@ test('syncStudioInspectorTypographyControls applies font, color, alignment, z-in
   assert.deepEqual(alignment, ['right']);
 });
 
+test('syncStudioInspectorTypographyControls prefers canonical z-index data', () => {
+  const zIndexInput = { value: '' };
+
+  assert.equal(inspectorView.syncStudioInspectorTypographyControls({
+    documentRef: {
+      getElementById(id) {
+        return id === 'elZIndex' ? zIndexInput : null;
+      }
+    },
+    primaryElement: { style: { zIndex: '12' } },
+    canonicalNode: { layout: { zIndex: 7 } },
+    computedStyles: {
+      fontFamily: 'sans-serif',
+      color: '#fff'
+    }
+  }), true);
+  assert.equal(zIndexInput.value, '7');
+});
+
 test('syncStudioInspectorBorderControls applies border values for shape-like selections', () => {
   const classList = createClassList();
   classList.add('editor-shape');

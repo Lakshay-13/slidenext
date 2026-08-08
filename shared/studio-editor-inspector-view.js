@@ -218,7 +218,14 @@
     if (textColorInput) textColorInput.value = rgbToHex(computedStyles.color);
     highlightAlignButton(computedStyles.textAlign || 'left');
     const zIndexInput = documentRef.getElementById('elZIndex');
-    if (zIndexInput) zIndexInput.value = primaryElement.style.zIndex || 0;
+    const canonicalZIndex = options.canonicalNode
+      && options.canonicalNode.layout
+      && options.canonicalNode.layout.zIndex;
+    if (zIndexInput) {
+      zIndexInput.value = Number.isFinite(canonicalZIndex)
+        ? String(canonicalZIndex)
+        : primaryElement.style.zIndex || 0;
+    }
 
     const opacityVal = Math.round((parseFloat(computedStyles.opacity || '1')) * 100);
     const opacityInput = documentRef.getElementById('elOpacity');

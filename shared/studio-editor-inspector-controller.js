@@ -34,6 +34,7 @@
       return inspectorView.syncStudioInspectorSelection({
         documentRef,
         selectionState,
+        canonicalNode: options.canonicalNode,
         rgbToHex: options.rgbToHex,
         highlightAlignButton: options.highlightAlignButton
       });
@@ -50,12 +51,14 @@
     inspectorView.syncStudioInspectorContentControls({
       documentRef,
       primaryElement,
-      isMulti: selectionSummary.isMulti
+      isMulti: selectionSummary.isMulti,
+      canonicalNode: options.canonicalNode
     });
     inspectorView.syncStudioInspectorTypographyControls({
       documentRef,
       primaryElement,
       computedStyles,
+      canonicalNode: options.canonicalNode,
       rgbToHex: options.rgbToHex,
       highlightAlignButton: options.highlightAlignButton
     });
