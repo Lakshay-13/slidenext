@@ -118,6 +118,7 @@ test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requ
     schemaVersion: 1,
     slides: []
   };
+  let canonicalBuildOptions = null;
   const context = {
     SlideNextStudioEditorPersistence: editorPersistence,
     SlideNextCanonicalDeck: {
@@ -130,8 +131,9 @@ test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requ
       assert.equal(nextDoc, doc);
       return '<html>persisted</html>';
     },
-    buildEditorCanonicalDeck(nextDoc) {
+    buildEditorCanonicalDeck(nextDoc, options) {
       assert.equal(nextDoc, doc);
+      canonicalBuildOptions = options;
       return canonicalDeck;
     },
     getIframeDoc() {
@@ -155,6 +157,10 @@ test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requ
       versionLabel: 'Auto: Updated Deck',
       canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeck)
     }
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(canonicalBuildOptions)),
+    { preferLiveCanonicalDeck: false }
   );
 });
 

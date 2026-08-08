@@ -8280,7 +8280,9 @@
             : (nextCanonicalDeck, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
                 nextCanonicalDeck,
                 {
-                  buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
+                  buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc, {
+                    preferLiveCanonicalDeck: false
+                  })
                 }
               ),
           buildPersistableDeckHtml: typeof options.buildPersistableDeckHtml === 'function'
@@ -8325,7 +8327,9 @@
           resolveCanonicalDeck: (nextCanonicalDeck, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
             nextCanonicalDeck,
             {
-              buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
+              buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc, {
+                preferLiveCanonicalDeck: false
+              })
             }
           ),
           buildPersistableDeckHtml
@@ -8348,7 +8352,9 @@
           resolveCanonicalDeck: (nextCanonicalDeck, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
             nextCanonicalDeck,
             {
-              buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
+              buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc, {
+                preferLiveCanonicalDeck: false
+              })
             }
           ),
           buildPersistableDeckHtml
@@ -8372,7 +8378,9 @@
       const resolvedCanonicalDeck = capturedDeckState && capturedDeckState.canonicalDeck
         ? capturedDeckState.canonicalDeck
         : resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc, {
+              preferLiveCanonicalDeck: false
+            })
           });
       const resolvedCleanHtml = typeof cleanHtml === 'string'
         ? cleanHtml
