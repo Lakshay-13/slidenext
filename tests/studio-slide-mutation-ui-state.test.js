@@ -1223,6 +1223,20 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
   assert.equal(calls[14][1], 2);
 });
 
+test('slide reorder wiring rebuilds the canonical deck from the iframe DOM', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const controllerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideReorderController =',
+    'const studioEditorSlideInsertionController ='
+  );
+
+  assert.match(
+    controllerSource,
+    /buildCanonicalDeck: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc, \{\s*preferLiveCanonicalDeck: false\s*\}\)/
+  );
+});
+
 test('reorderSlides delegates DOM ordering and transaction capture to the shared deck view', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const reorderSlidesSource = extractFunctionSource(

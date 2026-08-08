@@ -1622,7 +1622,9 @@
           getIframeDoc: () => getIframeDoc(),
           getSlides: (...args) => getSlides(...args),
           getSlideId: (...args) => getEditorSlideId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+            preferLiveCanonicalDeck: false
+          }),
           captureSlideMutationState: (...args) => captureSlideMutationRestoreState(...args),
           applyReorder: (...args) => applyEditorSlideReorderWithTransaction(...args),
           generateThumbnails: (...args) => generateThumbnails(...args),
