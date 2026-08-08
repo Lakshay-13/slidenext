@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 
 test('buildStudioCanonicalInsertionDeck imports and appends a new node without mutating the source', () => {
@@ -40,6 +41,7 @@ test('buildStudioCanonicalInsertionDeck builds the baseline from the source docu
     { dataset: { editorId: 'inserted' } },
     {
       canonicalDeckApi: canonicalDeck,
+      canonicalStateApi: canonicalState,
       buildCanonicalDeckBaseline(documentRef) {
         builtFromDocument = documentRef;
         return sourceDeck;
@@ -65,6 +67,7 @@ test('buildStudioCanonicalInsertionBaseline prefers a valid live canonical deck'
   let didBuildFromDocument = false;
   const result = canonicalInsertion.buildStudioCanonicalInsertionBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return liveDeck;
     },
@@ -142,6 +145,7 @@ test('createStudioCanonicalInsertionMutationBuilders falls back when the live ba
   let didBuildFromDocument = false;
   const builders = canonicalInsertion.createStudioCanonicalInsertionMutationBuilders({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return { invalid: true };
     },
