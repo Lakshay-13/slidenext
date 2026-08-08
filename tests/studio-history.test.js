@@ -439,6 +439,34 @@ test('normalizeStudioHistoryEntry preserves the canonical deck sidecar', () => {
   });
 });
 
+test('normalizeStudioHistoryEntry rejects malformed canonical sidecars by default', () => {
+  assert.deepEqual(studioHistory.normalizeStudioHistoryEntry({
+    html: '<html><body><main>snapshot</main></body></html>',
+    canonicalDeck: { invalid: true }
+  }), {
+    html: '<body><main>snapshot</main></body>',
+    activeSlideId: '',
+    selectedElementIds: [],
+    canonicalDeck: null
+  });
+});
+
+test('createStudioHistoryEntry falls back to HTML for malformed canonical sidecars', () => {
+  const entry = studioHistory.createStudioHistoryEntry({ id: 'history-doc' }, {
+    canonicalDeck: { invalid: true },
+    buildHistoryHtml() {
+      return '<html><body><main>fallback</main></body></html>';
+    }
+  });
+
+  assert.deepEqual(entry, {
+    html: '<body><main>fallback</main></body>',
+    activeSlideId: '',
+    selectedElementIds: [],
+    canonicalDeck: null
+  });
+});
+
 test('history equality includes optional transaction metadata', () => {
   const baseEntry = {
     html: '<main>same</main>',

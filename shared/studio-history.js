@@ -7,11 +7,20 @@
     root.SlideNextStudioHistory = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function isStudioHistoryCanonicalDeckLike(value) {
+    return !!value
+      && typeof value === 'object'
+      && !Array.isArray(value)
+      && Array.isArray(value.slides);
+  }
+
   function isValidStudioHistoryCanonicalDeck(value, validator) {
     if (!value) return false;
-    if (typeof validator !== 'function') return true;
+    const validate = typeof validator === 'function'
+      ? validator
+      : isStudioHistoryCanonicalDeckLike;
     try {
-      return validator(value) === true;
+      return validate(value) === true;
     } catch (err) {
       return false;
     }
@@ -256,12 +265,15 @@
       };
     }
 
+    const candidateCanonicalDeck = entry.canonicalDeck && typeof entry.canonicalDeck === 'object'
+      ? entry.canonicalDeck
+      : null;
     const normalizedEntry = {
       html: normalizeStudioHistoryFrameHtml(entry.html || ''),
       activeSlideId: entry.activeSlideId || '',
       selectedElementIds: normalizeStudioHistoryIdList(entry.selectedElementIds),
-      canonicalDeck: entry.canonicalDeck && typeof entry.canonicalDeck === 'object'
-        ? entry.canonicalDeck
+      canonicalDeck: isValidStudioHistoryCanonicalDeck(candidateCanonicalDeck)
+        ? candidateCanonicalDeck
         : null
     };
     const transaction = normalizeStudioHistoryTransaction(entry.transaction);
