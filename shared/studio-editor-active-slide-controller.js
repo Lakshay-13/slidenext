@@ -62,6 +62,9 @@
     const buildEditorDeckSnapshot = typeof options.buildEditorDeckSnapshot === 'function'
       ? options.buildEditorDeckSnapshot
       : () => ({ slides: [] });
+    const buildEditorCanonicalDeck = typeof options.buildEditorCanonicalDeck === 'function'
+      ? options.buildEditorCanonicalDeck
+      : null;
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : () => {};
@@ -135,6 +138,30 @@
         return false;
       }
 
+      let didResolveCanonicalWallpaperSlide = false;
+      let canonicalWallpaperSlide = null;
+      const resolveWallpaperSlide = (activeSlide) => {
+        if (didResolveCanonicalWallpaperSlide) {
+          return canonicalWallpaperSlide || activeSlide;
+        }
+        didResolveCanonicalWallpaperSlide = true;
+        if (!buildEditorCanonicalDeck || !activeSlide) return activeSlide;
+
+        let canonicalDeck = null;
+        try {
+          canonicalDeck = buildEditorCanonicalDeck(doc);
+        } catch (err) {
+          canonicalDeck = null;
+        }
+        const activeSlideId = getSlideId(activeSlide) || activeSlide.id
+          || (activeSlide.dataset && activeSlide.dataset.slideId) || '';
+        canonicalWallpaperSlide = canonicalDeck
+          && Array.isArray(canonicalDeck.slides)
+          ? canonicalDeck.slides.find((slide) => slide && slide.id === activeSlideId) || null
+          : null;
+        return canonicalWallpaperSlide || activeSlide;
+      };
+
       return activeSlideView.syncStudioActiveSlideChrome(doc, {
         ...syncOptions,
         getCurrentSlideIndex,
@@ -193,7 +220,7 @@
           if (!wallpaperView || typeof wallpaperView.syncStudioCustomGradientControls !== 'function') return false;
           const result = wallpaperView.syncStudioCustomGradientControls({
             documentRef,
-            activeSlide,
+            activeSlide: resolveWallpaperSlide(activeSlide),
             rgbToHex
           });
           if (!result || !result.didApply) return false;
@@ -204,7 +231,7 @@
           if (!wallpaperView || typeof wallpaperView.syncStudioWallpaperTabChrome !== 'function') return false;
           const result = wallpaperView.syncStudioWallpaperTabChrome({
             documentRef,
-            activeSlide,
+            activeSlide: resolveWallpaperSlide(activeSlide),
             wallpaperTab: typeof getWallpaperTab() === 'string' ? getWallpaperTab() : '',
             didSyncCustomGradientControls: wallpaperOptions.didSyncCustomGradientControls
           });
@@ -216,7 +243,7 @@
           if (!wallpaperView || typeof wallpaperView.syncStudioSolidWallpaperControl !== 'function') return false;
           return wallpaperView.syncStudioSolidWallpaperControl({
             documentRef,
-            activeSlide,
+            activeSlide: resolveWallpaperSlide(activeSlide),
             rgbToHex
           });
         }

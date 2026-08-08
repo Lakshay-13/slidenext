@@ -18,6 +18,52 @@
       : '';
   }
 
+  function readStudioStyleDeclarationValue(styleText, property) {
+    if (typeof styleText !== 'string' || !styleText.trim() || typeof property !== 'string') {
+      return '';
+    }
+    const normalizedProperty = property.trim().toLowerCase();
+    const declaration = styleText.split(';').find((candidate) => {
+      const separatorIndex = candidate.indexOf(':');
+      return separatorIndex >= 0
+        && candidate.slice(0, separatorIndex).trim().toLowerCase() === normalizedProperty;
+    });
+    if (!declaration) return '';
+    return declaration.slice(declaration.indexOf(':') + 1).trim();
+  }
+
+  function resolveStudioActiveSlideBackgroundValues(activeSlide) {
+    const canonicalBackground = activeSlide
+      && activeSlide.layout
+      && activeSlide.layout.background
+      && typeof activeSlide.layout.background === 'object'
+      ? activeSlide.layout.background
+      : null;
+    if (canonicalBackground) {
+      const styleText = typeof canonicalBackground.style === 'string'
+        ? canonicalBackground.style
+        : '';
+      const background = readStudioStyleDeclarationValue(styleText, 'background')
+        || (typeof canonicalBackground.color === 'string' ? canonicalBackground.color.trim() : '')
+        || (typeof canonicalBackground.image === 'string' ? canonicalBackground.image.trim() : '');
+      return {
+        background,
+        backgroundColor: typeof canonicalBackground.color === 'string'
+          ? canonicalBackground.color.trim()
+          : readStudioStyleDeclarationValue(styleText, 'background-color'),
+        backgroundImage: typeof canonicalBackground.image === 'string'
+          ? canonicalBackground.image.trim()
+          : readStudioStyleDeclarationValue(styleText, 'background-image')
+      };
+    }
+
+    return {
+      background: readInlineStyleValue(activeSlide, 'background'),
+      backgroundColor: readInlineStyleValue(activeSlide, 'backgroundColor'),
+      backgroundImage: readInlineStyleValue(activeSlide, 'backgroundImage')
+    };
+  }
+
   function rgbToHex(value, converter = null) {
     if (typeof converter === 'function') return converter(value);
     if (!colorUtils || typeof colorUtils.rgbToHex !== 'function') return '#ffffff';
@@ -65,11 +111,12 @@
   }
 
   function resolveStudioActiveSlideSolidWallpaperColor(activeSlide) {
-    const backgroundImage = readInlineStyleValue(activeSlide, 'backgroundImage');
+    const backgroundValues = resolveStudioActiveSlideBackgroundValues(activeSlide);
+    const backgroundImage = backgroundValues.backgroundImage;
     if (backgroundImage && backgroundImage !== 'none') return '';
 
-    const backgroundColor = readInlineStyleValue(activeSlide, 'backgroundColor');
-    const background = readInlineStyleValue(activeSlide, 'background');
+    const backgroundColor = backgroundValues.backgroundColor;
+    const background = backgroundValues.background;
     const fallbackColorMatch = background && !/gradient\(/i.test(background)
       ? background.match(/#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)/)
       : null;
@@ -77,10 +124,11 @@
   }
 
   function resolveStudioActiveSlideGradientBackground(activeSlide) {
-    const background = readInlineStyleValue(activeSlide, 'background');
+    const backgroundValues = resolveStudioActiveSlideBackgroundValues(activeSlide);
+    const background = backgroundValues.background;
     if (background && /gradient\(/i.test(background)) return background;
 
-    const backgroundImage = readInlineStyleValue(activeSlide, 'backgroundImage');
+    const backgroundImage = backgroundValues.backgroundImage;
     if (backgroundImage && backgroundImage !== 'none' && /gradient\(/i.test(backgroundImage)) {
       return backgroundImage;
     }

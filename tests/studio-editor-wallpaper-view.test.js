@@ -22,6 +22,38 @@ test('resolveStudioActiveSlideSolidWallpaperColor handles solid and gradient bac
   );
 });
 
+test('wallpaper readers accept canonical slide background metadata', () => {
+  const canonicalSolidSlide = {
+    layout: {
+      background: {
+        color: '#112233',
+        style: 'background: #112233;'
+      }
+    }
+  };
+  const canonicalGradientSlide = {
+    layout: {
+      background: {
+        style: 'background: linear-gradient(210deg, #112233 0%, #445566 100%);'
+      }
+    }
+  };
+
+  assert.equal(
+    wallpaperView.resolveStudioActiveSlideSolidWallpaperColor(canonicalSolidSlide),
+    '#112233'
+  );
+  assert.deepEqual(
+    wallpaperView.resolveStudioActiveSlideGradientControls(canonicalGradientSlide),
+    {
+      gradientType: 'linear',
+      color1Value: '#112233',
+      color2Value: '#445566',
+      angleValue: '210'
+    }
+  );
+});
+
 test('resolveStudioActiveSlideGradientControls parses editable linear and radial gradients', () => {
   assert.deepEqual(
     wallpaperView.resolveStudioActiveSlideGradientControls({

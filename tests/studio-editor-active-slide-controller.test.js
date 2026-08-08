@@ -110,3 +110,45 @@ test('active-slide controller synchronizes wallpaper state and fails closed with
   const unavailable = activeSlideController.createStudioEditorActiveSlideController();
   assert.equal(unavailable.sync(null), false);
 });
+
+test('active-slide controller prefers canonical active slide for wallpaper readers', () => {
+  const canonicalSlide = {
+    id: 'slide-1',
+    layout: { background: { style: 'background: #112233;' } }
+  };
+  const wallpaperSlides = [];
+  const controller = activeSlideController.createStudioEditorActiveSlideController({
+    activeSlideView: {
+      syncStudioActiveSlideChrome(doc, options) {
+        const domSlide = { id: 'slide-1' };
+        options.syncCustomGradientControls(domSlide);
+        options.syncWallpaperTabChrome(domSlide);
+        options.syncSolidWallpaperControl(domSlide);
+        return true;
+      }
+    },
+    wallpaperView: {
+      syncStudioCustomGradientControls(options) {
+        wallpaperSlides.push(options.activeSlide);
+        return { didApply: false };
+      },
+      syncStudioWallpaperTabChrome(options) {
+        wallpaperSlides.push(options.activeSlide);
+        return { didApply: false };
+      },
+      syncStudioSolidWallpaperControl(options) {
+        wallpaperSlides.push(options.activeSlide);
+        return { didApply: false };
+      }
+    },
+    buildEditorCanonicalDeck() {
+      return { slides: [canonicalSlide] };
+    },
+    getSlideId(slide) {
+      return slide.id;
+    }
+  });
+
+  assert.equal(controller.sync({ id: 'iframe-document' }), true);
+  assert.deepEqual(wallpaperSlides, [canonicalSlide, canonicalSlide, canonicalSlide]);
+});
