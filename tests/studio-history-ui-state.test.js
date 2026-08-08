@@ -487,8 +487,7 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
     'getIframeDoc',
     'buildEditorCanonicalDeck',
     'getEditorHistoryOptions',
-    'getPersistedActiveSlideId',
-    'getEditorHistoryOptions'
+    'getPersistedActiveSlideId'
   ]);
   assert.equal(calls[1][1], null);
   assert.equal(entry.html, '');
@@ -545,6 +544,7 @@ test('createHistoryEntry reuses the shared history entry builder when available'
   assert.equal(delegatedArgs.options.buildHistoryHtml, context.buildHistoryFrameHtml);
   assert.equal(delegatedArgs.options.getActiveSlideId, context.getActiveSlideId);
   assert.equal(delegatedArgs.options.getSelectedElementIds, context.getCommittedSelectedEditorElementIds);
+  assert.equal(delegatedArgs.options.preferCanonicalDeck, true);
 });
 
 test('buildHistoryFrameHtml reuses shared deck source sanitization for history snapshots', () => {

@@ -164,7 +164,8 @@
       selectedElementIds: [],
       buildHistoryHtml: options.buildHistoryHtml,
       canonicalDeck,
-      transaction: options.transaction
+      transaction: options.transaction,
+      preferCanonicalDeck: options.preferCanonicalDeck === true
     });
   }
 
@@ -189,7 +190,7 @@
       ? options.canonicalDeck
       : null;
     const transaction = normalizeStudioHistoryTransaction(options.transaction);
-    const html = canonicalDeck && transaction
+    const html = canonicalDeck && (transaction || options.preferCanonicalDeck === true)
       ? ''
       : normalizeStudioHistoryFrameHtml(buildHistoryHtml(doc, options));
 

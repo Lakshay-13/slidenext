@@ -140,6 +140,38 @@ test('createStudioHistoryEntry makes canonical transaction entries model-first w
   });
 });
 
+test('createStudioHistoryEntry can prefer canonical history without a transaction', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  let buildHistoryHtmlCalls = 0;
+
+  const entry = studioHistory.createStudioHistoryEntry({ id: 'doc' }, {
+    canonicalDeck,
+    preferCanonicalDeck: true,
+    buildHistoryHtml() {
+      buildHistoryHtmlCalls += 1;
+      return '<html>should not be serialized</html>';
+    },
+    getActiveSlideId() {
+      return 'slide-1';
+    },
+    getSelectedElementIds() {
+      return [];
+    }
+  });
+
+  assert.equal(buildHistoryHtmlCalls, 0);
+  assert.deepEqual(entry, {
+    html: '',
+    activeSlideId: 'slide-1',
+    selectedElementIds: [],
+    canonicalDeck
+  });
+});
+
 test('createStudioHistoryEntry can capture a model-only history entry without a live document', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',

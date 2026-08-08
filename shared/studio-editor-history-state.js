@@ -134,7 +134,8 @@
         buildHistoryHtml,
         getActiveSlideId,
         getSelectedElementIds,
-        transaction: getPendingTransaction()
+        transaction: getPendingTransaction(),
+        preferCanonicalDeck: options.preferCanonicalDeck === true
       });
     };
   }

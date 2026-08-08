@@ -45,8 +45,16 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
   const historyApi = {
     buildStudioHistoryEntry(doc, options) {
       const canonicalDeck = options.buildCanonicalDeck(doc);
-      calls.push({ doc, canonicalDeck, transaction: options.transaction });
-      return { canonicalDeck, transaction: options.transaction };
+      calls.push({
+        doc,
+        canonicalDeck,
+        transaction: options.transaction,
+        preferCanonicalDeck: options.preferCanonicalDeck
+      });
+      return {
+        canonicalDeck,
+        transaction: options.transaction
+      };
     }
   };
   const baseDeck = { kind: 'slidenext.deck', slides: [] };
@@ -56,6 +64,7 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
     getPendingCanonicalDeck() {
       return pendingCanonicalDeck;
     },
+    preferCanonicalDeck: true,
     buildCanonicalDeck(doc, options) {
       return options && options.canonicalDeckOverride
         ? options.canonicalDeckOverride
@@ -83,6 +92,8 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
     { doc: 'doc-1', canonicalDeck: overrideDeck, transaction: { id: 'transaction-1' } },
     { doc: 'doc-2', canonicalDeck: baseDeck, transaction: { id: 'transaction-2' } }
   ]);
+  assert.equal(calls[0].preferCanonicalDeck, true);
+  assert.equal(calls[1].preferCanonicalDeck, true);
 });
 
 test('createStudioEditorHistoryEntryAdapter reuses the shared entry builder', () => {
