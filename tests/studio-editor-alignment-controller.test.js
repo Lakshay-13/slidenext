@@ -34,6 +34,7 @@ test('alignment controller assembles canonical layout and transaction dependenci
     getIframeDoc: () => ({ id: 'doc' }),
     assignElementId: () => 'node-1',
     buildCanonicalDeck: () => ({ slides: [] }),
+    buildCanonicalDeckBaseline: () => ({ slides: [] }),
     applyPositionLayout: (...args) => {
       calls.push(['position', ...args]);
       return { didApply: true, transaction: { id: 'position-transaction' } };
@@ -47,6 +48,7 @@ test('alignment controller assembles canonical layout and transaction dependenci
   assert.equal(calls[0][2], 'middle');
   assert.equal(calls[1][0], 'builder');
   assert.equal(calls[1][1].canonicalDeckApi.id, 'deck-api');
+  assert.equal(typeof calls[1][1].buildCanonicalDeckBaseline, 'function');
   assert.equal(calls[2][0], 'canonical');
   assert.equal(calls[2][1].sourceDocument.id, 'doc');
   assert.equal(calls[3][0], 'position');

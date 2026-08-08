@@ -32,6 +32,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const applyPositionLayout = typeof options.applyPositionLayout === 'function'
       ? options.applyPositionLayout
       : () => ({ didApply: false, transaction: null });
@@ -45,7 +48,8 @@
         && typeof canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder === 'function'
         ? canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder({
             canonicalDeckApi,
-            buildCanonicalDeck
+            buildCanonicalDeck,
+            buildCanonicalDeckBaseline
           })
         : null;
       const canonicalDeck = canonicalLayoutBuilder

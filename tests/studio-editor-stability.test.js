@@ -158,6 +158,10 @@ test('alignment wiring rebuilds the canonical deck from the iframe DOM', () => {
     controllerSource,
     /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/
   );
+  assert.match(
+    controllerSource,
+    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
+  );
 });
 
 test('group wiring rebuilds the canonical deck from the iframe DOM', () => {
