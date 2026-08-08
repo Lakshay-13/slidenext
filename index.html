@@ -5275,23 +5275,26 @@
     }
 
     function updateMotionActionState(doc = getIframeDoc()) {
-      const motionActionState = buildMotionSelectionActionState(doc);
-      const syncStudioNudgeToolbarState = (
-        typeof SlideNextStudioEditorNudge !== 'undefined'
-        && SlideNextStudioEditorNudge
-        && typeof SlideNextStudioEditorNudge.syncStudioNudgeToolbarState === 'function'
-      )
-        ? SlideNextStudioEditorNudge.syncStudioNudgeToolbarState
+      const nudgeState = typeof SlideNextStudioEditorNudge !== 'undefined'
+        ? SlideNextStudioEditorNudge
         : null;
-      if (syncStudioNudgeToolbarState) {
-        return syncStudioNudgeToolbarState({
-          documentRef: document,
-          canNudge: motionActionState.canNudge
-        });
+      if (!nudgeState) {
+        return false;
       }
-      return SlideNextStudioEditorNudge.renderStudioNudgeToolbarState({
+      const motionActionState = buildMotionSelectionActionState(doc);
+      const toolbarOptions = {
         documentRef: document,
         canNudge: motionActionState.canNudge
+      };
+      if (typeof nudgeState.syncStudioNudgeToolbarState === 'function') {
+        return nudgeState.syncStudioNudgeToolbarState(toolbarOptions);
+      }
+      if (typeof nudgeState.renderStudioNudgeToolbarState !== 'function') {
+        return false;
+      }
+      return nudgeState.renderStudioNudgeToolbarState({
+          documentRef: document,
+          canNudge: motionActionState.canNudge
       });
     }
 
