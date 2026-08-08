@@ -106,6 +106,10 @@ test('validateStudioPdfSlideCount fails closed when the print document has the w
     }, { slideCount: 1 }).message,
     /could not be evaluated/
   );
+  assert.match(
+    pdfExport.validateStudioPdfSlideCount({}, { slideCount: 1 }).message,
+    /querySelectorAll is unavailable/
+  );
 });
 
 test('waitForStudioPdfPrintResources waits for fonts and image load or error', async () => {

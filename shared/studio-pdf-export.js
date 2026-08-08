@@ -132,12 +132,12 @@
     const expectedSlideCount = Number.isInteger(options.slideCount)
       ? options.slideCount
       : null;
-    if (
-      expectedSlideCount === null
-      || !documentRef
-      || typeof documentRef.querySelectorAll !== 'function'
-    ) {
+    if (expectedSlideCount === null) {
       return null;
+    }
+    if (!documentRef) return new Error('PDF print document is unavailable');
+    if (typeof documentRef.querySelectorAll !== 'function') {
+      return new Error('PDF slide selector could not be evaluated: querySelectorAll is unavailable');
     }
 
     const slideSelector = typeof options.slideSelector === 'string' && options.slideSelector.trim()
