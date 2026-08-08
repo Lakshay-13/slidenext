@@ -379,6 +379,7 @@
               doc: iframeDoc,
               slide: activeSlide,
               orderedElements: orderedLayerElements,
+              isLocked: () => !!layer.isLocked,
               canMutateDeck: () => canRunLayerActions
             }
           )

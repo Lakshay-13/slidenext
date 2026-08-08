@@ -458,7 +458,7 @@ test('syncStudioLayerList assembles live layer action state before shared render
     activeSlideId: 'slide-1',
     slides: [{
       id: 'slide-1',
-      elements: [{ id: 'node-1', isLocked: false }]
+      elements: [{ id: 'node-1', isLocked: true }]
     }]
   };
 
@@ -500,6 +500,7 @@ test('syncStudioLayerList assembles live layer action state before shared render
       assert.deepEqual(elements, [liveElement]);
       assert.equal(options.slide, activeSlide);
       assert.deepEqual(options.orderedElements, [liveElement]);
+      assert.equal(options.isLocked(liveElement), true);
       assert.equal(options.canMutateDeck(), true);
       return { canBringForward: true };
     }
