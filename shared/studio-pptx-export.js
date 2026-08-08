@@ -52,6 +52,25 @@
     }
   }
 
+  function getResponseFailureFallback(response) {
+    const status = Number(response && response.status);
+    return Number.isInteger(status) && status >= 400
+      ? `PPTX export request failed (HTTP ${status})`
+      : 'PPTX export request failed';
+  }
+
+  async function getResponseFailureMessage(response) {
+    const fallback = getResponseFailureFallback(response);
+    if (!response || typeof response.json !== 'function') return fallback;
+    try {
+      const payload = await response.json();
+      const message = payload && typeof payload.error === 'string' ? payload.error.trim() : '';
+      return message || fallback;
+    } catch (error) {
+      return fallback;
+    }
+  }
+
   async function exportStudioPptx(options = {}) {
     const fetchImpl = typeof options.fetchImpl === 'function'
       ? options.fetchImpl
@@ -86,7 +105,11 @@
         })
       });
       if (!response || response.ok !== true || typeof response.blob !== 'function') {
-        return { success: false, error: 'PPTX export request failed', response };
+        return {
+          success: false,
+          error: await getResponseFailureMessage(response),
+          response
+        };
       }
 
       const blob = await response.blob();
@@ -124,6 +147,7 @@
     getFilenameFromResponse,
     getWarningCount,
     getWarningDetails,
+    getResponseFailureMessage,
     exportStudioPptx
   };
 });

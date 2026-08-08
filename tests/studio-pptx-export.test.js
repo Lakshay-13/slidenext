@@ -116,6 +116,41 @@ test('exportStudioPptx reports unavailable dependencies and failed responses', a
   assert.equal(result.error, 'PPTX export request failed');
 });
 
+test('exportStudioPptx preserves structured server errors and falls back to HTTP status', async () => {
+  const baseOptions = {
+    canonicalDeck: { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] },
+    documentRef: { body: {}, createElement() {} },
+    urlApi: {
+      createObjectURL() {},
+      revokeObjectURL() {}
+    }
+  };
+
+  const structuredError = await pptxExport.exportStudioPptx({
+    ...baseOptions,
+    fetchImpl: async () => ({
+      ok: false,
+      status: 400,
+      async json() {
+        return { error: 'Cannot export an empty deck' };
+      }
+    })
+  });
+  assert.equal(structuredError.error, 'Cannot export an empty deck');
+
+  const statusFallback = await pptxExport.exportStudioPptx({
+    ...baseOptions,
+    fetchImpl: async () => ({
+      ok: false,
+      status: 503,
+      async json() {
+        throw new Error('invalid response body');
+      }
+    })
+  });
+  assert.equal(statusFallback.error, 'PPTX export request failed (HTTP 503)');
+});
+
 test('exportStudioPptx rejects an empty canonical deck before making a request', async () => {
   let fetchCalls = 0;
   const result = await pptxExport.exportStudioPptx({
