@@ -806,6 +806,21 @@ test('updateClipboardActionState enables paste on a live slide and enables copy 
           canCopy: typeof options.canMutateDeck === 'function' ? options.canMutateDeck() : true,
           canPaste: typeof options.canMutateDeck === 'function' ? options.canMutateDeck() : true
         };
+      },
+      syncStudioClipboardToolbarState(options = {}) {
+        const canMutateDeck = typeof options.canMutateDeck === 'function'
+          ? options.canMutateDeck()
+          : true;
+        return clipboardState.renderStudioClipboardToolbarState({
+          documentRef: options.documentRef,
+          actionState: {
+            buttonStates: {
+              copySelectionBtn: canMutateDeck && payloadItems.length > 0,
+              pasteClipboardBtn: canMutateDeck,
+              slidePasteClipboardBtn: canMutateDeck
+            }
+          }
+        });
       }
     },
     buildClipboardPayload() {
@@ -899,6 +914,17 @@ test('updateClipboardActionState reuses the shared clipboard toolbar helper when
             slidePasteClipboardBtn: false
           }
         };
+      },
+      syncStudioClipboardToolbarState(options = {}) {
+        const actionState = this.buildStudioClipboardToolbarState(
+          options.elements,
+          options.clipboard,
+          options
+        );
+        return clipboardState.renderStudioClipboardToolbarState({
+          documentRef: options.documentRef,
+          actionState
+        });
       }
     },
     document: {
@@ -974,7 +1000,7 @@ test('updateClipboardActionState delegates toolbar state assembly to the shared 
   assert.equal(calls[0].canMutateDeck(), true);
 });
 
-test('updateClipboardActionState keeps the legacy DOM fallback when the shared clipboard view is unavailable', () => {
+test('updateClipboardActionState fails closed when the shared clipboard view is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateClipboardActionStateSource = extractFunctionSource(
     fileContent,
@@ -985,13 +1011,7 @@ test('updateClipboardActionState keeps the legacy DOM fallback when the shared c
   const context = {
     selectedElements: [],
     buildClipboardSelectionMutationPlan() {
-      return {
-        buttonStates: {
-          copySelectionBtn: true,
-          pasteClipboardBtn: false,
-          slidePasteClipboardBtn: false
-        }
-      };
+      throw new Error('legacy clipboard toolbar fallback should not run');
     },
     document: {
       getElementById(id) {
@@ -1006,9 +1026,9 @@ test('updateClipboardActionState keeps the legacy DOM fallback when the shared c
   vm.createContext(context);
   vm.runInContext(updateClipboardActionStateSource, context);
 
-  assert.equal(context.updateClipboardActionState({}), true);
+  assert.equal(context.updateClipboardActionState({}), false);
   assert.deepEqual(getControlStates(controls), {
-    copySelectionBtn: false,
+    copySelectionBtn: true,
     pasteClipboardBtn: true,
     slidePasteClipboardBtn: true
   });

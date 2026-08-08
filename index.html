@@ -5721,63 +5721,20 @@
     }
 
     function updateClipboardActionState(doc = getIframeDoc()) {
-      updateBlockActionState(doc);
       const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
         ? SlideNextStudioEditorClipboard
         : null;
-      const syncStudioClipboardToolbarState = (
-        clipboardApi
-        && typeof clipboardApi.syncStudioClipboardToolbarState === 'function'
-      )
-        ? clipboardApi.syncStudioClipboardToolbarState
-        : null;
-      if (syncStudioClipboardToolbarState) {
-        return syncStudioClipboardToolbarState({
-          documentRef: document,
-          elements: selectedElements,
-          clipboard: editorClipboard,
-          isLocked: isElementLocked,
-          canMutateDeck: () => !!getActiveSlide(doc)
-        });
+      if (!clipboardApi || typeof clipboardApi.syncStudioClipboardToolbarState !== 'function') {
+        return false;
       }
-      const buildStudioClipboardToolbarState = (
-        clipboardApi
-        && typeof clipboardApi.buildStudioClipboardToolbarState === 'function'
-      )
-        ? clipboardApi.buildStudioClipboardToolbarState
-        : null;
-      const clipboardActionState = buildStudioClipboardToolbarState
-        ? buildStudioClipboardToolbarState(selectedElements, editorClipboard, {
-          isLocked: isElementLocked,
-          canMutateDeck: () => !!getActiveSlide(doc)
-        })
-        : buildClipboardSelectionMutationPlan(doc);
-      const buttonStates = clipboardActionState.buttonStates || {
-        copySelectionBtn: clipboardActionState.canCopy,
-        pasteClipboardBtn: clipboardActionState.canPaste,
-        slidePasteClipboardBtn: clipboardActionState.canPaste
-      };
-      const renderStudioClipboardToolbarState = (
-        clipboardApi
-        && typeof clipboardApi.renderStudioClipboardToolbarState === 'function'
-      )
-        ? clipboardApi.renderStudioClipboardToolbarState
-        : null;
-      if (renderStudioClipboardToolbarState) {
-        return renderStudioClipboardToolbarState({
-          documentRef: document,
-          actionState: {
-            ...clipboardActionState,
-            buttonStates
-          }
-        });
-      }
-
-      Object.entries(buttonStates).forEach(([id, canRun]) => {
-        const button = document.getElementById(id);
-        if (button) button.disabled = !canRun;
+      updateBlockActionState(doc);
+      return clipboardApi.syncStudioClipboardToolbarState({
+        documentRef: document,
+        elements: selectedElements,
+        clipboard: editorClipboard,
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(doc)
       });
-      return true;
     }
 
     function renderSavedBlocks(blocks = []) {
