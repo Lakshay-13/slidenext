@@ -1873,6 +1873,7 @@
           assignLockElementId: (...args) => assignEditorElementId(...args),
           assignVisibilityElementId: (...args) => assignEditorElementId(...args),
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           applyLockMutation: (...args) => applyEditorLockMutationWithTransaction(...args),
           applyVisibilityMutation: (...args) => applyEditorVisibilityMutationWithTransaction(...args),
           finalizeSelectionToggleMutation: (...args) => finalizeSelectionToggleMutation(...args)

@@ -19,9 +19,12 @@ test('buildStudioCanonicalVisibilityBaseline builds from the source document', (
   let builtFromDocument = null;
   const result = canonicalVisibility.buildStudioCanonicalVisibilityBaseline({
     canonicalDeckApi: canonicalDeck,
-    buildCanonicalDeck(documentRef) {
+    buildCanonicalDeckBaseline(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
+    },
+    buildCanonicalDeck() {
+      throw new Error('DOM mutation builder should not provide the baseline');
     },
     sourceDocument
   });
@@ -58,18 +61,26 @@ test('buildStudioCanonicalVisibilityDeck fails closed when the selection or adap
 
 test('buildStudioCanonicalVisibilityMutation centralizes baseline and patch application', () => {
   const sourceDeck = createSourceDeck();
+  let baselineBuildCount = 0;
   const result = canonicalVisibility.buildStudioCanonicalVisibilityMutation(
     [{ dataset: { editorId: 'node-1' } }],
     { hidden: true },
     {
       canonicalDeckApi: canonicalDeck,
-      buildCanonicalDeck: () => sourceDeck,
+      buildCanonicalDeckBaseline() {
+        baselineBuildCount += 1;
+        return sourceDeck;
+      },
+      buildCanonicalDeck() {
+        throw new Error('DOM mutation builder should not provide the baseline');
+      },
       sourceDocument: { id: 'editor-doc' },
       getElementId: (element) => element.dataset.editorId
     }
   );
 
   assert.equal(result.slides[0].nodes[0].visibility.hidden, true);
+  assert.equal(baselineBuildCount, 1);
   assert.equal(sourceDeck.slides[0].nodes[0].visibility.hidden, false);
 });
 

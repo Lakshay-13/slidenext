@@ -4,6 +4,7 @@ const lockVisibilityController = require('../shared/studio-editor-lock-visibilit
 
 test('lock and visibility controller builds sidecars and finalizes both toggles', () => {
   const calls = [];
+  let builderOptions = null;
   const selected = [{ id: 'node-1', dataset: { editorId: 'node-1' } }];
   const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
     lockStateApi: {
@@ -19,7 +20,8 @@ test('lock and visibility controller builds sidecars and finalizes both toggles'
       }
     },
     canonicalVisibilityApi: {
-      createStudioCanonicalVisibilityMutationBuilders() {
+      createStudioCanonicalVisibilityMutationBuilders(options) {
+        builderOptions = options;
         return {
           buildCanonicalVisibilityMutation(selection, state, options) {
             calls.push(['canonical', selection, state, options]);
@@ -33,6 +35,8 @@ test('lock and visibility controller builds sidecars and finalizes both toggles'
     getActiveSlide: () => ({ id: 'slide-1' }),
     assignLockElementId: (element) => element.dataset.editorId,
     assignVisibilityElementId: (element) => element.dataset.editorId,
+    buildCanonicalDeck: () => ({ slides: [] }),
+    buildCanonicalDeckBaseline: () => ({ slides: [] }),
     applyLockMutation: (...args) => {
       calls.push(['lockMutation', ...args]);
       return { didApply: true, transaction: { id: 'lock-tx' } };
@@ -63,6 +67,8 @@ test('lock and visibility controller builds sidecars and finalizes both toggles'
   assert.equal(calls[7][0], 'finalize');
   assert.equal(calls[7][1], 'Auto: Hid Element');
   assert.equal(calls[7][2].skipSelectionUi, true);
+  assert.equal(typeof builderOptions.buildCanonicalDeck, 'function');
+  assert.equal(typeof builderOptions.buildCanonicalDeckBaseline, 'function');
 });
 
 test('lock and visibility controller fails closed when plans or finalization are unavailable', () => {

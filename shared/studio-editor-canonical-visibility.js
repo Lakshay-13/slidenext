@@ -15,9 +15,11 @@
       && typeof canonicalDeckApi.updateCanonicalNodeVisibility === 'function'
       ? canonicalDeckApi.updateCanonicalNodeVisibility
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : null;
 
     if (!updateCanonicalNodeVisibility || !buildCanonicalDeck) {
       return null;
@@ -57,11 +59,15 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
-    if (!canonicalDeckApi || !buildCanonicalDeck) return null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
+    if (!canonicalDeckApi || (!buildCanonicalDeck && !buildCanonicalDeckBaseline)) return null;
 
     const canonicalDeckBeforeMutation = buildStudioCanonicalVisibilityBaseline({
       canonicalDeckApi,
       buildCanonicalDeck,
+      buildCanonicalDeckBaseline,
       sourceDocument: options.sourceDocument
     });
     return buildStudioCanonicalVisibilityDeck(selection, visibilityPatch, {
@@ -78,11 +84,15 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const buildCanonicalVisibilityBaseline = (baselineOptions = {}) => (
       buildStudioCanonicalVisibilityBaseline({
         ...baselineOptions,
         canonicalDeckApi,
-        buildCanonicalDeck
+        buildCanonicalDeck,
+        buildCanonicalDeckBaseline
       })
     );
     const buildCanonicalVisibilityDeck = (selection, visibilityPatch = {}, deckOptions = {}) => {
@@ -95,6 +105,8 @@
       return buildStudioCanonicalVisibilityDeck(selection, visibilityPatch, {
         ...deckOptions,
         canonicalDeckApi,
+        buildCanonicalDeck,
+        buildCanonicalDeckBaseline,
         canonicalDeckBeforeMutation
       });
     };
