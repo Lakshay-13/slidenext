@@ -1,5 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const childProcess = require('node:child_process');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 
 const pptxExport = require('../shared/canonical-pptx-export.js');
 
@@ -57,6 +61,46 @@ class FakePptx {
     return slide;
   }
 }
+
+test('createCanonicalPptxExport writes a valid PPTX with the real generator', async () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    metadata: { title: 'Runtime smoke' },
+    layout: { size: { width: 1920, height: 1080, unit: 'px' } },
+    slides: [{
+      id: 'slide-1',
+      nodes: [
+        {
+          id: 'title',
+          type: 'text',
+          tagName: 'h1',
+          text: 'Runtime smoke',
+          layout: { x: 100, y: 100, width: 800, height: 120 }
+        },
+        {
+          id: 'shape',
+          type: 'shape',
+          style: 'background-color: #123456;',
+          layout: { x: 100, y: 300, width: 400, height: 200 }
+        }
+      ]
+    }]
+  });
+
+  assert.equal(result.slideCount, 1);
+  assert.ok(result.pptx);
+  const buffer = await result.pptx.write({ outputType: 'nodebuffer' });
+  assert.ok(Buffer.isBuffer(buffer));
+  assert.equal(buffer.subarray(0, 2).toString(), 'PK');
+
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slidenext-pptx-'));
+  const outputPath = path.join(tempDir, 'runtime-smoke.pptx');
+  try {
+    fs.writeFileSync(outputPath, buffer);
+    childProcess.execFileSync('unzip', ['-t', outputPath], { stdio: 'pipe' });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
 
 test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () => {
   const result = pptxExport.createCanonicalPptxExport({
