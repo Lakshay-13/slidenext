@@ -133,3 +133,24 @@ test('makeStudioElementsHoverable assigns ids and adds the editor hover class', 
   assert.deepEqual(result, [element]);
   assert.equal(classNames.has('editor-hoverable'), true);
 });
+
+test('resolveStudioEditableTarget selects a chart frame from its inline title', () => {
+  const slide = createElement('SECTION', { classNames: ['slide'] });
+  const chart = createElement('DIV', {
+    parentElement: slide,
+    classNames: ['editor-chart']
+  });
+  const title = createElement('SPAN', { parentElement: chart });
+  chart.matches = (selector) => selector === '.editor-chart';
+  title.matches = () => false;
+  chart.nodeType = 1;
+  title.nodeType = 1;
+
+  assert.equal(
+    domState.resolveStudioEditableTarget(title, {
+      selectableSelector: '.editor-chart',
+      inlineTextTags: new Set(['span'])
+    }),
+    chart
+  );
+});

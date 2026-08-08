@@ -187,7 +187,8 @@ function trainEpoch(model, data) {
       element.style.color = '#f4f4f5';
       element.style.fontFamily = "'Geist', sans-serif";
 
-      const title = documentRef.createElement('div');
+      const title = documentRef.createElement('span');
+      title.className = 'editor-chart-title';
       title.textContent = 'Quarterly trend';
       title.style.fontSize = '18px';
       title.style.fontWeight = '600';

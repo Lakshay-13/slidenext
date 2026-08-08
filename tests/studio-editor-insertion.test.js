@@ -52,6 +52,8 @@ test('createStudioInsertedElement creates the existing text, image, and shape de
   assert.equal(chart.className, 'editor-chart');
   assert.equal(chart.attributes['data-chart-type'], 'bar');
   assert.equal(chart.children.length, 2);
+  assert.equal(chart.children[0].tagName, 'SPAN');
+  assert.equal(chart.children[0].className, 'editor-chart-title');
   assert.equal(chart.children[1].children.length, 4);
 });
 
