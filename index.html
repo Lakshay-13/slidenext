@@ -3561,26 +3561,13 @@
       const deckView = typeof SlideNextStudioDeckView !== 'undefined'
         ? SlideNextStudioDeckView
         : null;
-      if (!deckView) {
+      if (!deckView || typeof deckView.syncStudioDeckActiveThumbnailCardState !== 'function') {
         return false;
       }
-      if (deckView && typeof deckView.syncStudioDeckActiveThumbnailCardState === 'function') {
-        return deckView.syncStudioDeckActiveThumbnailCardState({
-          documentRef: document,
-          activeSlideId
-        });
-      }
-      const documentApi = typeof document !== 'undefined'
-        && document
-        && typeof document.querySelectorAll === 'function'
-        ? document
-        : null;
-      if (!documentApi || typeof deckView.updateStudioDeckActiveThumbnailCardState !== 'function') {
-        return false;
-      }
-      const cards = documentApi.querySelectorAll('#thumbnailsList > div');
-      deckView.updateStudioDeckActiveThumbnailCardState(cards, activeSlideId);
-      return true;
+      return deckView.syncStudioDeckActiveThumbnailCardState({
+        documentRef: document,
+        activeSlideId
+      });
     }
 
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
