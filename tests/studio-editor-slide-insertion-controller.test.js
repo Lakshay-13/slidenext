@@ -15,6 +15,7 @@ test('slide insertion controller assembles canonical and editor mutation depende
       createStudioCanonicalAddSlideMutationBuilders(options) {
         calls.push(['builders', options]);
         return {
+          buildCanonicalAddSlideBaseline: () => ({ id: 'baseline' }),
           buildCanonicalAddSlideDeck: () => ({ slides: [] })
         };
       }
@@ -45,6 +46,7 @@ test('slide insertion controller assembles canonical and editor mutation depende
   assert.equal(options.resolveInsertionActionState().canAddSlide, true);
   assert.equal(options.getSlides()[0].id, 'slide-1');
   assert.equal(options.createBlankSlide().id, 'slide-2');
+  assert.deepEqual(options.buildCanonicalAddSlideBaseline(), { id: 'baseline' });
   assert.deepEqual(options.buildCanonicalAddSlideDeck(), { slides: [] });
   assert.equal(typeof options.applyInsertion, 'function');
   assert.equal(typeof options.finalizeMutation, 'function');

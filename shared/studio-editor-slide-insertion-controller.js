@@ -84,6 +84,9 @@
         getSlideContainer,
         getSlides,
         createBlankSlide,
+        buildCanonicalAddSlideBaseline: canonicalAddSlideBuilders
+          ? canonicalAddSlideBuilders.buildCanonicalAddSlideBaseline
+          : null,
         buildCanonicalAddSlideDeck: canonicalAddSlideBuilders
           ? canonicalAddSlideBuilders.buildCanonicalAddSlideDeck
           : null,

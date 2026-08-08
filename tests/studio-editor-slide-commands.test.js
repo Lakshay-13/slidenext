@@ -213,14 +213,23 @@ test('addStudioSlideNode preserves canonical insertion and mutation lifecycle or
       calls.push('createBlankSlide');
       return newSlide;
     },
+    buildCanonicalAddSlideBaseline(options) {
+      assert.equal(options.sourceDocument, doc);
+      calls.push('buildCanonicalAddSlideBaseline');
+      return { slides: [{ id: 'slide-1' }] };
+    },
     buildCanonicalAddSlideDeck(options) {
       assert.equal(options.sourceDocument, doc);
       assert.equal(options.newSlide, newSlide);
       assert.equal(options.insertionIndex, 1);
+      assert.deepEqual(options.canonicalDeckBeforeMutation.slides.map((slide) => slide.id), ['slide-1']);
       calls.push('buildCanonicalAddSlideDeck');
       return { slides: [{ id: 'slide-1' }, { id: 'slide-2' }] };
     },
-    saveHistoryState() {
+    saveHistoryState(debounce, transaction, canonicalDeck) {
+      assert.equal(debounce, false);
+      assert.equal(transaction, null);
+      assert.deepEqual(canonicalDeck.slides.map((slide) => slide.id), ['slide-1']);
       calls.push('saveHistoryState');
     },
     applyInsertion(sourceContainer, slide) {
@@ -251,6 +260,7 @@ test('addStudioSlideNode preserves canonical insertion and mutation lifecycle or
     'getSlideContainer',
     'getSlides',
     'createBlankSlide',
+    'buildCanonicalAddSlideBaseline',
     'buildCanonicalAddSlideDeck',
     'saveHistoryState',
     'applyInsertion',

@@ -163,11 +163,22 @@
     const newSlide = createBlankSlide(iframeDoc, newIndex);
     if (!newSlide) return false;
 
+    const buildCanonicalAddSlideBaseline = typeof options.buildCanonicalAddSlideBaseline === 'function'
+      ? options.buildCanonicalAddSlideBaseline
+      : null;
+    const canonicalDeckBeforeAddition = buildCanonicalAddSlideBaseline
+      ? buildCanonicalAddSlideBaseline({
+          sourceDocument: iframeDoc
+        })
+      : null;
     const buildCanonicalAddSlideDeck = typeof options.buildCanonicalAddSlideDeck === 'function'
       ? options.buildCanonicalAddSlideDeck
       : null;
     const canonicalDeckAfterAddition = buildCanonicalAddSlideDeck
       ? buildCanonicalAddSlideDeck({
+          ...(canonicalDeckBeforeAddition
+            ? { canonicalDeckBeforeMutation: canonicalDeckBeforeAddition }
+            : {}),
           sourceDocument: iframeDoc,
           newSlide,
           insertionIndex: newIndex
@@ -177,7 +188,11 @@
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : () => {};
-    saveHistoryState();
+    if (canonicalDeckBeforeAddition) {
+      saveHistoryState(false, null, canonicalDeckBeforeAddition);
+    } else {
+      saveHistoryState();
+    }
     const applyInsertion = typeof options.applyInsertion === 'function'
       ? options.applyInsertion
       : () => ({ didApply: false, transaction: null });
