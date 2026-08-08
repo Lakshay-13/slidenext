@@ -123,3 +123,14 @@ test('persistence controller reads persisted baselines and resolves their conten
   persistedDeckHtml = '<html><body><main></main></body></html>';
   assert.equal(controller.read().cleanHtml, persistedDeckHtml);
 });
+
+test('persistence controller reads the persisted active slide id through the shared adapter', () => {
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState,
+    getPersistedPlaybackState: () => ({ activeSlideIds: ['slide-2', 'slide-1'] })
+  });
+
+  assert.equal(controller.getPersistedActiveSlideId(), 'slide-2');
+  assert.equal(controller.getPersistedActiveSlideId({ activeSlideId: 'slide-3' }), 'slide-3');
+});

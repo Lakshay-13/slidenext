@@ -4695,6 +4695,11 @@
     }
 
     function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.getPersistedActiveSlideId === 'function') {
+        return studioEditorPersistenceController.getPersistedActiveSlideId(playbackState);
+      }
       if (typeof getPersistedActiveSlideId.reader !== 'function') {
         const createStudioEditorPersistedActiveSlideIdAdapter = (
           typeof SlideNextStudioEditorPersistenceState !== 'undefined'

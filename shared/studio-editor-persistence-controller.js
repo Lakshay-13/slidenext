@@ -60,6 +60,7 @@
     let stateUpdater = null;
     let stateApplier = null;
     let stateReader = null;
+    let activeSlideIdReader = null;
     let canonicalDeckOverrideResolver = null;
     let fallbackCanonicalDeckResolver = null;
 
@@ -131,6 +132,26 @@
         : null;
     }
 
+    function createActiveSlideIdReader() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorPersistedActiveSlideIdAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorPersistedActiveSlideIdAdapter({
+        persistenceApi,
+        getPlaybackState: getPersistedPlaybackState
+      });
+    }
+
+    function getPersistedActiveSlideId(playbackState = getPersistedPlaybackState()) {
+      if (typeof activeSlideIdReader !== 'function') {
+        activeSlideIdReader = createActiveSlideIdReader();
+      }
+      return typeof activeSlideIdReader === 'function'
+        ? activeSlideIdReader(playbackState)
+        : '';
+    }
+
     function createStateApplier() {
       if (!persistenceStateApi
         || typeof persistenceStateApi.createStudioEditorPersistedDeckStateApplierAdapter !== 'function') {
@@ -196,6 +217,7 @@
       read,
       resolveWithContent,
       resolvePersistedDeckStateWithContent,
+      getPersistedActiveSlideId,
       update,
       apply,
       resolveCanonicalDeckOverride,
