@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const clipboardState = require('../shared/studio-editor-clipboard.js');
 const clipboardMutation = require('../shared/studio-editor-clipboard-mutation.js');
@@ -1044,6 +1045,68 @@ test('updateClipboardActionState delegates toolbar state assembly to the shared 
   assert.equal(calls[0].clipboard, clipboard);
   assert.equal(calls[0].isLocked, context.isElementLocked);
   assert.equal(calls[0].canMutateDeck(), true);
+});
+
+test('updateClipboardActionState prefers canonical lock metadata when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const visibilityReaderSource = extractFunctionSource(
+    fileContent,
+    'function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {',
+    '\n\n    function setElementHiddenState'
+  );
+  const updateClipboardActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateClipboardActionState(doc = getIframeDoc()) {',
+    '\n\n    function sanitizeDuplicatedSubtree(root) {'
+  );
+  const doc = { id: 'doc', activeSlide: {} };
+  const selectedElement = { dataset: { editorId: 'node-1' } };
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', visibility: { locked: true } }]
+    }]
+  });
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorCanonicalState: canonicalState,
+    SlideNextStudioEditorClipboard: {
+      syncStudioClipboardToolbarState(options) {
+        calls.push(options);
+        return options.isLocked(selectedElement);
+      }
+    },
+    buildEditorCanonicalDeck(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return canonicalDeck;
+    },
+    editorClipboard: { items: [] },
+    selectedElements: [selectedElement],
+    updateBlockActionState() {},
+    getIframeDoc() {
+      return doc;
+    },
+    getActiveSlide(currentDoc) {
+      return currentDoc.activeSlide;
+    },
+    resolveEditorCanonicalNodeForElement(element, deck) {
+      return deck.slides[0].nodes.find((node) => node.id === element.dataset.editorId) || null;
+    },
+    isElementLocked() {
+      return false;
+    },
+    isElementHidden() {
+      return false;
+    },
+    document: {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${visibilityReaderSource}\n${updateClipboardActionStateSource}`, context);
+
+  assert.equal(context.updateClipboardActionState(doc), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].isLocked(selectedElement), true);
 });
 
 test('updateClipboardActionState fails closed when the shared clipboard view is unavailable', () => {

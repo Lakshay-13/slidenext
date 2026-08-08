@@ -6491,11 +6491,14 @@
         return false;
       }
       updateBlockActionState(doc);
+      const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
+        ? getEditorCanonicalVisibilityReader('locked', doc, isElementLocked)
+        : isElementLocked;
       return clipboardApi.syncStudioClipboardToolbarState({
         documentRef: document,
         elements: selectedElements,
         clipboard: editorClipboard,
-        isLocked: isElementLocked,
+        isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
     }
