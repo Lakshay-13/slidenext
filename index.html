@@ -1503,6 +1503,9 @@
           buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
             ? buildEditorCanonicalDeck
             : null,
+          isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+            ? getEditorCanonicalDeckValidator()
+            : null,
           pdfExport: typeof SlideNextStudioPdfExport !== 'undefined'
             ? SlideNextStudioPdfExport
             : null,

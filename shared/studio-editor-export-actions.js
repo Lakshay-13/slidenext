@@ -7,6 +7,16 @@
     root.SlideNextStudioEditorExportActions = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function isValidStudioExportDeck(value, validator) {
+    if (!value) return false;
+    if (typeof validator !== 'function') return true;
+    try {
+      return validator(value) === true;
+    } catch (err) {
+      return false;
+    }
+  }
+
   function createStudioPdfExportAction(options = {}) {
     const resolveReadyState = typeof options.resolveReadyState === 'function'
       ? options.resolveReadyState
@@ -16,6 +26,9 @@
       : () => '';
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
+      : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
       : null;
     const pdfExport = options.pdfExport && typeof options.pdfExport === 'object'
       ? options.pdfExport
@@ -55,7 +68,7 @@
       } catch (error) {
         canonicalDeck = null;
       }
-      if (!canonicalDeck
+      if (!isValidStudioExportDeck(canonicalDeck, isCanonicalDeck)
         || !Array.isArray(canonicalDeck.slides)
         || canonicalDeck.slides.length === 0) {
         return failPdfExport();
@@ -112,6 +125,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
     const pptxExport = options.pptxExport && typeof options.pptxExport === 'object'
       ? options.pptxExport
       : null;
@@ -137,7 +153,9 @@
         setStatus('export-failed');
         return false;
       }
-      if (!canonicalDeck || !Array.isArray(canonicalDeck.slides) || canonicalDeck.slides.length === 0) {
+      if (!isValidStudioExportDeck(canonicalDeck, isCanonicalDeck)
+        || !Array.isArray(canonicalDeck.slides)
+        || canonicalDeck.slides.length === 0) {
         setStatus('export-failed');
         return false;
       }

@@ -5,6 +5,7 @@ const exportController = require('../shared/studio-editor-export-controller.js')
 
 test('export controller delegates PDF with current shared dependencies', () => {
   const calls = [];
+  const isCanonicalDeck = () => true;
   const controller = exportController.createStudioEditorExportController({
     exportActions: {
       createStudioPdfExportAction(options) {
@@ -15,6 +16,7 @@ test('export controller delegates PDF with current shared dependencies', () => {
     resolveReadyState: () => ({ canUseDeckActions: true }),
     buildPreviewHtml: () => '<html></html>',
     buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    isCanonicalDeck,
     pdfExport: { openStudioPdfPrintWindow() {} },
     documentRef: {},
     setStatus() {}
@@ -24,11 +26,13 @@ test('export controller delegates PDF with current shared dependencies', () => {
   assert.equal(calls.length, 1);
   assert.equal(calls[0].buildPreviewHtml(), '<html></html>');
   assert.equal(calls[0].buildCanonicalDeck().slides.length, 1);
+  assert.equal(calls[0].isCanonicalDeck, isCanonicalDeck);
   assert.equal(calls[0].pdfExport.openStudioPdfPrintWindow instanceof Function, true);
 });
 
 test('export controller resolves current PPTX path and filename on each call', async () => {
   const calls = [];
+  const isCanonicalDeck = () => true;
   let sourcePath = '/presentations/first/index.html';
   let filename = 'First.pptx';
   const controller = exportController.createStudioEditorExportController({
@@ -40,6 +44,7 @@ test('export controller resolves current PPTX path and filename on each call', a
     },
     resolveReadyState: () => ({ canUseDeckActions: true }),
     buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    isCanonicalDeck,
     resolveSourcePath: () => sourcePath,
     resolveFilename: () => filename
   });
@@ -55,6 +60,7 @@ test('export controller resolves current PPTX path and filename on each call', a
       ['/presentations/second/index.html', 'Second.pptx']
     ]
   );
+  assert.equal(calls[0].isCanonicalDeck, isCanonicalDeck);
 });
 
 test('export controller fails closed when export actions are unavailable', async () => {
