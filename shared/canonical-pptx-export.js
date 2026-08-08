@@ -222,7 +222,12 @@
       .filter(row => row && row.tagName === 'tr')
       .map(row => (Array.isArray(row.children) ? row.children : [])
         .filter(cell => cell && (cell.tagName === 'td' || cell.tagName === 'th'))
-        .map(getNestedNodeText))
+        .map(cell => {
+          const text = getNestedNodeText(cell);
+          return cell.tagName === 'th'
+            ? { text, options: { bold: true } }
+            : text;
+        }))
       .filter(row => row.length > 0);
   }
 

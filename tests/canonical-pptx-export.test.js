@@ -161,7 +161,10 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
     h: imageCall.options.h
   });
   assert.deepEqual(result.pptx.slides[0].calls[4].rows, [
-    ['Name', 'Value'],
+    [
+      { text: 'Name', options: { bold: true } },
+      { text: 'Value', options: { bold: true } }
+    ],
     ['Alpha', '42']
   ]);
   assert.equal(result.diagnostics.unsupportedNodes[0].id, 'table-1');
