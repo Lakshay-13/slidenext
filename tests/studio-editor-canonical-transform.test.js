@@ -66,6 +66,21 @@ test('buildStudioCanonicalTransformBaseline falls back when the live canonical d
   assert.equal(didBuildFromDocument, true);
 });
 
+test('buildStudioCanonicalTransformBaseline rejects invalid compatibility baselines', () => {
+  let rebuildCalls = 0;
+  const result = canonicalTransform.buildStudioCanonicalTransformBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => {
+      rebuildCalls += 1;
+      return { invalid: true };
+    }
+  });
+
+  assert.equal(result, null);
+  assert.equal(rebuildCalls, 1);
+});
+
 test('buildStudioCanonicalTransformDeck applies canonical layout updates to the current model', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{
