@@ -5,16 +5,22 @@
   const deckPersistence = typeof module === 'object' && module.exports
     ? require('./deck-persistence')
     : null;
-  const api = factory(root, canonicalDeck, deckPersistence);
+  const imagePosition = typeof module === 'object' && module.exports
+    ? require('./image-position')
+    : root && root.SlideNextImagePosition;
+  const api = factory(root, canonicalDeck, deckPersistence, imagePosition);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextDeckImport = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, canonicalDeck, deckPersistence) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, canonicalDeck, deckPersistence, imagePosition) {
   if (!canonicalDeck) {
     throw new Error('SlideNextCanonicalDeck dependency is required');
+  }
+  if (!imagePosition) {
+    throw new Error('SlideNextImagePosition dependency is required');
   }
 
   const DEFAULT_SKIP_TAG_NAMES = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE']);
@@ -902,30 +908,9 @@
   }
 
   function isSupportedImportedImagePosition(value) {
-    const normalized = normalizeString(value).trim().toLowerCase().replace(/\s+/g, ' ');
-    const tokens = normalized ? normalized.split(' ') : [];
-    if (tokens.length === 0 || tokens.length > 2) return false;
-
-    const parseAxis = (token, axis) => {
-      if (token === 'center') return 0.5;
-      if (axis === 'horizontal' && ['left', 'right'].includes(token)) return 0;
-      if (axis === 'vertical' && ['top', 'bottom'].includes(token)) return 0;
-      const percent = token.match(/^(\d+(?:\.\d+)?)%$/);
-      if (!percent) return null;
-      const parsed = Number(percent[1]);
-      return Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : null;
-    };
-
-    if (tokens.length === 1) {
-      return parseAxis(tokens[0], 'horizontal') !== null
-        || parseAxis(tokens[0], 'vertical') !== null;
-    }
-
-    const firstHorizontal = parseAxis(tokens[0], 'horizontal');
-    const secondVertical = parseAxis(tokens[1], 'vertical');
-    if (firstHorizontal !== null && secondVertical !== null) return true;
-    return parseAxis(tokens[0], 'vertical') !== null
-      && parseAxis(tokens[1], 'horizontal') !== null;
+    return typeof value === 'string'
+      && value.trim() !== ''
+      && imagePosition.parseImagePosition(value) !== null;
   }
 
   function buildImportedComputedNodeBackgroundStyle(el, inlineStyleText, options = {}) {

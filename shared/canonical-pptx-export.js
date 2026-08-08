@@ -2,11 +2,16 @@
   let defaultPptxGenJS = root && root.PptxGenJS;
   if (typeof module === 'object' && module.exports) {
     defaultPptxGenJS = require('pptxgenjs');
-    module.exports = factory(require('./canonical-deck.js'), defaultPptxGenJS);
+    module.exports = factory(require('./canonical-deck.js'), defaultPptxGenJS, require('./image-position'));
   } else if (root) {
-    root.SlideNextCanonicalPptxExport = factory(root.SlideNextCanonicalDeck, defaultPptxGenJS);
+    root.SlideNextCanonicalPptxExport = factory(
+      root.SlideNextCanonicalDeck,
+      defaultPptxGenJS,
+      root.SlideNextImagePosition
+    );
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (canonicalDeck, defaultPptxGenJS) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (canonicalDeck, defaultPptxGenJS, imagePosition) {
+  if (!imagePosition) throw new Error('SlideNextImagePosition dependency is required');
   const DEFAULT_PPTX_WIDTH = 13.333;
   const DEFAULT_PPTX_HEIGHT = 7.5;
   const DEFAULT_PPTX_ASPECT_RATIO = DEFAULT_PPTX_WIDTH / DEFAULT_PPTX_HEIGHT;
@@ -597,41 +602,7 @@
   }
 
   function parsePptxImagePosition(value) {
-    const normalized = typeof value === 'string'
-      ? value.trim().toLowerCase().replace(/\s+/g, ' ')
-      : '';
-    const tokens = normalized ? normalized.split(' ') : ['center'];
-    if (tokens.length > 2) return null;
-
-    const parseAxis = (token, axis) => {
-      if (token === 'center') return 0.5;
-      if (axis === 'horizontal' && token === 'left') return 0;
-      if (axis === 'horizontal' && token === 'right') return 1;
-      if (axis === 'vertical' && token === 'top') return 0;
-      if (axis === 'vertical' && token === 'bottom') return 1;
-      const percent = token.match(/^(-?[\d.]+)%$/);
-      if (!percent) return null;
-      const parsed = Number(percent[1]) / 100;
-      return Number.isFinite(parsed) && parsed >= 0 && parsed <= 1 ? parsed : null;
-    };
-
-    if (tokens.length === 1) {
-      const horizontal = parseAxis(tokens[0], 'horizontal');
-      if (horizontal !== null) return { x: horizontal, y: 0.5 };
-      const vertical = parseAxis(tokens[0], 'vertical');
-      return vertical === null ? null : { x: 0.5, y: vertical };
-    }
-
-    const firstHorizontal = parseAxis(tokens[0], 'horizontal');
-    const secondVertical = parseAxis(tokens[1], 'vertical');
-    if (firstHorizontal !== null && secondVertical !== null) {
-      return { x: firstHorizontal, y: secondVertical };
-    }
-    const firstVertical = parseAxis(tokens[0], 'vertical');
-    const secondHorizontal = parseAxis(tokens[1], 'horizontal');
-    return firstVertical !== null && secondHorizontal !== null
-      ? { x: secondHorizontal, y: firstVertical }
-      : null;
+    return imagePosition.parseImagePosition(value);
   }
 
   function resolvePptxImageFitSizing(objectFit, position, bounds, asset) {
@@ -704,10 +675,7 @@
   }
 
   function isCenteredPptxImagePosition(value) {
-    const position = typeof value === 'string'
-      ? value.trim().toLowerCase().replace(/\s+/g, ' ')
-      : '';
-    return !position || /^(?:center|50%)(?:\s+(?:center|50%))?$/.test(position);
+    return imagePosition.isCenteredImagePosition(value);
   }
 
   function getUnsupportedPptxImagePlacementProperties(style, options = {}) {
