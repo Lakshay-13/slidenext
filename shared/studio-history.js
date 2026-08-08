@@ -153,7 +153,13 @@
       : createStudioHistoryEntry;
 
     const nextDoc = doc || getDocument();
-    const canonicalDeck = buildCanonicalDeck(nextDoc);
+    let canonicalDeck = null;
+    try {
+      canonicalDeck = buildCanonicalDeck(nextDoc);
+    } catch (err) {
+      // Preserve history capture for legacy or partially supported decks.
+      canonicalDeck = null;
+    }
     const historyOptions = getHistoryOptions();
 
     return createHistoryEntry(nextDoc, {

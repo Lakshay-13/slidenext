@@ -280,6 +280,32 @@ test('buildStudioHistoryEntry resolves live editor history state before delegati
   });
 });
 
+test('buildStudioHistoryEntry falls back to HTML when canonical rebuild fails', () => {
+  const doc = { id: 'legacy-doc' };
+  const entry = studioHistory.buildStudioHistoryEntry(doc, {
+    buildCanonicalDeck() {
+      throw new Error('unsupported legacy markup');
+    },
+    buildHistoryHtml(nextDoc) {
+      assert.equal(nextDoc, doc);
+      return '<!DOCTYPE html><html><body><main>legacy</main></body></html>';
+    },
+    getActiveSlideId() {
+      return 'slide-legacy';
+    },
+    getSelectedElementIds() {
+      return ['node-legacy'];
+    }
+  });
+
+  assert.deepEqual(entry, {
+    html: '<body><main>legacy</main></body>',
+    activeSlideId: 'slide-legacy',
+    selectedElementIds: ['node-legacy'],
+    canonicalDeck: null
+  });
+});
+
 test('buildStudioHistoryEntry keeps model-only transaction metadata', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',
