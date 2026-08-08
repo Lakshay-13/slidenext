@@ -557,14 +557,18 @@
       const hasBounds = [bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite)
         && bounds.width > 0
         && bounds.height > 0;
-      if (!hasBounds) {
+      const type = typeof node.type === 'string' ? node.type.toLowerCase() : '';
+      const childNodes = type === 'table' || node.tagName === 'table' ? [] : node.children;
+      const childOrigin = getNodeChildOrigin(node, origin);
+      const hasExportableChildren = hasExportableChildBounds(childNodes, childOrigin);
+      if (!hasBounds && !hasExportableChildren) {
         diagnostics.warnings.push(`Node ${nodeId} has no exportable bounds`);
-      } else if (
+      } else if (hasBounds && (
         bounds.x < 0
         || bounds.y < 0
         || bounds.x + bounds.width > sourceSize.width
         || bounds.y + bounds.height > sourceSize.height
-      ) {
+      )) {
         diagnostics.overflowNodes.push({
           id: nodeId,
           x: bounds.x,
@@ -575,7 +579,6 @@
         diagnostics.warnings.push(`Node ${nodeId} extends beyond slide bounds`);
       }
 
-      const type = typeof node.type === 'string' ? node.type.toLowerCase() : '';
       const imageNode = type === 'image' || node.tagName === 'img';
       const style = nodeStyle(node);
       const nodeBackgroundValue = style['background-image'] || style.background || '';
@@ -665,8 +668,6 @@
         }
       }
 
-      const childNodes = type === 'table' || node.tagName === 'table' ? [] : node.children;
-      const childOrigin = getNodeChildOrigin(node, origin);
       if (isTextContainerNode(node)
         && getNestedNodeText(node)
         && !hasExportableChildBounds(childNodes, childOrigin)) {

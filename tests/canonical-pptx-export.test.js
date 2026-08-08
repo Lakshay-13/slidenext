@@ -245,6 +245,25 @@ test('createCanonicalPptxExport reports missing geometry and image assets withou
   assert.equal(result.pptx.slides[0].calls.length, 0);
 });
 
+test('preflightCanonicalPptxExport does not warn for bound children inside flow containers', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'flow-container',
+        type: 'container',
+        children: [{
+          id: 'positioned-child',
+          type: 'text',
+          text: 'Exported child',
+          layout: { x: 10, y: 20, width: 120, height: 30 }
+        }]
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.warnings, []);
+});
+
 test('preflightCanonicalPptxExport checks non-empty image paths when an asset resolver is provided', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     assets: [{ id: 'asset-1', src: 'images/missing.png' }],
