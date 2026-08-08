@@ -2852,15 +2852,17 @@
         ? SlideNextStudioEditorSession.createStudioEditorSessionReaderOptionsAdapter
         : null;
       if (createStudioEditorSessionReaderOptionsAdapter) {
-        const adapter = createStudioEditorSessionReaderOptionsAdapter({
-          sessionApi: SlideNextStudioEditorSession,
-          readCurrentSessionState: createCurrentStudioSessionStateReaders
-        });
-        if (typeof adapter === 'function') {
-          return adapter(options);
+        if (typeof createCurrentStudioSessionReaderOptions.adapter !== 'function') {
+          createCurrentStudioSessionReaderOptions.adapter = createStudioEditorSessionReaderOptionsAdapter({
+            sessionApi: SlideNextStudioEditorSession,
+            readCurrentSessionState: createCurrentStudioSessionStateReaders
+          });
         }
-        if (adapter && typeof adapter === 'object') {
-          return adapter;
+        if (typeof createCurrentStudioSessionReaderOptions.adapter === 'function') {
+          return createCurrentStudioSessionReaderOptions.adapter(options);
+        }
+        if (createCurrentStudioSessionReaderOptions.adapter && typeof createCurrentStudioSessionReaderOptions.adapter === 'object') {
+          return createCurrentStudioSessionReaderOptions.adapter;
         }
       }
 

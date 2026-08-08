@@ -507,6 +507,43 @@ test('createCurrentStudioSessionReaderOptions reuses the shared session-reader o
   assert.equal(delegatedArgs.readCurrentSessionState, context.createCurrentStudioSessionStateReaders);
 });
 
+test('createCurrentStudioSessionReaderOptions creates the shared reader-options adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let adapterCreateCalls = 0;
+  const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 12,
+    createCurrentStudioSessionStateReaders() {
+      return {
+        getCurrentPresentationUrl: () => context.currentPresentationUrl,
+        getCurrentSessionToken: () => context.studioEditorSessionToken
+      };
+    },
+    SlideNextStudioEditorSession: {
+      createStudioEditorSessionReaderOptionsAdapter(options) {
+        adapterCreateCalls += 1;
+        return editorSession.createStudioEditorSessionReaderOptionsAdapter(options);
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioSessionReaderOptions(fileContent, context);
+
+  const firstOptions = context.createCurrentStudioSessionReaderOptions({ onLoad: 'first' });
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 13;
+  const secondOptions = context.createCurrentStudioSessionReaderOptions({ onLoad: 'second' });
+
+  assert.equal(adapterCreateCalls, 1);
+  assert.equal(firstOptions.onLoad, 'first');
+  assert.equal(firstOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(firstOptions.getCurrentSessionToken(), 13);
+  assert.equal(secondOptions.onLoad, 'second');
+  assert.equal(secondOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(secondOptions.getCurrentSessionToken(), 13);
+});
+
 test('createCurrentStudioPresentationMetadataLoadOptions merges live session readers with metadata sync behavior', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
