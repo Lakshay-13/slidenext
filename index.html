@@ -8134,13 +8134,17 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckHtmlCheckerAdapter
         : null;
       if (createStudioEditorPersistedDeckHtmlCheckerAdapter) {
-        const adapter = createStudioEditorPersistedDeckHtmlCheckerAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          readPersistedDeckState: getCurrentEditorPersistedDeckState
-        });
-        const result = typeof adapter === 'function' ? adapter(cleanHtml) : null;
+        if (typeof isCurrentDeckHtmlPersisted.adapter !== 'function') {
+          isCurrentDeckHtmlPersisted.adapter = createStudioEditorPersistedDeckHtmlCheckerAdapter({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            readPersistedDeckState: getCurrentEditorPersistedDeckState
+          });
+        }
+        const result = typeof isCurrentDeckHtmlPersisted.adapter === 'function'
+          ? isCurrentDeckHtmlPersisted.adapter(cleanHtml)
+          : null;
         if (result !== null && typeof result !== 'undefined') {
           return result;
         }
