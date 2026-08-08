@@ -21,6 +21,14 @@
     let hasDocumentOwner = false;
     let hasSessionOwner = false;
 
+    function isValidCanonicalDeck(value) {
+      try {
+        return isCanonicalDeck(value) === true;
+      } catch (error) {
+        return false;
+      }
+    }
+
     function reset() {
       canonicalDeck = null;
       ownerDocument = null;
@@ -31,7 +39,7 @@
     }
 
     function set(nextCanonicalDeck, owner = {}) {
-      if (!isCanonicalDeck(nextCanonicalDeck)) {
+      if (!isValidCanonicalDeck(nextCanonicalDeck)) {
         return reset();
       }
 

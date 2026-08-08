@@ -111,6 +111,17 @@ test('studio editor canonical state rejects invalid models and can be reset', ()
   assert.equal(state.resolve({ documentRef, sessionToken: 1 }), null);
 });
 
+test('studio editor canonical state fails closed when validation throws', () => {
+  const state = canonicalState.createStudioEditorCanonicalState({
+    isCanonicalDeck() {
+      throw new Error('validator unavailable');
+    }
+  });
+
+  assert.doesNotThrow(() => state.set({ slides: [] }));
+  assert.equal(state.resolve(), null);
+});
+
 test('canonical node reader resolves safely and fails closed on lookup errors', () => {
   const canonicalDeck = createDeck('active');
   const element = { id: 'node-1' };
