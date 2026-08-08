@@ -25,6 +25,7 @@ test('alignment controller assembles canonical layout and transaction dependenci
       }
     },
     canonicalDeckApi: { id: 'deck-api' },
+    getCanonicalDeckBaseline: () => ({ slides: ['live'] }),
     buildAlignmentActionState: () => ({
       alignmentActionState: {
         canAlign: true,
@@ -49,6 +50,7 @@ test('alignment controller assembles canonical layout and transaction dependenci
   assert.equal(calls[1][0], 'builder');
   assert.equal(calls[1][1].canonicalDeckApi.id, 'deck-api');
   assert.equal(typeof calls[1][1].buildCanonicalDeckBaseline, 'function');
+  assert.deepEqual(calls[1][1].getCanonicalDeckBaseline(), { slides: ['live'] });
   assert.equal(calls[2][0], 'canonical');
   assert.equal(calls[2][1].sourceDocument.id, 'doc');
   assert.equal(calls[3][0], 'position');
