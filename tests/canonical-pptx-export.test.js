@@ -264,6 +264,29 @@ test('preflightCanonicalPptxExport does not warn for bound children inside flow 
   assert.deepEqual(report.diagnostics.warnings, []);
 });
 
+test('preflightCanonicalPptxExport reports children clipped by overflow-hidden ancestors', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      nodes: [{
+        id: 'clipping-panel',
+        type: 'container',
+        style: 'overflow: hidden;',
+        layout: { x: 100, y: 50, width: 200, height: 100 },
+        children: [{
+          id: 'clipped-child',
+          type: 'text',
+          text: 'Clipped content',
+          layout: { x: 180, y: 10, width: 80, height: 30 }
+        }]
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.clippedNodes.map(node => node.id), ['clipped-child']);
+  assert.match(report.diagnostics.warnings.join('\n'), /overflow-clipped ancestor/);
+});
+
 test('preflightCanonicalPptxExport checks non-empty image paths when an asset resolver is provided', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     assets: [{ id: 'asset-1', src: 'images/missing.png' }],

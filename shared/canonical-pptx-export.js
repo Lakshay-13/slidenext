@@ -494,6 +494,7 @@
       unsupportedNodes: [],
       unsupportedStyles: [],
       overflowNodes: [],
+      clippedNodes: [],
       fontSubstitutionRisks: [],
       missingAssets: [],
       missingBackgroundAssets: [],
@@ -550,7 +551,7 @@
     const sourceSize = resolvedExportOptions.sourceSize;
     const diagnostics = createExportDiagnostics();
 
-    function visit(node, origin = {}) {
+    function visit(node, origin = {}, parentClip = null) {
       if (!node || node.visibility?.hidden) return;
       const nodeId = node.id || 'unknown';
       const bounds = getNodeCanvasLayout(node, origin);
@@ -577,6 +578,22 @@
           height: bounds.height
         });
         diagnostics.warnings.push(`Node ${nodeId} extends beyond slide bounds`);
+      }
+      if (parentClip && hasBounds && (
+        bounds.x < parentClip.x
+        || bounds.y < parentClip.y
+        || bounds.x + bounds.width > parentClip.x + parentClip.width
+        || bounds.y + bounds.height > parentClip.y + parentClip.height
+      )) {
+        diagnostics.clippedNodes.push({
+          id: nodeId,
+          clip: { ...parentClip },
+          x: bounds.x,
+          y: bounds.y,
+          width: bounds.width,
+          height: bounds.height
+        });
+        diagnostics.warnings.push(`Node ${nodeId} extends beyond an overflow-clipped ancestor`);
       }
 
       const imageNode = type === 'image' || node.tagName === 'img';
@@ -673,7 +690,19 @@
         && !hasExportableChildBounds(childNodes, childOrigin)) {
         return;
       }
-      getPptxRenderOrder(childNodes).forEach(child => visit(child, childOrigin));
+      const overflow = style.overflow || style['overflow-x'] || style['overflow-y'] || '';
+      const createsClip = /^(?:hidden|clip)$/i.test(overflow.trim()) && hasBounds;
+      const nextClip = createsClip
+        ? parentClip
+          ? {
+              x: Math.max(parentClip.x, bounds.x),
+              y: Math.max(parentClip.y, bounds.y),
+              width: Math.max(0, Math.min(parentClip.x + parentClip.width, bounds.x + bounds.width) - Math.max(parentClip.x, bounds.x)),
+              height: Math.max(0, Math.min(parentClip.y + parentClip.height, bounds.y + bounds.height) - Math.max(parentClip.y, bounds.y))
+            }
+          : { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
+        : parentClip;
+      getPptxRenderOrder(childNodes).forEach(child => visit(child, childOrigin, nextClip));
     }
 
     deck.slides.forEach(slide => {
@@ -711,7 +740,7 @@
           diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} references a missing background image asset`);
         }
       }
-      slide.nodes.forEach(visit);
+      slide.nodes.forEach(node => visit(node));
     });
 
     return { deck, options: normalizedOptions, sourceSize, diagnostics };
