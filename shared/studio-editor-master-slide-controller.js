@@ -60,7 +60,11 @@
     const readCanonicalDeckBaseline = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
-          getCanonicalDeckBaseline
+          getCanonicalDeckBaseline,
+          isCanonicalDeck: canonicalDeckApi
+            && typeof canonicalDeckApi.isCanonicalDeck === 'function'
+            ? canonicalDeckApi.isCanonicalDeck
+            : null
         })
       : () => {
           if (!getCanonicalDeckBaseline) return null;
@@ -73,11 +77,16 @@
 
     function resolveCanonicalDeck() {
       const liveCanonicalDeck = readCanonicalDeckBaseline();
-      if (liveCanonicalDeck
-        && (!canonicalDeckApi
-          || typeof canonicalDeckApi.isCanonicalDeck !== 'function'
-          || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
-        return liveCanonicalDeck;
+      if (liveCanonicalDeck) {
+        try {
+          if (!canonicalDeckApi
+            || typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+            || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
+            return liveCanonicalDeck;
+          }
+        } catch (error) {
+          // Fall through to the supplied canonical deck fallback.
+        }
       }
       return getCanonicalDeck();
     }

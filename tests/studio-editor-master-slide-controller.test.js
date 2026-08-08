@@ -53,6 +53,28 @@ test('master slide mutations prefer a valid live canonical baseline', () => {
   assert.equal(didBuildFromDocument, false);
 });
 
+test('master slide mutations fall back when the live canonical baseline is invalid', () => {
+  const fallbackDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Fallback' }]
+  });
+  let didUseFallback = false;
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    getCanonicalDeck: () => {
+      didUseFallback = true;
+      return fallbackDeck;
+    },
+    getActiveSlideId: () => 'slide-1'
+  });
+
+  const result = controller.saveActiveSlide({ id: 'fallback-master', name: 'Fallback Master' });
+
+  assert.equal(result.masterSlides[0].id, 'fallback-master');
+  assert.equal(didUseFallback, true);
+});
+
 test('assignMasterSlide rerenders the active slide and commits the reference', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     masterSlides: [{
