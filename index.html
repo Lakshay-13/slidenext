@@ -9634,63 +9634,31 @@
     }
 
     function resolveCurrentStudioWallpaperActionState(doc = getIframeDoc()) {
-      const resolveStudioWallpaperActionState = (
-        typeof SlideNextStudioDeckView !== 'undefined'
-        && SlideNextStudioDeckView
-        && typeof SlideNextStudioDeckView.resolveStudioWallpaperActionState === 'function'
-      )
-        ? SlideNextStudioDeckView.resolveStudioWallpaperActionState
+      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
         : null;
-      if (resolveStudioWallpaperActionState) {
-        return resolveStudioWallpaperActionState(doc, {
-          getActiveSlide
-        });
+      if (!deckView || typeof deckView.resolveStudioWallpaperActionState !== 'function') {
+        return {
+          activeSlide: null,
+          canUseWallpaperControls: false
+        };
       }
-
-      const activeSlide = getActiveSlide(doc);
-      return {
-        activeSlide,
-        canUseWallpaperControls: !!activeSlide
-      };
+      return deckView.resolveStudioWallpaperActionState(doc, {
+        getActiveSlide
+      });
     }
 
     function updateWallpaperActionState(doc = getIframeDoc()) {
       const deckView = typeof SlideNextStudioDeckView !== 'undefined'
         ? SlideNextStudioDeckView
         : null;
-      if (deckView && typeof deckView.syncStudioWallpaperToolbarActionState === 'function') {
-        return deckView.syncStudioWallpaperToolbarActionState({
-          documentRef: document,
-          doc,
-          getActiveSlide
-        });
+      if (!deckView || typeof deckView.syncStudioWallpaperToolbarActionState !== 'function') {
+        return false;
       }
-
-      const actionState = resolveCurrentStudioWallpaperActionState(doc);
-      [
-        'wpTabSolid',
-        'wpTabPresets',
-        'wpTabCustom',
-        'wallpaperCustomColor',
-        'cgLinearBtn',
-        'cgRadialBtn',
-        'cgColor1',
-        'cgColor2',
-        'cgAngle',
-        'applyWallpaperToAllSlidesBtn'
-      ].forEach((id) => {
-        const control = document.getElementById(id);
-        if (control) {
-          control.disabled = !actionState.canUseWallpaperControls;
-        }
-      });
-
-      ['wallpaperSolidsList', 'wallpaperGradientsList'].forEach((id) => {
-        const container = document.getElementById(id);
-        if (!container || typeof container.querySelectorAll !== 'function') return;
-        container.querySelectorAll('button').forEach((button) => {
-          button.disabled = !actionState.canUseWallpaperControls;
-        });
+      return deckView.syncStudioWallpaperToolbarActionState({
+        documentRef: document,
+        doc,
+        getActiveSlide
       });
     }
 

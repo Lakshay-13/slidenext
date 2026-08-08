@@ -9,6 +9,7 @@ const canonicalWallpaper = require('../shared/studio-editor-canonical-wallpaper.
 const studioWallpaperView = require('../shared/studio-editor-wallpaper-view.js');
 const studioWallpaperMutation = require('../shared/studio-editor-wallpaper-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
+const deckView = require('../shared/studio-deck-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -51,6 +52,9 @@ function loadResolveCurrentStudioWallpaperActionState(fileContent, context) {
     'function resolveCurrentStudioWallpaperActionState(doc = getIframeDoc()) {',
     '\n\n    function updateWallpaperActionState(doc = getIframeDoc()) {'
   );
+  if (typeof context.SlideNextStudioDeckView === 'undefined') {
+    context.SlideNextStudioDeckView = deckView;
+  }
   vm.runInContext(helperSource, context);
 }
 

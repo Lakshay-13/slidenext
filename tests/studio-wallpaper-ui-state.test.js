@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const wallpaperView = require('../shared/studio-editor-wallpaper-view.js');
+const deckView = require('../shared/studio-deck-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -65,6 +66,9 @@ function loadResolveCurrentStudioWallpaperActionState(fileContent, context) {
     'function resolveCurrentStudioWallpaperActionState(doc = getIframeDoc()) {',
     '\n\n    function updateWallpaperActionState(doc = getIframeDoc()) {'
   );
+  if (typeof context.SlideNextStudioDeckView === 'undefined') {
+    context.SlideNextStudioDeckView = deckView;
+  }
   vm.runInContext(helperSource, context);
 }
 
