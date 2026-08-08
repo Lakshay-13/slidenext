@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 const zoomView = require('../shared/studio-editor-zoom.js');
+const deckView = require('../shared/studio-deck-view.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
@@ -122,6 +123,9 @@ function loadResolveCurrentStudioZoomActionState(fileContent, context) {
     'function resolveCurrentStudioZoomActionState(doc = getIframeDoc()) {',
     '\n\n    function updateZoomActionState(doc = getIframeDoc()) {'
   );
+  if (typeof context.SlideNextStudioDeckView === 'undefined') {
+    context.SlideNextStudioDeckView = deckView;
+  }
   vm.runInContext(helperSource, context);
 }
 

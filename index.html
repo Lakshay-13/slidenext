@@ -9606,47 +9606,30 @@
     }
 
     function resolveCurrentStudioZoomActionState(doc = getIframeDoc()) {
-      const resolveStudioZoomActionState = (
-        typeof SlideNextStudioDeckView !== 'undefined'
-        && SlideNextStudioDeckView
-        && typeof SlideNextStudioDeckView.resolveStudioZoomActionState === 'function'
-      )
-        ? SlideNextStudioDeckView.resolveStudioZoomActionState
+      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
         : null;
-      if (resolveStudioZoomActionState) {
-        return resolveStudioZoomActionState(doc, {
-          getActiveSlide
-        });
+      if (!deckView || typeof deckView.resolveStudioZoomActionState !== 'function') {
+        return {
+          canUseZoomControls: false
+        };
       }
-
-      const hasActiveSlide = !!getActiveSlide(doc);
-      return {
-        canUseZoomControls: hasActiveSlide
-      };
+      return deckView.resolveStudioZoomActionState(doc, {
+        getActiveSlide
+      });
     }
 
     function updateZoomActionState(doc = getIframeDoc()) {
       const deckView = typeof SlideNextStudioDeckView !== 'undefined'
         ? SlideNextStudioDeckView
         : null;
-      if (deckView && typeof deckView.syncStudioZoomToolbarActionState === 'function') {
-        return deckView.syncStudioZoomToolbarActionState({
-          documentRef: document,
-          doc,
-          getActiveSlide
-        });
+      if (!deckView || typeof deckView.syncStudioZoomToolbarActionState !== 'function') {
+        return false;
       }
-
-      const actionState = resolveCurrentStudioZoomActionState(doc);
-      [
-        'zoomOutBtn',
-        'zoomSelect',
-        'zoomInBtn'
-      ].forEach((id) => {
-        const control = document.getElementById(id);
-        if (control) {
-          control.disabled = !actionState.canUseZoomControls;
-        }
+      return deckView.syncStudioZoomToolbarActionState({
+        documentRef: document,
+        doc,
+        getActiveSlide
       });
     }
 
