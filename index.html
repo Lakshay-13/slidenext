@@ -1379,6 +1379,7 @@
   <script src="/shared/studio-editor-style-controller.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
+  <script src="/shared/studio-editor-frame-interactions.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
@@ -2393,6 +2394,70 @@
       ...EDITOR_INLINE_TEXT_TAGS
     ]);
     const RESIZE_HANDLE_DIRECTIONS = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
+    const studioEditorFrameInteractions = typeof SlideNextStudioEditorFrameInteractions !== 'undefined'
+      && SlideNextStudioEditorFrameInteractions
+      && typeof SlideNextStudioEditorFrameInteractions.createStudioEditorFrameInteractions === 'function'
+      ? SlideNextStudioEditorFrameInteractions.createStudioEditorFrameInteractions({
+          eventsApi: typeof SlideNextStudioEditorEvents !== 'undefined'
+            ? SlideNextStudioEditorEvents
+            : null,
+          inlineTextEditApi: typeof SlideNextStudioEditorInlineEdit !== 'undefined'
+            ? SlideNextStudioEditorInlineEdit
+            : null,
+          getIsDragging: () => isDraggingElement,
+          consumeClickSuppression: () => {
+            const shouldSuppress = suppressNextFrameClick;
+            suppressNextFrameClick = false;
+            return shouldSuppress;
+          },
+          shouldIgnoreTarget: (target) => !!(
+            target
+            && (
+              target.closest('.editor-resize-handle')
+              || target.closest('#editorSelectionOverlay')
+            )
+          ),
+          resolveEditableTarget,
+          selectElement,
+          deselectElement,
+          getActiveSlide,
+          resolveTextElement: resolveInlineTextEditTarget,
+          isElementLocked,
+          isElementHidden,
+          onInlineEditStart: ({ element }, iframeDoc) => {
+            commitEditorSelectionState({ selectedElements: [element] });
+            const overlayApi = typeof SlideNextStudioEditorOverlay !== 'undefined'
+              ? SlideNextStudioEditorOverlay
+              : null;
+            if (overlayApi && typeof overlayApi.hideStudioSelectionOverlay === 'function') {
+              overlayApi.hideStudioSelectionOverlay(
+                iframeDoc,
+                getActiveSlide(iframeDoc),
+                getEditorOverlayOptions()
+              );
+            }
+          },
+          onInlineEditCommit: ({ text }) => {
+            applySelectedElementStyle('text', text);
+          },
+          onInlineEditEnd: () => {
+            syncSelectionOverlay();
+            syncInspectorForSelection();
+          },
+          getSelectedElements: (doc) => getLiveSelectedElements(selectedElements, doc),
+          canMutateDeck: (doc) => !!getActiveSlide(doc),
+          editorUndo,
+          editorRedo,
+          selectAllElementsOnActiveSlide,
+          arrangeElementLayer,
+          removeSelectedElement,
+          copySelectedElements,
+          pasteClipboardElements,
+          duplicateSelectedElements,
+          nudgeSelectedElements,
+          navigateSlide: typeof navigateEditorSlide === 'function' ? navigateEditorSlide : null
+        })
+      : null;
 
     // Slide Wallpapers Presets Data
     const wallpaperPresetsData = {
@@ -3464,74 +3529,9 @@
       makeElementsHoverable(iframeDoc);
       
       // 3. Setup click and keyboard listeners on the document (survive innerHTML body swaps)
-      const frameClickHandler = SlideNextStudioEditorEvents.createStudioFrameClickHandler({
-        isDraggingElement: () => isDraggingElement,
-        consumeClickSuppression: () => {
-          const shouldSuppress = suppressNextFrameClick;
-          suppressNextFrameClick = false;
-          return shouldSuppress;
-        },
-        shouldIgnoreTarget: (target) => !!(target && (target.closest('.editor-resize-handle') || target.closest('#editorSelectionOverlay'))),
-        resolveEditableTarget,
-        selectElement,
-        deselectElement
-      });
-      const inlineTextEditApi = typeof SlideNextStudioEditorInlineEdit !== 'undefined'
-        ? SlideNextStudioEditorInlineEdit
-        : null;
-      if (inlineTextEditApi && typeof inlineTextEditApi.attachStudioInlineTextEditHandlers === 'function') {
-        inlineTextEditApi.attachStudioInlineTextEditHandlers(iframeDoc, {
-          getActiveSlide: () => getActiveSlide(iframeDoc),
-          resolveTextElement: resolveInlineTextEditTarget,
-          canEdit: (element) => !!getActiveSlide(iframeDoc)
-            && !isElementLocked(element)
-            && !isElementHidden(element),
-          onStart: ({ element }) => {
-            commitEditorSelectionState({ selectedElements: [element] });
-            const overlayApi = typeof SlideNextStudioEditorOverlay !== 'undefined'
-              ? SlideNextStudioEditorOverlay
-              : null;
-            if (overlayApi && typeof overlayApi.hideStudioSelectionOverlay === 'function') {
-              overlayApi.hideStudioSelectionOverlay(
-                iframeDoc,
-                getActiveSlide(iframeDoc),
-                getEditorOverlayOptions()
-              );
-            }
-          },
-          onCommit: ({ text }) => {
-            applySelectedElementStyle('text', text);
-          },
-          onEnd: () => {
-            syncSelectionOverlay();
-            syncInspectorForSelection();
-          }
-        });
-      }
-      const frameKeydownHandler = SlideNextStudioEditorEvents.createStudioFrameKeydownHandler({
-        getActiveElement: () => iframeDoc.activeElement,
-        getSelectedElements: () => getLiveSelectedElements(selectedElements, iframeDoc),
-        canMutateDeck: () => !!getActiveSlide(iframeDoc),
-        editorUndo,
-        editorRedo,
-        selectAllElementsOnActiveSlide,
-        arrangeElementLayer,
-        deselectElement,
-        removeSelectedElement,
-        copySelectedElements,
-        pasteClipboardElements,
-        duplicateSelectedElements,
-        nudgeSelectedElements,
-        navigateSlide: typeof navigateEditorSlide === 'function' ? navigateEditorSlide : null
-      });
-      const attachFrameInteractionHandlers = typeof SlideNextStudioEditorEvents.attachStudioFrameInteractionHandlers === 'function'
-        ? SlideNextStudioEditorEvents.attachStudioFrameInteractionHandlers
-        : null;
-      if (attachFrameInteractionHandlers) {
-        attachFrameInteractionHandlers(iframeDoc, {
-          clickHandler: frameClickHandler,
-          keydownHandler: frameKeydownHandler
-        });
+      if (studioEditorFrameInteractions
+        && typeof studioEditorFrameInteractions.attach === 'function') {
+        studioEditorFrameInteractions.attach(iframeDoc);
       }
 
       SlideNextStudioFrameBootstrap.runStudioFrameBootstrap(iframeDoc, {

@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const editorEvents = require('../shared/studio-editor-events.js');
+const frameInteractions = require('../shared/studio-editor-frame-interactions.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const themeView = require('../shared/studio-theme-view.js');
 
@@ -53,6 +54,17 @@ function loadResolveEditorCapturedPersistableDeckState(fileContent, context) {
     '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
   );
   vm.runInContext(helperSource, context);
+}
+
+function attachFrameInteractions(context) {
+  context.studioEditorFrameInteractions = frameInteractions.createStudioEditorFrameInteractions({
+    eventsApi: context.SlideNextStudioEditorEvents || null,
+    inlineTextEditApi: context.SlideNextStudioEditorInlineEdit || null,
+    getIsDragging: () => context.isDraggingElement,
+    getSelectedElements: () => context.selectedElements || [],
+    canMutateDeck: () => true
+  });
+  return context;
 }
 
 test('captureEditorPersistableDeckState returns persisted html, canonical deck, and playback state from one capture', () => {
@@ -852,6 +864,8 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     }
   };
 
+  attachFrameInteractions(context);
+
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   vm.runInContext(initStudioFrameSource, context);
@@ -1012,6 +1026,8 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
     setStudioAutoSaveStatus() {},
     syncInspectorForSelection() {}
   };
+
+  attachFrameInteractions(context);
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
