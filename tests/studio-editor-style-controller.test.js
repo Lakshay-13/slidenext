@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const styleController = require('../shared/studio-editor-style-controller.js');
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 
 test('style controller assembles mutation, feedback, canonical, and finalization dependencies', () => {
   const calls = [];
@@ -90,6 +91,7 @@ test('style controller blocks canonical-locked elements even when the DOM is sta
       }
     },
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline: () => deck,
     getSelectedElements: () => [element],
     getIframeDoc: () => ({ id: 'doc' }),

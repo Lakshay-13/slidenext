@@ -89,6 +89,27 @@ test('canonical visibility reader prefers model state and falls back safely', ()
   assert.equal(throwingReader(element), true);
 });
 
+test('canonical lock reader preserves DOM locks while preferring canonical locks', () => {
+  const canonicalDeck = createDeck('active');
+  const elements = {
+    canonicalLocked: { id: 'canonical-locked', domLocked: false },
+    canonicalUnlocked: { id: 'canonical-unlocked', domLocked: true },
+    missing: { id: 'missing', domLocked: true }
+  };
+  const reader = canonicalState.createStudioEditorCanonicalLockReader(canonicalDeck, {
+    resolveCanonicalNode(element) {
+      if (element === elements.canonicalLocked) return { visibility: { locked: true } };
+      if (element === elements.canonicalUnlocked) return { visibility: { locked: false } };
+      return null;
+    },
+    fallbackReader: (element) => element.domLocked
+  });
+
+  assert.equal(reader(elements.canonicalLocked), true);
+  assert.equal(reader(elements.canonicalUnlocked), true);
+  assert.equal(reader(elements.missing), true);
+});
+
 test('editor selection bounds and overlays use canonical hidden state before DOM fallback', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const visibilityReaderSource = extractFunctionSource(

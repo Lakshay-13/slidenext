@@ -94,8 +94,27 @@
     };
   }
 
+  function createStudioEditorCanonicalLockReader(canonicalDeck, options = {}) {
+    const resolveCanonicalNode = typeof options.resolveCanonicalNode === 'function'
+      ? options.resolveCanonicalNode
+      : () => null;
+    const fallbackReader = typeof options.fallbackReader === 'function'
+      ? options.fallbackReader
+      : () => false;
+    const readCanonicalLockValue = createStudioEditorCanonicalVisibilityReader(canonicalDeck, {
+      property: 'locked',
+      resolveCanonicalNode,
+      fallbackReader: () => false
+    });
+
+    return function readCanonicalLockState(element) {
+      return readCanonicalLockValue(element) || fallbackReader(element);
+    };
+  }
+
   return {
     createStudioEditorCanonicalState,
+    createStudioEditorCanonicalLockReader,
     createStudioEditorCanonicalVisibilityReader
   };
 });
