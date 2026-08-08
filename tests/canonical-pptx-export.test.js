@@ -269,6 +269,41 @@ test('createCanonicalPptxExport resolves nested theme tokens and CSS fallbacks',
   assert.equal(result.pptx.slides[0].calls[1].options.line.color, '14B8A6');
 });
 
+test('preflightCanonicalPptxExport reports unresolved theme tokens without flagging fallbacks', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      id: 'slide-1',
+      layout: {
+        background: {
+          style: 'background-color: var(--missing-slide-fallback, #ffffff); border-color: var(--missing-slide);'
+        }
+      },
+      nodes: [
+        {
+          id: 'missing-node',
+          type: 'text',
+          text: 'Missing token',
+          style: 'color: var(--missing-node);',
+          layout: { x: 0, y: 0, width: 300, height: 80 }
+        },
+        {
+          id: 'fallback-node',
+          type: 'text',
+          text: 'Fallback token',
+          style: 'color: var(--missing-node-fallback, #ffffff);',
+          layout: { x: 0, y: 100, width: 300, height: 80 }
+        }
+      ]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unresolvedThemeTokens, [
+    { id: 'slide-1:background', tokens: ['--missing-slide'] },
+    { id: 'missing-node', tokens: ['--missing-node'] }
+  ]);
+  assert.match(report.diagnostics.warnings.join('\n'), /unresolved theme token/);
+});
+
 test('createCanonicalPptxExport prefers the canonical node asset reference', () => {
   const result = pptxExport.createCanonicalPptxExport({
     assets: [

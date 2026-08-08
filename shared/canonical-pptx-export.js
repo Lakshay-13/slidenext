@@ -257,6 +257,26 @@
     return output + value.slice(cursor);
   }
 
+  function collectUnresolvedCssVariables(value) {
+    if (typeof value !== 'string' || !value.toLowerCase().includes('var(')) return [];
+    const unresolved = [];
+    const variablePattern = /var\s*\(/gi;
+    let match;
+    while ((match = variablePattern.exec(value))) {
+      const end = findCssFunctionEnd(value, match.index + match[0].length - 1);
+      if (end < 0) break;
+      const [rawName] = splitCssFunctionArguments(
+        value.slice(match.index + match[0].length, end)
+      );
+      const tokenName = rawName.trim();
+      if (/^--[A-Za-z_][A-Za-z0-9_-]*$/.test(tokenName) && !unresolved.includes(tokenName)) {
+        unresolved.push(tokenName);
+      }
+      variablePattern.lastIndex = end + 1;
+    }
+    return unresolved;
+  }
+
   function parseCssPx(value) {
     if (typeof value === 'number') return Number.isFinite(value) ? value : null;
     if (typeof value !== 'string') return null;
@@ -1144,6 +1164,7 @@
       overflowNodes: [],
       clippedNodes: [],
       fontSubstitutionRisks: [],
+      unresolvedThemeTokens: [],
       missingAssets: [],
       missingBackgroundAssets: [],
       missingNodeBackgroundAssets: []
@@ -1247,6 +1268,17 @@
 
       const imageNode = type === 'image' || node.tagName === 'img';
       const style = nodeStyle(node, themeTokens);
+      const unresolvedThemeTokens = Object.values(style)
+        .flatMap(collectUnresolvedCssVariables);
+      if (unresolvedThemeTokens.length > 0) {
+        diagnostics.unresolvedThemeTokens.push({
+          id: nodeId,
+          tokens: [...new Set(unresolvedThemeTokens)]
+        });
+        diagnostics.warnings.push(
+          `Node ${nodeId} references unresolved theme token(s): ${[...new Set(unresolvedThemeTokens)].join(', ')}`
+        );
+      }
       const nodeBackgroundValue = style['background-image'] || style.background || '';
       const nodeBackgroundAsset = resolveNodeBackgroundImageAsset(node, deck, normalizedOptions);
       const nodeBackgroundSource = nodeBackgroundAsset.source;
@@ -1416,6 +1448,17 @@
 
     deck.slides.forEach(slide => {
       const background = asObject(slide.layout).background || {};
+      const unresolvedThemeTokens = [background.color, background.style, background.image]
+        .map(value => resolveCssVariables(value, themeTokens))
+        .flatMap(collectUnresolvedCssVariables);
+      if (unresolvedThemeTokens.length > 0) {
+        const slideBackgroundId = getBackgroundAssetDiagnosticId(slide);
+        const tokens = [...new Set(unresolvedThemeTokens)];
+        diagnostics.unresolvedThemeTokens.push({ id: slideBackgroundId, tokens });
+        diagnostics.warnings.push(
+          `Slide ${slide.id || 'unknown'} references unresolved theme token(s): ${tokens.join(', ')}`
+        );
+      }
       const backgroundImageAsset = resolveSlideBackgroundImageAsset(background, deck, normalizedOptions);
       const backgroundImageSource = backgroundImageAsset.source;
       const supportsBackgroundStyle = hasSupportedSlideBackgroundStyle(
