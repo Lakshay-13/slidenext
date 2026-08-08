@@ -1936,9 +1936,7 @@
           documentRef: typeof document !== 'undefined' ? document : null,
           highlightAlignButton: (...args) => highlightAlignButton(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
-            preferLiveCanonicalDeck: false
-          }),
+          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           applyStyleMutation: (...args) => applyEditorStyleMutationWithTransaction(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
         })
