@@ -29,6 +29,15 @@
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
+    function isValidCanonicalDeck(value) {
+      if (!value) return false;
+      if (typeof isCanonicalDeck !== 'function') return true;
+      try {
+        return isCanonicalDeck(value) === true;
+      } catch (err) {
+        return false;
+      }
+    }
     const readCanonicalDeckBaseline = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
@@ -39,9 +48,7 @@
           if (!getCanonicalDeckBaseline) return null;
           try {
             const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
-            if (!liveCanonicalDeck) return null;
-            if (isCanonicalDeck && isCanonicalDeck(liveCanonicalDeck) !== true) return null;
-            return liveCanonicalDeck;
+            return isValidCanonicalDeck(liveCanonicalDeck) ? liveCanonicalDeck : null;
           } catch (err) {
             return null;
           }
@@ -53,7 +60,7 @@
     }
 
     function setLiveCanonicalDeck(canonicalDeck, documentRef = null, sessionToken = null) {
-      if (!state || typeof state.set !== 'function') return null;
+      if (!state || typeof state.set !== 'function' || !isValidCanonicalDeck(canonicalDeck)) return null;
       return state.set(canonicalDeck, {
         documentRef,
         sessionToken
@@ -62,10 +69,11 @@
 
     function resolveLiveCanonicalDeck(documentRef = null, sessionToken = null) {
       if (!state || typeof state.resolve !== 'function') return null;
-      return state.resolve({
+      const canonicalDeck = state.resolve({
         documentRef,
         sessionToken
       });
+      return isValidCanonicalDeck(canonicalDeck) ? canonicalDeck : null;
     }
 
     function buildCanonicalDeck(documentRef = getDocument(), buildOptions = {}) {
@@ -88,7 +96,8 @@
         }
       }
       try {
-        return canonicalDeckBuilder(documentRef, resolvedOptions);
+        const canonicalDeck = canonicalDeckBuilder(documentRef, resolvedOptions);
+        return isValidCanonicalDeck(canonicalDeck) ? canonicalDeck : null;
       } catch (err) {
         // Keep legacy HTML editing available when canonical import cannot proceed.
         return null;
@@ -98,7 +107,8 @@
     function buildMutationCanonicalDeck(sourceDoc) {
       if (!mutationCanonicalDeckBuilder) return null;
       try {
-        return mutationCanonicalDeckBuilder(sourceDoc);
+        const canonicalDeck = mutationCanonicalDeckBuilder(sourceDoc);
+        return isValidCanonicalDeck(canonicalDeck) ? canonicalDeck : null;
       } catch (err) {
         return null;
       }

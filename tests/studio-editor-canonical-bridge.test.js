@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalBridge = require('../shared/studio-editor-canonical-bridge.js');
+const canonicalDeck = require('../shared/canonical-deck.js');
 
 function createState() {
   let liveDeck = null;
@@ -104,6 +105,33 @@ test('canonical bridge ignores an invalid live baseline when rebuilding', () => 
   bridge.buildCanonicalDeck({}, { preferLiveCanonicalDeck: false });
 
   assert.deepEqual(capturedOptions, { preferLiveCanonicalDeck: false });
+});
+
+test('canonical bridge rejects malformed decks at state and builder boundaries', () => {
+  let liveDeck = { invalid: true };
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    canonicalStateApi: canonicalState,
+    isCanonicalDeck: canonicalDeck.isCanonicalDeck,
+    state: {
+      set(deck) {
+        liveDeck = deck;
+        return deck;
+      },
+      resolve() {
+        return liveDeck;
+      }
+    },
+    canonicalDeckBuilder: () => ({ invalid: true }),
+    mutationCanonicalDeckBuilder: () => ({ invalid: true })
+  });
+  const validDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+
+  assert.equal(bridge.setLiveCanonicalDeck({ invalid: true }), null);
+  assert.equal(bridge.resolveLiveCanonicalDeck(), null);
+  assert.equal(bridge.buildCanonicalDeck({}), null);
+  assert.equal(bridge.buildMutationCanonicalDeck({}), null);
+  assert.equal(bridge.setLiveCanonicalDeck(validDeck), validDeck);
+  assert.equal(bridge.resolveLiveCanonicalDeck(), validDeck);
 });
 
 test('canonical bridge fails closed when either builder throws or is unavailable', () => {
