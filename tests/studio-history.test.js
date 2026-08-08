@@ -833,6 +833,34 @@ test('createStudioHistorySaveHandler rejects malformed canonical sidecars while 
   assert.equal(liveCanonicalDeck, null);
 });
 
+test('createStudioHistorySaveHandler uses structural canonical validation by default', () => {
+  let pendingCanonicalDeck = null;
+  let liveCanonicalDeck = null;
+  const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
+    setPendingCanonicalDeck(nextCanonicalDeck) {
+      pendingCanonicalDeck = nextCanonicalDeck;
+    },
+    setLiveCanonicalDeck(nextCanonicalDeck) {
+      liveCanonicalDeck = nextCanonicalDeck;
+    },
+    scheduleCapture() {
+      return { nextTimer: null, didCapture: true };
+    }
+  });
+
+  saveHistoryState(false, null, { kind: 'invalid.deck' });
+  assert.equal(pendingCanonicalDeck, null);
+  assert.equal(liveCanonicalDeck, null);
+
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    slides: []
+  };
+  saveHistoryState(false, null, canonicalDeck);
+  assert.equal(pendingCanonicalDeck, canonicalDeck);
+  assert.equal(liveCanonicalDeck, canonicalDeck);
+});
+
 test('restoreStudioHistoryTransaction delegates replay and post-apply synchronization', () => {
   const historyEntry = { canonicalDeck: { slides: [{ id: 'slide-1' }] } };
   const historyStep = {

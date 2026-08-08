@@ -644,7 +644,7 @@
       : () => {};
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
-      : null;
+      : isStudioHistoryCanonicalDeckLike;
     const getTimer = typeof options.getTimer === 'function'
       ? options.getTimer
       : () => null;
