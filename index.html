@@ -7618,13 +7618,15 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorCapturedPersistableDeckStateResolverAdapter
         : null;
       if (createStudioEditorCapturedPersistableDeckStateResolverAdapter) {
-        const adapter = createStudioEditorCapturedPersistableDeckStateResolverAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null
-        });
-        const resolvedState = typeof adapter === 'function'
-          ? adapter(nextCleanHtml, options)
+        if (typeof resolveEditorCapturedPersistableDeckState.adapter !== 'function') {
+          resolveEditorCapturedPersistableDeckState.adapter = createStudioEditorCapturedPersistableDeckStateResolverAdapter({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null
+          });
+        }
+        const resolvedState = typeof resolveEditorCapturedPersistableDeckState.adapter === 'function'
+          ? resolveEditorCapturedPersistableDeckState.adapter(nextCleanHtml, options)
           : null;
         if (resolvedState !== null && typeof resolvedState !== 'undefined') {
           return resolvedState;

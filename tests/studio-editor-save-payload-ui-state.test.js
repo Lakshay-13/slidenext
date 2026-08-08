@@ -1802,6 +1802,44 @@ test('resolveEditorCapturedPersistableDeckState delegates through the editor per
   assert.equal(typeof factoryOptions.resolvePlaybackState, 'function');
 });
 
+test('resolveEditorCapturedPersistableDeckState creates the shared persistence-state adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorCapturedPersistableDeckStateSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {',
+    '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
+  );
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorCapturedPersistableDeckStateResolverAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(options.persistenceApi, context.SlideNextStudioEditorPersistence);
+        return (cleanHtml, nextOptions) => {
+          calls.push([cleanHtml, nextOptions]);
+          return { id: nextOptions.id };
+        };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorCapturedPersistableDeckStateSource, context);
+
+  assert.deepEqual(
+    context.resolveEditorCapturedPersistableDeckState('<html>one</html>', { id: 1 }),
+    { id: 1 }
+  );
+  assert.deepEqual(
+    context.resolveEditorCapturedPersistableDeckState('<html>two</html>', { id: 2 }),
+    { id: 2 }
+  );
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls.map(([, options]) => options.id), [1, 2]);
+});
+
 test('captureEditorPersistableDeckBuildState delegates through the editor persistence-state adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(
