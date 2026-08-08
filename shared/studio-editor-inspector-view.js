@@ -169,7 +169,12 @@
     const isImage = !isMulti && primaryElement.tagName.toLowerCase() === 'img';
     if (isImage) {
       if (imageGroup) imageGroup.classList.remove('hidden');
-      if (imageSrcInput) imageSrcInput.value = primaryElement.src || '';
+      const canonicalImageSrc = options.canonicalNode
+        && options.canonicalNode.attributes
+        && typeof options.canonicalNode.attributes.src === 'string'
+        ? options.canonicalNode.attributes.src
+        : '';
+      if (imageSrcInput) imageSrcInput.value = canonicalImageSrc || primaryElement.src || '';
       const canonicalObjectFit = readStudioInspectorCanonicalStyleValue(
         options.canonicalNode,
         'object-fit'
