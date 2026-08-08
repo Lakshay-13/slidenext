@@ -36,6 +36,7 @@ test('studio editor canonical state resolves only for its owning document and se
   assert.equal(state.set(deck, { documentRef, sessionToken: 4 }), deck);
   assert.equal(state.resolve({ documentRef, sessionToken: 4 }), deck);
   assert.equal(state.resolve(), null);
+  assert.equal(state.resolve(null), null);
   assert.equal(state.resolve({ documentRef }), null);
   assert.equal(state.resolve({ sessionToken: 4 }), null);
   assert.equal(state.resolve({ documentRef: {}, sessionToken: 4 }), null);
@@ -47,6 +48,8 @@ test('studio editor canonical state rejects invalid models and can be reset', ()
   const deck = createDeck('active');
   const documentRef = {};
 
+  assert.doesNotThrow(() => state.set(deck, null));
+  assert.equal(state.resolve(), deck);
   state.set(deck, { documentRef, sessionToken: 1 });
   assert.equal(state.set(null, { documentRef, sessionToken: 1 }), null);
   assert.equal(state.resolve({ documentRef, sessionToken: 1 }), null);

@@ -35,11 +35,12 @@
         return reset();
       }
 
+      const resolvedOwner = owner && typeof owner === 'object' ? owner : {};
       canonicalDeck = nextCanonicalDeck;
-      hasDocumentOwner = Object.prototype.hasOwnProperty.call(owner, 'documentRef');
-      hasSessionOwner = Object.prototype.hasOwnProperty.call(owner, 'sessionToken');
-      ownerDocument = hasDocumentOwner ? owner.documentRef : null;
-      ownerSessionToken = hasSessionOwner ? owner.sessionToken : null;
+      hasDocumentOwner = Object.prototype.hasOwnProperty.call(resolvedOwner, 'documentRef');
+      hasSessionOwner = Object.prototype.hasOwnProperty.call(resolvedOwner, 'sessionToken');
+      ownerDocument = hasDocumentOwner ? resolvedOwner.documentRef : null;
+      ownerSessionToken = hasSessionOwner ? resolvedOwner.sessionToken : null;
       return canonicalDeck;
     }
 
@@ -47,14 +48,15 @@
       if (!canonicalDeck) {
         return null;
       }
-      const hasOwnerDocument = Object.prototype.hasOwnProperty.call(owner, 'documentRef');
-      const hasOwnerSession = Object.prototype.hasOwnProperty.call(owner, 'sessionToken');
+      const resolvedOwner = owner && typeof owner === 'object' ? owner : {};
+      const hasOwnerDocument = Object.prototype.hasOwnProperty.call(resolvedOwner, 'documentRef');
+      const hasOwnerSession = Object.prototype.hasOwnProperty.call(resolvedOwner, 'sessionToken');
       if (hasDocumentOwner
-        && (!hasOwnerDocument || owner.documentRef !== ownerDocument)) {
+        && (!hasOwnerDocument || resolvedOwner.documentRef !== ownerDocument)) {
         return null;
       }
       if (hasSessionOwner
-        && (!hasOwnerSession || owner.sessionToken !== ownerSessionToken)) {
+        && (!hasOwnerSession || resolvedOwner.sessionToken !== ownerSessionToken)) {
         return null;
       }
       return canonicalDeck;
