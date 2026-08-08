@@ -219,6 +219,7 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
   let printSuccessCalls = 0;
   const events = [];
   const printWindow = {
+    opener: 'parent-window',
     document: {
       open() {
         events.push('open');
@@ -249,13 +250,15 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
 
   assert.equal(pdfExport.openStudioPdfPrintWindow({
     html: '<html><head></head><body><div class="slide">A</div></body></html>',
-    openWindow() {
+    openWindow(...args) {
+      assert.deepEqual(args, ['', '_blank']);
       return printWindow;
     },
     onPrint() {
       printSuccessCalls += 1;
     }
   }), true);
+  assert.equal(printWindow.opener, null);
   assert.match(writtenHtml, /data-slidenext-pdf-print="true"/);
   assert.deepEqual(events, ['listen', 'open', 'write', 'close']);
   assert.equal(printCalls, 0);
@@ -271,6 +274,81 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
       resolve();
     });
   });
+});
+
+test('openStudioPdfPrintWindow falls back to a completed synchronously written document', () => {
+  let printCalls = 0;
+  let printSuccessCalls = 0;
+  const printWindow = {
+    document: {
+      readyState: 'complete',
+      open() {},
+      write() {},
+      close() {},
+      fonts: {
+        ready: Promise.resolve()
+      }
+    },
+    addEventListener() {},
+    focus() {},
+    print() {
+      printCalls += 1;
+    }
+  };
+
+  assert.equal(pdfExport.openStudioPdfPrintWindow({
+    html: '<html><head></head><body><div class="slide">A</div></body></html>',
+    openWindow() {
+      return printWindow;
+    },
+    onPrint() {
+      printSuccessCalls += 1;
+    }
+  }), true);
+
+  return new Promise((resolve) => {
+    setImmediate(() => {
+      assert.equal(printCalls, 1);
+      assert.equal(printSuccessCalls, 1);
+      resolve();
+    });
+  });
+});
+
+test('openStudioPdfPrintWindow falls back when the popup never emits load', async () => {
+  let printCalls = 0;
+  let printSuccessCalls = 0;
+  const printWindow = {
+    document: {
+      readyState: 'loading',
+      open() {},
+      write() {},
+      close() {},
+      fonts: {
+        ready: Promise.resolve()
+      }
+    },
+    addEventListener() {},
+    focus() {},
+    print() {
+      printCalls += 1;
+    }
+  };
+
+  assert.equal(pdfExport.openStudioPdfPrintWindow({
+    html: '<html><head></head><body><div class="slide">A</div></body></html>',
+    fallbackLoadTimeoutMs: 5,
+    openWindow() {
+      return printWindow;
+    },
+    onPrint() {
+      printSuccessCalls += 1;
+    }
+  }), true);
+
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(printCalls, 1);
+  assert.equal(printSuccessCalls, 1);
 });
 
 test('openStudioPdfPrintWindow reports print-dialog failures', () => {

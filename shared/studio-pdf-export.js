@@ -319,18 +319,29 @@
       return false;
     }
 
-    const printWindow = openWindow('', '_blank', 'noopener,noreferrer');
+    // The print flow needs the WindowProxy so it can write the prepared deck and call print().
+    const printWindow = openWindow('', '_blank');
     if (!printWindow || !printWindow.document) {
       return false;
+    }
+    try {
+      printWindow.opener = null;
+    } catch (error) {
+      // Some test doubles and restricted window proxies do not expose opener.
     }
 
     let didPrint = false;
     let didLoad = false;
     let loadTimeoutId = null;
+    let fallbackLoadTimeoutId = null;
     const clearLoadTimeout = () => {
       if (loadTimeoutId) {
         clearTimeout(loadTimeoutId);
         loadTimeoutId = null;
+      }
+      if (fallbackLoadTimeoutId) {
+        clearTimeout(fallbackLoadTimeoutId);
+        fallbackLoadTimeoutId = null;
       }
     };
     const closePrintWindow = () => {
@@ -394,6 +405,13 @@
         didLoad = true;
         reportPrintFailure(new Error('Print window load timed out'));
       }, loadTimeoutMs);
+      const fallbackLoadTimeoutMs = Number.isFinite(options.fallbackLoadTimeoutMs)
+        ? Math.max(0, options.fallbackLoadTimeoutMs)
+        : 250;
+      fallbackLoadTimeoutId = setTimeout(() => {
+        if (didLoad || didPrint) return;
+        handleLoad();
+      }, fallbackLoadTimeoutMs);
     }
 
     try {
@@ -404,6 +422,13 @@
       clearLoadTimeout();
       reportPrintFailure(error);
       return false;
+    }
+
+    if (
+      typeof printWindow.addEventListener === 'function'
+      && printWindow.document.readyState === 'complete'
+    ) {
+      handleLoad();
     }
 
     if (typeof printWindow.addEventListener !== 'function') {
