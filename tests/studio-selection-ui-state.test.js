@@ -715,7 +715,7 @@ test('getEditorHistoryStackOptions forwards sanitizer overrides into the underly
   const getEditorHistoryStackOptionsSource = extractFunctionSource(
     fileContent,
     'function getEditorHistoryStackOptions(options = {}) {',
-    '\n\n    function createEditorSlideId() {'
+    '\n\n    function assignEditorSlideId(slide, options = {}) {'
   );
 
   const calls = [];

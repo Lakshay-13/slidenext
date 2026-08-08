@@ -63,7 +63,7 @@ function loadReorderSlideLayers(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {',
-    '\n\n    function findPreferredDragContainer(el) {'
+    '\n\n    function resolveEditableTarget(node) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -569,7 +569,7 @@ test('reorderSlideLayers delegates order application to the shared layer-order m
   const source = extractFunctionSource(
     fileContent,
     'function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {',
-    '\n\n    function findPreferredDragContainer(el) {'
+    '\n\n    function resolveEditableTarget(node) {'
   );
   const first = { isConnected: true, dataset: {}, style: { zIndex: '0' } };
   const second = { isConnected: true, dataset: {}, style: { zIndex: '1' } };

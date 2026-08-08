@@ -3962,20 +3962,12 @@
       };
     }
 
-    function createEditorSlideId() {
-      return SlideNextStudioEditorDom.createStudioSlideId();
-    }
-
     function assignEditorSlideId(slide, options = {}) {
       return SlideNextStudioEditorDom.assignStudioSlideId(slide, getEditorDomOptions(options));
     }
 
     function getEditorSlideId(slide, options = {}) {
       return SlideNextStudioEditorDom.getStudioSlideId(slide, getEditorDomOptions(options));
-    }
-
-    function ensureEditorSlideIds(root, options = {}) {
-      return SlideNextStudioEditorDom.ensureStudioSlideIds(root, getEditorDomOptions(options));
     }
 
     function getSlides(doc = getIframeDoc()) {
@@ -4605,16 +4597,8 @@
       return SlideNextStudioEditorDom.isEligibleEditableElement(el, getEditorDomOptions());
     }
 
-    function createEditorElementId() {
-      return SlideNextStudioEditorDom.createStudioElementId();
-    }
-
     function assignEditorElementId(el, options = {}) {
       return SlideNextStudioEditorDom.assignStudioElementId(el, getEditorDomOptions(options));
-    }
-
-    function ensureEditorElementIds(root, options = {}) {
-      return SlideNextStudioEditorDom.ensureStudioElementIds(root, getEditorDomOptions(options));
     }
 
     function getElementByEditorId(editorId, doc = getIframeDoc()) {
@@ -4678,10 +4662,6 @@
         && typeof studioEditorLayerOrderController.reorder === 'function'
         ? studioEditorLayerOrderController.reorder(action, targetElements, options)
         : false;
-    }
-
-    function findPreferredDragContainer(el) {
-      return SlideNextStudioEditorDom.findPreferredStudioDragContainer(el, getEditorDomOptions());
     }
 
     function resolveEditableTarget(node) {
@@ -5059,10 +5039,6 @@
       return SlideNextStudioEditorLiveSelection.hasStudioLockedLiveSelection(elements, {
         isLocked: isElementLocked
       });
-    }
-
-    function selectionSupportsFreeformTransforms(elements = selectedElements) {
-      return getTransformSelectionState(elements).canTransform;
     }
 
     function getNudgeSelectionState(elements = selectedElements) {
