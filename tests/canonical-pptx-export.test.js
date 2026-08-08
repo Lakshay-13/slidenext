@@ -564,6 +564,40 @@ test('createCanonicalPptxExport preserves supported CSS text line heights', () =
   assert.equal(percentageText.options.lineSpacingMultiple, 1.5);
 });
 
+test('createCanonicalPptxExport preserves supported CSS text vertical alignment', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'top-text',
+        type: 'text',
+        text: 'Top',
+        style: 'vertical-align: top;',
+        layout: { x: 0, y: 0, width: 100, height: 40 }
+      }, {
+        id: 'middle-text',
+        type: 'text',
+        text: 'Middle',
+        style: 'vertical-align: middle;',
+        layout: { x: 0, y: 50, width: 100, height: 40 }
+      }, {
+        id: 'bottom-text',
+        type: 'text',
+        text: 'Bottom',
+        style: 'vertical-align: bottom;',
+        layout: { x: 0, y: 100, width: 100, height: 40 }
+      }, {
+        id: 'default-text',
+        type: 'text',
+        text: 'Default',
+        layout: { x: 0, y: 150, width: 100, height: 40 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const calls = result.pptx.slides[0].calls;
+  assert.deepEqual(calls.map(call => call.options.valign), ['top', 'middle', 'bottom', undefined]);
+});
+
 test('preflightCanonicalPptxExport reports missing node background image assets', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{

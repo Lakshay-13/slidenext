@@ -457,6 +457,9 @@
         : lineHeightMatch && !lineHeightMatch[2] && lineHeightValue > 0
           ? { lineSpacingMultiple: lineHeightValue }
           : {};
+    const verticalAlignment = ['top', 'middle', 'bottom'].includes(style['vertical-align'])
+      ? { valign: style['vertical-align'] }
+      : {};
     const color = normalizeHexColor(style.color) || '000000';
     const fontFace = style['font-family']
       ? style['font-family'].split(',')[0].trim().replace(/^['"]|['"]$/g, '')
@@ -472,7 +475,8 @@
       margin: 0,
       breakLine: false,
       fit: 'shrink',
-      ...lineSpacing
+      ...lineSpacing,
+      ...verticalAlignment
     }, nodeTransparency(node));
   }
 
