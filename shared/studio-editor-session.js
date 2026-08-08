@@ -208,6 +208,54 @@
     };
   }
 
+  function createStudioEditorPresentationSessionStateController(options = {}) {
+    const sessionApi = options.sessionApi && typeof options.sessionApi === 'object'
+      ? options.sessionApi
+      : null;
+    const createStateUpdate = sessionApi
+      && typeof sessionApi.createStudioEditorPresentationSessionStateUpdateAdapter === 'function'
+      ? sessionApi.createStudioEditorPresentationSessionStateUpdateAdapter
+      : createStudioEditorPresentationSessionStateUpdateAdapter;
+    const normalizeState = createStateUpdate({ sessionApi });
+    const setPresentationUrl = typeof options.setPresentationUrl === 'function'
+      ? options.setPresentationUrl
+      : () => {};
+    const setPresentationTitle = typeof options.setPresentationTitle === 'function'
+      ? options.setPresentationTitle
+      : () => {};
+    const setPresentationCategory = typeof options.setPresentationCategory === 'function'
+      ? options.setPresentationCategory
+      : () => {};
+    const setSlideIndex = typeof options.setSlideIndex === 'function'
+      ? options.setSlideIndex
+      : () => {};
+    const setPresentationMetadata = typeof options.setPresentationMetadata === 'function'
+      ? options.setPresentationMetadata
+      : () => {};
+
+    function update(nextState = {}) {
+      const sessionStateUpdate = normalizeState(nextState);
+      if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationUrl')) {
+        setPresentationUrl(sessionStateUpdate.presentationUrl);
+      }
+      if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationTitle')) {
+        setPresentationTitle(sessionStateUpdate.presentationTitle);
+      }
+      if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationCategory')) {
+        setPresentationCategory(sessionStateUpdate.presentationCategory);
+      }
+      if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'slideIndex')) {
+        setSlideIndex(sessionStateUpdate.slideIndex);
+      }
+      if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationMetadata')) {
+        setPresentationMetadata(sessionStateUpdate.presentationMetadata);
+      }
+      return sessionStateUpdate;
+    }
+
+    return { update };
+  }
+
   function isCurrentStudioEditorSession(options = {}) {
     const expectedSessionToken = Number.isInteger(options.sessionToken)
       ? options.sessionToken
@@ -308,6 +356,7 @@
     createStudioEditorSessionSnapshotAdapter,
     createStudioPresentationSessionStateUpdate,
     createStudioEditorPresentationSessionStateUpdateAdapter,
+    createStudioEditorPresentationSessionStateController,
     isCurrentStudioEditorSession,
     shouldHandleStudioFrameLoad,
     createStudioEditorFrameLoadGuardAdapter,

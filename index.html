@@ -2483,6 +2483,28 @@
           }
         })
       : null;
+    const studioEditorSessionStateController = typeof SlideNextStudioEditorSession !== 'undefined'
+      && SlideNextStudioEditorSession
+      && typeof SlideNextStudioEditorSession.createStudioEditorPresentationSessionStateController === 'function'
+      ? SlideNextStudioEditorSession.createStudioEditorPresentationSessionStateController({
+          sessionApi: SlideNextStudioEditorSession,
+          setPresentationUrl: (value) => {
+            currentPresentationUrl = value;
+          },
+          setPresentationTitle: (value) => {
+            currentTitle = value;
+          },
+          setPresentationCategory: (value) => {
+            currentCategory = value;
+          },
+          setSlideIndex: (value) => {
+            currentSlideIndex = value;
+          },
+          setPresentationMetadata: (value) => {
+            applyCurrentPresentationMetadata(value);
+          }
+        })
+      : null;
     const studioEditorDeckMutationFinalizer = typeof SlideNextStudioEditorDeckMutation !== 'undefined'
       && SlideNextStudioEditorDeckMutation
       && typeof SlideNextStudioEditorDeckMutation.createStudioEditorDeckMutationFinalizer === 'function'
@@ -3506,6 +3528,11 @@
     }
 
     function updateCurrentPresentationSessionState(nextState = {}) {
+      if (typeof studioEditorSessionStateController !== 'undefined'
+        && studioEditorSessionStateController
+        && typeof studioEditorSessionStateController.update === 'function') {
+        return studioEditorSessionStateController.update(nextState);
+      }
       const createStudioEditorPresentationSessionStateUpdateAdapter = (
         typeof SlideNextStudioEditorSession !== 'undefined'
         && SlideNextStudioEditorSession

@@ -292,6 +292,50 @@ test('createStudioEditorPresentationSessionStateUpdateAdapter supports call-time
   ), { overridden: 4 });
 });
 
+test('createStudioEditorPresentationSessionStateController normalizes and applies session fields', () => {
+  const calls = [];
+  const metadata = { id: 'deck-1' };
+  const controller = editorSession.createStudioEditorPresentationSessionStateController({
+    sessionApi: editorSession,
+    setPresentationUrl(value) {
+      calls.push(['presentationUrl', value]);
+    },
+    setPresentationTitle(value) {
+      calls.push(['presentationTitle', value]);
+    },
+    setPresentationCategory(value) {
+      calls.push(['presentationCategory', value]);
+    },
+    setSlideIndex(value) {
+      calls.push(['slideIndex', value]);
+    },
+    setPresentationMetadata(value) {
+      calls.push(['presentationMetadata', value]);
+    }
+  });
+
+  assert.deepEqual(controller.update({
+    presentationUrl: null,
+    presentationTitle: 'Deck',
+    presentationCategory: 42,
+    slideIndex: 'invalid',
+    presentationMetadata: metadata
+  }), {
+    presentationUrl: '',
+    presentationTitle: 'Deck',
+    presentationCategory: '',
+    slideIndex: 0,
+    presentationMetadata: metadata
+  });
+  assert.deepEqual(calls, [
+    ['presentationUrl', ''],
+    ['presentationTitle', 'Deck'],
+    ['presentationCategory', ''],
+    ['slideIndex', 0],
+    ['presentationMetadata', metadata]
+  ]);
+});
+
 test('shouldHandleStudioFrameLoad requires an active matching editor session', () => {
   assert.equal(editorSession.shouldHandleStudioFrameLoad('', {
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
