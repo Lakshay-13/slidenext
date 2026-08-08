@@ -71,7 +71,28 @@
     return true;
   }
 
+  function syncStudioMasterSlideState(options = {}) {
+    const documentRef = options.documentRef;
+    const canUseMasterActions = !!options.canUseMasterActions;
+    if (documentRef && typeof documentRef.getElementById === 'function') {
+      [
+        'saveActiveSlideMasterBtn',
+        'masterSlideNameInput',
+        'masterSlideSelect',
+        'applyMasterSlideBtn'
+      ].forEach((id) => {
+        const control = documentRef.getElementById(id);
+        if (control) control.disabled = !canUseMasterActions;
+      });
+    }
+    return renderStudioMasterSlideLibrary({
+      ...options,
+      canApply: canUseMasterActions
+    });
+  }
+
   return {
-    renderStudioMasterSlideLibrary
+    renderStudioMasterSlideLibrary,
+    syncStudioMasterSlideState
   };
 });

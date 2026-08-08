@@ -5829,20 +5829,13 @@
     }
 
     function updateMasterSlideActionState(doc = getIframeDoc()) {
-      const canUse = !!getActiveSlide(doc);
-      const documentApi = typeof document !== 'undefined'
-        && document
-        && typeof document.getElementById === 'function'
-        ? document
+      const masterSlideView = typeof SlideNextStudioEditorMasterSlideView !== 'undefined'
+        ? SlideNextStudioEditorMasterSlideView
         : null;
-      const saveButton = documentApi ? documentApi.getElementById('saveActiveSlideMasterBtn') : null;
-      const nameInput = documentApi ? documentApi.getElementById('masterSlideNameInput') : null;
-      const select = documentApi ? documentApi.getElementById('masterSlideSelect') : null;
-      const applyButton = documentApi ? documentApi.getElementById('applyMasterSlideBtn') : null;
-      if (saveButton) saveButton.disabled = !canUse;
-      if (nameInput) nameInput.disabled = !canUse;
-      if (select) select.disabled = !canUse;
-      if (applyButton) applyButton.disabled = !canUse;
+      if (!masterSlideView || typeof masterSlideView.syncStudioMasterSlideState !== 'function') {
+        return false;
+      }
+      const canUse = !!getActiveSlide(doc);
       const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(doc)
         : null;
@@ -5851,10 +5844,14 @@
         && Array.isArray(canonicalDeck.slides)
         ? canonicalDeck.slides.find((slide) => slide && slide.id === activeSlideId)
         : null;
-      renderSavedMasterSlides(
-        canonicalDeck && canonicalDeck.masterSlides,
-        activeSlide && activeSlide.masterSlideId
-      );
+      masterSlideView.syncStudioMasterSlideState({
+        documentRef: document,
+        masterSlides: canonicalDeck && canonicalDeck.masterSlides,
+        activeMasterSlideId: activeSlide && activeSlide.masterSlideId,
+        canUseMasterActions: canUse,
+        applyMasterSlide: typeof applySavedMasterSlide === 'function' ? applySavedMasterSlide : null,
+        removeMasterSlide: typeof removeSavedMasterSlide === 'function' ? removeSavedMasterSlide : null
+      });
       return canUse;
     }
 

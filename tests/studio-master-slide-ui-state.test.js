@@ -132,6 +132,58 @@ test('shared master-slide view wires apply and remove actions to injected callba
   assert.deepEqual(calls, [['apply', 'brand'], ['remove', 'brand']]);
 });
 
+test('shared master-slide state sync updates controls before rendering the library', () => {
+  const select = {
+    disabled: false,
+    children: [],
+    textContent: '',
+    value: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const controls = {
+    saveActiveSlideMasterBtn: { disabled: false },
+    masterSlideNameInput: { disabled: false },
+    masterSlideSelect: select,
+    applyMasterSlideBtn: { disabled: false }
+  };
+  const list = {
+    children: [],
+    textContent: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const documentRef = {
+    getElementById(id) {
+      return controls[id] || (id === 'savedMasterSlidesList' ? list : null);
+    },
+    createElement() {
+      return {
+        textContent: '',
+        children: [],
+        appendChild(child) {
+          this.children.push(child);
+        },
+        addEventListener() {},
+        setAttribute() {}
+      };
+    }
+  };
+
+  assert.equal(masterSlideView.syncStudioMasterSlideState({
+    documentRef,
+    masterSlides: [],
+    canUseMasterActions: false
+  }), true);
+  assert.equal(controls.saveActiveSlideMasterBtn.disabled, true);
+  assert.equal(controls.masterSlideNameInput.disabled, true);
+  assert.equal(controls.masterSlideSelect.disabled, true);
+  assert.equal(controls.applyMasterSlideBtn.disabled, true);
+  assert.equal(list.children[0].textContent, 'No master layouts saved');
+});
+
 test('master layout actions delegate save, apply, and removal to the controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
@@ -212,8 +264,13 @@ test('updateMasterSlideActionState reflects the active slide reference', () => {
       slides: [{ id: 'slide-1', masterSlideId: 'brand' }],
       masterSlides: [{ id: 'brand', name: 'Brand' }]
     }),
-    renderSavedMasterSlides(masterSlides, activeMasterSlideId) {
-      rendered = { masterSlides, activeMasterSlideId };
+    SlideNextStudioEditorMasterSlideView: {
+      syncStudioMasterSlideState(options) {
+        rendered = {
+          masterSlides: options.masterSlides,
+          activeMasterSlideId: options.activeMasterSlideId
+        };
+      }
     }
   };
 
