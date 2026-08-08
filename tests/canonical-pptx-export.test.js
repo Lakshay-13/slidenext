@@ -181,6 +181,41 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
   assert.deepEqual(result.diagnostics.missingAssets, []);
 });
 
+test('createCanonicalPptxExport preserves table cell spans', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'spanned-table',
+        type: 'table',
+        layout: { x: 0, y: 0, width: 300, height: 100 },
+        children: [{
+          tagName: 'tr',
+          children: [{
+            tagName: 'td',
+            text: 'Merged',
+            attributes: { colspan: '2' }
+          }, {
+            tagName: 'td',
+            text: 'Tall',
+            attributes: { rowspan: '2' }
+          }]
+        }, {
+          tagName: 'tr',
+          children: [{ tagName: 'td', text: 'Bottom' }]
+        }]
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.pptx.slides[0].calls[0].rows, [
+    [
+      { text: 'Merged', options: { colspan: 2 } },
+      { text: 'Tall', options: { rowspan: 2 } }
+    ],
+    ['Bottom']
+  ]);
+});
+
 test('resolvePptxExportOptions keeps the default wide layout for canonical 16:9 decks', () => {
   const result = pptxExport.resolvePptxExportOptions({
     layout: { size: { width: 1920, height: 1080, unit: 'px' } },

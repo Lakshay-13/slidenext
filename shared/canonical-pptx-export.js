@@ -225,6 +225,7 @@
         .map(cell => {
           const text = getNestedNodeText(cell);
           const cellStyle = nodeStyle(cell);
+          const cellAttributes = asObject(cell.attributes);
           const cellOptions = {};
           const cellFill = resolvePptxFillColor(cellStyle['background-color'] || cellStyle.background);
           const cellColor = normalizeHexColor(cellStyle.color);
@@ -256,6 +257,10 @@
           );
           const cellItalic = typeof cellStyle['font-style'] === 'string'
             && cellStyle['font-style'].trim().toLowerCase() === 'italic';
+          const colspan = Number.parseInt(cell.colspan || cellAttributes.colspan, 10);
+          const rowspan = Number.parseInt(cell.rowspan || cellAttributes.rowspan, 10);
+          if (Number.isInteger(colspan) && colspan > 1) cellOptions.colspan = colspan;
+          if (Number.isInteger(rowspan) && rowspan > 1) cellOptions.rowspan = rowspan;
           if (cell.tagName === 'th' || /^(bold|[6-9]00)$/.test(cellFontWeight)) {
             cellOptions.bold = true;
           }
