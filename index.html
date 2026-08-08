@@ -2488,24 +2488,10 @@
         : null;
     }
 
-    // Render category tab filters through the shared dashboard view module.
-    function renderCategories(data) {
-      return presentationDashboardController
-        ? presentationDashboardController.renderCategories(data)
-        : '';
-    }
-
     // Filter by category selection
     function filterCategory(cat) {
       return presentationDashboardController
         ? presentationDashboardController.filter(cat)
-        : '';
-    }
-
-    // Render grid cards through the shared dashboard view module.
-    function renderGrid(data) {
-      return presentationDashboardController
-        ? presentationDashboardController.renderGrid(data)
         : '';
     }
 
