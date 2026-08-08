@@ -5091,36 +5091,14 @@
       const lockState = typeof SlideNextStudioEditorLockState !== 'undefined'
         ? SlideNextStudioEditorLockState
         : null;
-      if (!lockState) {
+      if (!lockState || typeof lockState.syncStudioLockToolbarState !== 'function') {
         return false;
       }
-      const toolbarOptions = {
+      return lockState.syncStudioLockToolbarState({
         documentRef: document,
         elements: selectedElements,
         isLocked: isElementLocked,
         canMutateDeck: () => !!getActiveSlide(doc)
-      };
-      if (typeof lockState.syncStudioLockToolbarState === 'function') {
-        return lockState.syncStudioLockToolbarState(toolbarOptions);
-      }
-      if (typeof lockState.renderStudioLockToolbarState !== 'function') {
-        return false;
-      }
-      const buildToolbarState = typeof lockState.buildStudioLockToolbarState === 'function'
-        ? lockState.buildStudioLockToolbarState
-        : typeof lockState.buildStudioLockActionState === 'function'
-          ? lockState.buildStudioLockActionState
-          : null;
-      if (!buildToolbarState) {
-        return false;
-      }
-      const lockActionState = buildToolbarState(selectedElements, {
-          isLocked: isElementLocked,
-          canMutateDeck: () => !!getActiveSlide(doc)
-        });
-      return lockState.renderStudioLockToolbarState({
-        documentRef: document,
-        actionState: lockActionState
       });
     }
 

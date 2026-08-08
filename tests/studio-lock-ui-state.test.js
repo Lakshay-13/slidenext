@@ -173,6 +173,9 @@ test('updateLockActionState enables the lock control only when the iframe has a 
       return true;
     },
     SlideNextStudioEditorLockState: {
+      syncStudioLockToolbarState(options) {
+        return lockState.syncStudioLockToolbarState(options);
+      },
       buildStudioLockActionState(elements, options = {}) {
         const canToggle = typeof options.canMutateDeck === 'function' ? options.canMutateDeck() : true;
         return {
@@ -234,6 +237,16 @@ test('updateLockActionState reuses the shared lock toolbar helper when available
       return false;
     },
     SlideNextStudioEditorLockState: {
+      syncStudioLockToolbarState(options) {
+        const actionState = this.buildStudioLockToolbarState(options.elements, {
+          isLocked: options.isLocked,
+          canMutateDeck: options.canMutateDeck
+        });
+        return this.renderStudioLockToolbarState({
+          documentRef: options.documentRef,
+          actionState
+        });
+      },
       buildStudioLockActionState() {
         throw new Error('buildStudioLockActionState should not be used when shared toolbar helper exists');
       },
