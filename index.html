@@ -1911,9 +1911,7 @@
           getNormalizedSlideLayerOrder: (...args) => getNormalizedSlideLayerOrder(...args),
           isElementLocked: (...args) => isElementLocked(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
-            preferLiveCanonicalDeck: false
-          }),
+          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           applyLayerOrderMutation: (...args) => applyEditorLayerOrderMutationWithTransaction(...args)
         })
       : null;
