@@ -2808,16 +2808,18 @@
         ? SlideNextStudioEditorSession.createStudioEditorSessionStateReadersAdapter
         : null;
       if (createStudioEditorSessionStateReadersAdapter) {
-        const adapter = createStudioEditorSessionStateReadersAdapter({
-          sessionApi: SlideNextStudioEditorSession,
-          getCurrentPresentationUrl: () => currentPresentationUrl,
-          getCurrentSessionToken: () => studioEditorSessionToken
-        });
-        if (typeof adapter === 'function') {
-          return adapter();
+        if (typeof createCurrentStudioSessionStateReaders.adapter !== 'function') {
+          createCurrentStudioSessionStateReaders.adapter = createStudioEditorSessionStateReadersAdapter({
+            sessionApi: SlideNextStudioEditorSession,
+            getCurrentPresentationUrl: () => currentPresentationUrl,
+            getCurrentSessionToken: () => studioEditorSessionToken
+          });
         }
-        if (adapter && typeof adapter === 'object') {
-          return adapter;
+        if (typeof createCurrentStudioSessionStateReaders.adapter === 'function') {
+          return createCurrentStudioSessionStateReaders.adapter();
+        }
+        if (createCurrentStudioSessionStateReaders.adapter && typeof createCurrentStudioSessionStateReaders.adapter === 'object') {
+          return createCurrentStudioSessionStateReaders.adapter;
         }
       }
 

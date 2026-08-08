@@ -426,6 +426,35 @@ test('createCurrentStudioSessionStateReaders exposes live session getters throug
   assert.equal(readers.getCurrentSessionToken(), 5);
 });
 
+test('createCurrentStudioSessionStateReaders creates the shared reader adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let adapterCreateCalls = 0;
+  const context = {
+    SlideNextStudioEditorSession: {
+      createStudioEditorSessionStateReadersAdapter(options) {
+        adapterCreateCalls += 1;
+        return editorSession.createStudioEditorSessionStateReadersAdapter(options);
+      }
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 4
+  };
+
+  vm.createContext(context);
+  loadCreateCurrentStudioSessionStateReaders(fileContent, context);
+
+  const firstReaders = context.createCurrentStudioSessionStateReaders();
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 5;
+  const secondReaders = context.createCurrentStudioSessionStateReaders();
+
+  assert.equal(adapterCreateCalls, 1);
+  assert.equal(firstReaders.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(firstReaders.getCurrentSessionToken(), 5);
+  assert.equal(secondReaders.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
+  assert.equal(secondReaders.getCurrentSessionToken(), 5);
+});
+
 test('createCurrentStudioSessionReaderOptions reuses the shared session-reader options builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let delegatedArgs = null;
