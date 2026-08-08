@@ -647,6 +647,8 @@
     const characterSpacing = cssLetterSpacing === null
       ? {}
       : { charSpacing: cssLetterSpacing * 0.75 };
+    const cssPadding = parseCssPx(style.padding);
+    const margin = cssPadding === null || cssPadding < 0 ? 0 : cssPadding / 96;
     const color = normalizeHexColor(style.color) || '000000';
     const fontFace = style['font-family']
       ? style['font-family'].split(',')[0].trim().replace(/^['"]|['"]$/g, '')
@@ -659,7 +661,7 @@
       italic: style['font-style'] === 'italic',
       color,
       align: resolvePptxTextAlignment(style['text-align']),
-      margin: 0,
+      margin,
       breakLine: false,
       fit: 'shrink',
       ...lineSpacing,

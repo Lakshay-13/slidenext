@@ -848,6 +848,22 @@ test('createCanonicalPptxExport preserves supported CSS letter spacing', () => {
   );
 });
 
+test('createCanonicalPptxExport preserves simple text padding', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'padded-text',
+        type: 'text',
+        text: 'Padded',
+        style: 'padding: 12px;',
+        layout: { x: 0, y: 0, width: 200, height: 50 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.ok(Math.abs(result.pptx.slides[0].calls[0].options.margin - 0.125) < 0.001);
+});
+
 test('preflightCanonicalPptxExport reports missing node background image assets', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{
