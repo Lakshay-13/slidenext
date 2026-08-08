@@ -588,6 +588,56 @@ test('createCanonicalPptxExport preserves legacy chart bars without metadata', (
   });
 });
 
+test('createCanonicalPptxExport renders embed placeholders as labeled shapes', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'embed-placeholder',
+        type: 'embed',
+        classes: ['editor-embed-placeholder'],
+        text: 'Media / Embed Placeholder',
+        style: 'background-color: rgba(112, 40, 208, 0.14); border-color: #c4a1ff; border-style: dashed; border-width: 1px; border-radius: 12px; color: #c4a1ff; font-size: 18px; font-weight: 600;',
+        layout: { x: 100, y: 80, width: 560, height: 315 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.diagnostics.unsupportedNodes, []);
+  const calls = result.pptx.slides[0].calls;
+  assert.deepEqual(calls.map(call => call.type), ['shape', 'text']);
+  assert.equal(calls[0].shapeType, 'ROUND_RECTANGLE');
+  assert.deepEqual(calls[0].options.fill, { color: '7028D0', transparency: 86 });
+  assert.deepEqual(calls[0].options.line, {
+    color: 'C4A1FF',
+    width: 0.75,
+    dashType: 'dash'
+  });
+  assert.equal(calls[1].text, 'Media / Embed Placeholder');
+  assert.equal(calls[1].options.color, 'C4A1FF');
+  assert.equal(calls[1].options.fontSize, 13.5);
+  assert.equal(calls[1].options.bold, true);
+});
+
+test('preflightCanonicalPptxExport keeps real embeds unsupported', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'real-embed',
+        type: 'embed',
+        attributes: { src: 'https://example.com/video' },
+        layout: { x: 100, y: 80, width: 560, height: 315 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedNodes, [{
+    id: 'real-embed',
+    type: 'embed',
+    tagName: '',
+    reason: 'node type embed'
+  }]);
+});
+
 test('preflightCanonicalPptxExport does not warn for bound children inside flow containers', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{

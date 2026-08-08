@@ -480,6 +480,11 @@
     return classes.includes(className) || classAttribute.split(/\s+/).includes(className);
   }
 
+  function isCanonicalEmbedPlaceholder(node) {
+    return hasCanonicalNodeClass(node, 'editor-embed-placeholder')
+      || getNodeAttribute(node, 'data-embed-placeholder').trim().toLowerCase() === 'true';
+  }
+
   function collectCanonicalChartBars(nodes, bars = []) {
     (Array.isArray(nodes) ? nodes : []).forEach((child) => {
       if (hasCanonicalNodeClass(child, 'editor-chart-bar')) bars.push(child);
@@ -1064,7 +1069,10 @@
       const nodeBackgroundAsset = resolveNodeBackgroundImageAsset(node, deck, normalizedOptions);
       const nodeBackgroundSource = nodeBackgroundAsset.source;
       const chartData = type === 'chart' ? getCanonicalChartData(node) : null;
-      if (UNSUPPORTED_NODE_TYPES.has(type) && !(type === 'chart' && chartData)) {
+      const embedPlaceholderNode = type === 'embed' && isCanonicalEmbedPlaceholder(node);
+      if (UNSUPPORTED_NODE_TYPES.has(type)
+        && !(type === 'chart' && chartData)
+        && !embedPlaceholderNode) {
         diagnostics.unsupportedNodes.push({
           id: nodeId,
           type,
@@ -1289,6 +1297,7 @@
     const tableNode = type === 'table' || tagName === 'table';
     const chartNode = type === 'chart';
     const chartData = chartNode ? getCanonicalChartData(node) : null;
+    const embedPlaceholderNode = type === 'embed' && isCanonicalEmbedPlaceholder(node);
     const childOrigin = getNodeChildOrigin(node, origin);
     const hasExportableChildren = hasExportableChildBounds(children, childOrigin);
     const text = getNestedNodeText(node);
@@ -1305,7 +1314,8 @@
       && context.diagnostics.missingNodeBackgroundAssets.includes(getNodeBackgroundAssetDiagnosticId(node));
 
     if (nodeBackgroundFill && nodeBackgroundFill.transparency !== 100 && bounds
-      && !shapeNode && !tableNode && typeof context.slide.addShape === 'function') {
+      && !shapeNode && !tableNode && !embedPlaceholderNode
+      && typeof context.slide.addShape === 'function') {
       context.slide.addShape(resolvePptxNodeShapeType(node, bounds, context.pptx), {
         ...bounds,
         fill: nodeBackgroundFill,
@@ -1343,6 +1353,13 @@
         labels: chartData.labels,
         values: chartData.values
       }], chartOptions);
+    } else if (embedPlaceholderNode && bounds) {
+      if (typeof context.slide.addShape === 'function') {
+        context.slide.addShape(resolvePptxNodeShapeType(node, bounds, context.pptx), shapeOptions(node, bounds));
+      }
+      if (text && typeof context.slide.addText === 'function') {
+        context.slide.addText(text, textOptions(node, bounds));
+      }
     } else if (tableNode) {
       const rows = getCanonicalTableRows(node);
       if (rows.length > 0 && bounds && typeof context.slide.addTable === 'function') {
