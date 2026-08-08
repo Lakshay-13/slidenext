@@ -445,6 +445,18 @@
       ? Math.max(14, 30 - (Number(tagName.slice(1)) - 1) * 3)
       : 14;
     const fontSize = Math.max(6, (cssFontSize === null ? defaultFontSize : cssFontSize) * 0.75);
+    const lineHeight = typeof style['line-height'] === 'string'
+      ? style['line-height'].trim().toLowerCase()
+      : '';
+    const lineHeightMatch = lineHeight.match(/^(\d[\d.]*)(px|%)?$/i);
+    const lineHeightValue = lineHeightMatch ? Number(lineHeightMatch[1]) : null;
+    const lineSpacing = lineHeightMatch && lineHeightMatch[2] === 'px' && lineHeightValue > 0
+      ? { lineSpacing: lineHeightValue * 0.75 }
+      : lineHeightMatch && lineHeightMatch[2] === '%' && lineHeightValue > 0
+        ? { lineSpacingMultiple: lineHeightValue / 100 }
+        : lineHeightMatch && !lineHeightMatch[2] && lineHeightValue > 0
+          ? { lineSpacingMultiple: lineHeightValue }
+          : {};
     const color = normalizeHexColor(style.color) || '000000';
     const fontFace = style['font-family']
       ? style['font-family'].split(',')[0].trim().replace(/^['"]|['"]$/g, '')
@@ -459,7 +471,8 @@
       align: style['text-align'] || 'left',
       margin: 0,
       breakLine: false,
-      fit: 'shrink'
+      fit: 'shrink',
+      ...lineSpacing
     }, nodeTransparency(node));
   }
 

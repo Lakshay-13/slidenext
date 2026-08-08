@@ -532,6 +532,38 @@ test('createCanonicalPptxExport preserves node opacity across text, shape, and i
   assert.equal(imageCall.options.transparency, 75);
 });
 
+test('createCanonicalPptxExport preserves supported CSS text line heights', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'pixel-leading',
+        type: 'text',
+        text: 'Pixel leading',
+        style: 'font-size: 20px; line-height: 30px;',
+        layout: { x: 0, y: 0, width: 200, height: 60 }
+      }, {
+        id: 'unitless-leading',
+        type: 'text',
+        text: 'Unitless leading',
+        style: 'font-size: 20px; line-height: 1.5;',
+        layout: { x: 0, y: 80, width: 200, height: 60 }
+      }, {
+        id: 'percentage-leading',
+        type: 'text',
+        text: 'Percentage leading',
+        style: 'font-size: 20px; line-height: 150%;',
+        layout: { x: 0, y: 160, width: 200, height: 60 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const [pixelText, unitlessText, percentageText] = result.pptx.slides[0].calls;
+  assert.equal(pixelText.options.lineSpacing, 22.5);
+  assert.equal(pixelText.options.lineSpacingMultiple, undefined);
+  assert.equal(unitlessText.options.lineSpacingMultiple, 1.5);
+  assert.equal(percentageText.options.lineSpacingMultiple, 1.5);
+});
+
 test('preflightCanonicalPptxExport reports missing node background image assets', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{
