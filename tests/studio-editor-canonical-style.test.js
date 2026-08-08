@@ -57,6 +57,24 @@ test('buildStudioCanonicalStyleBaseline prefers the live canonical baseline buil
   assert.equal(result, sourceDeck);
 });
 
+test('buildStudioCanonicalStyleBaseline prefers a valid session-owned canonical deck', () => {
+  const liveDeck = createSourceDeck();
+  let didBuildFromDocument = false;
+  const result = canonicalStyle.buildStudioCanonicalStyleBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return liveDeck;
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return createSourceDeck();
+    }
+  });
+
+  assert.equal(result, liveDeck);
+  assert.equal(didBuildFromDocument, false);
+});
+
 test('buildStudioCanonicalStyleMutation maps text, source, style, and z-index edits to the model', () => {
   const sourceDeck = createSourceDeck();
   const element = createElement();
@@ -116,6 +134,26 @@ test('buildStudioCanonicalStyleMutationWithBaseline builds the model from the so
 
   assert.equal(result.slides[0].nodes[0].style, 'color: #ffffff;');
   assert.equal(sourceDeck.slides[0].nodes[0].style, 'color: #000000;');
+});
+
+test('buildStudioCanonicalStyleMutationWithBaseline falls back when the live baseline is invalid', () => {
+  const sourceDeck = createSourceDeck();
+  const result = canonicalStyle.buildStudioCanonicalStyleMutationWithBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return { invalid: true };
+    },
+    buildCanonicalDeckBaseline() {
+      return sourceDeck;
+    },
+    sourceDocument: { id: 'editor-doc' },
+    selection: [createElement()],
+    prop: 'color',
+    value: '#ffffff',
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(result.slides[0].nodes[0].style, 'color: #ffffff;');
 });
 
 test('createStudioCanonicalStyleMutationBuilders reuses an explicit baseline', () => {

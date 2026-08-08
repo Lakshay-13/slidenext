@@ -38,10 +38,24 @@
       : typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
 
-    if (!canonicalDeckApi || !buildCanonicalDeck) {
-      return null;
+    if (!canonicalDeckApi) return null;
+    if (getCanonicalDeckBaseline) {
+      let liveCanonicalDeck = null;
+      try {
+        liveCanonicalDeck = getCanonicalDeckBaseline(options.sourceDocument);
+      } catch (err) {
+        liveCanonicalDeck = null;
+      }
+      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+        || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
+        if (liveCanonicalDeck) return liveCanonicalDeck;
+      }
     }
+    if (!buildCanonicalDeck) return null;
 
     return buildCanonicalDeck(options.sourceDocument);
   }
@@ -127,7 +141,11 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
-    if (!canonicalDeckApi || (!buildCanonicalDeck && !buildCanonicalDeckBaseline)) return null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
+    if (!canonicalDeckApi
+      || (!buildCanonicalDeck && !buildCanonicalDeckBaseline && !getCanonicalDeckBaseline)) return null;
 
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
@@ -135,6 +153,7 @@
           canonicalDeckApi,
           buildCanonicalDeck,
           buildCanonicalDeckBaseline,
+          getCanonicalDeckBaseline,
           sourceDocument: options.sourceDocument
         });
     return buildStudioCanonicalStyleMutation({
@@ -153,12 +172,16 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const buildCanonicalStyleBaseline = (baselineOptions = {}) => (
       buildStudioCanonicalStyleBaseline({
         ...baselineOptions,
         canonicalDeckApi,
         buildCanonicalDeck,
-        buildCanonicalDeckBaseline
+        buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline
       })
     );
     const buildCanonicalStyleMutation = (mutationOptions = {}) => {
@@ -172,6 +195,7 @@
         ...mutationOptions,
         canonicalDeckApi,
         buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline,
         canonicalDeckBeforeMutation
       });
     };
