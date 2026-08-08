@@ -1235,6 +1235,7 @@
   <script src="/shared/studio-editor-notes-actions.js"></script>
   <script src="/shared/studio-editor-slide-metadata.js"></script>
   <script src="/shared/studio-editor-slide-metadata-controller.js"></script>
+  <script src="/shared/studio-editor-slide-routing-controller.js"></script>
   <script src="/shared/studio-editor-active-slide-view.js"></script>
   <script src="/shared/studio-editor-active-slide-controller.js"></script>
   <script src="/shared/studio-editor-thumbnail-view.js"></script>
@@ -1638,6 +1639,19 @@
           },
           finalizeMutation: (...args) => finalizeEditorDeckMutation(...args),
           syncChrome: (...args) => syncStudioChromeToActiveSlide(...args)
+        })
+      : null;
+    const studioEditorSlideRoutingController = typeof SlideNextStudioEditorSlideRoutingController !== 'undefined'
+      && SlideNextStudioEditorSlideRoutingController
+      && typeof SlideNextStudioEditorSlideRoutingController.createStudioEditorSlideRoutingController === 'function'
+      ? SlideNextStudioEditorSlideRoutingController.createStudioEditorSlideRoutingController({
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
+            ? SlideNextStudioDeckView
+            : null,
+          getSlideIndexById: (...args) => getSlideIndexById(...args),
+          activateSlideByIndex: (index, options) => setActiveSlide(index, options),
+          deleteSlideByIndex: (index) => deleteSlideNode(index),
+          reorderSlidesByIndex: (fromIdx, toIdx) => reorderSlides(fromIdx, toIdx)
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -3969,26 +3983,24 @@
     }
 
     function setActiveSlideById(slideId, doc = getIframeDoc(), options = {}) {
-      return SlideNextStudioDeckView.setStudioDeckActiveSlideById(slideId, {
-        doc,
-        getSlideIndexById,
-        activateSlideByIndex: (index) => {
-          setActiveSlide(index, options);
-        }
-      });
+      return studioEditorSlideRoutingController
+        && typeof studioEditorSlideRoutingController.select === 'function'
+        ? studioEditorSlideRoutingController.select(slideId, doc, options)
+        : false;
     }
 
     function deleteSlideNodeById(slideId, doc = getIframeDoc()) {
-      const index = getSlideIndexById(slideId, doc);
-      if (index === -1) return false;
-      return deleteSlideNode(index);
+      return studioEditorSlideRoutingController
+        && typeof studioEditorSlideRoutingController.remove === 'function'
+        ? studioEditorSlideRoutingController.remove(slideId, doc)
+        : false;
     }
 
     function reorderSlidesById(sourceSlideId, targetSlideId, doc = getIframeDoc()) {
-      const fromIdx = getSlideIndexById(sourceSlideId, doc);
-      const toIdx = getSlideIndexById(targetSlideId, doc);
-      if (fromIdx === -1 || toIdx === -1) return false;
-      return reorderSlides(fromIdx, toIdx);
+      return studioEditorSlideRoutingController
+        && typeof studioEditorSlideRoutingController.reorder === 'function'
+        ? studioEditorSlideRoutingController.reorder(sourceSlideId, targetSlideId, doc)
+        : false;
     }
 
     function isEligibleEditableElement(el) {

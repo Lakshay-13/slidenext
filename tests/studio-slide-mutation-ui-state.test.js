@@ -15,6 +15,7 @@ const reorderController = require('../shared/studio-editor-slide-reorder-control
 const insertionController = require('../shared/studio-editor-slide-insertion-controller.js');
 const deletionController = require('../shared/studio-editor-slide-deletion-controller.js');
 const duplicationController = require('../shared/studio-editor-slide-duplication-controller.js');
+const routingController = require('../shared/studio-editor-slide-routing-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -170,6 +171,21 @@ function installSlideDuplicationController(context) {
     generateThumbnails: context.generateThumbnails,
     setActiveSlide: context.setActiveSlide,
     finalizeMutation: context.finalizeSlideMutationPersistence
+  });
+}
+
+function installSlideRoutingController(context) {
+  context.studioEditorSlideRoutingController = routingController.createStudioEditorSlideRoutingController({
+    deckViewApi: context.SlideNextStudioDeckView,
+    getSlideIndexById: context.getSlideIndexById,
+    activateSlideByIndex: (index, options) => {
+      if (typeof context.setActiveSlide === 'function') {
+        return context.setActiveSlide(index, options);
+      }
+      return false;
+    },
+    deleteSlideByIndex: context.deleteSlideNode,
+    reorderSlidesByIndex: context.reorderSlides
   });
 }
 
@@ -1446,6 +1462,7 @@ test('deleteSlideNodeById returns delegated deletion results', () => {
   };
 
   vm.createContext(context);
+  installSlideRoutingController(context);
   vm.runInContext(deleteSlideNodeByIdSource, context);
 
   assert.equal(context.deleteSlideNodeById('missing'), false);
@@ -1491,6 +1508,7 @@ test('reorderSlidesById returns delegated reorder results', () => {
   };
 
   vm.createContext(context);
+  installSlideRoutingController(context);
   vm.runInContext(reorderSlidesByIdSource, context);
 
   assert.equal(context.reorderSlidesById('missing', 'slide-2'), false);
