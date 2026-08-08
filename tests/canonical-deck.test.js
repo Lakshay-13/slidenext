@@ -138,6 +138,29 @@ test('canonical slide templates normalize ids and instantiate immutable slides',
   assert.equal(canonicalDeck.isCanonicalDeck(inserted), true);
 });
 
+test('saveCanonicalTemplateFromSlideId captures a slide without mutating the deck', () => {
+  const source = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      title: 'Opening',
+      nodes: [{ id: 'title', text: 'Hello' }]
+    }]
+  });
+
+  const saved = canonicalDeck.saveCanonicalTemplateFromSlideId(
+    source,
+    'slide-1',
+    { id: 'opening', name: 'Opening Template' }
+  );
+
+  assert.equal(saved.templates[0].id, 'opening');
+  assert.equal(saved.templates[0].name, 'Opening Template');
+  assert.equal(saved.templates[0].slide.title, 'Opening');
+  assert.equal(saved.templates[0].slide.nodes[0].text, 'Hello');
+  assert.equal(Object.prototype.hasOwnProperty.call(source, 'templates'), false);
+  assert.equal(canonicalDeck.saveCanonicalTemplateFromSlideId(source, 'missing'), null);
+});
+
 test('insertCanonicalBlockInstance clones block nodes with collision-free ids and offsets', () => {
   const source = canonicalDeck.createCanonicalDeck({
     blocks: [{

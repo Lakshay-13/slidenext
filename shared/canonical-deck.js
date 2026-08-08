@@ -602,6 +602,24 @@
     return insertCanonicalSlide(deck, slide, index);
   }
 
+  function saveCanonicalTemplateFromSlideId(deckLike, slideId, templateLike = {}) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedSlideId = normalizeString(slideId).trim();
+    if (!isCanonicalDeck(deck) || !normalizedSlideId) {
+      return null;
+    }
+
+    const slide = deck.slides.find((candidate) => candidate && candidate.id === normalizedSlideId);
+    if (!slide) return null;
+
+    return appendCanonicalTemplate(deck, {
+      ...asPlainObject(templateLike),
+      slide
+    });
+  }
+
   function saveCanonicalBlockFromNodeIds(deckLike, slideId, nodeIds = [], blockLike = {}) {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -1540,6 +1558,7 @@
     insertCanonicalTemplate,
     removeCanonicalTemplate,
     insertCanonicalTemplateSlide,
+    saveCanonicalTemplateFromSlideId,
     saveCanonicalBlockFromNodeIds,
     appendCanonicalNode,
     insertCanonicalBlockInstance,
