@@ -300,3 +300,30 @@ test('createStudioEditorHistoryFrameHtmlBuilder preserves capture and fallback c
   assert.equal(calls[1][2].canonicalDeck, canonicalDeck);
   assert.deepEqual(calls[2][2], { canonicalDeck });
 });
+
+test('createStudioEditorHistoryFrameHtmlStateAdapter reuses the shared frame builder', () => {
+  let createCalls = 0;
+  let capturedOptions = null;
+  const adapter = historyState.createStudioEditorHistoryFrameHtmlStateAdapter({
+    historyStateApi: {
+      createStudioEditorHistoryFrameHtmlBuilder(options) {
+        createCalls += 1;
+        capturedOptions = options;
+        return (doc) => `<history>${doc.id}</history>`;
+      }
+    },
+    historyApi: { id: 'history-api' },
+    buildPersistableDeckHtml: () => '<html>fallback</html>'
+  });
+
+  assert.equal(adapter({ id: 'doc-1' }), '<history>doc-1</history>');
+  assert.equal(adapter({ id: 'doc-2' }), '<history>doc-2</history>');
+  assert.equal(createCalls, 1);
+  assert.equal(capturedOptions.historyApi.id, 'history-api');
+  assert.equal(capturedOptions.buildPersistableDeckHtml(), '<html>fallback</html>');
+  assert.equal('historyStateApi' in capturedOptions, false);
+});
+
+test('createStudioEditorHistoryFrameHtmlStateAdapter fails closed without a shared builder', () => {
+  assert.equal(historyState.createStudioEditorHistoryFrameHtmlStateAdapter(), null);
+});

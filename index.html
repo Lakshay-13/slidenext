@@ -7633,15 +7633,16 @@
 
     function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {
       if (typeof buildHistoryFrameHtml.builder !== 'function') {
-        const createStudioEditorHistoryFrameHtmlBuilder = (
+        const createStudioEditorHistoryFrameHtmlStateAdapter = (
           typeof SlideNextStudioEditorHistoryState !== 'undefined'
           && SlideNextStudioEditorHistoryState
-          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryFrameHtmlBuilder === 'function'
+          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryFrameHtmlStateAdapter === 'function'
         )
-          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryFrameHtmlBuilder
+          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryFrameHtmlStateAdapter
           : null;
-        if (!createStudioEditorHistoryFrameHtmlBuilder) return '';
-        buildHistoryFrameHtml.builder = createStudioEditorHistoryFrameHtmlBuilder({
+        if (!createStudioEditorHistoryFrameHtmlStateAdapter) return '';
+        buildHistoryFrameHtml.builder = createStudioEditorHistoryFrameHtmlStateAdapter({
+          historyStateApi: SlideNextStudioEditorHistoryState,
           historyApi: SlideNextStudioHistory,
           getHistoryOptions: getEditorHistoryOptions,
           buildPersistableDeckHtml
