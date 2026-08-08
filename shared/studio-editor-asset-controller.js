@@ -117,12 +117,11 @@
       const hasCanonicalLockReader = canonicalDeck
         && typeof canonicalDeckApi.findCanonicalNodeById === 'function'
         && canonicalStateApi
-        && typeof canonicalStateApi.createStudioEditorCanonicalLockReader === 'function';
+        && typeof canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi === 'function';
       if (hasCanonicalLockReader) {
-        const readLockedState = canonicalStateApi.createStudioEditorCanonicalLockReader(canonicalDeck, {
-          resolveCanonicalNode(element, deck) {
-            return canonicalDeckApi.findCanonicalNodeById(deck, getElementId(element));
-          },
+        const readLockedState = canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi(canonicalDeck, {
+          canonicalDeckApi,
+          getElementId,
           fallbackReader: isElementLocked
         });
         if (readLockedState(selectedImage)) return false;

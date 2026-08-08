@@ -159,6 +159,24 @@ test('canonical lock reader preserves DOM locks while preferring canonical locks
   assert.equal(reader(elements.missing), true);
 });
 
+test('canonical lock reader adapter resolves nodes through the supplied deck API', () => {
+  const canonicalDeck = createDeck('active');
+  const element = { dataset: { editorId: 'node-1' }, domLocked: false };
+  const canonicalDeckApi = {
+    findCanonicalNodeById(deck, elementId) {
+      assert.equal(deck, canonicalDeck);
+      return elementId === 'node-1' ? { visibility: { locked: true } } : null;
+    }
+  };
+  const reader = canonicalState.createStudioEditorCanonicalLockReaderFromApi(canonicalDeck, {
+    canonicalDeckApi,
+    fallbackReader: (target) => target.domLocked
+  });
+
+  assert.equal(reader(element), true);
+  assert.equal(reader({ dataset: { editorId: 'missing' }, domLocked: true }), true);
+});
+
 test('editor selection bounds and overlays use canonical hidden state before DOM fallback', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const visibilityReaderSource = extractFunctionSource(

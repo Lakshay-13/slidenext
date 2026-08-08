@@ -91,11 +91,10 @@
       const canonicalDeck = resolveCanonicalDeck(sourceDocument);
       if (!canonicalDeck) return isElementLocked;
       if (canonicalStateApi
-        && typeof canonicalStateApi.createStudioEditorCanonicalLockReader === 'function') {
-        return canonicalStateApi.createStudioEditorCanonicalLockReader(canonicalDeck, {
-          resolveCanonicalNode(element, deck) {
-            return canonicalDeckApi.findCanonicalNodeById(deck, assignElementId(element));
-          },
+        && typeof canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi === 'function') {
+        return canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi(canonicalDeck, {
+          canonicalDeckApi,
+          getElementId: assignElementId,
           fallbackReader: isElementLocked
         });
       }
