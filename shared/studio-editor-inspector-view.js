@@ -308,7 +308,13 @@
     if (borderStyleInput) {
       borderStyleInput.value = canonicalBorderStyle || computedStyles.borderStyle || 'none';
     }
-    const bWidth = parseInt(computedStyles.borderWidth) || 0;
+    const canonicalBorderWidth = parseInt(
+      readStudioInspectorCanonicalStyleValue(options.canonicalNode, 'border-width'),
+      10
+    );
+    const bWidth = Number.isFinite(canonicalBorderWidth)
+      ? canonicalBorderWidth
+      : parseInt(computedStyles.borderWidth, 10) || 0;
     const borderWidthInput = documentRef.getElementById('elBorderWidth');
     if (borderWidthInput) borderWidthInput.value = bWidth;
     const borderWidthLabel = documentRef.getElementById('borderWidthVal');
