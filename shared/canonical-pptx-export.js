@@ -311,6 +311,39 @@
     return risks;
   }
 
+  function getPptxBorderStyleFallback(styleValue) {
+    const borderStyle = typeof styleValue === 'string' ? styleValue.trim().toLowerCase() : '';
+    if (!borderStyle || ['solid', 'dashed', 'none', 'hidden'].includes(borderStyle)) return null;
+    return {
+      borderStyle,
+      fallbackStyle: borderStyle === 'dotted' ? 'dashed' : 'solid'
+    };
+  }
+
+  function getCanonicalTableBorderStyleRisks(node) {
+    const tableNodeId = node && node.id ? node.id : 'unknown';
+    const risks = [];
+    const addRisk = (id, styleValue, scope) => {
+      const fallback = getPptxBorderStyleFallback(styleValue);
+      if (fallback) risks.push({ id, scope, ...fallback });
+    };
+    addRisk(tableNodeId, nodeStyle(node)['border-style'], 'table');
+    (Array.isArray(node && node.children) ? node.children : [])
+      .filter(row => row && row.tagName === 'tr')
+      .forEach((row, rowIndex) => {
+        (Array.isArray(row.children) ? row.children : [])
+          .filter(cell => cell && (cell.tagName === 'td' || cell.tagName === 'th'))
+          .forEach((cell, cellIndex) => {
+            addRisk(
+              `${tableNodeId}:cell-${rowIndex + 1}-${cellIndex + 1}`,
+              nodeStyle(cell)['border-style'],
+              'table cell'
+            );
+          });
+      });
+    return risks;
+  }
+
   function getPptxRenderOrder(nodes = []) {
     return (Array.isArray(nodes) ? nodes : [])
       .map((node, index) => ({
@@ -788,6 +821,12 @@
             diagnostics.fontSubstitutionRisks.push(risk);
             diagnostics.warnings.push(`Node ${risk.id} may substitute font ${risk.fontFamily}`);
           });
+        getCanonicalTableBorderStyleRisks(node).forEach((risk) => {
+          diagnostics.unsupportedStyles.push({ id: risk.id, properties: ['border-style'] });
+          diagnostics.warnings.push(
+            `Node ${risk.id} uses unsupported ${risk.scope} border-style: ${risk.borderStyle}; using ${risk.fallbackStyle} fallback`
+          );
+        });
       }
 
       if (imageNode) {

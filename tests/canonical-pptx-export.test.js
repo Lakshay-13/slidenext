@@ -937,6 +937,40 @@ test('preflightCanonicalPptxExport reports table cell font substitution risks', 
   assert.match(report.diagnostics.warnings.join('\n'), /table-font-risk:cell-1-1 may substitute font Custom Sans/);
 });
 
+test('preflightCanonicalPptxExport reports table border style fallbacks', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'table-border-risk',
+        type: 'table',
+        style: 'border-style: dotted;',
+        layout: { x: 0, y: 0, width: 200, height: 80 },
+        children: [{
+          tagName: 'tr',
+          children: [{
+            tagName: 'td',
+            text: 'Fallback',
+            style: 'border-style: double;'
+          }]
+        }]
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedStyles, [
+    { id: 'table-border-risk', properties: ['border-style'] },
+    { id: 'table-border-risk:cell-1-1', properties: ['border-style'] }
+  ]);
+  assert.match(
+    report.diagnostics.warnings.join('\n'),
+    /Node table-border-risk uses unsupported table border-style: dotted; using dashed fallback/
+  );
+  assert.match(
+    report.diagnostics.warnings.join('\n'),
+    /Node table-border-risk:cell-1-1 uses unsupported table cell border-style: double; using solid fallback/
+  );
+});
+
 test('preflightCanonicalPptxExport reports unsupported image fit values', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{
