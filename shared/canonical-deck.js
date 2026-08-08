@@ -72,6 +72,108 @@
     };
   }
 
+  function insertCanonicalAsset(deckLike, assetLike = {}, index) {
+    if (!deckLike || typeof deckLike !== 'object') {
+      return null;
+    }
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    if (!isCanonicalDeck(deck)
+      || !assetLike
+      || typeof assetLike !== 'object'
+      || !Number.isInteger(index)
+      || index < 0
+      || index > deck.assets.length) {
+      return null;
+    }
+
+    const nextAssets = [...deck.assets];
+    nextAssets.splice(index, 0, createCanonicalAsset(assetLike, index));
+    return createCanonicalDeck({
+      ...deck,
+      assets: nextAssets
+    });
+  }
+
+  function appendCanonicalAsset(deckLike, assetLike = {}) {
+    if (!deckLike || typeof deckLike !== 'object') {
+      return null;
+    }
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    if (!isCanonicalDeck(deck)) {
+      return null;
+    }
+    return insertCanonicalAsset(deck, assetLike, deck.assets.length);
+  }
+
+  function updateCanonicalAsset(deckLike, assetId, patch = {}) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedAssetId = normalizeString(assetId).trim();
+    if (!isCanonicalDeck(deck) || !normalizedAssetId || !patch || typeof patch !== 'object') {
+      return null;
+    }
+
+    const assetIndex = deck.assets.findIndex((asset) => asset && asset.id === normalizedAssetId);
+    if (assetIndex < 0) return null;
+
+    const currentAsset = deck.assets[assetIndex];
+    const nextAsset = createCanonicalAsset({
+      ...currentAsset,
+      ...asPlainObject(patch),
+      id: currentAsset.id
+    }, assetIndex);
+    if (JSON.stringify(currentAsset) === JSON.stringify(nextAsset)) {
+      return null;
+    }
+
+    return createCanonicalDeck({
+      ...deck,
+      assets: deck.assets.map((asset, index) => index === assetIndex ? nextAsset : asset)
+    });
+  }
+
+  function removeCanonicalAsset(deckLike, assetId) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedAssetId = normalizeString(assetId).trim();
+    if (!isCanonicalDeck(deck) || !normalizedAssetId) {
+      return null;
+    }
+
+    const assetIndex = deck.assets.findIndex((asset) => asset && asset.id === normalizedAssetId);
+    if (assetIndex < 0) return null;
+    const nodeReferencesAsset = (nodes = []) => (Array.isArray(nodes) ? nodes : []).some((node) => {
+      if (!node || typeof node !== 'object') return false;
+      return node.assetId === normalizedAssetId
+        || node.backgroundAssetId === normalizedAssetId
+        || nodeReferencesAsset(node.children);
+    });
+    const slideReferencesAsset = (slide) => !!slide
+      && slide.layout
+      && slide.layout.background
+      && slide.layout.background.assetId === normalizedAssetId;
+    const referencesAsset = [
+      ...deck.slides,
+      ...(Array.isArray(deck.templates) ? deck.templates.map((template) => template && template.slide) : []),
+      ...(Array.isArray(deck.masterSlides)
+        ? deck.masterSlides.map((master) => master && master.slide)
+        : [])
+    ].some((slide) => slideReferencesAsset(slide) || nodeReferencesAsset(slide && slide.nodes))
+      || (Array.isArray(deck.blocks) && deck.blocks.some((block) => nodeReferencesAsset(block && block.nodes)));
+    if (referencesAsset) return null;
+
+    return createCanonicalDeck({
+      ...deck,
+      assets: deck.assets.filter((_asset, index) => index !== assetIndex)
+    });
+  }
+
   function createCanonicalNode(seed = {}, index = 0) {
     const node = asPlainObject(seed);
     const layout = asPlainObject(node.layout);
@@ -1721,6 +1823,10 @@
     DEFAULT_LAYOUT_MODE,
     DEFAULT_NODE_TYPE,
     createCanonicalAsset,
+    insertCanonicalAsset,
+    appendCanonicalAsset,
+    updateCanonicalAsset,
+    removeCanonicalAsset,
     createCanonicalNode,
     createCanonicalBlock,
     createCanonicalTemplate,

@@ -332,6 +332,43 @@ test('createCanonicalDeck repairs duplicate asset ids without changing asset ord
   ]);
 });
 
+test('canonical asset operations are immutable and protect referenced assets', () => {
+  const source = canonicalDeck.createCanonicalDeck({
+    assets: [
+      { id: 'asset-a', name: 'Unused', src: 'unused.png' },
+      { id: 'asset-b', name: 'Used', src: 'used.png' }
+    ],
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'image-1', type: 'image', assetId: 'asset-b' }]
+    }]
+  });
+  const inserted = canonicalDeck.insertCanonicalAsset(source, {
+    id: 'asset-c',
+    name: 'Inserted',
+    src: 'inserted.png'
+  }, 1);
+  const updated = canonicalDeck.updateCanonicalAsset(inserted, 'asset-c', {
+    id: 'ignored-change',
+    name: 'Updated',
+    src: 'updated.png'
+  });
+  const removed = canonicalDeck.removeCanonicalAsset(updated, 'asset-a');
+
+  assert.deepEqual(source.assets.map((asset) => asset.id), ['asset-a', 'asset-b']);
+  assert.deepEqual(inserted.assets.map((asset) => asset.id), ['asset-a', 'asset-c', 'asset-b']);
+  assert.deepEqual(updated.assets.map((asset) => [asset.id, asset.name, asset.src]), [
+    ['asset-a', 'Unused', 'unused.png'],
+    ['asset-c', 'Updated', 'updated.png'],
+    ['asset-b', 'Used', 'used.png']
+  ]);
+  assert.deepEqual(removed.assets.map((asset) => asset.id), ['asset-c', 'asset-b']);
+  assert.equal(canonicalDeck.removeCanonicalAsset(updated, 'asset-b'), null);
+  assert.equal(canonicalDeck.updateCanonicalAsset(source, 'missing', { name: 'Missing' }), null);
+  assert.equal(canonicalDeck.updateCanonicalAsset(source, 'asset-a', { name: 'Unused' }), null);
+  assert.equal(canonicalDeck.isCanonicalDeck(removed), true);
+});
+
 test('createCanonicalDeck repairs duplicate inline script ids across source locations', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     source: {
