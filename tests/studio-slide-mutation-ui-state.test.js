@@ -14,6 +14,7 @@ const slideMutation = require('../shared/studio-editor-slide-mutation.js');
 const reorderController = require('../shared/studio-editor-slide-reorder-controller.js');
 const insertionController = require('../shared/studio-editor-slide-insertion-controller.js');
 const deletionController = require('../shared/studio-editor-slide-deletion-controller.js');
+const duplicationController = require('../shared/studio-editor-slide-duplication-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -146,6 +147,28 @@ function installSlideDeletionController(context) {
     applyDeletion: context.applyEditorSlideDeletionWithTransaction,
     generateThumbnails: context.generateThumbnails,
     restoreDeckViewAfterSlideMutation: context.restoreDeckViewAfterSlideMutation,
+    finalizeMutation: context.finalizeSlideMutationPersistence
+  });
+}
+
+function installSlideDuplicationController(context) {
+  context.studioEditorSlideDuplicationController = duplicationController.createStudioEditorSlideDuplicationController({
+    slideCommandsApi: context.SlideNextStudioEditorSlideCommands,
+    canonicalSlideApi: context.SlideNextStudioEditorCanonicalSlide,
+    deckImportApi: context.SlideNextDeckImport,
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    getIframeDoc: context.getIframeDoc,
+    resolveInsertionActionState: context.resolveCurrentStudioInsertionActionState,
+    getSlides: context.getSlides,
+    getActiveSlide: context.getActiveSlide,
+    sanitizeDuplicatedSubtree: context.sanitizeDuplicatedSubtree,
+    assignSlideId: context.assignEditorSlideId,
+    makeElementsHoverable: context.makeElementsHoverable,
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    saveHistoryState: context.saveHistoryState,
+    applyInsertion: context.applyEditorSlideInsertionWithTransaction,
+    generateThumbnails: context.generateThumbnails,
+    setActiveSlide: context.setActiveSlide,
     finalizeMutation: context.finalizeSlideMutationPersistence
   });
 }
@@ -962,6 +985,7 @@ test('duplicateSlideNode clones the active slide, inserts it next to the source,
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
+  installSlideDuplicationController(context);
   vm.runInContext(duplicateSlideNodeSource, context);
 
   assert.equal(context.duplicateSlideNode(), true);
