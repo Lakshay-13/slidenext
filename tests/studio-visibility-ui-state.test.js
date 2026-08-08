@@ -230,6 +230,70 @@ test('updateVisibilityActionState reuses the shared visibility toolbar helper wh
   }]);
 });
 
+test('updateVisibilityActionState prefers canonical hidden metadata when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateVisibilityActionStateSource = extractFunctionSource(
+    fileContent,
+    'function isElementLocked(el) {',
+    '\n\n    function updateMotionActionState(doc = getIframeDoc()) {'
+  );
+  const toggleVisibilitySelectionBtn = { disabled: true };
+  const toggleVisibilitySelectionIcon = { textContent: '' };
+  const toggleVisibilitySelectionLabel = { textContent: '' };
+  const selectedElement = {
+    dataset: { editorId: 'node-1' }
+  };
+  const context = {
+    selectedElements: [selectedElement],
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    buildEditorCanonicalDeck() {
+      return canonicalDeckModel.createCanonicalDeck({
+        slides: [{
+          id: 'slide-1',
+          nodes: [{
+            id: 'node-1',
+            visibility: { hidden: true }
+          }]
+        }]
+      });
+    },
+    SlideNextStudioEditorElementState: {
+      isStudioElementLocked() {
+        return false;
+      },
+      isStudioElementHidden() {
+        return false;
+      }
+    },
+    isElementHidden() {
+      return false;
+    },
+    SlideNextStudioEditorVisibilityState: visibilityState,
+    document: {
+      getElementById(id) {
+        if (id === 'toggleVisibilitySelectionBtn') return toggleVisibilitySelectionBtn;
+        if (id === 'toggleVisibilitySelectionIcon') return toggleVisibilitySelectionIcon;
+        if (id === 'toggleVisibilitySelectionLabel') return toggleVisibilitySelectionLabel;
+        return null;
+      }
+    },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateVisibilityActionStateSource, context);
+
+  context.updateVisibilityActionState({ activeSlide: {} });
+  assert.equal(toggleVisibilitySelectionBtn.disabled, false);
+  assert.equal(toggleVisibilitySelectionIcon.textContent, 'visibility');
+  assert.equal(toggleVisibilitySelectionLabel.textContent, 'Show Selected');
+});
+
 test('updateVisibilityActionState delegates toolbar state assembly to the shared visibility view', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateVisibilityActionStateSource = extractFunctionSource(
