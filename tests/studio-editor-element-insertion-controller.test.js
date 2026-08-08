@@ -97,6 +97,7 @@ test('element insertion controller selects flow mode for a flow-only canonical s
     },
     buildCanonicalDeck: () => ({ slides: [] }),
     buildCanonicalDeckBaseline: () => ({ slides: [] }),
+    getCanonicalDeckBaseline: () => ({ id: 'live-baseline' }),
     getIframeDoc: () => ({}),
     getActiveSlide: () => slide,
     getEditorSlideId: () => 'slide-1',
@@ -111,6 +112,7 @@ test('element insertion controller selects flow mode for a flow-only canonical s
   assert.equal(calls[0].layoutMode, 'flow');
   assert.equal(typeof builderOptions.buildCanonicalDeck, 'function');
   assert.equal(typeof builderOptions.buildCanonicalDeckBaseline, 'function');
+  assert.deepEqual(builderOptions.getCanonicalDeckBaseline(), { id: 'live-baseline' });
 });
 
 test('element insertion controller refreshes insertion state when no active slide exists', () => {

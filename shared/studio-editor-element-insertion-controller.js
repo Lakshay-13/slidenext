@@ -50,6 +50,9 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const applyElementInsertion = typeof options.applyElementInsertion === 'function'
       ? options.applyElementInsertion
       : () => ({ element: null, transaction: null });
@@ -94,6 +97,7 @@
             canonicalDeckApi,
             buildCanonicalDeck,
             buildCanonicalDeckBaseline,
+            getCanonicalDeckBaseline,
             importElementToCanonicalNode
           })
         : null;

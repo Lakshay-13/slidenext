@@ -2101,6 +2101,10 @@
           getEditorSlideId: (...args) => getEditorSlideId(...args),
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+            sourceDoc || getIframeDoc(),
+            studioEditorSessionToken
+          ),
           applyElementInsertion: (...args) => applyEditorElementInsertionWithTransaction(...args),
           makeElementsHoverable: (...args) => makeElementsHoverable(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
