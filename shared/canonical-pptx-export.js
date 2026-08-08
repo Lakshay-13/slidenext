@@ -485,6 +485,36 @@
       || getNodeAttribute(node, 'data-embed-placeholder').trim().toLowerCase() === 'true';
   }
 
+  function encodePptxBase64(value) {
+    if (typeof Buffer !== 'undefined' && typeof Buffer.from === 'function') {
+      return Buffer.from(value, 'utf8').toString('base64');
+    }
+    if (typeof btoa !== 'function') return '';
+    try {
+      const binary = encodeURIComponent(value).replace(/%([0-9a-f]{2})/gi, (_match, hex) => (
+        String.fromCharCode(Number.parseInt(hex, 16))
+      ));
+      return btoa(binary);
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function getCanonicalInlineSvgData(node) {
+    const type = typeof node?.type === 'string' ? node.type.toLowerCase() : '';
+    const tagName = typeof node?.tagName === 'string' ? node.tagName.toLowerCase() : '';
+    if (type !== 'vector' && tagName !== 'svg') return '';
+    const source = typeof node?.html === 'string' ? node.html.trim() : '';
+    if (!/^<svg(?:\s|>)/i.test(source) || !/<\/svg>$/i.test(source)) return '';
+    if (/<(?:script|iframe|video|audio)\b/i.test(source)
+      || /\b(?:href|xlink:href)\s*=\s*["'](?:https?:|file:|\/\/)/i.test(source)
+      || /url\(\s*["']?(?:https?:|file:|\/\/)/i.test(source)) {
+      return '';
+    }
+    const encoded = encodePptxBase64(source);
+    return encoded ? `data:image/svg+xml;base64,${encoded}` : '';
+  }
+
   function collectCanonicalChartBars(nodes, bars = []) {
     (Array.isArray(nodes) ? nodes : []).forEach((child) => {
       if (hasCanonicalNodeClass(child, 'editor-chart-bar')) bars.push(child);
@@ -1070,9 +1100,11 @@
       const nodeBackgroundSource = nodeBackgroundAsset.source;
       const chartData = type === 'chart' ? getCanonicalChartData(node) : null;
       const embedPlaceholderNode = type === 'embed' && isCanonicalEmbedPlaceholder(node);
+      const svgData = getCanonicalInlineSvgData(node);
       if (UNSUPPORTED_NODE_TYPES.has(type)
         && !(type === 'chart' && chartData)
-        && !embedPlaceholderNode) {
+        && !embedPlaceholderNode
+        && !svgData) {
         diagnostics.unsupportedNodes.push({
           id: nodeId,
           type,
@@ -1298,6 +1330,7 @@
     const chartNode = type === 'chart';
     const chartData = chartNode ? getCanonicalChartData(node) : null;
     const embedPlaceholderNode = type === 'embed' && isCanonicalEmbedPlaceholder(node);
+    const svgData = getCanonicalInlineSvgData(node);
     const childOrigin = getNodeChildOrigin(node, origin);
     const hasExportableChildren = hasExportableChildBounds(children, childOrigin);
     const text = getNestedNodeText(node);
@@ -1360,6 +1393,8 @@
       if (text && typeof context.slide.addText === 'function') {
         context.slide.addText(text, textOptions(node, bounds));
       }
+    } else if (svgData && bounds && typeof context.slide.addImage === 'function') {
+      context.slide.addImage({ data: svgData, ...bounds });
     } else if (tableNode) {
       const rows = getCanonicalTableRows(node);
       if (rows.length > 0 && bounds && typeof context.slide.addTable === 'function') {

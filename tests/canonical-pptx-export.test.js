@@ -638,6 +638,47 @@ test('preflightCanonicalPptxExport keeps real embeds unsupported', () => {
   }]);
 });
 
+test('createCanonicalPptxExport renders self-contained inline SVG nodes as data images', () => {
+  const svg = '<svg viewBox="0 0 10 10"><rect width="10" height="10" fill="#123456" /></svg>';
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'vector-1',
+        type: 'vector',
+        tagName: 'svg',
+        html: svg,
+        layout: { x: 100, y: 80, width: 300, height: 200 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.diagnostics.unsupportedNodes, []);
+  const imageCall = result.pptx.slides[0].calls[0];
+  assert.equal(imageCall.type, 'image');
+  assert.equal(imageCall.options.data, `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`);
+});
+
+test('preflightCanonicalPptxExport keeps external SVG sources unsupported', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'external-vector',
+        type: 'vector',
+        tagName: 'svg',
+        html: '<svg><image href="https://example.com/image.png" /></svg>',
+        layout: { x: 100, y: 80, width: 300, height: 200 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedNodes, [{
+    id: 'external-vector',
+    type: 'vector',
+    tagName: 'svg',
+    reason: 'node type vector'
+  }]);
+});
+
 test('preflightCanonicalPptxExport does not warn for bound children inside flow containers', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{
