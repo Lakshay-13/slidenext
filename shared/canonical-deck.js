@@ -177,6 +177,13 @@
   function createCanonicalNode(seed = {}, index = 0) {
     const node = asPlainObject(seed);
     const layout = asPlainObject(node.layout);
+    const layoutBounds = asPlainObject(layout.bounds);
+    const normalizedBounds = {};
+    ['x', 'y', 'width', 'height'].forEach((key) => {
+      if (Number.isFinite(layoutBounds[key])) {
+        normalizedBounds[key] = layoutBounds[key];
+      }
+    });
     const visibility = asPlainObject(node.visibility);
     const assetId = normalizeString(node.assetId).trim();
     const backgroundAssetId = normalizeString(node.backgroundAssetId).trim();
@@ -199,7 +206,8 @@
         y: normalizeFiniteNumber(layout.y),
         width: normalizeFiniteNumber(layout.width),
         height: normalizeFiniteNumber(layout.height),
-        zIndex: normalizeFiniteNumber(layout.zIndex, 0)
+        zIndex: normalizeFiniteNumber(layout.zIndex, 0),
+        ...(Object.keys(normalizedBounds).length > 0 ? { bounds: normalizedBounds } : {})
       },
       visibility: {
         hidden: !!visibility.hidden,

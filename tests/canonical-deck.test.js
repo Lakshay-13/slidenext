@@ -53,6 +53,20 @@ test('createCanonicalNode preserves an explicit asset reference without requirin
   assert.equal(Object.prototype.hasOwnProperty.call(legacyNode, 'backgroundAssetId'), false);
 });
 
+test('createCanonicalNode preserves optional rendered bounds without adding them to legacy nodes', () => {
+  const node = canonicalDeck.createCanonicalNode({
+    id: 'flow-node',
+    layout: {
+      mode: 'flow',
+      bounds: { x: 10, y: 20, width: 300, height: 80 }
+    }
+  });
+  const legacyNode = canonicalDeck.createCanonicalNode({ id: 'legacy-node' });
+
+  assert.deepEqual(node.layout.bounds, { x: 10, y: 20, width: 300, height: 80 });
+  assert.equal(Object.prototype.hasOwnProperty.call(legacyNode.layout, 'bounds'), false);
+});
+
 test('createCanonicalSlide preserves an explicit background asset reference without requiring one', () => {
   const slide = canonicalDeck.createCanonicalSlide({
     id: 'slide-1',

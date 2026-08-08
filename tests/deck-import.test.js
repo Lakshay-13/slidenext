@@ -1409,6 +1409,44 @@ test('importElementToCanonicalNode preserves flow sizing styles outside canonica
   });
 });
 
+test('importSlideToCanonicalSlide preserves rendered flow bounds relative to each parent', () => {
+  const slide = createImportedElement({
+    tagName: 'SECTION',
+    attributes: { id: 'slide-1' },
+    outerHTML: '<section id="slide-1"></section>'
+  });
+  const container = createImportedElement({
+    tagName: 'DIV',
+    outerHTML: '<div></div>'
+  });
+  const child = createImportedElement({
+    tagName: 'P',
+    textContent: 'Rendered child',
+    outerHTML: '<p>Rendered child</p>'
+  });
+  container.children = [child];
+  slide.children = [container];
+  slide.getBoundingClientRect = () => ({ x: 100, y: 200, width: 800, height: 450 });
+  container.getBoundingClientRect = () => ({ x: 140, y: 250, width: 400, height: 120 });
+  child.getBoundingClientRect = () => ({ x: 170, y: 280, width: 180, height: 30 });
+
+  const importedSlide = deckImport.importSlideToCanonicalSlide(slide, 0);
+
+  assert.equal(importedSlide.nodes[0].layout.mode, 'flow');
+  assert.deepEqual(importedSlide.nodes[0].layout.bounds, {
+    x: 40,
+    y: 50,
+    width: 400,
+    height: 120
+  });
+  assert.deepEqual(importedSlide.nodes[0].children[0].layout.bounds, {
+    x: 30,
+    y: 30,
+    width: 180,
+    height: 30
+  });
+});
+
 test('importElementToCanonicalNode strips duplicate visibility attrs from stored node html fragments', () => {
   const element = createImportedElement({
     tagName: 'DIV',

@@ -872,7 +872,41 @@
     return !skipTagNames.has(el.tagName.toUpperCase());
   }
 
-  function buildImportedLayout(el, win) {
+  function buildImportedRenderedBounds(el, boundsRoot) {
+    if (!el || !boundsRoot
+      || typeof el.getBoundingClientRect !== 'function'
+      || typeof boundsRoot.getBoundingClientRect !== 'function') {
+      return null;
+    }
+
+    let elementRect;
+    let rootRect;
+    try {
+      elementRect = el.getBoundingClientRect();
+      rootRect = boundsRoot.getBoundingClientRect();
+    } catch (error) {
+      return null;
+    }
+
+    const elementX = firstFiniteNumber([elementRect && elementRect.x, elementRect && elementRect.left]);
+    const elementY = firstFiniteNumber([elementRect && elementRect.y, elementRect && elementRect.top]);
+    const rootX = firstFiniteNumber([rootRect && rootRect.x, rootRect && rootRect.left], 0);
+    const rootY = firstFiniteNumber([rootRect && rootRect.y, rootRect && rootRect.top], 0);
+    const width = normalizeFiniteNumber(elementRect && elementRect.width);
+    const height = normalizeFiniteNumber(elementRect && elementRect.height);
+    if (![elementX, elementY, width, height].every(Number.isFinite) || width <= 0 || height <= 0) {
+      return null;
+    }
+
+    return {
+      x: elementX - rootX,
+      y: elementY - rootY,
+      width,
+      height
+    };
+  }
+
+  function buildImportedLayout(el, win, boundsRoot) {
     const computedStyle = win && typeof win.getComputedStyle === 'function'
       ? win.getComputedStyle(el)
       : null;
@@ -880,6 +914,7 @@
     const position = normalizeString(inlineStyle.position || (computedStyle && computedStyle.position));
     const isAbsoluteLayout = position === 'absolute' || position === 'fixed';
 
+    const renderedBounds = buildImportedRenderedBounds(el, boundsRoot);
     return {
       mode: isAbsoluteLayout
         ? 'absolute'
@@ -913,7 +948,8 @@
             Number.parseInt(inlineStyle.zIndex || '', 10),
             Number.parseInt(computedStyle ? computedStyle.zIndex : '', 10)
           ], 0)
-        : 0
+        : 0,
+      ...(renderedBounds && !isAbsoluteLayout ? { bounds: renderedBounds } : {})
     };
   }
 
@@ -1060,7 +1096,7 @@
     const fallbackNodeId = context.path && context.path.length > 0
       ? `${context.slideId || 'slide'}-node-${context.path.join('-')}`
       : `node-${(context.nodeIndex || 0) + 1}`;
-    const importedLayout = buildImportedLayout(el, win);
+    const importedLayout = buildImportedLayout(el, win, context.boundsRoot);
     const visibility = buildImportedVisibility(el, win);
     const attributes = stripCanonicalNodeAttributeDuplicates(sanitizeImportedAttributeMap(el, options), visibility);
     const inlineStyleText = normalizeString(el.getAttribute('style'));
@@ -1095,7 +1131,8 @@
       children: childElements.map((child, childIndex) => importElementToCanonicalNode(child, options, {
         slideId: context.slideId,
         nodeIndex: childIndex,
-        path: (context.path || []).concat(childIndex + 1)
+        path: (context.path || []).concat(childIndex + 1),
+        boundsRoot: el
       }))
     });
   }
@@ -1190,7 +1227,8 @@
       nodes: childElements.map((child, childIndex) => importElementToCanonicalNode(child, options, {
         slideId,
         nodeIndex: childIndex,
-        path: [childIndex + 1]
+        path: [childIndex + 1],
+        boundsRoot: slide
       })),
       source: {
         html: stripCanonicalSlideSourceHtmlDuplicates(buildImportedSourceHtml(slide, options), sourceAttributes),
