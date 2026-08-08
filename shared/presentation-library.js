@@ -7,6 +7,14 @@
     root.SlideNextPresentationLibrary = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  function resolveFetchImpl(options = {}) {
+    return typeof options.fetchImpl === 'function'
+      ? options.fetchImpl
+      : root && typeof root.fetch === 'function'
+        ? root.fetch.bind(root)
+        : null;
+  }
+
   function normalizePresentationLibraryData(data) {
     return Array.isArray(data) ? data.filter(group => group && typeof group === 'object') : [];
   }
@@ -36,11 +44,7 @@
   }
 
   async function loadPresentationLibrary(options = {}) {
-    const fetchImpl = typeof options.fetchImpl === 'function'
-      ? options.fetchImpl
-      : root && typeof root.fetch === 'function'
-        ? root.fetch.bind(root)
-        : null;
+    const fetchImpl = resolveFetchImpl(options);
     if (!fetchImpl) {
       return [];
     }
@@ -79,7 +83,43 @@
     }
   }
 
+  async function createPresentation(options = {}) {
+    const fetchImpl = resolveFetchImpl(options);
+    if (!fetchImpl) {
+      throw new Error('Presentation creation is unavailable');
+    }
+    if (typeof options.title !== 'string' || !options.title.trim()) {
+      throw new Error('Presentation title is required');
+    }
+
+    const response = await fetchImpl('/api/presentations/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ title: options.title.trim() }),
+      ...(options.requestInit || {})
+    });
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch (error) {
+      payload = null;
+    }
+    if (!response.ok) {
+      const message = payload && typeof payload.error === 'string'
+        ? payload.error
+        : `Presentation creation failed with status ${response.status}`;
+      throw new Error(message);
+    }
+    if (!payload || payload.success !== true || !payload.presentation) {
+      throw new Error('Presentation creation returned an invalid response');
+    }
+    return payload.presentation;
+  }
+
   return {
+    createPresentation,
     loadPresentationLibrary,
     normalizePresentationLibraryData,
     listPresentationLibraryCategories,

@@ -142,3 +142,55 @@ test('loadPresentationLibrary reports only current failures', async () => {
   assert.deepEqual(currentErrors, ['Presentation library request failed with status 503']);
   assert.deepEqual(staleErrors, []);
 });
+
+test('createPresentation posts a trimmed title and returns the created entry', async () => {
+  const fetchCalls = [];
+  const createdPresentation = {
+    id: 'team-kickoff',
+    title: 'Team Kickoff',
+    relativePath: 'presentations/team-kickoff/index.html'
+  };
+
+  const result = await presentationLibrary.createPresentation({
+    title: '  Team Kickoff  ',
+    fetchImpl: async (url, init) => {
+      fetchCalls.push({ url, init });
+      return {
+        ok: true,
+        status: 201,
+        json: async () => ({ success: true, presentation: createdPresentation })
+      };
+    }
+  });
+
+  assert.deepEqual(result, createdPresentation);
+  assert.deepEqual(fetchCalls, [{
+    url: '/api/presentations/create',
+    init: {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ title: 'Team Kickoff' })
+    }
+  }]);
+});
+
+test('createPresentation surfaces API errors and rejects blank titles', async () => {
+  await assert.rejects(
+    () => presentationLibrary.createPresentation({ title: '   ', fetchImpl: async () => ({}) }),
+    /Presentation title is required/
+  );
+
+  await assert.rejects(
+    () => presentationLibrary.createPresentation({
+      title: 'Existing Deck',
+      fetchImpl: async () => ({
+        ok: false,
+        status: 409,
+        json: async () => ({ error: 'A presentation with that name already exists' })
+      })
+    }),
+    /A presentation with that name already exists/
+  );
+});
