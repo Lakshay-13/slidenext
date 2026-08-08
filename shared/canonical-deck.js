@@ -1833,6 +1833,54 @@
     });
   }
 
+  function updateCanonicalThemeTokens(deckLike, tokenUpdates = {}) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    if (!isCanonicalDeck(deck) || !tokenUpdates || typeof tokenUpdates !== 'object' || Array.isArray(tokenUpdates)) {
+      return null;
+    }
+
+    const currentTokens = asPlainObject(deck.theme && deck.theme.tokens);
+    const nextTokens = { ...currentTokens };
+    let didChange = false;
+    let didReceiveUpdate = false;
+
+    Object.entries(tokenUpdates).forEach(([rawName, rawValue]) => {
+      const tokenName = normalizeString(rawName).trim();
+      if (!/^--[A-Za-z_][A-Za-z0-9_-]*$/.test(tokenName)) {
+        return;
+      }
+      didReceiveUpdate = true;
+
+      if (rawValue === null || rawValue === undefined || !normalizeString(rawValue).trim()) {
+        if (Object.prototype.hasOwnProperty.call(nextTokens, tokenName)) {
+          delete nextTokens[tokenName];
+          didChange = true;
+        }
+        return;
+      }
+
+      const tokenValue = normalizeString(rawValue).trim();
+      if (nextTokens[tokenName] !== tokenValue) {
+        nextTokens[tokenName] = tokenValue;
+        didChange = true;
+      }
+    });
+
+    if (!didReceiveUpdate || !didChange) {
+      return null;
+    }
+
+    return createCanonicalDeck({
+      ...deck,
+      theme: {
+        ...asPlainObject(deck.theme),
+        tokens: nextTokens
+      }
+    });
+  }
+
   function updateCanonicalSlideBackground(deckLike, slideIds = [], background = '') {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -1957,6 +2005,7 @@
     updateCanonicalNodeAttributes,
     updateCanonicalNodeAsset,
     updateCanonicalNodeStyle,
+    updateCanonicalThemeTokens,
     updateCanonicalSlideBackground,
     updateCanonicalSlideMetadata
   };

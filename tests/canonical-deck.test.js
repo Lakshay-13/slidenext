@@ -1021,6 +1021,50 @@ test('updateCanonicalNodeStyle returns null for no-op or invalid style updates',
   ]), null);
 });
 
+test('updateCanonicalThemeTokens immutably updates and removes valid CSS custom properties', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    theme: {
+      tokens: {
+        '--color-primary': '#7028d0',
+        '--space-md': '16px'
+      }
+    },
+    slides: [{ id: 'slide-1' }]
+  });
+
+  const updatedDeck = canonicalDeck.updateCanonicalThemeTokens(sourceDeck, {
+    '--color-primary': '#10b981',
+    '--font-heading': "'Geist', sans-serif",
+    '--space-md': null
+  });
+
+  assert.ok(canonicalDeck.isCanonicalDeck(updatedDeck));
+  assert.deepEqual(sourceDeck.theme.tokens, {
+    '--color-primary': '#7028d0',
+    '--space-md': '16px'
+  });
+  assert.deepEqual(updatedDeck.theme.tokens, {
+    '--color-primary': '#10b981',
+    '--font-heading': "'Geist', sans-serif"
+  });
+});
+
+test('updateCanonicalThemeTokens ignores unsafe names and no-op values', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    theme: { tokens: { '--color-primary': '#7028d0' } },
+    slides: [{ id: 'slide-1' }]
+  });
+
+  assert.equal(canonicalDeck.updateCanonicalThemeTokens(deck, {
+    'color-primary': 'red',
+    '--1invalid': 'red',
+    '--color-primary': '#7028d0'
+  }), null);
+  assert.equal(canonicalDeck.updateCanonicalThemeTokens(deck, {
+    '--missing-token': null
+  }), null);
+});
+
 test('updateCanonicalSlideBackground immutably updates selected slide backgrounds', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{
