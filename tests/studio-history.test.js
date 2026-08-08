@@ -306,6 +306,31 @@ test('buildStudioHistoryEntry falls back to HTML when canonical rebuild fails', 
   });
 });
 
+test('buildStudioHistoryEntry rejects malformed canonical builder output', () => {
+  const doc = { id: 'malformed-canonical-doc' };
+  const entry = studioHistory.buildStudioHistoryEntry(doc, {
+    isCanonicalDeck(value) {
+      return !!value && value.kind === 'slidenext.deck' && Array.isArray(value.slides);
+    },
+    buildCanonicalDeck() {
+      return { invalid: true };
+    },
+    buildHistoryHtml() {
+      return '<html><body><main>fallback</main></body></html>';
+    },
+    getActiveSlideId() {
+      return 'slide-1';
+    }
+  });
+
+  assert.deepEqual(entry, {
+    html: '<body><main>fallback</main></body>',
+    activeSlideId: 'slide-1',
+    selectedElementIds: [],
+    canonicalDeck: null
+  });
+});
+
 test('buildStudioHistoryEntry keeps model-only transaction metadata', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',

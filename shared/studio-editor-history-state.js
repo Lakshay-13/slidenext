@@ -169,6 +169,7 @@
         buildHistoryHtml,
         getActiveSlideId,
         getSelectedElementIds,
+        isCanonicalDeck,
         transaction: getPendingTransaction(),
         preferCanonicalDeck: options.preferCanonicalDeck === true
       });

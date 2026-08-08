@@ -7,6 +7,16 @@
     root.SlideNextStudioHistory = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function isValidStudioHistoryCanonicalDeck(value, validator) {
+    if (!value) return false;
+    if (typeof validator !== 'function') return true;
+    try {
+      return validator(value) === true;
+    } catch (err) {
+      return false;
+    }
+  }
+
   function normalizeStudioHistoryFrameHtml(html = '') {
     const nextHtml = typeof html === 'string' ? html : '';
     if (!nextHtml) {
@@ -142,6 +152,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : () => null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
     const getHistoryOptions = typeof options.getHistoryOptions === 'function'
       ? options.getHistoryOptions
       : () => ({});
@@ -156,6 +169,9 @@
     let canonicalDeck = null;
     try {
       canonicalDeck = buildCanonicalDeck(nextDoc);
+      if (!isValidStudioHistoryCanonicalDeck(canonicalDeck, isCanonicalDeck)) {
+        canonicalDeck = null;
+      }
     } catch (err) {
       // Preserve history capture for legacy or partially supported decks.
       canonicalDeck = null;
@@ -170,6 +186,7 @@
       selectedElementIds: [],
       buildHistoryHtml: options.buildHistoryHtml,
       canonicalDeck,
+      isCanonicalDeck,
       transaction: options.transaction,
       preferCanonicalDeck: options.preferCanonicalDeck === true
     });
@@ -192,8 +209,14 @@
     const selectedElementIds = doc
       ? normalizeStudioHistoryIdList(getSelectedElementIds(doc))
       : normalizeStudioHistoryIdList(options.selectedElementIds);
-    const canonicalDeck = options.canonicalDeck && typeof options.canonicalDeck === 'object'
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    const candidateCanonicalDeck = options.canonicalDeck && typeof options.canonicalDeck === 'object'
       ? options.canonicalDeck
+      : null;
+    const canonicalDeck = isValidStudioHistoryCanonicalDeck(candidateCanonicalDeck, isCanonicalDeck)
+      ? candidateCanonicalDeck
       : null;
     const transaction = normalizeStudioHistoryTransaction(options.transaction);
     const html = canonicalDeck && (transaction || options.preferCanonicalDeck === true)

@@ -7735,6 +7735,9 @@
               ? resolveEditorLiveCanonicalDeck(sourceDoc || getIframeDoc(), studioEditorSessionToken)
               : null
           ),
+          isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+            ? getEditorCanonicalDeckValidator()
+            : null,
           getHistoryOptions: getEditorHistoryOptions,
           resolveFallbackActiveSlideId: typeof resolveEditorFallbackActiveSlideId === 'function'
             ? resolveEditorFallbackActiveSlideId

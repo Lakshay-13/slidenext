@@ -161,6 +161,26 @@ test('createStudioEditorHistoryEntryBuilder ignores an invalid live baseline', (
   assert.deepEqual(capturedOptions, { preferLiveCanonicalDeck: false });
 });
 
+test('createStudioEditorHistoryEntryBuilder forwards the canonical validator', () => {
+  let receivedValidator = null;
+  const isCanonicalDeck = () => true;
+  const builder = historyState.createStudioEditorHistoryEntryBuilder({
+    historyApi: {
+      buildStudioHistoryEntry(_doc, options) {
+        receivedValidator = options.isCanonicalDeck;
+        return null;
+      }
+    },
+    isCanonicalDeck,
+    buildCanonicalDeck() {
+      return { kind: 'slidenext.deck', slides: [] };
+    }
+  });
+
+  assert.equal(builder('history-doc'), null);
+  assert.equal(receivedValidator, isCanonicalDeck);
+});
+
 test('createStudioEditorHistoryEntryAdapter reuses the shared entry builder', () => {
   let createCalls = 0;
   let capturedOptions = null;
