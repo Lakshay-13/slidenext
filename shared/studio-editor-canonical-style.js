@@ -33,9 +33,11 @@
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : null;
 
     if (!canonicalDeckApi || !buildCanonicalDeck) {
       return null;
@@ -122,13 +124,17 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
-    if (!canonicalDeckApi || !buildCanonicalDeck) return null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
+    if (!canonicalDeckApi || (!buildCanonicalDeck && !buildCanonicalDeckBaseline)) return null;
 
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
       : buildStudioCanonicalStyleBaseline({
           canonicalDeckApi,
           buildCanonicalDeck,
+          buildCanonicalDeckBaseline,
           sourceDocument: options.sourceDocument
         });
     return buildStudioCanonicalStyleMutation({
@@ -144,11 +150,15 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const buildCanonicalStyleBaseline = (baselineOptions = {}) => (
       buildStudioCanonicalStyleBaseline({
         ...baselineOptions,
         canonicalDeckApi,
-        buildCanonicalDeck
+        buildCanonicalDeck,
+        buildCanonicalDeckBaseline
       })
     );
     const buildCanonicalStyleMutation = (mutationOptions = {}) => {
@@ -161,6 +171,7 @@
       return buildStudioCanonicalStyleMutation({
         ...mutationOptions,
         canonicalDeckApi,
+        buildCanonicalDeckBaseline,
         canonicalDeckBeforeMutation
       });
     };

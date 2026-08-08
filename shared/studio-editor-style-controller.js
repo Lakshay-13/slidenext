@@ -48,6 +48,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const applyStyleMutation = typeof options.applyStyleMutation === 'function'
       ? options.applyStyleMutation
       : () => ({ didApply: false, displayValue: '', transaction: null });
@@ -108,7 +111,8 @@
         && typeof canonicalStyleApi.createStudioCanonicalStyleMutationBuilders === 'function'
         ? canonicalStyleApi.createStudioCanonicalStyleMutationBuilders({
             canonicalDeckApi,
-            buildCanonicalDeck
+            buildCanonicalDeck,
+            buildCanonicalDeckBaseline
           })
         : null;
       const buildCanonicalStyleBaseline = canonicalStyleBuilders

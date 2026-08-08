@@ -4,6 +4,7 @@ const styleController = require('../shared/studio-editor-style-controller.js');
 
 test('style controller assembles mutation, feedback, canonical, and finalization dependencies', () => {
   const calls = [];
+  const buildCanonicalDeckBaseline = () => ({ id: 'baseline' });
   const element = { dataset: { editorId: 'node-1' } };
   const controller = styleController.createStudioEditorStyleController({
     styleApi: {
@@ -16,7 +17,8 @@ test('style controller assembles mutation, feedback, canonical, and finalization
       }
     },
     canonicalStyleApi: {
-      createStudioCanonicalStyleMutationBuilders() {
+      createStudioCanonicalStyleMutationBuilders(options) {
+        calls.push(['builders', options]);
         return {
           buildCanonicalStyleBaseline: (options) => {
             calls.push(['baseline', options]);
@@ -33,6 +35,7 @@ test('style controller assembles mutation, feedback, canonical, and finalization
     getIframeDoc: () => ({ id: 'doc' }),
     getActiveSlide: () => ({ id: 'slide-1' }),
     assignElementId: () => 'node-1',
+    buildCanonicalDeckBaseline,
     applyStyleMutation: (...args) => {
       calls.push(['apply', ...args]);
       return { didApply: true, displayValue: '32', transaction: { id: 'tx' } };
@@ -43,13 +46,15 @@ test('style controller assembles mutation, feedback, canonical, and finalization
   assert.equal(controller.apply('size', '32'), true);
   assert.equal(calls[0][0], 'plan');
   assert.equal(calls[0][2], 'size');
-  assert.equal(calls[1][0], 'baseline');
-  assert.equal(calls[2][0], 'apply');
-  assert.equal(calls[3][0], 'feedback');
-  assert.equal(calls[4][0], 'canonical');
-  assert.equal(calls[5][1], 'Auto: Styled Element');
-  assert.deepEqual(calls[5][2].transaction, { id: 'tx' });
-  assert.deepEqual(calls[5][2].canonicalDeck, { id: 'after' });
+  assert.equal(calls[1][0], 'builders');
+  assert.equal(calls[1][1].buildCanonicalDeckBaseline, buildCanonicalDeckBaseline);
+  assert.equal(calls[2][0], 'baseline');
+  assert.equal(calls[3][0], 'apply');
+  assert.equal(calls[4][0], 'feedback');
+  assert.equal(calls[5][0], 'canonical');
+  assert.equal(calls[6][1], 'Auto: Styled Element');
+  assert.deepEqual(calls[6][2].transaction, { id: 'tx' });
+  assert.deepEqual(calls[6][2].canonicalDeck, { id: 'after' });
 });
 
 test('style controller refreshes inspector and fails closed for unavailable edits', () => {

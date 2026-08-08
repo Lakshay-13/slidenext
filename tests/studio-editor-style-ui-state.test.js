@@ -70,6 +70,7 @@ function installStyleController(context) {
     highlightAlignButton: context.highlightAlignButton,
     assignElementId: context.assignEditorElementId,
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    buildCanonicalDeckBaseline: context.buildEditorCanonicalDeck,
     applyStyleMutation: context.applyEditorStyleMutationWithTransaction,
     finalizeDeckMutation: context.finalizeEditorDeckMutation
   });

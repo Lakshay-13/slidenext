@@ -1939,6 +1939,7 @@
           highlightAlignButton: (...args) => highlightAlignButton(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           applyStyleMutation: (...args) => applyEditorStyleMutationWithTransaction(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
         })

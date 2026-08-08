@@ -37,13 +37,16 @@ function createElement() {
   };
 }
 
-test('buildStudioCanonicalStyleBaseline builds from the source document', () => {
+test('buildStudioCanonicalStyleBaseline prefers the live canonical baseline builder', () => {
   const sourceDeck = createSourceDeck();
   const sourceDocument = { id: 'editor-doc' };
   let builtFromDocument = null;
   const result = canonicalStyle.buildStudioCanonicalStyleBaseline({
     canonicalDeckApi: canonicalDeck,
-    buildCanonicalDeck(documentRef) {
+    buildCanonicalDeck() {
+      throw new Error('DOM-derived mutation builder should not build the baseline');
+    },
+    buildCanonicalDeckBaseline(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
     },
@@ -137,4 +140,30 @@ test('createStudioCanonicalStyleMutationBuilders reuses an explicit baseline', (
   assert.equal(buildCount, 0);
   assert.equal(result.slides[0].nodes[0].style, 'color: #ffffff;');
   assert.equal(sourceDeck.slides[0].nodes[0].style, 'color: #000000;');
+});
+
+test('createStudioCanonicalStyleMutationBuilders uses the live baseline builder', () => {
+  const sourceDeck = createSourceDeck();
+  let baselineCalls = 0;
+  const builders = canonicalStyle.createStudioCanonicalStyleMutationBuilders({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck() {
+      throw new Error('DOM-derived mutation builder should not build the baseline');
+    },
+    buildCanonicalDeckBaseline() {
+      baselineCalls += 1;
+      return sourceDeck;
+    }
+  });
+
+  const result = builders.buildCanonicalStyleMutation({
+    sourceDocument: { id: 'editor-doc' },
+    selection: [createElement()],
+    prop: 'color',
+    value: '#ffffff',
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(baselineCalls, 1);
+  assert.equal(result.slides[0].nodes[0].style, 'color: #ffffff;');
 });
