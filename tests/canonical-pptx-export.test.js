@@ -241,6 +241,33 @@ test('createCanonicalPptxExport preserves explicit table column widths', () => {
   assert.ok(Math.abs(columnWidths[1] - 3.9999) < 0.001);
 });
 
+test('createCanonicalPptxExport preserves explicit table row heights', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      nodes: [{
+        id: 'tall-table',
+        type: 'table',
+        layout: { x: 0, y: 0, width: 400, height: 100 },
+        children: [{
+          tagName: 'tr',
+          style: 'height: 25px;',
+          children: [{ tagName: 'td', text: 'Short' }]
+        }, {
+          tagName: 'tr',
+          style: 'height: 75px;',
+          children: [{ tagName: 'td', text: 'Tall' }]
+        }]
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const rowHeights = result.pptx.slides[0].calls[0].options.rowH;
+  assert.equal(rowHeights.length, 2);
+  assert.ok(Math.abs(rowHeights[0] - 0.3333) < 0.001);
+  assert.ok(Math.abs(rowHeights[1] - 0.9999) < 0.001);
+});
+
 test('resolvePptxExportOptions keeps the default wide layout for canonical 16:9 decks', () => {
   const result = pptxExport.resolvePptxExportOptions({
     layout: { size: { width: 1920, height: 1080, unit: 'px' } },

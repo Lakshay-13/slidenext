@@ -376,6 +376,18 @@
     return widths.map(width => tableWidth * (width / totalWidth));
   }
 
+  function getCanonicalTableRowHeights(node, tableHeight) {
+    if (!(Number.isFinite(tableHeight) && tableHeight > 0)) return null;
+    const rows = (Array.isArray(node && node.children) ? node.children : [])
+      .filter(row => row && row.tagName === 'tr');
+    if (rows.length === 0) return null;
+    const heights = rows.map(row => parseCssPx(nodeStyle(row).height));
+    if (!heights.every(height => Number.isFinite(height) && height > 0)) return null;
+    const totalHeight = heights.reduce((sum, height) => sum + height, 0);
+    if (!(totalHeight > 0)) return null;
+    return heights.map(height => tableHeight * (height / totalHeight));
+  }
+
   function getPptxRenderOrder(nodes = []) {
     return (Array.isArray(nodes) ? nodes : [])
       .map((node, index) => ({
@@ -1102,9 +1114,11 @@
           hidden: 'none'
         }[tableBorderStyle] || 'solid';
         const tableColumnWidths = getCanonicalTableColumnWidths(node, bounds.w);
+        const tableRowHeights = getCanonicalTableRowHeights(node, bounds.h);
         context.slide.addTable(rows, {
           ...bounds,
           ...(tableColumnWidths ? { colW: tableColumnWidths } : {}),
+          ...(tableRowHeights ? { rowH: tableRowHeights } : {}),
           border: { type: tableBorderType, color: tableBorderColor, pt: tableBorderWidth },
           color: tableColor,
           fill: tableFill,
