@@ -1581,6 +1581,46 @@ test('applyCurrentStudioPersistenceSuccess delegates through the editor persiste
   assert.equal(result.handlePersistenceSuccess, context.SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess);
 });
 
+test('applyCurrentStudioPersistenceSuccess creates the shared persistence-state adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyCurrentStudioPersistenceSuccessSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistenceSuccess(',
+    '\n\n    function applyCurrentStudioVersionPersistenceSuccess('
+  );
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorPersistenceSuccessHandlerAdapter(options) {
+        adapterCreateCalls += 1;
+        return (persistenceContext, nextOptions) => {
+          calls.push([persistenceContext, nextOptions]);
+          return { id: nextOptions.id, contextId: persistenceContext.id };
+        };
+      }
+    },
+    createCurrentStudioPersistenceHandlerOptions() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyCurrentStudioPersistenceSuccessSource, context);
+
+  assert.deepEqual(
+    context.applyCurrentStudioPersistenceSuccess({ id: 'one' }, { id: 1 }),
+    { id: 1, contextId: 'one' }
+  );
+  assert.deepEqual(
+    context.applyCurrentStudioPersistenceSuccess({ id: 'two' }, { id: 2 }),
+    { id: 2, contextId: 'two' }
+  );
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls.map(([, options]) => options.id), [1, 2]);
+});
+
 test('applyCurrentStudioVersionPersistenceSuccess reuses the shared version-success handler when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyCurrentStudioVersionPersistenceSuccessSource = extractFunctionSource(
