@@ -673,6 +673,37 @@ test('createCanonicalPptxExport preserves supported CSS text decorations', () =>
   assert.deepEqual(calls.map(call => call.options.strike), [undefined, true, true, undefined]);
 });
 
+test('createCanonicalPptxExport preserves supported CSS letter spacing', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'spaced-text',
+        type: 'text',
+        text: 'Spaced',
+        style: 'letter-spacing: 2px;',
+        layout: { x: 0, y: 0, width: 100, height: 40 }
+      }, {
+        id: 'zero-spaced-text',
+        type: 'text',
+        text: 'Zero spacing',
+        style: 'letter-spacing: 0;',
+        layout: { x: 0, y: 50, width: 100, height: 40 }
+      }, {
+        id: 'normal-spaced-text',
+        type: 'text',
+        text: 'Normal spacing',
+        style: 'letter-spacing: normal;',
+        layout: { x: 0, y: 100, width: 100, height: 40 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(
+    result.pptx.slides[0].calls.map(call => call.options.charSpacing),
+    [1.5, 0, undefined]
+  );
+});
+
 test('preflightCanonicalPptxExport reports missing node background image assets', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{

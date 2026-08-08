@@ -479,6 +479,10 @@
     const textDecoration = resolvePptxTextDecoration(
       [style['text-decoration'], style['text-decoration-line']].filter(Boolean).join(' ')
     );
+    const cssLetterSpacing = parseCssPx(style['letter-spacing']);
+    const characterSpacing = cssLetterSpacing === null
+      ? {}
+      : { charSpacing: cssLetterSpacing * 0.75 };
     const color = normalizeHexColor(style.color) || '000000';
     const fontFace = style['font-family']
       ? style['font-family'].split(',')[0].trim().replace(/^['"]|['"]$/g, '')
@@ -496,7 +500,8 @@
       fit: 'shrink',
       ...lineSpacing,
       ...verticalAlignment,
-      ...textDecoration
+      ...textDecoration,
+      ...characterSpacing
     }, nodeTransparency(node));
   }
 
