@@ -134,7 +134,7 @@
     const timeoutMs = Number.isFinite(options.timeoutMs)
       ? Math.max(0, options.timeoutMs)
       : 5000;
-    const waitWithTimeout = (resource) => new Promise((resolve, reject) => {
+    const waitWithTimeout = (resource, resourceName = 'resource') => new Promise((resolve, reject) => {
       let settled = false;
       const settle = (error = null) => {
         if (settled) return;
@@ -146,7 +146,10 @@
           resolve();
         }
       };
-      const timeoutId = setTimeout(settle, timeoutMs);
+      const timeoutId = setTimeout(
+        () => settle(new Error(`PDF ${resourceName} resource load timed out`)),
+        timeoutMs
+      );
       Promise.resolve(resource).then(() => settle(), settle);
     });
     const waitForImage = (image, source = null) => {
@@ -180,7 +183,10 @@
           }
         };
         const fail = () => settle(new Error('PDF image resource failed to load'));
-        const timeoutId = setTimeout(settle, timeoutMs);
+        const timeoutId = setTimeout(
+          () => settle(new Error('PDF image resource load timed out')),
+          timeoutMs
+        );
         image.addEventListener('load', () => settle(), { once: true });
         image.addEventListener('error', fail, { once: true });
         if (source !== null) {
@@ -200,7 +206,7 @@
     const waits = [];
     const fontsReady = documentRef.fonts && documentRef.fonts.ready;
     if (fontsReady && typeof fontsReady.then === 'function') {
-      waits.push(waitWithTimeout(fontsReady));
+      waits.push(waitWithTimeout(fontsReady, 'font'));
     }
 
     const images = documentRef.images && typeof documentRef.images.length === 'number'

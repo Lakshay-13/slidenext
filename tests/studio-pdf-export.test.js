@@ -169,14 +169,17 @@ test('waitForStudioPdfPrintResources preloads CSS background images', async () =
   await waiting;
 });
 
-test('waitForStudioPdfPrintResources resolves when a resource never settles', async () => {
+test('waitForStudioPdfPrintResources rejects when a resource never settles', async () => {
   const image = {
     complete: false,
     addEventListener() {}
   };
 
   const startedAt = Date.now();
-  await pdfExport.waitForStudioPdfPrintResources({ images: [image] }, { timeoutMs: 10 });
+  await assert.rejects(
+    pdfExport.waitForStudioPdfPrintResources({ images: [image] }, { timeoutMs: 10 }),
+    /PDF image resource load timed out/
+  );
 
   assert.ok(Date.now() - startedAt >= 8);
 });
