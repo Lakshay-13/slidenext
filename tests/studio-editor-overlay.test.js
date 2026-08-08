@@ -137,3 +137,29 @@ test('syncStudioSelectionOverlay hides the overlay and transient guides when sel
   assert.equal(overlay.style.display, 'none');
   assert.deepEqual(calls, ['hideGuides', 'hideDragHud']);
 });
+
+test('syncStudioSelectionOverlayForActiveSlide resolves the current slide before rendering', () => {
+  const overlay = createOverlay();
+  const slide = {
+    querySelector() {
+      return overlay;
+    }
+  };
+  const documentRef = { id: 'iframe-document' };
+  let resolvedDocument = null;
+
+  const result = overlayView.syncStudioSelectionOverlayForActiveSlide({
+    documentRef,
+    getActiveSlide(doc) {
+      resolvedDocument = doc;
+      return slide;
+    },
+    buildSelectionOverlayState() {
+      return { hasVisibleSelection: false, visibleSelection: [] };
+    }
+  });
+
+  assert.equal(resolvedDocument, documentRef);
+  assert.equal(result.didSync, false);
+  assert.equal(result.overlay, overlay);
+});

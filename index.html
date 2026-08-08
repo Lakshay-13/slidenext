@@ -4895,9 +4895,13 @@
 
     function syncSelectionOverlay() {
       const doc = getIframeDoc();
-      const slide = getActiveSlide(doc);
-      if (!doc || !slide) return;
-      return SlideNextStudioEditorOverlay.syncStudioSelectionOverlay(doc, slide, {
+      if (!SlideNextStudioEditorOverlay
+        || typeof SlideNextStudioEditorOverlay.syncStudioSelectionOverlayForActiveSlide !== 'function') {
+        return false;
+      }
+      return SlideNextStudioEditorOverlay.syncStudioSelectionOverlayForActiveSlide({
+        documentRef: doc,
+        getActiveSlide,
         ...getEditorOverlayOptions(),
         selectedElements,
         buildSelectionOverlayState: SlideNextStudioEditorOverlayState.buildStudioSelectionOverlayState,

@@ -187,6 +187,16 @@
     return { didSync: true, overlay, bounds, canTransform };
   }
 
+  function syncStudioSelectionOverlayForActiveSlide(options = {}) {
+    const documentRef = options.documentRef;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const slide = documentRef ? getActiveSlide(documentRef) : null;
+    if (!documentRef || !slide) return { didSync: false };
+    return syncStudioSelectionOverlay(documentRef, slide, options);
+  }
+
   return {
     ensureStudioSelectionOverlay,
     ensureStudioGuidesLayer,
@@ -197,6 +207,7 @@
     renderStudioGuides,
     renderStudioMarqueeSelection,
     clearStudioMarqueeSelection,
-    syncStudioSelectionOverlay
+    syncStudioSelectionOverlay,
+    syncStudioSelectionOverlayForActiveSlide
   };
 });
