@@ -5382,13 +5382,18 @@
     }
 
     function updateGroupActionState(doc = getIframeDoc()) {
+      const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
+        ? SlideNextStudioEditorGroup
+        : null;
+      if (!groupApi) {
+        return false;
+      }
       const groupState = buildGroupSelectionActionState(doc);
       const ungroupState = buildUngroupSelectionActionState(doc);
       const syncStudioGroupToolbarState = (
-        SlideNextStudioEditorGroup
-        && typeof SlideNextStudioEditorGroup.syncStudioGroupToolbarState === 'function'
+        typeof groupApi.syncStudioGroupToolbarState === 'function'
       )
-        ? SlideNextStudioEditorGroup.syncStudioGroupToolbarState
+        ? groupApi.syncStudioGroupToolbarState
         : null;
       if (syncStudioGroupToolbarState) {
         return syncStudioGroupToolbarState({
@@ -5397,7 +5402,10 @@
           canUngroup: ungroupState.canUngroup
         });
       }
-      return SlideNextStudioEditorGroup.renderStudioGroupToolbarState({
+      if (typeof groupApi.renderStudioGroupToolbarState !== 'function') {
+        return false;
+      }
+      return groupApi.renderStudioGroupToolbarState({
         documentRef: document,
         canGroup: groupState.canGroup,
         canUngroup: ungroupState.canUngroup

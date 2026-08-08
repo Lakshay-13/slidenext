@@ -111,6 +111,29 @@ test('updateGroupActionState delegates toolbar state assembly to the shared grou
   assert.equal(calls[0].canUngroup, false);
 });
 
+test('updateGroupActionState fails closed when the shared group view is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateGroupActionState(doc = getIframeDoc()) {',
+    '\n\n    function isEditorGroupElement(element) {'
+  );
+  const context = {
+    buildGroupSelectionActionState() {
+      throw new Error('selection state should not be built');
+    },
+    buildUngroupSelectionActionState() {
+      throw new Error('ungroup state should not be built');
+    },
+    document: {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateGroupActionState({}), false);
+});
+
 test('buildGroupSelectionActionState requires a complete same-parent freeform selection', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
