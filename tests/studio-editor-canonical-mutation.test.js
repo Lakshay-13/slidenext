@@ -58,3 +58,28 @@ test('mutation canonical builder forwards the pre-mutation baseline when availab
     }
   });
 });
+
+test('mutation canonical builder rebuilds when the live baseline is invalid', () => {
+  const documentRef = { id: 'post-mutation-document' };
+  const rebuiltCanonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  let didBuild = false;
+  const buildMutationDeck = canonicalMutation
+    .createStudioEditorMutationCanonicalDeckBuilder({
+      canonicalStateApi: canonicalState,
+      isCanonicalDeck(value) {
+        return !!value && value.kind === 'slidenext.deck' && Array.isArray(value.slides);
+      },
+      buildCanonicalDeck(sourceDoc, options) {
+        assert.equal(sourceDoc, documentRef);
+        didBuild = true;
+        assert.equal(options.canonicalDeckBaseline, undefined);
+        return rebuiltCanonicalDeck;
+      },
+      getCanonicalDeckBaseline() {
+        return { invalid: true };
+      }
+    });
+
+  assert.equal(buildMutationDeck(documentRef), rebuiltCanonicalDeck);
+  assert.equal(didBuild, true);
+});

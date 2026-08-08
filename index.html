@@ -2412,7 +2412,8 @@
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
             studioEditorSessionToken
-          )
+          ),
+          isCanonicalDeck: getEditorCanonicalDeckValidator()
         })
       : null;
     const studioEditorCanonicalBridge = typeof SlideNextStudioEditorCanonicalBridge !== 'undefined'

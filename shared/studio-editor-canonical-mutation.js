@@ -14,18 +14,25 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
     const readCanonicalDeckBaseline = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
-          getCanonicalDeckBaseline
+          getCanonicalDeckBaseline,
+          isCanonicalDeck
         })
       : (sourceDocument) => {
           if (!getCanonicalDeckBaseline) return null;
           try {
-            return getCanonicalDeckBaseline(sourceDocument) || null;
+            const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+            if (!liveCanonicalDeck) return null;
+            if (isCanonicalDeck && isCanonicalDeck(liveCanonicalDeck) !== true) return null;
+            return liveCanonicalDeck;
           } catch (err) {
             return null;
           }
