@@ -1739,6 +1739,47 @@ test('applyCurrentStudioVersionPersistenceSuccess delegates through the editor p
   assert.equal(result.handleVersionPersistenceSuccess, context.SlideNextStudioEditorPersistence.handleStudioVersionPersistenceSuccess);
 });
 
+test('applyCurrentStudioVersionPersistenceSuccess creates the shared persistence-state adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyCurrentStudioVersionPersistenceSuccessSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioVersionPersistenceSuccess(',
+    '\n\n    function runCurrentStudioPersistenceActionIfCurrent('
+  );
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    loadVersions: 'load-versions-sentinel',
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorVersionPersistenceSuccessHandlerAdapter(options) {
+        adapterCreateCalls += 1;
+        return (persistenceContext, nextOptions) => {
+          calls.push([persistenceContext, nextOptions]);
+          return { id: nextOptions.id, contextId: persistenceContext.id };
+        };
+      }
+    },
+    createCurrentStudioSessionReaderOptions() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyCurrentStudioVersionPersistenceSuccessSource, context);
+
+  assert.deepEqual(
+    context.applyCurrentStudioVersionPersistenceSuccess({ id: 'one' }, { id: 1 }),
+    { id: 1, contextId: 'one' }
+  );
+  assert.deepEqual(
+    context.applyCurrentStudioVersionPersistenceSuccess({ id: 'two' }, { id: 2 }),
+    { id: 2, contextId: 'two' }
+  );
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls.map(([, options]) => options.id), [1, 2]);
+});
+
 test('buildEditorSaveRequestBody reuses the local canonical override helper when capture state omits a canonical deck', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(
