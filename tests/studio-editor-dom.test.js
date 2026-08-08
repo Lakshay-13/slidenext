@@ -154,3 +154,18 @@ test('resolveStudioEditableTarget selects a chart frame from its inline title', 
     chart
   );
 });
+
+test('resolveStudioEditableTarget selects an embed placeholder frame', () => {
+  const placeholder = createElement('DIV', {
+    classNames: ['editor-embed-placeholder']
+  });
+  placeholder.nodeType = 1;
+  placeholder.matches = (selector) => selector === '.editor-embed-placeholder';
+
+  assert.equal(
+    domState.resolveStudioEditableTarget(placeholder, {
+      selectableSelector: '.editor-embed-placeholder'
+    }),
+    placeholder
+  );
+});
