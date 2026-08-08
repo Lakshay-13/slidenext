@@ -18,6 +18,8 @@
     const normalizedAssets = Array.isArray(options.assets) ? options.assets : [];
     const canApply = !!options.canApply;
     const applyAsset = typeof options.applyAsset === 'function' ? options.applyAsset : () => {};
+    const canInsert = typeof options.insertAsset === 'function';
+    const insertAsset = canInsert ? options.insertAsset : () => {};
     const removeAsset = typeof options.removeAsset === 'function' ? options.removeAsset : () => {};
     const resolvePreviewSource = typeof options.resolvePreviewSource === 'function'
       ? options.resolvePreviewSource
@@ -69,6 +71,14 @@
       useButton.title = 'Use on selected image';
       useButton.addEventListener('click', () => applyAsset(asset.id));
 
+      const insertButton = documentRef.createElement('button');
+      insertButton.type = 'button';
+      insertButton.className = 'shrink-0 rounded px-1.5 py-1 text-zinc-500 hover:bg-[#7028d0]/10 hover:text-[#c4a1ff] transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
+      insertButton.textContent = 'Insert';
+      insertButton.disabled = !canInsert;
+      insertButton.title = 'Insert on active slide';
+      insertButton.addEventListener('click', () => insertAsset(asset.id));
+
       const removeButton = documentRef.createElement('button');
       removeButton.type = 'button';
       removeButton.className = 'shrink-0 rounded px-1.5 py-1 text-zinc-500 hover:bg-red-500/10 hover:text-red-300 transition-colors';
@@ -79,6 +89,7 @@
 
       row.appendChild(item);
       row.appendChild(useButton);
+      row.appendChild(insertButton);
       row.appendChild(removeButton);
       list.appendChild(row);
     });

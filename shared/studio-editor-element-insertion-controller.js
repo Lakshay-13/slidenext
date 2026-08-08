@@ -99,7 +99,10 @@
         : null;
     }
 
-    function insert(type) {
+    function insert(type, insertOptions = {}) {
+      const normalizedInsertOptions = insertOptions && typeof insertOptions === 'object'
+        ? insertOptions
+        : {};
       const iframeDoc = getIframeDoc();
       const activeSlide = getActiveSlide(iframeDoc);
       if (!activeSlide) {
@@ -125,12 +128,21 @@
       const childCount = activeSlide.children && Number.isFinite(activeSlide.children.length)
         ? activeSlide.children.length
         : 0;
+      const customPrepareElement = typeof normalizedInsertOptions.prepareElement === 'function'
+        ? normalizedInsertOptions.prepareElement
+        : null;
+      const prepareElement = makeElementsHoverable || customPrepareElement
+        ? (element) => {
+            if (makeElementsHoverable) makeElementsHoverable(element);
+            if (customPrepareElement) customPrepareElement(element);
+          }
+        : null;
       const mutation = applyElementInsertion(type, {
         documentRef: iframeDoc,
         slide: activeSlide,
         offset: (childCount * 15) % 150,
         layoutMode: insertionLayoutMode,
-        prepareElement: makeElementsHoverable,
+        prepareElement,
         transactionElementId: activeSlideId ? `slide:${activeSlideId}` : ''
       });
       const newElement = mutation && mutation.element ? mutation.element : null;
@@ -150,7 +162,10 @@
       }
 
       if (newElement) {
-        const versionLabel = 'Auto: Added ' + type.toUpperCase();
+        const versionLabel = typeof normalizedInsertOptions.versionLabel === 'string'
+          && normalizedInsertOptions.versionLabel.trim()
+          ? normalizedInsertOptions.versionLabel.trim()
+          : 'Auto: Added ' + type.toUpperCase();
         if (finalizeInsertedElements) {
           return finalizeInsertedElements(
             [newElement],

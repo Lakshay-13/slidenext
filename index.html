@@ -5790,6 +5790,9 @@
         applyAsset: typeof applyAssetToSelectedImage === 'function'
           ? applyAssetToSelectedImage
           : null,
+        insertAsset: typeof insertAssetToActiveSlide === 'function'
+          ? insertAssetToActiveSlide
+          : null,
         removeAsset: typeof removeAssetFromLibrary === 'function'
           ? removeAssetFromLibrary
           : null,
@@ -6266,6 +6269,31 @@
         : false;
       if (didApply) updateAssetLibraryState();
       return didApply;
+    }
+
+    function insertAssetToActiveSlide(assetId) {
+      const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
+      const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(getIframeDoc())
+        : null;
+      const asset = canonicalDeck && Array.isArray(canonicalDeck.assets)
+        ? canonicalDeck.assets.find((candidate) => candidate && candidate.id === normalizedAssetId)
+        : null;
+      if (!asset || !asset.src || !studioEditorElementInsertionController
+        || typeof studioEditorElementInsertionController.insert !== 'function') {
+        return false;
+      }
+
+      return studioEditorElementInsertionController.insert('img', {
+        versionLabel: `Auto: Inserted Asset "${asset.name || asset.id}"`,
+        prepareElement: (element) => {
+          if (!element) return;
+          if (typeof element.setAttribute === 'function') {
+            element.setAttribute('data-asset-id', asset.id);
+          }
+          element.src = asset.src;
+        }
+      });
     }
 
     function nudgeSelectedElements(dx, dy) {

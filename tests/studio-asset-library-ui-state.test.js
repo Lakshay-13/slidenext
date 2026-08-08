@@ -52,12 +52,16 @@ test('shared asset view wires use and remove actions to injected callbacks', () 
     },
     removeAsset(assetId) {
       calls.push(['remove', assetId]);
+    },
+    insertAsset(assetId) {
+      calls.push(['insert', assetId]);
     }
   }), true);
 
-  events.find((event) => event.type === 'click').handler();
-  events.reverse().find((event) => event.type === 'click').handler();
-  assert.deepEqual(calls, [['apply', 'hero'], ['remove', 'hero']]);
+  events[0].handler();
+  events[1].handler();
+  events[2].handler();
+  assert.deepEqual(calls, [['apply', 'hero'], ['insert', 'hero'], ['remove', 'hero']]);
 });
 
 test('shared asset view renders previews only for image sources', () => {
@@ -224,6 +228,55 @@ test('applyAssetToSelectedImage delegates asset binding and refreshes the librar
   assert.equal(context.applyAssetToSelectedImage('hero'), true);
   assert.equal(delegatedId, 'hero');
   assert.equal(refreshes, 1);
+});
+
+test('insertAssetToActiveSlide stamps the canonical asset before insertion', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function addAssetToLibrary() {',
+    '\n\n    function nudgeSelectedElements'
+  );
+  const attributes = {};
+  const element = {
+    src: '',
+    setAttribute(name, value) {
+      attributes[name] = value;
+    }
+  };
+  const calls = [];
+  const context = {
+    currentPresentationUrl: '/presentations/demo/index.html',
+    document: { getElementById() { return { value: '' }; } },
+    getIframeDoc() {
+      return { id: 'doc' };
+    },
+    buildEditorCanonicalDeck() {
+      return { assets: [{ id: 'hero', name: 'Hero', src: '/images/hero.png' }] };
+    },
+    studioEditorElementInsertionController: {
+      insert(type, options) {
+        calls.push([type, options.versionLabel]);
+        options.prepareElement(element);
+        return true;
+      }
+    },
+    studioEditorAssetController: {
+      addAsset() { return null; },
+      removeAsset() { return false; },
+      applyAsset() { return false; }
+    },
+    updateAssetLibraryState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.insertAssetToActiveSlide('hero'), true);
+  assert.deepEqual(calls, [['img', 'Auto: Inserted Asset "Hero"']]);
+  assert.equal(attributes['data-asset-id'], 'hero');
+  assert.equal(element.src, '/images/hero.png');
+  assert.equal(context.insertAssetToActiveSlide('missing'), false);
 });
 
 test('asset library state resolves relative previews against the current presentation', () => {

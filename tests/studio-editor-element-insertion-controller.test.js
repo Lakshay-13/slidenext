@@ -39,6 +39,42 @@ test('element insertion controller preserves insertion finalization and version 
   ]);
 });
 
+test('element insertion controller composes custom preparation into the canonical transaction', () => {
+  const calls = [];
+  const element = {
+    attributes: {},
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    }
+  };
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    getIframeDoc: () => ({}),
+    getActiveSlide: () => ({ children: [] }),
+    getEditorSlideId: () => 'slide-1',
+    applyElementInsertion: (type, options) => {
+      calls.push(['apply', type]);
+      options.prepareElement(element);
+      return { element, transaction: null };
+    },
+    finalizeInsertedElements: (...args) => {
+      calls.push(['finalize', ...args]);
+      return true;
+    }
+  });
+
+  assert.equal(controller.insert('img', {
+    versionLabel: 'Auto: Inserted Asset "Hero"',
+    prepareElement(nextElement) {
+      nextElement.setAttribute('data-asset-id', 'hero');
+    }
+  }), true);
+  assert.deepEqual(calls, [
+    ['apply', 'img'],
+    ['finalize', [element], 'Auto: Inserted Asset "Hero"', null, null]
+  ]);
+  assert.equal(element.attributes['data-asset-id'], 'hero');
+});
+
 test('element insertion controller selects flow mode for a flow-only canonical slide', () => {
   const calls = [];
   let builderOptions = null;
