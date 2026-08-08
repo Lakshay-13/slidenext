@@ -70,6 +70,28 @@ test('canonical deck builder falls back when live state resolution throws', () =
   assert.equal(builder({ id: 'document' }), rebuiltDeck);
 });
 
+test('canonical deck builder falls back when deck validation throws', () => {
+  const rebuiltDeck = createDeck('rebuilt');
+  let validationCalls = 0;
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    isCanonicalDeck(value) {
+      validationCalls += 1;
+      if (validationCalls === 1) {
+        throw new Error('validator unavailable');
+      }
+      return value === rebuiltDeck;
+    },
+    resolveLiveCanonicalDeck() {
+      return createDeck('live');
+    },
+    buildStudioCanonicalDeck() {
+      return rebuiltDeck;
+    }
+  });
+
+  assert.equal(builder({ id: 'document' }), rebuiltDeck);
+});
+
 test('canonical deck builder rejects invalid DOM adapter output before using the stored baseline', () => {
   const storedDeck = createDeck('stored');
   const invalidDomDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };

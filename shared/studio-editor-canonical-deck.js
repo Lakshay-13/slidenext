@@ -15,6 +15,13 @@
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : isCanonicalDeckLike;
+    const isValidCanonicalDeck = (value) => {
+      try {
+        return isCanonicalDeck(value) === true;
+      } catch (error) {
+        return false;
+      }
+    };
     const readCurrentPresentationMetadata = typeof options.getCurrentPresentationMetadata === 'function'
       ? options.getCurrentPresentationMetadata
       : () => null;
@@ -47,14 +54,14 @@
       const canonicalDeckOverride = Object.prototype.hasOwnProperty.call(buildOptions, 'canonicalDeckOverride')
         ? buildOptions.canonicalDeckOverride
         : null;
-      if (isCanonicalDeck(canonicalDeckOverride)) {
+      if (isValidCanonicalDeck(canonicalDeckOverride)) {
         return canonicalDeckOverride;
       }
 
       if (buildOptions.preferLiveCanonicalDeck !== false && doc) {
         try {
           const liveCanonicalDeck = resolveLiveCanonicalDeck(doc, buildOptions);
-          if (isCanonicalDeck(liveCanonicalDeck)) {
+          if (isValidCanonicalDeck(liveCanonicalDeck)) {
             return liveCanonicalDeck;
           }
         } catch (error) {
@@ -79,7 +86,7 @@
           getSlideId: options.getSlideId,
           getNodeId: options.getNodeId
         });
-        if (isCanonicalDeck(studioCanonicalDeck)) {
+        if (isValidCanonicalDeck(studioCanonicalDeck)) {
           return studioCanonicalDeck;
         }
       }
@@ -88,7 +95,7 @@
         currentPresentationMetadata: presentationMetadata,
         persistedCanonicalDeck: readPersistedCanonicalDeck()
       });
-      const storedCanonicalDeck = isCanonicalDeck(storedCanonicalDeckCandidate)
+      const storedCanonicalDeck = isValidCanonicalDeck(storedCanonicalDeckCandidate)
         ? storedCanonicalDeckCandidate
         : null;
       if (!doc && storedCanonicalDeck) {
@@ -105,7 +112,7 @@
         getSlideId: options.getSlideId,
         getNodeId: options.getNodeId
       });
-      if (canonicalDeck && isCanonicalDeck(canonicalDeck)) {
+      if (isValidCanonicalDeck(canonicalDeck)) {
         return canonicalDeck;
       }
       return storedCanonicalDeck || null;
