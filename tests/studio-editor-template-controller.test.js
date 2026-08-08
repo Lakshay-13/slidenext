@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const templateController = require('../shared/studio-editor-template-controller.js');
 
 test('template controller saves the active slide and finalizes persistence hooks', () => {
@@ -48,6 +49,7 @@ test('template mutations prefer a valid live canonical baseline', () => {
   let didBuildFromDocument = false;
   const controller = templateController.createStudioEditorTemplateController({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline: () => liveDeck,
     getCanonicalDeck: () => {
       didBuildFromDocument = true;
