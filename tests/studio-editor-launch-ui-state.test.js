@@ -786,6 +786,45 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
   assert.deepEqual(zoomCalls, ['80']);
 });
 
+test('shouldHandleCurrentStudioFrameLoad creates the shared frame-load guard adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const shouldHandleCurrentStudioFrameLoadSource = extractFunctionSource(
+    fileContent,
+    'function shouldHandleCurrentStudioFrameLoad(expectedPresentationUrl = \'\', options = {}) {',
+    '\n\n    function launchStudioEditor(url, title, category) {'
+  );
+  let adapterCreateCalls = 0;
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorSession: {
+      createStudioEditorFrameLoadGuardAdapter() {
+        adapterCreateCalls += 1;
+        return (presentationUrl, options) => {
+          calls.push([presentationUrl, options]);
+          return options.allowed;
+        };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(shouldHandleCurrentStudioFrameLoadSource, context);
+
+  assert.equal(
+    context.shouldHandleCurrentStudioFrameLoad('/presentations/one/index.html', { allowed: true }),
+    true
+  );
+  assert.equal(
+    context.shouldHandleCurrentStudioFrameLoad('/presentations/two/index.html', { allowed: false }),
+    false
+  );
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls.map(([presentationUrl]) => presentationUrl), [
+    '/presentations/one/index.html',
+    '/presentations/two/index.html'
+  ]);
+});
+
 test('updateCurrentPresentationSessionState updates only the provided session fields and delegates metadata commits', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateCurrentPresentationSessionStateSource = extractFunctionSource(

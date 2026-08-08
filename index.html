@@ -3003,11 +3003,13 @@
         ? SlideNextStudioEditorSession.createStudioEditorFrameLoadGuardAdapter
         : null;
       if (createStudioEditorFrameLoadGuardAdapter) {
-        const adapter = createStudioEditorFrameLoadGuardAdapter({
-          sessionApi: SlideNextStudioEditorSession
-        });
-        if (typeof adapter === 'function') {
-          return adapter(expectedPresentationUrl, options);
+        if (typeof shouldHandleCurrentStudioFrameLoad.adapter !== 'function') {
+          shouldHandleCurrentStudioFrameLoad.adapter = createStudioEditorFrameLoadGuardAdapter({
+            sessionApi: SlideNextStudioEditorSession
+          });
+        }
+        if (typeof shouldHandleCurrentStudioFrameLoad.adapter === 'function') {
+          return shouldHandleCurrentStudioFrameLoad.adapter(expectedPresentationUrl, options);
         }
       }
 
