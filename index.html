@@ -5859,6 +5859,12 @@
     }
 
     function updateBlockActionState(doc = getIframeDoc()) {
+      const blockView = typeof SlideNextStudioEditorBlockView !== 'undefined'
+        ? SlideNextStudioEditorBlockView
+        : null;
+      if (!blockView || typeof blockView.syncStudioBlockState !== 'function') {
+        return false;
+      }
       const hasLockedSelection = typeof selectionHasLockedElements === 'function'
         ? selectionHasLockedElements(selectedElements)
         : typeof isElementLocked === 'function'
@@ -5867,19 +5873,16 @@
       const canSave = !!getActiveSlide(doc)
         && selectedElements.length > 0
         && !hasLockedSelection;
-      const documentApi = typeof document !== 'undefined'
-        && document
-        && typeof document.getElementById === 'function'
-        ? document
-        : null;
-      const button = documentApi ? documentApi.getElementById('saveSelectionBlockBtn') : null;
-      const nameInput = documentApi ? documentApi.getElementById('blockNameInput') : null;
-      if (button) button.disabled = !canSave;
-      if (nameInput) nameInput.disabled = !canSave;
       const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(doc)
         : null;
-      renderSavedBlocks(canonicalDeck && canonicalDeck.blocks);
+      blockView.syncStudioBlockState({
+        documentRef: document,
+        blocks: canonicalDeck && canonicalDeck.blocks,
+        canUseBlockActions: canSave,
+        insertBlock: typeof insertSavedBlock === 'function' ? insertSavedBlock : null,
+        removeBlock: typeof removeSavedBlock === 'function' ? removeSavedBlock : null
+      });
       return canSave;
     }
 

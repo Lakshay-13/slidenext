@@ -54,7 +54,23 @@
     return true;
   }
 
+  function syncStudioBlockState(options = {}) {
+    const documentRef = options.documentRef;
+    const canUseBlockActions = !!options.canUseBlockActions;
+    if (documentRef && typeof documentRef.getElementById === 'function') {
+      ['saveSelectionBlockBtn', 'blockNameInput'].forEach((id) => {
+        const control = documentRef.getElementById(id);
+        if (control) control.disabled = !canUseBlockActions;
+      });
+    }
+    return renderStudioBlockLibrary({
+      ...options,
+      canInsert: canUseBlockActions
+    });
+  }
+
   return {
-    renderStudioBlockLibrary
+    renderStudioBlockLibrary,
+    syncStudioBlockState
   };
 });
