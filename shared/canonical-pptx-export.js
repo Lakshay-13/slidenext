@@ -483,7 +483,18 @@
   }
 
   function resolveSlideBackgroundImageSource(background, options) {
-    return resolveAssetSource(extractCssImageSource(background && background.image), options);
+    return resolveSlideBackgroundImageAsset(background, null, options).source;
+  }
+
+  function resolveSlideBackgroundImageAsset(background, deck, options) {
+    const rawSource = extractCssImageSource(background && background.image);
+    const source = resolveAssetSource(rawSource, options);
+    const assets = deck && Array.isArray(deck.assets) ? deck.assets : [];
+    const asset = assets.find(item => item.src === rawSource || resolveAssetSource(item.src, options) === source);
+    return {
+      asset: asset || null,
+      source
+    };
   }
 
   function resolveNodeBackgroundImageSource(node, options) {
@@ -510,26 +521,25 @@
     };
   }
 
-  function resolveSlideBackgroundImageSizing(background, options) {
+  function resolveSlideBackgroundImageSizing(background, options, asset) {
     const styles = parseStyle(background && background.style);
     const type = typeof styles['background-size'] === 'string'
       ? styles['background-size'].trim().toLowerCase()
       : '';
     if (type !== 'cover' && type !== 'contain') return null;
-    const position = (styles['background-position'] || '').trim().toLowerCase();
-    if (position && !/^(?:center|center\s+center)$/.test(position)) return null;
     const repeat = (styles['background-repeat'] || '').trim().toLowerCase();
     if (repeat && repeat !== 'no-repeat') return null;
-    return {
-      type,
+    const position = parsePptxImagePosition(styles['background-position']);
+    if (!position) return null;
+    return resolvePptxImageFitSizing(type, position, {
       x: 0,
       y: 0,
       w: options.pageWidth,
       h: options.pageHeight
-    };
+    }, asset);
   }
 
-  function hasSupportedSlideBackgroundStyle(background, imageSource) {
+  function hasSupportedSlideBackgroundStyle(background, imageSource, imageAsset) {
     if (!imageSource) return false;
     const styles = parseStyle(background && background.style);
     const properties = Object.keys(styles);
@@ -539,7 +549,10 @@
         return ['cover', 'contain'].includes(styles[property].trim().toLowerCase());
       }
       if (property === 'background-position') {
-        return /^(?:center|center\s+center)$/i.test(styles[property].trim());
+        return isCenteredPptxImagePosition(styles[property])
+          || (['cover', 'contain'].includes((styles['background-size'] || '').trim().toLowerCase())
+            && getPptxImageDimensions(imageAsset)
+            && parsePptxImagePosition(styles[property]));
       }
       return property === 'background-repeat' && styles[property].trim().toLowerCase() === 'no-repeat';
     });
@@ -1141,8 +1154,13 @@
 
     deck.slides.forEach(slide => {
       const background = asObject(slide.layout).background || {};
-      const backgroundImageSource = resolveSlideBackgroundImageSource(background, normalizedOptions);
-      const supportsBackgroundStyle = hasSupportedSlideBackgroundStyle(background, backgroundImageSource);
+      const backgroundImageAsset = resolveSlideBackgroundImageAsset(background, deck, normalizedOptions);
+      const backgroundImageSource = backgroundImageAsset.source;
+      const supportsBackgroundStyle = hasSupportedSlideBackgroundStyle(
+        background,
+        backgroundImageSource,
+        backgroundImageAsset.asset
+      );
       if (background.style && !resolveSlideBackgroundColor(background) && !supportsBackgroundStyle) {
         diagnostics.unsupportedStyles.push({
           id: slide.id || 'unknown',
@@ -1316,7 +1334,8 @@
     const background = asObject(slide.layout).background || {};
     const color = resolveSlideBackgroundColor(background);
     if (color) context.slide.background = { color };
-    const backgroundSource = resolveSlideBackgroundImageSource(background, context.options);
+    const backgroundAsset = resolveSlideBackgroundImageAsset(background, context.deck, context.options);
+    const backgroundSource = backgroundAsset.source;
     const backgroundId = getBackgroundAssetDiagnosticId(slide);
     const missingBackground = context.diagnostics
       && Array.isArray(context.diagnostics.missingBackgroundAssets)
@@ -1331,8 +1350,16 @@
       const imageOptions = backgroundSource.startsWith('data:')
         ? { data: backgroundSource, ...bounds }
         : { path: backgroundSource, ...bounds };
-      const sizing = resolveSlideBackgroundImageSizing(background, context.options);
-      if (sizing) imageOptions.sizing = sizing;
+      const sizing = resolveSlideBackgroundImageSizing(background, context.options, backgroundAsset.asset);
+      if (sizing) {
+        if (sizing.sizing) imageOptions.sizing = sizing.sizing;
+        if (Number.isFinite(sizing.imageX)) imageOptions.x = sizing.imageX;
+        if (Number.isFinite(sizing.imageY)) imageOptions.y = sizing.imageY;
+        if (Number.isFinite(sizing.imageWidth) && Number.isFinite(sizing.imageHeight)) {
+          imageOptions.w = sizing.imageWidth;
+          imageOptions.h = sizing.imageHeight;
+        }
+      }
       context.slide.addImage(imageOptions);
     }
     if (slide.notes && typeof context.slide.addNotes === 'function') context.slide.addNotes(slide.notes);

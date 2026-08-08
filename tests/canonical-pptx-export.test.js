@@ -500,6 +500,34 @@ test('createCanonicalPptxExport renders canonical slide background images before
   assert.deepEqual(result.diagnostics.warnings, []);
 });
 
+test('createCanonicalPptxExport preserves focal positioning for slide background images', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 1000, unit: 'px' } },
+    assets: [{
+      id: 'asset-1',
+      src: 'data:image/png;base64,AAAA',
+      meta: { width: 1600, height: 900 }
+    }],
+    slides: [{
+      layout: {
+        background: {
+          image: 'url("data:image/png;base64,AAAA")',
+          style: 'background-size: cover; background-position: right bottom; background-repeat: no-repeat;'
+        }
+      },
+      nodes: []
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const imageOptions = result.pptx.slides[0].calls[0].options;
+  assert.equal(imageOptions.sizing.type, 'crop');
+  assert.ok(imageOptions.w > imageOptions.sizing.w);
+  assert.ok(imageOptions.h >= imageOptions.sizing.h);
+  assert.ok(imageOptions.sizing.x > 0);
+  assert.ok(imageOptions.sizing.y >= 0);
+  assert.deepEqual(result.diagnostics.unsupportedStyles, []);
+});
+
 test('preflightCanonicalPptxExport reports missing slide background image assets', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{
@@ -1378,6 +1406,29 @@ test('preflightCanonicalPptxExport reports unsupported non-solid slide backgroun
     properties: ['background']
   }]);
   assert.match(report.diagnostics.warnings.join('\n'), /Slide slide-1 uses unsupported CSS background styling/);
+});
+
+test('preflightCanonicalPptxExport accepts focal positioning for sized slide backgrounds', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 1000, unit: 'px' } },
+    assets: [{
+      id: 'asset-1',
+      src: 'data:image/png;base64,AAAA',
+      meta: { width: 1600, height: 900 }
+    }],
+    slides: [{
+      id: 'slide-1',
+      layout: {
+        background: {
+          image: 'url("data:image/png;base64,AAAA")',
+          style: 'background-size: cover; background-position: right bottom; background-repeat: no-repeat;'
+        }
+      },
+      nodes: []
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedStyles, []);
 });
 
 test('createPptxWarningDetailsHeader preserves a bounded diagnostic summary', () => {
