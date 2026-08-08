@@ -1711,9 +1711,7 @@
           sanitizeDuplicatedSubtree: (...args) => sanitizeDuplicatedSubtree(...args),
           assignSlideId: (...args) => assignEditorSlideId(...args),
           makeElementsHoverable: (...args) => makeElementsHoverable(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
-            preferLiveCanonicalDeck: false
-          }),
+          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           saveHistoryState: (...args) => saveHistoryState(...args),
           applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
           generateThumbnails: (...args) => generateThumbnails(...args),
