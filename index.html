@@ -1258,6 +1258,7 @@
   <script src="/shared/presentation-creation-view.js"></script>
   <script src="/shared/presentation-creation-controller.js"></script>
   <script src="/shared/presentation-library-view.js"></script>
+  <script src="/shared/presentation-dashboard-controller.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-style-mutation.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
@@ -1299,10 +1300,20 @@
     let redoStack = [];
     let pendingEditorTransaction = null;
     let wallpaperTab = 'solid';
-    let activeCategory = 'all';
-    let presentationLibraryData = [];
-    let presentationLibraryLoadToken = 0;
     let studioEditorSessionToken = 0;
+    const presentationDashboardController = typeof SlideNextPresentationDashboardController !== 'undefined'
+      && SlideNextPresentationDashboardController
+      && typeof SlideNextPresentationDashboardController.createPresentationDashboardController === 'function'
+      ? SlideNextPresentationDashboardController.createPresentationDashboardController({
+          documentRef: document,
+          presentationLibrary: typeof SlideNextPresentationLibrary !== 'undefined'
+            ? SlideNextPresentationLibrary
+            : null,
+          presentationLibraryView: typeof SlideNextPresentationLibraryView !== 'undefined'
+            ? SlideNextPresentationLibraryView
+            : null
+        })
+      : null;
     const presentationCreationController = typeof SlideNextPresentationCreationController !== 'undefined'
       && SlideNextPresentationCreationController
       && typeof SlideNextPresentationCreationController.createPresentationController === 'function'
@@ -1570,58 +1581,15 @@
 
     // 1. Fetch Presentations from Backend
     function setPresentationLibraryLoadingState() {
-      const view = typeof SlideNextPresentationLibraryView !== 'undefined'
-        ? SlideNextPresentationLibraryView
-        : null;
-      if (!view || typeof view.setPresentationLibraryLoadingState !== 'function') return false;
-      return view.setPresentationLibraryLoadingState({
-        documentRef: document
-      });
+      return presentationDashboardController
+        ? presentationDashboardController.setLoadingState()
+        : false;
     }
 
     async function loadPresentations() {
-      const requestedLoadToken = ++presentationLibraryLoadToken;
-      setPresentationLibraryLoadingState();
-
-      try {
-        await SlideNextPresentationLibrary.loadPresentationLibrary({
-          isCurrentLoad: () => requestedLoadToken === presentationLibraryLoadToken,
-          commitPresentationLibraryData: (nextData) => {
-            presentationLibraryData = nextData;
-          },
-          onSuccess: (nextData) => {
-            const loader = document.getElementById('loader');
-            if (loader) {
-              loader.classList.add('hidden');
-            }
-            const categoryTabs = document.getElementById('categoryTabs');
-            if (categoryTabs) {
-              categoryTabs.classList.remove('hidden');
-            }
-            const presentationsGrid = document.getElementById('presentationsGrid');
-            if (presentationsGrid) {
-              presentationsGrid.classList.remove('hidden');
-            }
-
-            renderCategories(nextData);
-            renderGrid(nextData);
-          },
-          onError: (err) => {
-            console.error('Error fetching presentations:', err);
-            const loader = document.getElementById('loader');
-            if (loader) {
-              loader.innerHTML = `
-                <span class="material-symbols-outlined text-[36px] text-rose-500">error</span>
-                <p class="text-xs text-rose-400 font-mono mt-2 uppercase tracking-widest">Failed to load SlideNext workspace</p>
-              `;
-            }
-          }
-        });
-      } catch (err) {
-        if (requestedLoadToken !== presentationLibraryLoadToken) {
-          return;
-        }
-      }
+      return presentationDashboardController
+        ? presentationDashboardController.load()
+        : [];
     }
 
     function openCreatePresentationModal() {
@@ -1644,44 +1612,23 @@
 
     // Render category tab filters through the shared dashboard view module.
     function renderCategories(data) {
-      const view = typeof SlideNextPresentationLibraryView !== 'undefined'
-        ? SlideNextPresentationLibraryView
-        : null;
-      if (!view || typeof view.renderPresentationLibraryCategories !== 'function') return '';
-      return view.renderPresentationLibraryCategories({
-        container: document.getElementById('categoryTabs'),
-        data,
-        activeCategory
-      });
+      return presentationDashboardController
+        ? presentationDashboardController.renderCategories(data)
+        : '';
     }
 
     // Filter by category selection
     function filterCategory(cat) {
-      activeCategory = cat;
-      const tabs = document.querySelectorAll('.category-tab');
-      tabs.forEach(tab => {
-        if (tab.textContent.trim().toLowerCase() === (cat === 'all' ? 'all decks' : cat.toLowerCase())) {
-          tab.classList.add('active');
-        } else {
-          tab.classList.remove('active');
-        }
-      });
-      
-      // Reload UI filtering
-      renderGrid(presentationLibraryData);
+      return presentationDashboardController
+        ? presentationDashboardController.filter(cat)
+        : '';
     }
 
     // Render grid cards through the shared dashboard view module.
     function renderGrid(data) {
-      const view = typeof SlideNextPresentationLibraryView !== 'undefined'
-        ? SlideNextPresentationLibraryView
-        : null;
-      if (!view || typeof view.renderPresentationLibraryGrid !== 'function') return '';
-      return view.renderPresentationLibraryGrid({
-        container: document.getElementById('presentationsGrid'),
-        data,
-        activeCategory
-      });
+      return presentationDashboardController
+        ? presentationDashboardController.renderGrid(data)
+        : '';
     }
 
     // 2. Viewer Presentation Modal
