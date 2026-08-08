@@ -163,6 +163,25 @@ test('applyAsset prefers canonical lock metadata over stale DOM state', () => {
   assert.equal(unlockedController.applyAsset('hero'), false);
 });
 
+test('applyAsset keeps canonical lock fallback behavior without the shared lock reader', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    assets: [{ id: 'hero', src: '/hero.png' }],
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'image-1', type: 'image', visibility: { locked: true } }]
+    }]
+  });
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedImage: () => ({ dataset: { editorId: 'image-1' } }),
+    isElementLocked: () => false
+  });
+
+  assert.equal(controller.applyAsset('hero'), false);
+});
+
 test('asset controller returns false when an asset operation cannot produce a deck', () => {
   const controller = assetController.createStudioEditorAssetController({
     canonicalDeckApi: canonicalDeck,

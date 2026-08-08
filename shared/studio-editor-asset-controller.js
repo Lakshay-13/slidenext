@@ -114,10 +114,11 @@
       const selectedImage = getSelectedImage();
       if (!selectedImage) return false;
       const canonicalDeck = resolveCanonicalDeck();
-      if (canonicalDeck
+      const hasCanonicalLockReader = canonicalDeck
         && typeof canonicalDeckApi.findCanonicalNodeById === 'function'
         && canonicalStateApi
-        && typeof canonicalStateApi.createStudioEditorCanonicalLockReader === 'function') {
+        && typeof canonicalStateApi.createStudioEditorCanonicalLockReader === 'function';
+      if (hasCanonicalLockReader) {
         const readLockedState = canonicalStateApi.createStudioEditorCanonicalLockReader(canonicalDeck, {
           resolveCanonicalNode(element, deck) {
             return canonicalDeckApi.findCanonicalNodeById(deck, getElementId(element));
@@ -125,25 +126,24 @@
           fallbackReader: isElementLocked
         });
         if (readLockedState(selectedImage)) return false;
-      }
-      let canonicalLockState = null;
-      if (canonicalDeck
-        && typeof canonicalDeckApi.findCanonicalNodeById === 'function') {
-        try {
-          const canonicalNode = canonicalDeckApi.findCanonicalNodeById(
-            canonicalDeck,
-            getElementId(selectedImage)
-          );
-          const value = canonicalNode
-            && canonicalNode.visibility
-            && canonicalNode.visibility.locked;
-          if (typeof value === 'boolean') canonicalLockState = value;
-        } catch (err) {
-          canonicalLockState = null;
+      } else {
+        let canonicalLockState = null;
+        if (canonicalDeck
+          && typeof canonicalDeckApi.findCanonicalNodeById === 'function') {
+          try {
+            const canonicalNode = canonicalDeckApi.findCanonicalNodeById(
+              canonicalDeck,
+              getElementId(selectedImage)
+            );
+            const value = canonicalNode
+              && canonicalNode.visibility
+              && canonicalNode.visibility.locked;
+            if (typeof value === 'boolean') canonicalLockState = value;
+          } catch (err) {
+            canonicalLockState = null;
+          }
         }
-      }
-      if (canonicalLockState === true || isElementLocked(selectedImage)) {
-        return false;
+        if (canonicalLockState === true || isElementLocked(selectedImage)) return false;
       }
       const nextCanonicalDeck = canonicalDeckApi.updateCanonicalNodeAsset(
         canonicalDeck,
