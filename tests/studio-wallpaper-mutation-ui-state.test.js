@@ -210,6 +210,35 @@ test('applyEditorWallpaperSlidesMutationWithTransaction returns an immutable can
   assert.equal(mutation.canonicalDeck.slides[0].layout.background.style, 'black');
 });
 
+test('applyEditorWallpaperSlidesMutationWithTransaction rebuilds canonical state from the current document', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const sourceDocument = { id: 'current-editor-document' };
+  const canonicalDeckBefore = canonicalDeckModel.createCanonicalDeck({
+    slides: [{ id: 'slide-1', layout: { background: { style: 'white' } } }]
+  });
+  const buildCalls = [];
+  const context = {
+    SlideNextCanonicalDeck: canonicalDeckModel,
+    buildEditorCanonicalDeck(documentRef, options) {
+      buildCalls.push([documentRef, options]);
+      return canonicalDeckBefore;
+    }
+  };
+
+  vm.createContext(context);
+  loadApplyEditorWallpaperMutationWithTransaction(fileContent, context);
+
+  const mutation = context.applyEditorWallpaperSlidesMutationWithTransaction(
+    [{ style: { background: 'white' } }],
+    'black',
+    { sourceDocument, getSlideId: () => 'slide-1' }
+  );
+
+  assert.equal(mutation.didChange, true);
+  assert.equal(buildCalls[0][0], sourceDocument);
+  assert.deepEqual(JSON.parse(JSON.stringify(buildCalls[0][1])), { preferLiveCanonicalDeck: false });
+});
+
 test('finalizeWallpaperMutation delegates its lifecycle adapter to shared mutation state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const transaction = { id: 'wallpaper-tx-shared' };

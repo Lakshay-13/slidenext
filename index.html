@@ -6553,6 +6553,7 @@
       const canonicalWallpaperApi = typeof SlideNextStudioEditorCanonicalWallpaper !== 'undefined'
         ? SlideNextStudioEditorCanonicalWallpaper
         : null;
+      const sourceDocument = options.sourceDocument || null;
       return applyMutation(slides, background, {
         createStyleTransaction: transactionApi
           && typeof transactionApi.createStudioStyleTransaction === 'function'
@@ -6565,8 +6566,11 @@
         getSlideId,
         canonicalDeckApi,
         canonicalWallpaperApi,
+        sourceDocument,
         buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-          ? () => buildEditorCanonicalDeck()
+          ? (sourceDoc) => buildEditorCanonicalDeck(sourceDoc || sourceDocument, {
+              preferLiveCanonicalDeck: false
+            })
           : null
       });
     }
@@ -6588,6 +6592,7 @@
         ? getEditorSlideId(activeSlide)
         : '';
       const mutation = applyEditorWallpaperMutationWithTransaction(activeSlide, val, {
+        sourceDocument: iframeDoc,
         getSlideId: () => activeSlideId
       });
       if (!mutation.didChange) return false;
@@ -6706,6 +6711,7 @@
       
       const slides = getSlides(iframeDoc);
       const mutation = applyEditorWallpaperSlidesMutationWithTransaction(slides, paint, {
+        sourceDocument: iframeDoc,
         getSlideId: (slide) => typeof getEditorSlideId === 'function'
           ? getEditorSlideId(slide)
           : ''
