@@ -1195,6 +1195,7 @@
   <script src="/shared/studio-editor-inspector-controller.js"></script>
   <script src="/shared/studio-editor-layer-order.js"></script>
   <script src="/shared/studio-editor-layer-order-mutation.js"></script>
+  <script src="/shared/studio-editor-layer-order-controller.js"></script>
   <script src="/shared/studio-editor-layer-view.js"></script>
   <script src="/shared/studio-editor-layer-controller.js"></script>
   <script src="/shared/studio-editor-insertion.js"></script>
@@ -1782,6 +1783,28 @@
           applyRemovalMutation: (...args) => applyEditorRemovalMutationWithTransaction(...args),
           deselectElement: (...args) => deselectElement(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
+        })
+      : null;
+    const studioEditorLayerOrderController = typeof SlideNextStudioEditorLayerOrderController !== 'undefined'
+      && SlideNextStudioEditorLayerOrderController
+      && typeof SlideNextStudioEditorLayerOrderController.createStudioEditorLayerOrderController === 'function'
+      ? SlideNextStudioEditorLayerOrderController.createStudioEditorLayerOrderController({
+          layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+            ? SlideNextStudioEditorLayerOrder
+            : null,
+          canonicalLayoutApi: typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
+            ? SlideNextStudioEditorCanonicalLayout
+            : null,
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          getActiveSlide: (...args) => getActiveSlide(...args),
+          getIframeDoc: (...args) => getIframeDoc(...args),
+          getNormalizedSlideLayerOrder: (...args) => getNormalizedSlideLayerOrder(...args),
+          isElementLocked: (...args) => isElementLocked(...args),
+          assignElementId: (...args) => assignEditorElementId(...args),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          applyLayerOrderMutation: (...args) => applyEditorLayerOrderMutationWithTransaction(...args)
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -4206,76 +4229,10 @@
     }
 
     function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {
-      const slide = getActiveSlide();
-      if (!slide) return false;
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const canonicalLayoutApi = typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
-        ? SlideNextStudioEditorCanonicalLayout
-        : null;
-      const buildCanonicalLayerOrderMutation = canonicalLayoutApi
-        && typeof canonicalLayoutApi.createStudioCanonicalLayerOrderMutationBuilder === 'function'
-        ? canonicalLayoutApi.createStudioCanonicalLayerOrderMutationBuilder({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null
-          })
-        : null;
-      const buildCanonicalLayoutBaseline = canonicalLayoutApi
-        && typeof canonicalLayoutApi.buildStudioCanonicalLayoutBaseline === 'function'
-        ? canonicalLayoutApi.buildStudioCanonicalLayoutBaseline
-        : null;
-      const canonicalDeckBefore = buildCanonicalLayoutBaseline
-        ? buildCanonicalLayoutBaseline({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
-            sourceDocument: typeof getIframeDoc === 'function' ? getIframeDoc() : null
-          })
-        : null;
-      const initialOrder = getNormalizedSlideLayerOrder(slide);
-      const reorderResult = SlideNextStudioEditorLayerOrder.buildStudioLayerOrderMutationPlan(targetElements, action, {
-        orderedElements: initialOrder,
-        isEligibleElement: (element) => !!(element && element.isConnected && slide.contains(element)),
-        isLocked: isElementLocked
-      });
-      if (!reorderResult.didChange) {
-        return false;
-      }
-      const getLayerOrderElementId = (element) => {
-        if (typeof assignEditorElementId === 'function') {
-          const assignedId = assignEditorElementId(element);
-          if (assignedId) return assignedId;
-        }
-        return element && element.dataset && element.dataset.editorId;
-      };
-      const mutation = applyEditorLayerOrderMutationWithTransaction(
-        slide,
-        initialOrder,
-        reorderResult.nextOrder,
-        {
-          getElementId: getLayerOrderElementId
-        }
-      );
-      if (!mutation.didApply) return false;
-      const canonicalDeck = buildCanonicalLayerOrderMutation
-        ? buildCanonicalLayerOrderMutation({
-            orderedElements: initialOrder,
-            canonicalDeckApi,
-            canonicalDeckBeforeMutation: canonicalDeckBefore,
-            getElementId: getLayerOrderElementId
-          })
-        : null;
-      if (typeof options.onTransaction === 'function') {
-        options.onTransaction(mutation.transaction);
-      }
-      if (typeof options.onCanonicalDeck === 'function') {
-        options.onCanonicalDeck(canonicalDeck);
-      }
-      return true;
+      return studioEditorLayerOrderController
+        && typeof studioEditorLayerOrderController.reorder === 'function'
+        ? studioEditorLayerOrderController.reorder(action, targetElements, options)
+        : false;
     }
 
     function findPreferredDragContainer(el) {

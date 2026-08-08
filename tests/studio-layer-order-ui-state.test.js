@@ -9,6 +9,7 @@ const layerOrder = require('../shared/studio-editor-layer-order.js');
 const layerOrderMutation = require('../shared/studio-editor-layer-order-mutation.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
+const layerOrderController = require('../shared/studio-editor-layer-order-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -74,6 +75,21 @@ function loadLayerOrderMutationHelper(fileContent, context) {
   );
   context.SlideNextStudioEditorLayerOrderMutation = layerOrderMutation;
   vm.runInContext(helperSource, context);
+}
+
+function installLayerOrderController(context) {
+  context.studioEditorLayerOrderController = layerOrderController.createStudioEditorLayerOrderController({
+    layerOrderApi: context.SlideNextStudioEditorLayerOrder,
+    canonicalLayoutApi: context.SlideNextStudioEditorCanonicalLayout,
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    getActiveSlide: context.getActiveSlide,
+    getIframeDoc: context.getIframeDoc,
+    getNormalizedSlideLayerOrder: context.getNormalizedSlideLayerOrder,
+    isElementLocked: context.isElementLocked,
+    assignElementId: context.assignEditorElementId,
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    applyLayerOrderMutation: context.applyEditorLayerOrderMutationWithTransaction
+  });
 }
 
 function createControls() {
@@ -184,6 +200,7 @@ test('reorderSlideLayers forwards a reversible z-index transaction', () => {
 
   vm.createContext(context);
   loadLayerOrderMutationHelper(fileContent, context);
+  installLayerOrderController(context);
   loadReorderSlideLayers(fileContent, context);
 
   assert.equal(context.reorderSlideLayers('front', [first], {
@@ -267,6 +284,7 @@ test('reorderSlideLayers forwards canonical z-index updates after applying layer
 
   vm.createContext(context);
   loadLayerOrderMutationHelper(fileContent, context);
+  installLayerOrderController(context);
   loadReorderSlideLayers(fileContent, context);
 
   assert.equal(context.reorderSlideLayers('front', [first], {
@@ -573,6 +591,7 @@ test('reorderSlideLayers delegates order application to the shared layer-order m
 
   vm.createContext(context);
   loadLayerOrderMutationHelper(fileContent, context);
+  installLayerOrderController(context);
   vm.runInContext(source, context);
 
   let captured = null;
