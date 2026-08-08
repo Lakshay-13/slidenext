@@ -158,3 +158,40 @@ test('syncStudioActiveSlideChrome refreshes slide section for the active slide',
 
   assert.deepEqual(calls, [{ id: 'slide-1' }]);
 });
+
+test('syncStudioActiveSlideChrome prefers canonical metadata for active-slide controls', () => {
+  const calls = [];
+  const domSlide = { id: 'dom-slide' };
+  const canonicalSlide = { id: 'canonical-slide', notes: 'Cue', section: 'Research' };
+
+  const didSync = activeSlideView.syncStudioActiveSlideChrome({ label: 'iframe-doc' }, {
+    getCurrentSlideIndex: () => 0,
+    syncStudioActiveSlideView() {
+      return { didSync: true };
+    },
+    getActiveSlide() {
+      return domSlide;
+    },
+    buildEditorDeckSnapshot() {
+      return {
+        activeSlideIndex: 0,
+        slides: [canonicalSlide]
+      };
+    },
+    resolveStudioActiveSlideIndex(snapshot, fallbackIndex) {
+      return Number.isInteger(snapshot.activeSlideIndex) ? snapshot.activeSlideIndex : fallbackIndex;
+    },
+    syncSpeakerNotesControl(activeSlide) {
+      calls.push(['notes', activeSlide]);
+    },
+    syncSlideSectionControl(activeSlide) {
+      calls.push(['section', activeSlide]);
+    }
+  });
+
+  assert.equal(didSync, true);
+  assert.deepEqual(calls, [
+    ['notes', canonicalSlide],
+    ['section', canonicalSlide]
+  ]);
+});

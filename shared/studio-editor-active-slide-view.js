@@ -113,8 +113,16 @@
     const activeSlide = typeof options.getActiveSlide === 'function'
       ? options.getActiveSlide(doc)
       : null;
-    syncSpeakerNotesControl(activeSlide);
-    syncSlideSectionControl(activeSlide);
+    const canonicalDeckSnapshot = buildEditorDeckSnapshot(doc);
+    const canonicalSlides = canonicalDeckSnapshot && Array.isArray(canonicalDeckSnapshot.slides)
+      ? canonicalDeckSnapshot.slides
+      : [];
+    const canonicalActiveSlide = canonicalSlides.length > 0
+      ? canonicalSlides[resolveActiveSlideIndex(canonicalDeckSnapshot, getCurrentSlideIndex())] || null
+      : null;
+    const activeSlideMetadata = canonicalActiveSlide || activeSlide;
+    syncSpeakerNotesControl(activeSlideMetadata);
+    syncSlideSectionControl(activeSlideMetadata);
     const syncCustomGradientControls = typeof options.syncCustomGradientControls === 'function'
       ? options.syncCustomGradientControls
       : () => false;
