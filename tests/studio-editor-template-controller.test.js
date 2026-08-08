@@ -41,6 +41,27 @@ test('template controller saves the active slide and finalizes persistence hooks
   assert.deepEqual(calls[3][1], ['hero-template']);
 });
 
+test('template mutations prefer a valid live canonical baseline', () => {
+  const liveDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Hero', nodes: [{ id: 'title', text: 'Hello' }] }]
+  });
+  let didBuildFromDocument = false;
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => liveDeck,
+    getCanonicalDeck: () => {
+      didBuildFromDocument = true;
+      return canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+    },
+    getActiveSlideId: () => 'slide-1'
+  });
+
+  const result = controller.saveActiveSlide({ id: 'live-template', name: 'Live Template' });
+
+  assert.equal(result.templates[0].id, 'live-template');
+  assert.equal(didBuildFromDocument, false);
+});
+
 test('template controller fails closed when the active slide or dependencies are unavailable', () => {
   const controller = templateController.createStudioEditorTemplateController({
     canonicalDeckApi: canonicalDeck,

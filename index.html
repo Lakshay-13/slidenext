@@ -2185,6 +2185,10 @@
             ? SlideNextDeckRender
             : null,
           getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
+          getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
+            getIframeDoc(),
+            studioEditorSessionToken
+          ),
           getDocument: () => getIframeDoc(),
           getSlideContainer: (doc) => doc && typeof doc.getElementById === 'function'
             ? doc.getElementById('slidesContainer')

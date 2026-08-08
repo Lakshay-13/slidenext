@@ -17,6 +17,9 @@
     const getCanonicalDeck = typeof options.getCanonicalDeck === 'function'
       ? options.getCanonicalDeck
       : () => null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const getActiveSlideId = typeof options.getActiveSlideId === 'function'
       ? options.getActiveSlideId
       : () => '';
@@ -62,6 +65,23 @@
       ? options.onTemplatesChanged
       : null;
 
+    function resolveCanonicalDeck() {
+      if (getCanonicalDeckBaseline) {
+        let liveCanonicalDeck = null;
+        try {
+          liveCanonicalDeck = getCanonicalDeckBaseline();
+        } catch (err) {
+          liveCanonicalDeck = null;
+        }
+        if (liveCanonicalDeck
+          && (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+            || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
+          return liveCanonicalDeck;
+        }
+      }
+      return getCanonicalDeck();
+    }
+
     function renderCanonicalSlideElement(documentRef, slide, index) {
       if (!documentRef
         || typeof documentRef.createElement !== 'function'
@@ -88,7 +108,7 @@
       }
 
       const nextCanonicalDeck = canonicalDeckApi.saveCanonicalTemplateFromSlideId(
-        getCanonicalDeck(),
+        resolveCanonicalDeck(),
         getActiveSlideId(),
         templateLike
       );
@@ -110,7 +130,7 @@
         return null;
       }
 
-      const canonicalDeck = getCanonicalDeck();
+      const canonicalDeck = resolveCanonicalDeck();
       const normalizedTemplateId = typeof templateId === 'string' ? templateId.trim() : '';
       const template = canonicalDeck
         && Array.isArray(canonicalDeck.templates)
@@ -138,7 +158,7 @@
         return false;
       }
 
-      const canonicalDeck = getCanonicalDeck();
+      const canonicalDeck = resolveCanonicalDeck();
       const activeSlideId = getActiveSlideId();
       const activeSlideIndex = canonicalDeck && Array.isArray(canonicalDeck.slides)
         ? canonicalDeck.slides.findIndex((slide) => slide && slide.id === activeSlideId)
