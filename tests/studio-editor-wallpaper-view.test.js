@@ -114,6 +114,25 @@ test('renderStudioWallpaperPresets tolerates missing wallpaper containers', () =
   assert.equal(wallpaperView.renderStudioWallpaperPresets({ documentRef: null }), false);
 });
 
+test('syncStudioCustomGradientAngleChrome updates the angle label', () => {
+  const angleLabel = { textContent: '135°' };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'cgAngleVal' ? angleLabel : null;
+    }
+  };
+
+  assert.equal(wallpaperView.syncStudioCustomGradientAngleChrome({
+    documentRef,
+    angle: '210'
+  }), true);
+  assert.equal(angleLabel.textContent, '210°');
+});
+
+test('syncStudioCustomGradientAngleChrome tolerates missing angle chrome', () => {
+  assert.equal(wallpaperView.syncStudioCustomGradientAngleChrome(), false);
+});
+
 test('applyStudioWallpaperToSlides updates changed slides and builds a style transaction', () => {
   const activeSlide = { style: { background: 'black' } };
   const siblingSlide = { style: { background: '' } };

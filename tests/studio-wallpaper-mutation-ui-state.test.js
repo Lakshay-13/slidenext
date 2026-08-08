@@ -1038,8 +1038,39 @@ test('updateCustomGradientAngle exits cleanly when the angle label is unavailabl
 
   assert.equal(context.updateCustomGradientAngle('180'), false);
   assert.deepEqual(calls, [
-    ['getElementById', 'cgAngle'],
     ['getElementById', 'cgAngleVal'],
     ['applyCustomGradient']
   ]);
+});
+
+test('updateCustomGradientAngle delegates angle chrome to the shared wallpaper view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateCustomGradientAngleSource = extractFunctionSource(
+    fileContent,
+    'function updateCustomGradientAngle(value) {',
+    '\n\n    // Build background CSS based on custom stops'
+  );
+  let syncOptions = null;
+  const context = {
+    SlideNextStudioEditorWallpaperView: {
+      syncStudioCustomGradientAngleChrome(options) {
+        syncOptions = options;
+        return true;
+      }
+    },
+    document: { id: 'editor-document' },
+    resolveCurrentStudioWallpaperActionState() {
+      return { canUseWallpaperControls: true };
+    },
+    applyCustomGradient() {
+      return true;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateCustomGradientAngleSource, context);
+
+  assert.equal(context.updateCustomGradientAngle('210'), true);
+  assert.equal(syncOptions.documentRef, context.document);
+  assert.equal(syncOptions.angle, '210');
 });

@@ -297,6 +297,14 @@
     return true;
   }
 
+  function syncStudioCustomGradientAngleChrome(options = {}) {
+    const documentRef = options.documentRef;
+    const angleLabel = documentRef && documentRef.getElementById('cgAngleVal');
+    if (!angleLabel) return false;
+    angleLabel.textContent = `${options.angle}°`;
+    return true;
+  }
+
   function syncStudioCustomGradientControls(options = {}) {
     const documentRef = options.documentRef;
     const color1Input = documentRef && documentRef.getElementById('cgColor1');
@@ -388,6 +396,7 @@
     syncStudioSolidWallpaperControl,
     syncStudioWallpaperTabChrome,
     syncStudioCustomGradientTypeChrome,
+    syncStudioCustomGradientAngleChrome,
     syncStudioCustomGradientControls,
     resolveStudioActiveSlideGradientControls
   };

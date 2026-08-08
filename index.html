@@ -6645,10 +6645,19 @@
 
     function updateCustomGradientAngle(value) {
       if (!resolveCurrentStudioWallpaperActionState().canUseWallpaperControls) return false;
-      const angleInput = document.getElementById('cgAngle');
-      const angleLabel = document.getElementById('cgAngleVal');
-      if (angleLabel) {
-        angleLabel.textContent = `${value}°`;
+      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+        ? SlideNextStudioEditorWallpaperView
+        : null;
+      if (wallpaperView && typeof wallpaperView.syncStudioCustomGradientAngleChrome === 'function') {
+        wallpaperView.syncStudioCustomGradientAngleChrome({
+          documentRef: document,
+          angle: value
+        });
+      } else {
+        const angleLabel = document.getElementById('cgAngleVal');
+        if (angleLabel) {
+          angleLabel.textContent = `${value}°`;
+        }
       }
       return applyCustomGradient();
     }
