@@ -901,6 +901,32 @@ test('preflightCanonicalPptxExport reports export fidelity risks', () => {
   assert.match(report.diagnostics.warnings.join('\n'), /unsupported CSS: transform/);
 });
 
+test('preflightCanonicalPptxExport reports table cell font substitution risks', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'table-font-risk',
+        type: 'table',
+        layout: { x: 0, y: 0, width: 200, height: 80 },
+        children: [{
+          tagName: 'tr',
+          children: [{
+            tagName: 'td',
+            text: 'Custom',
+            style: 'font-family: Custom Sans;'
+          }]
+        }]
+      }]
+    }]
+  }, { availableFonts: [] });
+
+  assert.deepEqual(report.diagnostics.fontSubstitutionRisks, [{
+    id: 'table-font-risk:cell-1-1',
+    fontFamily: 'Custom Sans'
+  }]);
+  assert.match(report.diagnostics.warnings.join('\n'), /table-font-risk:cell-1-1 may substitute font Custom Sans/);
+});
+
 test('preflightCanonicalPptxExport reports unsupported image fit values', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{

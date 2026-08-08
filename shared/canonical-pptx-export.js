@@ -250,6 +250,29 @@
       .filter(row => row.length > 0);
   }
 
+  function getCanonicalTableFontSubstitutionRisks(node, availableFonts = []) {
+    const tableNodeId = node && node.id ? node.id : 'unknown';
+    const knownFonts = Array.isArray(availableFonts) ? availableFonts : [];
+    const risks = [];
+    (Array.isArray(node && node.children) ? node.children : [])
+      .filter(row => row && row.tagName === 'tr')
+      .forEach((row, rowIndex) => {
+        (Array.isArray(row.children) ? row.children : [])
+          .filter(cell => cell && (cell.tagName === 'td' || cell.tagName === 'th'))
+          .forEach((cell, cellIndex) => {
+            const fontFamily = nodeStyle(cell)['font-family'];
+            if (!fontFamily) return;
+            const primaryFont = fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
+            if (!primaryFont || knownFonts.includes(primaryFont)) return;
+            risks.push({
+              id: `${tableNodeId}:cell-${rowIndex + 1}-${cellIndex + 1}`,
+              fontFamily: primaryFont
+            });
+          });
+      });
+    return risks;
+  }
+
   function getPptxRenderOrder(nodes = []) {
     return (Array.isArray(nodes) ? nodes : [])
       .map((node, index) => ({
@@ -722,6 +745,11 @@
           });
           diagnostics.warnings.push(`Node ${nodeId} is not fully supported: table has no exportable rows`);
         }
+        getCanonicalTableFontSubstitutionRisks(node, normalizedOptions.availableFonts)
+          .forEach((risk) => {
+            diagnostics.fontSubstitutionRisks.push(risk);
+            diagnostics.warnings.push(`Node ${risk.id} may substitute font ${risk.fontFamily}`);
+          });
       }
 
       if (imageNode) {
