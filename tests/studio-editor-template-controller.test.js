@@ -64,6 +64,29 @@ test('template mutations prefer a valid live canonical baseline', () => {
   assert.equal(didBuildFromDocument, false);
 });
 
+test('template mutations fall back when the live canonical baseline is invalid', () => {
+  const fallbackDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Fallback' }]
+  });
+  let didBuildFromDocument = false;
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    getCanonicalDeck: () => {
+      didBuildFromDocument = true;
+      return fallbackDeck;
+    },
+    getActiveSlideId: () => 'slide-1'
+  });
+
+  const result = controller.saveActiveSlide({ id: 'fallback-template', name: 'Fallback Template' });
+
+  assert.equal(result.templates[0].id, 'fallback-template');
+  assert.equal(result.templates[0].slide.title, 'Fallback');
+  assert.equal(didBuildFromDocument, true);
+});
+
 test('template controller fails closed when the active slide or dependencies are unavailable', () => {
   const controller = templateController.createStudioEditorTemplateController({
     canonicalDeckApi: canonicalDeck,
