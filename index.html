@@ -1818,7 +1818,9 @@
           updateAlignmentActionState: (...args) => updateAlignmentActionState(...args),
           getIframeDoc: (...args) => getIframeDoc(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+            preferLiveCanonicalDeck: false
+          }),
           applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
         })
