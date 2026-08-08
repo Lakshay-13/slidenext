@@ -40,6 +40,15 @@ function loadBuildMotionSelectionActionState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadGetNudgeSelectionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function getNudgeSelectionState(elements = selectedElements, doc = getIframeDoc()) {',
+    '\n\n    function isElementHidden(el) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadPositionMutationHelper(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -79,6 +88,50 @@ function createControls() {
 function getControlStates(controls) {
   return Object.fromEntries(Object.entries(controls).map(([id, control]) => [id, control.disabled]));
 }
+
+test('getNudgeSelectionState prefers canonical hidden and locked state over stale DOM state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = { id: 'iframe-doc' };
+  const hiddenElement = { id: 'hidden', isConnected: true };
+  const lockedElement = { id: 'locked', isConnected: true };
+  const canonicalNodes = new Map([
+    [hiddenElement, { visibility: { hidden: true, locked: false } }],
+    [lockedElement, { visibility: { hidden: false, locked: true } }]
+  ]);
+  const context = {
+    selectedElements: [hiddenElement, lockedElement],
+    SlideNextStudioEditorNudge: studioNudge,
+    SlideNextStudioEditorTransform: {
+      isStudioFreeformPositioned() {
+        return true;
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    buildEditorCanonicalDeck(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return { kind: 'slidenext.deck' };
+    },
+    resolveEditorCanonicalNodeForElement(element) {
+      return canonicalNodes.get(element) || null;
+    },
+    isElementLocked() {
+      return false;
+    },
+    isElementHidden() {
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  loadGetNudgeSelectionState(fileContent, context);
+
+  const result = context.getNudgeSelectionState(undefined, doc);
+
+  assert.deepEqual(result.selection, [lockedElement]);
+  assert.equal(result.canNudge, false);
+});
 
 test('buildMotionSelectionActionState resolves nudge geometry from the current doc and slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
