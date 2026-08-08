@@ -68,6 +68,26 @@ test('syncInspectorForSelection delegates inspector control synchronization to t
   assert.equal(delegatedOptions.highlightAlignButton, context.highlightAlignButton);
 });
 
+test('syncInspectorForSelection fails closed when live-selection state is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncInspectorForSelectionSource = extractFunctionSource(
+    fileContent,
+    'function syncInspectorForSelection() {',
+    '\n\n    // Click Selection highlights'
+  );
+  const context = {
+    selectedElements: [],
+    updateAssetLibraryState() {
+      throw new Error('asset state should not be refreshed');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncInspectorForSelectionSource, context);
+
+  assert.equal(context.syncInspectorForSelection(), false);
+});
+
 test('syncInspectorForSelection tolerates missing inspector chrome when no selection is active', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const syncInspectorForSelectionSource = extractFunctionSource(

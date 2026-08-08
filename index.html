@@ -4912,7 +4912,13 @@
     }
 
     function syncInspectorForSelection() {
-      const liveSelectionState = SlideNextStudioEditorLiveSelection.buildStudioLiveSelectionState(selectedElements);
+      const liveSelectionApi = typeof SlideNextStudioEditorLiveSelection !== 'undefined'
+        ? SlideNextStudioEditorLiveSelection
+        : null;
+      if (!liveSelectionApi || typeof liveSelectionApi.buildStudioLiveSelectionState !== 'function') {
+        return false;
+      }
+      const liveSelectionState = liveSelectionApi.buildStudioLiveSelectionState(selectedElements);
       if (typeof updateAssetLibraryState === 'function') {
         updateAssetLibraryState();
       }
