@@ -45,6 +45,21 @@ test('buildStudioCanonicalRemovalBaseline prefers a valid live canonical deck', 
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalRemovalBaseline rejects invalid compatibility baselines', () => {
+  let rebuildCalls = 0;
+  const result = canonicalRemoval.buildStudioCanonicalRemovalBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => {
+      rebuildCalls += 1;
+      return { invalid: true };
+    }
+  });
+
+  assert.equal(result, null);
+  assert.equal(rebuildCalls, 1);
+});
+
 test('buildStudioCanonicalRemovalDeck removes selected nodes without mutating the source', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{
