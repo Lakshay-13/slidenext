@@ -55,3 +55,75 @@ test('block controller fails closed when selection or dependencies are unavailab
   assert.equal(controller.saveSelection({ name: 'Empty' }), null);
   assert.equal(blockController.createStudioEditorBlockController().saveSelection(), null);
 });
+
+test('block controller renders and inserts canonical block nodes through a markup transaction', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    blocks: [{
+      id: 'hero',
+      nodes: [{ id: 'heading', tagName: 'h2', text: 'Hero' }]
+    }],
+    slides: [{ id: 'slide-1' }]
+  });
+  const slide = {
+    children: [],
+    innerHTML: '',
+    appendChild(element) {
+      this.children.push(element);
+      this.innerHTML = this.children.map((child) => child.outerHTML).join('');
+    }
+  };
+  const documentRef = {
+    createElement(tagName) {
+      if (tagName !== 'template') return null;
+      let markup = '';
+      const rootElement = {
+        dataset: {},
+        children: [],
+        get outerHTML() {
+          return `<h2 data-editor-id="${this.dataset.editorId}">${this.textContent}</h2>`;
+        },
+        textContent: 'Hero'
+      };
+      return {
+        set innerHTML(value) {
+          markup = value;
+        },
+        get innerHTML() {
+          return markup;
+        },
+        content: { get firstElementChild() { return rootElement; } }
+      };
+    }
+  };
+  const calls = [];
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalNode(node) {
+        return `<h2>${node.text}</h2>`;
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getDocument: () => documentRef,
+    getActiveSlide: () => slide,
+    getActiveSlideId: () => 'slide-1',
+    createMarkupTransactionCapture() {
+      return {
+        createTransaction() {
+          return { kind: 'markup-transaction' };
+        }
+      };
+    },
+    finalizeInsertedElements(elements, versionLabel, transaction, nextDeck) {
+      calls.push({ elements, versionLabel, transaction, nextDeck });
+      return true;
+    }
+  });
+
+  assert.equal(controller.insertBlock('hero'), true);
+  assert.equal(slide.children.length, 1);
+  assert.equal(slide.children[0].dataset.editorId, 'hero-heading');
+  assert.equal(calls[0].versionLabel, 'Auto: Inserted Block "hero"');
+  assert.equal(calls[0].transaction.kind, 'markup-transaction');
+  assert.equal(calls[0].nextDeck.slides[0].nodes[0].id, 'hero-heading');
+});
