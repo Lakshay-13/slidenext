@@ -2746,6 +2746,39 @@ test('resolveEditorMetadataPersistenceOptions delegates through the editor persi
   assert.equal(delegatedOptions.mergePresentationPersistenceOptions, null);
 });
 
+test('resolveEditorMetadataPersistenceOptions creates the shared persistence-state adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorMetadataPersistenceOptionsAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(options.persistenceApi, context.SlideNextStudioEditorPersistence);
+        return (nextOptions) => {
+          calls.push(nextOptions);
+          return { id: nextOptions.id };
+        };
+      }
+    },
+    currentPresentationMetadata: { id: 'deck-1' }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+
+  assert.deepEqual(context.resolveEditorMetadataPersistenceOptions({ id: 1 }), { id: 1 });
+  assert.deepEqual(context.resolveEditorMetadataPersistenceOptions({ id: 2 }), { id: 2 });
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls.map((options) => options.id), [1, 2]);
+});
+
 test('resolveEditorMetadataPersistenceOptions prefers the shared merged persistence resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
