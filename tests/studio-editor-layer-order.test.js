@@ -161,6 +161,21 @@ test('syncStudioLayerOrderZIndexInput updates the inspector control for a target
   assert.equal(layerOrder.syncStudioLayerOrderZIndexInput({ target: null }), null);
 });
 
+test('syncStudioLayerOrderZIndexInput prefers canonical node layout data', () => {
+  const zIndexInput = { value: '' };
+
+  assert.equal(layerOrder.syncStudioLayerOrderZIndexInput({
+    target: { style: { zIndex: '12' } },
+    canonicalTarget: { layout: { zIndex: 7 } },
+    documentRef: {
+      getElementById(id) {
+        return id === 'elZIndex' ? zIndexInput : null;
+      }
+    }
+  }), zIndexInput);
+  assert.equal(zIndexInput.value, '7');
+});
+
 test('syncStudioLayerOrderToolbarState builds and renders layer controls in one shared operation', () => {
   const element = { id: 'element-1', isConnected: true, locked: false };
   const controls = {

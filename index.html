@@ -6955,9 +6955,30 @@
       if (!layerOrderView || typeof layerOrderView.syncStudioLayerOrderZIndexInput !== 'function') {
         return null;
       }
+      const targetId = target && target.dataset && target.dataset.editorId;
+      const findCanonicalNode = (nodes = []) => {
+        for (const node of Array.isArray(nodes) ? nodes : []) {
+          if (node && node.id === targetId) return node;
+          const nestedNode = findCanonicalNode(node && node.children);
+          if (nestedNode) return nestedNode;
+        }
+        return null;
+      };
+      let canonicalDeck = null;
+      if (targetId && typeof buildEditorCanonicalDeck === 'function') {
+        try {
+          canonicalDeck = buildEditorCanonicalDeck(getIframeDoc());
+        } catch (err) {
+          canonicalDeck = null;
+        }
+      }
+      const canonicalTarget = canonicalDeck && Array.isArray(canonicalDeck.slides)
+        ? canonicalDeck.slides.reduce((match, slide) => match || findCanonicalNode(slide && slide.nodes), null)
+        : null;
       return layerOrderView.syncStudioLayerOrderZIndexInput({
         documentRef: document,
-        target
+        target,
+        canonicalTarget
       });
     }
 

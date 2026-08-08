@@ -115,7 +115,14 @@
     const zIndexInput = documentRef && typeof documentRef.getElementById === 'function'
       ? documentRef.getElementById('elZIndex')
       : null;
-    if (zIndexInput) zIndexInput.value = target.style && target.style.zIndex || 0;
+    const canonicalZIndex = options.canonicalTarget
+      && options.canonicalTarget.layout
+      && options.canonicalTarget.layout.zIndex;
+    if (zIndexInput) {
+      zIndexInput.value = Number.isFinite(canonicalZIndex)
+        ? String(canonicalZIndex)
+        : target.style && target.style.zIndex || 0;
+    }
     return zIndexInput;
   }
 

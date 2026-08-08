@@ -429,6 +429,37 @@ test('syncLayerOrderZIndexInput updates the z-index inspector only when a target
   assert.deepEqual(calls, [['getElementById', 'elZIndex']]);
 });
 
+test('syncLayerOrderZIndexInput resolves the canonical node for the selected target', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const zIndexInput = { value: '' };
+  const canonicalTarget = { id: 'node-1', layout: { zIndex: 7 } };
+  const context = {
+    SlideNextStudioEditorLayerOrder: layerOrder,
+    document: {
+      getElementById(id) {
+        return id === 'elZIndex' ? zIndexInput : null;
+      }
+    },
+    getIframeDoc() {
+      return { id: 'iframe-document' };
+    },
+    buildEditorCanonicalDeck() {
+      return {
+        slides: [{ nodes: [canonicalTarget] }]
+      };
+    }
+  };
+
+  vm.createContext(context);
+  loadSyncLayerOrderZIndexInput(fileContent, context);
+
+  assert.equal(context.syncLayerOrderZIndexInput({
+    dataset: { editorId: 'node-1' },
+    style: { zIndex: '12' }
+  }), zIndexInput);
+  assert.equal(zIndexInput.value, '7');
+});
+
 test('refreshLayerOrderUi refreshes layer state and optionally the layer list', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
