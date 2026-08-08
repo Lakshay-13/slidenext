@@ -127,6 +127,10 @@ app.post('/api/export/pptx', async (req, res) => {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
     res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
     res.setHeader('X-SlideNext-Pptx-Warning-Count', String(result.diagnostics.warnings.length));
+    res.setHeader(
+      'X-SlideNext-Pptx-Warning-Details',
+      canonicalPptxExport.createPptxWarningDetailsHeader(result.diagnostics.warnings)
+    );
     return res.send(buffer);
   } catch (err) {
     console.error('Error exporting PPTX:', err);

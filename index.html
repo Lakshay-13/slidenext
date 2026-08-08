@@ -10106,7 +10106,7 @@
       });
     }
 
-    function setStudioAutoSaveStatusWithWarningCount(state, warningCount = 0) {
+    function setStudioAutoSaveStatusWithWarningCount(state, warningCount = 0, warnings = [], warningsTruncated = false) {
       const statusView = typeof SlideNextStudioEditorStatusView !== 'undefined'
         ? SlideNextStudioEditorStatusView
         : null;
@@ -10114,7 +10114,9 @@
       return statusView.setStudioAutoSaveStatus({
         documentRef: document,
         state,
-        warningCount
+        warningCount,
+        warnings,
+        warningsTruncated
       });
     }
 

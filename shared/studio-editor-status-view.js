@@ -18,6 +18,12 @@
     const warningCount = Number.isInteger(options.warningCount) && options.warningCount > 0
       ? options.warningCount
       : 0;
+    const warnings = Array.isArray(options.warnings)
+      ? options.warnings.filter(warning => typeof warning === 'string' && warning.trim())
+      : [];
+    statusEl.title = options.state === 'exported-with-warnings' && warnings.length > 0
+      ? `PPTX warnings:\n${warnings.map(warning => `- ${warning}`).join('\n')}${options.warningsTruncated === true ? '\n- Additional warnings not shown' : ''}`
+      : '';
     if (state === 'loading') {
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Loading deck...</span>`;
     } else if (state === 'saving') {

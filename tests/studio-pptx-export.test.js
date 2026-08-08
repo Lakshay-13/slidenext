@@ -25,7 +25,12 @@ test('exportStudioPptx posts the canonical deck and downloads the response', asy
           get(name) {
             return name === 'Content-Disposition'
               ? 'attachment; filename="Demo_deck.pptx"'
-              : '2';
+              : name === 'X-SlideNext-Pptx-Warning-Count'
+                ? '2'
+                : encodeURIComponent(JSON.stringify({
+                  warnings: ['Node text-1 uses unsupported CSS: transform'],
+                  truncated: false
+                }));
           }
         },
         blob() {
@@ -58,6 +63,8 @@ test('exportStudioPptx posts the canonical deck and downloads the response', asy
   assert.equal(result.success, true);
   assert.equal(result.filename, 'Demo_deck.pptx');
   assert.equal(result.warningCount, 2);
+  assert.deepEqual(result.warnings, ['Node text-1 uses unsupported CSS: transform']);
+  assert.equal(result.warningsTruncated, false);
   assert.equal(calls[0][0], 'fetch');
   assert.equal(calls[0][1], '/api/export/pptx');
   assert.deepEqual(JSON.parse(calls[0][2].body), {
@@ -190,4 +197,19 @@ test('exportStudioPptx converts request and download exceptions into failed resu
 test('normalizeDownloadFilename keeps downloads safe and ends with pptx', () => {
   assert.equal(pptxExport.normalizeDownloadFilename('/tmp/Demo deck.pptx'), 'Demo_deck.pptx');
   assert.equal(pptxExport.normalizeDownloadFilename(''), 'slidenext-presentation.pptx');
+});
+
+test('getWarningDetails tolerates missing and malformed response headers', () => {
+  assert.deepEqual(pptxExport.getWarningDetails({ headers: { get: () => '' } }), {
+    warnings: [],
+    warningsTruncated: false
+  });
+  assert.deepEqual(pptxExport.getWarningDetails({ headers: { get: () => '%invalid' } }), {
+    warnings: [],
+    warningsTruncated: false
+  });
+  assert.deepEqual(pptxExport.getWarningDetails({ headers: { get: () => 'null' } }), {
+    warnings: [],
+    warningsTruncated: false
+  });
 });

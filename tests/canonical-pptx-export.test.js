@@ -673,3 +673,17 @@ test('preflightCanonicalPptxExport reports unsupported non-solid slide backgroun
   }]);
   assert.match(report.diagnostics.warnings.join('\n'), /Slide slide-1 uses unsupported CSS background styling/);
 });
+
+test('createPptxWarningDetailsHeader preserves a bounded diagnostic summary', () => {
+  const encoded = pptxExport.createPptxWarningDetailsHeader([
+    'first warning',
+    'second warning',
+    'third warning',
+    'fourth warning'
+  ]);
+
+  assert.deepEqual(JSON.parse(decodeURIComponent(encoded)), {
+    warnings: ['first warning', 'second warning', 'third warning'],
+    truncated: true
+  });
+});

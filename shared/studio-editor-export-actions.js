@@ -165,7 +165,9 @@
         }
         setStatus(
           result.warningCount > 0 ? 'exported-with-warnings' : 'exported',
-          result.warningCount
+          result.warningCount,
+          result.warnings,
+          result.warningsTruncated
         );
         return true;
       } catch (error) {

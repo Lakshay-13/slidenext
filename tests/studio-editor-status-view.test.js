@@ -46,9 +46,13 @@ test('setStudioAutoSaveStatus surfaces the PPTX warning count when provided', ()
   assert.equal(statusView.setStudioAutoSaveStatus({
     documentRef,
     state: 'exported-with-warnings',
-    warningCount: 3
+    warningCount: 3,
+    warnings: ['Node image-1 references a missing image asset'],
+    warningsTruncated: true
   }), true);
   assert.match(statusEl.innerHTML, /PPTX Exported with warnings \(3\)/);
+  assert.match(statusEl.title, /Node image-1 references a missing image asset/);
+  assert.match(statusEl.title, /Additional warnings not shown/);
 });
 
 test('setStudioSaveButtonState renders saving and idle version states', () => {

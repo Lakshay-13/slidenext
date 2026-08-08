@@ -35,6 +35,23 @@
     return Number.isFinite(value) && value >= 0 ? value : 0;
   }
 
+  function getWarningDetails(response) {
+    const encoded = readHeader(response, 'X-SlideNext-Pptx-Warning-Details');
+    if (!encoded) return { warnings: [], warningsTruncated: false };
+    try {
+      const details = JSON.parse(decodeURIComponent(encoded));
+      const warnings = Array.isArray(details && details.warnings)
+        ? details.warnings.filter(warning => typeof warning === 'string' && warning.trim())
+        : [];
+      return {
+        warnings,
+        warningsTruncated: Boolean(details && details.truncated === true)
+      };
+    } catch (error) {
+      return { warnings: [], warningsTruncated: false };
+    }
+  }
+
   async function exportStudioPptx(options = {}) {
     const fetchImpl = typeof options.fetchImpl === 'function'
       ? options.fetchImpl
@@ -89,7 +106,8 @@
       return {
         success: true,
         filename: anchor.download,
-        warningCount: getWarningCount(response)
+        warningCount: getWarningCount(response),
+        ...getWarningDetails(response)
       };
     } catch (error) {
       return {
@@ -105,6 +123,7 @@
     normalizeDownloadFilename,
     getFilenameFromResponse,
     getWarningCount,
+    getWarningDetails,
     exportStudioPptx
   };
 });

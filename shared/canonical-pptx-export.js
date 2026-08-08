@@ -24,9 +24,27 @@
     'text-shadow',
     'transform'
   ]);
+  const PPTX_WARNING_DETAILS_LIMIT = 3;
+  const PPTX_WARNING_TEXT_LIMIT = 180;
 
   function asObject(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  }
+
+  function createPptxWarningDetailsHeader(warnings = []) {
+    const normalizedWarnings = (Array.isArray(warnings) ? warnings : [])
+      .filter(warning => typeof warning === 'string' && warning.trim())
+      .map(warning => warning.trim());
+    const visibleWarnings = normalizedWarnings
+      .slice(0, PPTX_WARNING_DETAILS_LIMIT)
+      .map(warning => warning.length > PPTX_WARNING_TEXT_LIMIT
+        ? `${warning.slice(0, PPTX_WARNING_TEXT_LIMIT - 3)}...`
+        : warning);
+    const hasTruncatedWarningText = visibleWarnings.some((warning, index) => warning !== normalizedWarnings[index]);
+    return encodeURIComponent(JSON.stringify({
+      warnings: visibleWarnings,
+      truncated: normalizedWarnings.length > visibleWarnings.length || hasTruncatedWarningText
+    }));
   }
 
   function finitePositive(value, fallback) {
@@ -869,6 +887,7 @@
     CUSTOM_PPTX_LAYOUT_NAME,
     DEFAULT_SOURCE_WIDTH,
     DEFAULT_SOURCE_HEIGHT,
+    createPptxWarningDetailsHeader,
     normalizePptxExportOptions,
     resolvePptxExportOptions,
     normalizeHexColor,
