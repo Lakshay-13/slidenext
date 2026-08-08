@@ -1958,7 +1958,9 @@
           documentRef: typeof document !== 'undefined' ? document : null,
           highlightAlignButton: (...args) => highlightAlignButton(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+            preferLiveCanonicalDeck: false
+          }),
           applyStyleMutation: (...args) => applyEditorStyleMutationWithTransaction(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
         })
