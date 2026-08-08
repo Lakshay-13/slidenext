@@ -1223,6 +1223,7 @@
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-nudge-controller.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
+  <script src="/shared/studio-editor-alignment-controller.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-group-mutation.js"></script>
   <script src="/shared/studio-editor-ruler.js"></script>
@@ -1670,6 +1671,28 @@
             : null,
           buildMotionSelectionActionState: () => buildMotionSelectionActionState(),
           updateMotionActionState: (...args) => updateMotionActionState(...args),
+          assignElementId: (...args) => assignEditorElementId(...args),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
+          finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
+        })
+      : null;
+    const studioEditorAlignmentController = typeof SlideNextStudioEditorAlignmentController !== 'undefined'
+      && SlideNextStudioEditorAlignmentController
+      && typeof SlideNextStudioEditorAlignmentController.createStudioEditorAlignmentController === 'function'
+      ? SlideNextStudioEditorAlignmentController.createStudioEditorAlignmentController({
+          alignmentApi: typeof SlideNextStudioEditorAlignment !== 'undefined'
+            ? SlideNextStudioEditorAlignment
+            : null,
+          canonicalLayoutApi: typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
+            ? SlideNextStudioEditorCanonicalLayout
+            : null,
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          buildAlignmentActionState: (...args) => buildAlignmentActionState(...args),
+          updateAlignmentActionState: (...args) => updateAlignmentActionState(...args),
+          getIframeDoc: (...args) => getIframeDoc(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
           buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
@@ -6072,113 +6095,17 @@
     }
 
     function alignSelectedElements(action = '') {
-      const alignmentActionState = buildAlignmentActionState().alignmentActionState;
-      if (!alignmentActionState.canAlign) {
-        updateAlignmentActionState();
-        return false;
-      }
-
-      const alignmentResult = SlideNextStudioEditorAlignment.buildStudioAlignedLayout(
-        alignmentActionState.selection,
-        action
-      );
-      if (!alignmentResult.didChange) return false;
-
-      const getAlignmentElementId = (element) => {
-        if (typeof assignEditorElementId === 'function') {
-          return assignEditorElementId(element);
-        }
-        return element && element.dataset && element.dataset.editorId;
-      };
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const canonicalLayoutApi = typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
-        ? SlideNextStudioEditorCanonicalLayout
-        : null;
-      const buildCanonicalLayoutMutation = canonicalLayoutApi
-        && typeof canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder === 'function'
-        ? canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null
-          })
-        : null;
-      const canonicalDeck = buildCanonicalLayoutMutation
-        ? buildCanonicalLayoutMutation({
-            sourceDocument: typeof getIframeDoc === 'function' ? getIframeDoc() : null,
-            nextItems: alignmentResult.nextItems,
-            getElementId: getAlignmentElementId
-          })
-        : null;
-      const mutation = applyEditorPositionLayoutWithTransaction(alignmentResult.nextItems, {
-        getElementId: getAlignmentElementId
-      });
-      if (!mutation.didApply) return false;
-      finalizeEditorDeckMutation(`Auto: Aligned ${action}`, {
-        syncSelectionOverlay: true,
-        refreshThumbnails: false,
-        debounceHistory: true,
-        transaction: mutation.transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
-      });
-      return true;
+      return studioEditorAlignmentController
+        && typeof studioEditorAlignmentController.align === 'function'
+        ? studioEditorAlignmentController.align(action)
+        : false;
     }
 
     function distributeSelectedElements(axis = '') {
-      const alignmentActionState = buildAlignmentActionState().alignmentActionState;
-      if (!alignmentActionState.canAlign || alignmentActionState.selection.length < 3) {
-        updateAlignmentActionState();
-        return false;
-      }
-
-      const distributionResult = SlideNextStudioEditorAlignment.buildStudioDistributedLayout(
-        alignmentActionState.selection,
-        axis
-      );
-      if (!distributionResult.didChange) return false;
-
-      const getDistributionElementId = (element) => {
-        if (typeof assignEditorElementId === 'function') {
-          return assignEditorElementId(element);
-        }
-        return element && element.dataset && element.dataset.editorId;
-      };
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const canonicalLayoutApi = typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
-        ? SlideNextStudioEditorCanonicalLayout
-        : null;
-      const buildCanonicalLayoutMutation = canonicalLayoutApi
-        && typeof canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder === 'function'
-        ? canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null
-          })
-        : null;
-      const canonicalDeck = buildCanonicalLayoutMutation
-        ? buildCanonicalLayoutMutation({
-            sourceDocument: typeof getIframeDoc === 'function' ? getIframeDoc() : null,
-            nextItems: distributionResult.nextItems,
-            getElementId: getDistributionElementId
-          })
-        : null;
-      const mutation = applyEditorPositionLayoutWithTransaction(distributionResult.nextItems, {
-        getElementId: getDistributionElementId
-      });
-      if (!mutation.didApply) return false;
-      finalizeEditorDeckMutation(`Auto: Distributed ${axis}`, {
-        syncSelectionOverlay: true,
-        refreshThumbnails: false,
-        debounceHistory: true,
-        transaction: mutation.transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
-      });
-      return true;
+      return studioEditorAlignmentController
+        && typeof studioEditorAlignmentController.distribute === 'function'
+        ? studioEditorAlignmentController.distribute(axis)
+        : false;
     }
 
     function applyEditorGroupMutationWithTransaction(options = {}) {

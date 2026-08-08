@@ -7,6 +7,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioAlignment = require('../shared/studio-editor-alignment.js');
+const alignmentController = require('../shared/studio-editor-alignment-controller.js');
 const positionLayoutMutation = require('../shared/studio-editor-position-layout-mutation.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -30,6 +31,21 @@ function loadPositionMutationHelper(fileContent, context) {
   }
   context.SlideNextStudioEditorPositionLayoutMutation = positionLayoutMutation;
   vm.runInContext(helperSource, context);
+}
+
+function installAlignmentController(context) {
+  context.studioEditorAlignmentController = alignmentController.createStudioEditorAlignmentController({
+    alignmentApi: context.SlideNextStudioEditorAlignment,
+    canonicalLayoutApi: context.SlideNextStudioEditorCanonicalLayout,
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    buildAlignmentActionState: context.buildAlignmentActionState,
+    updateAlignmentActionState: context.updateAlignmentActionState,
+    getIframeDoc: context.getIframeDoc,
+    assignElementId: context.assignEditorElementId,
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    applyPositionLayout: context.applyEditorPositionLayoutWithTransaction,
+    finalizeDeckMutation: context.finalizeEditorDeckMutation
+  });
 }
 
 test('buildAlignmentActionState reuses valid nudge layout geometry for alignment readiness', () => {
@@ -195,6 +211,7 @@ test('distributeSelectedElements writes distribution positions and records one m
   };
   vm.createContext(context);
   loadPositionMutationHelper(fileContent, context);
+  installAlignmentController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.distributeSelectedElements('horizontal'), true);
@@ -266,6 +283,7 @@ test('distributeSelectedElements forwards an immutable canonical layout sidecar'
 
   vm.createContext(context);
   loadPositionMutationHelper(fileContent, context);
+  installAlignmentController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.distributeSelectedElements('horizontal'), true);
@@ -317,6 +335,7 @@ test('alignSelectedElements writes aligned parent-relative positions and records
   };
   vm.createContext(context);
   loadPositionMutationHelper(fileContent, context);
+  installAlignmentController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.alignSelectedElements('middle'), true);
@@ -373,6 +392,7 @@ test('alignSelectedElements forwards a reversible position transaction', () => {
 
   vm.createContext(context);
   loadPositionMutationHelper(fileContent, context);
+  installAlignmentController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.alignSelectedElements('middle'), true);
@@ -451,6 +471,7 @@ test('alignSelectedElements forwards an immutable canonical layout sidecar', () 
 
   vm.createContext(context);
   loadPositionMutationHelper(fileContent, context);
+  installAlignmentController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.alignSelectedElements('middle'), true);
@@ -508,6 +529,7 @@ test('alignSelectedElements delegates position application to the shared alignme
 
   vm.createContext(context);
   loadPositionMutationHelper(fileContent, context);
+  installAlignmentController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.alignSelectedElements('middle'), true);
@@ -564,6 +586,7 @@ test('distributeSelectedElements delegates position application to the shared al
 
   vm.createContext(context);
   loadPositionMutationHelper(fileContent, context);
+  installAlignmentController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.distributeSelectedElements('horizontal'), true);
