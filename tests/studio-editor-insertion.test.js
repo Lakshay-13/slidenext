@@ -68,6 +68,18 @@ test('createStudioInsertedElement creates the existing table and code defaults',
   assert.match(code.children[0].textContent, /trainEpoch/);
 });
 
+test('createStudioInsertedElement preserves normal flow when explicitly requested', () => {
+  const heading = insertion.createStudioInsertedElement('h2', {
+    documentRef: createDocument(),
+    offset: 30,
+    layoutMode: 'flow'
+  });
+
+  assert.equal(heading.style.position, undefined);
+  assert.equal(heading.style.left, undefined);
+  assert.equal(heading.style.top, undefined);
+});
+
 test('createStudioInsertedElement returns null for unsupported types or missing documents', () => {
   assert.equal(insertion.createStudioInsertedElement('unknown', { documentRef: createDocument() }), null);
   assert.equal(insertion.createStudioInsertedElement('h2'), null);

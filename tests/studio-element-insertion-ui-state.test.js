@@ -303,6 +303,7 @@ test('insertElement forwards an immutable canonical node sidecar for new element
     SlideNextStudioEditorInsertion: {
       applyStudioElementInsertion(type, options) {
         assert.equal(type, 'h2');
+        assert.equal(options.layoutMode, 'flow');
         options.slide.appendChild(insertedElement);
         return { element: insertedElement, transaction: { id: 'tx-insert' } };
       }

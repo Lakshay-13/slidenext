@@ -17,6 +17,22 @@
     return `calc(${percent}% + ${offset}px)`;
   }
 
+  function clearInlineStyleProperty(style, propertyName) {
+    if (!style) return;
+    if (typeof style.removeProperty === 'function') {
+      style.removeProperty(propertyName);
+      return;
+    }
+    delete style[propertyName];
+  }
+
+  function applyStudioInsertedLayoutMode(element, layoutMode) {
+    if (!element || layoutMode !== 'flow') return;
+    ['position', 'left', 'top'].forEach((propertyName) => {
+      clearInlineStyleProperty(element.style, propertyName);
+    });
+  }
+
   function createStudioInsertedElement(type, options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.createElement !== 'function') return null;
@@ -196,6 +212,7 @@ function trainEpoch(model, data) {
       element.appendChild(chartBody);
     }
 
+    applyStudioInsertedLayoutMode(element, options.layoutMode === 'flow' ? 'flow' : 'absolute');
     return element;
   }
 
@@ -211,7 +228,8 @@ function trainEpoch(model, data) {
 
     const element = createStudioInsertedElement(type, {
       documentRef,
-      offset: options.offset
+      offset: options.offset,
+      layoutMode: options.layoutMode
     });
     if (!element) {
       return {

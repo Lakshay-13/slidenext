@@ -7,6 +7,23 @@
     root.SlideNextStudioEditorElementInsertionController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  function hasAbsoluteCanonicalNode(nodes = []) {
+    return (Array.isArray(nodes) ? nodes : []).some((node) => {
+      if (!node || typeof node !== 'object') return false;
+      if (node.layout && node.layout.mode === 'absolute') return true;
+      return hasAbsoluteCanonicalNode(node.children);
+    });
+  }
+
+  function resolveCanonicalInsertionLayoutMode(canonicalDeck, slideId) {
+    if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return 'absolute';
+    const slide = canonicalDeck.slides.find((candidate) => candidate && candidate.id === slideId);
+    if (!slide) return 'absolute';
+    if (canonicalDeck.layout && canonicalDeck.layout.mode === 'absolute') return 'absolute';
+    if (slide.layout && slide.layout.mode === 'absolute') return 'absolute';
+    return hasAbsoluteCanonicalNode(slide.nodes) ? 'absolute' : 'flow';
+  }
+
   function createStudioEditorElementInsertionController(options = {}) {
     const hasOption = (name) => Object.prototype.hasOwnProperty.call(options, name);
     const resolveDependency = (name, globalName) => hasOption(name)
@@ -96,6 +113,10 @@
             sourceDocument: iframeDoc
           })
         : null;
+      const insertionLayoutMode = resolveCanonicalInsertionLayoutMode(
+        canonicalDeckBeforeInsertion,
+        activeSlideId
+      );
       const childCount = activeSlide.children && Number.isFinite(activeSlide.children.length)
         ? activeSlide.children.length
         : 0;
@@ -103,6 +124,7 @@
         documentRef: iframeDoc,
         slide: activeSlide,
         offset: (childCount * 15) % 150,
+        layoutMode: insertionLayoutMode,
         prepareElement: makeElementsHoverable,
         transactionElementId: activeSlideId ? `slide:${activeSlideId}` : ''
       });

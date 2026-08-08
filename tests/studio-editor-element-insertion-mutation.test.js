@@ -22,6 +22,7 @@ test('applyStudioElementInsertionMutationWithTransaction delegates insertion and
     documentRef: { id: 'document' },
     slide,
     offset: 12,
+    layoutMode: 'flow',
     prepareElement() {},
     transactionElementId: 'slide-1',
     getElementId: () => 'node-1'
@@ -31,6 +32,7 @@ test('applyStudioElementInsertionMutationWithTransaction delegates insertion and
   assert.equal(delegated.type, 'shape');
   assert.equal(delegated.options.slide, slide);
   assert.equal(delegated.options.offset, 12);
+  assert.equal(delegated.options.layoutMode, 'flow');
   assert.equal(typeof delegated.options.createMarkupTransactionCapture, 'function');
   assert.equal(typeof delegated.options.prepareElement, 'function');
 });

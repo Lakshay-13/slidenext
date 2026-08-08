@@ -30,6 +30,7 @@
       documentRef: options.documentRef,
       slide: options.slide,
       offset: options.offset,
+      layoutMode: options.layoutMode,
       prepareElement: typeof options.prepareElement === 'function'
         ? options.prepareElement
         : null,

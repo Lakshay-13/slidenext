@@ -28,6 +28,7 @@ test('element insertion controller preserves insertion finalization and version 
   assert.equal(calls[0][0], 'apply');
   assert.equal(calls[0][1], 'h2');
   assert.equal(calls[0][2].offset, 30);
+  assert.equal(calls[0][2].layoutMode, 'absolute');
   assert.equal(calls[0][2].transactionElementId, 'slide:slide-1');
   assert.deepEqual(calls[1], [
     'finalize',
@@ -36,6 +37,38 @@ test('element insertion controller preserves insertion finalization and version 
     { id: 'tx-1' },
     null
   ]);
+});
+
+test('element insertion controller selects flow mode for a flow-only canonical slide', () => {
+  const calls = [];
+  const slide = { children: [] };
+  const element = { id: 'element-1' };
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    canonicalInsertionApi: {
+      createStudioCanonicalInsertionMutationBuilders() {
+        return {
+          buildCanonicalInsertionBaseline() {
+            return {
+              kind: 'slidenext.deck',
+              layout: { mode: 'flow' },
+              slides: [{ id: 'slide-1', layout: { mode: 'flow' }, nodes: [] }]
+            };
+          }
+        };
+      }
+    },
+    getIframeDoc: () => ({}),
+    getActiveSlide: () => slide,
+    getEditorSlideId: () => 'slide-1',
+    applyElementInsertion: (type, options) => {
+      calls.push(options);
+      return { element, transaction: null };
+    },
+    finalizeInsertedElements: () => true
+  });
+
+  assert.equal(controller.insert('h2'), true);
+  assert.equal(calls[0].layoutMode, 'flow');
 });
 
 test('element insertion controller refreshes insertion state when no active slide exists', () => {
