@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
+const editorDeckReadyController = require('../shared/studio-editor-deck-ready-controller.js');
 const deckReadyView = require('../shared/studio-deck-ready.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -44,7 +45,35 @@ function loadResolveCurrentStudioDeckReadyActionState(fileContent, context) {
   if (typeof context.SlideNextStudioDeckReady === 'undefined') {
     context.SlideNextStudioDeckReady = deckReadyView;
   }
+  attachDeckReadyController(context);
   vm.runInContext(helperSource, context);
+}
+
+function attachDeckReadyController(context) {
+  context.studioEditorDeckReadyController = editorDeckReadyController.createStudioEditorDeckReadyController({
+    deckReadyApi: context.SlideNextStudioDeckReady || deckReadyView,
+    getDocumentRef: () => context.document || null,
+    getDocument: () => typeof context.getIframeDoc === 'function' ? context.getIframeDoc() : null,
+    getPresentationUrl: () => context.currentPresentationUrl,
+    getPersistedDeckState: () => typeof context.getCurrentEditorPersistedDeckState === 'function'
+      ? context.getCurrentEditorPersistedDeckState()
+      : null,
+    resolvePersistedDeckStateWithContent: (persistedDeckState) => {
+      if (typeof context.resolveEditorPersistedDeckStateWithContent === 'function') {
+        return context.resolveEditorPersistedDeckStateWithContent(persistedDeckState);
+      }
+      const reader = context.getCurrentEditorPersistedDeckState;
+      if (reader && typeof reader.resolveWithContent === 'function') {
+        return reader.resolveWithContent(persistedDeckState);
+      }
+      return persistedDeckState;
+    },
+    getStoredCanonicalDeck: () => typeof context.resolveEditorStoredCanonicalBaseline === 'function'
+      ? context.resolveEditorStoredCanonicalBaseline()
+      : null,
+    getSaveButtonState: () => context.currentStudioSaveButtonState
+  });
+  return context;
 }
 
 test('updateDeckReadyToolbarActionState enables deck-level toolbar actions when fallback deck state remains available', () => {
@@ -523,6 +552,8 @@ test('updateDeckReadyToolbarActionState delegates toolbar rendering to the share
       return doc;
     }
   };
+
+  attachDeckReadyController(context);
 
   vm.createContext(context);
   vm.runInContext(updateDeckReadyToolbarActionStateSource, context);

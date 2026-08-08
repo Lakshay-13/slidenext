@@ -1389,6 +1389,7 @@
   <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/studio-deck-ready.js"></script>
+  <script src="/shared/studio-editor-deck-ready-controller.js"></script>
   <script src="/shared/deck-html.js"></script>
   <script src="/shared/studio-deck-view.js"></script>
   <script src="/shared/studio-editor-navigation-controller.js"></script>
@@ -2470,6 +2471,24 @@
           localStorageRef: localStorage,
           getIframeDocument: getIframeDoc,
           resolveDarkMode: () => document.documentElement.classList.contains('dark')
+        })
+      : null;
+    const studioEditorDeckReadyController = typeof SlideNextStudioEditorDeckReadyController !== 'undefined'
+      && SlideNextStudioEditorDeckReadyController
+      && typeof SlideNextStudioEditorDeckReadyController.createStudioEditorDeckReadyController === 'function'
+      ? SlideNextStudioEditorDeckReadyController.createStudioEditorDeckReadyController({
+          deckReadyApi: typeof SlideNextStudioDeckReady !== 'undefined'
+            ? SlideNextStudioDeckReady
+            : null,
+          getDocumentRef: () => document,
+          getDocument: getIframeDoc,
+          getPresentationUrl: () => currentPresentationUrl,
+          getPersistedDeckState: () => getCurrentEditorPersistedDeckState(),
+          resolvePersistedDeckStateWithContent: (persistedDeckState) => resolveEditorPersistedDeckStateWithContent(
+            persistedDeckState
+          ),
+          getStoredCanonicalDeck: () => resolveEditorStoredCanonicalBaseline(),
+          getSaveButtonState: () => currentStudioSaveButtonState
         })
       : null;
 
@@ -9274,51 +9293,21 @@
     }
 
     function resolveCurrentStudioDeckReadyActionState(doc = getIframeDoc()) {
-      const persistedDeckState = getCurrentEditorPersistedDeckState();
-      const persistedDeckStateWithContent = resolveEditorPersistedDeckStateWithContent(persistedDeckState);
-      const storedCanonicalDeck = resolveEditorStoredCanonicalBaseline();
-      const saveButtonState = typeof currentStudioSaveButtonState === 'string'
-        ? currentStudioSaveButtonState
-        : 'idle';
-      const deckReadyView = typeof SlideNextStudioDeckReady !== 'undefined'
-        ? SlideNextStudioDeckReady
-        : null;
-      if (!deckReadyView || typeof deckReadyView.resolveStudioDeckReadyActionState !== 'function') {
+      if (!studioEditorDeckReadyController
+        || typeof studioEditorDeckReadyController.resolve !== 'function') {
         return {
           canUseSaveButton: false,
           canUseDeckActions: false,
           canLaunchPreview: false
         };
       }
-      return deckReadyView.resolveStudioDeckReadyActionState({
-        doc,
-        presentationUrl: currentPresentationUrl,
-        persistedDeckStateWithContent,
-        storedCanonicalDeck,
-        saveButtonState
-      });
+      return studioEditorDeckReadyController.resolve(doc);
     }
 
     function updateDeckReadyToolbarActionState(doc = getIframeDoc()) {
-      const deckReadyView = typeof SlideNextStudioDeckReady !== 'undefined'
-        ? SlideNextStudioDeckReady
-        : null;
-      if (!deckReadyView || typeof deckReadyView.syncStudioDeckReadyToolbarActionState !== 'function') {
-        return false;
-      }
-      const toolbarOptions = {
-        documentRef: document,
-        doc,
-        presentationUrl: currentPresentationUrl,
-        persistedDeckStateWithContent: resolveEditorPersistedDeckStateWithContent(
-          getCurrentEditorPersistedDeckState()
-        ),
-        storedCanonicalDeck: resolveEditorStoredCanonicalBaseline(),
-        saveButtonState: typeof currentStudioSaveButtonState === 'string'
-          ? currentStudioSaveButtonState
-          : 'idle'
-      };
-      return deckReadyView.syncStudioDeckReadyToolbarActionState(toolbarOptions);
+      if (!studioEditorDeckReadyController
+        || typeof studioEditorDeckReadyController.update !== 'function') return false;
+      return studioEditorDeckReadyController.update(doc);
     }
 
     function setStudioAutoSaveStatus(state) {
