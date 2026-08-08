@@ -125,7 +125,9 @@
         ? (sourceDoc) => buildCanonicalDeck(sourceDoc, {
             canonicalDeckOverride: pendingCanonicalDeck
           })
-        : buildCanonicalDeck;
+        : (sourceDoc) => buildCanonicalDeck(sourceDoc, {
+            preferLiveCanonicalDeck: false
+          });
       return historyApi.buildStudioHistoryEntry(doc, {
         getDocument,
         buildCanonicalDeck: historyCanonicalDeckBuilder,

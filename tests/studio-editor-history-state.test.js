@@ -40,6 +40,7 @@ test('createStudioEditorHistorySaveAdapter fails closed when shared history is u
 
 test('createStudioEditorHistoryEntryBuilder reads pending canonical state for each entry', () => {
   const calls = [];
+  const buildOptionsCalls = [];
   let pendingCanonicalDeck = null;
   let pendingTransaction = null;
   const historyApi = {
@@ -66,6 +67,7 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
     },
     preferCanonicalDeck: true,
     buildCanonicalDeck(doc, options) {
+      buildOptionsCalls.push(options);
       return options && options.canonicalDeckOverride
         ? options.canonicalDeckOverride
         : baseDeck;
@@ -91,6 +93,10 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
   assert.deepEqual(calls.map(({ doc, canonicalDeck, transaction }) => ({ doc, canonicalDeck, transaction })), [
     { doc: 'doc-1', canonicalDeck: overrideDeck, transaction: { id: 'transaction-1' } },
     { doc: 'doc-2', canonicalDeck: baseDeck, transaction: { id: 'transaction-2' } }
+  ]);
+  assert.deepEqual(buildOptionsCalls, [
+    { canonicalDeckOverride: overrideDeck },
+    { preferLiveCanonicalDeck: false }
   ]);
   assert.equal(calls[0].preferCanonicalDeck, true);
   assert.equal(calls[1].preferCanonicalDeck, true);

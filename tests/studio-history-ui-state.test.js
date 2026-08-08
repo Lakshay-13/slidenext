@@ -540,8 +540,11 @@ test('createHistoryEntry reuses the shared history entry builder when available'
     canonicalDeck: { kind: 'slidenext.deck', schemaVersion: 1, slides: [] }
   };
   let delegatedArgs = null;
+  let canonicalDeckBuildOptions = null;
   const context = {
-    buildEditorCanonicalDeck() {},
+    buildEditorCanonicalDeck(doc, options) {
+      canonicalDeckBuildOptions = { doc, options };
+    },
     buildHistoryFrameHtml() {},
     getActiveSlideId() {},
     getCommittedSelectedEditorElementIds() {},
@@ -566,7 +569,12 @@ test('createHistoryEntry reuses the shared history entry builder when available'
   );
   assert.equal(delegatedArgs.doc, undefined);
   assert.equal(delegatedArgs.options.getDocument, context.getIframeDoc);
-  assert.equal(delegatedArgs.options.buildCanonicalDeck, context.buildEditorCanonicalDeck);
+  assert.notEqual(delegatedArgs.options.buildCanonicalDeck, context.buildEditorCanonicalDeck);
+  assert.doesNotThrow(() => delegatedArgs.options.buildCanonicalDeck('history-doc'));
+  assert.deepEqual(canonicalDeckBuildOptions, {
+    doc: 'history-doc',
+    options: { preferLiveCanonicalDeck: false }
+  });
   assert.equal(delegatedArgs.options.getHistoryOptions, context.getEditorHistoryOptions);
   assert.equal(delegatedArgs.options.resolveFallbackActiveSlideId, context.resolveEditorFallbackActiveSlideId);
   assert.equal(delegatedArgs.options.buildHistoryHtml, context.buildHistoryFrameHtml);
