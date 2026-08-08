@@ -47,15 +47,17 @@
       }
       if (!html) return failPdfExport();
 
+      if (!buildCanonicalDeck) return failPdfExport();
+
       let canonicalDeck = null;
-      if (buildCanonicalDeck) {
-        try {
-          canonicalDeck = buildCanonicalDeck();
-        } catch (error) {
-          canonicalDeck = null;
-        }
+      try {
+        canonicalDeck = buildCanonicalDeck();
+      } catch (error) {
+        canonicalDeck = null;
       }
-      if (canonicalDeck && Array.isArray(canonicalDeck.slides) && canonicalDeck.slides.length === 0) {
+      if (!canonicalDeck
+        || !Array.isArray(canonicalDeck.slides)
+        || canonicalDeck.slides.length === 0) {
         return failPdfExport();
       }
 
@@ -72,7 +74,7 @@
       setStatus('exporting-pdf');
       try {
         let pageDimensions = {};
-        if (buildCanonicalDeck && typeof pdfExport.resolveStudioPdfPageDimensions === 'function') {
+        if (typeof pdfExport.resolveStudioPdfPageDimensions === 'function') {
           try {
             pageDimensions = pdfExport.resolveStudioPdfPageDimensions(canonicalDeck);
           } catch (error) {
@@ -81,9 +83,7 @@
         }
         const didOpenPrintFlow = pdfExport.openStudioPdfPrintWindow({
           html,
-          ...(canonicalDeck && Array.isArray(canonicalDeck.slides)
-            ? { slideCount: canonicalDeck.slides.length }
-            : {}),
+          slideCount: canonicalDeck.slides.length,
           ...pageDimensions,
           onPrint: () => {
             setStatus('pdf-exported');

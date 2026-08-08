@@ -63,6 +63,9 @@ test('exportPdf delegates a ready deck to the shared browser print exporter', ()
       calls.push(['buildEditorPreviewHtml']);
       return '<html><body><div class="slide">A</div></body></html>';
     },
+    buildEditorCanonicalDeck() {
+      return { slides: [{ id: 'slide-1' }] };
+    },
     document: {
       getElementById(id) {
         return id === 'exportPdfBtn' ? exportButton : null;
@@ -82,7 +85,8 @@ test('exportPdf delegates a ready deck to the shared browser print exporter', ()
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
     ['buildEditorPreviewHtml'],
     ['openStudioPdfPrintWindow', {
-      html: '<html><body><div class="slide">A</div></body></html>'
+      html: '<html><body><div class="slide">A</div></body></html>',
+      slideCount: 1
     }]
   ]);
   assert.deepEqual(statusCalls, ['exporting-pdf', 'pdf-exported']);
@@ -103,6 +107,9 @@ test('exportPdf keeps the button disabled until the async print flow completes',
     },
     buildEditorPreviewHtml() {
       return '<html><body><div class="slide">A</div></body></html>';
+    },
+    buildEditorCanonicalDeck() {
+      return { slides: [{ id: 'slide-1' }] };
     },
     document: {
       getElementById(id) {
@@ -146,7 +153,10 @@ test('exportPdf forwards canonical layout dimensions when the shared resolver is
     },
     buildEditorCanonicalDeck() {
       canonicalDeckBuilds += 1;
-      return { layout: { size: { width: 1280, height: 720, unit: 'px' } } };
+      return {
+        layout: { size: { width: 1280, height: 720, unit: 'px' } },
+        slides: [{ id: 'slide-1' }]
+      };
     },
     buildEditorPreviewHtml() {
       return '<html><body><div class="slide">A</div></body></html>';
@@ -161,10 +171,12 @@ test('exportPdf forwards canonical layout dimensions when the shared resolver is
   assert.equal(context.exportPdf(), true);
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
     ['resolveStudioPdfPageDimensions', {
-      layout: { size: { width: 1280, height: 720, unit: 'px' } }
+      layout: { size: { width: 1280, height: 720, unit: 'px' } },
+      slides: [{ id: 'slide-1' }]
     }],
     ['openStudioPdfPrintWindow', {
       html: '<html><body><div class="slide">A</div></body></html>',
+      slideCount: 1,
       pageWidth: '1280px',
       pageHeight: '720px'
     }]
@@ -229,6 +241,32 @@ test('exportPdf fails closed for an empty canonical deck without opening a popup
   assert.deepEqual(statusCalls, ['pdf-export-failed']);
 });
 
+test('exportPdf fails closed when no canonical deck is available for slide-count validation', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const statusCalls = [];
+  const context = {
+    SlideNextStudioPdfExport: {
+      openStudioPdfPrintWindow() {
+        throw new Error('missing canonical deck should fail before opening a popup');
+      }
+    },
+    buildEditorPreviewHtml() {
+      return '<html><body><div class="slide">A</div></body></html>';
+    },
+    setStudioAutoSaveStatus(state) {
+      statusCalls.push(state);
+    },
+    resolveCurrentStudioDeckReadyActionState() {
+      return { canUseDeckActions: true };
+    }
+  };
+
+  loadExportPdfAction(fileContent, context);
+
+  assert.equal(context.exportPdf(), false);
+  assert.deepEqual(statusCalls, ['pdf-export-failed']);
+});
+
 test('exportPdf reports preview renderer failures instead of throwing', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const statusCalls = [];
@@ -267,6 +305,9 @@ test('exportPdf reports popup failures and restores the export button', () => {
     },
     buildEditorPreviewHtml() {
       return '<html><body><div class="slide">A</div></body></html>';
+    },
+    buildEditorCanonicalDeck() {
+      return { slides: [{ id: 'slide-1' }] };
     },
     document: {
       getElementById(id) {
