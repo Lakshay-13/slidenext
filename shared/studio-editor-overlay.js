@@ -62,6 +62,17 @@
     if (guides) guides.innerHTML = '';
   }
 
+  function clearStudioGuidesForActiveSlide(options = {}) {
+    const documentRef = options.documentRef;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const slide = documentRef ? getActiveSlide(documentRef) : null;
+    if (!documentRef || !slide) return false;
+    clearStudioGuides(slide, options);
+    return true;
+  }
+
   function hideStudioDragHud(slide, options = {}) {
     if (!slide) return;
     const dragHudId = options.dragHudId || 'editorDragHud';
@@ -242,6 +253,7 @@
     ensureStudioGuidesLayer,
     ensureStudioDragHud,
     clearStudioGuides,
+    clearStudioGuidesForActiveSlide,
     hideStudioDragHud,
     updateStudioDragHud,
     updateStudioDragHudForActiveSlide,

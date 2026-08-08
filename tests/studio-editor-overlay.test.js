@@ -280,3 +280,27 @@ test('clearStudioMarqueeSelectionForActiveSlide resolves the current slide befor
   assert.equal(overlay.classList.contains('drag-preview'), false);
   assert.equal(overlay.style.display, 'none');
 });
+
+test('clearStudioGuidesForActiveSlide resolves the current slide before clearing guide lines', () => {
+  const guidesLayer = { innerHTML: '<div class="guide"></div>' };
+  const slide = {
+    querySelector(selector) {
+      assert.equal(selector, '#editorGuidesLayer');
+      return guidesLayer;
+    }
+  };
+  const documentRef = { id: 'iframe-document' };
+  let resolvedDocument = null;
+
+  const result = overlayView.clearStudioGuidesForActiveSlide({
+    documentRef,
+    getActiveSlide(doc) {
+      resolvedDocument = doc;
+      return slide;
+    }
+  });
+
+  assert.equal(resolvedDocument, documentRef);
+  assert.equal(result, true);
+  assert.equal(guidesLayer.innerHTML, '');
+});

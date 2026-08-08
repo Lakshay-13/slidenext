@@ -4830,9 +4830,15 @@
 
     function hideGuides() {
       const doc = getIframeDoc();
-      const slide = getActiveSlide(doc);
-      if (!slide) return;
-      SlideNextStudioEditorOverlay.clearStudioGuides(slide, getEditorOverlayOptions());
+      if (!SlideNextStudioEditorOverlay
+        || typeof SlideNextStudioEditorOverlay.clearStudioGuidesForActiveSlide !== 'function') {
+        return false;
+      }
+      return SlideNextStudioEditorOverlay.clearStudioGuidesForActiveSlide({
+        documentRef: doc,
+        getActiveSlide,
+        ...getEditorOverlayOptions()
+      });
     }
 
     function hideDragHud() {
