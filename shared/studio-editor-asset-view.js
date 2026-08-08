@@ -19,6 +19,9 @@
     const canApply = !!options.canApply;
     const applyAsset = typeof options.applyAsset === 'function' ? options.applyAsset : () => {};
     const removeAsset = typeof options.removeAsset === 'function' ? options.removeAsset : () => {};
+    const resolvePreviewSource = typeof options.resolvePreviewSource === 'function'
+      ? options.resolvePreviewSource
+      : (source) => source;
     list.textContent = '';
     if (normalizedAssets.length === 0) {
       const emptyState = documentRef.createElement('span');
@@ -31,10 +34,31 @@
       const row = documentRef.createElement('div');
       row.className = 'flex items-center gap-1';
       const item = documentRef.createElement('span');
-      item.className = 'min-w-0 flex-1 truncate rounded px-2 py-1';
+      item.className = 'min-w-0 flex-1 truncate rounded px-2 py-1 flex items-center gap-2';
       const assetName = asset && asset.name ? asset.name : 'Unnamed Asset';
       const assetType = asset && asset.type ? asset.type : 'file';
-      item.textContent = `${assetName} - ${assetType}`;
+      const assetSource = asset && typeof asset.src === 'string' ? asset.src.trim() : '';
+      const previewSource = assetType === 'image' && assetSource
+        ? resolvePreviewSource(assetSource, asset)
+        : '';
+      if (typeof previewSource === 'string' && /^(?:data:image\/|https?:\/\/|blob:|\/)/i.test(previewSource)) {
+        const preview = documentRef.createElement('img');
+        preview.className = 'h-7 w-7 shrink-0 rounded object-cover border border-white/10 bg-black/20';
+        preview.src = previewSource;
+        preview.alt = '';
+        preview.loading = 'lazy';
+        preview.decoding = 'async';
+        if (typeof preview.addEventListener === 'function') {
+          preview.addEventListener('error', () => {
+            preview.hidden = true;
+          });
+        }
+        item.appendChild(preview);
+      }
+      const label = documentRef.createElement('span');
+      label.className = 'min-w-0 truncate';
+      label.textContent = `${assetName} - ${assetType}`;
+      item.appendChild(label);
       item.title = asset && asset.src ? asset.src : assetName;
 
       const useButton = documentRef.createElement('button');

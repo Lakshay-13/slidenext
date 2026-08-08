@@ -60,6 +60,46 @@ test('shared asset view wires use and remove actions to injected callbacks', () 
   assert.deepEqual(calls, [['apply', 'hero'], ['remove', 'hero']]);
 });
 
+test('shared asset view renders previews only for image sources', () => {
+  const list = {
+    children: [],
+    textContent: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const documentRef = {
+    getElementById() {
+      return list;
+    },
+    createElement(tagName) {
+      return {
+        tagName,
+        children: [],
+        addEventListener() {},
+        appendChild(child) {
+          this.children.push(child);
+        },
+        setAttribute() {}
+      };
+    }
+  };
+
+  assert.equal(assetView.renderStudioAssetLibrary({
+    documentRef,
+    assets: [
+      { id: 'hero', name: 'Hero', type: 'image', src: '/images/hero.png' },
+      { id: 'font', name: 'Font', type: 'font', src: '/fonts/hero.woff2' },
+      { id: 'relative', name: 'Relative', type: 'image', src: 'assets/relative.png' }
+    ]
+  }), true);
+
+  assert.equal(list.children[0].children[0].children[0].tagName, 'img');
+  assert.equal(list.children[0].children[0].children[0].src, '/images/hero.png');
+  assert.equal(list.children[1].children[0].children[0].tagName, 'span');
+  assert.equal(list.children[2].children[0].children[0].tagName, 'span');
+});
+
 test('shared asset state sync derives image eligibility before rendering the library', () => {
   const list = {
     children: [],
