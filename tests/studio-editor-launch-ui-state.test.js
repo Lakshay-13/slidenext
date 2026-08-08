@@ -884,6 +884,39 @@ test('updateCurrentPresentationSessionState delegates normalization through the 
   assert.equal(adapterOptions.sessionApi, context.SlideNextStudioEditorSession);
 });
 
+test('updateCurrentPresentationSessionState creates the shared session update adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let adapterCreateCalls = 0;
+  const context = {
+    SlideNextStudioEditorSession: {
+      createStudioEditorPresentationSessionStateUpdateAdapter() {
+        adapterCreateCalls += 1;
+        return (nextState) => ({ presentationTitle: nextState.presentationTitle });
+      }
+    },
+    currentCategory: 'General',
+    currentPresentationMetadata: null,
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentSlideIndex: 0,
+    currentTitle: 'Project Onboarding',
+    applyCurrentPresentationMetadata() {}
+  };
+
+  vm.createContext(context);
+  const updateCurrentPresentationSessionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateCurrentPresentationSessionState(nextState = {}) {',
+    '\n\n    function launchStudioEditor(url, title, category) {'
+  );
+  vm.runInContext(updateCurrentPresentationSessionStateSource, context);
+
+  context.updateCurrentPresentationSessionState({ presentationTitle: 'First Deck' });
+  context.updateCurrentPresentationSessionState({ presentationTitle: 'Second Deck' });
+
+  assert.equal(adapterCreateCalls, 1);
+  assert.equal(context.currentTitle, 'Second Deck');
+});
+
 test('setStudioAutoSaveStatus renders saving and failure editor states', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setStudioAutoSaveStatusSource = extractFunctionSource(
