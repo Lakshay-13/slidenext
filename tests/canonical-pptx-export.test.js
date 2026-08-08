@@ -268,6 +268,28 @@ test('createCanonicalPptxExport preserves explicit table row heights', () => {
   assert.ok(Math.abs(rowHeights[1] - 0.9999) < 0.001);
 });
 
+test('createCanonicalPptxExport preserves simple table cell padding', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'padded-table',
+        type: 'table',
+        layout: { x: 0, y: 0, width: 200, height: 80 },
+        children: [{
+          tagName: 'tr',
+          children: [{
+            tagName: 'td',
+            text: 'Padded',
+            style: 'padding: 12px;'
+          }]
+        }]
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.ok(Math.abs(result.pptx.slides[0].calls[0].rows[0][0].options.margin - 0.125) < 0.001);
+});
+
 test('resolvePptxExportOptions keeps the default wide layout for canonical 16:9 decks', () => {
   const result = pptxExport.resolvePptxExportOptions({
     layout: { size: { width: 1920, height: 1080, unit: 'px' } },

@@ -252,6 +252,7 @@
           const cellFontWeight = typeof cellStyle['font-weight'] === 'string'
             ? cellStyle['font-weight'].trim().toLowerCase()
             : '';
+          const cellPadding = parseCssPx(cellStyle.padding);
           const cellTextDecoration = resolvePptxTextDecoration(
             [cellStyle['text-decoration'], cellStyle['text-decoration-line']].filter(Boolean).join(' ')
           );
@@ -261,6 +262,7 @@
           const rowspan = Number.parseInt(cell.rowspan || cellAttributes.rowspan, 10);
           if (Number.isInteger(colspan) && colspan > 1) cellOptions.colspan = colspan;
           if (Number.isInteger(rowspan) && rowspan > 1) cellOptions.rowspan = rowspan;
+          if (cellPadding !== null && cellPadding >= 0) cellOptions.margin = cellPadding / 96;
           if (cell.tagName === 'th' || /^(bold|[6-9]00)$/.test(cellFontWeight)) {
             cellOptions.bold = true;
           }
