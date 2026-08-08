@@ -8,6 +8,7 @@ const studioGroup = require('../shared/studio-editor-group.js');
 const groupMutation = require('../shared/studio-editor-group-mutation.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalGroup = require('../shared/studio-editor-canonical-group.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const groupController = require('../shared/studio-editor-group-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -249,6 +250,11 @@ test('buildGroupSelectionActionState delegates geometry orchestration to the sha
 
 test('buildGroupSelectionActionState prefers canonical lock metadata for grouping', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const visibilityReaderSource = extractFunctionSource(
+    fileContent,
+    'function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {',
+    '\n\n    function setElementHiddenState'
+  );
   const source = extractFunctionSource(
     fileContent,
     'function buildGroupSelectionActionState(doc = null) {',
@@ -260,6 +266,7 @@ test('buildGroupSelectionActionState prefers canonical lock metadata for groupin
   let receivedOptions = null;
   const context = {
     selectedElements: [first, second],
+    SlideNextStudioEditorCanonicalState: canonicalState,
     getIframeDoc() {
       return doc;
     },
@@ -292,7 +299,7 @@ test('buildGroupSelectionActionState prefers canonical lock metadata for groupin
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  vm.runInContext(`${visibilityReaderSource}\n${source}`, context);
 
   assert.deepEqual(context.buildGroupSelectionActionState(doc), { canGroup: false });
   assert.equal(receivedOptions.isLocked(first), true);

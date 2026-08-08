@@ -5863,25 +5863,9 @@
       const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
         ? SlideNextStudioEditorGroup
         : null;
-      let canonicalDeck = null;
-      if (typeof buildEditorCanonicalDeck === 'function') {
-        try {
-          canonicalDeck = buildEditorCanonicalDeck(resolvedDoc);
-        } catch (error) {
-          canonicalDeck = null;
-        }
-      }
-      const readLockedState = canonicalDeck
-        ? (element) => {
-            const canonicalNode = typeof resolveEditorCanonicalNodeForElement === 'function'
-              ? resolveEditorCanonicalNodeForElement(element, canonicalDeck)
-              : null;
-            return canonicalNode
-              && canonicalNode.visibility
-              && typeof canonicalNode.visibility.locked === 'boolean'
-              ? canonicalNode.visibility.locked
-              : isElementLocked(element);
-          }
+      const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
+        && typeof buildEditorCanonicalDeck === 'function'
+        ? getEditorCanonicalVisibilityReader('locked', resolvedDoc, isElementLocked)
         : isElementLocked;
       if (groupApi && typeof groupApi.buildStudioGroupSelectionActionState === 'function') {
         return groupApi.buildStudioGroupSelectionActionState(selectedElements, {
