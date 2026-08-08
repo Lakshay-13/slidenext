@@ -747,6 +747,17 @@
             <span class="material-symbols-outlined text-[16px] text-[#7028d0]">content_copy</span> Duplicate
           </button>
           </div>
+          <div class="mt-3 pt-3 border-t border-white/5 flex flex-col gap-2">
+            <label for="templateNameInput" class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Slide Template</label>
+            <input id="templateNameInput" type="text" value="Slide Template" placeholder="Name this slide" disabled class="w-full p-2 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed" />
+            <button id="saveActiveSlideTemplateBtn" onclick="saveActiveSlideAsTemplate()" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+              <span class="material-symbols-outlined text-[14px] text-[#7028d0]">view_quilt</span>
+              Save Slide Template
+            </button>
+            <div id="savedTemplatesList" class="flex flex-col gap-1 text-[10px] font-mono text-zinc-500">
+              <span>No slide templates saved</span>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -1254,6 +1265,7 @@
   <script src="/shared/studio-editor-canonical-removal.js"></script>
   <script src="/shared/studio-editor-canonical-insertion.js"></script>
   <script src="/shared/studio-editor-block-controller.js"></script>
+  <script src="/shared/studio-editor-template-controller.js"></script>
   <script src="/shared/studio-editor-canonical-slide.js"></script>
   <script src="/shared/studio-editor-canonical-metadata.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
@@ -1970,6 +1982,21 @@
           onBlocksChanged: (blocks) => renderSavedBlocks(blocks)
         })
       : null;
+    const studioEditorTemplateController = typeof SlideNextStudioEditorTemplateController !== 'undefined'
+      && SlideNextStudioEditorTemplateController
+      && typeof SlideNextStudioEditorTemplateController.createStudioEditorTemplateController === 'function'
+      ? SlideNextStudioEditorTemplateController.createStudioEditorTemplateController({
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
+          getActiveSlideId: () => getActiveSlideId(getIframeDoc()),
+          saveHistoryState: (...args) => saveHistoryState(...args),
+          triggerAutoSave: (...args) => triggerAutoSave(...args),
+          triggerAutoVersion: (...args) => triggerAutoVersion(...args),
+          onTemplatesChanged: (templates) => renderSavedTemplates(templates)
+        })
+      : null;
     const studioEditorTransformController = typeof SlideNextStudioEditorTransformController !== 'undefined'
       && SlideNextStudioEditorTransformController
       && typeof SlideNextStudioEditorTransformController.createStudioEditorTransformController === 'function'
@@ -2224,6 +2251,7 @@
       updateGridSnapActionState();
       updateDeckReadyToolbarActionState();
       updateBlockActionState();
+      updateTemplateActionState();
       
       // Update theme toggle icons
       const themeIcon = document.getElementById('themeIcon');
@@ -3435,9 +3463,13 @@
     }
 
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
-      return studioEditorActiveSlideController
+      const didSync = studioEditorActiveSlideController
         ? studioEditorActiveSlideController.sync(doc, options)
         : false;
+      if (typeof updateTemplateActionState === 'function') {
+        updateTemplateActionState(doc);
+      }
+      return didSync;
     }
 
     function bindDeckNavigationSync(doc = getIframeDoc()) {
@@ -5851,6 +5883,51 @@
       return true;
     }
 
+    function renderSavedTemplates(templates = []) {
+      if (typeof document === 'undefined' || !document || typeof document.getElementById !== 'function') {
+        return false;
+      }
+      const list = document.getElementById('savedTemplatesList');
+      if (!list || typeof document.createElement !== 'function') return false;
+      list.textContent = '';
+      const normalizedTemplates = Array.isArray(templates) ? templates : [];
+      if (normalizedTemplates.length === 0) {
+        const emptyState = document.createElement('span');
+        emptyState.textContent = 'No slide templates saved';
+        list.appendChild(emptyState);
+        return true;
+      }
+      normalizedTemplates.forEach((template) => {
+        const item = document.createElement('span');
+        const nodeCount = template
+          && template.slide
+          && Array.isArray(template.slide.nodes)
+          ? template.slide.nodes.length
+          : 0;
+        item.textContent = `${template && template.name ? template.name : 'Unnamed Template'} - ${nodeCount} element${nodeCount === 1 ? '' : 's'}`;
+        list.appendChild(item);
+      });
+      return true;
+    }
+
+    function updateTemplateActionState(doc = getIframeDoc()) {
+      const canSave = !!getActiveSlide(doc);
+      const documentApi = typeof document !== 'undefined'
+        && document
+        && typeof document.getElementById === 'function'
+        ? document
+        : null;
+      const button = documentApi ? documentApi.getElementById('saveActiveSlideTemplateBtn') : null;
+      const nameInput = documentApi ? documentApi.getElementById('templateNameInput') : null;
+      if (button) button.disabled = !canSave;
+      if (nameInput) nameInput.disabled = !canSave;
+      const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(doc)
+        : null;
+      renderSavedTemplates(canonicalDeck && canonicalDeck.templates);
+      return canSave;
+    }
+
     function updateBlockActionState(doc = getIframeDoc()) {
       const hasLockedSelection = typeof selectionHasLockedElements === 'function'
         ? selectionHasLockedElements(selectedElements)
@@ -6115,6 +6192,21 @@
         : null;
       if (removedDeck) updateBlockActionState();
       return !!removedDeck;
+    }
+
+    function saveActiveSlideAsTemplate() {
+      const nameInput = document.getElementById('templateNameInput');
+      const name = nameInput && typeof nameInput.value === 'string' && nameInput.value.trim()
+        ? nameInput.value.trim()
+        : 'Slide Template';
+      const savedDeck = studioEditorTemplateController
+        && typeof studioEditorTemplateController.saveActiveSlide === 'function'
+        ? studioEditorTemplateController.saveActiveSlide({ name })
+        : null;
+      if (!savedDeck) return false;
+      if (nameInput) nameInput.value = '';
+      updateTemplateActionState();
+      return true;
     }
 
     function nudgeSelectedElements(dx, dy) {
