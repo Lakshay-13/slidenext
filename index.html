@@ -7198,20 +7198,24 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistableDeckSanitizerOptionsAdapter
         : null;
       if (createStudioEditorPersistableDeckSanitizerOptionsAdapter) {
-        const adapter = createStudioEditorPersistableDeckSanitizerOptionsAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
-            ? options.resolveMetadataPersistenceOptions
-            : () => ({}),
-          getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
-            ? options.getDeckSanitizerOptions
-            : typeof getEditorDeckSanitizerOptions === 'function'
-              ? getEditorDeckSanitizerOptions
-              : () => ({})
-        });
-        return typeof adapter === 'function' ? adapter(playbackState, options) : {};
+        if (typeof buildEditorPersistableDeckSanitizerOptions.adapter !== 'function') {
+          buildEditorPersistableDeckSanitizerOptions.adapter = createStudioEditorPersistableDeckSanitizerOptionsAdapter({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
+              ? options.resolveMetadataPersistenceOptions
+              : () => ({}),
+            getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
+              ? options.getDeckSanitizerOptions
+              : typeof getEditorDeckSanitizerOptions === 'function'
+                ? getEditorDeckSanitizerOptions
+                : () => ({})
+          });
+        }
+        return typeof buildEditorPersistableDeckSanitizerOptions.adapter === 'function'
+          ? buildEditorPersistableDeckSanitizerOptions.adapter(playbackState, options)
+          : {};
       }
 
       const createStudioPersistableDeckSanitizerOptionsBuilder = (

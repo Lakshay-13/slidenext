@@ -3177,6 +3177,46 @@ test('buildEditorPersistableDeckSanitizerOptions delegates through the editor pe
   assert.equal(factoryOptions.getDeckSanitizerOptions, getDeckSanitizerOptions);
 });
 
+test('buildEditorPersistableDeckSanitizerOptions creates the shared persistence-state adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {',
+    '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
+  );
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorPersistableDeckSanitizerOptionsAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(options.persistenceApi, context.SlideNextStudioEditorPersistence);
+        return (nextPlaybackState, nextOptions) => {
+          calls.push([nextPlaybackState, nextOptions]);
+          return { playbackState: nextPlaybackState };
+        };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
+
+  const firstPlaybackState = { activeSlideIds: ['slide-1'] };
+  const secondPlaybackState = { activeSlideIds: ['slide-2'] };
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.buildEditorPersistableDeckSanitizerOptions(firstPlaybackState, { id: 1 }))),
+    { playbackState: firstPlaybackState }
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.buildEditorPersistableDeckSanitizerOptions(secondPlaybackState, { id: 2 }))),
+    { playbackState: secondPlaybackState }
+  );
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls.map(([, options]) => options.id), [1, 2]);
+});
+
 test('sanitizeEditorReusablePersistedHtml delegates through the editor persistence-state adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const sanitizeEditorReusablePersistedHtmlSource = extractFunctionSource(
