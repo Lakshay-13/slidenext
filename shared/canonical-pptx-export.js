@@ -410,10 +410,19 @@
 
   function getNodeCanvasLayout(node, origin = {}) {
     const layout = asObject(node.layout);
-    const x = Number.isFinite(layout.x) ? layout.x : null;
-    const y = Number.isFinite(layout.y) ? layout.y : null;
-    const width = Number.isFinite(layout.width) ? layout.width : null;
-    const height = Number.isFinite(layout.height) ? layout.height : null;
+    const bounds = asObject(layout.bounds);
+    const x = Number.isFinite(layout.x)
+      ? layout.x
+      : Number.isFinite(bounds.x) ? bounds.x : null;
+    const y = Number.isFinite(layout.y)
+      ? layout.y
+      : Number.isFinite(bounds.y) ? bounds.y : null;
+    const width = Number.isFinite(layout.width)
+      ? layout.width
+      : Number.isFinite(bounds.width) ? bounds.width : null;
+    const height = Number.isFinite(layout.height)
+      ? layout.height
+      : Number.isFinite(bounds.height) ? bounds.height : null;
     return {
       x: x === null ? null : x + (Number.isFinite(origin.x) ? origin.x : 0),
       y: y === null ? null : y + (Number.isFinite(origin.y) ? origin.y : 0),

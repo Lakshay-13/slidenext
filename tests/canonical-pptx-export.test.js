@@ -471,6 +471,33 @@ test('preflightCanonicalPptxExport does not warn for bound children inside flow 
   assert.deepEqual(report.diagnostics.warnings, []);
 });
 
+test('createCanonicalPptxExport uses rendered bounds for flow nodes and nested children', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      nodes: [{
+        id: 'flow-container',
+        type: 'container',
+        layout: { bounds: { x: 100, y: 50, width: 400, height: 200 } },
+        children: [{
+          id: 'flow-text',
+          type: 'text',
+          text: 'Rendered flow text',
+          layout: { bounds: { x: 20, y: 30, width: 160, height: 40 } }
+        }]
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.diagnostics.warnings, []);
+  assert.deepEqual(result.pptx.slides[0].calls.map(call => call.type), ['text']);
+  const textCall = result.pptx.slides[0].calls[0];
+  assert.ok(Math.abs(textCall.options.x - 1.6) < 0.001);
+  assert.ok(Math.abs(textCall.options.y - 1.06664) < 0.001);
+  assert.ok(Math.abs(textCall.options.w - 2.13328) < 0.001);
+  assert.ok(Math.abs(textCall.options.h - 0.53332) < 0.001);
+});
+
 test('preflightCanonicalPptxExport reports children clipped by overflow-hidden ancestors', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     layout: { size: { width: 1000, height: 500, unit: 'px' } },
