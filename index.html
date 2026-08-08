@@ -1381,6 +1381,7 @@
   <script src="/shared/studio-editor-persistence.js"></script>
   <script src="/shared/studio-editor-persistence-state.js"></script>
   <script src="/shared/studio-editor-persistence-controller.js"></script>
+  <script src="/shared/studio-editor-presentation-metadata-controller.js"></script>
   <script src="/shared/studio-editor-autosave.js"></script>
   <script src="/shared/studio-modal-visibility.js"></script>
   <script src="/shared/presentation-library.js"></script>
@@ -2507,6 +2508,25 @@
           setPresentationMetadata: (value) => {
             applyCurrentPresentationMetadata(value);
           }
+        })
+      : null;
+    const studioEditorPresentationMetadataController = typeof SlideNextStudioEditorPresentationMetadataController !== 'undefined'
+      && SlideNextStudioEditorPresentationMetadataController
+      && typeof SlideNextStudioEditorPresentationMetadataController.createStudioEditorPresentationMetadataController === 'function'
+      ? SlideNextStudioEditorPresentationMetadataController.createStudioEditorPresentationMetadataController({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          setCurrentPresentationMetadata: (value) => {
+            currentPresentationMetadata = value;
+          },
+          getCurrentPresentationUrl: () => currentPresentationUrl,
+          resolveStoredCanonicalDeck: (metadata) => resolveEditorStoredCanonicalDeck(metadata),
+          applyPersistedDeckState: (...args) => applyCurrentStudioPersistedDeckState(...args),
+          getIframeDoc,
+          generateThumbnails,
+          syncStudioChromeToActiveSlide,
+          updateDeckReadyToolbarActionState
         })
       : null;
     const studioEditorDeckMutationFinalizer = typeof SlideNextStudioEditorDeckMutation !== 'undefined'
@@ -4366,6 +4386,11 @@
     }
 
     function applyCurrentPresentationMetadata(metadata, options = {}) {
+      if (typeof studioEditorPresentationMetadataController !== 'undefined'
+        && studioEditorPresentationMetadataController
+        && typeof studioEditorPresentationMetadataController.apply === 'function') {
+        return studioEditorPresentationMetadataController.apply(metadata, options);
+      }
       currentPresentationMetadata = metadata || null;
       if (!options.syncPersistedCanonicalDeck || !currentPresentationMetadata) {
         return currentPresentationMetadata;
