@@ -131,6 +131,29 @@ test('insertCanonicalBlockInstance clones block nodes with collision-free ids an
   assert.equal(canonicalDeck.insertCanonicalBlockInstance(source, 'slide-1', 'missing'), null);
 });
 
+test('saveCanonicalBlockFromNodeIds captures selected top-level nodes without mutating the slide', () => {
+  const source = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'before' }, { id: 'selected-1' }, { id: 'selected-2' }, { id: 'after' }]
+    }]
+  });
+  const saved = canonicalDeck.saveCanonicalBlockFromNodeIds(
+    source,
+    'slide-1',
+    ['selected-2', 'selected-1'],
+    { id: 'metrics', name: 'Metrics Block' }
+  );
+
+  assert.equal(saved.blocks[0].id, 'metrics');
+  assert.equal(saved.blocks[0].name, 'Metrics Block');
+  assert.deepEqual(saved.blocks[0].nodes.map((node) => node.id), ['selected-1', 'selected-2']);
+  assert.deepEqual(source.slides[0].nodes.map((node) => node.id), [
+    'before', 'selected-1', 'selected-2', 'after'
+  ]);
+  assert.equal(canonicalDeck.saveCanonicalBlockFromNodeIds(source, 'slide-1', ['missing']), null);
+});
+
 test('createCanonicalDeck preserves optional slide sections without changing empty slide shape', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     slides: [

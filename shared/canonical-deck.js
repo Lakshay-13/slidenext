@@ -465,6 +465,28 @@
     });
   }
 
+  function saveCanonicalBlockFromNodeIds(deckLike, slideId, nodeIds = [], blockLike = {}) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedSlideId = normalizeString(slideId).trim();
+    const normalizedNodeIds = new Set(normalizeStringArray(nodeIds).map((id) => id.trim()));
+    if (!isCanonicalDeck(deck) || !normalizedSlideId || normalizedNodeIds.size === 0) {
+      return null;
+    }
+
+    const slide = deck.slides.find((candidate) => candidate && candidate.id === normalizedSlideId);
+    if (!slide) return null;
+
+    const selectedNodes = slide.nodes.filter((node) => node && normalizedNodeIds.has(node.id));
+    if (selectedNodes.length !== normalizedNodeIds.size) return null;
+
+    return appendCanonicalBlock(deck, {
+      ...asPlainObject(blockLike),
+      nodes: selectedNodes
+    });
+  }
+
   function insertCanonicalSlide(deckLike, slideLike = {}, index) {
     if (!deckLike || typeof deckLike !== 'object') {
       return null;
@@ -1376,6 +1398,7 @@
     appendCanonicalBlock,
     insertCanonicalBlock,
     removeCanonicalBlock,
+    saveCanonicalBlockFromNodeIds,
     appendCanonicalNode,
     insertCanonicalBlockInstance,
     groupCanonicalNodes,
