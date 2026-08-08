@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const masterSlideController = require('../shared/studio-editor-master-slide-controller.js');
 
 test('saveActiveSlide persists a master layout through the canonical deck', () => {
@@ -37,6 +38,7 @@ test('master slide mutations prefer a valid live canonical baseline', () => {
   let didBuildFromDocument = false;
   const controller = masterSlideController.createStudioEditorMasterSlideController({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline: () => liveDeck,
     getCanonicalDeck: () => {
       didBuildFromDocument = true;
