@@ -1278,6 +1278,7 @@
   <script src="/shared/studio-pdf-export.js"></script>
   <script src="/shared/studio-pptx-export.js"></script>
   <script src="/shared/studio-editor-source.js"></script>
+  <script src="/shared/studio-editor-source-controller.js"></script>
   <script src="/shared/studio-editor-export-actions.js"></script>
   <script src="/shared/studio-editor-export-controller.js"></script>
   <script src="/shared/deck-persistence.js"></script>
@@ -1359,6 +1360,41 @@
           },
           resolveSourcePath: () => currentPresentationUrl,
           resolveFilename: () => (currentTitle || 'slidenext-presentation') + '.pptx'
+        })
+      : null;
+    const studioEditorSourceController = typeof SlideNextStudioEditorSourceController !== 'undefined'
+      && SlideNextStudioEditorSourceController
+      && typeof SlideNextStudioEditorSourceController.createStudioEditorSourceController === 'function'
+      ? SlideNextStudioEditorSourceController.createStudioEditorSourceController({
+          previewApi: typeof SlideNextStudioPreview !== 'undefined'
+            ? SlideNextStudioPreview
+            : null,
+          sourceApi: typeof SlideNextStudioEditorSource !== 'undefined'
+            ? SlideNextStudioEditorSource
+            : null,
+          documentRef: document,
+          resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
+          resolveSourceHtml: () => buildEditorSourceHtml(),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          getCurrentDocument: () => getIframeDoc(),
+          resolveActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
+            sourceDoc,
+            canonicalDeck
+          ),
+          resolveHistoryOptions: () => getEditorHistoryOptions(),
+          isCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
+          beforeApply: () => {
+            saveHistoryState(false);
+            return true;
+          },
+          restoreHistoryEntry: (historyEntry) => {
+            restoreFrameFromHistoryEntry(historyEntry);
+            return true;
+          },
+          afterApply: (canonicalDeck) => {
+            saveHistoryState(false, null, canonicalDeck);
+            triggerAutoSave();
+          }
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -2095,78 +2131,39 @@
     }
 
     function openSourceViewModal() {
-      SlideNextStudioPreview.openStudioSourceView({
-        canOpenSourceView: resolveCurrentStudioDeckReadyActionState().canUseDeckActions,
-        document,
-        editable: true,
-        resolveSourceHtml: () => buildEditorSourceHtml()
-      });
+      return studioEditorSourceController
+        ? studioEditorSourceController.open()
+        : false;
     }
 
     function applyEditorSourceHtml(sourceHtml = '') {
-      const sourceApi = typeof SlideNextStudioEditorSource !== 'undefined'
-        ? SlideNextStudioEditorSource
-        : null;
-      if (!sourceApi || typeof sourceApi.applyStudioEditorSource !== 'function') {
-        return { success: false, error: 'Source editor is unavailable' };
-      }
-
-      const historyOptions = getEditorHistoryOptions();
-      return sourceApi.applyStudioEditorSource(sourceHtml, {
-        DOMParser: typeof DOMParser === 'function' ? DOMParser : null,
-        sanitizeSourceRoot: typeof historyOptions.sanitizeFrameRoot === 'function'
-          ? historyOptions.sanitizeFrameRoot
-          : null,
-        buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
-        isCanonicalDeck: getEditorCanonicalDeckValidator(),
-        getCurrentDocument: getIframeDoc,
-        resolveActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
-          sourceDoc,
-          canonicalDeck
-        ),
-        beforeApply: () => {
-          saveHistoryState(false);
-          return true;
-        },
-        restoreHistoryEntry: (historyEntry) => {
-          restoreFrameFromHistoryEntry(historyEntry);
-          return true;
-        },
-        afterApply: (canonicalDeck) => {
-          saveHistoryState(false, null, canonicalDeck);
-          triggerAutoSave();
-        }
-      });
+      return studioEditorSourceController
+        ? studioEditorSourceController.applySourceHtml(sourceHtml)
+        : { success: false, error: 'Source editor is unavailable' };
     }
 
     function applySourceViewModal() {
-      if (!resolveCurrentStudioDeckReadyActionState().canUseDeckActions) return false;
-      if (!SlideNextStudioPreview || typeof SlideNextStudioPreview.applyStudioSourceView !== 'function') {
-        return false;
-      }
-      return SlideNextStudioPreview.applyStudioSourceView({
-        canOpenSourceView: true,
-        document,
-        onApplySourceHtml: applyEditorSourceHtml
-      });
+      return studioEditorSourceController
+        ? studioEditorSourceController.apply()
+        : false;
     }
 
     function closeSourceViewModal() {
-      SlideNextStudioPreview.closeStudioSourceView({
-        document
-      });
+      return studioEditorSourceController
+        ? studioEditorSourceController.close()
+        : false;
     }
 
     function resetStudioSourceViewUiState() {
-      SlideNextStudioPreview.resetStudioSourceViewUiState({
-        document
-      });
+      return studioEditorSourceController
+        ? studioEditorSourceController.reset()
+        : false;
     }
 
     function resetStudioPresentationUiState() {
-      SlideNextStudioPreview.resetStudioPresentationUiState({
-        document
-      });
+      return studioEditorSourceController
+        ? studioEditorSourceController.resetPresentation()
+        : false;
     }
 
     function closePresentation() {

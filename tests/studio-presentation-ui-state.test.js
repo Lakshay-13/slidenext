@@ -93,6 +93,11 @@ test('resetStudioPresentationUiState clears stale preview chrome and exits fulls
 
   const context = {
     SlideNextStudioPreview: preview,
+    studioEditorSourceController: {
+      resetPresentation() {
+        return preview.resetStudioPresentationUiState({ document: documentStub });
+      }
+    },
     document: documentStub
   };
 

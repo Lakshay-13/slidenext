@@ -78,6 +78,11 @@ test('resetStudioSourceViewUiState clears stale source modal chrome', () => {
 
   const context = {
     SlideNextStudioPreview: preview,
+    studioEditorSourceController: {
+      reset() {
+        return preview.resetStudioSourceViewUiState({ document: documentStub });
+      }
+    },
     document: documentStub
   };
 
@@ -103,54 +108,21 @@ test('openSourceViewModal delegates source view opening to the shared preview he
     '\n\n    function closeSourceViewModal() {'
   );
 
-  let buildEditorSourceHtmlCalls = 0;
-  const previewOpenCalls = [];
+  let openCalls = 0;
   const context = {
-    resolveCurrentStudioDeckReadyActionState() {
-      return {
-        canUseDeckActions: false
-      };
-    },
-    SlideNextStudioPreview: {
-      openStudioSourceView(options = {}) {
-        previewOpenCalls.push(options);
+    studioEditorSourceController: {
+      open() {
+        openCalls += 1;
         return true;
       }
     },
-    buildEditorSourceHtml() {
-      buildEditorSourceHtmlCalls += 1;
-      return '<html>source</html>';
-    },
-    document: {
-      getElementById(id) {
-        switch (id) {
-          case 'openSourceViewBtn':
-            return { disabled: true };
-          case 'sourceViewModal':
-            return { classList: createClassList(['hidden']) };
-          case 'sourceViewModalContent':
-            return { classList: createClassList(['scale-95']) };
-          case 'sourceViewContent':
-            return { value: '' };
-          default:
-            return null;
-        }
-      }
-    }
   };
 
   vm.createContext(context);
   vm.runInContext(openSourceViewModalSource, context);
 
-  context.openSourceViewModal();
-
-  assert.equal(previewOpenCalls.length, 1);
-  assert.equal(previewOpenCalls[0].canOpenSourceView, false);
-  assert.equal(previewOpenCalls[0].document, context.document);
-  assert.equal(typeof previewOpenCalls[0].resolveSourceHtml, 'function');
-  assert.equal(buildEditorSourceHtmlCalls, 0);
-  assert.equal(previewOpenCalls[0].resolveSourceHtml(), '<html>source</html>');
-  assert.equal(buildEditorSourceHtmlCalls, 1);
+  assert.equal(context.openSourceViewModal(), true);
+  assert.equal(openCalls, 1);
 });
 
 test('applyEditorSourceHtml wires canonical source editing through the shared pipeline', () => {
@@ -161,106 +133,45 @@ test('applyEditorSourceHtml wires canonical source editing through the shared pi
     '\n\n    function applySourceViewModal() {'
   );
 
-  let delegatedOptions = null;
-  const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
-  const historyCalls = [];
+  let delegatedSourceHtml = '';
   const context = {
-    SlideNextStudioEditorSource: {
-      applyStudioEditorSource(sourceHtml, options) {
-        delegatedOptions = { sourceHtml, options };
+    studioEditorSourceController: {
+      applySourceHtml(sourceHtml) {
+        delegatedSourceHtml = sourceHtml;
         return { success: true };
       }
-    },
-    DOMParser: class DOMParser {},
-    getEditorHistoryOptions() {
-      return {
-        sanitizeFrameRoot(root) {
-          return root;
-        }
-      };
-    },
-    buildEditorCanonicalDeck() {
-      return canonicalDeck;
-    },
-    getEditorCanonicalDeckValidator() {
-      return (value) => value === canonicalDeck;
-    },
-    getIframeDoc() {
-      return { id: 'live-frame' };
-    },
-    resolveEditorFallbackActiveSlideId() {
-      return 'slide-1';
-    },
-    saveHistoryState(...args) {
-      historyCalls.push(['saveHistoryState', args]);
-    },
-    restoreFrameFromHistoryEntry(entry) {
-      historyCalls.push(['restoreFrameFromHistoryEntry', entry]);
-    },
-    triggerAutoSave() {
-      historyCalls.push(['triggerAutoSave']);
     }
   };
 
   vm.createContext(context);
   vm.runInContext(applyEditorSourceHtmlSource, context);
 
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(context.applyEditorSourceHtml('<html>edited</html>'))),
-    { success: true }
-  );
-  assert.equal(delegatedOptions.sourceHtml, '<html>edited</html>');
-  assert.equal(delegatedOptions.options.DOMParser, context.DOMParser);
-  assert.equal(typeof delegatedOptions.options.sanitizeSourceRoot, 'function');
-  assert.equal(delegatedOptions.options.buildCanonicalDeck({}), context.buildEditorCanonicalDeck({}));
-  assert.equal(delegatedOptions.options.isCanonicalDeck(canonicalDeck), true);
-  assert.equal(delegatedOptions.options.getCurrentDocument().id, 'live-frame');
-  assert.equal(delegatedOptions.options.resolveActiveSlideId({}, canonicalDeck), 'slide-1');
-  delegatedOptions.options.beforeApply({});
-  delegatedOptions.options.restoreHistoryEntry({});
-  delegatedOptions.options.afterApply(canonicalDeck);
-  assert.deepEqual(historyCalls.map(([name]) => name), [
-    'saveHistoryState',
-    'restoreFrameFromHistoryEntry',
-    'saveHistoryState',
-    'triggerAutoSave'
-  ]);
-  assert.deepEqual(historyCalls[0][1], [false]);
-  assert.deepEqual(historyCalls[2][1], [false, null, canonicalDeck]);
+  assert.deepEqual(context.applyEditorSourceHtml('<html>edited</html>'), { success: true });
+  assert.equal(delegatedSourceHtml, '<html>edited</html>');
 });
 
-test('applySourceViewModal delegates source application only when the deck is ready', () => {
+test('applySourceViewModal delegates source application to the controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySourceViewModalSource = extractFunctionSource(
     fileContent,
     'function applySourceViewModal() {',
     '\n\n    function closeSourceViewModal() {'
   );
-  let delegatedOptions = null;
+  let applyCalls = 0;
   const context = {
-    resolveCurrentStudioDeckReadyActionState() {
-      return { canUseDeckActions: true };
-    },
-    SlideNextPreview: null,
-    SlideNextStudioPreview: {
-      applyStudioSourceView(options) {
-        delegatedOptions = options;
+    studioEditorSourceController: {
+      apply() {
+        applyCalls += 1;
         return true;
       }
-    },
-    applyEditorSourceHtml() {
-      return { success: true };
-    },
-    document: {}
+    }
   };
 
   vm.createContext(context);
   vm.runInContext(applySourceViewModalSource, context);
 
   assert.equal(context.applySourceViewModal(), true);
-  assert.equal(delegatedOptions.canOpenSourceView, true);
-  assert.equal(delegatedOptions.document, context.document);
-  assert.equal(delegatedOptions.onApplySourceHtml, context.applyEditorSourceHtml);
+  assert.equal(applyCalls, 1);
 });
 
 test('buildEditorSourceHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
