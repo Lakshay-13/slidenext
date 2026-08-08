@@ -2418,14 +2418,8 @@
       const gridSnapView = typeof SlideNextStudioEditorGridSnapView !== 'undefined'
         ? SlideNextStudioEditorGridSnapView
         : null;
-      if (gridSnapView && typeof gridSnapView.syncStudioGridSnapState === 'function') {
-        return gridSnapView.syncStudioGridSnapState({
-          documentRef: document,
-          isEnabled: isGridSnapEnabled
-        });
-      }
-      if (!gridSnapView || typeof gridSnapView.renderStudioGridSnapState !== 'function') return false;
-      return gridSnapView.renderStudioGridSnapState({
+      if (!gridSnapView || typeof gridSnapView.syncStudioGridSnapState !== 'function') return false;
+      return gridSnapView.syncStudioGridSnapState({
         documentRef: document,
         isEnabled: isGridSnapEnabled
       });
