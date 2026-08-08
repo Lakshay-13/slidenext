@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const layerOrder = require('../shared/studio-editor-layer-order.js');
+const layerController = require('../shared/studio-editor-layer-controller.js');
 const layerView = require('../shared/studio-editor-layer-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -69,7 +70,7 @@ function hasDisabledAttribute(attrs) {
   return /\sdisabled(?=\s|=|$)/.test(attrs);
 }
 
-test('updateLayersList delegates layer mounting and row identity to the shared layer view', () => {
+test('updateLayersList delegates layer synchronization to the shared layer controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateLayersListSource = extractFunctionSource(
     fileContent,
@@ -81,8 +82,8 @@ test('updateLayersList delegates layer mounting and row identity to the shared l
   const listContainer = createListContainer();
   let delegatedOptions = null;
   const context = {
-    SlideNextStudioEditorLayerView: {
-      renderStudioLayersListInDocument(options) {
+    SlideNextStudioEditorLayerController: {
+      syncStudioLayerList(options) {
         delegatedOptions = options;
         return true;
       }
@@ -121,9 +122,10 @@ test('updateLayersList delegates layer mounting and row identity to the shared l
   context.updateLayersList();
 
   assert.equal(delegatedOptions.documentRef, context.document);
-  assert.equal(delegatedOptions.activeSlideSnapshot.id, 'slide-1');
-  assert.deepEqual(JSON.parse(JSON.stringify(delegatedOptions.layers)), [{ id: 'element-1' }]);
-  assert.equal(typeof delegatedOptions.resolveLayerState, 'function');
+  assert.equal(delegatedOptions.iframeDoc, iframeDoc);
+  assert.equal(typeof delegatedOptions.getActiveSlide, 'function');
+  assert.equal(typeof delegatedOptions.buildEditorDeckSnapshot, 'function');
+  assert.equal(typeof delegatedOptions.getElementByEditorId, 'function');
 });
 
 test('updateLayersList disables row layer controls when a layer cannot move in that direction', () => {
@@ -149,6 +151,7 @@ test('updateLayersList disables row layer controls when a layer cannot move in t
   };
 
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
     SlideNextStudioEditorLayerOrder: layerOrder,
     SlideNextStudioEditorLayerView: layerView,
     buildEditorDeckSnapshot() {
@@ -225,6 +228,7 @@ test('updateLayersList renders canonical layer snapshots when the editor frame i
   let getNormalizedSlideLayerOrderCalls = 0;
 
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
     SlideNextStudioEditorLayerOrder: layerOrder,
     SlideNextStudioEditorLayerView: layerView,
     buildEditorDeckSnapshot() {

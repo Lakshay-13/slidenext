@@ -10316,73 +10316,21 @@
     // Slide Elements / Layers List Inspector Panel
     function updateLayersList() {
       const iframeDoc = getIframeDoc();
-      const activeSlide = getActiveSlide(iframeDoc);
       const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
         ? SlideNextStudioEditorLayerController
         : null;
-      if (layerController && typeof layerController.syncStudioLayerList === 'function') {
-        return layerController.syncStudioLayerList({
-          documentRef: document,
-          iframeDoc,
-          getActiveSlide,
-          getNormalizedSlideLayerOrder,
-          buildEditorDeckSnapshot,
-          getElementByEditorId,
-          buildLayerOrderSelectionActionState
-        });
+      if (!layerController || typeof layerController.syncStudioLayerList !== 'function') {
+        return false;
       }
-      const orderedLayerElements = activeSlide ? getNormalizedSlideLayerOrder(activeSlide) : [];
-      
-      const deckSnapshot = buildEditorDeckSnapshot(iframeDoc, { includeLayers: true });
-      const activeSlideSnapshot = deckSnapshot.slides.find(slide => slide.id === deckSnapshot.activeSlideId);
-      const layers = activeSlideSnapshot && Array.isArray(activeSlideSnapshot.elements)
-        ? activeSlideSnapshot.elements
-        : [];
-      const layerView = typeof SlideNextStudioEditorLayerView !== 'undefined'
-        ? SlideNextStudioEditorLayerView
-        : null;
-      const canRenderLayers = layerView
-        && (typeof layerView.renderStudioLayersListInDocument === 'function'
-          || typeof layerView.renderStudioLayersList === 'function');
-      if (!canRenderLayers) return;
-      const renderOptions = {
-        activeSlideSnapshot,
-        layers,
-        resolveLayerState: (layer) => {
-          const liveElement = getElementByEditorId(layer.id, iframeDoc);
-          const canRunLayerActions = !!liveElement;
-          return {
-            canRunLayerActions,
-            layerOrderActionState: buildLayerOrderSelectionActionState(
-              liveElement ? [liveElement] : [],
-              {
-                doc: iframeDoc,
-                slide: activeSlide,
-                orderedElements: orderedLayerElements,
-                canMutateDeck: () => canRunLayerActions
-              }
-            )
-          };
-        }
-      };
-      if (typeof layerView.renderStudioLayersListInDocument === 'function') {
-        return layerView.renderStudioLayersListInDocument({
-          documentRef: document,
-          ...renderOptions
-        });
-      }
-
-      const listContainer = document.getElementById('slideLayersList');
-      if (!listContainer || typeof layerView.renderStudioLayersList !== 'function') return;
-      listContainer.innerHTML = layerView.renderStudioLayersList(renderOptions);
-      
-      // Store stable editor ids on layer rows so actions can resolve the current DOM element.
-      const rows = listContainer.children;
-      for (let i = 0; i < rows.length; i++) {
-        if (layers[i]) {
-          rows[i].dataset.editorElementId = layers[i].id;
-        }
-      }
+      return layerController.syncStudioLayerList({
+        documentRef: document,
+        iframeDoc,
+        getActiveSlide,
+        getNormalizedSlideLayerOrder,
+        buildEditorDeckSnapshot,
+        getElementByEditorId,
+        buildLayerOrderSelectionActionState
+      });
     }
 
     function resolveLayerRowElement(row) {
