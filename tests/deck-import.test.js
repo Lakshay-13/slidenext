@@ -1414,6 +1414,33 @@ test('importElementToCanonicalNode keeps explicit background styles authoritativ
   assert.equal(node.style, 'background-color: #112233; background-image: url("assets/inline.png"); background-size: contain;');
 });
 
+test('importElementToCanonicalNode preserves computed focal background positions', () => {
+  const element = createImportedElement({
+    tagName: 'DIV',
+    classList: createIterableClassList(['hero-card']),
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return {
+            backgroundColor: 'transparent',
+            backgroundImage: 'url("assets/panel.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'right bottom',
+            backgroundRepeat: 'no-repeat'
+          };
+        }
+      }
+    },
+    attributes: { class: 'hero-card' },
+    textContent: 'Panel',
+    outerHTML: '<div class="hero-card">Panel</div>'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+
+  assert.match(node.style, /background-position: right bottom;/);
+});
+
 test('importElementToCanonicalNode omits transparent computed background colors', () => {
   const element = createImportedElement({
     tagName: 'DIV',
@@ -1650,4 +1677,32 @@ test('importSlideToCanonicalSlide promotes computed class-based background image
     'background-size: cover; background-position: center; background-repeat: no-repeat;'
   );
   assert.equal(canonicalSlide.source.attributes.style, undefined);
+});
+
+test('importSlideToCanonicalSlide preserves computed focal background positions', () => {
+  const slide = createImportedElement({
+    tagName: 'SECTION',
+    classList: createIterableClassList(['slide', 'hero-slide']),
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return {
+            backgroundColor: 'rgb(16, 24, 32)',
+            backgroundImage: 'url("http://localhost/presentations/demo/assets/hero.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'right bottom',
+            backgroundRepeat: 'no-repeat'
+          };
+        }
+      }
+    },
+    attributes: { class: 'slide hero-slide' },
+    outerHTML: '<section class="slide hero-slide"></section>'
+  });
+
+  const canonicalSlide = deckImport.importSlideToCanonicalSlide(slide, 0, {
+    sourcePath: '/presentations/demo/index.html'
+  });
+
+  assert.match(canonicalSlide.layout.background.style, /background-position: right bottom;/);
 });

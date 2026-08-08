@@ -901,6 +901,33 @@
       || /^rgba\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*0(?:\.0+)?\s*\)$/i.test(normalizedValue);
   }
 
+  function isSupportedImportedImagePosition(value) {
+    const normalized = normalizeString(value).trim().toLowerCase().replace(/\s+/g, ' ');
+    const tokens = normalized ? normalized.split(' ') : [];
+    if (tokens.length === 0 || tokens.length > 2) return false;
+
+    const parseAxis = (token, axis) => {
+      if (token === 'center') return 0.5;
+      if (axis === 'horizontal' && ['left', 'right'].includes(token)) return 0;
+      if (axis === 'vertical' && ['top', 'bottom'].includes(token)) return 0;
+      const percent = token.match(/^(\d+(?:\.\d+)?)%$/);
+      if (!percent) return null;
+      const parsed = Number(percent[1]);
+      return Number.isFinite(parsed) && parsed >= 0 && parsed <= 100 ? parsed : null;
+    };
+
+    if (tokens.length === 1) {
+      return parseAxis(tokens[0], 'horizontal') !== null
+        || parseAxis(tokens[0], 'vertical') !== null;
+    }
+
+    const firstHorizontal = parseAxis(tokens[0], 'horizontal');
+    const secondVertical = parseAxis(tokens[1], 'vertical');
+    if (firstHorizontal !== null && secondVertical !== null) return true;
+    return parseAxis(tokens[0], 'vertical') !== null
+      && parseAxis(tokens[1], 'horizontal') !== null;
+  }
+
   function buildImportedComputedNodeBackgroundStyle(el, inlineStyleText, options = {}) {
     const computedStyle = getImportedComputedStyle(el, options);
     if (!computedStyle) {
@@ -933,7 +960,10 @@
         return;
       }
       const value = readImportedStyleValue(computedStyle, propertyName);
-      if (supportedValuePattern.test(value)) {
+      const isSupported = propertyName === 'background-position'
+        ? isSupportedImportedImagePosition(value)
+        : supportedValuePattern.test(value);
+      if (isSupported) {
         declarations.push(`${propertyName}: ${value};`);
       }
     });
@@ -1060,7 +1090,7 @@
         .filter(({ propertyName, value }) => {
           if (findImportedStylePropertyValue(inlineStyleText, propertyName)) return false;
           if (propertyName === 'background-size') return /^(?:cover|contain)$/i.test(value);
-          if (propertyName === 'background-position') return /^(?:center|center\s+center)$/i.test(value);
+          if (propertyName === 'background-position') return isSupportedImportedImagePosition(value);
           return value.toLowerCase() === 'no-repeat';
         })
         .map(({ propertyName, value }) => `${propertyName}: ${value};`)
