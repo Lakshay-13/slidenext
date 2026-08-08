@@ -829,6 +829,25 @@ test('restoreStudioHistoryTransaction delegates replay and post-apply synchroniz
   }), null);
 });
 
+test('restoreStudioHistoryTransaction fails closed when replay throws', () => {
+  assert.doesNotThrow(() => {
+    assert.equal(studioHistory.restoreStudioHistoryTransaction(
+      { canonicalDeck: { slides: [{ id: 'slide-1' }] } },
+      {
+        direction: 'undo',
+        transaction: { kind: 'slidenext.editor.transaction', operations: [] }
+      },
+      {
+        transactionApi: {
+          applyStudioEditorTransaction() {
+            throw new Error('stale transaction target');
+          }
+        }
+      }
+    ), null);
+  });
+});
+
 test('createStudioHistoryStateCapturer leaves history state unchanged when no entry is available or capture is skipped', () => {
   const missingEntryCapturer = studioHistory.createStudioHistoryStateCapturer({
     createHistoryEntry() {

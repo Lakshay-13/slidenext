@@ -692,15 +692,20 @@
     const applyMarkupState = typeof options.applyMarkupState === 'function'
       ? options.applyMarkupState
       : () => false;
-    const transactionResult = transactionApi.applyStudioEditorTransaction(
-      transaction,
-      historyStep.direction,
-      {
-        getElementById,
-        applyVisibilityState,
-        applyMarkupState
-      }
-    );
+    let transactionResult;
+    try {
+      transactionResult = transactionApi.applyStudioEditorTransaction(
+        transaction,
+        historyStep.direction,
+        {
+          getElementById,
+          applyVisibilityState,
+          applyMarkupState
+        }
+      );
+    } catch (err) {
+      return null;
+    }
     if (!transactionResult || !transactionResult.didApply) return null;
 
     const onApplied = typeof options.onApplied === 'function'
