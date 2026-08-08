@@ -61,6 +61,21 @@ test('buildStudioCanonicalDuplicateSlideBaseline falls back when the live canoni
   assert.equal(didBuildFromDocument, true);
 });
 
+test('buildStudioCanonicalDuplicateSlideBaseline rejects invalid compatibility baselines', () => {
+  let rebuildCalls = 0;
+  const result = canonicalSlide.buildStudioCanonicalDuplicateSlideBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeck: () => {
+      rebuildCalls += 1;
+      return { invalid: true };
+    }
+  });
+
+  assert.equal(result, null);
+  assert.equal(rebuildCalls, 1);
+});
+
 test('buildStudioCanonicalDuplicateSlideDeck imports and inserts a duplicate without mutating the source', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1' }, { id: 'slide-3' }]
