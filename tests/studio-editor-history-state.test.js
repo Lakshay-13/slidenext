@@ -133,6 +133,34 @@ test('createStudioEditorHistoryEntryBuilder forwards a live baseline when pendin
   });
 });
 
+test('createStudioEditorHistoryEntryBuilder ignores an invalid live baseline', () => {
+  let capturedOptions = null;
+  const historyApi = {
+    buildStudioHistoryEntry(_doc, options) {
+      options.buildCanonicalDeck('history-doc');
+      return { canonicalDeck: null };
+    }
+  };
+  const builder = historyState.createStudioEditorHistoryEntryBuilder({
+    historyApi,
+    canonicalStateApi: canonicalState,
+    isCanonicalDeck(value) {
+      return !!value && value.kind === 'slidenext.deck' && Array.isArray(value.slides);
+    },
+    getCanonicalDeckBaseline() {
+      return { invalid: true };
+    },
+    buildCanonicalDeck(_sourceDoc, options) {
+      capturedOptions = options;
+      return { kind: 'slidenext.deck', slides: [] };
+    }
+  });
+
+  builder({ id: 'history-doc' });
+
+  assert.deepEqual(capturedOptions, { preferLiveCanonicalDeck: false });
+});
+
 test('createStudioEditorHistoryEntryAdapter reuses the shared entry builder', () => {
   let createCalls = 0;
   let capturedOptions = null;

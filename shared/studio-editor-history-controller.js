@@ -186,6 +186,7 @@
               getPendingCanonicalDeck,
               buildCanonicalDeck,
               getCanonicalDeckBaseline,
+              isCanonicalDeck,
               getHistoryOptions,
               resolveFallbackActiveSlideId,
               buildHistoryHtml: buildFrameHtml,
