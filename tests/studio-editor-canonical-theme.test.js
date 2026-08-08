@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalTheme = require('../shared/studio-editor-canonical-theme.js');
 
 function createDocumentRef() {
@@ -63,6 +64,7 @@ test('buildStudioCanonicalThemeBaseline prefers a valid live canonical deck', ()
   let didBuildFromDocument = false;
   const result = canonicalTheme.buildStudioCanonicalThemeBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return liveDeck;
     },
@@ -81,6 +83,7 @@ test('buildStudioCanonicalThemeBaseline falls back when the live canonical deck 
   let didBuildFromDocument = false;
   const result = canonicalTheme.buildStudioCanonicalThemeBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return { invalid: true };
     },
@@ -104,6 +107,7 @@ test('buildStudioCanonicalThemeDeck applies token updates to a supplied baseline
     '--font-heading': 'Geist'
   }, {
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     canonicalDeckBeforeMutation: sourceDeck
   });
 
