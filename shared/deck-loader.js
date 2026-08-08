@@ -5,14 +5,17 @@
   const presentationMetadata = typeof module === 'object' && module.exports
     ? require('./presentation-metadata')
     : root && root.SlideNextPresentationMetadata;
-  const api = factory(deckImport, presentationMetadata, root);
+  const canonicalDeck = typeof module === 'object' && module.exports
+    ? require('./canonical-deck')
+    : root && root.SlideNextCanonicalDeck;
+  const api = factory(deckImport, presentationMetadata, canonicalDeck, root);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextDeckLoader = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (deckImport, presentationMetadata, root) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (deckImport, presentationMetadata, canonicalDeck, root) {
   function normalizeString(value, fallback = '') {
     return typeof value === 'string' ? value : fallback;
   }
@@ -172,8 +175,9 @@
       ? options.transientClassNames
       : [];
 
-    return deckImport.importHtmlDeckToCanonicalDeck(doc, {
-      ...options,
+    const { canonicalDeckBaseline, ...importOptions } = options;
+    const importedDeck = deckImport.importHtmlDeckToCanonicalDeck(doc, {
+      ...importOptions,
       presentationMetadata: options.presentationMetadata || {},
       sourcePath: normalizeString(options.sourcePath),
       persistenceOptions,
@@ -184,6 +188,14 @@
       getSlideId: options.getSlideId,
       getNodeId: options.getNodeId
     });
+
+    const mergeCanonicalDeckRebuildBaseline = canonicalDeck
+      && typeof canonicalDeck.mergeCanonicalDeckRebuildBaseline === 'function'
+      ? canonicalDeck.mergeCanonicalDeckRebuildBaseline
+      : null;
+    return mergeCanonicalDeckRebuildBaseline
+      ? mergeCanonicalDeckRebuildBaseline(importedDeck, canonicalDeckBaseline)
+      : importedDeck;
   }
 
   return {

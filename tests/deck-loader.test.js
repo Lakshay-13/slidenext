@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const deckLoader = require('../shared/deck-loader.js');
+const canonicalDeck = require('../shared/canonical-deck.js');
 
 test('derivePresentationMetadataUrl maps presentation html urls onto presentation.json sidecars', () => {
   assert.equal(
@@ -217,6 +218,15 @@ test('buildCanonicalDeckFromDocument forwards shared import options to the canon
     sourcePath: '/presentations/custom-deck/index.html',
     slideSelector: '.custom-slide',
     slideTitleSelector: '.custom-title',
+    canonicalDeckBaseline: canonicalDeck.createCanonicalDeck({
+      assets: [{ id: 'library-asset', src: 'library.png' }],
+      blocks: [{ id: 'block-1', name: 'Reusable block', nodes: [] }],
+      templates: [{ id: 'template-1', name: 'Reusable template', slide: { nodes: [] } }],
+      masterSlides: [{ id: 'master-1', name: 'Reusable master', slide: { nodes: [] } }],
+      notes: { deck: 'Speaker notes' },
+      export: { pdf: { pageSize: 'wide' } },
+      slides: [{ id: 'before', nodes: [] }]
+    }),
     stripTransientDeckRuntimeState() {}
   });
 
@@ -225,6 +235,12 @@ test('buildCanonicalDeckFromDocument forwards shared import options to the canon
   assert.equal(deck.slides.length, 1);
   assert.equal(deck.slides[0].id, 'custom-slide-1');
   assert.equal(deck.slides[0].title, 'Custom Slide Title');
+  assert.deepEqual(deck.assets.map((asset) => asset.id), ['library-asset']);
+  assert.deepEqual(deck.blocks.map((block) => block.id), ['block-1']);
+  assert.deepEqual(deck.templates.map((template) => template.id), ['template-1']);
+  assert.deepEqual(deck.masterSlides.map((master) => master.id), ['master-1']);
+  assert.deepEqual(deck.notes, { deck: 'Speaker notes' });
+  assert.deepEqual(deck.export, { html: {}, pdf: { pageSize: 'wide' }, pptx: {} });
 });
 
 test('buildCanonicalDeckFromDocument applies metadata-configured transient class stripping to canonical nodes', () => {

@@ -11,12 +11,27 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
 
     return function buildStudioEditorMutationCanonicalDeck(sourceDoc) {
       if (!buildCanonicalDeck) return null;
-      return buildCanonicalDeck(sourceDoc, {
+      const buildOptions = {
         preferLiveCanonicalDeck: false
-      });
+      };
+      if (getCanonicalDeckBaseline) {
+        let canonicalDeckBaseline = null;
+        try {
+          canonicalDeckBaseline = getCanonicalDeckBaseline(sourceDoc);
+        } catch (err) {
+          canonicalDeckBaseline = null;
+        }
+        if (canonicalDeckBaseline) {
+          buildOptions.canonicalDeckBaseline = canonicalDeckBaseline;
+        }
+      }
+      return buildCanonicalDeck(sourceDoc, buildOptions);
     };
   }
 

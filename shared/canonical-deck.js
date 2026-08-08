@@ -456,6 +456,58 @@
     };
   }
 
+  function mergeCanonicalDeckRebuildBaseline(deckLike, baselineLike) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    if (!isCanonicalDeck(deck)) {
+      return null;
+    }
+
+    if (!baselineLike || typeof baselineLike !== 'object' || Array.isArray(baselineLike)) {
+      return deck;
+    }
+
+    const baseline = isCanonicalDeck(baselineLike)
+      ? baselineLike
+      : createCanonicalDeck(baselineLike);
+    if (!isCanonicalDeck(baseline)) {
+      return deck;
+    }
+
+    const nextAssets = [...deck.assets];
+    const assetIds = new Set();
+    const assetSources = new Set();
+    nextAssets.forEach((asset) => {
+      if (asset && asset.id) assetIds.add(asset.id);
+      if (asset && asset.src) assetSources.add(asset.src);
+    });
+    baseline.assets.forEach((asset) => {
+      if (!asset
+        || assetIds.has(asset.id)
+        || (asset.src && assetSources.has(asset.src))) {
+        return;
+      }
+      nextAssets.push(asset);
+      if (asset.id) assetIds.add(asset.id);
+      if (asset.src) assetSources.add(asset.src);
+    });
+
+    const nextDeck = {
+      ...deck,
+      assets: nextAssets,
+      notes: baseline.notes,
+      export: baseline.export
+    };
+    ['blocks', 'templates', 'masterSlides'].forEach((collectionName) => {
+      if (Array.isArray(baseline[collectionName])) {
+        nextDeck[collectionName] = baseline[collectionName];
+      }
+    });
+
+    return createCanonicalDeck(nextDeck);
+  }
+
   function hasUniqueCanonicalIds(deck) {
     const assetIds = new Set();
     const blockIds = new Set();
@@ -1975,6 +2027,7 @@
     createCanonicalSlide,
     createCanonicalInlineScript,
     createCanonicalDeck,
+    mergeCanonicalDeckRebuildBaseline,
     isCanonicalDeck,
     reorderCanonicalSlides,
     removeCanonicalSlide,

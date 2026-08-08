@@ -346,6 +346,37 @@ test('createCanonicalDeck repairs duplicate asset ids without changing asset ord
   ]);
 });
 
+test('mergeCanonicalDeckRebuildBaseline preserves deck-owned metadata while keeping rebuilt slides', () => {
+  const rebuilt = canonicalDeck.createCanonicalDeck({
+    assets: [{ id: 'asset-current', src: 'current.png' }],
+    slides: [{ id: 'slide-current', nodes: [] }]
+  });
+  const baseline = canonicalDeck.createCanonicalDeck({
+    assets: [
+      { id: 'asset-current', src: 'current.png', name: 'Current asset' },
+      { id: 'asset-library', src: 'library.png', name: 'Library asset' }
+    ],
+    blocks: [{ id: 'block-1', name: 'Reusable block', nodes: [] }],
+    templates: [{ id: 'template-1', name: 'Reusable template', slide: { nodes: [] } }],
+    masterSlides: [{ id: 'master-1', name: 'Reusable master', slide: { nodes: [] } }],
+    notes: { deck: 'Speaker notes' },
+    export: { pdf: { pageSize: 'wide' } },
+    slides: [{ id: 'slide-before', nodes: [] }]
+  });
+
+  const merged = canonicalDeck.mergeCanonicalDeckRebuildBaseline(rebuilt, baseline);
+
+  assert.equal(merged.slides[0].id, 'slide-current');
+  assert.deepEqual(merged.assets.map((asset) => asset.id), ['asset-current', 'asset-library']);
+  assert.deepEqual(merged.blocks.map((block) => block.id), ['block-1']);
+  assert.deepEqual(merged.templates.map((template) => template.id), ['template-1']);
+  assert.deepEqual(merged.masterSlides.map((master) => master.id), ['master-1']);
+  assert.deepEqual(merged.notes, baseline.notes);
+  assert.deepEqual(merged.export, baseline.export);
+  assert.equal(rebuilt.slides[0].id, 'slide-current');
+  assert.equal(Object.prototype.hasOwnProperty.call(rebuilt, 'blocks'), false);
+});
+
 test('canonical asset operations are immutable and protect referenced assets', () => {
   const source = canonicalDeck.createCanonicalDeck({
     assets: [
