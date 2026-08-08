@@ -11,6 +11,7 @@ const studioMutation = require('../shared/studio-editor-mutation.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const styleMutation = require('../shared/studio-editor-style-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
+const styleController = require('../shared/studio-editor-style-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -53,6 +54,25 @@ function loadStyleMutationHelper(fileContent, context) {
       })
     );
   }
+}
+
+function installStyleController(context) {
+  context.studioEditorStyleController = styleController.createStudioEditorStyleController({
+    styleApi: context.SlideNextStudioEditorStyle,
+    canonicalStyleApi: context.SlideNextStudioEditorCanonicalStyle,
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    getSelectedElements: () => context.selectedElements,
+    getIframeDoc: context.getIframeDoc,
+    getActiveSlide: context.getActiveSlide,
+    isElementLocked: context.isElementLocked,
+    syncInspectorForSelection: context.syncInspectorForSelection,
+    documentRef: context.document,
+    highlightAlignButton: context.highlightAlignButton,
+    assignElementId: context.assignEditorElementId,
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    applyStyleMutation: context.applyEditorStyleMutationWithTransaction,
+    finalizeDeckMutation: context.finalizeEditorDeckMutation
+  });
 }
 
 function createControlMap() {
@@ -452,6 +472,7 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadStyleMutationHelper(fileContent, context);
+  installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), false);
@@ -514,6 +535,7 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadStyleMutationHelper(fileContent, context);
+  installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), false);
@@ -555,6 +577,7 @@ test('applySelectedElementStyle delegates unsuccessful result refresh to the sha
 
   vm.createContext(context);
   loadStyleMutationHelper(fileContent, context);
+  installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), 'delegated');
@@ -614,6 +637,7 @@ test('applySelectedElementStyle delegates mutation and transaction assembly to t
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadStyleMutationHelper(fileContent, context);
+  installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), true);
@@ -677,6 +701,7 @@ test('applySelectedElementStyle falls back to style-action refresh when inspecto
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadStyleMutationHelper(fileContent, context);
+  installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), false);
@@ -776,6 +801,7 @@ test('applySelectedElementStyle tolerates missing style feedback labels after su
     vm.createContext(context);
     loadFinalizeEditorDeckMutation(fileContent, context);
     loadStyleMutationHelper(fileContent, context);
+    installStyleController(context);
     vm.runInContext(applySelectedElementStyleSource, context);
 
     assert.equal(context.applySelectedElementStyle(testCase.prop, testCase.value), true);
@@ -886,6 +912,7 @@ test('applySelectedElementStyle refreshes the layer list when the z-index change
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadStyleMutationHelper(fileContent, context);
+  installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('zIndex', '9'), true);
@@ -956,6 +983,7 @@ test('applySelectedElementStyle forwards a reversible CSS style transaction', ()
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadStyleMutationHelper(fileContent, context);
+  installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('color', '#fff'), true);
@@ -1042,6 +1070,7 @@ test('applySelectedElementStyle forwards a reversible text property transaction'
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadStyleMutationHelper(fileContent, context);
+  installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('text', 'After'), true);
@@ -1134,6 +1163,7 @@ test('applySelectedElementStyle persists image source edits in the canonical nod
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadStyleMutationHelper(fileContent, context);
+  installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
   assert.equal(context.applySelectedElementStyle('src', 'after.png'), true);

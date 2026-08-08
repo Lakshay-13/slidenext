@@ -1275,6 +1275,7 @@
   <script src="/shared/presentation-dashboard-controller.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-style-mutation.js"></script>
+  <script src="/shared/studio-editor-style-controller.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
@@ -1805,6 +1806,32 @@
           assignElementId: (...args) => assignEditorElementId(...args),
           buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           applyLayerOrderMutation: (...args) => applyEditorLayerOrderMutationWithTransaction(...args)
+        })
+      : null;
+    const studioEditorStyleController = typeof SlideNextStudioEditorStyleController !== 'undefined'
+      && SlideNextStudioEditorStyleController
+      && typeof SlideNextStudioEditorStyleController.createStudioEditorStyleController === 'function'
+      ? SlideNextStudioEditorStyleController.createStudioEditorStyleController({
+          styleApi: typeof SlideNextStudioEditorStyle !== 'undefined'
+            ? SlideNextStudioEditorStyle
+            : null,
+          canonicalStyleApi: typeof SlideNextStudioEditorCanonicalStyle !== 'undefined'
+            ? SlideNextStudioEditorCanonicalStyle
+            : null,
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          getSelectedElements: () => selectedElements,
+          getIframeDoc: (...args) => getIframeDoc(...args),
+          getActiveSlide: (...args) => getActiveSlide(...args),
+          isElementLocked: (...args) => isElementLocked(...args),
+          syncInspectorForSelection: (...args) => syncInspectorForSelection(...args),
+          documentRef: typeof document !== 'undefined' ? document : null,
+          highlightAlignButton: (...args) => highlightAlignButton(...args),
+          assignElementId: (...args) => assignEditorElementId(...args),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          applyStyleMutation: (...args) => applyEditorStyleMutationWithTransaction(...args),
+          finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -5407,105 +5434,10 @@
 
     // Apply styles immediately to active selected elements
     function applySelectedElementStyle(prop, val) {
-      const doc = getIframeDoc();
-      const styleApi = SlideNextStudioEditorStyle;
-      const finalizeStyleActionResult = (result) => {
-        if (styleApi && typeof styleApi.finalizeStudioStyleActionResult === 'function') {
-          return styleApi.finalizeStudioStyleActionResult(result, {
-            syncInspectorForSelection
-          });
-        }
-        syncInspectorForSelection();
-        return result;
-      };
-      const styleMutationPlan = styleApi.buildStudioStyleMutationPlan(selectedElements, prop, val, {
-        isLocked: isElementLocked,
-        canMutateDeck: () => !!getActiveSlide(doc)
-      });
-      if (!styleMutationPlan.canApply) {
-        return finalizeStyleActionResult(false);
-      }
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const canonicalStyleApi = typeof SlideNextStudioEditorCanonicalStyle !== 'undefined'
-        ? SlideNextStudioEditorCanonicalStyle
-        : null;
-      const canonicalStyleBuilders = canonicalStyleApi
-        && typeof canonicalStyleApi.createStudioCanonicalStyleMutationBuilders === 'function'
-        ? canonicalStyleApi.createStudioCanonicalStyleMutationBuilders({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null
-          })
-        : null;
-      const buildCanonicalStyleBaseline = canonicalStyleBuilders
-        && typeof canonicalStyleBuilders.buildCanonicalStyleBaseline === 'function'
-        ? canonicalStyleBuilders.buildCanonicalStyleBaseline
-        : null;
-      const canonicalDeckBeforeMutation = buildCanonicalStyleBaseline
-        ? buildCanonicalStyleBaseline({ sourceDocument: doc })
-        : null;
-      const getStyleElementId = (element) => {
-        if (typeof assignEditorElementId === 'function') {
-          const assignedId = assignEditorElementId(element);
-          if (assignedId) return assignedId;
-        }
-        return element && element.dataset && element.dataset.editorId;
-      };
-      const styleMutationResult = applyEditorStyleMutationWithTransaction(
-        styleApi,
-        styleMutationPlan.selection,
-        prop,
-        val,
-        { getElementId: getStyleElementId }
-      );
-      const transaction = styleMutationResult.transaction || null;
-      if (!styleMutationResult.didApply) {
-        return finalizeStyleActionResult(false);
-      }
-
-      if (prop === 'align') {
-        highlightAlignButton(val);
-      } else if (styleApi && typeof styleApi.syncStudioStyleFeedbackLabel === 'function') {
-        styleApi.syncStudioStyleFeedbackLabel({
-          documentRef: typeof document !== 'undefined' ? document : null,
-          prop,
-          displayValue: styleMutationResult.displayValue
-        });
-      } else if (prop === 'size') {
-        const fontSizeLabel = document.getElementById('fontSizeVal');
-        if (fontSizeLabel) fontSizeLabel.textContent = `${styleMutationResult.displayValue}px`;
-      } else if (prop === 'borderWidth') {
-        const borderWidthLabel = document.getElementById('borderWidthVal');
-        if (borderWidthLabel) borderWidthLabel.textContent = `${styleMutationResult.displayValue}px`;
-      } else if (prop === 'borderRadius') {
-        const borderRadiusLabel = document.getElementById('borderRadiusVal');
-        if (borderRadiusLabel) borderRadiusLabel.textContent = `${styleMutationResult.displayValue}px`;
-      } else if (prop === 'opacity') {
-        const opacityLabel = document.getElementById('opacityVal');
-        if (opacityLabel) opacityLabel.textContent = `${styleMutationResult.displayValue}%`;
-      }
-      const canonicalDeck = canonicalStyleBuilders
-        && typeof canonicalStyleBuilders.buildCanonicalStyleMutation === 'function'
-        ? canonicalStyleBuilders.buildCanonicalStyleMutation({
-            canonicalDeckBeforeMutation,
-            sourceDocument: doc,
-            selection: styleMutationPlan.selection,
-            prop,
-            value: val,
-            getElementId: getStyleElementId
-          })
-        : null;
-      finalizeEditorDeckMutation(styleMutationPlan.versionLabel, {
-        syncSelectionOverlay: true,
-        refreshLayersList: prop === 'zIndex',
-        debounceHistory: true,
-        transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
-      });
-      return true;
+      return studioEditorStyleController
+        && typeof studioEditorStyleController.apply === 'function'
+        ? studioEditorStyleController.apply(prop, val)
+        : false;
     }
 
     function applyEditorRemovalMutationWithTransaction(selection, options = {}) {

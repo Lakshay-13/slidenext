@@ -1,0 +1,68 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const styleController = require('../shared/studio-editor-style-controller.js');
+
+test('style controller assembles mutation, feedback, canonical, and finalization dependencies', () => {
+  const calls = [];
+  const element = { dataset: { editorId: 'node-1' } };
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(selection, prop, value, options) {
+        calls.push(['plan', selection, prop, value, options.canMutateDeck()]);
+        return { canApply: true, selection, versionLabel: 'Auto: Styled Element' };
+      },
+      syncStudioStyleFeedbackLabel(options) {
+        calls.push(['feedback', options]);
+      }
+    },
+    canonicalStyleApi: {
+      createStudioCanonicalStyleMutationBuilders() {
+        return {
+          buildCanonicalStyleBaseline: (options) => {
+            calls.push(['baseline', options]);
+            return { id: 'before' };
+          },
+          buildCanonicalStyleMutation: (options) => {
+            calls.push(['canonical', options]);
+            return { id: 'after' };
+          }
+        };
+      }
+    },
+    getSelectedElements: () => [element],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    assignElementId: () => 'node-1',
+    applyStyleMutation: (...args) => {
+      calls.push(['apply', ...args]);
+      return { didApply: true, displayValue: '32', transaction: { id: 'tx' } };
+    },
+    finalizeDeckMutation: (label, options) => calls.push(['finalize', label, options])
+  });
+
+  assert.equal(controller.apply('size', '32'), true);
+  assert.equal(calls[0][0], 'plan');
+  assert.equal(calls[0][2], 'size');
+  assert.equal(calls[1][0], 'baseline');
+  assert.equal(calls[2][0], 'apply');
+  assert.equal(calls[3][0], 'feedback');
+  assert.equal(calls[4][0], 'canonical');
+  assert.equal(calls[5][1], 'Auto: Styled Element');
+  assert.deepEqual(calls[5][2].transaction, { id: 'tx' });
+  assert.deepEqual(calls[5][2].canonicalDeck, { id: 'after' });
+});
+
+test('style controller refreshes inspector and fails closed for unavailable edits', () => {
+  let syncCalls = 0;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan: () => ({ canApply: false })
+    },
+    syncInspectorForSelection: () => {
+      syncCalls += 1;
+    }
+  });
+
+  assert.equal(controller.apply('color', '#fff'), false);
+  assert.equal(syncCalls, 1);
+});
