@@ -1312,6 +1312,7 @@
   <script src="/shared/studio-editor-canonical-insertion.js"></script>
   <script src="/shared/studio-editor-block-view.js"></script>
   <script src="/shared/studio-editor-block-controller.js"></script>
+  <script src="/shared/studio-editor-master-slide-view.js"></script>
   <script src="/shared/studio-editor-template-view.js"></script>
   <script src="/shared/studio-editor-template-controller.js"></script>
   <script src="/shared/studio-editor-master-slide-controller.js"></script>
@@ -6002,60 +6003,20 @@
     }
 
     function renderSavedMasterSlides(masterSlides = [], activeMasterSlideId = '') {
-      if (typeof document === 'undefined' || !document || typeof document.getElementById !== 'function') {
+      const masterSlideView = typeof SlideNextStudioEditorMasterSlideView !== 'undefined'
+        ? SlideNextStudioEditorMasterSlideView
+        : null;
+      if (!masterSlideView || typeof masterSlideView.renderStudioMasterSlideLibrary !== 'function') {
         return false;
       }
-      const select = document.getElementById('masterSlideSelect');
-      const list = document.getElementById('savedMasterSlidesList');
-      if (!select || !list || typeof document.createElement !== 'function') return false;
-      const normalizedMasterSlides = Array.isArray(masterSlides) ? masterSlides : [];
-      select.textContent = '';
-      const emptyOption = document.createElement('option');
-      emptyOption.value = '';
-      emptyOption.textContent = 'No master layout';
-      select.appendChild(emptyOption);
-      normalizedMasterSlides.forEach((master) => {
-        const option = document.createElement('option');
-        option.value = master && master.id ? master.id : '';
-        option.textContent = master && master.name ? master.name : 'Unnamed Master Layout';
-        select.appendChild(option);
+      return masterSlideView.renderStudioMasterSlideLibrary({
+        documentRef: document,
+        masterSlides,
+        activeMasterSlideId,
+        canApply: typeof getActiveSlide === 'function' ? !!getActiveSlide() : false,
+        applyMasterSlide: typeof applySavedMasterSlide === 'function' ? applySavedMasterSlide : null,
+        removeMasterSlide: typeof removeSavedMasterSlide === 'function' ? removeSavedMasterSlide : null
       });
-      select.value = activeMasterSlideId || '';
-
-      list.textContent = '';
-      if (normalizedMasterSlides.length === 0) {
-        const emptyState = document.createElement('span');
-        emptyState.textContent = 'No master layouts saved';
-        list.appendChild(emptyState);
-        return true;
-      }
-      normalizedMasterSlides.forEach((master) => {
-        const row = document.createElement('div');
-        row.className = 'flex items-center gap-1';
-        const item = document.createElement('button');
-        item.type = 'button';
-        item.className = 'min-w-0 flex-1 text-left rounded px-2 py-1 hover:bg-white/5 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
-        const nodeCount = master
-          && master.slide
-          && Array.isArray(master.slide.nodes)
-          ? master.slide.nodes.length
-          : 0;
-        const masterName = master && master.name ? master.name : 'Unnamed Master Layout';
-        item.textContent = `${masterName} - ${nodeCount} base element${nodeCount === 1 ? '' : 's'}`;
-        item.disabled = !getActiveSlide();
-        item.addEventListener('click', () => applySavedMasterSlide(master.id));
-        const removeButton = document.createElement('button');
-        removeButton.type = 'button';
-        removeButton.className = 'shrink-0 rounded px-1.5 py-1 text-zinc-500 hover:bg-red-500/10 hover:text-red-300 transition-colors';
-        removeButton.textContent = 'Remove';
-        removeButton.title = `Remove ${masterName}`;
-        removeButton.setAttribute('aria-label', `Remove ${masterName}`);
-        removeButton.addEventListener('click', () => removeSavedMasterSlide(master.id));
-        row.appendChild(item);
-        row.appendChild(removeButton);
-        list.appendChild(row);
-      });
-      return true;
     }
 
     function renderSavedAssets(assets = [], canApply = false) {

@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const masterSlideView = require('../shared/studio-editor-master-slide-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -42,6 +43,7 @@ test('renderSavedMasterSlides renders options, base-node counts, and the empty s
     }
   };
   const context = {
+    SlideNextStudioEditorMasterSlideView: masterSlideView,
     document: {
       getElementById(id) {
         return id === 'masterSlideSelect' ? select : list;
@@ -59,7 +61,9 @@ test('renderSavedMasterSlides renders options, base-node counts, and the empty s
         };
       }
     },
-    getActiveSlide: () => ({})
+    getActiveSlide: () => ({}),
+    applySavedMasterSlide() {},
+    removeSavedMasterSlide() {}
   };
 
   vm.createContext(context);
@@ -73,6 +77,59 @@ test('renderSavedMasterSlides renders options, base-node counts, and the empty s
   assert.equal(list.children[0].children[0].textContent, '<Brand> - 1 base element');
   assert.equal(context.renderSavedMasterSlides([], ''), true);
   assert.equal(list.children[0].textContent, 'No master layouts saved');
+});
+
+test('shared master-slide view wires apply and remove actions to injected callbacks', () => {
+  const select = {
+    children: [],
+    textContent: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const list = {
+    children: [],
+    textContent: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const events = [];
+  const documentRef = {
+    getElementById(id) {
+      return id === 'masterSlideSelect' ? select : list;
+    },
+    createElement() {
+      return {
+        children: [],
+        addEventListener(type, handler) {
+          events.push({ type, handler });
+        },
+        appendChild(child) {
+          this.children.push(child);
+        },
+        setAttribute() {}
+      };
+    }
+  };
+  const calls = [];
+
+  assert.equal(masterSlideView.renderStudioMasterSlideLibrary({
+    documentRef,
+    masterSlides: [{ id: 'brand', name: 'Brand', slide: { nodes: [{ id: 'footer' }] } }],
+    activeMasterSlideId: 'brand',
+    canApply: true,
+    applyMasterSlide(masterId) {
+      calls.push(['apply', masterId]);
+    },
+    removeMasterSlide(masterId) {
+      calls.push(['remove', masterId]);
+    }
+  }), true);
+
+  events.find((event) => event.type === 'click').handler();
+  events.reverse().find((event) => event.type === 'click').handler();
+  assert.deepEqual(calls, [['apply', 'brand'], ['remove', 'brand']]);
 });
 
 test('master layout actions delegate save, apply, and removal to the controller', () => {
