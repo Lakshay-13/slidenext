@@ -49,3 +49,61 @@ test('PPTX export rejects malformed canonical decks before invoking exporter', a
   assert.equal(exportCalls, 0);
   assert.deepEqual(statuses, ['export-failed']);
 });
+
+test('PDF and PPTX exports use structural canonical validation without an injected validator', async () => {
+  let pdfOpenCalls = 0;
+  let pptxExportCalls = 0;
+  const malformedDeck = { invalid: true };
+  const validDeck = {
+    slides: [{ id: 'slide-1' }]
+  };
+  const pdfExport = exportActions.createStudioPdfExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildPreviewHtml: () => '<html><body><div class="slide">A</div></body></html>',
+    buildCanonicalDeck: () => malformedDeck,
+    pdfExport: {
+      openStudioPdfPrintWindow() {
+        pdfOpenCalls += 1;
+        return true;
+      }
+    }
+  });
+  const pptxExport = exportActions.createStudioPptxExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildCanonicalDeck: () => malformedDeck,
+    pptxExport: {
+      async exportStudioPptx() {
+        pptxExportCalls += 1;
+        return { success: true };
+      }
+    }
+  });
+
+  assert.equal(pdfExport(), false);
+  assert.equal(await pptxExport(), false);
+  assert.equal(pdfOpenCalls, 0);
+  assert.equal(pptxExportCalls, 0);
+
+  const validPdfExport = exportActions.createStudioPdfExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildPreviewHtml: () => '<html><body><div class="slide">A</div></body></html>',
+    buildCanonicalDeck: () => validDeck,
+    pdfExport: {
+      openStudioPdfPrintWindow() {
+        return true;
+      }
+    }
+  });
+  const validPptxExport = exportActions.createStudioPptxExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildCanonicalDeck: () => validDeck,
+    pptxExport: {
+      async exportStudioPptx() {
+        return { success: true };
+      }
+    }
+  });
+
+  assert.equal(validPdfExport(), true);
+  assert.equal(await validPptxExport(), true);
+});
