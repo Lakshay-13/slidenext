@@ -110,6 +110,20 @@ test('transform controller thresholds are initialized before controller construc
   });
 });
 
+test('DOM mutation canonical builder bypasses live canonical state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorMutationCanonicalDeck(sourceDoc) {',
+    '\n\n    function resolveEditorCanonicalDeckOverride'
+  );
+
+  assert.match(
+    helperSource,
+    /return buildEditorCanonicalDeck\(sourceDoc, \{\s*preferLiveCanonicalDeck: false\s*\}\)/
+  );
+});
+
 test('nudge wiring rebuilds the canonical deck from the iframe DOM', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(

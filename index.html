@@ -1622,9 +1622,7 @@
           getIframeDoc: () => getIframeDoc(),
           getSlides: (...args) => getSlides(...args),
           getSlideId: (...args) => getEditorSlideId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
-            preferLiveCanonicalDeck: false
-          }),
+          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           captureSlideMutationState: (...args) => captureSlideMutationRestoreState(...args),
           applyReorder: (...args) => applyEditorSlideReorderWithTransaction(...args),
           generateThumbnails: (...args) => generateThumbnails(...args),
@@ -4211,6 +4209,12 @@
         }
       }
       return null;
+    }
+
+    function buildEditorMutationCanonicalDeck(sourceDoc) {
+      return buildEditorCanonicalDeck(sourceDoc, {
+        preferLiveCanonicalDeck: false
+      });
     }
 
     function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {
