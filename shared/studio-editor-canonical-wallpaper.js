@@ -15,15 +15,31 @@
       && typeof canonicalDeckApi.updateCanonicalSlideBackground === 'function'
       ? canonicalDeckApi.updateCanonicalSlideBackground
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : null;
 
-    if (!updateCanonicalSlideBackground || !buildCanonicalDeck) {
-      return null;
+    if (!updateCanonicalSlideBackground) return null;
+
+    if (getCanonicalDeckBaseline) {
+      let liveCanonicalDeck = null;
+      try {
+        liveCanonicalDeck = getCanonicalDeckBaseline(options.sourceDocument);
+      } catch (err) {
+        liveCanonicalDeck = null;
+      }
+      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+        || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
+        if (liveCanonicalDeck) return liveCanonicalDeck;
+      }
     }
+
+    if (!buildCanonicalDeck) return null;
 
     return buildCanonicalDeck(options.sourceDocument);
   }
@@ -68,12 +84,16 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const buildCanonicalWallpaperBaseline = (baselineOptions = {}) => (
       buildStudioCanonicalWallpaperBaseline({
         ...baselineOptions,
         canonicalDeckApi,
         buildCanonicalDeck,
-        buildCanonicalDeckBaseline
+        buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline
       })
     );
     const buildCanonicalWallpaperDeck = (slides, background, deckOptions = {}) => {

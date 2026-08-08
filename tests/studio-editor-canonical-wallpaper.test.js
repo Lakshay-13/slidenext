@@ -51,6 +51,42 @@ test('buildStudioCanonicalWallpaperBaseline builds from the source document', ()
   assert.equal(result, sourceDeck);
 });
 
+test('buildStudioCanonicalWallpaperBaseline prefers a valid live canonical deck', () => {
+  const liveDeck = createSourceDeck();
+  let didBuildFromDocument = false;
+  const result = canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return liveDeck;
+    },
+    buildCanonicalDeck() {
+      didBuildFromDocument = true;
+      return createSourceDeck();
+    }
+  });
+
+  assert.equal(result, liveDeck);
+  assert.equal(didBuildFromDocument, false);
+});
+
+test('buildStudioCanonicalWallpaperBaseline falls back when the live canonical deck is invalid', () => {
+  const sourceDeck = createSourceDeck();
+  let didBuildFromDocument = false;
+  const result = canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return { invalid: true };
+    },
+    buildCanonicalDeck() {
+      didBuildFromDocument = true;
+      return sourceDeck;
+    }
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(didBuildFromDocument, true);
+});
+
 test('buildStudioCanonicalWallpaperDeck fails closed when an adapter dependency is missing', () => {
   assert.equal(canonicalWallpaper.buildStudioCanonicalWallpaperDeck([{ id: 'slide-1' }], 'black', {}), null);
   assert.equal(canonicalWallpaper.buildStudioCanonicalWallpaperDeck([], 'black', {

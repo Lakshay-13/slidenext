@@ -47,6 +47,40 @@ test('applyStudioWallpaperSlidesMutationWithTransaction coordinates DOM, transac
   });
 });
 
+test('applyStudioWallpaperSlidesMutationWithTransaction prefers the live canonical baseline', () => {
+  const sourceSlide = {
+    dataset: { slideId: 'slide-1' },
+    style: { background: 'white' }
+  };
+  const liveDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', layout: { background: { style: 'live' } } }]
+  });
+  let didBuildFromDocument = false;
+
+  const result = wallpaperMutation.applyStudioWallpaperSlidesMutationWithTransaction(
+    [sourceSlide],
+    'black',
+    {
+      createStyleTransaction: studioTransaction.createStudioStyleTransaction,
+      applyStudioWallpaperToSlides: studioWallpaperView.applyStudioWallpaperToSlides,
+      canonicalDeckApi: canonicalDeck,
+      canonicalWallpaperApi: canonicalWallpaper,
+      getCanonicalDeckBaseline: () => liveDeck,
+      buildCanonicalDeckBaseline: () => {
+        didBuildFromDocument = true;
+        return canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+      },
+      buildCanonicalDeck: () => {
+        throw new Error('DOM mutation builder should not build the baseline');
+      },
+      getSlideId: (slide) => slide.dataset.slideId
+    }
+  );
+
+  assert.equal(result.canonicalDeck.slides[0].layout.background.style, 'black');
+  assert.equal(didBuildFromDocument, false);
+});
+
 test('applyStudioWallpaperSlidesMutationWithTransaction fails closed without slides or an apply adapter', () => {
   assert.deepEqual(
     wallpaperMutation.applyStudioWallpaperSlidesMutationWithTransaction([], 'black'),

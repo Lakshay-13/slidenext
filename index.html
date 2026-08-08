@@ -7106,7 +7106,11 @@
           : null,
         buildCanonicalDeckBaseline: typeof buildEditorCanonicalDeck === 'function'
           ? (sourceDoc) => buildEditorCanonicalDeck(sourceDoc || sourceDocument)
-          : null
+          : null,
+        getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+          sourceDoc || sourceDocument,
+          studioEditorSessionToken
+        )
       });
     }
 
