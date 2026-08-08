@@ -7968,7 +7968,9 @@
                 : null,
               captureBuildState: captureEditorPersistableDeckBuildState,
               buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-                buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+                buildCanonicalDeck: () => buildEditorCanonicalDeck(doc, {
+                  preferLiveCanonicalDeck: false
+                })
               }),
               resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
             })
@@ -8000,7 +8002,9 @@
           ),
           captureBuildState: captureEditorPersistableDeckBuildState,
           buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc, {
+              preferLiveCanonicalDeck: false
+            })
           }),
           resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
         })(doc, {
@@ -8020,7 +8024,9 @@
           canonicalDeck: providedCanonicalDeck,
           captureBuildState: captureEditorPersistableDeckBuildState,
           buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc, {
+              preferLiveCanonicalDeck: false
+            })
           }),
           resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
         });
@@ -8041,7 +8047,9 @@
             ? capturedBuildState.playbackState
             : undefined,
           buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc, {
+              preferLiveCanonicalDeck: false
+            })
           }),
           resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
         }

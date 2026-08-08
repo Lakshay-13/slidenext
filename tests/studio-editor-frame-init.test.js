@@ -393,6 +393,7 @@ test('captureEditorPersistableDeckState delegates capture orchestration through 
     slideCounterText: '1 / 1'
   };
   let delegatedArgs = null;
+  let canonicalBuildOptions = null;
 
   const context = {
     resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
@@ -417,8 +418,9 @@ test('captureEditorPersistableDeckState delegates capture orchestration through 
     captureEditorPersistableDeckBuildState() {
       throw new Error('captureEditorPersistableDeckBuildState should be delegated through the shared persistence helper');
     },
-    buildEditorCanonicalDeck(nextDoc) {
+    buildEditorCanonicalDeck(nextDoc, options) {
       assert.equal(nextDoc, iframeDoc);
+      canonicalBuildOptions = options;
       return canonicalDeck;
     },
     capturePersistedDeckPlaybackState(doc, nextCanonicalDeck) {
@@ -445,6 +447,10 @@ test('captureEditorPersistableDeckState delegates capture orchestration through 
   assert.equal(typeof delegatedArgs.captureBuildState, 'function');
   assert.equal(typeof delegatedArgs.buildCanonicalDeck, 'function');
   assert.equal(typeof delegatedArgs.resolvePlaybackState, 'function');
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(canonicalBuildOptions)),
+    { preferLiveCanonicalDeck: false }
+  );
 });
 
 test('captureEditorPersistableDeckState creates the shared capture adapter once', () => {
