@@ -444,6 +444,15 @@
     return ['left', 'center', 'right', 'justify'].includes(alignment) ? alignment : 'left';
   }
 
+  function resolvePptxTextDecoration(value) {
+    const decoration = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    const tokens = new Set(decoration.split(/\s+/).filter(Boolean));
+    return {
+      ...(tokens.has('underline') ? { underline: { style: 'sng' } } : {}),
+      ...(tokens.has('line-through') ? { strike: true } : {})
+    };
+  }
+
   function textOptions(node, bounds) {
     const style = nodeStyle(node);
     const tagName = typeof node.tagName === 'string' ? node.tagName.toLowerCase() : '';
@@ -467,6 +476,9 @@
     const verticalAlignment = ['top', 'middle', 'bottom'].includes(style['vertical-align'])
       ? { valign: style['vertical-align'] }
       : {};
+    const textDecoration = resolvePptxTextDecoration(
+      [style['text-decoration'], style['text-decoration-line']].filter(Boolean).join(' ')
+    );
     const color = normalizeHexColor(style.color) || '000000';
     const fontFace = style['font-family']
       ? style['font-family'].split(',')[0].trim().replace(/^['"]|['"]$/g, '')
@@ -483,7 +495,8 @@
       breakLine: false,
       fit: 'shrink',
       ...lineSpacing,
-      ...verticalAlignment
+      ...verticalAlignment,
+      ...textDecoration
     }, nodeTransparency(node));
   }
 

@@ -635,6 +635,44 @@ test('createCanonicalPptxExport normalizes CSS text alignment values', () => {
   );
 });
 
+test('createCanonicalPptxExport preserves supported CSS text decorations', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'underlined-text',
+        type: 'text',
+        text: 'Underlined',
+        style: 'text-decoration: underline;',
+        layout: { x: 0, y: 0, width: 100, height: 40 }
+      }, {
+        id: 'struck-text',
+        type: 'text',
+        text: 'Struck',
+        style: 'text-decoration-line: line-through;',
+        layout: { x: 0, y: 50, width: 100, height: 40 }
+      }, {
+        id: 'combined-text',
+        type: 'text',
+        text: 'Combined',
+        style: 'text-decoration: underline line-through;',
+        layout: { x: 0, y: 100, width: 100, height: 40 }
+      }, {
+        id: 'plain-text',
+        type: 'text',
+        text: 'Plain',
+        style: 'text-decoration: none;',
+        layout: { x: 0, y: 150, width: 100, height: 40 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const calls = result.pptx.slides[0].calls;
+  assert.deepEqual(calls.map(call => call.options.underline), [
+    { style: 'sng' }, undefined, { style: 'sng' }, undefined
+  ]);
+  assert.deepEqual(calls.map(call => call.options.strike), [undefined, true, true, undefined]);
+});
+
 test('preflightCanonicalPptxExport reports missing node background image assets', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{
