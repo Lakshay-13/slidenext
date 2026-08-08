@@ -41,11 +41,13 @@ test('element insertion controller preserves insertion finalization and version 
 
 test('element insertion controller selects flow mode for a flow-only canonical slide', () => {
   const calls = [];
+  let builderOptions = null;
   const slide = { children: [] };
   const element = { id: 'element-1' };
   const controller = elementInsertionController.createStudioEditorElementInsertionController({
     canonicalInsertionApi: {
-      createStudioCanonicalInsertionMutationBuilders() {
+      createStudioCanonicalInsertionMutationBuilders(options) {
+        builderOptions = options;
         return {
           buildCanonicalInsertionBaseline() {
             return {
@@ -57,6 +59,8 @@ test('element insertion controller selects flow mode for a flow-only canonical s
         };
       }
     },
+    buildCanonicalDeck: () => ({ slides: [] }),
+    buildCanonicalDeckBaseline: () => ({ slides: [] }),
     getIframeDoc: () => ({}),
     getActiveSlide: () => slide,
     getEditorSlideId: () => 'slide-1',
@@ -69,6 +73,8 @@ test('element insertion controller selects flow mode for a flow-only canonical s
 
   assert.equal(controller.insert('h2'), true);
   assert.equal(calls[0].layoutMode, 'flow');
+  assert.equal(typeof builderOptions.buildCanonicalDeck, 'function');
+  assert.equal(typeof builderOptions.buildCanonicalDeckBaseline, 'function');
 });
 
 test('element insertion controller refreshes insertion state when no active slide exists', () => {

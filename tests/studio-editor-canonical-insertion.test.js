@@ -40,9 +40,12 @@ test('buildStudioCanonicalInsertionDeck builds the baseline from the source docu
     { dataset: { editorId: 'inserted' } },
     {
       canonicalDeckApi: canonicalDeck,
-      buildCanonicalDeck(documentRef) {
+      buildCanonicalDeckBaseline(documentRef) {
         builtFromDocument = documentRef;
         return sourceDeck;
+      },
+      buildCanonicalDeck() {
+        throw new Error('DOM mutation builder should not provide the baseline');
       },
       sourceDocument,
       slideId: 'slide-1',

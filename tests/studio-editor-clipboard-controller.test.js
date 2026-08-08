@@ -91,6 +91,7 @@ test('clipboard controller rebuilds canonical state from the live post-insertion
   };
   let finalizedCanonicalDeck = null;
   let insertionCompleted = false;
+  let insertionBuilderOptions = null;
   const controller = clipboardController.createStudioEditorClipboardController({
     clipboardApi: {
       buildStudioClipboardPastePlan() {
@@ -103,7 +104,8 @@ test('clipboard controller rebuilds canonical state from the live post-insertion
       }
     },
     canonicalInsertionApi: {
-      createStudioCanonicalInsertionMutationBuilders() {
+      createStudioCanonicalInsertionMutationBuilders(options) {
+        insertionBuilderOptions = options;
         return {
           buildCanonicalInsertionSequence() {
             return {
@@ -129,6 +131,7 @@ test('clipboard controller rebuilds canonical state from the live post-insertion
       assert.deepEqual(options, { preferLiveCanonicalDeck: false });
       return insertionCompleted ? liveCanonicalDeck : null;
     },
+    buildCanonicalDeckBaseline: () => ({ slides: [] }),
     insertClipboardPayload: () => {
       insertionCompleted = true;
       return [{ id: 'pasted-flow-node' }];
@@ -145,4 +148,6 @@ test('clipboard controller rebuilds canonical state from the live post-insertion
     finalizedCanonicalDeck.slides[0].nodes.map((node) => node.id),
     ['flow-before', 'pasted-flow-node', 'flow-after']
   );
+  assert.equal(typeof insertionBuilderOptions.buildCanonicalDeck, 'function');
+  assert.equal(typeof insertionBuilderOptions.buildCanonicalDeckBaseline, 'function');
 });

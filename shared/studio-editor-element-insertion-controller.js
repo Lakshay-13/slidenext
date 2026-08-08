@@ -47,6 +47,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const applyElementInsertion = typeof options.applyElementInsertion === 'function'
       ? options.applyElementInsertion
       : () => ({ element: null, transaction: null });
@@ -90,6 +93,7 @@
         ? canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders({
             canonicalDeckApi,
             buildCanonicalDeck,
+            buildCanonicalDeckBaseline,
             importElementToCanonicalNode
           })
         : null;
@@ -110,6 +114,7 @@
         ? canonicalInsertionBuilders.buildCanonicalInsertionBaseline({
             canonicalDeckApi,
             buildCanonicalDeck,
+            buildCanonicalDeckBaseline,
             sourceDocument: iframeDoc
           })
         : null;

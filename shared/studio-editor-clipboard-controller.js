@@ -42,6 +42,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const insertClipboardPayload = typeof options.insertClipboardPayload === 'function'
       ? options.insertClipboardPayload
       : () => [];
@@ -59,6 +62,7 @@
         ? canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders({
             canonicalDeckApi,
             buildCanonicalDeck,
+            buildCanonicalDeckBaseline,
             importElementToCanonicalNode
           })
         : null;
