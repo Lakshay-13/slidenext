@@ -187,16 +187,17 @@ function resolveProvidedCanonicalDeck(canonicalDeck) {
 // Export any canonical deck without writing generated files into the workspace.
 app.post('/api/export/pptx', async (req, res) => {
   const { canonicalDeck, filename, sourcePath } = req.body || {};
-  if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) {
-    return res.status(400).json({ error: 'Missing canonicalDeck' });
+  const resolvedCanonicalDeck = resolveProvidedCanonicalDeck(canonicalDeck);
+  if (!resolvedCanonicalDeck) {
+    return res.status(400).json({ error: 'Invalid canonicalDeck' });
   }
-  if (canonicalDeck.slides.length === 0) {
+  if (resolvedCanonicalDeck.slides.length === 0) {
     return res.status(400).json({ error: 'Cannot export an empty deck' });
   }
 
   try {
-    const result = canonicalPptxExport.createCanonicalPptxExport(canonicalDeck, {
-      assetBaseDir: resolvePptxAssetBaseDir(sourcePath || canonicalDeck.metadata?.sourcePath),
+    const result = canonicalPptxExport.createCanonicalPptxExport(resolvedCanonicalDeck, {
+      assetBaseDir: resolvePptxAssetBaseDir(sourcePath || resolvedCanonicalDeck.metadata?.sourcePath),
       assetExists(assetSource) {
         if (/^(data:|https?:\/\/)/i.test(assetSource)) return true;
         const resolvedAssetPath = path.resolve(assetSource);
@@ -209,7 +210,7 @@ app.post('/api/export/pptx', async (req, res) => {
     }
 
     const buffer = await result.pptx.write({ outputType: 'nodebuffer' });
-    const downloadFilename = normalizePptxDownloadFilename(filename, canonicalDeck.metadata?.title);
+    const downloadFilename = normalizePptxDownloadFilename(filename, resolvedCanonicalDeck.metadata?.title);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
     res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
     res.setHeader('X-SlideNext-Pptx-Warning-Count', String(result.diagnostics.warnings.length));
