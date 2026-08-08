@@ -3973,13 +3973,17 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorCanonicalDeckOverrideAdapter
         : null;
       if (createStudioEditorCanonicalDeckOverrideAdapter) {
-        const adapter = createStudioEditorCanonicalDeckOverrideAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          isCanonicalDeck: getEditorCanonicalDeckValidator()
-        });
-        return typeof adapter === 'function' ? adapter(canonicalDeck, options) : null;
+        if (typeof resolveEditorCanonicalDeckOverride.adapter !== 'function') {
+          resolveEditorCanonicalDeckOverride.adapter = createStudioEditorCanonicalDeckOverrideAdapter({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            isCanonicalDeck: getEditorCanonicalDeckValidator()
+          });
+        }
+        return typeof resolveEditorCanonicalDeckOverride.adapter === 'function'
+          ? resolveEditorCanonicalDeckOverride.adapter(canonicalDeck, options)
+          : null;
       }
       const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck

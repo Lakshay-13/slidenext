@@ -830,6 +830,45 @@ test('resolveEditorCanonicalDeckOverride delegates through the editor persistenc
   assert.equal(delegatedOptions.isCanonicalDeck, isCanonicalDeck);
 });
 
+test('resolveEditorCanonicalDeckOverride creates the shared canonical override adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {',
+    '\n\n    function getEditorCanonicalDeckValidator() {'
+  );
+  let adapterCreateCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorCanonicalDeckOverrideAdapter(options) {
+        adapterCreateCalls += 1;
+        return (canonicalDeck, nextOptions) => ({
+          canonicalDeck,
+          marker: nextOptions.marker,
+          isCanonicalDeck: options.isCanonicalDeck
+        });
+      }
+    },
+    getEditorCanonicalDeckValidator() {
+      return 'canonical-validator';
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  const firstResult = context.resolveEditorCanonicalDeckOverride({ id: 'one' }, { marker: 1 });
+  const secondResult = context.resolveEditorCanonicalDeckOverride({ id: 'two' }, { marker: 2 });
+
+  assert.equal(adapterCreateCalls, 1);
+  assert.equal(firstResult.canonicalDeck.id, 'one');
+  assert.equal(firstResult.marker, 1);
+  assert.equal(firstResult.isCanonicalDeck, 'canonical-validator');
+  assert.equal(secondResult.canonicalDeck.id, 'two');
+  assert.equal(secondResult.marker, 2);
+});
+
 test('getEditorCanonicalDeckValidator returns the shared canonical deck validator when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
