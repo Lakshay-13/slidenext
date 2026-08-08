@@ -896,6 +896,46 @@ test('updateClipboardActionState delegates toolbar state assembly to the shared 
   assert.equal(calls[0].canMutateDeck(), true);
 });
 
+test('updateClipboardActionState keeps the legacy DOM fallback when the shared clipboard view is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateClipboardActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateClipboardActionState(doc = getIframeDoc()) {',
+    '\n\n    function sanitizeDuplicatedSubtree(root) {'
+  );
+  const controls = createControls();
+  const context = {
+    selectedElements: [],
+    buildClipboardSelectionMutationPlan() {
+      return {
+        buttonStates: {
+          copySelectionBtn: true,
+          pasteClipboardBtn: false,
+          slidePasteClipboardBtn: false
+        }
+      };
+    },
+    document: {
+      getElementById(id) {
+        return controls[id] || null;
+      }
+    },
+    getActiveSlide() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateClipboardActionStateSource, context);
+
+  assert.equal(context.updateClipboardActionState({}), true);
+  assert.deepEqual(getControlStates(controls), {
+    copySelectionBtn: false,
+    pasteClipboardBtn: true,
+    slidePasteClipboardBtn: true
+  });
+});
+
 test('copySelectedElements returns false and refreshes clipboard controls when payload build yields no items', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);

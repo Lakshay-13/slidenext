@@ -5929,11 +5929,14 @@
 
     function updateClipboardActionState(doc = getIframeDoc()) {
       updateBlockActionState(doc);
+      const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
+        ? SlideNextStudioEditorClipboard
+        : null;
       const syncStudioClipboardToolbarState = (
-        SlideNextStudioEditorClipboard
-        && typeof SlideNextStudioEditorClipboard.syncStudioClipboardToolbarState === 'function'
+        clipboardApi
+        && typeof clipboardApi.syncStudioClipboardToolbarState === 'function'
       )
-        ? SlideNextStudioEditorClipboard.syncStudioClipboardToolbarState
+        ? clipboardApi.syncStudioClipboardToolbarState
         : null;
       if (syncStudioClipboardToolbarState) {
         return syncStudioClipboardToolbarState({
@@ -5945,10 +5948,10 @@
         });
       }
       const buildStudioClipboardToolbarState = (
-        SlideNextStudioEditorClipboard
-        && typeof SlideNextStudioEditorClipboard.buildStudioClipboardToolbarState === 'function'
+        clipboardApi
+        && typeof clipboardApi.buildStudioClipboardToolbarState === 'function'
       )
-        ? SlideNextStudioEditorClipboard.buildStudioClipboardToolbarState
+        ? clipboardApi.buildStudioClipboardToolbarState
         : null;
       const clipboardActionState = buildStudioClipboardToolbarState
         ? buildStudioClipboardToolbarState(selectedElements, editorClipboard, {
@@ -5962,10 +5965,10 @@
         slidePasteClipboardBtn: clipboardActionState.canPaste
       };
       const renderStudioClipboardToolbarState = (
-        SlideNextStudioEditorClipboard
-        && typeof SlideNextStudioEditorClipboard.renderStudioClipboardToolbarState === 'function'
+        clipboardApi
+        && typeof clipboardApi.renderStudioClipboardToolbarState === 'function'
       )
-        ? SlideNextStudioEditorClipboard.renderStudioClipboardToolbarState
+        ? clipboardApi.renderStudioClipboardToolbarState
         : null;
       if (renderStudioClipboardToolbarState) {
         return renderStudioClipboardToolbarState({
