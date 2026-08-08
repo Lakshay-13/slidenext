@@ -814,6 +814,16 @@
     const doc = options.doc || null;
     const html = resolveStudioHistoryFrameHtml(historyEntry, options);
 
+    if (!html
+      && historyEntry
+      && historyEntry.canonicalDeck
+      && typeof historyEntry.canonicalDeck === 'object') {
+      return {
+        didRestoreDoc: false,
+        restoredHtmlLength: 0
+      };
+    }
+
     replaceFrameHtml(doc, html);
     syncIframeTheme(doc);
     makeElementsHoverable(doc);

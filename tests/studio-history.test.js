@@ -1326,6 +1326,48 @@ test('restoreStudioHistoryFrameSetup falls back to rendered canonical deck html 
   assert.equal(result.restoredHtmlLength, '<head><style>.deck{}</style></head><body><main>rendered</main></body>'.length);
 });
 
+test('restoreStudioHistoryFrameSetup preserves the live frame when canonical rendering is unavailable', () => {
+  const doc = {
+    documentElement: {
+      innerHTML: '<body><main>live</main></body>'
+    }
+  };
+  let hookCalls = 0;
+
+  const result = studioHistory.restoreStudioHistoryFrameSetup({
+    html: '',
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: [{ id: 'slide-1', nodes: [] }]
+    }
+  }, {
+    doc,
+    syncIframeTheme() {
+      hookCalls += 1;
+    },
+    makeElementsHoverable() {
+      hookCalls += 1;
+    },
+    setupIframeDragging() {
+      hookCalls += 1;
+    },
+    bindDeckNavigationSync() {
+      hookCalls += 1;
+    },
+    generateThumbnails() {
+      hookCalls += 1;
+    }
+  });
+
+  assert.deepEqual(result, {
+    didRestoreDoc: false,
+    restoredHtmlLength: 0
+  });
+  assert.equal(doc.documentElement.innerHTML, '<body><main>live</main></body>');
+  assert.equal(hookCalls, 0);
+});
+
 test('restoreStudioHistoryFrameSetup preserves an explicit render active slide override over the history entry active slide', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',
