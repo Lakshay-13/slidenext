@@ -21,6 +21,13 @@
     return { ...value };
   }
 
+  function isStructurallyValidStudioCanonicalDeck(value) {
+    return !!value
+      && typeof value === 'object'
+      && !Array.isArray(value)
+      && Array.isArray(value.slides);
+  }
+
   function normalizeSessionToken(value) {
     return Number.isInteger(value) ? value : null;
   }
@@ -630,15 +637,11 @@
       ? options.isCanonicalDeck
       : null;
 
-    if (!isCanonicalDeck) {
-      return options.canonicalDeck || (buildCanonicalDeck ? buildCanonicalDeck() : null);
-    }
-
     return resolveStudioSaveRequestCanonicalDeck({
       canonicalDeck: options.canonicalDeck,
       buildCanonicalDeck,
       createCanonicalDeck: options.createCanonicalDeck,
-      isCanonicalDeck,
+      isCanonicalDeck: isCanonicalDeck || isStructurallyValidStudioCanonicalDeck,
       resolvePresentationCanonicalDeck: options.resolvePresentationCanonicalDeck
     });
   }

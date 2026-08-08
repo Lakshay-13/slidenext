@@ -1806,32 +1806,53 @@ test('resolveStudioSaveRequestCanonicalDeck fails closed when the fallback build
   );
 });
 
-test('resolveStudioCanonicalDeckOverride preserves the provided override when no canonical validator is available', () => {
-  const providedCanonicalDeck = {
+test('resolveStudioCanonicalDeckOverride rejects malformed overrides when no canonical validator is available', () => {
+  const fallbackCanonicalDeck = {
     metadata: {
-      title: 'Unvalidated Deck'
-    }
+      title: 'Fallback Deck'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
   };
   let buildCanonicalDeckCalls = 0;
 
-  assert.equal(
+  assert.deepEqual(
     editorPersistence.resolveStudioCanonicalDeckOverride({
-      canonicalDeck: providedCanonicalDeck,
+      canonicalDeck: {
+        metadata: {
+          title: 'Unvalidated Deck'
+        }
+      },
       buildCanonicalDeck() {
         buildCanonicalDeckCalls += 1;
+        return fallbackCanonicalDeck;
+      }
+    }),
+    fallbackCanonicalDeck
+  );
+  assert.equal(buildCanonicalDeckCalls, 1);
+
+  assert.equal(
+    editorPersistence.resolveStudioCanonicalDeckOverride({
+      canonicalDeck: {
+        metadata: {
+          title: 'Unvalidated Deck'
+        }
+      },
+      buildCanonicalDeck() {
         return {
-          slides: [
-            {
-              id: 'slide-1',
-              nodes: []
-            }
-          ]
+          metadata: {
+            title: 'Still Broken'
+          }
         };
       }
     }),
-    providedCanonicalDeck
+    null
   );
-  assert.equal(buildCanonicalDeckCalls, 0);
 });
 
 test('resolveStudioCanonicalDeckOverride rebuilds malformed overrides when a canonical validator is available', () => {
