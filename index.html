@@ -2111,7 +2111,7 @@
           triggerAutoSave: (...args) => triggerAutoSave(...args),
           triggerAutoVersion: (...args) => triggerAutoVersion(...args),
           finalizeMutation: (...args) => finalizeEditorDeckMutation(...args),
-          onAssetsChanged: (assets) => renderSavedAssets(assets)
+          onAssetsChanged: () => updateAssetLibraryState()
         })
       : null;
     const studioEditorTransformController = typeof SlideNextStudioEditorTransformController !== 'undefined'
