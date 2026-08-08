@@ -1749,7 +1749,9 @@
           transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
             ? SlideNextStudioEditorTransaction
             : null,
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+            preferLiveCanonicalDeck: false
+          }),
           resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
           getDocument: (...args) => getIframeDoc(...args),
           getActiveSlide: (...args) => getActiveSlide(...args),

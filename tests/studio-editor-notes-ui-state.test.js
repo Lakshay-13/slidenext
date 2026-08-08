@@ -39,6 +39,20 @@ function installSlideMetadataController(context) {
   });
 }
 
+test('slide metadata wiring rebuilds the canonical deck from the iframe DOM', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const controllerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideMetadataController =',
+    'const studioEditorSlideRoutingController ='
+  );
+
+  assert.match(
+    controllerSource,
+    /buildCanonicalDeck: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc, \{\s*preferLiveCanonicalDeck: false\s*\}\)/
+  );
+});
+
 test('updateActiveSlideNotes delegates to the shared notes action', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const metadataAdapterSource = extractFunctionSource(
