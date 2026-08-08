@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioAlignment = require('../shared/studio-editor-alignment.js');
@@ -167,6 +168,73 @@ test('updateAlignmentActionState delegates toolbar state assembly to the shared 
   assert.equal(calls[0].items, layoutItems);
   assert.equal(calls[0].isLocked, context.isElementLocked);
   assert.equal(calls[0].canMutateDeck(), true);
+});
+
+test('alignment action state prefers canonical lock metadata when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const visibilityReaderSource = extractFunctionSource(
+    fileContent,
+    'function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {',
+    '\n\n    function setElementHiddenState'
+  );
+  const source = extractFunctionSource(
+    fileContent,
+    'function buildAlignmentActionState(doc = null) {',
+    '\n\n    function updateAlignmentActionState'
+  );
+  const doc = { id: 'doc' };
+  const element = { dataset: { editorId: 'node-1' } };
+  const layoutItems = [{ element }, { element: { dataset: { editorId: 'node-2' } } }];
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [
+        { id: 'node-1', visibility: { locked: true } },
+        { id: 'node-2', visibility: { locked: false } }
+      ]
+    }]
+  });
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorCanonicalState: canonicalState,
+    SlideNextStudioEditorAlignment: {
+      buildStudioAlignmentActionState(items, options) {
+        calls.push({ items, locked: options.isLocked(element) });
+        return { selection: items, canAlign: false };
+      }
+    },
+    buildEditorCanonicalDeck(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return canonicalDeck;
+    },
+    buildMotionSelectionActionState(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return {
+        doc,
+        slide: { id: 'slide-1' },
+        canNudge: true,
+        nudgeLayoutItems: layoutItems
+      };
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    resolveEditorCanonicalNodeForElement(target, deck) {
+      return deck.slides[0].nodes.find((node) => node.id === target.dataset.editorId) || null;
+    },
+    isElementLocked() {
+      return false;
+    },
+    isElementHidden() {
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${visibilityReaderSource}\n${source}`, context);
+
+  context.buildAlignmentActionState(doc);
+  assert.deepEqual(calls, [{ items: layoutItems, locked: true }]);
 });
 
 test('distributeSelectedElements writes distribution positions and records one mutation', () => {

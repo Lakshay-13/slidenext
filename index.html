@@ -5900,10 +5900,13 @@
 
     function buildAlignmentActionState(doc = null) {
       const motionActionState = buildMotionSelectionActionState(doc);
+      const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
+        ? getEditorCanonicalVisibilityReader('locked', doc || getIframeDoc(), isElementLocked)
+        : isElementLocked;
       const alignmentActionState = SlideNextStudioEditorAlignment.buildStudioAlignmentActionState(
         motionActionState.nudgeLayoutItems,
         {
-          isLocked: isElementLocked,
+          isLocked: readLockedState,
           canMutateDeck: () => !!motionActionState.slide && motionActionState.canNudge
         }
       );
@@ -6060,10 +6063,13 @@
       if (!Array.isArray(motionActionState.nudgeLayoutItems)) {
         return false;
       }
+      const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
+        ? getEditorCanonicalVisibilityReader('locked', doc, isElementLocked)
+        : isElementLocked;
       const toolbarOptions = {
         documentRef: document,
         items: motionActionState.nudgeLayoutItems,
-        isLocked: isElementLocked,
+        isLocked: readLockedState,
         canMutateDeck: () => !!motionActionState.slide && motionActionState.canNudge
       };
       return alignmentApi.syncStudioAlignmentToolbarState(toolbarOptions);
