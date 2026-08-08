@@ -85,6 +85,16 @@
     return hud;
   }
 
+  function updateStudioDragHudForActiveSlide(options = {}) {
+    const documentRef = options.documentRef;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const slide = documentRef ? getActiveSlide(documentRef) : null;
+    if (!documentRef || !slide || !options.bounds) return null;
+    return updateStudioDragHud(documentRef, slide, options.bounds, options);
+  }
+
   function renderStudioGuides(doc, slide, guidesDef, options = {}) {
     if (!doc || !slide) return null;
     const guidesLayer = ensureStudioGuidesLayer(doc, slide, options);
@@ -224,6 +234,7 @@
     clearStudioGuides,
     hideStudioDragHud,
     updateStudioDragHud,
+    updateStudioDragHudForActiveSlide,
     renderStudioGuides,
     renderStudioGuidesForActiveSlide,
     renderStudioMarqueeSelection,

@@ -4844,9 +4844,16 @@
 
     function updateDragHud(bounds) {
       const doc = getIframeDoc();
-      const slide = getActiveSlide(doc);
-      if (!doc || !slide || !bounds) return;
-      SlideNextStudioEditorOverlay.updateStudioDragHud(doc, slide, bounds, getEditorOverlayOptions());
+      if (!SlideNextStudioEditorOverlay
+        || typeof SlideNextStudioEditorOverlay.updateStudioDragHudForActiveSlide !== 'function') {
+        return false;
+      }
+      return SlideNextStudioEditorOverlay.updateStudioDragHudForActiveSlide({
+        documentRef: doc,
+        getActiveSlide,
+        bounds,
+        ...getEditorOverlayOptions()
+      });
     }
 
     function renderGuides(guidesDef) {

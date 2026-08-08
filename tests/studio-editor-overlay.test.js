@@ -222,3 +222,35 @@ test('renderStudioMarqueeSelectionForActiveSlide resolves the current slide befo
   assert.equal(overlay.style.left, '30px');
   assert.equal(overlay.style.top, '20px');
 });
+
+test('updateStudioDragHudForActiveSlide resolves the current slide before rendering drag feedback', () => {
+  const hud = {
+    textContent: '',
+    classList: {
+      add(value) {
+        this.added = value;
+      }
+    }
+  };
+  const slide = {
+    querySelector() {
+      return hud;
+    }
+  };
+  const documentRef = { id: 'iframe-document' };
+  let resolvedDocument = null;
+
+  const result = overlayView.updateStudioDragHudForActiveSlide({
+    documentRef,
+    getActiveSlide(doc) {
+      resolvedDocument = doc;
+      return slide;
+    },
+    bounds: { left: 12.4, top: 18.8, width: 120.2, height: 64.9 }
+  });
+
+  assert.equal(resolvedDocument, documentRef);
+  assert.equal(result, hud);
+  assert.equal(hud.textContent, 'X 12  Y 19  W 120  H 65');
+  assert.equal(hud.classList.added, 'visible');
+});
