@@ -3608,25 +3608,44 @@
     }
 
     function teardownDeckActiveSlideSync() {
-      const nextSyncState = SlideNextStudioDeckView.teardownStudioDeckActiveSlideSync({
+      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
+        : null;
+      if (!deckView || typeof deckView.teardownStudioDeckActiveSlideSync !== 'function') {
+        deckActiveSlideObserver = null;
+        deckActiveSlideSyncTimer = null;
+        return false;
+      }
+      const nextSyncState = deckView.teardownStudioDeckActiveSlideSync({
         observer: deckActiveSlideObserver,
         timer: deckActiveSlideSyncTimer
       });
       deckActiveSlideObserver = nextSyncState.observer;
       deckActiveSlideSyncTimer = nextSyncState.timer;
+      return true;
     }
 
     function scheduleStudioChromeSync(doc = getIframeDoc()) {
-      if (!doc) return;
-      deckActiveSlideSyncTimer = SlideNextStudioDeckView.scheduleStudioDeckActiveSlideSync(deckActiveSlideSyncTimer, () => {
+      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
+        : null;
+      if (!doc || !deckView || typeof deckView.scheduleStudioDeckActiveSlideSync !== 'function') return false;
+      deckActiveSlideSyncTimer = deckView.scheduleStudioDeckActiveSlideSync(deckActiveSlideSyncTimer, () => {
         deckActiveSlideSyncTimer = null;
         syncStudioChromeToActiveSlide(doc);
       });
+      return true;
     }
 
     function observeDeckActiveSlideState(doc = getIframeDoc()) {
+      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
+        : null;
       teardownDeckActiveSlideSync();
-      const nextObserverState = SlideNextStudioDeckView.observeStudioDeckActiveSlideState(doc, {
+      if (!deckView || typeof deckView.observeStudioDeckActiveSlideState !== 'function') {
+        return false;
+      }
+      const nextObserverState = deckView.observeStudioDeckActiveSlideState(doc, {
         scheduleSync: (nextDoc) => {
           scheduleStudioChromeSync(nextDoc);
         }

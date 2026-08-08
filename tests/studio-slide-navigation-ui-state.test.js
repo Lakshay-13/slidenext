@@ -171,6 +171,29 @@ test('bindDeckNavigationSync delegates to the navigation controller', () => {
   assert.equal(capturedDoc, iframeDoc);
 });
 
+test('deck active-slide lifecycle helpers fail closed without the shared deck view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function teardownDeckActiveSlideSync() {',
+    '\n\n    // Toggle active slide viewport display'
+  );
+  const context = {
+    deckActiveSlideObserver: { disconnect() {} },
+    deckActiveSlideSyncTimer: 123,
+    syncStudioChromeToActiveSlide() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.teardownDeckActiveSlideSync(), false);
+  assert.equal(context.deckActiveSlideObserver, null);
+  assert.equal(context.deckActiveSlideSyncTimer, null);
+  assert.equal(context.scheduleStudioChromeSync(null), false);
+  assert.equal(context.observeDeckActiveSlideState(null), false);
+});
+
 test('updateIframeNavigationUI delegates to the navigation controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateIframeNavigationUISource = extractFunctionSource(
