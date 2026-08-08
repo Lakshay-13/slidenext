@@ -54,6 +54,21 @@ test('buildStudioCanonicalVisibilityBaseline prefers a valid live canonical deck
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalVisibilityBaseline rejects invalid compatibility baselines', () => {
+  let rebuildCalls = 0;
+  const result = canonicalVisibility.buildStudioCanonicalVisibilityBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => {
+      rebuildCalls += 1;
+      return { invalid: true };
+    }
+  });
+
+  assert.equal(result, null);
+  assert.equal(rebuildCalls, 1);
+});
+
 test('buildStudioCanonicalVisibilityDeck applies hidden and locked patches without mutating the source', () => {
   const sourceDeck = createSourceDeck();
   const result = canonicalVisibility.buildStudioCanonicalVisibilityDeck(
