@@ -134,6 +134,28 @@ test('canonical bridge rejects malformed decks at state and builder boundaries',
   assert.equal(bridge.resolveLiveCanonicalDeck(), validDeck);
 });
 
+test('canonical bridge rejects malformed decks without a custom validator', () => {
+  let liveDeck = { invalid: true };
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    state: {
+      set(deck) {
+        liveDeck = deck;
+        return deck;
+      },
+      resolve() {
+        return liveDeck;
+      }
+    },
+    canonicalDeckBuilder: () => ({ invalid: true }),
+    mutationCanonicalDeckBuilder: () => ({ invalid: true })
+  });
+
+  assert.equal(bridge.setLiveCanonicalDeck({ invalid: true }), null);
+  assert.equal(bridge.resolveLiveCanonicalDeck(), null);
+  assert.equal(bridge.buildCanonicalDeck({}), null);
+  assert.equal(bridge.buildMutationCanonicalDeck({}), null);
+});
+
 test('canonical bridge fails closed when either builder throws or is unavailable', () => {
   const throwingBridge = canonicalBridge.createStudioEditorCanonicalBridge({
     canonicalDeckBuilder() {
