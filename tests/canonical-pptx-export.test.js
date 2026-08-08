@@ -494,6 +494,28 @@ test('createCanonicalPptxExport preserves rounded and circular shape geometry', 
   );
 });
 
+test('createCanonicalPptxExport preserves supported shape border styles', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'dotted-shape',
+        type: 'shape',
+        style: 'border-color: #ef4444; border-style: dotted;',
+        layout: { x: 0, y: 0, width: 100, height: 50 }
+      }, {
+        id: 'hidden-border-shape',
+        type: 'shape',
+        style: 'border-style: none;',
+        layout: { x: 120, y: 0, width: 100, height: 50 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const shapeCalls = result.pptx.slides[0].calls;
+  assert.equal(shapeCalls[0].options.line.dashType, 'sysDot');
+  assert.equal(shapeCalls[1].options.line.transparency, 100);
+});
+
 test('createCanonicalPptxExport preserves rounded image corners', () => {
   const result = pptxExport.createCanonicalPptxExport({
     assets: [{ id: 'asset-1', src: 'data:image/png;base64,AAAA' }],

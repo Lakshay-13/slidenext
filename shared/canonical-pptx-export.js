@@ -628,13 +628,24 @@
     const fill = resolvePptxFillColor(style['background-color'] || style.background) || { color: 'FFFFFF' };
     const lineColor = normalizeHexColor(style['border-color']) || fill.color;
     const lineWidth = parseCssPx(style['border-width']);
+    const borderStyle = typeof style['border-style'] === 'string'
+      ? style['border-style'].trim().toLowerCase()
+      : '';
+    const lineStyle = borderStyle === 'dashed'
+      ? { dashType: 'dash' }
+      : borderStyle === 'dotted'
+        ? { dashType: 'sysDot' }
+        : ['none', 'hidden'].includes(borderStyle)
+          ? { transparency: 100 }
+          : {};
     const transparency = nodeTransparency(node);
     return {
       ...bounds,
       fill: mergePptxTransparency(fill, transparency),
       line: mergePptxTransparency({
         color: lineColor,
-        width: lineWidth === null ? 0.5 : Math.max(0, lineWidth * 0.75)
+        width: lineWidth === null ? 0.5 : Math.max(0, lineWidth * 0.75),
+        ...lineStyle
       }, transparency)
     };
   }
