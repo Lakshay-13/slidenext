@@ -6366,11 +6366,14 @@
 
     function buildClipboardSelectionMutationPlan(doc = null) {
       const resolvedDoc = doc || getIframeDoc();
+      const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
+        ? SlideNextStudioEditorClipboard
+        : null;
       const buildStudioClipboardSelectionMutationPlan = (
-        SlideNextStudioEditorClipboard
-        && typeof SlideNextStudioEditorClipboard.buildStudioClipboardSelectionMutationPlan === 'function'
+        clipboardApi
+        && typeof clipboardApi.buildStudioClipboardSelectionMutationPlan === 'function'
       )
-        ? SlideNextStudioEditorClipboard.buildStudioClipboardSelectionMutationPlan
+        ? clipboardApi.buildStudioClipboardSelectionMutationPlan
         : null;
       if (buildStudioClipboardSelectionMutationPlan) {
         return buildStudioClipboardSelectionMutationPlan(selectedElements, editorClipboard, {
@@ -6382,7 +6385,17 @@
         });
       }
 
-      const clipboardMutationPlan = SlideNextStudioEditorClipboard.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
+      if (!clipboardApi || typeof clipboardApi.buildStudioClipboardMutationPlan !== 'function') {
+        return {
+          selection: [],
+          canCopy: false,
+          canDuplicate: false,
+          canPaste: false,
+          payloadItems: [],
+          canBuildPayload: false
+        };
+      }
+      const clipboardMutationPlan = clipboardApi.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
         isLocked: isElementLocked,
         canMutateDeck: () => !!getActiveSlide(resolvedDoc)
       });

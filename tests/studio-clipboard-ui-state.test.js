@@ -215,6 +215,26 @@ test('buildClipboardSelectionMutationPlan reuses the shared clipboard selection 
   ]);
 });
 
+test('buildClipboardSelectionMutationPlan fails closed when the shared clipboard module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
+  const context = {};
+
+  vm.createContext(context);
+  vm.runInContext(buildClipboardSelectionMutationPlanSource, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(
+    context.buildClipboardSelectionMutationPlan({})
+  )), {
+    selection: [],
+    canCopy: false,
+    canDuplicate: false,
+    canPaste: false,
+    payloadItems: [],
+    canBuildPayload: false
+  });
+});
+
 test('finalizeClipboardActionResult refreshes clipboard controls and preserves the action result', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
