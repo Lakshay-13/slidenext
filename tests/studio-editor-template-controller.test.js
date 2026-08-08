@@ -128,3 +128,44 @@ test('template controller inserts a rendered template after the active slide thr
   assert.equal(calls[3][2].kind, 'slide-insert');
   assert.equal(calls[3][3].slides.length, 2);
 });
+
+test('template controller removes a saved template and finalizes persistence hooks', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    templates: [
+      { id: 'hero-template', name: 'Hero Template' },
+      { id: 'stats-template', name: 'Stats Template' }
+    ],
+    slides: [{ id: 'slide-1' }]
+  });
+  const calls = [];
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    },
+    triggerAutoSave() {
+      calls.push(['save']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    },
+    onTemplatesChanged(templates, nextDeck) {
+      calls.push(['templates', templates.map((template) => template.id), nextDeck]);
+    }
+  });
+
+  const result = controller.removeTemplate('hero-template');
+
+  assert.deepEqual(sourceDeck.templates.map((template) => template.id), [
+    'hero-template', 'stats-template'
+  ]);
+  assert.deepEqual(result.templates.map((template) => template.id), ['stats-template']);
+  assert.equal(calls[0][0], 'history');
+  assert.equal(calls[0][1], false);
+  assert.equal(calls[0][2], null);
+  assert.equal(calls[0][3], result);
+  assert.deepEqual(calls.slice(1, 3), [['save'], ['version', 'Auto: Removed Template "Hero Template"']]);
+  assert.deepEqual(calls[3][0], 'templates');
+  assert.deepEqual(calls[3][1], ['stats-template']);
+});
