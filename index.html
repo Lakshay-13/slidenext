@@ -1362,6 +1362,7 @@
   <script src="/shared/studio-editor-slide-reorder-controller.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-inline-edit.js"></script>
+  <script src="/shared/studio-editor-table-navigation.js"></script>
   <script src="/shared/studio-editor-interaction-options.js"></script>
   <script src="/shared/studio-editor-interactions.js"></script>
   <script src="/shared/studio-editor-transform-controller.js"></script>
@@ -2396,6 +2397,9 @@
       ...EDITOR_INLINE_TEXT_TAGS
     ]);
     const RESIZE_HANDLE_DIRECTIONS = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
+    const studioEditorTableNavigation = typeof SlideNextStudioEditorTableNavigation !== 'undefined'
+      ? SlideNextStudioEditorTableNavigation
+      : null;
     const studioEditorFrameInteractions = typeof SlideNextStudioEditorFrameInteractions !== 'undefined'
       && SlideNextStudioEditorFrameInteractions
       && typeof SlideNextStudioEditorFrameInteractions.createStudioEditorFrameInteractions === 'function'
@@ -2424,7 +2428,10 @@
           deselectElement,
           getActiveSlide,
           resolveTextElement: resolveInlineTextEditTarget,
-          resolveAdjacentTextElement: resolveAdjacentInlineTextElement,
+          resolveAdjacentTextElement: studioEditorTableNavigation
+            && typeof studioEditorTableNavigation.resolveStudioAdjacentTableCell === 'function'
+            ? studioEditorTableNavigation.resolveStudioAdjacentTableCell
+            : null,
           isElementLocked,
           isElementHidden,
           onInlineEditStart: ({ element }, iframeDoc) => {
@@ -4736,29 +4743,6 @@
         selectedElements: getLiveSelectedElements(selectedElements, getIframeDoc()),
         textTagNames: EDITOR_INLINE_EDIT_TEXT_TAGS
       });
-    }
-
-    function resolveAdjacentInlineTextElement(element, options = {}) {
-      const tagName = element && typeof element.tagName === 'string'
-        ? element.tagName.toLowerCase()
-        : '';
-      const slide = options.slide || getActiveSlide(getIframeDoc());
-      if (!['td', 'th'].includes(tagName) || !slide
-        || typeof element.closest !== 'function'
-        || typeof slide.contains !== 'function') {
-        return null;
-      }
-
-      const table = element.closest('table');
-      if (!table || !slide.contains(table) || typeof table.querySelectorAll !== 'function') {
-        return null;
-      }
-
-      const cells = Array.from(table.querySelectorAll('th, td'));
-      const cellIndex = cells.indexOf(element);
-      const direction = options.direction === -1 ? -1 : 1;
-      const adjacentCell = cellIndex >= 0 ? cells[cellIndex + direction] : null;
-      return adjacentCell && slide.contains(adjacentCell) ? adjacentCell : null;
     }
 
     function refreshSelectionClasses() {
