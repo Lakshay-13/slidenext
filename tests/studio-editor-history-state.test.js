@@ -102,6 +102,35 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
   assert.equal(calls[1].preferCanonicalDeck, true);
 });
 
+test('createStudioEditorHistoryEntryBuilder forwards a live baseline when pending canonical state is absent', () => {
+  const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
+  let capturedOptions = null;
+  const historyApi = {
+    buildStudioHistoryEntry(_doc, options) {
+      options.buildCanonicalDeck('history-doc');
+      return { canonicalDeck: canonicalDeckBaseline };
+    }
+  };
+  const builder = historyState.createStudioEditorHistoryEntryBuilder({
+    historyApi,
+    getCanonicalDeckBaseline(sourceDoc) {
+      assert.equal(sourceDoc, 'history-doc');
+      return canonicalDeckBaseline;
+    },
+    buildCanonicalDeck(_doc, options) {
+      capturedOptions = options;
+      return canonicalDeckBaseline;
+    }
+  });
+
+  builder('history-doc');
+
+  assert.deepEqual(capturedOptions, {
+    preferLiveCanonicalDeck: false,
+    canonicalDeckBaseline
+  });
+});
+
 test('createStudioEditorHistoryEntryAdapter reuses the shared entry builder', () => {
   let createCalls = 0;
   let capturedOptions = null;

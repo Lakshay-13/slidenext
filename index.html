@@ -7096,6 +7096,11 @@
               : null
           ),
           buildCanonicalDeck: buildEditorCanonicalDeck,
+          getCanonicalDeckBaseline: (sourceDoc) => (
+            typeof resolveEditorLiveCanonicalDeck === 'function'
+              ? resolveEditorLiveCanonicalDeck(sourceDoc || getIframeDoc(), studioEditorSessionToken)
+              : null
+          ),
           getHistoryOptions: getEditorHistoryOptions,
           resolveFallbackActiveSlideId: typeof resolveEditorFallbackActiveSlideId === 'function'
             ? resolveEditorFallbackActiveSlideId
