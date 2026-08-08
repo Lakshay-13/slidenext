@@ -2200,7 +2200,9 @@
           saveHistoryState: (...args) => saveHistoryState(...args),
           triggerAutoSave: (...args) => triggerAutoSave(...args),
           triggerAutoVersion: (...args) => triggerAutoVersion(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+            preferLiveCanonicalDeck: false
+          }),
           assignElementId: (...args) => assignEditorElementId(...args),
           getGridSizePx: () => isGridSnapEnabled ? GRID_SNAP_SIZE_PX : null,
           getIsDraggingElement: () => isDraggingElement,
