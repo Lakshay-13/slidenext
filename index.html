@@ -2060,7 +2060,7 @@
           triggerAutoSave: (...args) => triggerAutoSave(...args),
           triggerAutoVersion: (...args) => triggerAutoVersion(...args),
           finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args),
-          onTemplatesChanged: (templates) => renderSavedTemplates(templates)
+          onTemplatesChanged: () => updateTemplateActionState()
         })
       : null;
     const studioEditorMasterSlideController = typeof SlideNextStudioEditorMasterSlideController !== 'undefined'
