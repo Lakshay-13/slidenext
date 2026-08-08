@@ -1248,6 +1248,7 @@
   <script src="/shared/studio-editor-slide-deletion-mutation.js"></script>
   <script src="/shared/studio-editor-slide-insertion-mutation.js"></script>
   <script src="/shared/studio-editor-slide-reorder-mutation.js"></script>
+  <script src="/shared/studio-editor-slide-reorder-controller.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-inline-edit.js"></script>
   <script src="/shared/studio-editor-interaction-options.js"></script>
@@ -1484,6 +1485,30 @@
           reorderSlidesById: (sourceSlideId, targetSlideId) => {
             reorderSlidesById(sourceSlideId, targetSlideId);
           }
+        })
+      : null;
+    const studioEditorSlideReorderController = typeof SlideNextStudioEditorSlideReorderController !== 'undefined'
+      && SlideNextStudioEditorSlideReorderController
+      && typeof SlideNextStudioEditorSlideReorderController.createStudioEditorSlideReorderController === 'function'
+      ? SlideNextStudioEditorSlideReorderController.createStudioEditorSlideReorderController({
+          slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+            ? SlideNextStudioEditorSlideCommands
+            : null,
+          canonicalSlideApi: typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
+            ? SlideNextStudioEditorCanonicalSlide
+            : null,
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          getIframeDoc: () => getIframeDoc(),
+          getSlides: (...args) => getSlides(...args),
+          getSlideId: (...args) => getEditorSlideId(...args),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          captureSlideMutationState: (...args) => captureSlideMutationRestoreState(...args),
+          applyReorder: (...args) => applyEditorSlideReorderWithTransaction(...args),
+          generateThumbnails: (...args) => generateThumbnails(...args),
+          restoreDeckViewAfterSlideMutation: (...args) => restoreDeckViewAfterSlideMutation(...args),
+          finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args)
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -2817,59 +2842,9 @@
 
     // Swap node indices in iframe and re-render
     function reorderSlides(fromIdx, toIdx) {
-      const slideCommands = typeof SlideNextStudioEditorSlideCommands !== 'undefined'
-        ? SlideNextStudioEditorSlideCommands
-        : null;
-      const reorderStudioSlideNodes = slideCommands
-        && typeof slideCommands.reorderStudioSlideNodes === 'function'
-        ? slideCommands.reorderStudioSlideNodes
-        : null;
-      if (!reorderStudioSlideNodes) return false;
-
-      const canonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
-        ? SlideNextStudioEditorCanonicalSlide
-        : null;
-      const canonicalReorderSlideBuilders = canonicalSlideApi
-        && typeof canonicalSlideApi.createStudioCanonicalReorderSlideMutationBuilders === 'function'
-        ? canonicalSlideApi.createStudioCanonicalReorderSlideMutationBuilders({
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null
-          })
-        : null;
-
-      return reorderStudioSlideNodes(fromIdx, toIdx, {
-        getIframeDoc,
-        getSlideContainer: (doc) => doc && typeof doc.getElementById === 'function'
-          ? doc.getElementById('slidesContainer')
-          : null,
-        getSlides: typeof getSlides === 'function' ? getSlides : () => [],
-        getSlideId: typeof getEditorSlideId === 'function'
-          ? getEditorSlideId
-          : (slide) => slide && slide.id || '',
-        buildCanonicalReorderSlideBaseline: canonicalReorderSlideBuilders
-          ? canonicalReorderSlideBuilders.buildCanonicalReorderSlideBaseline
-          : null,
-        buildCanonicalReorderSlideDeck: canonicalReorderSlideBuilders
-          ? canonicalReorderSlideBuilders.buildCanonicalReorderSlideDeck
-          : null,
-        captureSlideMutationState: typeof captureSlideMutationRestoreState === 'function'
-          ? captureSlideMutationRestoreState
-          : null,
-        applyReorder: typeof applyEditorSlideReorderWithTransaction === 'function'
-          ? applyEditorSlideReorderWithTransaction
-          : () => ({ didApply: false, transaction: null }),
-        generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
-        restoreDeckViewAfterSlideMutation: typeof restoreDeckViewAfterSlideMutation === 'function'
-          ? restoreDeckViewAfterSlideMutation
-          : null,
-        finalizeMutation: typeof finalizeSlideMutationPersistence === 'function'
-          ? finalizeSlideMutationPersistence
-          : null
-      });
+      return studioEditorSlideReorderController
+        ? studioEditorSlideReorderController.reorder(fromIdx, toIdx)
+        : false;
     }
 
     function updateActiveThumbnailCardState(activeSlideId) {

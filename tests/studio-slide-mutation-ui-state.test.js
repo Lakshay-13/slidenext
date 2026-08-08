@@ -11,6 +11,7 @@ const slideDeletionMutation = require('../shared/studio-editor-slide-deletion-mu
 const slideInsertionMutation = require('../shared/studio-editor-slide-insertion-mutation.js');
 const slideReorderMutation = require('../shared/studio-editor-slide-reorder-mutation.js');
 const slideMutation = require('../shared/studio-editor-slide-mutation.js');
+const reorderController = require('../shared/studio-editor-slide-reorder-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -80,6 +81,23 @@ function loadApplyEditorSlideReorderWithTransaction(fileContent, context) {
   );
   context.SlideNextStudioEditorSlideReorderMutation = slideReorderMutation;
   vm.runInContext(helperSource, context);
+}
+
+function installSlideReorderController(context) {
+  context.studioEditorSlideReorderController = reorderController.createStudioEditorSlideReorderController({
+    slideCommandsApi: context.SlideNextStudioEditorSlideCommands,
+    canonicalSlideApi: context.SlideNextStudioEditorCanonicalSlide,
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    getIframeDoc: context.getIframeDoc,
+    getSlides: context.getSlides,
+    getSlideId: context.getEditorSlideId,
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    captureSlideMutationState: context.captureSlideMutationRestoreState,
+    applyReorder: context.applyEditorSlideReorderWithTransaction,
+    generateThumbnails: context.generateThumbnails,
+    restoreDeckViewAfterSlideMutation: context.restoreDeckViewAfterSlideMutation,
+    finalizeMutation: context.finalizeSlideMutationPersistence
+  });
 }
 
 function loadRestoreSelectionAfterPreservedSlideMutation(fileContent, context) {
@@ -1022,6 +1040,7 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadApplyEditorSlideReorderWithTransaction(fileContent, context);
+  installSlideReorderController(context);
   vm.runInContext(reorderSlidesSource, context);
 
   context.reorderSlides(0, 2);
@@ -1131,6 +1150,7 @@ test('reorderSlides delegates DOM ordering and transaction capture to the shared
 
   vm.createContext(context);
   loadApplyEditorSlideReorderWithTransaction(fileContent, context);
+  installSlideReorderController(context);
   vm.runInContext(reorderSlidesSource, context);
 
   assert.equal(context.reorderSlides(0, 1), true);
@@ -1171,6 +1191,7 @@ test('reorderSlides no-ops when the iframe document is unavailable', () => {
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadApplyEditorSlideReorderWithTransaction(fileContent, context);
+  installSlideReorderController(context);
   vm.runInContext(reorderSlidesSource, context);
 
   assert.equal(context.reorderSlides(0, 1), false);
@@ -1210,6 +1231,7 @@ test('reorderSlides no-ops when the slide container is unavailable', () => {
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadApplyEditorSlideReorderWithTransaction(fileContent, context);
+  installSlideReorderController(context);
   vm.runInContext(reorderSlidesSource, context);
 
   assert.equal(context.reorderSlides(0, 1), false);
@@ -1256,6 +1278,7 @@ test('reorderSlides no-ops when the requested slide indexes are unavailable', ()
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadApplyEditorSlideReorderWithTransaction(fileContent, context);
+  installSlideReorderController(context);
   vm.runInContext(reorderSlidesSource, context);
 
   const result = context.reorderSlides(0, 9);
@@ -1305,6 +1328,7 @@ test('reorderSlides no-ops when the requested slide indexes are unchanged', () =
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadApplyEditorSlideReorderWithTransaction(fileContent, context);
+  installSlideReorderController(context);
   vm.runInContext(reorderSlidesSource, context);
 
   const result = context.reorderSlides(1, 1);
