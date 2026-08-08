@@ -5645,16 +5645,50 @@
         && typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReader === 'function'
         ? canonicalStateApi.createStudioEditorCanonicalVisibilityReader
         : null;
+      const createVisibilityReaderFromApi = canonicalStateApi
+        && typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReaderFromApi === 'function'
+        ? canonicalStateApi.createStudioEditorCanonicalVisibilityReaderFromApi
+        : null;
       const createLockReader = canonicalStateApi
         && typeof canonicalStateApi.createStudioEditorCanonicalLockReader === 'function'
         ? canonicalStateApi.createStudioEditorCanonicalLockReader
         : null;
+      const createLockReaderFromApi = canonicalStateApi
+        && typeof canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi === 'function'
+        ? canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi
+        : null;
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const getElementId = typeof assignEditorElementId === 'function'
+        ? assignEditorElementId
+        : (element) => element && element.dataset && element.dataset.editorId;
       const resolveCanonicalNode = typeof resolveEditorCanonicalNodeForElement === 'function'
         ? resolveEditorCanonicalNodeForElement
         : null;
+      if (canonicalDeck
+        && canonicalDeckApi
+        && property === 'locked'
+        && createLockReaderFromApi) {
+        return createLockReaderFromApi(canonicalDeck, {
+          canonicalDeckApi,
+          getElementId,
+          fallbackReader: fallback
+        });
+      }
       if (canonicalDeck && property === 'locked' && createLockReader) {
         return createLockReader(canonicalDeck, {
           resolveCanonicalNode,
+          fallbackReader: fallback
+        });
+      }
+      if (canonicalDeck
+        && canonicalDeckApi
+        && createVisibilityReaderFromApi) {
+        return createVisibilityReaderFromApi(canonicalDeck, {
+          property,
+          canonicalDeckApi,
+          getElementId,
           fallbackReader: fallback
         });
       }

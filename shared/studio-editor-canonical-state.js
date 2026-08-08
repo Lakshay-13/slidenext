@@ -142,11 +142,34 @@
     });
   }
 
+  function createStudioEditorCanonicalVisibilityReaderFromApi(canonicalDeck, options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi
+      && typeof options.canonicalDeckApi.findCanonicalNodeById === 'function'
+      ? options.canonicalDeckApi
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const fallbackReader = typeof options.fallbackReader === 'function'
+      ? options.fallbackReader
+      : () => false;
+
+    if (!canonicalDeckApi) return fallbackReader;
+    return createStudioEditorCanonicalVisibilityReader(canonicalDeck, {
+      property: options.property,
+      resolveCanonicalNode(element, deck) {
+        return canonicalDeckApi.findCanonicalNodeById(deck, getElementId(element));
+      },
+      fallbackReader
+    });
+  }
+
   return {
     createStudioEditorCanonicalState,
     createStudioEditorCanonicalNodeReader,
     createStudioEditorCanonicalLockReader,
     createStudioEditorCanonicalLockReaderFromApi,
-    createStudioEditorCanonicalVisibilityReader
+    createStudioEditorCanonicalVisibilityReader,
+    createStudioEditorCanonicalVisibilityReaderFromApi
   };
 });

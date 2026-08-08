@@ -115,12 +115,11 @@
           fallbackReader
         });
       }
-      if (typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReader === 'function') {
-        return canonicalStateApi.createStudioEditorCanonicalVisibilityReader(canonicalDeck, {
+      if (typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReaderFromApi === 'function') {
+        return canonicalStateApi.createStudioEditorCanonicalVisibilityReaderFromApi(canonicalDeck, {
           property,
-          resolveCanonicalNode(element, deck) {
-            return canonicalDeckApi.findCanonicalNodeById(deck, getElementId(element));
-          },
+          canonicalDeckApi,
+          getElementId,
           fallbackReader
         });
       }
