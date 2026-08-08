@@ -136,6 +136,39 @@ test('captureCurrentStudioSessionState delegates through the editor session snap
   assert.equal(delegatedArgs.getSessionToken(), 12);
 });
 
+test('captureCurrentStudioSessionState creates the shared snapshot adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let adapterCreateCalls = 0;
+  const context = {
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 12,
+    SlideNextStudioEditorSession: {
+      createStudioEditorSessionSnapshotAdapter(options) {
+        adapterCreateCalls += 1;
+        return editorSession.createStudioEditorSessionSnapshotAdapter(options);
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureCurrentStudioSessionState(fileContent, context);
+
+  const firstSnapshot = context.captureCurrentStudioSessionState();
+  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
+  context.studioEditorSessionToken = 13;
+  const secondSnapshot = context.captureCurrentStudioSessionState();
+
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(firstSnapshot, {
+    presentationUrl: '/presentations/onboarding-presentation/index.html',
+    sessionToken: 12
+  });
+  assert.deepEqual(secondSnapshot, {
+    presentationUrl: '/presentations/ai-tools-presentation/index.html',
+    sessionToken: 13
+  });
+});
+
 function loadCreateCurrentStudioSessionReaderOptions(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,

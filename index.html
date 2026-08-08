@@ -2894,13 +2894,15 @@
         ? SlideNextStudioEditorSession.createStudioEditorSessionSnapshotAdapter
         : null;
       if (createStudioEditorSessionSnapshotAdapter) {
-        const adapter = createStudioEditorSessionSnapshotAdapter({
-          sessionApi: SlideNextStudioEditorSession,
-          getPresentationUrl: () => currentPresentationUrl,
-          getSessionToken: () => studioEditorSessionToken
-        });
-        const snapshot = typeof adapter === 'function'
-          ? adapter()
+        if (typeof captureCurrentStudioSessionState.adapter !== 'function') {
+          captureCurrentStudioSessionState.adapter = createStudioEditorSessionSnapshotAdapter({
+            sessionApi: SlideNextStudioEditorSession,
+            getPresentationUrl: () => currentPresentationUrl,
+            getSessionToken: () => studioEditorSessionToken
+          });
+        }
+        const snapshot = typeof captureCurrentStudioSessionState.adapter === 'function'
+          ? captureCurrentStudioSessionState.adapter()
           : null;
         if (snapshot !== null && typeof snapshot !== 'undefined') {
           return snapshot;
