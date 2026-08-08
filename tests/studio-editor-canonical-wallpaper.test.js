@@ -72,6 +72,21 @@ test('buildStudioCanonicalWallpaperBaseline prefers a valid live canonical deck'
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalWallpaperBaseline rejects invalid compatibility baselines', () => {
+  let rebuildCalls = 0;
+  const result = canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeck: () => {
+      rebuildCalls += 1;
+      return { invalid: true };
+    }
+  });
+
+  assert.equal(result, null);
+  assert.equal(rebuildCalls, 1);
+});
+
 test('buildStudioCanonicalWallpaperBaseline falls back when the live canonical deck is invalid', () => {
   const sourceDeck = createSourceDeck();
   let didBuildFromDocument = false;
