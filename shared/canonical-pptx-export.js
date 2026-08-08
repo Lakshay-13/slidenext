@@ -229,6 +229,16 @@
           const cellFill = resolvePptxFillColor(cellStyle['background-color'] || cellStyle.background);
           const cellColor = normalizeHexColor(cellStyle.color);
           const cellBorderColor = normalizeHexColor(cellStyle['border-color']);
+          const cellBorderStyle = typeof cellStyle['border-style'] === 'string'
+            ? cellStyle['border-style'].trim().toLowerCase()
+            : '';
+          const cellBorderType = {
+            solid: 'solid',
+            dashed: 'dash',
+            dotted: 'dash',
+            none: 'none',
+            hidden: 'none'
+          }[cellBorderStyle] || 'solid';
           const cellCssBorderWidth = parseCssPx(cellStyle['border-width']);
           const cellBorderWidth = cellCssBorderWidth === null
             ? 0.75
@@ -251,8 +261,12 @@
           }
           if (cellFill) cellOptions.fill = cellFill;
           if (cellColor) cellOptions.color = cellColor;
-          if (cellBorderColor) {
-            cellOptions.border = { type: 'solid', color: cellBorderColor, pt: cellBorderWidth };
+          if (cellBorderColor || cellBorderStyle) {
+            cellOptions.border = {
+              type: cellBorderType,
+              color: cellBorderColor || 'D1D5DB',
+              pt: cellBorderWidth
+            };
           }
           if (cellFontFace) cellOptions.fontFace = cellFontFace;
           if (cellFontSize !== null) cellOptions.fontSize = cellFontSize;
@@ -988,7 +1002,7 @@
         const tableBorderType = {
           solid: 'solid',
           dashed: 'dash',
-          dotted: 'dot',
+          dotted: 'dash',
           none: 'none',
           hidden: 'none'
         }[tableBorderStyle] || 'solid';
