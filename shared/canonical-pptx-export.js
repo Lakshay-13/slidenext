@@ -500,11 +500,70 @@
     }
   }
 
+  const SAFE_SVG_ROOT_ATTRIBUTE_NAMES = new Set([
+    'aria-hidden',
+    'aria-label',
+    'color',
+    'enable-background',
+    'fill',
+    'fill-opacity',
+    'fill-rule',
+    'focusable',
+    'height',
+    'id',
+    'opacity',
+    'preserveaspectratio',
+    'role',
+    'stroke',
+    'stroke-dasharray',
+    'stroke-dashoffset',
+    'stroke-linecap',
+    'stroke-linejoin',
+    'stroke-miterlimit',
+    'stroke-opacity',
+    'stroke-width',
+    'version',
+    'viewbox',
+    'width',
+    'xml:space',
+    'xmlns',
+    'xmlns:xlink'
+  ]);
+
+  function escapeSvgAttributeValue(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function restoreCanonicalSvgRootAttributes(source, node) {
+    const openingTagMatch = source.match(/^<svg\b[^>]*>/i);
+    if (!openingTagMatch) return source;
+    const existingAttributeNames = new Set(
+      [...openingTagMatch[0].matchAll(/\s([:\w-]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?/g)]
+        .map(match => match[1].toLowerCase())
+    );
+    const additions = Object.entries(asObject(node && node.attributes))
+      .filter(([name, value]) => (
+        typeof value === 'string'
+        && value
+        && SAFE_SVG_ROOT_ATTRIBUTE_NAMES.has(name.toLowerCase())
+        && !existingAttributeNames.has(name.toLowerCase())
+      ))
+      .map(([name, value]) => ` ${name}="${escapeSvgAttributeValue(value)}"`)
+      .join('');
+    if (!additions) return source;
+    return `${openingTagMatch[0].slice(0, -1)}${additions}>${source.slice(openingTagMatch[0].length)}`;
+  }
+
   function getCanonicalInlineSvgData(node) {
     const type = typeof node?.type === 'string' ? node.type.toLowerCase() : '';
     const tagName = typeof node?.tagName === 'string' ? node.tagName.toLowerCase() : '';
     if (type !== 'vector' && tagName !== 'svg') return '';
-    const source = typeof node?.html === 'string' ? node.html.trim() : '';
+    const rawSource = typeof node?.html === 'string' ? node.html.trim() : '';
+    const source = rawSource ? restoreCanonicalSvgRootAttributes(rawSource, node) : '';
     if (!/^<svg(?:\s|>)/i.test(source) || !/<\/svg>$/i.test(source)) return '';
     if (/<(?:script|iframe|video|audio)\b/i.test(source)
       || /\b(?:href|xlink:href)\s*=\s*["'](?:https?:|file:|\/\/)/i.test(source)

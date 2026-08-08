@@ -658,6 +658,29 @@ test('createCanonicalPptxExport renders self-contained inline SVG nodes as data 
   assert.equal(imageCall.options.data, `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`);
 });
 
+test('createCanonicalPptxExport restores safe SVG root attributes stripped during import', () => {
+  const svg = '<svg><rect width="10" height="10" fill="#123456" /></svg>';
+  const restoredSvg = '<svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10" fill="#123456" /></svg>';
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'imported-vector',
+        type: 'vector',
+        tagName: 'svg',
+        html: svg,
+        attributes: {
+          viewBox: '0 0 10 10',
+          xmlns: 'http://www.w3.org/2000/svg'
+        },
+        layout: { x: 100, y: 80, width: 300, height: 200 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const encodedSvg = result.pptx.slides[0].calls[0].options.data.split(',')[1];
+  assert.equal(Buffer.from(encodedSvg, 'base64').toString('utf8'), restoredSvg);
+});
+
 test('preflightCanonicalPptxExport keeps external SVG sources unsupported', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{
