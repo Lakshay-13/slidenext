@@ -13,6 +13,9 @@ test('buildStudioPdfPrintHtml injects fixed-size one-slide-per-page print styles
   assert.match(html, /break-after: page/);
   assert.match(html, /\.slide:last-child/);
   assert.match(html, /#indicatorDots/);
+  assert.match(html, /#prev-btn/);
+  assert.match(html, /#next-btn/);
+  assert.match(html, /nav/);
   assert.match(html, /print-color-adjust: exact/);
   assert.match(html, /\.slides-wrapper/);
   assert.match(html, /position: relative !important/);

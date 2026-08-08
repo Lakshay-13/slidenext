@@ -103,7 +103,10 @@
   #nextBtn,
   #progressLine,
   #slideNum,
-  #indicatorDots {
+  #indicatorDots,
+  #prev-btn,
+  #next-btn,
+  nav {
     display: none !important;
   }
 }
