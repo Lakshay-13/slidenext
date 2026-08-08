@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const wallpaperView = require('../shared/studio-editor-wallpaper-view.js');
 const activeSlideView = require('../shared/studio-editor-active-slide-view.js');
+const activeSlideController = require('../shared/studio-editor-active-slide-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -28,6 +29,49 @@ function ensureSyncStudioChromeActionStateHelpers(context) {
   if (typeof context.updateWallpaperActionState !== 'function') {
     context.updateWallpaperActionState = () => {};
   }
+  const resolveContextFunction = (name, fallback = () => {}) => (
+    typeof context[name] === 'function' ? context[name] : fallback
+  );
+  context.studioEditorActiveSlideController = activeSlideController.createStudioEditorActiveSlideController({
+    activeSlideView: context.SlideNextStudioEditorActiveSlideView,
+    wallpaperView: context.SlideNextStudioEditorWallpaperView,
+    thumbnailView: context.SlideNextStudioEditorThumbnailView || null,
+    notesView: context.SlideNextStudioEditorNotes || null,
+    deckViewApi: context.SlideNextStudioDeckView || null,
+    deckSnapshotApi: context.SlideNextStudioDeckSnapshot || null,
+    documentRef: context.document || null,
+    getCurrentSlideIndex: () => context.currentSlideIndex,
+    getPreserveSelection: () => context.preserveSelectionOnNextActiveSlideSync,
+    setPreserveSelection: (nextValue) => {
+      context.preserveSelectionOnNextActiveSlideSync = !!nextValue;
+    },
+    updateCurrentPresentationSessionState: resolveContextFunction('updateCurrentPresentationSessionState'),
+    updateActiveThumbnailCardState: resolveContextFunction('updateActiveThumbnailCardState'),
+    updateInsertionActionState: resolveContextFunction('updateInsertionActionState'),
+    updateZoomActionState: resolveContextFunction('updateZoomActionState'),
+    updateWallpaperActionState: resolveContextFunction('updateWallpaperActionState'),
+    deselectElement: resolveContextFunction('deselectElement'),
+    updateLayersList: resolveContextFunction('updateLayersList'),
+    buildEditorDeckSnapshot: resolveContextFunction('buildEditorDeckSnapshot', () => ({ slides: [] })),
+    saveHistoryState: resolveContextFunction('saveHistoryState'),
+    getSlides: resolveContextFunction('getSlides', () => []),
+    getActiveSlide: resolveContextFunction('getActiveSlide', () => null),
+    getSlideId: resolveContextFunction('getEditorSlideId', () => ''),
+    updateIframeNavigationUI: resolveContextFunction('updateIframeNavigationUI'),
+    pruneEditorChromeNodes: resolveContextFunction('pruneEditorChromeNodes'),
+    resolveReadyState: resolveContextFunction(
+      'resolveCurrentStudioDeckReadyActionState',
+      () => ({ canUseDeckActions: false })
+    ),
+    rgbToHex: context.rgbToHex,
+    getWallpaperTab: () => context.wallpaperTab,
+    setWallpaperTab: (nextValue) => {
+      context.wallpaperTab = nextValue;
+    },
+    setCustomGradientType: (nextValue) => {
+      context.customGradientType = nextValue;
+    }
+  });
 }
 
 test('setActiveSlide delegates requested options to the navigation controller', () => {

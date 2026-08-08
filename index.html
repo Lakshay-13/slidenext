@@ -1235,6 +1235,7 @@
   <script src="/shared/studio-editor-notes-actions.js"></script>
   <script src="/shared/studio-editor-slide-metadata.js"></script>
   <script src="/shared/studio-editor-active-slide-view.js"></script>
+  <script src="/shared/studio-editor-active-slide-controller.js"></script>
   <script src="/shared/studio-editor-thumbnail-view.js"></script>
   <script src="/shared/studio-editor-thumbnail-controller.js"></script>
   <script src="/shared/studio-editor-mutation.js"></script>
@@ -1411,6 +1412,59 @@
           getSlides: (doc) => getSlides(doc),
           getCurrentSlideIndex: () => currentSlideIndex,
           syncStudioChromeToActiveSlide: (...args) => syncStudioChromeToActiveSlide(...args)
+        })
+      : null;
+    const studioEditorActiveSlideController = typeof SlideNextStudioEditorActiveSlideController !== 'undefined'
+      && SlideNextStudioEditorActiveSlideController
+      && typeof SlideNextStudioEditorActiveSlideController.createStudioEditorActiveSlideController === 'function'
+      ? SlideNextStudioEditorActiveSlideController.createStudioEditorActiveSlideController({
+          activeSlideView: typeof SlideNextStudioEditorActiveSlideView !== 'undefined'
+            ? SlideNextStudioEditorActiveSlideView
+            : null,
+          wallpaperView: typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+            ? SlideNextStudioEditorWallpaperView
+            : null,
+          thumbnailView: typeof SlideNextStudioEditorThumbnailView !== 'undefined'
+            ? SlideNextStudioEditorThumbnailView
+            : null,
+          notesView: typeof SlideNextStudioEditorNotes !== 'undefined'
+            ? SlideNextStudioEditorNotes
+            : null,
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
+            ? SlideNextStudioDeckView
+            : null,
+          deckSnapshotApi: typeof SlideNextStudioDeckSnapshot !== 'undefined'
+            ? SlideNextStudioDeckSnapshot
+            : null,
+          documentRef: document,
+          getCurrentSlideIndex: () => currentSlideIndex,
+          getPreserveSelection: () => preserveSelectionOnNextActiveSlideSync,
+          setPreserveSelection: (nextValue) => {
+            preserveSelectionOnNextActiveSlideSync = !!nextValue;
+          },
+          updateCurrentPresentationSessionState: (...args) => updateCurrentPresentationSessionState(...args),
+          updateActiveThumbnailCardState: (...args) => updateActiveThumbnailCardState(...args),
+          updateInsertionActionState: (...args) => updateInsertionActionState(...args),
+          updateZoomActionState: (...args) => updateZoomActionState(...args),
+          updateWallpaperActionState: (...args) => updateWallpaperActionState(...args),
+          deselectElement: (...args) => deselectElement(...args),
+          updateLayersList: (...args) => updateLayersList(...args),
+          buildEditorDeckSnapshot: (sourceDoc) => buildEditorDeckSnapshot(sourceDoc),
+          saveHistoryState: (...args) => saveHistoryState(...args),
+          getSlides: (...args) => getSlides(...args),
+          getActiveSlide: (...args) => getActiveSlide(...args),
+          getSlideId: (...args) => getEditorSlideId(...args),
+          updateIframeNavigationUI: (...args) => updateIframeNavigationUI(...args),
+          pruneEditorChromeNodes: (...args) => pruneEditorChromeNodes(...args),
+          resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
+          rgbToHex: typeof rgbToHex === 'function' ? rgbToHex : null,
+          getWallpaperTab: () => wallpaperTab,
+          setWallpaperTab: (nextValue) => {
+            wallpaperTab = nextValue;
+          },
+          setCustomGradientType: (nextValue) => {
+            customGradientType = nextValue;
+          }
         })
       : null;
     const studioEditorThumbnailController = typeof SlideNextStudioEditorThumbnailController !== 'undefined'
@@ -2837,146 +2891,9 @@
     }
 
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
-      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
-        ? SlideNextStudioEditorWallpaperView
-        : null;
-      const activeSlideView = typeof SlideNextStudioEditorActiveSlideView !== 'undefined'
-        ? SlideNextStudioEditorActiveSlideView
-        : null;
-      const thumbnailView = typeof SlideNextStudioEditorThumbnailView !== 'undefined'
-        ? SlideNextStudioEditorThumbnailView
-        : null;
-      if (!activeSlideView || typeof activeSlideView.syncStudioActiveSlideChrome !== 'function') return false;
-
-      return activeSlideView.syncStudioActiveSlideChrome(doc, {
-        ...options,
-        getCurrentSlideIndex: () => currentSlideIndex,
-        getPreserveSelectionOnNextActiveSlideSync: () => preserveSelectionOnNextActiveSlideSync,
-        setPreserveSelectionOnNextActiveSlideSync: (nextValue) => {
-          preserveSelectionOnNextActiveSlideSync = !!nextValue;
-        },
-        updateCurrentPresentationSessionState: (...args) => (
-          typeof updateCurrentPresentationSessionState === 'function'
-            ? updateCurrentPresentationSessionState(...args)
-            : undefined
-        ),
-        updateActiveThumbnailCardState: (...args) => (
-          typeof updateActiveThumbnailCardState === 'function'
-            ? updateActiveThumbnailCardState(...args)
-            : undefined
-        ),
-        setSlideCountLabel: (label) => {
-          if (thumbnailView && typeof thumbnailView.setStudioThumbnailSlideCount === 'function') {
-            return thumbnailView.setStudioThumbnailSlideCount({
-              documentRef: document,
-              label
-            });
-          }
-          const slideCountLabel = document.getElementById('slideCountLabel');
-          if (slideCountLabel) slideCountLabel.textContent = label;
-        },
-        refreshActionStateChrome: (nextDoc) => {
-          updateInsertionActionState(nextDoc);
-          updateZoomActionState(nextDoc);
-          updateWallpaperActionState(nextDoc);
-        },
-        syncSelectionChrome: (preserveSelection) => {
-          if (!preserveSelection) {
-            deselectElement();
-          } else {
-            updateLayersList();
-          }
-        },
-        buildEditorDeckSnapshot: (sourceDoc) => (
-          typeof buildEditorDeckSnapshot === 'function'
-            ? buildEditorDeckSnapshot(sourceDoc)
-            : { slides: [] }
-        ),
-        resolveStudioActiveSlideIndex: (deckSnapshot, fallbackIndex) => (
-          SlideNextStudioDeckSnapshot.resolveStudioActiveSlideIndex(deckSnapshot, fallbackIndex)
-        ),
-        saveHistoryState: (...args) => (
-          typeof saveHistoryState === 'function' ? saveHistoryState(...args) : undefined
-        ),
-        syncStudioActiveSlideView: (nextDoc, viewOptions) => (
-          SlideNextStudioDeckView.syncStudioActiveSlideView(nextDoc, viewOptions)
-        ),
-        getSlides: (...args) => (
-          typeof getSlides === 'function' ? getSlides(...args) : []
-        ),
-        deselectElement: (...args) => (
-          typeof deselectElement === 'function' ? deselectElement(...args) : undefined
-        ),
-        applyViewportTransform: (nextDoc, activeIndex) => {
-          const container = nextDoc.getElementById('slidesContainer');
-          if (container) container.style.transform = `translateX(-${activeIndex * 100}vw)`;
-        },
-        pruneEditorChromeNodes: (...args) => (
-          typeof pruneEditorChromeNodes === 'function' ? pruneEditorChromeNodes(...args) : undefined
-        ),
-        getSlideId: (...args) => (
-          typeof getEditorSlideId === 'function' ? getEditorSlideId(...args) : ''
-        ),
-        updateIframeNavigationUI: (...args) => (
-          typeof updateIframeNavigationUI === 'function' ? updateIframeNavigationUI(...args) : undefined
-        ),
-        getActiveSlide: (...args) => (
-          typeof getActiveSlide === 'function' ? getActiveSlide(...args) : null
-        ),
-        syncSpeakerNotesControl: (activeSlide) => {
-          const notesView = typeof SlideNextStudioEditorNotes !== 'undefined'
-            ? SlideNextStudioEditorNotes
-            : null;
-          if (!notesView || typeof notesView.syncStudioSpeakerNotesControl !== 'function') return false;
-          return notesView.syncStudioSpeakerNotesControl({
-            documentRef: document,
-            activeSlide,
-            canEdit: !!activeSlide && resolveCurrentStudioDeckReadyActionState().canUseDeckActions
-          });
-        },
-        syncSlideSectionControl: (activeSlide) => {
-          const notesView = typeof SlideNextStudioEditorNotes !== 'undefined'
-            ? SlideNextStudioEditorNotes
-            : null;
-          if (!notesView || typeof notesView.syncStudioSlideSectionControl !== 'function') return false;
-          return notesView.syncStudioSlideSectionControl({
-            documentRef: document,
-            activeSlide,
-            canEdit: !!activeSlide && resolveCurrentStudioDeckReadyActionState().canUseDeckActions
-          });
-        },
-        syncCustomGradientControls: (activeSlide) => {
-          if (!wallpaperView || typeof wallpaperView.syncStudioCustomGradientControls !== 'function') return false;
-          const result = wallpaperView.syncStudioCustomGradientControls({
-            documentRef: document,
-            activeSlide,
-            rgbToHex: typeof rgbToHex === 'function' ? rgbToHex : null
-          });
-          if (!result.didApply) return false;
-          customGradientType = result.gradientType;
-          return true;
-        },
-        syncWallpaperTabChrome: (activeSlide, wallpaperOptions = {}) => {
-          if (!wallpaperView || typeof wallpaperView.syncStudioWallpaperTabChrome !== 'function') return false;
-          const result = wallpaperView.syncStudioWallpaperTabChrome({
-            documentRef: document,
-            activeSlide,
-            wallpaperTab: typeof wallpaperTab === 'string' ? wallpaperTab : '',
-            didSyncCustomGradientControls: wallpaperOptions.didSyncCustomGradientControls
-          });
-          if (!result.didApply) return false;
-          wallpaperTab = result.wallpaperTab;
-          return true;
-        },
-        syncSolidWallpaperControl: (activeSlide) => {
-          if (!wallpaperView || typeof wallpaperView.syncStudioSolidWallpaperControl !== 'function') return false;
-          return wallpaperView.syncStudioSolidWallpaperControl({
-            documentRef: document,
-            activeSlide,
-            rgbToHex: typeof rgbToHex === 'function' ? rgbToHex : null
-          });
-        }
-      });
+      return studioEditorActiveSlideController
+        ? studioEditorActiveSlideController.sync(doc, options)
+        : false;
     }
 
     function bindDeckNavigationSync(doc = getIframeDoc()) {
