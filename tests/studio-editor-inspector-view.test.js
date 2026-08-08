@@ -185,6 +185,38 @@ test('syncStudioInspectorContentControls disables crop position when image fit i
   assert.equal(nodes.elImagePosition.disabled, true);
 });
 
+test('syncStudioInspectorContentControls prefers canonical object-fit data', () => {
+  const classLists = {
+    imageGroup: createClassList(),
+    textGroup: createClassList()
+  };
+  const nodes = {
+    inspectorImageGroup: { classList: classLists.imageGroup },
+    elImageSrc: { value: '' },
+    elImageFit: { value: '', disabled: true },
+    elImagePosition: { value: '', disabled: true },
+    inspectorTextContentGroup: { classList: classLists.textGroup }
+  };
+
+  assert.equal(inspectorView.syncStudioInspectorContentControls({
+    documentRef: {
+      getElementById(id) {
+        return nodes[id] || null;
+      }
+    },
+    primaryElement: {
+      tagName: 'IMG',
+      style: { objectFit: 'fill' },
+      src: '/image.png'
+    },
+    isMulti: false,
+    canonicalNode: { style: 'object-fit: contain;' },
+    computedStyles: { objectFit: 'cover', objectPosition: 'center center' }
+  }), true);
+  assert.equal(nodes.elImageFit.value, 'contain');
+  assert.equal(nodes.elImagePosition.disabled, true);
+});
+
 test('syncStudioInspectorTypographyControls applies font, color, alignment, z-index, and opacity values', () => {
   const nodes = {
     elFontSize: { value: '' },

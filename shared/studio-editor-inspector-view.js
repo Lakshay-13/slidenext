@@ -166,7 +166,14 @@
     if (isImage) {
       if (imageGroup) imageGroup.classList.remove('hidden');
       if (imageSrcInput) imageSrcInput.value = primaryElement.src || '';
-      const fit = computedStyles.objectFit || primaryElement.style?.objectFit || 'fill';
+      const canonicalObjectFit = readStudioInspectorCanonicalStyleValue(
+        options.canonicalNode,
+        'object-fit'
+      );
+      const fit = canonicalObjectFit
+        || computedStyles.objectFit
+        || primaryElement.style?.objectFit
+        || 'fill';
       const positionAliases = {
         center: 'center center',
         '50% 50%': 'center center'
@@ -357,7 +364,8 @@
       documentRef,
       primaryElement,
       isMulti: selectionSummary.isMulti,
-      computedStyles
+      computedStyles,
+      canonicalNode: options.canonicalNode
     });
     syncStudioInspectorTypographyControls({
       documentRef,
