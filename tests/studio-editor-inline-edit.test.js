@@ -154,6 +154,40 @@ test('inline text editing commits through a reversible baseline and restores edi
   });
 });
 
+test('inline text editing commits and navigates to an adjacent cell on Tab', () => {
+  const firstCell = createElement('First');
+  const secondCell = createElement('Second');
+  const calls = [];
+  const controller = inlineEdit.createStudioInlineTextEditController({
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    resolveTextElement: () => firstCell,
+    resolveAdjacentTextElement: (_element, options) => options.direction === 1 ? secondCell : null,
+    canEdit: () => true,
+    schedule: (callback) => callback(),
+    onCommit: (change) => {
+      calls.push(['commit', change]);
+      change.element.textContent = change.text;
+    },
+    onStart: ({ element }) => calls.push(['start', element])
+  });
+
+  assert.equal(controller.startEditing(firstCell), true);
+  firstCell.textContent = 'Edited first';
+  let prevented = false;
+  firstCell.dispatch('keydown', {
+    key: 'Tab',
+    preventDefault() {
+      prevented = true;
+    }
+  });
+
+  assert.equal(prevented, true);
+  assert.equal(firstCell.contentEditable, 'inherit');
+  assert.equal(secondCell.contentEditable, 'true');
+  assert.equal(calls[1][0], 'commit');
+  assert.equal(calls[1][1].text, 'Edited first');
+});
+
 test('inline text editing cancels with Escape and refuses locked elements', () => {
   const element = createElement();
   let commitCalls = 0;

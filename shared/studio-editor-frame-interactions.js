@@ -38,6 +38,9 @@
     const resolveTextElement = typeof options.resolveTextElement === 'function'
       ? options.resolveTextElement
       : () => null;
+    const resolveAdjacentTextElement = typeof options.resolveAdjacentTextElement === 'function'
+      ? options.resolveAdjacentTextElement
+      : null;
     const isElementLocked = typeof options.isElementLocked === 'function'
       ? options.isElementLocked
       : () => false;
@@ -107,6 +110,7 @@
         inlineTextEditApi.attachStudioInlineTextEditHandlers(doc, {
           getActiveSlide: () => getActiveSlide(doc),
           resolveTextElement,
+          resolveAdjacentTextElement,
           canEdit: (element) => !!getActiveSlide(doc)
             && !isElementLocked(element)
             && !isElementHidden(element),

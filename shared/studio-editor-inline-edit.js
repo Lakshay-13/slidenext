@@ -51,6 +51,12 @@
     const resolveTextElement = typeof options.resolveTextElement === 'function'
       ? options.resolveTextElement
       : () => null;
+    const resolveAdjacentTextElement = typeof options.resolveAdjacentTextElement === 'function'
+      ? options.resolveAdjacentTextElement
+      : null;
+    const schedule = typeof options.schedule === 'function'
+      ? options.schedule
+      : (callback) => setTimeout(callback, 0);
     const canEdit = typeof options.canEdit === 'function'
       ? options.canEdit
       : () => true;
@@ -143,6 +149,20 @@
         handleBlur: () => endEditing(true),
         handleKeydown: (keyboardEvent) => {
           if (!keyboardEvent) return;
+          if (keyboardEvent.key === 'Tab' && resolveAdjacentTextElement) {
+            const adjacentElement = resolveAdjacentTextElement(currentSession.element, {
+              direction: keyboardEvent.shiftKey ? -1 : 1,
+              slide: getActiveSlide()
+            });
+            if (adjacentElement && adjacentElement !== currentSession.element && canEdit(adjacentElement)) {
+              if (typeof keyboardEvent.preventDefault === 'function') keyboardEvent.preventDefault();
+              endEditing(true);
+              schedule(() => {
+                startEditing(adjacentElement);
+              });
+              return;
+            }
+          }
           if (keyboardEvent.key === 'Escape') {
             if (typeof keyboardEvent.preventDefault === 'function') keyboardEvent.preventDefault();
             endEditing(false);
