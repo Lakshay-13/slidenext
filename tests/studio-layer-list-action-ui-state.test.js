@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
+const layerController = require('../shared/studio-editor-layer-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -274,6 +275,7 @@ test('selectLayerElementByRef refreshes the layer list when the row target is st
   const row = { id: 'row-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
     resolveLayerRowElement(currentRow) {
       calls.push(['resolveLayerRowElement', currentRow]);
       return null;
@@ -329,6 +331,7 @@ test('selectLayerElementByRef relies on selection sync to refresh the layer list
   const target = { id: 'target-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
     resolveLayerRowElement(currentRow) {
       calls.push(['resolveLayerRowElement', currentRow]);
       return target;

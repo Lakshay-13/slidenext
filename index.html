@@ -10350,23 +10350,15 @@
       const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
         ? SlideNextStudioEditorLayerController
         : null;
-      if (layerController && typeof layerController.selectStudioLayerElementByRef === 'function') {
-        return layerController.selectStudioLayerElementByRef({
-          event,
-          resolveLayerRowElement,
-          selectElement,
-          updateLayersList
-        });
+      if (!layerController || typeof layerController.selectStudioLayerElementByRef !== 'function') {
+        return false;
       }
-      event.preventDefault();
-      event.stopPropagation();
-      const parentRow = event.currentTarget.closest('[class*="border"]');
-      const target = resolveLayerRowElement(parentRow);
-      if (!target) {
-        updateLayersList();
-        return;
-      }
-      selectElement(target, { additive: event.shiftKey, toggle: event.shiftKey });
+      return layerController.selectStudioLayerElementByRef({
+        event,
+        resolveLayerRowElement,
+        selectElement,
+        updateLayersList
+      });
     }
 
     function toggleLayerVisibilityByRef(event) {
