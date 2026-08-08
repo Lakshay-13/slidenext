@@ -773,6 +773,35 @@ test('preflightCanonicalPptxExport reports unsupported image positioning', () =>
   assert.match(report.diagnostics.warnings.join('\n'), /unsupported background image positioning/);
 });
 
+test('preflightCanonicalPptxExport reports non-uniform border radii', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'rounded-card',
+        type: 'shape',
+        style: 'border-radius: 8px 16px 8px 16px;',
+        layout: { x: 0, y: 0, width: 200, height: 100 }
+      }, {
+        id: 'elliptical-card',
+        type: 'container',
+        style: 'border-radius: 12px / 20px;',
+        layout: { x: 220, y: 0, width: 200, height: 100 }
+      }, {
+        id: 'uniform-card',
+        type: 'shape',
+        style: 'border-radius: 12px 12px 12px 12px;',
+        layout: { x: 440, y: 0, width: 200, height: 100 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedStyles, [
+    { id: 'rounded-card', properties: ['border-radius'] },
+    { id: 'elliptical-card', properties: ['border-radius'] }
+  ]);
+  assert.equal(report.diagnostics.warnings.filter(warning => /non-uniform border-radius/.test(warning)).length, 2);
+});
+
 test('preflightCanonicalPptxExport reports unsupported non-solid slide backgrounds', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{

@@ -497,6 +497,15 @@
     return radius > 0 ? { isPercent, radius } : null;
   }
 
+  function hasUnsupportedPptxBorderRadius(node) {
+    const value = nodeStyle(node)['border-radius'];
+    if (typeof value !== 'string' || !value.trim()) return false;
+    const [horizontalPart, verticalPart] = value.split('/').map(part => part.trim());
+    if (verticalPart) return true;
+    const tokens = horizontalPart.split(/\s+/).filter(Boolean);
+    return tokens.length > 1 && tokens.some(token => token !== tokens[0]);
+  }
+
   function resolvePptxNodeShapeType(node, bounds, pptx) {
     const shapeTypes = asObject(pptx && pptx.ShapeType);
     const rectangle = shapeTypes.rect || 'rect';
@@ -709,6 +718,11 @@
           diagnostics.fontSubstitutionRisks.push({ id: nodeId, fontFamily: primaryFont });
           diagnostics.warnings.push(`Node ${nodeId} may substitute font ${primaryFont}`);
         }
+      }
+
+      if (hasUnsupportedPptxBorderRadius(node)) {
+        diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['border-radius'] });
+        diagnostics.warnings.push(`Node ${nodeId} uses unsupported non-uniform border-radius`);
       }
 
       if (type === 'image' || node.tagName === 'img') {
