@@ -7,6 +7,44 @@
     root.SlideNextStudioEditorCanonicalTheme = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function isCanonicalThemeTokenName(value) {
+    return /^--[A-Za-z_][A-Za-z0-9_-]*$/.test(typeof value === 'string' ? value.trim() : '');
+  }
+
+  function applyStudioCanonicalThemeTokenUpdates(documentRef, tokenUpdates = {}) {
+    const rootStyle = documentRef
+      && documentRef.documentElement
+      && documentRef.documentElement.style
+      && typeof documentRef.documentElement.style.setProperty === 'function'
+      ? documentRef.documentElement.style
+      : null;
+    if (!rootStyle || !tokenUpdates || typeof tokenUpdates !== 'object' || Array.isArray(tokenUpdates)) {
+      return false;
+    }
+
+    let didChange = false;
+    Object.entries(tokenUpdates).forEach(([rawName, rawValue]) => {
+      const tokenName = typeof rawName === 'string' ? rawName.trim() : '';
+      if (!isCanonicalThemeTokenName(tokenName)) return;
+
+      if (rawValue === null || rawValue === undefined || `${rawValue}`.trim() === '') {
+        if (typeof rootStyle.removeProperty === 'function' && rootStyle.getPropertyValue(tokenName)) {
+          rootStyle.removeProperty(tokenName);
+          didChange = true;
+        }
+        return;
+      }
+
+      const tokenValue = `${rawValue}`.trim();
+      if (rootStyle.getPropertyValue(tokenName) !== tokenValue) {
+        rootStyle.setProperty(tokenName, tokenValue);
+        didChange = true;
+      }
+    });
+
+    return didChange;
+  }
+
   function buildStudioCanonicalThemeBaseline(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -85,6 +123,8 @@
   }
 
   return {
+    isCanonicalThemeTokenName,
+    applyStudioCanonicalThemeTokenUpdates,
     buildStudioCanonicalThemeBaseline,
     buildStudioCanonicalThemeDeck,
     createStudioCanonicalThemeMutationBuilders

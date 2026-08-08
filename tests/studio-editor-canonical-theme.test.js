@@ -4,6 +4,60 @@ const assert = require('node:assert/strict');
 const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalTheme = require('../shared/studio-editor-canonical-theme.js');
 
+function createDocumentRef() {
+  const values = {};
+  return {
+    documentElement: {
+      style: {
+        setProperty(name, value) {
+          values[name] = value;
+        },
+        getPropertyValue(name) {
+          return values[name] || '';
+        },
+        removeProperty(name) {
+          delete values[name];
+        }
+      }
+    },
+    values
+  };
+}
+
+test('applyStudioCanonicalThemeTokenUpdates mirrors valid updates and deletions to the iframe root', () => {
+  const documentRef = createDocumentRef();
+
+  assert.equal(canonicalTheme.applyStudioCanonicalThemeTokenUpdates(documentRef, {
+    '--color-primary': '#10b981',
+    '--font-heading': 'Geist'
+  }), true);
+  assert.deepEqual(documentRef.values, {
+    '--color-primary': '#10b981',
+    '--font-heading': 'Geist'
+  });
+
+  assert.equal(canonicalTheme.applyStudioCanonicalThemeTokenUpdates(documentRef, {
+    '--font-heading': null,
+    'unsafe-name': 'red'
+  }), true);
+  assert.deepEqual(documentRef.values, {
+    '--color-primary': '#10b981'
+  });
+});
+
+test('applyStudioCanonicalThemeTokenUpdates is a no-op for invalid or unchanged updates', () => {
+  const documentRef = createDocumentRef();
+  documentRef.values['--color-primary'] = '#10b981';
+
+  assert.equal(canonicalTheme.applyStudioCanonicalThemeTokenUpdates(documentRef, {
+    '--color-primary': '#10b981',
+    '--1invalid': 'red'
+  }), false);
+  assert.equal(canonicalTheme.applyStudioCanonicalThemeTokenUpdates(null, {
+    '--color-primary': 'red'
+  }), false);
+});
+
 test('buildStudioCanonicalThemeDeck applies token updates to a supplied baseline', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     theme: { tokens: { '--color-primary': '#7028d0' } },
