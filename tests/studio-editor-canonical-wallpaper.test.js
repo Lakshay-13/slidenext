@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalWallpaper = require('../shared/studio-editor-canonical-wallpaper.js');
 
 function createSourceDeck() {
@@ -37,6 +38,7 @@ test('buildStudioCanonicalWallpaperBaseline builds from the source document', ()
   let builtFromDocument = null;
   const result = canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeckBaseline(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
@@ -56,6 +58,7 @@ test('buildStudioCanonicalWallpaperBaseline prefers a valid live canonical deck'
   let didBuildFromDocument = false;
   const result = canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return liveDeck;
     },
@@ -74,6 +77,7 @@ test('buildStudioCanonicalWallpaperBaseline falls back when the live canonical d
   let didBuildFromDocument = false;
   const result = canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return { invalid: true };
     },
@@ -91,6 +95,7 @@ test('buildStudioCanonicalWallpaperDeck fails closed when an adapter dependency 
   assert.equal(canonicalWallpaper.buildStudioCanonicalWallpaperDeck([{ id: 'slide-1' }], 'black', {}), null);
   assert.equal(canonicalWallpaper.buildStudioCanonicalWallpaperDeck([], 'black', {
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck: createSourceDeck
   }), null);
 });
@@ -100,6 +105,7 @@ test('createStudioCanonicalWallpaperMutationBuilders reuses an explicit baseline
   let buildCount = 0;
   const builders = canonicalWallpaper.createStudioCanonicalWallpaperMutationBuilders({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck() {
       buildCount += 1;
       return sourceDeck;
