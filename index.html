@@ -1236,6 +1236,7 @@
   <script src="/shared/studio-editor-slide-metadata.js"></script>
   <script src="/shared/studio-editor-active-slide-view.js"></script>
   <script src="/shared/studio-editor-thumbnail-view.js"></script>
+  <script src="/shared/studio-editor-thumbnail-controller.js"></script>
   <script src="/shared/studio-editor-mutation.js"></script>
   <script src="/shared/studio-editor-deck-mutation.js"></script>
   <script src="/shared/studio-editor-transaction.js"></script>
@@ -1410,6 +1411,25 @@
           getSlides: (doc) => getSlides(doc),
           getCurrentSlideIndex: () => currentSlideIndex,
           syncStudioChromeToActiveSlide: (...args) => syncStudioChromeToActiveSlide(...args)
+        })
+      : null;
+    const studioEditorThumbnailController = typeof SlideNextStudioEditorThumbnailController !== 'undefined'
+      && SlideNextStudioEditorThumbnailController
+      && typeof SlideNextStudioEditorThumbnailController.createStudioEditorThumbnailController === 'function'
+      ? SlideNextStudioEditorThumbnailController.createStudioEditorThumbnailController({
+          thumbnailView: typeof SlideNextStudioEditorThumbnailView !== 'undefined'
+            ? SlideNextStudioEditorThumbnailView
+            : null,
+          documentRef: document,
+          getDocument: () => getIframeDoc(),
+          buildDeckSnapshot: (doc) => buildEditorDeckSnapshot(doc),
+          getActiveSlideIndex: (iframeDoc) => getStudioActiveSlideIndex(iframeDoc),
+          onSelectSlide: (slideId) => {
+            setActiveSlideById(slideId, undefined, { captureHistory: true });
+          },
+          reorderSlidesById: (sourceSlideId, targetSlideId) => {
+            reorderSlidesById(sourceSlideId, targetSlideId);
+          }
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -2700,99 +2720,16 @@
 
     // Render visual Slide Organizer thumbnails
     function generateThumbnails() {
-      const thumbnailView = typeof SlideNextStudioEditorThumbnailView !== 'undefined'
-        ? SlideNextStudioEditorThumbnailView
-        : null;
-      if (!thumbnailView) return false;
-      if (typeof thumbnailView.syncStudioEditorThumbnails === 'function') {
-        return thumbnailView.syncStudioEditorThumbnails({
-          documentRef: document,
-          getDocument: getIframeDoc,
-          buildDeckSnapshot: buildEditorDeckSnapshot,
-          getActiveSlideIndex: (iframeDoc, deckSnapshot) => (
-            deckSnapshot.slides.length === 0 ? 0 : getStudioActiveSlideIndex(iframeDoc)
-          ),
-          onSelectSlide: (slideId) => {
-            setActiveSlideById(slideId, undefined, { captureHistory: true });
-          },
-          setupDragAndDropThumbnail
-        });
-      }
-
-      const iframeDoc = getIframeDoc();
-      const deckSnapshot = buildEditorDeckSnapshot(iframeDoc);
-      const options = {
-        documentRef: document,
-        deckSnapshot,
-        getActiveSlideIndex: () => (
-          deckSnapshot.slides.length === 0 ? 0 : getStudioActiveSlideIndex(iframeDoc)
-        ),
-        canMutateSlides: !!iframeDoc,
-        onSelectSlide: (slideId) => {
-          setActiveSlideById(slideId, undefined, { captureHistory: true });
-        },
-        setupDragAndDropThumbnail
-      };
-      if (typeof thumbnailView.syncStudioThumbnailList === 'function') {
-        return thumbnailView.syncStudioThumbnailList(options);
-      }
-      if (typeof thumbnailView.renderStudioThumbnailList !== 'function') return false;
-      return thumbnailView.renderStudioThumbnailList({
-        ...options,
-        canDeleteSlides: deckSnapshot.slides.length > 1
-      });
+      return studioEditorThumbnailController
+        ? studioEditorThumbnailController.render()
+        : false;
     }
 
     // HTML5 Drag and Drop handlers for thumbnail cards
-    let draggedThumbSlideId = '';
     function setupDragAndDropThumbnail(card) {
-      const thumbnailView = typeof SlideNextStudioEditorThumbnailView !== 'undefined'
-        ? SlideNextStudioEditorThumbnailView
-        : null;
-      const attachStudioThumbnailDragAndDrop = thumbnailView
-        && typeof thumbnailView.attachStudioThumbnailDragAndDrop === 'function'
-        ? thumbnailView.attachStudioThumbnailDragAndDrop
-        : null;
-      if (attachStudioThumbnailDragAndDrop) {
-        return attachStudioThumbnailDragAndDrop(card, {
-          getDraggedSlideId: () => draggedThumbSlideId,
-          setDraggedSlideId: (nextSlideId) => {
-            draggedThumbSlideId = nextSlideId || '';
-          },
-          onReorder: (sourceSlideId, targetSlideId) => {
-            reorderSlidesById(sourceSlideId, targetSlideId);
-          }
-        });
-      }
-
-      card.addEventListener('dragstart', (e) => {
-        draggedThumbSlideId = card.dataset.slideId || '';
-        card.style.opacity = '0.4';
-      });
-      
-      card.addEventListener('dragend', () => {
-        card.style.opacity = '1';
-        draggedThumbSlideId = '';
-      });
-      
-      card.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        card.classList.add('border-dashed', 'border-[#7028d0]/50');
-      });
-      
-      card.addEventListener('dragleave', () => {
-        card.classList.remove('border-dashed', 'border-[#7028d0]/50');
-      });
-      
-      card.addEventListener('drop', (e) => {
-        e.preventDefault();
-        card.classList.remove('border-dashed', 'border-[#7028d0]/50');
-        
-        const targetSlideId = card.dataset.slideId || '';
-        if (draggedThumbSlideId && draggedThumbSlideId !== targetSlideId) {
-          reorderSlidesById(draggedThumbSlideId, targetSlideId);
-        }
-      });
+      return studioEditorThumbnailController
+        ? studioEditorThumbnailController.attach(card)
+        : false;
     }
 
     function applyEditorSlideReorderWithTransaction(container, slideNode, beforeNode = null, options = {}) {

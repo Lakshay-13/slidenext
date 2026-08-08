@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 const thumbnailView = require('../shared/studio-editor-thumbnail-view.js');
+const thumbnailController = require('../shared/studio-editor-thumbnail-controller.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
@@ -234,15 +235,11 @@ test('setupDragAndDropThumbnail delegates event binding to the shared thumbnail 
   const card = { dataset: { slideId: 'slide-2' } };
   const calls = [];
   const context = {
-    draggedThumbSlideId: '',
-    SlideNextStudioEditorThumbnailView: {
-      attachStudioThumbnailDragAndDrop(nextCard, options) {
-        calls.push(['attach', nextCard, options]);
+    studioEditorThumbnailController: {
+      attach(nextCard) {
+        calls.push(['attach', nextCard]);
         return true;
       }
-    },
-    reorderSlidesById(sourceSlideId, targetSlideId) {
-      calls.push(['reorder', sourceSlideId, targetSlideId]);
     }
   };
 
@@ -252,13 +249,6 @@ test('setupDragAndDropThumbnail delegates event binding to the shared thumbnail 
   assert.equal(context.setupDragAndDropThumbnail(card), true);
   assert.equal(calls[0][0], 'attach');
   assert.equal(calls[0][1], card);
-  assert.equal(typeof calls[0][2].getDraggedSlideId, 'function');
-  assert.equal(typeof calls[0][2].setDraggedSlideId, 'function');
-  assert.equal(typeof calls[0][2].onReorder, 'function');
-  calls[0][2].setDraggedSlideId('slide-1');
-  assert.equal(calls[0][2].getDraggedSlideId(), 'slide-1');
-  calls[0][2].onReorder('slide-1', 'slide-2');
-  assert.deepEqual(calls[1], ['reorder', 'slide-1', 'slide-2']);
 });
 
 test('generateThumbnails delegates thumbnail option assembly to the shared coordinator', () => {
@@ -268,43 +258,18 @@ test('generateThumbnails delegates thumbnail option assembly to the shared coord
     'function generateThumbnails() {',
     '\n\n    // HTML5 Drag and Drop handlers for thumbnail cards'
   );
-  const deckSnapshot = {
-    activeSlideId: 'slide-1',
-    slides: [{ id: 'slide-1', index: 0 }]
-  };
-  const calls = [];
-  const iframeDoc = { id: 'doc' };
   const context = {
-    SlideNextStudioEditorThumbnailView: {
-      syncStudioThumbnailList(options) {
-        calls.push(options);
+    studioEditorThumbnailController: {
+      render() {
         return 'delegated';
       }
-    },
-    buildEditorDeckSnapshot() {
-      return deckSnapshot;
-    },
-    document: {},
-    getIframeDoc() {
-      return iframeDoc;
-    },
-    getStudioActiveSlideIndex() {
-      return 0;
-    },
-    setActiveSlideById() {},
-    setupDragAndDropThumbnail() {}
+    }
   };
 
   vm.createContext(context);
   vm.runInContext(generateThumbnailsSource, context);
 
   assert.equal(context.generateThumbnails(), 'delegated');
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].documentRef, context.document);
-  assert.equal(calls[0].deckSnapshot, deckSnapshot);
-  assert.equal(calls[0].canMutateSlides, true);
-  assert.equal(typeof calls[0].onSelectSlide, 'function');
-  assert.equal(typeof calls[0].setupDragAndDropThumbnail, 'function');
 });
 
 test('generateThumbnails hides the slide delete affordance when only one slide remains', () => {
@@ -358,6 +323,14 @@ test('generateThumbnails hides the slide delete affordance when only one slide r
     setActiveSlideById() {},
     setupDragAndDropThumbnail() {}
   };
+  context.studioEditorThumbnailController = thumbnailController.createStudioEditorThumbnailController({
+    thumbnailView,
+    documentRef: context.document,
+    getDocument: context.getIframeDoc,
+    buildDeckSnapshot: context.buildEditorDeckSnapshot,
+    getActiveSlideIndex: context.getStudioActiveSlideIndex,
+    onSelectSlide: context.setActiveSlideById
+  });
 
   vm.createContext(context);
   vm.runInContext(generateThumbnailsSource, context);
@@ -452,6 +425,14 @@ test('generateThumbnails renders a read-only canonical fallback when the editor 
       setupDragAndDropCalls += 1;
     }
   };
+  context.studioEditorThumbnailController = thumbnailController.createStudioEditorThumbnailController({
+    thumbnailView,
+    documentRef: context.document,
+    getDocument: context.getIframeDoc,
+    buildDeckSnapshot: context.buildEditorDeckSnapshot,
+    getActiveSlideIndex: context.getStudioActiveSlideIndex,
+    onSelectSlide: context.setActiveSlideById
+  });
 
   vm.createContext(context);
   vm.runInContext(generateThumbnailsSource, context);
@@ -523,6 +504,14 @@ test('generateThumbnails tolerates missing organizer chrome nodes', () => {
       calls.push(['setupDragAndDropThumbnail']);
     }
   };
+  context.studioEditorThumbnailController = thumbnailController.createStudioEditorThumbnailController({
+    thumbnailView,
+    documentRef: context.document,
+    getDocument: context.getIframeDoc,
+    buildDeckSnapshot: context.buildEditorDeckSnapshot,
+    getActiveSlideIndex: context.getStudioActiveSlideIndex,
+    onSelectSlide: context.setActiveSlideById
+  });
 
   vm.createContext(context);
   vm.runInContext(generateThumbnailsSource, context);
