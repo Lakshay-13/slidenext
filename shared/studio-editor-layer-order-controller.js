@@ -49,6 +49,50 @@
       ? options.applyLayerOrderMutation
       : () => ({ didApply: false, transaction: null });
 
+    function resolveCanonicalDeck(sourceDocument) {
+      if (getCanonicalDeckBaseline) {
+        try {
+          const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+          if (liveCanonicalDeck) return liveCanonicalDeck;
+        } catch (err) {
+          // Fall through to the document rebuild path.
+        }
+      }
+      if (buildCanonicalDeckBaseline) {
+        try {
+          return buildCanonicalDeckBaseline(sourceDocument);
+        } catch (err) {
+          return null;
+        }
+      }
+      return null;
+    }
+
+    function resolveLockedReader(sourceDocument) {
+      if (!canonicalDeckApi
+        || typeof canonicalDeckApi.findCanonicalNodeById !== 'function') {
+        return isElementLocked;
+      }
+      const canonicalDeck = resolveCanonicalDeck(sourceDocument);
+      if (!canonicalDeck) return isElementLocked;
+      return (element) => {
+        let canonicalLockState = null;
+        try {
+          const canonicalNode = canonicalDeckApi.findCanonicalNodeById(
+            canonicalDeck,
+            assignElementId(element)
+          );
+          const value = canonicalNode
+            && canonicalNode.visibility
+            && canonicalNode.visibility.locked;
+          if (typeof value === 'boolean') canonicalLockState = value;
+        } catch (err) {
+          canonicalLockState = null;
+        }
+        return canonicalLockState === true || isElementLocked(element);
+      };
+    }
+
     function reorder(action, targetElements = [], reorderOptions = {}) {
       const slide = getActiveSlide();
       if (!slide || !layerOrderApi || typeof layerOrderApi.buildStudioLayerOrderMutationPlan !== 'function') {
@@ -77,10 +121,11 @@
           })
         : null;
       const initialOrder = getNormalizedSlideLayerOrder(slide);
+      const readLockedState = resolveLockedReader(getIframeDoc());
       const reorderResult = layerOrderApi.buildStudioLayerOrderMutationPlan(targetElements, action, {
         orderedElements: initialOrder,
         isEligibleElement: (element) => !!(element && element.isConnected && slide.contains(element)),
-        isLocked: isElementLocked
+        isLocked: readLockedState
       });
       if (!reorderResult || !reorderResult.didChange) return false;
       const getLayerOrderElementId = (element) => assignElementId(element);

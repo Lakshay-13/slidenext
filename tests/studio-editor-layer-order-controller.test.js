@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const layerOrderController = require('../shared/studio-editor-layer-order-controller.js');
+const canonicalDeck = require('../shared/canonical-deck.js');
 
 test('layer order controller applies the planned order and forwards mutation callbacks', () => {
   const calls = [];
@@ -74,4 +75,44 @@ test('layer order controller fails closed for inactive slides and no-op plans', 
     getNormalizedSlideLayerOrder: () => []
   });
   assert.equal(noOpController.reorder('back', []), false);
+});
+
+test('layer order controller blocks canonical-locked elements when the DOM is stale', () => {
+  const first = { id: 'node-1', isConnected: true };
+  const second = { id: 'node-2', isConnected: true };
+  const slide = { contains: () => true };
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [
+        { id: 'node-1', visibility: { locked: true } },
+        { id: 'node-2', visibility: { locked: false } }
+      ]
+    }]
+  });
+  let receivedLockState = null;
+  let applied = false;
+  const controller = layerOrderController.createStudioEditorLayerOrderController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => deck,
+    layerOrderApi: {
+      buildStudioLayerOrderMutationPlan(elements, action, options) {
+        receivedLockState = options.isLocked(first);
+        return { didChange: false };
+      }
+    },
+    getActiveSlide: () => slide,
+    getIframeDoc: () => ({ id: 'doc' }),
+    getNormalizedSlideLayerOrder: () => [first, second],
+    assignElementId: (element) => element.id,
+    isElementLocked: () => false,
+    applyLayerOrderMutation: () => {
+      applied = true;
+      return { didApply: true };
+    }
+  });
+
+  assert.equal(controller.reorder('front', [first]), false);
+  assert.equal(receivedLockState, true);
+  assert.equal(applied, false);
 });
