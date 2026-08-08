@@ -7,6 +7,11 @@
     root.SlideNextStudioEditorInteractionOptions = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  const DEFAULT_DRAG_START_THRESHOLD_PX = 4;
+  const DEFAULT_SNAP_THRESHOLD_PX = 12;
+  const DEFAULT_MIN_ELEMENT_SIZE_PX = 24;
+  const DEFAULT_DRAG_OVERFLOW_MARGIN_PX = 280;
+
   function buildStudioTransformInteractionOptions(options = {}, overrides = {}) {
     const transformApi = options.transformApi && typeof options.transformApi === 'object'
       ? options.transformApi
@@ -109,6 +114,10 @@
   }
 
   return {
+    DEFAULT_DRAG_START_THRESHOLD_PX,
+    DEFAULT_SNAP_THRESHOLD_PX,
+    DEFAULT_MIN_ELEMENT_SIZE_PX,
+    DEFAULT_DRAG_OVERFLOW_MARGIN_PX,
     buildStudioTransformInteractionOptions,
     buildStudioMarqueeInteractionOptions
   };

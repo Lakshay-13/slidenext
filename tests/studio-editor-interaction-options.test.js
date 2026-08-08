@@ -3,6 +3,13 @@ const assert = require('node:assert/strict');
 
 const interactionOptions = require('../shared/studio-editor-interaction-options.js');
 
+test('interaction defaults provide one stable source for editor geometry thresholds', () => {
+  assert.equal(interactionOptions.DEFAULT_DRAG_START_THRESHOLD_PX, 4);
+  assert.equal(interactionOptions.DEFAULT_SNAP_THRESHOLD_PX, 12);
+  assert.equal(interactionOptions.DEFAULT_MIN_ELEMENT_SIZE_PX, 24);
+  assert.equal(interactionOptions.DEFAULT_DRAG_OVERFLOW_MARGIN_PX, 280);
+});
+
 test('buildStudioTransformInteractionOptions delegates snap targets and preserves overrides', () => {
   const slide = { id: 'slide-1' };
   const snapCalls = [];

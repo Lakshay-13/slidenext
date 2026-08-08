@@ -1,15 +1,21 @@
 (function (root, factory) {
-  const api = factory();
+  const interactionOptions = typeof module === 'object' && module.exports
+    ? require('./studio-editor-interaction-options')
+    : root && root.SlideNextStudioEditorInteractionOptions;
+  const api = factory(interactionOptions);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorTransform = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (interactionOptions) {
   const STUDIO_RESIZE_WIDTH_TAGS = new Set(['img', 'table', 'pre', 'code', 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
   const STUDIO_RESIZE_HEIGHT_TAGS = new Set(['img', 'table', 'pre', 'code', 'div']);
-  const DEFAULT_DRAG_START_THRESHOLD_PX = 4;
+  const DEFAULT_DRAG_START_THRESHOLD_PX = interactionOptions
+    && Number.isFinite(interactionOptions.DEFAULT_DRAG_START_THRESHOLD_PX)
+    ? interactionOptions.DEFAULT_DRAG_START_THRESHOLD_PX
+    : 4;
   const STUDIO_TRANSFORM_MOVED_VERSION_LABEL = 'Auto: Moved Element';
 
   function normalizeStudioTransformDragStartThreshold(value) {

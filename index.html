@@ -1314,6 +1314,7 @@
   <script src="/shared/studio-editor-visibility-state.js"></script>
   <script src="/shared/studio-editor-visibility-mutation.js"></script>
   <script src="/shared/studio-editor-lock-visibility-controller.js"></script>
+  <script src="/shared/studio-editor-interaction-options.js"></script>
   <script src="/shared/studio-editor-transform.js"></script>
   <script src="/shared/studio-editor-canonical-transform.js"></script>
   <script src="/shared/studio-editor-canonical-wallpaper.js"></script>
@@ -1374,7 +1375,6 @@
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-inline-edit.js"></script>
   <script src="/shared/studio-editor-table-navigation.js"></script>
-  <script src="/shared/studio-editor-interaction-options.js"></script>
   <script src="/shared/studio-editor-keyboard.js"></script>
   <script src="/shared/studio-editor-interactions.js"></script>
   <script src="/shared/studio-editor-transform-controller.js"></script>
@@ -1438,15 +1438,28 @@
     let pendingEditorTransaction = null;
     let wallpaperTab = 'solid';
     let studioEditorSessionToken = 0;
-    const DRAG_START_THRESHOLD_PX = (
-      typeof SlideNextStudioEditorTransform !== 'undefined'
-      && Number.isFinite(SlideNextStudioEditorTransform.DEFAULT_DRAG_START_THRESHOLD_PX)
-    )
-      ? SlideNextStudioEditorTransform.DEFAULT_DRAG_START_THRESHOLD_PX
-      : 4;
-    const SNAP_THRESHOLD_PX = 12;
-    const MIN_ELEMENT_SIZE_PX = 24;
-    const DRAG_OVERFLOW_MARGIN_PX = 280;
+    const editorInteractionDefaults = typeof SlideNextStudioEditorInteractionOptions !== 'undefined'
+      ? SlideNextStudioEditorInteractionOptions
+      : null;
+    const DRAG_START_THRESHOLD_PX = editorInteractionDefaults
+      && Number.isFinite(editorInteractionDefaults.DEFAULT_DRAG_START_THRESHOLD_PX)
+      ? editorInteractionDefaults.DEFAULT_DRAG_START_THRESHOLD_PX
+      : typeof SlideNextStudioEditorTransform !== 'undefined'
+        && Number.isFinite(SlideNextStudioEditorTransform.DEFAULT_DRAG_START_THRESHOLD_PX)
+        ? SlideNextStudioEditorTransform.DEFAULT_DRAG_START_THRESHOLD_PX
+        : 4;
+    const SNAP_THRESHOLD_PX = editorInteractionDefaults
+      && Number.isFinite(editorInteractionDefaults.DEFAULT_SNAP_THRESHOLD_PX)
+      ? editorInteractionDefaults.DEFAULT_SNAP_THRESHOLD_PX
+      : 12;
+    const MIN_ELEMENT_SIZE_PX = editorInteractionDefaults
+      && Number.isFinite(editorInteractionDefaults.DEFAULT_MIN_ELEMENT_SIZE_PX)
+      ? editorInteractionDefaults.DEFAULT_MIN_ELEMENT_SIZE_PX
+      : 24;
+    const DRAG_OVERFLOW_MARGIN_PX = editorInteractionDefaults
+      && Number.isFinite(editorInteractionDefaults.DEFAULT_DRAG_OVERFLOW_MARGIN_PX)
+      ? editorInteractionDefaults.DEFAULT_DRAG_OVERFLOW_MARGIN_PX
+      : 280;
     const presentationDashboardController = typeof SlideNextPresentationDashboardController !== 'undefined'
       && SlideNextPresentationDashboardController
       && typeof SlideNextPresentationDashboardController.createPresentationDashboardController === 'function'
