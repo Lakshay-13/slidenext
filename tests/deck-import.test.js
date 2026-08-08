@@ -365,6 +365,37 @@ test('collectDeckAssets preserves intrinsic image dimensions for export sizing',
   }]);
 });
 
+test('collectDeckAssets infers source media types from MIME type and URL extension', () => {
+  const videoSource = createElement('SOURCE', {
+    src: 'media/demo.mp4',
+    type: 'video/mp4'
+  });
+  const audioSource = createElement('SOURCE', {
+    src: 'media/voice.ogg',
+    type: 'audio/ogg'
+  });
+  const imageSource = createElement('SOURCE', {
+    src: 'media/hero.webp'
+  });
+  const doc = {
+    querySelectorAll(selector) {
+      if (selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], link[rel~="preload"][href], video[poster]') {
+        return [videoSource, audioSource, imageSource];
+      }
+      return [];
+    }
+  };
+
+  assert.deepEqual(
+    deckImport.collectDeckAssets(doc).map(({ src, type, mimeType }) => ({ src, type, mimeType })),
+    [
+      { src: 'media/demo.mp4', type: 'video', mimeType: 'video/mp4' },
+      { src: 'media/voice.ogg', type: 'audio', mimeType: 'audio/ogg' },
+      { src: 'media/hero.webp', type: 'image', mimeType: 'image/webp' }
+    ]
+  );
+});
+
 test('collectDeckAssets includes srcset and poster asset urls, skips fragments, and deduplicates repeated candidates', () => {
   const posterVideoEl = createElement('VIDEO', {
     poster: 'assets/poster.jpg'

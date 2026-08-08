@@ -1230,7 +1230,14 @@
     const tagName = el.tagName.toLowerCase();
     if (tagName === 'img') return 'image';
     if (tagName === 'video') return 'video';
-    if (tagName === 'audio' || tagName === 'source') return 'audio';
+    if (tagName === 'audio') return 'audio';
+    if (tagName === 'source') {
+      const mediaType = normalizeString(el.getAttribute('type')).toLowerCase();
+      if (mediaType.startsWith('video/')) return 'video';
+      if (mediaType.startsWith('audio/')) return 'audio';
+      if (mediaType.startsWith('image/')) return 'image';
+      return inferAssetTypeFromUrl(el.getAttribute('src'));
+    }
     if (tagName === 'script') return 'script';
     if (tagName === 'link') {
       const rel = normalizeString(el.getAttribute('rel')).toLowerCase();
