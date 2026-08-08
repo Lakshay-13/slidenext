@@ -55,6 +55,25 @@ test('resolveStudioInlineTextEditTarget ignores resize handles and non-text node
   assert.equal(inlineEdit.resolveStudioInlineTextEditTarget(shape, slide), null);
 });
 
+test('resolveStudioInlineTextEditTarget supports table cell text when enabled', () => {
+  for (const tagName of ['td', 'th']) {
+    const cell = { tagName: tagName.toUpperCase(), parentElement: null };
+    const child = { nodeType: 1, tagName: 'SPAN', parentElement: cell };
+    const slide = {
+      contains(element) {
+        return element === child || element === cell;
+      }
+    };
+
+    assert.equal(
+      inlineEdit.resolveStudioInlineTextEditTarget(child, slide, {
+        textTagNames: new Set(['td', 'th'])
+      }),
+      cell
+    );
+  }
+});
+
 function createElement(text = 'Before') {
   const attributes = {};
   const listeners = {};
