@@ -5354,7 +5354,7 @@
       const styleApi = typeof SlideNextStudioEditorStyle !== 'undefined'
         ? SlideNextStudioEditorStyle
         : null;
-      if (!styleApi) {
+      if (!styleApi || typeof styleApi.syncStudioStyleToolbarState !== 'function') {
         return false;
       }
       const toolbarOptions = {
@@ -5363,42 +5363,7 @@
         isLocked: isElementLocked,
         canMutateDeck: () => !!getActiveSlide(doc)
       };
-      if (typeof styleApi.syncStudioStyleToolbarState === 'function') {
-        return styleApi.syncStudioStyleToolbarState(toolbarOptions);
-      }
-      if (typeof styleApi.renderStudioStyleToolbarState !== 'function') {
-        return false;
-      }
-      const controlConfigs = typeof styleApi.getStudioStyleToolbarControlConfigs === 'function'
-        ? styleApi.getStudioStyleToolbarControlConfigs()
-        : [];
-      if (typeof styleApi.buildStudioStyleToolbarState === 'function') {
-        const toolbarState = styleApi.buildStudioStyleToolbarState(selectedElements, controlConfigs, {
-          isLocked: isElementLocked,
-          canMutateDeck: () => !!getActiveSlide(doc)
-        });
-        return styleApi.renderStudioStyleToolbarState({
-          documentRef: document,
-          toolbarState
-        });
-      }
-      if (typeof styleApi.buildStudioStyleMutationPlan !== 'function') {
-        return false;
-      }
-      const toolbarState = { controlStates: {} };
-      controlConfigs.forEach(([id, prop, value]) => {
-        const control = document.getElementById(id);
-        if (!control) return;
-        const styleMutationPlan = styleApi.buildStudioStyleMutationPlan(selectedElements, prop, value, {
-          isLocked: isElementLocked,
-          canMutateDeck: () => !!getActiveSlide(doc)
-        });
-        toolbarState.controlStates[id] = styleMutationPlan.canApply;
-      });
-      return styleApi.renderStudioStyleToolbarState({
-        documentRef: document,
-        toolbarState
-      });
+      return styleApi.syncStudioStyleToolbarState(toolbarOptions);
     }
 
     function buildLayerOrderSelectionActionState(elements = selectedElements, options = {}) {

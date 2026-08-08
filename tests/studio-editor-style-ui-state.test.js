@@ -337,6 +337,16 @@ test('updateStyleActionState reuses the shared style toolbar helper when availab
           controlStates: Object.fromEntries(controlConfigs.map(([id]) => [id, true]))
         };
       },
+      syncStudioStyleToolbarState(options = {}) {
+        const controlConfigs = styleState.getStudioStyleToolbarControlConfigs();
+        calls.push({
+          elements: options.elements,
+          controlConfigs,
+          hasCanMutateDeck: typeof options.canMutateDeck === 'function',
+          canMutateDeck: options.canMutateDeck()
+        });
+        return styleState.syncStudioStyleToolbarState(options);
+      },
       renderStudioStyleToolbarState(options) {
         return styleState.renderStudioStyleToolbarState(options);
       }
