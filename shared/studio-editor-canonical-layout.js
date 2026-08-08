@@ -113,6 +113,9 @@
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const orderedElements = Array.isArray(options.orderedElements) ? options.orderedElements : [];
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
@@ -135,6 +138,7 @@
           canonicalDeckApi,
           buildCanonicalDeck: options.buildCanonicalDeck,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+          getCanonicalDeckBaseline,
           sourceDocument: options.sourceDocument
         });
 
@@ -176,11 +180,15 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     return (mutationOptions = {}) => buildStudioCanonicalLayerOrderMutation({
       ...mutationOptions,
       canonicalDeckApi,
       buildCanonicalDeck,
-      buildCanonicalDeckBaseline
+      buildCanonicalDeckBaseline,
+      getCanonicalDeckBaseline
     });
   }
 

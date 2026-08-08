@@ -11,6 +11,7 @@ test('layer order controller applies the planned order and forwards mutation cal
   const slide = { contains: (element) => element === first || element === second };
   const controller = layerOrderController.createStudioEditorLayerOrderController({
     canonicalDeckApi: { id: 'deck-api' },
+    getCanonicalDeckBaseline: () => ({ id: 'live-baseline' }),
     canonicalLayoutApi: {
       createStudioCanonicalLayerOrderMutationBuilder(options) {
         builderOptions = options;
@@ -53,8 +54,10 @@ test('layer order controller applies the planned order and forwards mutation cal
   assert.deepEqual(transaction, { id: 'tx' });
   assert.equal(builderOptions.canonicalDeckApi.id, 'deck-api');
   assert.equal(typeof builderOptions.buildCanonicalDeckBaseline, 'function');
+  assert.deepEqual(builderOptions.getCanonicalDeckBaseline(), { id: 'live-baseline' });
   assert.equal(baselineOptions.sourceDocument.id, 'doc');
   assert.equal(typeof baselineOptions.buildCanonicalDeckBaseline, 'function');
+  assert.deepEqual(baselineOptions.getCanonicalDeckBaseline(), { id: 'live-baseline' });
 });
 
 test('layer order controller fails closed for inactive slides and no-op plans', () => {

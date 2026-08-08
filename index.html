@@ -1997,6 +1997,10 @@
           assignElementId: (...args) => assignEditorElementId(...args),
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+            sourceDoc || getIframeDoc(),
+            studioEditorSessionToken
+          ),
           applyLayerOrderMutation: (...args) => applyEditorLayerOrderMutationWithTransaction(...args)
         })
       : null;
