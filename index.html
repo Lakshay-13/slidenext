@@ -1377,6 +1377,7 @@
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-style-mutation.js"></script>
   <script src="/shared/studio-editor-style-controller.js"></script>
+  <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-interactions.js"></script>
@@ -2458,6 +2459,19 @@
           navigateSlide: typeof navigateEditorSlide === 'function' ? navigateEditorSlide : null
         })
       : null;
+    const studioEditorThemeController = typeof SlideNextStudioEditorThemeController !== 'undefined'
+      && SlideNextStudioEditorThemeController
+      && typeof SlideNextStudioEditorThemeController.createStudioEditorThemeController === 'function'
+      ? SlideNextStudioEditorThemeController.createStudioEditorThemeController({
+          themeViewApi: typeof SlideNextStudioThemeView !== 'undefined'
+            ? SlideNextStudioThemeView
+            : null,
+          documentRef: document,
+          localStorageRef: localStorage,
+          getIframeDocument: getIframeDoc,
+          resolveDarkMode: () => document.documentElement.classList.contains('dark')
+        })
+      : null;
 
     // Slide Wallpapers Presets Data
     const wallpaperPresetsData = {
@@ -2575,28 +2589,15 @@
 
     // Theme Toggle Functionality
     function toggleGlobalTheme() {
-      const themeView = typeof SlideNextStudioThemeView !== 'undefined'
-        ? SlideNextStudioThemeView
-        : null;
-      if (!themeView || typeof themeView.toggleStudioGlobalTheme !== 'function') return false;
-      const result = themeView.toggleStudioGlobalTheme({
-        documentRef: document,
-        localStorageRef: localStorage,
-        syncIframeTheme
-      });
-      return !!(result && result.didApply);
+      if (!studioEditorThemeController
+        || typeof studioEditorThemeController.toggleGlobalTheme !== 'function') return false;
+      return studioEditorThemeController.toggleGlobalTheme();
     }
 
     function syncIframeTheme() {
-      const iframeDoc = getIframeDoc();
-      const themeView = typeof SlideNextStudioThemeView !== 'undefined'
-        ? SlideNextStudioThemeView
-        : null;
-      if (!themeView || typeof themeView.syncStudioIframeTheme !== 'function') return false;
-      return themeView.syncStudioIframeTheme({
-        iframeDoc,
-        isDark: document.documentElement.classList.contains('dark')
-      });
+      if (!studioEditorThemeController
+        || typeof studioEditorThemeController.syncIframeTheme !== 'function') return false;
+      return studioEditorThemeController.syncIframeTheme();
     }
 
     // 1. Fetch Presentations from Backend

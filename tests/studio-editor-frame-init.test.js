@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const editorEvents = require('../shared/studio-editor-events.js');
 const frameInteractions = require('../shared/studio-editor-frame-interactions.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
+const themeController = require('../shared/studio-editor-theme-controller.js');
 const themeView = require('../shared/studio-theme-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -1125,6 +1126,12 @@ test('syncIframeTheme uses the shared iframe accessor and injects the light them
       return iframeDoc;
     }
   };
+
+  context.studioEditorThemeController = themeController.createStudioEditorThemeController({
+    themeViewApi: context.SlideNextStudioThemeView,
+    documentRef: context.document,
+    getIframeDocument: context.getIframeDoc
+  });
 
   vm.createContext(context);
   vm.runInContext(syncIframeThemeSource, context);
