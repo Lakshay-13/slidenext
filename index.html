@@ -2031,7 +2031,7 @@
           saveHistoryState: (...args) => saveHistoryState(...args),
           triggerAutoSave: (...args) => triggerAutoSave(...args),
           triggerAutoVersion: (...args) => triggerAutoVersion(...args),
-          onBlocksChanged: (blocks) => renderSavedBlocks(blocks)
+          onBlocksChanged: () => updateBlockActionState()
         })
       : null;
     const studioEditorTemplateController = typeof SlideNextStudioEditorTemplateController !== 'undefined'
