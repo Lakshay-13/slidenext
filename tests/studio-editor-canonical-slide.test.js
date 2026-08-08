@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalSlide = require('../shared/studio-editor-canonical-slide.js');
 
 test('buildStudioCanonicalDuplicateSlideBaseline builds from the source document', () => {
@@ -10,6 +11,7 @@ test('buildStudioCanonicalDuplicateSlideBaseline builds from the source document
   let builtFromDocument = null;
   const result = canonicalSlide.buildStudioCanonicalDuplicateSlideBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
@@ -26,6 +28,7 @@ test('buildStudioCanonicalDuplicateSlideBaseline prefers a valid live canonical 
   let didBuildFromDocument = false;
   const result = canonicalSlide.buildStudioCanonicalDuplicateSlideBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return liveDeck;
     },
@@ -44,6 +47,7 @@ test('buildStudioCanonicalDuplicateSlideBaseline falls back when the live canoni
   let didBuildFromDocument = false;
   const result = canonicalSlide.buildStudioCanonicalDuplicateSlideBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return { invalid: true };
     },
@@ -63,6 +67,7 @@ test('buildStudioCanonicalDuplicateSlideDeck imports and inserts a duplicate wit
   });
   const result = canonicalSlide.buildStudioCanonicalDuplicateSlideDeck({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     canonicalDeckBeforeMutation: sourceDeck,
     duplicateSlide: { id: 'duplicate-slide' },
     duplicateSlideId: 'slide-2',
@@ -121,6 +126,7 @@ test('createStudioCanonicalDuplicateSlideMutationBuilders preserves an explicit 
   let buildCount = 0;
   const builders = canonicalSlide.createStudioCanonicalDuplicateSlideMutationBuilders({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck() {
       buildCount += 1;
       return sourceDeck;
@@ -147,6 +153,7 @@ test('buildStudioCanonicalAddSlideBaseline builds from the source document', () 
   let builtFromDocument = null;
   const result = canonicalSlide.buildStudioCanonicalAddSlideBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
@@ -163,6 +170,7 @@ test('buildStudioCanonicalAddSlideBaseline prefers a valid live canonical deck',
   let didBuildFromDocument = false;
   const result = canonicalSlide.buildStudioCanonicalAddSlideBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return liveDeck;
     },
@@ -181,6 +189,7 @@ test('buildStudioCanonicalAddSlideBaseline falls back when the live canonical de
   let didBuildFromDocument = false;
   const result = canonicalSlide.buildStudioCanonicalAddSlideBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return { invalid: true };
     },
@@ -200,6 +209,7 @@ test('buildStudioCanonicalAddSlideDeck imports and appends a new slide without m
   let builtFromDocument = null;
   const result = canonicalSlide.buildStudioCanonicalAddSlideDeck({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
@@ -227,6 +237,7 @@ test('createStudioCanonicalAddSlideMutationBuilders shares canonical import wiri
   const importedSlides = [];
   const builders = canonicalSlide.createStudioCanonicalAddSlideMutationBuilders({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck(documentRef) {
       builtDocuments.push(documentRef);
       return sourceDeck;
@@ -256,6 +267,7 @@ test('buildStudioCanonicalDeleteSlideBaseline builds from the source document', 
   let builtFromDocument = null;
   const result = canonicalSlide.buildStudioCanonicalDeleteSlideBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
@@ -272,6 +284,7 @@ test('buildStudioCanonicalDeleteSlideBaseline prefers a valid live canonical dec
   let didBuildFromDocument = false;
   const result = canonicalSlide.buildStudioCanonicalDeleteSlideBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return liveDeck;
     },
@@ -290,6 +303,7 @@ test('buildStudioCanonicalDeleteSlideBaseline falls back when the live canonical
   let didBuildFromDocument = false;
   const result = canonicalSlide.buildStudioCanonicalDeleteSlideBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return { invalid: true };
     },
@@ -311,6 +325,7 @@ test('buildStudioCanonicalDeleteSlideDeck removes only the requested slide witho
   let builtFromDocument = null;
   const result = canonicalSlide.buildStudioCanonicalDeleteSlideDeck({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
@@ -333,6 +348,7 @@ test('createStudioCanonicalDeleteSlideMutationBuilders builds from the source do
   const builtDocuments = [];
   const builders = canonicalSlide.createStudioCanonicalDeleteSlideMutationBuilders({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck(documentRef) {
       builtDocuments.push(documentRef);
       return sourceDeck;
@@ -354,6 +370,7 @@ test('buildStudioCanonicalReorderSlideBaseline builds from the source document',
   let builtFromDocument = null;
   const result = canonicalSlide.buildStudioCanonicalReorderSlideBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
@@ -370,6 +387,7 @@ test('buildStudioCanonicalReorderSlideBaseline prefers a valid live canonical de
   let didBuildFromDocument = false;
   const result = canonicalSlide.buildStudioCanonicalReorderSlideBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return liveDeck;
     },
@@ -388,6 +406,7 @@ test('buildStudioCanonicalReorderSlideBaseline falls back when the live canonica
   let didBuildFromDocument = false;
   const result = canonicalSlide.buildStudioCanonicalReorderSlideBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return { invalid: true };
     },
@@ -411,6 +430,7 @@ test('buildStudioCanonicalReorderSlideDeck moves the requested slide without mut
   const targetSlide = { id: 'slide-3' };
   const result = canonicalSlide.buildStudioCanonicalReorderSlideDeck({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
@@ -434,6 +454,7 @@ test('createStudioCanonicalReorderSlideMutationBuilders shares canonical API wir
   const builtDocuments = [];
   const builders = canonicalSlide.createStudioCanonicalReorderSlideMutationBuilders({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck(documentRef) {
       builtDocuments.push(documentRef);
       return sourceDeck;
