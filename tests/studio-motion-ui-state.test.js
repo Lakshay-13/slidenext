@@ -52,6 +52,15 @@ function loadGetNudgeSelectionState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadCanonicalVisibilityReader(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {',
+    '\n\n    function setElementHiddenState'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadGetTransformSelectionState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -147,6 +156,7 @@ test('getNudgeSelectionState prefers canonical hidden and locked state over stal
   };
 
   vm.createContext(context);
+  loadCanonicalVisibilityReader(fileContent, context);
   loadGetNudgeSelectionState(fileContent, context);
 
   const result = context.getNudgeSelectionState(undefined, doc);
@@ -187,6 +197,7 @@ test('getTransformSelectionState prefers canonical hidden and locked state over 
   };
 
   vm.createContext(context);
+  loadCanonicalVisibilityReader(fileContent, context);
   loadGetTransformSelectionState(fileContent, context);
 
   const result = context.getTransformSelectionState(undefined);
@@ -201,6 +212,7 @@ test('selectionHasLockedElements prefers canonical lock state over stale DOM sta
   const selectedElement = { id: 'locked', isConnected: true };
   const context = {
     selectedElements: [selectedElement],
+    SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorLiveSelection: liveSelection,
     getIframeDoc() {
       return doc;
@@ -220,6 +232,7 @@ test('selectionHasLockedElements prefers canonical lock state over stale DOM sta
   };
 
   vm.createContext(context);
+  loadCanonicalVisibilityReader(fileContent, context);
   loadSelectionHasLockedElements(fileContent, context);
 
   assert.equal(context.selectionHasLockedElements(), true);

@@ -5581,35 +5581,9 @@
     }
 
     function getTransformSelectionState(elements = selectedElements) {
-      let canonicalDeck = null;
-      if (typeof buildEditorCanonicalDeck === 'function') {
-        try {
-          canonicalDeck = buildEditorCanonicalDeck(getIframeDoc());
-        } catch (error) {
-          canonicalDeck = null;
-        }
-      }
-      const canonicalStateApi = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-        ? SlideNextStudioEditorCanonicalState
-        : null;
-      const createVisibilityReader = canonicalStateApi
-        && typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReader === 'function'
-        ? canonicalStateApi.createStudioEditorCanonicalVisibilityReader
-        : null;
-      const readLockedState = canonicalDeck && createVisibilityReader
-        ? createVisibilityReader(canonicalDeck, {
-            property: 'locked',
-            resolveCanonicalNode: resolveEditorCanonicalNodeForElement,
-            fallbackReader: isElementLocked
-          })
-        : isElementLocked;
-      const readHiddenState = canonicalDeck && createVisibilityReader
-        ? createVisibilityReader(canonicalDeck, {
-            property: 'hidden',
-            resolveCanonicalNode: resolveEditorCanonicalNodeForElement,
-            fallbackReader: isElementHidden
-          })
-        : isElementHidden;
+      const doc = getIframeDoc();
+      const readLockedState = getEditorCanonicalVisibilityReader('locked', doc, isElementLocked);
+      const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden);
       return SlideNextStudioEditorTransform.buildStudioTransformSelectionState(elements, {
         isLocked: readLockedState,
         isHidden: readHiddenState,
@@ -5618,61 +5592,19 @@
     }
 
     function selectionHasLockedElements(elements = selectedElements) {
-      let canonicalDeck = null;
-      if (typeof buildEditorCanonicalDeck === 'function') {
-        try {
-          canonicalDeck = buildEditorCanonicalDeck(getIframeDoc());
-        } catch (error) {
-          canonicalDeck = null;
-        }
-      }
-      const readLockedState = canonicalDeck
-        ? (element) => {
-            const canonicalNode = typeof resolveEditorCanonicalNodeForElement === 'function'
-              ? resolveEditorCanonicalNodeForElement(element, canonicalDeck)
-              : null;
-            return canonicalNode
-              && canonicalNode.visibility
-              && typeof canonicalNode.visibility.locked === 'boolean'
-              ? canonicalNode.visibility.locked
-              : isElementLocked(element);
-          }
-        : isElementLocked;
+      const readLockedState = getEditorCanonicalVisibilityReader(
+        'locked',
+        getIframeDoc(),
+        isElementLocked
+      );
       return SlideNextStudioEditorLiveSelection.hasStudioLockedLiveSelection(elements, {
         isLocked: readLockedState
       });
     }
 
     function getNudgeSelectionState(elements = selectedElements, doc = getIframeDoc()) {
-      let canonicalDeck = null;
-      if (typeof buildEditorCanonicalDeck === 'function') {
-        try {
-          canonicalDeck = buildEditorCanonicalDeck(doc);
-        } catch (error) {
-          canonicalDeck = null;
-        }
-      }
-      const canonicalStateApi = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-        ? SlideNextStudioEditorCanonicalState
-        : null;
-      const createVisibilityReader = canonicalStateApi
-        && typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReader === 'function'
-        ? canonicalStateApi.createStudioEditorCanonicalVisibilityReader
-        : null;
-      const readLockedState = canonicalDeck && createVisibilityReader
-        ? createVisibilityReader(canonicalDeck, {
-            property: 'locked',
-            resolveCanonicalNode: resolveEditorCanonicalNodeForElement,
-            fallbackReader: isElementLocked
-          })
-        : isElementLocked;
-      const readHiddenState = canonicalDeck && createVisibilityReader
-        ? createVisibilityReader(canonicalDeck, {
-            property: 'hidden',
-            resolveCanonicalNode: resolveEditorCanonicalNodeForElement,
-            fallbackReader: isElementHidden
-          })
-        : isElementHidden;
+      const readLockedState = getEditorCanonicalVisibilityReader('locked', doc, isElementLocked);
+      const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden);
       return SlideNextStudioEditorNudge.buildStudioNudgeSelectionState(elements, {
         isLocked: readLockedState,
         isHidden: readHiddenState,
