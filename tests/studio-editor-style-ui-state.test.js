@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalStyle = require('../shared/studio-editor-canonical-style.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const styleState = require('../shared/studio-editor-style.js');
 const studioMutation = require('../shared/studio-editor-mutation.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
@@ -443,6 +444,11 @@ test('updateStyleActionState delegates toolbar state assembly to the shared styl
 
 test('updateStyleActionState prefers canonical lock metadata for style controls', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const visibilityReaderSource = extractFunctionSource(
+    fileContent,
+    'function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {',
+    '\n\n    function setElementHiddenState'
+  );
   const updateStyleActionStateSource = extractFunctionSource(
     fileContent,
     'function updateStyleActionState(doc = getIframeDoc()) {',
@@ -453,6 +459,7 @@ test('updateStyleActionState prefers canonical lock metadata for style controls'
   let receivedOptions = null;
   const context = {
     selectedElements: [selectedElement],
+    SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorStyle: {
       syncStudioStyleToolbarState(options) {
         receivedOptions = options;
@@ -477,7 +484,7 @@ test('updateStyleActionState prefers canonical lock metadata for style controls'
   };
 
   vm.createContext(context);
-  vm.runInContext(updateStyleActionStateSource, context);
+  vm.runInContext(`${visibilityReaderSource}\n${updateStyleActionStateSource}`, context);
 
   assert.equal(context.updateStyleActionState(doc), 'delegated');
   assert.equal(receivedOptions.isLocked(selectedElement), true);
