@@ -4041,17 +4041,22 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorFallbackCanonicalDeckAdapter
         : null;
       if (createStudioEditorFallbackCanonicalDeckAdapter) {
-        const adapter = createStudioEditorFallbackCanonicalDeckAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          buildCanonicalDeck: canonicalDeck
-            ? () => buildEditorCanonicalDeck(doc)
-            : null,
-          resolveCanonicalDeckOverride: resolveEditorCanonicalDeckOverride,
-          isCanonicalDeck: getEditorCanonicalDeckValidator()
-        });
-        return typeof adapter === 'function' ? adapter(canonicalDeck) : null;
+        if (typeof resolveEditorFallbackCanonicalDeck.adapter !== 'function') {
+          resolveEditorFallbackCanonicalDeck.adapter = createStudioEditorFallbackCanonicalDeckAdapter({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            resolveCanonicalDeckOverride: resolveEditorCanonicalDeckOverride,
+            isCanonicalDeck: getEditorCanonicalDeckValidator()
+          });
+        }
+        return typeof resolveEditorFallbackCanonicalDeck.adapter === 'function'
+          ? resolveEditorFallbackCanonicalDeck.adapter(canonicalDeck, {
+              buildCanonicalDeck: canonicalDeck
+                ? () => buildEditorCanonicalDeck(doc)
+                : null
+            })
+          : null;
       }
       const createStudioFallbackCanonicalDeckResolver = (
         typeof SlideNextStudioEditorPersistence !== 'undefined'

@@ -227,16 +227,28 @@
       ? options.isCanonicalDeck
       : null;
 
-    return function resolveFallbackCanonicalDeck(canonicalDeck = null) {
+    return function resolveFallbackCanonicalDeck(canonicalDeck = null, nextOptions = {}) {
       if (!persistenceApi || typeof persistenceApi.createStudioFallbackCanonicalDeckResolver !== 'function') {
         return null;
       }
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      const currentBuildCanonicalDeck = typeof resolvedOptions.buildCanonicalDeck === 'function'
+        ? resolvedOptions.buildCanonicalDeck
+        : buildCanonicalDeck;
+      const currentResolveCanonicalDeckOverride = typeof resolvedOptions.resolveCanonicalDeckOverride === 'function'
+        ? resolvedOptions.resolveCanonicalDeckOverride
+        : resolveCanonicalDeckOverride;
+      const currentIsCanonicalDeck = typeof resolvedOptions.isCanonicalDeck === 'function'
+        ? resolvedOptions.isCanonicalDeck
+        : isCanonicalDeck;
       const resolver = persistenceApi.createStudioFallbackCanonicalDeckResolver({
-        buildCanonicalDeck: canonicalDeck && buildCanonicalDeck
-          ? () => buildCanonicalDeck()
+        buildCanonicalDeck: canonicalDeck && currentBuildCanonicalDeck
+          ? () => currentBuildCanonicalDeck()
           : null,
-        resolveCanonicalDeckOverride,
-        isCanonicalDeck
+        resolveCanonicalDeckOverride: currentResolveCanonicalDeckOverride,
+        isCanonicalDeck: currentIsCanonicalDeck
       });
       return typeof resolver === 'function' ? resolver(canonicalDeck) : null;
     };

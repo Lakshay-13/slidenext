@@ -194,6 +194,34 @@ test('createStudioEditorFallbackCanonicalDeckAdapter preserves conditional canon
   assert.equal(resolverOptions[1].buildCanonicalDeck, null);
 });
 
+test('createStudioEditorFallbackCanonicalDeckAdapter supports call-time canonical rebuilds', () => {
+  const resolverOptions = [];
+  const persistenceApi = {
+    createStudioFallbackCanonicalDeckResolver(options) {
+      resolverOptions.push(options);
+      return (canonicalDeck) => canonicalDeck && options.buildCanonicalDeck
+        ? options.buildCanonicalDeck()
+        : canonicalDeck;
+    }
+  };
+  const adapter = editorPersistenceState.createStudioEditorFallbackCanonicalDeckAdapter({
+    persistenceApi
+  });
+  const firstDeck = { kind: 'slidenext.deck', id: 'first', slides: [] };
+  const secondDeck = { kind: 'slidenext.deck', id: 'second', slides: [] };
+
+  assert.equal(
+    adapter({ id: 'malformed-1' }, { buildCanonicalDeck: () => firstDeck }),
+    firstDeck
+  );
+  assert.equal(
+    adapter({ id: 'malformed-2' }, { buildCanonicalDeck: () => secondDeck }),
+    secondDeck
+  );
+  assert.equal(resolverOptions.length, 2);
+  assert.notEqual(resolverOptions[0].buildCanonicalDeck, resolverOptions[1].buildCanonicalDeck);
+});
+
 test('createStudioEditorFallbackCanonicalDeckAdapter fails closed without shared persistence', () => {
   const adapter = editorPersistenceState.createStudioEditorFallbackCanonicalDeckAdapter();
 

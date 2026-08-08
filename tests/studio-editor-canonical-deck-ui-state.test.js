@@ -1409,6 +1409,58 @@ test('resolveEditorFallbackCanonicalDeck delegates through the editor persistenc
   });
 });
 
+test('resolveEditorFallbackCanonicalDeck reuses the adapter without stale document closures', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const firstDoc = { id: 'doc-one' };
+  const secondDoc = { id: 'doc-two' };
+  let adapterCreateCalls = 0;
+  const buildCalls = [];
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      createStudioFallbackCanonicalDeckResolver(options = {}) {
+        return (canonicalDeck) => canonicalDeck && options.buildCanonicalDeck
+          ? options.buildCanonicalDeck()
+          : canonicalDeck;
+      }
+    },
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorFallbackCanonicalDeckAdapter(options) {
+        adapterCreateCalls += 1;
+        return editorPersistenceState.createStudioEditorFallbackCanonicalDeckAdapter(options);
+      }
+    },
+    buildEditorCanonicalDeck(doc) {
+      buildCalls.push(doc);
+      return { id: doc.id, slides: [] };
+    },
+    getEditorCanonicalDeckValidator() {
+      return () => true;
+    },
+    resolveEditorCanonicalDeckOverride() {
+      return null;
+    }
+  };
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function getPersistedActiveSlideId(playbackState = persistedDeckPlaybackState) {'
+  );
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.deepEqual(
+    context.resolveEditorFallbackCanonicalDeck(firstDoc, { id: 'malformed-one' }),
+    { id: 'doc-one', slides: [] }
+  );
+  assert.deepEqual(
+    context.resolveEditorFallbackCanonicalDeck(secondDoc, { id: 'malformed-two' }),
+    { id: 'doc-two', slides: [] }
+  );
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(buildCalls, [firstDoc, secondDoc]);
+});
+
 test('resolveEditorFallbackActiveSlideId delegates to the shared deck view helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
