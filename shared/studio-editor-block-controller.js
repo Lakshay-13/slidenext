@@ -83,6 +83,35 @@
       return nextCanonicalDeck;
     }
 
+    function removeBlock(blockId) {
+      if (!canonicalDeckApi
+        || typeof canonicalDeckApi.removeCanonicalBlock !== 'function') {
+        return null;
+      }
+
+      const canonicalDeck = getCanonicalDeck();
+      const normalizedBlockId = typeof blockId === 'string' ? blockId.trim() : '';
+      const block = canonicalDeck
+        && Array.isArray(canonicalDeck.blocks)
+        ? canonicalDeck.blocks.find((candidate) => candidate && candidate.id === normalizedBlockId)
+        : null;
+      const nextCanonicalDeck = canonicalDeckApi.removeCanonicalBlock(
+        canonicalDeck,
+        normalizedBlockId
+      );
+      if (!nextCanonicalDeck) return null;
+
+      if (saveHistoryState) {
+        saveHistoryState(false, null, nextCanonicalDeck);
+      }
+      if (triggerAutoSave) triggerAutoSave();
+      if (triggerAutoVersion) {
+        triggerAutoVersion(`Auto: Removed Block${block && block.name ? ` "${block.name}"` : normalizedBlockId ? ` "${normalizedBlockId}"` : ''}`);
+      }
+      if (onBlocksChanged) onBlocksChanged(nextCanonicalDeck.blocks, nextCanonicalDeck);
+      return nextCanonicalDeck;
+    }
+
     function assignRenderedNodeIds(element, node) {
       if (!element || !node) return;
       if (element.dataset) {
@@ -164,6 +193,7 @@
 
     return {
       saveSelection,
+      removeBlock,
       insertBlock
     };
   }

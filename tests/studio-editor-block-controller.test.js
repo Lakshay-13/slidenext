@@ -56,6 +56,45 @@ test('block controller fails closed when selection or dependencies are unavailab
   assert.equal(blockController.createStudioEditorBlockController().saveSelection(), null);
 });
 
+test('block controller removes a saved block and finalizes persistence hooks', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    blocks: [
+      { id: 'hero', name: 'Hero' },
+      { id: 'stats', name: 'Stats' }
+    ],
+    slides: [{ id: 'slide-1' }]
+  });
+  const calls = [];
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    },
+    triggerAutoSave() {
+      calls.push(['save']);
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    },
+    onBlocksChanged(blocks, nextDeck) {
+      calls.push(['blocks', blocks.map((block) => block.id), nextDeck]);
+    }
+  });
+
+  const result = controller.removeBlock('hero');
+
+  assert.deepEqual(sourceDeck.blocks.map((block) => block.id), ['hero', 'stats']);
+  assert.deepEqual(result.blocks.map((block) => block.id), ['stats']);
+  assert.equal(calls[0][0], 'history');
+  assert.equal(calls[0][1], false);
+  assert.equal(calls[0][2], null);
+  assert.equal(calls[0][3], result);
+  assert.deepEqual(calls.slice(1, 3), [['save'], ['version', 'Auto: Removed Block "Hero"']]);
+  assert.deepEqual(calls[3][0], 'blocks');
+  assert.deepEqual(calls[3][1], ['stats']);
+});
+
 test('block controller renders and inserts canonical block nodes through a markup transaction', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     blocks: [{

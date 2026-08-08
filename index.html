@@ -5827,14 +5827,26 @@
         return true;
       }
       normalizedBlocks.forEach((block) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-1';
         const item = document.createElement('button');
         item.type = 'button';
-        item.className = 'text-left rounded px-2 py-1 hover:bg-white/5 hover:text-white transition-colors';
+        item.className = 'min-w-0 flex-1 text-left rounded px-2 py-1 hover:bg-white/5 hover:text-white transition-colors';
         const nodeCount = Array.isArray(block && block.nodes) ? block.nodes.length : 0;
-        item.textContent = `${block && block.name ? block.name : 'Unnamed Block'} - ${nodeCount} element${nodeCount === 1 ? '' : 's'}`;
+        const blockName = block && block.name ? block.name : 'Unnamed Block';
+        item.textContent = `${blockName} - ${nodeCount} element${nodeCount === 1 ? '' : 's'}`;
         item.disabled = !getActiveSlide();
         item.addEventListener('click', () => insertSavedBlock(block.id));
-        list.appendChild(item);
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'shrink-0 rounded px-1.5 py-1 text-zinc-500 hover:bg-red-500/10 hover:text-red-300 transition-colors';
+        removeButton.textContent = 'Remove';
+        removeButton.title = `Remove ${blockName}`;
+        removeButton.setAttribute('aria-label', `Remove ${blockName}`);
+        removeButton.addEventListener('click', () => removeSavedBlock(block.id));
+        row.appendChild(item);
+        row.appendChild(removeButton);
+        list.appendChild(row);
       });
       return true;
     }
@@ -6094,6 +6106,15 @@
         : false;
       if (didInsert) updateBlockActionState();
       return didInsert;
+    }
+
+    function removeSavedBlock(blockId) {
+      const removedDeck = studioEditorBlockController
+        && typeof studioEditorBlockController.removeBlock === 'function'
+        ? studioEditorBlockController.removeBlock(blockId)
+        : null;
+      if (removedDeck) updateBlockActionState();
+      return !!removedDeck;
     }
 
     function nudgeSelectedElements(dx, dy) {
