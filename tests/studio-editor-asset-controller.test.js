@@ -74,6 +74,35 @@ test('asset mutations fall back when the live canonical baseline is invalid', ()
   assert.equal(didBuildFromDocument, true);
 });
 
+test('asset mutations require strict canonical baseline validation', () => {
+  const fallbackDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let didUseFallback = false;
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    isCanonicalDeck: (value) => (
+      value
+        && value.kind === 'slidenext.deck'
+        && Array.isArray(value.slides)
+        ? true
+        : 1
+    )
+  };
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    getCanonicalDeck: () => {
+      didUseFallback = true;
+      return fallbackDeck;
+    },
+    saveHistoryState: () => {}
+  });
+
+  const result = controller.addAsset({ id: 'strict-asset', src: '/strict.png' });
+
+  assert.equal(result.assets[0].id, 'strict-asset');
+  assert.equal(didUseFallback, true);
+});
+
 test('removeAsset commits unused asset removal and rejects referenced assets', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     assets: [

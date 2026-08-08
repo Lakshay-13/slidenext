@@ -51,6 +51,16 @@
       ? options.onAssetsChanged
       : null;
 
+    function isValidCanonicalDeck(value) {
+      if (!value) return false;
+      if (!canonicalDeckApi || typeof canonicalDeckApi.isCanonicalDeck !== 'function') return true;
+      try {
+        return canonicalDeckApi.isCanonicalDeck(value) === true;
+      } catch (err) {
+        return false;
+      }
+    }
+
     const readCanonicalDeckBaseline = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
@@ -63,7 +73,10 @@
       : () => {
           if (!getCanonicalDeckBaseline) return null;
           try {
-            return getCanonicalDeckBaseline();
+            const liveCanonicalDeck = getCanonicalDeckBaseline();
+            return isValidCanonicalDeck(liveCanonicalDeck)
+              ? liveCanonicalDeck
+              : null;
           } catch (err) {
             return null;
           }
@@ -71,19 +84,11 @@
 
     function resolveCanonicalDeck() {
       const liveCanonicalDeck = readCanonicalDeckBaseline();
-      let isValidCanonicalDeck = true;
-      if (liveCanonicalDeck && canonicalDeckApi
-        && typeof canonicalDeckApi.isCanonicalDeck === 'function') {
-        try {
-          isValidCanonicalDeck = canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck) === true;
-        } catch (error) {
-          isValidCanonicalDeck = false;
-        }
-      }
-      if (liveCanonicalDeck && isValidCanonicalDeck) {
-        return liveCanonicalDeck;
-      }
-      return getCanonicalDeck();
+      if (isValidCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
+      const fallbackCanonicalDeck = getCanonicalDeck();
+      return isValidCanonicalDeck(fallbackCanonicalDeck)
+        ? fallbackCanonicalDeck
+        : null;
     }
 
     function commitDeck(nextCanonicalDeck, versionLabel = '') {
