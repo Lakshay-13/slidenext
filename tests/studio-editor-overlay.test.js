@@ -197,3 +197,28 @@ test('renderStudioGuidesForActiveSlide resolves the current slide before renderi
   assert.equal(result, guidesLayer);
   assert.equal(guideLine.style.left, '24px');
 });
+
+test('renderStudioMarqueeSelectionForActiveSlide resolves the current slide before rendering the marquee', () => {
+  const overlay = createOverlay();
+  const slide = {
+    querySelector() {
+      return overlay;
+    }
+  };
+  const documentRef = { id: 'iframe-document' };
+  let resolvedDocument = null;
+
+  const result = overlayView.renderStudioMarqueeSelectionForActiveSlide({
+    documentRef,
+    getActiveSlide(doc) {
+      resolvedDocument = doc;
+      return slide;
+    },
+    rect: { left: 90, top: 80, right: 30, bottom: 20 }
+  });
+
+  assert.equal(resolvedDocument, documentRef);
+  assert.equal(result, overlay);
+  assert.equal(overlay.style.left, '30px');
+  assert.equal(overlay.style.top, '20px');
+});

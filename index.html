@@ -4865,9 +4865,16 @@
 
     function renderMarqueeSelection(rect) {
       const doc = getIframeDoc();
-      const slide = getActiveSlide(doc);
-      if (!doc || !slide || !rect) return;
-      SlideNextStudioEditorOverlay.renderStudioMarqueeSelection(doc, slide, rect, getEditorOverlayOptions());
+      if (!SlideNextStudioEditorOverlay
+        || typeof SlideNextStudioEditorOverlay.renderStudioMarqueeSelectionForActiveSlide !== 'function') {
+        return false;
+      }
+      return SlideNextStudioEditorOverlay.renderStudioMarqueeSelectionForActiveSlide({
+        documentRef: doc,
+        getActiveSlide,
+        rect,
+        ...getEditorOverlayOptions()
+      });
     }
 
     function clearMarqueeSelection() {

@@ -140,6 +140,16 @@
     return overlay;
   }
 
+  function renderStudioMarqueeSelectionForActiveSlide(options = {}) {
+    const documentRef = options.documentRef;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const slide = documentRef ? getActiveSlide(documentRef) : null;
+    if (!documentRef || !slide) return null;
+    return renderStudioMarqueeSelection(documentRef, slide, options.rect, options);
+  }
+
   function clearStudioMarqueeSelection(slide, options = {}) {
     if (!slide) return false;
     const overlayId = options.selectionOverlayId || 'editorSelectionOverlay';
@@ -217,6 +227,7 @@
     renderStudioGuides,
     renderStudioGuidesForActiveSlide,
     renderStudioMarqueeSelection,
+    renderStudioMarqueeSelectionForActiveSlide,
     clearStudioMarqueeSelection,
     syncStudioSelectionOverlay,
     syncStudioSelectionOverlayForActiveSlide
