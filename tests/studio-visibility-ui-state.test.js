@@ -68,6 +68,7 @@ function installLockVisibilityController(context) {
     visibilityStateApi: context.SlideNextStudioEditorVisibilityState,
     canonicalDeckApi: context.SlideNextCanonicalDeck,
     canonicalVisibilityApi: context.SlideNextStudioEditorCanonicalVisibility,
+    canonicalStateApi: context.SlideNextStudioEditorCanonicalState,
     getSelectedElements: () => context.selectedElements,
     getIframeDoc: context.getIframeDoc,
     getActiveSlide: context.getActiveSlide,

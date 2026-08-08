@@ -20,6 +20,9 @@
     const canonicalVisibilityApi = options.canonicalVisibilityApi
       || (root && root.SlideNextStudioEditorCanonicalVisibility)
       || null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     const getSelectedElements = typeof options.getSelectedElements === 'function'
       ? options.getSelectedElements
       : () => [];
@@ -77,6 +80,53 @@
       ? options.finalizeSelectionToggleMutation
       : null;
 
+    function resolveCanonicalDeck(sourceDocument) {
+      if (getCanonicalDeckBaseline) {
+        try {
+          const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+          if (liveCanonicalDeck) return liveCanonicalDeck;
+        } catch (err) {
+          // Fall through to the document rebuild path.
+        }
+      }
+      if (buildCanonicalDeckBaseline) {
+        try {
+          return buildCanonicalDeckBaseline(sourceDocument);
+        } catch (err) {
+          return null;
+        }
+      }
+      return null;
+    }
+
+    function resolveCanonicalVisibilityReader(property, sourceDocument, fallbackReader, getElementId) {
+      if (!canonicalDeckApi
+        || typeof canonicalDeckApi.findCanonicalNodeById !== 'function'
+        || !canonicalStateApi) {
+        return fallbackReader;
+      }
+      const canonicalDeck = resolveCanonicalDeck(sourceDocument);
+      if (!canonicalDeck) return fallbackReader;
+      if (property === 'locked'
+        && typeof canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi === 'function') {
+        return canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi(canonicalDeck, {
+          canonicalDeckApi,
+          getElementId,
+          fallbackReader
+        });
+      }
+      if (typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReader === 'function') {
+        return canonicalStateApi.createStudioEditorCanonicalVisibilityReader(canonicalDeck, {
+          property,
+          resolveCanonicalNode(element, deck) {
+            return canonicalDeckApi.findCanonicalNodeById(deck, getElementId(element));
+          },
+          fallbackReader
+        });
+      }
+      return fallbackReader;
+    }
+
     function buildCanonicalVisibilityMutation(selection, nextState, doc, getElementId) {
       const canonicalVisibilityBuilders = canonicalVisibilityApi
         && typeof canonicalVisibilityApi.createStudioCanonicalVisibilityMutationBuilders === 'function'
@@ -110,14 +160,20 @@
         return false;
       }
       const doc = getIframeDoc();
-      const lockMutationPlan = lockStateApi.buildStudioLockMutationPlan(getSelectedElements(), {
-        isLocked,
-        canMutateDeck: () => !!getActiveSlide(doc)
-      });
-      if (!lockMutationPlan || !lockMutationPlan.didChange) return false;
       const getLockElementId = (element) => {
         return assignLockElementId(element);
       };
+      const readLockedState = resolveCanonicalVisibilityReader(
+        'locked',
+        doc,
+        isLocked,
+        getLockElementId
+      );
+      const lockMutationPlan = lockStateApi.buildStudioLockMutationPlan(getSelectedElements(), {
+        isLocked: readLockedState,
+        canMutateDeck: () => !!getActiveSlide(doc)
+      });
+      if (!lockMutationPlan || !lockMutationPlan.didChange) return false;
       const canonicalDeck = buildCanonicalVisibilityMutation(
         lockMutationPlan.selection,
         { locked: lockMutationPlan.shouldLock },
@@ -128,7 +184,7 @@
         lockMutationPlan.selection,
         lockMutationPlan.shouldLock,
         {
-          isLocked,
+          isLocked: readLockedState,
           setLocked,
           getElementId: getLockElementId
         }
@@ -147,14 +203,6 @@
         return false;
       }
       const doc = getIframeDoc();
-      const visibilityMutationPlan = visibilityStateApi.buildStudioVisibilityMutationPlan(
-        getSelectedElements(),
-        {
-          isHidden,
-          canMutateDeck: () => !!getActiveSlide(doc)
-        }
-      );
-      if (!visibilityMutationPlan || !visibilityMutationPlan.didChange) return false;
       const getVisibilityElementId = (element) => {
         if (typeof options.assignElementId === 'function') {
           const assignedId = options.assignElementId(element);
@@ -162,6 +210,20 @@
         }
         return assignVisibilityElementId(element);
       };
+      const readHiddenState = resolveCanonicalVisibilityReader(
+        'hidden',
+        doc,
+        isHidden,
+        getVisibilityElementId
+      );
+      const visibilityMutationPlan = visibilityStateApi.buildStudioVisibilityMutationPlan(
+        getSelectedElements(),
+        {
+          isHidden: readHiddenState,
+          canMutateDeck: () => !!getActiveSlide(doc)
+        }
+      );
+      if (!visibilityMutationPlan || !visibilityMutationPlan.didChange) return false;
       const canonicalDeck = buildCanonicalVisibilityMutation(
         visibilityMutationPlan.selection,
         { hidden: visibilityMutationPlan.shouldHide },
@@ -172,7 +234,7 @@
         visibilityMutationPlan.selection,
         visibilityMutationPlan.shouldHide,
         {
-          isHidden,
+          isHidden: readHiddenState,
           setHidden,
           getVisibilityState,
           getElementId: getVisibilityElementId
