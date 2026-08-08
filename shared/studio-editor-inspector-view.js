@@ -293,6 +293,7 @@
       documentRef,
       primaryElement,
       computedStyles,
+      canonicalNode: options.canonicalNode,
       rgbToHex: options.rgbToHex,
       highlightAlignButton: options.highlightAlignButton
     });

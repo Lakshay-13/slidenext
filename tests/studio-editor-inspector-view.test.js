@@ -348,3 +348,47 @@ test('syncStudioInspectorSelection coordinates summary, computed styles, and ins
     ['highlightAlignButton', 'center']
   ]);
 });
+
+test('syncStudioInspectorSelection forwards canonical node data to typography controls', () => {
+  const zIndexInput = { value: '' };
+  const primaryElement = {
+    tagName: 'DIV',
+    innerText: 'Title',
+    style: { zIndex: '3' },
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return {
+            fontSize: '20px',
+            fontFamily: 'sans-serif',
+            fontWeight: '700',
+            color: '#fff',
+            textAlign: 'center',
+            opacity: '1'
+          };
+        }
+      }
+    },
+    classList: {
+      contains() {
+        return false;
+      }
+    }
+  };
+
+  assert.equal(inspectorView.syncStudioInspectorSelection({
+    documentRef: {
+      getElementById(id) {
+        return id === 'elZIndex' ? zIndexInput : null;
+      }
+    },
+    selectionState: {
+      hasSelection: true,
+      count: 1,
+      primaryElement,
+      selection: [primaryElement]
+    },
+    canonicalNode: { layout: { zIndex: 11 } }
+  }), true);
+  assert.equal(zIndexInput.value, '11');
+});
