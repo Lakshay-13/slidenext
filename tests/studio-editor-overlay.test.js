@@ -254,3 +254,29 @@ test('updateStudioDragHudForActiveSlide resolves the current slide before render
   assert.equal(hud.textContent, 'X 12  Y 19  W 120  H 65');
   assert.equal(hud.classList.added, 'visible');
 });
+
+test('clearStudioMarqueeSelectionForActiveSlide resolves the current slide before clearing the preview', () => {
+  const overlay = createOverlay();
+  overlay.classList.add('drag-preview');
+  overlay.style.display = 'block';
+  const slide = {
+    querySelector() {
+      return overlay;
+    }
+  };
+  const documentRef = { id: 'iframe-document' };
+  let resolvedDocument = null;
+
+  const result = overlayView.clearStudioMarqueeSelectionForActiveSlide({
+    documentRef,
+    getActiveSlide(doc) {
+      resolvedDocument = doc;
+      return slide;
+    }
+  });
+
+  assert.equal(resolvedDocument, documentRef);
+  assert.equal(result, true);
+  assert.equal(overlay.classList.contains('drag-preview'), false);
+  assert.equal(overlay.style.display, 'none');
+});

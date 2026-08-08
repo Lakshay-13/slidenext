@@ -4886,9 +4886,15 @@
 
     function clearMarqueeSelection() {
       const doc = getIframeDoc();
-      const slide = getActiveSlide(doc);
-      if (!slide) return;
-      SlideNextStudioEditorOverlay.clearStudioMarqueeSelection(slide, getEditorOverlayOptions());
+      if (!SlideNextStudioEditorOverlay
+        || typeof SlideNextStudioEditorOverlay.clearStudioMarqueeSelectionForActiveSlide !== 'function') {
+        return false;
+      }
+      return SlideNextStudioEditorOverlay.clearStudioMarqueeSelectionForActiveSlide({
+        documentRef: doc,
+        getActiveSlide,
+        ...getEditorOverlayOptions()
+      });
     }
 
     function getSlideMetrics(slide) {
