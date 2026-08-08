@@ -2438,6 +2438,9 @@
           historyStateApi: typeof SlideNextStudioEditorHistoryState !== 'undefined'
             ? SlideNextStudioEditorHistoryState
             : null,
+          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+            ? SlideNextStudioEditorCanonicalState
+            : null,
           restoreApi: typeof SlideNextStudioEditorHistoryRestore !== 'undefined'
             ? SlideNextStudioEditorHistoryRestore
             : null,
@@ -7704,6 +7707,9 @@
         if (!createStudioEditorHistoryEntryAdapter) return null;
         createHistoryEntry.builder = createStudioEditorHistoryEntryAdapter({
           historyStateApi: SlideNextStudioEditorHistoryState,
+          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+            ? SlideNextStudioEditorCanonicalState
+            : null,
           historyApi: SlideNextStudioHistory,
           getDocument: getIframeDoc,
           getPendingCanonicalDeck: () => (

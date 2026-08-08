@@ -17,6 +17,10 @@
       'historyStateApi',
       'SlideNextStudioEditorHistoryState'
     );
+    const canonicalStateApi = resolveDependency(
+      'canonicalStateApi',
+      'SlideNextStudioEditorCanonicalState'
+    );
     const restoreApi = resolveDependency(
       'restoreApi',
       'SlideNextStudioEditorHistoryRestore'
@@ -176,6 +180,7 @@
         historyEntryBuilder = createEntryAdapter
           ? createEntryAdapter({
               historyStateApi,
+              canonicalStateApi,
               historyApi,
               getDocument,
               getPendingCanonicalDeck,

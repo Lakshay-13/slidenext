@@ -1,12 +1,12 @@
 (function (root, factory) {
-  const api = factory();
+  const api = factory(root);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorHistoryState = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   function createStudioEditorHistorySaveAdapter(options = {}) {
     const historyApi = options.historyApi && typeof options.historyApi === 'object'
       ? options.historyApi
@@ -100,6 +100,22 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
+    const readCanonicalDeckBaseline = canonicalStateApi
+      && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
+      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
+          getCanonicalDeckBaseline
+        })
+      : (sourceDocument) => {
+          if (!getCanonicalDeckBaseline) return null;
+          try {
+            return getCanonicalDeckBaseline(sourceDocument) || null;
+          } catch (err) {
+            return null;
+          }
+        };
     const getHistoryOptions = typeof options.getHistoryOptions === 'function'
       ? options.getHistoryOptions
       : () => ({});
@@ -128,20 +144,13 @@
         ? (sourceDoc) => buildCanonicalDeck(sourceDoc, {
             canonicalDeckOverride: pendingCanonicalDeck
           })
-        : (sourceDoc) => {
+          : (sourceDoc) => {
             const buildOptions = {
               preferLiveCanonicalDeck: false
             };
-            if (getCanonicalDeckBaseline) {
-              let canonicalDeckBaseline = null;
-              try {
-                canonicalDeckBaseline = getCanonicalDeckBaseline(sourceDoc);
-              } catch (err) {
-                canonicalDeckBaseline = null;
-              }
-              if (canonicalDeckBaseline) {
-                buildOptions.canonicalDeckBaseline = canonicalDeckBaseline;
-              }
+            const canonicalDeckBaseline = readCanonicalDeckBaseline(sourceDoc);
+            if (canonicalDeckBaseline) {
+              buildOptions.canonicalDeckBaseline = canonicalDeckBaseline;
             }
             return buildCanonicalDeck(sourceDoc, buildOptions);
           };

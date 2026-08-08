@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const historyState = require('../shared/studio-editor-history-state.js');
 
 test('createStudioEditorHistorySaveAdapter lazily creates and reuses the shared history handler', () => {
@@ -113,6 +114,7 @@ test('createStudioEditorHistoryEntryBuilder forwards a live baseline when pendin
   };
   const builder = historyState.createStudioEditorHistoryEntryBuilder({
     historyApi,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline(sourceDoc) {
       assert.equal(sourceDoc, 'history-doc');
       return canonicalDeckBaseline;

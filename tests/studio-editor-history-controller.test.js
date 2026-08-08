@@ -89,3 +89,22 @@ test('history controller forwards history steps and restore entries', () => {
     [{ id: 'didRedo' }, { id: 'step' }, 'restore-options']
   ]);
 });
+
+test('history controller forwards canonical state to history entry builders', () => {
+  const canonicalStateApi = { id: 'canonical-state-api' };
+  let capturedOptions = null;
+  const historyStateApi = {
+    createStudioEditorHistoryEntryAdapter(options) {
+      capturedOptions = options;
+      return () => ({ id: 'entry' });
+    }
+  };
+  const controller = historyController.createStudioEditorHistoryController({
+    historyApi: {},
+    historyStateApi,
+    canonicalStateApi
+  });
+
+  assert.deepEqual(controller.createEntry({ id: 'document' }), { id: 'entry' });
+  assert.equal(capturedOptions.canonicalStateApi, canonicalStateApi);
+});
