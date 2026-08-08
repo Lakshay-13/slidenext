@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const exportActions = require('../shared/studio-editor-export-actions.js');
+const exportController = require('../shared/studio-editor-export-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -21,7 +22,23 @@ function loadExportPptx(fileContent, context) {
     'async function exportPptx() {',
     '\n\n    function exportPdf() {'
   );
-  context.SlideNextStudioEditorExportActions = exportActions;
+  context.studioEditorExportController = exportController.createStudioEditorExportController({
+    exportActions,
+    resolveReadyState: () => context.resolveCurrentStudioDeckReadyActionState(),
+    buildCanonicalDeck: () => (
+      typeof context.buildEditorCanonicalDeck === 'function'
+        ? context.buildEditorCanonicalDeck()
+        : null
+    ),
+    pptxExport: context.SlideNextStudioPptxExport,
+    documentRef: context.document,
+    setStatus: (...args) => {
+      const handler = context.setStudioAutoSaveStatusWithWarningCount || context.setStudioAutoSaveStatus;
+      return typeof handler === 'function' ? handler(...args) : undefined;
+    },
+    resolveSourcePath: () => context.currentPresentationUrl || '',
+    resolveFilename: () => (context.currentTitle || 'slidenext-presentation') + '.pptx'
+  });
   vm.createContext(context);
   vm.runInContext(source, context);
 }

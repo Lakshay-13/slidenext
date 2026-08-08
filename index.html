@@ -1279,6 +1279,7 @@
   <script src="/shared/studio-pptx-export.js"></script>
   <script src="/shared/studio-editor-source.js"></script>
   <script src="/shared/studio-editor-export-actions.js"></script>
+  <script src="/shared/studio-editor-export-controller.js"></script>
   <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/studio-version-actions.js"></script>
   <script src="/shared/studio-version-view.js"></script>
@@ -1327,6 +1328,37 @@
             : null,
           loadPresentations: () => loadPresentations(),
           launchStudioEditor: (...args) => launchStudioEditor(...args)
+        })
+      : null;
+    const studioEditorExportController = typeof SlideNextStudioEditorExportController !== 'undefined'
+      && SlideNextStudioEditorExportController
+      && typeof SlideNextStudioEditorExportController.createStudioEditorExportController === 'function'
+      ? SlideNextStudioEditorExportController.createStudioEditorExportController({
+          exportActions: typeof SlideNextStudioEditorExportActions !== 'undefined'
+            ? SlideNextStudioEditorExportActions
+            : null,
+          resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
+          buildPreviewHtml: () => buildEditorPreviewHtml(),
+          buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+            ? buildEditorCanonicalDeck
+            : null,
+          pdfExport: typeof SlideNextStudioPdfExport !== 'undefined'
+            ? SlideNextStudioPdfExport
+            : null,
+          pptxExport: typeof SlideNextStudioPptxExport !== 'undefined'
+            ? SlideNextStudioPptxExport
+            : null,
+          documentRef: document,
+          setStatus: (...args) => {
+            const statusHandler = typeof setStudioAutoSaveStatusWithWarningCount === 'function'
+              ? setStudioAutoSaveStatusWithWarningCount
+              : typeof setStudioAutoSaveStatus === 'function'
+                ? setStudioAutoSaveStatus
+                : null;
+            return statusHandler ? statusHandler(...args) : undefined;
+          },
+          resolveSourcePath: () => currentPresentationUrl,
+          resolveFilename: () => (currentTitle || 'slidenext-presentation') + '.pptx'
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -11059,58 +11091,15 @@
 
     // Presentation Live Preview from workspace
     async function exportPptx() {
-      const exportActions = typeof SlideNextStudioEditorExportActions !== 'undefined'
-        ? SlideNextStudioEditorExportActions
-        : null;
-      const createStudioPptxExportAction = exportActions
-        && typeof exportActions.createStudioPptxExportAction === 'function'
-        ? exportActions.createStudioPptxExportAction
-        : null;
-      if (!createStudioPptxExportAction) return false;
-      return createStudioPptxExportAction({
-        resolveReadyState: resolveCurrentStudioDeckReadyActionState,
-        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-          ? buildEditorCanonicalDeck
-          : null,
-        pptxExport: typeof SlideNextStudioPptxExport !== 'undefined'
-          ? SlideNextStudioPptxExport
-          : null,
-        documentRef: typeof document !== 'undefined' ? document : null,
-        setStatus: typeof setStudioAutoSaveStatusWithWarningCount === 'function'
-          ? setStudioAutoSaveStatusWithWarningCount
-          : typeof setStudioAutoSaveStatus === 'function'
-            ? setStudioAutoSaveStatus
-          : null,
-        sourcePath: typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '',
-        filename: `${currentTitle || 'slidenext-presentation'}.pptx`
-      })();
+      return studioEditorExportController
+        ? studioEditorExportController.exportPptx()
+        : false;
     }
 
     function exportPdf() {
-      const exportActions = typeof SlideNextStudioEditorExportActions !== 'undefined'
-        ? SlideNextStudioEditorExportActions
-        : null;
-      const createStudioPdfExportAction = exportActions
-        && typeof exportActions.createStudioPdfExportAction === 'function'
-        ? exportActions.createStudioPdfExportAction
-        : null;
-      if (!createStudioPdfExportAction) return false;
-      return createStudioPdfExportAction({
-        resolveReadyState: resolveCurrentStudioDeckReadyActionState,
-        buildPreviewHtml: buildEditorPreviewHtml,
-        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-          ? buildEditorCanonicalDeck
-          : null,
-        pdfExport: typeof SlideNextStudioPdfExport !== 'undefined'
-          ? SlideNextStudioPdfExport
-          : null,
-        documentRef: typeof document !== 'undefined' ? document : null,
-        setStatus: typeof setStudioAutoSaveStatusWithWarningCount === 'function'
-          ? setStudioAutoSaveStatusWithWarningCount
-          : typeof setStudioAutoSaveStatus === 'function'
-            ? setStudioAutoSaveStatus
-          : null
-      })();
+      return studioEditorExportController
+        ? studioEditorExportController.exportPdf()
+        : false;
     }
 
     function launchPreview() {

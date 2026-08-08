@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const exportActions = require('../shared/studio-editor-export-actions.js');
+const exportController = require('../shared/studio-editor-export-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -21,7 +22,26 @@ function loadExportPdfAction(fileContent, context) {
     'function exportPdf() {',
     '\n\n    function launchPreview() {'
   );
-  context.SlideNextStudioEditorExportActions = exportActions;
+  context.studioEditorExportController = exportController.createStudioEditorExportController({
+    exportActions,
+    resolveReadyState: () => context.resolveCurrentStudioDeckReadyActionState(),
+    buildPreviewHtml: () => (
+      typeof context.buildEditorPreviewHtml === 'function'
+        ? context.buildEditorPreviewHtml()
+        : ''
+    ),
+    buildCanonicalDeck: () => (
+      typeof context.buildEditorCanonicalDeck === 'function'
+        ? context.buildEditorCanonicalDeck()
+        : null
+    ),
+    pdfExport: context.SlideNextStudioPdfExport,
+    documentRef: context.document,
+    setStatus: (...args) => {
+      const handler = context.setStudioAutoSaveStatusWithWarningCount || context.setStudioAutoSaveStatus;
+      return typeof handler === 'function' ? handler(...args) : undefined;
+    }
+  });
   vm.createContext(context);
   vm.runInContext(exportPdfSource, context);
 }
