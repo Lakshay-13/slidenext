@@ -319,7 +319,13 @@
     if (borderWidthInput) borderWidthInput.value = bWidth;
     const borderWidthLabel = documentRef.getElementById('borderWidthVal');
     if (borderWidthLabel) borderWidthLabel.textContent = bWidth + 'px';
-    const bRadius = parseInt(computedStyles.borderRadius) || 0;
+    const canonicalBorderRadius = parseInt(
+      readStudioInspectorCanonicalStyleValue(options.canonicalNode, 'border-radius'),
+      10
+    );
+    const bRadius = Number.isFinite(canonicalBorderRadius)
+      ? canonicalBorderRadius
+      : parseInt(computedStyles.borderRadius, 10) || 0;
     const borderRadiusInput = documentRef.getElementById('elBorderRadius');
     if (borderRadiusInput) borderRadiusInput.value = bRadius;
     const borderRadiusLabel = documentRef.getElementById('borderRadiusVal');

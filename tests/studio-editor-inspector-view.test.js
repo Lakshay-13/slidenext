@@ -444,6 +444,36 @@ test('syncStudioInspectorBorderControls prefers canonical border-width data', ()
   assert.equal(borderWidthLabel.textContent, '5px');
 });
 
+test('syncStudioInspectorBorderControls prefers canonical border-radius data', () => {
+  const classList = createClassList();
+  classList.add('editor-shape');
+  const borderRadiusInput = { value: '' };
+  const borderRadiusLabel = { textContent: '' };
+
+  assert.equal(inspectorView.syncStudioInspectorBorderControls({
+    documentRef: {
+      getElementById(id) {
+        if (id === 'elBorderRadius') return borderRadiusInput;
+        if (id === 'borderRadiusVal') return borderRadiusLabel;
+        return null;
+      }
+    },
+    selection: [{ tagName: 'DIV', classList }],
+    canonicalNode: { style: 'border-radius: 12px;' },
+    computedStyles: {
+      borderStyle: 'solid',
+      borderWidth: '1px',
+      borderRadius: '2px',
+      borderColor: '#fff'
+    },
+    rgbToHex(value) {
+      return value;
+    }
+  }), true);
+  assert.equal(borderRadiusInput.value, 12);
+  assert.equal(borderRadiusLabel.textContent, '12px');
+});
+
 test('syncStudioInspectorBorderControls applies border values for shape-like selections', () => {
   const classList = createClassList();
   classList.add('editor-shape');
