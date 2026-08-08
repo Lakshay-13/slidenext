@@ -27,7 +27,10 @@ test('applyStudioWallpaperSlidesMutationWithTransaction coordinates DOM, transac
       applyStudioWallpaperToSlides: studioWallpaperView.applyStudioWallpaperToSlides,
       canonicalDeckApi: canonicalDeck,
       canonicalWallpaperApi: canonicalWallpaper,
-      buildCanonicalDeck: () => sourceDeck,
+      buildCanonicalDeckBaseline: () => sourceDeck,
+      buildCanonicalDeck: () => {
+        throw new Error('DOM mutation builder should not provide the baseline');
+      },
       getSlideId: (slide) => slide.dataset.slideId
     }
   );

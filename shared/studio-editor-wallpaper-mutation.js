@@ -35,11 +35,15 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const canonicalWallpaperBuilders = canonicalWallpaperApi
       && typeof canonicalWallpaperApi.createStudioCanonicalWallpaperMutationBuilders === 'function'
       ? canonicalWallpaperApi.createStudioCanonicalWallpaperMutationBuilders({
           canonicalDeckApi,
-          buildCanonicalDeck
+          buildCanonicalDeck,
+          buildCanonicalDeckBaseline
         })
       : null;
     const buildCanonicalWallpaperDeck = canonicalWallpaperBuilders

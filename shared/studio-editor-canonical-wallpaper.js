@@ -15,9 +15,11 @@
       && typeof canonicalDeckApi.updateCanonicalSlideBackground === 'function'
       ? canonicalDeckApi.updateCanonicalSlideBackground
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : null;
 
     if (!updateCanonicalSlideBackground || !buildCanonicalDeck) {
       return null;
@@ -37,6 +39,9 @@
       : null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
+      : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
       : null;
     const getSlideId = typeof options.getSlideId === 'function'
       ? options.getSlideId
@@ -60,11 +65,15 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const buildCanonicalWallpaperBaseline = (baselineOptions = {}) => (
       buildStudioCanonicalWallpaperBaseline({
         ...baselineOptions,
         canonicalDeckApi,
-        buildCanonicalDeck
+        buildCanonicalDeck,
+        buildCanonicalDeckBaseline
       })
     );
     const buildCanonicalWallpaperDeck = (slides, background, deckOptions = {}) => {
@@ -78,6 +87,7 @@
         ...deckOptions,
         canonicalDeckApi,
         buildCanonicalDeck,
+        buildCanonicalDeckBaseline,
         canonicalDeckBeforeMutation
       });
     };

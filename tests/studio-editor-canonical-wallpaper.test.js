@@ -37,9 +37,12 @@ test('buildStudioCanonicalWallpaperBaseline builds from the source document', ()
   let builtFromDocument = null;
   const result = canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
     canonicalDeckApi: canonicalDeck,
-    buildCanonicalDeck(documentRef) {
+    buildCanonicalDeckBaseline(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
+    },
+    buildCanonicalDeck() {
+      throw new Error('DOM mutation builder should not provide the baseline');
     },
     sourceDocument
   });
