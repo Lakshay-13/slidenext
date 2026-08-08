@@ -11,6 +11,14 @@ function createClassList() {
     },
     contains(value) {
       return values.has(value);
+    },
+    toggle(value) {
+      if (values.has(value)) {
+        values.delete(value);
+        return false;
+      }
+      values.add(value);
+      return true;
     }
   };
 }
@@ -27,6 +35,28 @@ test('hideStudioVersionsDropdown hides the version menu', () => {
   assert.equal(dropdown.classList.contains('hidden'), true);
 });
 
+test('toggleStudioVersionsDropdown reports whether the menu opened', () => {
+  const dropdown = { classList: createClassList() };
+  dropdown.classList.add('hidden');
+  const documentRef = {
+    getElementById(id) {
+      return id === 'versionsDropdown' ? dropdown : null;
+    }
+  };
+
+  assert.deepEqual(versionView.toggleStudioVersionsDropdown({ documentRef }), {
+    didToggle: true,
+    shouldOpen: true
+  });
+  assert.equal(dropdown.classList.contains('hidden'), false);
+
+  assert.deepEqual(versionView.toggleStudioVersionsDropdown({ documentRef }), {
+    didToggle: true,
+    shouldOpen: false
+  });
+  assert.equal(dropdown.classList.contains('hidden'), true);
+});
+
 test('version rename button view helpers render reset and busy states', () => {
   const button = { disabled: true, textContent: 'Renaming...' };
   assert.equal(versionView.resetStudioRenameVersionButton(button), true);
@@ -40,6 +70,10 @@ test('version rename button view helpers render reset and busy states', () => {
 
 test('version view helpers safely skip missing chrome', () => {
   assert.equal(versionView.hideStudioVersionsDropdown(), false);
+  assert.deepEqual(versionView.toggleStudioVersionsDropdown(), {
+    didToggle: false,
+    shouldOpen: false
+  });
   assert.equal(versionView.resetStudioRenameVersionButton(), false);
   assert.equal(versionView.setStudioRenameVersionButtonBusy(), false);
 });

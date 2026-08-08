@@ -17,6 +17,20 @@
     return true;
   }
 
+  function toggleStudioVersionsDropdown(options = {}) {
+    const documentRef = options.documentRef;
+    const dropdown = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('versionsDropdown')
+      : null;
+    if (!dropdown || !dropdown.classList || typeof dropdown.classList.toggle !== 'function') {
+      return { didToggle: false, shouldOpen: false };
+    }
+
+    const shouldOpen = dropdown.classList.contains('hidden');
+    dropdown.classList.toggle('hidden');
+    return { didToggle: true, shouldOpen };
+  }
+
   function resetStudioVersionUiState(options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -132,6 +146,7 @@
 
   return {
     hideStudioVersionsDropdown,
+    toggleStudioVersionsDropdown,
     resetStudioVersionUiState,
     resetStudioRenameVersionButton,
     setStudioRenameVersionButtonBusy,

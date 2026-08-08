@@ -1274,6 +1274,50 @@ test('toggleVersionDropdown refreshes version history only when opening the menu
   ]]);
 });
 
+test('toggleVersionDropdown delegates menu state to the shared version view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function toggleVersionDropdown() {',
+    '\n\n    function renderVersionsList'
+  );
+  const toggleCalls = [];
+  const loadVersionsCalls = [];
+  const context = {
+    currentPresentationUrl: '/presentations/demo/index.html',
+    resolveCurrentStudioDeckReadyActionState() {
+      return { canUseDeckActions: true };
+    },
+    document: {},
+    SlideNextStudioVersionView: {
+      toggleStudioVersionsDropdown(options) {
+        toggleCalls.push(options);
+        return {
+          didToggle: true,
+          shouldOpen: toggleCalls.length === 1
+        };
+      }
+    },
+    loadVersions(presentationUrl, sessionToken) {
+      loadVersionsCalls.push([presentationUrl, sessionToken]);
+    },
+    studioEditorSessionToken: 9
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.toggleVersionDropdown(), true);
+  assert.equal(context.toggleVersionDropdown(), true);
+  assert.equal(toggleCalls.length, 2);
+  assert.equal(toggleCalls[0].documentRef, context.document);
+  assert.equal(toggleCalls[1].documentRef, context.document);
+  assert.deepEqual(loadVersionsCalls, [[
+    '/presentations/demo/index.html',
+    9
+  ]]);
+});
+
 test('renderVersionsList delegates version view input assembly to the shared coordinator', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(

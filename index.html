@@ -9471,14 +9471,29 @@
 
     // 7. Versions and Backups listing
     function toggleVersionDropdown() {
-      if (!resolveCurrentStudioDeckReadyActionState().canUseDeckActions) return;
+      if (!resolveCurrentStudioDeckReadyActionState().canUseDeckActions) return false;
+      const versionView = typeof SlideNextStudioVersionView !== 'undefined'
+        ? SlideNextStudioVersionView
+        : null;
+      if (versionView && typeof versionView.toggleStudioVersionsDropdown === 'function') {
+        const toggleResult = versionView.toggleStudioVersionsDropdown({
+          documentRef: document
+        });
+        if (!toggleResult || !toggleResult.didToggle) return false;
+        if (toggleResult.shouldOpen && currentPresentationUrl) {
+          loadVersions(currentPresentationUrl, studioEditorSessionToken);
+        }
+        return true;
+      }
+
       const menu = document.getElementById('versionsDropdown');
-      if (!menu) return;
+      if (!menu) return false;
       const shouldOpen = menu.classList.contains('hidden');
       menu.classList.toggle('hidden');
       if (shouldOpen && currentPresentationUrl) {
         loadVersions(currentPresentationUrl, studioEditorSessionToken);
       }
+      return true;
     }
 
     function renderVersionsList(presentationUrl, versions = []) {
