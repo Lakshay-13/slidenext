@@ -1068,6 +1068,10 @@
           diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['background-image'] });
           diagnostics.warnings.push(`Node ${nodeId} background image is not an exportable image URL`);
         } else {
+          if (/gradient\(/i.test(nodeBackgroundValue)) {
+            diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['background-image'] });
+            diagnostics.warnings.push(`Node ${nodeId} uses unsupported background gradients`);
+          }
           const unsupportedBackgroundPlacement = getUnsupportedPptxImagePlacementProperties(style, {
             backgroundImage: true,
             imageAsset: nodeBackgroundAsset.asset
@@ -1175,6 +1179,13 @@
         });
         diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} background image is not an exportable image URL`);
       } else if (backgroundImageSource) {
+        if (/gradient\(/i.test(background.image || '')) {
+          diagnostics.unsupportedStyles.push({
+            id: slide.id || 'unknown',
+            properties: ['background-image']
+          });
+          diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} uses unsupported background gradients`);
+        }
         let hasMissingAsset = false;
         if (normalizedOptions.assetExists) {
           try {

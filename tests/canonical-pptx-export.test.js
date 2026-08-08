@@ -940,6 +940,24 @@ test('preflightCanonicalPptxExport reports missing node background image assets'
   assert.match(report.diagnostics.warnings.join('\n'), /missing background image asset/);
 });
 
+test('preflightCanonicalPptxExport reports gradients layered over node background images', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'panel-1',
+        type: 'container',
+        style: 'background-image: linear-gradient(red, blue), url("data:image/png;base64,AAAA");',
+        layout: { x: 0, y: 0, width: 200, height: 100 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedStyles, [
+    { id: 'panel-1', properties: ['background-image'] }
+  ]);
+  assert.match(report.diagnostics.warnings.join('\n'), /unsupported background gradients/);
+});
+
 test('createCanonicalPptxExport resolves grouped child positions from parent-local coordinates', () => {
   const result = pptxExport.createCanonicalPptxExport({
     layout: { size: { width: 1000, height: 500, unit: 'px' } },
@@ -1429,6 +1447,26 @@ test('preflightCanonicalPptxExport accepts focal positioning for sized slide bac
   });
 
   assert.deepEqual(report.diagnostics.unsupportedStyles, []);
+});
+
+test('preflightCanonicalPptxExport reports gradients layered over slide background images', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      id: 'slide-1',
+      layout: {
+        background: {
+          image: 'linear-gradient(red, blue), url("data:image/png;base64,AAAA")',
+          style: 'background-size: cover; background-position: center;'
+        }
+      },
+      nodes: []
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedStyles, [
+    { id: 'slide-1', properties: ['background-image'] }
+  ]);
+  assert.match(report.diagnostics.warnings.join('\n'), /unsupported background gradients/);
 });
 
 test('createPptxWarningDetailsHeader preserves a bounded diagnostic summary', () => {
