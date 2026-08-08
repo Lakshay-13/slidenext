@@ -33,6 +33,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const resolveReadyState = typeof options.resolveReadyState === 'function'
       ? options.resolveReadyState
       : () => ({ canUseDeckActions: false });
@@ -61,6 +64,7 @@
         canonicalMetadataApi,
         canonicalDeckApi,
         buildCanonicalDeck,
+        buildCanonicalDeckBaseline,
         resolveReadyState,
         getDocument,
         getActiveSlide,

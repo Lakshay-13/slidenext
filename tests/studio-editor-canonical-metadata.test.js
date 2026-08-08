@@ -20,14 +20,17 @@ test('buildStudioCanonicalMetadataDeck applies a slide metadata patch to a suppl
   assert.equal(sourceDeck.slides[0].notes, 'Before');
 });
 
-test('createStudioCanonicalMetadataMutationBuilders shares the canonical baseline', () => {
+test('createStudioCanonicalMetadataMutationBuilders prefers the live canonical baseline builder', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', section: 'Before' }]
   });
   const calls = [];
   const builders = metadata.createStudioCanonicalMetadataMutationBuilders({
     canonicalDeckApi: canonicalDeck,
-    buildCanonicalDeck(sourceDocument) {
+    buildCanonicalDeck() {
+      throw new Error('DOM-derived mutation builder should not build the baseline');
+    },
+    buildCanonicalDeckBaseline(sourceDocument) {
       calls.push(sourceDocument);
       return sourceDeck;
     }

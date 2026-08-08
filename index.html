@@ -1743,6 +1743,7 @@
             ? SlideNextStudioEditorTransaction
             : null,
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
           getDocument: (...args) => getIframeDoc(...args),
           getActiveSlide: (...args) => getActiveSlide(...args),

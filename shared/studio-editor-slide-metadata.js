@@ -29,6 +29,9 @@
             : null,
           buildCanonicalDeck: typeof options.buildCanonicalDeck === 'function'
             ? options.buildCanonicalDeck
+            : null,
+          buildCanonicalDeckBaseline: typeof options.buildCanonicalDeckBaseline === 'function'
+            ? options.buildCanonicalDeckBaseline
             : null
         })
       : null;

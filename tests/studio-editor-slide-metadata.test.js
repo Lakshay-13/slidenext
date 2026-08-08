@@ -13,6 +13,7 @@ test('applyStudioActiveSlideMetadataEdit delegates metadata and canonical wiring
       return { id: 'after' };
     }
   };
+  const buildCanonicalDeckBaseline = () => ({ id: 'baseline' });
   const metadataActions = {
     applyStudioSlideMetadataEdit(value, options) {
       calls.push([value, options]);
@@ -30,6 +31,7 @@ test('applyStudioActiveSlideMetadataEdit delegates metadata and canonical wiring
     },
     canonicalDeckApi: { id: 'deck' },
     buildCanonicalDeck() {},
+    buildCanonicalDeckBaseline,
     resolveReadyState() {},
     getDocument() {},
     getActiveSlide() {},
@@ -50,6 +52,7 @@ test('applyStudioActiveSlideMetadataEdit delegates metadata and canonical wiring
   assert.equal(calls[1][1].canonicalMetadataKey, 'section');
   assert.equal(calls[1][1].buildCanonicalMetadataBaseline, canonicalMetadataBuilders.buildCanonicalMetadataBaseline);
   assert.equal(calls[1][1].buildCanonicalMetadataDeck, canonicalMetadataBuilders.buildCanonicalMetadataDeck);
+  assert.equal(calls[0][1].buildCanonicalDeckBaseline, buildCanonicalDeckBaseline);
   assert.equal(calls[1][1].transactionApi.id, 'transaction');
 });
 

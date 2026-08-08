@@ -15,9 +15,11 @@
       && typeof canonicalDeckApi.updateCanonicalSlideMetadata === 'function'
       ? canonicalDeckApi.updateCanonicalSlideMetadata
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : null;
 
     if (!updateCanonicalSlideMetadata || !buildCanonicalDeck) return null;
     return buildCanonicalDeck(options.sourceDocument);
@@ -55,11 +57,15 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const buildCanonicalMetadataBaseline = (baselineOptions = {}) => (
       buildStudioCanonicalMetadataBaseline({
         ...baselineOptions,
         canonicalDeckApi,
-        buildCanonicalDeck
+        buildCanonicalDeck,
+        buildCanonicalDeckBaseline
       })
     );
     const buildCanonicalMetadataDeck = (slide, metadata = {}, deckOptions = {}) => {
@@ -73,6 +79,7 @@
         ...deckOptions,
         canonicalDeckApi,
         buildCanonicalDeck,
+        buildCanonicalDeckBaseline,
         canonicalDeckBeforeMutation
       });
     };
