@@ -83,3 +83,17 @@ test('mutation canonical builder rebuilds when the live baseline is invalid', ()
   assert.equal(buildMutationDeck(documentRef), rebuiltCanonicalDeck);
   assert.equal(didBuild, true);
 });
+
+test('mutation canonical builder rejects invalid rebuilt output', () => {
+  const buildMutationDeck = canonicalMutation
+    .createStudioEditorMutationCanonicalDeckBuilder({
+      isCanonicalDeck(value) {
+        return !!value && value.kind === 'slidenext.deck' && Array.isArray(value.slides);
+      },
+      buildCanonicalDeck() {
+        return { invalid: true };
+      }
+    });
+
+  assert.equal(buildMutationDeck({ id: 'document' }), null);
+});
