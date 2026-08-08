@@ -2484,7 +2484,10 @@
           },
           getCurrentPresentationUrl: () => currentPresentationUrl,
           setCurrentPresentationCanonicalDeck: (...args) => setCurrentPresentationCanonicalDeck(...args),
-          isCanonicalDeck: getEditorCanonicalDeckValidator()
+          isCanonicalDeck: getEditorCanonicalDeckValidator(),
+          getPersistedDeckHtml: () => lastPersistedDeckHtml,
+          getPersistedCanonicalDeck: () => lastPersistedCanonicalDeck,
+          getPersistedPlaybackState: () => persistedDeckPlaybackState
         })
       : null;
     const studioEditorSessionStateController = typeof SlideNextStudioEditorSession !== 'undefined'
@@ -4732,6 +4735,11 @@
     }
 
     function getCurrentEditorPersistedDeckState() {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.read === 'function') {
+        return studioEditorPersistenceController.read();
+      }
       if (typeof getCurrentEditorPersistedDeckState.stateReader !== 'function') {
         const createStudioEditorPersistedDeckStateReaderAdapter = (
           typeof SlideNextStudioEditorPersistenceState !== 'undefined'
@@ -4774,6 +4782,11 @@
     }
 
     getCurrentEditorPersistedDeckState.resolveWithContent = function (persistedDeckState = getCurrentEditorPersistedDeckState()) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.resolveWithContent === 'function') {
+        return studioEditorPersistenceController.resolveWithContent(persistedDeckState);
+      }
       const hasPersistedDeckStateReaderAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState
@@ -4826,6 +4839,11 @@
     };
 
     function resolveEditorPersistedDeckStateWithContent(persistedDeckState = getCurrentEditorPersistedDeckState()) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.resolvePersistedDeckStateWithContent === 'function') {
+        return studioEditorPersistenceController.resolvePersistedDeckStateWithContent(persistedDeckState);
+      }
       if (typeof resolveEditorPersistedDeckStateWithContent.contentResolver !== 'function') {
         const hasPersistedDeckStateReaderAdapter = (
           typeof SlideNextStudioEditorPersistenceState !== 'undefined'

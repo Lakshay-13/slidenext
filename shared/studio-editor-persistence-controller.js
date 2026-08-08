@@ -47,9 +47,19 @@
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
+    const getPersistedDeckHtml = typeof options.getPersistedDeckHtml === 'function'
+      ? options.getPersistedDeckHtml
+      : () => options.persistedDeckHtml;
+    const getPersistedCanonicalDeck = typeof options.getPersistedCanonicalDeck === 'function'
+      ? options.getPersistedCanonicalDeck
+      : () => options.persistedCanonicalDeck;
+    const getPersistedPlaybackState = typeof options.getPersistedPlaybackState === 'function'
+      ? options.getPersistedPlaybackState
+      : () => options.persistedPlaybackState;
 
     let stateUpdater = null;
     let stateApplier = null;
+    let stateReader = null;
     let canonicalDeckOverrideResolver = null;
     let fallbackCanonicalDeckResolver = null;
 
@@ -73,6 +83,52 @@
         stateUpdater = createStateUpdater();
       }
       return typeof stateUpdater === 'function' ? stateUpdater(nextState) : {};
+    }
+
+    function createStateReader() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorPersistedDeckStateReaderAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorPersistedDeckStateReaderAdapter({
+        persistenceApi,
+        getPersistedDeckHtml,
+        getPersistedCanonicalDeck,
+        getPersistedPlaybackState
+      });
+    }
+
+    function read() {
+      if (typeof stateReader !== 'function') {
+        stateReader = createStateReader();
+      }
+      return typeof stateReader === 'function'
+        ? stateReader()
+        : {
+            cleanHtml: '',
+            canonicalDeck: null,
+            playbackState: null
+          };
+    }
+
+    function resolveWithContent(persistedDeckState = read()) {
+      if (typeof stateReader !== 'function') {
+        read();
+      }
+      return stateReader
+        && typeof stateReader.resolveWithContent === 'function'
+        ? stateReader.resolveWithContent(persistedDeckState)
+        : null;
+    }
+
+    function resolvePersistedDeckStateWithContent(persistedDeckState = read()) {
+      if (typeof stateReader !== 'function') {
+        read();
+      }
+      return stateReader
+        && typeof stateReader.resolvePersistedDeckStateWithContent === 'function'
+        ? stateReader.resolvePersistedDeckStateWithContent(persistedDeckState)
+        : null;
     }
 
     function createStateApplier() {
@@ -137,6 +193,9 @@
     }
 
     return {
+      read,
+      resolveWithContent,
+      resolvePersistedDeckStateWithContent,
       update,
       apply,
       resolveCanonicalDeckOverride,

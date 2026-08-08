@@ -100,3 +100,26 @@ test('persistence controller reuses canonical override and fallback adapters', (
     buildCanonicalDeck: () => canonicalDeck
   }), canonicalDeck);
 });
+
+test('persistence controller reads persisted baselines and resolves their content lazily', () => {
+  let persistedDeckHtml = '<html><body></body></html>';
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({ slides: [] });
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState,
+    getPersistedDeckHtml: () => persistedDeckHtml,
+    getPersistedCanonicalDeck: () => canonicalDeck,
+    getPersistedPlaybackState: () => ({ activeSlideId: 'slide-1' })
+  });
+
+  assert.deepEqual(controller.read(), {
+    cleanHtml: persistedDeckHtml,
+    canonicalDeck,
+    playbackState: { activeSlideId: 'slide-1' }
+  });
+  assert.equal(controller.resolveWithContent().cleanHtml, persistedDeckHtml);
+  assert.equal(controller.resolvePersistedDeckStateWithContent().cleanHtml, persistedDeckHtml);
+
+  persistedDeckHtml = '<html><body><main></main></body></html>';
+  assert.equal(controller.read().cleanHtml, persistedDeckHtml);
+});
