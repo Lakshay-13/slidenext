@@ -1,0 +1,120 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+const canonicalDeck = require('../shared/canonical-deck.js');
+const masterSlideController = require('../shared/studio-editor-master-slide-controller.js');
+
+test('saveActiveSlide persists a master layout through the canonical deck', () => {
+  let deck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Opening', nodes: [{ id: 'title', text: 'Hello' }] }]
+  });
+  const versionLabels = [];
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    saveHistoryState: (_debounce, _transaction, nextDeck) => {
+      deck = nextDeck;
+    },
+    triggerAutoVersion: (label) => versionLabels.push(label)
+  });
+
+  const nextDeck = controller.saveActiveSlide({
+    id: 'opening-master',
+    name: 'Opening Master'
+  });
+
+  assert.equal(nextDeck.masterSlides[0].id, 'opening-master');
+  assert.equal(nextDeck.masterSlides[0].slide.nodes[0].text, 'Hello');
+  assert.equal(deck.masterSlides[0].name, 'Opening Master');
+  assert.deepEqual(versionLabels, ['Auto: Saved Master Layout "Opening Master"']);
+});
+
+test('assignMasterSlide rerenders the active slide and commits the reference', () => {
+  let deck = canonicalDeck.createCanonicalDeck({
+    masterSlides: [{
+      id: 'master-1',
+      name: 'Brand Base',
+      slide: { nodes: [{ id: 'footer', tagName: 'p', text: 'Footer' }] }
+    }],
+    slides: [{ id: 'slide-1', nodes: [{ id: 'body', tagName: 'p', text: 'Body' }] }]
+  });
+  let activeSlide = { replaceWith(nextSlide) { activeSlide = nextSlide; } };
+  let renderedOptions = null;
+  let activeIndex = -1;
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalSlide(_slide, _index, options) {
+        renderedOptions = options;
+        return '<section><p>Rendered</p></section>';
+      }
+    },
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => ({
+      createElement() {
+        return {
+          content: { firstElementChild: { rendered: true } },
+          set innerHTML(value) {
+            this.html = value;
+          }
+        };
+      }
+    }),
+    getSlides: () => [activeSlide],
+    setActiveSlide: (index) => { activeIndex = index; },
+    saveHistoryState: (_debounce, _transaction, nextDeck) => {
+      deck = nextDeck;
+    }
+  });
+
+  assert.equal(controller.assignMasterSlide('master-1'), true);
+  assert.equal(deck.slides[0].masterSlideId, 'master-1');
+  assert.deepEqual(renderedOptions.masterSlides.map((master) => master.id), ['master-1']);
+  assert.equal(renderedOptions.preferSlideSourceHtml, false);
+  assert.equal(activeSlide.rendered, true);
+  assert.equal(activeIndex, 0);
+});
+
+test('removeMasterSlide detaches the active slide and rerenders it without the removed layout', () => {
+  let deck = canonicalDeck.createCanonicalDeck({
+    masterSlides: [{ id: 'master-1', name: 'Brand Base', slide: { nodes: [{ id: 'footer' }] } }],
+    slides: [{ id: 'slide-1', masterSlideId: 'master-1', nodes: [{ id: 'body' }] }]
+  });
+  let replacementCount = 0;
+  const activeSlide = {
+    replaceWith() {
+      replacementCount += 1;
+    }
+  };
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalSlide() {
+        return '<section></section>';
+      }
+    },
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => ({
+      createElement() {
+        return {
+          content: { firstElementChild: {} },
+          set innerHTML(value) {
+            this.html = value;
+          }
+        };
+      }
+    }),
+    getSlides: () => [activeSlide],
+    saveHistoryState: (_debounce, _transaction, nextDeck) => {
+      deck = nextDeck;
+    }
+  });
+
+  assert.equal(controller.removeMasterSlide('master-1'), true);
+  assert.deepEqual(deck.masterSlides, []);
+  assert.equal(Object.prototype.hasOwnProperty.call(deck.slides[0], 'masterSlideId'), false);
+  assert.equal(replacementCount, 1);
+});

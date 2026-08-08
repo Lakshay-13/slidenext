@@ -758,6 +758,24 @@
               <span>No slide templates saved</span>
             </div>
           </div>
+          <div class="mt-3 pt-3 border-t border-white/5 flex flex-col gap-2">
+            <label for="masterSlideNameInput" class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Master Layout</label>
+            <input id="masterSlideNameInput" type="text" value="Master Layout" placeholder="Name this layout" disabled class="w-full p-2 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed" />
+            <button id="saveActiveSlideMasterBtn" onclick="saveActiveSlideAsMaster()" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+              <span class="material-symbols-outlined text-[14px] text-[#7028d0]">layers</span>
+              Save Master Layout
+            </button>
+            <select id="masterSlideSelect" disabled class="w-full p-2 bg-zinc-900 border border-white/5 rounded-lg text-xs font-sans text-zinc-300 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 disabled:opacity-40 disabled:cursor-not-allowed">
+              <option value="">No master layout</option>
+            </select>
+            <button id="applyMasterSlideBtn" onclick="applySelectedMasterSlide()" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+              <span class="material-symbols-outlined text-[14px] text-[#7028d0]">style</span>
+              Apply Master Layout
+            </button>
+            <div id="savedMasterSlidesList" class="flex flex-col gap-1 text-[10px] font-mono text-zinc-500">
+              <span>No master layouts saved</span>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -1266,6 +1284,7 @@
   <script src="/shared/studio-editor-canonical-insertion.js"></script>
   <script src="/shared/studio-editor-block-controller.js"></script>
   <script src="/shared/studio-editor-template-controller.js"></script>
+  <script src="/shared/studio-editor-master-slide-controller.js"></script>
   <script src="/shared/studio-editor-canonical-slide.js"></script>
   <script src="/shared/studio-editor-canonical-metadata.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
@@ -2011,6 +2030,30 @@
           onTemplatesChanged: (templates) => renderSavedTemplates(templates)
         })
       : null;
+    const studioEditorMasterSlideController = typeof SlideNextStudioEditorMasterSlideController !== 'undefined'
+      && SlideNextStudioEditorMasterSlideController
+      && typeof SlideNextStudioEditorMasterSlideController.createStudioEditorMasterSlideController === 'function'
+      ? SlideNextStudioEditorMasterSlideController.createStudioEditorMasterSlideController({
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          renderApi: typeof SlideNextDeckRender !== 'undefined'
+            ? SlideNextDeckRender
+            : null,
+          getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
+          getDocument: () => getIframeDoc(),
+          getSlides: (doc) => getSlides(doc),
+          getActiveSlideId: () => getActiveSlideId(getIframeDoc()),
+          prepareSlide: (...args) => makeElementsHoverable(...args),
+          setActiveSlide: (...args) => setActiveSlide(...args),
+          generateThumbnails: (...args) => generateThumbnails(...args),
+          saveHistoryState: (...args) => saveHistoryState(...args),
+          triggerAutoSave: (...args) => triggerAutoSave(...args),
+          triggerAutoVersion: (...args) => triggerAutoVersion(...args),
+          finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args),
+          onMasterSlidesChanged: () => updateMasterSlideActionState()
+        })
+      : null;
     const studioEditorTransformController = typeof SlideNextStudioEditorTransformController !== 'undefined'
       && SlideNextStudioEditorTransformController
       && typeof SlideNextStudioEditorTransformController.createStudioEditorTransformController === 'function'
@@ -2266,6 +2309,7 @@
       updateDeckReadyToolbarActionState();
       updateBlockActionState();
       updateTemplateActionState();
+      updateMasterSlideActionState();
       
       // Update theme toggle icons
       const themeIcon = document.getElementById('themeIcon');
@@ -3482,6 +3526,9 @@
         : false;
       if (typeof updateTemplateActionState === 'function') {
         updateTemplateActionState(doc);
+      }
+      if (typeof updateMasterSlideActionState === 'function') {
+        updateMasterSlideActionState(doc);
       }
       return didSync;
     }
@@ -5940,6 +5987,63 @@
       return true;
     }
 
+    function renderSavedMasterSlides(masterSlides = [], activeMasterSlideId = '') {
+      if (typeof document === 'undefined' || !document || typeof document.getElementById !== 'function') {
+        return false;
+      }
+      const select = document.getElementById('masterSlideSelect');
+      const list = document.getElementById('savedMasterSlidesList');
+      if (!select || !list || typeof document.createElement !== 'function') return false;
+      const normalizedMasterSlides = Array.isArray(masterSlides) ? masterSlides : [];
+      select.textContent = '';
+      const emptyOption = document.createElement('option');
+      emptyOption.value = '';
+      emptyOption.textContent = 'No master layout';
+      select.appendChild(emptyOption);
+      normalizedMasterSlides.forEach((master) => {
+        const option = document.createElement('option');
+        option.value = master && master.id ? master.id : '';
+        option.textContent = master && master.name ? master.name : 'Unnamed Master Layout';
+        select.appendChild(option);
+      });
+      select.value = activeMasterSlideId || '';
+
+      list.textContent = '';
+      if (normalizedMasterSlides.length === 0) {
+        const emptyState = document.createElement('span');
+        emptyState.textContent = 'No master layouts saved';
+        list.appendChild(emptyState);
+        return true;
+      }
+      normalizedMasterSlides.forEach((master) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-1';
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'min-w-0 flex-1 text-left rounded px-2 py-1 hover:bg-white/5 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
+        const nodeCount = master
+          && master.slide
+          && Array.isArray(master.slide.nodes)
+          ? master.slide.nodes.length
+          : 0;
+        const masterName = master && master.name ? master.name : 'Unnamed Master Layout';
+        item.textContent = `${masterName} - ${nodeCount} base element${nodeCount === 1 ? '' : 's'}`;
+        item.disabled = !getActiveSlide();
+        item.addEventListener('click', () => applySavedMasterSlide(master.id));
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'shrink-0 rounded px-1.5 py-1 text-zinc-500 hover:bg-red-500/10 hover:text-red-300 transition-colors';
+        removeButton.textContent = 'Remove';
+        removeButton.title = `Remove ${masterName}`;
+        removeButton.setAttribute('aria-label', `Remove ${masterName}`);
+        removeButton.addEventListener('click', () => removeSavedMasterSlide(master.id));
+        row.appendChild(item);
+        row.appendChild(removeButton);
+        list.appendChild(row);
+      });
+      return true;
+    }
+
     function updateTemplateActionState(doc = getIframeDoc()) {
       const canSave = !!getActiveSlide(doc);
       const documentApi = typeof document !== 'undefined'
@@ -5956,6 +6060,36 @@
         : null;
       renderSavedTemplates(canonicalDeck && canonicalDeck.templates);
       return canSave;
+    }
+
+    function updateMasterSlideActionState(doc = getIframeDoc()) {
+      const canUse = !!getActiveSlide(doc);
+      const documentApi = typeof document !== 'undefined'
+        && document
+        && typeof document.getElementById === 'function'
+        ? document
+        : null;
+      const saveButton = documentApi ? documentApi.getElementById('saveActiveSlideMasterBtn') : null;
+      const nameInput = documentApi ? documentApi.getElementById('masterSlideNameInput') : null;
+      const select = documentApi ? documentApi.getElementById('masterSlideSelect') : null;
+      const applyButton = documentApi ? documentApi.getElementById('applyMasterSlideBtn') : null;
+      if (saveButton) saveButton.disabled = !canUse;
+      if (nameInput) nameInput.disabled = !canUse;
+      if (select) select.disabled = !canUse;
+      if (applyButton) applyButton.disabled = !canUse;
+      const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(doc)
+        : null;
+      const activeSlideId = typeof getActiveSlideId === 'function' ? getActiveSlideId(doc) : '';
+      const activeSlide = canonicalDeck
+        && Array.isArray(canonicalDeck.slides)
+        ? canonicalDeck.slides.find((slide) => slide && slide.id === activeSlideId)
+        : null;
+      renderSavedMasterSlides(
+        canonicalDeck && canonicalDeck.masterSlides,
+        activeSlide && activeSlide.masterSlideId
+      );
+      return canUse;
     }
 
     function updateBlockActionState(doc = getIframeDoc()) {
@@ -6258,6 +6392,44 @@
         : null;
       if (removedDeck) updateTemplateActionState();
       return !!removedDeck;
+    }
+
+    function saveActiveSlideAsMaster() {
+      const nameInput = document.getElementById('masterSlideNameInput');
+      const name = nameInput && typeof nameInput.value === 'string' && nameInput.value.trim()
+        ? nameInput.value.trim()
+        : 'Master Layout';
+      const savedDeck = studioEditorMasterSlideController
+        && typeof studioEditorMasterSlideController.saveActiveSlide === 'function'
+        ? studioEditorMasterSlideController.saveActiveSlide({ name })
+        : null;
+      if (!savedDeck) return false;
+      if (nameInput) nameInput.value = '';
+      updateMasterSlideActionState();
+      return true;
+    }
+
+    function applySelectedMasterSlide() {
+      const select = document.getElementById('masterSlideSelect');
+      return applySavedMasterSlide(select && typeof select.value === 'string' ? select.value : '');
+    }
+
+    function applySavedMasterSlide(masterSlideId) {
+      const didApply = studioEditorMasterSlideController
+        && typeof studioEditorMasterSlideController.assignMasterSlide === 'function'
+        ? studioEditorMasterSlideController.assignMasterSlide(masterSlideId)
+        : false;
+      if (didApply) updateMasterSlideActionState();
+      return didApply;
+    }
+
+    function removeSavedMasterSlide(masterSlideId) {
+      const didRemove = studioEditorMasterSlideController
+        && typeof studioEditorMasterSlideController.removeMasterSlide === 'function'
+        ? studioEditorMasterSlideController.removeMasterSlide(masterSlideId)
+        : false;
+      if (didRemove) updateMasterSlideActionState();
+      return didRemove;
     }
 
     function nudgeSelectedElements(dx, dy) {
