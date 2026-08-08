@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalMutation = require('../shared/studio-editor-canonical-mutation.js');
 
 test('mutation canonical builder always rebuilds from the supplied document', () => {
@@ -11,7 +12,10 @@ test('mutation canonical builder always rebuilds from the supplied document', ()
     return canonicalDeck;
   };
   const buildMutationDeck = canonicalMutation
-    .createStudioEditorMutationCanonicalDeckBuilder({ buildCanonicalDeck });
+    .createStudioEditorMutationCanonicalDeckBuilder({
+      buildCanonicalDeck,
+      canonicalStateApi: canonicalState
+    });
 
   assert.equal(buildMutationDeck(documentRef), canonicalDeck);
   assert.deepEqual(captured, {
@@ -33,6 +37,7 @@ test('mutation canonical builder forwards the pre-mutation baseline when availab
   let captured = null;
   const buildMutationDeck = canonicalMutation
     .createStudioEditorMutationCanonicalDeckBuilder({
+      canonicalStateApi: canonicalState,
       buildCanonicalDeck(sourceDoc, options) {
         captured = { sourceDoc, options };
         return { kind: 'slidenext.deck', slides: [] };
