@@ -833,6 +833,56 @@ test('updateLayerOrderActionState delegates toolbar state assembly to the shared
   assert.equal(calls[0].buildZIndexMutationPlan([selectedElement]).canApply, true);
 });
 
+test('updateLayerOrderActionState prefers canonical lock metadata for toolbar actions', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateLayerOrderActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateLayerOrderActionState(doc = getIframeDoc()) {',
+    '\n\n    function toggleSelectedElementsLockState() {'
+  );
+  const selectedElement = { id: 'selected', isConnected: true, locked: false };
+  const activeSlide = { id: 'slide-1' };
+  let receivedOptions = null;
+  const context = {
+    selectedElements: [selectedElement],
+    SlideNextStudioEditorLayerOrder: {
+      syncStudioLayerOrderToolbarState(options) {
+        receivedOptions = options;
+        return 'delegated';
+      }
+    },
+    SlideNextStudioEditorStyle: {
+      buildStudioStyleMutationPlan() {
+        return { canApply: true };
+      }
+    },
+    document: {},
+    buildEditorCanonicalDeck() {
+      return { kind: 'slidenext.deck' };
+    },
+    resolveEditorCanonicalNodeForElement(element) {
+      return element === selectedElement
+        ? { visibility: { locked: true } }
+        : null;
+    },
+    getActiveSlide(doc) {
+      return doc && doc.activeSlide ? doc.activeSlide : null;
+    },
+    getNormalizedSlideLayerOrder() {
+      return [selectedElement];
+    },
+    isElementLocked() {
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateLayerOrderActionStateSource, context);
+
+  assert.equal(context.updateLayerOrderActionState({ activeSlide }), 'delegated');
+  assert.equal(receivedOptions.isLocked(selectedElement), true);
+});
+
 test('updateLayerOrderActionState delegates state assembly to the shared layer controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectedElement = { id: 'selected', isConnected: true };

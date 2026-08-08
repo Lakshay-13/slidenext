@@ -6045,6 +6045,26 @@
       const styleApi = typeof SlideNextStudioEditorStyle !== 'undefined'
         ? SlideNextStudioEditorStyle
         : null;
+      let canonicalDeck = null;
+      if (typeof buildEditorCanonicalDeck === 'function') {
+        try {
+          canonicalDeck = buildEditorCanonicalDeck(doc);
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      const readLockedState = canonicalDeck
+        ? (element) => {
+            const canonicalNode = typeof resolveEditorCanonicalNodeForElement === 'function'
+              ? resolveEditorCanonicalNodeForElement(element, canonicalDeck)
+              : null;
+            return canonicalNode
+              && canonicalNode.visibility
+              && typeof canonicalNode.visibility.locked === 'boolean'
+              ? canonicalNode.visibility.locked
+              : isElementLocked(element);
+          }
+        : isElementLocked;
       if (layerController && typeof layerController.syncStudioLayerOrderActionState === 'function') {
         return layerController.syncStudioLayerOrderActionState({
           documentRef: document,
@@ -6054,7 +6074,7 @@
           styleApi,
           getActiveSlide,
           getNormalizedSlideLayerOrder,
-          isLocked: isElementLocked,
+          isLocked: readLockedState,
           buildLayerOrderSelectionActionState
         });
       }
@@ -6074,7 +6094,7 @@
         documentRef: document,
         elements: selectedElements,
         orderedElements,
-        isLocked: isElementLocked,
+        isLocked: readLockedState,
         canMutateDeck,
         buildZIndexMutationPlan
       });
