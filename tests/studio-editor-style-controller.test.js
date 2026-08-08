@@ -102,3 +102,33 @@ test('style controller blocks canonical-locked elements even when the DOM is sta
   assert.equal(controller.apply('color', '#fff'), false);
   assert.equal(receivedLockState, true);
 });
+
+test('style controller rebuilds the canonical lock baseline when live state is invalid', () => {
+  const element = { dataset: { editorId: 'node-1' } };
+  const rebuiltDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', visibility: { locked: true } }]
+    }]
+  });
+  let receivedLockState = null;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(_selection, _prop, _value, options) {
+        receivedLockState = options.isLocked(element);
+        return { canApply: false };
+      }
+    },
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => rebuiltDeck,
+    getSelectedElements: () => [element],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isElementLocked: () => false
+  });
+
+  assert.equal(controller.apply('color', '#fff'), false);
+  assert.equal(receivedLockState, true);
+});
