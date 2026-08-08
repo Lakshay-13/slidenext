@@ -603,6 +603,29 @@
       && hasUniqueCanonicalIds(value);
   }
 
+  function findCanonicalNodeById(deckLike, nodeId) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedNodeId = normalizeString(nodeId).trim();
+    if (!isCanonicalDeck(deck) || !normalizedNodeId) return null;
+
+    function findNode(nodes = []) {
+      for (const node of Array.isArray(nodes) ? nodes : []) {
+        if (node && node.id === normalizedNodeId) return node;
+        const nestedNode = findNode(node && node.children);
+        if (nestedNode) return nestedNode;
+      }
+      return null;
+    }
+
+    for (const slide of deck.slides) {
+      const node = findNode(slide && slide.nodes);
+      if (node) return node;
+    }
+    return null;
+  }
+
   function reorderCanonicalSlides(deckLike, sourceSlideId, targetSlideId) {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -2029,6 +2052,7 @@
     createCanonicalDeck,
     mergeCanonicalDeckRebuildBaseline,
     isCanonicalDeck,
+    findCanonicalNodeById,
     reorderCanonicalSlides,
     removeCanonicalSlide,
     appendCanonicalSlide,

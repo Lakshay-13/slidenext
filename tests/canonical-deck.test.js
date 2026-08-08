@@ -1132,3 +1132,41 @@ test('updateCanonicalSlideBackground returns null for no-op or unknown slide ids
   assert.equal(canonicalDeck.updateCanonicalSlideBackground(deck, ['missing'], 'black'), null);
   assert.equal(canonicalDeck.updateCanonicalSlideBackground(deck, [], 'black'), null);
 });
+
+test('findCanonicalNodeById resolves nested slide nodes without exposing DOM state', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'group-1',
+        children: [{ id: 'node-1', text: 'Nested' }]
+      }]
+    }]
+  });
+
+  assert.deepEqual(canonicalDeck.findCanonicalNodeById(deck, 'node-1'), {
+    id: 'node-1',
+    type: 'html',
+    name: '',
+    tagName: '',
+    text: 'Nested',
+    html: '',
+    classes: [],
+    attributes: {},
+    style: '',
+    layout: {
+      mode: 'flow',
+      x: null,
+      y: null,
+      width: null,
+      height: null,
+      zIndex: 0
+    },
+    visibility: {
+      hidden: false,
+      locked: false
+    },
+    children: []
+  });
+  assert.equal(canonicalDeck.findCanonicalNodeById(deck, 'missing-node'), null);
+});

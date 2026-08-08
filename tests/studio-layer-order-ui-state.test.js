@@ -435,6 +435,7 @@ test('syncLayerOrderZIndexInput resolves the canonical node for the selected tar
   const canonicalTarget = { id: 'node-1', layout: { zIndex: 7 } };
   const context = {
     SlideNextStudioEditorLayerOrder: layerOrder,
+    SlideNextCanonicalDeck: canonicalDeck,
     document: {
       getElementById(id) {
         return id === 'elZIndex' ? zIndexInput : null;

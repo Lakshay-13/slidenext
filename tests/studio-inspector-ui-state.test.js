@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const liveSelection = require('../shared/studio-editor-live-selection.js');
 const inspectorController = require('../shared/studio-editor-inspector-controller.js');
 const inspectorView = require('../shared/studio-editor-inspector-view.js');
+const canonicalDeck = require('../shared/canonical-deck.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -48,6 +49,7 @@ test('syncInspectorForSelection delegates inspector control synchronization to t
         return true;
       }
     },
+    SlideNextCanonicalDeck: canonicalDeck,
     SlideNextStudioEditorLiveSelection: {
       buildStudioLiveSelectionState(elements) {
         assert.deepEqual(elements, [selectedElement]);
@@ -94,6 +96,7 @@ test('syncInspectorForSelection resolves the canonical node for the selected ele
         return true;
       }
     },
+    SlideNextCanonicalDeck: canonicalDeck,
     SlideNextStudioEditorLiveSelection: {
       buildStudioLiveSelectionState() {
         return {
@@ -122,10 +125,8 @@ test('syncInspectorForSelection resolves the canonical node for the selected ele
   vm.runInContext(syncInspectorForSelectionSource, context);
 
   assert.equal(context.syncInspectorForSelection(), true);
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(delegatedOptions.canonicalNode)),
-    { id: 'node-1', layout: { zIndex: 7 } }
-  );
+  assert.equal(delegatedOptions.canonicalNode.id, 'node-1');
+  assert.equal(delegatedOptions.canonicalNode.layout.zIndex, 7);
 });
 
 test('syncInspectorForSelection fails closed when live-selection state is unavailable', () => {

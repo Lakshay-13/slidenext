@@ -5438,21 +5438,17 @@
       const primaryElementId = primaryElement && primaryElement.dataset
         ? primaryElement.dataset.editorId
         : '';
-      const findCanonicalNode = (nodes = []) => {
-        for (const node of Array.isArray(nodes) ? nodes : []) {
-          if (node && node.id === primaryElementId) return node;
-          const nestedNode = findCanonicalNode(node && node.children);
-          if (nestedNode) return nestedNode;
-        }
-        return null;
-      };
       let canonicalNode = null;
-      if (primaryElementId && typeof buildEditorCanonicalDeck === 'function') {
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      if (primaryElementId
+        && canonicalDeckApi
+        && typeof canonicalDeckApi.findCanonicalNodeById === 'function'
+        && typeof buildEditorCanonicalDeck === 'function') {
         try {
           const canonicalDeck = buildEditorCanonicalDeck(getIframeDoc());
-          canonicalNode = canonicalDeck && Array.isArray(canonicalDeck.slides)
-            ? canonicalDeck.slides.reduce((match, slide) => match || findCanonicalNode(slide && slide.nodes), null)
-            : null;
+          canonicalNode = canonicalDeckApi.findCanonicalNodeById(canonicalDeck, primaryElementId);
         } catch (err) {
           canonicalNode = null;
         }
@@ -6980,14 +6976,6 @@
         return null;
       }
       const targetId = target && target.dataset && target.dataset.editorId;
-      const findCanonicalNode = (nodes = []) => {
-        for (const node of Array.isArray(nodes) ? nodes : []) {
-          if (node && node.id === targetId) return node;
-          const nestedNode = findCanonicalNode(node && node.children);
-          if (nestedNode) return nestedNode;
-        }
-        return null;
-      };
       let canonicalDeck = null;
       if (targetId && typeof buildEditorCanonicalDeck === 'function') {
         try {
@@ -6996,8 +6984,12 @@
           canonicalDeck = null;
         }
       }
-      const canonicalTarget = canonicalDeck && Array.isArray(canonicalDeck.slides)
-        ? canonicalDeck.slides.reduce((match, slide) => match || findCanonicalNode(slide && slide.nodes), null)
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const canonicalTarget = canonicalDeckApi
+        && typeof canonicalDeckApi.findCanonicalNodeById === 'function'
+        ? canonicalDeckApi.findCanonicalNodeById(canonicalDeck, targetId)
         : null;
       return layerOrderView.syncStudioLayerOrderZIndexInput({
         documentRef: document,
