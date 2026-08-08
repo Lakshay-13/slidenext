@@ -228,6 +228,7 @@
           const cellOptions = {};
           const cellFill = resolvePptxFillColor(cellStyle['background-color'] || cellStyle.background);
           const cellColor = normalizeHexColor(cellStyle.color);
+          const cellBorderColor = normalizeHexColor(cellStyle['border-color']);
           const cellFontFace = typeof cellStyle['font-family'] === 'string'
             ? cellStyle['font-family'].split(',')[0].trim().replace(/^['"]|['"]$/g, '')
             : '';
@@ -246,6 +247,9 @@
           }
           if (cellFill) cellOptions.fill = cellFill;
           if (cellColor) cellOptions.color = cellColor;
+          if (cellBorderColor) {
+            cellOptions.border = { type: 'solid', color: cellBorderColor, pt: 0.75 };
+          }
           if (cellFontFace) cellOptions.fontFace = cellFontFace;
           if (cellFontSize !== null) cellOptions.fontSize = cellFontSize;
           Object.assign(cellOptions, cellTextDecoration);

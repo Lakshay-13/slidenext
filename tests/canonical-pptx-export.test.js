@@ -116,7 +116,7 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
           }, {
             tagName: 'tr',
             children: [
-              { tagName: 'td', text: 'Alpha', style: 'text-align: center; vertical-align: middle; font-weight: 700; text-decoration: underline line-through;' },
+              { tagName: 'td', text: 'Alpha', style: 'text-align: center; vertical-align: middle; font-weight: 700; text-decoration: underline line-through; border-color: #ef4444;' },
               { tagName: 'td', text: '42' }
             ]
           }]
@@ -166,7 +166,7 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
       { text: 'Name', options: { bold: true, fill: { color: 'EEF2FF' } } },
       { text: 'Value', options: { bold: true, align: 'right', color: '1D4ED8', italic: true, fontFace: 'Georgia', fontSize: 15 } }
     ],
-    [{ text: 'Alpha', options: { align: 'center', valign: 'middle', bold: true, underline: { style: 'sng' }, strike: true } }, '42']
+    [{ text: 'Alpha', options: { align: 'center', valign: 'middle', bold: true, underline: { style: 'sng' }, strike: true, border: { type: 'solid', color: 'EF4444', pt: 0.75 } } }, '42']
   ]);
   assert.equal(result.pptx.slides[0].calls[4].options.fontFace, 'Georgia');
   assert.equal(result.pptx.slides[0].calls[4].options.fontSize, 15);
