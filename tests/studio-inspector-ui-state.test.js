@@ -16,7 +16,16 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return fileContent.slice(start, end);
+  const source = fileContent.slice(start, end);
+  if (startMarker !== 'function syncInspectorForSelection() {') {
+    return source;
+  }
+  const resolverSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCanonicalNodeForElement(element, canonicalDeck = null) {',
+    '\n\n    function getLiveSelectedElements(elements = selectedElements, doc = getIframeDoc()) {'
+  );
+  return `${resolverSource}\n${source}`;
 }
 
 function createInspectorTestContext(context) {

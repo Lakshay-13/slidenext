@@ -5452,19 +5452,16 @@
         ? primaryElement.dataset.editorId
         : '';
       let canonicalNode = null;
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      if (primaryElementId
-        && canonicalDeckApi
-        && typeof canonicalDeckApi.findCanonicalNodeById === 'function'
-        && typeof buildEditorCanonicalDeck === 'function') {
+      let canonicalDeck = null;
+      if (primaryElementId && typeof buildEditorCanonicalDeck === 'function') {
         try {
-          const canonicalDeck = buildEditorCanonicalDeck(getIframeDoc());
-          canonicalNode = canonicalDeckApi.findCanonicalNodeById(canonicalDeck, primaryElementId);
+          canonicalDeck = buildEditorCanonicalDeck(getIframeDoc());
         } catch (err) {
-          canonicalNode = null;
+          canonicalDeck = null;
         }
+      }
+      if (typeof resolveEditorCanonicalNodeForElement === 'function') {
+        canonicalNode = resolveEditorCanonicalNodeForElement(primaryElement, canonicalDeck);
       }
       return inspectorController.syncStudioInspectorForSelection({
         documentRef: document,
