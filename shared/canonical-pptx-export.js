@@ -236,6 +236,9 @@
           const cellFontWeight = typeof cellStyle['font-weight'] === 'string'
             ? cellStyle['font-weight'].trim().toLowerCase()
             : '';
+          const cellTextDecoration = resolvePptxTextDecoration(
+            [cellStyle['text-decoration'], cellStyle['text-decoration-line']].filter(Boolean).join(' ')
+          );
           const cellItalic = typeof cellStyle['font-style'] === 'string'
             && cellStyle['font-style'].trim().toLowerCase() === 'italic';
           if (cell.tagName === 'th' || /^(bold|[6-9]00)$/.test(cellFontWeight)) {
@@ -245,6 +248,7 @@
           if (cellColor) cellOptions.color = cellColor;
           if (cellFontFace) cellOptions.fontFace = cellFontFace;
           if (cellFontSize !== null) cellOptions.fontSize = cellFontSize;
+          Object.assign(cellOptions, cellTextDecoration);
           if (cellItalic) cellOptions.italic = true;
           if (typeof cellStyle['text-align'] === 'string' && cellStyle['text-align'].trim()) {
             cellOptions.align = resolvePptxTextAlignment(cellStyle['text-align']);
