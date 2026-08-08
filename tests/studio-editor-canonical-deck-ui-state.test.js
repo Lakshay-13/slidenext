@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js');
+const canonicalBridge = require('../shared/studio-editor-canonical-bridge.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
 const deckView = require('../shared/studio-deck-view.js');
@@ -94,6 +95,10 @@ function loadBuildEditorCanonicalDeck(fileContent, context, helperSource) {
       getNodeId: context.assignEditorElementId
     });
   }
+  context.studioEditorCanonicalBridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    canonicalDeckBuilder: context.studioEditorCanonicalDeckBuilder,
+    getDocument: context.getIframeDoc
+  });
   vm.runInContext(helperSource, context);
 }
 

@@ -120,11 +120,11 @@ test('DOM mutation canonical builder bypasses live canonical state', () => {
 
   assert.match(
     helperSource,
-    /studioEditorMutationCanonicalDeckBuilder\(sourceDoc\)/
+    /studioEditorCanonicalBridge\.buildMutationCanonicalDeck\(sourceDoc\)/
   );
   assert.match(
     fileContent,
-    /<script src="\/shared\/studio-editor-canonical-mutation\.js"><\/script>/
+    /<script src="\/shared\/studio-editor-canonical-bridge\.js"><\/script>/
   );
 });
 

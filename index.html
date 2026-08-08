@@ -1269,6 +1269,7 @@
   <script src="/shared/studio-editor-canonical-state.js"></script>
   <script src="/shared/studio-editor-canonical-deck.js"></script>
   <script src="/shared/studio-editor-canonical-mutation.js"></script>
+  <script src="/shared/studio-editor-canonical-bridge.js"></script>
   <script src="/shared/presentation-metadata.js"></script>
   <script src="/shared/image-position.js"></script>
   <script src="/shared/deck-import.js"></script>
@@ -2254,6 +2255,16 @@
       && typeof SlideNextStudioEditorCanonicalMutation.createStudioEditorMutationCanonicalDeckBuilder === 'function'
       ? SlideNextStudioEditorCanonicalMutation.createStudioEditorMutationCanonicalDeckBuilder({
           buildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions)
+        })
+      : null;
+    const studioEditorCanonicalBridge = typeof SlideNextStudioEditorCanonicalBridge !== 'undefined'
+      && SlideNextStudioEditorCanonicalBridge
+      && typeof SlideNextStudioEditorCanonicalBridge.createStudioEditorCanonicalBridge === 'function'
+      ? SlideNextStudioEditorCanonicalBridge.createStudioEditorCanonicalBridge({
+          state: studioEditorCanonicalState,
+          canonicalDeckBuilder: studioEditorCanonicalDeckBuilder,
+          mutationCanonicalDeckBuilder: studioEditorMutationCanonicalDeckBuilder,
+          getDocument: getIframeDoc
         })
       : null;
     const studioEditorDeckMutationFinalizer = typeof SlideNextStudioEditorDeckMutation !== 'undefined'
@@ -4160,53 +4171,36 @@
     }
 
     function resetEditorLiveCanonicalDeck() {
-      if (studioEditorCanonicalState && typeof studioEditorCanonicalState.reset === 'function') {
-        studioEditorCanonicalState.reset();
-      }
+      if (!studioEditorCanonicalBridge
+        || typeof studioEditorCanonicalBridge.resetLiveCanonicalDeck !== 'function') return null;
+      return studioEditorCanonicalBridge.resetLiveCanonicalDeck();
     }
 
     function setEditorLiveCanonicalDeck(canonicalDeck, doc = null, sessionToken = null) {
-      if (!studioEditorCanonicalState || typeof studioEditorCanonicalState.set !== 'function') {
-        return null;
-      }
-      return studioEditorCanonicalState.set(canonicalDeck, {
-        documentRef: doc,
-        sessionToken
-      });
+      if (!studioEditorCanonicalBridge
+        || typeof studioEditorCanonicalBridge.setLiveCanonicalDeck !== 'function') return null;
+      return studioEditorCanonicalBridge.setLiveCanonicalDeck(canonicalDeck, doc, sessionToken);
     }
 
     function resolveEditorLiveCanonicalDeck(doc = null, sessionToken = null) {
-      if (!studioEditorCanonicalState || typeof studioEditorCanonicalState.resolve !== 'function') {
-        return null;
-      }
-      return studioEditorCanonicalState.resolve({
-        documentRef: doc,
-        sessionToken
-      });
+      if (!studioEditorCanonicalBridge
+        || typeof studioEditorCanonicalBridge.resolveLiveCanonicalDeck !== 'function') return null;
+      return studioEditorCanonicalBridge.resolveLiveCanonicalDeck(doc, sessionToken);
     }
 
     function buildEditorCanonicalDeck(doc = getIframeDoc()) {
       const options = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
         ? arguments[1]
         : {};
-      if (typeof studioEditorCanonicalDeckBuilder === 'function') {
-        try {
-          return studioEditorCanonicalDeckBuilder(doc, options);
-        } catch (err) {
-          // Keep legacy HTML editing available when canonical import cannot proceed.
-          return null;
-        }
-      }
-      return null;
+      if (!studioEditorCanonicalBridge
+        || typeof studioEditorCanonicalBridge.buildCanonicalDeck !== 'function') return null;
+      return studioEditorCanonicalBridge.buildCanonicalDeck(doc, options);
     }
 
     function buildEditorMutationCanonicalDeck(sourceDoc) {
-      if (typeof studioEditorMutationCanonicalDeckBuilder !== 'function') return null;
-      try {
-        return studioEditorMutationCanonicalDeckBuilder(sourceDoc);
-      } catch (err) {
-        return null;
-      }
+      if (!studioEditorCanonicalBridge
+        || typeof studioEditorCanonicalBridge.buildMutationCanonicalDeck !== 'function') return null;
+      return studioEditorCanonicalBridge.buildMutationCanonicalDeck(sourceDoc);
     }
 
     function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {

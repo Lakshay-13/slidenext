@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js');
+const canonicalBridge = require('../shared/studio-editor-canonical-bridge.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -101,6 +102,10 @@ test('buildEditorCanonicalDeck prefers the active live model unless DOM rebuild 
     getSlideId: context.getEditorSlideId,
     getNodeId: context.assignEditorElementId
   });
+  context.studioEditorCanonicalBridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    canonicalDeckBuilder: context.studioEditorCanonicalDeckBuilder,
+    getDocument: context.getIframeDoc
+  });
 
   vm.createContext(context);
   vm.runInContext(buildEditorCanonicalDeckSource, context);
@@ -127,6 +132,9 @@ test('buildEditorCanonicalDeck fails closed when the canonical builder throws', 
       throw new Error('unsupported legacy markup');
     }
   };
+  context.studioEditorCanonicalBridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    canonicalDeckBuilder: context.studioEditorCanonicalDeckBuilder
+  });
 
   vm.createContext(context);
   vm.runInContext(buildEditorCanonicalDeckSource, context);
