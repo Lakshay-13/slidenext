@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const assetController = require('../shared/studio-editor-asset-controller.js');
 
 test('addAsset commits a canonical asset and notifies the library view', () => {
@@ -137,6 +138,7 @@ test('applyAsset prefers canonical lock metadata over stale DOM state', () => {
   };
   const createController = () => assetController.createStudioEditorAssetController({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeck: () => deck,
     getActiveSlideId: () => 'slide-1',
     getSelectedImage: () => selectedImage,
@@ -151,6 +153,7 @@ test('applyAsset prefers canonical lock metadata over stale DOM state', () => {
   });
   const unlockedController = assetController.createStudioEditorAssetController({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeck: () => deck,
     getActiveSlideId: () => 'slide-1',
     getSelectedImage: () => selectedImage,

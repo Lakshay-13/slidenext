@@ -11,6 +11,9 @@
     const canonicalDeckApi = options.canonicalDeckApi
       || (root && root.SlideNextCanonicalDeck)
       || null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     const getCanonicalDeck = typeof options.getCanonicalDeck === 'function'
       ? options.getCanonicalDeck
       : () => null;
@@ -111,6 +114,18 @@
       const selectedImage = getSelectedImage();
       if (!selectedImage) return false;
       const canonicalDeck = resolveCanonicalDeck();
+      if (canonicalDeck
+        && typeof canonicalDeckApi.findCanonicalNodeById === 'function'
+        && canonicalStateApi
+        && typeof canonicalStateApi.createStudioEditorCanonicalLockReader === 'function') {
+        const readLockedState = canonicalStateApi.createStudioEditorCanonicalLockReader(canonicalDeck, {
+          resolveCanonicalNode(element, deck) {
+            return canonicalDeckApi.findCanonicalNodeById(deck, getElementId(element));
+          },
+          fallbackReader: isElementLocked
+        });
+        if (readLockedState(selectedImage)) return false;
+      }
       let canonicalLockState = null;
       if (canonicalDeck
         && typeof canonicalDeckApi.findCanonicalNodeById === 'function') {
