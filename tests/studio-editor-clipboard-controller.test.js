@@ -209,3 +209,50 @@ test('clipboard controller applies inserted nodes to a validated live canonical 
     'pasted'
   ]);
 });
+
+test('clipboard controller falls back when live canonical validation throws', () => {
+  const fallbackCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }, { id: 'pasted' }] }]
+  };
+  let buildCalls = 0;
+  let finalizedCanonicalDeck = null;
+  const controller = clipboardController.createStudioEditorClipboardController({
+    clipboardApi: {
+      buildStudioClipboardPastePlan() {
+        return {
+          canPaste: true,
+          items: [{ id: 'clipboard-item' }],
+          nextPasteCount: 1,
+          nextClipboard: { items: [{ id: 'clipboard-item' }], pasteCount: 1 }
+        };
+      }
+    },
+    canonicalDeckApi: {
+      isCanonicalDeck() {
+        throw new Error('validator unavailable');
+      }
+    },
+    getClipboard: () => ({ items: [{ id: 'clipboard-item' }], pasteCount: 0 }),
+    setClipboard: () => {},
+    getIframeDoc: () => ({ id: 'editor-document' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeck(_document, options) {
+      buildCalls += 1;
+      assert.deepEqual(options, { preferLiveCanonicalDeck: false });
+      return fallbackCanonicalDeck;
+    },
+    insertClipboardPayload: () => [{ id: 'pasted' }],
+    finalizeInsertedElements: (_items, _label, _transaction, canonicalDeck) => {
+      finalizedCanonicalDeck = canonicalDeck;
+      return true;
+    },
+    finalizeClipboardActionResult: (result) => result
+  });
+
+  assert.equal(controller.paste(), true);
+  assert.equal(buildCalls, 1);
+  assert.equal(finalizedCanonicalDeck, fallbackCanonicalDeck);
+});

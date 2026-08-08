@@ -55,6 +55,18 @@
       ? options.finalizeInsertedElements
       : () => false;
 
+    function isValidCanonicalDeck(value) {
+      if (!value) return false;
+      if (!canonicalDeckApi || typeof canonicalDeckApi.isCanonicalDeck !== 'function') {
+        return true;
+      }
+      try {
+        return canonicalDeckApi.isCanonicalDeck(value) === true;
+      } catch (error) {
+        return false;
+      }
+    }
+
     function getCanonicalInsertionSequence() {
       const importElementToCanonicalNode = deckImportApi
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
@@ -97,10 +109,7 @@
         } catch (err) {
           liveCanonicalDeck = null;
         }
-        if (liveCanonicalDeck
-          && canonicalDeckApi
-          && typeof canonicalDeckApi.isCanonicalDeck === 'function'
-          && !canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
+        if (liveCanonicalDeck && !isValidCanonicalDeck(liveCanonicalDeck)) {
           liveCanonicalDeck = null;
         }
       }
