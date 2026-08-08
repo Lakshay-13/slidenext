@@ -1256,6 +1256,7 @@
   <script src="/shared/studio-modal-visibility.js"></script>
   <script src="/shared/presentation-library.js"></script>
   <script src="/shared/presentation-creation-view.js"></script>
+  <script src="/shared/presentation-creation-controller.js"></script>
   <script src="/shared/presentation-library-view.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-style-mutation.js"></script>
@@ -1302,6 +1303,21 @@
     let presentationLibraryData = [];
     let presentationLibraryLoadToken = 0;
     let studioEditorSessionToken = 0;
+    const presentationCreationController = typeof SlideNextPresentationCreationController !== 'undefined'
+      && SlideNextPresentationCreationController
+      && typeof SlideNextPresentationCreationController.createPresentationController === 'function'
+      ? SlideNextPresentationCreationController.createPresentationController({
+          documentRef: document,
+          presentationCreationView: typeof SlideNextPresentationCreationView !== 'undefined'
+            ? SlideNextPresentationCreationView
+            : null,
+          presentationLibrary: typeof SlideNextPresentationLibrary !== 'undefined'
+            ? SlideNextPresentationLibrary
+            : null,
+          loadPresentations: () => loadPresentations(),
+          launchStudioEditor: (...args) => launchStudioEditor(...args)
+        })
+      : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
       && SlideNextStudioEditorCanonicalState
       && typeof SlideNextStudioEditorCanonicalState.createStudioEditorCanonicalState === 'function'
@@ -1608,81 +1624,22 @@
       }
     }
 
-    function getPresentationCreationView() {
-      return typeof SlideNextPresentationCreationView !== 'undefined'
-        ? SlideNextPresentationCreationView
-        : null;
-    }
-
     function openCreatePresentationModal() {
-      const view = getPresentationCreationView();
-      if (!view || typeof view.openPresentationCreationModal !== 'function') return false;
-      return view.openPresentationCreationModal({
-        documentRef: document
-      });
+      return presentationCreationController
+        ? presentationCreationController.open()
+        : false;
     }
 
     function closeCreatePresentationModal() {
-      const view = getPresentationCreationView();
-      if (!view || typeof view.closePresentationCreationModal !== 'function') return false;
-      return view.closePresentationCreationModal({
-        documentRef: document
-      });
+      return presentationCreationController
+        ? presentationCreationController.close()
+        : false;
     }
 
     async function submitCreatePresentation(event) {
-      if (event && typeof event.preventDefault === 'function') {
-        event.preventDefault();
-      }
-
-      const view = getPresentationCreationView();
-      const titleInput = document.getElementById('createPresentationTitle');
-      if (
-        !view
-        || typeof view.setPresentationCreationError !== 'function'
-        || typeof view.setPresentationCreationBusyState !== 'function'
-        || typeof SlideNextPresentationLibrary === 'undefined'
-        || typeof SlideNextPresentationLibrary.createPresentation !== 'function'
-      ) {
-        return null;
-      }
-
-      view.setPresentationCreationError({
-        documentRef: document,
-        message: ''
-      });
-      view.setPresentationCreationBusyState({
-        documentRef: document,
-        isBusy: true
-      });
-
-      try {
-        const createdPresentation = await SlideNextPresentationLibrary.createPresentation({
-          title: titleInput ? titleInput.value : ''
-        });
-        if (titleInput) {
-          titleInput.value = '';
-        }
-        closeCreatePresentationModal();
-        await loadPresentations();
-        launchStudioEditor(
-          createdPresentation.url,
-          createdPresentation.title,
-          createdPresentation.category || 'General'
-        );
-        return createdPresentation;
-      } catch (error) {
-        view.setPresentationCreationError({
-          documentRef: document,
-          message: error && error.message ? error.message : 'Failed to create presentation.'
-        });
-        return null;
-      } finally {
-        view.setPresentationCreationBusyState({
-          documentRef: document,
-          isBusy: false
-        });
-      }
+      return presentationCreationController
+        ? presentationCreationController.submit(event)
+        : null;
     }
 
     // Render category tab filters through the shared dashboard view module.

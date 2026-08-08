@@ -2,66 +2,52 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const vm = require('node:vm');
+const presentationCreationController = require('../shared/presentation-creation-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
-
-function extractFunctionSource(fileContent, startMarker, endMarker) {
-  const start = fileContent.indexOf(startMarker);
-  assert.notEqual(start, -1, 'Missing start marker: ' + startMarker);
-  const end = fileContent.indexOf(endMarker, start);
-  assert.notEqual(end, -1, 'Missing end marker: ' + endMarker);
-  return fileContent.slice(start, end);
-}
 
 function createControllerContext(createPresentation) {
   const titleInput = {
     value: '  New Research Deck  '
   };
   const calls = [];
-  const context = {
-    document: {
-      getElementById(id) {
-        if (id === 'createPresentationTitle') return titleInput;
-        return null;
-      }
+  const documentRef = {
+    getElementById(id) {
+      if (id === 'createPresentationTitle') return titleInput;
+      return null;
+    }
+  };
+  const view = {
+    setPresentationCreationError(options) {
+      calls.push(['error', options.message]);
     },
-    SlideNextPresentationCreationView: {
-      setPresentationCreationError(options) {
-        calls.push(['error', options.message]);
-      },
-      setPresentationCreationBusyState(options) {
-        calls.push(['busy', options.isBusy]);
-      },
-      closePresentationCreationModal() {
-        calls.push(['close']);
-        return true;
-      }
+    setPresentationCreationBusyState(options) {
+      calls.push(['busy', options.isBusy]);
     },
-    SlideNextPresentationLibrary: {
-      createPresentation
-    },
+    closePresentationCreationModal() {
+      calls.push(['close']);
+      return true;
+    }
+  };
+  const library = {
+    createPresentation
+  };
+  const controller = presentationCreationController.createPresentationController({
+    documentRef,
+    presentationCreationView: view,
+    presentationLibrary: library,
     async loadPresentations() {
       calls.push(['refresh']);
     },
     launchStudioEditor(...args) {
       calls.push(['launch', ...args]);
     }
-  };
-
-  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const controllerSource = extractFunctionSource(
-    source,
-    'function getPresentationCreationView() {',
-    '\n\n    // Render category tab filters'
-  );
-  vm.createContext(context);
-  vm.runInContext(controllerSource, context);
-  return { context, titleInput, calls };
+  });
+  return { controller, titleInput, calls };
 }
 
 test('submitCreatePresentation creates, refreshes, and opens the new deck', async () => {
-  const { context, titleInput, calls } = createControllerContext(async (options) => {
+  const { controller, titleInput, calls } = createControllerContext(async (options) => {
     assert.equal(options.title, '  New Research Deck  ');
     return {
       url: 'presentations/new-research-deck/index.html',
@@ -70,7 +56,7 @@ test('submitCreatePresentation creates, refreshes, and opens the new deck', asyn
     };
   });
 
-  const result = await context.submitCreatePresentation({
+  const result = await controller.submit({
     preventDefault() {
       calls.push(['preventDefault']);
     }
@@ -90,11 +76,11 @@ test('submitCreatePresentation creates, refreshes, and opens the new deck', asyn
 });
 
 test('submitCreatePresentation keeps the form open and reports creation errors', async () => {
-  const { context, calls } = createControllerContext(async () => {
+  const { controller, calls } = createControllerContext(async () => {
     throw new Error('A presentation with that name already exists');
   });
 
-  const result = await context.submitCreatePresentation({
+  const result = await controller.submit({
     preventDefault() {}
   });
 
