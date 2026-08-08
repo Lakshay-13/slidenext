@@ -191,6 +191,12 @@
 
       return buildDeckSnapshot(doc, {
         includeLayers: !!buildOptions.includeLayers,
+        ...(buildOptions.preferCanonicalLayers
+          ? { preferCanonicalLayers: true }
+          : {}),
+        ...(buildOptions.canonicalLayerOptions
+          ? { canonicalLayerOptions: buildOptions.canonicalLayerOptions }
+          : {}),
         ...snapshotBuildOptions,
         buildDomSnapshot: (sourceDoc) => buildDomSnapshot(sourceDoc, buildOptions),
         getActiveSlideId: options.getActiveSlideId,
@@ -243,7 +249,7 @@
       ...deckSnapshot,
       slides: deckSnapshot.slides.map((slideSnapshot) => {
         const slideEl = getSlideById ? getSlideById(slideSnapshot.id, doc) : null;
-        if (!slideEl || !buildSlideLayerSnapshot) {
+        if (options.preferCanonicalLayers || !slideEl || !buildSlideLayerSnapshot) {
           return slideSnapshot;
         }
         return {

@@ -322,16 +322,36 @@
     const getNormalizedSlideLayerOrder = typeof options.getNormalizedSlideLayerOrder === 'function'
       ? options.getNormalizedSlideLayerOrder
       : () => [];
-    const orderedLayerElements = activeSlide ? getNormalizedSlideLayerOrder(activeSlide) : [];
     const buildEditorDeckSnapshot = typeof options.buildEditorDeckSnapshot === 'function'
       ? options.buildEditorDeckSnapshot
       : () => ({ slides: [] });
-    const deckSnapshot = buildEditorDeckSnapshot(iframeDoc, { includeLayers: true }) || {};
+    const getSelectedElementIds = typeof options.getSelectedElementIds === 'function'
+      ? options.getSelectedElementIds
+      : null;
+    const selectedElementIds = new Set(
+      getSelectedElementIds
+        ? (getSelectedElementIds(iframeDoc) || []).filter((id) => typeof id === 'string' && id)
+        : []
+    );
+    const deckSnapshot = buildEditorDeckSnapshot(iframeDoc, {
+      includeLayers: true,
+      preferCanonicalLayers: true,
+      ...(getSelectedElementIds
+        ? {
+            canonicalLayerOptions: {
+              isSelectedNode: (node) => !!node && selectedElementIds.has(node.id)
+            }
+          }
+        : {})
+    }) || {};
     const activeSlideSnapshot = Array.isArray(deckSnapshot.slides)
       ? deckSnapshot.slides.find((slide) => slide.id === deckSnapshot.activeSlideId)
       : null;
     const layers = activeSlideSnapshot && Array.isArray(activeSlideSnapshot.elements)
       ? activeSlideSnapshot.elements
+      : [];
+    const orderedLayerElements = activeSlide
+      ? getNormalizedSlideLayerOrder(activeSlide)
       : [];
     const view = options.layerView || layerView;
     const canRenderLayers = view

@@ -10768,6 +10768,9 @@
         getActiveSlide,
         getNormalizedSlideLayerOrder,
         buildEditorDeckSnapshot,
+        getSelectedElementIds: typeof getCommittedSelectedEditorElementIds === 'function'
+          ? getCommittedSelectedEditorElementIds
+          : null,
         getElementByEditorId,
         buildLayerOrderSelectionActionState
       });

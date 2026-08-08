@@ -481,8 +481,15 @@ test('syncStudioLayerList assembles live layer action state before shared render
     },
     buildEditorDeckSnapshot(doc, options) {
       assert.equal(doc, iframeDoc);
-      assert.deepEqual(options, { includeLayers: true });
+      assert.equal(options.includeLayers, true);
+      assert.equal(options.preferCanonicalLayers, true);
+      assert.equal(options.canonicalLayerOptions.isSelectedNode({ id: 'node-1' }), true);
+      assert.equal(options.canonicalLayerOptions.isSelectedNode({ id: 'node-2' }), false);
       return deckSnapshot;
+    },
+    getSelectedElementIds(doc) {
+      assert.equal(doc, iframeDoc);
+      return ['node-1'];
     },
     getElementByEditorId(id, doc) {
       assert.equal(id, 'node-1');

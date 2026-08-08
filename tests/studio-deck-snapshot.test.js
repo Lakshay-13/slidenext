@@ -522,6 +522,55 @@ test('buildStudioDeckSnapshot merges live layer snapshots onto canonical slides 
   });
 });
 
+test('buildStudioDeckSnapshot can keep canonical layer snapshots when requested', () => {
+  const doc = { label: 'doc' };
+  let liveLayerSnapshotCalls = 0;
+  const result = deckSnapshot.buildStudioDeckSnapshot(doc, {
+    includeLayers: true,
+    preferCanonicalLayers: true,
+    canonicalLayerOptions: {
+      isSelectedNode(node) {
+        return node.id === 'node-2';
+      }
+    },
+    buildCanonicalDeck() {
+      return {
+        slides: [{
+          id: 'slide-1',
+          title: 'Intro',
+          nodes: [
+            { id: 'node-1', type: 'heading', text: 'Welcome', layout: { zIndex: 1 } },
+            { id: 'node-2', type: 'shape', layout: { zIndex: 0 } }
+          ]
+        }]
+      };
+    },
+    getActiveSlide() {
+      return { id: 'active-slide-el' };
+    },
+    getActiveSlideId() {
+      return 'slide-1';
+    },
+    getSlideById() {
+      return { id: 'slide-el-1' };
+    },
+    buildSlideLayerSnapshot() {
+      liveLayerSnapshotCalls += 1;
+      return ['dom-layer'];
+    }
+  });
+
+  assert.equal(liveLayerSnapshotCalls, 0);
+  assert.deepEqual(result.slides[0].elements.map((layer) => ({
+    id: layer.id,
+    zIndex: layer.zIndex,
+    isSelected: layer.isSelected
+  })), [
+    { id: 'node-1', zIndex: '1', isSelected: false },
+    { id: 'node-2', zIndex: '0', isSelected: true }
+  ]);
+});
+
 test('buildStudioDeckSnapshot preserves canonical layer snapshots when live slide elements are unavailable', () => {
   const result = deckSnapshot.buildStudioDeckSnapshot(null, {
     includeLayers: true,
