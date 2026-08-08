@@ -60,6 +60,27 @@ test('studio editor canonical state rejects invalid models and can be reset', ()
   assert.equal(state.resolve({ documentRef, sessionToken: 1 }), null);
 });
 
+test('canonical node reader resolves safely and fails closed on lookup errors', () => {
+  const canonicalDeck = createDeck('active');
+  const element = { id: 'node-1' };
+  const reader = canonicalState.createStudioEditorCanonicalNodeReader(canonicalDeck, {
+    resolveCanonicalNode(target, deck) {
+      assert.equal(deck, canonicalDeck);
+      return target === element ? { id: 'node-1' } : null;
+    }
+  });
+
+  assert.deepEqual(reader(element), { id: 'node-1' });
+  assert.equal(reader({ id: 'missing' }), null);
+
+  const throwingReader = canonicalState.createStudioEditorCanonicalNodeReader(canonicalDeck, {
+    resolveCanonicalNode() {
+      throw new Error('lookup failed');
+    }
+  });
+  assert.equal(throwingReader(element), null);
+});
+
 test('canonical visibility reader prefers model state and falls back safely', () => {
   const element = { id: 'node-1' };
   const canonicalDeck = createDeck('active');

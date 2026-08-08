@@ -69,26 +69,35 @@
     };
   }
 
-  function createStudioEditorCanonicalVisibilityReader(canonicalDeck, options = {}) {
-    const property = typeof options.property === 'string' ? options.property : '';
+  function createStudioEditorCanonicalNodeReader(canonicalDeck, options = {}) {
     const resolveCanonicalNode = typeof options.resolveCanonicalNode === 'function'
       ? options.resolveCanonicalNode
       : () => null;
+
+    return function readCanonicalNode(element) {
+      if (!canonicalDeck) return null;
+      try {
+        return resolveCanonicalNode(element, canonicalDeck);
+      } catch (error) {
+        return null;
+      }
+    };
+  }
+
+  function createStudioEditorCanonicalVisibilityReader(canonicalDeck, options = {}) {
+    const property = typeof options.property === 'string' ? options.property : '';
+    const readCanonicalNode = createStudioEditorCanonicalNodeReader(canonicalDeck, options);
     const fallbackReader = typeof options.fallbackReader === 'function'
       ? options.fallbackReader
       : () => false;
 
     return function readCanonicalVisibilityState(element) {
       if (canonicalDeck && property) {
-        try {
-          const canonicalNode = resolveCanonicalNode(element, canonicalDeck);
-          const value = canonicalNode
-            && canonicalNode.visibility
-            && canonicalNode.visibility[property];
-          if (typeof value === 'boolean') return value;
-        } catch (error) {
-          // Fall back to the live element when canonical lookup is unavailable.
-        }
+        const canonicalNode = readCanonicalNode(element);
+        const value = canonicalNode
+          && canonicalNode.visibility
+          && canonicalNode.visibility[property];
+        if (typeof value === 'boolean') return value;
       }
       return fallbackReader(element);
     };
@@ -114,6 +123,7 @@
 
   return {
     createStudioEditorCanonicalState,
+    createStudioEditorCanonicalNodeReader,
     createStudioEditorCanonicalLockReader,
     createStudioEditorCanonicalVisibilityReader
   };
