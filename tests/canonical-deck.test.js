@@ -369,6 +369,32 @@ test('canonical asset operations are immutable and protect referenced assets', (
   assert.equal(canonicalDeck.isCanonicalDeck(removed), true);
 });
 
+test('updateCanonicalNodeAsset binds image nodes to canonical assets and can clear safely', () => {
+  const source = canonicalDeck.createCanonicalDeck({
+    assets: [{ id: 'hero', type: 'image', src: '/images/hero.png' }],
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'group-1',
+        type: 'group',
+        children: [{ id: 'image-1', type: 'image', tagName: 'img', attributes: { src: '/old.png' } }]
+      }]
+    }]
+  });
+
+  const bound = canonicalDeck.updateCanonicalNodeAsset(source, 'slide-1', 'image-1', 'hero');
+  const cleared = canonicalDeck.updateCanonicalNodeAsset(bound, 'slide-1', 'image-1');
+
+  assert.equal(source.slides[0].nodes[0].children[0].assetId, undefined);
+  assert.equal(bound.slides[0].nodes[0].children[0].assetId, 'hero');
+  assert.equal(bound.slides[0].nodes[0].children[0].attributes.src, '/images/hero.png');
+  assert.equal(Object.prototype.hasOwnProperty.call(cleared.slides[0].nodes[0].children[0], 'assetId'), false);
+  assert.equal(cleared.slides[0].nodes[0].children[0].attributes.src, '/images/hero.png');
+  assert.equal(canonicalDeck.updateCanonicalNodeAsset(source, 'slide-1', 'image-1', 'missing'), null);
+  assert.equal(canonicalDeck.updateCanonicalNodeAsset(source, 'slide-1', 'missing', 'hero'), null);
+  assert.equal(canonicalDeck.isCanonicalDeck(cleared), true);
+});
+
 test('createCanonicalDeck repairs duplicate inline script ids across source locations', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     source: {

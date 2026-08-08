@@ -1616,6 +1616,85 @@
     });
   }
 
+  function updateCanonicalNodeAsset(deckLike, slideId, nodeId, assetId = '') {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedSlideId = normalizeString(slideId).trim();
+    const normalizedNodeId = normalizeString(nodeId).trim();
+    const normalizedAssetId = normalizeString(assetId).trim();
+    if (!isCanonicalDeck(deck) || !normalizedSlideId || !normalizedNodeId) {
+      return null;
+    }
+
+    const asset = normalizedAssetId
+      ? deck.assets.find((candidate) => candidate && candidate.id === normalizedAssetId)
+      : null;
+    if (normalizedAssetId && !asset) return null;
+
+    const slideIndex = deck.slides.findIndex((slide) => slide && slide.id === normalizedSlideId);
+    if (slideIndex < 0) return null;
+
+    let didFindNode = false;
+    let didChange = false;
+    const updateNodes = (nodes = []) => (Array.isArray(nodes) ? nodes : []).map((node, index) => {
+      if (!node || typeof node !== 'object') return node;
+      let nextNode = node;
+      let nodeChanged = false;
+      const currentChildren = Array.isArray(node.children) ? node.children : [];
+      const nextChildren = updateNodes(currentChildren);
+      if (nextChildren.some((child, childIndex) => child !== currentChildren[childIndex])) {
+        nextNode = {
+          ...nextNode,
+          children: nextChildren
+        };
+        nodeChanged = true;
+      }
+
+      if (node.id === normalizedNodeId) {
+        didFindNode = true;
+        if (normalizedAssetId) {
+          if (node.assetId !== normalizedAssetId) {
+            nextNode = {
+              ...nextNode,
+              assetId: normalizedAssetId
+            };
+            nodeChanged = true;
+          }
+          const isImageNode = node.type === 'image' || normalizeString(node.tagName).toLowerCase() === 'img';
+          if (isImageNode && asset && normalizeString(node.attributes && node.attributes.src) !== normalizeString(asset.src)) {
+            nextNode = {
+              ...nextNode,
+              attributes: {
+                ...asPlainObject(node.attributes),
+                src: asset.src
+              }
+            };
+            nodeChanged = true;
+          }
+        } else if (Object.prototype.hasOwnProperty.call(node, 'assetId')) {
+          nextNode = { ...nextNode };
+          delete nextNode.assetId;
+          nodeChanged = true;
+        }
+      }
+
+      if (!nodeChanged) return node;
+      didChange = true;
+      return createCanonicalNode(nextNode, index);
+    });
+
+    const slide = deck.slides[slideIndex];
+    const nextNodes = updateNodes(slide.nodes);
+    if (!didFindNode || !didChange) return null;
+    return createCanonicalDeck({
+      ...deck,
+      slides: deck.slides.map((candidate, index) => index === slideIndex
+        ? { ...candidate, nodes: nextNodes }
+        : candidate)
+    });
+  }
+
   function updateCanonicalNodeStyle(deckLike, nodeStyles = []) {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -1862,6 +1941,7 @@
     updateCanonicalNodeLayout,
     updateCanonicalNodeText,
     updateCanonicalNodeAttributes,
+    updateCanonicalNodeAsset,
     updateCanonicalNodeStyle,
     updateCanonicalSlideBackground,
     updateCanonicalSlideMetadata
