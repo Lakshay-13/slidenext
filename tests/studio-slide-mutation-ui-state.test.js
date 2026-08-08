@@ -12,6 +12,7 @@ const slideInsertionMutation = require('../shared/studio-editor-slide-insertion-
 const slideReorderMutation = require('../shared/studio-editor-slide-reorder-mutation.js');
 const slideMutation = require('../shared/studio-editor-slide-mutation.js');
 const reorderController = require('../shared/studio-editor-slide-reorder-controller.js');
+const insertionController = require('../shared/studio-editor-slide-insertion-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -96,6 +97,36 @@ function installSlideReorderController(context) {
     applyReorder: context.applyEditorSlideReorderWithTransaction,
     generateThumbnails: context.generateThumbnails,
     restoreDeckViewAfterSlideMutation: context.restoreDeckViewAfterSlideMutation,
+    finalizeMutation: context.finalizeSlideMutationPersistence
+  });
+}
+
+function installSlideInsertionController(context) {
+  context.studioEditorSlideInsertionController = insertionController.createStudioEditorSlideInsertionController({
+    slideCommandsApi: context.SlideNextStudioEditorSlideCommands,
+    canonicalSlideApi: context.SlideNextStudioEditorCanonicalSlide,
+    deckImportApi: context.SlideNextDeckImport,
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    getIframeDoc: context.getIframeDoc,
+    resolveInsertionActionState: context.resolveCurrentStudioInsertionActionState,
+    getSlides: context.getSlides,
+    createBlankSlide: (doc) => {
+      const domApi = context.SlideNextStudioEditorDom;
+      if (!domApi || typeof domApi.createStudioBlankSlide !== 'function') return null;
+      return domApi.createStudioBlankSlide(doc, {
+        ...(typeof context.getEditorDomOptions === 'function'
+          ? context.getEditorDomOptions()
+          : {}),
+        assignSlideId: context.assignEditorSlideId,
+        decorateSlide: context.makeElementsHoverable
+      });
+    },
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    getSlideId: context.getEditorSlideId,
+    saveHistoryState: context.saveHistoryState,
+    applyInsertion: context.applyEditorSlideInsertionWithTransaction,
+    generateThumbnails: context.generateThumbnails,
+    setActiveSlide: context.setActiveSlide,
     finalizeMutation: context.finalizeSlideMutationPersistence
   });
 }
@@ -546,6 +577,7 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
   loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
+  installSlideInsertionController(context);
   vm.runInContext(addSlideNodeSource, context);
 
   const result = context.addSlideNode();
@@ -652,6 +684,7 @@ test('addSlideNode delegates slide insertion and transaction capture to the shar
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
   loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
+  installSlideInsertionController(context);
   vm.runInContext(addSlideNodeSource, context);
 
   assert.equal(context.addSlideNode(), true);
@@ -692,6 +725,7 @@ test('addSlideNode no-ops when insertion state or the iframe document disallows 
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
   loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
+  installSlideInsertionController(context);
   vm.runInContext(addSlideNodeSource, context);
 
   assert.equal(context.addSlideNode(), false);
@@ -784,6 +818,7 @@ test('addSlideNode skips history when blank slide creation fails', () => {
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
   loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
+  installSlideInsertionController(context);
   vm.runInContext(addSlideNodeSource, context);
 
   assert.equal(context.addSlideNode(), false);

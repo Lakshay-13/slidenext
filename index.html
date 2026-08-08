@@ -1247,6 +1247,7 @@
   <script src="/shared/studio-editor-slide-commands.js"></script>
   <script src="/shared/studio-editor-slide-deletion-mutation.js"></script>
   <script src="/shared/studio-editor-slide-insertion-mutation.js"></script>
+  <script src="/shared/studio-editor-slide-insertion-controller.js"></script>
   <script src="/shared/studio-editor-slide-reorder-mutation.js"></script>
   <script src="/shared/studio-editor-slide-reorder-controller.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
@@ -1508,6 +1509,39 @@
           applyReorder: (...args) => applyEditorSlideReorderWithTransaction(...args),
           generateThumbnails: (...args) => generateThumbnails(...args),
           restoreDeckViewAfterSlideMutation: (...args) => restoreDeckViewAfterSlideMutation(...args),
+          finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args)
+        })
+      : null;
+    const studioEditorSlideInsertionController = typeof SlideNextStudioEditorSlideInsertionController !== 'undefined'
+      && SlideNextStudioEditorSlideInsertionController
+      && typeof SlideNextStudioEditorSlideInsertionController.createStudioEditorSlideInsertionController === 'function'
+      ? SlideNextStudioEditorSlideInsertionController.createStudioEditorSlideInsertionController({
+          slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+            ? SlideNextStudioEditorSlideCommands
+            : null,
+          canonicalSlideApi: typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
+            ? SlideNextStudioEditorCanonicalSlide
+            : null,
+          deckImportApi: typeof SlideNextDeckImport !== 'undefined'
+            ? SlideNextDeckImport
+            : null,
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          getIframeDoc: (...args) => getIframeDoc(...args),
+          resolveInsertionActionState: (...args) => resolveCurrentStudioInsertionActionState(...args),
+          getSlides: (...args) => getSlides(...args),
+          createBlankSlide: (doc) => SlideNextStudioEditorDom.createStudioBlankSlide(doc, {
+            ...getEditorDomOptions(),
+            assignSlideId: assignEditorSlideId,
+            decorateSlide: makeElementsHoverable
+          }),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          getSlideId: (...args) => getEditorSlideId(...args),
+          saveHistoryState: (...args) => saveHistoryState(...args),
+          applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
+          generateThumbnails: (...args) => generateThumbnails(...args),
+          setActiveSlide: (...args) => setActiveSlide(...args),
           finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args)
         })
       : null;
@@ -3043,67 +3077,10 @@
 
     // Add Blank Slide Node
     function addSlideNode() {
-      const slideCommands = typeof SlideNextStudioEditorSlideCommands !== 'undefined'
-        ? SlideNextStudioEditorSlideCommands
-        : null;
-      const addStudioSlideNode = slideCommands
-        && typeof slideCommands.addStudioSlideNode === 'function'
-        ? slideCommands.addStudioSlideNode
-        : null;
-      if (!addStudioSlideNode) return false;
-
-      const canonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
-        ? SlideNextStudioEditorCanonicalSlide
-        : null;
-      const importSlideToCanonicalSlide = (
-        typeof SlideNextDeckImport !== 'undefined'
-        && SlideNextDeckImport
-        && typeof SlideNextDeckImport.importSlideToCanonicalSlide === 'function'
-      )
-        ? SlideNextDeckImport.importSlideToCanonicalSlide
-        : null;
-      const canonicalAddSlideBuilders = canonicalSlideApi
-        && typeof canonicalSlideApi.createStudioCanonicalAddSlideMutationBuilders === 'function'
-        ? canonicalSlideApi.createStudioCanonicalAddSlideMutationBuilders({
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null,
-            importSlideToCanonicalSlide,
-            getSlideId: typeof getEditorSlideId === 'function'
-              ? getEditorSlideId
-              : (slide) => slide && slide.id || ''
-          })
-        : null;
-      const buildCanonicalAddSlideDeck = canonicalAddSlideBuilders
-        ? canonicalAddSlideBuilders.buildCanonicalAddSlideDeck
-        : null;
-
-      return addStudioSlideNode({
-        getIframeDoc,
-        resolveInsertionActionState: resolveCurrentStudioInsertionActionState,
-        getSlideContainer: (doc) => doc && typeof doc.getElementById === 'function'
-          ? doc.getElementById('slidesContainer')
-          : null,
-        getSlides: typeof getSlides === 'function' ? getSlides : () => [],
-        createBlankSlide: (doc) => SlideNextStudioEditorDom.createStudioBlankSlide(doc, {
-          ...getEditorDomOptions(),
-          assignSlideId: assignEditorSlideId,
-          decorateSlide: makeElementsHoverable
-        }),
-        buildCanonicalAddSlideDeck,
-        saveHistoryState: typeof saveHistoryState === 'function' ? saveHistoryState : () => {},
-        applyInsertion: typeof applyEditorSlideInsertionWithTransaction === 'function'
-          ? applyEditorSlideInsertionWithTransaction
-          : () => ({ didApply: false, transaction: null }),
-        generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
-        setActiveSlide: typeof setActiveSlide === 'function' ? setActiveSlide : null,
-        finalizeMutation: typeof finalizeSlideMutationPersistence === 'function'
-          ? finalizeSlideMutationPersistence
-          : null
-      });
+      return studioEditorSlideInsertionController
+        && typeof studioEditorSlideInsertionController.add === 'function'
+        ? studioEditorSlideInsertionController.add()
+        : false;
     }
 
     function duplicateSlideNode() {
