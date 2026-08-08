@@ -6603,24 +6603,14 @@
       const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
         ? SlideNextStudioEditorClipboard
         : null;
-      let canonicalDeck = null;
-      if (typeof buildEditorCanonicalDeck === 'function') {
-        try {
-          canonicalDeck = buildEditorCanonicalDeck(resolvedDoc);
-        } catch (error) {
-          canonicalDeck = null;
-        }
-      }
-      const readLockedState = (element) => {
-        if (canonicalDeck && typeof resolveEditorCanonicalNodeForElement === 'function') {
-          const canonicalNode = resolveEditorCanonicalNodeForElement(element, canonicalDeck);
-          const value = canonicalNode
-            && canonicalNode.visibility
-            && canonicalNode.visibility.locked;
-          if (typeof value === 'boolean') return value;
-        }
-        return isElementLocked(element);
-      };
+      const fallbackLockedReader = typeof isElementLocked === 'function'
+        ? isElementLocked
+        : () => false;
+      const readLockedState = getEditorCanonicalVisibilityReader(
+        'locked',
+        resolvedDoc,
+        fallbackLockedReader
+      );
       const buildStudioClipboardSelectionMutationPlan = (
         clipboardApi
         && typeof clipboardApi.buildStudioClipboardSelectionMutationPlan === 'function'

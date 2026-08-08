@@ -23,11 +23,17 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 }
 
 function extractClipboardMutationPlanBuilderSource(fileContent) {
-  return extractFunctionSource(
+  const visibilityReaderSource = extractFunctionSource(
+    fileContent,
+    'function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {',
+    '\n\n    function setElementHiddenState'
+  );
+  const builderSource = extractFunctionSource(
     fileContent,
     'function buildClipboardSelectionMutationPlan(doc = null) {',
     '\n\n    function finalizeClipboardActionResult(result) {'
   );
+  return `${visibilityReaderSource}\n${builderSource}`;
 }
 
 function extractClipboardActionFinalizerSource(fileContent) {
@@ -224,6 +230,7 @@ test('buildClipboardSelectionMutationPlan disables copy and duplicate for canoni
   const context = {
     selectedElements: [selectedElement],
     editorClipboard: { items: [], pasteCount: 0 },
+    SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorClipboard: clipboardState,
     buildEditorCanonicalDeck(currentDoc) {
       assert.equal(currentDoc, doc);
