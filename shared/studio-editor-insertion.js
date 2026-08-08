@@ -51,6 +51,15 @@
       element.style.position = 'absolute';
       element.style.left = centeredPosition(40, offset);
       element.style.top = centeredPosition(30, offset);
+    } else if (type === 'icon') {
+      element = documentRef.createElement('span');
+      element.className = 'material-symbols-outlined';
+      element.textContent = 'auto_awesome';
+      element.style.fontSize = '72px';
+      element.style.color = '#c4a1ff';
+      element.style.position = 'absolute';
+      element.style.left = centeredPosition(48, offset);
+      element.style.top = centeredPosition(42, offset);
     } else if (type === 'shape') {
       element = documentRef.createElement('div');
       element.className = 'editor-shape';

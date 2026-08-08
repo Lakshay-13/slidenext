@@ -24,6 +24,7 @@ test('createStudioInsertedElement creates the existing text, image, and shape de
   const heading = insertion.createStudioInsertedElement('h2', { documentRef, offset: 30 });
   const paragraph = insertion.createStudioInsertedElement('p', { documentRef, offset: 30 });
   const image = insertion.createStudioInsertedElement('img', { documentRef, offset: 30 });
+  const icon = insertion.createStudioInsertedElement('icon', { documentRef, offset: 30 });
   const shape = insertion.createStudioInsertedElement('shape', { documentRef, offset: 30 });
 
   assert.equal(heading.tagName, 'H2');
@@ -32,6 +33,10 @@ test('createStudioInsertedElement creates the existing text, image, and shape de
   assert.equal(paragraph.textContent, 'Enter text descriptions here.');
   assert.equal(paragraph.style.top, 'calc(50% + 30px)');
   assert.match(image.src, /^https:\/\/images\.unsplash\.com\//);
+  assert.equal(icon.tagName, 'SPAN');
+  assert.equal(icon.className, 'material-symbols-outlined');
+  assert.equal(icon.textContent, 'auto_awesome');
+  assert.equal(icon.style.left, 'calc(48% + 30px)');
   assert.equal(shape.className, 'editor-shape');
   assert.equal(shape.style.width, '200px');
 });

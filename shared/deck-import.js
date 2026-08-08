@@ -799,6 +799,7 @@
   function inferImportedNodeType(el) {
     const tagName = el.tagName.toLowerCase();
     if (el.getAttribute('data-editor-group') === 'true') return 'group';
+    if (el.classList.contains('material-symbols-outlined')) return 'icon';
     if (/^h[1-6]$/.test(tagName)) return 'heading';
     if (tagName === 'p' || tagName === 'span' || tagName === 'li' || tagName === 'blockquote') return 'text';
     if (tagName === 'img') return 'image';

@@ -1171,6 +1171,23 @@ test('importElementToCanonicalNode strips editor-only classes and attributes fro
   });
 });
 
+test('importElementToCanonicalNode preserves Material Symbols as icon nodes', () => {
+  const node = deckImport.importElementToCanonicalNode(createImportedElement({
+    tagName: 'SPAN',
+    classList: createIterableClassList(['material-symbols-outlined']),
+    attributes: {
+      class: 'material-symbols-outlined',
+      'aria-label': 'Spark'
+    },
+    textContent: 'auto_awesome',
+    outerHTML: '<span class="material-symbols-outlined">auto_awesome</span>'
+  }));
+
+  assert.equal(node.type, 'icon');
+  assert.equal(node.text, 'auto_awesome');
+  assert.equal(node.attributes['aria-label'], 'Spark');
+});
+
 test('importElementToCanonicalNode promotes explicit and resolved asset references', () => {
   const explicitNode = deckImport.importElementToCanonicalNode(createImportedElement({
     tagName: 'IMG',
