@@ -101,3 +101,36 @@ test('transform controller fails closed when no transform factory is available',
   const controller = transformController.createStudioEditorTransformController({});
   assert.equal(controller.setup({ body: {} }), false);
 });
+
+test('transform controller forwards canonical hidden state to transform and marquee options', () => {
+  const doc = { body: {} };
+  let transformHiddenReader = null;
+  let marqueeHiddenReader = null;
+  const controller = transformController.createStudioEditorTransformController({
+    interactionOptionsApi: {
+      buildStudioTransformInteractionOptions(options) {
+        transformHiddenReader = options.isHidden;
+        return { kind: 'transform' };
+      },
+      buildStudioMarqueeInteractionOptions(options) {
+        marqueeHiddenReader = options.isHidden;
+        return { kind: 'marquee' };
+      }
+    },
+    interactionsApi: {
+      attachStudioEditorInteractionHandlers() {
+        return true;
+      }
+    },
+    isHidden: () => false,
+    getCanonicalVisibilityReader(property, currentDoc) {
+      assert.equal(property, 'hidden');
+      assert.equal(currentDoc, doc);
+      return () => true;
+    }
+  });
+
+  assert.equal(controller.setup(doc), true);
+  assert.equal(transformHiddenReader({ id: 'node-1' }), true);
+  assert.equal(marqueeHiddenReader({ id: 'node-1' }), true);
+});

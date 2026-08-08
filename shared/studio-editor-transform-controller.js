@@ -56,6 +56,9 @@
       ? options.getSlideEditableElements
       : null;
     const isHidden = typeof options.isHidden === 'function' ? options.isHidden : null;
+    const getCanonicalVisibilityReader = typeof options.getCanonicalVisibilityReader === 'function'
+      ? options.getCanonicalVisibilityReader
+      : null;
     const getRectOnSlide = typeof options.getRectOnSlide === 'function'
       ? options.getRectOnSlide
       : null;
@@ -129,6 +132,18 @@
       ? options.dragOverflowMarginPx
       : 280;
     const snapDistancePx = Number.isFinite(options.snapDistancePx) ? options.snapDistancePx : 12;
+
+    function readHiddenState(element, doc) {
+      if (getCanonicalVisibilityReader) {
+        try {
+          const reader = getCanonicalVisibilityReader('hidden', doc);
+          if (typeof reader === 'function') return reader(element);
+        } catch (err) {
+          // Fall back to the live element when canonical state is unavailable.
+        }
+      }
+      return isHidden ? isHidden(element) : false;
+    }
 
     function getCanonicalTransformBuilders() {
       const buildCanonicalLayoutUpdates = transformApi
@@ -233,7 +248,7 @@
               getPointerOnSlide,
               getSelectionBounds,
               getSlideEditableElements,
-              isHidden,
+              isHidden: (element) => readHiddenState(element, doc),
               getRectOnSlide,
               ensureOverlay: (slide) => ensureOverlay(slide),
               itemOptions: {
@@ -274,7 +289,7 @@
               getSelectedElements,
               captureTarget: doc && doc.body,
               dragStartThresholdPx,
-              isHidden,
+              isHidden: (element) => readHiddenState(element, doc),
               getRectOnSlide,
               onSessionStart: () => {
                 setIsDraggingElement(true);

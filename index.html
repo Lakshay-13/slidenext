@@ -2306,6 +2306,12 @@
           getPointerOnSlide: (...args) => getPointerOnSlide(...args),
           getSelectionBounds: (...args) => getSelectionBounds(...args),
           getSlideEditableElements: (...args) => getSlideEditableElements(...args),
+          getCanonicalVisibilityReader: (property, doc) => {
+            const fallbackReader = property === 'hidden' ? isElementHidden : isElementLocked;
+            return typeof getEditorCanonicalVisibilityReader === 'function'
+              ? getEditorCanonicalVisibilityReader(property, doc || getIframeDoc(), fallbackReader)
+              : fallbackReader;
+          },
           isHidden: (...args) => isElementHidden(...args),
           getRectOnSlide: (...args) => getRectOnSlide(...args),
           ensureOverlay: (slide) => ensureSelectionOverlay(getIframeDoc(), slide),
