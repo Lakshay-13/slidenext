@@ -8568,15 +8568,17 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter
         : null;
       if (createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter) {
-        const adapter = createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          getPresentationUrl: () => currentPresentationUrl,
-          capturePersistableDeckState: captureEditorPersistableDeckState
-        });
-        const resolvedState = typeof adapter === 'function'
-          ? adapter(doc, nextOptions)
+        if (typeof resolveCurrentStudioPersistenceStateFromCapture.adapter !== 'function') {
+          resolveCurrentStudioPersistenceStateFromCapture.adapter = createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            getPresentationUrl: () => currentPresentationUrl,
+            capturePersistableDeckState: captureEditorPersistableDeckState
+          });
+        }
+        const resolvedState = typeof resolveCurrentStudioPersistenceStateFromCapture.adapter === 'function'
+          ? resolveCurrentStudioPersistenceStateFromCapture.adapter(doc, nextOptions)
           : null;
         if (resolvedState !== null && typeof resolvedState !== 'undefined') {
           return resolvedState;

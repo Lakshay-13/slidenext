@@ -1135,6 +1135,47 @@ test('resolveCurrentStudioPersistenceStateFromCapture delegates through the edit
   assert.equal(result.resolvePersistenceStateFromCapture, resolvePersistenceStateFromCapture);
 });
 
+test('resolveCurrentStudioPersistenceStateFromCapture creates the shared capture-state adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
+    fileContent,
+    'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
+    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
+  );
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter(options) {
+        adapterCreateCalls += 1;
+        return (doc, nextOptions) => {
+          calls.push([doc, nextOptions]);
+          return { docId: doc.id, presentationUrl: nextOptions.presentationUrl };
+        };
+      }
+    },
+    captureEditorPersistableDeckState() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveCurrentStudioPersistenceStateFromCaptureSource, context);
+
+  assert.deepEqual(
+    context.resolveCurrentStudioPersistenceStateFromCapture({ id: 'one' }, { presentationUrl: 'presentations/one/index.html' }),
+    { docId: 'one', presentationUrl: 'presentations/one/index.html' }
+  );
+  assert.deepEqual(
+    context.resolveCurrentStudioPersistenceStateFromCapture({ id: 'two' }, { presentationUrl: 'presentations/two/index.html' }),
+    { docId: 'two', presentationUrl: 'presentations/two/index.html' }
+  );
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls.map(([doc]) => doc.id), ['one', 'two']);
+});
+
 test('isCurrentStudioPersistenceTaskStale reuses the shared stale-task checker when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const isCurrentStudioPersistenceTaskStaleSource = extractFunctionSource(
