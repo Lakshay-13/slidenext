@@ -474,6 +474,33 @@
     return values.length > 0 && values.every(Number.isFinite) ? values : [];
   }
 
+  function hasCanonicalNodeClass(node, className) {
+    const classes = Array.isArray(node && node.classes) ? node.classes : [];
+    const classAttribute = getNodeAttribute(node, 'class');
+    return classes.includes(className) || classAttribute.split(/\s+/).includes(className);
+  }
+
+  function collectCanonicalChartBars(nodes, bars = []) {
+    (Array.isArray(nodes) ? nodes : []).forEach((child) => {
+      if (hasCanonicalNodeClass(child, 'editor-chart-bar')) bars.push(child);
+      collectCanonicalChartBars(child && child.children, bars);
+    });
+    return bars;
+  }
+
+  function parseCanonicalChartBarValue(node) {
+    const attributes = ['data-chart-value', 'data-value'];
+    for (const attribute of attributes) {
+      const rawValue = getNodeAttribute(node, attribute).trim();
+      if (!rawValue) continue;
+      const value = Number(rawValue);
+      if (Number.isFinite(value)) return value;
+    }
+    const height = nodeStyle(node).height;
+    const match = typeof height === 'string' && height.trim().match(/^(-?(?:\d+\.?\d*|\.\d+))(?:%|px)?$/i);
+    return match ? Number(match[1]) : null;
+  }
+
   function getCanonicalChartTitle(node) {
     const titleAttribute = getNodeAttribute(node, 'data-chart-title').trim();
     if (titleAttribute) return titleAttribute;
@@ -486,7 +513,12 @@
   function getCanonicalChartData(node) {
     const chartType = getNodeAttribute(node, 'data-chart-type').trim().toLowerCase() || 'bar';
     if (!['bar', 'column'].includes(chartType)) return null;
-    const values = parseCanonicalChartNumberList(getNodeAttribute(node, 'data-chart-values'));
+    let values = parseCanonicalChartNumberList(getNodeAttribute(node, 'data-chart-values'));
+    if (values.length === 0) {
+      const legacyBars = collectCanonicalChartBars(node && node.children)
+        .map(parseCanonicalChartBarValue);
+      if (legacyBars.length > 0 && legacyBars.every(Number.isFinite)) values = legacyBars;
+    }
     if (values.length === 0) return null;
     const rawLabels = getNodeAttribute(node, 'data-chart-labels')
       .split(',')

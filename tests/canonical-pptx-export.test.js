@@ -539,6 +539,55 @@ test('createCanonicalPptxExport renders metadata-backed bar charts', () => {
   }]);
 });
 
+test('createCanonicalPptxExport preserves legacy chart bars without metadata', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'legacy-chart',
+        type: 'chart',
+        classes: ['editor-chart'],
+        children: [
+          {
+            id: 'legacy-title',
+            classes: ['editor-chart-title'],
+            text: 'Legacy trend'
+          },
+          {
+            id: 'legacy-bars',
+            children: [
+              { id: 'bar-1', classes: ['editor-chart-bar'], style: 'height: 42%;' },
+              { id: 'bar-2', classes: ['editor-chart-bar'], style: 'height: 68%;' },
+              { id: 'bar-3', classes: ['editor-chart-bar'], style: 'height: 55%;' }
+            ]
+          }
+        ],
+        layout: { x: 100, y: 80, width: 600, height: 360 }
+      }]
+    }],
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.diagnostics.unsupportedNodes, []);
+  assert.deepEqual(result.pptx.slides[0].calls.find(call => call.type === 'chart'), {
+    type: 'chart',
+    chartType: 'bar',
+    data: [{
+      name: 'Legacy trend',
+      labels: ['1', '2', '3'],
+      values: [42, 68, 55]
+    }],
+    options: {
+      x: 0.6944270833333334,
+      y: 0.5555555555555556,
+      w: 4.1665625,
+      h: 2.5,
+      barDir: 'col',
+      showLegend: false,
+      showTitle: true,
+      title: 'Legacy trend'
+    }
+  });
+});
+
 test('preflightCanonicalPptxExport does not warn for bound children inside flow containers', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{
