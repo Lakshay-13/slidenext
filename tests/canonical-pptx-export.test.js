@@ -105,7 +105,7 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
         {
           id: 'table-2',
           type: 'table',
-          style: 'font-family: Georgia, serif; font-size: 20px; color: #0f172a; background-color: #f8fafc; border-color: #94a3b8; border-width: 2px;',
+          style: 'font-family: Georgia, serif; font-size: 20px; color: #0f172a; background-color: #f8fafc; border-color: #94a3b8; border-width: 2px; border-style: dashed;',
           layout: { x: 0, y: 200, width: 400, height: 150 },
           children: [{
             tagName: 'tr',
@@ -173,7 +173,7 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
   assert.equal(result.pptx.slides[0].calls[4].options.color, '0F172A');
   assert.deepEqual(result.pptx.slides[0].calls[4].options.fill, { color: 'F8FAFC' });
   assert.deepEqual(result.pptx.slides[0].calls[4].options.border, {
-    type: 'solid',
+    type: 'dash',
     color: '94A3B8',
     pt: 1.5
   });

@@ -974,9 +974,19 @@
         const tableBorderWidth = tableCssBorderWidth === null
           ? 0.75
           : Math.max(0, tableCssBorderWidth * 0.75);
+        const tableBorderStyle = typeof tableStyle['border-style'] === 'string'
+          ? tableStyle['border-style'].trim().toLowerCase()
+          : '';
+        const tableBorderType = {
+          solid: 'solid',
+          dashed: 'dash',
+          dotted: 'dot',
+          none: 'none',
+          hidden: 'none'
+        }[tableBorderStyle] || 'solid';
         context.slide.addTable(rows, {
           ...bounds,
-          border: { type: 'solid', color: tableBorderColor, pt: tableBorderWidth },
+          border: { type: tableBorderType, color: tableBorderColor, pt: tableBorderWidth },
           color: tableColor,
           fill: tableFill,
           fontFace: tableFontFace || 'Aptos',
