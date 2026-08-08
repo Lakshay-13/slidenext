@@ -1843,6 +1843,42 @@ test('captureEditorPersistableDeckBuildState delegates through the editor persis
   assert.equal(factoryOptions.buildPersistableDeckHtml, context.buildPersistableDeckHtml);
 });
 
+test('captureEditorPersistableDeckBuildState creates the shared persistence-state adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(
+    fileContent,
+    'function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {',
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
+  );
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorPersistableDeckBuildStateCapturerAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(options.persistenceApi, context.SlideNextStudioEditorPersistence);
+        return (doc, buildOptions) => {
+          calls.push([doc, buildOptions]);
+          return { id: buildOptions.id };
+        };
+      }
+    },
+    buildPersistableDeckHtml() {
+      return '<html>persisted</html>';
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(captureEditorPersistableDeckBuildStateSource, context);
+
+  const iframeDoc = { label: 'iframe-doc' };
+  assert.deepEqual(context.captureEditorPersistableDeckBuildState(iframeDoc, { id: 1 }), { id: 1 });
+  assert.deepEqual(context.captureEditorPersistableDeckBuildState(iframeDoc, { id: 2 }), { id: 2 });
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls.map(([, options]) => options.id), [1, 2]);
+});
+
 test('captureEditorPersistableDeckBuildState reuses the shared build-state capturer when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(
