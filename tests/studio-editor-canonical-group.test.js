@@ -89,6 +89,21 @@ test('buildStudioCanonicalGroupBaseline prefers a valid live canonical deck', ()
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalGroupBaseline rejects invalid compatibility baselines', () => {
+  let rebuildCalls = 0;
+  const result = canonicalGroup.buildStudioCanonicalGroupBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => {
+      rebuildCalls += 1;
+      return { invalid: true };
+    }
+  });
+
+  assert.equal(result, null);
+  assert.equal(rebuildCalls, 1);
+});
+
 test('createStudioCanonicalGroupMutationBuilders preserves an explicit baseline', () => {
   const sourceDeck = createSourceDeck();
   const explicitBaseline = canonicalDeck.createCanonicalDeck({

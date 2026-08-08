@@ -8,12 +8,23 @@
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   function readStudioCanonicalGroupBaseline(options = {}) {
-    const canonicalDeckApi = options.canonicalDeckApi;
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
     const getCanonicalDeckBaseline = options.getCanonicalDeckBaseline;
     const buildCanonicalDeck = options.buildCanonicalDeck;
+    function isValidCanonicalDeck(value) {
+      if (!value) return false;
+      if (!canonicalDeckApi || typeof canonicalDeckApi.isCanonicalDeck !== 'function') return true;
+      try {
+        return canonicalDeckApi.isCanonicalDeck(value) === true;
+      } catch (err) {
+        return false;
+      }
+    }
     const readCanonicalDeckBaseline = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
@@ -27,9 +38,7 @@
           if (getCanonicalDeckBaseline) {
             try {
               const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
-              if (liveCanonicalDeck
-                && (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
-                  || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
+              if (isValidCanonicalDeck(liveCanonicalDeck)) {
                 return liveCanonicalDeck;
               }
             } catch (err) {
@@ -37,7 +46,14 @@
             }
           }
           if (!buildCanonicalDeck) return null;
-          return buildCanonicalDeck(sourceDocument);
+          try {
+            const rebuiltCanonicalDeck = buildCanonicalDeck(sourceDocument);
+            return isValidCanonicalDeck(rebuiltCanonicalDeck)
+              ? rebuiltCanonicalDeck
+              : null;
+          } catch (err) {
+            return null;
+          }
         };
 
     return readCanonicalDeckBaseline(options.sourceDocument);
