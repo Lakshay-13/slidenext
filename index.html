@@ -5792,7 +5792,24 @@
           : null,
         removeAsset: typeof removeAssetFromLibrary === 'function'
           ? removeAssetFromLibrary
-          : null
+          : null,
+        resolvePreviewSource: (source) => {
+          if (typeof source !== 'string' || !source.trim()) return '';
+          const baseUri = typeof document.baseURI === 'string' && document.baseURI
+            ? document.baseURI
+            : typeof window !== 'undefined' && typeof window.location?.href === 'string'
+              ? window.location.href
+              : '';
+          if (!baseUri) return source;
+          try {
+            const presentationUri = currentPresentationUrl
+              ? new URL(currentPresentationUrl, baseUri).href
+              : baseUri;
+            return new URL(source, presentationUri).href;
+          } catch (error) {
+            return source;
+          }
+        }
       });
     }
 

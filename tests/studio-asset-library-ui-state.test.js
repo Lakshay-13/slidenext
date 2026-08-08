@@ -225,3 +225,43 @@ test('applyAssetToSelectedImage delegates asset binding and refreshes the librar
   assert.equal(delegatedId, 'hero');
   assert.equal(refreshes, 1);
 });
+
+test('asset library state resolves relative previews against the current presentation', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateAssetLibraryState(doc = getIframeDoc()) {',
+    '\n\n    function updateTemplateActionState'
+  );
+  let receivedOptions = null;
+  const context = {
+    currentPresentationUrl: '/presentations/demo/index.html',
+    selectedElements: [],
+    document: {
+      baseURI: 'http://localhost:3000/index.html'
+    },
+    URL,
+    buildEditorCanonicalDeck() {
+      return { assets: [] };
+    },
+    SlideNextStudioEditorAssetView: {
+      syncStudioAssetState(options) {
+        receivedOptions = options;
+        return true;
+      }
+    },
+    isElementLocked() {},
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateAssetLibraryState(), true);
+  assert.equal(
+    receivedOptions.resolvePreviewSource('assets/hero.png'),
+    'http://localhost:3000/presentations/demo/assets/hero.png'
+  );
+});
