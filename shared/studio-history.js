@@ -556,9 +556,10 @@
     const debounceMs = Number.isInteger(options.debounceMs) && options.debounceMs >= 0
       ? options.debounceMs
       : 800;
+    const hasCurrentTimer = currentTimer !== null && typeof currentTimer !== 'undefined';
 
     if (!debounce) {
-      if (currentTimer) {
+      if (hasCurrentTimer) {
         clearScheduledCapture(currentTimer);
       }
       captureFn();
@@ -568,7 +569,7 @@
       };
     }
 
-    if (currentTimer) {
+    if (hasCurrentTimer) {
       clearScheduledCapture(currentTimer);
     }
 
