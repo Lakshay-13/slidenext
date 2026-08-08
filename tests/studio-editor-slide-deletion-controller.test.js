@@ -4,6 +4,7 @@ const deletionController = require('../shared/studio-editor-slide-deletion-contr
 
 test('slide deletion controller assembles canonical and editor mutation dependencies', () => {
   const calls = [];
+  const liveCanonicalDeck = { id: 'live-baseline' };
   const controller = deletionController.createStudioEditorSlideDeletionController({
     slideCommandsApi: {
       deleteStudioSlideNode(index, options) {
@@ -20,6 +21,7 @@ test('slide deletion controller assembles canonical and editor mutation dependen
       }
     },
     canonicalDeckApi: { id: 'canonical-api' },
+    getCanonicalDeckBaseline: () => liveCanonicalDeck,
     getIframeDoc: () => ({ id: 'doc' }),
     getSlides: () => [{ id: 'slide-1' }],
     alert: () => {},
@@ -35,6 +37,7 @@ test('slide deletion controller assembles canonical and editor mutation dependen
   assert.equal(controller.remove(1), true);
   assert.equal(calls[0][0], 'builders');
   assert.equal(calls[0][1].canonicalDeckApi.id, 'canonical-api');
+  assert.equal(calls[0][1].getCanonicalDeckBaseline(), liveCanonicalDeck);
   assert.equal(typeof calls[1][2].getIframeDoc, 'function');
   assert.equal(calls[1][2].getIframeDoc().id, 'doc');
   assert.equal(calls[1][2].getSlides()[0].id, 'slide-1');

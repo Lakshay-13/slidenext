@@ -44,6 +44,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const applyDeletion = typeof options.applyDeletion === 'function'
       ? options.applyDeletion
       : () => ({ didApply: false, transaction: null });
@@ -64,7 +67,8 @@
         && typeof canonicalSlideApi.createStudioCanonicalDeleteSlideMutationBuilders === 'function'
         ? canonicalSlideApi.createStudioCanonicalDeleteSlideMutationBuilders({
             canonicalDeckApi,
-            buildCanonicalDeck
+            buildCanonicalDeck,
+            getCanonicalDeckBaseline
           })
         : null;
 

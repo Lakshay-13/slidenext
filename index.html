@@ -1760,6 +1760,10 @@
           captureSlideMutationState: (...args) => captureSlideMutationRestoreState(...args),
           getSlideId: (...args) => getEditorSlideId(...args),
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+            sourceDoc || getIframeDoc(),
+            studioEditorSessionToken
+          ),
           applyDeletion: (...args) => applyEditorSlideDeletionWithTransaction(...args),
           generateThumbnails: (...args) => generateThumbnails(...args),
           restoreDeckViewAfterSlideMutation: (...args) => restoreDeckViewAfterSlideMutation(...args),
