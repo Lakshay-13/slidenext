@@ -8512,15 +8512,17 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceTaskStaleCheckerAdapter
         : null;
       if (createStudioEditorPersistenceTaskStaleCheckerAdapter) {
-        const adapter = createStudioEditorPersistenceTaskStaleCheckerAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          getPresentationUrl: () => currentPresentationUrl,
-          getSessionToken: () => studioEditorSessionToken
-        });
-        const result = typeof adapter === 'function'
-          ? adapter(presentationUrl, sessionToken)
+        if (typeof isCurrentStudioPersistenceTaskStale.adapter !== 'function') {
+          isCurrentStudioPersistenceTaskStale.adapter = createStudioEditorPersistenceTaskStaleCheckerAdapter({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            getPresentationUrl: () => currentPresentationUrl,
+            getSessionToken: () => studioEditorSessionToken
+          });
+        }
+        const result = typeof isCurrentStudioPersistenceTaskStale.adapter === 'function'
+          ? isCurrentStudioPersistenceTaskStale.adapter(presentationUrl, sessionToken)
           : null;
         if (result !== null && typeof result !== 'undefined') {
           return result;

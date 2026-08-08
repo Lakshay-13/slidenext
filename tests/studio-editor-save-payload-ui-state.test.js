@@ -1227,6 +1227,48 @@ test('isCurrentStudioPersistenceTaskStale delegates through the editor persisten
   );
 });
 
+test('isCurrentStudioPersistenceTaskStale creates the shared stale-task adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const isCurrentStudioPersistenceTaskStaleSource = extractFunctionSource(
+    fileContent,
+    'function isCurrentStudioPersistenceTaskStale(',
+    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
+  );
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 12,
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorPersistenceTaskStaleCheckerAdapter(options) {
+        adapterCreateCalls += 1;
+        return (presentationUrl, sessionToken) => {
+          calls.push([presentationUrl, sessionToken]);
+          return { presentationUrl, sessionToken };
+        };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(isCurrentStudioPersistenceTaskStaleSource, context);
+
+  assert.deepEqual(
+    context.isCurrentStudioPersistenceTaskStale('presentations/one/index.html', 1),
+    { presentationUrl: 'presentations/one/index.html', sessionToken: 1 }
+  );
+  assert.deepEqual(
+    context.isCurrentStudioPersistenceTaskStale('presentations/two/index.html', 2),
+    { presentationUrl: 'presentations/two/index.html', sessionToken: 2 }
+  );
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls, [
+    ['presentations/one/index.html', 1],
+    ['presentations/two/index.html', 2]
+  ]);
+});
+
 test('runCurrentStudioPersistenceActionIfCurrent reuses the shared current-action runner when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const runCurrentStudioPersistenceActionIfCurrentSource = extractFunctionSource(
