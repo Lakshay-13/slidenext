@@ -1988,9 +1988,7 @@
           getIframeDoc: (...args) => getIframeDoc(...args),
           getActiveSlide: (...args) => getActiveSlide(...args),
           getEditorSlideId: (...args) => getEditorSlideId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
-            preferLiveCanonicalDeck: false
-          }),
+          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           applyElementInsertion: (...args) => applyEditorElementInsertionWithTransaction(...args),
           makeElementsHoverable: (...args) => makeElementsHoverable(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
