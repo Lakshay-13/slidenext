@@ -1332,6 +1332,7 @@
   <script src="/shared/studio-editor-ruler.js"></script>
   <script src="/shared/studio-editor-ruler-view.js"></script>
   <script src="/shared/studio-editor-zoom.js"></script>
+  <script src="/shared/studio-editor-zoom-controller.js"></script>
   <script src="/shared/studio-editor-status-view.js"></script>
   <script src="/shared/studio-editor-grid-snap-view.js"></script>
   <script src="/shared/studio-theme-view.js"></script>
@@ -2298,6 +2299,25 @@
     let isDraggingElement = false;
     let suppressNextFrameClick = false;
     let zoomFactor = 1.0;
+    const studioEditorZoomController = typeof SlideNextStudioEditorZoomController !== 'undefined'
+      && SlideNextStudioEditorZoomController
+      && typeof SlideNextStudioEditorZoomController.createStudioEditorZoomController === 'function'
+      ? SlideNextStudioEditorZoomController.createStudioEditorZoomController({
+          zoomApi: typeof SlideNextStudioEditorZoom !== 'undefined'
+            ? SlideNextStudioEditorZoom
+            : null,
+          rulerViewApi: typeof SlideNextStudioEditorRulerView !== 'undefined'
+            ? SlideNextStudioEditorRulerView
+            : null,
+          documentRef: document,
+          localStorageRef: localStorage,
+          resolveActionState: () => resolveCurrentStudioZoomActionState(),
+          getZoomFactor: () => zoomFactor,
+          setZoomFactor: (nextZoomFactor) => {
+            zoomFactor = nextZoomFactor;
+          }
+        })
+      : null;
     let customGradientType = 'linear';
     let hasPendingCustomWallpaperVersion = false;
     let currentStudioSaveButtonState = 'idle';
@@ -6751,95 +6771,34 @@
     }
 
     function syncCanvasRulers() {
-      const rulerViewApi = typeof SlideNextStudioEditorRulerView !== 'undefined'
-        ? SlideNextStudioEditorRulerView
-        : null;
-      if (!rulerViewApi || typeof rulerViewApi.syncStudioCanvasRulers !== 'function') return false;
-      return rulerViewApi.syncStudioCanvasRulers({
-        documentRef: document,
-        zoomFactor
-      });
+      if (!studioEditorZoomController
+        || typeof studioEditorZoomController.syncRulers !== 'function') return false;
+      return studioEditorZoomController.syncRulers();
     }
 
     // 4. Zoom Engine (Center workspace stage)
     function applyZoom(scaleVal) {
-      const zoomApi = typeof SlideNextStudioEditorZoom !== 'undefined'
-        ? SlideNextStudioEditorZoom
-        : null;
-      if (!zoomApi || typeof zoomApi.applyStudioZoom !== 'function') return;
-      const result = zoomApi.applyStudioZoom({
-        documentRef: document,
-        localStorageRef: localStorage,
-        scaleVal,
-        zoomFactor
-      });
-      if (!result.didApply) return;
-      zoomFactor = result.zoomFactor;
-      if (typeof syncCanvasRulers === 'function') {
-        syncCanvasRulers();
-      }
+      if (!studioEditorZoomController
+        || typeof studioEditorZoomController.apply !== 'function') return;
+      studioEditorZoomController.apply(scaleVal);
     }
 
     function zoomIn() {
-      if (!resolveCurrentStudioZoomActionState().canUseZoomControls) return false;
-      const select = document.getElementById('zoomSelect');
-      if (!select) return false;
-      const zoomView = typeof SlideNextStudioEditorZoom !== 'undefined'
-        ? SlideNextStudioEditorZoom
-        : null;
-      let nextVal;
-      if (zoomView && typeof zoomView.resolveStudioZoomControlStep === 'function') {
-        nextVal = zoomView.resolveStudioZoomControlStep({
-          documentRef: document,
-          direction: 'in',
-          zoomFactor
-        });
-      } else if (zoomView && typeof zoomView.resolveStudioZoomStep === 'function') {
-        nextVal = zoomView.resolveStudioZoomStep({
-          currentValue: select.value,
-          direction: 'in',
-          zoomFactor
-        });
-      } else {
-        nextVal = 1.0;
-      }
-      if (!Number.isFinite(nextVal)) return false;
-      applyZoom(nextVal.toString());
-      return true;
+      if (!studioEditorZoomController
+        || typeof studioEditorZoomController.zoomIn !== 'function') return false;
+      return studioEditorZoomController.zoomIn(applyZoom);
     }
 
     function zoomOut() {
-      if (!resolveCurrentStudioZoomActionState().canUseZoomControls) return false;
-      const select = document.getElementById('zoomSelect');
-      if (!select) return false;
-      const zoomView = typeof SlideNextStudioEditorZoom !== 'undefined'
-        ? SlideNextStudioEditorZoom
-        : null;
-      let nextVal;
-      if (zoomView && typeof zoomView.resolveStudioZoomControlStep === 'function') {
-        nextVal = zoomView.resolveStudioZoomControlStep({
-          documentRef: document,
-          direction: 'out',
-          zoomFactor
-        });
-      } else if (zoomView && typeof zoomView.resolveStudioZoomStep === 'function') {
-        nextVal = zoomView.resolveStudioZoomStep({
-          currentValue: select.value,
-          direction: 'out',
-          zoomFactor
-        });
-      } else {
-        nextVal = 1.0;
-      }
-      if (!Number.isFinite(nextVal)) return false;
-      applyZoom(nextVal.toString());
-      return true;
+      if (!studioEditorZoomController
+        || typeof studioEditorZoomController.zoomOut !== 'function') return false;
+      return studioEditorZoomController.zoomOut(applyZoom);
     }
 
     function zoomSelectChange(val) {
-      if (!resolveCurrentStudioZoomActionState().canUseZoomControls) return false;
-      applyZoom(val);
-      return true;
+      if (!studioEditorZoomController
+        || typeof studioEditorZoomController.zoomSelectChange !== 'function') return false;
+      return studioEditorZoomController.zoomSelectChange(val, applyZoom);
     }
 
     // 5. Undo/Redo Engine

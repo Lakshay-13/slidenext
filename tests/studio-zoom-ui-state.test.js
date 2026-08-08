@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 const zoomView = require('../shared/studio-editor-zoom.js');
+const zoomController = require('../shared/studio-editor-zoom-controller.js');
 const deckView = require('../shared/studio-deck-view.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
@@ -111,6 +112,15 @@ test('applyZoom tolerates a missing zoom select while fitting the canvas', () =>
     SlideNextStudioEditorZoom: require('../shared/studio-editor-zoom.js'),
     zoomFactor: 1
   };
+  context.studioEditorZoomController = zoomController.createStudioEditorZoomController({
+    zoomApi: context.SlideNextStudioEditorZoom,
+    documentRef: context.document,
+    localStorageRef: context.localStorage,
+    getZoomFactor: () => context.zoomFactor,
+    setZoomFactor: (nextZoomFactor) => {
+      context.zoomFactor = nextZoomFactor;
+    }
+  });
 
   vm.createContext(context);
   vm.runInContext(applyZoomSource, context);
@@ -341,6 +351,12 @@ test('zoom helpers no-op safely when zoom readiness is disabled and still tolera
     },
     zoomFactor: 1
   };
+  context.studioEditorZoomController = zoomController.createStudioEditorZoomController({
+    documentRef: context.document,
+    resolveActionState: () => context.resolveCurrentStudioZoomActionState(),
+    getZoomFactor: () => context.zoomFactor,
+    applyZoom: undefined
+  });
 
   vm.createContext(context);
   vm.runInContext(zoomInSource, context);
@@ -394,6 +410,15 @@ test('zoomIn and zoomOut delegate step resolution to the shared zoom view', () =
     },
     zoomFactor: 1
   };
+  context.studioEditorZoomController = zoomController.createStudioEditorZoomController({
+    zoomApi: context.SlideNextStudioEditorZoom,
+    documentRef: context.document,
+    resolveActionState: () => context.resolveCurrentStudioZoomActionState(),
+    getZoomFactor: () => context.zoomFactor,
+    applyZoom(value) {
+      applied.push(value);
+    }
+  });
 
   vm.createContext(context);
   vm.runInContext(zoomInSource, context);

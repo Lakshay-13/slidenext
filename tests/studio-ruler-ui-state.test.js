@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const zoomController = require('../shared/studio-editor-zoom-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -70,6 +71,11 @@ test('syncCanvasRulers renders zoomed ticks against the visible canvas wrapper o
     zoomFactor: 0.5,
     SlideNextStudioEditorRulerView: require('../shared/studio-editor-ruler-view.js')
   };
+  context.studioEditorZoomController = zoomController.createStudioEditorZoomController({
+    rulerViewApi: context.SlideNextStudioEditorRulerView,
+    documentRef: context.document,
+    getZoomFactor: () => context.zoomFactor
+  });
   vm.createContext(context);
   vm.runInContext(source, context);
 
@@ -100,6 +106,11 @@ test('syncCanvasRulers delegates ruler rendering to the shared coordinator', () 
       }
     }
   };
+  context.studioEditorZoomController = zoomController.createStudioEditorZoomController({
+    rulerViewApi: context.SlideNextStudioEditorRulerView,
+    documentRef: context.document,
+    getZoomFactor: () => context.zoomFactor
+  });
 
   vm.createContext(context);
   vm.runInContext(source, context);
