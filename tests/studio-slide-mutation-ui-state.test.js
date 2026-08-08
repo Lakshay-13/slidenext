@@ -272,6 +272,31 @@ test('finalizeSlideMutationPersistence delegates lifecycle ordering to the share
   assert.equal(delegatedOptions.triggerAutoVersion, context.triggerAutoVersion);
 });
 
+test('finalizeSlideMutationPersistence uses a configured shared finalizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const context = {
+    studioEditorSlideMutationPersistenceFinalizer(...args) {
+      calls.push(args);
+      return 'configured';
+    },
+    saveHistoryState() {},
+    triggerAutoSave() {},
+    triggerAutoVersion() {}
+  };
+
+  vm.createContext(context);
+  loadFinalizeSlideMutationPersistence(fileContent, context);
+
+  const transaction = { id: 'tx-1' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  assert.equal(
+    context.finalizeSlideMutationPersistence('Auto: Added Slide', transaction, canonicalDeck),
+    'configured'
+  );
+  assert.deepEqual(calls, [['Auto: Added Slide', transaction, canonicalDeck]]);
+});
+
 test('captureSlideMutationRestoreState snapshots the active slide id and committed selection after saving history', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { id: 'doc' };

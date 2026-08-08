@@ -2038,6 +2038,18 @@
           triggerAutoVersion: typeof triggerAutoVersion === 'function' ? triggerAutoVersion : null
         })
       : null;
+    const studioEditorSlideMutationPersistenceFinalizer = typeof SlideNextStudioEditorSlideMutation !== 'undefined'
+      && SlideNextStudioEditorSlideMutation
+      && typeof SlideNextStudioEditorSlideMutation.createStudioEditorSlideMutationPersistenceFinalizer === 'function'
+      ? SlideNextStudioEditorSlideMutation.createStudioEditorSlideMutationPersistenceFinalizer({
+          mutationApi: typeof SlideNextStudioEditorMutation !== 'undefined'
+            ? SlideNextStudioEditorMutation
+            : null,
+          saveHistoryState: typeof saveHistoryState === 'function' ? saveHistoryState : null,
+          triggerAutoSave: typeof triggerAutoSave === 'function' ? triggerAutoSave : null,
+          triggerAutoVersion: typeof triggerAutoVersion === 'function' ? triggerAutoVersion : null
+        })
+      : null;
     let isDraggingElement = false;
     let suppressNextFrameClick = false;
     let zoomFactor = 1.0;
@@ -3423,6 +3435,9 @@
 
     function finalizeSlideMutationPersistence(versionLabel, transaction = null) {
       const canonicalDeck = arguments.length > 2 ? arguments[2] : null;
+      if (typeof studioEditorSlideMutationPersistenceFinalizer === 'function') {
+        return studioEditorSlideMutationPersistenceFinalizer(versionLabel, transaction, canonicalDeck);
+      }
       return createEditorSlideMutationPersistenceFinalizer({
         saveHistoryState,
         triggerAutoSave,
