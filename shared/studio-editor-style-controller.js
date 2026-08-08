@@ -57,6 +57,15 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    function isValidCanonicalDeck(value) {
+      if (!value) return false;
+      if (!canonicalDeckApi || typeof canonicalDeckApi.isCanonicalDeck !== 'function') return true;
+      try {
+        return canonicalDeckApi.isCanonicalDeck(value) === true;
+      } catch (err) {
+        return false;
+      }
+    }
     const applyStyleMutation = typeof options.applyStyleMutation === 'function'
       ? options.applyStyleMutation
       : () => ({ didApply: false, displayValue: '', transaction: null });
@@ -78,14 +87,17 @@
           if (getCanonicalDeckBaseline) {
             try {
               const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
-              if (liveCanonicalDeck) return liveCanonicalDeck;
+              if (isValidCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
             } catch (err) {
               // Fall through to the document rebuild path.
             }
           }
           if (buildCanonicalDeckBaseline) {
             try {
-              return buildCanonicalDeckBaseline(sourceDocument);
+              const rebuiltCanonicalDeck = buildCanonicalDeckBaseline(sourceDocument);
+              return isValidCanonicalDeck(rebuiltCanonicalDeck)
+                ? rebuiltCanonicalDeck
+                : null;
             } catch (err) {
               return null;
             }

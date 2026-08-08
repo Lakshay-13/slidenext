@@ -132,3 +132,43 @@ test('style controller rebuilds the canonical lock baseline when live state is i
   assert.equal(controller.apply('color', '#fff'), false);
   assert.equal(receivedLockState, true);
 });
+
+test('style controller rejects malformed canonical baselines before lock lookup', () => {
+  const element = { dataset: { editorId: 'node-1' } };
+  const malformedDeck = { invalid: true };
+  let didUseMalformedDeck = false;
+  let receivedLockState = null;
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    isCanonicalDeck: (value) => (
+      value
+        && value.kind === 'slidenext.deck'
+        && Array.isArray(value.slides)
+        ? true
+        : 1
+    ),
+    findCanonicalNodeById(deck) {
+      if (deck === malformedDeck) didUseMalformedDeck = true;
+      return null;
+    }
+  };
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(_selection, _prop, _value, options) {
+        receivedLockState = options.isLocked(element);
+        return { canApply: !receivedLockState };
+      }
+    },
+    canonicalDeckApi,
+    getCanonicalDeckBaseline: () => malformedDeck,
+    buildCanonicalDeckBaseline: () => malformedDeck,
+    getSelectedElements: () => [element],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isElementLocked: () => true
+  });
+
+  assert.equal(controller.apply('color', '#fff'), false);
+  assert.equal(receivedLockState, true);
+  assert.equal(didUseMalformedDeck, false);
+});
