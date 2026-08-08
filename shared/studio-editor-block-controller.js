@@ -17,6 +17,9 @@
     const getCanonicalDeck = typeof options.getCanonicalDeck === 'function'
       ? options.getCanonicalDeck
       : () => null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const getActiveSlideId = typeof options.getActiveSlideId === 'function'
       ? options.getActiveSlideId
       : () => '';
@@ -54,13 +57,30 @@
       ? options.onBlocksChanged
       : null;
 
+    function resolveCanonicalDeck() {
+      if (getCanonicalDeckBaseline) {
+        let liveCanonicalDeck = null;
+        try {
+          liveCanonicalDeck = getCanonicalDeckBaseline();
+        } catch (err) {
+          liveCanonicalDeck = null;
+        }
+        if (liveCanonicalDeck
+          && (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+            || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
+          return liveCanonicalDeck;
+        }
+      }
+      return getCanonicalDeck();
+    }
+
     function saveSelection(blockLike = {}) {
       if (!canonicalDeckApi
         || typeof canonicalDeckApi.saveCanonicalBlockFromNodeIds !== 'function') {
         return null;
       }
 
-      const canonicalDeck = getCanonicalDeck();
+      const canonicalDeck = resolveCanonicalDeck();
       const slideId = getActiveSlideId();
       const nodeIds = getSelectedNodeIds();
       const nextCanonicalDeck = canonicalDeckApi.saveCanonicalBlockFromNodeIds(
@@ -89,7 +109,7 @@
         return null;
       }
 
-      const canonicalDeck = getCanonicalDeck();
+      const canonicalDeck = resolveCanonicalDeck();
       const normalizedBlockId = typeof blockId === 'string' ? blockId.trim() : '';
       const block = canonicalDeck
         && Array.isArray(canonicalDeck.blocks)
@@ -148,7 +168,7 @@
         return false;
       }
 
-      const canonicalDeck = getCanonicalDeck();
+      const canonicalDeck = resolveCanonicalDeck();
       const documentRef = getDocument();
       const activeSlide = getActiveSlide(documentRef);
       const slideId = getActiveSlideId();

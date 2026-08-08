@@ -44,6 +44,31 @@ test('block controller saves the active selection and finalizes persistence hook
   assert.deepEqual(calls[3][1], ['intro']);
 });
 
+test('block mutations prefer a valid live canonical baseline', () => {
+  const liveDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', text: 'Heading' }]
+    }]
+  });
+  let didBuildFromDocument = false;
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => liveDeck,
+    getCanonicalDeck: () => {
+      didBuildFromDocument = true;
+      return canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+    },
+    getActiveSlideId: () => 'slide-1',
+    getSelectedNodeIds: () => ['node-1']
+  });
+
+  const result = controller.saveSelection({ id: 'live-block', name: 'Live Block' });
+
+  assert.equal(result.blocks[0].id, 'live-block');
+  assert.equal(didBuildFromDocument, false);
+});
+
 test('block controller fails closed when selection or dependencies are unavailable', () => {
   const controller = blockController.createStudioEditorBlockController({
     canonicalDeckApi: canonicalDeck,

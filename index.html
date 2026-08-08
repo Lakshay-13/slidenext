@@ -2145,6 +2145,10 @@
             ? SlideNextCanonicalDeck
             : null,
           getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
+          getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
+            getIframeDoc(),
+            studioEditorSessionToken
+          ),
           renderApi: typeof SlideNextDeckRender !== 'undefined'
             ? SlideNextDeckRender
             : null,
