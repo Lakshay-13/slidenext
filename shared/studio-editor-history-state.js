@@ -231,6 +231,44 @@
     };
   }
 
+  function createStudioEditorHistoryCaptureStateAdapter(options = {}) {
+    const historyStateApi = options.historyStateApi && typeof options.historyStateApi === 'object'
+      ? options.historyStateApi
+      : null;
+    const createHistoryCaptureAdapter = typeof options.createHistoryCaptureAdapter === 'function'
+      ? options.createHistoryCaptureAdapter
+      : historyStateApi && typeof historyStateApi.createStudioEditorHistoryCaptureAdapter === 'function'
+        ? historyStateApi.createStudioEditorHistoryCaptureAdapter
+        : null;
+    const getUndoStack = typeof options.getUndoStack === 'function'
+      ? options.getUndoStack
+      : () => [];
+    const getRedoStack = typeof options.getRedoStack === 'function'
+      ? options.getRedoStack
+      : () => [];
+    const clearPendingState = typeof options.clearPendingState === 'function'
+      ? options.clearPendingState
+      : () => {};
+    const fallbackCaptureState = () => {
+      clearPendingState();
+      return {
+        didCapture: false,
+        undoStack: getUndoStack(),
+        redoStack: getRedoStack(),
+        historyEntry: null
+      };
+    };
+    if (!createHistoryCaptureAdapter) {
+      return fallbackCaptureState;
+    }
+
+    const adapterOptions = { ...options };
+    delete adapterOptions.historyStateApi;
+    delete adapterOptions.createHistoryCaptureAdapter;
+    const captureState = createHistoryCaptureAdapter(adapterOptions);
+    return typeof captureState === 'function' ? captureState : fallbackCaptureState;
+  }
+
   function createStudioEditorHistoryStepAdapter(options = {}) {
     const historyApi = options.historyApi && typeof options.historyApi === 'object'
       ? options.historyApi
@@ -344,6 +382,7 @@
     createStudioEditorHistoryEntryBuilder,
     createStudioEditorHistoryEntryAdapter,
     createStudioEditorHistoryCaptureAdapter,
+    createStudioEditorHistoryCaptureStateAdapter,
     createStudioEditorHistoryStepAdapter,
     createStudioEditorHistoryFrameHtmlBuilder
   };

@@ -63,3 +63,53 @@ test('createHistoryEntry delegates editor dependencies through the shared histor
   assert.equal(capturedOptions.getPendingCanonicalDeck().id, 'pending-deck');
   assert.equal(capturedOptions.getPendingTransaction().id, 'pending-transaction');
 });
+
+test('captureState delegates editor stacks and pending cleanup through the shared history adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function captureState() {',
+    '\n\n    function updateHistoryButtons() {'
+  );
+  let capturedOptions = null;
+  let adapterCalls = 0;
+  const context = {
+    SlideNextStudioHistory: { id: 'history-api' },
+    SlideNextStudioEditorHistoryState: {
+      createStudioEditorHistoryCaptureStateAdapter(options) {
+        capturedOptions = options;
+        return () => {
+          adapterCalls += 1;
+          return { didCapture: true, historyEntry: { id: 'entry-1' } };
+        };
+      }
+    },
+    pendingEditorTransaction: { id: 'pending-transaction' },
+    pendingEditorCanonicalDeck: { id: 'pending-deck' },
+    undoStack: ['undo-entry'],
+    redoStack: ['redo-entry'],
+    createHistoryEntry() {},
+    getEditorHistoryStackOptions: () => ({ id: 'history-options' }),
+    updateHistoryButtons() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.deepEqual(context.captureState(), {
+    didCapture: true,
+    historyEntry: { id: 'entry-1' }
+  });
+  assert.deepEqual(context.captureState(), {
+    didCapture: true,
+    historyEntry: { id: 'entry-1' }
+  });
+  assert.equal(adapterCalls, 2);
+  assert.equal(capturedOptions.historyApi.id, 'history-api');
+  assert.deepEqual(capturedOptions.getUndoStack(), ['undo-entry']);
+  assert.deepEqual(capturedOptions.getRedoStack(), ['redo-entry']);
+  assert.equal(capturedOptions.createHistoryEntry, context.createHistoryEntry);
+  assert.equal(capturedOptions.clearPendingState(), undefined);
+  assert.equal(context.pendingEditorTransaction, null);
+  assert.equal(context.pendingEditorCanonicalDeck, null);
+});

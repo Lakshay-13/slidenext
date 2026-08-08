@@ -7734,12 +7734,12 @@
 
     function captureState() {
       if (typeof captureState.adapter !== 'function') {
-        const createStudioEditorHistoryCaptureAdapter = (
+        const createStudioEditorHistoryCaptureStateAdapter = (
           typeof SlideNextStudioEditorHistoryState !== 'undefined'
           && SlideNextStudioEditorHistoryState
-          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryCaptureAdapter === 'function'
+          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryCaptureStateAdapter === 'function'
         )
-          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryCaptureAdapter
+          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryCaptureStateAdapter
           : null;
         const clearPendingState = () => {
           if (typeof pendingEditorTransaction !== 'undefined') {
@@ -7749,7 +7749,7 @@
             pendingEditorCanonicalDeck = null;
           }
         };
-        if (!createStudioEditorHistoryCaptureAdapter) {
+        if (!createStudioEditorHistoryCaptureStateAdapter) {
           clearPendingState();
           return {
             didCapture: false,
@@ -7758,7 +7758,8 @@
             historyEntry: null
           };
         }
-        captureState.adapter = createStudioEditorHistoryCaptureAdapter({
+        captureState.adapter = createStudioEditorHistoryCaptureStateAdapter({
+          historyStateApi: SlideNextStudioEditorHistoryState,
           historyApi: SlideNextStudioHistory,
           createHistoryEntry,
           getUndoStack: () => undoStack,

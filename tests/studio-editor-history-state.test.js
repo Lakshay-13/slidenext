@@ -168,6 +168,49 @@ test('createStudioEditorHistoryCaptureAdapter reuses the capturer and clears pen
   assert.deepEqual(redoStack, []);
 });
 
+test('createStudioEditorHistoryCaptureStateAdapter reuses the shared capture adapter', () => {
+  let createCalls = 0;
+  let capturedOptions = null;
+  const adapter = historyState.createStudioEditorHistoryCaptureStateAdapter({
+    historyStateApi: {
+      createStudioEditorHistoryCaptureAdapter(options) {
+        createCalls += 1;
+        capturedOptions = options;
+        return () => ({ didCapture: true, historyEntry: { id: 'entry-1' } });
+      }
+    },
+    historyApi: { id: 'history-api' },
+    getUndoStack: () => ['undo'],
+    getRedoStack: () => ['redo']
+  });
+
+  assert.deepEqual(adapter(), { didCapture: true, historyEntry: { id: 'entry-1' } });
+  assert.equal(createCalls, 1);
+  assert.equal(capturedOptions.historyApi.id, 'history-api');
+  assert.deepEqual(capturedOptions.getUndoStack(), ['undo']);
+  assert.deepEqual(capturedOptions.getRedoStack(), ['redo']);
+  assert.equal('historyStateApi' in capturedOptions, false);
+});
+
+test('createStudioEditorHistoryCaptureStateAdapter clears pending state in its fallback', () => {
+  let clearCalls = 0;
+  const adapter = historyState.createStudioEditorHistoryCaptureStateAdapter({
+    getUndoStack: () => ['undo'],
+    getRedoStack: () => ['redo'],
+    clearPendingState() {
+      clearCalls += 1;
+    }
+  });
+
+  assert.deepEqual(adapter(), {
+    didCapture: false,
+    undoStack: ['undo'],
+    redoStack: ['redo'],
+    historyEntry: null
+  });
+  assert.equal(clearCalls, 1);
+});
+
 test('createStudioEditorHistoryStepAdapter builds independent undo and redo runners', () => {
   const createdSteps = [];
   const historyApi = {
