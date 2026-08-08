@@ -86,11 +86,13 @@
       : null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
-      : null;
+      : (value) => !!value
+        && typeof value === 'object'
+        && !Array.isArray(value)
+        && Array.isArray(value.slides);
 
     function isValidCanonicalDeck(value) {
       if (!value) return false;
-      if (!isCanonicalDeck) return true;
       try {
         return isCanonicalDeck(value) === true;
       } catch (error) {
