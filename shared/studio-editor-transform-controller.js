@@ -100,6 +100,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const assignElementId = typeof options.assignElementId === 'function'
       ? options.assignElementId
       : null;
@@ -137,6 +140,9 @@
         canonicalDeckApi,
         buildCanonicalDeck: buildCanonicalDeck
           ? (sourceDocument) => buildCanonicalDeck(sourceDocument)
+          : null,
+        buildCanonicalDeckBaseline: buildCanonicalDeckBaseline
+          ? (sourceDocument) => buildCanonicalDeckBaseline(sourceDocument)
           : null,
         buildCanonicalLayoutUpdates,
         getElementId: assignElementId
