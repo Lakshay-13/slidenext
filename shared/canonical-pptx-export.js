@@ -461,6 +461,33 @@
     return shapeTypes[name] || name;
   }
 
+  function resolvePptxNodeShapeType(node, bounds, pptx) {
+    const shapeTypes = asObject(pptx && pptx.ShapeType);
+    const rectangle = shapeTypes.rect || 'rect';
+    const style = nodeStyle(node);
+    const radiusValue = typeof style['border-radius'] === 'string'
+      ? style['border-radius'].trim().split(/\s+/)[0]
+      : '';
+    if (!radiusValue) return rectangle;
+
+    const radius = radiusValue.endsWith('%')
+      ? parseCssPx(radiusValue.slice(0, -1))
+      : parseCssPx(radiusValue);
+    if (!(radius > 0)) return rectangle;
+
+    const nodeLayout = getNodeCanvasLayout(node);
+    const minDimension = [nodeLayout.width, nodeLayout.height].every(Number.isFinite)
+      ? Math.min(nodeLayout.width, nodeLayout.height)
+      : 0;
+    if (radiusValue.endsWith('%') && radius >= 50) {
+      return shapeTypes.ellipse || rectangle;
+    }
+    if (!radiusValue.endsWith('%') && minDimension > 0 && radius >= minDimension / 2) {
+      return shapeTypes.ellipse || rectangle;
+    }
+    return shapeTypes.roundRect || rectangle;
+  }
+
   function createExportDiagnostics() {
     return {
       warnings: [],
@@ -713,7 +740,7 @@
       && context.diagnostics.missingNodeBackgroundAssets.includes(getNodeBackgroundAssetDiagnosticId(node));
 
     if (nodeBackgroundFill && nodeBackgroundFill.transparency !== 100 && bounds && !shapeNode && typeof context.slide.addShape === 'function') {
-      context.slide.addShape(getShapeType(context.pptx, 'rect'), {
+      context.slide.addShape(resolvePptxNodeShapeType(node, bounds, context.pptx), {
         ...bounds,
         fill: nodeBackgroundFill,
         line: { color: nodeBackgroundFill.color, transparency: 100, width: 0 }
@@ -756,7 +783,9 @@
         context.slide.addImage(mergePptxTransparency(imageOptions, transparency));
       }
     } else if (shapeNode) {
-      if (bounds) context.slide.addShape(getShapeType(context.pptx, 'rect'), shapeOptions(node, bounds));
+      if (bounds) {
+        context.slide.addShape(resolvePptxNodeShapeType(node, bounds, context.pptx), shapeOptions(node, bounds));
+      }
     } else if (!UNSUPPORTED_NODE_TYPES.has(type)
       && text
       && bounds

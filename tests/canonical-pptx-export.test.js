@@ -31,7 +31,11 @@ class FakeSlide {
 
 class FakePptx {
   constructor() {
-    this.ShapeType = { rect: 'RECTANGLE' };
+    this.ShapeType = {
+      ellipse: 'ELLIPSE',
+      rect: 'RECTANGLE',
+      roundRect: 'ROUND_RECTANGLE'
+    };
     this.layouts = [];
     this.slides = [];
     this.sections = [];
@@ -409,6 +413,30 @@ test('createCanonicalPptxExport renders solid node backgrounds beneath child con
     transparency: 100,
     width: 0
   });
+});
+
+test('createCanonicalPptxExport preserves rounded and circular shape geometry', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      nodes: [{
+        id: 'rounded-card',
+        type: 'shape',
+        style: 'background-color: #123456; border-radius: 16px;',
+        layout: { x: 0, y: 0, width: 400, height: 200 }
+      }, {
+        id: 'circle',
+        type: 'shape',
+        style: 'background-color: #abcdef; border-radius: 50%;',
+        layout: { x: 500, y: 0, width: 200, height: 200 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(
+    result.pptx.slides[0].calls.map(call => call.shapeType),
+    ['ROUND_RECTANGLE', 'ELLIPSE']
+  );
 });
 
 test('createCanonicalPptxExport preserves node opacity across text, shape, and image output', () => {
