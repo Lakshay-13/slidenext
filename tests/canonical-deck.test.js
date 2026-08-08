@@ -64,6 +64,41 @@ test('createCanonicalSlide preserves an explicit background asset reference with
   assert.equal(Object.prototype.hasOwnProperty.call(legacySlide.layout.background, 'assetId'), false);
 });
 
+test('createCanonicalDeck normalizes reusable block ids and nested node ids', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    blocks: [
+      { id: 'block-1', nodes: [{ id: 'node-1' }, { id: 'node-1' }] },
+      { id: 'block-1', name: 'Stats' }
+    ],
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1' }] }]
+  });
+
+  assert.deepEqual(deck.blocks.map((block) => block.id), ['block-1', 'block-1-2']);
+  assert.deepEqual(deck.blocks[0].nodes.map((node) => node.id), ['node-1', 'node-1-2']);
+  assert.equal(deck.slides[0].nodes[0].id, 'node-1');
+  assert.equal(canonicalDeck.isCanonicalDeck(deck), true);
+});
+
+test('canonical block operations are immutable and preserve block order', () => {
+  const source = canonicalDeck.createCanonicalDeck({
+    blocks: [{ id: 'block-1', name: 'Hero' }],
+    slides: [{ id: 'slide-1' }]
+  });
+  const expanded = canonicalDeck.insertCanonicalBlock(source, {
+    id: 'block-2',
+    name: 'Stats',
+    nodes: [{ id: 'node-2', type: 'text' }]
+  }, 1);
+  const reduced = canonicalDeck.removeCanonicalBlock(expanded, 'block-1');
+
+  assert.deepEqual(expanded.blocks.map((block) => block.id), ['block-1', 'block-2']);
+  assert.equal(expanded.blocks[1].nodes[0].type, 'text');
+  assert.deepEqual(source.blocks.map((block) => block.id), ['block-1']);
+  assert.deepEqual(reduced.blocks.map((block) => block.id), ['block-2']);
+  assert.equal(canonicalDeck.appendCanonicalBlock(source, null), null);
+  assert.equal(canonicalDeck.removeCanonicalBlock(source, 'missing'), null);
+});
+
 test('createCanonicalDeck preserves optional slide sections without changing empty slide shape', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     slides: [
