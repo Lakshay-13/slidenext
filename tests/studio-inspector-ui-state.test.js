@@ -58,6 +58,7 @@ test('syncInspectorForSelection delegates inspector control synchronization to t
     highlightAlignButton() {},
     rgbToHex() {},
     selectedElements: [selectedElement],
+    updateAssetLibraryState() {},
     updateClipboardActionState() {},
     updateLayerOrderActionState() {},
     updateLockActionState() {},

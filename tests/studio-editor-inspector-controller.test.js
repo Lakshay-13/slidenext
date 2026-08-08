@@ -6,6 +6,7 @@ const inspectorController = require('../shared/studio-editor-inspector-controlle
 test('syncStudioInspectorActionStates preserves the inspector toolbar refresh order', () => {
   const calls = [];
   const actionNames = [
+    'updateAssetLibraryState',
     'updateClipboardActionState',
     'updateRemovalActionState',
     'updateLockActionState',
@@ -83,6 +84,9 @@ test('syncStudioInspectorForSelection refreshes action state before rendering se
   const calls = [];
 
   assert.equal(inspectorController.syncStudioInspectorForSelection({
+    updateAssetLibraryState() {
+      calls.push('asset');
+    },
     updateClipboardActionState() {
       calls.push('actions');
     },
@@ -94,5 +98,5 @@ test('syncStudioInspectorForSelection refreshes action state before rendering se
     },
     selectionState: { hasSelection: true }
   }), true);
-  assert.deepEqual(calls, ['actions', 'selection']);
+  assert.deepEqual(calls, ['asset', 'actions', 'selection']);
 });

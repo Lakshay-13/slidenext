@@ -4931,9 +4931,6 @@
         return false;
       }
       const liveSelectionState = liveSelectionApi.buildStudioLiveSelectionState(selectedElements);
-      if (typeof updateAssetLibraryState === 'function') {
-        updateAssetLibraryState();
-      }
       const inspectorController = typeof SlideNextStudioEditorInspectorController !== 'undefined'
         ? SlideNextStudioEditorInspectorController
         : null;
@@ -4949,6 +4946,9 @@
         inspectorView,
         rgbToHex,
         highlightAlignButton,
+        updateAssetLibraryState: typeof updateAssetLibraryState === 'function'
+          ? updateAssetLibraryState
+          : null,
         updateClipboardActionState: typeof updateClipboardActionState === 'function'
           ? updateClipboardActionState
           : null,

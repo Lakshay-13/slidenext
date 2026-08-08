@@ -12,6 +12,7 @@
       if (typeof options[name] === 'function') options[name]();
     };
 
+    invoke('updateAssetLibraryState');
     invoke('updateClipboardActionState');
     invoke('updateRemovalActionState');
     invoke('updateLockActionState');
