@@ -99,6 +99,45 @@ test('canonical block operations are immutable and preserve block order', () => 
   assert.equal(canonicalDeck.removeCanonicalBlock(source, 'missing'), null);
 });
 
+test('canonical slide templates normalize ids and instantiate immutable slides', () => {
+  const legacyDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  assert.equal(Object.prototype.hasOwnProperty.call(legacyDeck, 'templates'), false);
+
+  const source = canonicalDeck.createCanonicalDeck({
+    templates: [
+      {
+        id: 'template-1',
+        name: 'Hero',
+        slide: {
+          id: 'hero-slide',
+          section: 'Opening',
+          nodes: [{ id: 'title', tagName: 'h1', text: 'Hero' }]
+        }
+      },
+      { id: 'template-1', name: 'Stats', slide: { nodes: [{ id: 'metric' }] } }
+    ],
+    slides: [{ id: 'slide-1', nodes: [{ id: 'title' }] }]
+  });
+  const inserted = canonicalDeck.insertCanonicalTemplateSlide(
+    source,
+    'template-1',
+    1,
+    { id: 'slide-2', title: 'Inserted Hero', section: 'Body' }
+  );
+  const removed = canonicalDeck.removeCanonicalTemplate(source, 'template-1');
+
+  assert.deepEqual(source.templates.map((template) => template.id), ['template-1', 'template-1-2']);
+  assert.equal(source.templates[0].slide.nodes[0].id, 'title');
+  assert.deepEqual(inserted.slides.map((slide) => slide.id), ['slide-1', 'slide-2']);
+  assert.equal(inserted.slides[1].title, 'Inserted Hero');
+  assert.equal(inserted.slides[1].section, 'Body');
+  assert.equal(inserted.slides[1].nodes[0].id, 'title-2');
+  assert.deepEqual(removed.templates.map((template) => template.id), ['template-1-2']);
+  assert.equal(canonicalDeck.insertCanonicalTemplateSlide(source, 'missing', 0), null);
+  assert.equal(canonicalDeck.appendCanonicalTemplate(source, null), null);
+  assert.equal(canonicalDeck.isCanonicalDeck(inserted), true);
+});
+
 test('insertCanonicalBlockInstance clones block nodes with collision-free ids and offsets', () => {
   const source = canonicalDeck.createCanonicalDeck({
     blocks: [{

@@ -122,6 +122,20 @@
     };
   }
 
+  function createCanonicalTemplate(seed = {}, index = 0) {
+    const template = asPlainObject(seed);
+    const templateSlide = asPlainObject(template.slide);
+    const metadata = asPlainObject(template.metadata);
+
+    return {
+      id: normalizeString(template.id, `template-${index + 1}`),
+      name: normalizeString(template.name, `Template ${index + 1}`),
+      description: normalizeString(template.description),
+      slide: createCanonicalSlide(templateSlide, index),
+      metadata
+    };
+  }
+
   function createCanonicalSlide(seed = {}, index = 0) {
     const slide = asPlainObject(seed);
     const layout = asPlainObject(slide.layout);
@@ -197,12 +211,17 @@
     const normalizedBlocks = Array.isArray(deck.blocks)
       ? deck.blocks.map((block, blockIndex) => createCanonicalBlock(block, blockIndex))
       : [];
+    const normalizedTemplates = Array.isArray(deck.templates)
+      ? deck.templates.map((template, templateIndex) => createCanonicalTemplate(template, templateIndex))
+      : [];
     const hasBlocksCollection = Array.isArray(deck.blocks);
+    const hasTemplatesCollection = Array.isArray(deck.templates);
     const normalizedAssets = Array.isArray(deck.assets)
       ? deck.assets.map((asset, assetIndex) => createCanonicalAsset(asset, assetIndex))
       : [];
     const assetIds = new Set();
     const blockIds = new Set();
+    const templateIds = new Set();
     const slideIds = new Set();
     const nodeIds = new Set();
     const inlineScriptIds = new Set();
@@ -244,6 +263,14 @@
             }))
           }
         : {}),
+      ...(hasTemplatesCollection
+        ? {
+            templates: normalizedTemplates.map((template, templateIndex) => ({
+              ...template,
+              id: createUniqueCanonicalId(template.id, `template-${templateIndex + 1}`, templateIds)
+            }))
+          }
+        : {}),
       slides: normalizedSlides.map((slide, slideIndex) => ({
         ...slide,
         id: createUniqueCanonicalId(slide.id, `slide-${slideIndex + 1}`, slideIds),
@@ -281,6 +308,7 @@
   function hasUniqueCanonicalIds(deck) {
     const assetIds = new Set();
     const blockIds = new Set();
+    const templateIds = new Set();
     const slideIds = new Set();
     const nodeIds = new Set();
     const inlineScriptIds = new Set();
@@ -307,6 +335,15 @@
           && hasUniqueNodeIds(block.nodes, new Set());
       });
     };
+    const hasUniqueTemplateIds = (templates) => {
+      if (!Array.isArray(templates)) return true;
+      return templates.every((template) => {
+        return !!template
+          && registerId(template.id, templateIds)
+          && !!template.slide
+          && hasUniqueNodeIds(template.slide.nodes, new Set());
+      });
+    };
     const hasUniqueInlineScriptIds = (scripts) => {
       if (!Array.isArray(scripts)) return true;
       return scripts.every((script) => {
@@ -322,6 +359,10 @@
     if (!Array.isArray(deck.slides)) return false;
     if (Object.prototype.hasOwnProperty.call(deck, 'blocks')
       && (!Array.isArray(deck.blocks) || !hasUniqueBlockIds(deck.blocks))) {
+      return false;
+    }
+    if (Object.prototype.hasOwnProperty.call(deck, 'templates')
+      && (!Array.isArray(deck.templates) || !hasUniqueTemplateIds(deck.templates))) {
       return false;
     }
     if (deck.source && typeof deck.source === 'object'
@@ -463,6 +504,102 @@
       ...deck,
       blocks: blocks.filter((_block, index) => index !== blockIndex)
     });
+  }
+
+  function appendCanonicalTemplate(deckLike, templateLike = {}) {
+    if (!deckLike || typeof deckLike !== 'object') {
+      return null;
+    }
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    if (!isCanonicalDeck(deck)) {
+      return null;
+    }
+    return insertCanonicalTemplate(
+      deck,
+      templateLike,
+      Array.isArray(deck.templates) ? deck.templates.length : 0
+    );
+  }
+
+  function insertCanonicalTemplate(deckLike, templateLike = {}, index) {
+    if (!deckLike || typeof deckLike !== 'object') {
+      return null;
+    }
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const templates = Array.isArray(deck.templates) ? deck.templates : [];
+    if (!isCanonicalDeck(deck)
+      || !templateLike
+      || typeof templateLike !== 'object'
+      || !Number.isInteger(index)
+      || index < 0
+      || index > templates.length) {
+      return null;
+    }
+
+    const nextTemplates = [...templates];
+    nextTemplates.splice(index, 0, createCanonicalTemplate(templateLike, index));
+    return createCanonicalDeck({
+      ...deck,
+      templates: nextTemplates
+    });
+  }
+
+  function removeCanonicalTemplate(deckLike, templateId) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedTemplateId = normalizeString(templateId).trim();
+    const templates = Array.isArray(deck.templates) ? deck.templates : [];
+    if (!isCanonicalDeck(deck) || !normalizedTemplateId) {
+      return null;
+    }
+
+    const templateIndex = templates.findIndex(
+      (template) => template && template.id === normalizedTemplateId
+    );
+    if (templateIndex < 0) {
+      return null;
+    }
+
+    return createCanonicalDeck({
+      ...deck,
+      templates: templates.filter((_template, index) => index !== templateIndex)
+    });
+  }
+
+  function insertCanonicalTemplateSlide(deckLike, templateId, index, options = {}) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedTemplateId = normalizeString(templateId).trim();
+    const templates = Array.isArray(deck.templates) ? deck.templates : [];
+    const template = templates.find(
+      (candidate) => candidate && candidate.id === normalizedTemplateId
+    );
+    if (!isCanonicalDeck(deck)
+      || !template
+      || !Number.isInteger(index)
+      || index < 0
+      || index > deck.slides.length) {
+      return null;
+    }
+
+    const overrides = asPlainObject(options);
+    const slide = {
+      ...template.slide,
+      ...(typeof overrides.id === 'string' && overrides.id.trim()
+        ? { id: overrides.id.trim() }
+        : {}),
+      ...(typeof overrides.name === 'string' ? { name: overrides.name } : {}),
+      ...(typeof overrides.title === 'string' ? { title: overrides.title } : {}),
+      ...(typeof overrides.notes === 'string' ? { notes: overrides.notes } : {}),
+      ...(typeof overrides.section === 'string' ? { section: overrides.section } : {})
+    };
+    return insertCanonicalSlide(deck, slide, index);
   }
 
   function saveCanonicalBlockFromNodeIds(deckLike, slideId, nodeIds = [], blockLike = {}) {
@@ -1387,6 +1524,7 @@
     createCanonicalAsset,
     createCanonicalNode,
     createCanonicalBlock,
+    createCanonicalTemplate,
     createCanonicalSlide,
     createCanonicalInlineScript,
     createCanonicalDeck,
@@ -1398,6 +1536,10 @@
     appendCanonicalBlock,
     insertCanonicalBlock,
     removeCanonicalBlock,
+    appendCanonicalTemplate,
+    insertCanonicalTemplate,
+    removeCanonicalTemplate,
+    insertCanonicalTemplateSlide,
     saveCanonicalBlockFromNodeIds,
     appendCanonicalNode,
     insertCanonicalBlockInstance,
