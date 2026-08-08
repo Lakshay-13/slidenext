@@ -31,16 +31,9 @@
     const readCanonicalDeckBaseline = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
-          getCanonicalDeckBaseline: getCanonicalDeckBaseline
-            ? (sourceDocument) => {
-                const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
-                if (!liveCanonicalDeck
-                  || (typeof canonicalDeckApi.isCanonicalDeck === 'function'
-                    && !canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
-                  return null;
-                }
-                return liveCanonicalDeck;
-              }
+          getCanonicalDeckBaseline,
+          isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
+            ? canonicalDeckApi.isCanonicalDeck
             : null,
           buildCanonicalDeckBaseline: buildCanonicalDeck
         })
@@ -101,11 +94,15 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     if (!canonicalDeckApi
       || (!buildCanonicalDeck && !buildCanonicalDeckBaseline && !getCanonicalDeckBaseline)) return null;
 
     const canonicalDeckBeforeMutation = buildStudioCanonicalVisibilityBaseline({
       canonicalDeckApi,
+      canonicalStateApi,
       buildCanonicalDeck,
       buildCanonicalDeckBaseline,
       getCanonicalDeckBaseline,
@@ -131,10 +128,14 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     const buildCanonicalVisibilityBaseline = (baselineOptions = {}) => (
       buildStudioCanonicalVisibilityBaseline({
         ...baselineOptions,
         canonicalDeckApi,
+        canonicalStateApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
         getCanonicalDeckBaseline
