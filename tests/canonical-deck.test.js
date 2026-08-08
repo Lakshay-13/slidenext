@@ -383,6 +383,30 @@ test('canonical asset operations are immutable and protect referenced assets', (
   assert.equal(canonicalDeck.isCanonicalDeck(removed), true);
 });
 
+test('removeCanonicalAsset protects legacy node asset attributes', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    assets: [
+      { id: 'image-asset', src: 'image.png' },
+      { id: 'background-asset', src: 'background.png' }
+    ],
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'image-1',
+        type: 'image',
+        attributes: { 'data-asset-id': ' image-asset ' }
+      }, {
+        id: 'panel-1',
+        type: 'shape',
+        attributes: { 'data-background-asset': 'background-asset' }
+      }]
+    }]
+  });
+
+  assert.equal(canonicalDeck.removeCanonicalAsset(deck, 'image-asset'), null);
+  assert.equal(canonicalDeck.removeCanonicalAsset(deck, 'background-asset'), null);
+});
+
 test('updateCanonicalNodeAsset binds image nodes to canonical assets and can clear safely', () => {
   const source = canonicalDeck.createCanonicalDeck({
     assets: [{ id: 'hero', type: 'image', src: '/images/hero.png' }],

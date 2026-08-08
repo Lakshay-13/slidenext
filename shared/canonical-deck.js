@@ -148,10 +148,16 @@
 
     const assetIndex = deck.assets.findIndex((asset) => asset && asset.id === normalizedAssetId);
     if (assetIndex < 0) return null;
+    const referencesAssetId = (value) => normalizeString(value).trim() === normalizedAssetId;
     const nodeReferencesAsset = (nodes = []) => (Array.isArray(nodes) ? nodes : []).some((node) => {
       if (!node || typeof node !== 'object') return false;
-      return node.assetId === normalizedAssetId
-        || node.backgroundAssetId === normalizedAssetId
+      const attributes = asPlainObject(node.attributes);
+      return referencesAssetId(node.assetId)
+        || referencesAssetId(node.backgroundAssetId)
+        || referencesAssetId(attributes['data-asset-id'])
+        || referencesAssetId(attributes['data-asset'])
+        || referencesAssetId(attributes['data-background-asset-id'])
+        || referencesAssetId(attributes['data-background-asset'])
         || nodeReferencesAsset(node.children);
     });
     const slideReferencesAsset = (slide) => !!slide
