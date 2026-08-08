@@ -5334,32 +5334,20 @@
       const alignmentApi = typeof SlideNextStudioEditorAlignment !== 'undefined'
         ? SlideNextStudioEditorAlignment
         : null;
-      if (!alignmentApi) {
+      if (!alignmentApi || typeof alignmentApi.syncStudioAlignmentToolbarState !== 'function') {
         return false;
       }
       const motionActionState = buildMotionSelectionActionState(doc);
+      if (!Array.isArray(motionActionState.nudgeLayoutItems)) {
+        return false;
+      }
       const toolbarOptions = {
         documentRef: document,
         items: motionActionState.nudgeLayoutItems,
         isLocked: isElementLocked,
         canMutateDeck: () => !!motionActionState.slide && motionActionState.canNudge
       };
-      if (typeof alignmentApi.syncStudioAlignmentToolbarState === 'function'
-        && Array.isArray(motionActionState.nudgeLayoutItems)) {
-        return alignmentApi.syncStudioAlignmentToolbarState(toolbarOptions);
-      }
-      if (typeof alignmentApi.renderStudioAlignmentToolbarState !== 'function') {
-        return false;
-      }
-      const alignmentState = buildAlignmentActionState(doc);
-      const alignmentActionState = alignmentState.alignmentActionState;
-      return alignmentApi.renderStudioAlignmentToolbarState({
-          documentRef: document,
-          canAlign: alignmentActionState.canAlign,
-          selectionCount: Array.isArray(alignmentActionState.selection)
-            ? alignmentActionState.selection.length
-            : 0
-        });
+      return alignmentApi.syncStudioAlignmentToolbarState(toolbarOptions);
     }
 
     function updateStyleActionState(doc = getIframeDoc()) {
