@@ -960,13 +960,17 @@
         const tableFontFace = typeof tableStyle['font-family'] === 'string'
           ? tableStyle['font-family'].split(',')[0].trim().replace(/^['"]|['"]$/g, '')
           : '';
+        const tableCssFontSize = parseCssPx(tableStyle['font-size']);
+        const tableFontSize = tableCssFontSize === null
+          ? 11
+          : Math.max(6, tableCssFontSize * 0.75);
         context.slide.addTable(rows, {
           ...bounds,
           border: { type: 'solid', color: 'D1D5DB', pt: 0.75 },
           color: '000000',
           fill: 'FFFFFF',
           fontFace: tableFontFace || 'Aptos',
-          fontSize: 11,
+          fontSize: tableFontSize,
           margin: 0.04
         });
       }
