@@ -10,6 +10,7 @@ const layerOrderMutation = require('../shared/studio-editor-layer-order-mutation
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const layerOrderController = require('../shared/studio-editor-layer-order-controller.js');
+const layerController = require('../shared/studio-editor-layer-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -407,6 +408,7 @@ test('syncLayerOrderZIndexInput updates the z-index inspector only when a target
   const zIndexInput = { value: '' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
     document: {
       getElementById(id) {
         calls.push(['getElementById', id]);
@@ -832,6 +834,7 @@ test('arrangeElementLayer returns false when there is no live reorder target or 
 
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
     document: {
       getElementById(id) {
         if (id === 'elZIndex') {
@@ -913,6 +916,7 @@ test('arrangeElementLayer returns false and refreshes layer controls when the li
   const lockedTarget = { style: { zIndex: '5' } };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
     document: {
       getElementById(id) {
         calls.push(['getElementById', id]);
@@ -973,6 +977,7 @@ test('arrangeElementLayer returns true and tolerates a missing z-index input whe
   const target = { style: { zIndex: '9' } };
   const calls = [];
   const context = {
+    SlideNextStudioEditorLayerController: layerController,
     document: {
       getElementById(id) {
         calls.push(['getElementById', id]);

@@ -6754,43 +6754,18 @@
       const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
         ? SlideNextStudioEditorLayerController
         : null;
-      if (layerController && typeof layerController.arrangeStudioElementLayer === 'function') {
-        return layerController.arrangeStudioElementLayer({
-          action,
-          getSelectedElements: getLiveSelectedElements,
-          selectionHasLockedElements,
-          refreshLayerOrderUi,
-          reorderSlideLayers,
-          syncLayerOrderZIndexInput,
-          finalizeLayerOrderMutation
-        });
+      if (!layerController || typeof layerController.arrangeStudioElementLayer !== 'function') {
+        return false;
       }
-      const targets = getLiveSelectedElements();
-      if (targets.length === 0) {
-        return refreshLayerOrderUi();
-      }
-      if (selectionHasLockedElements(targets)) {
-        return refreshLayerOrderUi();
-      }
-      let transaction = null;
-      let canonicalDeck = null;
-      const didChange = reorderSlideLayers(action, targets, {
-        onTransaction(nextTransaction) {
-          transaction = nextTransaction;
-        },
-        onCanonicalDeck(nextCanonicalDeck) {
-          canonicalDeck = nextCanonicalDeck;
-        }
+      return layerController.arrangeStudioElementLayer({
+        action,
+        getSelectedElements: getLiveSelectedElements,
+        selectionHasLockedElements,
+        refreshLayerOrderUi,
+        reorderSlideLayers,
+        syncLayerOrderZIndexInput,
+        finalizeLayerOrderMutation
       });
-      if (!didChange) {
-        return refreshLayerOrderUi();
-      }
-      syncLayerOrderZIndexInput(targets[0]);
-      finalizeLayerOrderMutation('Auto: Rearranged Layers', {
-        transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
-      });
-      return true;
     }
 
     // Wallpaper / Background styles Tabs
