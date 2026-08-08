@@ -6753,19 +6753,23 @@
       const zoomView = typeof SlideNextStudioEditorZoom !== 'undefined'
         ? SlideNextStudioEditorZoom
         : null;
-      const zoomOptions = zoomView && typeof zoomView.getStudioZoomOptions === 'function'
-        ? zoomView.getStudioZoomOptions()
-        : [];
       let nextVal;
-      if (zoomView && typeof zoomView.resolveStudioZoomStep === 'function') {
+      if (zoomView && typeof zoomView.resolveStudioZoomControlStep === 'function') {
+        nextVal = zoomView.resolveStudioZoomControlStep({
+          documentRef: document,
+          direction: 'in',
+          zoomFactor
+        });
+      } else if (zoomView && typeof zoomView.resolveStudioZoomStep === 'function') {
         nextVal = zoomView.resolveStudioZoomStep({
           currentValue: select.value,
           direction: 'in',
           zoomFactor
         });
       } else {
-        nextVal = zoomOptions.length > 0 ? zoomOptions[0] : 1.0;
+        nextVal = 1.0;
       }
+      if (!Number.isFinite(nextVal)) return false;
       applyZoom(nextVal.toString());
       return true;
     }
@@ -6777,19 +6781,23 @@
       const zoomView = typeof SlideNextStudioEditorZoom !== 'undefined'
         ? SlideNextStudioEditorZoom
         : null;
-      const zoomOptions = zoomView && typeof zoomView.getStudioZoomOptions === 'function'
-        ? zoomView.getStudioZoomOptions()
-        : [];
       let nextVal;
-      if (zoomView && typeof zoomView.resolveStudioZoomStep === 'function') {
+      if (zoomView && typeof zoomView.resolveStudioZoomControlStep === 'function') {
+        nextVal = zoomView.resolveStudioZoomControlStep({
+          documentRef: document,
+          direction: 'out',
+          zoomFactor
+        });
+      } else if (zoomView && typeof zoomView.resolveStudioZoomStep === 'function') {
         nextVal = zoomView.resolveStudioZoomStep({
           currentValue: select.value,
           direction: 'out',
           zoomFactor
         });
       } else {
-        nextVal = zoomOptions.length > 0 ? zoomOptions[zoomOptions.length - 1] : 1.0;
+        nextVal = 1.0;
       }
+      if (!Number.isFinite(nextVal)) return false;
       applyZoom(nextVal.toString());
       return true;
     }

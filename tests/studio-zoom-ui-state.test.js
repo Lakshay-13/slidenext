@@ -50,6 +50,22 @@ test('shared zoom view resolves fit, unknown, and boundary steps deterministical
   }), 0.25);
 });
 
+test('shared zoom view resolves a control step from the document select', () => {
+  const select = { value: '1.0' };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'zoomSelect' ? select : null;
+    }
+  };
+
+  assert.equal(zoomView.resolveStudioZoomControlStep({
+    documentRef,
+    direction: 'in',
+    zoomFactor: 1
+  }), 1.05);
+  assert.equal(zoomView.resolveStudioZoomControlStep(), null);
+});
+
 test('applyZoom tolerates a missing zoom select while fitting the canvas', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyZoomSource = extractFunctionSource(
@@ -343,4 +359,47 @@ test('zoom helpers no-op safely when zoom readiness is disabled and still tolera
   assert.equal(context.zoomOut(), true);
   assert.equal(context.zoomSelectChange('1.2'), true);
   assert.equal(applyZoomCalls, 4);
+});
+
+test('zoomIn and zoomOut delegate step resolution to the shared zoom view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const zoomInSource = extractFunctionSource(
+    fileContent,
+    'function zoomIn() {',
+    '\n\n    function zoomOut() {'
+  );
+  const zoomOutSource = extractFunctionSource(
+    fileContent,
+    'function zoomOut() {',
+    '\n\n    function zoomSelectChange(val) {'
+  );
+  const select = { value: '1.0' };
+  const applied = [];
+  const context = {
+    document: {
+      getElementById(id) {
+        return id === 'zoomSelect' ? select : null;
+      }
+    },
+    SlideNextStudioEditorZoom: {
+      resolveStudioZoomControlStep(options) {
+        return options.direction === 'in' ? 1.05 : 0.95;
+      }
+    },
+    resolveCurrentStudioZoomActionState() {
+      return { canUseZoomControls: true };
+    },
+    applyZoom(value) {
+      applied.push(value);
+    },
+    zoomFactor: 1
+  };
+
+  vm.createContext(context);
+  vm.runInContext(zoomInSource, context);
+  vm.runInContext(zoomOutSource, context);
+
+  assert.equal(context.zoomIn(), true);
+  assert.equal(context.zoomOut(), true);
+  assert.deepEqual(applied, ['1.05', '0.95']);
 });

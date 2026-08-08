@@ -35,6 +35,19 @@
       : STUDIO_ZOOM_OPTIONS[Math.max(0, index - 1)];
   }
 
+  function resolveStudioZoomControlStep(options = {}) {
+    const documentRef = options.documentRef;
+    const select = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('zoomSelect')
+      : null;
+    if (!select) return null;
+    return resolveStudioZoomStep({
+      currentValue: select.value,
+      direction: options.direction,
+      zoomFactor: options.zoomFactor
+    });
+  }
+
   function applyStudioZoom(options = {}) {
     const documentRef = options.documentRef;
     const stage = documentRef && documentRef.getElementById('canvasStage');
@@ -73,5 +86,10 @@
     return { didApply: true, zoomFactor };
   }
 
-  return { getStudioZoomOptions, resolveStudioZoomStep, applyStudioZoom };
+  return {
+    getStudioZoomOptions,
+    resolveStudioZoomStep,
+    resolveStudioZoomControlStep,
+    applyStudioZoom
+  };
 });
