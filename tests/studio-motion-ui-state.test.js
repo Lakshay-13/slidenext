@@ -7,6 +7,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioNudge = require('../shared/studio-editor-nudge.js');
+const studioTransform = require('../shared/studio-editor-transform.js');
 const nudgeController = require('../shared/studio-editor-nudge-controller.js');
 const positionLayoutMutation = require('../shared/studio-editor-position-layout-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
@@ -45,6 +46,15 @@ function loadGetNudgeSelectionState(fileContent, context) {
     fileContent,
     'function getNudgeSelectionState(elements = selectedElements, doc = getIframeDoc()) {',
     '\n\n    function isElementHidden(el) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadGetTransformSelectionState(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function getTransformSelectionState(elements = selectedElements) {',
+    '\n\n    function selectionHasLockedElements(elements = selectedElements) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -131,6 +141,45 @@ test('getNudgeSelectionState prefers canonical hidden and locked state over stal
 
   assert.deepEqual(result.selection, [lockedElement]);
   assert.equal(result.canNudge, false);
+});
+
+test('getTransformSelectionState prefers canonical hidden and locked state over stale DOM state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = { id: 'iframe-doc' };
+  const hiddenElement = { id: 'hidden', isConnected: true };
+  const lockedElement = { id: 'locked', isConnected: true };
+  const canonicalNodes = new Map([
+    [hiddenElement, { visibility: { hidden: true, locked: false } }],
+    [lockedElement, { visibility: { hidden: false, locked: true } }]
+  ]);
+  const context = {
+    selectedElements: [hiddenElement, lockedElement],
+    SlideNextStudioEditorTransform: studioTransform,
+    getIframeDoc() {
+      return doc;
+    },
+    buildEditorCanonicalDeck(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return { kind: 'slidenext.deck' };
+    },
+    resolveEditorCanonicalNodeForElement(element) {
+      return canonicalNodes.get(element) || null;
+    },
+    isElementLocked() {
+      return false;
+    },
+    isElementHidden() {
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  loadGetTransformSelectionState(fileContent, context);
+
+  const result = context.getTransformSelectionState(undefined);
+
+  assert.deepEqual(result.selection, [lockedElement]);
+  assert.equal(result.canTransform, false);
 });
 
 test('buildMotionSelectionActionState resolves nudge geometry from the current doc and slide', () => {

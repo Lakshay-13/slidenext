@@ -5568,9 +5568,27 @@
     }
 
     function getTransformSelectionState(elements = selectedElements) {
+      let canonicalDeck = null;
+      if (typeof buildEditorCanonicalDeck === 'function') {
+        try {
+          canonicalDeck = buildEditorCanonicalDeck(getIframeDoc());
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      const readCanonicalVisibilityState = (element, property, fallbackReader) => {
+        if (canonicalDeck && typeof resolveEditorCanonicalNodeForElement === 'function') {
+          const canonicalNode = resolveEditorCanonicalNodeForElement(element, canonicalDeck);
+          const value = canonicalNode
+            && canonicalNode.visibility
+            && canonicalNode.visibility[property];
+          if (typeof value === 'boolean') return value;
+        }
+        return fallbackReader(element);
+      };
       return SlideNextStudioEditorTransform.buildStudioTransformSelectionState(elements, {
-        isLocked: isElementLocked,
-        isHidden: isElementHidden,
+        isLocked: (element) => readCanonicalVisibilityState(element, 'locked', isElementLocked),
+        isHidden: (element) => readCanonicalVisibilityState(element, 'hidden', isElementHidden),
         isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
       });
     }
