@@ -1393,6 +1393,7 @@
   <script src="/shared/studio-editor-navigation-sync.js"></script>
   <script src="/shared/studio-editor-ui-state.js"></script>
   <script src="/shared/studio-preview.js"></script>
+  <script src="/shared/studio-editor-preview-controller.js"></script>
   <script src="/shared/studio-pdf-export.js"></script>
   <script src="/shared/studio-pptx-export.js"></script>
   <script src="/shared/studio-editor-source.js"></script>
@@ -1487,6 +1488,20 @@
           },
           resolveSourcePath: () => currentPresentationUrl,
           resolveFilename: () => (currentTitle || 'slidenext-presentation') + '.pptx'
+        })
+      : null;
+    const studioEditorPreviewController = typeof SlideNextStudioEditorPreviewController !== 'undefined'
+      && SlideNextStudioEditorPreviewController
+      && typeof SlideNextStudioEditorPreviewController.createStudioEditorPreviewController === 'function'
+      ? SlideNextStudioEditorPreviewController.createStudioEditorPreviewController({
+          previewApi: typeof SlideNextStudioPreview !== 'undefined'
+            ? SlideNextStudioPreview
+            : null,
+          documentRef: document,
+          resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
+          resolvePresentationUrl: () => currentPresentationUrl,
+          resolveActiveSlideIndex: () => getStudioActiveSlideIndex(),
+          buildPreviewHtml: () => buildEditorPreviewHtml()
         })
       : null;
     const studioEditorSourceController = typeof SlideNextStudioEditorSourceController !== 'undefined'
@@ -10095,14 +10110,9 @@
     }
 
     function launchPreview() {
-      if (!resolveCurrentStudioDeckReadyActionState().canLaunchPreview) return;
-      if (!currentPresentationUrl) return;
-      SlideNextStudioPreview.launchStudioPresentation({
-        document,
-        startSlideIdx: getStudioActiveSlideIndex(),
-        presentationUrl: currentPresentationUrl,
-        previewHtml: buildEditorPreviewHtml()
-      });
+      if (!studioEditorPreviewController
+        || typeof studioEditorPreviewController.launch !== 'function') return;
+      studioEditorPreviewController.launch();
     }
   </script>
 </body>

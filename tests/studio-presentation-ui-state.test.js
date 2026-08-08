@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const preview = require('../shared/studio-preview.js');
+const editorPreviewController = require('../shared/studio-editor-preview-controller.js');
 const deckView = require('../shared/studio-deck-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -32,6 +33,18 @@ function createEditorDeckViewSharedOptionsForTest(context, doc) {
       : '',
     isCanonicalDeck: (deck) => !!deck && Array.isArray(deck.slides)
   });
+}
+
+function attachEditorPreviewController(context) {
+  context.studioEditorPreviewController = editorPreviewController.createStudioEditorPreviewController({
+    previewApi: context.SlideNextStudioPreview || null,
+    documentRef: context.document || null,
+    resolveReadyState: () => context.resolveCurrentStudioDeckReadyActionState(),
+    resolvePresentationUrl: () => context.currentPresentationUrl,
+    resolveActiveSlideIndex: () => context.getStudioActiveSlideIndex(),
+    buildPreviewHtml: () => context.buildEditorPreviewHtml()
+  });
+  return context;
 }
 
 function createClassList(initialValues = []) {
@@ -194,6 +207,8 @@ test('launchPreview does not open preview flows when deck-ready state disables p
     }
   };
 
+  attachEditorPreviewController(context);
+
   vm.createContext(context);
   vm.runInContext(launchPreviewSource, context);
 
@@ -244,6 +259,8 @@ test('launchPreview delegates the launch-mode decision to the shared preview hel
       return 2;
     }
   };
+
+  attachEditorPreviewController(context);
 
   vm.createContext(context);
   vm.runInContext(launchPreviewSource, context);
