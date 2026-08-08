@@ -169,6 +169,8 @@ function trainEpoch(model, data) {
       element.className = 'editor-chart';
       if (typeof element.setAttribute === 'function') {
         element.setAttribute('data-chart-type', 'bar');
+        element.setAttribute('data-chart-labels', 'Q1,Q2,Q3,Q4');
+        element.setAttribute('data-chart-values', '42,68,55,86');
         element.setAttribute('role', 'img');
         element.setAttribute('aria-label', 'Bar chart placeholder');
       }
