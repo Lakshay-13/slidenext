@@ -1832,9 +1832,7 @@
           getRectOnSlide: (...args) => getRectOnSlide(...args),
           getNormalizedSlideLayerOrder: (...args) => getNormalizedSlideLayerOrder(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
-            preferLiveCanonicalDeck: false
-          }),
+          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           getEditorSlideId: (...args) => getEditorSlideId(...args),
           applyGroupMutation: (...args) => applyEditorGroupMutationWithTransaction(...args),
           applyUngroupMutation: (...args) => applyEditorUngroupMutationWithTransaction(...args),
