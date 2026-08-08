@@ -95,6 +95,38 @@ test('block mutations fall back when the live canonical baseline is invalid', ()
   assert.equal(didBuildFromDocument, true);
 });
 
+test('block mutations require strict canonical baseline validation', () => {
+  const fallbackDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', text: 'Fallback' }] }]
+  });
+  let didUseFallback = false;
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    isCanonicalDeck: (value) => (
+      value
+        && value.kind === 'slidenext.deck'
+        && Array.isArray(value.slides)
+        ? true
+        : 1
+    )
+  };
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    getCanonicalDeck: () => {
+      didUseFallback = true;
+      return fallbackDeck;
+    },
+    getActiveSlideId: () => 'slide-1',
+    getSelectedNodeIds: () => ['node-1']
+  });
+
+  const result = controller.saveSelection({ id: 'strict-block', name: 'Strict Block' });
+
+  assert.equal(result.blocks[0].id, 'strict-block');
+  assert.equal(didUseFallback, true);
+});
+
 test('block controller fails closed when selection or dependencies are unavailable', () => {
   const controller = blockController.createStudioEditorBlockController({
     canonicalDeckApi: canonicalDeck,
