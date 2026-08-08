@@ -1322,6 +1322,15 @@
     let pendingEditorTransaction = null;
     let wallpaperTab = 'solid';
     let studioEditorSessionToken = 0;
+    const DRAG_START_THRESHOLD_PX = (
+      typeof SlideNextStudioEditorTransform !== 'undefined'
+      && Number.isFinite(SlideNextStudioEditorTransform.DEFAULT_DRAG_START_THRESHOLD_PX)
+    )
+      ? SlideNextStudioEditorTransform.DEFAULT_DRAG_START_THRESHOLD_PX
+      : 4;
+    const SNAP_THRESHOLD_PX = 12;
+    const MIN_ELEMENT_SIZE_PX = 24;
+    const DRAG_OVERFLOW_MARGIN_PX = 280;
     const presentationDashboardController = typeof SlideNextPresentationDashboardController !== 'undefined'
       && SlideNextPresentationDashboardController
       && typeof SlideNextPresentationDashboardController.createPresentationDashboardController === 'function'
@@ -2063,18 +2072,9 @@
     let deckActiveSlideSyncTimer = null;
     let preserveSelectionOnNextActiveSlideSync = false;
     let isGridSnapEnabled = false;
-    const DRAG_START_THRESHOLD_PX = (
-      typeof SlideNextStudioEditorTransform !== 'undefined'
-      && Number.isFinite(SlideNextStudioEditorTransform.DEFAULT_DRAG_START_THRESHOLD_PX)
-    )
-      ? SlideNextStudioEditorTransform.DEFAULT_DRAG_START_THRESHOLD_PX
-      : 4;
-    const SNAP_THRESHOLD_PX = 12;
     const GRID_SNAP_SIZE_PX = 20;
     const DUPLICATE_OFFSET_PX = 24;
-    const MIN_ELEMENT_SIZE_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
-    const DRAG_OVERFLOW_MARGIN_PX = 280;
     const EDITOR_CHROME_NODE_IDS = ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud'];
     const EDITOR_ELEMENT_ID_ATTR = 'data-editor-id';
     const EDITOR_SLIDE_ID_ATTR = 'data-slide-id';

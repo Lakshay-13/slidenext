@@ -90,6 +90,26 @@ function installTransformController(context) {
     });
 }
 
+test('transform controller thresholds are initialized before controller construction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const controllerStart = fileContent.indexOf('const studioEditorTransformController =');
+  assert.notEqual(controllerStart, -1);
+
+  [
+    'const DRAG_START_THRESHOLD_PX =',
+    'const SNAP_THRESHOLD_PX =',
+    'const MIN_ELEMENT_SIZE_PX =',
+    'const DRAG_OVERFLOW_MARGIN_PX ='
+  ].forEach((declaration) => {
+    const declarationStart = fileContent.indexOf(declaration);
+    assert.notEqual(declarationStart, -1, `Missing declaration: ${declaration}`);
+    assert.ok(
+      declarationStart < controllerStart,
+      `${declaration} must be initialized before the transform controller`
+    );
+  });
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(
