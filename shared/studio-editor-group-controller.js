@@ -48,6 +48,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const getEditorSlideId = typeof options.getEditorSlideId === 'function'
       ? options.getEditorSlideId
       : (slide) => slide && slide.id;
@@ -77,6 +80,7 @@
         ? canonicalGroupApi.createStudioCanonicalGroupMutationBuilders({
             canonicalDeckApi,
             buildCanonicalDeck,
+            buildCanonicalDeckBaseline,
             importElementToCanonicalNode
           })
         : null;
@@ -97,6 +101,7 @@
         ? canonicalGroupApi.createStudioCanonicalUngroupMutationBuilders({
             canonicalDeckApi,
             buildCanonicalDeck,
+            buildCanonicalDeckBaseline,
             importElementToCanonicalNode
           })
         : null;
@@ -136,7 +141,7 @@
         && canonicalDeckApi
         && typeof canonicalDeckApi.groupCanonicalNodes === 'function'
         && importElementToCanonicalNode
-        && buildCanonicalDeck) {
+        && (buildCanonicalDeckBaseline || buildCanonicalDeck)) {
         canonicalSlideId = getEditorSlideId(slide);
         canonicalParentId = parent === slide ? '' : getGroupElementId(parent);
         canonicalSelectedNodeIds = orderedSelection
@@ -217,7 +222,7 @@
         && canonicalDeckApi
         && typeof canonicalDeckApi.ungroupCanonicalNodes === 'function'
         && importElementToCanonicalNode
-        && buildCanonicalDeck) {
+        && (buildCanonicalDeckBaseline || buildCanonicalDeck)) {
         const canonicalSlideId = getEditorSlideId(ungroupActionState.slide);
         const groupIds = new Set();
         let canBuildCanonicalSidecar = !!canonicalSlideId;

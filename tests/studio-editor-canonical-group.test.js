@@ -53,9 +53,12 @@ test('buildStudioCanonicalGroupBaseline builds from the source document', () => 
   let builtFromDocument = null;
   const result = canonicalGroup.buildStudioCanonicalGroupBaseline({
     canonicalDeckApi: canonicalDeck,
-    buildCanonicalDeck(documentRef) {
+    buildCanonicalDeckBaseline(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
+    },
+    buildCanonicalDeck() {
+      throw new Error('DOM mutation builder should not provide the baseline');
     },
     sourceDocument
   });
@@ -129,9 +132,12 @@ test('buildStudioCanonicalUngroupBaseline builds from the source document', () =
   let builtFromDocument = null;
   const result = canonicalGroup.buildStudioCanonicalUngroupBaseline({
     canonicalDeckApi: canonicalDeck,
-    buildCanonicalDeck(documentRef) {
+    buildCanonicalDeckBaseline(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
+    },
+    buildCanonicalDeck() {
+      throw new Error('DOM mutation builder should not provide the baseline');
     },
     sourceDocument
   });

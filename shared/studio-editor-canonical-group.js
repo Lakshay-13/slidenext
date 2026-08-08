@@ -15,9 +15,11 @@
       && typeof canonicalDeckApi.groupCanonicalNodes === 'function'
       ? canonicalDeckApi.groupCanonicalNodes
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : null;
     if (!groupCanonicalNodes || !buildCanonicalDeck) return null;
     return buildCanonicalDeck(options.sourceDocument);
   }
@@ -30,9 +32,11 @@
       && typeof canonicalDeckApi.ungroupCanonicalNodes === 'function'
       ? canonicalDeckApi.ungroupCanonicalNodes
       : null;
-    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck
-      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : null;
     if (!ungroupCanonicalNodes || !buildCanonicalDeck) return null;
     return buildCanonicalDeck(options.sourceDocument);
   }
@@ -86,6 +90,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const importElementToCanonicalNode = typeof options.importElementToCanonicalNode === 'function'
       ? options.importElementToCanonicalNode
       : null;
@@ -93,7 +100,8 @@
       buildStudioCanonicalGroupBaseline({
         ...groupOptions,
         canonicalDeckApi,
-        buildCanonicalDeck
+        buildCanonicalDeck,
+        buildCanonicalDeckBaseline
       })
     );
     const buildCanonicalGroupDeck = (groupOptions = {}) => {
@@ -107,6 +115,7 @@
         ...groupOptions,
         canonicalDeckApi,
         buildCanonicalDeck,
+        buildCanonicalDeckBaseline,
         importElementToCanonicalNode,
         canonicalDeckBeforeMutation
       });
@@ -172,6 +181,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const importElementToCanonicalNode = typeof options.importElementToCanonicalNode === 'function'
       ? options.importElementToCanonicalNode
       : null;
@@ -179,7 +191,8 @@
       buildStudioCanonicalUngroupBaseline({
         ...ungroupOptions,
         canonicalDeckApi,
-        buildCanonicalDeck
+        buildCanonicalDeck,
+        buildCanonicalDeckBaseline
       })
     );
     const buildCanonicalUngroupDeck = (ungroupOptions = {}) => {
@@ -193,6 +206,7 @@
         ...ungroupOptions,
         canonicalDeckApi,
         buildCanonicalDeck,
+        buildCanonicalDeckBaseline,
         importElementToCanonicalNode,
         canonicalDeckBeforeMutation
       });
