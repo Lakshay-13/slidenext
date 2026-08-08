@@ -52,9 +52,13 @@
       }
 
       if (buildOptions.preferLiveCanonicalDeck !== false && doc) {
-        const liveCanonicalDeck = resolveLiveCanonicalDeck(doc, buildOptions);
-        if (isCanonicalDeck(liveCanonicalDeck)) {
-          return liveCanonicalDeck;
+        try {
+          const liveCanonicalDeck = resolveLiveCanonicalDeck(doc, buildOptions);
+          if (isCanonicalDeck(liveCanonicalDeck)) {
+            return liveCanonicalDeck;
+          }
+        } catch (error) {
+          // Continue through stored and DOM-derived fallback sources.
         }
       }
 

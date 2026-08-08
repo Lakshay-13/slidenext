@@ -56,6 +56,20 @@ test('canonical deck builder rejects invalid overrides and live models before fa
   assert.equal(builder(documentRef, { canonicalDeckOverride: invalidOverride }), rebuiltDeck);
 });
 
+test('canonical deck builder falls back when live state resolution throws', () => {
+  const rebuiltDeck = createDeck('rebuilt');
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    resolveLiveCanonicalDeck() {
+      throw new Error('editor frame was replaced');
+    },
+    buildStudioCanonicalDeck() {
+      return rebuiltDeck;
+    }
+  });
+
+  assert.equal(builder({ id: 'document' }), rebuiltDeck);
+});
+
 test('canonical deck builder rejects invalid DOM adapter output before using the stored baseline', () => {
   const storedDeck = createDeck('stored');
   const invalidDomDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
