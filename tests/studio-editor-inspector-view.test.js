@@ -343,6 +343,28 @@ test('syncStudioInspectorTypographyControls prefers canonical font-family data',
   assert.equal(familySelect.value, "'Source Sans 3', sans-serif");
 });
 
+test('syncStudioInspectorTypographyControls prefers canonical text color data', () => {
+  const textColorInput = { value: '' };
+
+  assert.equal(inspectorView.syncStudioInspectorTypographyControls({
+    documentRef: {
+      getElementById(id) {
+        return id === 'elTextColor' ? textColorInput : null;
+      }
+    },
+    primaryElement: { style: { color: 'rgb(1, 2, 3)' } },
+    canonicalNode: { style: 'color: #112233;' },
+    computedStyles: {
+      fontFamily: 'sans-serif',
+      color: 'rgb(255, 255, 255)'
+    },
+    rgbToHex(value) {
+      return value;
+    }
+  }), true);
+  assert.equal(textColorInput.value, '#112233');
+});
+
 test('syncStudioInspectorBorderControls applies border values for shape-like selections', () => {
   const classList = createClassList();
   classList.add('editor-shape');
