@@ -7674,21 +7674,25 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistableDeckStateCapturerAdapter
         : null;
       if (createStudioEditorPersistableDeckStateCapturerAdapter) {
-        const adapter = createStudioEditorPersistableDeckStateCapturerAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          capturePersistableDeckState: typeof captureOptions.captureStudioPersistableDeckState === 'function'
-            ? captureOptions.captureStudioPersistableDeckState
-            : null,
-          captureBuildState: captureEditorPersistableDeckBuildState,
-          buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
-          }),
-          resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
-        });
-        const capturedState = typeof adapter === 'function'
-          ? adapter(doc, { canonicalDeck: providedCanonicalDeck })
+        if (typeof captureEditorPersistableDeckState.adapter !== 'function') {
+          captureEditorPersistableDeckState.adapter = createStudioEditorPersistableDeckStateCapturerAdapter({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null
+          });
+        }
+        const capturedState = typeof captureEditorPersistableDeckState.adapter === 'function'
+          ? captureEditorPersistableDeckState.adapter(doc, {
+              canonicalDeck: providedCanonicalDeck,
+              captureStudioPersistableDeckState: typeof captureOptions.captureStudioPersistableDeckState === 'function'
+                ? captureOptions.captureStudioPersistableDeckState
+                : null,
+              captureBuildState: captureEditorPersistableDeckBuildState,
+              buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
+                buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+              }),
+              resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
+            })
           : null;
         if (capturedState !== null && typeof capturedState !== 'undefined') {
           return capturedState;

@@ -447,6 +447,60 @@ test('captureEditorPersistableDeckState delegates capture orchestration through 
   assert.equal(typeof delegatedArgs.resolvePlaybackState, 'function');
 });
 
+test('captureEditorPersistableDeckState creates the shared capture adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  let adapterCreateCalls = 0;
+  const capturedDocs = [];
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorPersistableDeckStateCapturerAdapter(options) {
+        adapterCreateCalls += 1;
+        return (doc, captureOptions) => {
+          capturedDocs.push([doc, captureOptions]);
+          return {
+            cleanHtml: '<html>persisted</html>',
+            canonicalDeck: captureOptions.buildCanonicalDeck(),
+            playbackState: captureOptions.resolvePlaybackState(canonicalDeck)
+          };
+        };
+      }
+    },
+    resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
+      return nextCanonicalDeck || options.buildCanonicalDeck();
+    },
+    buildEditorCanonicalDeck(nextDoc) {
+      assert.equal(nextDoc, iframeDoc);
+      return canonicalDeck;
+    },
+    capturePersistedDeckPlaybackState(doc, nextCanonicalDeck) {
+      assert.equal(doc, iframeDoc);
+      assert.equal(nextCanonicalDeck, canonicalDeck);
+      return { activeSlideIds: ['slide-1'] };
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckState(fileContent, context);
+
+  context.captureEditorPersistableDeckState();
+  context.captureEditorPersistableDeckState();
+
+  assert.equal(adapterCreateCalls, 1);
+  assert.equal(capturedDocs.length, 2);
+  assert.equal(capturedDocs[0][0], iframeDoc);
+  assert.equal(capturedDocs[1][0], iframeDoc);
+});
+
 test('captureEditorPersistableDeckState reuses the local captured persistable deck-state resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
