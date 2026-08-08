@@ -14,6 +14,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
     const syncSelectionOverlay = typeof options.syncSelectionOverlay === 'function'
       ? options.syncSelectionOverlay
       : null;
@@ -37,6 +40,7 @@
       return finalizeStudioEditorDeckMutation(versionLabel, mutationOptions, {
         mutationApi,
         buildCanonicalDeck,
+        isCanonicalDeck,
         syncSelectionOverlay,
         generateThumbnails,
         updateLayersList,
@@ -53,6 +57,9 @@
       : null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
+      : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
       : null;
     const syncSelectionOverlay = typeof options.syncSelectionOverlay === 'function'
       ? options.syncSelectionOverlay
@@ -77,6 +84,7 @@
         versionLabel,
         mutationOptions,
         ...(buildCanonicalDeck ? { buildCanonicalDeck } : {}),
+        ...(isCanonicalDeck ? { isCanonicalDeck } : {}),
         syncSelectionOverlay,
         generateThumbnails,
         updateLayersList,

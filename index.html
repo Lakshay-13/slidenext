@@ -2638,6 +2638,7 @@
             ? SlideNextStudioEditorMutation
             : null,
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          isCanonicalDeck: getEditorCanonicalDeckValidator(),
           syncSelectionOverlay: typeof syncSelectionOverlay === 'function' ? syncSelectionOverlay : null,
           generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
           updateLayersList: typeof updateLayersList === 'function' ? updateLayersList : null,
@@ -6288,6 +6289,9 @@
           : null,
         buildCanonicalDeck: typeof buildEditorMutationCanonicalDeck === 'function'
           ? (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc)
+          : null,
+        isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+          ? getEditorCanonicalDeckValidator()
           : null,
         syncSelectionOverlay: typeof syncSelectionOverlay === 'function' ? syncSelectionOverlay : null,
         generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,

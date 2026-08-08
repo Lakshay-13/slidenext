@@ -7,12 +7,30 @@
     root.SlideNextStudioEditorMutation = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function isValidStudioCanonicalDeck(value, validator) {
+    if (!value) return false;
+    if (typeof validator !== 'function') return true;
+    try {
+      return validator(value) === true;
+    } catch (err) {
+      return false;
+    }
+  }
+
   function resolveStudioMutationOptions(mutationOptions = {}, options = {}) {
     const sourceOptions = mutationOptions && typeof mutationOptions === 'object'
       ? mutationOptions
       : {};
-    if (Object.prototype.hasOwnProperty.call(sourceOptions, 'canonicalDeck')
-      || typeof options.buildCanonicalDeck !== 'function') {
+    const isCanonicalDeck = options.isCanonicalDeck;
+    const hasCanonicalDeck = Object.prototype.hasOwnProperty.call(sourceOptions, 'canonicalDeck');
+    if (hasCanonicalDeck) {
+      if (isValidStudioCanonicalDeck(sourceOptions.canonicalDeck, isCanonicalDeck)) {
+        return sourceOptions;
+      }
+      const { canonicalDeck, ...optionsWithoutCanonicalDeck } = sourceOptions;
+      return optionsWithoutCanonicalDeck;
+    }
+    if (typeof options.buildCanonicalDeck !== 'function') {
       return sourceOptions;
     }
 
@@ -23,7 +41,7 @@
       // Do not interrupt mutation persistence when a legacy deck cannot import.
       canonicalDeck = null;
     }
-    return canonicalDeck
+    return isValidStudioCanonicalDeck(canonicalDeck, isCanonicalDeck)
       ? { ...sourceOptions, canonicalDeck }
       : sourceOptions;
   }
@@ -50,10 +68,14 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
 
     return function finalizeStudioMutation(versionLabel, mutationOptions = {}) {
       const resolvedMutationOptions = resolveStudioMutationOptions(mutationOptions, {
-        buildCanonicalDeck
+        buildCanonicalDeck,
+        isCanonicalDeck
       });
       if (resolvedMutationOptions.syncSelectionOverlay) {
         syncSelectionOverlay();

@@ -99,6 +99,31 @@ test('createStudioMutationFinalizer preserves an optional canonical deck history
   assert.deepEqual(historyArgs, [false, { id: 'tx-canonical' }, canonicalDeck]);
 });
 
+test('createStudioMutationFinalizer drops malformed canonical deck sidecars', () => {
+  const historyArgs = [];
+  const isCanonicalDeck = (value) => (
+    !!value && value.kind === 'slidenext.deck' && Array.isArray(value.slides)
+  );
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    isCanonicalDeck,
+    buildCanonicalDeck: () => ({ invalid: true }),
+    saveHistoryState(...args) {
+      historyArgs.push(args);
+    }
+  });
+
+  finalizeMutation('Auto: Rebuilt', { transaction: { id: 'tx-rebuilt' } });
+  finalizeMutation('Auto: Explicit', {
+    transaction: { id: 'tx-explicit' },
+    canonicalDeck: { invalid: true }
+  });
+
+  assert.deepEqual(historyArgs, [
+    [false, { id: 'tx-rebuilt' }],
+    [false, { id: 'tx-explicit' }]
+  ]);
+});
+
 test('createStudioMutationFinalizer resolves a canonical deck only when the mutation has no sidecar', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
