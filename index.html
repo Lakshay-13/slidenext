@@ -5408,7 +5408,7 @@
           buildLayerOrderSelectionActionState
         });
       }
-      if (!layerOrderApi) {
+      if (!layerOrderApi || typeof layerOrderApi.syncStudioLayerOrderToolbarState !== 'function') {
         return false;
       }
       const buildZIndexMutationPlan = (elements, options = {}) => {
@@ -5420,59 +5420,13 @@
       const slide = getActiveSlide(doc);
       const canMutateDeck = () => !!slide;
       const orderedElements = slide ? getNormalizedSlideLayerOrder(slide) : [];
-      const syncStudioLayerOrderToolbarState = (
-        typeof layerOrderApi.syncStudioLayerOrderToolbarState === 'function'
-      )
-        ? layerOrderApi.syncStudioLayerOrderToolbarState
-        : null;
-      if (syncStudioLayerOrderToolbarState) {
-        return syncStudioLayerOrderToolbarState({
-          documentRef: document,
-          elements: selectedElements,
-          orderedElements,
-          isLocked: isElementLocked,
-          canMutateDeck,
-          buildZIndexMutationPlan
-        });
-      }
-      if (typeof layerOrderApi.renderStudioLayerOrderToolbarState !== 'function') {
-        return false;
-      }
-      const buildStudioLayerOrderToolbarState = (
-        typeof layerOrderApi.buildStudioLayerOrderToolbarState === 'function'
-      )
-        ? layerOrderApi.buildStudioLayerOrderToolbarState
-        : null;
-      const layerOrderActionState = buildStudioLayerOrderToolbarState
-        ? buildStudioLayerOrderToolbarState(selectedElements, {
-          orderedElements,
-          isLocked: isElementLocked,
-          canMutateDeck,
-          buildZIndexMutationPlan
-        })
-        : buildLayerOrderSelectionActionState(selectedElements, {
-          slide,
-          orderedElements,
-          canMutateDeck
-        });
-      let zIndexCanApply;
-      const zIndexInput = document.getElementById('elZIndex');
-      if (zIndexInput) {
-        const controlStates = layerOrderActionState.controlStates || null;
-        if (controlStates && Object.prototype.hasOwnProperty.call(controlStates, 'elZIndex')) {
-          zIndexCanApply = !!controlStates.elZIndex;
-        } else {
-          const zIndexMutationPlan = buildZIndexMutationPlan(selectedElements, {
-            isLocked: isElementLocked,
-            canMutateDeck
-          });
-          zIndexCanApply = !!zIndexMutationPlan.canApply;
-        }
-      }
-      return layerOrderApi.renderStudioLayerOrderToolbarState({
+      return layerOrderApi.syncStudioLayerOrderToolbarState({
         documentRef: document,
-        actionState: layerOrderActionState,
-        zIndexCanApply
+        elements: selectedElements,
+        orderedElements,
+        isLocked: isElementLocked,
+        canMutateDeck,
+        buildZIndexMutationPlan
       });
     }
 

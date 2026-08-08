@@ -500,6 +500,15 @@ test('updateLayerOrderActionState enables layer order controls only when the ifr
           canSendBackward: canReorder
         };
       },
+      syncStudioLayerOrderToolbarState(options = {}) {
+        const actionState = this.buildStudioLayerOrderActionState(options.elements, options);
+        const zIndexMutationPlan = options.buildZIndexMutationPlan(options.elements, options);
+        return layerOrder.renderStudioLayerOrderToolbarState({
+          documentRef: options.documentRef,
+          actionState,
+          zIndexCanApply: !!zIndexMutationPlan.canApply
+        });
+      },
       renderStudioLayerOrderToolbarState(options) {
         return layerOrder.renderStudioLayerOrderToolbarState(options);
       }
@@ -680,6 +689,13 @@ test('updateLayerOrderActionState reuses the shared layer-order toolbar helper w
             elZIndex: true
           }
         };
+      },
+      syncStudioLayerOrderToolbarState(options = {}) {
+        const actionState = this.buildStudioLayerOrderToolbarState(options.elements, options);
+        return layerOrder.renderStudioLayerOrderToolbarState({
+          documentRef: options.documentRef,
+          actionState
+        });
       },
       renderStudioLayerOrderToolbarState(options) {
         return layerOrder.renderStudioLayerOrderToolbarState(options);
