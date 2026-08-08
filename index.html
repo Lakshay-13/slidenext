@@ -1221,6 +1221,7 @@
   <script src="/shared/studio-editor-canonical-slide.js"></script>
   <script src="/shared/studio-editor-canonical-metadata.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
+  <script src="/shared/studio-editor-nudge-controller.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-group-mutation.js"></script>
@@ -1652,6 +1653,27 @@
           activateSlideByIndex: (index, options) => setActiveSlide(index, options),
           deleteSlideByIndex: (index) => deleteSlideNode(index),
           reorderSlidesByIndex: (fromIdx, toIdx) => reorderSlides(fromIdx, toIdx)
+        })
+      : null;
+    const studioEditorNudgeController = typeof SlideNextStudioEditorNudgeController !== 'undefined'
+      && SlideNextStudioEditorNudgeController
+      && typeof SlideNextStudioEditorNudgeController.createStudioEditorNudgeController === 'function'
+      ? SlideNextStudioEditorNudgeController.createStudioEditorNudgeController({
+          nudgeApi: typeof SlideNextStudioEditorNudge !== 'undefined'
+            ? SlideNextStudioEditorNudge
+            : null,
+          canonicalLayoutApi: typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
+            ? SlideNextStudioEditorCanonicalLayout
+            : null,
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          buildMotionSelectionActionState: () => buildMotionSelectionActionState(),
+          updateMotionActionState: (...args) => updateMotionActionState(...args),
+          assignElementId: (...args) => assignEditorElementId(...args),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
+          finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
         })
       : null;
     const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
@@ -6010,62 +6032,10 @@
     }
 
     function nudgeSelectedElements(dx, dy) {
-      const motionActionState = buildMotionSelectionActionState();
-      const { doc, nudgeLayoutItems, slideBounds } = motionActionState;
-      if (!motionActionState.canNudge) {
-        updateMotionActionState(doc);
-        return false;
-      }
-      const nudgeResult = SlideNextStudioEditorNudge.buildStudioNudgedLayout(nudgeLayoutItems, { dx, dy }, slideBounds);
-      if (!nudgeResult.didChange) return false;
-      const nudgeApi = typeof SlideNextStudioEditorNudge !== 'undefined'
-        ? SlideNextStudioEditorNudge
-        : null;
-      const getNudgeElementId = (element) => {
-        if (typeof assignEditorElementId === 'function') {
-          return assignEditorElementId(element);
-        }
-        return element && element.dataset && element.dataset.editorId;
-      };
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const canonicalLayoutApi = typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
-        ? SlideNextStudioEditorCanonicalLayout
-        : null;
-      const buildCanonicalLayoutMutation = canonicalLayoutApi
-        && typeof canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder === 'function'
-        ? canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder({
-            canonicalDeckApi,
-            buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
-              : null
-          })
-        : null;
-      const canonicalDeck = buildCanonicalLayoutMutation
-        ? buildCanonicalLayoutMutation({
-            sourceDocument: doc,
-            nextItems: nudgeResult.nextItems,
-            getElementId: getNudgeElementId
-          })
-        : null;
-      const applyStudioNudgedLayout = nudgeApi
-        && typeof nudgeApi.applyStudioNudgedLayout === 'function'
-        ? nudgeApi.applyStudioNudgedLayout
-        : null;
-      const mutation = applyEditorPositionLayoutWithTransaction(nudgeResult.nextItems, {
-        getElementId: getNudgeElementId,
-        applyLayout: applyStudioNudgedLayout
-      });
-      if (!mutation.didApply) return false;
-      finalizeEditorDeckMutation('Auto: Nudged Element', {
-        syncSelectionOverlay: true,
-        refreshThumbnails: false,
-        debounceHistory: true,
-        transaction: mutation.transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
-      });
-      return true;
+      return studioEditorNudgeController
+        && typeof studioEditorNudgeController.nudge === 'function'
+        ? studioEditorNudgeController.nudge(dx, dy)
+        : false;
     }
 
     function applyEditorPositionLayoutWithTransaction(nextItems, options = {}) {

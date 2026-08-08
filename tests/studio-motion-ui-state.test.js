@@ -7,6 +7,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioNudge = require('../shared/studio-editor-nudge.js');
+const nudgeController = require('../shared/studio-editor-nudge-controller.js');
 const positionLayoutMutation = require('../shared/studio-editor-position-layout-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 
@@ -50,6 +51,20 @@ function loadPositionMutationHelper(fileContent, context) {
   }
   context.SlideNextStudioEditorPositionLayoutMutation = positionLayoutMutation;
   vm.runInContext(helperSource, context);
+}
+
+function installNudgeController(context) {
+  context.studioEditorNudgeController = nudgeController.createStudioEditorNudgeController({
+    nudgeApi: context.SlideNextStudioEditorNudge,
+    canonicalLayoutApi: context.SlideNextStudioEditorCanonicalLayout,
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    buildMotionSelectionActionState: context.buildMotionSelectionActionState,
+    updateMotionActionState: context.updateMotionActionState,
+    assignElementId: context.assignEditorElementId,
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    applyPositionLayout: context.applyEditorPositionLayoutWithTransaction,
+    finalizeDeckMutation: context.finalizeEditorDeckMutation
+  });
 }
 
 function createControls() {
@@ -461,6 +476,7 @@ test('nudgeSelectedElements returns false and refreshes motion controls when sel
   loadBuildMotionSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadPositionMutationHelper(fileContent, context);
+  installNudgeController(context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
   assert.equal(context.nudgeSelectedElements(1, 0), false);
@@ -509,6 +525,7 @@ test('nudgeSelectedElements returns false and refreshes motion controls when nud
   loadBuildMotionSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadPositionMutationHelper(fileContent, context);
+  installNudgeController(context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
   assert.equal(context.nudgeSelectedElements(1, 0), false);
@@ -614,6 +631,7 @@ test('nudgeSelectedElements persists the moved selection through the shared muta
   loadBuildMotionSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadPositionMutationHelper(fileContent, context);
+  installNudgeController(context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
   assert.equal(context.nudgeSelectedElements(5, -3), true);
@@ -702,6 +720,7 @@ test('nudgeSelectedElements forwards an immutable canonical layout sidecar', () 
 
   vm.createContext(context);
   loadPositionMutationHelper(fileContent, context);
+  installNudgeController(context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
   assert.equal(context.nudgeSelectedElements(1, 1), true);
@@ -754,6 +773,7 @@ test('nudgeSelectedElements delegates position application to the shared nudge m
 
   vm.createContext(context);
   loadPositionMutationHelper(fileContent, context);
+  installNudgeController(context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
   assert.equal(context.nudgeSelectedElements(1, 1), true);
@@ -809,6 +829,7 @@ test('nudgeSelectedElements forwards a reversible style transaction to history',
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadPositionMutationHelper(fileContent, context);
+  installNudgeController(context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
   assert.equal(context.nudgeSelectedElements(1, 1), true);
