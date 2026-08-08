@@ -4843,9 +4843,15 @@
 
     function hideDragHud() {
       const doc = getIframeDoc();
-      const slide = getActiveSlide(doc);
-      if (!slide) return;
-      SlideNextStudioEditorOverlay.hideStudioDragHud(slide, getEditorOverlayOptions());
+      if (!SlideNextStudioEditorOverlay
+        || typeof SlideNextStudioEditorOverlay.hideStudioDragHudForActiveSlide !== 'function') {
+        return false;
+      }
+      return SlideNextStudioEditorOverlay.hideStudioDragHudForActiveSlide({
+        documentRef: doc,
+        getActiveSlide,
+        ...getEditorOverlayOptions()
+      });
     }
 
     function updateDragHud(bounds) {

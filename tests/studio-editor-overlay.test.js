@@ -304,3 +304,34 @@ test('clearStudioGuidesForActiveSlide resolves the current slide before clearing
   assert.equal(result, true);
   assert.equal(guidesLayer.innerHTML, '');
 });
+
+test('hideStudioDragHudForActiveSlide resolves the current slide before hiding drag feedback', () => {
+  const classes = new Set(['visible']);
+  const hud = {
+    classList: {
+      remove(value) {
+        classes.delete(value);
+      }
+    }
+  };
+  const slide = {
+    querySelector(selector) {
+      assert.equal(selector, '#editorDragHud');
+      return hud;
+    }
+  };
+  const documentRef = { id: 'iframe-document' };
+  let resolvedDocument = null;
+
+  const result = overlayView.hideStudioDragHudForActiveSlide({
+    documentRef,
+    getActiveSlide(doc) {
+      resolvedDocument = doc;
+      return slide;
+    }
+  });
+
+  assert.equal(resolvedDocument, documentRef);
+  assert.equal(result, true);
+  assert.equal(classes.has('visible'), false);
+});

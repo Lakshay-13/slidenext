@@ -81,6 +81,17 @@
     if (hud) hud.classList.remove(visibleClassName);
   }
 
+  function hideStudioDragHudForActiveSlide(options = {}) {
+    const documentRef = options.documentRef;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const slide = documentRef ? getActiveSlide(documentRef) : null;
+    if (!documentRef || !slide) return false;
+    hideStudioDragHud(slide, options);
+    return true;
+  }
+
   function updateStudioDragHud(doc, slide, bounds, options = {}) {
     if (!doc || !slide || !bounds) return null;
     const visibleClassName = options.visibleClassName || 'visible';
@@ -255,6 +266,7 @@
     clearStudioGuides,
     clearStudioGuidesForActiveSlide,
     hideStudioDragHud,
+    hideStudioDragHudForActiveSlide,
     updateStudioDragHud,
     updateStudioDragHudForActiveSlide,
     renderStudioGuides,
