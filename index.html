@@ -1923,6 +1923,12 @@
           canonicalGroupApi: typeof SlideNextStudioEditorCanonicalGroup !== 'undefined'
             ? SlideNextStudioEditorCanonicalGroup
             : null,
+          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+            sourceDoc || getIframeDoc(),
+            studioEditorSessionToken
+          ),
           deckImportApi: typeof SlideNextDeckImport !== 'undefined'
             ? SlideNextDeckImport
             : null,

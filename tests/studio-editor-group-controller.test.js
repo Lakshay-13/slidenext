@@ -42,6 +42,67 @@ test('group controller commits grouped selection and finalizes the mutation', ()
   assert.deepEqual(calls[2][2].transaction, { id: 'tx' });
 });
 
+test('group controller forwards canonical baselines and commits the canonical sidecar', () => {
+  const slide = {
+    id: 'slide-1',
+    getBoundingClientRect() {
+      return { left: 0, top: 0, right: 100, bottom: 100 };
+    }
+  };
+  const first = { dataset: { editorId: 'node-1' } };
+  const second = { dataset: { editorId: 'node-2' } };
+  const group = { dataset: { editorId: 'group-1' } };
+  const baseline = { id: 'canonical-baseline' };
+  let baselineOptions = null;
+  let deckOptions = null;
+  let finalizedOptions = null;
+  const controller = groupController.createStudioEditorGroupController({
+    canonicalDeckApi: {
+      groupCanonicalNodes() {}
+    },
+    canonicalGroupApi: {
+      createStudioCanonicalGroupMutationBuilders() {
+        return {
+          buildCanonicalGroupBaseline(options) {
+            baselineOptions = options;
+            return baseline;
+          },
+          buildCanonicalGroupDeck(options) {
+            deckOptions = options;
+            return { id: 'canonical-sidecar' };
+          }
+        };
+      }
+    },
+    deckImportApi: {
+      importElementToCanonicalNode() {
+        return { id: 'group-1' };
+      }
+    },
+    buildCanonicalDeck: () => ({ id: 'mutation-builder' }),
+    buildCanonicalDeckBaseline: () => baseline,
+    getCanonicalDeckBaseline: () => baseline,
+    buildGroupSelectionActionState: () => ({
+      canGroup: true,
+      slide,
+      parent: slide,
+      selection: [first, second],
+      groupPlan: { bounds: { left: 10, top: 20 }, nextItems: [] }
+    }),
+    getIframeDoc: () => ({ id: 'doc' }),
+    getSlideMetrics: () => ({ scaleX: 1 }),
+    getRectOnSlide: (rect) => rect,
+    getNormalizedSlideLayerOrder: () => [first, second],
+    applyGroupMutation: () => ({ didApply: true, group, transaction: { id: 'tx' } }),
+    finalizeDeckMutation: (_label, options) => { finalizedOptions = options; }
+  });
+
+  assert.equal(controller.group(), true);
+  assert.equal(baselineOptions.sourceDocument.id, 'doc');
+  assert.equal(deckOptions.canonicalDeckBeforeMutation, baseline);
+  assert.equal(finalizedOptions.canonicalDeck.id, 'canonical-sidecar');
+});
+
 test('group controller commits restored selection and finalizes ungrouping', () => {
   const calls = [];
   const slide = { id: 'slide-1' };
