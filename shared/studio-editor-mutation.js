@@ -165,18 +165,34 @@
     const getCommittedSelectedElementIds = typeof options.getCommittedSelectedElementIds === 'function'
       ? options.getCommittedSelectedElementIds
       : () => [];
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+
+    const captureHistoryBaseline = buildCanonicalDeck
+      ? (iframeDoc) => {
+          const canonicalDeck = buildCanonicalDeck(iframeDoc);
+          if (canonicalDeck) {
+            saveHistoryState(false, null, canonicalDeck);
+          } else {
+            saveHistoryState();
+          }
+        }
+      : saveHistoryState;
 
     if (captureStudioDeckViewBeforeSlideMutation) {
       return (iframeDoc) => captureStudioDeckViewBeforeSlideMutation({
         doc: iframeDoc,
-        saveHistoryState,
+        saveHistoryState: buildCanonicalDeck
+          ? () => captureHistoryBaseline(iframeDoc)
+          : saveHistoryState,
         getActiveSlideId,
         getCommittedSelectedElementIds
       });
     }
 
     return (iframeDoc) => {
-      saveHistoryState();
+      captureHistoryBaseline(iframeDoc);
       return {
         preservedActiveSlideId: getActiveSlideId(iframeDoc),
         preservedSelectionIds: getCommittedSelectedElementIds(iframeDoc)

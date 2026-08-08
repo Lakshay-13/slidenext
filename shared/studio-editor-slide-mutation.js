@@ -77,6 +77,7 @@
       return createRestoreStateCapturer({
         captureStudioDeckViewBeforeSlideMutation,
         saveHistoryState,
+        buildCanonicalDeck: options.buildCanonicalDeck,
         getActiveSlideId,
         getCommittedSelectedElementIds
       });

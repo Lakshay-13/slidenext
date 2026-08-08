@@ -3461,6 +3461,7 @@
           ? SlideNextStudioDeckView
           : null,
         saveHistoryState: options.saveHistoryState,
+        buildCanonicalDeck: options.buildCanonicalDeck,
         getActiveSlideId: options.getActiveSlideId,
         getSelectedElementIds: options.getSelectedElementIds
       });
@@ -3474,6 +3475,9 @@
           : () => [];
       return createEditorSlideMutationRestoreStateCapturer({
         saveHistoryState,
+        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+          ? (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)
+          : null,
         getActiveSlideId,
         getSelectedElementIds: getCommittedSelectionIds
       })(iframeDoc);

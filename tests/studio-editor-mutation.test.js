@@ -396,6 +396,34 @@ test('createStudioSlideMutationRestoreStateCapturer delegates to shared deck-vie
   assert.equal(delegatedOptions.doc, iframeDoc);
 });
 
+test('createStudioSlideMutationRestoreStateCapturer records a canonical baseline before mutation', () => {
+  const iframeDoc = { id: 'editor-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const calls = [];
+  const captureState = mutation.createStudioSlideMutationRestoreStateCapturer({
+    buildCanonicalDeck(doc) {
+      calls.push(['buildCanonicalDeck', doc]);
+      return canonicalDeck;
+    },
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
+    },
+    getActiveSlideId() {
+      return 'slide-1';
+    },
+    getCommittedSelectedElementIds() {
+      return [];
+    }
+  });
+
+  captureState(iframeDoc);
+
+  assert.deepEqual(calls, [
+    ['buildCanonicalDeck', iframeDoc],
+    ['saveHistoryState', false, null, canonicalDeck]
+  ]);
+});
+
 test('finalizeStudioLayerOrderMutation preserves layer UI ordering around shared persistence', () => {
   const calls = [];
   const transaction = { id: 'tx-layer-order' };
