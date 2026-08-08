@@ -86,8 +86,8 @@ test('finalizeEditorDeckMutation supplies the canonical deck builder to shared m
         return options.versionLabel;
       }
     },
-    buildEditorCanonicalDeck(_sourceDoc, options) {
-      buildCanonicalDeckOptions = options;
+    buildEditorMutationCanonicalDeck(_sourceDoc) {
+      buildCanonicalDeckOptions = { preferLiveCanonicalDeck: false };
       return canonicalDeck;
     },
     syncSelectionOverlay() {},

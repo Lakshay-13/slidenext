@@ -5604,10 +5604,8 @@
         mutationApi: typeof SlideNextStudioEditorMutation !== 'undefined'
           ? SlideNextStudioEditorMutation
           : null,
-        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-          ? (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
-              preferLiveCanonicalDeck: false
-            })
+        buildCanonicalDeck: typeof buildEditorMutationCanonicalDeck === 'function'
+          ? (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc)
           : null,
         syncSelectionOverlay: typeof syncSelectionOverlay === 'function' ? syncSelectionOverlay : null,
         generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
