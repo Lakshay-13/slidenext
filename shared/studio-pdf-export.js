@@ -128,6 +128,36 @@
     return `${styleTag}${html}`;
   }
 
+  function validateStudioPdfSlideCount(documentRef, options = {}) {
+    const expectedSlideCount = Number.isInteger(options.slideCount)
+      ? options.slideCount
+      : null;
+    if (
+      expectedSlideCount === null
+      || !documentRef
+      || typeof documentRef.querySelectorAll !== 'function'
+    ) {
+      return null;
+    }
+
+    const slideSelector = typeof options.slideSelector === 'string' && options.slideSelector.trim()
+      ? options.slideSelector.trim()
+      : '.slide';
+    let actualSlideCount = 0;
+    try {
+      const slides = documentRef.querySelectorAll(slideSelector);
+      actualSlideCount = slides && typeof slides.length === 'number' ? slides.length : 0;
+    } catch (error) {
+      return new Error('PDF slide selector could not be evaluated: ' + error.message);
+    }
+    if (actualSlideCount !== expectedSlideCount) {
+      return new Error(
+        'PDF slide count mismatch: expected ' + expectedSlideCount + ', found ' + actualSlideCount
+      );
+    }
+    return null;
+  }
+
   function waitForStudioPdfPrintResources(documentRef, options = {}) {
     if (!documentRef) return Promise.resolve();
 
@@ -346,6 +376,11 @@
       if (didLoad) return;
       didLoad = true;
       clearLoadTimeout();
+      const slideCountError = validateStudioPdfSlideCount(printWindow.document, options);
+      if (slideCountError) {
+        reportPrintFailure(slideCountError);
+        return;
+      }
       waitForResources();
     };
 
@@ -385,6 +420,7 @@
     resolveStudioPdfPageDimensions,
     buildStudioPdfPrintStyles,
     buildStudioPdfPrintHtml,
+    validateStudioPdfSlideCount,
     waitForStudioPdfPrintResources,
     openStudioPdfPrintWindow
   };

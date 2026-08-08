@@ -81,6 +81,33 @@ test('resolveStudioPdfPageDimensions maps valid canonical layout sizes and rejec
   );
 });
 
+test('validateStudioPdfSlideCount fails closed when the print document has the wrong number of slides', () => {
+  assert.equal(
+    pdfExport.validateStudioPdfSlideCount({
+      querySelectorAll() {
+        return [{}, {}];
+      }
+    }, { slideCount: 2 }),
+    null
+  );
+  assert.match(
+    pdfExport.validateStudioPdfSlideCount({
+      querySelectorAll() {
+        return [{}, {}];
+      }
+    }, { slideCount: 3 }).message,
+    /expected 3, found 2/
+  );
+  assert.match(
+    pdfExport.validateStudioPdfSlideCount({
+      querySelectorAll() {
+        throw new Error('invalid selector');
+      }
+    }, { slideCount: 1 }).message,
+    /could not be evaluated/
+  );
+});
+
 test('waitForStudioPdfPrintResources waits for fonts and image load or error', async () => {
   let resolveFonts;
   const imageHandlers = {};
@@ -327,6 +354,44 @@ test('openStudioPdfPrintWindow reports resource failures without printing', () =
       resolve();
     });
   });
+});
+
+test('openStudioPdfPrintWindow refuses to print when the loaded slide count mismatches', () => {
+  let printCalls = 0;
+  let printErrors = 0;
+  const printWindow = {
+    document: {
+      open() {},
+      write() {},
+      close() {},
+      querySelectorAll() {
+        return [{}, {}];
+      }
+    },
+    addEventListener(type, handler) {
+      assert.equal(type, 'load');
+      this.loadHandler = handler;
+    },
+    print() {
+      printCalls += 1;
+    }
+  };
+
+  assert.equal(pdfExport.openStudioPdfPrintWindow({
+    html: '<html><body><div class="slide">A</div></body></html>',
+    slideCount: 1,
+    openWindow() {
+      return printWindow;
+    },
+    onError(error) {
+      assert.match(error.message, /PDF slide count mismatch/);
+      printErrors += 1;
+    }
+  }), true);
+
+  printWindow.loadHandler();
+  assert.equal(printCalls, 0);
+  assert.equal(printErrors, 1);
 });
 
 test('openStudioPdfPrintWindow reports a print-window load timeout', async () => {
