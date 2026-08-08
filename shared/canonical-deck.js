@@ -136,6 +136,22 @@
     };
   }
 
+  function createCanonicalMasterSlide(seed = {}, index = 0) {
+    const master = asPlainObject(seed);
+    const masterSlide = createCanonicalSlide(asPlainObject(master.slide), index);
+
+    return {
+      id: normalizeString(master.id, `master-slide-${index + 1}`),
+      name: normalizeString(master.name, `Master Slide ${index + 1}`),
+      description: normalizeString(master.description),
+      slide: {
+        ...masterSlide,
+        nodes: normalizeCanonicalNodeIds(masterSlide.nodes, new Set())
+      },
+      metadata: asPlainObject(master.metadata)
+    };
+  }
+
   function createCanonicalSlide(seed = {}, index = 0) {
     const slide = asPlainObject(seed);
     const layout = asPlainObject(slide.layout);
@@ -143,6 +159,7 @@
     const backgroundAssetId = normalizeString(background.assetId).trim();
     const source = asPlainObject(slide.source);
     const section = normalizeString(slide.section);
+    const masterSlideId = normalizeString(slide.masterSlideId).trim();
 
     return {
       id: normalizeString(slide.id, `slide-${index + 1}`),
@@ -150,6 +167,7 @@
       title: normalizeString(slide.title, normalizeString(slide.name, `Slide ${index + 1}`)),
       notes: normalizeString(slide.notes),
       ...(section ? { section } : {}),
+      ...(masterSlideId ? { masterSlideId } : {}),
       layout: {
         mode: normalizeLayoutMode(layout.mode),
         background: {
@@ -214,14 +232,19 @@
     const normalizedTemplates = Array.isArray(deck.templates)
       ? deck.templates.map((template, templateIndex) => createCanonicalTemplate(template, templateIndex))
       : [];
+    const normalizedMasterSlides = Array.isArray(deck.masterSlides)
+      ? deck.masterSlides.map((master, masterIndex) => createCanonicalMasterSlide(master, masterIndex))
+      : [];
     const hasBlocksCollection = Array.isArray(deck.blocks);
     const hasTemplatesCollection = Array.isArray(deck.templates);
+    const hasMasterSlidesCollection = Array.isArray(deck.masterSlides);
     const normalizedAssets = Array.isArray(deck.assets)
       ? deck.assets.map((asset, assetIndex) => createCanonicalAsset(asset, assetIndex))
       : [];
     const assetIds = new Set();
     const blockIds = new Set();
     const templateIds = new Set();
+    const masterSlideIds = new Set();
     const slideIds = new Set();
     const nodeIds = new Set();
     const inlineScriptIds = new Set();
@@ -271,6 +294,18 @@
             }))
           }
         : {}),
+      ...(hasMasterSlidesCollection
+        ? {
+            masterSlides: normalizedMasterSlides.map((master, masterIndex) => ({
+              ...master,
+              id: createUniqueCanonicalId(
+                master.id,
+                `master-slide-${masterIndex + 1}`,
+                masterSlideIds
+              )
+            }))
+          }
+        : {}),
       slides: normalizedSlides.map((slide, slideIndex) => ({
         ...slide,
         id: createUniqueCanonicalId(slide.id, `slide-${slideIndex + 1}`, slideIds),
@@ -309,6 +344,7 @@
     const assetIds = new Set();
     const blockIds = new Set();
     const templateIds = new Set();
+    const masterSlideIds = new Set();
     const slideIds = new Set();
     const nodeIds = new Set();
     const inlineScriptIds = new Set();
@@ -344,6 +380,15 @@
           && hasUniqueNodeIds(template.slide.nodes, new Set());
       });
     };
+    const hasUniqueMasterSlideIds = (masterSlides) => {
+      if (!Array.isArray(masterSlides)) return true;
+      return masterSlides.every((master) => {
+        return !!master
+          && registerId(master.id, masterSlideIds)
+          && !!master.slide
+          && hasUniqueNodeIds(master.slide.nodes, new Set());
+      });
+    };
     const hasUniqueInlineScriptIds = (scripts) => {
       if (!Array.isArray(scripts)) return true;
       return scripts.every((script) => {
@@ -363,6 +408,10 @@
     }
     if (Object.prototype.hasOwnProperty.call(deck, 'templates')
       && (!Array.isArray(deck.templates) || !hasUniqueTemplateIds(deck.templates))) {
+      return false;
+    }
+    if (Object.prototype.hasOwnProperty.call(deck, 'masterSlides')
+      && (!Array.isArray(deck.masterSlides) || !hasUniqueMasterSlideIds(deck.masterSlides))) {
       return false;
     }
     if (deck.source && typeof deck.source === 'object'
@@ -568,6 +617,138 @@
     return createCanonicalDeck({
       ...deck,
       templates: templates.filter((_template, index) => index !== templateIndex)
+    });
+  }
+
+  function appendCanonicalMasterSlide(deckLike, masterLike = {}) {
+    if (!deckLike || typeof deckLike !== 'object') {
+      return null;
+    }
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    if (!isCanonicalDeck(deck)) {
+      return null;
+    }
+    return insertCanonicalMasterSlide(
+      deck,
+      masterLike,
+      Array.isArray(deck.masterSlides) ? deck.masterSlides.length : 0
+    );
+  }
+
+  function insertCanonicalMasterSlide(deckLike, masterLike = {}, index) {
+    if (!deckLike || typeof deckLike !== 'object') {
+      return null;
+    }
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const masterSlides = Array.isArray(deck.masterSlides) ? deck.masterSlides : [];
+    if (!isCanonicalDeck(deck)
+      || !masterLike
+      || typeof masterLike !== 'object'
+      || !Number.isInteger(index)
+      || index < 0
+      || index > masterSlides.length) {
+      return null;
+    }
+
+    const nextMasterSlides = [...masterSlides];
+    nextMasterSlides.splice(index, 0, createCanonicalMasterSlide(masterLike, index));
+    return createCanonicalDeck({
+      ...deck,
+      masterSlides: nextMasterSlides
+    });
+  }
+
+  function removeCanonicalMasterSlide(deckLike, masterSlideId) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedMasterSlideId = normalizeString(masterSlideId).trim();
+    const masterSlides = Array.isArray(deck.masterSlides) ? deck.masterSlides : [];
+    if (!isCanonicalDeck(deck) || !normalizedMasterSlideId) {
+      return null;
+    }
+
+    const masterSlideIndex = masterSlides.findIndex(
+      (master) => master && master.id === normalizedMasterSlideId
+    );
+    if (masterSlideIndex < 0) {
+      return null;
+    }
+
+    return createCanonicalDeck({
+      ...deck,
+      masterSlides: masterSlides.filter((_master, index) => index !== masterSlideIndex),
+      slides: deck.slides.map((slide) => {
+        if (!slide || slide.masterSlideId !== normalizedMasterSlideId) {
+          return slide;
+        }
+        const nextSlide = { ...slide };
+        delete nextSlide.masterSlideId;
+        return nextSlide;
+      })
+    });
+  }
+
+  function updateCanonicalSlideMasterSlide(deckLike, slideId, masterSlideId = '') {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedSlideId = normalizeString(slideId).trim();
+    const normalizedMasterSlideId = normalizeString(masterSlideId).trim();
+    const masterSlides = Array.isArray(deck.masterSlides) ? deck.masterSlides : [];
+    if (!isCanonicalDeck(deck) || !normalizedSlideId) {
+      return null;
+    }
+    if (normalizedMasterSlideId
+      && !masterSlides.some((master) => master && master.id === normalizedMasterSlideId)) {
+      return null;
+    }
+
+    const slideIndex = deck.slides.findIndex((slide) => slide && slide.id === normalizedSlideId);
+    if (slideIndex < 0) {
+      return null;
+    }
+    const currentMasterSlideId = normalizeString(deck.slides[slideIndex].masterSlideId).trim();
+    if (currentMasterSlideId === normalizedMasterSlideId) {
+      return null;
+    }
+
+    const nextSlides = deck.slides.map((slide, index) => {
+      if (index !== slideIndex) return slide;
+      const nextSlide = { ...slide };
+      if (normalizedMasterSlideId) {
+        nextSlide.masterSlideId = normalizedMasterSlideId;
+      } else {
+        delete nextSlide.masterSlideId;
+      }
+      return createCanonicalSlide(nextSlide, index);
+    });
+
+    return createCanonicalDeck({
+      ...deck,
+      slides: nextSlides
+    });
+  }
+
+  function saveCanonicalMasterSlideFromSlideId(deckLike, slideId, masterLike = {}) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedSlideId = normalizeString(slideId).trim();
+    if (!isCanonicalDeck(deck) || !normalizedSlideId) {
+      return null;
+    }
+
+    const slide = deck.slides.find((candidate) => candidate && candidate.id === normalizedSlideId);
+    if (!slide) return null;
+
+    return appendCanonicalMasterSlide(deck, {
+      ...asPlainObject(masterLike),
+      slide
     });
   }
 
@@ -1543,6 +1724,7 @@
     createCanonicalNode,
     createCanonicalBlock,
     createCanonicalTemplate,
+    createCanonicalMasterSlide,
     createCanonicalSlide,
     createCanonicalInlineScript,
     createCanonicalDeck,
@@ -1557,6 +1739,11 @@
     appendCanonicalTemplate,
     insertCanonicalTemplate,
     removeCanonicalTemplate,
+    appendCanonicalMasterSlide,
+    insertCanonicalMasterSlide,
+    removeCanonicalMasterSlide,
+    updateCanonicalSlideMasterSlide,
+    saveCanonicalMasterSlideFromSlideId,
     insertCanonicalTemplateSlide,
     saveCanonicalTemplateFromSlideId,
     saveCanonicalBlockFromNodeIds,

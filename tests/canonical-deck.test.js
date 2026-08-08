@@ -64,6 +64,71 @@ test('createCanonicalSlide preserves an explicit background asset reference with
   assert.equal(Object.prototype.hasOwnProperty.call(legacySlide.layout.background, 'assetId'), false);
 });
 
+test('createCanonicalDeck preserves legacy shape and normalizes master slide ids', () => {
+  const legacyDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  assert.equal(Object.prototype.hasOwnProperty.call(legacyDeck, 'masterSlides'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(legacyDeck.slides[0], 'masterSlideId'), false);
+
+  const deck = canonicalDeck.createCanonicalDeck({
+    masterSlides: [
+      { id: 'master-1', name: 'Title', slide: { nodes: [{ id: 'logo' }] } },
+      { id: 'master-1', name: 'Body', slide: { nodes: [{ id: 'logo' }] } }
+    ],
+    slides: [
+      { id: 'slide-1', masterSlideId: 'master-1' },
+      { id: 'slide-2', masterSlideId: 'master-1' }
+    ]
+  });
+
+  assert.deepEqual(deck.masterSlides.map((master) => master.id), ['master-1', 'master-1-2']);
+  assert.deepEqual(deck.masterSlides.map((master) => master.slide.nodes[0].id), ['logo', 'logo']);
+  assert.deepEqual(deck.slides.map((slide) => slide.masterSlideId), ['master-1', 'master-1']);
+  assert.equal(canonicalDeck.isCanonicalDeck(deck), true);
+});
+
+test('canonical master slide operations are immutable and keep references valid', () => {
+  const source = canonicalDeck.createCanonicalDeck({
+    masterSlides: [{ id: 'master-a', name: 'Title' }],
+    slides: [{ id: 'slide-1', masterSlideId: 'master-a' }, { id: 'slide-2' }]
+  });
+  const expanded = canonicalDeck.insertCanonicalMasterSlide(source, {
+    id: 'master-b',
+    name: 'Body'
+  }, 1);
+  const assigned = canonicalDeck.updateCanonicalSlideMasterSlide(expanded, 'slide-2', 'master-b');
+  const cleared = canonicalDeck.updateCanonicalSlideMasterSlide(assigned, 'slide-2');
+  const removed = canonicalDeck.removeCanonicalMasterSlide(assigned, 'master-a');
+
+  assert.deepEqual(source.masterSlides.map((master) => master.id), ['master-a']);
+  assert.deepEqual(expanded.masterSlides.map((master) => master.id), ['master-a', 'master-b']);
+  assert.deepEqual(assigned.slides.map((slide) => slide.masterSlideId || ''), ['master-a', 'master-b']);
+  assert.deepEqual(cleared.slides.map((slide) => slide.masterSlideId || ''), ['master-a', '']);
+  assert.deepEqual(removed.masterSlides.map((master) => master.id), ['master-b']);
+  assert.deepEqual(removed.slides.map((slide) => slide.masterSlideId || ''), ['', 'master-b']);
+  assert.equal(canonicalDeck.updateCanonicalSlideMasterSlide(source, 'slide-2', 'missing'), null);
+  assert.equal(canonicalDeck.removeCanonicalMasterSlide(source, 'missing'), null);
+  assert.equal(canonicalDeck.isCanonicalDeck(removed), true);
+});
+
+test('saveCanonicalMasterSlideFromSlideId captures a slide without mutating the deck', () => {
+  const source = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Opening', nodes: [{ id: 'logo', text: 'Hello' }] }]
+  });
+
+  const saved = canonicalDeck.saveCanonicalMasterSlideFromSlideId(
+    source,
+    'slide-1',
+    { id: 'opening-master', name: 'Opening Master' }
+  );
+
+  assert.equal(saved.masterSlides[0].id, 'opening-master');
+  assert.equal(saved.masterSlides[0].name, 'Opening Master');
+  assert.equal(saved.masterSlides[0].slide.title, 'Opening');
+  assert.equal(saved.masterSlides[0].slide.nodes[0].text, 'Hello');
+  assert.equal(Object.prototype.hasOwnProperty.call(source, 'masterSlides'), false);
+  assert.equal(canonicalDeck.saveCanonicalMasterSlideFromSlideId(source, 'missing'), null);
+});
+
 test('createCanonicalDeck normalizes reusable block ids and nested node ids', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     blocks: [
