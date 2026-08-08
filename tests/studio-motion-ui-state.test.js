@@ -9,6 +9,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioNudge = require('../shared/studio-editor-nudge.js');
 const studioTransform = require('../shared/studio-editor-transform.js');
 const liveSelection = require('../shared/studio-editor-live-selection.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const nudgeController = require('../shared/studio-editor-nudge-controller.js');
 const positionLayoutMutation = require('../shared/studio-editor-position-layout-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
@@ -120,6 +121,7 @@ test('getNudgeSelectionState prefers canonical hidden and locked state over stal
   ]);
   const context = {
     selectedElements: [hiddenElement, lockedElement],
+    SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorNudge: studioNudge,
     SlideNextStudioEditorTransform: {
       isStudioFreeformPositioned() {
@@ -164,6 +166,7 @@ test('getTransformSelectionState prefers canonical hidden and locked state over 
   ]);
   const context = {
     selectedElements: [hiddenElement, lockedElement],
+    SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorTransform: studioTransform,
     getIframeDoc() {
       return doc;

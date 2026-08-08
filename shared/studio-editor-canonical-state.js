@@ -69,7 +69,33 @@
     };
   }
 
+  function createStudioEditorCanonicalVisibilityReader(canonicalDeck, options = {}) {
+    const property = typeof options.property === 'string' ? options.property : '';
+    const resolveCanonicalNode = typeof options.resolveCanonicalNode === 'function'
+      ? options.resolveCanonicalNode
+      : () => null;
+    const fallbackReader = typeof options.fallbackReader === 'function'
+      ? options.fallbackReader
+      : () => false;
+
+    return function readCanonicalVisibilityState(element) {
+      if (canonicalDeck && property) {
+        try {
+          const canonicalNode = resolveCanonicalNode(element, canonicalDeck);
+          const value = canonicalNode
+            && canonicalNode.visibility
+            && canonicalNode.visibility[property];
+          if (typeof value === 'boolean') return value;
+        } catch (error) {
+          // Fall back to the live element when canonical lookup is unavailable.
+        }
+      }
+      return fallbackReader(element);
+    };
+  }
+
   return {
-    createStudioEditorCanonicalState
+    createStudioEditorCanonicalState,
+    createStudioEditorCanonicalVisibilityReader
   };
 });

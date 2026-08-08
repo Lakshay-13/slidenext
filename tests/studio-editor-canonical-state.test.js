@@ -59,6 +59,35 @@ test('studio editor canonical state rejects invalid models and can be reset', ()
   assert.equal(state.resolve({ documentRef, sessionToken: 1 }), null);
 });
 
+test('canonical visibility reader prefers model state and falls back safely', () => {
+  const element = { id: 'node-1' };
+  const canonicalDeck = createDeck('active');
+  const reader = canonicalState.createStudioEditorCanonicalVisibilityReader(canonicalDeck, {
+    property: 'locked',
+    resolveCanonicalNode(target, deck) {
+      assert.equal(deck, canonicalDeck);
+      return target === element ? { visibility: { locked: true } } : null;
+    },
+    fallbackReader() {
+      return false;
+    }
+  });
+
+  assert.equal(reader(element), true);
+  assert.equal(reader({ id: 'missing' }), false);
+
+  const throwingReader = canonicalState.createStudioEditorCanonicalVisibilityReader(canonicalDeck, {
+    property: 'hidden',
+    resolveCanonicalNode() {
+      throw new Error('lookup failed');
+    },
+    fallbackReader() {
+      return true;
+    }
+  });
+  assert.equal(throwingReader(element), true);
+});
+
 test('buildEditorCanonicalDeck prefers the active live model unless DOM rebuild is requested', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorCanonicalDeckSource = extractFunctionSource(

@@ -5576,19 +5576,30 @@
           canonicalDeck = null;
         }
       }
-      const readCanonicalVisibilityState = (element, property, fallbackReader) => {
-        if (canonicalDeck && typeof resolveEditorCanonicalNodeForElement === 'function') {
-          const canonicalNode = resolveEditorCanonicalNodeForElement(element, canonicalDeck);
-          const value = canonicalNode
-            && canonicalNode.visibility
-            && canonicalNode.visibility[property];
-          if (typeof value === 'boolean') return value;
-        }
-        return fallbackReader(element);
-      };
+      const canonicalStateApi = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalState
+        : null;
+      const createVisibilityReader = canonicalStateApi
+        && typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReader === 'function'
+        ? canonicalStateApi.createStudioEditorCanonicalVisibilityReader
+        : null;
+      const readLockedState = canonicalDeck && createVisibilityReader
+        ? createVisibilityReader(canonicalDeck, {
+            property: 'locked',
+            resolveCanonicalNode: resolveEditorCanonicalNodeForElement,
+            fallbackReader: isElementLocked
+          })
+        : isElementLocked;
+      const readHiddenState = canonicalDeck && createVisibilityReader
+        ? createVisibilityReader(canonicalDeck, {
+            property: 'hidden',
+            resolveCanonicalNode: resolveEditorCanonicalNodeForElement,
+            fallbackReader: isElementHidden
+          })
+        : isElementHidden;
       return SlideNextStudioEditorTransform.buildStudioTransformSelectionState(elements, {
-        isLocked: (element) => readCanonicalVisibilityState(element, 'locked', isElementLocked),
-        isHidden: (element) => readCanonicalVisibilityState(element, 'hidden', isElementHidden),
+        isLocked: readLockedState,
+        isHidden: readHiddenState,
         isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
       });
     }
@@ -5628,19 +5639,30 @@
           canonicalDeck = null;
         }
       }
-      const readCanonicalVisibilityState = (element, property, fallbackReader) => {
-        if (canonicalDeck && typeof resolveEditorCanonicalNodeForElement === 'function') {
-          const canonicalNode = resolveEditorCanonicalNodeForElement(element, canonicalDeck);
-          const value = canonicalNode
-            && canonicalNode.visibility
-            && canonicalNode.visibility[property];
-          if (typeof value === 'boolean') return value;
-        }
-        return fallbackReader(element);
-      };
+      const canonicalStateApi = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalState
+        : null;
+      const createVisibilityReader = canonicalStateApi
+        && typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReader === 'function'
+        ? canonicalStateApi.createStudioEditorCanonicalVisibilityReader
+        : null;
+      const readLockedState = canonicalDeck && createVisibilityReader
+        ? createVisibilityReader(canonicalDeck, {
+            property: 'locked',
+            resolveCanonicalNode: resolveEditorCanonicalNodeForElement,
+            fallbackReader: isElementLocked
+          })
+        : isElementLocked;
+      const readHiddenState = canonicalDeck && createVisibilityReader
+        ? createVisibilityReader(canonicalDeck, {
+            property: 'hidden',
+            resolveCanonicalNode: resolveEditorCanonicalNodeForElement,
+            fallbackReader: isElementHidden
+          })
+        : isElementHidden;
       return SlideNextStudioEditorNudge.buildStudioNudgeSelectionState(elements, {
-        isLocked: (element) => readCanonicalVisibilityState(element, 'locked', isElementLocked),
-        isHidden: (element) => readCanonicalVisibilityState(element, 'hidden', isElementHidden),
+        isLocked: readLockedState,
+        isHidden: readHiddenState,
         isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
       });
     }
