@@ -1905,7 +1905,9 @@
           finalizeRemovalActionResult: (...args) => finalizeRemovalActionResult(...args),
           getIframeDoc: (...args) => getIframeDoc(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+            preferLiveCanonicalDeck: false
+          }),
           applyRemovalMutation: (...args) => applyEditorRemovalMutationWithTransaction(...args),
           deselectElement: (...args) => deselectElement(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
