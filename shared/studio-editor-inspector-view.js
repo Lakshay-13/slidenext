@@ -154,7 +154,11 @@
     const computedStyles = options.computedStyles || {};
     const textContentInput = documentRef.getElementById('elTextContent');
     if (textContentInput) {
-      textContentInput.value = primaryElement.innerText || primaryElement.textContent || '';
+      const hasCanonicalText = options.canonicalNode
+        && typeof options.canonicalNode.text === 'string';
+      textContentInput.value = hasCanonicalText
+        ? options.canonicalNode.text
+        : primaryElement.innerText || primaryElement.textContent || '';
     }
 
     const imageGroup = documentRef.getElementById('inspectorImageGroup');

@@ -246,6 +246,27 @@ test('syncStudioInspectorContentControls prefers canonical object-position data'
   assert.equal(nodes.elImagePosition.disabled, false);
 });
 
+test('syncStudioInspectorContentControls prefers canonical text data', () => {
+  const textInput = { value: '' };
+
+  assert.equal(inspectorView.syncStudioInspectorContentControls({
+    documentRef: {
+      getElementById(id) {
+        return id === 'elTextContent' ? textInput : null;
+      }
+    },
+    primaryElement: {
+      tagName: 'DIV',
+      innerText: 'DOM title',
+      textContent: 'DOM title'
+    },
+    canonicalNode: { text: 'Canonical title' },
+    isMulti: false,
+    computedStyles: {}
+  }), true);
+  assert.equal(textInput.value, 'Canonical title');
+});
+
 test('syncStudioInspectorTypographyControls applies font, color, alignment, z-index, and opacity values', () => {
   const nodes = {
     elFontSize: { value: '' },
