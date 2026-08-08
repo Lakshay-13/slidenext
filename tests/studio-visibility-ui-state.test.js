@@ -10,6 +10,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const visibilityState = require('../shared/studio-editor-visibility-state.js');
 const visibilityMutation = require('../shared/studio-editor-visibility-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
+const lockVisibilityController = require('../shared/studio-editor-lock-visibility-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -58,6 +59,32 @@ function loadVisibilityMutationHelper(fileContent, context) {
   );
   context.SlideNextStudioEditorVisibilityMutation = visibilityMutation;
   vm.runInContext(helperSource, context);
+}
+
+function installLockVisibilityController(context) {
+  context.studioEditorLockVisibilityController = lockVisibilityController.createStudioEditorLockVisibilityController({
+    lockStateApi: context.SlideNextStudioEditorLockState,
+    visibilityStateApi: context.SlideNextStudioEditorVisibilityState,
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    canonicalVisibilityApi: context.SlideNextStudioEditorCanonicalVisibility,
+    getSelectedElements: () => context.selectedElements,
+    getIframeDoc: context.getIframeDoc,
+    getActiveSlide: context.getActiveSlide,
+    isLocked: context.isElementLocked,
+    isHidden: context.isElementHidden,
+    setLocked: context.setElementLockedState,
+    setHidden: context.setElementHiddenState
+      || (context.SlideNextStudioElementState
+        && context.SlideNextStudioElementState.setStudioElementHiddenState),
+    getVisibilityState: context.SlideNextStudioElementState
+      && context.SlideNextStudioElementState.getStudioElementVisibilityState,
+    assignLockElementId: context.assignEditorElementId,
+    assignVisibilityElementId: context.assignEditorElementId,
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    applyLockMutation: context.applyEditorLockMutationWithTransaction,
+    applyVisibilityMutation: context.applyEditorVisibilityMutationWithTransaction,
+    finalizeSelectionToggleMutation: context.finalizeSelectionToggleMutation
+  });
 }
 
 test('updateVisibilityActionState enables the visibility control only when the iframe has a live active slide', () => {
@@ -300,6 +327,7 @@ test('toggleSelectedElementsVisibility returns false and skips persistence when 
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadVisibilityMutationHelper(fileContent, context);
+  installLockVisibilityController(context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility(), false);
@@ -383,6 +411,7 @@ test('toggleSelectedElementsVisibility returns true after hiding live targets an
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadVisibilityMutationHelper(fileContent, context);
+  installLockVisibilityController(context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility(), true);
@@ -482,6 +511,7 @@ test('toggleSelectedElementsVisibility captures a reversible visibility transact
   loadSyncSelectionUiAfterMutation(fileContent, context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadVisibilityMutationHelper(fileContent, context);
+  installLockVisibilityController(context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility(), true);
@@ -579,6 +609,7 @@ test('toggleSelectedElementsVisibility forwards an immutable canonical visibilit
   vm.createContext(context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadVisibilityMutationHelper(fileContent, context);
+  installLockVisibilityController(context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility(), true);
@@ -659,6 +690,7 @@ test('toggleSelectedElementsVisibility can skip temporary selection UI sync when
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadVisibilityMutationHelper(fileContent, context);
+  installLockVisibilityController(context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility({ skipSelectionUi: true }), true);
@@ -723,6 +755,7 @@ test('toggleSelectedElementsVisibility delegates visibility application to the s
   vm.createContext(context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadVisibilityMutationHelper(fileContent, context);
+  installLockVisibilityController(context);
   vm.runInContext(toggleSelectedElementsVisibilitySource, context);
 
   assert.equal(context.toggleSelectedElementsVisibility(), true);

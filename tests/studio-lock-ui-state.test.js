@@ -9,6 +9,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const lockState = require('../shared/studio-editor-lock-state.js');
 const lockMutation = require('../shared/studio-editor-lock-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
+const lockVisibilityController = require('../shared/studio-editor-lock-visibility-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -57,6 +58,32 @@ function loadLockMutationHelper(fileContent, context) {
   );
   context.SlideNextStudioEditorLockMutation = lockMutation;
   vm.runInContext(helperSource, context);
+}
+
+function installLockVisibilityController(context) {
+  context.studioEditorLockVisibilityController = lockVisibilityController.createStudioEditorLockVisibilityController({
+    lockStateApi: context.SlideNextStudioEditorLockState,
+    visibilityStateApi: context.SlideNextStudioEditorVisibilityState,
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    canonicalVisibilityApi: context.SlideNextStudioEditorCanonicalVisibility,
+    getSelectedElements: () => context.selectedElements,
+    getIframeDoc: context.getIframeDoc,
+    getActiveSlide: context.getActiveSlide,
+    isLocked: context.isElementLocked,
+    isHidden: context.isElementHidden,
+    setLocked: context.setElementLockedState
+      || (context.SlideNextStudioElementState
+        && context.SlideNextStudioElementState.setStudioElementLockedState),
+    setHidden: context.setElementHiddenState,
+    getVisibilityState: context.SlideNextStudioElementState
+      && context.SlideNextStudioElementState.getStudioElementVisibilityState,
+    assignLockElementId: context.assignEditorElementId,
+    assignVisibilityElementId: context.assignEditorElementId,
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    applyLockMutation: context.applyEditorLockMutationWithTransaction,
+    applyVisibilityMutation: context.applyEditorVisibilityMutationWithTransaction,
+    finalizeSelectionToggleMutation: context.finalizeSelectionToggleMutation
+  });
 }
 
 test('syncSelectionUiAfterMutation refreshes selection classes before syncing selection chrome', () => {
@@ -371,6 +398,7 @@ test('toggleSelectedElementsLockState returns false and skips persistence when p
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadLockMutationHelper(fileContent, context);
+  installLockVisibilityController(context);
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
   assert.equal(context.toggleSelectedElementsLockState(), false);
@@ -456,6 +484,7 @@ test('toggleSelectedElementsLockState returns true after locking live targets an
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
   loadLockMutationHelper(fileContent, context);
+  installLockVisibilityController(context);
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
   assert.equal(context.toggleSelectedElementsLockState(), true);
@@ -535,6 +564,7 @@ test('toggleSelectedElementsLockState captures a reversible dataset transaction'
   loadSyncSelectionUiAfterMutation(fileContent, context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadLockMutationHelper(fileContent, context);
+  installLockVisibilityController(context);
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
   assert.equal(context.toggleSelectedElementsLockState(), true);
@@ -622,6 +652,7 @@ test('toggleSelectedElementsLockState forwards an immutable canonical visibility
   vm.createContext(context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadLockMutationHelper(fileContent, context);
+  installLockVisibilityController(context);
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
   assert.equal(context.toggleSelectedElementsLockState(), true);
@@ -676,6 +707,7 @@ test('toggleSelectedElementsLockState delegates lock application to the shared l
   vm.createContext(context);
   loadFinalizeSelectionToggleMutation(fileContent, context);
   loadLockMutationHelper(fileContent, context);
+  installLockVisibilityController(context);
   vm.runInContext(toggleSelectedElementsLockStateSource, context);
 
   assert.equal(context.toggleSelectedElementsLockState(), true);
