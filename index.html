@@ -8237,16 +8237,18 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceHandlerOptionsAdapter
         : null;
       if (createStudioEditorPersistenceHandlerOptionsAdapter) {
-        const adapter = createStudioEditorPersistenceHandlerOptionsAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          getPresentationUrl: () => currentPresentationUrl,
-          createSessionReaderOptions: createCurrentStudioSessionReaderOptions,
-          applyPersistedDeckState: applyCurrentStudioPersistedDeckState
-        });
-        const result = typeof adapter === 'function'
-          ? adapter(options)
+        if (typeof createCurrentStudioPersistenceHandlerOptions.adapter !== 'function') {
+          createCurrentStudioPersistenceHandlerOptions.adapter = createStudioEditorPersistenceHandlerOptionsAdapter({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            getPresentationUrl: () => currentPresentationUrl,
+            createSessionReaderOptions: createCurrentStudioSessionReaderOptions,
+            applyPersistedDeckState: applyCurrentStudioPersistedDeckState
+          });
+        }
+        const result = typeof createCurrentStudioPersistenceHandlerOptions.adapter === 'function'
+          ? createCurrentStudioPersistenceHandlerOptions.adapter(options)
           : null;
         if (result !== null && typeof result !== 'undefined') {
           return result;

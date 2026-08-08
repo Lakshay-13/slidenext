@@ -981,6 +981,49 @@ test('createCurrentStudioPersistenceHandlerOptions delegates through the editor 
   assert.equal(result.onFailure, 'failure-sentinel');
 });
 
+test('createCurrentStudioPersistenceHandlerOptions creates the shared persistence-state adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createCurrentStudioPersistenceHandlerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
+    '\n\n    function applyCurrentStudioPersistenceFailure('
+  );
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorPersistenceHandlerOptionsAdapter(options) {
+        adapterCreateCalls += 1;
+        return (nextOptions) => {
+          calls.push(nextOptions);
+          return { presentationUrl: nextOptions.presentationUrl || options.getPresentationUrl() };
+        };
+      }
+    },
+    createCurrentStudioSessionReaderOptions() {},
+    applyCurrentStudioPersistedDeckState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createCurrentStudioPersistenceHandlerOptionsSource, context);
+
+  assert.deepEqual(
+    context.createCurrentStudioPersistenceHandlerOptions({ presentationUrl: 'presentations/one/index.html' }),
+    { presentationUrl: 'presentations/one/index.html' }
+  );
+  assert.deepEqual(
+    context.createCurrentStudioPersistenceHandlerOptions({ presentationUrl: 'presentations/two/index.html' }),
+    { presentationUrl: 'presentations/two/index.html' }
+  );
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls.map((options) => options.presentationUrl), [
+    'presentations/one/index.html',
+    'presentations/two/index.html'
+  ]);
+});
+
 test('resolveCurrentStudioPersistenceStateFromCapture reuses the shared capture-state resolver builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
