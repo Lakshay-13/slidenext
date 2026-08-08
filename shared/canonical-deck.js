@@ -76,6 +76,7 @@
     const node = asPlainObject(seed);
     const layout = asPlainObject(node.layout);
     const visibility = asPlainObject(node.visibility);
+    const assetId = normalizeString(node.assetId).trim();
 
     return {
       id: normalizeString(node.id, `node-${index + 1}`),
@@ -86,6 +87,7 @@
       html: normalizeString(node.html),
       classes: normalizeStringArray(node.classes),
       attributes: asPlainObject(node.attributes),
+      ...(assetId ? { assetId } : {}),
       style: normalizeString(node.style),
       layout: {
         mode: normalizeLayoutMode(layout.mode),

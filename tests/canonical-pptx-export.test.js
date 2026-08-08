@@ -181,6 +181,27 @@ test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () 
   assert.deepEqual(result.diagnostics.missingAssets, []);
 });
 
+test('createCanonicalPptxExport prefers the canonical node asset reference', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    assets: [
+      { id: 'asset-canonical', src: 'data:image/png;base64,CANONICAL' },
+      { id: 'asset-legacy', src: 'data:image/png;base64,LEGACY' }
+    ],
+    slides: [{
+      nodes: [{
+        id: 'image-1',
+        type: 'image',
+        assetId: 'asset-canonical',
+        attributes: { 'data-asset-id': 'asset-legacy' },
+        layout: { x: 0, y: 0, width: 100, height: 100 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.equal(result.pptx.slides[0].calls[0].type, 'image');
+  assert.equal(result.pptx.slides[0].calls[0].options.data, 'data:image/png;base64,CANONICAL');
+});
+
 test('createCanonicalPptxExport preserves table cell spans', () => {
   const result = pptxExport.createCanonicalPptxExport({
     slides: [{

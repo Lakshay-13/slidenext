@@ -827,6 +827,23 @@
     return tagName.toUpperCase();
   }
 
+  function resolveImportedElementAssetId(el, options = {}) {
+    if (!el || typeof el.getAttribute !== 'function') return '';
+
+    const explicitAssetId = normalizeString(
+      el.getAttribute('data-asset-id') || el.getAttribute('data-asset')
+    ).trim();
+    if (explicitAssetId) return explicitAssetId;
+
+    const tagName = normalizeString(el.tagName).toLowerCase();
+    const source = tagName === 'link'
+      ? normalizeString(el.getAttribute('href')).trim()
+      : normalizeString(el.getAttribute('src')).trim();
+    if (!source || typeof options.resolveAssetId !== 'function') return '';
+
+    return normalizeString(options.resolveAssetId(el, source)).trim();
+  }
+
   function shouldImportElement(el, options = {}) {
     if (!el || !el.tagName) return false;
     const skipTagNames = options.skipTagNames instanceof Set
@@ -1036,6 +1053,7 @@
     const canonicalStyleText = [importedStyleText, computedBackgroundStyleText, computedImageStyleText]
       .filter(Boolean)
       .join(' ');
+    const assetId = resolveImportedElementAssetId(el, options);
 
     return canonicalDeck.createCanonicalNode({
       id: typeof options.getNodeId === 'function'
@@ -1048,6 +1066,7 @@
       html: stripCanonicalNodeSourceHtmlDuplicates(buildImportedSourceHtml(el, options), attributes, visibility),
       classes: sanitizeImportedClassNames(el.classList || [], options),
       attributes,
+      ...(assetId ? { assetId } : {}),
       style: canonicalStyleText,
       layout: importedLayout,
       visibility,
@@ -1671,6 +1690,16 @@
 
     const slideSelector = normalizeString(options.slideSelector, '.slide');
     const slides = Array.from(doc.querySelectorAll(slideSelector));
+    const assets = collectDeckAssets(doc);
+    const importOptions = typeof options.resolveAssetId === 'function'
+      ? options
+      : {
+          ...options,
+          resolveAssetId(_element, source) {
+            const asset = assets.find((candidate) => candidate && candidate.src === source);
+            return asset ? asset.id : '';
+          }
+        };
 
     return canonicalDeck.createCanonicalDeck({
       metadata: buildDeckMetadata(doc, options),
@@ -1679,8 +1708,8 @@
         customCss: collectDeckCustomCss(doc)
       },
       layout: inferDeckLayout(doc, slides, options),
-      assets: collectDeckAssets(doc),
-      slides: slides.map((slide, index) => importSlideToCanonicalSlide(slide, index, options)),
+      assets,
+      slides: slides.map((slide, index) => importSlideToCanonicalSlide(slide, index, importOptions)),
       source: buildDeckSource(doc, options)
     });
   }

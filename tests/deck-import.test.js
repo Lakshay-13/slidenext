@@ -709,6 +709,38 @@ test('importHtmlDeckToCanonicalDeck preserves explicit metadata over head fallba
   });
 });
 
+test('importHtmlDeckToCanonicalDeck links imported image nodes to collected assets', () => {
+  const image = createImportedElement({
+    tagName: 'IMG',
+    attributes: { src: 'assets/hero.png' },
+    outerHTML: '<img src="assets/hero.png">'
+  });
+  const slide = createImportedElement({
+    tagName: 'SECTION',
+    attributes: { id: 'slide-1' },
+    children: [image],
+    outerHTML: '<section id="slide-1"><img src="assets/hero.png"></section>'
+  });
+  const assetSelector = 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], link[rel~="preload"][href], video[poster]';
+  const doc = createMetadataDocument();
+  doc.querySelectorAll = (selector) => {
+    if (selector === '.slide') return [slide];
+    if (selector === assetSelector) return [image];
+    return [];
+  };
+
+  const deck = deckImport.importHtmlDeckToCanonicalDeck(doc, {
+    sourcePath: '/presentations/asset-deck/index.html',
+    stripTransientDeckRuntimeState() {}
+  });
+
+  assert.deepEqual(deck.assets.map(({ id, src }) => ({ id, src })), [{
+    id: 'asset-1',
+    src: 'assets/hero.png'
+  }]);
+  assert.equal(deck.slides[0].nodes[0].assetId, 'asset-1');
+});
+
 test('collectDeckThemeTokens reads same-origin :root custom properties and ignores inaccessible stylesheets', () => {
   const doc = {
     documentElement: {
@@ -1137,6 +1169,31 @@ test('importElementToCanonicalNode strips editor-only classes and attributes fro
     hidden: true,
     locked: false
   });
+});
+
+test('importElementToCanonicalNode promotes explicit and resolved asset references', () => {
+  const explicitNode = deckImport.importElementToCanonicalNode(createImportedElement({
+    tagName: 'IMG',
+    attributes: {
+      src: 'assets/explicit.png',
+      'data-asset-id': 'asset-explicit'
+    },
+    outerHTML: '<img src="assets/explicit.png" data-asset-id="asset-explicit">'
+  }));
+  const resolvedNode = deckImport.importElementToCanonicalNode(createImportedElement({
+    tagName: 'IMG',
+    attributes: {
+      src: 'assets/resolved.png'
+    },
+    outerHTML: '<img src="assets/resolved.png">'
+  }), {
+    resolveAssetId(_element, source) {
+      return source === 'assets/resolved.png' ? 'asset-resolved' : '';
+    }
+  });
+
+  assert.equal(explicitNode.assetId, 'asset-explicit');
+  assert.equal(resolvedNode.assetId, 'asset-resolved');
 });
 
 test('importElementToCanonicalNode sanitizes stored node html fragments', () => {

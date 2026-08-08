@@ -470,7 +470,9 @@
 
   function resolveImageAsset(node, deck, options) {
     const directSource = getNodeAttribute(node, 'src');
-    const assetId = getNodeAttribute(node, 'data-asset-id') || getNodeAttribute(node, 'data-asset');
+    const assetId = typeof node.assetId === 'string' && node.assetId.trim()
+      ? node.assetId.trim()
+      : getNodeAttribute(node, 'data-asset-id') || getNodeAttribute(node, 'data-asset');
     const asset = assetId
       ? deck.assets.find(item => item.id === assetId)
       : deck.assets.find(item => item.src === directSource);
