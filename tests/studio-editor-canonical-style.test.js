@@ -78,6 +78,21 @@ test('buildStudioCanonicalStyleBaseline prefers a valid session-owned canonical 
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalStyleBaseline rejects invalid compatibility baselines', () => {
+  let rebuildCalls = 0;
+  const result = canonicalStyle.buildStudioCanonicalStyleBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeck: () => {
+      rebuildCalls += 1;
+      return { invalid: true };
+    }
+  });
+
+  assert.equal(result, null);
+  assert.equal(rebuildCalls, 1);
+});
+
 test('buildStudioCanonicalStyleMutation maps text, source, style, and z-index edits to the model', () => {
   const sourceDeck = createSourceDeck();
   const element = createElement();
