@@ -311,9 +311,12 @@
     return risks;
   }
 
-  function getPptxBorderStyleFallback(styleValue) {
+  function getPptxBorderStyleFallback(
+    styleValue,
+    supportedStyles = ['solid', 'dashed', 'none', 'hidden']
+  ) {
     const borderStyle = typeof styleValue === 'string' ? styleValue.trim().toLowerCase() : '';
-    if (!borderStyle || ['solid', 'dashed', 'none', 'hidden'].includes(borderStyle)) return null;
+    if (!borderStyle || supportedStyles.includes(borderStyle)) return null;
     return {
       borderStyle,
       fallbackStyle: borderStyle === 'dotted' ? 'dashed' : 'solid'
@@ -838,6 +841,19 @@
             `Node ${risk.id} uses unsupported ${risk.scope} border-style: ${risk.borderStyle}; using ${risk.fallbackStyle} fallback`
           );
         });
+      }
+      const shapeNode = type === 'shape' || node.classes?.includes('editor-shape');
+      if (shapeNode) {
+        const fallback = getPptxBorderStyleFallback(
+          style['border-style'],
+          ['solid', 'dashed', 'dotted', 'none', 'hidden']
+        );
+        if (fallback) {
+          diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['border-style'] });
+          diagnostics.warnings.push(
+            `Node ${nodeId} uses unsupported shape border-style: ${fallback.borderStyle}; using ${fallback.fallbackStyle} fallback`
+          );
+        }
       }
 
       if (imageNode) {

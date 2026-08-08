@@ -993,6 +993,32 @@ test('preflightCanonicalPptxExport reports table border style fallbacks', () => 
   );
 });
 
+test('preflightCanonicalPptxExport reports unsupported shape border styles', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'shape-border-risk',
+        type: 'shape',
+        style: 'border-style: double;',
+        layout: { x: 0, y: 0, width: 100, height: 50 }
+      }, {
+        id: 'shape-dotted',
+        type: 'shape',
+        style: 'border-style: dotted;',
+        layout: { x: 120, y: 0, width: 100, height: 50 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedStyles, [
+    { id: 'shape-border-risk', properties: ['border-style'] }
+  ]);
+  assert.match(
+    report.diagnostics.warnings.join('\n'),
+    /Node shape-border-risk uses unsupported shape border-style: double; using solid fallback/
+  );
+});
+
 test('preflightCanonicalPptxExport reports unsupported image fit values', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{
