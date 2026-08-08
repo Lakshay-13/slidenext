@@ -78,6 +78,33 @@
     }
 
     function buildCanonicalDeckForInsertion(context) {
+      const sourceDocument = context && context.doc
+        ? context.doc
+        : getIframeDoc();
+      if (buildCanonicalDeck && sourceDocument) {
+        const liveCanonicalDeck = buildCanonicalDeck(sourceDocument);
+        const insertedItems = context && Array.isArray(context.items) ? context.items : [];
+        const insertedIds = insertedItems
+          .map((item) => assignElementId(item))
+          .filter((id) => typeof id === 'string' && id.trim());
+        const canonicalNodeIds = new Set();
+        const collectCanonicalNodeIds = (nodes = []) => {
+          (Array.isArray(nodes) ? nodes : []).forEach((node) => {
+            if (!node || typeof node !== 'object') return;
+            if (typeof node.id === 'string' && node.id.trim()) {
+              canonicalNodeIds.add(node.id);
+            }
+            collectCanonicalNodeIds(node.children);
+          });
+        };
+        if (liveCanonicalDeck && Array.isArray(liveCanonicalDeck.slides)) {
+          liveCanonicalDeck.slides.forEach((slide) => collectCanonicalNodeIds(slide && slide.nodes));
+        }
+        if (liveCanonicalDeck && (insertedIds.length === 0
+          || insertedIds.every((id) => canonicalNodeIds.has(id)))) {
+          return liveCanonicalDeck;
+        }
+      }
       if (!context || typeof context.buildCanonicalInsertionSequence !== 'function') return null;
       return context.buildCanonicalInsertionSequence(context.items, {
         slideId: context.slideId,

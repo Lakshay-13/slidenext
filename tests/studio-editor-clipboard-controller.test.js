@@ -74,3 +74,74 @@ test('clipboard controller routes paste and duplicate through the insertion cont
     ['finalizeInserted', [{ id: 'node-1' }], 'Auto: Duplicated Element', { id: 'tx-1' }]
   ]);
 });
+
+test('clipboard controller rebuilds canonical state from the live post-insertion document', () => {
+  const sourceDocument = { id: 'editor-document' };
+  const liveCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{
+      id: 'slide-1',
+      nodes: [
+        { id: 'flow-before' },
+        { id: 'pasted-flow-node' },
+        { id: 'flow-after' }
+      ]
+    }]
+  };
+  let finalizedCanonicalDeck = null;
+  let insertionCompleted = false;
+  const controller = clipboardController.createStudioEditorClipboardController({
+    clipboardApi: {
+      buildStudioClipboardPastePlan() {
+        return {
+          canPaste: true,
+          items: [{ id: 'clipboard-item' }],
+          nextPasteCount: 1,
+          nextClipboard: { items: [{ id: 'clipboard-item' }], pasteCount: 1 }
+        };
+      }
+    },
+    canonicalInsertionApi: {
+      createStudioCanonicalInsertionMutationBuilders() {
+        return {
+          buildCanonicalInsertionSequence() {
+            return {
+              slides: [{
+                id: 'slide-1',
+                nodes: [
+                  { id: 'flow-before' },
+                  { id: 'flow-after' },
+                  { id: 'pasted-flow-node' }
+                ]
+              }]
+            };
+          }
+        };
+      }
+    },
+    getClipboard: () => ({ items: [{ id: 'clipboard-item' }], pasteCount: 0 }),
+    setClipboard: () => {},
+    getIframeDoc: () => sourceDocument,
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    buildCanonicalDeck: (doc) => {
+      assert.equal(doc, sourceDocument);
+      return insertionCompleted ? liveCanonicalDeck : null;
+    },
+    insertClipboardPayload: () => {
+      insertionCompleted = true;
+      return [{ id: 'pasted-flow-node' }];
+    },
+    finalizeInsertedElements: (_items, _label, _transaction, canonicalDeck) => {
+      finalizedCanonicalDeck = canonicalDeck;
+      return true;
+    },
+    finalizeClipboardActionResult: (result) => result
+  });
+
+  assert.equal(controller.paste(), true);
+  assert.deepEqual(
+    finalizedCanonicalDeck.slides[0].nodes.map((node) => node.id),
+    ['flow-before', 'pasted-flow-node', 'flow-after']
+  );
+});
