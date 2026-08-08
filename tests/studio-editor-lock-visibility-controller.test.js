@@ -151,3 +151,44 @@ test('lock and visibility mutation plans prefer canonical metadata over stale DO
   assert.equal(typeof planReaders.hidden, 'function');
   assert.equal(finalized, 2);
 });
+
+test('lock and visibility readers rebuild when the live canonical baseline is invalid', () => {
+  const selected = [{ isConnected: true, dataset: { editorId: 'node-1' } }];
+  const rebuiltDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', visibility: { locked: true, hidden: true } }]
+    }]
+  });
+  const readers = {};
+  const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
+    lockStateApi: {
+      buildStudioLockMutationPlan(elements, options) {
+        readers.locked = options.isLocked;
+        assert.equal(options.isLocked(elements[0]), true);
+        return { didChange: false };
+      }
+    },
+    visibilityStateApi: {
+      buildStudioVisibilityMutationPlan(elements, options) {
+        readers.hidden = options.isHidden;
+        assert.equal(options.isHidden(elements[0]), true);
+        return { didChange: false };
+      }
+    },
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getSelectedElements: () => selected,
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isLocked: () => false,
+    isHidden: () => false,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => rebuiltDeck
+  });
+
+  assert.equal(controller.toggleLock(), false);
+  assert.equal(controller.toggleVisibility(), false);
+  assert.equal(typeof readers.locked, 'function');
+  assert.equal(typeof readers.hidden, 'function');
+});
