@@ -956,12 +956,16 @@
     if (tableNode) {
       const rows = getCanonicalTableRows(node);
       if (rows.length > 0 && bounds && typeof context.slide.addTable === 'function') {
+        const tableStyle = nodeStyle(node);
+        const tableFontFace = typeof tableStyle['font-family'] === 'string'
+          ? tableStyle['font-family'].split(',')[0].trim().replace(/^['"]|['"]$/g, '')
+          : '';
         context.slide.addTable(rows, {
           ...bounds,
           border: { type: 'solid', color: 'D1D5DB', pt: 0.75 },
           color: '000000',
           fill: 'FFFFFF',
-          fontFace: 'Aptos',
+          fontFace: tableFontFace || 'Aptos',
           fontSize: 11,
           margin: 0.04
         });
