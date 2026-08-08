@@ -2739,6 +2739,12 @@
             && typeof studioEditorTableNavigation.resolveStudioAdjacentTableCell === 'function'
             ? studioEditorTableNavigation.resolveStudioAdjacentTableCell
             : null,
+          getCanonicalVisibilityReader: (property, doc) => {
+            const fallbackReader = property === 'hidden' ? isElementHidden : isElementLocked;
+            return typeof getEditorCanonicalVisibilityReader === 'function'
+              ? getEditorCanonicalVisibilityReader(property, doc || getIframeDoc(), fallbackReader)
+              : fallbackReader;
+          },
           isElementLocked,
           isElementHidden,
           onInlineEditStart: ({ element }, iframeDoc) => {

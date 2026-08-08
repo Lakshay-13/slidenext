@@ -53,3 +53,37 @@ test('fails closed when the frame document or event handler factory is unavailab
   assert.equal(noDocumentController.attach(null), false);
   assert.equal(noEventsController.attach({}), false);
 });
+
+test('inline edit eligibility prefers canonical lock and hidden state', () => {
+  const doc = { activeElement: null };
+  let canEdit = null;
+  const state = { locked: false, hidden: false };
+  const controller = frameInteractions.createStudioEditorFrameInteractions({
+    eventsApi: {
+      createStudioFrameClickHandler: () => () => {},
+      createStudioFrameKeydownHandler: () => () => {},
+      attachStudioFrameInteractionHandlers() {}
+    },
+    inlineTextEditApi: {
+      attachStudioInlineTextEditHandlers(nextDoc, options) {
+        assert.equal(nextDoc, doc);
+        canEdit = options.canEdit;
+      }
+    },
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    getCanonicalVisibilityReader(property, currentDoc) {
+      assert.equal(currentDoc, doc);
+      return () => state[property];
+    },
+    isElementLocked: () => false,
+    isElementHidden: () => false
+  });
+
+  assert.equal(controller.attach(doc), true);
+  assert.equal(canEdit({ id: 'node-1' }), true);
+  state.locked = true;
+  assert.equal(canEdit({ id: 'node-1' }), false);
+  state.locked = false;
+  state.hidden = true;
+  assert.equal(canEdit({ id: 'node-1' }), false);
+});

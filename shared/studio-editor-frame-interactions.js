@@ -47,6 +47,9 @@
     const isElementHidden = typeof options.isElementHidden === 'function'
       ? options.isElementHidden
       : () => false;
+    const getCanonicalVisibilityReader = typeof options.getCanonicalVisibilityReader === 'function'
+      ? options.getCanonicalVisibilityReader
+      : null;
     const onInlineEditStart = typeof options.onInlineEditStart === 'function'
       ? options.onInlineEditStart
       : () => {};
@@ -89,6 +92,18 @@
       ? options.navigateSlide
       : null;
 
+    function readElementVisibility(property, element, doc, fallbackReader) {
+      if (getCanonicalVisibilityReader) {
+        try {
+          const reader = getCanonicalVisibilityReader(property, doc);
+          if (typeof reader === 'function') return reader(element);
+        } catch (err) {
+          // Fall back to the live element when canonical state is unavailable.
+        }
+      }
+      return fallbackReader(element);
+    }
+
     function attach(doc) {
       if (!doc || !eventsApi
         || typeof eventsApi.createStudioFrameClickHandler !== 'function'
@@ -112,8 +127,8 @@
           resolveTextElement,
           resolveAdjacentTextElement,
           canEdit: (element) => !!getActiveSlide(doc)
-            && !isElementLocked(element)
-            && !isElementHidden(element),
+            && !readElementVisibility('locked', element, doc, isElementLocked)
+            && !readElementVisibility('hidden', element, doc, isElementHidden),
           onStart: (payload) => onInlineEditStart(payload, doc),
           onCommit: onInlineEditCommit,
           onEnd: onInlineEditEnd
