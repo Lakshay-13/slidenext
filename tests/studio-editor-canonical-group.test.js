@@ -67,6 +67,24 @@ test('buildStudioCanonicalGroupBaseline builds from the source document', () => 
   assert.equal(result, sourceDeck);
 });
 
+test('buildStudioCanonicalGroupBaseline prefers a valid live canonical deck', () => {
+  const liveDeck = createSourceDeck();
+  let didBuildFromDocument = false;
+  const result = canonicalGroup.buildStudioCanonicalGroupBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return liveDeck;
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return createSourceDeck();
+    }
+  });
+
+  assert.equal(result, liveDeck);
+  assert.equal(didBuildFromDocument, false);
+});
+
 test('createStudioCanonicalGroupMutationBuilders preserves an explicit baseline', () => {
   const sourceDeck = createSourceDeck();
   const explicitBaseline = canonicalDeck.createCanonicalDeck({
@@ -144,6 +162,24 @@ test('buildStudioCanonicalUngroupBaseline builds from the source document', () =
 
   assert.equal(builtFromDocument, sourceDocument);
   assert.equal(result, sourceDeck);
+});
+
+test('buildStudioCanonicalUngroupBaseline falls back when the live canonical deck is invalid', () => {
+  const sourceDeck = createSourceDeck();
+  let didBuildFromDocument = false;
+  const result = canonicalGroup.buildStudioCanonicalUngroupBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return { invalid: true };
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return sourceDeck;
+    }
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(didBuildFromDocument, true);
 });
 
 test('createStudioCanonicalUngroupMutationBuilders preserves an explicit baseline', () => {

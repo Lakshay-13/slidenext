@@ -20,7 +20,23 @@
       : typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : null;
-    if (!groupCanonicalNodes || !buildCanonicalDeck) return null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
+    if (!groupCanonicalNodes) return null;
+    if (getCanonicalDeckBaseline) {
+      let liveCanonicalDeck = null;
+      try {
+        liveCanonicalDeck = getCanonicalDeckBaseline(options.sourceDocument);
+      } catch (err) {
+        liveCanonicalDeck = null;
+      }
+      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+        || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
+        if (liveCanonicalDeck) return liveCanonicalDeck;
+      }
+    }
+    if (!buildCanonicalDeck) return null;
     return buildCanonicalDeck(options.sourceDocument);
   }
 
@@ -37,7 +53,23 @@
       : typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : null;
-    if (!ungroupCanonicalNodes || !buildCanonicalDeck) return null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
+    if (!ungroupCanonicalNodes) return null;
+    if (getCanonicalDeckBaseline) {
+      let liveCanonicalDeck = null;
+      try {
+        liveCanonicalDeck = getCanonicalDeckBaseline(options.sourceDocument);
+      } catch (err) {
+        liveCanonicalDeck = null;
+      }
+      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+        || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
+        if (liveCanonicalDeck) return liveCanonicalDeck;
+      }
+    }
+    if (!buildCanonicalDeck) return null;
     return buildCanonicalDeck(options.sourceDocument);
   }
 
@@ -93,6 +125,9 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const importElementToCanonicalNode = typeof options.importElementToCanonicalNode === 'function'
       ? options.importElementToCanonicalNode
       : null;
@@ -101,7 +136,8 @@
         ...groupOptions,
         canonicalDeckApi,
         buildCanonicalDeck,
-        buildCanonicalDeckBaseline
+        buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline
       })
     );
     const buildCanonicalGroupDeck = (groupOptions = {}) => {
@@ -116,6 +152,7 @@
         canonicalDeckApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline,
         importElementToCanonicalNode,
         canonicalDeckBeforeMutation
       });
@@ -184,6 +221,9 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const importElementToCanonicalNode = typeof options.importElementToCanonicalNode === 'function'
       ? options.importElementToCanonicalNode
       : null;
@@ -192,7 +232,8 @@
         ...ungroupOptions,
         canonicalDeckApi,
         buildCanonicalDeck,
-        buildCanonicalDeckBaseline
+        buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline
       })
     );
     const buildCanonicalUngroupDeck = (ungroupOptions = {}) => {
@@ -207,6 +248,7 @@
         canonicalDeckApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
+        getCanonicalDeckBaseline,
         importElementToCanonicalNode,
         canonicalDeckBeforeMutation
       });
