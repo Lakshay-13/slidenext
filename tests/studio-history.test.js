@@ -1001,6 +1001,9 @@ test('createStudioHistoryStepRunner applies successful history steps and skips u
     },
     triggerAutoSave() {
       calls.push(['triggerAutoSave']);
+    },
+    flushPendingHistory() {
+      calls.push(['flushPendingHistory']);
     }
   });
 
@@ -1013,6 +1016,7 @@ test('createStudioHistoryStepRunner applies successful history steps and skips u
   assert.deepEqual(undoStack, ['undo-next']);
   assert.deepEqual(redoStack, ['redo-next']);
   assert.deepEqual(calls, [
+    ['flushPendingHistory'],
     ['getUndoStack'],
     ['getRedoStack'],
     ['stepHistory', ['undo-entry'], ['redo-entry']],

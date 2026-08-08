@@ -7043,6 +7043,16 @@
       });
     }
 
+    function flushPendingEditorHistory() {
+      const hasPendingTransaction = typeof pendingEditorTransaction !== 'undefined'
+        && pendingEditorTransaction !== null;
+      const hasPendingCanonicalDeck = typeof pendingEditorCanonicalDeck !== 'undefined'
+        && pendingEditorCanonicalDeck !== null;
+      if (!hasPendingTransaction && !hasPendingCanonicalDeck) return false;
+      saveHistoryState(false);
+      return true;
+    }
+
     function getEditorHistoryStepAdapter() {
       if (typeof getEditorHistoryStepAdapter.adapter !== 'object'
         || !getEditorHistoryStepAdapter.adapter) {
@@ -7067,7 +7077,10 @@
           },
           restoreHistoryEntry: restoreFrameFromHistoryEntry,
           updateHistoryButtons,
-          triggerAutoSave
+          triggerAutoSave,
+          flushPendingHistory: typeof flushPendingEditorHistory === 'function'
+            ? flushPendingEditorHistory
+            : null
         });
       }
       return getEditorHistoryStepAdapter.adapter;

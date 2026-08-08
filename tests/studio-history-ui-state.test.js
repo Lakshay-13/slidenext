@@ -133,7 +133,8 @@ test('getEditorHistoryStepAdapter delegates factory wiring through shared histor
     redoStack: ['redo-entry'],
     restoreFrameFromHistoryEntry() {},
     updateHistoryButtons() {},
-    triggerAutoSave() {}
+    triggerAutoSave() {},
+    flushPendingEditorHistory() {}
   };
 
   vm.createContext(context);
@@ -148,6 +149,33 @@ test('getEditorHistoryStepAdapter delegates factory wiring through shared histor
   assert.equal(capturedOptions.restoreHistoryEntry, context.restoreFrameFromHistoryEntry);
   assert.equal(capturedOptions.updateHistoryButtons, context.updateHistoryButtons);
   assert.equal(capturedOptions.triggerAutoSave, context.triggerAutoSave);
+  assert.equal(typeof capturedOptions.flushPendingHistory, 'function');
+});
+
+test('flushPendingEditorHistory captures pending canonical edits before stepping history', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const flushPendingEditorHistorySource = extractFunctionSource(
+    fileContent,
+    'function flushPendingEditorHistory() {',
+    '\n\n    function getEditorHistoryStepAdapter() {'
+  );
+  const calls = [];
+  const context = {
+    pendingEditorTransaction: { id: 'pending-transaction' },
+    pendingEditorCanonicalDeck: { kind: 'slidenext.deck', slides: [] },
+    saveHistoryState(...args) {
+      calls.push(args);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(flushPendingEditorHistorySource, context);
+
+  assert.equal(context.flushPendingEditorHistory(), true);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [[false]]);
+  context.pendingEditorTransaction = null;
+  context.pendingEditorCanonicalDeck = null;
+  assert.equal(context.flushPendingEditorHistory(), false);
 });
 
 test('updateHistoryButtons returns false when the shared history state is unavailable', () => {

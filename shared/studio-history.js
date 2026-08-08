@@ -410,8 +410,12 @@
     const triggerAutoSave = typeof options.triggerAutoSave === 'function'
       ? options.triggerAutoSave
       : () => {};
+    const flushPendingHistory = typeof options.flushPendingHistory === 'function'
+      ? options.flushPendingHistory
+      : () => {};
 
     return function runHistoryStep() {
+      flushPendingHistory();
       const nextHistoryState = stepHistory(getUndoStack(), getRedoStack(), options);
       if (!nextHistoryState || !nextHistoryState[didStepKey]) {
         return nextHistoryState;

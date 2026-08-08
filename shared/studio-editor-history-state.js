@@ -295,6 +295,9 @@
     const triggerAutoSave = typeof options.triggerAutoSave === 'function'
       ? options.triggerAutoSave
       : () => {};
+    const flushPendingHistory = typeof options.flushPendingHistory === 'function'
+      ? options.flushPendingHistory
+      : () => {};
 
     const runners = {
       undo: null,
@@ -326,7 +329,8 @@
         setRedoStack,
         restoreHistoryEntry,
         updateHistoryButtons,
-        triggerAutoSave
+        triggerAutoSave,
+        flushPendingHistory
       });
     }
 
