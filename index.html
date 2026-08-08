@@ -4114,6 +4114,7 @@
           currentPresentationUrl: typeof currentPresentationUrl === 'string'
             ? currentPresentationUrl
             : '',
+          getCurrentPresentationUrl: () => currentPresentationUrl,
           updatePersistedDeckState: updateEditorPersistedDeckState,
           setCurrentPresentationCanonicalDeck
         });

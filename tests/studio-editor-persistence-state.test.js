@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
+const editorPersistence = require('../shared/studio-editor-persistence.js');
 
 test('createStudioEditorPersistedDeckStateAdapter lazily reuses the shared updater', () => {
   let createCalls = 0;
@@ -65,6 +66,30 @@ test('createStudioEditorPersistedDeckStateApplierAdapter reuses the shared appli
   assert.equal(capturedOptions.currentPresentationUrl, '/presentations/deck/index.html');
   assert.equal(capturedOptions.updatePersistedDeckState, updatePersistedDeckState);
   assert.equal(capturedOptions.setCurrentPresentationCanonicalDeck, setCurrentPresentationCanonicalDeck);
+});
+
+test('createStudioEditorPersistedDeckStateApplierAdapter reads the active presentation URL at call time', () => {
+  let currentPresentationUrl = '/presentations/first/index.html';
+  const metadataCalls = [];
+  const adapter = editorPersistenceState.createStudioEditorPersistedDeckStateApplierAdapter({
+    persistenceApi: editorPersistence,
+    currentPresentationUrl,
+    getCurrentPresentationUrl: () => currentPresentationUrl,
+    setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl) {
+      metadataCalls.push([canonicalDeck, presentationUrl]);
+    }
+  });
+  const firstCanonicalDeck = { slides: [{ id: 'slide-1' }] };
+  const secondCanonicalDeck = { slides: [{ id: 'slide-2' }] };
+
+  adapter({ canonicalDeck: firstCanonicalDeck });
+  currentPresentationUrl = '/presentations/second/index.html';
+  adapter({ canonicalDeck: secondCanonicalDeck });
+
+  assert.deepEqual(metadataCalls, [
+    [firstCanonicalDeck, '/presentations/first/index.html'],
+    [secondCanonicalDeck, '/presentations/second/index.html']
+  ]);
 });
 
 test('createStudioEditorPersistedDeckStateApplierAdapter returns input state without shared persistence', () => {

@@ -58,6 +58,9 @@
     const currentPresentationUrl = typeof options.currentPresentationUrl === 'string'
       ? options.currentPresentationUrl
       : '';
+    const getCurrentPresentationUrl = typeof options.getCurrentPresentationUrl === 'function'
+      ? options.getCurrentPresentationUrl
+      : () => currentPresentationUrl;
     const updatePersistedDeckState = typeof options.updatePersistedDeckState === 'function'
       ? options.updatePersistedDeckState
       : () => {};
@@ -73,6 +76,7 @@
       }
       return persistenceApi.createStudioPersistedDeckStateApplier({
         currentPresentationUrl,
+        getCurrentPresentationUrl,
         updatePersistedDeckState,
         setCurrentPresentationCanonicalDeck
       });

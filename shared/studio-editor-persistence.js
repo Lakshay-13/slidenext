@@ -119,8 +119,12 @@
 
   function createStudioPersistedDeckStateApplier(options = {}) {
     return function applyPersistedDeckState(nextState = {}, nextOptions = {}) {
+      const currentPresentationUrl = typeof options.getCurrentPresentationUrl === 'function'
+        ? options.getCurrentPresentationUrl()
+        : options.currentPresentationUrl;
       return applyStudioPersistedDeckState(nextState, {
         ...options,
+        currentPresentationUrl,
         ...nextOptions
       });
     };
