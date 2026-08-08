@@ -1,0 +1,101 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+function extractFunctionSource(fileContent, startMarker, endMarker) {
+  const start = fileContent.indexOf(startMarker);
+  assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
+  const end = fileContent.indexOf(endMarker, start);
+  assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
+  return fileContent.slice(start, end);
+}
+
+test('renderSavedAssets renders asset names and the empty state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function renderSavedAssets(assets = []) {',
+    '\n\n    function updateAssetLibraryState'
+  );
+  const list = {
+    children: [],
+    set textContent(value) {
+      this.children = [];
+      this.value = value;
+    },
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const context = {
+    document: {
+      getElementById() {
+        return list;
+      },
+      createElement() {
+        return {
+          textContent: '',
+          children: [],
+          addEventListener() {},
+          appendChild(child) {
+            this.children.push(child);
+          },
+          setAttribute() {}
+        };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.renderSavedAssets([
+    { id: 'hero', name: 'Hero', type: 'image', src: '/hero.png' }
+  ]), true);
+  assert.equal(list.children[0].children[0].textContent, 'Hero - image');
+  assert.equal(context.renderSavedAssets([]), true);
+  assert.equal(list.children[0].textContent, 'No assets saved');
+});
+
+test('addAssetToLibrary validates the source and delegates a normalized image asset', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function addAssetToLibrary() {',
+    '\n\n    function nudgeSelectedElements'
+  );
+  const nameInput = { value: '  Hero  ' };
+  const sourceInput = { value: '  /images/hero.png  ' };
+  const calls = [];
+  const context = {
+    document: {
+      getElementById(id) {
+        return id === 'assetNameInput' ? nameInput : sourceInput;
+      }
+    },
+    studioEditorAssetController: {
+      addAsset(asset) {
+        calls.push(asset);
+        return { assets: [asset] };
+      },
+      removeAsset() {
+        return true;
+      }
+    },
+    updateAssetLibraryState() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.addAssetToLibrary(), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].name, 'Hero');
+  assert.equal(calls[0].src, '/images/hero.png');
+  assert.equal(calls[0].type, 'image');
+  assert.equal(sourceInput.value, '');
+});

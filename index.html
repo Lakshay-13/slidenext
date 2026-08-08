@@ -997,6 +997,22 @@
           </div>
         </div>
 
+        <div id="assetLibraryPanel" class="flex flex-col gap-3 mt-6 pt-5 border-t border-white/5">
+          <div class="flex items-center justify-between gap-2">
+            <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Asset Library</h4>
+            <span class="text-[9px] text-zinc-500 font-mono uppercase tracking-wider">Deck assets</span>
+          </div>
+          <input id="assetNameInput" type="text" value="New Asset" placeholder="Asset name" class="w-full p-2 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
+          <input id="assetSourceInput" type="text" placeholder="https://... or /path/to/file" class="w-full p-2 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-mono text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
+          <button id="addAssetBtn" onclick="addAssetToLibrary()" class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            <span class="material-symbols-outlined text-[14px] text-[#7028d0]">add_photo_alternate</span>
+            Add Asset
+          </button>
+          <div id="savedAssetsList" class="flex flex-col gap-1 text-[10px] font-mono text-zinc-500">
+            <span>No assets saved</span>
+          </div>
+        </div>
+
         <!-- Selected Element properties panel - visible when an element is focused -->
         <div id="elementInspectorPanel" class="flex flex-col gap-6 hidden">
           
@@ -1285,6 +1301,7 @@
   <script src="/shared/studio-editor-block-controller.js"></script>
   <script src="/shared/studio-editor-template-controller.js"></script>
   <script src="/shared/studio-editor-master-slide-controller.js"></script>
+  <script src="/shared/studio-editor-asset-controller.js"></script>
   <script src="/shared/studio-editor-canonical-slide.js"></script>
   <script src="/shared/studio-editor-canonical-metadata.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
@@ -2054,6 +2071,21 @@
           onMasterSlidesChanged: () => updateMasterSlideActionState()
         })
       : null;
+    const studioEditorAssetController = typeof SlideNextStudioEditorAssetController !== 'undefined'
+      && SlideNextStudioEditorAssetController
+      && typeof SlideNextStudioEditorAssetController.createStudioEditorAssetController === 'function'
+      ? SlideNextStudioEditorAssetController.createStudioEditorAssetController({
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
+          saveHistoryState: (...args) => saveHistoryState(...args),
+          triggerAutoSave: (...args) => triggerAutoSave(...args),
+          triggerAutoVersion: (...args) => triggerAutoVersion(...args),
+          finalizeMutation: (...args) => finalizeEditorDeckMutation(...args),
+          onAssetsChanged: (assets) => renderSavedAssets(assets)
+        })
+      : null;
     const studioEditorTransformController = typeof SlideNextStudioEditorTransformController !== 'undefined'
       && SlideNextStudioEditorTransformController
       && typeof SlideNextStudioEditorTransformController.createStudioEditorTransformController === 'function'
@@ -2310,6 +2342,7 @@
       updateBlockActionState();
       updateTemplateActionState();
       updateMasterSlideActionState();
+      updateAssetLibraryState();
       
       // Update theme toggle icons
       const themeIcon = document.getElementById('themeIcon');
@@ -3529,6 +3562,9 @@
       }
       if (typeof updateMasterSlideActionState === 'function') {
         updateMasterSlideActionState(doc);
+      }
+      if (typeof updateAssetLibraryState === 'function') {
+        updateAssetLibraryState(doc);
       }
       return didSync;
     }
@@ -6044,6 +6080,50 @@
       return true;
     }
 
+    function renderSavedAssets(assets = []) {
+      if (typeof document === 'undefined' || !document || typeof document.getElementById !== 'function') {
+        return false;
+      }
+      const list = document.getElementById('savedAssetsList');
+      if (!list || typeof document.createElement !== 'function') return false;
+      const normalizedAssets = Array.isArray(assets) ? assets : [];
+      list.textContent = '';
+      if (normalizedAssets.length === 0) {
+        const emptyState = document.createElement('span');
+        emptyState.textContent = 'No assets saved';
+        list.appendChild(emptyState);
+        return true;
+      }
+      normalizedAssets.forEach((asset) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-1';
+        const item = document.createElement('span');
+        item.className = 'min-w-0 flex-1 truncate rounded px-2 py-1';
+        const assetName = asset && asset.name ? asset.name : 'Unnamed Asset';
+        const assetType = asset && asset.type ? asset.type : 'file';
+        item.textContent = `${assetName} - ${assetType}`;
+        item.title = asset && asset.src ? asset.src : assetName;
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'shrink-0 rounded px-1.5 py-1 text-zinc-500 hover:bg-red-500/10 hover:text-red-300 transition-colors';
+        removeButton.textContent = 'Remove';
+        removeButton.title = `Remove ${assetName}`;
+        removeButton.setAttribute('aria-label', `Remove ${assetName}`);
+        removeButton.addEventListener('click', () => removeAssetFromLibrary(asset.id));
+        row.appendChild(item);
+        row.appendChild(removeButton);
+        list.appendChild(row);
+      });
+      return true;
+    }
+
+    function updateAssetLibraryState(doc = getIframeDoc()) {
+      const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(doc)
+        : null;
+      return renderSavedAssets(canonicalDeck && canonicalDeck.assets);
+    }
+
     function updateTemplateActionState(doc = getIframeDoc()) {
       const canSave = !!getActiveSlide(doc);
       const documentApi = typeof document !== 'undefined'
@@ -6429,6 +6509,33 @@
         ? studioEditorMasterSlideController.removeMasterSlide(masterSlideId)
         : false;
       if (didRemove) updateMasterSlideActionState();
+      return didRemove;
+    }
+
+    function addAssetToLibrary() {
+      const nameInput = document.getElementById('assetNameInput');
+      const sourceInput = document.getElementById('assetSourceInput');
+      const src = sourceInput && typeof sourceInput.value === 'string' ? sourceInput.value.trim() : '';
+      if (!src) return false;
+      const name = nameInput && typeof nameInput.value === 'string' && nameInput.value.trim()
+        ? nameInput.value.trim()
+        : src.split('/').pop() || 'Image Asset';
+      const savedDeck = studioEditorAssetController
+        && typeof studioEditorAssetController.addAsset === 'function'
+        ? studioEditorAssetController.addAsset({ name, src, type: 'image' })
+        : null;
+      if (!savedDeck) return false;
+      sourceInput.value = '';
+      updateAssetLibraryState();
+      return true;
+    }
+
+    function removeAssetFromLibrary(assetId) {
+      const didRemove = studioEditorAssetController
+        && typeof studioEditorAssetController.removeAsset === 'function'
+        ? studioEditorAssetController.removeAsset(assetId)
+        : false;
+      if (didRemove) updateAssetLibraryState();
       return didRemove;
     }
 
