@@ -28,6 +28,10 @@ class FakeSlide {
     this.calls.push({ type: 'table', rows, options });
   }
 
+  addChart(chartType, data, options) {
+    this.calls.push({ type: 'chart', chartType, data, options });
+  }
+
   addNotes(notes) {
     this.calls.push({ type: 'notes', notes });
   }
@@ -494,6 +498,45 @@ test('preflightCanonicalPptxExport reports chart nodes as unsupported', () => {
     reason: 'node type chart'
   }]);
   assert.match(report.diagnostics.warnings.join('\n'), /node type chart/);
+});
+
+test('createCanonicalPptxExport renders metadata-backed bar charts', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'chart-1',
+        type: 'chart',
+        attributes: {
+          'data-chart-type': 'bar',
+          'data-chart-labels': 'Q1,Q2,Q3',
+          'data-chart-values': '42,68,55',
+          'data-chart-title': 'Quarterly trend'
+        },
+        layout: { x: 100, y: 80, width: 600, height: 360 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.diagnostics.unsupportedNodes, []);
+  assert.deepEqual(result.pptx.slides[0].calls, [{
+    type: 'chart',
+    chartType: 'bar',
+    data: [{
+      name: 'Quarterly trend',
+      labels: ['Q1', 'Q2', 'Q3'],
+      values: [42, 68, 55]
+    }],
+    options: {
+      x: 0.6944270833333334,
+      y: 0.5555555555555556,
+      w: 4.1665625,
+      h: 2.5,
+      barDir: 'col',
+      showLegend: false,
+      showTitle: true,
+      title: 'Quarterly trend'
+    }
+  }]);
 });
 
 test('preflightCanonicalPptxExport does not warn for bound children inside flow containers', () => {

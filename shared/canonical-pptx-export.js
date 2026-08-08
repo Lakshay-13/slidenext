@@ -467,6 +467,39 @@
     return typeof attributes[name] === 'string' ? attributes[name] : '';
   }
 
+  function parseCanonicalChartNumberList(value) {
+    if (typeof value !== 'string' || !value.trim()) return [];
+    const parts = value.split(',').map(part => part.trim()).filter(Boolean);
+    const values = parts.map(Number);
+    return values.length > 0 && values.every(Number.isFinite) ? values : [];
+  }
+
+  function getCanonicalChartTitle(node) {
+    const titleAttribute = getNodeAttribute(node, 'data-chart-title').trim();
+    if (titleAttribute) return titleAttribute;
+    const titleNode = (Array.isArray(node && node.children) ? node.children : [])
+      .find(child => getNodeAttribute(child, 'class').split(/\s+/).includes('editor-chart-title')
+        || (Array.isArray(child && child.classes) && child.classes.includes('editor-chart-title')));
+    return titleNode ? getNestedNodeText(titleNode) : '';
+  }
+
+  function getCanonicalChartData(node) {
+    const chartType = getNodeAttribute(node, 'data-chart-type').trim().toLowerCase() || 'bar';
+    if (!['bar', 'column'].includes(chartType)) return null;
+    const values = parseCanonicalChartNumberList(getNodeAttribute(node, 'data-chart-values'));
+    if (values.length === 0) return null;
+    const rawLabels = getNodeAttribute(node, 'data-chart-labels')
+      .split(',')
+      .map(label => label.trim());
+    const labels = values.map((_, index) => rawLabels[index] || String(index + 1));
+    return {
+      type: 'bar',
+      labels,
+      values,
+      title: getCanonicalChartTitle(node)
+    };
+  }
+
   function resolveAssetSource(source, options) {
     if (!source) return '';
     if (/^(data:|https?:\/\/|file:\/\/|\/)/i.test(source) || !options.assetBaseDir) return source;
@@ -998,7 +1031,8 @@
       const nodeBackgroundValue = style['background-image'] || style.background || '';
       const nodeBackgroundAsset = resolveNodeBackgroundImageAsset(node, deck, normalizedOptions);
       const nodeBackgroundSource = nodeBackgroundAsset.source;
-      if (UNSUPPORTED_NODE_TYPES.has(type)) {
+      const chartData = type === 'chart' ? getCanonicalChartData(node) : null;
+      if (UNSUPPORTED_NODE_TYPES.has(type) && !(type === 'chart' && chartData)) {
         diagnostics.unsupportedNodes.push({
           id: nodeId,
           type,
@@ -1221,6 +1255,8 @@
     const imageNode = type === 'image' || tagName === 'img';
     const shapeNode = type === 'shape' || node.classes?.includes('editor-shape');
     const tableNode = type === 'table' || tagName === 'table';
+    const chartNode = type === 'chart';
+    const chartData = chartNode ? getCanonicalChartData(node) : null;
     const childOrigin = getNodeChildOrigin(node, origin);
     const hasExportableChildren = hasExportableChildBounds(children, childOrigin);
     const text = getNestedNodeText(node);
@@ -1263,7 +1299,19 @@
       context.slide.addImage(mergePptxTransparency(backgroundOptions, transparency));
     }
 
-    if (tableNode) {
+    if (chartNode && chartData && bounds && typeof context.slide.addChart === 'function') {
+      const chartOptions = {
+        ...bounds,
+        barDir: 'col',
+        showLegend: false,
+        ...(chartData.title ? { showTitle: true, title: chartData.title } : {})
+      };
+      context.slide.addChart(chartData.type, [{
+        name: chartData.title || 'Series 1',
+        labels: chartData.labels,
+        values: chartData.values
+      }], chartOptions);
+    } else if (tableNode) {
       const rows = getCanonicalTableRows(node);
       if (rows.length > 0 && bounds && typeof context.slide.addTable === 'function') {
         const tableStyle = nodeStyle(node);
