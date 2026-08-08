@@ -47,6 +47,58 @@ test('removeAsset commits unused asset removal and rejects referenced assets', (
   assert.deepEqual(deck.assets.map((asset) => asset.id), ['used']);
 });
 
+test('applyAsset binds the selected image, updates its DOM source, and commits the deck', () => {
+  let deck = canonicalDeck.createCanonicalDeck({
+    assets: [{ id: 'hero', name: 'Hero', type: 'image', src: '/hero.png' }],
+    slides: [{ id: 'slide-1', nodes: [{ id: 'image-1', type: 'image', attributes: { src: '/old.png' } }] }]
+  });
+  const selectedImage = {
+    dataset: { editorId: 'image-1' },
+    attributes: {},
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    }
+  };
+  let inspectorSyncs = 0;
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedImage: () => selectedImage,
+    syncInspectorForSelection: () => { inspectorSyncs += 1; },
+    saveHistoryState: (_debounce, _transaction, nextDeck) => { deck = nextDeck; }
+  });
+
+  assert.equal(controller.applyAsset('hero'), true);
+  assert.equal(deck.slides[0].nodes[0].assetId, 'hero');
+  assert.equal(selectedImage.attributes.src, '/hero.png');
+  assert.equal(selectedImage.src, '/hero.png');
+  assert.equal(inspectorSyncs, 1);
+});
+
+test('applyAsset refuses missing, unselected, and locked image targets', () => {
+  let deck = canonicalDeck.createCanonicalDeck({
+    assets: [{ id: 'hero', src: '/hero.png' }],
+    slides: [{ id: 'slide-1', nodes: [{ id: 'image-1', type: 'image' }] }]
+  });
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedImage: () => null
+  });
+  assert.equal(controller.applyAsset('hero'), false);
+
+  const lockedController = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedImage: () => ({ dataset: { editorId: 'image-1' } }),
+    isElementLocked: () => true
+  });
+  assert.equal(lockedController.applyAsset('hero'), false);
+});
+
 test('asset controller returns false when an asset operation cannot produce a deck', () => {
   const controller = assetController.createStudioEditorAssetController({
     canonicalDeckApi: canonicalDeck,

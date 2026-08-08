@@ -14,6 +14,21 @@
     const getCanonicalDeck = typeof options.getCanonicalDeck === 'function'
       ? options.getCanonicalDeck
       : () => null;
+    const getActiveSlideId = typeof options.getActiveSlideId === 'function'
+      ? options.getActiveSlideId
+      : () => '';
+    const getSelectedImage = typeof options.getSelectedImage === 'function'
+      ? options.getSelectedImage
+      : () => null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const isElementLocked = typeof options.isElementLocked === 'function'
+      ? options.isElementLocked
+      : () => false;
+    const syncInspectorForSelection = typeof options.syncInspectorForSelection === 'function'
+      ? options.syncInspectorForSelection
+      : null;
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : null;
@@ -68,9 +83,44 @@
       return true;
     }
 
+    function applyAsset(assetId) {
+      if (!canonicalDeckApi
+        || typeof canonicalDeckApi.updateCanonicalNodeAsset !== 'function') {
+        return false;
+      }
+      const selectedImage = getSelectedImage();
+      if (!selectedImage || isElementLocked(selectedImage)) return false;
+      const nextCanonicalDeck = canonicalDeckApi.updateCanonicalNodeAsset(
+        getCanonicalDeck(),
+        getActiveSlideId(),
+        getElementId(selectedImage),
+        assetId
+      );
+      if (!nextCanonicalDeck) return false;
+
+      const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
+      const asset = nextCanonicalDeck.assets.find(
+        (candidate) => candidate && candidate.id === normalizedAssetId
+      );
+      if (normalizedAssetId && !asset) return false;
+      if (asset && typeof selectedImage.setAttribute === 'function') {
+        selectedImage.setAttribute('src', asset.src);
+      }
+      if (asset) selectedImage.src = asset.src;
+      if (syncInspectorForSelection) syncInspectorForSelection();
+      commitDeck(
+        nextCanonicalDeck,
+        asset
+          ? `Auto: Applied Asset "${asset.name || asset.id}"`
+          : 'Auto: Cleared Image Asset'
+      );
+      return true;
+    }
+
     return {
       addAsset,
-      removeAsset
+      removeAsset,
+      applyAsset
     };
   }
 

@@ -18,7 +18,7 @@ test('renderSavedAssets renders asset names and the empty state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
     fileContent,
-    'function renderSavedAssets(assets = []) {',
+    'function renderSavedAssets(assets = [], canApply = false) {',
     '\n\n    function updateAssetLibraryState'
   );
   const list = {
@@ -98,4 +98,44 @@ test('addAssetToLibrary validates the source and delegates a normalized image as
   assert.equal(calls[0].src, '/images/hero.png');
   assert.equal(calls[0].type, 'image');
   assert.equal(sourceInput.value, '');
+});
+
+test('applyAssetToSelectedImage delegates asset binding and refreshes the library state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function addAssetToLibrary() {',
+    '\n\n    function nudgeSelectedElements'
+  );
+  let delegatedId = '';
+  let refreshes = 0;
+  const context = {
+    document: {
+      getElementById() {
+        return { value: '' };
+      }
+    },
+    studioEditorAssetController: {
+      addAsset() {
+        return null;
+      },
+      removeAsset() {
+        return false;
+      },
+      applyAsset(assetId) {
+        delegatedId = assetId;
+        return true;
+      }
+    },
+    updateAssetLibraryState() {
+      refreshes += 1;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.applyAssetToSelectedImage('hero'), true);
+  assert.equal(delegatedId, 'hero');
+  assert.equal(refreshes, 1);
 });
