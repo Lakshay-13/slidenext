@@ -222,6 +222,20 @@ test('clipboard wiring rebuilds the canonical deck from the iframe DOM', () => {
   );
 });
 
+test('element insertion wiring rebuilds the canonical deck from the iframe DOM', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const controllerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementInsertionController =',
+    'const studioEditorBlockController ='
+  );
+
+  assert.match(
+    controllerSource,
+    /buildCanonicalDeck: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc, \{\s*preferLiveCanonicalDeck: false\s*\}\)/
+  );
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(

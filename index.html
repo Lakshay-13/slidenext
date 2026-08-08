@@ -2014,7 +2014,9 @@
           getIframeDoc: (...args) => getIframeDoc(...args),
           getActiveSlide: (...args) => getActiveSlide(...args),
           getEditorSlideId: (...args) => getEditorSlideId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+            preferLiveCanonicalDeck: false
+          }),
           applyElementInsertion: (...args) => applyEditorElementInsertionWithTransaction(...args),
           makeElementsHoverable: (...args) => makeElementsHoverable(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
