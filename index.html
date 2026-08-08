@@ -5594,8 +5594,28 @@
     }
 
     function selectionHasLockedElements(elements = selectedElements) {
+      let canonicalDeck = null;
+      if (typeof buildEditorCanonicalDeck === 'function') {
+        try {
+          canonicalDeck = buildEditorCanonicalDeck(getIframeDoc());
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      const readLockedState = canonicalDeck
+        ? (element) => {
+            const canonicalNode = typeof resolveEditorCanonicalNodeForElement === 'function'
+              ? resolveEditorCanonicalNodeForElement(element, canonicalDeck)
+              : null;
+            return canonicalNode
+              && canonicalNode.visibility
+              && typeof canonicalNode.visibility.locked === 'boolean'
+              ? canonicalNode.visibility.locked
+              : isElementLocked(element);
+          }
+        : isElementLocked;
       return SlideNextStudioEditorLiveSelection.hasStudioLockedLiveSelection(elements, {
-        isLocked: isElementLocked
+        isLocked: readLockedState
       });
     }
 
