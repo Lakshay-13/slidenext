@@ -71,6 +71,11 @@
     if (textContentGroup) textContentGroup.classList.remove('hidden');
     const imageGroup = documentRef.getElementById('inspectorImageGroup');
     if (imageGroup) imageGroup.classList.add('hidden');
+    const imageFitInput = documentRef.getElementById('elImageFit');
+    if (imageFitInput) {
+      imageFitInput.value = 'fill';
+      imageFitInput.disabled = true;
+    }
     const borderGroup = documentRef.getElementById('inspectorBorderGroup');
     if (borderGroup) borderGroup.classList.add('hidden');
 
@@ -127,6 +132,7 @@
     const primaryElement = options.primaryElement;
     if (!documentRef || !primaryElement || typeof documentRef.getElementById !== 'function') return false;
     const isMulti = !!options.isMulti;
+    const computedStyles = options.computedStyles || {};
     const textContentInput = documentRef.getElementById('elTextContent');
     if (textContentInput) {
       textContentInput.value = primaryElement.innerText || primaryElement.textContent || '';
@@ -134,14 +140,21 @@
 
     const imageGroup = documentRef.getElementById('inspectorImageGroup');
     const imageSrcInput = documentRef.getElementById('elImageSrc');
+    const imageFitInput = documentRef.getElementById('elImageFit');
     const textContentGroup = documentRef.getElementById('inspectorTextContentGroup');
     const isImage = !isMulti && primaryElement.tagName.toLowerCase() === 'img';
     if (isImage) {
       if (imageGroup) imageGroup.classList.remove('hidden');
       if (imageSrcInput) imageSrcInput.value = primaryElement.src || '';
+      if (imageFitInput) {
+        const fit = computedStyles.objectFit || primaryElement.style?.objectFit || 'fill';
+        imageFitInput.value = ['fill', 'contain', 'cover'].includes(fit) ? fit : 'fill';
+        imageFitInput.disabled = false;
+      }
       if (textContentGroup) textContentGroup.classList.add('hidden');
     } else {
       if (imageGroup) imageGroup.classList.add('hidden');
+      if (imageFitInput) imageFitInput.disabled = true;
       if (textContentGroup) textContentGroup.classList.toggle('hidden', isMulti);
     }
     return true;
@@ -241,7 +254,8 @@
     syncStudioInspectorContentControls({
       documentRef,
       primaryElement,
-      isMulti: selectionSummary.isMulti
+      isMulti: selectionSummary.isMulti,
+      computedStyles
     });
     syncStudioInspectorTypographyControls({
       documentRef,

@@ -129,6 +129,7 @@ test('syncStudioInspectorContentControls switches between image and text control
     elTextContent: { value: '' },
     inspectorImageGroup: { classList: classLists.imageGroup },
     elImageSrc: { value: '' },
+    elImageFit: { value: '', disabled: true },
     inspectorTextContentGroup: { classList: classLists.textGroup }
   };
   const image = {
@@ -145,10 +146,13 @@ test('syncStudioInspectorContentControls switches between image and text control
       }
     },
     primaryElement: image,
-    isMulti: false
+    isMulti: false,
+    computedStyles: { objectFit: 'cover' }
   }), true);
   assert.equal(nodes.elTextContent.value, 'Caption');
   assert.equal(nodes.elImageSrc.value, '/image.png');
+  assert.equal(nodes.elImageFit.value, 'cover');
+  assert.equal(nodes.elImageFit.disabled, false);
   assert.equal(classLists.imageGroup.contains('hidden'), false);
   assert.equal(classLists.textGroup.contains('hidden'), true);
 });

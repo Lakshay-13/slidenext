@@ -970,6 +970,12 @@
           <div class="flex flex-col gap-2 hidden" id="inspectorImageGroup">
             <label class="text-[10px] font-mono text-zinc-500 uppercase">Image Asset URL</label>
             <input type="text" id="elImageSrc" oninput="applySelectedElementStyle('src', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-mono text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
+            <label class="text-[10px] font-mono text-zinc-500 uppercase mt-1">Image Fit</label>
+            <select id="elImageFit" onchange="applySelectedElementStyle('objectFit', this.value)" disabled class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+              <option value="fill">Fill Frame</option>
+              <option value="contain">Fit Inside</option>
+              <option value="cover">Crop to Frame</option>
+            </select>
           </div>
 
           <!-- Font Typography size & font -->
