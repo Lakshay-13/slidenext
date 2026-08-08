@@ -12,8 +12,11 @@
     const isEligibleElement = typeof options.isEligibleElement === 'function'
       ? options.isEligibleElement
       : (element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected);
+    const isHidden = typeof options.isHidden === 'function'
+      ? options.isHidden
+      : () => false;
 
-    return selection.filter((element) => isEligibleElement(element));
+    return selection.filter((element) => isEligibleElement(element) && !isHidden(element));
   }
 
   function buildStudioNudgeSelectionState(elements = [], options = {}) {

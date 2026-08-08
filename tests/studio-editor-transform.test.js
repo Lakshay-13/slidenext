@@ -380,6 +380,20 @@ test('buildStudioTransformSelectionState returns filtered live selections and tr
   });
 });
 
+test('buildStudioTransformSelectionState excludes hidden elements from transform eligibility', () => {
+  const visible = { id: 'visible', isConnected: true };
+  const hidden = { id: 'hidden', isConnected: true };
+
+  assert.deepEqual(transformState.buildStudioTransformSelectionState([visible, hidden], {
+    isHidden: (element) => element === hidden,
+    isLocked: () => false,
+    isFreeformPositioned: () => true
+  }), {
+    selection: [visible],
+    canTransform: true
+  });
+});
+
 test('getStudioSlideMetrics, getStudioRectOnSlide, and getStudioPointerOnSlide convert browser geometry into slide coordinates', () => {
   const metrics = transformState.getStudioSlideMetrics({
     clientWidth: 1920,

@@ -25,6 +25,20 @@ test('buildStudioNudgeSelectionState filters stale selections and requires unloc
   });
 });
 
+test('buildStudioNudgeSelectionState excludes hidden elements from movement eligibility', () => {
+  const visible = { id: 'visible', isConnected: true, freeform: true };
+  const hidden = { id: 'hidden', isConnected: true, freeform: true };
+
+  assert.deepEqual(nudge.buildStudioNudgeSelectionState([visible, hidden], {
+    isHidden: (element) => element === hidden,
+    isLocked: () => false,
+    isFreeformPositioned: (element) => !!element.freeform
+  }), {
+    selection: [visible],
+    canNudge: true
+  });
+});
+
 test('buildStudioNudgedLayout clamps a multi-selection as one group', () => {
   const result = nudge.buildStudioNudgedLayout([
     {

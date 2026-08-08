@@ -5032,6 +5032,7 @@
     function getTransformSelectionState(elements = selectedElements) {
       return SlideNextStudioEditorTransform.buildStudioTransformSelectionState(elements, {
         isLocked: isElementLocked,
+        isHidden: isElementHidden,
         isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
       });
     }
@@ -5045,6 +5046,7 @@
     function getNudgeSelectionState(elements = selectedElements) {
       return SlideNextStudioEditorNudge.buildStudioNudgeSelectionState(elements, {
         isLocked: isElementLocked,
+        isHidden: isElementHidden,
         isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
       });
     }
