@@ -1796,17 +1796,24 @@
       }
     }
 
+    let canRenderAllSlides = true;
     deck.slides.forEach(slide => {
-      if (typeof pptx.addSlide !== 'function') {
-        diagnostics.warnings.push('PptxGenJS instance cannot add slides');
-        return;
-      }
+      if (!canRenderAllSlides) return;
       const sectionTitle = typeof slide.section === 'string' ? slide.section.trim() : '';
       const outputSlide = canExportSections && sectionTitle
         ? pptx.addSlide({ sectionTitle })
         : pptx.addSlide();
+      if (!outputSlide || (typeof outputSlide !== 'object' && typeof outputSlide !== 'function')) {
+        diagnostics.warnings.push(`PptxGenJS could not create slide ${slide.id || 'unknown'}`);
+        canRenderAllSlides = false;
+        return;
+      }
       renderSlide(slide, { ...contextBase, slide: outputSlide });
     });
+
+    if (!canRenderAllSlides) {
+      return { deck, pptx: null, slideCount: 0, diagnostics };
+    }
 
     return {
       deck,

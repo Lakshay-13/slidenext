@@ -511,6 +511,22 @@ test('createCanonicalPptxExport fails closed when the generator cannot add slide
   assert.deepEqual(result.diagnostics.warnings, ['PptxGenJS cannot add slides']);
 });
 
+test('createCanonicalPptxExport fails closed when a slide cannot be created', () => {
+  class NullSlidePptx extends FakePptx {
+    addSlide() {
+      return null;
+    }
+  }
+
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{ id: 'slide-1', nodes: [] }]
+  }, { PptxGenJS: NullSlidePptx });
+
+  assert.equal(result.pptx, null);
+  assert.equal(result.slideCount, 0);
+  assert.deepEqual(result.diagnostics.warnings, ['PptxGenJS could not create slide slide-1']);
+});
+
 test('createCanonicalPptxExport preserves canonical slide sections', () => {
   const result = pptxExport.createCanonicalPptxExport({
     slides: [
