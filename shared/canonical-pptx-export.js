@@ -228,11 +228,15 @@
           const cellOptions = {};
           const cellFill = resolvePptxFillColor(cellStyle['background-color'] || cellStyle.background);
           const cellColor = normalizeHexColor(cellStyle.color);
+          const cellFontFace = typeof cellStyle['font-family'] === 'string'
+            ? cellStyle['font-family'].split(',')[0].trim().replace(/^['"]|['"]$/g, '')
+            : '';
           const cellItalic = typeof cellStyle['font-style'] === 'string'
             && cellStyle['font-style'].trim().toLowerCase() === 'italic';
           if (cell.tagName === 'th') cellOptions.bold = true;
           if (cellFill) cellOptions.fill = cellFill;
           if (cellColor) cellOptions.color = cellColor;
+          if (cellFontFace) cellOptions.fontFace = cellFontFace;
           if (cellItalic) cellOptions.italic = true;
           if (typeof cellStyle['text-align'] === 'string' && cellStyle['text-align'].trim()) {
             cellOptions.align = resolvePptxTextAlignment(cellStyle['text-align']);
