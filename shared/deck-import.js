@@ -1314,11 +1314,17 @@
 
   function buildImportedAssetMeta(el) {
     const tagName = normalizeString(el && el.tagName).toLowerCase();
-    if (tagName !== 'link' && tagName !== 'script') {
+    if (tagName !== 'img' && tagName !== 'link' && tagName !== 'script') {
       return null;
     }
 
     const meta = {};
+    if (tagName === 'img') {
+      const width = Number(el.naturalWidth);
+      const height = Number(el.naturalHeight);
+      if (Number.isFinite(width) && width > 0) meta.width = width;
+      if (Number.isFinite(height) && height > 0) meta.height = height;
+    }
     if (tagName === 'link') {
       ['media', 'crossorigin', 'integrity', 'referrerpolicy'].forEach((attributeName) => {
         const attributeValue = readElementAttributeIfPresent(el, attributeName);

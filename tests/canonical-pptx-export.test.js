@@ -1191,6 +1191,76 @@ test('preflightCanonicalPptxExport reports unsupported image positioning', () =>
   assert.match(report.diagnostics.warnings.join('\n'), /unsupported background image positioning/);
 });
 
+test('createCanonicalPptxExport maps supported image focal positions to crop sizing', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    layout: { size: { width: 1000, height: 1000, unit: 'px' } },
+    assets: [{
+      id: 'asset-1',
+      src: 'data:image/png;base64,AAAA',
+      meta: { width: 1600, height: 900 }
+    }],
+    slides: [{
+      nodes: [{
+        id: 'image-1',
+        type: 'image',
+        attributes: { 'data-asset-id': 'asset-1' },
+        style: 'object-fit: cover; object-position: right bottom;',
+        layout: { x: 0, y: 0, width: 400, height: 400 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const imageOptions = result.pptx.slides[0].calls[0].options;
+  assert.equal(imageOptions.sizing.type, 'crop');
+  assert.ok(imageOptions.w > imageOptions.sizing.w);
+  assert.ok(Math.abs(imageOptions.h - imageOptions.sizing.h) < 0.001);
+  assert.ok(Math.abs(imageOptions.sizing.x - (imageOptions.w - imageOptions.sizing.w)) < 0.001);
+  assert.equal(imageOptions.sizing.y, 0);
+  assert.deepEqual(result.diagnostics.unsupportedStyles, []);
+});
+
+test('preflightCanonicalPptxExport warns for focal positions without intrinsic dimensions', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    assets: [{ id: 'asset-1', src: 'data:image/png;base64,AAAA' }],
+    slides: [{
+      nodes: [{
+        id: 'image-1',
+        type: 'image',
+        attributes: { 'data-asset-id': 'asset-1' },
+        style: 'object-fit: cover; object-position: right bottom;',
+        layout: { x: 0, y: 0, width: 100, height: 100 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedStyles, [
+    { id: 'image-1', properties: ['object-position'] }
+  ]);
+});
+
+test('preflightCanonicalPptxExport keeps non-centered contain positioning as a warning', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    assets: [{
+      id: 'asset-1',
+      src: 'data:image/png;base64,AAAA',
+      meta: { width: 1600, height: 900 }
+    }],
+    slides: [{
+      nodes: [{
+        id: 'image-1',
+        type: 'image',
+        attributes: { 'data-asset-id': 'asset-1' },
+        style: 'object-fit: contain; object-position: right bottom;',
+        layout: { x: 0, y: 0, width: 100, height: 100 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedStyles, [
+    { id: 'image-1', properties: ['object-position'] }
+  ]);
+});
+
 test('preflightCanonicalPptxExport reports non-uniform border radii', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{

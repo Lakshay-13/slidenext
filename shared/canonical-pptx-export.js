@@ -460,10 +460,19 @@
   }
 
   function resolveImageSource(node, deck, options) {
+    return resolveImageAsset(node, deck, options).source;
+  }
+
+  function resolveImageAsset(node, deck, options) {
     const directSource = getNodeAttribute(node, 'src');
     const assetId = getNodeAttribute(node, 'data-asset-id') || getNodeAttribute(node, 'data-asset');
-    const asset = assetId ? deck.assets.find(item => item.id === assetId) : null;
-    return resolveAssetSource(directSource || (asset && asset.src) || '', options);
+    const asset = assetId
+      ? deck.assets.find(item => item.id === assetId)
+      : deck.assets.find(item => item.src === directSource);
+    return {
+      asset: asset || null,
+      source: resolveAssetSource(directSource || (asset && asset.src) || '', options)
+    };
   }
 
   function extractCssImageSource(value) {
@@ -539,15 +548,92 @@
     return resolvePptxTransparency(nodeStyle(node).opacity);
   }
 
-  function resolveNodeImageSizing(node, bounds) {
-    const objectFit = (nodeStyle(node)['object-fit'] || '').trim().toLowerCase();
+  function getPptxImageDimensions(asset) {
+    const meta = asObject(asset && asset.meta);
+    const width = Number(meta.width);
+    const height = Number(meta.height);
+    return Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0
+      ? { width, height }
+      : null;
+  }
+
+  function parsePptxImagePosition(value) {
+    const normalized = typeof value === 'string'
+      ? value.trim().toLowerCase().replace(/\s+/g, ' ')
+      : '';
+    const tokens = normalized ? normalized.split(' ') : ['center'];
+    if (tokens.length > 2) return null;
+
+    const parseAxis = (token, axis) => {
+      if (token === 'center') return 0.5;
+      if (axis === 'horizontal' && token === 'left') return 0;
+      if (axis === 'horizontal' && token === 'right') return 1;
+      if (axis === 'vertical' && token === 'top') return 0;
+      if (axis === 'vertical' && token === 'bottom') return 1;
+      const percent = token.match(/^(-?[\d.]+)%$/);
+      if (!percent) return null;
+      const parsed = Number(percent[1]) / 100;
+      return Number.isFinite(parsed) && parsed >= 0 && parsed <= 1 ? parsed : null;
+    };
+
+    if (tokens.length === 1) {
+      const horizontal = parseAxis(tokens[0], 'horizontal');
+      if (horizontal !== null) return { x: horizontal, y: 0.5 };
+      const vertical = parseAxis(tokens[0], 'vertical');
+      return vertical === null ? null : { x: 0.5, y: vertical };
+    }
+
+    const firstHorizontal = parseAxis(tokens[0], 'horizontal');
+    const secondVertical = parseAxis(tokens[1], 'vertical');
+    if (firstHorizontal !== null && secondVertical !== null) {
+      return { x: firstHorizontal, y: secondVertical };
+    }
+    const firstVertical = parseAxis(tokens[0], 'vertical');
+    const secondHorizontal = parseAxis(tokens[1], 'horizontal');
+    return firstVertical !== null && secondHorizontal !== null
+      ? { x: secondHorizontal, y: firstVertical }
+      : null;
+  }
+
+  function resolveNodeImageSizing(node, bounds, asset) {
+    const styles = nodeStyle(node);
+    const objectFit = (styles['object-fit'] || '').trim().toLowerCase();
     if (objectFit !== 'cover' && objectFit !== 'contain') return null;
+
+    const dimensions = getPptxImageDimensions(asset);
+    const position = parsePptxImagePosition(styles['object-position']);
+    if (objectFit === 'cover' && dimensions && position) {
+      const sourceAspectRatio = dimensions.width / dimensions.height;
+      const boxAspectRatio = bounds.w / bounds.h;
+      const imageWidth = sourceAspectRatio >= boxAspectRatio
+        ? bounds.h * sourceAspectRatio
+        : bounds.w;
+      const imageHeight = sourceAspectRatio >= boxAspectRatio
+        ? bounds.h
+        : bounds.w / sourceAspectRatio;
+      const cropX = (imageWidth - bounds.w) * position.x;
+      const cropY = (imageHeight - bounds.h) * position.y;
+      return {
+        imageWidth,
+        imageHeight,
+        sizing: {
+          type: 'crop',
+          x: cropX,
+          y: cropY,
+          w: bounds.w,
+          h: bounds.h
+        }
+      };
+    }
+
     return {
-      type: objectFit,
-      x: bounds.x,
-      y: bounds.y,
-      w: bounds.w,
-      h: bounds.h
+      sizing: {
+        type: objectFit,
+        x: bounds.x,
+        y: bounds.y,
+        w: bounds.w,
+        h: bounds.h
+      }
     };
   }
 
@@ -560,8 +646,12 @@
 
   function getUnsupportedPptxImagePlacementProperties(style, options = {}) {
     const properties = [];
-    if (options.imageNode && ['cover', 'contain'].includes((style['object-fit'] || '').trim().toLowerCase())
-      && !isCenteredPptxImagePosition(style['object-position'])) {
+    const objectFit = (style['object-fit'] || '').trim().toLowerCase();
+    if (options.imageNode && ['cover', 'contain'].includes(objectFit)
+      && !isCenteredPptxImagePosition(style['object-position'])
+      && (objectFit !== 'cover'
+        || !getPptxImageDimensions(options.imageAsset)
+        || !parsePptxImagePosition(style['object-position']))) {
       properties.push('object-position');
     }
     if (options.backgroundImage) {
@@ -902,13 +992,15 @@
       }
 
       if (imageNode) {
+        const imageAsset = resolveImageAsset(node, deck, normalizedOptions);
         const objectFit = (style['object-fit'] || '').trim().toLowerCase();
         if (objectFit && !['fill', 'cover', 'contain'].includes(objectFit)) {
           diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['object-fit'] });
           diagnostics.warnings.push(`Node ${nodeId} uses unsupported image fit: ${objectFit}`);
         }
         const unsupportedImagePlacement = getUnsupportedPptxImagePlacementProperties(style, {
-          imageNode: true
+          imageNode: true,
+          imageAsset: imageAsset.asset
         });
         if (unsupportedImagePlacement.length > 0) {
           diagnostics.unsupportedStyles.push({ id: nodeId, properties: unsupportedImagePlacement });
@@ -1132,7 +1224,8 @@
         });
       }
     } else if (imageNode) {
-      const source = resolveImageSource(node, context.deck, context.options);
+      const imageAsset = resolveImageAsset(node, context.deck, context.options);
+      const source = imageAsset.source;
       const missingAsset = context.diagnostics
         && Array.isArray(context.diagnostics.missingAssets)
         && context.diagnostics.missingAssets.includes(node.id);
@@ -1140,8 +1233,14 @@
         const imageOptions = source.startsWith('data:')
           ? { data: source, ...bounds }
           : { path: source, ...bounds };
-        const sizing = resolveNodeImageSizing(node, bounds);
-        if (sizing) imageOptions.sizing = sizing;
+        const sizing = resolveNodeImageSizing(node, bounds, imageAsset.asset);
+        if (sizing) {
+          imageOptions.sizing = sizing.sizing;
+          if (Number.isFinite(sizing.imageWidth) && Number.isFinite(sizing.imageHeight)) {
+            imageOptions.w = sizing.imageWidth;
+            imageOptions.h = sizing.imageHeight;
+          }
+        }
         if (resolvePptxBorderRadius(node)) imageOptions.rounding = true;
         context.slide.addImage(mergePptxTransparency(imageOptions, transparency));
       }

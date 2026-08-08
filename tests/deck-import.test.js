@@ -342,6 +342,29 @@ test('collectDeckAssets includes inline style asset urls, skips fragments, and d
   ]);
 });
 
+test('collectDeckAssets preserves intrinsic image dimensions for export sizing', () => {
+  const imageEl = createElement('IMG', { src: 'assets/hero.png' });
+  imageEl.naturalWidth = 1600;
+  imageEl.naturalHeight = 900;
+  const doc = {
+    querySelectorAll(selector) {
+      if (selector === 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], link[rel~="preload"][href], video[poster]') {
+        return [imageEl];
+      }
+      return [];
+    }
+  };
+
+  assert.deepEqual(deckImport.collectDeckAssets(doc), [{
+    id: 'asset-1',
+    type: 'image',
+    name: 'hero.png',
+    src: 'assets/hero.png',
+    mimeType: 'image/png',
+    meta: { width: 1600, height: 900 }
+  }]);
+});
+
 test('collectDeckAssets includes srcset and poster asset urls, skips fragments, and deduplicates repeated candidates', () => {
   const posterVideoEl = createElement('VIDEO', {
     poster: 'assets/poster.jpg'
