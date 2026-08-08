@@ -5105,36 +5105,37 @@
     }
 
     function updateLockActionState(doc = getIframeDoc()) {
-      const syncStudioLockToolbarState = (
-        SlideNextStudioEditorLockState
-        && typeof SlideNextStudioEditorLockState.syncStudioLockToolbarState === 'function'
-      )
-        ? SlideNextStudioEditorLockState.syncStudioLockToolbarState
+      const lockState = typeof SlideNextStudioEditorLockState !== 'undefined'
+        ? SlideNextStudioEditorLockState
         : null;
-      if (syncStudioLockToolbarState) {
-        return syncStudioLockToolbarState({
-          documentRef: document,
-          elements: selectedElements,
+      if (!lockState) {
+        return false;
+      }
+      const toolbarOptions = {
+        documentRef: document,
+        elements: selectedElements,
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(doc)
+      };
+      if (typeof lockState.syncStudioLockToolbarState === 'function') {
+        return lockState.syncStudioLockToolbarState(toolbarOptions);
+      }
+      if (typeof lockState.renderStudioLockToolbarState !== 'function') {
+        return false;
+      }
+      const buildToolbarState = typeof lockState.buildStudioLockToolbarState === 'function'
+        ? lockState.buildStudioLockToolbarState
+        : typeof lockState.buildStudioLockActionState === 'function'
+          ? lockState.buildStudioLockActionState
+          : null;
+      if (!buildToolbarState) {
+        return false;
+      }
+      const lockActionState = buildToolbarState(selectedElements, {
           isLocked: isElementLocked,
           canMutateDeck: () => !!getActiveSlide(doc)
         });
-      }
-      const buildStudioLockToolbarState = (
-        SlideNextStudioEditorLockState
-        && typeof SlideNextStudioEditorLockState.buildStudioLockToolbarState === 'function'
-      )
-        ? SlideNextStudioEditorLockState.buildStudioLockToolbarState
-        : null;
-      const lockActionState = buildStudioLockToolbarState
-        ? buildStudioLockToolbarState(selectedElements, {
-          isLocked: isElementLocked,
-          canMutateDeck: () => !!getActiveSlide(doc)
-        })
-        : SlideNextStudioEditorLockState.buildStudioLockActionState(selectedElements, {
-        isLocked: isElementLocked,
-        canMutateDeck: () => !!getActiveSlide(doc)
-      });
-      return SlideNextStudioEditorLockState.renderStudioLockToolbarState({
+      return lockState.renderStudioLockToolbarState({
         documentRef: document,
         actionState: lockActionState
       });
