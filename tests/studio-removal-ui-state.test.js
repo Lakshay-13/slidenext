@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalRemoval = require('../shared/studio-editor-canonical-removal.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const removalState = require('../shared/studio-editor-removal.js');
@@ -22,12 +23,18 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 }
 
 function loadBuildRemovalSelectionActionState(fileContent, context) {
+  const visibilityReaderSource = extractFunctionSource(
+    fileContent,
+    'function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {',
+    '\n\n    function setElementHiddenState'
+  );
   const helperSource = extractFunctionSource(
     fileContent,
     'function buildRemovalSelectionActionState(doc = null) {',
     '\n\n    function updateRemovalActionState(doc = getIframeDoc()) {'
   );
-  vm.runInContext(helperSource, context);
+  context.SlideNextStudioEditorCanonicalState = canonicalState;
+  vm.runInContext(`${visibilityReaderSource}\n${helperSource}`, context);
 }
 
 function loadFinalizeRemovalActionResult(fileContent, context) {
