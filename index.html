@@ -7729,7 +7729,9 @@
       if (buildStudioPersistableDeckHtmlFromDocument) {
         return buildStudioPersistableDeckHtmlFromDocument(doc, {
           resolveCanonicalDeck: (shouldReportCanonicalDeck) => resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
-            || (shouldReportCanonicalDeck ? buildEditorCanonicalDeck(doc) : null),
+            || (shouldReportCanonicalDeck
+              ? buildEditorCanonicalDeck(doc, { preferLiveCanonicalDeck: false })
+              : null),
           resolvePlaybackState: (canonicalDeck) => capturePersistedDeckPlaybackState(doc, canonicalDeck),
           onCanonicalDeckResolved: typeof buildOptions.onCanonicalDeckResolved === 'function'
             ? buildOptions.onCanonicalDeckResolved
@@ -7749,7 +7751,9 @@
 
       const shouldReportCanonicalDeck = typeof buildOptions.onCanonicalDeckResolved === 'function';
       const canonicalDeck = resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
-        || (shouldReportCanonicalDeck ? buildEditorCanonicalDeck(doc) : null);
+        || (shouldReportCanonicalDeck
+          ? buildEditorCanonicalDeck(doc, { preferLiveCanonicalDeck: false })
+          : null);
       const resolvedPlaybackState = capturePersistedDeckPlaybackState(doc, canonicalDeck);
       if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
         buildOptions.onCanonicalDeckResolved(canonicalDeck);

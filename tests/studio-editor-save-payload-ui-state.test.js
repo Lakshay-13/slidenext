@@ -5696,6 +5696,7 @@ test('buildPersistableDeckHtml reports the resolved live canonical deck when req
   };
   let reportedCanonicalDeck = null;
   let buildEditorCanonicalDeckCalls = 0;
+  let canonicalBuildOptions = null;
   const context = {
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
     EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
@@ -5706,9 +5707,10 @@ test('buildPersistableDeckHtml reports the resolved live canonical deck when req
         return '<html>persisted-live</html>';
       }
     },
-    buildEditorCanonicalDeck(nextDoc) {
+    buildEditorCanonicalDeck(nextDoc, options) {
       buildEditorCanonicalDeckCalls += 1;
       assert.equal(nextDoc, iframeDoc);
+      canonicalBuildOptions = options;
       return canonicalDeck;
     },
     capturePersistedDeckPlaybackState(nextDoc) {
@@ -5735,6 +5737,10 @@ test('buildPersistableDeckHtml reports the resolved live canonical deck when req
   );
   assert.equal(reportedCanonicalDeck, canonicalDeck);
   assert.equal(buildEditorCanonicalDeckCalls, 1);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(canonicalBuildOptions)),
+    { preferLiveCanonicalDeck: false }
+  );
 });
 
 test('buildPersistableDeckHtml reports canonical deck and playback state for live iframe persistence', () => {
