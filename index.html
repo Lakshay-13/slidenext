@@ -9532,7 +9532,7 @@
       const versionView = typeof SlideNextStudioVersionView !== 'undefined'
         ? SlideNextStudioVersionView
         : null;
-      if (!versionView) return false;
+      if (!versionView || typeof versionView.syncStudioVersionsList !== 'function') return false;
       const options = {
         documentRef: document,
         versions,
@@ -9540,14 +9540,7 @@
         deriveVersionDeckBaseName: SlideNextStudioVersionHistory.deriveStudioVersionDeckBaseName,
         deriveVersionDisplayLabel: VersionBackupUtils.deriveVersionDisplayLabel
       };
-      if (typeof versionView.syncStudioVersionsList === 'function') {
-        return versionView.syncStudioVersionsList(options);
-      }
-      if (typeof versionView.renderStudioVersionsList !== 'function') return false;
-      return versionView.renderStudioVersionsList({
-        ...options,
-        baseName: SlideNextStudioVersionHistory.deriveStudioVersionDeckBaseName(presentationUrl)
-      });
+      return versionView.syncStudioVersionsList(options);
     }
 
     // Fetch versions checklist
