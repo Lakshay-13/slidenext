@@ -7282,24 +7282,28 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorReusablePersistedHtmlSanitizerAdapter
         : null;
       if (createStudioEditorReusablePersistedHtmlSanitizerAdapter) {
-        const adapter = createStudioEditorReusablePersistedHtmlSanitizerAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          buildPersistableDeckHtml,
-          resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
-            ? options.resolveMetadataPersistenceOptions
-            : () => ({}),
-          getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
-            ? options.getDeckSanitizerOptions
-            : typeof getEditorDeckSanitizerOptions === 'function'
-              ? getEditorDeckSanitizerOptions
+        if (typeof sanitizeEditorReusablePersistedHtml.adapter !== 'function') {
+          sanitizeEditorReusablePersistedHtml.adapter = createStudioEditorReusablePersistedHtmlSanitizerAdapter({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            buildPersistableDeckHtml,
+            resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
+              ? options.resolveMetadataPersistenceOptions
               : () => ({}),
-          DOMParser: typeof DOMParser === 'function'
-            ? DOMParser
-            : null
-        });
-        return typeof adapter === 'function' ? adapter(nextPersistedHtml, options) : nextPersistedHtml;
+            getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
+              ? options.getDeckSanitizerOptions
+              : typeof getEditorDeckSanitizerOptions === 'function'
+                ? getEditorDeckSanitizerOptions
+                : () => ({}),
+            DOMParser: typeof DOMParser === 'function'
+              ? DOMParser
+              : null
+          });
+        }
+        return typeof sanitizeEditorReusablePersistedHtml.adapter === 'function'
+          ? sanitizeEditorReusablePersistedHtml.adapter(nextPersistedHtml, options)
+          : nextPersistedHtml;
       }
 
       const sanitizeStudioReusablePersistedHtml = (

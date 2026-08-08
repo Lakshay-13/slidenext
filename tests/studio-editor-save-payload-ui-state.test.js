@@ -3267,6 +3267,44 @@ test('sanitizeEditorReusablePersistedHtml delegates through the editor persisten
   assert.equal(delegatedArgs.DOMParser, context.DOMParser);
 });
 
+test('sanitizeEditorReusablePersistedHtml creates the shared persistence-state adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const sanitizeEditorReusablePersistedHtmlSource = extractFunctionSource(
+    fileContent,
+    'function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorReusablePersistedHtmlSanitizerAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(options.persistenceApi, context.SlideNextStudioEditorPersistence);
+        return (persistedHtml, nextOptions) => {
+          calls.push([persistedHtml, nextOptions]);
+          return `${persistedHtml}:${nextOptions.id}`;
+        };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(sanitizeEditorReusablePersistedHtmlSource, context);
+
+  assert.equal(
+    context.sanitizeEditorReusablePersistedHtml('<html>one</html>', { id: 1 }),
+    '<html>one</html>:1'
+  );
+  assert.equal(
+    context.sanitizeEditorReusablePersistedHtml('<html>two</html>', { id: 2 }),
+    '<html>two</html>:2'
+  );
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls.map(([, options]) => options.id), [1, 2]);
+});
+
 test('sanitizeEditorReusablePersistedHtml reuses the local persistable deck sanitizer options helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const sanitizeEditorReusablePersistedHtmlSource = extractFunctionSource(
