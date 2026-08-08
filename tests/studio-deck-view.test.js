@@ -4,6 +4,42 @@ const assert = require('node:assert/strict');
 const deckView = require('../shared/studio-deck-view.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 
+test('scheduleStudioDeckActiveSlideSync cancels a timer handle of zero', () => {
+  const clearedTimers = [];
+  const scheduled = [];
+
+  const result = deckView.scheduleStudioDeckActiveSlideSync(0, () => {}, {
+    clearTimer(timer) {
+      clearedTimers.push(timer);
+    },
+    scheduleTimer(callback, delayMs) {
+      scheduled.push([callback, delayMs]);
+      return 'next-timer';
+    }
+  });
+
+  assert.equal(result, 'next-timer');
+  assert.deepEqual(clearedTimers, [0]);
+  assert.equal(scheduled.length, 1);
+  assert.equal(scheduled[0][1], 0);
+});
+
+test('teardownStudioDeckActiveSlideSync clears a timer handle of zero', () => {
+  const clearedTimers = [];
+
+  const result = deckView.teardownStudioDeckActiveSlideSync({ timer: 0 }, {
+    clearTimer(timer) {
+      clearedTimers.push(timer);
+    }
+  });
+
+  assert.deepEqual(result, {
+    observer: null,
+    timer: null
+  });
+  assert.deepEqual(clearedTimers, [0]);
+});
+
 test('captureStudioDeckViewBeforeSlideMutation saves history before preserving slide view state', () => {
   const doc = { id: 'editor-doc' };
   const calls = [];

@@ -416,12 +416,13 @@
       ? options.clearTimer
       : (timerId) => clearTimeout(timerId);
     const observer = state.observer || null;
-    const timer = state.timer || null;
+    const timer = state.timer ?? null;
+    const hasTimer = timer !== null && typeof timer !== 'undefined';
 
     if (observer) {
       disconnectObserver(observer);
     }
-    if (timer) {
+    if (hasTimer) {
       clearTimer(timer);
     }
 
@@ -441,8 +442,9 @@
     const delayMs = Number.isInteger(options.delayMs) && options.delayMs >= 0
       ? options.delayMs
       : 0;
+    const hasCurrentTimer = currentTimer !== null && typeof currentTimer !== 'undefined';
 
-    if (currentTimer) {
+    if (hasCurrentTimer) {
       clearTimer(currentTimer);
     }
 
