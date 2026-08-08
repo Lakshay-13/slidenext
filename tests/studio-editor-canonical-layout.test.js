@@ -33,6 +33,26 @@ test('buildStudioCanonicalLayoutBaseline builds from the source document', () =>
   assert.equal(result, sourceDeck);
 });
 
+test('buildStudioCanonicalLayoutBaseline prefers a valid live canonical deck', () => {
+  const liveDeck = createSourceDeck();
+  let didBuildFromDocument = false;
+  const result = canonicalLayout.buildStudioCanonicalLayoutBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline(documentRef) {
+      assert.deepEqual(documentRef, { id: 'editor-doc' });
+      return liveDeck;
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return createSourceDeck();
+    },
+    sourceDocument: { id: 'editor-doc' }
+  });
+
+  assert.equal(result, liveDeck);
+  assert.equal(didBuildFromDocument, false);
+});
+
 test('buildStudioCanonicalLayoutDeck applies layout updates to the provided pre-mutation deck', () => {
   const sourceDeck = createSourceDeck();
   const result = canonicalLayout.buildStudioCanonicalLayoutDeck(
@@ -163,6 +183,31 @@ test('createStudioCanonicalLayoutMutationBuilder shares canonical dependencies',
 
   assert.equal(builtFromDocument.id, 'editor-doc');
   assert.equal(result.slides[0].nodes[0].layout.x, 40);
+});
+
+test('createStudioCanonicalLayoutMutationBuilder falls back when the live baseline is invalid', () => {
+  const sourceDeck = createSourceDeck();
+  let fallbackBuildCount = 0;
+  const buildCanonicalLayoutMutation = canonicalLayout.createStudioCanonicalLayoutMutationBuilder({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline() {
+      fallbackBuildCount += 1;
+      return sourceDeck;
+    }
+  });
+
+  const result = buildCanonicalLayoutMutation({
+    sourceDocument: { id: 'editor-doc' },
+    nextItems: [{
+      element: { dataset: { editorId: 'node-1' } },
+      nextAbsLeft: 40,
+      nextAbsTop: 60
+    }]
+  });
+
+  assert.equal(result.slides[0].nodes[0].layout.x, 40);
+  assert.equal(fallbackBuildCount, 1);
 });
 
 test('createStudioCanonicalLayerOrderMutationBuilder reuses an explicit baseline', () => {

@@ -4,6 +4,7 @@ const nudgeController = require('../shared/studio-editor-nudge-controller.js');
 
 test('nudge controller assembles canonical layout and transaction dependencies', () => {
   const calls = [];
+  const liveCanonicalDeck = { slides: ['live'] };
   const controller = nudgeController.createStudioEditorNudgeController({
     nudgeApi: {
       buildStudioNudgedLayout(items, delta, bounds) {
@@ -34,6 +35,7 @@ test('nudge controller assembles canonical layout and transaction dependencies',
     assignElementId: () => 'node-1',
     buildCanonicalDeck: () => ({ slides: [] }),
     buildCanonicalDeckBaseline: () => ({ slides: [] }),
+    getCanonicalDeckBaseline: () => liveCanonicalDeck,
     applyPositionLayout: (...args) => {
       calls.push(['position', ...args]);
       return { didApply: true, transaction: { id: 'position-transaction' } };
@@ -48,6 +50,7 @@ test('nudge controller assembles canonical layout and transaction dependencies',
   assert.equal(calls[1][0], 'builder');
   assert.equal(calls[1][1].canonicalDeckApi.id, 'deck-api');
   assert.equal(typeof calls[1][1].buildCanonicalDeckBaseline, 'function');
+  assert.equal(calls[1][1].getCanonicalDeckBaseline(), liveCanonicalDeck);
   assert.equal(calls[2][0], 'canonical');
   assert.equal(calls[2][1].sourceDocument.id, 'doc');
   assert.equal(calls[3][0], 'position');

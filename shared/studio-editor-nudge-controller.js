@@ -32,6 +32,9 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const applyPositionLayout = typeof options.applyPositionLayout === 'function'
       ? options.applyPositionLayout
       : () => ({ didApply: false, transaction: null });
@@ -63,7 +66,8 @@
         ? canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder({
             canonicalDeckApi,
             buildCanonicalDeck,
-            buildCanonicalDeckBaseline
+            buildCanonicalDeckBaseline,
+            getCanonicalDeckBaseline
           })
         : null;
       const canonicalDeck = canonicalLayoutBuilder
