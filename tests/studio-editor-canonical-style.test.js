@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalStyle = require('../shared/studio-editor-canonical-style.js');
 
 function createSourceDeck() {
@@ -43,6 +44,7 @@ test('buildStudioCanonicalStyleBaseline prefers the live canonical baseline buil
   let builtFromDocument = null;
   const result = canonicalStyle.buildStudioCanonicalStyleBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck() {
       throw new Error('DOM-derived mutation builder should not build the baseline');
     },
@@ -62,6 +64,7 @@ test('buildStudioCanonicalStyleBaseline prefers a valid session-owned canonical 
   let didBuildFromDocument = false;
   const result = canonicalStyle.buildStudioCanonicalStyleBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return liveDeck;
     },
@@ -124,6 +127,7 @@ test('buildStudioCanonicalStyleMutationWithBaseline builds the model from the so
   const sourceDeck = createSourceDeck();
   const result = canonicalStyle.buildStudioCanonicalStyleMutationWithBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck: () => sourceDeck,
     sourceDocument: { id: 'editor-doc' },
     selection: [createElement()],
@@ -140,6 +144,7 @@ test('buildStudioCanonicalStyleMutationWithBaseline falls back when the live bas
   const sourceDeck = createSourceDeck();
   const result = canonicalStyle.buildStudioCanonicalStyleMutationWithBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return { invalid: true };
     },
@@ -161,6 +166,7 @@ test('createStudioCanonicalStyleMutationBuilders reuses an explicit baseline', (
   let buildCount = 0;
   const builders = canonicalStyle.createStudioCanonicalStyleMutationBuilders({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck() {
       buildCount += 1;
       return sourceDeck;

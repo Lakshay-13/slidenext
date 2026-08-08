@@ -1,12 +1,12 @@
 (function (root, factory) {
-  const api = factory();
+  const api = factory(root);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorCanonicalStyle = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   const CANONICAL_STYLE_PROPERTIES = {
     size: { property: 'font-size', domProperty: 'fontSize' },
     family: { property: 'font-family', domProperty: 'fontFamily' },
@@ -41,23 +41,45 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
 
     if (!canonicalDeckApi) return null;
-    if (getCanonicalDeckBaseline) {
-      let liveCanonicalDeck = null;
-      try {
-        liveCanonicalDeck = getCanonicalDeckBaseline(options.sourceDocument);
-      } catch (err) {
-        liveCanonicalDeck = null;
-      }
-      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
-        || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
-        if (liveCanonicalDeck) return liveCanonicalDeck;
-      }
-    }
-    if (!buildCanonicalDeck) return null;
+    const readCanonicalDeckBaseline = canonicalStateApi
+      && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
+      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
+          getCanonicalDeckBaseline: getCanonicalDeckBaseline
+            ? (sourceDocument) => {
+                const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+                if (!liveCanonicalDeck
+                  || (typeof canonicalDeckApi.isCanonicalDeck === 'function'
+                    && !canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
+                  return null;
+                }
+                return liveCanonicalDeck;
+              }
+            : null,
+          buildCanonicalDeckBaseline: buildCanonicalDeck
+        })
+      : (sourceDocument) => {
+          if (getCanonicalDeckBaseline) {
+            try {
+              const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+              if (liveCanonicalDeck
+                && (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+                  || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
+                return liveCanonicalDeck;
+              }
+            } catch (err) {
+              // Fall through to the document rebuild path.
+            }
+          }
+          if (!buildCanonicalDeck) return null;
+          return buildCanonicalDeck(sourceDocument);
+        };
 
-    return buildCanonicalDeck(options.sourceDocument);
+    return readCanonicalDeckBaseline(options.sourceDocument);
   }
 
   function buildStudioCanonicalStyleMutation(options = {}) {
