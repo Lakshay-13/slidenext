@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const blockController = require('../shared/studio-editor-block-controller.js');
 
 test('block controller saves the active selection and finalizes persistence hooks', () => {
@@ -54,6 +55,7 @@ test('block mutations prefer a valid live canonical baseline', () => {
   let didBuildFromDocument = false;
   const controller = blockController.createStudioEditorBlockController({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline: () => liveDeck,
     getCanonicalDeck: () => {
       didBuildFromDocument = true;

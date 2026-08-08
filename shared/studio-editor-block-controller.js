@@ -11,6 +11,9 @@
     const canonicalDeckApi = options.canonicalDeckApi
       || (root && root.SlideNextCanonicalDeck)
       || null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     const renderApi = options.renderApi
       || (root && root.SlideNextDeckRender)
       || null;
@@ -57,19 +60,27 @@
       ? options.onBlocksChanged
       : null;
 
+    const readCanonicalDeckBaseline = canonicalStateApi
+      && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
+      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
+          getCanonicalDeckBaseline
+        })
+      : () => {
+          if (!getCanonicalDeckBaseline) return null;
+          try {
+            return getCanonicalDeckBaseline();
+          } catch (err) {
+            return null;
+          }
+        };
+
     function resolveCanonicalDeck() {
-      if (getCanonicalDeckBaseline) {
-        let liveCanonicalDeck = null;
-        try {
-          liveCanonicalDeck = getCanonicalDeckBaseline();
-        } catch (err) {
-          liveCanonicalDeck = null;
-        }
-        if (liveCanonicalDeck
-          && (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
-            || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
-          return liveCanonicalDeck;
-        }
+      const liveCanonicalDeck = readCanonicalDeckBaseline();
+      if (liveCanonicalDeck
+        && (!canonicalDeckApi
+          || typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+          || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck))) {
+        return liveCanonicalDeck;
       }
       return getCanonicalDeck();
     }
