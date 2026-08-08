@@ -372,9 +372,15 @@
       ? options.resolvePlaybackState
       : null;
 
-    const canonicalDeck = nextCleanHtml && !resolvedCanonicalDeck && buildCanonicalDeck
-      ? buildCanonicalDeck()
-      : resolvedCanonicalDeck;
+    let canonicalDeck = resolvedCanonicalDeck;
+    if (nextCleanHtml && !canonicalDeck && buildCanonicalDeck) {
+      try {
+        canonicalDeck = buildCanonicalDeck();
+      } catch (err) {
+        // Keep the clean HTML save path available for legacy decks.
+        canonicalDeck = null;
+      }
+    }
     const playbackState = typeof resolvedPlaybackState !== 'undefined'
       ? resolvedPlaybackState
       : (resolvePlaybackState ? resolvePlaybackState(canonicalDeck) : null);

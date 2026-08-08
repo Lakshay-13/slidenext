@@ -697,6 +697,33 @@ test('resolveStudioCapturedPersistableDeckState rebuilds canonical and playback 
   assert.equal(resolvePlaybackStateCalls, 1);
 });
 
+test('resolveStudioCapturedPersistableDeckState preserves clean HTML when canonical rebuild fails', () => {
+  const playbackState = {
+    activeSlideIds: ['slide-legacy'],
+    slideCounterText: '1 / 1'
+  };
+  let resolvePlaybackStateCalls = 0;
+
+  assert.deepEqual(
+    editorPersistence.resolveStudioCapturedPersistableDeckState('<html>legacy</html>', {
+      buildCanonicalDeck() {
+        throw new Error('unsupported legacy markup');
+      },
+      resolvePlaybackState(nextCanonicalDeck) {
+        resolvePlaybackStateCalls += 1;
+        assert.equal(nextCanonicalDeck, null);
+        return playbackState;
+      }
+    }),
+    {
+      cleanHtml: '<html>legacy</html>',
+      canonicalDeck: null,
+      playbackState
+    }
+  );
+  assert.equal(resolvePlaybackStateCalls, 1);
+});
+
 test('createStudioCapturedPersistableDeckStateResolver reuses call-time overrides before builder defaults', () => {
   const calls = [];
   const canonicalDeck = {
