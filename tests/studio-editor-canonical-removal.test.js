@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalRemoval = require('../shared/studio-editor-canonical-removal.js');
 
 test('buildStudioCanonicalRemovalBaseline builds from the source document', () => {
@@ -10,6 +11,7 @@ test('buildStudioCanonicalRemovalBaseline builds from the source document', () =
   let builtFromDocument = null;
   const result = canonicalRemoval.buildStudioCanonicalRemovalBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeckBaseline(documentRef) {
       builtFromDocument = documentRef;
       return sourceDeck;
@@ -29,6 +31,7 @@ test('buildStudioCanonicalRemovalBaseline prefers a valid live canonical deck', 
   let didBuildFromDocument = false;
   const result = canonicalRemoval.buildStudioCanonicalRemovalBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return liveDeck;
     },
@@ -53,6 +56,7 @@ test('buildStudioCanonicalRemovalDeck removes selected nodes without mutating th
     [{ dataset: { editorId: 'node-1' } }, { dataset: { editorId: 'node-2' } }],
     {
       canonicalDeckApi: canonicalDeck,
+      canonicalStateApi: canonicalState,
       canonicalDeckBeforeMutation: sourceDeck,
       getElementId: (element) => element.dataset.editorId
     }
@@ -82,6 +86,7 @@ test('buildStudioCanonicalRemovalMutation centralizes baseline and node removal'
     [{ dataset: { editorId: 'node-1' } }],
     {
       canonicalDeckApi: canonicalDeck,
+      canonicalStateApi: canonicalState,
       buildCanonicalDeckBaseline() {
         baselineBuildCount += 1;
         return sourceDeck;
@@ -130,6 +135,7 @@ test('createStudioCanonicalRemovalMutationBuilders reuses an explicit baseline',
   let buildCount = 0;
   const builders = canonicalRemoval.createStudioCanonicalRemovalMutationBuilders({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck() {
       buildCount += 1;
       return sourceDeck;
