@@ -289,6 +289,26 @@ test('applyStudioStyleMutation applies image fit as a reversible style property'
   assert.deepEqual(result.transaction.operations[0].after, { objectFit: 'cover' });
 });
 
+test('applyStudioStyleMutation applies a supported image crop position as a reversible style property', () => {
+  const image = createElement('img');
+  image.style.objectPosition = 'center center';
+
+  const result = styleState.applyStudioStyleMutationWithTransaction(
+    [image],
+    'objectPosition',
+    'right bottom',
+    {
+      createStyleTransaction: transactionState.createStudioStyleTransaction,
+      getElementId: () => 'image-position'
+    }
+  );
+
+  assert.equal(result.didApply, true);
+  assert.equal(image.style.objectPosition, 'right bottom');
+  assert.deepEqual(result.transaction.operations[0].before, { objectPosition: 'center center' });
+  assert.deepEqual(result.transaction.operations[0].after, { objectPosition: 'right bottom' });
+});
+
 test('applyStudioStyleMutationWithTransaction applies a mutation and builds a reversible style or property transaction', () => {
   const styledElement = createElement('div');
   styledElement.style.color = 'red';

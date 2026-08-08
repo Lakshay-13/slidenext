@@ -130,6 +130,7 @@ test('syncStudioInspectorContentControls switches between image and text control
     inspectorImageGroup: { classList: classLists.imageGroup },
     elImageSrc: { value: '' },
     elImageFit: { value: '', disabled: true },
+    elImagePosition: { value: '', disabled: true },
     inspectorTextContentGroup: { classList: classLists.textGroup }
   };
   const image = {
@@ -147,14 +148,41 @@ test('syncStudioInspectorContentControls switches between image and text control
     },
     primaryElement: image,
     isMulti: false,
-    computedStyles: { objectFit: 'cover' }
+    computedStyles: { objectFit: 'cover', objectPosition: 'right bottom' }
   }), true);
   assert.equal(nodes.elTextContent.value, 'Caption');
   assert.equal(nodes.elImageSrc.value, '/image.png');
   assert.equal(nodes.elImageFit.value, 'cover');
   assert.equal(nodes.elImageFit.disabled, false);
+  assert.equal(nodes.elImagePosition.value, 'right bottom');
+  assert.equal(nodes.elImagePosition.disabled, false);
   assert.equal(classLists.imageGroup.contains('hidden'), false);
   assert.equal(classLists.textGroup.contains('hidden'), true);
+});
+
+test('syncStudioInspectorContentControls disables crop position when image fit is not crop', () => {
+  const nodes = {
+    inspectorImageGroup: { classList: createClassList() },
+    elImageSrc: { value: '' },
+    elImageFit: { value: '', disabled: true },
+    elImagePosition: { value: '', disabled: true },
+    inspectorTextContentGroup: { classList: createClassList() }
+  };
+
+  inspectorView.syncStudioInspectorContentControls({
+    documentRef: {
+      getElementById(id) {
+        return nodes[id] || null;
+      }
+    },
+    primaryElement: { tagName: 'IMG', style: {}, src: '/image.png' },
+    isMulti: false,
+    computedStyles: { objectFit: 'contain', objectPosition: 'right bottom' }
+  });
+
+  assert.equal(nodes.elImageFit.value, 'contain');
+  assert.equal(nodes.elImagePosition.value, 'right bottom');
+  assert.equal(nodes.elImagePosition.disabled, true);
 });
 
 test('syncStudioInspectorTypographyControls applies font, color, alignment, z-index, and opacity values', () => {

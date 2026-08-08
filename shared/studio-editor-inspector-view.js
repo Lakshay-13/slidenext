@@ -76,6 +76,11 @@
       imageFitInput.value = 'fill';
       imageFitInput.disabled = true;
     }
+    const imagePositionInput = documentRef.getElementById('elImagePosition');
+    if (imagePositionInput) {
+      imagePositionInput.value = 'center center';
+      imagePositionInput.disabled = true;
+    }
     const borderGroup = documentRef.getElementById('inspectorBorderGroup');
     if (borderGroup) borderGroup.classList.add('hidden');
 
@@ -141,20 +146,40 @@
     const imageGroup = documentRef.getElementById('inspectorImageGroup');
     const imageSrcInput = documentRef.getElementById('elImageSrc');
     const imageFitInput = documentRef.getElementById('elImageFit');
+    const imagePositionInput = documentRef.getElementById('elImagePosition');
     const textContentGroup = documentRef.getElementById('inspectorTextContentGroup');
     const isImage = !isMulti && primaryElement.tagName.toLowerCase() === 'img';
     if (isImage) {
       if (imageGroup) imageGroup.classList.remove('hidden');
       if (imageSrcInput) imageSrcInput.value = primaryElement.src || '';
+      const fit = computedStyles.objectFit || primaryElement.style?.objectFit || 'fill';
+      const positionAliases = {
+        center: 'center center',
+        '50% 50%': 'center center'
+      };
+      const position = positionAliases[computedStyles.objectPosition]
+        || positionAliases[primaryElement.style?.objectPosition]
+        || computedStyles.objectPosition
+        || primaryElement.style?.objectPosition
+        || 'center center';
+      const supportedPositions = [
+        'left top', 'center top', 'right top',
+        'left center', 'center center', 'right center',
+        'left bottom', 'center bottom', 'right bottom'
+      ];
       if (imageFitInput) {
-        const fit = computedStyles.objectFit || primaryElement.style?.objectFit || 'fill';
         imageFitInput.value = ['fill', 'contain', 'cover'].includes(fit) ? fit : 'fill';
         imageFitInput.disabled = false;
+      }
+      if (imagePositionInput) {
+        imagePositionInput.value = supportedPositions.includes(position) ? position : 'center center';
+        imagePositionInput.disabled = fit !== 'cover';
       }
       if (textContentGroup) textContentGroup.classList.add('hidden');
     } else {
       if (imageGroup) imageGroup.classList.add('hidden');
       if (imageFitInput) imageFitInput.disabled = true;
+      if (imagePositionInput) imagePositionInput.disabled = true;
       if (textContentGroup) textContentGroup.classList.toggle('hidden', isMulti);
     }
     return true;

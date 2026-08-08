@@ -976,6 +976,18 @@
               <option value="contain">Fit Inside</option>
               <option value="cover">Crop to Frame</option>
             </select>
+            <label class="text-[10px] font-mono text-zinc-500 uppercase mt-1">Crop Position</label>
+            <select id="elImagePosition" onchange="applySelectedElementStyle('objectPosition', this.value)" disabled class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+              <option value="left top">Top Left</option>
+              <option value="center top">Top Center</option>
+              <option value="right top">Top Right</option>
+              <option value="left center">Center Left</option>
+              <option value="center center">Center</option>
+              <option value="right center">Center Right</option>
+              <option value="left bottom">Bottom Left</option>
+              <option value="center bottom">Bottom Center</option>
+              <option value="right bottom">Bottom Right</option>
+            </select>
           </div>
 
           <!-- Font Typography size & font -->

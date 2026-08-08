@@ -19,6 +19,7 @@
     borderRadius: 'Auto: Changed Corner Radius',
     borderColor: 'Auto: Changed Border Color',
     objectFit: 'Auto: Changed Image Fit',
+    objectPosition: 'Auto: Changed Crop Position',
     opacity: 'Auto: Changed Opacity'
   };
   const STUDIO_STYLE_TOOLBAR_CONTROL_CONFIGS = [
@@ -166,6 +167,22 @@
       };
     }
 
+    if (prop === 'objectPosition') {
+      const allowedPositions = new Set([
+        'left top', 'center top', 'right top',
+        'left center', 'center center', 'right center',
+        'left bottom', 'center bottom', 'right bottom'
+      ]);
+      const normalizedPosition = typeof value === 'string' ? value.trim().toLowerCase() : '';
+      const styleValue = allowedPositions.has(normalizedPosition)
+        ? normalizedPosition
+        : 'center center';
+      return {
+        styleValue,
+        displayValue: styleValue
+      };
+    }
+
     return {
       styleValue: value,
       displayValue: `${value}`
@@ -245,6 +262,9 @@
       } else if (prop === 'objectFit') {
         element.style.objectFit = normalizedValue.styleValue;
         didApply = true;
+      } else if (prop === 'objectPosition') {
+        element.style.objectPosition = normalizedValue.styleValue;
+        didApply = true;
       }
     });
 
@@ -271,7 +291,8 @@
       borderWidth: 'borderWidth',
       borderRadius: 'borderRadius',
       borderColor: 'borderColor',
-      objectFit: 'objectFit'
+      objectFit: 'objectFit',
+      objectPosition: 'objectPosition'
     }[prop] || '';
     const propertyTransactionProperty = {
       text: 'textContent',
