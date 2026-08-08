@@ -250,6 +250,30 @@ test('syncStudioInspectorTypographyControls prefers canonical z-index data', () 
   assert.equal(zIndexInput.value, '7');
 });
 
+test('syncStudioInspectorTypographyControls prefers canonical opacity data', () => {
+  const opacityInput = { value: '' };
+  const opacityLabel = { textContent: '' };
+
+  assert.equal(inspectorView.syncStudioInspectorTypographyControls({
+    documentRef: {
+      getElementById(id) {
+        if (id === 'elOpacity') return opacityInput;
+        if (id === 'opacityVal') return opacityLabel;
+        return null;
+      }
+    },
+    primaryElement: { style: { opacity: '0.12' } },
+    canonicalNode: { style: 'opacity: 0.42; color: #fff;' },
+    computedStyles: {
+      fontFamily: 'sans-serif',
+      color: '#fff',
+      opacity: '0.9'
+    }
+  }), true);
+  assert.equal(opacityInput.value, 42);
+  assert.equal(opacityLabel.textContent, '42%');
+});
+
 test('syncStudioInspectorBorderControls applies border values for shape-like selections', () => {
   const classList = createClassList();
   classList.add('editor-shape');

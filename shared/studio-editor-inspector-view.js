@@ -7,6 +7,20 @@
     root.SlideNextStudioEditorInspectorView = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function readStudioInspectorCanonicalStyleValue(canonicalNode, property) {
+    const styleText = canonicalNode && typeof canonicalNode.style === 'string'
+      ? canonicalNode.style
+      : '';
+    if (!styleText || typeof property !== 'string') return '';
+    const normalizedProperty = property.trim().toLowerCase();
+    const declaration = styleText.split(';').find((candidate) => {
+      const separatorIndex = candidate.indexOf(':');
+      return separatorIndex >= 0
+        && candidate.slice(0, separatorIndex).trim().toLowerCase() === normalizedProperty;
+    });
+    return declaration ? declaration.slice(declaration.indexOf(':') + 1).trim() : '';
+  }
+
   function renderStudioInspectorSelectionSummary(options = {}) {
     const documentRef = options.documentRef;
     const selectionState = options.selectionState || {};
@@ -227,7 +241,13 @@
         : primaryElement.style.zIndex || 0;
     }
 
-    const opacityVal = Math.round((parseFloat(computedStyles.opacity || '1')) * 100);
+    const canonicalOpacity = parseFloat(
+      readStudioInspectorCanonicalStyleValue(options.canonicalNode, 'opacity')
+    );
+    const opacity = Number.isFinite(canonicalOpacity)
+      ? canonicalOpacity
+      : parseFloat(computedStyles.opacity || '1');
+    const opacityVal = Math.round(opacity * 100);
     const opacityInput = documentRef.getElementById('elOpacity');
     if (opacityInput) opacityInput.value = opacityVal;
     const opacityLabel = documentRef.getElementById('opacityVal');
