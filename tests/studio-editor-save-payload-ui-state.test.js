@@ -5619,6 +5619,7 @@ test('capturePersistedDeckPlaybackState falls back to the current session slide 
     ]
   };
   let buildEditorCanonicalDeckCalls = 0;
+  let canonicalBuildOptions = null;
   const context = {
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
     SlideNextStudioDeckView: {
@@ -5642,9 +5643,10 @@ test('capturePersistedDeckPlaybackState falls back to the current session slide 
     resolveEditorFallbackCanonicalDeck(nextDoc, nextCanonicalDeck) {
       return nextCanonicalDeck || context.buildEditorCanonicalDeck(nextDoc);
     },
-    buildEditorCanonicalDeck(nextDoc) {
+    buildEditorCanonicalDeck(nextDoc, options) {
       buildEditorCanonicalDeckCalls += 1;
       assert.equal(nextDoc, iframeDoc);
+      canonicalBuildOptions = options;
       return canonicalDeck;
     },
     currentSlideIndex: 1,
@@ -5679,6 +5681,10 @@ test('capturePersistedDeckPlaybackState falls back to the current session slide 
     }
   );
   assert.equal(buildEditorCanonicalDeckCalls, 1);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(canonicalBuildOptions)),
+    { preferLiveCanonicalDeck: false }
+  );
 });
 
 test('buildPersistableDeckHtml reports the resolved live canonical deck when requested', () => {

@@ -8081,7 +8081,9 @@
             slideIdAttr: EDITOR_SLIDE_ID_ATTR,
             resolveFallbackActiveSlideId: (nextDoc, nextCanonicalDeck) => resolveEditorFallbackActiveSlideId(
               nextDoc,
-              nextCanonicalDeck || buildEditorCanonicalDeck(nextDoc)
+              nextCanonicalDeck || buildEditorCanonicalDeck(nextDoc, {
+                preferLiveCanonicalDeck: false
+              })
             )
           });
         }
@@ -8135,7 +8137,9 @@
           resolveFallbackActiveSlideId: doc
             ? () => resolveEditorFallbackActiveSlideId(
                 doc,
-                canonicalDeck || buildEditorCanonicalDeck(doc)
+                canonicalDeck || buildEditorCanonicalDeck(doc, {
+                  preferLiveCanonicalDeck: false
+                })
               )
             : null
         })(doc);
@@ -8176,7 +8180,9 @@
           resolveFallbackActiveSlideId: doc
             ? () => resolveEditorFallbackActiveSlideId(
                 doc,
-                canonicalDeck || buildEditorCanonicalDeck(doc)
+                canonicalDeck || buildEditorCanonicalDeck(doc, {
+                  preferLiveCanonicalDeck: false
+                })
               )
             : null
         });
@@ -8196,7 +8202,9 @@
           resolveFallbackActiveSlideId: doc
             ? () => resolveEditorFallbackActiveSlideId(
                 doc,
-                canonicalDeck || buildEditorCanonicalDeck(doc)
+                canonicalDeck || buildEditorCanonicalDeck(doc, {
+                  preferLiveCanonicalDeck: false
+                })
               )
             : null
         });
@@ -8220,7 +8228,9 @@
         return ensurePersistedDeckPlaybackStateActiveSlideId(playbackState, {
           resolveFallbackActiveSlideId: () => resolveEditorFallbackActiveSlideId(
             doc,
-            canonicalDeck || buildEditorCanonicalDeck(doc)
+            canonicalDeck || buildEditorCanonicalDeck(doc, {
+              preferLiveCanonicalDeck: false
+            })
           )
         });
       }
@@ -8232,7 +8242,12 @@
         return playbackState;
       }
 
-      const fallbackActiveSlideId = resolveEditorFallbackActiveSlideId(doc, canonicalDeck || buildEditorCanonicalDeck(doc));
+      const fallbackActiveSlideId = resolveEditorFallbackActiveSlideId(
+        doc,
+        canonicalDeck || buildEditorCanonicalDeck(doc, {
+          preferLiveCanonicalDeck: false
+        })
+      );
       if (!fallbackActiveSlideId) {
         return playbackState;
       }
