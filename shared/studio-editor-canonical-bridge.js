@@ -1,12 +1,12 @@
 (function (root, factory) {
-  const api = factory();
+  const api = factory(root);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorCanonicalBridge = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   function createStudioEditorCanonicalBridge(options = {}) {
     const state = options.state && typeof options.state === 'object'
       ? options.state
@@ -23,6 +23,22 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
+    const readCanonicalDeckBaseline = canonicalStateApi
+      && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
+      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
+          getCanonicalDeckBaseline
+        })
+      : (sourceDocument) => {
+          if (!getCanonicalDeckBaseline) return null;
+          try {
+            return getCanonicalDeckBaseline(sourceDocument) || null;
+          } catch (err) {
+            return null;
+          }
+        };
 
     function resetLiveCanonicalDeck() {
       if (!state || typeof state.reset !== 'function') return null;
@@ -56,12 +72,7 @@
       if (normalizedOptions.preferLiveCanonicalDeck === false
         && !Object.prototype.hasOwnProperty.call(normalizedOptions, 'canonicalDeckBaseline')
         && getCanonicalDeckBaseline) {
-        let canonicalDeckBaseline = null;
-        try {
-          canonicalDeckBaseline = getCanonicalDeckBaseline(documentRef);
-        } catch (err) {
-          canonicalDeckBaseline = null;
-        }
+        const canonicalDeckBaseline = readCanonicalDeckBaseline(documentRef);
         if (canonicalDeckBaseline) {
           resolvedOptions = {
             ...normalizedOptions,

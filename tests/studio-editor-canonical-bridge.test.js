@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalBridge = require('../shared/studio-editor-canonical-bridge.js');
 
 function createState() {
@@ -65,6 +66,7 @@ test('canonical bridge adds the live baseline to forced DOM rebuilds', () => {
   const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
   let capturedOptions = null;
   const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    canonicalStateApi: canonicalState,
     canonicalDeckBuilder(_doc, options) {
       capturedOptions = options;
       return { kind: 'slidenext.deck', slides: [] };
