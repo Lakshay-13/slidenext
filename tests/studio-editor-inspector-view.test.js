@@ -298,6 +298,26 @@ test('syncStudioInspectorTypographyControls prefers canonical font-size data', (
   assert.equal(fontSizeLabel.textContent, '28px');
 });
 
+test('syncStudioInspectorTypographyControls prefers canonical font-weight data', () => {
+  const fontWeightInput = { value: '' };
+
+  assert.equal(inspectorView.syncStudioInspectorTypographyControls({
+    documentRef: {
+      getElementById(id) {
+        return id === 'elFontWeight' ? fontWeightInput : null;
+      }
+    },
+    primaryElement: { style: { fontWeight: '400' } },
+    canonicalNode: { style: 'font-weight: 700;' },
+    computedStyles: {
+      fontFamily: 'sans-serif',
+      color: '#fff',
+      fontWeight: '400'
+    }
+  }), true);
+  assert.equal(fontWeightInput.value, '700');
+});
+
 test('syncStudioInspectorBorderControls applies border values for shape-like selections', () => {
   const classList = createClassList();
   classList.add('editor-shape');

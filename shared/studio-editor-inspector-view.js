@@ -232,8 +232,14 @@
       }
     }
 
+    const canonicalFontWeight = readStudioInspectorCanonicalStyleValue(
+      options.canonicalNode,
+      'font-weight'
+    );
     const fontWeightInput = documentRef.getElementById('elFontWeight');
-    if (fontWeightInput) fontWeightInput.value = computedStyles.fontWeight;
+    if (fontWeightInput) {
+      fontWeightInput.value = canonicalFontWeight || computedStyles.fontWeight;
+    }
     const textColorInput = documentRef.getElementById('elTextColor');
     if (textColorInput) textColorInput.value = rgbToHex(computedStyles.color);
     highlightAlignButton(computedStyles.textAlign || 'left');
