@@ -176,7 +176,7 @@ test('lock and visibility wiring rebuilds the canonical deck from the iframe DOM
 
   assert.match(
     controllerSource,
-    /buildCanonicalDeck: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc, \{\s*preferLiveCanonicalDeck: false\s*\}\)/
+    /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/
   );
 });
 
