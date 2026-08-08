@@ -970,9 +970,13 @@
           tableStyle['background-color'] || tableStyle.background
         ) || { color: 'FFFFFF' };
         const tableBorderColor = normalizeHexColor(tableStyle['border-color']) || 'D1D5DB';
+        const tableCssBorderWidth = parseCssPx(tableStyle['border-width']);
+        const tableBorderWidth = tableCssBorderWidth === null
+          ? 0.75
+          : Math.max(0, tableCssBorderWidth * 0.75);
         context.slide.addTable(rows, {
           ...bounds,
-          border: { type: 'solid', color: tableBorderColor, pt: 0.75 },
+          border: { type: 'solid', color: tableBorderColor, pt: tableBorderWidth },
           color: tableColor,
           fill: tableFill,
           fontFace: tableFontFace || 'Aptos',
