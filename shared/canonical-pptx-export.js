@@ -461,28 +461,33 @@
     return shapeTypes[name] || name;
   }
 
-  function resolvePptxNodeShapeType(node, bounds, pptx) {
-    const shapeTypes = asObject(pptx && pptx.ShapeType);
-    const rectangle = shapeTypes.rect || 'rect';
+  function resolvePptxBorderRadius(node) {
     const style = nodeStyle(node);
     const radiusValue = typeof style['border-radius'] === 'string'
       ? style['border-radius'].trim().split(/\s+/)[0]
       : '';
-    if (!radiusValue) return rectangle;
-
-    const radius = radiusValue.endsWith('%')
+    if (!radiusValue) return null;
+    const isPercent = radiusValue.endsWith('%');
+    const radius = isPercent
       ? parseCssPx(radiusValue.slice(0, -1))
       : parseCssPx(radiusValue);
-    if (!(radius > 0)) return rectangle;
+    return radius > 0 ? { isPercent, radius } : null;
+  }
+
+  function resolvePptxNodeShapeType(node, bounds, pptx) {
+    const shapeTypes = asObject(pptx && pptx.ShapeType);
+    const rectangle = shapeTypes.rect || 'rect';
+    const radius = resolvePptxBorderRadius(node);
+    if (!radius) return rectangle;
 
     const nodeLayout = getNodeCanvasLayout(node);
     const minDimension = [nodeLayout.width, nodeLayout.height].every(Number.isFinite)
       ? Math.min(nodeLayout.width, nodeLayout.height)
       : 0;
-    if (radiusValue.endsWith('%') && radius >= 50) {
+    if (radius.isPercent && radius.radius >= 50) {
       return shapeTypes.ellipse || rectangle;
     }
-    if (!radiusValue.endsWith('%') && minDimension > 0 && radius >= minDimension / 2) {
+    if (!radius.isPercent && minDimension > 0 && radius.radius >= minDimension / 2) {
       return shapeTypes.ellipse || rectangle;
     }
     return shapeTypes.roundRect || rectangle;
@@ -783,6 +788,7 @@
         : { path: nodeBackgroundSource, ...bounds };
       const sizing = resolveNodeBackgroundImageSizing(node, bounds);
       if (sizing) backgroundOptions.sizing = sizing;
+      if (resolvePptxBorderRadius(node)) backgroundOptions.rounding = true;
       context.slide.addImage(mergePptxTransparency(backgroundOptions, transparency));
     }
 
@@ -810,6 +816,7 @@
           : { path: source, ...bounds };
         const sizing = resolveNodeImageSizing(node, bounds);
         if (sizing) imageOptions.sizing = sizing;
+        if (resolvePptxBorderRadius(node)) imageOptions.rounding = true;
         context.slide.addImage(mergePptxTransparency(imageOptions, transparency));
       }
     } else if (shapeNode) {
