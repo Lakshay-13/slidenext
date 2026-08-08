@@ -5805,23 +5805,8 @@
       if (!visibilityState || typeof visibilityState.syncStudioVisibilityToolbarState !== 'function') {
         return false;
       }
-      let canonicalDeck = null;
-      if (typeof buildEditorCanonicalDeck === 'function') {
-        try {
-          canonicalDeck = buildEditorCanonicalDeck(doc);
-        } catch (error) {
-          canonicalDeck = null;
-        }
-      }
-      const readHiddenState = canonicalDeck
-        ? (element) => {
-            const canonicalNode = resolveEditorCanonicalNodeForElement(element, canonicalDeck);
-            return canonicalNode
-              && canonicalNode.visibility
-              && typeof canonicalNode.visibility.hidden === 'boolean'
-              ? canonicalNode.visibility.hidden
-              : isElementHidden(element);
-          }
+      const readHiddenState = typeof getEditorCanonicalVisibilityReader === 'function'
+        ? getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden)
         : isElementHidden;
       return visibilityState.syncStudioVisibilityToolbarState({
         documentRef: document,
