@@ -55,8 +55,8 @@ test('renderPresentationLibraryCategories renders active and inactive category t
   });
 
   assert.equal(container.innerHTML, markup);
-  assert.match(markup, /filterCategory\('all'\)/);
-  assert.match(markup, /filterCategory\('Research'\)/);
+  assert.match(markup, /filterCategory\(&quot;all&quot;\)/);
+  assert.match(markup, /filterCategory\(&quot;Research&quot;\)/);
   assert.match(markup, /category-tab active/);
 });
 
@@ -79,8 +79,8 @@ test('renderPresentationLibraryGrid renders presentation actions and empty state
 
   assert.equal(container.innerHTML, markup);
   assert.match(markup, /Onboarding/);
-  assert.match(markup, /launchPresentation\('presentations\/onboarding\/index.html'\)/);
-  assert.match(markup, /launchStudioEditor\('presentations\/onboarding\/index.html'/);
+  assert.match(markup, /launchPresentation\(&quot;presentations\/onboarding\/index.html&quot;\)/);
+  assert.match(markup, /launchStudioEditor\(&quot;presentations\/onboarding\/index.html&quot;/);
 
   const emptyContainer = { innerHTML: '' };
   const emptyMarkup = presentationLibraryView.renderPresentationLibraryGrid({
@@ -90,4 +90,26 @@ test('renderPresentationLibraryGrid renders presentation actions and empty state
   });
   assert.equal(emptyContainer.innerHTML, emptyMarkup);
   assert.match(emptyMarkup, /No presentations found/);
+});
+
+test('renderPresentationLibraryGrid escapes user-controlled metadata and handler arguments', () => {
+  const markup = presentationLibraryView.renderPresentationLibraryGrid({
+    data: [{
+      category: 'General',
+      presentations: [{
+        title: 'Quarterly "Review" <Draft>',
+        subtitle: "Owner's notes",
+        description: '<img src=x onerror=alert(1)>',
+        url: 'presentations/review/quote"deck/index.html',
+        tags: ['R&D']
+      }]
+    }],
+    activeCategory: 'all'
+  });
+
+  assert.match(markup, /Quarterly &quot;Review&quot; &lt;Draft&gt;/);
+  assert.match(markup, /Owner&#39;s notes/);
+  assert.match(markup, /&lt;img src=x onerror=alert\(1\)&gt;/);
+  assert.match(markup, /launchPresentation\(&quot;presentations\/review\/quote\\&quot;deck\/index.html&quot;\)/);
+  assert.doesNotMatch(markup, /<img src=x/);
 });
