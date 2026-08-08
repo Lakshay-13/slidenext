@@ -218,6 +218,35 @@ test('waitForStudioPdfPrintResources rejects when a resource never settles', asy
   assert.ok(Date.now() - startedAt >= 8);
 });
 
+test('waitForStudioPdfPrintResources clears a zero-valued timeout handle', async () => {
+  const originalSetTimeout = global.setTimeout;
+  const originalClearTimeout = global.clearTimeout;
+  const clearedTimers = [];
+  const imageHandlers = {};
+  global.setTimeout = () => 0;
+  global.clearTimeout = (timer) => {
+    clearedTimers.push(timer);
+  };
+
+  try {
+    const waiting = pdfExport.waitForStudioPdfPrintResources({
+      images: [{
+        complete: false,
+        addEventListener(type, handler) {
+          imageHandlers[type] = handler;
+        }
+      }]
+    });
+    imageHandlers.load();
+    await waiting;
+  } finally {
+    global.setTimeout = originalSetTimeout;
+    global.clearTimeout = originalClearTimeout;
+  }
+
+  assert.deepEqual(clearedTimers, [0]);
+});
+
 test('openStudioPdfPrintWindow writes export html and waits for the print window load event', () => {
   let writtenHtml = '';
   let printCalls = 0;
@@ -281,6 +310,47 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
       resolve();
     });
   });
+});
+
+test('openStudioPdfPrintWindow clears zero-valued popup timeout handles', () => {
+  const originalSetTimeout = global.setTimeout;
+  const originalClearTimeout = global.clearTimeout;
+  const clearedTimers = [];
+  let loadHandler = null;
+  global.setTimeout = () => 0;
+  global.clearTimeout = (timer) => {
+    clearedTimers.push(timer);
+  };
+
+  try {
+    const printWindow = {
+      document: {
+        readyState: 'loading',
+        open() {},
+        write() {},
+        close() {}
+      },
+      addEventListener(type, handler) {
+        assert.equal(type, 'load');
+        loadHandler = handler;
+      },
+      print() {}
+    };
+
+    assert.equal(pdfExport.openStudioPdfPrintWindow({
+      html: '<html><body><div class="slide">A</div></body></html>',
+      openWindow() {
+        return printWindow;
+      }
+    }), true);
+
+    loadHandler();
+  } finally {
+    global.setTimeout = originalSetTimeout;
+    global.clearTimeout = originalClearTimeout;
+  }
+
+  assert.deepEqual(clearedTimers, [0, 0]);
 });
 
 test('openStudioPdfPrintWindow falls back to a completed synchronously written document', () => {

@@ -11,6 +11,10 @@
   const DEFAULT_PAGE_HEIGHT = '9in';
   const DEFAULT_LOAD_TIMEOUT_MS = 10000;
 
+  function hasStudioPdfTimerHandle(timerId) {
+    return timerId !== null && typeof timerId !== 'undefined';
+  }
+
   function normalizeDimension(value, fallback) {
     const normalizedValue = typeof value === 'string' ? value.trim() : '';
     const match = normalizedValue.match(/^(\d+(?:\.\d+)?)(?:in|cm|mm|px|pt)$/);
@@ -172,7 +176,7 @@
       const settle = (error = null) => {
         if (settled) return;
         settled = true;
-        if (timeoutId) clearTimeout(timeoutId);
+        if (hasStudioPdfTimerHandle(timeoutId)) clearTimeout(timeoutId);
         if (error) {
           reject(error);
         } else {
@@ -208,7 +212,7 @@
         const settle = (error = null) => {
           if (settled) return;
           settled = true;
-          if (timeoutId) clearTimeout(timeoutId);
+          if (hasStudioPdfTimerHandle(timeoutId)) clearTimeout(timeoutId);
           if (error) {
             reject(error);
           } else {
@@ -338,11 +342,11 @@
     let loadTimeoutId = null;
     let fallbackLoadTimeoutId = null;
     const clearLoadTimeout = () => {
-      if (loadTimeoutId) {
+      if (hasStudioPdfTimerHandle(loadTimeoutId)) {
         clearTimeout(loadTimeoutId);
         loadTimeoutId = null;
       }
-      if (fallbackLoadTimeoutId) {
+      if (hasStudioPdfTimerHandle(fallbackLoadTimeoutId)) {
         clearTimeout(fallbackLoadTimeoutId);
         fallbackLoadTimeoutId = null;
       }
