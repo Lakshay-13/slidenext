@@ -497,6 +497,20 @@ test('createCanonicalPptxExport fails closed for an empty canonical deck', () =>
   assert.deepEqual(result.diagnostics.warnings, ['Canonical deck has no slides']);
 });
 
+test('createCanonicalPptxExport fails closed when the generator cannot add slides', () => {
+  class NoSlidePptx {
+    write() {}
+  }
+
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{ id: 'slide-1', nodes: [] }]
+  }, { PptxGenJS: NoSlidePptx });
+
+  assert.equal(result.pptx, null);
+  assert.equal(result.slideCount, 0);
+  assert.deepEqual(result.diagnostics.warnings, ['PptxGenJS cannot add slides']);
+});
+
 test('createCanonicalPptxExport preserves canonical slide sections', () => {
   const result = pptxExport.createCanonicalPptxExport({
     slides: [

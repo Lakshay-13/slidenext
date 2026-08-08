@@ -1739,6 +1739,10 @@
       diagnostics.warnings.push('PptxGenJS is unavailable');
       return { deck, pptx: null, slideCount: 0, diagnostics };
     }
+    if (typeof pptx.addSlide !== 'function') {
+      diagnostics.warnings.push('PptxGenJS cannot add slides');
+      return { deck, pptx: null, slideCount: 0, diagnostics };
+    }
 
     if (normalizedOptions.customLayout) {
       if (typeof pptx.defineLayout !== 'function') {
