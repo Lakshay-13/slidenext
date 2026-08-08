@@ -230,6 +230,12 @@
           if (typeof cellStyle['text-align'] === 'string' && cellStyle['text-align'].trim()) {
             cellOptions.align = resolvePptxTextAlignment(cellStyle['text-align']);
           }
+          const verticalAlignment = typeof cellStyle['vertical-align'] === 'string'
+            ? cellStyle['vertical-align'].trim().toLowerCase()
+            : '';
+          if (['top', 'middle', 'bottom'].includes(verticalAlignment)) {
+            cellOptions.valign = verticalAlignment;
+          }
           return Object.keys(cellOptions).length > 0
             ? { text, options: cellOptions }
             : text;
