@@ -5149,33 +5149,37 @@
     }
 
     function updateRemovalActionState(doc = getIframeDoc()) {
-      const syncStudioRemovalToolbarState = (
-        SlideNextStudioEditorRemoval
-        && typeof SlideNextStudioEditorRemoval.syncStudioRemovalToolbarState === 'function'
-      )
-        ? SlideNextStudioEditorRemoval.syncStudioRemovalToolbarState
+      const removalState = typeof SlideNextStudioEditorRemoval !== 'undefined'
+        ? SlideNextStudioEditorRemoval
         : null;
-      if (syncStudioRemovalToolbarState) {
-        return syncStudioRemovalToolbarState({
-          documentRef: document,
-          elements: selectedElements,
+      if (!removalState) {
+        return false;
+      }
+      const toolbarOptions = {
+        documentRef: document,
+        elements: selectedElements,
+        isLocked: isElementLocked,
+        canMutateDeck: () => !!getActiveSlide(doc)
+      };
+      if (typeof removalState.syncStudioRemovalToolbarState === 'function') {
+        return removalState.syncStudioRemovalToolbarState(toolbarOptions);
+      }
+      if (typeof removalState.renderStudioRemovalToolbarState !== 'function') {
+        return false;
+      }
+      const buildToolbarState = typeof removalState.buildStudioRemovalToolbarState === 'function'
+        ? removalState.buildStudioRemovalToolbarState
+        : typeof removalState.buildStudioRemovalActionState === 'function'
+          ? removalState.buildStudioRemovalActionState
+          : null;
+      if (!buildToolbarState) {
+        return false;
+      }
+      const removalActionState = buildToolbarState(selectedElements, {
           isLocked: isElementLocked,
           canMutateDeck: () => !!getActiveSlide(doc)
         });
-      }
-      const buildStudioRemovalToolbarState = (
-        SlideNextStudioEditorRemoval
-        && typeof SlideNextStudioEditorRemoval.buildStudioRemovalToolbarState === 'function'
-      )
-        ? SlideNextStudioEditorRemoval.buildStudioRemovalToolbarState
-        : null;
-      const removalActionState = buildStudioRemovalToolbarState
-        ? buildStudioRemovalToolbarState(selectedElements, {
-          isLocked: isElementLocked,
-          canMutateDeck: () => !!getActiveSlide(doc)
-        })
-        : buildRemovalSelectionActionState(doc);
-      return SlideNextStudioEditorRemoval.renderStudioRemovalToolbarState({
+      return removalState.renderStudioRemovalToolbarState({
         documentRef: document,
         actionState: removalActionState
       });
