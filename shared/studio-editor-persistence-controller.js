@@ -44,9 +44,14 @@
     const setCurrentPresentationCanonicalDeck = typeof options.setCurrentPresentationCanonicalDeck === 'function'
       ? options.setCurrentPresentationCanonicalDeck
       : () => {};
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
 
     let stateUpdater = null;
     let stateApplier = null;
+    let canonicalDeckOverrideResolver = null;
+    let fallbackCanonicalDeckResolver = null;
 
     function createStateUpdater() {
       if (!persistenceStateApi
@@ -91,7 +96,52 @@
       return typeof stateApplier === 'function' ? stateApplier(nextState, nextOptions) : nextState;
     }
 
-    return { update, apply };
+    function createCanonicalDeckOverrideResolver() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorCanonicalDeckOverrideAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorCanonicalDeckOverrideAdapter({
+        persistenceApi,
+        isCanonicalDeck
+      });
+    }
+
+    function resolveCanonicalDeckOverride(canonicalDeck = null, nextOptions = {}) {
+      if (typeof canonicalDeckOverrideResolver !== 'function') {
+        canonicalDeckOverrideResolver = createCanonicalDeckOverrideResolver();
+      }
+      return typeof canonicalDeckOverrideResolver === 'function'
+        ? canonicalDeckOverrideResolver(canonicalDeck, nextOptions)
+        : null;
+    }
+
+    function createFallbackCanonicalDeckResolver() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorFallbackCanonicalDeckAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorFallbackCanonicalDeckAdapter({
+        persistenceApi,
+        isCanonicalDeck
+      });
+    }
+
+    function resolveFallbackCanonicalDeck(canonicalDeck = null, nextOptions = {}) {
+      if (typeof fallbackCanonicalDeckResolver !== 'function') {
+        fallbackCanonicalDeckResolver = createFallbackCanonicalDeckResolver();
+      }
+      return typeof fallbackCanonicalDeckResolver === 'function'
+        ? fallbackCanonicalDeckResolver(canonicalDeck, nextOptions)
+        : null;
+    }
+
+    return {
+      update,
+      apply,
+      resolveCanonicalDeckOverride,
+      resolveFallbackCanonicalDeck
+    };
   }
 
   return {

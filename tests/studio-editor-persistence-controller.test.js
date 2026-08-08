@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const persistence = require('../shared/studio-editor-persistence.js');
 const persistenceState = require('../shared/studio-editor-persistence-state.js');
 const persistenceController = require('../shared/studio-editor-persistence-controller.js');
+const canonicalDeckModel = require('../shared/canonical-deck.js');
 
 test('persistence controller reuses the shared updater and preserves canonical normalization', () => {
   const stored = {};
@@ -81,4 +82,21 @@ test('persistence controller applies canonical state through the shared applier'
       presentationUrl: '/presentations/deck/index.html'
     }
   });
+});
+
+test('persistence controller reuses canonical override and fallback adapters', () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({ slides: [] });
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState,
+    isCanonicalDeck(value) {
+      return canonicalDeckModel.isCanonicalDeck(value);
+    }
+  });
+
+  assert.deepEqual(controller.resolveCanonicalDeckOverride(canonicalDeck), canonicalDeck);
+  assert.equal(controller.resolveCanonicalDeckOverride({}), null);
+  assert.deepEqual(controller.resolveFallbackCanonicalDeck({}, {
+    buildCanonicalDeck: () => canonicalDeck
+  }), canonicalDeck);
 });

@@ -2483,7 +2483,8 @@
             persistedDeckPlaybackState = playbackState;
           },
           getCurrentPresentationUrl: () => currentPresentationUrl,
-          setCurrentPresentationCanonicalDeck: (...args) => setCurrentPresentationCanonicalDeck(...args)
+          setCurrentPresentationCanonicalDeck: (...args) => setCurrentPresentationCanonicalDeck(...args),
+          isCanonicalDeck: getEditorCanonicalDeckValidator()
         })
       : null;
     const studioEditorSessionStateController = typeof SlideNextStudioEditorSession !== 'undefined'
@@ -4547,6 +4548,17 @@
     }
 
     function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.resolveCanonicalDeckOverride === 'function') {
+        const resolvedCanonicalDeck = studioEditorPersistenceController.resolveCanonicalDeckOverride(
+          canonicalDeck,
+          options
+        );
+        if (resolvedCanonicalDeck !== null && typeof resolvedCanonicalDeck !== 'undefined') {
+          return resolvedCanonicalDeck;
+        }
+      }
       const createStudioEditorCanonicalDeckOverrideAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState
@@ -4615,6 +4627,21 @@
     }
 
     function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.resolveFallbackCanonicalDeck === 'function') {
+        const resolvedCanonicalDeck = studioEditorPersistenceController.resolveFallbackCanonicalDeck(
+          canonicalDeck,
+          {
+            buildCanonicalDeck: canonicalDeck
+              ? () => buildEditorCanonicalDeck(doc)
+              : null
+          }
+        );
+        if (resolvedCanonicalDeck !== null && typeof resolvedCanonicalDeck !== 'undefined') {
+          return resolvedCanonicalDeck;
+        }
+      }
       const createStudioEditorFallbackCanonicalDeckAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState
