@@ -844,6 +844,23 @@
     return normalizeString(options.resolveAssetId(el, source)).trim();
   }
 
+  function resolveImportedBackgroundAssetId(el, styleText, options = {}) {
+    if (!el || typeof el.getAttribute !== 'function') return '';
+
+    const explicitAssetId = normalizeString(
+      el.getAttribute('data-background-asset-id') || el.getAttribute('data-background-asset')
+    ).trim();
+    if (explicitAssetId) return explicitAssetId;
+
+    const declaration = normalizeString(styleText).match(
+      /(?:^|;)\s*background(?:-image)?\s*:\s*([^;]+)/i
+    );
+    const source = extractCssUrlValues(declaration ? declaration[1] : '')[0] || '';
+    if (!source || typeof options.resolveAssetId !== 'function') return '';
+
+    return normalizeString(options.resolveAssetId(el, source)).trim();
+  }
+
   function shouldImportElement(el, options = {}) {
     if (!el || !el.tagName) return false;
     const skipTagNames = options.skipTagNames instanceof Set
@@ -1054,6 +1071,7 @@
       .filter(Boolean)
       .join(' ');
     const assetId = resolveImportedElementAssetId(el, options);
+    const backgroundAssetId = resolveImportedBackgroundAssetId(el, canonicalStyleText, options);
 
     return canonicalDeck.createCanonicalNode({
       id: typeof options.getNodeId === 'function'
@@ -1067,6 +1085,7 @@
       classes: sanitizeImportedClassNames(el.classList || [], options),
       attributes,
       ...(assetId ? { assetId } : {}),
+      ...(backgroundAssetId ? { backgroundAssetId } : {}),
       style: canonicalStyleText,
       layout: importedLayout,
       visibility,

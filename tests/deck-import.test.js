@@ -1196,6 +1196,36 @@ test('importElementToCanonicalNode promotes explicit and resolved asset referenc
   assert.equal(resolvedNode.assetId, 'asset-resolved');
 });
 
+test('importElementToCanonicalNode promotes canonical background asset references', () => {
+  const explicitNode = deckImport.importElementToCanonicalNode(createImportedElement({
+    tagName: 'DIV',
+    attributes: {
+      'data-background-asset-id': 'asset-background'
+    },
+    style: {
+      backgroundImage: 'url("assets/background.png")'
+    },
+    outerHTML: '<div data-background-asset-id="asset-background"></div>'
+  }));
+  const resolvedNode = deckImport.importElementToCanonicalNode(createImportedElement({
+    tagName: 'DIV',
+    attributes: {
+      style: 'background-image: url("assets/resolved-background.png");'
+    },
+    style: {
+      backgroundImage: 'url("assets/resolved-background.png")'
+    },
+    outerHTML: '<div style="background-image: url(&quot;assets/resolved-background.png&quot;);"></div>'
+  }), {
+    resolveAssetId(_element, source) {
+      return source === 'assets/resolved-background.png' ? 'asset-resolved-background' : '';
+    }
+  });
+
+  assert.equal(explicitNode.backgroundAssetId, 'asset-background');
+  assert.equal(resolvedNode.backgroundAssetId, 'asset-resolved-background');
+});
+
 test('importElementToCanonicalNode sanitizes stored node html fragments', () => {
   const child = createSanitizableElement({
     tagName: 'SPAN',

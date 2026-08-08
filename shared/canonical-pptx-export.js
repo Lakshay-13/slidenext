@@ -476,9 +476,10 @@
     const asset = assetId
       ? deck.assets.find(item => item.id === assetId)
       : deck.assets.find(item => item.src === directSource);
+    const resolvedSource = assetId && asset ? asset.src : directSource || (asset && asset.src) || '';
     return {
       asset: asset || null,
-      source: resolveAssetSource(directSource || (asset && asset.src) || '', options)
+      source: resolveAssetSource(resolvedSource, options)
     };
   }
 
@@ -523,7 +524,9 @@
     const rawSource = extractCssImageSource(style['background-image'] || style.background);
     const source = resolveAssetSource(rawSource, options);
     const attributes = asObject(node && node.attributes);
-    const assetId = typeof attributes['data-background-asset-id'] === 'string'
+    const assetId = typeof node.backgroundAssetId === 'string' && node.backgroundAssetId.trim()
+      ? node.backgroundAssetId.trim()
+      : typeof attributes['data-background-asset-id'] === 'string'
       ? attributes['data-background-asset-id']
       : typeof attributes['data-background-asset'] === 'string'
         ? attributes['data-background-asset']
@@ -532,9 +535,10 @@
     const asset = assetId
       ? assets.find(item => item.id === assetId)
       : assets.find(item => item.src === rawSource || resolveAssetSource(item.src, options) === source);
+    const resolvedSource = assetId && asset ? asset.src : rawSource || (asset && asset.src) || '';
     return {
       asset: asset || null,
-      source
+      source: resolveAssetSource(resolvedSource, options)
     };
   }
 

@@ -192,7 +192,7 @@ test('createCanonicalPptxExport prefers the canonical node asset reference', () 
         id: 'image-1',
         type: 'image',
         assetId: 'asset-canonical',
-        attributes: { 'data-asset-id': 'asset-legacy' },
+        attributes: { src: 'legacy.png', 'data-asset-id': 'asset-legacy' },
         layout: { x: 0, y: 0, width: 100, height: 100 }
       }]
     }]
@@ -200,6 +200,28 @@ test('createCanonicalPptxExport prefers the canonical node asset reference', () 
 
   assert.equal(result.pptx.slides[0].calls[0].type, 'image');
   assert.equal(result.pptx.slides[0].calls[0].options.data, 'data:image/png;base64,CANONICAL');
+});
+
+test('createCanonicalPptxExport prefers the canonical node background asset reference', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    assets: [
+      { id: 'asset-canonical-background', src: 'canonical.png' },
+      { id: 'asset-legacy-background', src: 'legacy.png' }
+    ],
+    slides: [{
+      nodes: [{
+        id: 'panel-1',
+        type: 'shape',
+        backgroundAssetId: 'asset-canonical-background',
+        attributes: { 'data-background-asset-id': 'asset-legacy-background' },
+        style: 'background-image: url("legacy.png");',
+        layout: { x: 0, y: 0, width: 100, height: 100 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.equal(result.pptx.slides[0].calls[0].type, 'image');
+  assert.equal(result.pptx.slides[0].calls[0].options.path, 'canonical.png');
 });
 
 test('createCanonicalPptxExport preserves table cell spans', () => {

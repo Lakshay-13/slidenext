@@ -77,6 +77,7 @@
     const layout = asPlainObject(node.layout);
     const visibility = asPlainObject(node.visibility);
     const assetId = normalizeString(node.assetId).trim();
+    const backgroundAssetId = normalizeString(node.backgroundAssetId).trim();
 
     return {
       id: normalizeString(node.id, `node-${index + 1}`),
@@ -88,6 +89,7 @@
       classes: normalizeStringArray(node.classes),
       attributes: asPlainObject(node.attributes),
       ...(assetId ? { assetId } : {}),
+      ...(backgroundAssetId ? { backgroundAssetId } : {}),
       style: normalizeString(node.style),
       layout: {
         mode: normalizeLayoutMode(layout.mode),

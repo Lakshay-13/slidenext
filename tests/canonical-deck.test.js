@@ -40,11 +40,17 @@ test('createCanonicalDeck normalizes the legacy freeform layout alias to absolut
 });
 
 test('createCanonicalNode preserves an explicit asset reference without requiring one', () => {
-  const node = canonicalDeck.createCanonicalNode({ id: 'image-1', assetId: ' asset-1 ' });
+  const node = canonicalDeck.createCanonicalNode({
+    id: 'image-1',
+    assetId: ' asset-1 ',
+    backgroundAssetId: ' background-1 '
+  });
   const legacyNode = canonicalDeck.createCanonicalNode({ id: 'text-1' });
 
   assert.equal(node.assetId, 'asset-1');
+  assert.equal(node.backgroundAssetId, 'background-1');
   assert.equal(Object.prototype.hasOwnProperty.call(legacyNode, 'assetId'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(legacyNode, 'backgroundAssetId'), false);
 });
 
 test('createCanonicalDeck preserves optional slide sections without changing empty slide shape', () => {
