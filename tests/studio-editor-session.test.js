@@ -382,6 +382,31 @@ test('createStudioEditorPresentationSessionStateController provides live readers
   assert.equal(readers.getCurrentSessionToken(), sessionToken);
 });
 
+test('createStudioEditorPresentationSessionStateController creates guarded frame-load handlers', () => {
+  const calls = [];
+  const controller = editorSession.createStudioEditorPresentationSessionStateController({
+    sessionApi: editorSession,
+    getPresentationUrl: () => '/presentations/deck/index.html',
+    getSessionToken: () => 4
+  });
+  const handler = controller.createFrameLoadHandler({
+    presentationUrl: '/presentations/deck/index.html',
+    sessionToken: 4,
+    getCurrentPresentationUrl: () => '/presentations/deck/index.html',
+    getCurrentSessionToken: () => 4,
+    isEditorActive: () => true,
+    handleLoad() {
+      calls.push('load');
+    },
+    afterLoad() {
+      calls.push('after');
+    }
+  });
+
+  assert.equal(handler(), true);
+  assert.deepEqual(calls, ['load', 'after']);
+});
+
 test('shouldHandleStudioFrameLoad requires an active matching editor session', () => {
   assert.equal(editorSession.shouldHandleStudioFrameLoad('', {
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',

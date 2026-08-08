@@ -3607,6 +3607,11 @@
     }
 
     function createCurrentStudioFrameLoadHandler(options = {}) {
+      if (typeof studioEditorSessionStateController !== 'undefined'
+        && studioEditorSessionStateController
+        && typeof studioEditorSessionStateController.createFrameLoadHandler === 'function') {
+        return studioEditorSessionStateController.createFrameLoadHandler(options);
+      }
       const createStudioEditorFrameLoadHandlerAdapter = (
         typeof SlideNextStudioEditorSession !== 'undefined'
         && SlideNextStudioEditorSession

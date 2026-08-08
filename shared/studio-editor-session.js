@@ -256,6 +256,11 @@
             })
       )
     });
+    const createFrameLoadHandler = sessionApi
+      && typeof sessionApi.createStudioEditorFrameLoadHandlerAdapter === 'function'
+      ? sessionApi.createStudioEditorFrameLoadHandlerAdapter
+      : createStudioEditorFrameLoadHandlerAdapter;
+    const frameLoadHandler = createFrameLoadHandler({ sessionApi });
     const setPresentationUrl = typeof options.setPresentationUrl === 'function'
       ? options.setPresentationUrl
       : () => {};
@@ -319,9 +324,16 @@
           };
     }
 
+    function createSessionFrameLoadHandler(nextOptions = {}) {
+      return typeof frameLoadHandler === 'function'
+        ? frameLoadHandler(nextOptions)
+        : createStudioFrameLoadHandler(nextOptions);
+    }
+
     return {
       readers: readSessionState,
       readerOptions: createSessionReaderOptions,
+      createFrameLoadHandler: createSessionFrameLoadHandler,
       update,
       capture
     };
