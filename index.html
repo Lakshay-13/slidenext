@@ -5552,12 +5552,24 @@
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
+      const canonicalStateApi = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalState
+        : null;
       const elementId = element && element.dataset && element.dataset.editorId;
       if (!canonicalDeckApi
         || typeof canonicalDeckApi.findCanonicalNodeById !== 'function'
         || !elementId
         || !canonicalDeck) {
         return null;
+      }
+      if (canonicalStateApi
+        && typeof canonicalStateApi.createStudioEditorCanonicalNodeReader === 'function') {
+        const readCanonicalNode = canonicalStateApi.createStudioEditorCanonicalNodeReader(canonicalDeck, {
+          resolveCanonicalNode(target, deck) {
+            return canonicalDeckApi.findCanonicalNodeById(deck, target.dataset.editorId);
+          }
+        });
+        return readCanonicalNode(element);
       }
       try {
         return canonicalDeckApi.findCanonicalNodeById(canonicalDeck, elementId);

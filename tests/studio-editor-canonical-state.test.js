@@ -81,6 +81,34 @@ test('canonical node reader resolves safely and fails closed on lookup errors', 
   assert.equal(throwingReader(element), null);
 });
 
+test('editor canonical node resolver prefers the shared safe reader', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolverSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCanonicalNodeForElement(element, canonicalDeck = null) {',
+    '\n\n    function getLiveSelectedElements(elements = selectedElements, doc = getIframeDoc()) {'
+  );
+  const calls = [];
+  const canonicalDeck = createDeck('active');
+  const target = { dataset: { editorId: 'node-1' } };
+  const expectedNode = { id: 'node-1' };
+  const context = {
+    SlideNextStudioEditorCanonicalState: canonicalState,
+    SlideNextCanonicalDeck: {
+      findCanonicalNodeById(deck, elementId) {
+        calls.push([deck, elementId]);
+        return elementId === 'node-1' ? expectedNode : null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolverSource, context);
+
+  assert.equal(context.resolveEditorCanonicalNodeForElement(target, canonicalDeck), expectedNode);
+  assert.deepEqual(calls, [[canonicalDeck, 'node-1']]);
+});
+
 test('canonical visibility reader prefers model state and falls back safely', () => {
   const element = { id: 'node-1' };
   const canonicalDeck = createDeck('active');
