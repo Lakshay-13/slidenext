@@ -69,6 +69,29 @@ test('buildStudioCanonicalVisibilityBaseline rejects invalid compatibility basel
   assert.equal(rebuildCalls, 1);
 });
 
+test('buildStudioCanonicalVisibilityBaseline uses structural validation without a canonical validator', () => {
+  const canonicalDeckApi = {
+    updateCanonicalNodeVisibility() {}
+  };
+  const malformedDeck = { invalid: true };
+  const validDeck = { slides: [] };
+
+  assert.equal(
+    canonicalVisibility.buildStudioCanonicalVisibilityBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => malformedDeck
+    }),
+    null
+  );
+  assert.equal(
+    canonicalVisibility.buildStudioCanonicalVisibilityBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => validDeck
+    }),
+    validDeck
+  );
+});
+
 test('buildStudioCanonicalVisibilityDeck applies hidden and locked patches without mutating the source', () => {
   const sourceDeck = createSourceDeck();
   const result = canonicalVisibility.buildStudioCanonicalVisibilityDeck(
