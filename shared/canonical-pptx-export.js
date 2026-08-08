@@ -482,6 +482,16 @@
     return source && !source.startsWith('#') ? source : '';
   }
 
+  function getUnsupportedPptxBackgroundImageEffects(value) {
+    if (typeof value !== 'string') return [];
+    const effects = [];
+    if (/gradient\(/i.test(value)) effects.push('unsupported background gradients');
+    if ((value.match(/url\(/gi) || []).length > 1) {
+      effects.push('multiple background image layers are not supported');
+    }
+    return effects;
+  }
+
   function resolveSlideBackgroundImageSource(background, options) {
     return resolveSlideBackgroundImageAsset(background, null, options).source;
   }
@@ -1068,9 +1078,12 @@
           diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['background-image'] });
           diagnostics.warnings.push(`Node ${nodeId} background image is not an exportable image URL`);
         } else {
-          if (/gradient\(/i.test(nodeBackgroundValue)) {
+          const unsupportedBackgroundEffects = getUnsupportedPptxBackgroundImageEffects(nodeBackgroundValue);
+          if (unsupportedBackgroundEffects.length > 0) {
             diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['background-image'] });
-            diagnostics.warnings.push(`Node ${nodeId} uses unsupported background gradients`);
+            unsupportedBackgroundEffects.forEach(effect => {
+              diagnostics.warnings.push(`Node ${nodeId} uses ${effect}`);
+            });
           }
           const unsupportedBackgroundPlacement = getUnsupportedPptxImagePlacementProperties(style, {
             backgroundImage: true,
@@ -1179,12 +1192,15 @@
         });
         diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} background image is not an exportable image URL`);
       } else if (backgroundImageSource) {
-        if (/gradient\(/i.test(background.image || '')) {
+        const unsupportedBackgroundEffects = getUnsupportedPptxBackgroundImageEffects(background.image || '');
+        if (unsupportedBackgroundEffects.length > 0) {
           diagnostics.unsupportedStyles.push({
             id: slide.id || 'unknown',
             properties: ['background-image']
           });
-          diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} uses unsupported background gradients`);
+          unsupportedBackgroundEffects.forEach(effect => {
+            diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} uses ${effect}`);
+          });
         }
         let hasMissingAsset = false;
         if (normalizedOptions.assetExists) {

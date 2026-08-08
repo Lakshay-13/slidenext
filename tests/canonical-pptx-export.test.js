@@ -1469,6 +1469,32 @@ test('preflightCanonicalPptxExport reports gradients layered over slide backgrou
   assert.match(report.diagnostics.warnings.join('\n'), /unsupported background gradients/);
 });
 
+test('preflightCanonicalPptxExport reports layered background images', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      id: 'slide-1',
+      layout: {
+        background: {
+          image: 'url("data:image/png;base64,AAAA"), url("data:image/png;base64,BBBB")',
+          style: 'background-size: cover; background-position: center;'
+        }
+      },
+      nodes: [{
+        id: 'panel-1',
+        type: 'container',
+        style: 'background-image: url("data:image/png;base64,AAAA"), url("data:image/png;base64,BBBB");',
+        layout: { x: 0, y: 0, width: 200, height: 100 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedStyles, [
+    { id: 'slide-1', properties: ['background-image'] },
+    { id: 'panel-1', properties: ['background-image'] }
+  ]);
+  assert.match(report.diagnostics.warnings.join('\n'), /multiple background image layers are not supported/);
+});
+
 test('createPptxWarningDetailsHeader preserves a bounded diagnostic summary', () => {
   const encoded = pptxExport.createPptxWarningDetailsHeader([
     'first warning',
