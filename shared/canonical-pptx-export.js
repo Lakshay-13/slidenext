@@ -387,6 +387,29 @@
     };
   }
 
+  function isCenteredPptxImagePosition(value) {
+    const position = typeof value === 'string'
+      ? value.trim().toLowerCase().replace(/\s+/g, ' ')
+      : '';
+    return !position || /^(?:center|50%)(?:\s+(?:center|50%))?$/.test(position);
+  }
+
+  function getUnsupportedPptxImagePlacementProperties(style, options = {}) {
+    const properties = [];
+    if (options.imageNode && ['cover', 'contain'].includes((style['object-fit'] || '').trim().toLowerCase())
+      && !isCenteredPptxImagePosition(style['object-position'])) {
+      properties.push('object-position');
+    }
+    if (options.backgroundImage) {
+      const backgroundSize = (style['background-size'] || '').trim().toLowerCase();
+      if (backgroundSize && !['cover', 'contain'].includes(backgroundSize)) properties.push('background-size');
+      if (!isCenteredPptxImagePosition(style['background-position'])) properties.push('background-position');
+      const backgroundRepeat = (style['background-repeat'] || '').trim().toLowerCase();
+      if (backgroundRepeat && backgroundRepeat !== 'no-repeat') properties.push('background-repeat');
+    }
+    return properties;
+  }
+
   function resolveNodeBackgroundImageSizing(node, bounds) {
     const styles = nodeStyle(node);
     const type = (styles['background-size'] || '').trim().toLowerCase();
@@ -632,6 +655,13 @@
           diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['object-fit'] });
           diagnostics.warnings.push(`Node ${nodeId} uses unsupported image fit: ${objectFit}`);
         }
+        const unsupportedImagePlacement = getUnsupportedPptxImagePlacementProperties(style, {
+          imageNode: true
+        });
+        if (unsupportedImagePlacement.length > 0) {
+          diagnostics.unsupportedStyles.push({ id: nodeId, properties: unsupportedImagePlacement });
+          diagnostics.warnings.push(`Node ${nodeId} uses unsupported image positioning: ${unsupportedImagePlacement.join(', ')}`);
+        }
       }
 
       if (nodeBackgroundValue && /(?:url\(|gradient\()/i.test(nodeBackgroundValue)) {
@@ -639,6 +669,13 @@
           diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['background-image'] });
           diagnostics.warnings.push(`Node ${nodeId} background image is not an exportable image URL`);
         } else {
+          const unsupportedBackgroundPlacement = getUnsupportedPptxImagePlacementProperties(style, {
+            backgroundImage: true
+          });
+          if (unsupportedBackgroundPlacement.length > 0) {
+            diagnostics.unsupportedStyles.push({ id: nodeId, properties: unsupportedBackgroundPlacement });
+            diagnostics.warnings.push(`Node ${nodeId} uses unsupported background image positioning: ${unsupportedBackgroundPlacement.join(', ')}`);
+          }
           let hasMissingAsset = false;
           if (normalizedOptions.assetExists) {
             try {

@@ -746,6 +746,33 @@ test('preflightCanonicalPptxExport reports unsupported image fit values', () => 
   assert.match(report.diagnostics.warnings.join('\n'), /unsupported image fit: none/);
 });
 
+test('preflightCanonicalPptxExport reports unsupported image positioning', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    assets: [{ id: 'asset-1', src: 'data:image/png;base64,AAAA' }],
+    slides: [{
+      nodes: [{
+        id: 'image-1',
+        type: 'image',
+        attributes: { 'data-asset-id': 'asset-1' },
+        style: 'object-fit: cover; object-position: left top;',
+        layout: { x: 0, y: 0, width: 100, height: 100 }
+      }, {
+        id: 'background-image-1',
+        type: 'container',
+        style: 'background-image: url("data:image/png;base64,AAAA"); background-size: 100% 100%; background-position: left; background-repeat: repeat;',
+        layout: { x: 100, y: 0, width: 100, height: 100 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.unsupportedStyles, [
+    { id: 'image-1', properties: ['object-position'] },
+    { id: 'background-image-1', properties: ['background-size', 'background-position', 'background-repeat'] }
+  ]);
+  assert.match(report.diagnostics.warnings.join('\n'), /unsupported image positioning: object-position/);
+  assert.match(report.diagnostics.warnings.join('\n'), /unsupported background image positioning/);
+});
+
 test('preflightCanonicalPptxExport reports unsupported non-solid slide backgrounds', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{
