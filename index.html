@@ -1685,7 +1685,9 @@
           alert: typeof alert === 'function' ? alert : null,
           captureSlideMutationState: (...args) => captureSlideMutationRestoreState(...args),
           getSlideId: (...args) => getEditorSlideId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+            preferLiveCanonicalDeck: false
+          }),
           applyDeletion: (...args) => applyEditorSlideDeletionWithTransaction(...args),
           generateThumbnails: (...args) => generateThumbnails(...args),
           restoreDeckViewAfterSlideMutation: (...args) => restoreDeckViewAfterSlideMutation(...args),
