@@ -1311,6 +1311,7 @@
   <script src="/shared/studio-editor-canonical-removal.js"></script>
   <script src="/shared/studio-editor-canonical-insertion.js"></script>
   <script src="/shared/studio-editor-block-controller.js"></script>
+  <script src="/shared/studio-editor-template-view.js"></script>
   <script src="/shared/studio-editor-template-controller.js"></script>
   <script src="/shared/studio-editor-master-slide-controller.js"></script>
   <script src="/shared/studio-editor-asset-view.js"></script>
@@ -6007,46 +6008,19 @@
     }
 
     function renderSavedTemplates(templates = []) {
-      if (typeof document === 'undefined' || !document || typeof document.getElementById !== 'function') {
+      const templateView = typeof SlideNextStudioEditorTemplateView !== 'undefined'
+        ? SlideNextStudioEditorTemplateView
+        : null;
+      if (!templateView || typeof templateView.renderStudioTemplateLibrary !== 'function') {
         return false;
       }
-      const list = document.getElementById('savedTemplatesList');
-      if (!list || typeof document.createElement !== 'function') return false;
-      list.textContent = '';
-      const normalizedTemplates = Array.isArray(templates) ? templates : [];
-      if (normalizedTemplates.length === 0) {
-        const emptyState = document.createElement('span');
-        emptyState.textContent = 'No slide templates saved';
-        list.appendChild(emptyState);
-        return true;
-      }
-      normalizedTemplates.forEach((template) => {
-        const row = document.createElement('div');
-        row.className = 'flex items-center gap-1';
-        const item = document.createElement('button');
-        item.type = 'button';
-        item.className = 'min-w-0 flex-1 text-left rounded px-2 py-1 hover:bg-white/5 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed';
-        const nodeCount = template
-          && template.slide
-          && Array.isArray(template.slide.nodes)
-          ? template.slide.nodes.length
-          : 0;
-        const templateName = template && template.name ? template.name : 'Unnamed Template';
-        item.textContent = `${templateName} - ${nodeCount} element${nodeCount === 1 ? '' : 's'}`;
-        item.disabled = typeof getActiveSlide === 'function' ? !getActiveSlide() : false;
-        item.addEventListener('click', () => insertSavedTemplate(template.id));
-        const removeButton = document.createElement('button');
-        removeButton.type = 'button';
-        removeButton.className = 'shrink-0 rounded px-1.5 py-1 text-zinc-500 hover:bg-red-500/10 hover:text-red-300 transition-colors';
-        removeButton.textContent = 'Remove';
-        removeButton.title = `Remove ${templateName}`;
-        removeButton.setAttribute('aria-label', `Remove ${templateName}`);
-        removeButton.addEventListener('click', () => removeSavedTemplate(template.id));
-        row.appendChild(item);
-        row.appendChild(removeButton);
-        list.appendChild(row);
+      return templateView.renderStudioTemplateLibrary({
+        documentRef: document,
+        templates,
+        canInsert: typeof getActiveSlide === 'function' ? !!getActiveSlide() : false,
+        insertTemplate: typeof insertSavedTemplate === 'function' ? insertSavedTemplate : null,
+        removeTemplate: typeof removeSavedTemplate === 'function' ? removeSavedTemplate : null
       });
-      return true;
     }
 
     function renderSavedMasterSlides(masterSlides = [], activeMasterSlideId = '') {

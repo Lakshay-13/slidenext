@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const templateView = require('../shared/studio-editor-template-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -25,6 +26,7 @@ test('saveActiveSlideAsTemplate delegates the name and refreshes template state'
   let delegatedName = '';
   let refreshCalls = 0;
   const context = {
+    SlideNextStudioEditorTemplateView: templateView,
     document: {
       getElementById(id) {
         return id === 'templateNameInput' ? input : null;
@@ -68,6 +70,7 @@ test('renderSavedTemplates uses text content and shows the empty state', () => {
     }
   };
   const context = {
+    SlideNextStudioEditorTemplateView: templateView,
     document: {
       getElementById() {
         return list;
@@ -83,7 +86,12 @@ test('renderSavedTemplates uses text content and shows the empty state', () => {
           setAttribute() {}
         };
       }
-    }
+    },
+    getActiveSlide() {
+      return { id: 'active-slide' };
+    },
+    insertSavedTemplate() {},
+    removeSavedTemplate() {}
   };
 
   vm.createContext(context);
@@ -95,6 +103,51 @@ test('renderSavedTemplates uses text content and shows the empty state', () => {
   assert.equal(list.children[0].children[0].textContent, '<Hero> - 1 element');
   assert.equal(context.renderSavedTemplates([]), true);
   assert.equal(list.children[0].textContent, 'No slide templates saved');
+});
+
+test('shared template view wires insert and remove actions to injected callbacks', () => {
+  const list = {
+    children: [],
+    textContent: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const events = [];
+  const documentRef = {
+    getElementById() {
+      return list;
+    },
+    createElement() {
+      return {
+        children: [],
+        addEventListener(type, handler) {
+          events.push({ type, handler });
+        },
+        appendChild(child) {
+          this.children.push(child);
+        },
+        setAttribute() {}
+      };
+    }
+  };
+  const calls = [];
+
+  assert.equal(templateView.renderStudioTemplateLibrary({
+    documentRef,
+    templates: [{ id: 'hero', name: 'Hero', slide: { nodes: [{ id: 'title' }] } }],
+    canInsert: true,
+    insertTemplate(templateId) {
+      calls.push(['insert', templateId]);
+    },
+    removeTemplate(templateId) {
+      calls.push(['remove', templateId]);
+    }
+  }), true);
+
+  events.find((event) => event.type === 'click').handler();
+  events.reverse().find((event) => event.type === 'click').handler();
+  assert.deepEqual(calls, [['insert', 'hero'], ['remove', 'hero']]);
 });
 
 test('insertSavedTemplate delegates to the template controller and refreshes editor state', () => {
