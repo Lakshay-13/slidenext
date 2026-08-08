@@ -20,6 +20,44 @@ test('buildStudioCanonicalMetadataDeck applies a slide metadata patch to a suppl
   assert.equal(sourceDeck.slides[0].notes, 'Before');
 });
 
+test('buildStudioCanonicalMetadataBaseline prefers a valid live canonical deck', () => {
+  const liveDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', notes: 'Live' }]
+  });
+  let didBuildFromDocument = false;
+  const result = metadata.buildStudioCanonicalMetadataBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return liveDeck;
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+    }
+  });
+
+  assert.equal(result, liveDeck);
+  assert.equal(didBuildFromDocument, false);
+});
+
+test('buildStudioCanonicalMetadataBaseline falls back when the live canonical deck is invalid', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let didBuildFromDocument = false;
+  const result = metadata.buildStudioCanonicalMetadataBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline() {
+      return { invalid: true };
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return sourceDeck;
+    }
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(didBuildFromDocument, true);
+});
+
 test('createStudioCanonicalMetadataMutationBuilders prefers the live canonical baseline builder', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', section: 'Before' }]

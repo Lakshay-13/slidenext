@@ -55,6 +55,10 @@ test('slide metadata wiring rebuilds the canonical deck from the iframe DOM', ()
     controllerSource,
     /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
   );
+  assert.match(
+    controllerSource,
+    /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
+  );
 });
 
 test('updateActiveSlideNotes delegates to the shared notes action', () => {
