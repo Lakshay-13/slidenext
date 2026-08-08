@@ -71,6 +71,7 @@
           presentationUrl,
           presentationTitle,
           preferStoredCanonicalDeck: false,
+          canonicalDeckBaseline: buildOptions.canonicalDeckBaseline,
           getSlideId: options.getSlideId,
           getNodeId: options.getNodeId
         });

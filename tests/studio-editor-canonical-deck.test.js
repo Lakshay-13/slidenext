@@ -116,3 +116,29 @@ test('canonical deck builder can rebuild from a document or return the stored mo
   assert.equal(builder(documentRef, { preferLiveCanonicalDeck: false }), importedDeck);
   assert.equal(builder(null), storedDeck);
 });
+
+test('canonical deck builder forwards the DOM rebuild baseline to the shared deck context', () => {
+  const documentRef = {};
+  const canonicalDeckBaseline = createDeck('baseline');
+  const importedDeck = createDeck('imported');
+  let capturedOptions = null;
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    getCurrentPresentationMetadata: () => ({ id: 'demo' }),
+    getPersistedCanonicalDeck: () => null,
+    buildStudioCanonicalDeck(_doc, options) {
+      capturedOptions = options;
+      return importedDeck;
+    },
+    getPresentationUrl: () => '/presentations/demo/index.html',
+    getPresentationTitle: () => 'Demo'
+  });
+
+  assert.equal(
+    builder(documentRef, {
+      preferLiveCanonicalDeck: false,
+      canonicalDeckBaseline
+    }),
+    importedDeck
+  );
+  assert.equal(capturedOptions.canonicalDeckBaseline, canonicalDeckBaseline);
+});
