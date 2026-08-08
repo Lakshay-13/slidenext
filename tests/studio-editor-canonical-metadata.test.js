@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const metadata = require('../shared/studio-editor-canonical-metadata.js');
 
 test('buildStudioCanonicalMetadataDeck applies a slide metadata patch to a supplied baseline', () => {
@@ -27,6 +28,7 @@ test('buildStudioCanonicalMetadataBaseline prefers a valid live canonical deck',
   let didBuildFromDocument = false;
   const result = metadata.buildStudioCanonicalMetadataBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return liveDeck;
     },
@@ -45,6 +47,7 @@ test('buildStudioCanonicalMetadataBaseline falls back when the live canonical de
   let didBuildFromDocument = false;
   const result = metadata.buildStudioCanonicalMetadataBaseline({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline() {
       return { invalid: true };
     },
@@ -65,6 +68,7 @@ test('createStudioCanonicalMetadataMutationBuilders prefers the live canonical b
   const calls = [];
   const builders = metadata.createStudioCanonicalMetadataMutationBuilders({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     buildCanonicalDeck() {
       throw new Error('DOM-derived mutation builder should not build the baseline');
     },
