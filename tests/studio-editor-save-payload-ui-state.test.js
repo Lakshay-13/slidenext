@@ -1331,6 +1331,46 @@ test('runCurrentStudioPersistenceActionIfCurrent delegates through the editor pe
   assert.equal(result.currentSessionState.getCurrentSessionToken(), 12);
 });
 
+test('runCurrentStudioPersistenceActionIfCurrent creates the shared current-action adapter once', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const runCurrentStudioPersistenceActionIfCurrentSource = extractFunctionSource(
+    fileContent,
+    'function runCurrentStudioPersistenceActionIfCurrent(',
+    '\n\n    function isCurrentStudioPersistenceTaskStale('
+  );
+  const calls = [];
+  let adapterCreateCalls = 0;
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    SlideNextStudioEditorPersistenceState: {
+      createStudioEditorPersistenceActionCurrentRunnerAdapter(options) {
+        adapterCreateCalls += 1;
+        return (persistenceContext, action) => {
+          calls.push([persistenceContext, action]);
+          return { contextId: persistenceContext.id, action };
+        };
+      }
+    },
+    createCurrentStudioSessionStateReaders() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(runCurrentStudioPersistenceActionIfCurrentSource, context);
+
+  assert.deepEqual(
+    context.runCurrentStudioPersistenceActionIfCurrent({ id: 'one' }, 'action-one'),
+    { contextId: 'one', action: 'action-one' }
+  );
+  assert.deepEqual(
+    context.runCurrentStudioPersistenceActionIfCurrent({ id: 'two' }, 'action-two'),
+    { contextId: 'two', action: 'action-two' }
+  );
+  assert.equal(adapterCreateCalls, 1);
+  assert.deepEqual(calls.map(([, action]) => action), ['action-one', 'action-two']);
+});
+
 test('applyCurrentStudioPersistenceFailure reuses the shared failure handler when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyCurrentStudioPersistenceFailureSource = extractFunctionSource(
